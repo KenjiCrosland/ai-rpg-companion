@@ -23,6 +23,9 @@
     <div v-if="loading">Generating...</div>
     <div v-if="locationDescription" class="location-description">{{ locationDescription }}</div>
   </div>
+  <p class="credits">
+    This app was created by <a href='https://cros.land'>Kenji Crosland</a>
+  </p>
 </template>
 
 <script>
@@ -117,6 +120,12 @@ Based on these style notes, please write a description of ${this.typeOfPlace}. P
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+.credits {
+  font-family: 'Roboto', sans-serif;
+  max-width: 800px;
+  margin: 5px auto;
+  text-align: center;
 }
 
 h1 {
