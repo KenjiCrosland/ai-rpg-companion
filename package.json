@@ -9,12 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@rei/cedar": "^13.3.1",
     "axios": "^1.3.4",
+    "dotenv": "^16.0.3",
     "openai": "^3.2.1",
     "openai-api": "^1.3.1",
+    "sass": "^1.60.0",
     "vue": "^3.2.47"
   },
   "devDependencies": {
+    "@rei/cdr-tokens": "^11.0.1",
     "@vitejs/plugin-vue": "^4.1.0",
     "vite": "^4.2.0"
   }

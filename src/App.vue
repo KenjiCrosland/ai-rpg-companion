@@ -2,54 +2,59 @@
   <div class="app-container">
     <h1>RPG Location Description Generator</h1>
     <hr>
-    <p>
-      Welcome to the RPG Location Description Generator! This App uses the ChatGPT API to provide an engaging descriptions of locations for your players. Some examples of types of locations might be:
-      <ul>
-        <li
-          v-for="example in examples"
-          :key="example"
-          @click="setInputValue(example)"
-          class="suggestion"
-        >
-          {{ example }}
-        </li>
-      </ul>
-    </p>
+    <cdr-text class="intro">
+      Welcome to the RPG Location Description Generator! This App uses the ChatGPT API to provide engaging descriptions
+      of locations for your players. Some examples of types of locations might be:
+    </cdr-text>
+
+    <cdr-list class="suggestions" modifier="unordered">
+      <li v-for="example in examples" :key="example">
+        <cdr-link modifier="standalone" @click="setInputValue(example)">{{ example }}</cdr-link>
+      </li>
+    </cdr-list>
+
     <form @submit.prevent="generateLocationDescription">
-      <label for="typeOfPlace">Type of location:</label>
-      <input id="typeOfPlace" v-model="typeOfPlace" required />
-      <button type="submit">Generate Description</button>
+      <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" label="Type of Location:" required />
+      <cdr-button type="submit" class="generate-button">Generate Description</cdr-button>
     </form>
     <div v-if="loading">Generating...</div>
     <div v-if="locationDescription" class="location-description">{{ locationDescription }}</div>
   </div>
-  <p class="credits">
-    This app was created by <a href='https://cros.land'>Kenji Crosland</a>
-  </p>
+  <cdr-text class="credits">
+    This app was created by <cdr-link href='https://cros.land'>Kenji Crosland</cdr-link>
+  </cdr-text>
 </template>
 
 <script>
-import { Configuration, OpenAIApi }  from "openai";
-const configuration = new Configuration({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
-
+import { CdrInput, CdrLink, CdrButton, CdrText, CdrList } from '@rei/cedar';
+import '@rei/cedar/dist/style/cdr-input.css';
+import '@rei/cedar/dist/cdr-fonts.css';
+import '@rei/cedar/dist/reset.css';
+import '@rei/cedar/dist/style/cdr-text.css';
+import '@rei/cedar/dist/style/cdr-button.css';
+import '@rei/cedar/dist/style/cdr-link.css';
+import '@rei/cedar/dist/style/cdr-list.css';
 export default {
   data() {
     return {
       locationDescription: '',
       typeOfPlace: '',
       examples: [
-        'A tavern in Neverwinter that serves as a front for the local chapter of the Zhentarim',
         'The captain\'s quarters on a spelljammer ship',
+        'A tavern in Neverwinter that serves as a front for the local chapter of the Zhentarim',
         'A tea house where the Emerald Champion Doji Satsume often frequents in the Land of Rokugan',
+        'A gnome\'s workshop and home deep in the feywild who makes sentient puppets',
         'An upscale ripperdoc establishment in Night City',
-        'A study in a mage\'s tower, long abandoned',
-        'A gnome\'s workshop and home deep in the feywild who makes sentient puppets'
       ],
       loading: false,
     };
+  },
+  components: {
+    CdrInput,
+    CdrText,
+    CdrButton,
+    CdrLink,
+    CdrList,
   },
   methods: {
     setInputValue(value) {
@@ -59,7 +64,7 @@ export default {
       this.loading = true;
 
       const prompt =
-`Write a 4-sentence description of a location in a D&D game. Each sentence must meet the following parameters. Please note that while the example below is of a Tavern, it could be any place:
+        `Write a 4-sentence description of a location in a Tabletop Roleplaying Game. Each sentence must meet the following parameters. Please note that while the example below is of a Tavern, it could be any place:
 
 Sentence 1: Provide a general description of the location's interior or exterior to give players a sense of its dimensions. Examples include:
 
@@ -89,15 +94,27 @@ Sentence 4: Describe something or someone the players can interact with. It coul
 Based on these style notes, please write a description of ${this.typeOfPlace}. Please make sure it's only 4 sentences and do not share any hidden details that wouldn't be evident to the players.`;
 
       try {
-        const gptResponse = await openai.createChatCompletion({
-  model:"gpt-3.5-turbo",
-  messages:[
-        {"role": "system", "content": "You are an assistant Game Master."},
-        {"role": "user", "content": prompt }
-    ]
-        })
+        const requestOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [
+              { "role": "system", "content": "You are an assistant Game Master." },
+              { "role": "user", "content": prompt },
+            ],
+          }),
+        };
+        let response;
+        if (import.meta.env.DEV) {
+          requestOptions.headers.Authorization = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+          response = await fetch('https://api.openai.com/v1/chat/completions', requestOptions);
+        } else {
+          response = await fetch('/wp-json/open-ai-proxy/api/v1/proxy', requestOptions);
+        }
+        const responseData = await response.json();
 
-    this.locationDescription = gptResponse.data.choices[0].message.content;
+        this.locationDescription = responseData.choices[0].message.content;
       } catch (error) {
         console.error('Error generating tavern description:', error);
         this.locationDescription = error;
@@ -109,107 +126,65 @@ Based on these style notes, please write a description of ${this.typeOfPlace}. P
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 .app-container {
-  font-family: 'Roboto', sans-serif;
+  @include cdr-text-body-400();
+  color: $cdr-color-text-primary;
   max-width: 800px;
   margin: 20px auto;
-  padding: 30px;
+  padding: 2px 30px 30px 30px;
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+hr {
+  border: 1px solid $cdr-color-border-secondary;
+  width: 80%;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+.intro {
+  @include cdr-text-body-400();
+}
+
+.suggestions {
+  margin-left: 2rem;
+  padding: 2rem;
+}
 .credits {
-  font-family: 'Roboto', sans-serif;
-  max-width: 800px;
+  @include cdr-text-body-400();
   margin: 5px auto;
   text-align: center;
 }
 
 h1 {
-  font-family: 'Roboto', sans-serif;
-  color: #7A200D;
-  font-weight: 700;
-  margin: 0px;
-  font-size: 36px;
-  letter-spacing: 1px;
-  font-variant: small-caps;
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-p {
-  font-size: 1.2rem;
-  line-height: 1.7;
-  margin-bottom: 20px;
-  color: #3c1208;
-}
-
-ul {
-  list-style-type: disc;
-  padding-left: 40px;
-  margin-bottom: 20px;
-}
-
-li {
-  color: #3c1208;
-  cursor: pointer;
-}
-
-.suggestion:hover {
-  color: #922610;
+  @include cdr-text-heading-serif-1000;
 }
 
 form {
-  background-color: #FDF1DC;
+  background-color: $cdr-color-background-secondary;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-label {
-  display: block;
-  font-size: 1.3rem;
-  margin-bottom: 8px;
-  color: #3c1208;
-}
-
-input {
-  width: 95%;
-padding: 8px 16px;
-  font-size: 1.1rem;
-  border: none;
-  background-color: #ffffff;
-  border-bottom: 2px solid #7A200D;
-  margin-bottom: 16px;
-  outline-color: #7A200D;
-}
-
-button {
-  padding: 10px 20px;
-  font-size: 1.2rem;
-  background-color: #7A200D;
-  border: none;
-  border-radius: 4px;
-  color: #fff;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-button:hover {
-  background-color: #922610;
+.generate-button {
+  align-self: flex-start;
 }
 
 .location-description {
-  font-size: 1.3rem;
-  line-height: 1.7;
+  @include cdr-text-body-500();
   background-color: #ffffff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  color: #3c1208;
   margin-top: 20px;
 }
 </style>
