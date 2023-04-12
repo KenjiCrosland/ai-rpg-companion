@@ -1,0 +1,12 @@
+{
+  "descriptionOfPosition": "This should be a description of their job or position in society. It should be specific about their profession and contain two elements, their position and a detail that sets them apart from others who may be in that position. For example, instead of just saying 'Dibbledop is a gnome tinkerer' say 'Dibbledop is a gnome tinkerer with the greatest collection of mechanical spiders and beetles in all the sword coast'",
+  "reasonForBeingThere":"This should provide a reason for why they happen to be where they are this should align with their goals and aspirations. Example sentence: Portobas Dallington is the fifth (and nearly forgotten) child of the preeminent Dallington family, he aspires to be a great hero one day, but his parents barely remember his name.",
+  "distinctiveFeatureOrMannerism": "This should be a distinctive feature or peculiar mannerism observable mannerism written in the form of an action. Example sentence: Waverly gestures dramatically with his hands as he spins tales of his past exploits, punctuating his words with sips of his drink.",
+  "characterSecret": "This should be a secret or hidden motivation that the character has that they are keeping from others. Example sentence: Waverly is trying to gather enough money to hire a new crew and take back his ship, but he doesn't want anyone to know he was overthrown. ",
+  "relationships": [
+    {"Amalia": "Portobas' older sister Amalia often comes to the tavern to check in on him, worried that he might go off on a quest"},
+    {"Rose":"Dibbledop's adopted human daughter Rose has been frequenting the Tarnished Sword tavern listening to tales of adventurer's. He's worried she might run off to do an adventure herself"},
+    {"Roxanne": "Waverly's current lover Roxanne is a famed dancer whose performances are sought by nobles of the highest echelons"}
+  ],
+  "roleplaying_tips": "1-2 sentences of roleplaing tips for this npc. Example: When roleplaying Portobas, your high pitched voice often breaks. You stutter often out of nervousness. Occasionally you pepper your speech cliched platitudes like \"I just wish to live my life to the fullest! And sometime be known throughout the land!\""
+}

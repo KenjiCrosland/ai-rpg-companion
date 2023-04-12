@@ -1,0 +1,49 @@
+Please provide a description of an NPC in a tabletop rpg and use natural language without any numbering or bullet points.
+
+Here are some additional notes on style: 
+
+The first part have the heading "Summary" and have 4 sentences. Each or sentence should flow into the next. Use transitions like "However", "Fortunately," "Unfortunately" etc.
+
+Sentence 1 should be a description of their job or position in society. It should be specific about their profession and contain two elements, their position and a detail that sets them apart from others who may be in that position. For example, instead of just saying "Dibbledop is a gnome tinkerer" say "Dibbledop is a gnome tinkerer with the greatest collection of mechanical spiders and beetles in all the sword coast"
+Here are some more examples:
+    Bjarti is the crown prince of the bearfolk Kingdom Bjarnvoldenheim, and he also happens to have the mind of a child.
+    Gorton Traxer grew up watching vids of surgery procedures while other kids were playing the latest BD adventure--so it's not surprising he became one of the best known ripperdocs in Night city.
+    Portobas Dallington is the fifth (and nearly forgotten) child of the preeminent Dallington family, he aspires to be a great hero one day, but his parents barely remember his name.
+    Waverly Radcliffe is a consummate liar, but the fact that at least half of his stories of being a privateer are in fact true (if not embellished for dramatic effect).
+
+Sentence 2 should provide a reason for why they happen to be where they are this should align with their goals and aspirations:
+    Portobas has been strutting around in his shining plate armor at the Leaky Tap for days now hoping someone may give him a quest, and no one has the heart to tell him that he looks ridiculous.
+    Dibbledop is in the jungle collecting species of a rare mantis, hoping that he can get a few live specimens so that he can create a clockwork mantis.
+    Waverly is actually drinking his sorrows away because his crew recently mutinied and kicked him off his own ship.
+    Gorton's is actually here to sell some braindances of folks who chose to undergo mod surgery without anesthesia.
+    Bjarti went off chasing a butterfly and got separated from the rest of his tribe and has been lost for days.
+
+Sentence 3 should be a distinctive feature or peculiar mannerism observable mannerism written in the form of an action:
+    His pale face is flushed with sweat and exertion from walking around in the plate armor, and he has a bit of a squeaky voice.
+    He has a perfectly trimmed blond goatee and mustache and wears a hat with a ridiculously wide brim and his hands always seem to rest near his belt where his rapier is sheathed
+    Dibbledop absentmindedly tinkers with a small mechanical spider, occasionally muttering to himself as he makes adjustments.
+    Waverly gestures dramatically with his hands as he spins tales of his past exploits, punctuating his words with sips of his drink.
+    Gorton nervously taps his fingers on the table, his eyes darting around the room as he looks for potential customers.
+    Bjarti often breaks into fits of giggles at the sight of something amusing, and he has a habit of petting the head of his stuffed animal companion.
+
+Sentence 4 should be a secret or hidden motivation that the character has that they are keeping from others:
+
+    Portobas secretly hopes that by completing a heroic quest, he will win the approval of his family and be recognized as a true hero.
+    Dibbledop is actually on the run from a rival inventor who wants to steal his clockwork mantis design.
+    Waverly is trying to gather enough money to hire a new crew and take back his ship, but he doesn't want anyone to know he was overthrown.
+    Gorton has been experimenting on himself with illegal cyberware and is starting to lose touch with reality.
+    Bjarti knows the way back to his tribe, but he is enjoying his solo adventure and doesn't want to return just yet.
+
+After the summary, the next part should have the heading "Relationships". These relationship descriptions should be in the form of actions:
+    Portobas' older sister Amalia often comes to the tavern to check in on him, worried that he might go off on a quest
+    Dibbledop's adopted human daughter Rose has been frequenting the Tarnished Sword tavern listening to tales of adventurer's. He's worried she might run off to do an adventure herself
+    Waverly's current lover Roxanne is a famed dancer whose performances are sought by nobles of the highest echelons
+
+Please provide 3 relationships.
+
+The final part should have the heading "Roleplaying Tips"
+    When roleplaying Portobas, your high pitched voice often breaks. You stutter often out of nervousness. Occasionally you pepper your speech cliched platitudes like "I just wish to live my life to the fullest! And sometime be known throughout the land!"
+    When roleplaying Dibbledop, appear as though you're barely paying attention to the players, as you're often taking notes or looking of a part. Only after the players' yell at him do you turn around and say "Oh hello!"
+
+With this format in mind, please create an NPC for the location described below:
+The Mermaid's Song is a sprawling, wooden structure with an open-air thatched roof overlooking the ocean. The sound of churning waves mingles with the delightful tinkling of glassware and laughter. Several paintings of adolescent mermaids hang above the main bar, their golden tails arcing and shimmering in the light. A group of rough-looking sailors in the corner shout lustily over ale mugs while a fuchsia-skinned tiefling whistles a jaunty tune and eyes the new arrivals with interest.
