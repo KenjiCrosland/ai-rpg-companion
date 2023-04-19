@@ -10,6 +10,8 @@
  * @link    https://www.studiopress.com/
  */
 
+ ini_set('max_execution_time', 300); // Set the maximum execution time to 5 minutes (300 seconds)
+ 
 // Starts the engine.
 require_once get_template_directory() . '/lib/init.php';
 
@@ -250,7 +252,7 @@ function whisper_api_proxy( WP_REST_Request $request ) {
     $response = wp_remote_post_with_retry($url, [
         'headers' => $headers,
         'body' => json_encode($request_data),
-        'timeout' => 30, // Timeout in seconds
+        'timeout' => 180, // Timeout in seconds
     ]);
 
     if (is_wp_error($response)) {
@@ -281,3 +283,13 @@ function wp_remote_post_with_retry($url, $args, $max_retries = 3, $retry_interva
 
     return $response; // Return the last failed response after all retries
 }
+
+function vue_app_gm_dashboard_shortcode() {
+    return '<div id="app" data-page="gm-dashboard"></div>';
+}
+add_shortcode( 'vue_app_gm_dashboard', 'vue_app_gm_dashboard_shortcode' );
+
+function vue_app_npc_generator_shortcode() {
+    return '<div id="app" data-page="gm-dashboard"></div>';
+}
+add_shortcode( 'vue_app_npc_generator', 'vue_app_npc_generator_shortcode' );

@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+npc-generator.txt
 .env
 .env.local
 

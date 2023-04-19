@@ -52,7 +52,7 @@ function vue_app_render_root_element() {
     echo '<div id="app" data-page="npc-generator"></div>';
 }
 
-add_action( 'genesis_entry_content', 'vue_app_render_root_element' );
+//add_action( 'genesis_entry_content', 'vue_app_render_root_element' );
 
 // Runs the Genesis loop.
 genesis();
