@@ -3,6 +3,7 @@
     <LocationGenerator v-if="currentPage === 'location-generator'" />
     <NPCGenerator v-if="currentPage === 'npc-generator'" />
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
+    <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
   </div>
 </template>
 
@@ -10,6 +11,7 @@
 import LocationGenerator from './components/LocationGenerator.vue';
 import NPCGenerator from './components/NPCGenerator.vue';
 import Dashboard from './components/Dashboard.vue';
+import DashboardPlus from './components/DashboardPlus.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -18,12 +20,13 @@ export default {
     LocationGenerator,
     NPCGenerator,
     Dashboard,
+    DashboardPlus,
     CdrLink,
     CdrText
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'gm-dashboard',
+      currentPage: this.$attrs['data-page'] || 'npc-generator',
     };
   },
   mounted() {
@@ -40,6 +43,11 @@ export default {
     if (typeof gtag === 'function' && this.currentPage === 'gm-dashboard') {
       gtag('config', 'UA-11925218-1', {
         'page_path': '/gm-dashboard',
+      });
+    }
+    if (typeof gtag === 'function' && this.currentPage === 'gm-dashboard-plus') {
+      gtag('config', 'UA-11925218-1', {
+        'page_path': '/gm-dashboard-plus',
       });
     }
   },

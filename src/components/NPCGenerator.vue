@@ -13,7 +13,7 @@
 
         <cdr-list class="suggestions" modifier="unordered">
             <li v-for="example in examples" :key="example">
-                <cdr-link modifier="standalone" @click="setInputValue(example)">{{ example }}</cdr-link>
+                <cdr-link modifier="standalone" @click="setInputValue({ value: example })">{{ example }}</cdr-link>
             </li>
         </cdr-list>
 
@@ -22,12 +22,12 @@
         </cdr-text>
 
 
-        <form @submit.prevent="generateNPCDescription">
-            <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" label="Give me an NPC Description For:"
-                required />
-            <cdr-button type="submit" class="generate-button">Generate Description</cdr-button>
-        </form>
-        <div class="location-description" v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2">
+        <NPCForm :inputValue="typeOfPlace" labelText="Give me an NPC Description For:"
+            @npc-description-generated="displayNPCDescription" @npc-description-error="handleError"
+            @set-loading-state="setLoadingState" @example-clicked="setInputValue"></NPCForm>
+
+        <div class="location-description"
+            v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
             <div v-if="loadingPart1">
                 <CdrSkeleton>
                     <CdrSkeletonBone type="heading" style="width: 50%; height: 50px" />
@@ -126,6 +126,7 @@
                 <p>{{ npcDescriptionPart2.roleplaying_tips }}
                 </p>
             </div>
+            <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
         </div>
         <div class="patreon">
             <cdr-link href="https://www.patreon.com/bePatron?u=2356190">Support Me on Patreon!</cdr-link>
@@ -134,13 +135,11 @@
 </template>
   
 <script>
-import { CdrInput, CdrLink, CdrButton, CdrText, CdrList, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
-import { createNPCPrompt, createRelationshipAndTipsPrompt } from '../util/prompts.mjs';
-import '@rei/cedar/dist/style/cdr-input.css';
+import { CdrButton, CdrInput, CdrLink, CdrText, CdrList, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import NPCForm from './NPCForm.vue';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
-import '@rei/cedar/dist/style/cdr-button.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-skeleton.css';
@@ -160,13 +159,15 @@ export default {
                 'A goblin by the name of Boblin',
                 'A completely random NPC. Surprise me'
             ],
+            errorMessage: '',
             loadingPart1: false,
             loadingPart2: false,
         };
     },
     components: {
-        CdrInput,
+        NPCForm,
         CdrText,
+        CdrInput,
         CdrButton,
         CdrLink,
         CdrList,
@@ -174,90 +175,26 @@ export default {
         CdrSkeletonBone
     },
     methods: {
-        setInputValue(value) {
+        setInputValue({ value }) {
             this.typeOfPlace = value;
         },
-        validateNPCDescription(jsonString) {
-            try {
-                const jsonObj = JSON.parse(jsonString);
-                const keys = ['characterName', 'descriptionOfPosition', 'reasonForBeingThere', 'distinctiveFeatureOrMannerism', 'characterSecret'];
-                return keys.every(key => key in jsonObj);
-            } catch (error) {
-                return false;
-            }
+
+        setLoadingState({ part, isLoading }) {
+            this[`loadingPart${part}`] = isLoading;
         },
-        validatePart2(jsonString) {
-            try {
-                const jsonObj = JSON.parse(jsonString);
-                const keys = ['relationships', 'roleplaying_tips'];
-                return keys.every(key => key in jsonObj);
-            } catch (error) {
-                return false;
-            }
+        displayNPCDescription({ part, npcDescription }) {
+            this[`npcDescriptionPart${part}`] = npcDescription;
+            this[`loadingPart${part}`] = false;
         },
-        async generateGptResponse(prompt, validateJson = null, maxAttempts = 3) {
-            let attempts = 0;
-            let validJson = false;
-            let errorThrown = false;
-            let responseData;
-
-            while (attempts < maxAttempts && !validJson && !errorThrown) {
-                try {
-                    const requestOptions = {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            model: "gpt-3.5-turbo",
-                            messages: [
-                                { "role": "system", "content": "You are an assistant Game Master." },
-                                { "role": "user", "content": prompt },
-                            ],
-                        }),
-                    };
-                    let response;
-                    if (import.meta.env.DEV) {
-                        requestOptions.headers.Authorization = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
-                        response = await fetch('https://api.openai.com/v1/chat/completions', requestOptions);
-                    } else {
-                        response = await fetch('/wp-json/open-ai-proxy/api/v1/proxy', requestOptions);
-                    }
-                    responseData = await response.json();
-                    const jsonString = responseData.choices[0].message.content;
-
-                    validJson = validateJson(jsonString);
-
-                } catch (error) {
-                    console.error('Error generating response:', error);
-                    errorThrown = true;
-                }
-                attempts++;
+        handleError(errorMessage) {
+            console.error(errorMessage);
+            this.loadingPart1 = false;
+            this.loadingPart2 = false;
+            if (this.npcDescriptionPart1 && this.npcDescriptionPart2) {
+                this.errorMessage = null;
+                return;
             }
-
-            if (!validJson) {
-                throw new Error('Failed to generate a valid response. Please try again later.');
-            }
-
-            return responseData.choices[0].message.content;
-        },
-        async generateNPCDescription() {
-            this.loadingPart1 = true;
-            this.loadingPart2 = true;
-
-            const npcPrompt = createNPCPrompt(this.typeOfPlace); // Same as before
-
-            try {
-                const npcJsonString = await this.generateGptResponse(npcPrompt, this.validateNPCDescription);
-                this.npcDescriptionPart1 = JSON.parse(npcJsonString);
-                this.loadingPart1 = false;
-                const part2Prompt = createRelationshipAndTipsPrompt(JSON.stringify(this.npcDescriptionPart1));
-                const relationshipJsonString = await this.generateGptResponse(part2Prompt, this.validatePart2);
-                this.npcDescriptionPart2 = JSON.parse(relationshipJsonString);
-                this.loadingPart2 = false;
-            } catch (error) {
-                console.error('Error generating NPC description and relationships:', error);
-                this.loadingPart1 = false;
-                this.npcDescription = 'Failed to generate NPC description and relationships. Please try again later.';
-            }
+            this.errorMessage = errorMessage;
         },
     },
 };
@@ -312,7 +249,12 @@ div[class^="cdr-skeleton-bone"] {
 }
 
 h1 {
-    @include cdr-text-heading-serif-1000;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    letter-spacing: 0px;
+    font-size: 4.2rem;
+    line-height: 3rem;
 }
 
 form {
@@ -338,8 +280,16 @@ form {
     margin-top: 20px;
 }
 
+.error-message {
+    border: 1px solid $cdr-color-border-error;
+    padding: $cdr-space-inset-one-x-stretch;
+    color: $cdr-color-text-message-error;
+    background-color: $cdr-color-background-message-error-01;
+    text-align: center;
+    margin-top: 16px;
+}
+
 .patreon {
     margin: 30px auto 0 auto;
     text-align: center;
-}
-</style>
+}</style>

@@ -50,7 +50,7 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin: 100px 30px;
+    margin: 50px 30px;
 }
 
 .dashboard-content {
