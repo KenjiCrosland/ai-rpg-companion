@@ -45,7 +45,7 @@ export default {
 };
 </script>
   
-<style lang="scss">
+<style scoped lang="scss">
 .dashboard {
     display: flex;
     flex-direction: column;

@@ -26,8 +26,11 @@ export async function generateGptResponse(prompt, validateJson = null, maxAttemp
             }
             responseData = await response.json();
             const jsonString = responseData.choices[0].message.content;
-
+            if (validateJson) {
             validJson = validateJson(jsonString);
+            } else {
+                validJson = true;
+            }
 
         } catch (error) {
             console.error('Error generating response:', error);

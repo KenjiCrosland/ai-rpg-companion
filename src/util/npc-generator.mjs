@@ -19,6 +19,7 @@ export function validateNPCDescription(jsonString) {
 
 export function validatePart2(jsonString) {
   try {
+    console.log(jsonString)
     const jsonObj = JSON.parse(jsonString);
     const keys = ['relationships', 'roleplaying_tips'];
     return keys.every((key) => key in jsonObj);
