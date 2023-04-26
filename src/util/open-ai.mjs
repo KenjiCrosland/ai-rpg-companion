@@ -1,47 +1,111 @@
-export async function generateGptResponse(prompt, validateJson = null, maxAttempts = 3) {
-    let attempts = 0;
-    let validJson = false;
-    let errorThrown = false;
-    let responseData;
+export async function generateGptResponse(
+  prompt,
+  validateJSONKeys = null,
+  maxAttempts = 3,
+) {
+  let attempts = 0;
+  let validJson = false;
+  let errorThrown = false;
+  let previousJSONString = '';
+  let retryPrompt;
+  let responseData;
+  let validJsonString;
 
-    while (attempts < maxAttempts && !validJson && !errorThrown) {
-        try {
-            const requestOptions = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: "gpt-3.5-turbo",
-                    messages: [
-                        { "role": "system", "content": "You are an assistant Game Master." },
-                        { "role": "user", "content": prompt },
-                    ],
-                }),
-            };
-            let response;
-            if (import.meta.env.DEV) {
-                requestOptions.headers.Authorization = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
-                response = await fetch('https://api.openai.com/v1/chat/completions', requestOptions);
-            } else {
-                response = await fetch('/wp-json/open-ai-proxy/api/v1/proxy', requestOptions);
-            }
-            responseData = await response.json();
-            const jsonString = responseData.choices[0].message.content;
-            if (validateJson) {
-            validJson = validateJson(jsonString);
-            } else {
-                validJson = true;
-            }
-
-        } catch (error) {
-            console.error('Error generating response:', error);
-            errorThrown = true;
-        }
+  while (attempts < maxAttempts && !validJson && !errorThrown) {
+    try {
+      if (previousJSONString) {
+        retryPrompt = `This JSON may not be formatted correctly. If not formatted correctly can you fix it for me? Please only return a valid JSON string and no comments please.
+                ${previousJSONString}`;
+      }
+      console.log(retryPrompt);
+      const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: 'You are an assistant Game Master.' },
+            { role: 'user', content: retryPrompt ? retryPrompt : prompt },
+          ],
+        }),
+      };
+      let response;
+      if (import.meta.env.DEV) {
+        requestOptions.headers.Authorization = `Bearer ${
+          import.meta.env.VITE_OPENAI_API_KEY
+        }`;
+        response = await fetch(
+          'https://api.openai.com/v1/chat/completions',
+          requestOptions,
+        );
+      } else {
+        response = await fetch(
+          '/wp-json/open-ai-proxy/api/v1/proxy',
+          requestOptions,
+        );
+      }
+      responseData = await response.json();
+      const responseContent = responseData.choices[0].message.content;
+      validJsonString =  extractJSONFromString(responseData.choices[0].message.content);
+      console.log("valid: " + validJsonString);
+      if (!validJsonString) {
+        console.log(previousJSONString);
+        previousJSONString = responseContent;
         attempts++;
-    }
+        continue;
+      }
 
-    if (!validJson) {
-        throw new Error('Failed to generate a valid response. Please try again later.');
+      if (validateJSONKeys) {
+        validJson = validateJSONKeys(validJsonString);
+      } else {
+        validJson = true;
+      }
+    } catch (error) {
+      console.error('Error generating response:', error);
+      errorThrown = true;
     }
+    attempts++;
+  }
 
-    return responseData.choices[0].message.content;
+  if (!validJson) {
+    throw new Error(
+      'Failed to generate a valid response. Please try again later.',
+    );
+  }
+
+  return validJsonString;
 }
+
+function isValidJson(str) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+function extractJSONFromString(input) {
+    const regex = /(?:\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\})|(?:\[(?:[^\[\]]|\[(?:[^\[\]]|\[(?:[^\[\]]|\[[^\[\]]*\])*\])*\])*\])/g;
+    const matches = input.match(regex);
+  
+    if (matches && matches.length > 0) {
+      for (const match of matches) {
+        try {
+          JSON.parse(match); // Check if it's a valid JSON string
+          return match;
+        } catch (error) {
+          continue;
+        }
+      }
+    }
+  
+    // Additional check for JSON strings
+    try {
+      JSON.parse(input); // Check if the whole input is a valid JSON string
+      return input;
+    } catch (error) {
+      return false;
+    }
+  }
+  

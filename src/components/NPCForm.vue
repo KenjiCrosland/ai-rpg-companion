@@ -49,7 +49,6 @@ export default {
       };
 
       const handlePart = (part, receivedData) => {
-        console.log(receivedData);
         Object.assign(npcDescription, receivedData);
         if (part === 1) {
           this.$emit("npc-description-part-received", receivedData);
