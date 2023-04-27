@@ -15,10 +15,10 @@
         <h2>{{ location.name }}</h2>
         <cdr-text class="body-text">{{ location.description }}</cdr-text>
         <div class="form-container">
-          <NPCForm :combineResponses="true" :inputValue="newNPCs[index].description"
-            labelText="Give me an NPC Description For:" @npc-description-generated="addNPC(index, $event)"
+          <NPCForm :inputValue="newNPCs[index].description" labelText="Give me an NPC Description For:"
+            @npc-description-generated="addNPCPart(index, $event)"
             @npc-description-part-received="updateFirstPartDescription(index, $event)"
-            @set-loading-state="setNPCLoadingState($event)" />
+            @set-loading-state="setNPCLoadingState(index, $event)" />
         </div>
         <cdr-accordion-group>
           <cdr-accordion class="accordion" v-for="(npc, npcIndex) in location.npcs" :key="npc.id" :id="'npc-' + npc.id"
@@ -32,7 +32,7 @@
             <p>{{ npc.reasonForBeingThere }}</p>
             <p>{{ npc.distinctiveFeatureOrMannerism }}</p>
             <p>{{ npc.characterSecret }}</p>
-            <div v-if="!loadingRelationships">
+            <div v-if="!npc.loadingRelationships">
               <h3>Relationships</h3>
               <ul>
                 <li class="relationship" v-for="(relationshipDescription, relationshipName) in npc.relationships"
@@ -44,7 +44,7 @@
               <h3>Roleplaying Tips</h3>
               <cdr-text class="body-text">{{ npc.roleplaying_tips }}</cdr-text>
             </div>
-            <div v-if="loadingRelationships">
+            <div v-if="npc.loadingRelationships">
               <h3>Relationships</h3>
               <CdrSkeleton>
                 <div>
@@ -91,7 +91,7 @@
             </div>
           </cdr-accordion>
         </cdr-accordion-group>
-        <cdr-accordion-group v-if="loadingNPC">
+        <cdr-accordion-group v-if="locations[index].loadingNPC">
           <cdr-accordion class="accordion" level="2" id="loading-npc">
             <template #label>
               <CdrSkeleton>
@@ -149,6 +149,7 @@ export default {
         id: 1,
         name: 'Mock Location 1',
         description: 'This is a mock description for Location 1. This is a mock description for Location 1. This is a mock description for Location 1. This is a mock description for Location 1',
+        loadingNPC: false,
         npcs: [
           {
             id: 1.1,
@@ -157,6 +158,7 @@ export default {
             reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
             distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
             characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            loadingRelationships: false,
             relationships: {
               'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',
               'Mock Character 2': 'Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2.',
@@ -170,6 +172,7 @@ export default {
             reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
             distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
             characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            loadingRelationships: false,
             relationships: {
               'Mock Character 3': 'Mock relationship description for Mock Character 3.',
               'Mock Character 4': 'Mock relationship description for Mock Character 4.',
@@ -182,33 +185,41 @@ export default {
         id: 2,
         name: 'Mock Location 2',
         description: 'This is a mock description for Location 2.',
+        loadingNPC: false,
         npcs: [
-          {
+        {
             id: 2.1,
-            name: 'Mock NPC 1',
-            description: 'This is a mock description for NPC 1 in Location 2.',
+            characterName: 'Mock NPC 1',
+            descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            loadingRelationships: false,
             relationships: {
-              'Mock Character 5': 'Mock relationship description for Mock Character 5.',
-              'Mock Character 6': 'Mock relationship description for Mock Character 6.',
+              'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',
+              'Mock Character 2': 'Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2.',
             },
-            roleplayingTips: 'These are mock roleplaying tips for NPC 1 in Location 2.',
+            roleplaying_tips: 'These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1.',
           },
           {
             id: 2.2,
-            name: 'Mock NPC 2',
-            description: 'This is a mock description for NPC 2 in Location 2.',
+            characterName: 'Mock NPC 2',
+            descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+            loadingRelationships: false,
             relationships: {
-              'Mock Character 7': 'Mock relationship description for Mock Character 7.',
-              'Mock Character 8': 'Mock relationship description for Mock Character 8.',
+              'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',
+              'Mock Character 2': 'Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2.',
             },
-            roleplayingTips: 'These are mock roleplaying tips for NPC 2 in Location 2.',
+            roleplaying_tips: 'These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1.',
           },
         ],
       },
     ]);
     const loadingLocation = ref(false);
     const loadingNPC = ref(false);
-    const loadingRelationships = ref(false);
     const openedAccordions = ref([]);
     const openedNPCAccordions = reactive(locations.map(location => location.npcs.map(() => false)));
     const newLocation = ref({ name: '', description: '' });
@@ -236,14 +247,20 @@ export default {
       });
     }
 
-    async function addNPC(locationIndex, npcDescription) {
-      const npc = {
-        id: Math.random(),
-        name: npcDescription.characterName,
-        ...npcDescription
-      };
+    function addNPCPart(locationIndex, response) {
+      if (response.part === 1) {
+        updateFirstPartDescription(locationIndex, response.npcDescription)
+      }
+      if (response.part === 2) {
+        addNPC(locationIndex, response.npcDescription)
+      }
+    }
 
-      locations[locationIndex].npcs[locations[locationIndex].npcs.length - 1] = npc;
+    function addNPC(locationIndex, npcDescription) {
+      const npc = locations[locationIndex].npcs[locations[locationIndex].npcs.length - 1];
+      npc.relationships = npcDescription.relationships;
+      npc.roleplaying_tips = npcDescription.roleplaying_tips;
+
       delete newNPCs[locationIndex].firstPart; // Remove the first part property
     }
 
@@ -253,6 +270,7 @@ export default {
 
         const npc = {
           id: Math.random(),
+          loadingRelationships: true,
           ...npcDescription
         };
 
@@ -272,12 +290,12 @@ export default {
       openedNPCAccordions[locationIndex][npcIndex] = !openedNPCAccordions[locationIndex][npcIndex];
     }
 
-    function setNPCLoadingState({ part, isLoading }) {
-      if (part === 1) {
-        return loadingNPC.value = isLoading;
-      }
-      if (part === 2) {
-        return loadingRelationships.value = isLoading;
+    function setNPCLoadingState(index, npcDescription) {
+      if (npcDescription.part === 1) {
+        locations[index].loadingNPC = npcDescription.isLoading;
+      } else if (npcDescription.part === 2) {
+        const npcIndex = locations[index].npcs.length - 1;
+        locations[index].npcs[npcIndex].loadingRelationships = npcDescription.isLoading;
       }
     }
 
@@ -285,7 +303,6 @@ export default {
       locations,
       loadingLocation,
       loadingNPC,
-      loadingRelationships,
       setNPCLoadingState,
       openedAccordions,
       openedNPCAccordions,
@@ -295,6 +312,7 @@ export default {
       newLocation,
       newNPCs,
       addLocation,
+      addNPCPart,
       addNPC,
     };
   },

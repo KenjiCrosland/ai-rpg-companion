@@ -84,28 +84,35 @@ function isValidJson(str) {
   }
   return true;
 }
-
+ 
 function extractJSONFromString(input) {
     const regex = /(?:\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\})|(?:\[(?:[^\[\]]|\[(?:[^\[\]]|\[(?:[^\[\]]|\[[^\[\]]*\])*\])*\])*\])/g;
     const matches = input.match(regex);
   
+    function fixInvalidJSON(jsonString) {
+      try {
+        JSON.parse(jsonString);
+      } catch (e) {
+        if (e instanceof SyntaxError) {
+          // Try fixing the JSON by removing the extra comma before the closing brace
+          jsonString = jsonString.replace(/,\s*}/g, '}');
+          jsonString = jsonString.replace(/,\s*]/g, ']');
+        } else {
+          return false;
+        }
+      }
+  
+      return JSON.parse(jsonString);
+    }
+  
     if (matches && matches.length > 0) {
       for (const match of matches) {
-        try {
-          JSON.parse(match); // Check if it's a valid JSON string
-          return match;
-        } catch (error) {
-          continue;
+        const fixedJSON = fixInvalidJSON(match);
+        if (fixedJSON) {
+          return JSON.stringify(fixedJSON);
         }
       }
     }
   
-    // Additional check for JSON strings
-    try {
-      JSON.parse(input); // Check if the whole input is a valid JSON string
-      return input;
-    } catch (error) {
-      return false;
-    }
+    return false;
   }
-  
