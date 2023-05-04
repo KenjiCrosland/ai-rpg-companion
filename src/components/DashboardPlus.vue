@@ -6,92 +6,104 @@
         buttonText="Add Location" />
     </div>
     <cdr-accordion-group>
-      <cdr-accordion class="accordion" v-for="(location, index) in locations" :key="location.id"
-        :id="'location-' + location.id" level="2" :opened="openedAccordions[index]"
-        @accordion-toggle="toggleAccordion(index)">
+      <cdr-accordion class="accordion" v-for="(location, locationIndex) in locations" :key="location.id"
+        :id="'location-' + location.id" level="2" :opened="openedAccordions[locationIndex]"
+        @accordion-toggle="toggleAccordion(locationIndex)">
         <template #label>
           {{ location.name }}
         </template>
-        <h2>{{ location.name }}</h2>
-        <cdr-text class="body-text">{{ location.description }}</cdr-text>
-        <div class="form-container">
-          <NPCForm :inputValue="newNPCs[index].description" labelText="Give me an NPC Description For:"
-            @npc-description-generated="addNPCPart(index, $event)"
-            @npc-description-part-received="updateFirstPartDescription(index, $event)"
-            @set-loading-state="setNPCLoadingState(index, $event)" />
+        <div class="content-container">
+          <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
+            <template #trigger>
+              <cdr-button size="small" :icon-only="true" :with-background="true"
+                @click.stop="deleteLocation(locationIndex)">
+                <template #icon>
+                  <icon-x-sm />
+                </template>
+              </cdr-button>
+            </template>
+            <div>
+              Delete Location
+            </div>
+          </cdr-tooltip>
+          <h2>{{ location.name }}</h2>
+          <cdr-text class="body-text">{{ location.description }}</cdr-text>
+          <div class="form-container">
+            <h3>Potential NPCs in {{ location.name }}</h3>
+            <cdr-text class="body-text"></cdr-text>
+            <cdr-list v-for="npcName in location.npcNames" :key="npcName">
+              <li class="npc-name-example">
+                <cdr-text class="body-text">{{ npcName }}</cdr-text>
+                <NPCGenerationButton :typeOfNPC="npcName" :extraDescription="{ location: location.description }"
+                  @npc-description-generated="addNPCPart(locationIndex, $event)"
+                  @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
+                  @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
+              </li>
+            </cdr-list>
+            <NPCForm :locationDescription="location.description" labelText="Or, suggest your own NPC below:"
+              @npc-description-generated="addNPCPart(locationIndex, $event)"
+              @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
+              @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
+          </div>
         </div>
         <cdr-accordion-group>
           <cdr-accordion class="accordion" v-for="(npc, npcIndex) in location.npcs" :key="npc.id" :id="'npc-' + npc.id"
-            level="2" :opened="openedNPCAccordions[index][npcIndex]"
-            @accordion-toggle="toggleNPCAccordion(index, npcIndex)">
+            level="2" :opened="openedNPCAccordions[locationIndex][npcIndex]"
+            @accordion-toggle="toggleNPCAccordion(locationIndex, npcIndex)">
             <template #label>
-              {{ npc.characterName }}
+              <div class="accordion-header">
+                {{ npc.characterName }}
+              </div>
             </template>
-            <h2>{{ npc.characterName }}</h2>
-            <p>{{ npc.descriptionOfPosition }}</p>
-            <p>{{ npc.reasonForBeingThere }}</p>
-            <p>{{ npc.distinctiveFeatureOrMannerism }}</p>
-            <p>{{ npc.characterSecret }}</p>
-            <div v-if="!npc.loadingRelationships">
-              <h3>Relationships</h3>
-              <ul>
-                <li class="relationship" v-for="(relationshipDescription, relationshipName) in npc.relationships"
-                  :key="relationshipName">
-                  <cdr-text class="body-text"><strong>{{ relationshipName }}</strong> : {{ relationshipDescription
-                  }}</cdr-text>
-                </li>
-              </ul>
-              <h3>Roleplaying Tips</h3>
-              <cdr-text class="body-text">{{ npc.roleplaying_tips }}</cdr-text>
-            </div>
-            <div v-if="npc.loadingRelationships">
-              <h3>Relationships</h3>
-              <CdrSkeleton>
+            <div class="content-container">
+              <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
+                <template #trigger>
+                  <cdr-button size="small" :icon-only="true" :with-background="true"
+                    @click.stop="deleteNPC(locationIndex, npcIndex)">
+                    <template #icon>
+                      <icon-x-sm />
+                    </template>
+                  </cdr-button>
+                </template>
                 <div>
-                  <div class="flex-bone">
-                    <CdrSkeletonBone type="line" style="width:10%;" /> :
-                    <CdrSkeletonBone type="line" style="width:80%;" />
-                  </div>
-                  <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
-                  <CdrSkeletonBone type="line" style="width:90%;" />
-                  <CdrSkeletonBone type="line" style="width:85%;" />
+                  Delete NPC
                 </div>
-
-                <div>
-                  <div class="flex-bone">
-                    <CdrSkeletonBone type="line" style="width:10%;" /> :
-                    <CdrSkeletonBone type="line" style="width:80%;" />
-                  </div>
-                  <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
-                  <CdrSkeletonBone type="line" style="width:90%;" />
-                  <CdrSkeletonBone type="line" style="width:85%;" />
-                </div>
-
-                <div>
-                  <div class="flex-bone">
-                    <CdrSkeletonBone type="line" style="width:10%;" /> :
-                    <CdrSkeletonBone type="line" style="width:80%;" />
-                  </div>
-                  <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
-                  <CdrSkeletonBone type="line" style="width:90%;" />
-                  <CdrSkeletonBone type="line" style="width:85%;" />
-                </div>
-
-
+              </cdr-tooltip>
+              <h2>{{ npc.characterName }}</h2>
+              <cdr-text class="body-text">{{ npc.descriptionOfPosition }}</cdr-text>
+              <cdr-text class="body-text">{{ npc.reasonForBeingThere }}</cdr-text>
+              <cdr-text class="body-text">{{ npc.distinctiveFeatureOrMannerism }}</cdr-text>
+              <cdr-text class="body-text">{{ npc.characterSecret }}</cdr-text>
+              <div v-if="!npc.loadingRelationships">
+                <h3>Relationships</h3>
+                <cdr-list>
+                  <li class="relationship" v-for="(relationshipDescription, relationshipName) in npc.relationships"
+                    :key="relationshipName">
+                    <cdr-text class="body-text"><strong>{{ relationshipName }}</strong> : {{ relationshipDescription
+                    }}</cdr-text>
+                  </li>
+                </cdr-list>
+                <h4>Generate a full description for:</h4>
+                <cdr-list>
+                  <li class="relationship" v-for="(relationshipDescription, relationshipName) in npc.relationships"
+                    :key="relationshipName">
+                    <NPCGenerationButton :buttonText="relationshipName" :typeOfNPC="relationshipName"
+                      :extraDescription="{ relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
+                      @npc-description-generated="addNPCPart(locationIndex, { ...$event, relationshipNPC: true })"
+                      @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
+                      @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
+                  </li>
+                </cdr-list>
                 <h3>Roleplaying Tips</h3>
-
-                <p style="margin-top: 0">
-                  <CdrSkeletonBone type="line" style="width:95%" />
-                  <CdrSkeletonBone type="line" style="width:90%" />
-                  <CdrSkeletonBone type="line" style="width:85%" />
-                  <CdrSkeletonBone type="line" style="width:95%" />
-                  <CdrSkeletonBone type="line" style="width:60%" />
-                </p>
-              </CdrSkeleton>
+                <cdr-text class="body-text">{{ npc.roleplaying_tips }}</cdr-text>
+              </div>
+              <div v-if="npc.loadingRelationships">
+                <RelationshipSkeleton />
+              </div>
             </div>
           </cdr-accordion>
         </cdr-accordion-group>
-        <cdr-accordion-group v-if="locations[index].loadingNPC">
+        <cdr-accordion-group v-if="locations[locationIndex].loadingNPC">
           <cdr-accordion class="accordion" level="2" id="loading-npc">
             <template #label>
               <CdrSkeleton>
@@ -115,10 +127,13 @@
 </template>
   
 <script>
-import { ref, reactive, nextTick, onMounted } from 'vue';
-import { CdrText, CdrList, CdrAccordionGroup, CdrAccordion, CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import { ref, reactive, nextTick } from 'vue';
+import { CdrText, CdrList, CdrLink, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone, IconXSm } from '@rei/cedar';
 import LocationForm from './LocationForm.vue';
+import NPCGenerationButton from './NPCGenerationButton.vue';
 import NPCForm from './NPCForm.vue';
+import RelationshipSkeleton from "./RelationshipSkeleton.vue";
+import { mockData } from '../util/mockdata.mjs';
 import '@rei/cedar/dist/style/cdr-input.css';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
@@ -128,96 +143,29 @@ import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-button.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
+import '@rei/cedar/dist/style/cdr-tooltip.css';
 import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 export default {
   components: {
     CdrText,
     CdrList,
+    CdrLink,
     CdrAccordion,
     CdrAccordionGroup,
     CdrInput,
     CdrButton,
+    CdrTooltip,
+    IconXSm,
     LocationForm,
     NPCForm,
+    NPCGenerationButton,
     CdrSkeleton,
-    CdrSkeletonBone
+    CdrSkeletonBone,
+    RelationshipSkeleton
   },
   setup() {
-    const locations = reactive([
-      {
-        id: 1,
-        name: 'Mock Location 1',
-        description: 'This is a mock description for Location 1. This is a mock description for Location 1. This is a mock description for Location 1. This is a mock description for Location 1',
-        loadingNPC: false,
-        npcs: [
-          {
-            id: 1.1,
-            characterName: 'Mock NPC 1',
-            descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            loadingRelationships: false,
-            relationships: {
-              'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',
-              'Mock Character 2': 'Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2.',
-            },
-            roleplaying_tips: 'These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1.',
-          },
-          {
-            id: 1.2,
-            characterName: 'Mock NPC 2',
-            descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            loadingRelationships: false,
-            relationships: {
-              'Mock Character 3': 'Mock relationship description for Mock Character 3.',
-              'Mock Character 4': 'Mock relationship description for Mock Character 4.',
-            },
-            roleplaying_tips: 'These are mock roleplaying tips for NPC 2 in Location 1.',
-          },
-        ],
-      },
-      {
-        id: 2,
-        name: 'Mock Location 2',
-        description: 'This is a mock description for Location 2.',
-        loadingNPC: false,
-        npcs: [
-        {
-            id: 2.1,
-            characterName: 'Mock NPC 1',
-            descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            loadingRelationships: false,
-            relationships: {
-              'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',
-              'Mock Character 2': 'Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2.',
-            },
-            roleplaying_tips: 'These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1.',
-          },
-          {
-            id: 2.2,
-            characterName: 'Mock NPC 2',
-            descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-            loadingRelationships: false,
-            relationships: {
-              'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',
-              'Mock Character 2': 'Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2. Mock relationship description for Mock Character 2.',
-            },
-            roleplaying_tips: 'These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1. These are mock roleplaying tips for NPC 1 in Location 1.',
-          },
-        ],
-      },
-    ]);
+    const locations = reactive(JSON.parse(JSON.stringify(mockData)));
     const loadingLocation = ref(false);
     const loadingNPC = ref(false);
     const openedAccordions = ref([]);
@@ -231,6 +179,7 @@ export default {
         id,
         name: generatedData.locationName,
         description: generatedData.locationDescription,
+        npcNames: generatedData.locationNPCs,
         npcs: [],
       };
       locations.push(location);
@@ -247,9 +196,14 @@ export default {
       });
     }
 
+    function deleteLocation(index) {
+      openedAccordions.value[index] = false;
+      locations.splice(index, 1);
+    }
+
     function addNPCPart(locationIndex, response) {
       if (response.part === 1) {
-        updateFirstPartDescription(locationIndex, response.npcDescription)
+          updateFirstPartDescription(locationIndex, response.npcDescription)
       }
       if (response.part === 2) {
         addNPC(locationIndex, response.npcDescription)
@@ -260,8 +214,14 @@ export default {
       const npc = locations[locationIndex].npcs[locations[locationIndex].npcs.length - 1];
       npc.relationships = npcDescription.relationships;
       npc.roleplaying_tips = npcDescription.roleplaying_tips;
+      npc.fullDescription = `${npcDescription.descriptionOfPosition} ${npcDescription.reasonForBeingThere} ${npcDescription.distinctiveFeatureOrMannerism} ${npcDescription.characterSecret}`
 
       delete newNPCs[locationIndex].firstPart; // Remove the first part property
+    }
+
+    function deleteNPC(locationIndex, npcIndex) {
+      openedNPCAccordions[locationIndex][npcIndex] = false;
+      locations[locationIndex].npcs.splice(npcIndex, 1);
     }
 
     function updateFirstPartDescription(locationIndex, npcDescription) {
@@ -312,6 +272,8 @@ export default {
       newLocation,
       newNPCs,
       addLocation,
+      deleteLocation,
+      deleteNPC,
       addNPCPart,
       addNPC,
     };
@@ -321,6 +283,16 @@ export default {
   
 <style scoped lang="scss">
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
+
+.content-container {
+  position: relative;
+}
+
+.delete-button {
+  position: absolute;
+  top: -6px;
+  right: 3px;
+}
 
 .dashboard {
   display: flex;
@@ -385,6 +357,12 @@ h3 {
 
 }
 
+li.npc-name-example {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
 
 li:hover {
   background-color: #eaeaea;
@@ -401,5 +379,4 @@ li:hover {
 .flex-bone {
   display: flex;
   gap: 10px;
-}
-</style>
+}</style>

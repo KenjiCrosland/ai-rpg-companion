@@ -97,6 +97,14 @@ function extractJSONFromString(input) {
           // Try fixing the JSON by removing the extra comma before the closing brace
           jsonString = jsonString.replace(/,\s*}/g, '}');
           jsonString = jsonString.replace(/,\s*]/g, ']');
+  
+          // Try parsing the fixed JSON string
+          try {
+            return JSON.parse(jsonString);
+          } catch (e) {
+            // If it's still not valid, return false
+            return false;
+          }
         } else {
           return false;
         }
@@ -115,4 +123,4 @@ function extractJSONFromString(input) {
     }
   
     return false;
-  }
+  }  

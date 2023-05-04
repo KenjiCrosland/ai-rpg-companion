@@ -34,12 +34,25 @@ export default {
         updateInputValue(value) {
             this.typeOfPlace = value;
         },
+        validateLocationDescription(jsonString) {
+            try {
+                const jsonObj = JSON.parse(jsonString);
+                const keys = [
+                'locationName',
+                'locationDescription',
+                'locationNPCs'
+                ];
+                return keys.every((key) => key in jsonObj);
+            } catch (error) {
+                return false;
+            }
+        },
         async generateLocationDescription() {
             this.$emit("set-loading-state", true);
 
             const prompt = createLocationPrompt(this.typeOfPlace);
             try {
-                const response = await generateGptResponse(prompt);
+                const response = await generateGptResponse(prompt, this.validateLocationDescription);
                 this.$emit("location-description-generated", JSON.parse(response));
             } catch (error) {
                 console.error("Error generating location description:", error);
