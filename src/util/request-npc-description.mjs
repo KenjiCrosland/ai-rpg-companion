@@ -3,17 +3,16 @@ import { generateNPCDescription } from "./npc-generator.mjs";
 export async function requestNPCDescription(typeOfNPC, extraDescription = {}, sequentialLoading = false, emit) {
     //TODO: pass an options object
   const fullPrompt = () => {
-    if (extraDescription.location) {
+    if (extraDescription.location && extraDescription.locationName) {
       return (
         extraDescription.location +
-        `Give me a description of ${typeOfNPC} who may live or frequent this place.`
+        `Give me a description of ${typeOfNPC} who may live or frequent or work at ${extraDescription.locationName}.`
       );
     }
-    if (extraDescription.relationship && extraDescription.mainNPC) {
+    if (extraDescription.relationship && extraDescription.mainNPC && extraDescription.locationContext && extraDescription.locationName) {
         return (
-        `I'd like you to give me a full description of ${typeOfNPC}. They have a relationship with ${extraDescription.mainNPC}. Below is a description of their relationship` +
-          extraDescription.relationship +
-          `Give me a full description of ${typeOfNPC} in the expected format.`
+          extraDescription.locationContext +
+          `Give me a description of ${typeOfNPC} who may live or frequent or work at ${extraDescription.locationName}. ${typeOfNPC} has a relationship with ${extraDescription.mainNPC}. ${extraDescription.relationship}`
         );
       }
     return typeOfNPC;

@@ -34,14 +34,14 @@
               <li class="npc-name-example">
                 <cdr-text class="body-text">{{ npcName }}</cdr-text>
                 <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true" :typeOfNPC="npcName"
-                  :extraDescription="{ location: location.description }"
+                  :extraDescription="{ location: location.description, locationName: location.name }"
                   @npc-description-generated="addNPCPart(locationIndex, $event)"
                   @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
                   @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
               </li>
             </cdr-list>
-            <NPCForm :disabledButton="anythingLoading" :sequentialLoading="true" :locationDescription="location.description"
-              labelText="Or, suggest your own NPC below:" @npc-description-generated="addNPCPart(locationIndex, $event)"
+            <NPCForm :disabledButton="anythingLoading" :sequentialLoading="true" :extraDescription="{ location: location.description, locationName: location.name }"
+              labelText="Or, suggest your own NPC below (leave blank for a random NPC):" @npc-description-generated="addNPCPart(locationIndex, $event)"
               @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
               @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
           </div>
@@ -89,7 +89,7 @@
                     <li v-for="(relationshipDescription, relationshipName) in npc.relationships" :key="relationshipName">
                       <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true" :buttonText="relationshipName"
                         :typeOfNPC="relationshipName"
-                        :extraDescription="{ mainNPC: npc.characterName, relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
+                        :extraDescription="{ locationName: location.name, locationContext: location.description, mainNPC: npc.characterName, relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
                         @npc-description-generated="addNPCPart(locationIndex, { ...$event, relationshipNPC: true })"
                         @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
                         @set-loading-state="setNPCLoadingState(locationIndex, $event)" />

@@ -35,7 +35,7 @@ export function createLocationPrompt(param) {
         "You hear a deep bass voice laughing from a corner table and yelling out to what appears to be a group of fellow adventurers say, "And then he turned dear Philo here into a newt! A NEWT!""
     
     Based on these style notes, please write a description of ${param}. Please make sure it's only 4 sentences and do not share any hidden details that wouldn't be evident to the players.
-    Return the description in JSON format with three keys: locationName for the location name and locationDescription for the location description and also provide an array of possible npc names with the key locationNPCs. The NPC name should be a combination of name and occupation like "Gurn the Blacksmith" (But don't use this example)`; 
+    Return the description in JSON format with three keys: locationName for the location name and locationDescription for the location description and also provide an array of possible npc names with the key locationNPCs. The NPC name should be a combination of first and last name and occupation like "Gurn Fellhammer (Blacksmith)"`; 
 }
 
 export function createNPCPrompt(param) {

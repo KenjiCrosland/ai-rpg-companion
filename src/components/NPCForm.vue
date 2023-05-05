@@ -34,7 +34,7 @@ export default {
       default: 'Type of NPC:'
     },
     inputValue: String,
-    locationDescription: String,
+    extraDescription: Object,
     combineResponses: {
       type: Boolean,
       default: false,
@@ -53,7 +53,7 @@ export default {
     async handleRequestNPCDescription() {
       await requestNPCDescription(
         this.typeOfNPC,
-        this.locationDescription,
+        this.extraDescription,
         this.sequentialLoading,
         (event, payload) => this.$emit(event, payload)
       );
