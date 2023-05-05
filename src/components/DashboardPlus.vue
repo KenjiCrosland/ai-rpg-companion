@@ -3,7 +3,7 @@
     <h1>AI Powered Game Master Dashboard</h1>
     <div class="form-container">
       <location-form @location-description-generated="addLocation($event)" @set-loading-state="loadingLocation = $event"
-        buttonText="Add Location" />
+        buttonText="Add Location" :disabledButton="anythingLoading" />
     </div>
     <cdr-accordion-group>
       <cdr-accordion class="accordion" v-for="(location, locationIndex) in locations" :key="location.id"
@@ -34,14 +34,15 @@
             <cdr-list v-for="npcName in location.npcNames" :key="npcName">
               <li class="npc-name-example">
                 <cdr-text class="body-text">{{ npcName }}</cdr-text>
-                <NPCGenerationButton :typeOfNPC="npcName" :extraDescription="{ location: location.description }"
+                <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true" :typeOfNPC="npcName"
+                  :extraDescription="{ location: location.description }"
                   @npc-description-generated="addNPCPart(locationIndex, $event)"
                   @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
                   @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
               </li>
             </cdr-list>
-            <NPCForm :locationDescription="location.description" labelText="Or, suggest your own NPC below:"
-              @npc-description-generated="addNPCPart(locationIndex, $event)"
+            <NPCForm :disabledButton="anythingLoading" :sequentialLoading="true" :locationDescription="location.description"
+              labelText="Or, suggest your own NPC below:" @npc-description-generated="addNPCPart(locationIndex, $event)"
               @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
               @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
           </div>
@@ -83,17 +84,19 @@
                     }}</cdr-text>
                   </li>
                 </cdr-list>
-                <h4>Generate a full description for:</h4>
-                <cdr-list>
-                  <li class="relationship" v-for="(relationshipDescription, relationshipName) in npc.relationships"
-                    :key="relationshipName">
-                    <NPCGenerationButton :buttonText="relationshipName" :typeOfNPC="relationshipName"
-                      :extraDescription="{ relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
-                      @npc-description-generated="addNPCPart(locationIndex, { ...$event, relationshipNPC: true })"
-                      @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
-                      @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
-                  </li>
-                </cdr-list>
+                <div class="relationship-buttons">
+                  <h4>Generate a full description for:</h4>
+                  <cdr-list modifier="inline" class="relationship-npc-buttons">
+                    <li v-for="(relationshipDescription, relationshipName) in npc.relationships" :key="relationshipName">
+                      <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true" :buttonText="relationshipName"
+                        :typeOfNPC="relationshipName"
+                        :extraDescription="{ mainNPC: npc.characterName, relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
+                        @npc-description-generated="addNPCPart(locationIndex, { ...$event, relationshipNPC: true })"
+                        @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
+                        @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
+                    </li>
+                  </cdr-list>
+                </div>
                 <h3>Roleplaying Tips</h3>
                 <cdr-text class="body-text">{{ npc.roleplaying_tips }}</cdr-text>
               </div>
@@ -127,13 +130,12 @@
 </template>
   
 <script>
-import { ref, reactive, nextTick } from 'vue';
+import { ref, reactive, nextTick, computed, onMounted } from 'vue';
 import { CdrText, CdrList, CdrLink, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone, IconXSm } from '@rei/cedar';
 import LocationForm from './LocationForm.vue';
 import NPCGenerationButton from './NPCGenerationButton.vue';
 import NPCForm from './NPCForm.vue';
 import RelationshipSkeleton from "./RelationshipSkeleton.vue";
-import { mockData } from '../util/mockdata.mjs';
 import '@rei/cedar/dist/style/cdr-input.css';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
@@ -165,13 +167,39 @@ export default {
     RelationshipSkeleton
   },
   setup() {
-    const locations = reactive(JSON.parse(JSON.stringify(mockData)));
+    const locations = reactive([]);
+    loadLocationsFromLocalStorage();
     const loadingLocation = ref(false);
     const loadingNPC = ref(false);
     const openedAccordions = ref([]);
     const openedNPCAccordions = reactive(locations.map(location => location.npcs.map(() => false)));
     const newLocation = ref({ name: '', description: '' });
     const newNPCs = reactive(locations.map(() => ({ description: '' })));
+
+    onMounted(() => {
+      resetLoadingStates();
+    });
+
+    const anythingLoading = computed(() => {
+      return (
+        loadingLocation.value ||
+        locations.some(location =>
+          location.npcs.some(npc => npc.loadingRelationships)
+        ) ||
+        locations.some(location => location.loadingNPC)
+      );
+    });
+
+    function resetLoadingStates() {
+      loadingLocation.value = false;
+      locations.forEach(location => {
+        location.loadingNPC = false;
+        location.npcs.forEach(npc => {
+          npc.loadingRelationships = false;
+        });
+      });
+    }
+
 
     function addLocation(generatedData) {
       const id = locations.length + 1;
@@ -183,7 +211,7 @@ export default {
         npcs: [],
       };
       locations.push(location);
-
+      saveLocationsToLocalStorage();
       // Add an empty object to the newNPCs array for the newly added location
       newNPCs.push({ description: '' });
 
@@ -199,11 +227,23 @@ export default {
     function deleteLocation(index) {
       openedAccordions.value[index] = false;
       locations.splice(index, 1);
+      saveLocationsToLocalStorage();
+    }
+
+    function saveLocationsToLocalStorage() {
+      localStorage.setItem('locations', JSON.stringify(locations));
+    }
+
+    function loadLocationsFromLocalStorage() {
+      const storedLocations = localStorage.getItem('locations');
+      if (storedLocations) {
+        locations.splice(0, locations.length, ...JSON.parse(storedLocations));
+      }
     }
 
     function addNPCPart(locationIndex, response) {
       if (response.part === 1) {
-          updateFirstPartDescription(locationIndex, response.npcDescription)
+        updateFirstPartDescription(locationIndex, response.npcDescription)
       }
       if (response.part === 2) {
         addNPC(locationIndex, response.npcDescription)
@@ -217,11 +257,13 @@ export default {
       npc.fullDescription = `${npcDescription.descriptionOfPosition} ${npcDescription.reasonForBeingThere} ${npcDescription.distinctiveFeatureOrMannerism} ${npcDescription.characterSecret}`
 
       delete newNPCs[locationIndex].firstPart; // Remove the first part property
+      saveLocationsToLocalStorage();
     }
 
     function deleteNPC(locationIndex, npcIndex) {
       openedNPCAccordions[locationIndex][npcIndex] = false;
       locations[locationIndex].npcs.splice(npcIndex, 1);
+      saveLocationsToLocalStorage();
     }
 
     function updateFirstPartDescription(locationIndex, npcDescription) {
@@ -260,6 +302,7 @@ export default {
     }
 
     return {
+      anythingLoading,
       locations,
       loadingLocation,
       loadingNPC,
@@ -344,8 +387,23 @@ h3 {
 }
 
 .relationship {
+  margin-left: 2rem;
   list-style-type: disc;
   border: none;
+}
+
+.relationship-buttons {
+  background-color: #f4f2ed;
+  border-radius: 8px;
+  padding: 1rem 1rem 4rem 1rem;
+  margin: 1rem auto;
+  text-align: center;
+
+  ul {
+    justify-content: center;
+    margin: 0;
+  }
+
 }
 
 .accordion {
@@ -379,4 +437,5 @@ li:hover {
 .flex-bone {
   display: flex;
   gap: 10px;
-}</style>
+}
+</style>

@@ -2,7 +2,7 @@
     <div>
         <form @submit.prevent="generateLocationDescription">
             <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" label="Type of Location:" required />
-            <cdr-button type="submit">{{ buttonText }}</cdr-button>
+            <cdr-button type="submit" :disabled="disabledButton">{{ buttonText }}</cdr-button>
         </form>
     </div>
 </template>
@@ -25,6 +25,10 @@ export default {
         CdrInput,
     },
     props: {
+        disabledButton: {
+            type: Boolean,
+            default: false
+        },
         buttonText: {
             type: String,
             default: 'Generate Description'

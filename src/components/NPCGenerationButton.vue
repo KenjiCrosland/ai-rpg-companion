@@ -1,5 +1,5 @@
 <template>
-    <cdr-button size="small" @click="handleRequestNPCDescription()">{{ buttonText }}</cdr-button>
+    <cdr-button size="small" :disabled="disabledButton" @click="handleRequestNPCDescription()">{{ buttonText }}</cdr-button>
 </template>
   
 <script>
@@ -8,6 +8,14 @@ import { requestNPCDescription } from "../util/request-npc-description.mjs";
 import '@rei/cedar/dist/style/cdr-button.css';
 export default {
     props: {
+        sequentialLoading: {
+            type: Boolean,
+            default: false
+        },
+        disabledButton: {
+            type: Boolean,
+            default: false,
+        },
         typeOfNPC: String,
         extraDescription: Object,
         buttonText: {
@@ -23,6 +31,7 @@ export default {
             await requestNPCDescription(
                 this.typeOfNPC,
                 this.extraDescription,
+                this.sequentialLoading,
                 (event, payload) => this.$emit(event, payload)
             );
         },

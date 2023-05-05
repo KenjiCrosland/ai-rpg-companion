@@ -2,7 +2,7 @@
   <div :class="hidden ? 'hidden' : ''">
     <form @submit.prevent="handleRequestNPCDescription()">
       <cdr-input id="typeOfNPC" v-model="typeOfNPC" background="secondary" :label="labelText" required />
-      <cdr-button type="submit">Generate NPC</cdr-button>
+      <cdr-button type="submit" :disabled="disabledButton">Generate NPC</cdr-button>
     </form>
   </div>
 </template>
@@ -20,6 +20,14 @@ export default {
     };
   },
   props: {
+    sequentialLoading: {
+      type: Boolean,
+      default: false
+    },
+    disabledButton: {
+      type: Boolean,
+      default: false,
+    },
     hidden: false,
     labelText: {
       type: String,
@@ -46,6 +54,7 @@ export default {
       await requestNPCDescription(
         this.typeOfNPC,
         this.locationDescription,
+        this.sequentialLoading,
         (event, payload) => this.$emit(event, payload)
       );
     },

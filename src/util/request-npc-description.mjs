@@ -1,6 +1,6 @@
 import { generateNPCDescription } from "./npc-generator.mjs";
 
-export async function requestNPCDescription(typeOfNPC, extraDescription, emit) {
+export async function requestNPCDescription(typeOfNPC, extraDescription, sequentialLoading = false, emit) {
     //TODO: pass an options object
   const fullPrompt = () => {
     if (extraDescription.location) {
@@ -9,10 +9,11 @@ export async function requestNPCDescription(typeOfNPC, extraDescription, emit) {
         `Give me a description of ${typeOfNPC} who may live or frequent this place.`
       );
     }
-    if (extraDescription.relationship) {
+    if (extraDescription.relationship && extraDescription.mainNPC) {
         return (
+        `I'd like you to give me a full description of ${typeOfNPC}. They have a relationship with ${extraDescription.mainNPC}. Below is a description of their relationship` +
           extraDescription.relationship +
-          `Give me a full description ${typeOfNPC}.`
+          `Give me a full description of ${typeOfNPC} in the expected format.`
         );
       }
     return typeOfNPC;
@@ -23,18 +24,23 @@ export async function requestNPCDescription(typeOfNPC, extraDescription, emit) {
       part,
       npcDescription,
     });
-    emit("set-loading-state", { part, isLoading: false });
-
-    // Set part 2 loading state to true after part 1 loading is set to false
-    if (part === 1) {
+  
+    if (sequentialLoading && part === 1) {
+      emit("set-loading-state", { part: 1, isLoading: false });
       emit("set-loading-state", { part: 2, isLoading: true });
+    } else {
+      emit("set-loading-state", { part, isLoading: false });
     }
   };
 
-  // ... (keep the handleError function unchanged)
-
-  // Set loading state only for part 1 initially
-  emit("set-loading-state", { part: 1, isLoading: true });
+  if (sequentialLoading) {
+    // Set loading state for part 1
+    emit("set-loading-state", { part: 1, isLoading: true });
+  } else {
+    // Set loading state for both parts
+    emit("set-loading-state", { part: 1, isLoading: true });
+    emit("set-loading-state", { part: 2, isLoading: true });
+  }
 
   try {
     await generateNPCDescription(fullPrompt(), {
