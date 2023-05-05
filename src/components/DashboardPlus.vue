@@ -1,6 +1,5 @@
 <template>
   <div class="dashboard">
-    <h1>AI Powered Game Master Dashboard</h1>
     <div class="form-container">
       <location-form @location-description-generated="addLocation($event)" @set-loading-state="loadingLocation = $event"
         buttonText="Add Location" :disabledButton="anythingLoading" />

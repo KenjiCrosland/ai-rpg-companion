@@ -289,6 +289,11 @@ function vue_app_gm_dashboard_shortcode() {
 }
 add_shortcode( 'vue_app_gm_dashboard', 'vue_app_gm_dashboard_shortcode' );
 
+function vue_app_gm_dashboard_plus_shortcode() {
+    return '<div id="app" data-page="gm-dashboard-plus"></div>';
+}
+add_shortcode( 'vue_app_gm_dashboard_plus', 'vue_app_gm_dashboard_plus_shortcode' );
+
 function vue_app_npc_generator_shortcode() {
     return '<div id="app" data-page="gm-dashboard"></div>';
 }

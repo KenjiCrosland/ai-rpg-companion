@@ -1,6 +1,6 @@
 import { generateNPCDescription } from "./npc-generator.mjs";
 
-export async function requestNPCDescription(typeOfNPC, extraDescription, sequentialLoading = false, emit) {
+export async function requestNPCDescription(typeOfNPC, extraDescription = {}, sequentialLoading = false, emit) {
     //TODO: pass an options object
   const fullPrompt = () => {
     if (extraDescription.location) {
@@ -19,6 +19,8 @@ export async function requestNPCDescription(typeOfNPC, extraDescription, sequent
     return typeOfNPC;
   };
 
+
+
   const handlePart = (part, npcDescription) => {
     emit("npc-description-generated", {
       part,
@@ -31,6 +33,15 @@ export async function requestNPCDescription(typeOfNPC, extraDescription, sequent
     } else {
       emit("set-loading-state", { part, isLoading: false });
     }
+  };
+
+  const handleError = (error) => {
+    console.error("Error generating NPC description:", error);
+    const errorMessage =
+      "Failed to generate full description. Please try again later.";
+    emit("npc-description-error", errorMessage);
+    emit("set-loading-state", { part: 1, isLoading: false });
+    emit("set-loading-state", { part: 2, isLoading: false });
   };
 
   if (sequentialLoading) {
@@ -52,4 +63,6 @@ export async function requestNPCDescription(typeOfNPC, extraDescription, sequent
   } catch (error) {
     handleError(error);
   }
+
+
 }
