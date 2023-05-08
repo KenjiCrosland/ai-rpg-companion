@@ -1,4 +1,7 @@
 export function createLocationPrompt(param) {
+    if (!param){
+        param = "a random location";
+    }
     return `Write a 4-sentence description of a location in a Tabletop Roleplaying Game. Each sentence must meet the following parameters. Please note that while the example below is of a Tavern, it could be any place:
   
     Sentence 1: Provide a general description of the location's interior or exterior to give players a sense of its dimensions. Examples include:
@@ -34,12 +37,15 @@ export function createLocationPrompt(param) {
         "You notice a group of gnomes at a corner table, giggling and whispering excitedly about the arrival of a group of adventurers from a far-off land, while the tavern keeper, a tall and slender elf, pours a goblet of glowing green liquid for a half-ogre sitting at the bar."
         "You hear a deep bass voice laughing from a corner table and yelling out to what appears to be a group of fellow adventurers say, "And then he turned dear Philo here into a newt! A NEWT!""
     
-    Based on these style notes, please write a description of ${param}. Please make sure it's only 4 sentences and do not share any hidden details that wouldn't be evident to the players.
-    Return the description in JSON format with three keys: locationName for the location name and locationDescription for the location description and also provide an array of possible npc names with the key locationNPCs. The NPC name should be a combination of first and last name and occupation like "Gurn Fellhammer (Blacksmith)"`; 
+    Based on these style notes, please write a description of ${param}. Please make sure it's only 4 sentences and do not share any hidden details that wouldn't be evident to the players. Make sure to provide unusual and evocative details. Avoid common fantasy tropes. Be sure to provide a unique name for the location. Temperature: 0.9`
+}
+
+export function getLocationJSON() {
+    return `Based on the above description, return a JSON object with three keys: locationName locationNPCs and subLocations. locationName should be the location name. locationNPCs should be an array of possible NPCs who are either living in or visiting this location. The NPC name should be a combination of first and last name and occupation like "FIRST_NAME LAST_NAME (PROFESSION). Also provide an array with the key subLocations within this location if there are any. Provide at least 3 for a large location like a town or large building. Provide names of rooms for a building like "kitchen", "cellar" or "scriptorium". Return a JSON string only. No additional comments or text`
 }
 
 export function createNPCPrompt(param) {
-    return `Please create an Tabletop Roleplaying NPC description for ${param} in the form of a JSON object using the given instructions and examples as guidelines. The JSON object should include the following keys: characterName, descriptionOfPosition, reasonForBeingThere, distinctiveFeatureOrMannerism, and characterSecret.
+    return `Please create an Tabletop Roleplaying NPC description for ${param} in the form of a JSON object using the given instructions and examples as guidelines. The JSON object should include the following keys: characterName, descriptionOfPosition, reasonForBeingThere, distinctiveFeatureOrMannerism, and characterSecret. Temperature: 0.9.
     {
         "format": "JSON",
         "instructions": {

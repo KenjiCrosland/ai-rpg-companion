@@ -1,18 +1,22 @@
 <template>
     <div>
-        <form @submit.prevent="generateLocationDescription">
-            <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" label="Type of Location:" required />
-            <cdr-button type="submit" :disabled="disabledButton">{{ buttonText }}</cdr-button>
+        <form v-if="!formContent" @submit.prevent="generateLocationDescription">
+            <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" :label="formLabel" required />
+            <cdr-button class="location-form-button" type="submit" :disabled="disabledButton">{{ buttonText }}</cdr-button>
         </form>
+        <cdr-button :size="buttonSize" v-else @click="generateLocationDescription" :disabled="disabledButton">
+            {{ buttonText }}
+        </cdr-button>
     </div>
 </template>
   
 <script>
+import { startCase } from 'lodash';
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { CdrInput, CdrButton } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-button.css";
-import { createLocationPrompt } from "../util/prompts.mjs";
+import { createLocationPrompt, getLocationJSON } from "../util/prompts.mjs";
 
 export default {
     data() {
@@ -25,6 +29,22 @@ export default {
         CdrInput,
     },
     props: {
+        buttonSize: {
+            type: String,
+            default: null,
+        },
+        formLabel: {
+            type: String,
+            default: 'Type of Location:'
+        },
+        parentLocation: {
+            type: Object,
+            default: null
+        },
+        formContent: {
+            type: String,
+            default: null,
+        },
         disabledButton: {
             type: Boolean,
             default: false
@@ -42,9 +62,9 @@ export default {
             try {
                 const jsonObj = JSON.parse(jsonString);
                 const keys = [
-                'locationName',
-                'locationDescription',
-                'locationNPCs'
+                    'locationName',
+                    'locationNPCs',
+                    'subLocations'
                 ];
                 return keys.every((key) => key in jsonObj);
             } catch (error) {
@@ -53,11 +73,43 @@ export default {
         },
         async generateLocationDescription() {
             this.$emit("set-loading-state", true);
+            if (this.typeOfPlace === "" && this.formContent) {
+                this.typeOfPlace = this.formContent;
+            };
+            this.typeOfPlace = startCase(this.typeOfPlace);
 
-            const prompt = createLocationPrompt(this.typeOfPlace);
+            let previousContext;
+            let prompt;
+            if (this.parentLocation) {
+                const contextLocationObj = {
+                    locationName: this.parentLocation.name,
+                    locationDescription: this.parentLocation.description,
+                    locationNPCs: this.parentLocation.npcNames,
+                    subLocations: this.parentLocation.subLocations,
+                };
+                previousContext = [
+                    { role: 'user', content: `${createLocationPrompt()}` },
+                    { role: 'system', content: `${this.parentLocation.description}` }
+                ];
+                prompt = `Please describe ${this.typeOfPlace} which is a sublocation of the place described in the previous message. Return the exact same format.`
+            } else {
+                prompt = createLocationPrompt(this.typeOfPlace);
+            }
+             
             try {
-                const response = await generateGptResponse(prompt, this.validateLocationDescription);
-                this.$emit("location-description-generated", JSON.parse(response));
+                const response = await generateGptResponse(prompt, null, 3, previousContext);
+                console.log(response);
+                previousContext = [
+                    { role: 'user', content: `Please create a description of a location in a tabletop RPG` },
+                    { role: 'system', content: `${response}` }
+                ];
+                prompt = getLocationJSON();
+                const JSONResponse = await generateGptResponse(prompt, this.validateLocationDescription, 3, previousContext);
+                const returnObj = {
+                    locationDescription: response,
+                    ...JSON.parse(JSONResponse)
+                };
+                this.$emit("location-description-generated", returnObj);
             } catch (error) {
                 console.error("Error generating location description:", error);
                 this.$emit("location-description-error", "Failed to generate location description. Please try again later.");
@@ -69,8 +121,8 @@ export default {
 };
 </script>
 <style scoped lang="scss">
-    button {
-        margin-top: 2rem;
-    }
+.location-form-button {
+    margin-top: 2rem;
+}
 </style>
   

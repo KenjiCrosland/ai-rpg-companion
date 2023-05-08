@@ -2,6 +2,7 @@ export async function generateGptResponse(
   prompt,
   validateJSONKeys = null,
   maxAttempts = 3,
+  previousContext
 ) {
   let attempts = 0;
   let validJson = false;
@@ -17,17 +18,24 @@ export async function generateGptResponse(
         retryPrompt = `This JSON may not be formatted correctly. If not formatted correctly can you fix it for me? Please only return a valid JSON string and no comments please.
                 ${previousJSONString}`;
       }
-      console.log(retryPrompt);
+      const body = {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'You are an assistant Game Master.' },
+          { role: 'user', content: retryPrompt ? retryPrompt : prompt },
+        ],
+      };
+      if (previousContext) {
+        body.messages = [
+          { role: 'system', content: 'You are an assistant Game Master.' },
+          ...previousContext,
+          { role: 'user', content: retryPrompt ? retryPrompt : prompt },
+        ]
+      }
       const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            { role: 'system', content: 'You are an assistant Game Master.' },
-            { role: 'user', content: retryPrompt ? retryPrompt : prompt },
-          ],
-        }),
+        body: JSON.stringify(body),
       };
       let response;
       if (import.meta.env.DEV) {
@@ -46,10 +54,13 @@ export async function generateGptResponse(
       }
       responseData = await response.json();
       const responseContent = responseData.choices[0].message.content;
+      if (!validateJSONKeys){
+        return responseContent;
+      }
       validJsonString =  extractJSONFromString(responseData.choices[0].message.content);
-      console.log("valid: " + validJsonString);
+      //console.log("valid: " + validJsonString);
       if (!validJsonString) {
-        console.log(previousJSONString);
+        //console.log(previousJSONString);
         previousJSONString = responseContent;
         attempts++;
         continue;

@@ -30,8 +30,8 @@
           <div class="form-container">
             <h3>Potential NPCs in {{ location.name }}</h3>
             <cdr-text class="body-text"></cdr-text>
-            <cdr-list v-for="npcName in location.npcNames" :key="npcName">
-              <li class="npc-name-example">
+            <cdr-list>
+              <li v-for="npcName in location.npcNames" :key="npcName" class="npc-name-example">
                 <cdr-text class="body-text">{{ npcName }}</cdr-text>
                 <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true" :typeOfNPC="npcName"
                   :extraDescription="{ location: location.description, locationName: location.name }"
@@ -40,10 +40,27 @@
                   @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
               </li>
             </cdr-list>
-            <NPCForm :disabledButton="anythingLoading" :sequentialLoading="true" :extraDescription="{ location: location.description, locationName: location.name }"
-              labelText="Or, suggest your own NPC below (leave blank for a random NPC):" @npc-description-generated="addNPCPart(locationIndex, $event)"
+            <NPCForm :disabledButton="anythingLoading" :sequentialLoading="true"
+              :extraDescription="{ location: location.description, locationName: location.name }"
+              labelText="Or, suggest your own NPC below (leave blank for a random NPC):"
+              @npc-description-generated="addNPCPart(locationIndex, $event)"
               @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
               @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
+          </div>
+          <div v-if="location.subLocations && location.subLocations.length > 0" class="form-container">
+            <h3>Potential Sub-locations in {{ location.name }}</h3>
+            <cdr-text class="body-text"></cdr-text>
+            <cdr-list >
+              <li v-for="sublocation in location.subLocations" :key="sublocation" class="npc-name-example">
+                <cdr-text class="body-text">{{ sublocation }}</cdr-text>
+                <location-form buttonSize="small" :formContent="sublocation" :parentLocation="location"
+                  @location-description-generated="addLocation($event)" @set-loading-state="loadingLocation = $event"
+                  buttonText="Add Location" :disabledButton="anythingLoading" />
+              </li>
+            </cdr-list>
+            <location-form formLabel="Or suggest your own Sub-location below" buttonSize="small" :parentLocation="location"
+                  @location-description-generated="addLocation($event)" @set-loading-state="loadingLocation = $event"
+                  buttonText="Add Location" :disabledButton="anythingLoading" />
           </div>
         </div>
         <cdr-accordion-group>
@@ -87,8 +104,8 @@
                   <h4>Generate a full description for:</h4>
                   <cdr-list modifier="inline" class="relationship-npc-buttons">
                     <li v-for="(relationshipDescription, relationshipName) in npc.relationships" :key="relationshipName">
-                      <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true" :buttonText="relationshipName"
-                        :typeOfNPC="relationshipName"
+                      <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true"
+                        :buttonText="relationshipName" :typeOfNPC="relationshipName"
                         :extraDescription="{ locationName: location.name, locationContext: location.description, mainNPC: npc.characterName, relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
                         @npc-description-generated="addNPCPart(locationIndex, { ...$event, relationshipNPC: true })"
                         @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
@@ -207,6 +224,7 @@ export default {
         name: generatedData.locationName,
         description: generatedData.locationDescription,
         npcNames: generatedData.locationNPCs,
+        subLocations: generatedData.subLocations || [],
         npcs: [],
       };
       locations.push(location);
@@ -436,5 +454,4 @@ li:hover {
 .flex-bone {
   display: flex;
   gap: 10px;
-}
-</style>
+}</style>
