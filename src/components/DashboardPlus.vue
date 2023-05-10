@@ -142,12 +142,16 @@
         </template>
       </cdr-accordion>
     </cdr-accordion-group>
+    <cdr-button class="pdf-button" modifier="secondary" @click="generatePDF(locations)">Export to PDF</cdr-button>
   </div>
+
+
 </template>
   
 <script>
 import { ref, reactive, nextTick, computed, onMounted } from 'vue';
 import { CdrText, CdrList, CdrLink, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone, IconXSm } from '@rei/cedar';
+import { generatePDF } from '../util/pdfGenerator.mjs';
 import LocationForm from './LocationForm.vue';
 import NPCGenerationButton from './NPCGenerationButton.vue';
 import NPCForm from './NPCForm.vue';
@@ -329,6 +333,7 @@ export default {
       updateFirstPartDescription,
       toggleAccordion,
       toggleNPCAccordion,
+      generatePDF,
       newLocation,
       newNPCs,
       addLocation,
@@ -421,6 +426,11 @@ h3 {
     margin: 0;
   }
 
+}
+
+.pdf-button {
+  margin-top: 3rem;
+  align-self: cemter;
 }
 
 .accordion {
