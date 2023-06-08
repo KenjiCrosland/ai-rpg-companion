@@ -1,0 +1,64 @@
+{
+  "name": "Crystal Centipede",
+  "type_and_alignment": "Huge monstrosity, unaligned",
+  "armor_class": "20 (natural armor)",
+  "hit_points": "300 (24d12 + 120)",
+  "speed": "60 ft., burrow 30 ft., climb 30 ft.",
+  "attributes": "STR 26 (+8), DEX 16 (+3), CON 20 (+5), INT 3 (-4), WIS 10 (+0), CHA 3 (-4)",
+  "saving_throws": "STR +14, CON +12",
+  "damage_resistances": "Bludgeoning, Piercing, and Slashing from Nonmagical Attacks",
+  "damage_immunities": "Poison",
+  "condition_immunities": "Poisoned",
+  "senses": "Darkvision 120 ft., tremorsense 60 ft., passive Perception 20",
+  "languages": "-",
+  "challenge_rating": "17 (13,000 XP)",
+  "proficiency_bonus": "+5",
+  "abilities": [
+    {
+      "name": "Legendary Resistance",
+      "description": "(3/day) If the centipede fails a saving throw, it can choose to succeed instead."
+    },
+    {
+      "name": "Magic Resistance",
+      "description": "The centipede has advantage on saving throws against spells and other magical effects."
+    },
+    {
+      "name": "Crystal Carapace",
+      "description": "The centipede's body is covered in a crystalline shell, giving it resistance to bludgeoning, piercing, and slashing damage from nonmagical weapons."
+    }
+  ],
+  "legendary_actions": [
+    {
+      "name": "Leg Swipe (Costs 1 Action)",
+      "description": "The centipede makes a leg attack."
+    },
+    {
+      "name": "Crystal Spikes (Costs 2 Actions)",
+      "description": "The centipede shoots a volley of crystal spikes at a point it can see within 60 feet. Each creature within 10 feet of that point must make a DC 20 Dexterity saving throw, taking 20 (3d8 + 8) piercing damage on a failed save, or half as much damage on a successful one."
+    },
+    {
+      "name": "Burrow (Costs 1 Action)",
+      "description": "The centipede burrows into the ground, becoming invisible until it emerges or attacks. While burrowed, the centipede can move 30 feet"
+    }
+  ],
+  "actions": [
+    {
+      "name": "Multiattack",
+      "description": "The centipede makes three attacks: one with its bite and two with its legs."
+    },
+    {
+      "name": "Bite",
+      "description": "Melee Weapon Attack: +14 to hit, reach 10 ft., one target. Hit: 30 (4d10 + 8) piercing damage, and the target must succeed on a DC 20 Constitution saving throw or be poisoned for 1 minute. The poisoned target is also restrained. The target can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success."
+    },
+    {
+      "name": "Legs",
+      "description": "Melee Weapon Attack: +14 to hit, reach 15 ft., one target. Hit: 20 (3d8 + 8) bludgeoning damage. If the target is a creature, it must succeed on a DC 20 Strength saving throw or be knocked prone."
+    },
+    {
+      "name": "Crystal Shards",
+      "description": "(Recharge 5-6) The centipede shatters some of the crystals on its body, sending razor-sharp shards flying in a 60-foot cone. Each creature in the area must make a DC 20 Dexterity saving throw, taking 110 (20d10) piercing damage on a failed save, or half as much damage on a successful one."
+    }
+  ],
+  "total_legendary_actions": 3,
+  "damage_per_round": 110
+}

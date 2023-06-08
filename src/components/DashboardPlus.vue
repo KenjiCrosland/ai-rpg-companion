@@ -50,7 +50,7 @@
           <div v-if="location.subLocations && location.subLocations.length > 0" class="form-container">
             <h3>Potential Sub-locations in {{ location.name }}</h3>
             <cdr-text class="body-text"></cdr-text>
-            <cdr-list >
+            <cdr-list>
               <li v-for="sublocation in location.subLocations" :key="sublocation" class="npc-name-example">
                 <cdr-text class="body-text">{{ sublocation }}</cdr-text>
                 <location-form buttonSize="small" :formContent="sublocation" :parentLocation="location"
@@ -58,9 +58,9 @@
                   buttonText="Add Location" :disabledButton="anythingLoading" />
               </li>
             </cdr-list>
-            <location-form formLabel="Or suggest your own Sub-location below" buttonSize="small" :parentLocation="location"
-                  @location-description-generated="addLocation($event)" @set-loading-state="loadingLocation = $event"
-                  buttonText="Add Location" :disabledButton="anythingLoading" />
+            <location-form formLabel="Or suggest your own Sub-location below" buttonSize="small"
+              :parentLocation="location" @location-description-generated="addLocation($event)"
+              @set-loading-state="loadingLocation = $event" buttonText="Add Location" :disabledButton="anythingLoading" />
           </div>
         </div>
         <cdr-accordion-group>
@@ -142,20 +142,32 @@
         </template>
       </cdr-accordion>
     </cdr-accordion-group>
-    <cdr-button class="pdf-button" modifier="secondary" @click="generatePDF(locations)">Export to PDF</cdr-button>
   </div>
 
-
+  <div class="instructions">
+      <h3>Use Homebrewery to Make a Beautiful PDF of Your Generated Content!</h3>
+      <cdr-list tag="ol" modifier="ordered">
+        <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
+        <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
+            rel="noopener noreferrer">Homebrewery</a>.</li>
+        <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the content as
+          you like.</li>
+        <li>Enjoy the beautifully formatted content!</li>
+      </cdr-list>
+      <div class="markdown-button">
+      <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
+      </div>
+    </div>
 </template>
   
 <script>
 import { ref, reactive, nextTick, computed, onMounted } from 'vue';
 import { CdrText, CdrList, CdrLink, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone, IconXSm } from '@rei/cedar';
-import { generatePDF } from '../util/pdfGenerator.mjs';
 import LocationForm from './LocationForm.vue';
 import NPCGenerationButton from './NPCGenerationButton.vue';
 import NPCForm from './NPCForm.vue';
 import RelationshipSkeleton from "./RelationshipSkeleton.vue";
+import {convertLocationsToMarkdown} from '../util/convertToMarkdown.mjs';
 import '@rei/cedar/dist/style/cdr-input.css';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
@@ -195,7 +207,8 @@ export default {
     const openedNPCAccordions = reactive(locations.map(location => location.npcs.map(() => false)));
     const newLocation = ref({ name: '', description: '' });
     const newNPCs = reactive(locations.map(() => ({ description: '' })));
-
+    // const markdownString = convertLocationsToMarkdown(locations);
+    // console.log(markdownString);
     onMounted(() => {
       resetLoadingStates();
     });
@@ -322,6 +335,26 @@ export default {
       }
     }
 
+    function copyAsMarkdown() {
+      // Replace `generatedMarkdown` with the variable that holds your generated markdown content.
+      const markdownContent = convertLocationsToMarkdown(locations);
+
+      if (markdownContent) {
+        const textarea = document.createElement('textarea');
+        textarea.textContent = markdownContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        // Optionally, display a message that the content has been copied.
+        alert('Content copied as markdown!');
+      } else {
+        // If there is no content to copy, display a message to the user.
+        alert('No content available to copy as markdown.');
+      }
+    }
+
     return {
       anythingLoading,
       locations,
@@ -333,7 +366,6 @@ export default {
       updateFirstPartDescription,
       toggleAccordion,
       toggleNPCAccordion,
-      generatePDF,
       newLocation,
       newNPCs,
       addLocation,
@@ -341,6 +373,7 @@ export default {
       deleteNPC,
       addNPCPart,
       addNPC,
+      copyAsMarkdown
     };
   },
 };
@@ -428,11 +461,6 @@ h3 {
 
 }
 
-.pdf-button {
-  margin-top: 3rem;
-  align-self: cemter;
-}
-
 .accordion {
   border: 0.1rem solid #dcd6cb;
 
@@ -464,4 +492,32 @@ li:hover {
 .flex-bone {
   display: flex;
   gap: 10px;
-}</style>
+}
+
+.instructions {
+  max-width: 700px;
+  padding: 3rem;
+  margin: 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.instructions h2 {
+  margin-bottom: 1rem;
+}
+
+.instructions ol {
+  padding-left: 1.5rem;
+}
+
+.instructions li {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-button {
+  display: flex;
+  button {
+    margin: 2rem auto 1rem;
+  }
+}
+</style>

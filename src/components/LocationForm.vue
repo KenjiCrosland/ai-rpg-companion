@@ -98,7 +98,6 @@ export default {
              
             try {
                 const response = await generateGptResponse(prompt, null, 3, previousContext);
-                console.log(response);
                 previousContext = [
                     { role: 'user', content: `Please create a description of a location in a tabletop RPG` },
                     { role: 'system', content: `${response}` }

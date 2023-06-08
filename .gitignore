@@ -15,6 +15,7 @@ data-training
 npc-generator.txt
 .env
 .env.local
+launch.json
 
 # Editor directories and files
 .vscode/*

@@ -4,6 +4,7 @@
     <NPCGenerator v-if="currentPage === 'npc-generator'" />
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
+    <StatblockGenerator v-if="currentPage === 'statblock-generator'"/>
   </div>
 </template>
 
@@ -12,6 +13,7 @@ import LocationGenerator from './components/LocationGenerator.vue';
 import NPCGenerator from './components/NPCGenerator.vue';
 import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
+import StatblockGenerator from './components/StatblockGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -21,12 +23,13 @@ export default {
     NPCGenerator,
     Dashboard,
     DashboardPlus,
+    StatblockGenerator,
     CdrLink,
     CdrText
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'gm-dashboard-plus',
+      currentPage: this.$attrs['data-page'] || 'statblock-generator',
     };
   },
   mounted() {
