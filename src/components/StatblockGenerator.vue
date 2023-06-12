@@ -14,7 +14,7 @@
             <cdr-button class="monster-form-button" type="submit">{{ 'Generate Statblock' }}</cdr-button>
         </form>
 
-        <Statblock v-if="monster" :creatureData="monster" />
+        <Statblock v-if="loading || monster" :loading="loading" :monster="monster" />
 
     </div>
 </template>
@@ -47,6 +47,7 @@ export default {
         CdrToggleGroup,
     },
     setup() {
+        const loading = ref(false);
         const monsterName = ref('');
         const monsterType = ref('Random');
         const selectedChallengeRating = ref(null);
@@ -85,6 +86,7 @@ export default {
 
         async function generateStatblock() {
             monster.value = null;
+            loading.value = true;
             const promptOptions = {
                 monsterName: monsterName.value,
                 challengeRating: selectedChallengeRating.value,
@@ -108,6 +110,7 @@ export default {
             }
             console.log(finalMonster);
             monster.value = finalMonster;
+            loading.value = false;
         }
 
         function copyAsMarkdown() {
@@ -131,6 +134,7 @@ export default {
     }
 
         return {
+            loading,
             copyAsMarkdown,
             monsterName,
             monsterType,

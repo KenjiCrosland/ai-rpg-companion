@@ -1242,6 +1242,7 @@
             "damage_immunities": false,
             "condition_immunities": false,
             "saving_throws": "+3, +4",
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1265,6 +1266,7 @@
             "damage_immunities": true,
             "condition_immunities": true,
             "saving_throws": "+3, +4",
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1288,6 +1290,7 @@
             "damage_immunities": true,
             "condition_immunities": true,
             "saving_throws": "+3, +4",
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1311,6 +1314,7 @@
             "damage_immunities": false,
             "condition_immunities": false,
             "saving_throws": "+3",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Action 1",
@@ -1330,6 +1334,7 @@
             "damage_immunities": false,
             "condition_immunities": false,
             "saving_throws": "+3, +4",
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1353,6 +1358,7 @@
             "damage_immunities": true,
             "condition_immunities": true,
             "saving_throws": "+3, +4",
+            "to_hit_bonus": "+5",
             "actions": [
                 {
                     "name": "Action 1",
@@ -1376,6 +1382,7 @@
             "armor_class": "13",
             "hit_points": "97 (13d10 + 26)",
             "type": "balanced",
+            "to_hit_bonus": "+5",
             "actions": [
                 {
                     "name": "Action 1",
@@ -1405,6 +1412,7 @@
             "type": "balanced",
             "saving_throws": "+2, +5, +2, +4",
             "damage_immunities": true,
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Action 1",
@@ -1424,6 +1432,7 @@
             "damage_resistances": true,
             "damage_immunities": false,
             "condition_immunities": false,
+            "to_hit_bonus": "+5",
             "actions": [
                 {
                     "name": "Action 1",
@@ -1450,6 +1459,7 @@
             "saving_throws": "",
             "damage_immunities": true,
             "condition_immunities": false,
+            "to_hit_bonus": "+5",
             "actions": [
                 {
                     "name": "Action 1",
@@ -1469,6 +1479,7 @@
             "armor_class": "14",
             "hit_points": "75",
             "type": "balanced",
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1488,6 +1499,7 @@
             "armor_class": "14",
             "hit_points": "75",
             "type": "balanced",
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1512,6 +1524,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1535,6 +1548,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1561,6 +1575,7 @@
             "damage_resistances": false,
             "damage_immunities": false,
             "condition_immunities": false,
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Primary Ability Attack",
@@ -1579,6 +1594,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1597,6 +1613,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1615,6 +1632,7 @@
             "damage_resistances": false,
             "damage_immunities": false,
             "condition_immunities": false,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1637,6 +1655,7 @@
             "damage_resistances": false,
             "damage_immunities": false,
             "condition_immunities": false,
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1689,6 +1708,7 @@
             "damage_resistances": true,
             "damage_immunities": false,
             "condition_immunities": false,
+            "to_hit_bonus": "+5",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1719,6 +1739,7 @@
             "damage_resistances": false,
             "damage_immunities": false,
             "condition_immunities": false,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1741,6 +1762,7 @@
             "damage_resistances": false,
             "damage_immunities": false,
             "condition_immunities": false,
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1767,6 +1789,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": false,
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1789,6 +1812,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1810,6 +1834,7 @@
             "type": "balanced",
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1850,6 +1875,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1870,6 +1896,7 @@
             "hit_points": "73 (7d8 + 42)",
             "type": "balanced",
             "damage_resistances": true,
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1891,6 +1918,7 @@
             "armor_class": "14",
             "hit_points": "114 (12d10 + 48)",
             "type": "balanced",
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1918,6 +1946,7 @@
             "armor_class": "19",
             "hit_points": "123 (13d10 + 52)",
             "type": "defensive",
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1941,6 +1970,7 @@
             "armor_class": "13",
             "hit_points": "126 (11d12 + 55)",
             "type": "balanced",
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Action 1",
@@ -1959,6 +1989,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "saving_throws": "+5, +4, +2",
+            "to_hit_bonus": "+6",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -1986,6 +2017,7 @@
             "armor_class": "15",
             "hit_points": "110 (13d10 + 39)",
             "type": "balanced",
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2013,6 +2045,7 @@
             "damage_immunities": true,
             "condition_immunities": false,
             "saving_throws": "+4, +5, +2, +5",
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2044,6 +2077,7 @@
             "armor_class": "14",
             "hit_points": "70 (10d10 + 20)",
             "type": "offensive",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2063,6 +2097,7 @@
             "armor_class": "14",
             "hit_points": "75 (10d10 + 20)",
             "type": "offensive",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2082,6 +2117,7 @@
             "armor_class": "14",
             "hit_points": "75 (10d10 + 20)",
             "type": "offensive",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2105,7 +2141,7 @@
             "type": "balanced",
             "damage_resistances": false,
             "damage_immunities": false,
-            "saving_throws": "",
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2128,6 +2164,7 @@
             "damage_resistances": false,
             "damage_immunities": false,
             "saving_throws": "+5, +8, +4",
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2150,6 +2187,7 @@
             "damage_resistances": false,
             "damage_immunities": true,
             "saving_throws": "+5, +6, +3, +5",
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2173,6 +2211,7 @@
             "armor_class": "15",
             "hit_points": "90 (11d10 + 33)",
             "type": "offensive",
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2192,6 +2231,7 @@
             "armor_class": "15",
             "hit_points": "90 (11d10 + 33)",
             "type": "offensive",
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2213,6 +2253,7 @@
             "type": "defensive",
             "damage_resistances": true,
             "saving_throws": "+8, +6, +6",
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2234,6 +2275,7 @@
             "type": "defensive",
             "damage_resistances": true,
             "saving_throws": "+7, +6",
+            "to_hit_bonus": "+5",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2255,6 +2297,7 @@
             "type": "defensive",
             "damage_resistances": true,
             "saving_throws": "+8, +8",
+            "to_hit_bonus": "+7",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2273,7 +2316,7 @@
             "hit_points": "135 (18d10 + 45)",
             "type": "balanced",
             "damage_resistances": false,
-            "saving_throws": "",
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2291,6 +2334,7 @@
             "type": "balanced",
             "damage_resistances": false,
             "saving_throws": "",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2311,7 +2355,7 @@
             "hit_points": "135 (18d10 + 45)",
             "type": "balanced",
             "damage_resistances": false,
-            "saving_throws": "",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2331,6 +2375,7 @@
             "armor_class": "15",
             "hit_points": "105 (14d10 + 42)",
             "type": "offensive",
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2348,6 +2393,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "type": "offensive",
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2373,6 +2419,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "type": "offensive",
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2395,6 +2442,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "saving_throws": "+6, +8, +4",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2413,6 +2461,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "saving_throws": "+5, +7, +5",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2439,6 +2488,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "saving_throws": "+6, +9, +5",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2463,6 +2513,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "saving_throws": "+5, +6, +7",
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2484,6 +2535,7 @@
             "type": "balanced",
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2504,6 +2556,7 @@
             "hit_points": "200 (16d12 + 96)",
             "type": "defensive",
             "saving_throws": "+10, +7, +7",
+            "to_hit_bonus": "+12",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2530,6 +2583,7 @@
             "damage_immunities": true,
             "damage_resistances": true,
             "saving_throws": "+3, +10, +5",
+            "to_hit_bonus": "+11",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2552,6 +2606,7 @@
             "saving_throws": "+9, +9, +7, +7",
             "damage_immunities": true,
             "damage_resistances": true,
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2577,6 +2632,7 @@
             "type": "balanced",
             "damage_resistances": true,
             "damage_vulnerabilities": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2602,6 +2658,7 @@
             "type": "balanced",
             "saving_throws": "+4, +8, +5, +7",
             "damage_immunities": true,
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2626,6 +2683,7 @@
             "hit_points": "150 (20d10 + 60)",
             "type": "offensive",
             "damage_immunities": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2650,6 +2708,7 @@
             "hit_points": "150 (20d10 + 60)",
             "type": "offensive",
             "damage_resistances": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2669,6 +2728,7 @@
             "armor_class": "15",
             "hit_points": "150 (20d10 + 60)",
             "type": "offensive",
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2693,6 +2753,7 @@
             "saving_throws": "+6, +8, +6",
             "damage_immunities": false,
             "damage_resistances": false,
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2734,6 +2795,7 @@
             "damage_immunities": false,
             "damage_resistances": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2760,6 +2822,7 @@
             "saving_throws": "+8, +7, +7, +8, +8",
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Action 1",
@@ -2777,6 +2840,7 @@
             "hit_points": "178 (17d10 + 85)",
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2798,6 +2862,7 @@
             "hit_points": "178 (17d10 + 85)",
             "saving_throws": "+6, +9, +5, +9",
             "damage_immunities": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2831,6 +2896,7 @@
             "hit_points": "178 (17d10 + 85)",
             "saving_throws": "+4, +9, +4, +8",
             "damage_immunities": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2854,6 +2920,7 @@
             "type": "offensive",
             "armor_class": "16",
             "hit_points": "135",
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2873,6 +2940,7 @@
             "type": "offensive",
             "armor_class": "16",
             "hit_points": "135",
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2900,6 +2968,7 @@
             "hit_points": "168 (16d12 + 64)",
             "saving_throws": "+3, +4",
             "damage_immunities": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2931,6 +3000,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2955,6 +3025,7 @@
             "armor_class": "17",
             "hit_points": "195 (17d12 + 85)",
             "damage_immunities": true,
+            "to_hit_bonus": "+11",
             "actions": [
                 {
                     "name": "Action 1",
@@ -2973,6 +3044,7 @@
             "saving_throws": "+8, +10, +7, +9",
             "damage_immunities": true,
             "damage_resistances": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -2995,6 +3067,7 @@
             "saving_throws": "+7, +9, +8, +10",
             "damage_immunities": true,
             "damage_resistances": true,
+            "to_hit_bonus": "+9",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -3024,6 +3097,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -3051,6 +3125,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+10",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -3078,6 +3153,7 @@
             "damage_resistances": true,
             "damage_immunities": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+8",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -3103,6 +3179,7 @@
             "hit_points": "165 (20d8 + 65)",
             "damage_resistances": true,
             "condition_immunities": true,
+            "to_hit_bonus": "+11",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -3124,6 +3201,907 @@
         }
     ],
     "13": [
-        
+        {
+            "type": "balanced",
+            "armor_class": "18",
+            "hit_points": "172 (15d12 + 75)",
+            "saving_throws": "+5, +10, +6, +8",
+            "damage_immunities": true,
+            "to_hit_bonus": "+11",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature can use its Action 4. It then makes three attacks: one with Action 1 and two with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "Melee Attack: +11 to hit, reach 10 ft., one target. Hit: 17 (2d10 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "Melee Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d6 + 6) damage."
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Each creature of the creature's choice that is within 120 feet of the creature and aware of it must succeed on a DC 16 saving throw or suffer an effect for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. If a creature's saving throw is successful or the effect ends for it, the creature is immune to this action for the next 24 hours."
+                },
+                {
+                    "name": "Special Abilities (Recharge 5-6)",
+                    "description": "The creature uses one of the following special abilities: Damage Effect or Condition Effect."
+                },
+                {
+                    "name": "Damage Effect",
+                    "description": "The creature creates an effect in a 60-foot line that is 5 feet wide. Each creature in that line must make a DC 18 saving throw, taking 45 (13d6) damage on a failed save, or half as much damage on a successful one."
+                },
+                {
+                    "name": "Condition Effect",
+                    "description": "The creature releases an effect in a 60-foot cone. Each creature in that area must succeed on a DC 18 saving throw or suffer an effect for 10 minutes. This effect ends for a creature if the creature takes damage or someone uses an action to wake it."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "Detect",
+                    "description": "The creature makes a Wisdom (Perception) check."
+                },
+                {
+                    "name": "Action 3",
+                    "description": "The creature makes an Action 2 attack."
+                },
+                {
+                    "name": "Special Movement (Costs 2 Actions)",
+                    "description": "The creature activates a special ability. Each creature within 10 feet of the creature must succeed on a DC 19 saving throw or take 13 (2d6 + 6) damage and suffer a condition. The creature can then move up to half its speed."
+                }
+            ]
+        },
+        {
+            "type": "balanced",
+            "armor_class": "18",
+            "hit_points": "200 (16d12 + 96)",
+            "saving_throws": "+5, +11, +6, +6",
+            "damage_immunities": true,
+            "to_hit_bonus": "+11",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature can use its Action 4. It then makes three attacks: one with Action 1 and two with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "Melee Attack: +11 to hit, reach 10 ft., one target. Hit: 17 (2d10 + 6) damage plus 4 (1d8) additional damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "Melee Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d6 + 6) damage."
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Melee Attack: +11 to hit, reach 15 ft., one target. Hit: 15 (2d8 + 6) damage."
+                },
+                {
+                    "name": "Action 4",
+                    "description": "Each creature of the creature's choice that is within 120 feet of the creature and aware of it must succeed on a DC 14 saving throw or suffer an effect for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. If a creature's saving throw is successful or the effect ends for it, the creature is immune to the effect for the next 24 hours."
+                },
+                {
+                    "name": "Action 5 (Recharge 5–6)",
+                    "description": "The creature releases an effect in a 60-foot cone. Each creature in that area must make a DC 19 saving throw, taking 54 (12d8) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "Detect",
+                    "description": "The creature makes a Wisdom (Perception) check."
+                },
+                {
+                    "name": "Action 3",
+                    "description": "The creature makes an Action 3 attack."
+                },
+                {
+                    "name": "Special Movement (Costs 2 Actions)",
+                    "description": "The creature activates a special ability. Each creature within 10 feet of the creature must succeed on a DC 19 saving throw or take 13 (2d6 + 6) damage and suffer a condition. The creature can then move up to half its speed."
+                }
+            ]
+        },
+        {
+            "armor_class": "18",
+            "hit_points": "184 (16d10 + 96)",
+            "saving_throws": "+11, +9, +6, +7",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "condition_immunities": true,
+            "to_hit_bonus": "+10",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature uses Action 3 if it can. It then makes three attacks: one with Action 1 and two with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "Melee Attack: +10 to hit, reach 5 ft., one target. Hit: 32 (5d10 + 5) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "Melee Attack: +10 to hit, reach 10 ft., one target. Hit: 15 (3d6 + 5) damage."
+                },
+                {
+                    "name": "Action 3 (Recharge 5-6)",
+                    "description": "The creature magically emits an effect. Each creature within 15 feet of the creature that can see the effect must succeed on a DC 15 saving throw or suffer an effect for 1 minute. A creature can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success. If a creature's saving throw is successful or the effect ends for it, the creature is immune to this effect for the next 24 hours."
+                },
+                {
+                    "name": "Movement Ability",
+                    "description": "The creature has an ability that allows it to be extra mobile and allows it to move 60-120 feet depending on the creature."
+                }
+            ]
+        },
+        {
+            "type": "defensive",
+            "armor_class": "16",
+            "hit_points": "230 (20d12 + 100)",
+            "saving_throws": "+14, +10, +9, +9",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+14",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two Action 1 attacks."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "Melee Attack: +14 to hit, reach 10 ft., one target. Hit: 30 (6d6 + 9) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "Ranged Attack: +14 to hit, range 60/240 ft., one target. Hit: 35 (4d12 + 9) damage."
+                },
+                {
+                    "name": "Special Ability (Recharge 5-6)",
+                    "description": "The creature uses a magical effect at a point it can see within 500 feet of it. Each creature within 10 feet of that point must make a DC 17 saving throw, taking 54 (12d8) damage on a failed save, or half as much damage on a successful one."
+                }
+            ]
+        },
+        {
+            "type": "offensive",
+            "armor_class": "16",
+            "hit_points": "184 (16d10 + 96)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+11",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes three attacks: two with its Action 1 and one with its Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "Melee Attack: +11 to hit, reach 5 ft., one target. Hit: 32 (4d12 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "Ranged Attack: +11 to hit, range 60/240 ft., one target. Hit: 32 (4d12 + 6) damage."
+                },
+                {
+                    "name": "AOE Attack (Recharge 5-6)",
+                    "description": "The creature uses an effect in an area it can see within 60 feet of it. Each creature within that area must make a DC18 throw, taking 52 (15d6) damage on a failed save, or half as much damage on a successful one."
+                },
+                {
+                    "name": "Special Ability",
+                    "description": "If the creature fulfills a certain condition, it causes another specific condition to its target(s)."
+                }
+            ]
+        }
+    ],
+    "14": [
+        {
+            "type": "balanced",
+            "armor_class": "18",
+            "hit_points": "195 (17d12 + 85)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+11",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +11 to hit melee action that does 16 (2d10 + 5) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +11 to hit ranged action that does 27 (4d10 + 5) damage. The creature must make a DC 18 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 18 saving throw or take 50 (9d10) damage or half as much on a successful save."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets"
+                },
+                {
+                    "name": " (Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "The creature can choose to use Action 3."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 38 (7d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets"
+                }
+            ]
+        }
+    ],
+    "15": [
+        {
+            "type": "balanced",
+            "armor_class": "18",
+            "hit_points": "240 (20d12 + 120)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 16 (2d10 + 5) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 27 (4d10 + 5) damage. The creature must make a DC 18 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 18 saving throw, taking 53 (15d6) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 38 (6d10 + 5) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 44 (8d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "16": [
+        {
+            "type": "balanced",
+            "armor_class": "18",
+            "hit_points": "250 (20d12 + 120)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 22 (3d10 + 5) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 33 (5d10 + 5) damage. The creature must make a DC 18 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 18 saving throw, taking 56 (16d6) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 26 (3d12 + 6) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 44 (8d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "17": [
+        {
+            "type": "balanced",
+            "armor_class": "19",
+            "hit_points": "255 (21d12 + 118)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 24 (5d6 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 30 (7d6 + 6) damage. The creature must make a DC 18 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 18 saving throw, taking 60 (17d6) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 31 (4d12 + 5) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 46 (7d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "18": [
+        {
+            "type": "balanced",
+            "armor_class": "19",
+            "hit_points": "260 (22d12 + 117)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 27 (5d8 + 4) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 33 (6d8 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Each creature within 20 feet of the creature must make a DC 19 saving throw, taking 67 (15d8) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 27 (5d8 + 4) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 39 (7d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "19": [
+        {
+            "type": "balanced",
+            "armor_class": "19",
+            "hit_points": "270 (22d12 + 127)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 27 (5d8 + 4) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 38 (7d8 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 77 (14d10) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 27 (5d8 + 4) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 39 (7d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "20": [
+        {
+            "type": "balanced",
+            "armor_class": "19",
+            "hit_points": "280 (22d12 + 137)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 31 (6d8 + 4) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 42 (8d8 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 82 (15d10) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 27 (5d8 + 4) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 39 (7d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "21": [
+        {
+            "type": "balanced",
+            "armor_class": "19",
+            "hit_points": "290 (22d12 + 147)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 31 (6d8 + 4) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 42 (8d8 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 82 (15d10) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 27 (5d8 + 4) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 39 (7d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }        
+    ],
+    "22": [
+        {
+            "type": "balanced",
+            "armor_class": "19",
+            "hit_points": "360 (32d12 + 152)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 38 (6d10 + 5) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 50 (8d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 104 (16d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 35 (5d10 + 7) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 50 (9d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "23": [
+        {
+            "type": "balanced",
+            "armor_class": "20",
+            "hit_points": "360 (32d12 + 152)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 44 (7d10 + 5) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 55 (9d10 + 5) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 111 (17d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 38 (6d10 + 5) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 52 (8d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "24": [
+        {
+            "type": "balanced",
+            "armor_class": "20",
+            "hit_points": "400 (38d12 + 152)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 50 (8d10 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 61 (10d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 130 (20d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 50 (8d10 + 6) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 65 (10d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "25": [
+        {
+            "type": "balanced",
+            "armor_class": "20",
+            "hit_points": "430 (43d12 + 151)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 56 (9d10 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 72 (12d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 136 (21d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 50 (8d10 + 6) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 72 (11d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "26": [
+        {
+            "type": "balanced",
+            "armor_class": "20",
+            "hit_points": "465 (48d12 + 153)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 65 (9d12 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 72 (12d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 136 (21d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 50 (8d10 + 6) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 72 (11d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "27": [
+        {
+            "type": "balanced",
+            "armor_class": "20",
+            "hit_points": "502 (53d12 + 158)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 65 (9d12 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 72 (12d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 143 (22d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 61 (10d10 + 6) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 72 (11d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }
+    ],
+    "28": [
+        {
+            "type": "balanced",
+            "armor_class": "20",
+            "hit_points": "540 (60d12 + 150)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 71 (10d12 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 78 (11d12 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 150 (23d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 65 (10d10 + 10) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 78 (12d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }     
+    ],
+    "29": [
+        {
+            "type": "balanced",
+            "armor_class": "20",
+            "hit_points": "605 (70d12 + 150)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 84 (12d12 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 90 (13d12 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 156 (24d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 65 (10d10 + 10) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 85 (13d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        }   
+    ],
+    "30": [
+        {
+            "type": "balanced",
+            "armor_class": "22",
+            "hit_points": "605 (70d12 + 150)",
+            "damage_resistances": true,
+            "damage_immunities": true,
+            "to_hit_bonus": "+12",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "A +12 to hit melee action that does 84 (12d12 + 6) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "A +12 to hit ranged action that does 90 (13d12 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 156 (24d12) damage on a failed save, or half as much damage on a successful one."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
+                    "description": "A +12 to hit melee action that does 65 (10d10 + 10) damage."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
+                    "description": "DON'T DEAL DAMAGE WITH THIS ACTION. A legendary action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 85 (13d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                }
+            ]
+        } 
     ]
 }

@@ -4,7 +4,7 @@
         <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
     </cdr-toggle-group>
 
-    <div :class="`container ${columns}`">
+    <div v-if="!loading" :class="`container ${columns}`">
         <div class="statblock">
             <div class="creature-heading">
                 <h1>{{ monster.name }}</h1>
@@ -108,6 +108,115 @@
             </div>
         </div>
     </div>
+    <div v-if="loading" :class="`container ${columns}`">
+
+        <div class="statblock">
+            <CdrSkeleton>
+                <div class="creature-heading">
+                    <CdrSkeletonBone type="line" class="statblock-bone" style="width:65%; height: 22px;" />
+                    <CdrSkeletonBone type="line" class="statblock-bone" style="width:45%; height: 1.2em;" />
+                </div>
+                <svg height="5" width="100%" class="tapered-rule">
+                    <polyline points="0,0 400,2.5 0,5"></polyline>
+                </svg>
+                <div class="property-block">
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 6rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 2rem" />
+                    </div>
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 5rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 7rem" />
+                    </div>
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 3rem" />
+                    </div>
+                    <div>
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
+                            style="width: 75%; height: 3.5rem; margin: 1rem auto;" />
+                    </div>
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 7rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
+                    </div>
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 8rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20rem" />
+                    </div>
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 26rem" />
+                    </div>
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 5rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 24rem" />
+                    </div>
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 3rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
+                    </div>
+                    <div class="property-line-skeleton">
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
+                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 5rem" />
+                    </div>
+                </div>
+
+                <svg height="5" width="100%" class="tapered-rule">
+                    <polyline points="0,0 400,2.5 0,5"></polyline>
+                </svg>
+                <div class="property-line-skeleton" style="margin-top: 1rem;">
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
+                </div>
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
+                    style="width: 94%; margin-top: 3px;" />
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 95%" />
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 45%" />
+                <div class="property-line-skeleton" style="margin-top: 1rem;">
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
+                </div>
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
+                    style="width: 94%; margin-top: 3px;" />
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 95%" />
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 45%" />
+            </CdrSkeleton>
+        </div>
+        <div class="statblock">
+            <CdrSkeleton>
+                <h3>Actions</h3>
+                <div class="property-line-skeleton" style="margin-top: 1rem;">
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
+                </div>
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
+                    style="width: 44%; margin-top: 3px;" />
+                <div class="property-line-skeleton" style="margin-top: 1rem;">
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
+                </div>
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
+                    style="width: 44%; margin-top: 3px;" />
+                <div class="property-line-skeleton" style="margin-top: 1rem;">
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
+                </div>
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
+                    style="width: 94%; margin-top: 3px;" />
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 95%" />
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 45%" />
+                <div class="property-line-skeleton" style="margin-top: 1rem;">
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
+                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
+                </div>
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
+                    style="width: 94%; margin-top: 3px;" />
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 95%" />
+                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 45%" />
+            </CdrSkeleton>
+        </div>
+    </div>
     <div v-if="monster" class="instructions">
         <h3>Use Homebrewery to Make a Beautiful PDF of Your Statblock!</h3>
         <cdr-list tag="ol" modifier="ordered">
@@ -127,27 +236,32 @@
   
 <script setup>
 import { ref, computed, defineProps } from 'vue';
-import { CdrToggleButton, CdrToggleGroup, CdrButton, CdrList } from "@rei/cedar";
+import { CdrToggleButton, CdrToggleGroup, CdrButton, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
 import "@rei/cedar/dist/style/cdr-toggle-button.css";
 import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-button.css";
+import "@rei/cedar/dist/style/cdr-skeleton.css";
+import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 // Props
 const props = defineProps({
-    creatureData: {
+    monster: {
         type: Object,
-        default: {}
+        default: () => ({})
+    },
+    loading: {
+        type: Boolean,
+        default: false,
     }
 });
 
 // Reactive state
 const columns = ref('two_columns');
-const monster = ref(props.creatureData);
 
 // Computed properties
 const parsedAttributes = computed(() => {
-    return monster.value.attributes.split(',').map(attr => {
+    return props.monster.attributes.split(',').map(attr => {
         const [stat, ...valueParts] = attr.trim().split(' ');
         const value = valueParts.join(' ');
         return { stat, value };
@@ -156,9 +270,9 @@ const parsedAttributes = computed(() => {
 
 const copyAsMarkdown = () => {
 
-    const markdownContent = statblockToMarkdown(monster.value, columns.value);
+    const markdownContent = statblockToMarkdown(monster, columns.value);
 
-console.log(columns.value);
+    console.log(columns.value);
     if (markdownContent) {
         const textarea = document.createElement('textarea');
         textarea.textContent = markdownContent;
@@ -174,7 +288,6 @@ console.log(columns.value);
         alert('No content available to copy as markdown.');
     }
 }
-
 </script>
 
 
@@ -289,6 +402,22 @@ console.log(columns.value);
     }
 }
 
+.statblock-bone {
+    background-image: linear-gradient(90deg, #efdfc2 0%, #FDF4E3 15%, #efdfc2 30%);
+}
+
+.property-line-skeleton {
+    display: flex;
+    justify-content: flex-start;
+    gap: .5rem;
+}
+
+.skeleton-line-item {
+    height: 1em;
+    flex-grow: 0;
+}
+
+//linear-gradient(90deg, #e2d9ca 0%, #FDF4E3 15%, #e2d9ca 30%)
 .scores {
     width: 90%;
     text-align: center;
@@ -310,17 +439,17 @@ console.log(columns.value);
 }
 
 .instructions {
-  max-width: 700px;
-  padding: 3rem;
-  margin: 0 auto;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    max-width: 700px;
+    padding: 3rem;
+    margin: 0 auto;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 
 .markdown-button {
-  display: flex;
-  button {
-    margin: 2rem auto 1rem;
-  }
-}
-</style>
+    display: flex;
+
+    button {
+        margin: 2rem auto 1rem;
+    }
+}</style>
