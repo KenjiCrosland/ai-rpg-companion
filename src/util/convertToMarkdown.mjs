@@ -101,6 +101,12 @@ export function convertLocationsToMarkdown(locations) {
     obj.actions.forEach(action => {
         markdown += `***${action.name}.*** ${action.description}\n:\n`;
     });
+    if (obj.legendary_actions) {
+      markdown += "### Legendary Actions\n";
+      obj.legendary_actions.forEach(action => {
+        markdown += `***${action.name}.*** ${action.description}\n:\n`;
+    });
+    }
 
     markdown += "}}\n";
     

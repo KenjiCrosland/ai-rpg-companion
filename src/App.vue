@@ -53,6 +53,11 @@ export default {
         'page_path': '/gm-dashboard-plus',
       });
     }
+    if (typeof gtag === 'function' && this.currentPage === 'statblock-generator') {
+      gtag('config', 'UA-11925218-1', {
+        'page_path': '/ai-powered-dnd-5e-monster-statblock-generator',
+      });
+    }
   },
 };
 </script>

@@ -1,11 +1,11 @@
 <template>
-    <cdr-toggle-group v-model="columns" style="max-width: 25rem">
+    <cdr-toggle-group v-if="shouldDisplayInterface" v-model="userColumnsPreference" style="max-width: 25rem">
         <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
         <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
     </cdr-toggle-group>
 
-    <div v-if="!loading" :class="`container ${columns}`">
-        <div class="statblock">
+    <div :class="`container ${columns}`">
+        <div v-if="!loadingPart1" class="statblock">
             <div class="creature-heading">
                 <h1>{{ monster.name }}</h1>
                 <h2>{{ monster.type_and_alignment }}</h2>
@@ -88,7 +88,10 @@
                 </li>
             </ul>
         </div>
-        <div class="statblock">
+        <div v-if="loadingPart1" class="statblock">
+            <StatblockSkeletonPtOne />
+        </div>
+        <div v-if="!loadingPart2" class="statblock">
             <h3>Actions</h3>
             <ul class="abilities">
                 <li v-for="(action, index) in monster.actions" :key="index">
@@ -107,114 +110,23 @@
                 </ul>
             </div>
         </div>
-    </div>
-    <div v-if="loading" :class="`container ${columns}`">
-
-        <div class="statblock">
-            <CdrSkeleton>
-                <div class="creature-heading">
-                    <CdrSkeletonBone type="line" class="statblock-bone" style="width:65%; height: 22px;" />
-                    <CdrSkeletonBone type="line" class="statblock-bone" style="width:45%; height: 1.2em;" />
-                </div>
-                <svg height="5" width="100%" class="tapered-rule">
-                    <polyline points="0,0 400,2.5 0,5"></polyline>
-                </svg>
-                <div class="property-block">
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 6rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 2rem" />
-                    </div>
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 5rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 7rem" />
-                    </div>
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 3rem" />
-                    </div>
-                    <div>
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
-                            style="width: 75%; height: 3.5rem; margin: 1rem auto;" />
-                    </div>
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 7rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
-                    </div>
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 8rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20rem" />
-                    </div>
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 26rem" />
-                    </div>
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 5rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 24rem" />
-                    </div>
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 3rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
-                    </div>
-                    <div class="property-line-skeleton">
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 4rem" />
-                        <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 5rem" />
-                    </div>
-                </div>
-
-                <svg height="5" width="100%" class="tapered-rule">
-                    <polyline points="0,0 400,2.5 0,5"></polyline>
-                </svg>
-                <div class="property-line-skeleton" style="margin-top: 1rem;">
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
-                </div>
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
-                    style="width: 94%; margin-top: 3px;" />
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 95%" />
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 45%" />
-                <div class="property-line-skeleton" style="margin-top: 1rem;">
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
-                </div>
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
-                    style="width: 94%; margin-top: 3px;" />
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 95%" />
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 45%" />
-            </CdrSkeleton>
+        <div v-if="loadingPart2" class="statblock">
+            <StatblockSkeletonPtTwo />
         </div>
-        <div class="statblock">
-            <CdrSkeleton>
-                <h3>Actions</h3>
-                <div class="property-line-skeleton" style="margin-top: 1rem;">
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
-                </div>
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
-                    style="width: 44%; margin-top: 3px;" />
-                <div class="property-line-skeleton" style="margin-top: 1rem;">
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
-                </div>
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
-                    style="width: 44%; margin-top: 3px;" />
-                <div class="property-line-skeleton" style="margin-top: 1rem;">
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
-                </div>
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
-                    style="width: 94%; margin-top: 3px;" />
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 95%" />
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 45%" />
-                <div class="property-line-skeleton" style="margin-top: 1rem;">
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 20%" />
-                    <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 75%" />
-                </div>
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone"
-                    style="width: 94%; margin-top: 3px;" />
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 95%" />
-                <CdrSkeletonBone type="line" class="skeleton-line-item statblock-bone" style="width: 45%" />
-            </CdrSkeleton>
+    </div>
+    <div class="exports">
+    <div v-if="monster" class="instructions">
+        <h3>Export this Monster to the Improved Initiative App</h3>
+        <cdr-list tag="ol" modifier="ordered">
+            <li>Click the "Copy as Improved Initiative JSON" button below to copy the generated content in JSON format compatible with the Improved Initiative App.</li>
+            <li>Visit <a href="https://improvedinitiative.app/e/" target="_blank"
+                    rel="noopener noreferrer">The Improved Initiative App</a>.</li>
+            <li>Click "Add New" at the bottom right left of the screen.</li>
+            <li>Choose the "JSON" Editor mode and paste your copied JSON in the text area</li>
+            <li>Save the monster and have fun!</li>
+        </cdr-list>
+        <div class="markdown-button">
+            <cdr-button @click="copyAsImprovedInitiative">Copy as Improved Initiative JSON</cdr-button>
         </div>
     </div>
     <div v-if="monster" class="instructions">
@@ -232,12 +144,16 @@
             <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
         </div>
     </div>
+</div>
 </template>
   
 <script setup>
-import { ref, computed, defineProps } from 'vue';
+import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
+import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
+import { ref, computed, defineProps, onMounted, onBeforeUnmount } from 'vue';
 import { CdrToggleButton, CdrToggleGroup, CdrButton, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
+import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
 import "@rei/cedar/dist/style/cdr-toggle-button.css";
 import "@rei/cedar/dist/style/cdr-list.css";
@@ -250,14 +166,43 @@ const props = defineProps({
         type: Object,
         default: () => ({})
     },
-    loading: {
+    loadingPart1: {
         type: Boolean,
         default: false,
+    },
+    loadingPart2: {
+        type: Boolean,
+        default: false,
+    },
+    errorMessage: {
+        type: String,
+        default: '',
     }
 });
 
-// Reactive state
-const columns = ref('two_columns');
+const windowWidth = ref(window.innerWidth);
+const userColumnsPreference = ref('two_columns');
+const onResize = () => {
+    windowWidth.value = window.innerWidth;
+};
+
+onMounted(() => {
+    window.addEventListener('resize', onResize);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', onResize);
+});
+
+
+const columns = computed(() => {
+    return windowWidth.value <= 855 ? 'one_column' : userColumnsPreference.value;
+});
+
+const shouldDisplayInterface = computed(() => {
+    return windowWidth.value > 855;
+});
+
 
 // Computed properties
 const parsedAttributes = computed(() => {
@@ -270,7 +215,7 @@ const parsedAttributes = computed(() => {
 
 const copyAsMarkdown = () => {
 
-    const markdownContent = statblockToMarkdown(monster, columns.value);
+    const markdownContent = statblockToMarkdown(props.monster, columns.value);
 
     console.log(columns.value);
     if (markdownContent) {
@@ -288,6 +233,25 @@ const copyAsMarkdown = () => {
         alert('No content available to copy as markdown.');
     }
 }
+
+const copyAsImprovedInitiative = () => {
+
+    const improvedInitiativeJSON = convertToImprovedInitiative(props.monster);
+    if (improvedInitiativeJSON) {
+        const textarea = document.createElement('textarea');
+        textarea.textContent = JSON.stringify(improvedInitiativeJSON);
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        // Optionally, display a message that the content has been copied.
+        alert('Copied as Improved Initiative JSON!');
+    } else {
+        // If there is no content to copy, display a message to the user.
+        alert('No content available to copy.');
+    }
+}
 </script>
 
 
@@ -298,7 +262,7 @@ const copyAsMarkdown = () => {
 
     justify-content: center;
     background: #FDF1DC;
-    background-image: url('../assets/parchment.jpg');
+    background-image: url('https://cros.land/wp-content/uploads/2023/06/parchment-fee031d8.jpg');
     background-blend-mode: overlay;
     background-attachment: fixed;
 
@@ -309,6 +273,7 @@ const copyAsMarkdown = () => {
     &.one_column {
         grid-template-columns: 1fr;
         width: 425px;
+        max-width: calc(100vw - 2rem);
     }
 
     &.two_columns {
@@ -316,6 +281,12 @@ const copyAsMarkdown = () => {
         width: 850px;
         gap: 2rem;
     }
+}
+.exports {
+    max-width: 850px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
 }
 
 .statblock {
@@ -439,7 +410,6 @@ const copyAsMarkdown = () => {
 }
 
 .instructions {
-    max-width: 700px;
     padding: 3rem;
     margin: 0 auto;
     border-radius: 8px;
@@ -452,4 +422,18 @@ const copyAsMarkdown = () => {
     button {
         margin: 2rem auto 1rem;
     }
-}</style>
+}
+
+@media screen and (max-width: 855px) {
+    .exports {
+    grid-template-columns: 1fr;
+}
+    .container {
+        background-image: none;
+
+        &.one_column {
+            width: inherit;
+        }
+    }
+}
+</style>

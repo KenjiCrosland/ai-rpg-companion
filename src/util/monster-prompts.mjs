@@ -37,7 +37,7 @@ export function createStatblockPrompts(options) {
   if (templateArray.length === 0){
     templateArray = creatureTemplates[challengeRating];
   }
-  console.log(templateArray);
+  //console.log(templateArray);
   template = templateArray[Math.floor(Math.random() * templateArray.length)];
   let challengeRatingObj = challengeRatingObjects[challengeRating];
 

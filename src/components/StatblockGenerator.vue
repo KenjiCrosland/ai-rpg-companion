@@ -1,5 +1,6 @@
 <template>
     <div class="generator-container">
+        <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
         <form @submit.prevent="generateStatblock" class="monster-form">
             <div class="form-row">
                 <cdr-input id="monsterName" v-model="monsterName" background="secondary"
@@ -11,11 +12,9 @@
                 <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
             </div>
 
-            <cdr-button class="monster-form-button" type="submit">{{ 'Generate Statblock' }}</cdr-button>
+            <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">{{ 'Generate Statblock' }}</cdr-button>
         </form>
-
-        <Statblock v-if="loading || monster" :loading="loading" :monster="monster" />
-
+        <Statblock v-if="loadingPart1 || loadingPart2 || monster" :loadingPart1="loadingPart1" :loadingPart2="loadingPart2" :monster="monster" />
     </div>
 </template>
       
@@ -47,12 +46,14 @@ export default {
         CdrToggleGroup,
     },
     setup() {
-        const loading = ref(false);
+        const loadingPart1 = ref(false);
+        const loadingPart2 = ref(false);
         const monsterName = ref('');
         const monsterType = ref('Random');
         const selectedChallengeRating = ref(null);
         const monster = ref(null);
         const caster = ref(false);
+        const errorMessage = ref('');
         function validationPart1(jsonString) {
             try {
                 const jsonObj = JSON.parse(jsonString);
@@ -86,7 +87,8 @@ export default {
 
         async function generateStatblock() {
             monster.value = null;
-            loading.value = true;
+            loadingPart1.value = true;
+            loadingPart2.value = true;
             const promptOptions = {
                 monsterName: monsterName.value,
                 challengeRating: selectedChallengeRating.value,
@@ -94,48 +96,41 @@ export default {
                 caster: caster.value
             }
             const monsterPrompts = createStatblockPrompts(promptOptions);
-            console.log(monsterPrompts.part1);
-            const monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
-            console.log(monsterStatsPart1);
+            //console.log(monsterPrompts.part1);
+            let monsterStatsPart1;
+            try {
+             monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
+            } catch(e) {
+                errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.'
+            }
+            //console.log(monsterStatsPart1);
+            monster.value = JSON.parse(monsterStatsPart1);
+            loadingPart1.value = false;
             const previousContext = [
                 { role: 'user', content: `Please give me the first part of a D&D statblock in the following format` },
                 { role: 'system', content: `${monsterStatsPart1}` }
             ];
-            console.log(monsterPrompts.part2);
-            const monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
-            console.log(monsterStatsPart2);
+            //console.log(monsterPrompts.part2);
+            let monsterStatsPart2;
+            try {
+                monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
+            } catch(e) {
+                errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.'
+            }
+            //console.log(monsterStatsPart2);
             const finalMonster = {
                 ...JSON.parse(monsterStatsPart1),
                 ...JSON.parse(monsterStatsPart2),
             }
             console.log(finalMonster);
             monster.value = finalMonster;
-            loading.value = false;
+            loadingPart2.value = false;
         }
 
-        function copyAsMarkdown() {
-
-      const markdownContent = statblockToMarkdown(monster.value);
-
-      if (markdownContent) {
-        const textarea = document.createElement('textarea');
-        textarea.textContent = markdownContent;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-
-        // Optionally, display a message that the content has been copied.
-        alert('Content copied as markdown!');
-      } else {
-        // If there is no content to copy, display a message to the user.
-        alert('No content available to copy as markdown.');
-      }
-    }
-
         return {
-            loading,
-            copyAsMarkdown,
+            loadingPart1,
+            loadingPart2,
+            errorMessage,
             monsterName,
             monsterType,
             monster,
@@ -151,11 +146,11 @@ export default {
 
 
 <style lang="scss" scoped>
+@import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 .form-row {
     display: grid;
     grid-template-columns: 4fr 1.5fr .5fr;
     gap: 2rem;
-
 }
 
 #monsterType {
@@ -174,10 +169,27 @@ export default {
     flex-direction: column;
     width: 855px;
     margin: 20px;
+    max-width: calc(100vw - 2rem);
 
     button {
         align-self: flex-start;
         margin-top: 1.5rem;
     }
 }
+
+@media screen and (max-width: 855px) {
+ .form-row {
+    grid-template-columns: 1fr;
+}
+}
+
+.error-message {
+    border: 1px solid $cdr-color-border-error;
+    padding: $cdr-space-inset-one-x-stretch;
+    color: $cdr-color-text-message-error;
+    background-color: $cdr-color-background-message-error-01;
+    text-align: center;
+    margin-top: 16px;
+}
+
 </style>
