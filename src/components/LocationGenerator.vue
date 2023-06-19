@@ -1,10 +1,10 @@
 <template>
   <div class="app-container">
-
     <h1>RPG Location Description Generator</h1>
     <hr>
     <cdr-text class="intro">
-      Welcome to the RPG Location Description Generator! This App uses the ChatGPT API to provide engaging descriptions
+      Welcome to the RPG Location Description Generator! This App uses a custom trained GPT Model to provide engaging
+      descriptions
       of locations for your players. Some examples of types of locations might be:
     </cdr-text>
 
@@ -14,10 +14,9 @@
       </li>
     </cdr-list>
 
-    <form @submit.prevent="generateLocationDescription">
-      <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" label="Type of Location:" required />
-      <cdr-button type="submit" class="generate-button">Generate Description</cdr-button>
-    </form>
+    <location-form ref="locationForm" @set-loading-state="loading = $event"
+      @location-description-generated="gptResponse = $event" @location-description-error="handleError($event)" />
+
     <div v-if="loading" class="location-description">
       <p>
         <CdrSkeleton>
@@ -29,36 +28,48 @@
         </CdrSkeleton>
       </p>
     </div>
-    <div v-if="locationDescription" class="location-description">{{ locationDescription }}</div>
+    <div v-if="gptResponse" class="location-description">
+      <h2>{{ gptResponse.locationName }}</h2>
+      {{ gptResponse.locationDescription }}
+    </div>
     <div class="patreon">
       <cdr-link href="https://www.patreon.com/bePatron?u=2356190">Support Me on Patreon!</cdr-link>
     </div>
   </div>
 </template>
-  
+
 <script>
-import { CdrInput, CdrLink, CdrButton, CdrText, CdrList, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
-import '@rei/cedar/dist/style/cdr-input.css';
-import '@rei/cedar/dist/cdr-fonts.css';
-import '@rei/cedar/dist/reset.css';
-import '@rei/cedar/dist/style/cdr-text.css';
-import '@rei/cedar/dist/style/cdr-button.css';
-import '@rei/cedar/dist/style/cdr-link.css';
-import '@rei/cedar/dist/style/cdr-list.css';
-import '@rei/cedar/dist/style/cdr-skeleton.css';
-import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
-import { createLocationPrompt } from '../util/prompts.mjs';
+import {
+  CdrInput,
+  CdrLink,
+  CdrButton,
+  CdrText,
+  CdrList,
+  CdrSkeleton,
+  CdrSkeletonBone,
+} from "@rei/cedar";
+import "@rei/cedar/dist/style/cdr-input.css";
+import "@rei/cedar/dist/cdr-fonts.css";
+import "@rei/cedar/dist/reset.css";
+import "@rei/cedar/dist/style/cdr-text.css";
+import "@rei/cedar/dist/style/cdr-button.css";
+import "@rei/cedar/dist/style/cdr-link.css";
+import "@rei/cedar/dist/style/cdr-list.css";
+import "@rei/cedar/dist/style/cdr-skeleton.css";
+import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
+import LocationForm from "./LocationForm.vue";
+
 export default {
   data() {
     return {
-      locationDescription: '',
-      typeOfPlace: '',
+      gptResponse: "",
+      typeOfPlace: "",
       examples: [
-        'The captain\'s quarters on a spelljammer ship',
-        'A tavern in Neverwinter that serves as a front for the local chapter of the Zhentarim',
-        'A tea house where the Emerald Champion Doji Satsume often frequents in the Land of Rokugan',
-        'A gnome\'s workshop and home deep in the feywild who makes sentient puppets',
-        'An upscale ripperdoc establishment in Night City',
+        "The captain's quarters on a spelljammer ship",
+        "A tavern in Neverwinter that serves as a front for the local chapter of the Zhentarim",
+        "A tea house where the Emerald Champion Doji Satsume often frequents in the Land of Rokugan",
+        "A gnome's workshop and home deep in the feywild who makes sentient puppets",
+        "An upscale ripperdoc establishment in Night City",
       ],
       loading: false,
     };
@@ -70,44 +81,15 @@ export default {
     CdrLink,
     CdrList,
     CdrSkeleton,
-    CdrSkeletonBone
+    CdrSkeletonBone,
+    LocationForm,
   },
   methods: {
     setInputValue(value) {
-      this.typeOfPlace = value;
+      this.$refs.locationForm.updateInputValue(value);
     },
-    async generateLocationDescription() {
-      this.loading = true;
-
-      const prompt = createLocationPrompt(this.typeOfPlace);
-
-      try {
-        const requestOptions = {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [
-              { "role": "system", "content": "You are an assistant Game Master." },
-              { "role": "user", "content": prompt },
-            ],
-          }),
-        };
-        let response;
-        if (import.meta.env.DEV) {
-          requestOptions.headers.Authorization = `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
-          response = await fetch('https://api.openai.com/v1/chat/completions', requestOptions);
-        } else {
-          response = await fetch('/wp-json/open-ai-proxy/api/v1/proxy', requestOptions);
-        }
-        const responseData = await response.json();
-
-        this.locationDescription = responseData.choices[0].message.content;
-      } catch (error) {
-        console.error('Error generating tavern description:', error);
-        this.locationDescription = error;
-      }
-
+    handleError(errorMessage) {
+      console.error(errorMessage);
       this.loading = false;
     },
   },

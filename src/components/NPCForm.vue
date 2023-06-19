@@ -1,26 +1,44 @@
 <template>
-  <div>
-    <form @submit.prevent="requestNPCDescription">
-      <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" label="Type of Location:" required />
-      <cdr-button type="submit" class="generate-button">Generate Description</cdr-button>
+  <div :class="hidden ? 'hidden' : ''">
+    <form @submit.prevent="handleRequestNPCDescription()">
+      <cdr-input id="typeOfNPC" v-model="typeOfNPC" background="secondary" :label="labelText" required />
+      <cdr-button type="submit" :disabled="disabledButton">Generate NPC</cdr-button>
     </form>
   </div>
 </template>
 
 <script>
-import { generateNPCDescription } from '../util/npc-generator.mjs';
 import { CdrInput, CdrButton } from '@rei/cedar';
+import { requestNPCDescription } from "../util/request-npc-description.mjs";
 import '@rei/cedar/dist/style/cdr-input.css';
 import '@rei/cedar/dist/style/cdr-button.css';
 export default {
   data() {
     return {
-      typeOfPlace: '',
+      typeOfNPC: this.inputValue || '',
+      firstPartDescription: '',
     };
   },
   props: {
-    labelText: String,
+    sequentialLoading: {
+      type: Boolean,
+      default: false
+    },
+    disabledButton: {
+      type: Boolean,
+      default: false,
+    },
+    hidden: false,
+    labelText: {
+      type: String,
+      default: 'Type of NPC:'
+    },
     inputValue: String,
+    extraDescription: Object,
+    combineResponses: {
+      type: Boolean,
+      default: false,
+    },
   },
   components: {
     CdrButton,
@@ -28,42 +46,29 @@ export default {
   },
   watch: {
     inputValue(newVal) {
-      this.typeOfPlace = newVal;
+      this.typeOfNPC = newVal;
     },
   },
   methods: {
-    async requestNPCDescription() {
-      const handlePart = (part, npcDescription) => {
-        this.$emit("npc-description-generated", {
-          part,
-          npcDescription,
-        });
-        this.$emit("set-loading-state", { part, isLoading: false });
-      };
-
-      const handleError = error => {
-        console.error("Error generating NPC description:", error);
-        const errorMessage = "Failed to generate full description. Please try again later.";
-        this.$emit("npc-description-error", errorMessage);
-        this.$emit("set-loading-state", { part: 1, isLoading: false });
-        this.$emit("set-loading-state", { part: 2, isLoading: false });
-      };
-
-      // Set loading state for both parts
-      this.$emit("set-loading-state", { part: 1, isLoading: true });
-      this.$emit("set-loading-state", { part: 2, isLoading: true });
-
-      try {
-        await generateNPCDescription(this.typeOfPlace, {
-          part1: npcDescription => handlePart(1, npcDescription),
-          part2: npcDescription => handlePart(2, npcDescription),
-          error1: error => handleError(error),
-          error2: error => handleError(error),
-        });
-      } catch (error) {
-        handleError(error);
-      }
+    async handleRequestNPCDescription() {
+      await requestNPCDescription(
+        this.typeOfNPC,
+        this.extraDescription,
+        this.sequentialLoading,
+        (event, payload) => this.$emit(event, payload)
+      );
     },
   },
 };
 </script>
+
+<style scoped lang="scss">
+button {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.hidden {
+  //display: none;
+}
+</style>

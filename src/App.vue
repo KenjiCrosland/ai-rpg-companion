@@ -4,6 +4,7 @@
     <NPCGenerator v-if="currentPage === 'npc-generator'" />
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
+    <StatblockGenerator v-if="currentPage === 'statblock-generator'"/>
   </div>
 </template>
 
@@ -12,6 +13,7 @@ import LocationGenerator from './components/LocationGenerator.vue';
 import NPCGenerator from './components/NPCGenerator.vue';
 import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
+import StatblockGenerator from './components/StatblockGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -21,12 +23,13 @@ export default {
     NPCGenerator,
     Dashboard,
     DashboardPlus,
+    StatblockGenerator,
     CdrLink,
     CdrText
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'npc-generator',
+      currentPage: this.$attrs['data-page'] || 'statblock-generator',
     };
   },
   mounted() {
@@ -48,6 +51,11 @@ export default {
     if (typeof gtag === 'function' && this.currentPage === 'gm-dashboard-plus') {
       gtag('config', 'UA-11925218-1', {
         'page_path': '/gm-dashboard-plus',
+      });
+    }
+    if (typeof gtag === 'function' && this.currentPage === 'statblock-generator') {
+      gtag('config', 'UA-11925218-1', {
+        'page_path': '/ai-powered-dnd-5e-monster-statblock-generator',
       });
     }
   },
