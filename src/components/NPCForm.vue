@@ -67,8 +67,4 @@ button {
   margin-top: 2rem;
   margin-bottom: 2rem;
 }
-
-.hidden {
-  //display: none;
-}
 </style>

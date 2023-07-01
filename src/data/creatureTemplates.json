@@ -7,10 +7,6 @@
             "type": "defensive",
             "actions": [
                 {
-                    "name": "Example Action (Don't use this)",
-                    "description": "Longsword. Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 22 (3d10 + 6) slashing damage."
-                },
-                {
                     "name": "Action 1",
                     "description": "Action dealing 1 (1d4 - 1) damage."
                 }
@@ -23,10 +19,6 @@
             "type": "balanced",
             "actions": [
                 {
-                    "name": "Example Action (Don't use this)",
-                    "description": "Longsword. Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 22 (3d10 + 6) slashing damage."
-                },
-                {
                     "name": "Action 1",
                     "description": "Action dealing 1 (1d4 − 1) damage."
                 }
@@ -38,10 +30,6 @@
             "attack_bonus": "+1",
             "type": "offensive",
             "actions": [
-                {
-                    "name": "Example Action (Don't use this)",
-                    "description": "Longsword. Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 22 (3d10 + 6) slashing damage."
-                },
                 {
                     "name": "Action 1",
                     "description": "Action dealing 2 (1d4) damage."

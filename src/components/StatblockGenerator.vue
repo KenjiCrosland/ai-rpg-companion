@@ -1,24 +1,36 @@
 <template>
     <div class="generator-container">
-        <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
         <form @submit.prevent="generateStatblock" class="monster-form">
-            <div class="form-row">
+            <div class="form-row-top">
                 <cdr-input id="monsterName" v-model="monsterName" background="secondary"
-                    :label="'Monster Description (Example: Headless Horseman)'" required />
+                    :label="'Monster Name (Example: Headless Horseman)'" required />
                 <cdr-select v-model="monsterType" label="type"
                     :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" required />
                 <cdr-select v-model="selectedChallengeRating" label="CR" prompt="CR"
                     :options="challengeRatingData.fullArray" required />
+            </div>
+            <div class="form-row-mid">
+                <cdr-input
+                    v-model="monsterDescription"
+                    :optional="true"
+                    label='Monster Description / Special Instructions: Input extra details about the monster or any special instructions. Examples: "output the statblock in German", "this creature has a flying speed of 60ft", "this creature has an ability to do X". Feel free to add as much or as little detail as you like, or you can leave this field blank.'
+                    :rows="4"
+                />
+            </div>
+            <div class="form-row-end">
                 <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
             </div>
 
+
             <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">{{ 'Generate Statblock' }}</cdr-button>
         </form>
-        <Statblock v-if="loadingPart1 || loadingPart2 || monster" :loadingPart1="loadingPart1" :loadingPart2="loadingPart2" :monster="monster" />
+        <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+        <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1" :loadingPart2="loadingPart2" :monster="monster" />
     </div>
 </template>
-      
+
 <script>
+      //Include a "Decapitate" action, but make sure that the target is already suffering a condition inflicted by the headless horseman for it to work.
 import { ref } from 'vue';
 import Statblock from './Statblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
@@ -50,6 +62,7 @@ export default {
         const loadingPart2 = ref(false);
         const monsterName = ref('');
         const monsterType = ref('Random');
+        const monsterDescription = ref('');
         const selectedChallengeRating = ref(null);
         const monster = ref(null);
         const caster = ref(false);
@@ -93,6 +106,7 @@ export default {
                 monsterName: monsterName.value,
                 challengeRating: selectedChallengeRating.value,
                 monsterType: monsterType.value,
+                monsterDescription: monsterDescription.value,
                 caster: caster.value
             }
             const monsterPrompts = createStatblockPrompts(promptOptions);
@@ -133,6 +147,7 @@ export default {
             errorMessage,
             monsterName,
             monsterType,
+            monsterDescription,
             monster,
             caster,
             generateStatblock,
@@ -147,9 +162,20 @@ export default {
 
 <style lang="scss" scoped>
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
-.form-row {
+.form-row-top {
     display: grid;
     grid-template-columns: 4fr 1.5fr .5fr;
+    gap: 2rem;
+}
+.form-row-mid {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+.form-row-end {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 2rem;
 }
 

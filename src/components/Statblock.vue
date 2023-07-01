@@ -115,7 +115,7 @@
         </div>
     </div>
     <div class="exports">
-    <div v-if="monster" class="instructions">
+    <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
         <h3>Export this Monster to the Improved Initiative App</h3>
         <cdr-list tag="ol" modifier="ordered">
             <li>Click the "Copy as Improved Initiative JSON" button below to copy the generated content in JSON format compatible with the Improved Initiative App.</li>
@@ -129,7 +129,7 @@
             <cdr-button @click="copyAsImprovedInitiative">Copy as Improved Initiative JSON</cdr-button>
         </div>
     </div>
-    <div v-if="monster" class="instructions">
+    <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
         <h3>Use Homebrewery to Make a Beautiful PDF of Your Statblock!</h3>
         <cdr-list tag="ol" modifier="ordered">
             <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
