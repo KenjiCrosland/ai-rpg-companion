@@ -7,11 +7,11 @@ export const mockData = [
       npcs: [
         {
           id: 1.1,
-          characterName: 'Mock NPC 1',
-          descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          character_name: 'Mock NPC 1',
+          description_of_position: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          reason_for_being_there: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          distinctive_feature_or_mannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          character_secret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
           loadingRelationships: false,
           relationships: {
             'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',
@@ -21,11 +21,11 @@ export const mockData = [
         },
         {
           id: 1.2,
-          characterName: 'Mock NPC 2',
-          descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          character_name: 'Mock NPC 2',
+          description_of_position: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          reason_for_being_there: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          distinctive_feature_or_mannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          character_secret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
           loadingRelationships: false,
           relationships: {
             'Mock Character 3': 'Mock relationship description for Mock Character 3.',
@@ -43,11 +43,11 @@ export const mockData = [
       npcs: [
         {
           id: 2.1,
-          characterName: 'Mock NPC 1',
-          descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          character_name: 'Mock NPC 1',
+          description_of_position: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          reason_for_being_there: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          distinctive_feature_or_mannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          character_secret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
           loadingRelationships: false,
           relationships: {
             'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',
@@ -57,11 +57,11 @@ export const mockData = [
         },
         {
           id: 2.2,
-          characterName: 'Mock NPC 2',
-          descriptionOfPosition: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          reasonForBeingThere: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          distinctiveFeatureOrMannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
-          characterSecret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          character_name: 'Mock NPC 2',
+          description_of_position: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          reason_for_being_there: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          distinctive_feature_or_mannerism: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
+          character_secret: 'This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1. This is a mock description for NPC 1 in Location 1',
           loadingRelationships: false,
           relationships: {
             'Mock Character 1': 'Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1. Mock relationship description for Mock Character 1.',

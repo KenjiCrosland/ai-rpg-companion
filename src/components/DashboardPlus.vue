@@ -69,7 +69,7 @@
             @accordion-toggle="toggleNPCAccordion(locationIndex, npcIndex)">
             <template #label>
               <div class="accordion-header">
-                {{ npc.characterName }}
+                {{ npc.character_name }}
               </div>
             </template>
             <div class="content-container">
@@ -86,11 +86,14 @@
                   Delete NPC
                 </div>
               </cdr-tooltip>
-              <h2>{{ npc.characterName }}</h2>
-              <cdr-text class="body-text">{{ npc.descriptionOfPosition }}</cdr-text>
-              <cdr-text class="body-text">{{ npc.reasonForBeingThere }}</cdr-text>
-              <cdr-text class="body-text">{{ npc.distinctiveFeatureOrMannerism }}</cdr-text>
-              <cdr-text class="body-text">{{ npc.characterSecret }}</cdr-text>
+              <h2>{{ npc.character_name }}</h2>
+              <div class="read-aloud">
+              <cdr-text class="body-text">{{ npc.read_aloud_description }}</cdr-text>
+              </div>
+              <cdr-text class="body-text">{{ npc.description_of_position }}</cdr-text>
+              <cdr-text class="body-text">{{ npc.reason_for_being_there }}</cdr-text>
+              <cdr-text class="body-text">{{ npc.distinctive_feature_or_mannerism }}</cdr-text>
+              <cdr-text class="body-text">{{ npc.character_secret }}</cdr-text>
               <div v-if="!npc.loadingRelationships">
                 <h3>Relationships</h3>
                 <cdr-list>
@@ -106,7 +109,7 @@
                     <li v-for="(relationshipDescription, relationshipName) in npc.relationships" :key="relationshipName">
                       <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true"
                         :buttonText="relationshipName" :typeOfNPC="relationshipName"
-                        :extraDescription="{ locationName: location.name, locationContext: location.description, mainNPC: npc.characterName, relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
+                        :extraDescription="{ locationName: location.name, locationContext: location.description, mainNPC: npc.character_name, relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
                         @npc-description-generated="addNPCPart(locationIndex, { ...$event, relationshipNPC: true })"
                         @npc-description-part-received="updateFirstPartDescription(locationIndex, $event)"
                         @set-loading-state="setNPCLoadingState(locationIndex, $event)" />
@@ -276,23 +279,31 @@ export default {
     }
 
     function addNPCPart(locationIndex, response) {
-      if (response.part === 1) {
-        updateFirstPartDescription(locationIndex, response.npcDescription)
-      }
-      if (response.part === 2) {
-        addNPC(locationIndex, response.npcDescription)
-      }
+    if (response.part === 1) {
+        updateFirstPartDescription(locationIndex, response.npcDescription);
+        // Save first part
+        locations[locationIndex].firstPartDescription = response.npcDescription;
     }
-
-    function addNPC(locationIndex, npcDescription) {
-      const npc = locations[locationIndex].npcs[locations[locationIndex].npcs.length - 1];
-      npc.relationships = npcDescription.relationships;
-      npc.roleplaying_tips = npcDescription.roleplaying_tips;
-      npc.fullDescription = `${npcDescription.descriptionOfPosition} ${npcDescription.reasonForBeingThere} ${npcDescription.distinctiveFeatureOrMannerism} ${npcDescription.characterSecret}`
-
-      delete newNPCs[locationIndex].firstPart; // Remove the first part property
-      saveLocationsToLocalStorage();
+    if (response.part === 2) {
+        // Merge first and second parts
+        const completeDescription = {...locations[locationIndex].firstPartDescription, ...response.npcDescription};
+        addNPC(locationIndex, completeDescription);
+        // Delete the first part after it's used
+        delete locations[locationIndex].firstPartDescription;
     }
+}
+
+function addNPC(locationIndex, npcDescription) {
+    const npc = locations[locationIndex].npcs[locations[locationIndex].npcs.length - 1];
+    npc.relationships = npcDescription.relationships;
+    npc.roleplaying_tips = npcDescription.roleplaying_tips;
+    npc.read_aloud_description = npcDescription.read_aloud_description;
+    npc.fullDescription = `${npcDescription.description_of_position} ${npcDescription.reason_for_being_there} ${npcDescription.distinctive_feature_or_mannerism} ${npcDescription.character_secret}`;
+
+    delete newNPCs[locationIndex].firstPart; // Remove the first part property
+    saveLocationsToLocalStorage();
+}
+
 
     function deleteNPC(locationIndex, npcIndex) {
       openedNPCAccordions[locationIndex][npcIndex] = false;
@@ -302,7 +313,7 @@ export default {
 
     function updateFirstPartDescription(locationIndex, npcDescription) {
       if (!newNPCs[locationIndex].hasOwnProperty("firstPart")) {
-        newNPCs[locationIndex].firstPart = `${npcDescription.descriptionOfPosition} ${npcDescription.reasonForBeingThere} ${npcDescription.distinctiveFeatureOrMannerism} ${npcDescription.characterSecret}`;
+        newNPCs[locationIndex].firstPart = `${npcDescription.read_aloud_description} ${npcDescription.description_of_position} ${npcDescription.reason_for_being_there} ${npcDescription.distinctive_feature_or_mannerism} ${npcDescription.character_secret}`;
 
         const npc = {
           id: Math.random(),
@@ -428,6 +439,16 @@ h3 {
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
+}
+
+.read-aloud {
+    background-color: $cdr-color-background-secondary;
+    color: $cdr-color-text-secondary;
+    .body-text {
+      @include cdr-text-body-400();
+      font-style: italic;
+    }
+    padding: 1rem 2rem;
 }
 
 .cdr-accordion-group {

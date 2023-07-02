@@ -5,11 +5,12 @@ export function validateNPCDescription(jsonString) {
   try {
     const jsonObj = JSON.parse(jsonString);
     const keys = [
-      'characterName',
-      'descriptionOfPosition',
-      'reasonForBeingThere',
-      'distinctiveFeatureOrMannerism',
-      'characterSecret',
+      'character_name',
+      'description_of_position',
+      'reason_for_being_there',
+      'distinctive_feature_or_mannerism',
+      'character_secret',
+      'read_aloud_description',
     ];
     return keys.every((key) => key in jsonObj);
   } catch (error) {
