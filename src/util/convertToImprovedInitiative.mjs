@@ -27,7 +27,7 @@ export function convertToImprovedInitiative(monster) {
         "ConditionImmunities": monster.condition_immunities.split(', '),
         "Saves": [],
         "Skills": [],
-        "Senses": monster.senses.match(sensesRegex),
+        "Senses": monster.senses.match(sensesRegex) ? monster.senses.match(sensesRegex) : [],
         "Languages": [monster.languages],
         "Challenge": challengeRegex.exec(monster.challenge_rating)[1],
         "Traits": monster.abilities.map(ability => ({ "Name": ability.name, "Content": ability.description })),

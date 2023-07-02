@@ -19,7 +19,7 @@ const baseCreatureTemplate = {
   proficiency_bonus: '+5',
 };
 export function createStatblockPrompts(options) {
-  let { monsterName, challengeRating, monsterType, caster } = options;
+  let { monsterName, challengeRating, monsterType, monsterDescription, caster } = options;
   const monsterTypeDictionary = {
     Random: 'random',
     'Stronger Defense': 'defensive',
@@ -81,6 +81,14 @@ export function createStatblockPrompts(options) {
     });
     casterPrompt = "This creature is a spellcaster, so be sure to include thematically appropriate spells or cantrips for this creature in the abilities section. Also, make sure the spellcasting ability (INT, WIS or CHA) is at least 11 or above. These spells will all require an action or bonus action depending on the spell"
   }
+
+  let monsterDescriptionPromptPart1 = '';
+  let monsterDescriptionPromptPart2 = '';
+  if (monsterDescription.length > 0){
+    monsterDescriptionPromptPart1 = `Finally, here are some final output instructions provided by the user via a form field. These instructions could include a description of the creature (example: the creature is very evasive) or output instructions (please output in a particular language) Do not modify stats based on the special instructions unless explicitly stated below. Also, as this creature will be generated in two parts, please ignore any details of the below special instructions that doesn't fit into the above data structure: 
+    ${monsterDescription}`;
+    monsterDescriptionPromptPart2 = `Finally, please remember the final output instructions provided in the previous prompt: ${monsterDescription}. If any part of these special instructions can be applied to the actions or legendary actions (either mechanically or as flavor) please do so. Do not modify stats based on special instructions unless explcitly stated to do so.`
+  }
   baseCreatureTemplate.abilities = abilities;
   let legendaryResistancePrompt = '';
   if (template.legendary_actions) {
@@ -90,7 +98,9 @@ export function createStatblockPrompts(options) {
     })
     legendaryResistancePrompt = `Be sure to include legendary resistances in the abilities array for this creature`;
   }
-  if (template.actions.length <= 3) {
+  console.log(parseInt(challengeRating));
+  if (template.actions.length <= 3 && parseInt(challengeRating) > 1) {
+    console.log("In another action");
     template.actions.push({
       name: "Another Action",
       description: 'An action that thematically matches the creature. The more unique the better. If this technique does more damage than normal, add a recharge mechanic',
@@ -148,13 +158,14 @@ export function createStatblockPrompts(options) {
     
     With the above format in mind, please generate the first part of a statblock for ${monsterName}. Abilities should be passive and not require an action. ${casterPrompt}
     The creature should have a challenge_rating ${challengeRating} with a proficiency_bonus of +${challengeRatingObj.proficiency_bonus}. The effective armor_class should be around ${template.armor_class} (depending on abilities) and hit_points should be ${template.hit_points}.
-    ${savingThrowsPrompt}. ${resistanceAndImmunitiesPrompt} ${legendaryResistancePrompt}. Remember that the only possible damage types are from this list: Acid, Bludgeoning, Cold, Fire, Force, Lightning, Necrotic, Piercing, Poison, Psychic, Radiant, Slashing, Thunder as well as "Bludgeoning, Slashing and Piercing from non-magical weapons". Finally condition_immunities can only be selected from this list: Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious`,
+    ${savingThrowsPrompt}. ${resistanceAndImmunitiesPrompt} ${legendaryResistancePrompt}. Remember that the only possible damage types are from this list: Acid, Bludgeoning, Cold, Fire, Force, Lightning, Necrotic, Piercing, Poison, Psychic, Radiant, Slashing, Thunder as well as "Bludgeoning, Slashing and Piercing from non-magical weapons". Finally condition_immunities can only be selected from this list: Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious
+    ${monsterDescriptionPromptPart1}`,
     
-    part2: `Please give me the second part of a D&D statblock in the following format. Use the same number of actions and abilities (except the example action) and use all the info provided in the description. Use the exact average damage, number/type of dice and damage modifiers provided below for each action template. Anything in this format: 30 (4d12 + 4) should not be changed.
+    part2: `Please give me the second part of a D&D statblock in the following format. Use the same number of actions and abilities (except the example action) and use all the info provided in the description. Use the exact average damage, number/type of dice and damage modifiers provided below for each action template. Anything in this format: 30 (4d12 + 4) should not be changed. If special instructions were used in the previous prompt, please use it to inform the actions of this creature.
     
     ${JSON.stringify(part2Obj, null, "\t")}
     
-    With the above format in mind, please generate the second part of a statblock for ${monsterName}. The attack_bonus for each attack should be ${template.to_hit_bonus || challengeRatingObj.attack_bonus}. For each of the example actions in the actions array, please retain the exact avg_damage and the exact (number_of_dice/type_of_dice + modifier) and the exact dice roll modifiers. Do not add more actions than there are examples for them. Provide damage types and flavor. ${multiattackString} Actions (Action 1, Action 2, etc) should be replaced with their actual generated names. Actions should not repeat any content from the previously generated abilities array. Conditions caused by actions should vary and not repeat conditions cuased by other actions or abilities. Don't include passive abilities. Finally, if an action doesn't fit thematically with ${monsterName} feel free to modify but try to keep damage and DC saves the same.`,
+    With the above format in mind, please generate the second part of a statblock for ${monsterName}. The attack_bonus for each attack should be ${template.to_hit_bonus || challengeRatingObj.attack_bonus}. For each of the example actions in the actions array, please retain the exact avg_damage and the exact (number_of_dice/type_of_dice + modifier) and the exact dice roll modifiers. Do not add more actions than there are examples for them. Provide damage types and flavor. ${multiattackString} Actions (Action 1, Action 2, etc) should be replaced with their actual generated names. Actions should not repeat any content from the previously generated abilities array. Conditions caused by actions should vary and not repeat conditions cuased by other actions or abilities. Don't include passive abilities. Finally, if an action doesn't fit thematically with ${monsterName} feel free to modify but try to keep damage and DC saves the same. ${monsterDescriptionPromptPart2}`,
   };
 }
 
