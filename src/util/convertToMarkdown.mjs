@@ -10,9 +10,12 @@ export function convertLocationsToMarkdown(locations) {
         markdown += `### NPCs in ${location.name}\n\n`;
         location.npcs.forEach(npc => {
           markdown += `#### ${npc.character_name}\n\n`;
-          markdown += `${npc.description_of_position}\n`;
-          markdown += `${npc.reason_for_being_there}\n`;
-          markdown += `${npc.distinctive_feature_or_mannerism}\n`;
+          if (npc.read_aloud_description) {
+            markdown += `{{descriptive \n${npc.read_aloud_description}\n}}\n\n`
+          }
+          markdown += `${npc.description_of_position}\n\n`;
+          markdown += `${npc.reason_for_being_there}\n\n`;
+          markdown += `${npc.distinctive_feature_or_mannerism}\n\n`;
           markdown += `${npc.character_secret}\n\n`;
   
           if (npc.relationships) {
@@ -24,8 +27,7 @@ export function convertLocationsToMarkdown(locations) {
           }
   
           if (npc.roleplaying_tips) {
-            markdown += `##### Roleplaying Tips\n\n`;
-            markdown += `${npc.roleplaying_tips}\n\n`;
+            markdown += `{{note\n##### Roleplaying Tips\n${npc.roleplaying_tips}\n}}`
           }
         });
       }
