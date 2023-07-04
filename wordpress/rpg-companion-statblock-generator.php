@@ -58,6 +58,9 @@ function vue_app_enqueue_assets() {
             .statblock ul.abilities {
                 margin: 0;
             }
+            .read-aloud p {
+                margin-bottom: 1rem;
+            }
             .statblock th, .statblock td {
                 padding: 0;
                 text-align: center;
