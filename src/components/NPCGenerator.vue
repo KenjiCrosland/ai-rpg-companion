@@ -62,11 +62,14 @@
                 </CdrSkeleton>
             </div>
             <div v-if="npcDescriptionPart1 && !loadingPart1">
-                <h2>{{ npcDescriptionPart1.characterName }}</h2>
-                <p>{{ npcDescriptionPart1.descriptionOfPosition }}</p>
-                <p>{{ npcDescriptionPart1.reasonForBeingThere }}</p>
-                <p>{{ npcDescriptionPart1.distinctiveFeatureOrMannerism }}</p>
-                <p>{{ npcDescriptionPart1.characterSecret }}</p>
+                <h2>{{ npcDescriptionPart1.character_name }}</h2>
+                <div class="read-aloud">
+                    <p>{{ npcDescriptionPart1.read_aloud_description }}</p>
+                </div>
+                <p>{{ npcDescriptionPart1.description_of_position }}</p>
+                <p>{{ npcDescriptionPart1.reason_for_being_there }}</p>
+                <p>{{ npcDescriptionPart1.distinctive_feature_or_mannerism }}</p>
+                <p>{{ npcDescriptionPart1.character_secret }}</p>
             </div>
             <div v-if="loadingPart2">
                 <h3>Relationships</h3>
@@ -225,6 +228,12 @@ hr {
 .intro {
     @include cdr-text-body-400();
     margin: 1rem 0;
+}
+.read-aloud {
+    background-color: $cdr-color-background-secondary;
+    color: $cdr-color-text-secondary;
+    padding: 1rem 2rem;
+    font-style: italic;
 }
 
 .suggestions {

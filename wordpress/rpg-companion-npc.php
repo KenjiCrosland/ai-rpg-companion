@@ -29,6 +29,7 @@ function vue_app_enqueue_assets() {
     $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-npc/dist/assets';
 
     $files = scandir($vue_app_path);
+    $enqueued_style_handle = '';
 
     foreach ($files as $file) {
         $file_path = $vue_app_path . '/' . $file; // Add the missing slash
@@ -38,11 +39,27 @@ function vue_app_enqueue_assets() {
             $ext = pathinfo($file, PATHINFO_EXTENSION);
 
             if ($ext === 'css') {
-                wp_enqueue_style('index-' . md5($file), $file_url, [], null);
+                $handle = 'index-' . md5($file);
+                wp_enqueue_style($handle, $file_url, [], null);
+                $enqueued_style_handle = $handle;
             } elseif ($ext === 'js') {
                 wp_enqueue_script('index-' . md5($file), $file_url, [], null, true);
             }
         }
+    }
+
+    if ($enqueued_style_handle) {
+        $custom_css = '
+        .read-aloud {
+            padding: 1rem 2.5rem;
+            width: 90%;
+            margin: 2rem auto;
+        }
+        .read-aloud p {
+            margin-bottom: 1rem;
+          }
+        ';
+        wp_add_inline_style($enqueued_style_handle, $custom_css);
     }
 }
 add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );

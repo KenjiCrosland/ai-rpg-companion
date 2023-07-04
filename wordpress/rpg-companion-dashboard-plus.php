@@ -58,6 +58,9 @@ function vue_app_enqueue_assets() {
                 max-width: 100%;
                 width: 100%;
             }
+            .read-aloud p {
+                margin-bottom: 1rem;
+            }
             .entry-content ul > li {
                 list-style-type: none;
             }

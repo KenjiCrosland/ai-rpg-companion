@@ -139,10 +139,10 @@ export function generatePDF(locations) {
 
       location.npcs.forEach((npc) => {
         doc.setTextColor(8,8,8);
-        printParagraphs(npc.characterName, "times", 14, 5, true);
+        printParagraphs(npc.character_name, "times", 14, 5, true);
         doc.setTextColor(59, 58, 56);
         printParagraphs(
-          `${npc.descriptionOfPosition}\n${npc.reasonForBeingThere}\n${npc.distinctiveFeatureOrMannerism}\n${npc.characterSecret}`,
+          `${npc.description_of_position}\n${npc.reason_for_being_there}\n${npc.distinctive_feature_or_mannerism}\n${npc.character_secret}`,
           "helvetica",
           10,
           5
