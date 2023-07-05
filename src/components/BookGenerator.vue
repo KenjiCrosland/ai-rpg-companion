@@ -72,53 +72,7 @@
             <cdr-text class="body-text">{{ bookDescriptions[index].secret_found }}</cdr-text>
           </div>
           <div v-if="loadingDescriptions[index]">
-            <CdrSkeleton style="margin-top: 2rem;">
-              <CdrSkeletonBone type="heading" style="width: 85%; height: 35px" />
-
-              <h3>Author Name</h3>
-              <CdrSkeletonBone type="line" style="width:35%" />
-
-              <h3>Author's Background</h3>
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:90%" />
-              <CdrSkeletonBone type="line" style="width:85%" />
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:30%" />
-
-              <h3>Book Physical Description</h3>
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:90%" />
-              <CdrSkeletonBone type="line" style="width:85%" />
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:30%" />
-
-              <h3>Summary</h3>
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:90%" />
-              <CdrSkeletonBone type="line" style="width:85%" />
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:60%" />
-
-              <h3>Excerpt</h3>
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:90%" />
-              <CdrSkeletonBone type="line" style="width:85%" />
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:60%" />
-
-              <h3>Secret</h3>
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:90%" />
-              <CdrSkeletonBone type="line" style="width:85%" />
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:60%" />
-
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:90%" />
-              <CdrSkeletonBone type="line" style="width:85%" />
-              <CdrSkeletonBone type="line" style="width:95%" />
-              <CdrSkeletonBone type="line" style="width:30%" />
-            </CdrSkeleton>
+            <BookSkeleton/>
           </div>
         </div>
       </cdr-accordion>
@@ -126,8 +80,10 @@
   </div>
 </template>
   
-<script setup>
+
+<script>
 import { ref } from 'vue';
+import BookSkeleton from './BookSkeleton.vue';
 import { CdrInput, CdrButton, CdrList, CdrText, CdrAccordionGroup, CdrAccordion, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 import "@rei/cedar/dist/cdr-fonts.css";
 import "@rei/cedar/dist/reset.css";
@@ -141,63 +97,78 @@ import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 import { generateGptResponse } from "../util/open-ai.mjs";
 
-const setting = ref('');
-const location = ref('');
-const genre = ref('');
-const openedAccordions = ref([]);
-const bookDescriptions = ref([]);
-const bookTitles = ref(null);
-const loadingTitles = ref(false);
-const loadingDescriptions = ref([]);
+export default {
+  components: {
+    BookSkeleton,
+    CdrInput,
+    CdrButton,
+    CdrList,
+    CdrText,
+    CdrAccordionGroup,
+    CdrAccordion,
+    CdrSkeleton,
+    CdrSkeletonBone
+  },
+  setup() {
+    const setting = ref('');
+    const location = ref('');
+    const genre = ref('');
+    const openedAccordions = ref([]);
+    const bookDescriptions = ref([]);
+    const bookTitles = ref(null);
+    const loadingTitles = ref(false);
+    const loadingDescriptions = ref([]);
 
-function toggleAccordion(index) {
-  openedAccordions.value[index] = !openedAccordions.value[index];
-}
+    function toggleAccordion(index) {
+      openedAccordions.value[index] = !openedAccordions.value[index];
+    }
 
-const generateBookTitles = async () => {
-  bookTitles.value = null;
-  bookDescriptions.value = [];
-  openedAccordions.value = [];
-  let genrePrompt = '';
-  if (genre.value) {
-    genrePrompt = `but also include 1-2 books focused on ${genre.value}`;
-  }
-  const prompt = `Generate an eclectic list of 7 book titles. The books are located in a ${location.value} in the ${setting.value} setting but be sure to include an eclectic mix of books. Make sure that the books reflect various interests and genres (including fiction, non-fiction and reference books)${genrePrompt}. Only provide the title and do not number the results.`;
+    const generateBookTitles = async () => {
+      bookTitles.value = null;
+      bookDescriptions.value = [];
+      openedAccordions.value = [];
+      let genrePrompt = '';
+      if (genre.value) {
+        genrePrompt = `but also include 1-2 books focused on ${genre.value}`;
+      }
+      const prompt = `Generate an eclectic list of 7 book titles. The books are located in a ${location.value} in the ${setting.value} setting but be sure to include an eclectic mix of books. Make sure that the books reflect various interests and genres (including fiction, non-fiction and reference books)${genrePrompt}. Only provide the title and do not number the results.`;
 
-  try {
-    loadingTitles.value = true;
+      try {
+        loadingTitles.value = true;
 
-    const response = await generateGptResponse(prompt);
-    console.log(response);
-    bookTitles.value = response.split('\n');
-    loadingTitles.value = false;
-  } catch (error) {
-    console.error("Error generating book titles:", error);
-  }
-};
-function validateBookJSON(jsonString) {
-  try {
-    const jsonObj = JSON.parse(jsonString);
-    const keys = [
-      'book_title',
-      'author_name',
-      'author_background',
-      'book_physical_description',
-      'summary',
-      "excerpt",
-      "secret_description",
-      "secret_check_difficulty",
-      "secret_check_needed",
-      "secret_found"
-    ];
-    return keys.every((key) => key in jsonObj);
-  } catch (error) {
-    return false;
-  }
-}
-const generateBookDescription = async (title, index) => {
-  bookDescriptions.value[index] = null;
-  const prompt = `Generate a description for a book with the title "${title}". This book was found in a "${location.value}" in the "${setting.value}" setting. Please provide the information in the following JSON format: 
+        const response = await generateGptResponse(prompt);
+        console.log(response);
+        bookTitles.value = response.split('\n');
+        loadingTitles.value = false;
+      } catch (error) {
+        console.error("Error generating book titles:", error);
+      }
+    };
+
+    function validateBookJSON(jsonString) {
+      try {
+        const jsonObj = JSON.parse(jsonString);
+        const keys = [
+          'book_title',
+          'author_name',
+          'author_background',
+          'book_physical_description',
+          'summary',
+          "excerpt",
+          "secret_description",
+          "secret_check_difficulty",
+          "secret_check_needed",
+          "secret_found"
+        ];
+        return keys.every((key) => key in jsonObj);
+      } catch (error) {
+        return false;
+      }
+    }
+
+    const generateBookDescription = async (title, index) => {
+      bookDescriptions.value[index] = null;
+      const prompt = `Generate a description for a book with the title "${title}". This book was found in a "${location.value}" in the "${setting.value}" setting. Please provide the information in the following JSON format: 
       {
         "book_title": "<Book's Title>"
         "author_name": "<Author's name>",
@@ -211,16 +182,33 @@ const generateBookDescription = async (title, index) => {
         "secret_found": "<Description of how the secret appears in the book and how it can be found by the reader>"
         }
       }.`;
-  try {
-    loadingDescriptions.value[index] = true;
-    const response = await generateGptResponse(prompt, validateBookJSON);
-    console.log(response);
-    bookDescriptions.value[index] = JSON.parse(response);
-    loadingDescriptions.value[index] = false;
-  } catch (error) {
-    console.error("Error generating book titles:", error);
+      try {
+        loadingDescriptions.value[index] = true;
+        const response = await generateGptResponse(prompt, validateBookJSON);
+        console.log(response);
+        bookDescriptions.value[index] = JSON.parse(response);
+        loadingDescriptions.value[index] = false;
+      } catch (error) {
+        console.error("Error generating book titles:", error);
+      }
+    }
+
+    return {
+      setting,
+      location,
+      genre,
+      openedAccordions,
+      bookDescriptions,
+      bookTitles,
+      loadingTitles,
+      loadingDescriptions,
+      toggleAccordion,
+      generateBookTitles,
+      validateBookJSON,
+      generateBookDescription
+    };
   }
-}
+};
 </script>
   
 <style scoped lang="scss">
