@@ -32,7 +32,7 @@ export default {
 },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'book-generator',
+      currentPage: this.$attrs['data-page'] || 'gm-dashboard-plus',
     };
   },
   mounted() {
