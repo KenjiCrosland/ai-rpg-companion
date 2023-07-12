@@ -5,6 +5,7 @@
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
     <StatblockGenerator v-if="currentPage === 'statblock-generator'"/>
+    <BookGenerator v-if="currentPage === 'book-generator'"/>
   </div>
 </template>
 
@@ -14,6 +15,7 @@ import NPCGenerator from './components/NPCGenerator.vue';
 import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
 import StatblockGenerator from './components/StatblockGenerator.vue';
+import BookGenerator from './components/BookGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -25,8 +27,9 @@ export default {
     DashboardPlus,
     StatblockGenerator,
     CdrLink,
-    CdrText
-  },
+    CdrText,
+    BookGenerator
+},
   data() {
     return {
       currentPage: this.$attrs['data-page'] || 'gm-dashboard-plus',

@@ -57,6 +57,7 @@ export async function generateGptResponse(
       if (!validateJSONKeys){
         return responseContent;
       }
+      console.log(responseData.choices[0].message.content);
       validJsonString =  extractJSONFromString(responseData.choices[0].message.content);
       //console.log("valid: " + validJsonString);
       if (!validJsonString) {
