@@ -30,7 +30,16 @@ export function convertToFoundryVTT(monster) {
   
     // Abilities
     monster.abilities.forEach((ability) => {
-      lines.push(`${ability.name}. ${ability.description}`);
+      if (ability.name !== 'Spellcasting') {
+        lines.push(`${ability.name}. ${ability.description}`);
+      } else {
+        // Special handling for spellcasting
+        const spellcastingLines = ability.description.split('\n').filter(line => line);
+        lines.push(`${ability.name}. ${spellcastingLines[0]}`);
+        for(let i = 1; i < spellcastingLines.length; i++) {
+          lines.push(spellcastingLines[i]);
+        }
+      }
     });
   
     // Actions

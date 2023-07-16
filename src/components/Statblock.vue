@@ -116,6 +116,21 @@
     </div>
     <div class="exports">
         <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
+        <h3>Use Homebrewery to Make a Beautiful PDF of Your Statblock!</h3>
+        <cdr-list tag="ol" modifier="ordered">
+            <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
+            <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
+                    rel="noopener noreferrer">Homebrewery</a>.</li>
+            <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the
+                content as
+                you like.</li>
+            <li>Enjoy the beautifully formatted content!</li>
+        </cdr-list>
+        <div class="markdown-button">
+            <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
+        </div>
+    </div>
+        <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
         <h3>Export this Monster to Foundry VTT!</h3>
         <cdr-list tag="ol" modifier="ordered">
             <li>Click the "Copy as Foundry VTT text" button below to copy the generated content in a text block compatible with the Foundry VTT.</li>
@@ -141,21 +156,7 @@
             <cdr-button @click="copyAsImprovedInitiative">Copy as Improved Initiative JSON</cdr-button>
         </div>
     </div>
-    <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
-        <h3>Use Homebrewery to Make a Beautiful PDF of Your Statblock!</h3>
-        <cdr-list tag="ol" modifier="ordered">
-            <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
-            <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
-                    rel="noopener noreferrer">Homebrewery</a>.</li>
-            <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the
-                content as
-                you like.</li>
-            <li>Enjoy the beautifully formatted content!</li>
-        </cdr-list>
-        <div class="markdown-button">
-            <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
-        </div>
-    </div>
+
     
 </div>
 </template>
