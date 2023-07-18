@@ -32,7 +32,7 @@ export default {
 },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'gm-dashboard-plus',
+      currentPage: this.$attrs['data-page'] || 'statblock-generator',
     };
   },
   mounted() {

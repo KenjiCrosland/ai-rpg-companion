@@ -38,7 +38,7 @@ function vue_app_enqueue_assets() {
         if (is_file($file_path)) {
             $ext = pathinfo($file, PATHINFO_EXTENSION);
 
-            $version = '1.3.0';
+            $version = '1.4.0';
 
             if ($ext === 'css') {
                 $handle = 'index-' . md5($file);

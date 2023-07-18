@@ -115,21 +115,7 @@
         </div>
     </div>
     <div class="exports">
-    <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
-        <h3>Export this Monster to the Improved Initiative App</h3>
-        <cdr-list tag="ol" modifier="ordered">
-            <li>Click the "Copy as Improved Initiative JSON" button below to copy the generated content in JSON format compatible with the Improved Initiative App.</li>
-            <li>Visit <a href="https://improvedinitiative.app/e/" target="_blank"
-                    rel="noopener noreferrer">The Improved Initiative App</a>.</li>
-            <li>Click "Add New" at the bottom right left of the screen.</li>
-            <li>Choose the "JSON" Editor mode and paste your copied JSON in the text area</li>
-            <li>Save the monster and have fun!</li>
-        </cdr-list>
-        <div class="markdown-button">
-            <cdr-button @click="copyAsImprovedInitiative">Copy as Improved Initiative JSON</cdr-button>
-        </div>
-    </div>
-    <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
+        <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
         <h3>Use Homebrewery to Make a Beautiful PDF of Your Statblock!</h3>
         <cdr-list tag="ol" modifier="ordered">
             <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
@@ -144,6 +130,34 @@
             <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
         </div>
     </div>
+        <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
+        <h3>Export this Monster to Foundry VTT!</h3>
+        <cdr-list tag="ol" modifier="ordered">
+            <li>Click the "Copy as Foundry VTT text" button below to copy the generated content in a text block compatible with the Foundry VTT.</li>
+            <li>Follow these <a href="https://foundryvtt.com/packages/5e-statblock-importer" target="_blank"
+                    rel="noopener noreferrer">Foundry VTT Import Instructions</a>. to import to Foundry VTT</li>
+            <li>Have Fun!</li>
+        </cdr-list>
+        <div class="markdown-button">
+            <cdr-button @click="copyAsVTT">Copy in Foundry VTT Text Format</cdr-button>
+        </div>
+    </div>
+    <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
+        <h3>Export this Monster to the Improved Initiative App</h3>
+        <cdr-list tag="ol" modifier="ordered">
+            <li>Click the "Copy as Improved Initiative JSON" button below to copy the generated content in JSON format compatible with the Improved Initiative App.</li>
+            <li>Visit <a href="https://improvedinitiative.app/e/" target="_blank"
+                    rel="noopener noreferrer">The Improved Initiative App</a>.</li>
+            <li>Click "Add New" at the bottom right left of the screen.</li>
+            <li>Choose the "JSON" Editor mode and paste your copied JSON in the text area</li>
+            <li>Save the monster and have fun!</li>
+        </cdr-list>
+        <div class="markdown-button">
+            <cdr-button @click="copyAsImprovedInitiative">Copy as Improved Initiative JSON</cdr-button>
+        </div>
+    </div>
+
+    
 </div>
 </template>
   
@@ -154,6 +168,7 @@ import { ref, computed, defineProps, onMounted, onBeforeUnmount } from 'vue';
 import { CdrToggleButton, CdrToggleGroup, CdrButton, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
 import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
+import { convertToFoundryVTT } from '../util/convertToFoundryVTT.mjs';
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
 import "@rei/cedar/dist/style/cdr-toggle-button.css";
 import "@rei/cedar/dist/style/cdr-list.css";
@@ -232,6 +247,26 @@ const copyAsMarkdown = () => {
         // If there is no content to copy, display a message to the user.
         alert('No content available to copy as markdown.');
     }
+}
+
+const copyAsVTT = () => {
+
+const VTTContent = convertToFoundryVTT(props.monster);
+
+if (VTTContent) {
+    const textarea = document.createElement('textarea');
+    textarea.textContent = VTTContent;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    // Optionally, display a message that the content has been copied.
+    alert('Content copied in Foundry VTT Format!');
+} else {
+    // If there is no content to copy, display a message to the user.
+    alert('No content available to copy as markdown.');
+}
 }
 
 const copyAsImprovedInitiative = () => {
