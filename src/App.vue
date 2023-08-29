@@ -6,6 +6,7 @@
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
     <StatblockGenerator v-if="currentPage === 'statblock-generator'"/>
     <BookGenerator v-if="currentPage === 'book-generator'"/>
+    <LoreGenerator v-if="currentPage === 'lore-generator'" />
   </div>
 </template>
 
@@ -16,12 +17,14 @@ import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
 import StatblockGenerator from './components/StatblockGenerator.vue';
 import BookGenerator from './components/BookGenerator.vue';
+import LoreGenerator from './components/LoreGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 export default {
   components: {
     LocationGenerator,
+    LoreGenerator,
     NPCGenerator,
     Dashboard,
     DashboardPlus,
@@ -32,7 +35,7 @@ export default {
 },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'statblock-generator',
+      currentPage: this.$attrs['data-page'] || 'lore-generator',
     };
   },
   mounted() {
