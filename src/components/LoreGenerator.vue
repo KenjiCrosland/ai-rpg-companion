@@ -3,7 +3,7 @@
 
     <div class="top-container">
       <form class="subject-form" @submit.prevent="generateTimelineEvents">
-        <h1>RPG Timeline Generator</h1>
+        <h2>Event Generation Form</h2>
         <cdr-input class="subject-form-input" id="subject" v-model="subject" background="secondary"
           label="Name of Person, Place or Thing:" required>
           <template #helper-text-bottom>
@@ -49,7 +49,7 @@
         <h2>Potential Events</h2>
         <cdr-accordion-group>
           <cdr-accordion v-for="n in 3" :key="n" level="3" :id="`accordion-${n}`" :opened="eventsAccordion[n]"
-          @accordion-toggle="handleAccordionToggle(n - 1)">
+            @accordion-toggle="handleAccordionToggle(n - 1)">
             <template #label>
               <CdrSkeleton>
                 <CdrSkeletonBone type="line" style="width:300px" />
@@ -78,7 +78,8 @@
       </div>
     </div>
 
-    <cdr-button class="clear-button" modifier="secondary"  @click="clearLocalStorage" :full-width="true" type="button">Clear All Timeline Data</cdr-button>
+    <cdr-button class="clear-button" modifier="secondary" @click="clearLocalStorage" :full-width="true"
+      type="button">Clear All Timeline Data</cdr-button>
 
     <div>
       <h2 v-if="timelineEvents.length > 0">Historic Timeline of {{ subject }}</h2>
@@ -99,30 +100,64 @@
       </div>
       <div v-if="loadingSummary">
         <CdrSkeleton>
-                <h2>Historic Summary of {{ subject }}</h2>
-                <CdrSkeletonBone type="line" style="width:100%" />
-                <CdrSkeletonBone type="line" style="width:95%" />
-                <CdrSkeletonBone type="line" style="width:90%" />
-                <CdrSkeletonBone type="line" style="width:97%" />
-                <CdrSkeletonBone type="line" style="width:85%" />
-                <CdrSkeletonBone type="line" style="width:30%" />
-                <h3 v-if="currentState">Current State of {{ subject }}</h3>
-                <CdrSkeletonBone type="line" style="width:100%" />
-                <CdrSkeletonBone type="line" style="width:95%" />
-                <CdrSkeletonBone type="line" style="width:90%" />
-                <CdrSkeletonBone type="line" style="width:97%" />
-                <CdrSkeletonBone type="line" style="width:85%" />
-                <CdrSkeletonBone type="line" style="width:30%" />
+          <h2>Historic Summary of {{ subject }}</h2>
+          <CdrSkeletonBone type="line" style="width:100%" />
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:97%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:30%" />
+          <h3 v-if="currentState">Current State of {{ subject }}</h3>
+          <CdrSkeletonBone type="line" style="width:100%" />
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:97%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:30%" />
         </CdrSkeleton>
       </div>
-      <cdr-button v-if="timelineSummary" class="generate-button" @click="generateTimelineSummary()" type="button" :disabled="loadingSummary">Re-Generate Summary</cdr-button>
-      <cdr-button v-if="!timelineSummary && timelineEvents.length > 0" class="generate-button" @click="generateTimelineSummary()" type="button" :disabled="loadingSummary">Generate Summary of Timeline</cdr-button>
+      <cdr-button v-if="timelineSummary" class="generate-button" @click="generateTimelineSummary()" type="button"
+        :disabled="loadingSummary">Re-Generate Summary</cdr-button>
+      <cdr-button v-if="!timelineSummary && timelineEvents.length > 0" class="generate-button"
+        @click="generateTimelineSummary()" type="button" :disabled="loadingSummary">Generate Summary of
+        Timeline</cdr-button>
 
+    </div>
+    <div class="exports">
+      <div class="instructions">
+        <h3>Use Homebrewery to Make a Beautiful PDF of Your Timeline!</h3>
+        <cdr-list tag="ol" modifier="ordered">
+          <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
+          <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
+              rel="noopener noreferrer">Homebrewery</a>.</li>
+          <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the
+            content as
+            you like.</li>
+          <li>Enjoy the beautifully formatted content!</li>
+        </cdr-list>
+        <div class="markdown-button">
+          <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
+        </div>
+      </div>
+      <div class="instructions">
+        <h3>Copy Timeline as Plain Text</h3>
+        <cdr-list tag="ol" modifier="ordered">
+          <li>Click the "Copy as Plain Text" button below to copy the generated content in plain text format.</li>
+          <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the
+            content as
+            you like.</li>
+          <li>Enjoy the beautifully formatted content!</li>
+        </cdr-list>
+        <div class="markdown-button">
+          <cdr-button @click="copyPlainText">Copy as Plain Text</cdr-button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import { convertLoreToMarkdown } from '../util/convertToMarkdown.mjs';
 import { ref, computed } from "vue";
 import {
   CdrAccordion,
@@ -134,7 +169,8 @@ import {
   CdrSkeletonBone,
   CdrSelect,
   CdrText,
-  CdrGrid
+  CdrGrid,
+  CdrList
 } from "@rei/cedar";
 import "@rei/cedar/dist/cdr-fonts.css";
 import "@rei/cedar/dist/reset.css";
@@ -144,6 +180,7 @@ import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-grid.css";
 import "@rei/cedar/dist/style/cdr-button.css";
 import "@rei/cedar/dist/style/cdr-card.css";
+import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-select.css";
 import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
@@ -162,6 +199,7 @@ export default {
     CdrSkeleton,
     CdrSkeletonBone,
     CdrText,
+    CdrList
   },
   setup() {
     const subject = ref("");
@@ -172,6 +210,21 @@ export default {
       "Origin Event",
       "Transformative Event (Bad)",
       "Transformative Event (Good)",
+      "Transformative Event (Mixed Consequences)",
+      "Unusual/Weird Event",
+      "Alteration/Modification",
+      "Movement/Relocation",
+      "Peak/Milestone",
+      "Decline/Deterioration",
+      "Revival/Renewal",
+      "Conflict/Struggle",
+      "Resolution/Agreement",
+      "Discovery/Recognition",
+      "End/Destruction",
+      "Association/Connection",
+      "Separation/Isolation",
+      "Conservation/Preservation",
+      "Expansion/Growth"
     ];
     const currentYear = ref("");
     const yearReckoning = ref("");
@@ -200,17 +253,21 @@ export default {
         // ... (any other data you want to save)
       };
 
-    localStorage.setItem("rpgTimelineState", JSON.stringify(appState));
-  };
+      localStorage.setItem("rpgTimelineState", JSON.stringify(appState));
+    };
 
-  const handleAccordionToggle = (index) => {
-    console.log(index);
-    for (let i = 0; i < eventsAccordion.value.length; i++) {
-      eventsAccordion.value[i] = (i === index);
+    const handleAccordionToggle = (index) => {
+      if (eventsAccordion.value[index]) { // If the current accordion is open
+        eventsAccordion.value[index] = false; // Close it
+      } else {
+        for (let i = 0; i < eventsAccordion.value.length; i++) {
+          eventsAccordion.value[i] = (i === index); // Open the clicked one and close all others
+        }
+      }
     }
-  }
 
-  function summaryObjectValidation(jsonString) {
+
+    function summaryObjectValidation(jsonString) {
       try {
         const jsonObj = JSON.parse(jsonString);
         const keys = ["timeline_summary", "current_state"];
@@ -233,7 +290,6 @@ export default {
     const timelineEventsText = computed(() => {
       let promptString = "And here are the current timeline events: \n";
       if (timelineEvents.value.length) {
-        console.log(timelineEvents);
         let eventString = timelineEvents.value.reverse()
           .map(
             (event) => `${event.title} (${event.eventYear})\n${event.details}`
@@ -245,15 +301,15 @@ export default {
       return "";
     });
 
-const eventYearString = computed(() => {
-  const matches = currentYear.value.match(/\d+/g);
-  if (matches && matches.length === 1){
-    currentYearNumber.value = parseInt(matches[0], 10);
-    yearReckoning.value = currentYear.value.replace(/\d+/, "THE_YEAR");
-    const eventYear = (currentYearNumber.value - yearsAgo.value).toString();
-    return yearReckoning.value.replace("THE_YEAR", eventYear);
-  }
-});
+    const eventYearString = computed(() => {
+      const matches = currentYear.value.match(/\d+/g);
+      if (matches && matches.length === 1) {
+        currentYearNumber.value = parseInt(matches[0], 10);
+        yearReckoning.value = currentYear.value.replace(/\d+/, "THE_YEAR");
+        const eventYear = (currentYearNumber.value - yearsAgo.value).toString();
+        return yearReckoning.value.replace("THE_YEAR", eventYear);
+      }
+    });
 
 
     const generateTimelineEvents = async () => {
@@ -270,6 +326,51 @@ const eventYearString = computed(() => {
           break;
         case "Transformative Event (Good)":
           eventSpecificPrompt = `a positive transformative event in the history of ${subject.value}`;
+          break;
+        case "Transformative Event (Mixed Consequences)":
+          eventSpecificPrompt = `a transformative event in the history of ${subject.value} with mixed consequences`;
+          break;
+        case "Unusual/Weird Event":
+          eventSpecificPrompt = `a weird, strange, or unusual event in the history of ${subject.value}`;
+          break;
+        case "Alteration/Modification":
+          eventSpecificPrompt = `an alteration or modification in the history of ${subject.value}`;
+          break;
+        case "Movement/Relocation":
+          eventSpecificPrompt = `a time when ${subject.value} moved or was relocated`;
+          break;
+        case "Peak/Milestone":
+          eventSpecificPrompt = `a peak or significant milestone in the history of ${subject.value}`;
+          break;
+        case "Decline/Deterioration":
+          eventSpecificPrompt = `a period of decline or deterioration for ${subject.value}`;
+          break;
+        case "Revival/Renewal":
+          eventSpecificPrompt = `a revival or renewal moment for ${subject.value}`;
+          break;
+        case "Conflict/Struggle":
+          eventSpecificPrompt = `a conflict or struggle related to ${subject.value}`;
+          break;
+        case "Resolution/Agreement":
+          eventSpecificPrompt = `a resolution or agreement reached regarding ${subject.value}`;
+          break;
+        case "Discovery/Recognition":
+          eventSpecificPrompt = `a moment of discovery or recognition for ${subject.value}`;
+          break;
+        case "End/Destruction":
+          eventSpecificPrompt = `the end or a moment of destruction for ${subject.value}`;
+          break;
+        case "Association/Connection":
+          eventSpecificPrompt = `a significant association or connection involving ${subject.value}`;
+          break;
+        case "Separation/Isolation":
+          eventSpecificPrompt = `a period of separation or isolation for ${subject.value}`;
+          break;
+        case "Conservation/Preservation":
+          eventSpecificPrompt = `an act of conserving or preserving ${subject.value}`;
+          break;
+        case "Expansion/Growth":
+          eventSpecificPrompt = `a phase of expansion or growth for ${subject.value}`;
           break;
         default:
           eventSpecificPrompt = `event for ${subject.value}`;
@@ -296,17 +397,17 @@ const eventYearString = computed(() => {
           }
           Note: Provide 3 distinct events in the events array.
         `;
-        console.log(prompt);
+        //console.log(prompt);
         const response = await generateGptResponse(
           prompt,
           timelineObjectValidation
         );
         const eventData = JSON.parse(response);
 
-        console.log(eventData);
+        //console.log(eventData);
         // const eventYear = (currentYearNumber.value - yearsAgo.value).toString();
         // const eventYearString = yearReckoning.value.replace('THE_YEAR', eventYear);
-        console.log("Event year string:", eventYearString.value);
+        //console.log("Event year string:", eventYearString.value);
         const suggestedEvents = eventData.events.map((event) => ({
           title: event.event_title,
           eventYear: eventYearString.value,
@@ -347,13 +448,13 @@ const eventYearString = computed(() => {
       }`;
 
       const prompt = summaryIntroduction + eventsList + conclusion;
-      console.log('summary promprt', prompt);
+      //console.log('summary promprt', prompt);
       try {
         loadingSummary.value = true;
         const summary = await generateGptResponse(prompt, summaryObjectValidation);
         loadingSummary.value = false;
         const summaryData = JSON.parse(summary);
-        console.log(summaryData);
+        //console.log(summaryData);
         timelineSummary.value = summaryData.timeline_summary;
         currentState.value = summaryData.current_state;
         saveToLocalStorage();
@@ -364,13 +465,13 @@ const eventYearString = computed(() => {
 
     const validateYear = () => {
       //TODO: This needs to be separated into two methods
-      console.log("currentYear.value:", currentYear.value);
+      //console.log("currentYear.value:", currentYear.value);
       const matches = currentYear.value.match(/\d+/g);
       if (matches && matches.length === 1) {
         yearError.value = false;
         yearErrorMessage.value = "";
-        console.log(currentYearNumber.value);
-        console.log(yearReckoning.value);
+        //console.log(currentYearNumber.value);
+        //console.log(yearReckoning.value);
         return;
       }
       yearError.value = true;
@@ -400,44 +501,124 @@ const eventYearString = computed(() => {
 
 
 
-  const loadFromLocalStorage = () => {
-  const savedState = localStorage.getItem("rpgTimelineState");
+    const loadFromLocalStorage = () => {
+      const savedState = localStorage.getItem("rpgTimelineState");
 
-  if(!savedState) {
-    return;
-  }
+      if (!savedState) {
+        return;
+      }
 
-  if (savedState) {
-    try {
-      const appState = JSON.parse(savedState);
-      
-      subject.value = appState.subject;
-      itemDetails.value = appState.itemDetails;
-      timelineEvents.value = appState.timelineEvents;
-      currentState.value = appState.currentState,
-      timelineSummary.value = appState.timelineSummary,
-      currentYear.value = appState.currentYear;
-      potentialEvents.value = appState.potentialEvents;
-      // ... (load other saved data as necessary)
+      if (savedState) {
+        try {
+          const appState = JSON.parse(savedState);
 
-    } catch (error) {
-      console.error("Failed to load from local storage:", error);
+          subject.value = appState.subject;
+          itemDetails.value = appState.itemDetails;
+          timelineEvents.value = appState.timelineEvents;
+          currentState.value = appState.currentState,
+            timelineSummary.value = appState.timelineSummary,
+            currentYear.value = appState.currentYear;
+          potentialEvents.value = appState.potentialEvents;
+          // ... (load other saved data as necessary)
+
+        } catch (error) {
+          console.error("Failed to load from local storage:", error);
+        }
+      }
+
+    };
+    const clearLocalStorage = () => {
+      localStorage.removeItem("rpgTimelineState");
+      subject.value = "";
+      itemDetails.value = "";
+      timelineEvents.value = [];
+      timelineSummary.value = "";
+      currentState.value = "";
+      currentYear.value = "";
+      potentialEvents.value = [];
+      yearsAgo.value = null;
+    };
+
+    function convertLoreToMarkdown() {
+      let markdown = '';
+
+      markdown += `# Historic Summary of ${subject.value}\n\n\n\n`;
+      markdown += `${timelineSummary.value}\n\n`;
+      markdown += `${currentState.value}\n\n`;
+
+      markdown += `# Full Historic Timeline of ${subject.value}\n\n`;
+
+      //console.log(timelineEvents.value);
+      if (timelineEvents.value.length > 0) {
+        timelineEvents.value.forEach(timelineEvent => {
+          markdown += `### ${timelineEvent.title}\n\n`;
+          markdown += `#### ${timelineEvent.eventYear}\n`;
+          markdown += `${timelineEvent.details}\n\n`;
+        })
+      }
+      return markdown;
     }
-  }
 
-};
-const clearLocalStorage = () => {
-  localStorage.removeItem("rpgTimelineState");
-  subject.value = "";
-  itemDetails.value = "";
-  timelineEvents.value = [];
-  timelineSummary.value = "";
-  currentState.value = "";
-  currentYear.value = "";
-  potentialEvents.value = [];
-  yearsAgo.value = null;
-};
-loadFromLocalStorage();
+    function convertLoreToPlainText() {
+      let plaintext = '';
+
+      plaintext += `Historic Summary of ${subject.value}\n\n\n\n`;
+      plaintext += `${timelineSummary.value}\n\n`;
+      plaintext += `${currentState.value}\n\n`;
+
+      plaintext += `Full Historic Timeline of ${subject.value}\n\n`;
+
+      //console.log(timelineEvents.value);
+      if (timelineEvents.value.length > 0) {
+        timelineEvents.value.forEach(timelineEvent => {
+          plaintext += `${timelineEvent.title}\n\n`;
+          plaintext += `${timelineEvent.eventYear}\n`;
+          plaintext += `${timelineEvent.details}\n\n`;
+        })
+      }
+      return plaintext;
+    }
+
+    function copyPlainText() {
+      // Replace `generatedMarkdown` with the variable that holds your generated markdown content.
+      const markdownContent = convertLoreToPlainText();
+
+      if (markdownContent) {
+        const textarea = document.createElement('textarea');
+        textarea.textContent = markdownContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        // Optionally, display a message that the content has been copied.
+        alert('Content copied as plain text!');
+      } else {
+        // If there is no content to copy, display a message to the user.
+        alert('No content available to copy as markdown.');
+      }
+    }
+
+    function copyAsMarkdown() {
+      // Replace `generatedMarkdown` with the variable that holds your generated markdown content.
+      const markdownContent = convertLoreToMarkdown();
+
+      if (markdownContent) {
+        const textarea = document.createElement('textarea');
+        textarea.textContent = markdownContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        // Optionally, display a message that the content has been copied.
+        alert('Content copied as markdown!');
+      } else {
+        // If there is no content to copy, display a message to the user.
+        alert('No content available to copy as markdown.');
+      }
+    }
+    loadFromLocalStorage();
 
     return {
       subject,
@@ -451,8 +632,10 @@ loadFromLocalStorage();
       addEventToTimeline,
       removeEventFromTimeline,
       generateTimelineSummary,
+      copyPlainText,
       eventsAccordion,
       clearLocalStorage,
+      copyAsMarkdown,
       validateYear,
       timelineSummary,
       currentState,
@@ -564,6 +747,28 @@ loadFromLocalStorage();
   margin-top: 2rem;
 }
 
+.exports {
+  max-width: 850px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.instructions {
+  padding: 3rem;
+  margin: 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.markdown-button {
+  display: flex;
+
+  button {
+    margin: 2rem auto 1rem;
+  }
+}
+
 .remove-button {
   margin-top: auto;
   margin-bottom: 2rem;
@@ -571,8 +776,7 @@ loadFromLocalStorage();
 }
 
 @media screen and (max-width: 855px) {
- .top-container {
+  .top-container {
     grid-template-columns: 1fr;
-}
-}
-</style>
+  }
+}</style>
