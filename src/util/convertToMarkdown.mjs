@@ -1,3 +1,23 @@
+export function convertLoreToMarkdown(loreObj){
+  let markdown = '';
+
+  markdown += `# Historic Summary of ${loreObj.subject}\n\n`;
+  markdown += `${loreObj.timelineSummary}\n\n`;
+  markdown += `${loreObj.currentState}\n\n`;
+
+  markdown += `# Full Historic Timeline of ${loreObj.subject}\n\n`;
+
+  console.log(loreObj.timelineEvents);
+  if (loreObj.timelineEvents > 0) {
+    loreObj.timelineEvents.forEach(timelineEvent => {
+      markdown += `### ${timelineEvent.title}\n\n`;
+      markdown += `#### ${timelineEvent.eventYear}\n\n`;
+      markdown += `#### ${timelineEvent.details}\n\n`;
+    })
+  }
+  return markdown;
+}
+
 export function convertLocationsToMarkdown(locations) {
     let markdown = '';
   
