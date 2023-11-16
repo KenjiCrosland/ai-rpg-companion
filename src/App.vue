@@ -6,6 +6,8 @@
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
     <StatblockGenerator v-if="currentPage === 'statblock-generator'"/>
     <BookGenerator v-if="currentPage === 'book-generator'"/>
+    <LoreGenerator v-if="currentPage === 'lore-generator'" />
+    <DungeonGenerator v-if="currentPage === 'dungeon-generator'" />
   </div>
 </template>
 
@@ -16,6 +18,7 @@ import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
 import StatblockGenerator from './components/StatblockGenerator.vue';
 import BookGenerator from './components/BookGenerator.vue';
+import DungeonGenerator from './components/DungeonGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -28,17 +31,23 @@ export default {
     StatblockGenerator,
     CdrLink,
     CdrText,
-    BookGenerator
+    BookGenerator,
+    DungeonGenerator
 },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'statblock-generator',
+      currentPage: this.$attrs['data-page'] || 'dungeon-generator',
     };
   },
   mounted() {
     if (typeof gtag === 'function' && this.currentPage === 'location-generator') {
       gtag('config', 'UA-11925218-1', {
         'page_path': '/ai-rpg-location-generator',
+      });
+    }
+    if (typeof gtag === 'function' && this.currentPage === 'dungeon-generator') {
+      gtag('config', 'UA-11925218-1', {
+        'page_path': '/ai-powered-dungeon-generator',
       });
     }
     if (typeof gtag === 'function' && this.currentPage === 'npc-generator') {
