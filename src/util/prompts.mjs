@@ -32,7 +32,7 @@ export function dungeonFormatGuidelines() {
 
     Sentence 4: Interactive Elements
 
-    Guideline: Introduce objects, guardians, characters, or features in the room that players can interact with. These should be elements that can provoke action, conversation, or decision-making. DO NOT MENTION TRAPS OR ANYTHING HIDDEN TO PLAYERS.
+    Guideline: Introduce objects, guardians, characters, or features in the room that players can interact with. These should be elements that can provoke action, conversation, or decision-making. DO NOT MENTION TRAPS OR ANYTHING HIDDEN TO PLAYERS. DO NOT INCLUDE CHESTS OR TREASURE AT A DUNGEON ENTRANCE.
 
     Examples:
 

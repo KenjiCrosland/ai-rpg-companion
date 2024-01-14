@@ -1,7 +1,15 @@
 {
-    "dungeon_room_approach": "The entrance to the Temple of the Reeds is hidden amidst a dense, swampy marshland. The path leading to it is treacherous and often submerged in murky waters. Travelers must navigate their way carefully, avoiding sinking and getting stuck in the mire. Additionally, the marsh is infested with poisonous insects that buzz ominously around, posing a threat to anyone who comes near.",
-    "dungeon_room_dimensions": "The entrance to the dungeon is a small, crumbling stone archway, barely large enough for a single person to pass through. Beyond the archway lies a narrow corridor that leads deeper into the temple. The corridor is 20 feet long and 10 feet wide.",
-    "unique_feature_extra_details": "If the players decide to examine the reeds that make up the temple walls, they will notice that they exude a sickly, greenish glow. This glow is the result of the corruption caused by the dark lizardfolk god. The reeds themselves are decayed and brittle, crumbling at the slightest touch.",
-    "interactive_element_extra_details": "If the players choose to investigate the stone archway, they will discover a hidden pressure plate located just inside the entrance. This pressure plate triggers a trap in the form of a collapsing ceiling. If the players fail to disarm or avoid the trap, the consequences can vary depending on their response. If they react quickly and manage to avoid being crushed, they will only suffer minor injuries. However, if they are caught off guard, they may become pinned under the rubble, taking significant damage and potentially becoming trapped in the corridor.",
-    "read_aloud_description": "The entrance to the Temple of the Reeds is a small, crumbling stone archway enveloped by dense, overgrown reeds. The air is thick with a musty odor, a mixture of decaying vegetation and stagnant water. The reeds sway ominously in the breeze, their sickly greenish glow casting eerie shadows on the path before you. As you approach the archway, you can see the reeds themselves are decayed and brittle, crumbling at the slightest touch."
-  }
+    "dungeon_room_approach": "<Provide details about the approach to the dungeon entrance. Is there a long road or path to the dungeon? Are there hazards on long the way? What types of checks or actions are required to bypass or overcome these hazards? Technical details only, no need for descriptions or flavor.>",
+    "dungeon_room_dimensions": "<This part of the description should give specific dimensions of all features in the dungeon entrance and where they happen to be relative to each other. Technical details only, no need for descriptions or flavor.>",
+    "unique_feature_extra_details": "<Please provide extra details about the unique feature described in the read_aloud_description (sentence 3) if players decide to examine or interact with it>",
+    "interactive_element_extra_details": "<Please provide extra details about the interactive element (sentence 4). What is the nature of it? What is the lore/history/biography behind this feature? Are there any consequences positive or negative for interacting with this feature>",
+    "read_aloud_description": "<Description full text goes here. DO NOT INCLUDE ANYTHING HIDDEN TO THE PARTY>",
+    "npc_or_monster_list": [
+        {
+            "name": "<The name of the monster or NPC>",
+            "description": "<Short Description of the monster or NPC: Provide details about appearance as well as what the creature is currently doing>",
+            "motivation": "<What does this NPC or monster want or fear? Perhaps some skillful roleplay can help avoid combat with this npc or monster or even perhaps recruit them as an ally? Provide this info>",
+            "challenge_rating": "<Provide a D&D 5e challenge_rating for this creature>"
+        }
+    ]
+}
