@@ -283,6 +283,12 @@ function wp_remote_post_with_retry($url, $args, $max_retries = 3, $retry_interva
 
     return $response; // Return the last failed response after all retries
 }
+
+function vue_app_lore_generator_shortcode() {
+    return '<div id="app" data-page="lore-generator"></div>';
+}
+add_shortcode( 'vue_app_lore_generator', 'vue_app_lore_generator_shortcode' );
+
 function vue_app_book_generator_shortcode() {
     return '<div id="app" data-page="book-generator"></div>';
 }

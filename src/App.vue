@@ -26,6 +26,7 @@ import '@rei/cedar/dist/style/cdr-link.css';
 export default {
   components: {
     LocationGenerator,
+    LoreGenerator,
     NPCGenerator,
     Dashboard,
     DashboardPlus,
