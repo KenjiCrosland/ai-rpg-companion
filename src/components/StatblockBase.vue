@@ -1,4 +1,5 @@
 <template>
+    <div>
     <div :class="`container ${columns}`">
         <div v-if="!loadingPart1 && monster" class="statblock">
             <div class="creature-heading">
@@ -109,12 +110,22 @@
             <StatblockSkeletonPtTwo />
         </div>
     </div>
+    <div class="copy-statblock-buttons" v-if="copyButtons">
+        <strong>Export:</strong>
+        <cdr-button modifier="secondary" size="small" @click="copyAsMarkdown">Homebrewery Markdown</cdr-button>
+        <cdr-button modifier="secondary" size="small" @click="copyAsVTT">Foundry VTT</cdr-button>
+        <cdr-button modifier="secondary" size="small" @click="copyAsImprovedInitiative">Improved Initiative</cdr-button>
+    </div>
+</div>
 </template>
   
 <script setup>
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
 import { ref, computed, defineProps, onMounted, onBeforeUnmount } from 'vue';
+import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
+import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
+import { convertToFoundryVTT } from '../util/convertToFoundryVTT.mjs';
 import { CdrToggleButton, CdrToggleGroup, CdrButton, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
 import "@rei/cedar/dist/style/cdr-toggle-button.css";
@@ -131,6 +142,10 @@ const props = defineProps({
     columns: {
         type: String,
         default: 'two_columns'
+    },
+    copyButtons: {
+        type: Boolean,
+        default: false,
     },
     loadingPart1: {
         type: Boolean,
@@ -179,6 +194,66 @@ const parsedAttributes = computed(() => {
     });
 });
 
+const copyAsMarkdown = () => {
+
+const markdownContent = statblockToMarkdown(props.monster, columns.value);
+
+console.log(columns.value);
+if (markdownContent) {
+    const textarea = document.createElement('textarea');
+    textarea.textContent = markdownContent;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    // Optionally, display a message that the content has been copied.
+    alert('Content copied as markdown!');
+} else {
+    // If there is no content to copy, display a message to the user.
+    alert('No content available to copy as markdown.');
+}
+}
+
+const copyAsVTT = () => {
+
+const VTTContent = convertToFoundryVTT(props.monster);
+
+if (VTTContent) {
+const textarea = document.createElement('textarea');
+textarea.textContent = VTTContent;
+document.body.appendChild(textarea);
+textarea.select();
+document.execCommand('copy');
+document.body.removeChild(textarea);
+
+// Optionally, display a message that the content has been copied.
+alert('Content copied in Foundry VTT Format!');
+} else {
+// If there is no content to copy, display a message to the user.
+alert('No content available to copy as markdown.');
+}
+}
+
+const copyAsImprovedInitiative = () => {
+
+const improvedInitiativeJSON = convertToImprovedInitiative(props.monster);
+if (improvedInitiativeJSON) {
+    const textarea = document.createElement('textarea');
+    textarea.textContent = JSON.stringify(improvedInitiativeJSON);
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    // Optionally, display a message that the content has been copied.
+    alert('Copied as Improved Initiative JSON!');
+} else {
+    // If there is no content to copy, display a message to the user.
+    alert('No content available to copy.');
+}
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -203,12 +278,20 @@ const parsedAttributes = computed(() => {
 
     &.two_columns {
         grid-template-columns: 1fr 1fr;
-        width: 850px;
+        width: 700px;
         gap: 2rem;
     }
 }
+
+.copy-statblock-buttons {
+    display: flex;
+    gap: 1rem;
+    height: 3.8rem;
+    align-items: center;
+    justify-content: center;
+}
 .exports {
-    max-width: 850px;
+    max-width: 740px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
@@ -349,7 +432,7 @@ const parsedAttributes = computed(() => {
     }
 }
 
-@media screen and (max-width: 855px) {
+@media screen and (max-width: 745px) {
     .exports {
     grid-template-columns: 1fr;
 }

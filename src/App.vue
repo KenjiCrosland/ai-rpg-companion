@@ -13,6 +13,7 @@
 
 <script>
 import LocationGenerator from './components/LocationGenerator.vue';
+import LoreGenerator from './components/LoreGenerator.vue';
 import NPCGenerator from './components/NPCGenerator.vue';
 import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
@@ -32,7 +33,8 @@ export default {
     CdrLink,
     CdrText,
     BookGenerator,
-    DungeonGenerator
+    DungeonGenerator,
+    LoreGenerator
 },
   data() {
     return {

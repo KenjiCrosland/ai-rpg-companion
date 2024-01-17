@@ -35,6 +35,47 @@ export function convertLocationsToMarkdown(locations) {
   
     return addPageBreaks(markdown);
   }
+
+  export function convertDungeonToMarkdown(dungeonName, dungeonSummary, detailedRooms) {
+    let markdown = `# ${dungeonName}\n\n`;
+
+    // Dungeon Summary Details
+    markdown += `### General Description\n${dungeonSummary.general_description}\n\n`;
+    markdown += `{{descriptive\n${dungeonSummary.historical_background}\n}}\n\n`
+    markdown += `### Current Situation\n${dungeonSummary.current_situation}\n\n`;
+    markdown += `${dungeonSummary.adventurers_motivation}\n\n`;
+    markdown += `{{note\n${dungeonSummary.secret}\n}}\n\n`;
+    markdown += `### Features\n${dungeonSummary.environmental_features}\n\n`;
+    markdown += `### Factions or NPCs\n${dungeonSummary.factions_or_npcs}\n\n`;
+
+    // Iterating through detailed rooms
+    if (detailedRooms && detailedRooms.length > 0) {
+    detailedRooms.forEach((room, index) => {
+        markdown += `## ${index + 1}. ${room.room_name}\n`;
+        markdown += `${room.read_aloud_description}\n\n`;
+        markdown += `${room.detailed_description.dungeon_room_dimensions}\n\n`;
+        markdown += `${room.detailed_description.unique_feature_extra_details}\n\n`;
+        markdown += `${room.detailed_description.interactive_element_extra_details}\n\n`;
+        if (room.detailed_description.hidden_secret) {
+            markdown += `${room.detailed_description.hidden_secret}\n\n`;
+        }
+
+        if (room.detailed_description.npc_or_monster_list && room.detailed_description.npc_or_monster_list.length > 0) {
+            room.detailed_description.npc_or_monster_list.forEach(npc => {
+                markdown += `## ${npc.name}\n`;
+                markdown += `${npc.description}\n\n`;
+                markdown += `${npc.motivation}\n\n`;
+                if (npc.statblock) {
+                  markdown += statblockToMarkdown(npc.statblock, 'two_columns') + '\n\n'; // Assuming you have this function defined
+              }
+          });
+      }
+  });
+}
+  
+return dungeonPageBreaks(markdown);
+}
+                
   
   
 
@@ -51,6 +92,38 @@ export function convertLocationsToMarkdown(locations) {
     }
   
     result += remainingText;
+    return result;
+  }
+
+  function dungeonPageBreaks(text) {
+    const pageBreak = '\\page';
+    const maxCharacters = 4800;
+    let result = '';
+    let remainingText = text;
+  
+    while (remainingText.length > 0) {
+      // Check if the remaining text is shorter than the max limit
+      if (remainingText.length <= maxCharacters) {
+        result += remainingText;
+        break;
+      }
+  
+      let breakPoint = maxCharacters;
+      let lastSpaceIndex = remainingText.lastIndexOf(' ', breakPoint);
+      let specialStart = remainingText.lastIndexOf('{{monster', breakPoint);
+      let specialEnd = remainingText.indexOf('}}', specialStart) + 2;
+  
+      // Adjust break point if it's inside a special section
+      if (specialStart !== -1 && specialEnd < breakPoint && specialEnd > specialStart) {
+        breakPoint = specialEnd;
+      } else if (lastSpaceIndex !== -1 && lastSpaceIndex > specialStart) {
+        breakPoint = lastSpaceIndex;
+      }
+  
+      result += remainingText.slice(0, breakPoint) + '\n\n' + pageBreak + '\n\n';
+      remainingText = remainingText.slice(breakPoint).trimStart();
+    }
+  
     return result;
   }
   
