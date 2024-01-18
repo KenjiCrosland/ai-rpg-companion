@@ -82,7 +82,7 @@ export function convertLocationsToMarkdown(locations) {
 
         if (room.detailed_description.npc_or_monster_list && room.detailed_description.npc_or_monster_list.length > 0) {
             room.detailed_description.npc_or_monster_list.forEach(npc => {
-                markdown += `## ${npc.name}\n`;
+                markdown += `### ${npc.name}\n`;
                 markdown += `${npc.description}\n\n`;
                 markdown += `${npc.motivation}\n\n`;
                 if (npc.statblock) {

@@ -13,7 +13,16 @@
             <cdr-button type="submit" class="generate_button">Generate Dungeon Summary</cdr-button>
         </form>
         <h2>{{ dungeonName }}</h2>
-        <cdr-accordion v-if="dungeonSummary" level="2" :opened="summaryOpen" @accordion-toggle="summaryOpen = !summaryOpen">
+
+        <cdr-accordion v-if="loadingSummary" class="accordion" level="2" id="loading-npc">
+            <template #label>
+              <CdrSkeleton>
+                <CdrSkeletonBone type="line" style="width:150px" />
+              </CdrSkeleton>
+            </template>
+        </cdr-accordion>
+
+        <cdr-accordion v-if="dungeonSummary && !loadingSummary" level="2" :opened="summaryOpen" @accordion-toggle="summaryOpen = !summaryOpen" id="summary">
             <template #label>
                 Dungeon Summary
             </template>
@@ -45,7 +54,15 @@
             </div>
         </cdr-accordion>
 
-        <cdr-accordion v-if="dungeonList && dungeonList.length > 0" level="2" :opened="listOpen" @accordion-toggle="listOpen = !listOpen" id="room-list">
+        <cdr-accordion v-if="loadingList" class="accordion" level="2" id="loading-npc">
+            <template #label>
+              <CdrSkeleton>
+                <CdrSkeletonBone type="line" style="width:150px" />
+              </CdrSkeleton>
+            </template>
+        </cdr-accordion>
+
+        <cdr-accordion v-if="dungeonList && dungeonList.length > 0 && !loadingList" level="2" :opened="listOpen" @accordion-toggle="listOpen = !listOpen" id="room-list">
             <template #label>
                 <div class="accordion-lineup">
                 <div>
@@ -78,8 +95,8 @@
 
         <div v-if="detailedRooms && detailedRooms.length > 0">
             <h2>Detailed Room Descriptions</h2>
-            <cdr-accordion-group v-for="(room, index) in detailedRooms" :key="`detailed-room-${index}`" id="detailed-rooms">
-                <cdr-accordion level="2" :opened="roomOpen[index]" @accordion-toggle="roomOpen[index] = !roomOpen[index]" :id="`detailed-room-${index}`">
+            <cdr-accordion-group id="detailed-rooms" >
+                <cdr-accordion v-for="(room, index) in detailedRooms" :key="`detailed-room-${index}`" level="2" :opened="roomOpen[index]" @accordion-toggle="roomOpen[index] = !roomOpen[index]" :id="`detailed-room-${index}`">
                     <template #label>
                         {{ (index + 1).toString() + '. ' + room.room_name }}
                     </template>
@@ -122,6 +139,17 @@
                 </cdr-accordion>
             </cdr-accordion-group>
         </div>
+        <div>
+        <h2 v-if="loadingDetailedRooms && !detailedRooms.length">Detailed Room Descriptions</h2>
+        <cdr-accordion v-if="loadingDetailedRooms" class="accordion" level="2" id="loading-npc">
+                    <template #label>
+                    <CdrSkeleton>
+                        <CdrSkeletonBone type="line" style="width:150px" />
+                    </CdrSkeleton>
+                    </template>
+            </cdr-accordion>
+        <div ref="loadingDetailedRoomAccordion"></div>
+        </div>
     </div>
     <div v-if="dungeonSummary" class="instructions">
         <h3>Use Homebrewery to Make a Beautiful PDF of Your Generated Content!</h3>
@@ -141,7 +169,7 @@
 </template>
   
 <script>
-import { CdrInput, CdrButton, CdrList, CdrText, CdrAccordion, CdrAccordionGroup, CdrTooltip, IconXSm, IconReload } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrList, CdrText, CdrAccordion, CdrAccordionGroup, CdrSkeleton, CdrSkeletonBone, CdrTooltip, IconXSm, IconReload } from "@rei/cedar";
 import StatblockBase from './StatblockBase.vue';
 import { generateGptResponse } from '../util/open-ai.mjs';
 import { dungeonFormatGuidelines } from "../util/prompts.mjs";
@@ -156,6 +184,8 @@ export default {
         CdrAccordion,
         CdrAccordionGroup,
         CdrTooltip,
+        CdrSkeleton,
+        CdrSkeletonBone,
         IconXSm,
         IconReload,
         StatblockBase
@@ -163,13 +193,16 @@ export default {
     data() {
         return {
             summaryOpen: false,
+            loadingSummary: false,
             listOpen: false,
+            loadingList: false,
             roomOpen: [],
             dungeonName: '',
             dungeonDetails: '',
             dungeonSummary: null,
             dungeonList: null,
             detailedRooms: [],
+            loadingDetailedRooms: false
         };
     },
     mounted() {
@@ -201,10 +234,14 @@ export default {
             `;
 
             try {
+                this.loadingSummary = true;
                 const response = await generateGptResponse(prompt, this.summaryValidation);
                 this.dungeonSummary = JSON.parse(response);
                 this.saveToLocalStorage();
+                this.summaryOpen = true;
+                this.loadingSummary = false;
             } catch (error) {
+                this.loadingSummary = false;
                 console.error('Error generating dungeon summary:', error);
             }
         },
@@ -260,7 +297,7 @@ export default {
                     "hidden_secret": "<Provide a possible hidden secret in this room. This secret could be a passage to another room, a cache of valuables, a hiding monster, or a trap. Make sure to include details about the skill check or knowledge needed to uncover this secret.>"
                     "npc_or_monster_list": [
                         {
-                            "name": "<The name of the monster or NPC>",
+                            "name": "<The name of the monster or NPC. Consider a monster or NPC appropriate to this room (ie don't put a faction leader near the entrance). If an NPC is mentioned in the room description provided above, do describe that NPC.>",
                             "description": "<Short Description of the monster or NPC: Provide details about appearance as well as what the creature is currently doing>",
                             "motivation": "<What does this NPC or monster want or fear? Perhaps some skillful roleplay can help avoid combat with this npc or monster or even perhaps recruit them as an ally? Provide this info>",
                             "challenge_rating": "<Provide a D&D 5e challenge_rating for this creature>"
@@ -271,6 +308,8 @@ export default {
         `;
 
                 try {
+                    this.loadingDetailedRooms = true;
+                    this.$refs['loadingDetailedRoomAccordion'].scrollIntoView({ behavior: "smooth" });
                     const detailedResponse = await generateGptResponse(detailedPrompt, this.detailedRoomValidation);
                     // Assuming the response is a simple string
                     const parsedResponse = JSON.parse(detailedResponse);
@@ -284,9 +323,11 @@ export default {
                         read_aloud_description: room.room_description,
                         detailed_description: parsedResponse
                     });
-                    this.roomOpen.push(true);
                     this.saveToLocalStorage();
+                    this.loadingDetailedRooms = false;
+                    this.roomOpen.push(true);
                 } catch (error) {
+                    this.loadingDetailedRooms = false;
                     console.error('Error generating detailed room description:', error);
                 }
             }
@@ -339,7 +380,7 @@ export default {
                 [
                 {
                     "room_name": "Name of the Room",
-                    "room_description": "Description of the room. Be sure to follow the 4 sentence room_description format provided below"
+                    "room_description": "Description of the room. This must be 4 sentences. The first sentence gives the general dimensions. 2nd sentence provides an atmospheric detail. 3rd sentence provides an unusual detail. 4th sentence is something interesting to interact with. Be sure to follow the 4 sentence room_description format provided below"
                 },
                 // ... more rooms with other specified types
                 ]
@@ -348,12 +389,16 @@ export default {
             `;
 
             try {
+                this.loadingList = true;
                 const response = await generateGptResponse(roomListPrompt, this.roomListValidation);
                 const generatedRooms = JSON.parse(response); // Assuming 'response' is the JSON-formatted string from the AI
                 // Update your data with valid rooms
                 this.dungeonList = generatedRooms;
                 this.saveToLocalStorage();
+                this.listOpen = true;
+                this.loadingList = false;
             } catch (error) {
+                this.loadingList = false;
                 console.error('Error generating room list:', error);
             }
         },
