@@ -110,7 +110,7 @@
             <StatblockSkeletonPtTwo />
         </div>
     </div>
-    <div class="copy-statblock-buttons" v-if="copyButtons">
+    <div class="copy-statblock-buttons" v-if="copyButtons && !loadingPart1 && !loadingPart2 && monster">
         <strong>Export:</strong>
         <cdr-button modifier="secondary" size="small" @click="copyAsMarkdown">Homebrewery Markdown</cdr-button>
         <cdr-button modifier="secondary" size="small" @click="copyAsVTT">Foundry VTT</cdr-button>
@@ -198,7 +198,6 @@ const copyAsMarkdown = () => {
 
 const markdownContent = statblockToMarkdown(props.monster, columns.value);
 
-console.log(columns.value);
 if (markdownContent) {
     const textarea = document.createElement('textarea');
     textarea.textContent = markdownContent;

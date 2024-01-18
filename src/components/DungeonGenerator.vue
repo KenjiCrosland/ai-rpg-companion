@@ -1,32 +1,37 @@
 <template>
     <div class="app_container">
-        <div class="header">
         <h1>RPG Dungeon Generator</h1>
-        <cdr-button size="small" modifier="secondary" @click="clearAllContent">Clear All Content</cdr-button>
-        </div>
         <form @submit.prevent="generateDungeonSummary" class="dungeon_form">
-            <cdr-input v-model="dungeonName" background="secondary" label="Dungeon Name" placeholder="Enter Dungeon Name" required>
+            <cdr-input v-model="dungeonName" background="secondary" label="Dungeon Name" placeholder="Enter Dungeon Name"
+                required>
             </cdr-input>
-            <cdr-input :rows="7" tag="textarea" v-model="dungeonDetails" background="secondary" label="Dungeon Details"
-                placeholder="Enter any additional dungeon details" class="dungeon-details">
+            <cdr-input :rows="7" tag="textarea" v-model="dungeonDetails" background="secondary"
+                label="Dungeon Details and Lore" placeholder="Enter any additional dungeon details" class="dungeon-details">
+                <template #helper-text-bottom>
+                    Write any details about your dungeon that you want to include. Need help coming up with lore for your
+                    dungeon? Use the <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore
+                        Generator</cdr-link> and paste in the generated summary!
+                </template>
             </cdr-input>
             <cdr-button type="submit" class="generate_button">Generate Dungeon Summary</cdr-button>
         </form>
+        <cdr-button modifier="secondary" :full-width="true" @click="clearAllContent">Clear All Dungeon Content</cdr-button>
         <h2>{{ dungeonName }}</h2>
 
         <cdr-accordion v-if="loadingSummary" class="accordion" level="2" id="loading-npc">
             <template #label>
-              <CdrSkeleton>
-                <CdrSkeletonBone type="line" style="width:150px" />
-              </CdrSkeleton>
+                <CdrSkeleton>
+                    <CdrSkeletonBone type="line" style="width:150px" />
+                </CdrSkeleton>
             </template>
         </cdr-accordion>
 
-        <cdr-accordion v-if="dungeonSummary && !loadingSummary" level="2" :opened="summaryOpen" @accordion-toggle="summaryOpen = !summaryOpen" id="summary">
+        <cdr-accordion v-if="dungeonSummary && !loadingSummary" level="2" :opened="summaryOpen"
+            @accordion-toggle="summaryOpen = !summaryOpen" id="summary">
             <template #label>
                 Dungeon Summary
             </template>
-            <div >
+            <div>
 
                 <div>
                     <h3>General Description</h3>
@@ -56,20 +61,21 @@
 
         <cdr-accordion v-if="loadingList" class="accordion" level="2" id="loading-npc">
             <template #label>
-              <CdrSkeleton>
-                <CdrSkeletonBone type="line" style="width:150px" />
-              </CdrSkeleton>
+                <CdrSkeleton>
+                    <CdrSkeletonBone type="line" style="width:150px" />
+                </CdrSkeleton>
             </template>
         </cdr-accordion>
 
-        <cdr-accordion v-if="dungeonList && dungeonList.length > 0 && !loadingList" level="2" :opened="listOpen" @accordion-toggle="listOpen = !listOpen" id="room-list">
+        <cdr-accordion v-if="dungeonList && dungeonList.length > 0 && !loadingList" level="2" :opened="listOpen"
+            @accordion-toggle="listOpen = !listOpen" id="room-list">
             <template #label>
                 <div class="accordion-lineup">
-                <div>
-                Potential Room List
-                </div>
-                
-                <cdr-tooltip id="tooltip-example" position="right">
+                    <div>
+                        Potential Room List
+                    </div>
+
+                    <cdr-tooltip id="tooltip-example" position="right">
                         <template #trigger>
                             <cdr-button size="small" :icon-only="true" :with-background="true"
                                 @click.stop="generateRoomList">
@@ -84,7 +90,7 @@
                     </cdr-tooltip>
                 </div>
             </template>
-            <div >
+            <div>
                 <div v-for="(room, index) in dungeonList" :key="index">
                     <h3>{{ room.room_name }}</h3>
                     <p>{{ room.room_description }}</p>
@@ -95,8 +101,10 @@
 
         <div v-if="detailedRooms && detailedRooms.length > 0">
             <h2>Detailed Room Descriptions</h2>
-            <cdr-accordion-group id="detailed-rooms" >
-                <cdr-accordion v-for="(room, index) in detailedRooms" :key="`detailed-room-${index}`" level="2" :opened="roomOpen[index]" @accordion-toggle="roomOpen[index] = !roomOpen[index]" :id="`detailed-room-${index}`">
+            <cdr-accordion-group id="detailed-rooms">
+                <cdr-accordion v-for="(room, index) in detailedRooms" :key="`detailed-room-${index}`" level="2"
+                    :opened="roomOpen[index]" @accordion-toggle="roomOpen[index] = !roomOpen[index]"
+                    :id="`detailed-room-${index}`">
                     <template #label>
                         {{ (index + 1).toString() + '. ' + room.room_name }}
                     </template>
@@ -110,10 +118,39 @@
                             </cdr-button>
                         </template>
                         <div>
-                            Delete Location
+                            Delete Room
                         </div>
                     </cdr-tooltip>
-                    <h3 class="room-name">{{ room.room_name }}</h3>
+                    <div class="room-detail-header">
+                        <h3 class="room-name">{{ room.room_name }}</h3>
+                        <div style="display: flex;">
+                            <cdr-tooltip id="tooltip-example" position="bottom">
+                                <template #trigger>
+                                    <cdr-button size="small" :icon-only="true" @click.stop="moveRoom('down', index)">
+                                        <template #icon>
+                                            <icon-arrow-down />
+                                        </template>
+                                    </cdr-button>
+                                </template>
+                                <div>
+                                    Move Room Down
+                                </div>
+                            </cdr-tooltip>
+                            <cdr-tooltip id="tooltip-example" position="bottom">
+                                <template #trigger>
+                                    <cdr-button size="small" :icon-only="true" @click.stop="moveRoom('up', index)">
+                                        <template #icon>
+                                            <icon-arrow-up />
+                                        </template>
+                                    </cdr-button>
+                                </template>
+                                <div>
+                                    Move Room Up
+                                </div>
+                            </cdr-tooltip>
+                        </div>
+                    </div>
+
                     <div class="read-aloud">
                         <p>{{ room.read_aloud_description }}</p>
                     </div>
@@ -130,25 +167,33 @@
                             <p><strong>{{ npc.name }}</strong></p>
                             <p>{{ npc.description }}</p>
                             <p>{{ npc.motivation }}</p>
+                            <div class="generate-monster">
+
+                            <div class="cr-select"> 
+                                <cdr-select v-model="npc.challenge_rating" label="Challenge Rating" prompt="CR"
+                                    :options="challengeRatingData.fullArray" />
+                            </div>
                             <cdr-button @click="generateMonster(npc, index, npcIndex)">Generate Statblock</cdr-button>
+                        </div>
+
                             <StatblockBase v-if="(npc.loadingPart1 || npc.loadingPart2 || npc.statblock)"
-                                :loadingPart1="npc.loadingPart1" :loadingPart2="npc.loadingPart2"
-                                :monster="npc.statblock" :copyButtons="true" />
+                                :loadingPart1="npc.loadingPart1" :loadingPart2="npc.loadingPart2" :monster="npc.statblock"
+                                :copyButtons="true" />
                         </div>
                     </div>
                 </cdr-accordion>
             </cdr-accordion-group>
         </div>
         <div>
-        <h2 v-if="loadingDetailedRooms && !detailedRooms.length">Detailed Room Descriptions</h2>
-        <cdr-accordion v-if="loadingDetailedRooms" class="accordion" level="2" id="loading-npc">
-                    <template #label>
+            <h2 v-if="loadingDetailedRooms && !detailedRooms.length">Detailed Room Descriptions</h2>
+            <cdr-accordion v-if="loadingDetailedRooms" class="accordion" level="2" id="loading-npc">
+                <template #label>
                     <CdrSkeleton>
                         <CdrSkeletonBone type="line" style="width:150px" />
                     </CdrSkeleton>
-                    </template>
+                </template>
             </cdr-accordion>
-        <div ref="loadingDetailedRoomAccordion"></div>
+            <div ref="loadingDetailedRoomAccordion"></div>
         </div>
     </div>
     <div v-if="dungeonSummary" class="instructions">
@@ -169,18 +214,21 @@
 </template>
   
 <script>
-import { CdrInput, CdrButton, CdrList, CdrText, CdrAccordion, CdrAccordionGroup, CdrSkeleton, CdrSkeletonBone, CdrTooltip, IconXSm, IconReload } from "@rei/cedar";
+import { CdrInput, CdrSelect, CdrLink, CdrButton, CdrList, CdrText, CdrAccordion, CdrAccordionGroup, CdrSkeleton, CdrSkeletonBone, CdrTooltip, IconXSm, IconReload, IconArrowUp, IconArrowDown } from "@rei/cedar";
 import StatblockBase from './StatblockBase.vue';
 import { generateGptResponse } from '../util/open-ai.mjs';
 import { dungeonFormatGuidelines } from "../util/prompts.mjs";
 import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
 import { convertDungeonToMarkdown } from '../util/convertToMarkdown.mjs';
+import challengeRatingData from '../data/challengeRatings.json';
 export default {
     components: {
         CdrInput,
         CdrButton,
         CdrText,
+        CdrLink,
         CdrList,
+        CdrSelect,
         CdrAccordion,
         CdrAccordionGroup,
         CdrTooltip,
@@ -188,7 +236,9 @@ export default {
         CdrSkeletonBone,
         IconXSm,
         IconReload,
-        StatblockBase
+        StatblockBase,
+        IconArrowUp,
+        IconArrowDown,
     },
     data() {
         return {
@@ -202,12 +252,18 @@ export default {
             dungeonSummary: null,
             dungeonList: null,
             detailedRooms: [],
-            loadingDetailedRooms: false
+            loadingDetailedRooms: false,
+            challengeRatingData
         };
     },
     mounted() {
         this.loadFromLocalStorage();
     },
+    computed: {
+    roomNamesString() {
+      return this.detailedRooms.map(room => room.room_name).join(', ');
+    },
+  },
     methods: {
         async generateDungeonSummary() {
             const prompt = `
@@ -215,6 +271,8 @@ export default {
                 
                 Here are some existing details on the dungeon. Be sure to incorporate these and don't deviate from them, only supplement:
                 ${this.dungeonDetails}
+                
+                The challenge level for this dungeon should be appropriate for ${this.selectedChallengeLevel}.
 
                 Do NOT change the lore or names of any of the characters or factions above, and be sure to use them in the response. You can expand and add more details, but don't change any provided above.
                 
@@ -300,7 +358,7 @@ export default {
                             "name": "<The name of the monster or NPC. Consider a monster or NPC appropriate to this room (ie don't put a faction leader near the entrance). If an NPC is mentioned in the room description provided above, do describe that NPC.>",
                             "description": "<Short Description of the monster or NPC: Provide details about appearance as well as what the creature is currently doing>",
                             "motivation": "<What does this NPC or monster want or fear? Perhaps some skillful roleplay can help avoid combat with this npc or monster or even perhaps recruit them as an ally? Provide this info>",
-                            "challenge_rating": "<Provide a D&D 5e challenge_rating for this creature>"
+                            "challenge_rating": "<Provide a D&D 5e challenge_rating for this creature.>"
                         }
                     ],
                 }
@@ -372,10 +430,19 @@ export default {
             }
         },
         async generateRoomList() {
+            let existingRooms;
+            let roomPromptString = 'All lists should include an entrance, a room with a roleplaying challenge, a hidden room, and a room with a final showdown. Feel free to include other rooms unique to the character of the dungeon';
+   
+            if (this.detailedRooms.length > 0) {
+                existingRooms = this.roomNamesString;
+                roomPromptString = `Do NOT include any rooms similar in theme or name to the following rooms: ${existingRooms}`;
+            };
+
+
             const roomListPrompt = `
                 Generate a list of 7 rooms for a dungeon named "${this.dungeonName}". Use the following room types and include a brief description for each room, highlighting key features and potential characters or monsters. Use the following dungeon summary as context:
                 Dungeon Summary: ${JSON.stringify(this.dungeonSummary)}
-                All lists should include an entrance, a room with a roleplaying challenge, a hidden room, and a room with a final showdown. Feel free to include other rooms unique to the character of the dungeon
+                ${roomPromptString}
 
                 [
                 {
@@ -429,7 +496,7 @@ export default {
             const { name, challenge_rating, description } = npc;
             this.detailedRooms[roomIndex].detailed_description.npc_or_monster_list[npcIndex].loadingPart1 = true
             this.detailedRooms[roomIndex].detailed_description.npc_or_monster_list[npcIndex].loadingPart2 = true
-            console.log(challenge_rating);
+
             const { monsterPart1, monsterPrompts, errorMessage: errorPart1 } = await generateStatblockPart1({
                 monsterName: name,
                 challengeRating: challenge_rating.toString(),
@@ -483,11 +550,33 @@ export default {
             this.detailedRooms.splice(index, 1);
             this.saveToLocalStorage();
         },
+        moveRoom(direction, index) {
+            if (direction === "down") {
+                if (index === this.detailedRooms.length - 1) {
+                    return;
+                }
+
+                this.arraymove(this.detailedRooms, index, index + 1)
+            }
+
+            if (direction === "up") {
+                if (index === 0) {
+                    return;
+                }
+                this.arraymove(this.detailedRooms, index, index - 1)
+            }
+            this.roomOpen[index] = false;
+        },
+        arraymove(arr, fromIndex, toIndex) {
+            var element = arr[fromIndex];
+            arr.splice(fromIndex, 1);
+            arr.splice(toIndex, 0, element);
+        },
         clearAllContent() {
             this.dungeonName = '';
             this.dungeonDetails = '';
             this.dungeonSummary = null;
-            this.dungeonList =  null;
+            this.dungeonList = null;
             this.detailedRooms = [];
 
             localStorage.setItem('dungeonData', '{}');
@@ -532,12 +621,25 @@ export default {
 }
 
 .header {
-    display:flex;
+    display: flex;
     align-content: center;
     align-items: center;
     justify-content: space-between;
 }
 
+.room-detail-header {
+    display: flex;
+    align-items: center;
+}
+
+.generate-monster {
+    display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+}
+.cr-select {
+    width: 12rem;
+}
 .dungeon_form {
     background-color: $cdr-color-background-secondary;
     border-radius: 8px;
@@ -595,6 +697,5 @@ export default {
 
 .instructions li {
     margin-bottom: 0.5rem;
-}
-</style>
+}</style>
   
