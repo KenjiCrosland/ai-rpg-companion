@@ -1,4 +1,9 @@
 <template>
+  <div class="message-banner">
+    <p>NOTE: The town generator will become exclusive to <cdr-link
+        href="https://www.patreon.com/ai_rpg_tookit">patrons</cdr-link> at the $5 level on April 5th 2024. If you are a
+      free user, be sure to copy any content you've created before then</p>
+  </div>
   <div class="dashboard">
     <div class="form-container">
       <location-form @location-description-generated="addLocation($event)" @set-loading-state="loadingLocation = $event"
@@ -60,7 +65,8 @@
             </cdr-list>
             <location-form formLabel="Or suggest your own Sub-location below" buttonSize="small"
               :parentLocation="location" @location-description-generated="addLocation($event)"
-              @set-loading-state="loadingLocation = $event" buttonText="Add Location" :disabledButton="anythingLoading" />
+              @set-loading-state="loadingLocation = $event" buttonText="Add Location"
+              :disabledButton="anythingLoading" />
           </div>
         </div>
         <cdr-accordion-group>
@@ -88,7 +94,7 @@
               </cdr-tooltip>
               <h2>{{ npc.character_name }}</h2>
               <div class="read-aloud">
-              <cdr-text class="body-text">{{ npc.read_aloud_description }}</cdr-text>
+                <cdr-text class="body-text">{{ npc.read_aloud_description }}</cdr-text>
               </div>
               <cdr-text class="body-text">{{ npc.description_of_position }}</cdr-text>
               <cdr-text class="body-text">{{ npc.reason_for_being_there }}</cdr-text>
@@ -100,13 +106,14 @@
                   <li class="relationship" v-for="(relationshipDescription, relationshipName) in npc.relationships"
                     :key="relationshipName">
                     <cdr-text class="body-text"><strong>{{ relationshipName }}</strong> : {{ relationshipDescription
-                    }}</cdr-text>
+                      }}</cdr-text>
                   </li>
                 </cdr-list>
                 <div class="relationship-buttons">
                   <h4>Generate a full description for:</h4>
                   <cdr-list modifier="inline" class="relationship-npc-buttons">
-                    <li v-for="(relationshipDescription, relationshipName) in npc.relationships" :key="relationshipName">
+                    <li v-for="(relationshipDescription, relationshipName) in npc.relationships"
+                      :key="relationshipName">
                       <NPCGenerationButton :disabledButton="anythingLoading" :sequentialLoading="true"
                         :buttonText="relationshipName" :typeOfNPC="relationshipName"
                         :extraDescription="{ locationName: location.name, locationContext: location.description, mainNPC: npc.character_name, relationship: npc.fullDescription + ' ' + relationshipName + ' ' + relationshipDescription }"
@@ -148,21 +155,21 @@
   </div>
 
   <div class="instructions">
-      <h3>Use Homebrewery to Make a Beautiful PDF of Your Generated Content!</h3>
-      <cdr-list tag="ol" modifier="ordered">
-        <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
-        <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
-            rel="noopener noreferrer">Homebrewery</a>.</li>
-        <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the content as
-          you like.</li>
-        <li>Enjoy the beautifully formatted content!</li>
-      </cdr-list>
-      <div class="markdown-button">
+    <h3>Use Homebrewery to Make a Beautiful PDF of Your Generated Content!</h3>
+    <cdr-list tag="ol" modifier="ordered">
+      <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
+      <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
+          rel="noopener noreferrer">Homebrewery</a>.</li>
+      <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the content as
+        you like.</li>
+      <li>Enjoy the beautifully formatted content!</li>
+    </cdr-list>
+    <div class="markdown-button">
       <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
-      </div>
     </div>
+  </div>
 </template>
-  
+
 <script>
 import { ref, reactive, nextTick, computed, onMounted } from 'vue';
 import { CdrText, CdrList, CdrLink, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone, IconXSm } from '@rei/cedar';
@@ -170,7 +177,7 @@ import LocationForm from './LocationForm.vue';
 import NPCGenerationButton from './NPCGenerationButton.vue';
 import NPCForm from './NPCForm.vue';
 import RelationshipSkeleton from "./RelationshipSkeleton.vue";
-import {convertLocationsToMarkdown} from '../util/convertToMarkdown.mjs';
+import { convertLocationsToMarkdown } from '../util/convertToMarkdown.mjs';
 import '@rei/cedar/dist/style/cdr-input.css';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
@@ -279,30 +286,30 @@ export default {
     }
 
     function addNPCPart(locationIndex, response) {
-    if (response.part === 1) {
+      if (response.part === 1) {
         updateFirstPartDescription(locationIndex, response.npcDescription);
         // Save first part
         locations[locationIndex].firstPartDescription = response.npcDescription;
-    }
-    if (response.part === 2) {
+      }
+      if (response.part === 2) {
         // Merge first and second parts
-        const completeDescription = {...locations[locationIndex].firstPartDescription, ...response.npcDescription};
+        const completeDescription = { ...locations[locationIndex].firstPartDescription, ...response.npcDescription };
         addNPC(locationIndex, completeDescription);
         // Delete the first part after it's used
         delete locations[locationIndex].firstPartDescription;
+      }
     }
-}
 
-function addNPC(locationIndex, npcDescription) {
-    const npc = locations[locationIndex].npcs[locations[locationIndex].npcs.length - 1];
-    npc.relationships = npcDescription.relationships;
-    npc.roleplaying_tips = npcDescription.roleplaying_tips;
-    npc.read_aloud_description = npcDescription.read_aloud_description;
-    npc.fullDescription = `${npcDescription.description_of_position} ${npcDescription.reason_for_being_there} ${npcDescription.distinctive_feature_or_mannerism} ${npcDescription.character_secret}`;
+    function addNPC(locationIndex, npcDescription) {
+      const npc = locations[locationIndex].npcs[locations[locationIndex].npcs.length - 1];
+      npc.relationships = npcDescription.relationships;
+      npc.roleplaying_tips = npcDescription.roleplaying_tips;
+      npc.read_aloud_description = npcDescription.read_aloud_description;
+      npc.fullDescription = `${npcDescription.description_of_position} ${npcDescription.reason_for_being_there} ${npcDescription.distinctive_feature_or_mannerism} ${npcDescription.character_secret}`;
 
-    delete newNPCs[locationIndex].firstPart; // Remove the first part property
-    saveLocationsToLocalStorage();
-}
+      delete newNPCs[locationIndex].firstPart; // Remove the first part property
+      saveLocationsToLocalStorage();
+    }
 
 
     function deleteNPC(locationIndex, npcIndex) {
@@ -389,9 +396,18 @@ function addNPC(locationIndex, npcDescription) {
   },
 };
 </script>
-  
+
 <style scoped lang="scss">
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
+
+//styling for a red message banner which spans the page
+.message-banner {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  text-align: center;
+  font-weight: bold;
+}
 
 .content-container {
   position: relative;
@@ -442,13 +458,15 @@ h3 {
 }
 
 .read-aloud {
-    background-color: $cdr-color-background-secondary;
-    color: $cdr-color-text-secondary;
-    .body-text {
-      @include cdr-text-body-400();
-      font-style: italic;
-    }
-    padding: 1rem 2rem;
+  background-color: $cdr-color-background-secondary;
+  color: $cdr-color-text-secondary;
+
+  .body-text {
+    @include cdr-text-body-400();
+    font-style: italic;
+  }
+
+  padding: 1rem 2rem;
 }
 
 .cdr-accordion-group {
@@ -537,6 +555,7 @@ li:hover {
 
 .markdown-button {
   display: flex;
+
   button {
     margin: 2rem auto 1rem;
   }
