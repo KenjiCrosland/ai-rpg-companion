@@ -1,3 +1,47 @@
+export function dungeonFormatGuidelines() {
+    return `
+    Sentence 1: Room-Specific Description
+
+    Guideline: Describe the specific type and characteristics of the room within the dungeon. Include details about its size, purpose, and distinctive features to set the scene for what the players are encountering.
+
+    Examples:
+
+    "The Guardroom is cramped and dimly lit, with rusted weapons and shields adorning its walls."
+    "The Alchemist's Lab is cluttered with bubbling potions and strange apparatuses, the air heavy with the scent of chemicals."
+    "The Treasure Chamber gleams with gold and jewels, but its opulence is overshadowed by the ominous statues guarding every corner."
+
+    Sentence 2: Atmospheric Details
+
+    Guideline: Focus on sensory experiences specific to the room. Describe smells, lighting, sounds, or any atmospheric element that adds depth to the room’s character.
+
+    Examples:
+
+        "A musty odor permeates the air, mingling with a faint, metallic scent of old battles."
+        "Faint, eerie lights from various flasks cast unsettling shadows on the stone walls."
+        "The clink of shifting coins echoes softly, disturbed by a barely perceptible draft."
+
+    Sentence 3: Unique Features
+
+    Guideline: Highlight unique, non-interactive elements that make the room special. These can be architectural, artistic, or natural details that contribute to the ambiance without being directly usable by the players.
+
+    Examples:
+
+        "An ancient tapestry, threadbare and faded, depicts a long-forgotten battle, hanging precariously on one wall."
+        "Shelves lined with oddly colored fungi emit a faint luminescence, providing the only light in the chamber."
+        "Intricate mosaics on the floor, partially covered by dust, show celestial patterns and unknown symbols."
+
+    Sentence 4: Interactive Elements
+
+    Guideline: Introduce objects, guardians, characters, or features in the room that players can interact with. These should be elements that can provoke action, conversation, or decision-making. DO NOT MENTION TRAPS OR ANYTHING HIDDEN TO PLAYERS. DO NOT INCLUDE CHESTS OR TREASURE AT A DUNGEON ENTRANCE.
+
+    Examples:
+
+        "A ghostly figure, clad in ancient armor, paces restlessly, murmuring about a lost battle and a betrayed king."
+        "Among the clutter, a prominently placed tome radiates a subtle, magical aura, seemingly beckoning for a closer look."
+        "A conspicuously ornate chest sits in the center, its lock glinting ominously under the flickering torchlight."
+    `
+}
+
 export function createLocationPrompt(param) {
     if (!param){
         param = "a random location";
