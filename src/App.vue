@@ -4,10 +4,11 @@
     <NPCGenerator v-if="currentPage === 'npc-generator'" />
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
-    <StatblockGenerator v-if="currentPage === 'statblock-generator'"/>
-    <BookGenerator v-if="currentPage === 'book-generator'"/>
+    <StatblockGenerator v-if="currentPage === 'statblock-generator'" />
+    <BookGenerator v-if="currentPage === 'book-generator'" />
     <LoreGenerator v-if="currentPage === 'lore-generator'" />
     <DungeonGenerator v-if="currentPage === 'dungeon-generator'" />
+    <ItemGenerator v-if="currentPage === 'item-generator'" />
   </div>
 </template>
 
@@ -20,6 +21,7 @@ import DashboardPlus from './components/DashboardPlus.vue';
 import StatblockGenerator from './components/StatblockGenerator.vue';
 import BookGenerator from './components/BookGenerator.vue';
 import DungeonGenerator from './components/DungeonGenerator.vue';
+import ItemGenerator from './components/ItemGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -35,11 +37,12 @@ export default {
     CdrText,
     BookGenerator,
     DungeonGenerator,
-    LoreGenerator
-},
+    LoreGenerator,
+    ItemGenerator,
+  },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'dungeon-generator',
+      currentPage: this.$attrs['data-page'] || 'item-generator',
     };
   },
   mounted() {
@@ -71,6 +74,11 @@ export default {
     if (typeof gtag === 'function' && this.currentPage === 'statblock-generator') {
       gtag('config', 'UA-11925218-1', {
         'page_path': '/ai-powered-dnd-5e-monster-statblock-generator',
+      });
+    }
+    if (typeof gtag === 'function' && this.currentPage === 'item-generator') {
+      gtag('config', 'UA-11925218-1', {
+        'page_path': '/dnd-5e-magic-item-generator',
       });
     }
   },

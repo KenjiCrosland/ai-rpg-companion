@@ -4,9 +4,9 @@
  *
  * A template to force full-width layout, remove breadcrumbs, and remove the page title.
  *
- * Template Name: RPG Companion Dungeon Generator
+ * Template Name: RPG Companion Magic Item Generator
  *
- * @package Genesis Custom RPG Companion Dungeon Generator
+ * @package Genesis Custom RPG Companion Magic Item Generator
  * @author  Your Name
  * @license GPL-2.0-or-later
  * @link    https://your-link.com/
@@ -25,8 +25,8 @@ remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs');
 
 // Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
-    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-dungeon-generator/dist/assets';
-    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-dungeon-generator/dist/assets';
+    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-item-generator/dist/assets';
+    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-item-generator/dist/assets';
 
     $files = scandir($vue_app_path);
     $enqueued_style_handle = '';
@@ -59,39 +59,27 @@ function vue_app_enqueue_assets() {
         .site-container .site-inner {
             max-width: none;
         }
-        .statblock ul.abilities {
-            margin: 0;
-        }
         h1, h2 {
             padding-top: 2rem;
+        }
+        h2 {
+          margin-bottom: 1rem;
         }
         h3 {
             margin-top: 1rem;
             margin-bottom: 1rem;
         }
-        h3.room-name {
-            margin-top: 0;
-            margin-bottom: 0;
-        }
         select {
             padding: 1rem;
+        }
+        p {
+          margin: 1rem 0;
         }
         .read-aloud p {
             margin-bottom: 1rem;
         }
         .read-aloud {
             margin-bottom: 2rem;
-        }
-        .statblock th, .statblock td {
-            padding: 0;
-            text-align: center;
-            border: none;
-        }
-        .monster-form select {
-            padding-top: .9rem;
-        }
-        #detailed-rooms {
-            margin-bottom: 0;
         }
         #genesis-content,
         #app {
@@ -118,7 +106,7 @@ add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 
 //Add Vue app root element.
 function vue_app_render_root_element() {
-    echo '<div id="app" data-page="dungeon-generator"></div>';
+    echo '<div id="app" data-page="item-generator"></div>';
 }
 
 // add_action( 'genesis_entry_content', 'vue_app_render_root_element' );

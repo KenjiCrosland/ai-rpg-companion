@@ -630,6 +630,7 @@ export default {
 .room-detail-header {
     display: flex;
     align-items: center;
+    padding-bottom: 1.5rem;
 }
 
 .generate-monster {
@@ -674,7 +675,7 @@ export default {
 
 .delete-button {
     position: absolute;
-    top: 80px;
+    top: 65px;
     right: 15px;
     z-index: 1;
 }
