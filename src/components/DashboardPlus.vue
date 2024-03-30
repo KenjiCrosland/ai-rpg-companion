@@ -407,6 +407,8 @@ export default {
   padding: 1rem;
   text-align: center;
   font-weight: bold;
+  max-width: 700px;
+  margin: auto;
 }
 
 .content-container {
