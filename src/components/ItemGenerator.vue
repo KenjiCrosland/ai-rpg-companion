@@ -35,7 +35,7 @@
       <p class="rarity">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}</p>
 
       <h3>Features</h3>
-      {{ magicItemDescription.modifier }}
+      {{ magicItemDescription.modifier_sentence }}
       <p class="body-text" v-for="(description, feature) in magicItemDescription.features" :key="feature">
         <strong>{{ feature }}</strong>: {{ description }}
       </p>
@@ -112,6 +112,7 @@ import { ref } from 'vue';
 import { CdrInput, CdrButton, CdrText, CdrSelect, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
+import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
 export default {
   components: {
     CdrInput,
@@ -160,23 +161,26 @@ export default {
         const randomIndex = Math.floor(Math.random() * rarityOptions.length);
         rarity.value = rarityOptions[randomIndex];
       }
+      const featuresAndBonuses = determineFeaturesAndBonuses(rarity.value);
       magicItemDescription.value = null;
       const prompt = `Generate a detailed Dungeons & Dragons magic item description adhering to the provided rarity guidelines and incomplete information. The item's description should align with D&D 5e mechanics, including specific spell levels, attunement requirements, and balanced recharge conditions. Emphasize the item's versatility, historical context, and potential interactions with players.
         For "features" and "possible_uses", present them as nested objects where each feature or use is a key, and its detailed description is the corresponding value. This structure should enrich the item's narrative and mechanical clarity.
 
-        Rarity Guidelines:
-        - **Common:** Mimics cantrips or has 1st-level spell effects, no bonuses.
-        - **Uncommon:** May include up to 3rd-level spells, provides a +1 bonus.
-        - **Rare:** Can feature up to 6th-level spells, offers a +2 bonus, often combines features.
-        - **Very Rare:** Encompasses up to 8th-level spells, grants a +3 bonus, significantly alters gameplay.
-        - **Legendary:** Includes 9th-level spells, grants a +4 bonus, pivotal to plots.
-
+        Guidelines for features based on rarity and item type:
+        - Common: Minor magical properties or effects. No bonuses to AC or attack/damage rolls.
+        - Uncommon: May include one minor effect OR a +1 bonus to AC (for armor) or to attack/damage rolls (for weapons).
+        - Rare: Up to +1 bonus to AC and one minor effect for armor; up to +2 to attack/damage rolls OR one effect for weapons.
+        - Very Rare: Up to +3 bonus to AC or enhanced effects for armor; up to +3 to attack/damage rolls and/or effects for weapons.
+        - Legendary: Significant magical effects, up to +4 bonus to AC for armor; up to +4 to attack/damage rolls and major effects for weapons.
+    
         Example of a detailed object for guidance:
         {
           "name": "Armor of Shadow Veil",
-          "item_type": "Wondrous Item",
+          "item_type": "Armor",
           "rarity": "Rare // Can feature up to 6th-level spells, offers a +2 bonus, often combines features.",
-          "armor_or_weapon_modifier": "While wearing this armor, you gain a +1 bonus to AC."
+          "bonus": "+1",
+          "modifier_sentence": "While wearing this armor, you gain a +1 bonus to AC.",
+          "feature_count": 2,
           "features": {
             "Invisibility": "Grants invisibility when in shadows or darkness.",
             "Darkness": "Can cast 'Darkness' once per day without expending a spell slot. Requires attunement by a rogue or bard."
@@ -191,12 +195,11 @@ export default {
           "name": "${itemName.value}",
           "item_type": "${itemType.value}",
           "rarity": "${rarity.value} // ${rarityGuidelines[rarity.value]}",
-          ${isWeapon(itemType.value) ? '"modifier": "While wielding this weapon, you gain a' + rarityModifiers[rarity.value] + 'bonus to attack and damage rolls.",' : ''}
-          ${(itemType.value === 'Armor') ? '"modifier": "While wearing this armor, you gain a' + rarityModifiers[rarity.value] + 'bonus to AC.",' : ''}
-          "features": {
-            "feature_1": "feature_1_description",
-            "feature_2": "feature_2_description"
-          },
+          "bonus": "${featuresAndBonuses.bonus}",
+          "modifier_sentence": "${constructModifierSentence(featuresAndBonuses.bonus, itemType.value)}",
+          "feature_guidelines": "${rarityGuidelines[rarity.value]}",
+          "feature_count": ${featuresAndBonuses.feature_count},
+          "features": ${JSON.stringify(featuresAndBonuses.features)},
           "reason_for_rarity_level": "",
           "physical_description": "",
           "lore": "${itemLore.value}"
@@ -206,7 +209,7 @@ export default {
         loadingItem.value = true;
         // Use your method to call the OpenAI API with the prompt and parse the JSON response.
         // This example assumes you have a method like `generateGptResponse` that takes a prompt and returns the response data.
-        const response = await generateGptResponse(prompt);
+        const response = await generateGptResponse(prompt, itemValidation, 3);
         magicItemDescription.value = JSON.parse(response);
         magicItemDescription.value.rarity = parseRarity(magicItemDescription.value.rarity);
         loadingItem.value = false;
@@ -216,28 +219,43 @@ export default {
       }
     };
 
-    const rarityModifiers = {
-      'Common': '+1',
-      'Uncommon': '+1',
-      'Rare': '+2',
-      'Very Rare': '+3',
-      'Legendary': '+4'
-    };
-
-    const isWeapon = (itemType) => {
-      return itemType === 'Weapon' || itemType === 'Rod' || itemType === 'Staff';
+    const itemValidation = (jsonString) => {
+      try {
+        const jsonObj = JSON.parse(jsonString);
+        const keys = [
+          'name',
+          'item_type',
+          'rarity',
+          'bonus',
+          'feature_count',
+          'features',
+          'physical_description',
+          'lore'
+        ];
+        return keys.every((key) => key in jsonObj);
+      } catch (error) {
+        return false;
+      }
     }
-
+    const constructModifierSentence = (bonus, itemType) => {
+      if (itemType === 'Armor') {
+        return `While wearing this armor, you gain a ${bonus} bonus to AC.`;
+      } else if (itemType === 'Weapon') {
+        return `This weapon grants a ${bonus} bonus to attack and damage rolls.`;
+      } else {
+        return '';
+      }
+    }
     const parseRarity = (rarity) => {
       return rarity.split(' // ')[0];
     }
 
     const rarityGuidelines = {
-      'Common': 'Mimics cantrips or has 1st-level spell effects, no bonuses.',
-      'Uncommon': 'May include up to 3rd-level spells, provides a +1 bonus.',
-      'Rare': 'Can feature up to 6th-level spells, offers a +2 bonus, often combines features.',
-      'Very Rare': 'Encompasses up to 8th-level spells, grants a +3 bonus, significantly alters gameplay.',
-      'Legendary': 'Includes 9th-level spells, grants a +4 bonus, pivotal to plots.'
+      'Common': 'Minor magical properties or effects. No bonuses to AC or attack/damage rolls. These items rarely cause effects requiring a saving throw.',
+      'Uncommon': 'May include one minor feature OR a +1 bonus to AC (for armor) or to attack/damage rolls (for weapons). If the item causes an effect on a creature, the saving throw DC is around  13 to 14.',
+      'Rare': 'Up to +1 bonus to AC and one minor feature for armor; up to +2 to attack/damage rolls OR one effect for weapons. If the item causes an effect on a creature, the saving throw DC is around  15 to 16.',
+      'Very Rare': 'Up to +3 bonus to AC or enhanced features for armor; up to +3 to attack/damage rolls and/or effects for weapons. If the item causes an effect on a creature, the saving throw DC is around  17 to 18.',
+      'Legendary': 'Significant magical features, up to +4 bonus to AC for armor; up to +4 to attack/damage rolls and major effects for weapons. If the item causes an effect on a creature, the saving throw DC is 19 or higher.'
     }
 
     const copyAsMarkdown = () => {
