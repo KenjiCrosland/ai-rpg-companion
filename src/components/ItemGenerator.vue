@@ -162,7 +162,6 @@ export default {
         rarity.value = rarityOptions[randomIndex];
       }
       const featuresAndBonuses = determineFeaturesAndBonuses(rarity.value);
-      console.log(featuresAndBonuses);
       magicItemDescription.value = null;
       const prompt = `Generate a detailed Dungeons & Dragons magic item description adhering to the provided rarity guidelines and incomplete information. The item's description should align with D&D 5e mechanics, including specific spell levels, attunement requirements, and balanced recharge conditions. Emphasize the item's versatility, historical context, and potential interactions with players.
         For "features" and "possible_uses", present them as nested objects where each feature or use is a key, and its detailed description is the corresponding value. This structure should enrich the item's narrative and mechanical clarity.
@@ -210,7 +209,6 @@ export default {
         loadingItem.value = true;
         // Use your method to call the OpenAI API with the prompt and parse the JSON response.
         // This example assumes you have a method like `generateGptResponse` that takes a prompt and returns the response data.
-        console.log(prompt);
         const response = await generateGptResponse(prompt, itemValidation, 3);
         magicItemDescription.value = JSON.parse(response);
         magicItemDescription.value.rarity = parseRarity(magicItemDescription.value.rarity);
