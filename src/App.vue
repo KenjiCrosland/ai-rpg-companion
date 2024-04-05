@@ -9,6 +9,7 @@
     <LoreGenerator v-if="currentPage === 'lore-generator'" />
     <DungeonGenerator v-if="currentPage === 'dungeon-generator'" />
     <ItemGenerator v-if="currentPage === 'item-generator'" />
+    <EncounterGenerator v-if="currentPage === 'encounter-generator'" />
   </div>
 </template>
 
@@ -22,6 +23,7 @@ import StatblockGenerator from './components/StatblockGenerator.vue';
 import BookGenerator from './components/BookGenerator.vue';
 import DungeonGenerator from './components/DungeonGenerator.vue';
 import ItemGenerator from './components/ItemGenerator.vue';
+import EncounterGenerator from './components/EncounterGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -39,10 +41,11 @@ export default {
     DungeonGenerator,
     LoreGenerator,
     ItemGenerator,
+    EncounterGenerator
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'item-generator',
+      currentPage: this.$attrs['data-page'] || 'encounter-generator',
     };
   },
   mounted() {
@@ -79,6 +82,11 @@ export default {
     if (typeof gtag === 'function' && this.currentPage === 'item-generator') {
       gtag('config', 'UA-11925218-1', {
         'page_path': '/dnd-5e-magic-item-generator',
+      });
+    }
+    if (typeof gtag === 'function' && this.currentPage === 'encounter-generator') {
+      gtag('config', 'UA-11925218-1', {
+        'page_path': '/dnd-5e-encounter-generator',
       });
     }
   },
