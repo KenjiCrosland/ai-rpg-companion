@@ -2,7 +2,7 @@ export async function generateGptResponse(
   prompt,
   validateJSONKeys = null,
   maxAttempts = 3,
-  previousContext
+  previousContext,
 ) {
   let attempts = 0;
   let validJson = false;
@@ -30,7 +30,7 @@ export async function generateGptResponse(
           { role: 'system', content: 'You are an assistant Game Master.' },
           ...previousContext,
           { role: 'user', content: retryPrompt ? retryPrompt : prompt },
-        ]
+        ];
       }
       const requestOptions = {
         method: 'POST',
@@ -54,11 +54,13 @@ export async function generateGptResponse(
       }
       responseData = await response.json();
       const responseContent = responseData.choices[0].message.content;
-      if (!validateJSONKeys){
+      if (!validateJSONKeys) {
         return responseContent;
       }
-      console.log(responseData.choices[0].message.content);
-      validJsonString =  extractJSONFromString(responseData.choices[0].message.content);
+      //console.log(responseData.choices[0].message.content);
+      validJsonString = extractJSONFromString(
+        responseData.choices[0].message.content,
+      );
       //console.log("valid: " + validJsonString);
       if (!validJsonString) {
         //console.log(previousJSONString);
@@ -96,43 +98,44 @@ function isValidJson(str) {
   }
   return true;
 }
- 
+
 function extractJSONFromString(input) {
-    const regex = /(?:\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\})|(?:\[(?:[^\[\]]|\[(?:[^\[\]]|\[(?:[^\[\]]|\[[^\[\]]*\])*\])*\])*\])/g;
-    const matches = input.match(regex);
-  
-    function fixInvalidJSON(jsonString) {
-      try {
-        JSON.parse(jsonString);
-      } catch (e) {
-        if (e instanceof SyntaxError) {
-          // Try fixing the JSON by removing the extra comma before the closing brace
-          jsonString = jsonString.replace(/,\s*}/g, '}');
-          jsonString = jsonString.replace(/,\s*]/g, ']');
-  
-          // Try parsing the fixed JSON string
-          try {
-            return JSON.parse(jsonString);
-          } catch (e) {
-            // If it's still not valid, return false
-            return false;
-          }
-        } else {
+  const regex =
+    /(?:\{(?:[^{}]|(?:\{(?:[^{}]|(?:\{[^{}]*\}))*\}))*\})|(?:\[(?:[^\[\]]|\[(?:[^\[\]]|\[(?:[^\[\]]|\[[^\[\]]*\])*\])*\])*\])/g;
+  const matches = input.match(regex);
+
+  function fixInvalidJSON(jsonString) {
+    try {
+      JSON.parse(jsonString);
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        // Try fixing the JSON by removing the extra comma before the closing brace
+        jsonString = jsonString.replace(/,\s*}/g, '}');
+        jsonString = jsonString.replace(/,\s*]/g, ']');
+
+        // Try parsing the fixed JSON string
+        try {
+          return JSON.parse(jsonString);
+        } catch (e) {
+          // If it's still not valid, return false
           return false;
         }
-      }
-  
-      return JSON.parse(jsonString);
-    }
-  
-    if (matches && matches.length > 0) {
-      for (const match of matches) {
-        const fixedJSON = fixInvalidJSON(match);
-        if (fixedJSON) {
-          return JSON.stringify(fixedJSON);
-        }
+      } else {
+        return false;
       }
     }
-  
-    return false;
-  }  
+
+    return JSON.parse(jsonString);
+  }
+
+  if (matches && matches.length > 0) {
+    for (const match of matches) {
+      const fixedJSON = fixInvalidJSON(match);
+      if (fixedJSON) {
+        return JSON.stringify(fixedJSON);
+      }
+    }
+  }
+
+  return false;
+}

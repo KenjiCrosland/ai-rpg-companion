@@ -1,0 +1,355 @@
+{
+  "0": {
+    "Aquatic": [
+      "Crab",
+      "Octopus",
+      "Quipper",
+      "Sea horse"
+    ],
+    "Arctic": [
+      "Snowy owl"
+    ],
+    "Coastal": [
+      "Crab",
+      "Seagull"
+    ],
+    "Underwater": [
+      "Octopus",
+      "Quipper",
+      "Sea horse"
+    ],
+    "Forest": [
+      "Awakened shrub",
+      "Baboon",
+      "Badger",
+      "Bat",
+      "Cat",
+      "Deer",
+      "Eagle",
+      "Frog",
+      "Giant fire beetle",
+      "Goat",
+      "Hawk",
+      "Homunculus",
+      "Hyena",
+      "Jackal",
+      "Lizard",
+      "Myconid sprout",
+      "Owl",
+      "Rat",
+      "Raven",
+      "Scorpion",
+      "Shrieker",
+      "Spider",
+      "Vulture",
+      "Weasel"
+    ],
+    "Grassland": [
+      "Baboon",
+      "Deer",
+      "Eagle",
+      "Goat",
+      "Hawk",
+      "Hyena",
+      "Jackal",
+      "Vulture"
+    ],
+    "Hill": [
+      "Goat",
+      "Hawk"
+    ],
+    "Jungle": [
+      "Baboon",
+      "Frog",
+      "Lizard",
+      "Parrot"
+    ],
+    "Mountain": [
+      "Eagle",
+      "Goat",
+      "Hawk"
+    ],
+    "Swamp": [
+      "Crawling claw",
+      "Frog"
+    ],
+    "Underdark": [
+      "Crawling claw",
+      "Myconid sprout",
+      "Shrieker"
+    ],
+    "Urban": [
+      "Cat",
+      "Commoner",
+      "Rat",
+      "Weasel"
+    ],
+    "Planar": [
+      "Lemure"
+    ],
+    "Cave": [
+      "Bat",
+      "Spider",
+      "Crawling claw"
+    ],
+    "Dungeon": [
+      "Rat",
+      "Spider",
+      "Crawling claw",
+      "Homunculus"
+    ]
+  },
+  "1/8": {
+    "Aquatic": [
+      "Giant crab",
+      "Merfolk"
+    ],
+    "Arctic": [
+      "Blood hawk"
+    ],
+    "Coastal": [
+      "Giant crab",
+      "Merfolk"
+    ],
+    "Underwater": [
+      "Merfolk"
+    ],
+    "Forest": [
+      "Blood hawk",
+      "Flying snake",
+      "Giant rat",
+      "Giant weasel",
+      "Kobold",
+      "Twig blight"
+    ],
+    "Grassland": [
+      "Camel",
+      "Mule",
+      "Pony"
+    ],
+    "Hill": [],
+    "Jungle": [
+      "Flying snake",
+      "Poisonous snake"
+    ],
+    "Mountain": [
+      "Blood hawk"
+    ],
+    "Swamp": [
+      "Stirge"
+    ],
+    "Underdark": [
+      "Manes"
+    ],
+    "Urban": [
+      "Bandit",
+      "Cultist",
+      "Guard",
+      "Noble",
+      "Tribal warrior"
+    ],
+    "Planar": [
+      "Flumph",
+      "Slaad tadpole"
+    ],
+    "Cave": [
+      "Giant rat",
+      "Kobold"
+    ],
+    "Dungeon": [
+      "Bandit",
+      "Cultist",
+      "Guard",
+      "Kobold"
+    ]
+  },
+  "1/4": {
+    "Aquatic": [
+      "Kuo-toa"
+    ],
+    "Coastal": [
+      "Pteranodon"
+    ],
+    "Underwater": [
+      "Kuo-toa"
+    ],
+    "Forest": [
+      "Aarakocra",
+      "Blink dog",
+      "Boar",
+      "Bullywug",
+      "Giant badger",
+      "Giant bat",
+      "Giant centipede",
+      "Giant frog",
+      "Giant lizard",
+      "Giant owl",
+      "Giant poisonous snake",
+      "Giant wolf spider",
+      "Goblin",
+      "Kenku",
+      "Needle blight",
+      "Panther",
+      "Pixie",
+      "Pseudodragon",
+      "Swarm of bats",
+      "Swarm of rats",
+      "Swarm of ravens",
+      "Winged kobold",
+      "Wolf"
+    ],
+    "Grassland": [
+      "Axe beak",
+      "Boar",
+      "Draft horse",
+      "Elk",
+      "Riding horse"
+    ],
+    "Hill": [
+      "Troglodyte"
+    ],
+    "Jungle": [
+      "Bullywug",
+      "Constrictor snake",
+      "Giant frog",
+      "Giant lizard",
+      "Panther"
+    ],
+    "Mountain": [
+      "Aarakocra",
+      "Giant owl",
+      "Pteranodon"
+    ],
+    "Swamp": [
+      "Bullywug",
+      "Giant frog",
+      "Swarm of bats"
+    ],
+    "Underdark": [
+      "Dretch",
+      "Drow",
+      "Duodrone",
+      "Grimlock",
+      "Troglodyte"
+    ],
+    "Urban": [
+      "Acolyte",
+      "Drow",
+      "Goblin",
+      "Skeleton",
+      "Zombie"
+    ],
+    "Planar": [
+      "Mud mephit",
+      "Smoke mephit",
+      "Steam mephit"
+    ],
+    "Cave": [
+      "Giant bat",
+      "Giant spider",
+      "Troglodyte"
+    ],
+    "Dungeon": [
+      "Dretch",
+      "Duodrone",
+      "Goblin",
+      "Grimlock",
+      "Skeleton",
+      "Zombie"
+    ]
+  },
+  "1/2": {
+    "Aquatic": [
+      "Giant sea horse",
+      "Reef shark",
+      "Sahuagin"
+    ],
+    "Arctic": [
+      "Ice mephit"
+    ],
+    "Coastal": [
+      "Crocodile",
+      "Reef shark",
+      "Sahuagin"
+    ],
+    "Underwater": [
+      "Giant sea horse",
+      "Reef shark",
+      "Sahuagin"
+    ],
+    "Forest": [
+      "Ape",
+      "Black bear",
+      "Cockatrice",
+      "Giant goat",
+      "Giant wasp",
+      "Gnoll",
+      "Hobgoblin",
+      "Jackalwere",
+      "Lizardfolk",
+      "Orc",
+      "Satyr",
+      "Vine blight",
+      "Worg"
+    ],
+    "Grassland": [
+      "Ape",
+      "Black bear",
+      "Giant goat",
+      "Gnoll",
+      "Hobgoblin",
+      "Orc",
+      "Warhorse"
+    ],
+    "Hill": [
+      "Giant goat",
+      "Hobgoblin",
+      "Orc"
+    ],
+    "Jungle": [
+      "Ape",
+      "Lizardfolk"
+    ],
+    "Mountain": [
+      "Giant goat",
+      "Hobgoblin"
+    ],
+    "Swamp": [
+      "Crocodile",
+      "Lizardfolk"
+    ],
+    "Underdark": [
+      "Darkmantle",
+      "Deep gnome",
+      "Gray ooze",
+      "Myconid adult"
+    ],
+    "Urban": [
+      "Deep gnome",
+      "Hobgoblin",
+      "Orc",
+      "Thug",
+      "Warhorse",
+      "Warhorse skeleton"
+    ],
+    "Planar": [
+      "Dust mephit",
+      "Gas spore",
+      "Ice mephit",
+      "Magma mephit",
+      "Shadow"
+    ],
+    "Cave": [
+      "Darkmantle",
+      "Gray ooze",
+      "Piercer"
+    ],
+    "Dungeon": [
+      "Cockatrice",
+      "Darkmantle",
+      "Gray ooze",
+      "Rust monster",
+      "Shadow"
+    ]
+  }
+}
