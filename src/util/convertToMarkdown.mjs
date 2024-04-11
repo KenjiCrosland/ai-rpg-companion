@@ -82,6 +82,29 @@ export function convertItemToMarkdown(item) {
   return addPageBreaks(markdown);
 }
 
+export function convertEncounterToMarkdown(
+  locationReadAloud,
+  encounterDescription,
+  monsters,
+) {
+  let markdown = `### ${encounterDescription.place_name}\n\n`;
+  markdown += `{{descriptive \n${locationReadAloud}\n}}\n\n`;
+  markdown += `${encounterDescription.encounter_intro} \n\n`;
+  markdown += `${encounterDescription.environmental_twist} \n\n`;
+  markdown += `${encounterDescription.non_combat_objective} \n\n`;
+  markdown += `${encounterDescription.potential_event} \n\n`;
+  markdown += `${encounterDescription.encounter_aftermath} \n\n`;
+
+  monsters.forEach((monster) => {
+    if (monster.statblock) {
+      markdown +=
+        statblockToMarkdown(monster.statblock, 'two_columns') + '\n\n';
+    }
+  });
+
+  return markdown;
+}
+
 export function convertDungeonToMarkdown(
   dungeonName,
   dungeonSummary,

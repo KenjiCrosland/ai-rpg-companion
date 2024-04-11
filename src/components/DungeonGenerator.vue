@@ -2,20 +2,23 @@
     <div class="app_container">
         <h1>RPG Dungeon Generator</h1>
         <form @submit.prevent="generateDungeonSummary" class="dungeon_form">
-            <cdr-input v-model="dungeonName" background="secondary" label="Dungeon Name" placeholder="Enter Dungeon Name"
-                required>
+            <cdr-input v-model="dungeonName" background="secondary" label="Dungeon Name"
+                placeholder="Enter Dungeon Name" required>
             </cdr-input>
             <cdr-input :rows="7" tag="textarea" v-model="dungeonDetails" background="secondary"
-                label="Dungeon Details and Lore" placeholder="Enter any additional dungeon details" class="dungeon-details">
+                label="Dungeon Details and Lore" placeholder="Enter any additional dungeon details"
+                class="dungeon-details">
                 <template #helper-text-bottom>
-                    Write any details about your dungeon that you want to include. Need help coming up with lore for your
+                    Write any details about your dungeon that you want to include. Need help coming up with lore for
+                    your
                     dungeon? Use the <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore
                         Generator</cdr-link> and paste in the generated summary!
                 </template>
             </cdr-input>
             <cdr-button type="submit" class="generate_button">Generate Dungeon Summary</cdr-button>
         </form>
-        <cdr-button modifier="secondary" :full-width="true" @click="clearAllContent">Clear All Dungeon Content</cdr-button>
+        <cdr-button modifier="secondary" :full-width="true" @click="clearAllContent">Clear All Dungeon
+            Content</cdr-button>
         <h2>{{ dungeonName }}</h2>
 
         <cdr-accordion v-if="loadingSummary" class="accordion" level="2" id="loading-npc">
@@ -94,7 +97,8 @@
                 <div v-for="(room, index) in dungeonList" :key="index">
                     <h3>{{ room.room_name }}</h3>
                     <p>{{ room.room_description }}</p>
-                    <cdr-button @click="createDetailedRoom(room)" class="expand_button">Generate Detailed Room</cdr-button>
+                    <cdr-button @click="createDetailedRoom(room)" class="expand_button">Generate Detailed
+                        Room</cdr-button>
                 </div>
             </div>
         </cdr-accordion>
@@ -169,16 +173,17 @@
                             <p>{{ npc.motivation }}</p>
                             <div class="generate-monster">
 
-                            <div class="cr-select"> 
-                                <cdr-select v-model="npc.challenge_rating" label="Challenge Rating" prompt="CR"
-                                    :options="challengeRatingData.fullArray" />
+                                <div class="cr-select">
+                                    <cdr-select v-model="npc.challenge_rating" label="Challenge Rating" prompt="CR"
+                                        :options="challengeRatingData.fullArray" />
+                                </div>
+                                <cdr-button @click="generateMonster(npc, index, npcIndex)">Generate
+                                    Statblock</cdr-button>
                             </div>
-                            <cdr-button @click="generateMonster(npc, index, npcIndex)">Generate Statblock</cdr-button>
-                        </div>
 
                             <StatblockBase v-if="(npc.loadingPart1 || npc.loadingPart2 || npc.statblock)"
-                                :loadingPart1="npc.loadingPart1" :loadingPart2="npc.loadingPart2" :monster="npc.statblock"
-                                :copyButtons="true" />
+                                :loadingPart1="npc.loadingPart1" :loadingPart2="npc.loadingPart2"
+                                :monster="npc.statblock" :copyButtons="true" />
                         </div>
                     </div>
                 </cdr-accordion>
@@ -212,7 +217,7 @@
         </div>
     </div>
 </template>
-  
+
 <script>
 import { CdrInput, CdrSelect, CdrLink, CdrButton, CdrList, CdrText, CdrAccordion, CdrAccordionGroup, CdrSkeleton, CdrSkeletonBone, CdrTooltip, IconXSm, IconReload, IconArrowUp, IconArrowDown } from "@rei/cedar";
 import StatblockBase from './StatblockBase.vue';
@@ -260,10 +265,10 @@ export default {
         this.loadFromLocalStorage();
     },
     computed: {
-    roomNamesString() {
-      return this.detailedRooms.map(room => room.room_name).join(', ');
+        roomNamesString() {
+            return this.detailedRooms.map(room => room.room_name).join(', ');
+        },
     },
-  },
     methods: {
         async generateDungeonSummary() {
             const prompt = `
@@ -432,7 +437,7 @@ export default {
         async generateRoomList() {
             let existingRooms;
             let roomPromptString = 'All lists should include an entrance, a room with a roleplaying challenge, a hidden room, and a room with a final showdown. Feel free to include other rooms unique to the character of the dungeon';
-   
+
             if (this.detailedRooms.length > 0) {
                 existingRooms = this.roomNamesString;
                 roomPromptString = `Do NOT include any rooms similar in theme or name to the following rooms: ${existingRooms}`;
@@ -604,7 +609,7 @@ export default {
     }
 };
 </script>
-  
+
 <style scoped lang="scss">
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -635,12 +640,14 @@ export default {
 
 .generate-monster {
     display: flex;
-  align-items: flex-end;
-  gap: 2rem;
+    align-items: flex-end;
+    gap: 2rem;
 }
+
 .cr-select {
     width: 12rem;
 }
+
 .dungeon_form {
     background-color: $cdr-color-background-secondary;
     border-radius: 8px;
@@ -698,5 +705,5 @@ export default {
 
 .instructions li {
     margin-bottom: 0.5rem;
-}</style>
-  
+}
+</style>

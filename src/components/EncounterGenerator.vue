@@ -30,7 +30,7 @@
       <div>
         <cdr-checkbox label="Spellcaster:" v-model="newMonster.isSpellcaster">Creature is a Spellcaster</cdr-checkbox>
 
-        <cdr-button @click="addMonster">Add Monster</cdr-button>
+        <cdr-button @click="addMonster(newMonster)">Add Monster</cdr-button>
       </div>
 
     </div>
@@ -68,7 +68,7 @@
 
       <div class="monster-list">
         <h4>Monsters</h4>
-        <div v-for="(monster, index) in monsters" :key="index" class="monster-entry">
+        <div v-for="(monster, index) in monsters" :key="`${monster.name}-${index}`" class="monster-entry">
           <div class="monster-details">
             <div>{{ monster.name }}</div>
             <div>
@@ -77,10 +77,6 @@
                 <span>CR {{ monster.cr }}</span>
                 <span>{{ crToXP[monster.cr] }} XP</span>
               </div>
-
-
-
-
             </div>
           </div>
           <div class="count-and-remove">
@@ -114,20 +110,143 @@
       </h3>
     </div>
     <form @submit.prevent="generateEncounter" class="encounter_form">
+      <cdr-input id="location" v-model="location" background="secondary"
+        label="Short location description (example: a misty forest, the glimmering ruins of xarnok)" />
+      <cdr-checkbox label="Ambush" v-model="ambush">Encounter is an Ambush</cdr-checkbox>
 
 
+      <cdr-button type="submit">Generate Encounter</cdr-button>
     </form>
+    <div v-if="locationReadAloud && !loadingReadAloud" class="read-aloud">
+      <p>{{ locationReadAloud }}</p>
+    </div>
+    <div v-if="loadingReadAloud" class="read-aloud">
+      <p>
+        <CdrSkeleton>
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:50%" />
+        </CdrSkeleton>
+      </p>
+    </div>
+    <div v-if="loadingEncounterDescription">
+      <p>
+        <CdrSkeleton>
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:50%" />
+        </CdrSkeleton>
+      </p>
+      <p>
+        <CdrSkeleton>
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:50%" />
+        </CdrSkeleton>
+      </p>
+      <p>
+        <CdrSkeleton>
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:50%" />
+        </CdrSkeleton>
+      </p>
+      <p>
+        <CdrSkeleton>
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:50%" />
+        </CdrSkeleton>
+      </p>
+      <p>
+        <CdrSkeleton>
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:50%" />
+        </CdrSkeleton>
+      </p>
+      <p>
+        <CdrSkeleton>
+          <CdrSkeletonBone type="line" style="width:95%" />
+          <CdrSkeletonBone type="line" style="width:90%" />
+          <CdrSkeletonBone type="line" style="width:85%" />
+          <CdrSkeletonBone type="line" style="width:50%" />
+        </CdrSkeleton>
+      </p>
+    </div>
+    <div v-if="encounterDescription && !loadingEncounterDescription">
+      <p>{{ encounterDescription.encounter_intro }}</p>
+      <p>{{ encounterDescription.environmental_twist }}</p>
+      <p>{{ encounterDescription.non_combat_objective }}</p>
+      <p>{{ encounterDescription.potential_event }}</p>
+      <p>{{ encounterDescription.encounter_aftermath }}</p>
+    </div>
+    <div v-if="encounterDescription">
+      <h3>Statblocks</h3>
+      <div v-for="(monster, index) in monsters" :key="index">
+        <div v-if="!monster.statblock" class="statblock-generation-list">
+          <div class="monster-details">
+            <div>{{ monster.name }}</div>
+            <div>
 
+              <div class="cr-and-xp">
+                <span>CR {{ monster.cr }}</span>
+                <span>{{ crToXP[monster.cr] }} XP</span>
+              </div>
+            </div>
+          </div>
+          <cdr-button @click="generateStatblock(monster, index)">Generate Statblock</cdr-button>
+        </div>
+
+        <div v-if="monster.statblock || monster.loadingPart1 || monster.loadingPart2">
+          <StatblockBase :monster="monster.statblock"
+            v-if="(monster.loadingPart1 || monster.loadingPart2 || monster.statblock)"
+            :loadingPart1="monster.loadingPart1" :loadingPart2="monster.loadingPart2" :copyButtons="true" />
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <div v-if="encounterDescription" class="instructions">
+    <h3>Use Homebrewery to Make a Beautiful PDF of Your Generated Content!</h3>
+    <cdr-list tag="ol" modifier="ordered">
+      <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
+      <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
+          rel="noopener noreferrer">Homebrewery</a>.</li>
+      <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the
+        content as
+        you like.</li>
+      <li>Enjoy the beautifully formatted content!</li>
+    </cdr-list>
+    <div class="markdown-button">
+      <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
+    </div>
   </div>
 </template>
 
 <script>
 import { ref, reactive, watchEffect } from 'vue';
 import encounterDifficulty from '../data/encounter-difficulty.json';
+import StatblockBase from './StatblockBase.vue';
 import { CdrInput, CdrButton, CdrText, CdrSelect, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip } from "@rei/cedar";
 import challengeRatingData from '../data/challengeRatings.json';
 import crToXP from '../data/cr-to-xp.json';
 import { generateGptResponse } from "../util/open-ai.mjs";
+import { createLocationPrompt } from '../util/prompts.mjs';
+import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
+import encounterPrompt from '../util/encounter-prompt.mjs';
+import { convertEncounterToMarkdown } from '../util/convertToMarkdown.mjs';
 
 export default {
   components: {
@@ -141,7 +260,8 @@ export default {
     CdrSkeleton,
     CdrSkeletonBone,
     IconXSm,
-    CdrTooltip
+    CdrTooltip,
+    StatblockBase
   },
   setup() {
     const groups = reactive([{ members: 1, level: 1 }]);
@@ -150,8 +270,16 @@ export default {
     const adjustedTotalXP = ref(0);
     const xpString = ref('');
     const encounterDifficultyLevel = ref('');
+    const location = ref('');
+    const locationReadAloud = ref('');
     const monsters = ref([]);
     const partyComposition = ref([]);
+    const ambush = ref(false);
+    const encounterDescription = ref(null);
+    const loadingReadAloud = ref(false);
+    const loadingEncounterDescription = ref(false);
+    const loadingPart1 = ref(false);
+    const loadingPart2 = ref(false);
 
     function addGroup() {
       groups.push({ members: 1, level: 1 });
@@ -167,6 +295,15 @@ export default {
         return total + (xp * monster.quantity);
       }, 0);
     };
+
+    function generateLocationDescription() {
+      let locationAndMonsterPromptString = `${location.value}. In this location there are the following monsters: ${monsters.value.map(monster => `${monster.quantity} ${monster.name}`).join(', ')}.`;
+      if (ambush.value === true) {
+        locationAndMonsterPromptString += "This is an ambush so the creatures are not visible. Only include hints of them in the description."
+      }
+      const prompt = createLocationPrompt(locationAndMonsterPromptString);
+      return prompt;
+    }
 
     function getMultiplier(numberOfMonsters) {
       if (numberOfMonsters === 1) return 1;
@@ -196,18 +333,64 @@ export default {
 
 
     const newMonster = ref({
-      name: 'Unnamed',
+      name: '',
       cr: '1',
       description: '',
       quantity: 1,
       type: 'Balanced', // Default selection
-      isSpellcaster: false
+      isSpellcaster: false,
+      loadingPart1: false,
+      loadingPart2: false,
+      statblock: null
     });
 
-    const addMonster = () => {
-      monsters.value.push({ ...newMonster.value });
-      // Reset form, defaulting type to Balanced and isSpellcaster to false
-      newMonster.value = { name: 'Unnamed', cr: '1', description: '', quantity: 1, type: 'Balanced', isSpellcaster: false };
+    async function generateStatblock(monster, index) {
+      console.log(monsters.value[index]);
+      monsters.value[index].loadingPart1 = true;
+      monsters.value[index].loadingPart2 = true;
+      const { monsterPart1, monsterPrompts, errorMessage: errorPart1 } = await generateStatblockPart1({
+        monsterName: monsters.value[index].name,
+        challengeRating: monsters.value[index].cr,
+        monsterType: monsters.value[index].type,
+        monsterDescription: monsters.value[index].description,
+        caster: monsters.value[index].isSpellcaster,
+      });
+
+      if (errorPart1) {
+        console.error("Error generating statblock part 1:", errorPart1);
+        return;
+      }
+
+      const { monsterPart2, errorMessage: errorPart2 } = await completeStatblock(monsterPart1, monsterPrompts);
+
+      if (errorPart2) {
+        console.error("Error generating statblock part 2:", errorPart2);
+        return;
+      }
+
+      if (monsterPart1 && monsterPart2) {
+        let combined = { ...monsterPart1, ...monsterPart2 };
+        monsters.value[index].statblock = combined;
+        console.log(monsters.value[index].statblock);
+      }
+      monsters.value[index].loadingPart1 = false;
+      monsters.value[index].loadingPart2 = false;
+    };
+
+    const addMonster = (monster) => {
+      // If no monster is provided, use the current newMonster.value
+      const monsterToAdd = monster || newMonster.value;
+
+      if (!monsterToAdd.name) {
+        monsterToAdd.name = 'Unnamed Monster';
+      }
+
+      monsters.value.push({ ...monsterToAdd });
+
+      // Reset only if no monster argument is passed, maintaining function's original behavior
+      if (!monster) {
+        newMonster.value = { name: '', cr: '1', description: '', quantity: 1, type: 'Balanced', isSpellcaster: false, statblock: null };
+      }
     };
 
     const removeMonster = (index) => {
@@ -241,8 +424,82 @@ export default {
       return totalXP;
     }
 
+    const encounterValidation = (jsonString) => {
+      try {
+        const jsonObj = JSON.parse(jsonString);
+        const keys = [
+          'encounter_intro',
+          'environmental_twist',
+          'non_combat_objective',
+          'potential_event',
+          'encounter_aftermath'
+        ];
+        return keys.every((key) => key in jsonObj);
+      } catch (error) {
+        return false;
+      }
+    }
+
+    async function generateEncounter() {
+      const locationPrompt = generateLocationDescription();
+      const monsterDescriptionString = monsters.value.map(monster => `${monster.quantity} ${monster.name}${monster.description ? ': ' + monster.description : ''}`).join(', ');
+      console.log(monsterDescriptionString);
+      try {
+        loadingEncounterDescription.value = true;
+        loadingReadAloud.value = true;
+        locationReadAloud.value = await generateGptResponse(locationPrompt);
+        loadingReadAloud.value = false;
+      } catch (error) {
+        console.error("Error generating location string:", error);
+      }
+
+      try {
+        const encounterResponse = await generateGptResponse(encounterPrompt(locationReadAloud.value, monsterDescriptionString), encounterValidation, 3);
+        encounterDescription.value = JSON.parse(encounterResponse);
+        loadingEncounterDescription.value = false;
+        if (encounterDescription.value.monsters) {
+          encounterDescription.value.monsters.forEach(monster => {
+            const monsterData = {
+              name: monster.name,
+              cr: monster.cr,
+              description: monster.description,
+              quantity: monster.quantity,
+              type: monster.type,
+              isSpellcaster: monster.isSpellcaster,
+              statblock: null,
+              loadingPart1: false,
+              loadingPart2: false
+            };
+            addMonster(monsterData);
+          });
+        }
+      } catch (error) {
+        console.error("Error generating encounter:", error);
+      }
+    }
+
     function numberWithCommas(x) {
       return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    const copyAsMarkdown = () => {
+
+      const markdownContent = convertEncounterToMarkdown(locationReadAloud.value, encounterDescription.value, monsters.value);
+
+      if (markdownContent) {
+        const textarea = document.createElement('textarea');
+        textarea.textContent = markdownContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        // Optionally, display a message that the content has been copied.
+        alert('Content copied as markdown!');
+      } else {
+        // If there is no content to copy, display a message to the user.
+        alert('No content available to copy as markdown.');
+      }
     }
 
     // Automatically populate the partyComposition array whenever 'groups' changes
@@ -275,8 +532,20 @@ export default {
       addMonster,
       removeMonster,
       encounterDifficultyLevel,
+      copyAsMarkdown,
+      generateEncounter,
+      generateStatblock,
+      ambush,
+      loadingReadAloud,
+      generateLocationDescription,
       crToXP,
       xpString,
+      location,
+      locationReadAloud,
+      loadingPart1,
+      loadingPart2,
+      encounterDescription,
+      loadingEncounterDescription,
       IconXSm,
       incrementQuantity,
       decrementQuantity,
@@ -289,7 +558,8 @@ export default {
       CdrLink,
       CdrList,
       CdrSkeleton,
-      CdrSkeletonBone
+      CdrSkeletonBone,
+      StatblockBase
     };
   }
 }
@@ -320,6 +590,13 @@ export default {
   gap: 1.5rem;
 }
 
+.statblock-generation-list {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
 .monster-form {
   display: grid;
   grid-template-columns: 9fr 2fr;
@@ -328,6 +605,7 @@ export default {
   .creature-form-right {
     display: grid;
     grid-template-columns: 1fr;
+    min-width: 11rem;
 
     .label-standalone,
     cdr-select {
@@ -357,17 +635,19 @@ export default {
   }
 }
 
+.cr-and-xp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 1.5rem;
+}
+
 .monster-list {
   h4 {
     margin-top: 0;
   }
 
-  .cr-and-xp {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    font-size: 1.5rem;
-  }
+
 
   .monster-count {
     width: 5rem;
@@ -404,6 +684,12 @@ export default {
   }
 }
 
+.read-aloud {
+  background-color: $cdr-color-background-secondary;
+  color: $cdr-color-text-secondary;
+  padding: 1rem 2rem;
+  font-style: italic;
+}
 
 .counter-input {
   max-width: 100px;
@@ -440,6 +726,7 @@ export default {
 }
 
 .party-and-xp {
+  margin: 2rem 0;
   display: grid;
   gap: 1rem;
   grid-template-columns: 2fr 2fr 3fr;
@@ -610,5 +897,40 @@ th {
 .difficulty-deadly {
   color: #B22222;
   /* FireBrick - for deadly difficulty */
+}
+
+.instructions {
+  max-width: 700px;
+  padding: 3rem;
+  margin: 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.instructions h2 {
+  margin-bottom: 1rem;
+}
+
+.instructions ol {
+  padding-left: 1.5rem;
+}
+
+.instructions li {
+  margin-bottom: 0.5rem;
+}
+
+@media screen and (max-width: 855px) {
+  .party-and-xp {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr 1fr;
+    /* Sets up two columns */
+  }
+
+  /* Assuming the third item can be targeted with a class or is always the third child */
+  .party-and-xp> :nth-child(3) {
+    grid-column: 1 / span 2;
+    /* Makes the third item take up both columns */
+  }
 }
 </style>
