@@ -1,5 +1,17 @@
 <template>
   <div class="app-container">
+    <h1>D&D 5e Encounter Generator</h1>
+    <p>
+      Welcome to the D&D 5e Encounter Generator! Build your encounter by adding monsters and party composition, then
+      type in a short location description to generate a full encounter description. You can also generate statblocks
+      for the monsters you've added once the encounter description has been generated. Encounters can be exported to
+      homebrewery and the individual stat blocks can be exported to homebrewery, foundry VTT and the improved initiative
+      app.
+    </p>
+    <p>
+      No form fields are required. You can click 'Generate Encounter' to randomly generate a full encounter description
+      without adding monsters or a location description.
+    </p>
     <h3>Add a Monster</h3>
     <div class="monster-form">
       <!-- Form inputs for monster details -->
@@ -345,7 +357,6 @@ export default {
     });
 
     async function generateStatblock(monster, index) {
-      console.log(monsters.value[index]);
       monsters.value[index].loadingPart1 = true;
       monsters.value[index].loadingPart2 = true;
       const { monsterPart1, monsterPrompts, errorMessage: errorPart1 } = await generateStatblockPart1({
@@ -371,7 +382,6 @@ export default {
       if (monsterPart1 && monsterPart2) {
         let combined = { ...monsterPart1, ...monsterPart2 };
         monsters.value[index].statblock = combined;
-        console.log(monsters.value[index].statblock);
       }
       monsters.value[index].loadingPart1 = false;
       monsters.value[index].loadingPart2 = false;
@@ -443,7 +453,6 @@ export default {
     async function generateEncounter() {
       const locationPrompt = generateLocationDescription();
       const monsterDescriptionString = monsters.value.map(monster => `${monster.quantity} ${monster.name}${monster.description ? ': ' + monster.description : ''}`).join(', ');
-      console.log(monsterDescriptionString);
       try {
         loadingEncounterDescription.value = true;
         loadingReadAloud.value = true;
@@ -515,10 +524,8 @@ export default {
       adjustedTotalXP.value = totalMonsterXP.value * multiplier;
       partyComposition.value = newComposition;
       totalXPThreshold.value = calculateDifficulty(partyComposition.value);
-      console.log("adjustedTotalXP", adjustedTotalXP.value);
       encounterDifficultyLevel.value = determineEncounterDifficulty(totalXPThreshold.value);
       xpString.value = numberWithCommas(adjustedTotalXP.value);
-      console.log(encounterDifficultyLevel.value)
     });
 
     return {
