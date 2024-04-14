@@ -45,7 +45,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'encounter-generator',
+      currentPage: this.$attrs['data-page'] || 'gm-dashboard-plus',
     };
   },
   mounted() {

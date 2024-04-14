@@ -1,9 +1,4 @@
 <template>
-  <div class="message-banner">
-    <p>NOTE: The town generator will become exclusive to <cdr-link
-        href="https://www.patreon.com/ai_rpg_tookit">patrons</cdr-link> at the $5 level on April 5th 2024. If you are a
-      free user, be sure to copy any content you've created before then</p>
-  </div>
   <div class="dashboard">
     <div class="form-container">
       <location-form @location-description-generated="addLocation($event)" @set-loading-state="loadingLocation = $event"
