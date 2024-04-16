@@ -289,6 +289,11 @@ function vue_app_encounter_generator_shortcode() {
 }
 add_shortcode( 'vue_app_encounter-generator', 'vue_app_encounter_generator_shortcode' );
 
+function vue_app_encounter_generator_premium_shortcode() {
+	return '<div id="app" data-page="encounter-generator-premium"></div>';
+}
+add_shortcode( 'vue_app_encounter-generator_premium', 'vue_app_encounter_generator_premium_shortcode' );
+
 function vue_app_item_generator_shortcode() {
 		return '<div id="app" data-page="item-generator"></div>';
 }
@@ -298,6 +303,11 @@ function vue_app_dungeon_generator_shortcode() {
     return '<div id="app" data-page="dungeon-generator"></div>';
 }
 add_shortcode( 'vue_app_dungeon_generator', 'vue_app_dungeon_generator_shortcode' );
+
+function vue_app_dungeon_generator_premium_shortcode() {
+	return '<div id="app" data-page="dungeon-generator"></div>';
+}
+add_shortcode( 'vue_app_dungeon_generator_premium', 'vue_app_dungeon_generator_shortcode' );
 
 function vue_app_lore_generator_shortcode() {
     return '<div id="app" data-page="lore-generator"></div>';
@@ -323,6 +333,11 @@ function vue_app_statblock_generator_shortcode() {
     return '<div id="app" data-page="statblock-generator"></div>';
 }
 add_shortcode( 'vue_app_statblock_generator', 'vue_app_statblock_generator_shortcode' );
+
+function vue_app_statblock_generator_premium_shortcode() {
+	return '<div id="app" data-page="statblock-generator-premium"></div>';
+}
+add_shortcode( 'vue_app_statblock_generator_premium', 'vue_app_statblock_generator_premium_shortcode' );
 
 function vue_app_npc_generator_shortcode() {
     return '<div id="app" data-page="gm-dashboard"></div>';

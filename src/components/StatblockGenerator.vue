@@ -1,10 +1,10 @@
 <template>
     <div class="generator-container">
         <div class="intro-container">
-            <h1>D&D 5e Monster Statblock Generator</h1>
+            <h1>D&D 5e Monster Statblock Generator -- Free Version</h1>
             <p>
                 Welcome to the D&D 5e Statblock
-                Generator!
+                Generator! This free version has a limit of 5 statblocks per day.
                 Enter the name of the monster and choose a monster type and CR.
                 Monster types determine whether a monster is stronger on defense, offense or balanced. CR will determine
                 how
@@ -60,6 +60,7 @@ import "@rei/cedar/dist/style/cdr-toggle-button.css";
 import challengeRatingData from '../data/challengeRatings.json';
 import creatureTemplates from '../data/creatureTemplates.json';
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
+import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
 
 export default {
     components: {
@@ -115,8 +116,12 @@ export default {
 
         async function generateStatblock() {
             monster.value = null;
+            if (!canGenerateStatblock()) {
+                return; // Exit if the limit is reached
+            }
             loadingPart1.value = true;
             loadingPart2.value = true;
+
             const promptOptions = {
                 monsterName: monsterName.value,
                 challengeRating: selectedChallengeRating.value,

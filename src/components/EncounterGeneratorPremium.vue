@@ -1,11 +1,11 @@
 <template>
   <div class="app-container">
-    <h1>D&D 5e Encounter Generator -- Free Version</h1>
+    <h1>D&D 5e Encounter Generator -- Premium Version</h1>
     <p>
       Welcome to the D&D 5e Encounter Generator! Build your encounter by adding monsters and party composition, then
       type in a short location description to generate a full encounter description. You can also generate statblocks
-      for the monsters you've added once the encounter description has been generated. This free version limits the
-      number of stat blocks that can be generated to 5 per day. Encounters can be exported to
+      for the monsters you've added once the encounter description has been generated. This premium version has no limit
+      to the number of statblocks that can be generated per day. Encounters can be exported to
       homebrewery and the individual stat blocks can be exported to homebrewery, foundry VTT and the improved initiative
       app.
     </p>
@@ -260,7 +260,6 @@ import { createLocationPrompt } from '../util/prompts.mjs';
 import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
 import encounterPrompt from '../util/encounter-prompt.mjs';
 import { convertEncounterToMarkdown } from '../util/convertToMarkdown.mjs';
-import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
 
 export default {
   components: {
@@ -359,9 +358,6 @@ export default {
     });
 
     async function generateStatblock(monster, index) {
-      if (!canGenerateStatblock()) {
-        return; // Exit if the limit is reached
-      }
       monsters.value[index].loadingPart1 = true;
       monsters.value[index].loadingPart2 = true;
       const { monsterPart1, monsterPrompts, errorMessage: errorPart1 } = await generateStatblockPart1({
