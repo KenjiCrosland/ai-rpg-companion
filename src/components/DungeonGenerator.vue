@@ -1,6 +1,17 @@
 <template>
     <div class="app_container">
-        <h1>RPG Dungeon Generator</h1>
+        <h1>RPG Dungeon Generator -- Free Version</h1>
+        <p>
+            You can use this app to generate an overall summary of a dungeon, generate a potential room list based on
+            the
+            summary, and then you can create a list of more detailed room descriptions. As a bonus you can also generate
+            statblock for npcs and monsters each room. This free version limits the number of statblocks you can
+            generate to 5 per day.
+        </p>
+        <p>
+            <cdr-link href="https://cros.land/ai-powered-dungeon-generator-premium/">Link to Dungeon Generator --
+                Premium version</cdr-link>
+        </p>
         <form @submit.prevent="generateDungeonSummary" class="dungeon_form">
             <cdr-input v-model="dungeonName" background="secondary" label="Dungeon Name"
                 placeholder="Enter Dungeon Name" required>
@@ -226,6 +237,8 @@ import { dungeonFormatGuidelines } from "../util/prompts.mjs";
 import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
 import { convertDungeonToMarkdown } from '../util/convertToMarkdown.mjs';
 import challengeRatingData from '../data/challengeRatings.json';
+import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
+
 export default {
     components: {
         CdrInput,
@@ -498,6 +511,9 @@ export default {
             }
         },
         async generateMonster(npc, roomIndex, npcIndex) {
+            if (!canGenerateStatblock()) {
+                return;
+            }
             const { name, challenge_rating, description } = npc;
             this.detailedRooms[roomIndex].detailed_description.npc_or_monster_list[npcIndex].loadingPart1 = true
             this.detailedRooms[roomIndex].detailed_description.npc_or_monster_list[npcIndex].loadingPart2 = true

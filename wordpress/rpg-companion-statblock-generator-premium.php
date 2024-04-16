@@ -4,9 +4,9 @@
  *
  * A template to force full-width layout, remove breadcrumbs, and remove the page title.
  *
- * Template Name: RPG Companion Statblock Generator
+ * Template Name: RPG Companion Statblock Generator Premium
  *
- * @package Genesis Custom RPG Companion Statblock Generator
+ * @package Genesis Custom RPG Companion Statblock Generator Premium
  * @author  Your Name
  * @license GPL-2.0-or-later
  * @link    https://your-link.com/
@@ -25,8 +25,8 @@ remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs');
 
 // Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
-    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-statblock-generator/dist/assets';
-    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-statblock-generator/dist/assets';
+    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-statblock-generator-premium/dist/assets';
+    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-statblock-generator-premium/dist/assets';
 
     $files = scandir($vue_app_path);
     $enqueued_style_handle = '';
@@ -61,13 +61,13 @@ function vue_app_enqueue_assets() {
             .read-aloud p {
                 margin-bottom: 1rem;
             }
+            select {
+              padding: 1rem;
+            }
             .statblock th, .statblock td {
                 padding: 0;
                 text-align: center;
                 border: none;
-            }
-            select {
-                padding: 1rem;
             }
             .monster-form select {
                 padding-top: .9rem;
@@ -97,7 +97,7 @@ add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 
 //Add Vue app root element.
 function vue_app_render_root_element() {
-    echo '<div id="app" data-page="statblock-generator"></div>';
+    echo '<div id="app" data-page="statblock-generator-premium"></div>';
 }
 
 // add_action( 'genesis_entry_content', 'vue_app_render_root_element' );
