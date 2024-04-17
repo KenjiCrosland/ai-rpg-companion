@@ -4,9 +4,9 @@
  *
  * A template to force full-width layout, remove breadcrumbs, and remove the page title.
  *
- * Template Name: RPG Companion NPC Generator
+ * Template Name: RPG Companion NPC Generator Premium
  *
- * @package Genesis Custom RPG Companion NPC Generator
+ * @package Genesis Custom RPG Companion NPC Generator Premium
  * @author  Your Name
  * @license GPL-2.0-or-later
  * @link    https://your-link.com/
@@ -25,8 +25,8 @@ remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs' );
 
 // Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
-    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-npc/dist/assets';
-    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-npc/dist/assets';
+    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-npc-premium/dist/assets';
+    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-npc-premium/dist/assets';
 
     $files = scandir($vue_app_path);
     $enqueued_style_handle = '';
@@ -51,9 +51,9 @@ function vue_app_enqueue_assets() {
     if ($enqueued_style_handle) {
         $custom_css = '
         main.content {
-            max-width: 940px;
-            width: auto;
-        }
+          max-width: 940px;
+          width: auto;
+      }
         .read-aloud {
             padding: 1rem 2.5rem;
             width: 90%;
@@ -73,7 +73,7 @@ add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 
 // Add Vue app root element.
 function vue_app_render_root_element() {
-    echo '<div id="app" data-page="npc-generator"></div>';
+    echo '<div id="app" data-page="npc-generator-premium"></div>';
 }
 
 //add_action( 'genesis_entry_content', 'vue_app_render_root_element' );

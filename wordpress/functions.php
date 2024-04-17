@@ -340,6 +340,11 @@ function vue_app_statblock_generator_premium_shortcode() {
 add_shortcode( 'vue_app_statblock_generator_premium', 'vue_app_statblock_generator_premium_shortcode' );
 
 function vue_app_npc_generator_shortcode() {
-    return '<div id="app" data-page="gm-dashboard"></div>';
+    return '<div id="app" data-page="npc-generator"></div>';
 }
 add_shortcode( 'vue_app_npc_generator', 'vue_app_npc_generator_shortcode' );
+
+function vue_app_npc_generator_premium_shortcode() {
+	return '<div id="app" data-page="npc-generator-premium"></div>';
+}
+add_shortcode( 'vue_app_npc_generator_premium', 'vue_app_npc_generator_premium_shortcode' );
