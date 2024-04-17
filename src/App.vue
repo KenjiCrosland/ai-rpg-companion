@@ -2,6 +2,7 @@
   <div id="app" v-bind="$attrs">
     <LocationGenerator v-if="currentPage === 'location-generator'" />
     <NPCGenerator v-if="currentPage === 'npc-generator'" />
+    <NPCGeneratorPremium v-if="currentPage === 'npc-generator-premium'" />
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
     <StatblockGenerator v-if="currentPage === 'statblock-generator'" />
@@ -20,6 +21,7 @@
 import LocationGenerator from './components/LocationGenerator.vue';
 import LoreGenerator from './components/LoreGenerator.vue';
 import NPCGenerator from './components/NPCGenerator.vue';
+import NPCGeneratorPremium from './components/NPCGeneratorPremium.vue';
 import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
 import StatblockGenerator from './components/StatblockGenerator.vue';
@@ -38,6 +40,7 @@ export default {
     LocationGenerator,
     LoreGenerator,
     NPCGenerator,
+    NPCGeneratorPremium,
     Dashboard,
     DashboardPlus,
     StatblockGenerator,
@@ -54,7 +57,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'dungeon-generator',
+      currentPage: this.$attrs['data-page'] || 'npc-generator',
     };
   },
   mounted() {

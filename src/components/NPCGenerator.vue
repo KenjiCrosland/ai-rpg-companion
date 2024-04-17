@@ -1,13 +1,15 @@
 <template>
     <div class="app-container">
-        <h1>RPG NPC Generator</h1>
+        <h1>RPG NPC Generator -- Free Version</h1>
         <hr>
         <cdr-text class="intro">
             Welcome to the RPG NPC Generator! This App uses the ChatGPT API to provide engaging descriptions
-            of NPCs for your players. Below are some examples you can feed the NPC generator. The more context you provide,
+            of NPCs for your players. Below are some examples you can feed the NPC generator. The more context you
+            provide,
             the better. If you want to generate NPCs for your homebrew city, for example, provide some details about the
-            city so that the Generator can include details about the city in its response. Please note that it can take up
-            to two minutes for a description to load when ChatGPT is experiencing heavy traffic.
+            city so that the Generator can include details about the city in its response. Finally, you can generate D&D
+            5e Statblocks for the NPCs you generate. Statblock generation is limited to 5 per day for the free version.
+            <cdr-link href="https://cros.land/npc-generator-premium-version/">Link to Premium Version</cdr-link>
 
         </cdr-text>
 
@@ -17,7 +19,8 @@
             </li>
         </cdr-list>
 
-        <cdr-text class="intro"> You also can use the <cdr-link href="https://cros.land/ai-rpg-location-generator/">location
+        <cdr-text class="intro"> You also can use the <cdr-link
+                href="https://cros.land/ai-rpg-location-generator/">location
                 description generator</cdr-link> and copy and paste the results into the NPC generator here!
         </cdr-text>
 
@@ -129,6 +132,27 @@
                 <p>{{ npcDescriptionPart2.roleplaying_tips }}
                 </p>
             </div>
+            <div v-if="npcDescriptionPart2 && !loadingPart2">
+                <h3>Generate D&D 5e Statblock for {{ npcDescriptionPart1.character_name }}</h3>
+                <div>
+                    <div class="generate-monster">
+
+                        <div class="cr-select">
+                            <cdr-select v-model="selectedChallengeRating" label="Challenge Rating" prompt="CR"
+                                :options="challengeRatingData.fullArray" />
+                            <cdr-checkbox label="Spellcaster:" v-model="isSpellcaster">NPC is a
+                                Spellcaster</cdr-checkbox>
+
+                        </div>
+
+                        <cdr-button @click="generateStatblock()">Generate Statblock</cdr-button>
+                    </div>
+
+                    <StatblockBase v-if="(loadingStatblockPart1 || loadingStatblockPart1 || statblock)"
+                        :loadingPart1="loadingStatblockPart1" :loadingPart2="loadingStatblockPart2" :monster="statblock"
+                        :copyButtons="true" />
+                </div>
+            </div>
             <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
         </div>
         <div class="patreon">
@@ -136,10 +160,17 @@
         </div>
     </div>
 </template>
-  
-<script>
-import { CdrButton, CdrInput, CdrLink, CdrText, CdrList, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+
+<script setup>
+import { ref } from 'vue';
+import { CdrButton, CdrInput, CdrLink, CdrText, CdrCheckbox, CdrSelect, CdrList, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import StatblockBase from './StatblockBase.vue';
+import { generateGptResponse } from "../util/open-ai.mjs";
+import { createStatblockPrompts } from "../util/monster-prompts.mjs";
+import challengeRatingData from '../data/challengeRatings.json';
+import creatureTemplates from '../data/creatureTemplates.json';
 import NPCForm from './NPCForm.vue';
+import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
@@ -147,62 +178,146 @@ import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-skeleton.css';
 import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
-export default {
-    data() {
-        return {
-            npcDescriptionPart1: '',
-            npcDescriptionPart2: '',
-            typeOfPlace: '',
-            examples: [
-                'An edgerunner in Night City dealing with bouts of cyberpsychosis',
-                'A Scorpion Illusionist Shugenja who is possessed by an Oni and is living in the city of Ryoko Owari',
-                'A notable tavern patron',
-                'A sentient gazebo in the Feywild by the name of Gary',
-                'A prisoner who has been kept in the dungeons of an evil red wizard of Thay',
-                'A goblin by the name of Boblin',
-                'A completely random NPC. Surprise me'
-            ],
-            errorMessage: '',
-            loadingPart1: false,
-            loadingPart2: false,
-        };
-    },
-    components: {
-        NPCForm,
-        CdrText,
-        CdrInput,
-        CdrButton,
-        CdrLink,
-        CdrList,
-        CdrSkeleton,
-        CdrSkeletonBone
-    },
-    methods: {
-        setInputValue({ value }) {
-            this.typeOfPlace = value;
-        },
 
-        setLoadingState({ part, isLoading }) {
-            this[`loadingPart${part}`] = isLoading;
-        },
-        displayNPCDescription({ part, npcDescription }) {
-            this[`npcDescriptionPart${part}`] = npcDescription;
-            this[`loadingPart${part}`] = false;
-        },
-        handleError(errorMessage) {
-            console.error(errorMessage);
-            this.loadingPart1 = false;
-            this.loadingPart2 = false;
-            if (this.npcDescriptionPart1 && this.npcDescriptionPart2) {
-                this.errorMessage = null;
-                return;
-            }
-            this.errorMessage = errorMessage;
-        },
-    },
+// Reactive data states
+const npcDescriptionPart1 = ref('');
+const npcDescriptionPart2 = ref('');
+const typeOfPlace = ref('');
+const errorMessage = ref('');
+const loadingPart1 = ref(false);
+const loadingPart2 = ref(false);
+const loadingStatblockPart1 = ref(false);
+const loadingStatblockPart2 = ref(false);
+const statblock = ref(null);
+const selectedChallengeRating = ref('1');
+const isSpellcaster = ref(false);
+
+const examples = ref([
+    'An edgerunner in Night City dealing with bouts of cyberpsychosis',
+    'A Scorpion Illusionist Shugenja who is possessed by an Oni and is living in the city of Ryoko Owari',
+    'A notable tavern patron',
+    'A sentient gazebo in the Feywild by the name of Gary',
+    'A prisoner who has been kept in the dungeons of an evil red wizard of Thay',
+    'A goblin by the name of Boblin',
+    'A completely random NPC. Surprise me'
+]);
+
+function validationPart1(jsonString) {
+    try {
+        const jsonObj = JSON.parse(jsonString);
+        const keys = [
+            'armor_class',
+            'hit_points',
+            'speed',
+            'senses',
+            'languages',
+            'challenge_rating',
+            'proficiency_bonus',
+            'abilities'
+        ];
+        return keys.every((key) => key in jsonObj);
+    } catch (error) {
+        return false;
+    }
+}
+
+function validationPart2(jsonString) {
+    try {
+        const jsonObj = JSON.parse(jsonString);
+        const keys = [
+            'actions'
+        ];
+        return keys.every((key) => key in jsonObj);
+    } catch (error) {
+        return false;
+    }
+}
+
+// Methods converted to setup scope functions
+const setInputValue = ({ value }) => {
+    typeOfPlace.value = value;
 };
+
+const setLoadingState = ({ part, isLoading }) => {
+    if (part === 1) {
+        loadingPart1.value = isLoading;
+    } else if (part === 2) {
+        loadingPart2.value = isLoading;
+    }
+};
+
+const displayNPCDescription = ({ part, npcDescription }) => {
+    if (part === 1) {
+        npcDescriptionPart1.value = npcDescription;
+        loadingPart1.value = false;
+    } else if (part === 2) {
+        npcDescriptionPart2.value = npcDescription;
+        loadingPart2.value = false;
+    }
+};
+
+const handleError = (message) => {
+    console.error(message);
+    loadingPart1.value = false;
+    loadingPart2.value = false;
+    if (npcDescriptionPart1.value && npcDescriptionPart2.value) {
+        errorMessage.value = null;
+    } else {
+        errorMessage.value = message;
+    }
+};
+
+
+
+async function generateStatblock() {
+    if (!canGenerateStatblock()) {
+        return;
+    }
+    statblock.value = null;
+    loadingStatblockPart1.value = true;
+    loadingStatblockPart2.value = true;
+    const fullNPCDescription = `Description of Position: ${npcDescriptionPart1.value.description_of_position}. Distinctive Feature:  ${npcDescriptionPart1.value.distinctive_feature_or_mannerism}. Character Secret: ${npcDescriptionPart1.value.character_secret}.
+    Read Aloud Description: ${npcDescriptionPart1.value.read_aloud_description}`
+    const promptOptions = {
+        monsterName: npcDescriptionPart1.value.character_name,
+        challengeRating: selectedChallengeRating.value,
+        monsterType: 'Random',
+        monsterDescription: fullNPCDescription,
+        caster: isSpellcaster.value
+    }
+    const npcPrompts = createStatblockPrompts(promptOptions);
+
+    let npcStatsPart1;
+    try {
+        npcStatsPart1 = await generateGptResponse(npcPrompts.part1, validationPart1, 3);
+    } catch (e) {
+        errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.'
+    }
+
+    statblock.value = JSON.parse(npcStatsPart1);
+    loadingStatblockPart1.value = false;
+    const previousContext = [
+        { role: 'user', content: `Please give me the first part of a D&D statblock in the following format` },
+        { role: 'system', content: `${npcStatsPart1}` }
+    ];
+
+    let npcStatsPart2;
+    try {
+        npcStatsPart2 = await generateGptResponse(npcPrompts.part2, validationPart2, 3, previousContext);
+    } catch (e) {
+        errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.'
+    }
+
+    loadingStatblockPart2.value = false;
+    const finalStatblock = {
+        ...JSON.parse(npcStatsPart1),
+        ...JSON.parse(npcStatsPart2),
+    }
+    statblock.value = finalStatblock;
+    loadingPart2.value = false;
+}
 </script>
-  
+
 <style scoped lang="scss">
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -229,6 +344,7 @@ hr {
     @include cdr-text-body-400();
     margin: 1rem 0;
 }
+
 .read-aloud {
     background-color: $cdr-color-background-secondary;
     color: $cdr-color-text-secondary;
@@ -249,6 +365,16 @@ div[class^="cdr-skeleton-bone"] {
 .flex-bone {
     display: flex;
     gap: 10px;
+}
+
+.generate-monster {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+
+    button {
+        margin-top: 4px;
+    }
 }
 
 .credits {
@@ -301,4 +427,5 @@ form {
 .patreon {
     margin: 30px auto 0 auto;
     text-align: center;
-}</style>
+}
+</style>
