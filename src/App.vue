@@ -14,6 +14,7 @@
     <ItemGenerator v-if="currentPage === 'item-generator'" />
     <EncounterGenerator v-if="currentPage === 'encounter-generator'" />
     <EncounterGeneratorPremium v-if="currentPage === 'encounter-generator-premium'" />
+    <TownKingdomGenerator v-if="currentPage === 'town-kingdom-generator'" />
   </div>
 </template>
 
@@ -32,6 +33,7 @@ import DungeonGeneratorPremium from './components/DungeonGeneratorPremium.vue';
 import ItemGenerator from './components/ItemGenerator.vue';
 import EncounterGenerator from './components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from './components/EncounterGeneratorPremium.vue';
+import TownKingdomGenerator from './components/TownKingdomGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -53,17 +55,23 @@ export default {
     LoreGenerator,
     ItemGenerator,
     EncounterGenerator,
-    EncounterGeneratorPremium
+    EncounterGeneratorPremium,
+    TownKingdomGenerator
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'npc-generator',
+      currentPage: this.$attrs['data-page'] || 'town-kingdom-generator',
     };
   },
   mounted() {
     if (typeof gtag === 'function' && this.currentPage === 'location-generator') {
       gtag('config', 'UA-11925218-1', {
         'page_path': '/ai-rpg-location-generator',
+      });
+    }
+    if (typeof gtag === 'function' && this.currentPage === 'town-kingdom-generator') {
+      gtag('config', 'UA-11925218-1', {
+        'page_path': '/town-kingdom-generator',
       });
     }
     if (typeof gtag === 'function' && this.currentPage === 'dungeon-generator') {
