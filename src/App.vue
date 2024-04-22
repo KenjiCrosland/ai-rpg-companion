@@ -57,7 +57,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'npc-generator',
+      currentPage: this.$attrs['data-page'] || 'statblock-generator',
     };
   },
   mounted() {
