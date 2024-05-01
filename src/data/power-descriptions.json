@@ -1,0 +1,14 @@
+{
+  "power_descriptions": {
+    "Nonexistent": "Indicates a total lack of influence and recognition within any sphere of activity. Such entities are entirely disregarded in political, social, and economic contexts.",
+    "Marginal": "Represents entities with very limited influence, struggling to gain recognition. They may have minor local impact but are largely ineffective on a broader scale.",
+    "Emerging": "Describes factions or groups that are beginning to make their presence felt but still have minimal overall influence. They are in the early stages of establishing a base and achieving initial goals.",
+    "Moderate": "Signifies entities with a noticeable but limited regional influence. They might sway local policies or decisions but lack the power to affect broader change.",
+    "Noteworthy": "Used for groups recognized within a larger context and starting to effect change on a significant scale. They are gaining momentum and beginning to challenge established powers.",
+    "Influential": "Describes entities with significant sway in local politics and society. They have the capacity to influence major decisions and hold considerable clout in their domains.",
+    "Powerful": "Indicates a strong influence and the ability to mobilize considerable resources. Such entities can shape outcomes in multiple spheres and are key players in their environments.",
+    "Dominant": "Describes a party that has a strong influence and perhaps a majority in one branch of government or one aspect of governance—like a majority in the Senate—but doesn't have unchecked power across the entire spectrum of government. They are a major player and can decisively influence legislation and policy outcomes in that specific context, but their power is not absolute and can be checked by other branches or levels of government.",
+    "Controlling": "This would indicate a higher level of power, where a party not only has significant influence but also controls multiple branches of government or has significant sway across various aspects of governance. This implies a broader control that affects a wide range of policies and a larger scale of operations, potentially directing the main course of the nation's political agenda.",
+    "Totalitarian": "Reflects absolute control over society, without opposition. This level of power is marked by an absence of democratic processes and is characterized by unilateral decision-making and enforcement of policies."
+  }
+}
