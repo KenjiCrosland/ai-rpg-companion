@@ -77,6 +77,7 @@
             <LocationListSkeleton />
           </div>
         </cdr-tab-panel>
+
         <cdr-tab-panel label="Factions" name="Factions" @tab-change="generateFactions">
           <h2>Factions</h2>
           <div v-if="currentSetting.factions && currentSetting.factions.length > 0">
@@ -117,15 +118,50 @@
         </cdr-tab-panel>
         <cdr-tab-panel label="Notable NPCs" name="NPCs">
           <h2>Notable NPCs</h2>
-          <div v-if="currentSetting.npcs && currentSetting.npcs.length > 0">
-            <cdr-list>
-              <li v-for="npc in currentSetting.npcs" :key="npc.name">
-                <h3>{{ npc.name }}</h3>
-                <p>{{ npc.description }}</p>
-              </li>
-            </cdr-list>
-          </div>
-          <p v-else>Notable NPCs not yet generated</p>
+          <cdr-accordion-group>
+            <cdr-accordion v-for="(npc, index) in currentSetting.npcs" level="2" :id="'npc-' + npc.name" :key="npc.name"
+              :opened="npc.open" @accordion-toggle="npc.open = !npc.open">
+              <template #label>
+                {{ npc.name }}
+              </template>
+              <div v-if="!npc.loading">
+                <h2>{{ npc.name }}</h2>
+                <div v-if="!npc.read_aloud_description">
+                  <p>{{ npc.description }}</p>
+                  <cdr-button @click="generateDetailedNPCDescription(index)">Generate Detailed
+                    Description</cdr-button>
+                </div>
+                <div v-else>
+                  <div class="focus-text">{{ npc.read_aloud_description }}</div>
+                  <p>{{ npc.description_of_position }}</p>
+                  <p>{{ npc.current_location }}</p>
+                  <p>{{ npc.distinctive_features_or_mannerisms }}</p>
+                  <p>{{ npc.character_secret }}</p>
+                  <h3>Relationships</h3>
+                  <div v-for="(relationship, npcName) in npc.relationships" :key="npcName">
+                    <p>
+                      <strong>{{ npcName }}</strong>: {{ relationship }}
+                    </p>
+                  </div>
+                  <h3>Roleplaying Tips</h3>
+                  <p>{{ npc.roleplaying_tips }}</p>
+                  <div class="relationship-buttons">
+                    <h4>Generate a full description for:</h4>
+                    <cdr-list modifier="inline" class="relationship-npc-buttons">
+                      <li v-for="(relationshipDescription, relationshipName) in npc.relationships"
+                        :key="relationshipName">
+                        <cdr-button @click="generateDetailedNPCDescription(index)">{{ relationshipName }}</cdr-button>
+                      </li>
+                    </cdr-list>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="npc.loading">
+                <NPCSkeleton />
+              </div>
+            </cdr-accordion>
+          </cdr-accordion-group>
         </cdr-tab-panel>
         <cdr-tab-panel label="Empty" name="empty">
           <p>Empty tab</p>
@@ -187,11 +223,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip } from "@rei/cedar";
-import { kingdomOverviewPrompt, subLocationsPrompt, factionsPrompt } from "../util/kingdom-prompts.mjs";
+import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
+import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion } from "@rei/cedar";
+import { kingdomOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt } from "../util/kingdom-prompts.mjs";
 import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import LocationListSkeleton from "./skeletons/LocationListSkeleton.vue";
+import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import placeAdjectives from '../data/place-adjectives.json';
 import placeNames from '../data/place-names.json';
@@ -215,6 +252,7 @@ const defaultSetting = reactive({
 });
 const settings = ref([reactive({ ...defaultSetting })]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
+onMounted(loadSettingsFromLocalStorage);
 
 const selectSetting = (index) => {
   currentSettingIndex.value = index;
@@ -254,6 +292,35 @@ const createNewSetting = () => {
   currentSettingIndex.value = settings.value.length - 1;
   isNewSetting.value = true;  // Mark as new
 };
+
+function saveSettingsToLocalStorage() {
+  // Serialize the current state of settings to a JSON string
+  const serializedSettings = JSON.stringify(settings.value.map(setting => ({
+    ...setting,
+    // Remove reactive internals and other non-serializable values
+    kingdomOverview: setting.kingdomOverview,
+    factions: setting.factions,
+    importantLocations: setting.importantLocations,
+    npcs: setting.npcs
+  })));
+
+  // Save the serialized string to local storage
+  localStorage.setItem('gameSettings', serializedSettings);
+}
+
+function loadSettingsFromLocalStorage() {
+  const serializedSettings = localStorage.getItem('gameSettings');
+  if (serializedSettings) {
+    try {
+      const parsedSettings = JSON.parse(serializedSettings);
+      settings.value = parsedSettings.map(setting => reactive(setting));
+    } catch (error) {
+      console.error("Failed to parse settings from local storage:", error);
+    }
+  }
+}
+
+
 
 const kingdomOverviewExists = computed(() => {
   const overview = currentSetting.value.kingdomOverview?.overview;
@@ -315,6 +382,31 @@ const factionValidation = jsonString => {
   }
 }
 
+const npcValidationPart1 = jsonString => {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    console.log(jsonObj);
+    const keys = ['description_of_position', 'current_location', 'distinctive_features_or_mannerisms',
+      'character_secret', 'read_aloud_description'];
+    return keys.every(key => key in jsonObj);
+
+  } catch (error) {
+    return false;
+  }
+}
+
+const npcValidationPart2 = jsonString => {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    console.log(jsonObj);
+    const keys = ['relationships', 'roleplaying_tips'];
+    return keys.every(key => key in jsonObj);
+
+  } catch (error) {
+    return false;
+  }
+}
+
 // Faction power levels (constant)
 const factionPowerLevels = [
   'Nonexistent', 'Marginal', 'Emerging', 'Moderate', 'Noteworthy', 'Influential',
@@ -340,6 +432,9 @@ async function processQueue() {
     case 'generateFactions':
       await handleGenerateFactions(data);
       break;
+    case 'generateDetailedNPCDescription':
+      await handleGenerateDetailedNPCDescription(data);
+      break;
     default:
       console.error("Unknown request type:", type);
   }
@@ -353,11 +448,11 @@ function enqueueRequest(type, data) {
   if (!isProcessing.value) processQueue();
 }
 
-function getKingdomOverviewText(kingdomOverview) {
-  if (!kingdomOverview) {
+function getOverviewText(overviewObject) {
+  if (!overviewObject) {
     return '';
   }
-  return Object.entries(kingdomOverview).map(([key, value]) => {
+  return Object.entries(overviewObject).map(([key, value]) => {
     if (Array.isArray(value)) {
       return ''; // Skip array values or handle them appropriately
     }
@@ -384,7 +479,7 @@ function generateTownOrKingdom() {
 function generateSubLocations() {
   const operationIndex = currentSettingIndex.value;
   if (settings.value[operationIndex].importantLocations.length > 0) return;
-  const overviewText = getKingdomOverviewText(settings.value[operationIndex].kingdomOverview);
+  const overviewText = getOverviewText(settings.value[operationIndex].kingdomOverview);
   const prompt = subLocationsPrompt(overviewText);
 
   enqueueRequest('generateSubLocations', { operationIndex, prompt });
@@ -393,11 +488,37 @@ function generateSubLocations() {
 function generateFactions() {
   const operationIndex = currentSettingIndex.value;
   if (settings.value[operationIndex].factions.length > 0) return;
-  const overviewText = getKingdomOverviewText(settings.value[operationIndex].kingdomOverview);
+  const overviewText = getOverviewText(settings.value[operationIndex].kingdomOverview);
   const prompt = factionsPrompt(overviewText);
 
   enqueueRequest('generateFactions', { operationIndex, prompt });
 }
+
+function findObjectByName(objects, name) {
+  // Iterate through the array of objects
+  for (const obj of objects) {
+    // Check if the current object's name property matches the provided name
+    if (obj.name === name) {
+      return obj;  // Return the matching object
+    }
+  }
+  return undefined;  // Return undefined if no matching object is found
+}
+
+function generateDetailedNPCDescription(index) {
+  const operationIndex = currentSettingIndex.value;
+  const npc = settings.value[operationIndex].npcs[index];
+  const kingdomOverviewText = getOverviewText(settings.value[operationIndex].kingdomOverview);
+  let faction = findObjectByName(settings.value[operationIndex].factions, npc.faction);
+  const factionOverviewText = getOverviewText(faction);
+
+  if (!npc.detailedDescription) { // Avoid regenerating if already present
+    const prompt = createNPCPrompt(npc.name, kingdomOverviewText, factionOverviewText); // Assume createNPCPrompt creates an appropriate prompt
+    console.log(prompt);
+    enqueueRequest('generateDetailedNPCDescription', { operationIndex, npcIndex: index, prompt });
+  }
+}
+
 
 
 
@@ -410,34 +531,26 @@ async function handleGenerateTownOrKingdom({ operationIndex, prompt }) {
     const response = await generateGptResponse(prompt, kingdomValidation);
     const overview = JSON.parse(response);
 
-    if (settings.value[operationIndex]) {  // Check if the setting still exists
-      if (isNewSetting.value && operationIndex === currentSettingIndex.value) {
-        Object.assign(settings.value[operationIndex], {
-          kingdomOverview: overview,
-          npcs: overview.npc_list || []
-        });
-        isNewSetting.value = false;  // Reset new setting flag
-      } else {
-        settings.value[operationIndex] = {
-          ...settings.value[operationIndex],
-          kingdomOverview: overview,
-          npcs: overview.npc_list || []
-        };
-      }
-    }
     if (settings.value[operationIndex]) {
+      settings.value[operationIndex].kingdomOverview = overview;
+      settings.value[operationIndex].npcs = overview.npc_list || [];
       settings.value[operationIndex].loadingKingdomOverview = false;
+      saveSettingsToLocalStorage();  // Save to local storage after update
     }
   } catch (error) {
     console.error("Error generating kingdom description:", error);
+    if (settings.value[operationIndex]) {
+      settings.value[operationIndex].loadingKingdomOverview = false;
+    }
   }
 }
 
 async function handleGenerateSubLocations({ operationIndex, prompt }) {
   try {
     const response = await generateGptResponse(prompt, sublocationValidation);
-    if (settings.value[operationIndex]) {  // Ensure the setting still exists
+    if (settings.value[operationIndex]) {
       settings.value[operationIndex].importantLocations = JSON.parse(response);
+      saveSettingsToLocalStorage();  // Save to local storage after update
     }
   } catch (error) {
     console.error("Error generating sublocations:", error);
@@ -447,27 +560,44 @@ async function handleGenerateSubLocations({ operationIndex, prompt }) {
 async function handleGenerateFactions({ operationIndex, prompt }) {
   try {
     const response = await generateGptResponse(prompt, factionValidation);
-    if (settings.value[operationIndex]) {  // Ensure the setting still exists
+    if (settings.value[operationIndex]) {
       const factions = JSON.parse(response);
-      const npcNames = settings.value[operationIndex].npcs.map(npc => npc.name);
-
+      settings.value[operationIndex].factions = factions;
       factions.forEach(faction => {
-        if (!npcNames.includes(faction.faction_leader)) {
+        if (!settings.value[operationIndex].npcs.map(npc => npc.name).includes(faction.faction_leader)) {
           settings.value[operationIndex].npcs.push({
             name: faction.faction_leader,
-            description: faction.faction_leader_description
+            description: faction.faction_leader_description,
+            faction: faction.name
           });
         }
       });
-
-      settings.value[operationIndex].factions = factions;
+      saveSettingsToLocalStorage();  // Save to local storage after update
     }
   } catch (error) {
     console.error("Error generating factions:", error);
   }
 }
 
-
+async function handleGenerateDetailedNPCDescription({ operationIndex, npcIndex, prompt }) {
+  try {
+    console.log(prompt);
+    const npc = settings.value[operationIndex].npcs[npcIndex];
+    npc.loading = true;
+    const npcPart1 = await generateGptResponse(prompt, npcValidationPart1);
+    const relationshipsAndTips = await generateGptResponse(createRelationshipAndTipsPrompt(npc.name, npcPart1), npcValidationPart2);
+    if (npc) {
+      Object.assign(npc, JSON.parse(npcPart1));
+      Object.assign(npc, JSON.parse(relationshipsAndTips));
+      npc.loading = false;
+      console.log(npc);
+      saveSettingsToLocalStorage(); // Save to local storage after update
+    }
+  } catch (error) {
+    npc.loading = false;
+    console.error("Error generating detailed NPC description:", error);
+  }
+}
 
 // Random type, adjective, and name functions
 function randomType() {
@@ -586,5 +716,18 @@ function randomName(type) {
 
 .bone-list-item {
   margin: 4rem 0;
+}
+
+.relationship-buttons {
+  background-color: #f4f2ed;
+  border-radius: 8px;
+  padding: 1rem 1rem 4rem 1rem;
+  margin: 1rem auto;
+  text-align: center;
+
+  ul {
+    justify-content: center;
+    margin: 0;
+  }
 }
 </style>
