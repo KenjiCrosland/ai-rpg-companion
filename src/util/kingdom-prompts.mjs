@@ -1,33 +1,74 @@
-export function kingdomOverviewPrompt(
+export function settingOverviewPrompt(
   adjective,
-  kingdomType,
-  placeName,
-  placeLore,
+  setting_type,
+  place_name,
+  place_lore,
 ) {
-  let initialSentence = `Give me a description of the ${adjective} ${kingdomType} of ${placeName}.`;
-  if (!placeName) {
-    initialSentence = `Give me a description of an ${adjective} ${kingdomType}.`;
+  let initialSentence = `Give me a description of the ${adjective} ${setting_type} of ${place_name}.`;
+  if (!place_name) {
+    initialSentence = `Give me a description of an ${adjective} ${setting_type}.`;
   }
   return `
   ${initialSentence}. When describing events and individuals be specific about names and locations. Each key should be a sentence or two, should be detailed and specific and should flow together to create a cohesive description. Avoid common fantasy tropes and cliches. Temperature: 0.9
 
-  ${placeLore ? `Additional details about the setting: ${placeLore}.` : ''}
+  ${place_lore ? `Additional details about the setting: ${place_lore}.` : ''}
   
   Return the description in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups:
   {
-    overview: 'A brief overview of the ${kingdomType}, with a brief description of its current state',
-    history: 'A very brief history of the ${kingdomType}, including its founding and most significant recent events',
-    current_ruler_sentence: 'A sentence describing the ruler of the ${kingdomType}. What have they done to earn their position? What was their most recent significant action?',
-    recent_event_current_ruler: 'describe a recent political event involving the current ruler which reflects the current state of the ${kingdomType}',
+    overview: 'A brief overview of the ${setting_type}, with a brief description of its current state',
+    history: 'A very brief history of the ${setting_type}, including its founding and most significant recent events',
+    current_ruler_sentence: 'A sentence describing the ruler of the ${setting_type}. What have they done to earn their position? What was their most recent significant action?',
+    recent_event_current_ruler: 'describe a recent political event involving the current ruler which reflects the current state of the ${setting_type}',
     recent_event_consequences: 'describe the consequences of the recent political event involving the current ruler',
-    social_history: 'A brief history of the social structure of the ${kingdomType}',
-    recent_event_social: 'this sentence should tie into the previous sentence about social history. describe a recent social event which reflects the current state of the ${kingdomType}. Show don't tell, use examples and do not say "A recent social event was...". Be specific with names of organizations, individuals, or locations',
-    economic_history: 'A brief history of the economic structure of the ${kingdomType}',
-    impactful_economic_event: 'describe a recent event that either had a positive or negative impact on the economy of the ${kingdomType}. Be specific with names of organizations, individuals, or locations',
-    military_history: 'A brief history of the military structure of the ${kingdomType}',
-    recent_event_military: 'this sentence should tie into the previous sentence about military history. describe a recent military event which reflects the current state of the ${kingdomType}. Show don't tell, use examples and do not say "A recent military event was...". Be specific with names of organizations, individuals, or locations',
-    greatest_hope: 'A description of the ${kingdomType}'s greatest hope. Be specific about what this hope is and why it is important',
-    darkest_fear: 'A description of the ${kingdomType}'s darkest fear. Be specific about what this fear is and why it is important',
+    social_history: 'A brief history of the social structure of the ${setting_type}',
+    recent_event_social: 'this sentence should tie into the previous sentence about social history. describe a recent social event which reflects the current state of the ${setting_type}. Show don't tell, use examples and do not say "A recent social event was...". Be specific with names of organizations, individuals, or locations',
+    economic_history: 'A brief history of the economic structure of the ${setting_type}',
+    impactful_economic_event: 'describe a recent event that either had a positive or negative impact on the economy of the ${setting_type}. Be specific with names of organizations, individuals, or locations',
+    military_history: 'A brief history of the military structure of the ${setting_type}',
+    recent_event_military: 'this sentence should tie into the previous sentence about military history. describe a recent military event which reflects the current state of the ${setting_type}. Show don't tell, use examples and do not say "A recent military event was...". Be specific with names of organizations, individuals, or locations',
+    greatest_hope: 'A description of the ${setting_type}'s greatest hope. Be specific about what this hope is and why it is important',
+    darkest_fear: 'A description of the ${setting_type}'s darkest fear. Be specific about what this fear is and why it is important',
+    npc_list: [
+      {
+        name: 'NPC Name',
+        description: 'A brief description of the NPC's role and personality'
+      }
+      // Repeat the above structure for each NPC
+    ]
+  }`;
+}
+
+export function sublocationOverviewPrompt(
+  place_name,
+  place_lore,
+  subLocationDescription,
+) {
+  return `
+  Give me a description of ${place_name}. This is a sub-location of a larger setting. Here are some details about the larger setting: 
+    
+  ${place_lore}.
+    
+  Here are some initial details about ${place_name}:
+    
+  ${subLocationDescription}. When describing events and individuals be specific about names and locations. Each key should be a sentence or two, should be detailed and specific and should flow together to create a cohesive description. Avoid common fantasy tropes and cliches. Temperature: 0.9
+  
+  Return the description of ${place_name} in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups:
+  {
+    overview: 'A brief overview of the sublocation, with a brief description of its current state',
+    adjective: 'An adjective that describes the sublocation',
+    setting_type: 'The type of setting the sublocation is',
+    history: 'A very brief history of the sublocation, including its founding and most significant recent events',
+    current_ruler_sentence: 'A sentence describing the ruler of the sublocation. What have they done to earn their position? What was their most recent significant action?',
+    recent_event_current_ruler: 'describe a recent political event involving the current ruler which reflects the current state of the sublocation',
+    recent_event_consequences: 'describe the consequences of the recent political event involving the current ruler',
+    social_history: 'A brief history of the social structure of the sublocation',
+    recent_event_social: 'this sentence should tie into the previous sentence about social history. describe a recent social event which reflects the current state of the sublocation. Show don't tell, use examples and do not say "A recent social event was...". Be specific with names of organizations, individuals, or locations',
+    economic_history: 'A brief history of the economic structure of the sublocation',
+    impactful_economic_event: 'describe a recent event that either had a positive or negative impact on the economy of the sublocation. Be specific with names of organizations, individuals, or locations',
+    military_history: 'A brief history of the military structure of the sublocation',
+    recent_event_military: 'this sentence should tie into the previous sentence about military history. describe a recent military event which reflects the current state of the sublocation. Show don't tell, use examples and do not say "A recent military event was...". Be specific with names of organizations, individuals, or locations',
+    greatest_hope: 'A description of the sublocation's greatest hope. Be specific about what this hope is and why it is important',
+    darkest_fear: 'A description of the sublocation's darkest fear. Be specific about what this fear is and why it is important',
     npc_list: [
       {
         name: 'NPC Name',
@@ -129,6 +170,39 @@ Temperature: 0.9.
 }
 
 
+`;
+}
+
+export function createNPCRelationshipPrompt(
+  npcName,
+  npcParentText,
+  relationshipDescription,
+  kingdomDescription,
+  factionDescription,
+) {
+  const factionString = factionDescription
+    ? `${npcName} a key member of the faction: '${factionDescription}'.`
+    : '';
+  return `
+
+Please create a detailed Tabletop Roleplaying NPC description for ${relationshipDescription.name} who has the following relationship with ${npcName}: ${relationshipDescription.description}.
+
+${npcParentText}
+${factionString}
+
+Also here is some more context about the setting:
+${kingdomDescription}
+
+
+Please format the NPC description as a JSON object with the following keys:
+
+{
+  "description_of_position": "Provide a specific and detailed description of their job or position in society, including a detail that sets them apart from others in that position.",
+  "current_location": "Provide a location where ${relationshipDescription.name} can be found and explain why they are there, considering a current goal or aspiration of theirs.",
+  "distinctive_features_or_mannerisms": "Provide a distinctive feature or peculiar mannerism observable in their actions. Avoid cliches and consider how these traits might influence their interactions with others.",
+  "character_secret": "A hidden motivation or secret of ${relationshipDescription.name} that influences their behavior. Be specific about what this secret is and how it impacts their actions.",
+  "read_aloud_description": "A concise 2-3 sentence description designed for a GM to read aloud when players first encounter ${relationshipDescription.name}."
+}
 `;
 }
 

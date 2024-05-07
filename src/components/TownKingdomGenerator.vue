@@ -4,14 +4,14 @@
       <ul class="settings-tabs">
         <li v-for="(setting, index) in settings" :key="index" :class="{ active: currentSettingIndex === index }"
           @click="selectSetting(index)">
-          {{ formatTitle(setting.adjective, setting.kingdomType, setting.placeName) || 'Unnamed Setting' }}
+          {{ formatTitle(setting.adjective, setting.setting_type, setting.place_name) || 'Unnamed Setting' }}
         </li>
         <li v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" @click="createNewSetting">+ New Setting</li>
       </ul>
     </div>
     <div class="main-content">
       <h1>Kenji's RPG Setting Generator: Build a Kingdom, Town, Empire, or Space Station!</h1>
-      <form @submit.prevent="generateTownOrKingdom" style="margin-bottom: 3rem">
+      <form @submit.prevent="generateSetting" style="margin-bottom: 3rem">
         <div class="generator-fields">
           <cdr-input class="generator-field-input" id="adjective" v-model="currentSetting.adjective"
             background="secondary" label="Adjective">
@@ -19,21 +19,21 @@
               Examples: "Flourishing", "Decrepit", "Decadent"
             </template>
           </cdr-input>
-          <cdr-input class="generator-field-input" id="kingdomType" v-model="currentSetting.kingdomType"
+          <cdr-input class="generator-field-input" id="setting_type" v-model="currentSetting.setting_type"
             background="secondary" label="Type of Place">
             <template #helper-text-bottom>
               Examples: "Kingdom", "Town", "City", "Republic"
             </template>
           </cdr-input>
           <p>Of</p>
-          <cdr-input class="generator-field-input" id="placeName" v-model="currentSetting.placeName"
+          <cdr-input class="generator-field-input" id="place_name" v-model="currentSetting.place_name"
             background="secondary" label="Place name">
             <template #helper-text-bottom>
               Examples: "Kingdomaria", "Townland", "Citytopia", "Republic of the People"
             </template>
           </cdr-input>
         </div>
-        <cdr-input :rows="5" tag="textarea" v-model="currentSetting.placeLore" background="secondary"
+        <cdr-input :rows="5" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
           label="Setting Lore" placeholder="Enter any additional details about the setting" class="item-lore-details">
           <template #helper-text-bottom>
             Write any details about your setting that you want to include. Need help coming up with lore for your
@@ -42,26 +42,26 @@
             and paste in the generated summary!
           </template>
         </cdr-input>
-        <cdr-button @click="generateTownOrKingdom">Generate</cdr-button>
+        <cdr-button @click="generateSetting">Generate</cdr-button>
       </form>
-      <cdr-tabs v-if="kingdomOverviewExists" height="auto" style="width: 800px">
+      <cdr-tabs v-if="settingOverviewExists" height="auto" style="width: 800px">
         <cdr-tab-panel label="Overview" name="Overview">
-          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.kingdomType, currentSetting.placeName) }}</h2>
-          <p>{{ currentSetting.kingdomOverview.overview }}</p>
-          <p>{{ currentSetting.kingdomOverview.history }}</p>
-          <p>{{ currentSetting.kingdomOverview.current_ruler_sentence }} {{
-          currentSetting.kingdomOverview.recent_event_current_ruler }} {{
-          currentSetting.kingdomOverview.recent_event_consequences }}</p>
-          <p>{{ currentSetting.kingdomOverview.social_history }} {{ currentSetting.kingdomOverview.recent_event_social
+          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name) }}</h2>
+          <p>{{ currentSetting.setting_overview.overview }}</p>
+          <p>{{ currentSetting.setting_overview.history }}</p>
+          <p>{{ currentSetting.setting_overview.current_ruler_sentence }} {{
+          currentSetting.setting_overview.recent_event_current_ruler }} {{
+          currentSetting.setting_overview.recent_event_consequences }}</p>
+          <p>{{ currentSetting.setting_overview.social_history }} {{ currentSetting.setting_overview.recent_event_social
             }}
           </p>
-          <p>{{ currentSetting.kingdomOverview.economic_history }} {{
-          currentSetting.kingdomOverview.impactful_economic_event }}</p>
-          <p>{{ currentSetting.kingdomOverview.military_history }} {{
-          currentSetting.kingdomOverview.recent_event_military
+          <p>{{ currentSetting.setting_overview.economic_history }} {{
+          currentSetting.setting_overview.impactful_economic_event }}</p>
+          <p>{{ currentSetting.setting_overview.military_history }} {{
+          currentSetting.setting_overview.recent_event_military
         }}</p>
-          <p>{{ currentSetting.kingdomOverview.greatest_hope }}</p>
-          <p>{{ currentSetting.kingdomOverview.darkest_fear }}</p>
+          <p>{{ currentSetting.setting_overview.greatest_hope }}</p>
+          <p>{{ currentSetting.setting_overview.darkest_fear }}</p>
         </cdr-tab-panel>
         <cdr-tab-panel label="Important Locations" name="Locations" @tab-change="generateSubLocations">
           <h2>Important Locations</h2>
@@ -70,6 +70,9 @@
               <li v-for="location in currentSetting.importantLocations" :key="location.name">
                 <h3>{{ location.name }}</h3>
                 <p>{{ location.description }}</p>
+                <cdr-button
+                  @click="generateSetting({ isSubLocation: true, subLocationName: location.name, subLocationDescription: location.description })">Generate
+                  Full Description</cdr-button>
               </li>
             </cdr-list>
           </div>
@@ -119,8 +122,8 @@
         <cdr-tab-panel label="Notable NPCs" name="NPCs">
           <h2>Notable NPCs</h2>
           <cdr-accordion-group>
-            <cdr-accordion v-for="(npc, index) in currentSetting.npcs" level="2" :id="'npc-' + npc.name" :key="npc.name"
-              :opened="npc.open" @accordion-toggle="npc.open = !npc.open">
+            <cdr-accordion v-for="(npc, index) in currentSetting.npcs" level="2" :id="'npc-' + index"
+              :key="'npc-' + index" :opened="npc.open" @accordion-toggle="npc.open = !npc.open">
               <template #label>
                 {{ npc.name }}
               </template>
@@ -150,7 +153,9 @@
                     <cdr-list modifier="inline" class="relationship-npc-buttons">
                       <li v-for="(relationshipDescription, relationshipName) in npc.relationships"
                         :key="relationshipName">
-                        <cdr-button @click="generateDetailedNPCDescription(index)">{{ relationshipName }}</cdr-button>
+                        <cdr-button
+                          @click="generateDetailedNPCDescription(index, { name: relationshipName, description: relationshipDescription })">{{
+          relationshipName }}</cdr-button>
                       </li>
                     </cdr-list>
                   </div>
@@ -167,7 +172,7 @@
           <p>Empty tab</p>
         </cdr-tab-panel>
       </cdr-tabs>
-      <div v-if="!kingdomOverviewExists && currentSetting.loadingKingdomOverview">
+      <div v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
         <CdrSkeleton>
           <ul class="skeleton-ul">
             <li class="skeleton-tab">
@@ -184,7 +189,7 @@
             </li>
           </ul>
           <hr class="skeleton-hr">
-          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.kingdomType, currentSetting.placeName)}}</h2>
+          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name)}}</h2>
 
           <CdrSkeletonBone type="line" style="width:95%" />
           <CdrSkeletonBone type="line" style="width:90%" />
@@ -225,27 +230,26 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion } from "@rei/cedar";
-import { kingdomOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt } from "../util/kingdom-prompts.mjs";
+import { settingOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt } from "../util/kingdom-prompts.mjs";
 import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import LocationListSkeleton from "./skeletons/LocationListSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import placeAdjectives from '../data/place-adjectives.json';
-import placeNames from '../data/place-names.json';
+import place_names from '../data/place-names.json';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-tabs.css';
 
-
 const currentSettingIndex = ref(0);
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
 const defaultSetting = reactive({
   adjective: '',
-  kingdomType: '',
-  placeName: '',
-  placeLore: '',
-  kingdomOverview: null,
+  setting_type: '',
+  place_name: '',
+  place_lore: '',
+  settingOverview: null,
   factions: [],
   importantLocations: [],
   npcs: [],
@@ -260,13 +264,13 @@ const selectSetting = (index) => {
 };
 
 const currentlyLoadingOverview = computed(() => {
-  // Check if any setting has loadingKingdomOverview set to true
-  return settings.value.some(setting => setting.loadingKingdomOverview);
+  // Check if any setting has loadingsettingOverview set to true
+  return settings.value.some(setting => setting.loadingsettingOverview);
 });
 
-//function similar to the above but returns false if there is no kingdomOverview for any setting
+//function similar to the above but returns false if there is no settingOverview for any setting
 const allSettingsHaveAnOverview = computed(() => {
-  return settings.value.every(setting => setting.kingdomOverview?.overview);
+  return settings.value.every(setting => setting.setting_overview?.overview);
 });
 
 watch(currentSettingIndex, (newValue, oldValue) => {
@@ -283,7 +287,7 @@ watch(currentSettingIndex, (newValue, oldValue) => {
 const createNewSetting = () => {
   const newSetting = reactive({
     ...defaultSetting,
-    kingdomOverview: { ...defaultSetting.kingdomOverview },
+    settingOverview: { ...defaultSetting.setting_overview },
     factions: [],
     importantLocations: [],
     npcs: []
@@ -294,15 +298,20 @@ const createNewSetting = () => {
 };
 
 function saveSettingsToLocalStorage() {
-  // Serialize the current state of settings to a JSON string
-  const serializedSettings = JSON.stringify(settings.value.map(setting => ({
+  // Map over settings to adjust NPCs and remove non-serializable values
+  const settingsToSave = settings.value.map(setting => ({
     ...setting,
-    // Remove reactive internals and other non-serializable values
-    kingdomOverview: setting.kingdomOverview,
+    settingOverview: setting.setting_overview,
     factions: setting.factions,
     importantLocations: setting.importantLocations,
-    npcs: setting.npcs
-  })));
+    npcs: setting.npcs.map(npc => ({
+      ...npc,
+      open: false // Set all npc.open properties to false before saving
+    }))
+  }));
+
+  // Serialize the modified settings to a JSON string
+  const serializedSettings = JSON.stringify(settingsToSave);
 
   // Save the serialized string to local storage
   localStorage.setItem('gameSettings', serializedSettings);
@@ -322,8 +331,8 @@ function loadSettingsFromLocalStorage() {
 
 
 
-const kingdomOverviewExists = computed(() => {
-  const overview = currentSetting.value.kingdomOverview?.overview;
+const settingOverviewExists = computed(() => {
+  const overview = currentSetting.value.setting_overview?.overview;
   return !!overview && overview.length > 0;
 });
 
@@ -423,8 +432,8 @@ async function processQueue() {
   const { type, data } = requestQueue.value.shift();  // Dequeue the first request
 
   switch (type) {
-    case 'generateTownOrKingdom':
-      await handleGenerateTownOrKingdom(data);
+    case 'generateSetting':
+      await handleGenerateSetting(data);
       break;
     case 'generateSubLocations':
       await handleGenerateSubLocations(data);
@@ -461,25 +470,29 @@ function getOverviewText(overviewObject) {
 }
 
 
-function generateTownOrKingdom() {
+function generateSetting({ isSubLocation, subLocationName, subLocationDescription }) {
   const operationIndex = currentSettingIndex.value;
   const setting = settings.value[operationIndex];
 
   // Directly update properties in a reactive way
-  setting.kingdomType = setting.kingdomType || randomType();
-  setting.adjective = setting.adjective || randomAdjective(setting.kingdomType);
-  setting.placeName = setting.placeName || randomName(setting.kingdomType);
-  setting.placeLore = setting.placeLore || '';
+  setting.setting_type = setting.setting_type || randomType();
+  setting.adjective = setting.adjective || randomAdjective(setting.setting_type);
+  setting.place_name = setting.place_name || randomName(setting.setting_type);
+  setting.place_lore = setting.place_lore || '';
 
-  const prompt = kingdomOverviewPrompt(setting.kingdomType, setting.adjective, setting.placeName, setting.placeLore);
-  enqueueRequest('generateTownOrKingdom', { operationIndex, prompt });
+  let nameToPass = subLocationName || setting.place_name || '';
+  let parentLocationOverview = setting.place_lore || getOverviewText(setting.setting_overview) || '';
+
+  const prompt = settingOverviewPrompt(setting.setting_type, setting.adjective, setting.place_name, setting.place_lore);
+  console.log(prompt);
+  enqueueRequest('generateSetting', { operationIndex, prompt });
 }
 
 
 function generateSubLocations() {
   const operationIndex = currentSettingIndex.value;
   if (settings.value[operationIndex].importantLocations.length > 0) return;
-  const overviewText = getOverviewText(settings.value[operationIndex].kingdomOverview);
+  const overviewText = getOverviewText(settings.value[operationIndex].setting_overview);
   const prompt = subLocationsPrompt(overviewText);
 
   enqueueRequest('generateSubLocations', { operationIndex, prompt });
@@ -488,7 +501,7 @@ function generateSubLocations() {
 function generateFactions() {
   const operationIndex = currentSettingIndex.value;
   if (settings.value[operationIndex].factions.length > 0) return;
-  const overviewText = getOverviewText(settings.value[operationIndex].kingdomOverview);
+  const overviewText = getOverviewText(settings.value[operationIndex].setting_overview);
   const prompt = factionsPrompt(overviewText);
 
   enqueueRequest('generateFactions', { operationIndex, prompt });
@@ -505,17 +518,27 @@ function findObjectByName(objects, name) {
   return undefined;  // Return undefined if no matching object is found
 }
 
-function generateDetailedNPCDescription(index) {
+function getNPCText(npc) {
+  return `Here is a description of ${npc.name}: ${npc.description_of_position} ${npc.current_location} ${npc.distinctive_features_or_mannerisms} ${npc.character_secret}`;
+}
+
+function generateDetailedNPCDescription(index, relationshipObject) {
   const operationIndex = currentSettingIndex.value;
   const npc = settings.value[operationIndex].npcs[index];
-  const kingdomOverviewText = getOverviewText(settings.value[operationIndex].kingdomOverview);
+  const npcText = getNPCText(npc);
+  const settingOverviewText = getOverviewText(settings.value[operationIndex].setting_overview);
   let faction = findObjectByName(settings.value[operationIndex].factions, npc.faction);
   const factionOverviewText = getOverviewText(faction);
 
-  if (!npc.detailedDescription) { // Avoid regenerating if already present
-    const prompt = createNPCPrompt(npc.name, kingdomOverviewText, factionOverviewText); // Assume createNPCPrompt creates an appropriate prompt
+  if (!npc.detailedDescription) {
+    let prompt;
+    if (relationshipObject) {
+      prompt = createNPCRelationshipPrompt(npc.name, npcText, relationshipObject, settingOverviewText, factionOverviewText);
+    } else {
+      prompt = createNPCPrompt(npc.name, settingOverviewText, factionOverviewText);
+    }
     console.log(prompt);
-    enqueueRequest('generateDetailedNPCDescription', { operationIndex, npcIndex: index, prompt });
+    enqueueRequest('generateDetailedNPCDescription', { operationIndex, npcIndex: index, prompt, relationshipObject });
   }
 }
 
@@ -523,24 +546,24 @@ function generateDetailedNPCDescription(index) {
 
 
 // Generation functions
-async function handleGenerateTownOrKingdom({ operationIndex, prompt }) {
+async function handleGenerateSetting({ operationIndex, prompt }) {
   try {
     if (settings.value[operationIndex]) {
-      settings.value[operationIndex].loadingKingdomOverview = true;
+      settings.value[operationIndex].loadingsettingOverview = true;
     }
     const response = await generateGptResponse(prompt, kingdomValidation);
     const overview = JSON.parse(response);
 
     if (settings.value[operationIndex]) {
-      settings.value[operationIndex].kingdomOverview = overview;
+      settings.value[operationIndex].setting_overview = overview;
       settings.value[operationIndex].npcs = overview.npc_list || [];
-      settings.value[operationIndex].loadingKingdomOverview = false;
+      settings.value[operationIndex].loadingsettingOverview = false;
       saveSettingsToLocalStorage();  // Save to local storage after update
     }
   } catch (error) {
     console.error("Error generating kingdom description:", error);
     if (settings.value[operationIndex]) {
-      settings.value[operationIndex].loadingKingdomOverview = false;
+      settings.value[operationIndex].loadingsettingOverview = false;
     }
   }
 }
@@ -579,13 +602,23 @@ async function handleGenerateFactions({ operationIndex, prompt }) {
   }
 }
 
-async function handleGenerateDetailedNPCDescription({ operationIndex, npcIndex, prompt }) {
+async function handleGenerateDetailedNPCDescription({ operationIndex, npcIndex, prompt, relationshipObject }) {
+  let npc;  // Define npc here to ensure it's accessible throughout the function
+
   try {
-    console.log(prompt);
-    const npc = settings.value[operationIndex].npcs[npcIndex];
-    npc.loading = true;
+    if (relationshipObject) {
+      settings.value[operationIndex].npcs.push({ name: relationshipObject.name, loading: true });  // Also set loading here
+      let npcIndex = settings.value[operationIndex].npcs.length - 1;  // Update npcIndex to the new NPC
+      npc = settings.value[operationIndex].npcs[npcIndex]; // Correctly reference the newly added npc
+      handleAccordion(npcIndex);
+    } else {
+      npc = settings.value[operationIndex].npcs[npcIndex];
+      npc.loading = true;  // Set loading status
+    }
+
     const npcPart1 = await generateGptResponse(prompt, npcValidationPart1);
     const relationshipsAndTips = await generateGptResponse(createRelationshipAndTipsPrompt(npc.name, npcPart1), npcValidationPart2);
+
     if (npc) {
       Object.assign(npc, JSON.parse(npcPart1));
       Object.assign(npc, JSON.parse(relationshipsAndTips));
@@ -594,10 +627,23 @@ async function handleGenerateDetailedNPCDescription({ operationIndex, npcIndex, 
       saveSettingsToLocalStorage(); // Save to local storage after update
     }
   } catch (error) {
-    npc.loading = false;
+    if (npc) {
+      npc.loading = false; // Ensure we catch and handle the case where npc might be partially defined
+    }
     console.error("Error generating detailed NPC description:", error);
   }
 }
+
+function handleAccordion(npcIndex) {
+  nextTick(() => {
+    const accordion = document.getElementById(`npc-${npcIndex}`);
+    if (accordion) {
+      accordion.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+      settings.value[currentSettingIndex.value].npcs[npcIndex].open = true; // Open the accordion
+    }
+  });
+}
+
 
 // Random type, adjective, and name functions
 function randomType() {
@@ -610,7 +656,7 @@ function randomAdjective(type) {
 }
 
 function randomName(type) {
-  return placeNames[type.toLowerCase()][Math.floor(Math.random() * placeNames[type.toLowerCase()].length)];
+  return place_names[type.toLowerCase()][Math.floor(Math.random() * place_names[type.toLowerCase()].length)];
 }
 </script>
 
