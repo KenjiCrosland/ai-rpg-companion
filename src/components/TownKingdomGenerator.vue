@@ -65,17 +65,45 @@
         </cdr-tab-panel>
         <cdr-tab-panel label="Important Locations" name="Locations" @tab-change="generateSubLocations">
           <h2>Important Locations</h2>
-          <div v-if="currentSetting.importantLocations && currentSetting.importantLocations.length > 0">
-            <cdr-list>
-              <li v-for="location in currentSetting.importantLocations" :key="location.name">
-                <h3>{{ location.name }}</h3>
-                <p>{{ location.description }}</p>
+          <cdr-accordion-group v-if="currentSetting.importantLocations && currentSetting.importantLocations.length > 0">
+            <cdr-accordion v-for="(setting, index) in currentSetting.importantLocations" :key="setting.name"
+              :id="setting.name" level="2" :opened="setting.open" @accordion-toggle="setting.open = !setting.open">
+              <template #label>
+                {{ setting.name }}
+              </template>
+              <div v-if="!setting.main_index && !setting.loading">
+                <h2>{{ setting.name }}</h2>
+                <p>{{ setting.description }}</p>
                 <cdr-button
-                  @click="generateSetting({ isSubLocation: true, subLocationName: location.name, subLocationDescription: location.description })">Generate
-                  Full Description</cdr-button>
-              </li>
-            </cdr-list>
-          </div>
+                  @click="generateSetting({ sublocationIndex: index, subLocationName: setting.name, subLocationDescription: setting.description, adjective: setting.adjective, setting_type: setting.setting_type })">
+                  Generate Full Description
+                </cdr-button>
+              </div>
+              <div v-if="setting.has_detailed_description && !setting.loading">
+                <h2>{{ setting.name }}</h2>
+                <p>{{ settings[setting.main_index].setting_overview.overview }}</p>
+                <p>{{ settings[setting.main_index].setting_overview.history }}</p>
+                <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
+          settings[setting.main_index].setting_overview.recent_event_current_ruler
+        }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
+          settings[setting.main_index].setting_overview.recent_event_social }}</p>
+                <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
+          settings[setting.main_index].setting_overview.impactful_economic_event
+        }}</p>
+                <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
+          settings[setting.main_index].setting_overview.recent_event_military }}
+                </p>
+                <p>{{ settings[setting.main_index].setting_overview.greatest_hope }}</p>
+                <p>{{ settings[setting.main_index].setting_overview.darkest_fear }}</p>
+              </div>
+              <div v-if="!setting.has_detailed_description && setting.loading">
+                <CdrSkeleton>
+                  <OverviewSkeleton />
+                </CdrSkeleton>
+              </div>
+            </cdr-accordion>
+          </cdr-accordion-group>
           <div v-else>
             <LocationListSkeleton />
           </div>
@@ -190,37 +218,7 @@
           </ul>
           <hr class="skeleton-hr">
           <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name)}}</h2>
-
-          <CdrSkeletonBone type="line" style="width:95%" />
-          <CdrSkeletonBone type="line" style="width:90%" />
-          <CdrSkeletonBone type="line" style="width:85%" />
-          <CdrSkeletonBone type="line" style="width:95%" />
-          <p>
-            <CdrSkeletonBone type="line" style="width:95%" />
-            <CdrSkeletonBone type="line" style="width:90%" />
-            <CdrSkeletonBone type="line" style="width:85%" />
-            <CdrSkeletonBone type="line" style="width:85%" />
-          </p>
-          <p>
-            <CdrSkeletonBone type="line" style="width:95%" />
-            <CdrSkeletonBone type="line" style="width:90%" />
-            <CdrSkeletonBone type="line" style="width:85%" />
-            <CdrSkeletonBone type="line" style="width:85%" />
-            <CdrSkeletonBone type="line" style="width:90%" />
-            <CdrSkeletonBone type="line" style="width:85%" />
-          </p>
-          <p>
-            <CdrSkeletonBone type="line" style="width:95%" />
-            <CdrSkeletonBone type="line" style="width:90%" />
-            <CdrSkeletonBone type="line" style="width:85%" />
-            <CdrSkeletonBone type="line" style="width:90%" />
-            <CdrSkeletonBone type="line" style="width:85%" />
-            <CdrSkeletonBone type="line" style="width:85%" />
-          </p>
-          <p>
-            <CdrSkeletonBone type="line" style="width:95%" />
-            <CdrSkeletonBone type="line" style="width:90%" />
-          </p>
+          <OverviewSkeleton />
         </CdrSkeleton>
       </div>
     </div>
@@ -230,10 +228,11 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion } from "@rei/cedar";
-import { settingOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt } from "../util/kingdom-prompts.mjs";
+import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt } from "../util/kingdom-prompts.mjs";
 import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import LocationListSkeleton from "./skeletons/LocationListSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
+import OverviewSkeleton from "./skeletons/OverviewSkeleton.vue";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import placeAdjectives from '../data/place-adjectives.json';
 import place_names from '../data/place-names.json';
@@ -241,7 +240,9 @@ import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-tabs.css';
-
+function isNumber(value) {
+  return typeof value === 'number';
+}
 const currentSettingIndex = ref(0);
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
 const defaultSetting = reactive({
@@ -249,7 +250,7 @@ const defaultSetting = reactive({
   setting_type: '',
   place_name: '',
   place_lore: '',
-  settingOverview: null,
+  setting_overview: null,
   factions: [],
   importantLocations: [],
   npcs: [],
@@ -284,24 +285,32 @@ watch(currentSettingIndex, (newValue, oldValue) => {
   }
 });
 
-const createNewSetting = () => {
+const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '') => {
   const newSetting = reactive({
     ...defaultSetting,
-    settingOverview: { ...defaultSetting.setting_overview },
+    setting_overview: { ...defaultSetting.setting_overview },
     factions: [],
     importantLocations: [],
-    npcs: []
+    npcs: [],
   });
+  if (isSublocation) {
+    newSetting.adjective = adjective;
+    newSetting.setting_type = setting_type;
+    newSetting.place_name = place_name;
+  }
   settings.value.push(newSetting);
-  currentSettingIndex.value = settings.value.length - 1;
-  isNewSetting.value = true;  // Mark as new
+  if (!isSublocation) {
+    currentSettingIndex.value = settings.value.length - 1;
+    isNewSetting.value = true;  // Mark as new
+  }
+
 };
 
 function saveSettingsToLocalStorage() {
   // Map over settings to adjust NPCs and remove non-serializable values
   const settingsToSave = settings.value.map(setting => ({
     ...setting,
-    settingOverview: setting.setting_overview,
+    setting_overview: setting.setting_overview,
     factions: setting.factions,
     importantLocations: setting.importantLocations,
     npcs: setting.npcs.map(npc => ({
@@ -470,7 +479,7 @@ function getOverviewText(overviewObject) {
 }
 
 
-function generateSetting({ isSubLocation, subLocationName, subLocationDescription }) {
+function generateSetting({ sublocationIndex, subLocationName, subLocationDescription, adjective, setting_type }) {
   const operationIndex = currentSettingIndex.value;
   const setting = settings.value[operationIndex];
 
@@ -483,9 +492,15 @@ function generateSetting({ isSubLocation, subLocationName, subLocationDescriptio
   let nameToPass = subLocationName || setting.place_name || '';
   let parentLocationOverview = setting.place_lore || getOverviewText(setting.setting_overview) || '';
 
-  const prompt = settingOverviewPrompt(setting.setting_type, setting.adjective, setting.place_name, setting.place_lore);
+  let prompt;
+  if (isNumber(sublocationIndex)) {
+    prompt = sublocationOverviewPrompt(nameToPass, parentLocationOverview, subLocationDescription);
+  } else {
+    prompt = settingOverviewPrompt(setting.adjective, setting.setting_type, setting.place_name, setting.place_lore);
+  }
+  console.log(sublocationIndex);
   console.log(prompt);
-  enqueueRequest('generateSetting', { operationIndex, prompt });
+  enqueueRequest('generateSetting', { operationIndex, prompt, sublocationIndex: sublocationIndex, subLocationName, adjective, setting_type });
 }
 
 
@@ -542,14 +557,22 @@ function generateDetailedNPCDescription(index, relationshipObject) {
   }
 }
 
-
-
-
 // Generation functions
-async function handleGenerateSetting({ operationIndex, prompt }) {
+async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex, subLocationName, adjective, setting_type }) {
+
   try {
+    let parentIndex;
+    if (isNumber(sublocationIndex)) {
+      parentIndex = operationIndex;
+      console.log("Parent index:", parentIndex, "Sublocation index:", sublocationIndex, "Sublocation name:", subLocationName, "Adjective:", adjective, "Setting type:", setting_type);
+      createNewSetting(true, adjective, setting_type, subLocationName);
+      operationIndex = settings.value.length - 1;
+    }
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].loadingsettingOverview = true;
+    }
+    if (isNumber(parentIndex)) {
+      settings.value[parentIndex].importantLocations[sublocationIndex].loading = true;
     }
     const response = await generateGptResponse(prompt, kingdomValidation);
     const overview = JSON.parse(response);
@@ -558,6 +581,11 @@ async function handleGenerateSetting({ operationIndex, prompt }) {
       settings.value[operationIndex].setting_overview = overview;
       settings.value[operationIndex].npcs = overview.npc_list || [];
       settings.value[operationIndex].loadingsettingOverview = false;
+      if (isNumber(parentIndex)) {
+        settings.value[parentIndex].importantLocations[sublocationIndex].has_detailed_description = true;
+        settings.value[parentIndex].importantLocations[sublocationIndex].main_index = operationIndex;
+        settings.value[parentIndex].importantLocations[sublocationIndex].loading = false;
+      }
       saveSettingsToLocalStorage();  // Save to local storage after update
     }
   } catch (error) {
@@ -644,7 +672,6 @@ function handleAccordion(npcIndex) {
   });
 }
 
-
 // Random type, adjective, and name functions
 function randomType() {
   const placeTypes = Object.keys(placeAdjectives);
@@ -669,7 +696,7 @@ function randomName(type) {
   display: flex;
 
   .sidebar {
-    width: 200px;
+    width: 400px;
     background-color: #f4f4f4;
     padding: 10px;
 

@@ -50,25 +50,29 @@ export function sublocationOverviewPrompt(
     
   Here are some initial details about ${place_name}:
     
-  ${subLocationDescription}. When describing events and individuals be specific about names and locations. Each key should be a sentence or two, should be detailed and specific and should flow together to create a cohesive description. Avoid common fantasy tropes and cliches. Temperature: 0.9
+  ${subLocationDescription}.
+  
+  When describing events and individuals be specific about names and locations. Each key should be a sentence or two, should be detailed and specific and should flow together to create a cohesive description. Avoid common fantasy tropes and cliches. Temperature: 0.9
+
+  Be sure that the description is specifically about ${place_name} and not the larger setting.
   
   Return the description of ${place_name} in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups:
   {
-    overview: 'A brief overview of the sublocation, with a brief description of its current state',
-    adjective: 'An adjective that describes the sublocation',
-    setting_type: 'The type of setting the sublocation is',
-    history: 'A very brief history of the sublocation, including its founding and most significant recent events',
-    current_ruler_sentence: 'A sentence describing the ruler of the sublocation. What have they done to earn their position? What was their most recent significant action?',
-    recent_event_current_ruler: 'describe a recent political event involving the current ruler which reflects the current state of the sublocation',
+    overview: 'A brief overview of ${place_name}, with a brief description of its current state',
+    adjective: 'An adjective that describes ${place_name}',
+    setting_type: 'The type of setting ${place_name} is',
+    history: 'A very brief history of ${place_name}, including its founding and most significant recent events',
+    current_ruler_sentence: 'A sentence describing the ruler of ${place_name}. Since this is a sublocation, this ruler may be a vassal or subordinate to the ruler of the larger setting. What have they done to earn their position? What was their most recent significant action?',
+    recent_event_current_ruler: 'describe a recent political event involving the current ruler of the sublocation which reflects the current state of ${place_name}',
     recent_event_consequences: 'describe the consequences of the recent political event involving the current ruler',
-    social_history: 'A brief history of the social structure of the sublocation',
-    recent_event_social: 'this sentence should tie into the previous sentence about social history. describe a recent social event which reflects the current state of the sublocation. Show don't tell, use examples and do not say "A recent social event was...". Be specific with names of organizations, individuals, or locations',
-    economic_history: 'A brief history of the economic structure of the sublocation',
-    impactful_economic_event: 'describe a recent event that either had a positive or negative impact on the economy of the sublocation. Be specific with names of organizations, individuals, or locations',
-    military_history: 'A brief history of the military structure of the sublocation',
-    recent_event_military: 'this sentence should tie into the previous sentence about military history. describe a recent military event which reflects the current state of the sublocation. Show don't tell, use examples and do not say "A recent military event was...". Be specific with names of organizations, individuals, or locations',
-    greatest_hope: 'A description of the sublocation's greatest hope. Be specific about what this hope is and why it is important',
-    darkest_fear: 'A description of the sublocation's darkest fear. Be specific about what this fear is and why it is important',
+    social_history: 'Provide a brief history of ${place_name} and how it plays an important role in the larger setting',
+    recent_event_social: 'this sentence should tie into the previous sentence about social history. describe a recent social event which reflects the current state of ${place_name}. Show don't tell, use examples and do not say "A recent social event was...". Be specific with names of organizations, individuals, or locations',
+    economic_history: 'A brief history of the economic structure of ${place_name}. If the place is small, describe the economic role of this sublocation in the larger setting',
+    impactful_economic_event: 'describe a recent event that either had a positive or negative impact on the economy of ${place_name}. If the place is small, describe how economic events in the larger setting are affecting ${place_name}',
+    military_history: 'A brief history of the military structure of ${place_name}. For very small sublocations, this may be a description of the local militia, guard or even an informal posse',
+    recent_event_military: 'this sentence should tie into the previous sentence about the security of ${place_name}. If there was no recent military event, describe how a military event in the larger setting is affecting ${place_name}',
+    greatest_hope: 'A description of ${place_name}'s greatest hope. Be specific about what this hope is and why it is important',
+    darkest_fear: 'A description of ${place_name}'s darkest fear. Be specific about what this fear is and why it is important',
     npc_list: [
       {
         name: 'NPC Name',
@@ -88,6 +92,8 @@ export function subLocationsPrompt(kingdomDescription) {
   [
     {
       "name": "Name of the sub-location",
+      "setting_type": "The type of setting the sub-location is",
+      "adjective": "An adjective that describes the setting_type: for example, 'mysterious', 'thriving', 'dangerous'.",
       "description": "Two sentences describing the sub-location. The first sentence should be a general overview of the location and the second sentence should provide some information about why the location is important or interesting."
     }
     // Repeat the above structure for each sub-location
