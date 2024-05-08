@@ -2,8 +2,10 @@
   <div class="app-container">
     <div class="sidebar">
       <ul class="settings-tabs">
-        <li v-for="(setting, index) in settings" :key="index" :class="{ active: currentSettingIndex === index }"
-          @click="selectSetting(index)">
+        <!-- Flatten settings tree and display each with appropriate indentation -->
+        <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
+          :class="{ active: currentSettingIndex === setting.originalIndex }"
+          @click="selectSetting(setting.originalIndex)" :style="{ paddingLeft: `${setting.depth * 20}px` }">
           {{ formatTitle(setting.adjective, setting.setting_type, setting.place_name) || 'Unnamed Setting' }}
         </li>
         <li v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" @click="createNewSetting">+ New Setting</li>
@@ -254,10 +256,44 @@ const defaultSetting = reactive({
   factions: [],
   importantLocations: [],
   npcs: [],
+  parentIndex: null,
 });
 const settings = ref([reactive({ ...defaultSetting })]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
 onMounted(loadSettingsFromLocalStorage);
+
+const settingsTree = computed(() => {
+  let tree = [];
+  let settingsMap = new Map();
+
+  // Initialize map entries for all settings with their indices as keys
+  settings.value.forEach((setting, index) => {
+    settingsMap.set(index, { ...setting, children: [], originalIndex: index });
+  });
+
+  // Populate children arrays based on the parentIndex
+  settings.value.forEach((setting, index) => {
+    if (typeof setting.parentIndex === 'number' && settingsMap.has(setting.parentIndex)) {
+      settingsMap.get(setting.parentIndex).children.push(settingsMap.get(index));
+    } else if (setting.parentIndex === null) {
+      tree.push(settingsMap.get(index));
+    }
+  });
+
+  console.log("Final TREE with Indices:", tree);
+  return tree;
+});
+
+function flattenSettings(tree, depth = 0) {
+  let flat = [];
+  tree.forEach(setting => {
+    flat.push({ ...setting, depth });
+    if (setting.children.length) {
+      flat = flat.concat(flattenSettings(setting.children, depth + 1));
+    }
+  });
+  return flat;
+}
 
 const selectSetting = (index) => {
   currentSettingIndex.value = index;
@@ -285,7 +321,7 @@ watch(currentSettingIndex, (newValue, oldValue) => {
   }
 });
 
-const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '') => {
+const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', parentIndex = null) => {
   const newSetting = reactive({
     ...defaultSetting,
     setting_overview: { ...defaultSetting.setting_overview },
@@ -294,6 +330,7 @@ const createNewSetting = (isSublocation, adjective = '', setting_type = '', plac
     npcs: [],
   });
   if (isSublocation) {
+    newSetting.parentIndex = parentIndex;
     newSetting.adjective = adjective;
     newSetting.setting_type = setting_type;
     newSetting.place_name = place_name;
@@ -565,7 +602,7 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
     if (isNumber(sublocationIndex)) {
       parentIndex = operationIndex;
       console.log("Parent index:", parentIndex, "Sublocation index:", sublocationIndex, "Sublocation name:", subLocationName, "Adjective:", adjective, "Setting type:", setting_type);
-      createNewSetting(true, adjective, setting_type, subLocationName);
+      createNewSetting(true, adjective, setting_type, subLocationName, parentIndex);
       operationIndex = settings.value.length - 1;
     }
     if (settings.value[operationIndex]) {
@@ -695,9 +732,18 @@ function randomName(type) {
 .app-container {
   display: flex;
 
+  $sidebar-width: 400px;
+  $background-color: #f4f4f4;
+  $active-color: #ffffff;
+  $hover-background-color: #f0f0f0;
+  $default-background-color: #e0e0e0;
+  $active-border-color: #007BFF;
+  $indentation-step: 20px;
+  $transition-speed: 0.3s;
+
   .sidebar {
-    width: 400px;
-    background-color: #f4f4f4;
+    width: $sidebar-width;
+    background-color: $background-color;
     padding: 10px;
 
     .settings-tabs {
@@ -708,22 +754,23 @@ function randomName(type) {
       li {
         padding: 8px 16px;
         cursor: pointer;
-        background-color: #e0e0e0;
+        background-color: $default-background-color;
         margin-bottom: 4px;
         border-left: 5px solid transparent;
-        transition: background-color 0.3s;
+        transition: background-color $transition-speed;
 
         &:hover {
-          background-color: #f0f0f0;
+          background-color: $hover-background-color;
         }
 
         &.active {
-          background-color: #ffffff;
-          border-left-color: #007BFF;
+          background-color: $active-color;
+          border-left-color: $active-border-color;
         }
       }
     }
   }
+
 
   .main-content {
     flex-grow: 1;
