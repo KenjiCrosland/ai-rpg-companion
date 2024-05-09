@@ -202,6 +202,7 @@
           <p>Empty tab</p>
         </cdr-tab-panel>
       </cdr-tabs>
+      <cdr-button v-if="settingOverviewExists" @click="deleteSetting(currentSettingIndex)">Delete Setting</cdr-button>
       <div v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
         <CdrSkeleton>
           <ul class="skeleton-ul">
@@ -300,6 +301,50 @@ const selectSetting = (index) => {
   isNewSetting.value = false;  // Not new since it's selected from existing ones
 };
 
+const updateOriginalIndices = () => {
+  settings.value.forEach((setting, index) => {
+    setting.originalIndex = index;  // Update originalIndex to the new index
+  });
+};
+
+const deleteSetting = (indexToDelete) => {
+  if (indexToDelete < 0 || indexToDelete >= settings.value.length) return;  // Safety check
+
+  // Capture the parentIndex of the setting to be deleted for reassigning children
+  const parentOfDeleted = settings.value[indexToDelete].parentIndex;
+
+  // Update children of the deleted setting to the parent of the deleted setting
+  settings.value.forEach((setting, index) => {
+    if (setting.parentIndex === indexToDelete) {
+      setting.parentIndex = parentOfDeleted;
+    }
+    // Additionally check and update main_index in importantLocations if needed
+    setting.importantLocations.forEach(location => {
+      if (location.main_index === indexToDelete) {
+        location.main_index = parentOfDeleted !== null ? parentOfDeleted : null;  // Reassign or remove depending on parent availability
+      } else if (location.main_index > indexToDelete) {
+        location.main_index--;  // Adjust indices that are higher than the deleted index
+      }
+    });
+  });
+
+  // Remove the setting
+  settings.value.splice(indexToDelete, 1);
+
+  // Update parentIndex for all remaining settings
+  settings.value.forEach(setting => {
+    if (typeof setting.parentIndex === 'number' && setting.parentIndex > indexToDelete) {
+      setting.parentIndex--;  // Adjust parentIndex down by one to account for the shift
+    }
+  });
+
+  saveSettingsToLocalStorage();
+};
+
+
+
+
+
 const currentlyLoadingOverview = computed(() => {
   // Check if any setting has loadingsettingOverview set to true
   return settings.value.some(setting => setting.loadingsettingOverview);
@@ -323,25 +368,29 @@ watch(currentSettingIndex, (newValue, oldValue) => {
 
 const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', parentIndex = null) => {
   const newSetting = reactive({
-    ...defaultSetting,
-    setting_overview: { ...defaultSetting.setting_overview },
+    adjective: adjective,
+    setting_type: setting_type,
+    place_name: place_name,
+    place_lore: '',
+    setting_overview: null,
     factions: [],
     importantLocations: [],
     npcs: [],
+    parentIndex: isSublocation ? parentIndex : null
   });
-  if (isSublocation) {
-    newSetting.parentIndex = parentIndex;
-    newSetting.adjective = adjective;
-    newSetting.setting_type = setting_type;
-    newSetting.place_name = place_name;
-  }
-  settings.value.push(newSetting);
-  if (!isSublocation) {
-    currentSettingIndex.value = settings.value.length - 1;
-    isNewSetting.value = true;  // Mark as new
-  }
 
+  // Push the new setting to the settings array
+  settings.value.push(newSetting);
+
+  // Update currentSettingIndex to the index of the newly created setting
+  currentSettingIndex.value = settings.value.length - 1;
+  isNewSetting.value = true;  // Mark as new
+
+  // Optionally save settings to local storage or another persistent state
+  //saveSettingsToLocalStorage();
 };
+
+
 
 function saveSettingsToLocalStorage() {
   // Map over settings to adjust NPCs and remove non-serializable values
