@@ -5,51 +5,57 @@
         <!-- Flatten settings tree and display each with appropriate indentation -->
         <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
           :class="{ active: currentSettingIndex === setting.originalIndex }"
-          @click="selectSetting(setting.originalIndex)" :style="{ paddingLeft: `${setting.depth * 20}px` }">
-          {{ formatTitle(setting.adjective, setting.setting_type, setting.place_name) || 'Unnamed Setting' }}
+          @click="selectSetting(setting.originalIndex)" :style="{ marginLeft: `${setting.depth * 20}px` }">
+          {{ setting.place_name || 'Unnamed Setting' }}
         </li>
         <li v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" @click="createNewSetting">+ New Setting</li>
       </ul>
     </div>
     <div class="main-content">
-      <h1>Kenji's RPG Setting Generator: Build a Kingdom, Town, Empire, or Space Station!</h1>
-      <form @submit.prevent="generateSetting" style="margin-bottom: 3rem">
-        <div class="generator-fields">
-          <cdr-input class="generator-field-input" id="adjective" v-model="currentSetting.adjective"
-            background="secondary" label="Adjective">
+      <div v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
+        <h1>Kenji's RPG Setting Generator: Build a Kingdom, Town, Empire, or Space Station!</h1>
+        <form @submit.prevent="generateSetting" style="margin-bottom: 3rem">
+          <div class="generator-fields">
+            <cdr-input class="generator-field-input" id="adjective" v-model="currentSetting.adjective"
+              background="secondary" label="Adjective">
+              <template #helper-text-bottom>
+                Examples: "Flourishing", "Decrepit", "Decadent"
+              </template>
+            </cdr-input>
+            <cdr-input class="generator-field-input" id="setting_type" v-model="currentSetting.setting_type"
+              background="secondary" label="Type of Place">
+              <template #helper-text-bottom>
+                Examples: "Kingdom", "Town", "City", "Republic"
+              </template>
+            </cdr-input>
+            <p>Of</p>
+            <cdr-input class="generator-field-input" id="place_name" v-model="currentSetting.place_name"
+              background="secondary" label="Place name">
+              <template #helper-text-bottom>
+                Examples: "Kingdomaria", "Townland", "Citytopia", "Republic of the People"
+              </template>
+            </cdr-input>
+          </div>
+          <cdr-input :rows="5" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
+            label="Setting Lore" placeholder="Enter any additional details about the setting" class="item-lore-details">
             <template #helper-text-bottom>
-              Examples: "Flourishing", "Decrepit", "Decadent"
+              Write any details about your setting that you want to include. Need help coming up with lore for your
+              setting?
+              Use the <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore
+                Generator</cdr-link>
+              and paste in the generated summary!
             </template>
           </cdr-input>
-          <cdr-input class="generator-field-input" id="setting_type" v-model="currentSetting.setting_type"
-            background="secondary" label="Type of Place">
-            <template #helper-text-bottom>
-              Examples: "Kingdom", "Town", "City", "Republic"
-            </template>
-          </cdr-input>
-          <p>Of</p>
-          <cdr-input class="generator-field-input" id="place_name" v-model="currentSetting.place_name"
-            background="secondary" label="Place name">
-            <template #helper-text-bottom>
-              Examples: "Kingdomaria", "Townland", "Citytopia", "Republic of the People"
-            </template>
-          </cdr-input>
-        </div>
-        <cdr-input :rows="5" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
-          label="Setting Lore" placeholder="Enter any additional details about the setting" class="item-lore-details">
-          <template #helper-text-bottom>
-            Write any details about your setting that you want to include. Need help coming up with lore for your
-            setting?
-            Use the <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link>
-            and paste in the generated summary!
-          </template>
-        </cdr-input>
-        <cdr-button @click="generateSetting">Generate</cdr-button>
-      </form>
-      <cdr-tabs v-if="settingOverviewExists" height="auto" style="width: 800px">
+          <cdr-button @click="generateSetting">Generate</cdr-button>
+        </form>
+      </div>
+      <cdr-tabs v-if="settingOverviewExists" height="auto" style="width: 800px; margin-top:3rem">
         <cdr-tab-panel label="Overview" name="Overview">
-          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name) }}</h2>
-          <p>{{ currentSetting.setting_overview.overview }}</p>
+          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
+          currentSetting.setting_overview.title) }}</h2>
+          <p>{{ currentSetting.setting_overview.overview }} {{
+          currentSetting.setting_overview.relation_to_larger_setting }}
+          </p>
           <p>{{ currentSetting.setting_overview.history }}</p>
           <p>{{ currentSetting.setting_overview.current_ruler_sentence }} {{
           currentSetting.setting_overview.recent_event_current_ruler }} {{
@@ -62,8 +68,9 @@
           <p>{{ currentSetting.setting_overview.military_history }} {{
           currentSetting.setting_overview.recent_event_military
         }}</p>
-          <p>{{ currentSetting.setting_overview.greatest_hope }}</p>
-          <p>{{ currentSetting.setting_overview.darkest_fear }}</p>
+          <p>{{ currentSetting.setting_overview.main_problem }} {{ currentSetting.setting_overview.potential_solutions
+            }}</p>
+          <p>{{ currentSetting.setting_overview.conclusion }}</p>
         </cdr-tab-panel>
         <cdr-tab-panel label="Important Locations" name="Locations" @tab-change="generateSubLocations">
           <h2>Important Locations</h2>
@@ -76,14 +83,16 @@
               <div v-if="!setting.main_index && !setting.loading">
                 <h2>{{ setting.name }}</h2>
                 <p>{{ setting.description }}</p>
+                <p>{{ setting.setting_scale }}</p>
                 <cdr-button
-                  @click="generateSetting({ sublocationIndex: index, subLocationName: setting.name, subLocationDescription: setting.description, adjective: setting.adjective, setting_type: setting.setting_type })">
+                  @click="generateSetting({ sublocationIndex: index, subLocationName: setting.name, subLocationDescription: setting.description, adjective: setting.adjective, setting_type: setting.setting_type, title: setting.title })">
                   Generate Full Description
                 </cdr-button>
               </div>
               <div v-if="setting.has_detailed_description && !setting.loading">
                 <h2>{{ setting.name }}</h2>
-                <p>{{ settings[setting.main_index].setting_overview.overview }}</p>
+                <p>{{ settings[setting.main_index].setting_overview.overview }} {{
+          settings[setting.main_index].setting_overview.relation_to_larger_setting }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
           settings[setting.main_index].setting_overview.recent_event_current_ruler
@@ -96,8 +105,11 @@
                 <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
           settings[setting.main_index].setting_overview.recent_event_military }}
                 </p>
-                <p>{{ settings[setting.main_index].setting_overview.greatest_hope }}</p>
-                <p>{{ settings[setting.main_index].setting_overview.darkest_fear }}</p>
+                <p>{{ settings[setting.main_index].setting_overview.main_problem }} {{
+          settings[setting.main_index].setting_overview.potential_solutions }}</p>
+                <p>
+                  {{ settings[setting.main_index].setting_overview.conclusion }}
+                </p>
               </div>
               <div v-if="!setting.has_detailed_description && setting.loading">
                 <CdrSkeleton>
@@ -220,7 +232,8 @@
             </li>
           </ul>
           <hr class="skeleton-hr">
-          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name)}}</h2>
+          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
+            currentSetting.setting_overview?.title)}}</h2>
           <OverviewSkeleton />
         </CdrSkeleton>
       </div>
@@ -366,11 +379,12 @@ watch(currentSettingIndex, (newValue, oldValue) => {
   }
 });
 
-const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', parentIndex = null) => {
+const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', title = '', parentIndex = null) => {
   const newSetting = reactive({
     adjective: adjective,
     setting_type: setting_type,
     place_name: place_name,
+    title: title,
     place_lore: '',
     setting_overview: null,
     factions: [],
@@ -431,7 +445,8 @@ const settingOverviewExists = computed(() => {
   return !!overview && overview.length > 0;
 });
 
-function formatTitle(string1, string2, string3) {
+function formatTitle(string1, string2, string3, title) {
+  if (title) return title;
   if (!string1 || !string2 || !string3) return '';
   // Helper function to capitalize the first letter of each word in a string
   function capitalize(text) {
@@ -449,10 +464,9 @@ function formatTitle(string1, string2, string3) {
 const kingdomValidation = jsonString => {
   try {
     const jsonObj = JSON.parse(jsonString);
-    const keys = ['overview', 'history', 'current_ruler_sentence', 'recent_event_current_ruler',
+    const keys = ['overview', 'relation_to_larger_setting', 'history', 'current_ruler_sentence', 'recent_event_current_ruler',
       'recent_event_consequences', 'social_history', 'recent_event_social', 'economic_history',
-      'impactful_economic_event', 'military_history', 'recent_event_military', 'greatest_hope',
-      'darkest_fear', 'npc_list'];
+      'impactful_economic_event', 'military_history', 'recent_event_military', 'main_problem', 'potential_solutions', 'conclusion', 'npc_list'];
     const npcKeys = ['name', 'description'];
     for (let npc of jsonObj.npc_list) {
       if (!npcKeys.every(key => key in npc)) return false;
@@ -466,7 +480,7 @@ const kingdomValidation = jsonString => {
 const sublocationValidation = jsonString => {
   try {
     const jsonObj = JSON.parse(jsonString);
-    return jsonObj.every(location => ['name', 'description'].every(key => key in location));
+    return jsonObj.every(location => ['name', 'description', 'setting_scale', 'title', 'setting_type', 'adjective'].every(key => key in location));
   } catch (error) {
     return false;
   }
@@ -644,14 +658,14 @@ function generateDetailedNPCDescription(index, relationshipObject) {
 }
 
 // Generation functions
-async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex, subLocationName, adjective, setting_type }) {
+async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex, subLocationName, adjective, setting_type, title }) {
 
   try {
     let parentIndex;
     if (isNumber(sublocationIndex)) {
       parentIndex = operationIndex;
       console.log("Parent index:", parentIndex, "Sublocation index:", sublocationIndex, "Sublocation name:", subLocationName, "Adjective:", adjective, "Setting type:", setting_type);
-      createNewSetting(true, adjective, setting_type, subLocationName, parentIndex);
+      createNewSetting(true, adjective, setting_type, subLocationName, title, parentIndex);
       operationIndex = settings.value.length - 1;
     }
     if (settings.value[operationIndex]) {
