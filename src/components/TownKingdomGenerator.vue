@@ -36,7 +36,8 @@
               </template>
             </cdr-input>
           </div>
-          <cdr-input :rows="5" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
+          <div class="lore-field-input">
+            <cdr-input :rows="5" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
             label="Setting Lore" placeholder="Enter any additional details about the setting" class="item-lore-details">
             <template #helper-text-bottom>
               Write any details about your setting that you want to include. Need help coming up with lore for your
@@ -46,10 +47,12 @@
               and paste in the generated summary!
             </template>
           </cdr-input>
-          <cdr-button @click="generateSetting">Generate</cdr-button>
+          </div>
+
+          <cdr-button @click="generateSetting" class='generate-button' :full-width="true" modifier="secondary">Generate</cdr-button>
         </form>
       </div>
-      <cdr-tabs v-if="settingOverviewExists" height="auto" style="width: 800px; margin-top:3rem">
+      <cdr-tabs v-if="settingOverviewExists" height="auto" style="width: 100%; margin-top:3rem">
         <cdr-tab-panel label="Overview" name="Overview">
           <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
           currentSetting.setting_overview.title) }}</h2>
@@ -334,7 +337,9 @@ const deleteSetting = (indexToDelete) => {
     // Additionally check and update main_index in importantLocations if needed
     setting.importantLocations.forEach(location => {
       if (location.main_index === indexToDelete) {
-        location.main_index = parentOfDeleted !== null ? parentOfDeleted : null;  // Reassign or remove depending on parent availability
+        //location.main_index = parentOfDeleted !== null ? parentOfDeleted : null;  // Reassign or remove depending on parent availability
+        location.main_index = null;  // Always remove main_index
+        location.has_detailed_description = false;  // Reset detailed description flag
       } else if (location.main_index > indexToDelete) {
         location.main_index--;  // Adjust indices that are higher than the deleted index
       }
@@ -352,6 +357,7 @@ const deleteSetting = (indexToDelete) => {
   });
 
   saveSettingsToLocalStorage();
+  selectSetting(0);  // Select the first setting after deletion
 };
 
 
@@ -412,7 +418,10 @@ function saveSettingsToLocalStorage() {
     ...setting,
     setting_overview: setting.setting_overview,
     factions: setting.factions,
-    importantLocations: setting.importantLocations,
+    importantLocations: setting.importantLocations.map(location => ({
+      ...location,
+      open: false // Set all location.open properties to false before saving
+    })),
     npcs: setting.npcs.map(npc => ({
       ...npc,
       open: false // Set all npc.open properties to false before saving
@@ -808,6 +817,7 @@ function randomName(type) {
     width: $sidebar-width;
     background-color: $background-color;
     padding: 10px;
+    height: 100vh;
 
     .settings-tabs {
       list-style: none;
@@ -841,9 +851,14 @@ function randomName(type) {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: auto;
+    margin: 3rem auto;
     max-width: 800px;
-    height: 100vh;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px #0000001a;
+    padding: 10px 30px 30px;
+    .generate-button {
+      margin-top: 2rem;
+    }
   }
 }
 
@@ -851,6 +866,10 @@ function randomName(type) {
   display: flex;
   gap: 2rem;
   align-items: center;
+}
+
+.lore-field-input {
+  margin-top: 1.5rem;
 }
 
 .focus-text {
