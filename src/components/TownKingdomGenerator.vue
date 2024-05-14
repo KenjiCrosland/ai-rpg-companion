@@ -10,6 +10,8 @@
         </li>
         <li v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" @click="createNewSetting">+ New Setting</li>
       </ul>
+
+      <cdr-button @click="copySettingsAsPlainText">Copy As Plain Text</cdr-button>
     </div>
     <div class="main-content">
       <div class='generator-form' v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
@@ -72,7 +74,7 @@
             currentSetting.setting_overview.impactful_economic_event }}</p>
           <p>{{ currentSetting.setting_overview.military_history }} {{
             currentSetting.setting_overview.recent_event_military
-          }}</p>
+            }}</p>
           <p>{{ currentSetting.setting_overview.main_problem }} {{ currentSetting.setting_overview.potential_solutions
             }}</p>
           <p>{{ currentSetting.setting_overview.conclusion }}</p>
@@ -101,12 +103,12 @@
                 <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                   settings[setting.main_index].setting_overview.recent_event_current_ruler
-                }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_social }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                   settings[setting.main_index].setting_overview.impactful_economic_event
-                }}</p>
+                  }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_military }}
                 </p>
@@ -138,7 +140,7 @@
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
-                  }}
+                    }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -256,6 +258,7 @@ import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import LocationListSkeleton from "./skeletons/LocationListSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
 import OverviewSkeleton from "./skeletons/OverviewSkeleton.vue";
+import { formatSettingAsPlainText } from "../util/formatSettingAsPlainText.mjs";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import placeAdjectives from '../data/place-adjectives.json';
 import place_names from '../data/place-names.json';
@@ -263,6 +266,13 @@ import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-tabs.css';
+
+function copySettingsAsPlainText() {
+  const text = formatSettingAsPlainText(settingsTree.value);
+  console.log(text);
+  navigator.clipboard.writeText(text);
+}
+
 function isNumber(value) {
   return typeof value === 'number';
 }
