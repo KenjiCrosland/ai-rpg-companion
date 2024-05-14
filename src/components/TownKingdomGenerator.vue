@@ -12,9 +12,9 @@
       </ul>
     </div>
     <div class="main-content">
-      <div v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
+      <div class='generator-form' v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
         <h1>Kenji's RPG Setting Generator: Build a Kingdom, Town, Empire, or Space Station!</h1>
-        <form @submit.prevent="generateSetting" style="margin-bottom: 3rem">
+        <form @submit.prevent="generateSetting">
           <div class="generator-fields">
             <cdr-input class="generator-field-input" id="adjective" v-model="currentSetting.adjective"
               background="secondary" label="Adjective">
@@ -38,39 +38,41 @@
           </div>
           <div class="lore-field-input">
             <cdr-input :rows="5" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
-            label="Setting Lore" placeholder="Enter any additional details about the setting" class="item-lore-details">
-            <template #helper-text-bottom>
-              Write any details about your setting that you want to include. Need help coming up with lore for your
-              setting?
-              Use the <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore
-                Generator</cdr-link>
-              and paste in the generated summary!
-            </template>
-          </cdr-input>
+              label="Setting Lore" placeholder="Enter any additional details about the setting"
+              class="item-lore-details">
+              <template #helper-text-bottom>
+                Write any details about your setting that you want to include. Need help coming up with lore for your
+                setting?
+                Use the <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore
+                  Generator</cdr-link>
+                and paste in the generated summary!
+              </template>
+            </cdr-input>
           </div>
 
-          <cdr-button @click="generateSetting" class='generate-button' :full-width="true" modifier="secondary">Generate</cdr-button>
+          <cdr-button @click="generateSetting" class='generate-button' :full-width="true"
+            modifier="secondary">Generate</cdr-button>
         </form>
       </div>
-      <cdr-tabs v-if="settingOverviewExists" height="auto" style="width: 100%; margin-top:3rem">
+      <cdr-tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%">
         <cdr-tab-panel label="Overview" name="Overview">
           <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
-          currentSetting.setting_overview.title) }}</h2>
+            currentSetting.setting_overview.title) }}</h2>
           <p>{{ currentSetting.setting_overview.overview }} {{
-          currentSetting.setting_overview.relation_to_larger_setting }}
+            currentSetting.setting_overview.relation_to_larger_setting }}
           </p>
           <p>{{ currentSetting.setting_overview.history }}</p>
           <p>{{ currentSetting.setting_overview.current_ruler_sentence }} {{
-          currentSetting.setting_overview.recent_event_current_ruler }} {{
-          currentSetting.setting_overview.recent_event_consequences }}</p>
+            currentSetting.setting_overview.recent_event_current_ruler }} {{
+              currentSetting.setting_overview.recent_event_consequences }}</p>
           <p>{{ currentSetting.setting_overview.social_history }} {{ currentSetting.setting_overview.recent_event_social
             }}
           </p>
           <p>{{ currentSetting.setting_overview.economic_history }} {{
-          currentSetting.setting_overview.impactful_economic_event }}</p>
+            currentSetting.setting_overview.impactful_economic_event }}</p>
           <p>{{ currentSetting.setting_overview.military_history }} {{
-          currentSetting.setting_overview.recent_event_military
-        }}</p>
+            currentSetting.setting_overview.recent_event_military
+          }}</p>
           <p>{{ currentSetting.setting_overview.main_problem }} {{ currentSetting.setting_overview.potential_solutions
             }}</p>
           <p>{{ currentSetting.setting_overview.conclusion }}</p>
@@ -95,21 +97,21 @@
               <div v-if="setting.has_detailed_description && !setting.loading">
                 <h2>{{ setting.name }}</h2>
                 <p>{{ settings[setting.main_index].setting_overview.overview }} {{
-          settings[setting.main_index].setting_overview.relation_to_larger_setting }}</p>
+                  settings[setting.main_index].setting_overview.relation_to_larger_setting }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
-          settings[setting.main_index].setting_overview.recent_event_current_ruler
-        }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                  settings[setting.main_index].setting_overview.recent_event_current_ruler
+                }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
-          settings[setting.main_index].setting_overview.recent_event_social }}</p>
+                  settings[setting.main_index].setting_overview.recent_event_social }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
-          settings[setting.main_index].setting_overview.impactful_economic_event
-        }}</p>
+                  settings[setting.main_index].setting_overview.impactful_economic_event
+                }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
-          settings[setting.main_index].setting_overview.recent_event_military }}
+                  settings[setting.main_index].setting_overview.recent_event_military }}
                 </p>
                 <p>{{ settings[setting.main_index].setting_overview.main_problem }} {{
-          settings[setting.main_index].setting_overview.potential_solutions }}</p>
+                  settings[setting.main_index].setting_overview.potential_solutions }}</p>
                 <p>
                   {{ settings[setting.main_index].setting_overview.conclusion }}
                 </p>
@@ -135,8 +137,8 @@
                 <p><strong>Influence Level: </strong>{{ factionPowerLevels[faction.influence_level - 1] }}</p>
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
-          faction.faction_leader_description
-        }}
+                    faction.faction_leader_description
+                  }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -200,7 +202,7 @@
                         :key="relationshipName">
                         <cdr-button
                           @click="generateDetailedNPCDescription(index, { name: relationshipName, description: relationshipDescription })">{{
-          relationshipName }}</cdr-button>
+                            relationshipName }}</cdr-button>
                       </li>
                     </cdr-list>
                   </div>
@@ -217,8 +219,10 @@
           <p>Empty tab</p>
         </cdr-tab-panel>
       </cdr-tabs>
-      <cdr-button v-if="settingOverviewExists" @click="deleteSetting(currentSettingIndex)">Delete Setting</cdr-button>
-      <div v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
+      <cdr-button class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
+        @click="deleteSetting(currentSettingIndex)">Delete
+        Setting</cdr-button>
+      <div class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
         <CdrSkeleton>
           <ul class="skeleton-ul">
             <li class="skeleton-tab">
@@ -236,7 +240,7 @@
           </ul>
           <hr class="skeleton-hr">
           <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
-            currentSetting.setting_overview?.title)}}</h2>
+            currentSetting.setting_overview?.title) }}</h2>
           <OverviewSkeleton />
         </CdrSkeleton>
       </div>
@@ -262,6 +266,7 @@ import '@rei/cedar/dist/style/cdr-tabs.css';
 function isNumber(value) {
   return typeof value === 'number';
 }
+const currentlyLoading = ref(false);
 const currentSettingIndex = ref(0);
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
 const defaultSetting = reactive({
@@ -489,7 +494,7 @@ const kingdomValidation = jsonString => {
 const sublocationValidation = jsonString => {
   try {
     const jsonObj = JSON.parse(jsonString);
-    return jsonObj.every(location => ['name', 'description', 'setting_scale', 'title', 'setting_type', 'adjective'].every(key => key in location));
+    return jsonObj.every(location => ['name', 'description', 'title', 'setting_type', 'adjective'].every(key => key in location));
   } catch (error) {
     return false;
   }
@@ -679,6 +684,7 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
     }
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].loadingsettingOverview = true;
+      currentlyLoading.value = true;
     }
     if (isNumber(parentIndex)) {
       settings.value[parentIndex].importantLocations[sublocationIndex].loading = true;
@@ -690,10 +696,12 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
       settings.value[operationIndex].setting_overview = overview;
       settings.value[operationIndex].npcs = overview.npc_list || [];
       settings.value[operationIndex].loadingsettingOverview = false;
+      currentlyLoading.value = false;
       if (isNumber(parentIndex)) {
         settings.value[parentIndex].importantLocations[sublocationIndex].has_detailed_description = true;
         settings.value[parentIndex].importantLocations[sublocationIndex].main_index = operationIndex;
         settings.value[parentIndex].importantLocations[sublocationIndex].loading = false;
+        currentlyLoading.value = false;
       }
       saveSettingsToLocalStorage();  // Save to local storage after update
     }
@@ -701,25 +709,35 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
     console.error("Error generating kingdom description:", error);
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].loadingsettingOverview = false;
+      currentlyLoading.value = false;
     }
   }
 }
 
 async function handleGenerateSubLocations({ operationIndex, prompt }) {
   try {
+    currentlyLoading.value = true;
     const response = await generateGptResponse(prompt, sublocationValidation);
+    currentlyLoading.value = false;
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].importantLocations = JSON.parse(response);
       saveSettingsToLocalStorage();  // Save to local storage after update
     }
   } catch (error) {
+    currentlyLoading.value = false;
     console.error("Error generating sublocations:", error);
   }
 }
 
 async function handleGenerateFactions({ operationIndex, prompt }) {
   try {
+    if (!settings.value[operationIndex].factions.length > 0) {
+      currentlyLoading.value = true;
+    }
+
     const response = await generateGptResponse(prompt, factionValidation);
+    currentlyLoading.value = false;
+
     if (settings.value[operationIndex]) {
       const factions = JSON.parse(response);
       settings.value[operationIndex].factions = factions;
@@ -732,9 +750,11 @@ async function handleGenerateFactions({ operationIndex, prompt }) {
           });
         }
       });
+      currentlyLoading.value = false;
       saveSettingsToLocalStorage();  // Save to local storage after update
     }
   } catch (error) {
+    currentlyLoading.value = false;
     console.error("Error generating factions:", error);
   }
 }
@@ -751,6 +771,7 @@ async function handleGenerateDetailedNPCDescription({ operationIndex, npcIndex, 
     } else {
       npc = settings.value[operationIndex].npcs[npcIndex];
       npc.loading = true;  // Set loading status
+      currentlyLoading.value = true;
     }
 
     const npcPart1 = await generateGptResponse(prompt, npcValidationPart1);
@@ -760,12 +781,14 @@ async function handleGenerateDetailedNPCDescription({ operationIndex, npcIndex, 
       Object.assign(npc, JSON.parse(npcPart1));
       Object.assign(npc, JSON.parse(relationshipsAndTips));
       npc.loading = false;
+      currentlyLoading.value = false;
       console.log(npc);
       saveSettingsToLocalStorage(); // Save to local storage after update
     }
   } catch (error) {
     if (npc) {
       npc.loading = false; // Ensure we catch and handle the case where npc might be partially defined
+      currentlyLoading.value = false;
     }
     console.error("Error generating detailed NPC description:", error);
   }
@@ -853,13 +876,23 @@ function randomName(type) {
     align-items: center;
     margin: 3rem auto;
     max-width: 800px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px #0000001a;
-    padding: 10px 30px 30px;
+
+
     .generate-button {
       margin-top: 2rem;
     }
+
+    .generator-form,
+    .content-tabs {
+      box-shadow: 0 4px 6px #0000001a;
+      padding: 3rem;
+      border-radius: 8px;
+    }
   }
+}
+
+.delete-button {
+  margin-top: 2rem;
 }
 
 .generator-fields {

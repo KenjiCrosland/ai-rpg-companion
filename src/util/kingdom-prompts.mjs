@@ -67,7 +67,7 @@ export function sublocationOverviewPrompt(
     setting_type: 'The type of setting ${place_name} is',
     title: 'A descriptive title like: The Prosperous Village of Greenhaven or The Haunted Ruins of Blackwood. The title MUST include the setting name.',
     history: 'A very brief history of ${place_name}, including its founding and most significant recent events',
-    current_ruler_sentence: 'A sentence describing the ruler of ${place_name}. This ruler may be a vassal or subordinate to the ruler of the larger setting. What have they done to earn their position? What was their most recent significant action?',
+    current_ruler_sentence: 'A sentence describing the ruler of ${place_name}. This ruler may be a vassal or subordinate to the ruler of the larger setting. What have they done to earn their position? What was their most recent significant action? If the setting is too small for a leader, mention a prominent individual who frequents this setting.',
     recent_event_current_ruler: 'describe a recent political event involving the current ruler which reflects the current state of ${place_name}',
     recent_event_consequences: 'describe the consequences of the recent political event involving the current ruler',
     social_history: 'Provide a brief history of ${place_name} and how it plays an important role in the larger setting',
@@ -94,23 +94,15 @@ export function subLocationsPrompt(settingDescription) {
   Below is a description of a setting:
   ${settingDescription}
 
-  Use the following definitions for setting scales when identifying and adding sub-locations:
-  - **Country**: A sovereign state that encompasses multiple regions, cities, towns, and other territories. It may be a republic, monarchy, empire, or other form of governance.
-  - **Region**: A substantial part of a country, usually comprising several cities, towns, and rural areas, often defined by geographical, cultural, or administrative boundaries.
-  - **City**: A large urban area with significant population, infrastructure, and cultural, economic, and administrative functions.
-  - **Town**: Smaller than a city, a town typically has localized administrative structures and serves as a local hub for its surrounding area.
-  - **Area**: A distinct geographical or constructed space within a city, town, or region that contains multiple points of interest.
-  - **Building**: A single structure with a specific function, such as a temple, library, or inn.
-  - **Room**: A single room within a building, detailed enough to have its own significance and function.
-  - **Location**: Any specific, defined place that can range from a natural landmark to a man-made feature, smaller in scale but important within its context.
-
-  Return a JSON array in the following format, including the sub-locations mentioned in the text and 3-4 additional important sub-locations found within the setting. Ensure that each sub-location's scale is appropriate relative to the main location's scale. For example, if the main location is a 'Country', the sublocation may be a 'Region'. If the main location is a 'Region', describe a 'City' or 'Town'. If the main location is a 'City', describe an important 'Area'. If the main location is a 'Building', describe an important 'Room'. If the main location is an 'Area', you might describe a 'Location' within it.
+  Return a JSON array in the following format, including the sub-locations mentioned in the text and 5-6 additional important sub-locations found within the setting. Ensure that each sub-location's scale is appropriate relative to the main location's scale. For example, if the main location is a 'Country', the sublocation may be a 'Region'. If the main location is a 'Region', describe a 'City' or 'Town'. If the main location is a 'City', describe an important 'Area'. If the main location is a 'Building', describe an important 'Room'. If the main location is an 'Area', you might describe a 'Location' within it.
+  
+  All sub-locations must be smaller than the location they are a part of and be contained within the larger setting. Do not include neighboring settings or locations that are not part of the setting described in the main location.
+  
   Temperature: 0.9
   [
     {
       "name": "Name of the sub-location",
       "setting_type": "The type of setting the sub-location is, e.g., 'republic', 'empire', 'city-state', 'space station', etc",
-      "setting_scale": "The scale of the setting, corresponding to the types: 'Country', 'Region', 'City', 'Town', 'Area', 'Building', 'Room', or 'Location'",
       "adjective": "An adjective that describes the setting_type: for example, 'mysterious', 'thriving', 'dangerous'.",
       "title": "A descriptive title like: 'The Prosperous Village of Greenhaven' or 'The Haunted Ruins of Blackwood'. The title MUST include the setting name.",
       "description": "Two sentences describing the sub-location. The first sentence should be a general overview of the location and the second sentence should provide some information about why the location is important or interesting."
