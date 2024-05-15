@@ -4,9 +4,13 @@ export function settingOverviewPrompt(
   place_name,
   place_lore,
 ) {
-  let initialSentence = `Give me a description of the ${adjective} ${setting_type} of ${place_name}.`;
+  let initialSentence = `Give me a description of the ${adjective} ${setting_type} of ${place_name}`;
   if (!place_name) {
-    initialSentence = `Give me a description of an ${adjective} ${setting_type}.`;
+    initialSentence = `Give me a description of an ${adjective} ${setting_type}`;
+  }
+  if (place_lore && !place_name) {
+    initialSentence = `Give me a description of a setting`;
+    setting_type = 'the setting';
   }
   return `
   ${initialSentence}. When describing events and individuals be specific about names and locations. Try to use creative and unique names and titles which borrow from more than one literary tradition and ethnicity. Each key should be a sentence or two, should be detailed and specific and should flow together to create a cohesive description. Avoid common fantasy tropes and cliches. Temperature: 0.9
@@ -15,6 +19,7 @@ export function settingOverviewPrompt(
   
   Return the description in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups:
   {
+    name: '${place_name}',
     overview: 'A brief overview of the ${setting_type}, with a brief description of its current state',
     relation_to_larger_setting: 'How does the ${setting_type} relate to the larger setting? What role does it play in the larger setting? How is it situated geographically or politically in relation to the larger setting? Provide a name for the larger setting if possible',
     history: 'A very brief history of the ${setting_type}, including its founding and most significant recent events',
@@ -61,6 +66,7 @@ export function sublocationOverviewPrompt(
   
   Return the description of ${place_name} in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups:
   {
+    name: '${place_name}',
     overview: 'A brief overview of ${place_name}, with a brief description of its current state',
     relation_to_larger_setting: 'How does ${place_name} relate to the larger setting? What role does it play in the larger setting? How is it situated geographically or politically in relation to the larger setting? Provide a name for the larger setting if possible',
     adjective: 'An adjective that describes ${place_name}',

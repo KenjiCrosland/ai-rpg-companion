@@ -10,12 +10,23 @@
         </li>
         <li v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" @click="createNewSetting">+ New Setting</li>
       </ul>
+      <div class="copy-buttons">
+        <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
+        <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
+        <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Hombrewery Markdown</cdr-button>
+        <p>Use the above buttons to copy all setting info into your desired format. For homebrewery go <cdr-link
+            href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
+          there. You will need to add your own pagebreaks.</p>
 
-      <cdr-button @click="copySettingsAsPlainText">Copy As Plain Text</cdr-button>
+        <cdr-button @click="deleteAllSettings">Delete All Settings</cdr-button>
+      </div>
     </div>
     <div class="main-content">
       <div class='generator-form' v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
         <h1>Kenji's RPG Setting Generator: Build a Kingdom, Town, Empire, or Space Station!</h1>
+        <p>Welcome to the RPG Setting Generator! Use this tool to build detailed settings complete with NPCs, factions
+          and even settings nested within settings! Enter as much info as you like here in the form fields or just click
+          "Generate!" For something completely random.</p>
         <form @submit.prevent="generateSetting">
           <div class="generator-fields">
             <cdr-input class="generator-field-input" id="adjective" v-model="currentSetting.adjective"
@@ -136,7 +147,21 @@
             <cdr-list>
               <li v-for="faction in currentSetting.factions" :key="faction.name">
                 <h3>{{ faction.name }}</h3>
-                <p><strong>Influence Level: </strong>{{ factionPowerLevels[faction.influence_level - 1] }}</p>
+                <div class="influence-level">
+                  <strong>Influence Level:</strong> {{ factionPowerLevels[faction.influence_level - 1] }}
+                  <cdr-popover id="popover-example" position="right">
+                    <template #trigger>
+                      <cdr-button :icon-only="true" :with-background="true">
+                        <template #icon>
+                          <icon-information-stroke />
+                        </template>
+                      </cdr-button>
+                    </template>
+                    <div>
+                      {{ factionPowerDescriptions[faction.influence_level - 1] }}
+                    </div>
+                  </cdr-popover>
+                </div>
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
@@ -217,9 +242,6 @@
             </cdr-accordion>
           </cdr-accordion-group>
         </cdr-tab-panel>
-        <cdr-tab-panel label="Empty" name="empty">
-          <p>Empty tab</p>
-        </cdr-tab-panel>
       </cdr-tabs>
       <cdr-button class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
         @click="deleteSetting(currentSettingIndex)">Delete
@@ -252,13 +274,15 @@
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
-import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrPopover, IconInformationStroke } from "@rei/cedar";
 import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt } from "../util/kingdom-prompts.mjs";
 import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import LocationListSkeleton from "./skeletons/LocationListSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
 import OverviewSkeleton from "./skeletons/OverviewSkeleton.vue";
 import { formatSettingAsPlainText } from "../util/formatSettingAsPlainText.mjs";
+import { formatSettingAsMarkdown } from "../util/formatSettingAsMarkdown.mjs";
+import { formatSettingAsHtml } from "../util/formatSettingAsHTML.mjs";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import placeAdjectives from '../data/place-adjectives.json';
 import place_names from '../data/place-names.json';
@@ -266,11 +290,31 @@ import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-tabs.css';
+import '@rei/cedar/dist/style/cdr-popover.css';
 
 function copySettingsAsPlainText() {
   const text = formatSettingAsPlainText(settingsTree.value);
-  console.log(text);
   navigator.clipboard.writeText(text);
+  alert("Settings copied to clipboard as plain text!");
+}
+
+function copySettingsAsMarkdown() {
+  const text = formatSettingAsMarkdown(settingsTree.value);
+  navigator.clipboard.writeText(text);
+  alert("Settings copied to clipboard as Homebrewery Markdown!");
+}
+
+function copySettingsAsHtml() {
+  const text = formatSettingAsHtml(settingsTree.value);
+  navigator.clipboard.writeText(text);
+  alert("Settings copied to clipboard as HTML!");
+}
+
+function deleteAllSettings() {
+  if (confirm("Are you sure you want to delete all settings?")) {
+    settings.value = [reactive({ ...defaultSetting })];
+    saveSettingsToLocalStorage();
+  }
 }
 
 function isNumber(value) {
@@ -339,6 +383,8 @@ const updateOriginalIndices = () => {
 };
 
 const deleteSetting = (indexToDelete) => {
+  //confirm deletion
+  if (!confirm("Are you sure you want to delete this setting?")) return;
   if (indexToDelete < 0 || indexToDelete >= settings.value.length) return;  // Safety check
 
   // Capture the parentIndex of the setting to be deleted for reassigning children
@@ -554,6 +600,18 @@ const factionPowerLevels = [
   'Nonexistent', 'Marginal', 'Emerging', 'Moderate', 'Noteworthy', 'Influential',
   'Powerful', 'Dominant', 'Controlling', 'Totalitarian'
 ];
+const factionPowerDescriptions = [
+  "Indicates a total lack of influence and recognition within any sphere of activity. Such entities are entirely disregarded in political, social, and economic contexts.",
+  "Represents entities with very limited influence, struggling to gain recognition. They may have minor local impact but are largely ineffective on a broader scale.",
+  "Describes factions or groups that are beginning to make their presence felt but still have minimal overall influence. They are in the early stages of establishing a base and achieving initial goals.",
+  "Signifies entities with a noticeable but limited regional influence. They might sway local policies or decisions but lack the power to affect broader change.",
+  "Used for groups recognized within a larger context and starting to effect change on a significant scale. They are gaining momentum and beginning to challenge established powers.",
+  "Describes factions with significant sway in local politics and society. They have the capacity to influence major decisions and hold considerable clout in their domains.",
+  "Indicates a strong influence and the ability to mobilize considerable resources. Such factions can shape outcomes in multiple spheres and are key players in their environments.",
+  "Describes a faction that has a strong influence and perhaps a majority in one branch of government or one aspect of governance—like a majority in the Senate—but doesn't have unchecked power across the entire spectrum of government. They are a major player and can decisively influence legislation and policy outcomes in that specific context, but their power is not absolute and can be checked by other branches or levels of government.",
+  "This would indicate a higher level of power, where a faction not only has significant influence but also controls multiple branches of government or has significant sway across various aspects of governance. This implies a broader control that affects a wide range of policies and a larger scale of operations, potentially directing the main course of the nation's political agenda.",
+  "Reflects absolute control over society, without opposition. This level of power is marked by an absence of democratic processes and is characterized by unilateral decision-making and enforcement of policies."
+];
 
 const requestQueue = ref([]);
 const isProcessing = ref(false);
@@ -608,9 +666,10 @@ function generateSetting({ sublocationIndex, subLocationName, subLocationDescrip
   const setting = settings.value[operationIndex];
 
   // Directly update properties in a reactive way
-  setting.setting_type = setting.setting_type || randomType();
-  setting.adjective = setting.adjective || randomAdjective(setting.setting_type);
-  setting.place_name = setting.place_name || randomName(setting.setting_type);
+
+  setting.setting_type = setting.setting_type || randomType(setting);
+  setting.adjective = setting.adjective || randomAdjective(setting) || '';
+  setting.place_name = setting.place_name || randomName(setting) || '';
   setting.place_lore = setting.place_lore || '';
 
   let nameToPass = subLocationName || setting.place_name || '';
@@ -703,6 +762,9 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
     const overview = JSON.parse(response);
 
     if (settings.value[operationIndex]) {
+      if (!settings.value.place_name) {
+        settings.value[operationIndex].place_name = overview.name;
+      }
       settings.value[operationIndex].setting_overview = overview;
       settings.value[operationIndex].npcs = overview.npc_list || [];
       settings.value[operationIndex].loadingsettingOverview = false;
@@ -750,6 +812,7 @@ async function handleGenerateFactions({ operationIndex, prompt }) {
 
     if (settings.value[operationIndex]) {
       const factions = JSON.parse(response);
+      factions.sort((a, b) => a.influence_level - b.influence_level).reverse();
       settings.value[operationIndex].factions = factions;
       factions.forEach(faction => {
         if (!settings.value[operationIndex].npcs.map(npc => npc.name).includes(faction.faction_leader)) {
@@ -815,17 +878,22 @@ function handleAccordion(npcIndex) {
 }
 
 // Random type, adjective, and name functions
-function randomType() {
+function randomType(setting) {
+  if (setting.place_lore !== '') return '';
   const placeTypes = Object.keys(placeAdjectives);
   return placeTypes[Math.floor(Math.random() * placeTypes.length)];
 }
 
-function randomAdjective(type) {
-  return placeAdjectives[type.toLowerCase()][Math.floor(Math.random() * placeAdjectives[type.toLowerCase()].length)];
+function randomAdjective(setting) {
+  if (setting.place_lore !== '') return '';
+  if (!placeAdjectives[setting.setting_type.toLowerCase()]) return '';
+  return placeAdjectives[setting.setting_type.toLowerCase()][Math.floor(Math.random() * placeAdjectives[setting.setting_type.toLowerCase()].length)];
 }
 
-function randomName(type) {
-  return place_names[type.toLowerCase()][Math.floor(Math.random() * place_names[type.toLowerCase()].length)];
+function randomName(setting) {
+  if (setting.place_lore !== '') return '';
+  if (!place_names[setting.setting_type.toLowerCase()]) return '';
+  return place_names[setting.setting_type.toLowerCase()][Math.floor(Math.random() * place_names[setting.setting_type.toLowerCase()].length)];
 }
 </script>
 
@@ -851,6 +919,9 @@ function randomName(type) {
     background-color: $background-color;
     padding: 10px;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 
     .settings-tabs {
       list-style: none;
@@ -874,6 +945,13 @@ function randomName(type) {
           border-left-color: $active-border-color;
         }
       }
+    }
+
+    .copy-buttons {
+      display: flex;
+      flex-direction: column;
+      margin: 1rem;
+      gap: 1rem;
     }
   }
 
@@ -899,6 +977,13 @@ function randomName(type) {
       border-radius: 8px;
     }
   }
+}
+
+.influence-level {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
 }
 
 .delete-button {
