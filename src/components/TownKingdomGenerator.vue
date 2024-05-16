@@ -75,19 +75,19 @@
             currentSetting.setting_overview.relation_to_larger_setting }}
           </p>
           <p>{{ currentSetting.setting_overview.history }}</p>
-          <p>{{ currentSetting.setting_overview.current_ruler_sentence }} {{
-            currentSetting.setting_overview.recent_event_current_ruler }} {{
-              currentSetting.setting_overview.recent_event_consequences }}</p>
+          <p>{{ currentSetting.setting_overview.current_ruler_sentence }}
+            {{ currentSetting.setting_overview.recent_event_current_ruler }}
+            {{ currentSetting.setting_overview.recent_event_consequences }}</p>
           <p>{{ currentSetting.setting_overview.social_history }} {{ currentSetting.setting_overview.recent_event_social
             }}
           </p>
           <p>{{ currentSetting.setting_overview.economic_history }} {{
             currentSetting.setting_overview.impactful_economic_event }}</p>
-          <p>{{ currentSetting.setting_overview.military_history }} {{
-            currentSetting.setting_overview.recent_event_military
-            }}</p>
-          <p>{{ currentSetting.setting_overview.main_problem }} {{ currentSetting.setting_overview.potential_solutions
-            }}</p>
+          <p>{{ currentSetting.setting_overview.military_history }}
+            {{ currentSetting.setting_overview.recent_event_military }}
+          </p>
+          <p>{{ currentSetting.setting_overview.main_problem }}
+            {{ currentSetting.setting_overview.potential_solutions }}</p>
           <p>{{ currentSetting.setting_overview.conclusion }}</p>
         </cdr-tab-panel>
         <cdr-tab-panel label="Important Locations" name="Locations" @tab-change="generateSubLocations">
@@ -114,12 +114,12 @@
                 <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                   settings[setting.main_index].setting_overview.recent_event_current_ruler
-                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_social }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                   settings[setting.main_index].setting_overview.impactful_economic_event
-                  }}</p>
+                }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_military }}
                 </p>
@@ -165,7 +165,7 @@
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
-                    }}
+                  }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -220,8 +220,6 @@
                       <strong>{{ npcName }}</strong>: {{ relationship }}
                     </p>
                   </div>
-                  <h3>Roleplaying Tips</h3>
-                  <p>{{ npc.roleplaying_tips }}</p>
                   <div class="relationship-buttons">
                     <h4>Generate a full description for:</h4>
                     <cdr-list modifier="inline" class="relationship-npc-buttons">
@@ -233,6 +231,11 @@
                       </li>
                     </cdr-list>
                   </div>
+                  <h3>Roleplaying Tips</h3>
+                  <p>{{ npc.roleplaying_tips }}</p>
+                  <h3>Generate a Quest</h3>
+                  <p>Generate a Quest Hook with this NPC as a Quest Giver</p>
+                  <cdr-button @click="generateQuestHook(npc)">Generate Quest</cdr-button>
                 </div>
               </div>
 
@@ -241,6 +244,69 @@
               </div>
             </cdr-accordion>
           </cdr-accordion-group>
+        </cdr-tab-panel>
+        <cdr-tab-panel name="Quest Hooks">
+          <h2>Quest Hooks</h2>
+          <div v-if="currentSetting.questHooks?.length > 0">
+            <cdr-accordion-group>
+              <cdr-accordion v-for="(hook, index) in currentSetting.questHooks" :key="index" :id="'hook-' + index"
+                level="2" :opened="hook.open" @accordion-toggle="hook.open = !hook.open">
+                <template #label>
+                  {{ hook.quest_title }}
+                </template>
+                <div>
+                  <h2>{{ hook.quest_title }}</h2>
+                  <p><strong>Quest Giver:</strong> {{ hook.quest_giver_name }}</p>
+                  <p>{{ hook.quest_giver_background }}</p>
+                  <p>{{ hook.quest_giver_encounter }}</p>
+                  <p>{{ hook.quest_details }}</p>
+                  <h3>Objectives</h3>
+                  <cdr-list v-for="(objective, index) in hook.objectives" modifier="unordered" :key="index">
+                    <li>
+                      {{ objective }}
+                    </li>
+                  </cdr-list>
+                  <h3>Challenges</h3>
+                  <cdr-list v-for="(challenge, index) in hook.challenges" modifier="unordered" :key="index">
+                    <li>
+                      {{ challenge }}
+                    </li>
+                  </cdr-list>
+                  <h3>Rewards</h3>
+                  <cdr-list v-for="(reward, index) in hook.rewards" modifier="unordered" :key="index">
+                    <li>
+                      {{ reward }}
+                    </li>
+                  </cdr-list>
+                  <h3>Twist</h3>
+                  <p>{{ hook.twist }}</p>
+                </div>
+              </cdr-accordion>
+              <cdr-accordion class="accordion" level="2" id="loading-location" v-if="loadingQuestHooks">
+                <template #label>
+                  <CdrSkeleton>
+                    <CdrSkeletonBone type="line" style="width:150px" />
+                  </CdrSkeleton>
+                </template>
+              </cdr-accordion>
+            </cdr-accordion-group>
+          </div>
+          <div v-if="!(currentSetting.questHooks?.length > 0) && !loadingQuestHooks">
+            <p>Quest hooks are generated by using fully generated NPCs as quest givers. Generate a full NPC description
+              in
+              order to create a quest hook.</p>
+          </div>
+          <div v-if="!(currentSetting.questHooks?.length > 0) && loadingQuestHooks">
+            <cdr-accordion-group>
+              <cdr-accordion class="accordion" level="2" id="loading-location">
+                <template #label>
+                  <CdrSkeleton>
+                    <CdrSkeletonBone type="line" style="width:150px" />
+                  </CdrSkeleton>
+                </template>
+              </cdr-accordion>
+            </cdr-accordion-group>
+          </div>
         </cdr-tab-panel>
       </cdr-tabs>
       <cdr-button class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
@@ -261,6 +327,9 @@
             <li class="skeleton-tab-inactive">
               NPCs
             </li>
+            <li class="skeleton-tab-inactive">
+              Quest Hooks
+            </li>
           </ul>
           <hr class="skeleton-hr">
           <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
@@ -275,7 +344,7 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrPopover, IconInformationStroke } from "@rei/cedar";
-import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt } from "../util/kingdom-prompts.mjs";
+import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt, createQuestHookPrompt } from "../util/kingdom-prompts.mjs";
 import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import LocationListSkeleton from "./skeletons/LocationListSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
@@ -321,6 +390,7 @@ function isNumber(value) {
   return typeof value === 'number';
 }
 const currentlyLoading = ref(false);
+const loadingQuestHooks = ref(false);
 const currentSettingIndex = ref(0);
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
 const defaultSetting = reactive({
@@ -332,6 +402,7 @@ const defaultSetting = reactive({
   factions: [],
   importantLocations: [],
   npcs: [],
+  questHooks: [],
   parentIndex: null,
 });
 const settings = ref([reactive({ ...defaultSetting })]);
@@ -457,6 +528,7 @@ const createNewSetting = (isSublocation, adjective = '', setting_type = '', plac
     factions: [],
     importantLocations: [],
     npcs: [],
+    questHooks: [],
     parentIndex: isSublocation ? parentIndex : null
   });
 
@@ -570,6 +642,16 @@ const factionValidation = jsonString => {
   }
 }
 
+function questHookValidation(jsonString) {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    const keys = ['quest_title', 'quest_giver_name', 'quest_giver_background', 'quest_giver_encounter', 'quest_details', 'objectives', 'challenges', 'rewards', 'twist'];
+    return keys.every(key => key in jsonObj);
+  } catch (error) {
+    return false;
+  }
+}
+
 const npcValidationPart1 = jsonString => {
   try {
     const jsonObj = JSON.parse(jsonString);
@@ -635,6 +717,9 @@ async function processQueue() {
     case 'generateDetailedNPCDescription':
       await handleGenerateDetailedNPCDescription(data);
       break;
+    case 'generateQuestHook':
+      await handleGenerateQuestHook(data);
+      break;
     default:
       console.error("Unknown request type:", type);
   }
@@ -659,7 +744,6 @@ function getOverviewText(overviewObject) {
     return `${value}`;
   }).join('\n');
 }
-
 
 function generateSetting({ sublocationIndex, subLocationName, subLocationDescription, adjective, setting_type }) {
   const operationIndex = currentSettingIndex.value;
@@ -705,6 +789,42 @@ function generateFactions() {
   enqueueRequest('generateFactions', { operationIndex, prompt });
 }
 
+function generateQuestHook(npc) {
+  const operationIndex = currentSettingIndex.value;
+  const overviewText = getFullNPCDescription(npc);
+  const prompt = createQuestHookPrompt(overviewText);
+
+  enqueueRequest('generateQuestHook', { operationIndex, prompt });
+}
+
+async function handleGenerateQuestHook({ operationIndex, prompt }) {
+  try {
+    nextTick(() => {
+      const tabs = document.querySelectorAll('[class^="cdr-tabs__header-item"]');
+      if (tabs.length > 0 && tabs[0]) {
+        tabs[tabs.length - 1].click(); // Attempt to click the last tab
+      }
+    });
+    currentlyLoading.value = true
+    loadingQuestHooks.value = true;
+    console.log(prompt);
+    const response = await generateGptResponse(prompt, questHookValidation);
+    currentlyLoading.value = false;
+    loadingQuestHooks.value = false;
+    console.log(response);
+    if (settings.value[operationIndex]) {
+      const questHook = JSON.parse(response);
+      settings.value[operationIndex].questHooks.push(questHook);
+      saveSettingsToLocalStorage();
+    }
+  } catch (error) {
+    currentlyLoading.value = false;
+    loadingQuestHooks.value = false;
+    console.error("Error generating quest hooks:", error);
+  }
+
+}
+
 function findObjectByName(objects, name) {
   // Iterate through the array of objects
   for (const obj of objects) {
@@ -718,6 +838,12 @@ function findObjectByName(objects, name) {
 
 function getNPCText(npc) {
   return `Here is a description of ${npc.name}: ${npc.description_of_position} ${npc.current_location} ${npc.distinctive_features_or_mannerisms} ${npc.character_secret}`;
+}
+
+function getFullNPCDescription(npc) {
+  const relationshipText = Object.entries(npc.relationships).map(([name, description]) => `${name}: ${description}`).join(' ');
+  return `${npc.read_aloud_description} ${npc.description_of_position} ${npc.current_location} ${npc.distinctive_features_or_mannerisms} ${npc.character_secret}
+  Relationships:\n ${relationshipText}`;
 }
 
 function generateDetailedNPCDescription(index, relationshipObject) {
