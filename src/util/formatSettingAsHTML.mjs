@@ -37,7 +37,6 @@ function formatSettingOverview(settings) {
 
       addSection(
         `${setting.setting_overview.overview} ${setting.setting_overview.relation_to_larger_setting}`,
-        'p',
       );
       addSection(setting.setting_overview.history);
 
@@ -63,74 +62,98 @@ function formatSettingOverview(settings) {
         setting.setting_overview.potential_solutions,
       ]);
 
-      addSection(setting.setting_overview.conclusion, 'p');
+      addSection(setting.setting_overview.conclusion);
 
       // Add NPC List
-      addSection(addHtmlSectionTitle('NPCs', 2));
+      text += addHtmlSectionTitle('NPCs', 2);
 
       if (setting.npcs) {
         setting.npcs.forEach((npc) => {
-          addSection(addHtmlSectionTitle(`${npc.name.toUpperCase()}`, 3));
+          text += addHtmlSectionTitle(`${npc.name.toUpperCase()}`, 3);
           if (!npc.description_of_position) {
-            addSection(`${npc.description}`, 'p');
+            addSection(`${npc.description}`);
           } else {
-            addSection(npc.read_aloud_description, 'p');
-            addSection(npc.description_of_position, 'p');
-            addSection(npc.current_location, 'p');
-            addSection(npc.distinctive_features_or_mannerisms, 'p');
-            addSection(npc.character_secret, 'p');
+            addSection(npc.read_aloud_description);
+            addSection(npc.description_of_position);
+            addSection(npc.current_location);
+            addSection(npc.distinctive_features_or_mannerisms);
+            addSection(npc.character_secret);
 
             if (npc.relationships) {
-              addSection(addHtmlSectionTitle('Relationships', 4));
+              text += addHtmlSectionTitle('Relationships', 4);
               Object.keys(npc.relationships).forEach((rel) => {
                 addSection(
                   `<strong>${rel}:</strong> ${npc.relationships[rel]}`,
-                  'p',
                 );
               });
             }
-            addSection(addHtmlSectionTitle('Roleplaying Tips', 4));
-            addSection(npc.roleplaying_tips, 'p');
+            text += addHtmlSectionTitle('Roleplaying Tips', 4);
+            addSection(npc.roleplaying_tips);
           }
         });
       }
 
       // Add Factions
       if (setting.factions.length > 0) {
-        addSection(addHtmlSectionTitle('Factions', 2));
+        text += addHtmlSectionTitle('Factions', 2);
         setting.factions.forEach((faction) => {
-          addSection(addHtmlSectionTitle(`${faction.name.toUpperCase()}`, 3));
+          text += addHtmlSectionTitle(`${faction.name.toUpperCase()}`, 3);
           addSection(
             `<strong>Influence Level:</strong> ${
               factionPowerLevels[faction.influence_level - 1]
             }`,
-            'p',
           );
           addSection(
             `<strong>Faction Leader:</strong> ${faction.faction_leader}: ${faction.faction_leader_description}`,
-            'p',
           );
           addSection(
             `<strong>Key Strengths:</strong> ${faction.key_resources_and_assets}`,
-            'p',
           );
-          addSection(`<strong>Motto:</strong> "${faction.motto}"`, 'p');
-          addSection(faction.history, 'p');
-          addSection([faction.recent_event, faction.current_situation], 'p');
+          addSection(`<strong>Motto:</strong> "${faction.motto}"`);
+          addSection(faction.history);
+          addSection([faction.recent_event, faction.current_situation]);
+          addSection([faction.rites_and_ceremonies, faction.recent_ceremony]);
+          addSection([faction.challenge_to_power, faction.challenge_event]);
+        });
+      }
+
+      // Add Quest Hooks
+      if (setting.questHooks.length > 0) {
+        text += addHtmlSectionTitle('Quests', 2);
+        setting.questHooks.forEach((quest) => {
+          text += addHtmlSectionTitle(`${quest.quest_title}`, 3);
+          addSection(quest.quest_giver_encounter);
+          addSection(quest.quest_details);
+          text += addHtmlSectionTitle(
+            `Quest Giver: ${quest.quest_giver_name}`,
+            4,
+          );
+          addSection(quest.quest_giver_background);
+          // Add Objectives, Challenges, Rewards as <ul> lists
+          text += addHtmlSectionTitle('Objectives', 4);
           addSection(
-            [faction.rites_and_ceremonies, faction.recent_ceremony],
-            'p',
+            quest.objectives.map((obj) => `<li>${obj}</li>`).join(''),
+            'ul',
           );
+          text += addHtmlSectionTitle('Challenges', 4);
           addSection(
-            [faction.challenge_to_power, faction.challenge_event],
-            'p',
+            quest.challenges.map((chal) => `<li>${chal}</li>`).join(''),
+            'ul',
           );
+          text += addHtmlSectionTitle('Rewards', 4);
+          addSection(
+            quest.rewards.map((rew) => `<li>${rew}</li>`).join(''),
+            'ul',
+          );
+
+          text += addHtmlSectionTitle('Twist', 4);
+          addSection(quest.twist);
         });
       }
 
       // Add Important Locations
       if (setting.importantLocations.length > 0) {
-        addSection(addHtmlSectionTitle('Important Locations', 2));
+        text += addHtmlSectionTitle('Important Locations', 2);
         setting.importantLocations.forEach((location) => {
           if (
             !setting.children ||
@@ -138,8 +161,8 @@ function formatSettingOverview(settings) {
               (child) => child.place_name === location.name,
             )
           ) {
-            addSection(addHtmlSectionTitle(location.title, 3));
-            addSection(location.description, 'p');
+            text += addHtmlSectionTitle(location.title, 3);
+            addSection(location.description);
           }
         });
       }

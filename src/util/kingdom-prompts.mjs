@@ -260,7 +260,7 @@ export function createRelationshipAndTipsPrompt(npc_name, param) {
     `;
 }
 
-export function createQuestHookPrompt(questGiver) {
+export function createQuestHookPrompt(questGiver, questType) {
   return `
 Please create a detailed Tabletop Roleplaying Game quest hook with the following details:
 
@@ -270,7 +270,7 @@ ${questGiver}
 The scale of the quest should match the importance of the quest giver. If the quest giver is a village elder, the quest should be of local importance. If the quest giver is a king, the quest should be of national or international importance. The quest should be tailored to the quest giver's background and motivations.
 
 The quest type should be a quest of the following type:
-${questTypes[Math.floor(Math.random() * questTypes.length)]}
+${questType}
 
 Please generate the following:
 
@@ -285,11 +285,11 @@ Please generate the following:
 Please format the quest hook as a JSON object with the following keys:
 
 {
-  "quest_title": "Generated Quest Title",
+  "quest_title": "Generated Quest Title. Avoid cliches. Don't use the word Shadow, Darkness or Whisper.",
   "quest_giver_name": "Quest Giver Name",
   "quest_giver_background": "Write a short description of who the quest giver is.",
-  "quest_giver_encounter": "Write a short description of the first encounter with the quest giver.",
-  "quest_details": "Provide a narrative description of the quest as provided by the quest giver. How does the quest giver describe the quest to the players? Provide some interesting turns of phrase or unique details that can make this immersive.",
+  "quest_giver_encounter": "Write a short description of the first encounter with the quest giver to be read aloud to the players.",
+  "quest_details": "Provide a narrative description of the quest to be read aloud as provided by the quest giver. How does the quest giver describe the quest to the players? Provide some interesting turns of phrase or unique details that can make this immersive.",
   "objectives": [
     "Generated Objective 1",
     "Generated Objective 2",
@@ -310,36 +310,3 @@ Please format the quest hook as a JSON object with the following keys:
 }
 `;
 }
-const questTypes = [
-  'Escort: Safeguard a person, creature, or caravan from one location to another.',
-  'Rescue: Save a captive or stranded individual from danger.',
-  'Investigation: Solve a mystery or uncover hidden truths.',
-  'Hunting: Track down and eliminate a dangerous creature or villain.',
-  'Diplomacy: Mediate a dispute between warring factions or negotiate a treaty.',
-  'Exploration: Chart unknown territories or discover hidden places.',
-  'Protection: Defend a village or landmark from an imminent threat.',
-  'Delivery: Transport a crucial item or message to a specific location.',
-  'Recovery: Retrieve stolen or lost items that are not artifacts.',
-  'Construction: Help build or repair a structure, like a bridge or fortification.',
-  'Training: Teach or train a group or individual in a specific skill or knowledge.',
-  'Distraction: Create a diversion to aid another operation or quest.',
-  'Sabotage: Undermine an enemy’s plans or operations.',
-  'Recruitment: Gather individuals to join a cause, guild, or army.',
-  'Research: Gather information or resources for a scholarly purpose.',
-  'Harvesting: Collect rare ingredients or resources from the environment.',
-  'Trade: Facilitate or protect a trade agreement or caravan.',
-  'Revenge: Avenge a wrong done to a character or group.',
-  'Ceremony: Perform or oversee a significant ritual or event.',
-  'Bounty: Capture or kill a wanted criminal or creature.',
-  'Alliance: Forge an alliance with a powerful entity or group.',
-  'Exorcism: Rid a location or individual of a haunting or curse.',
-  'Contest: Win a competition or tournament.',
-  'Heist: Steal a valuable item or information from a well-guarded location.',
-  'Infiltration: Gain access to a secure location or organization.',
-  'Pilgrimage: Travel to a sacred site or complete a spiritual journey.',
-  'Curse: Lift a curse or break a magical enchantment.',
-  'Mystery: Solve a series of strange occurrences or unexplained phenomena.',
-  'Prophecy: Fulfill or prevent a prophecy from coming to pass.',
-  'Assassination: Eliminate a target without being detected.',
-  'Betrayal: Uncover or prevent a betrayal within a group or organization.',
-];

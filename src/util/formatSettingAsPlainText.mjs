@@ -123,6 +123,28 @@ function formatSettingOverview(settings) {
           addSection([faction.challenge_to_power, faction.challenge_event]);
         });
       }
+      addSection(addDashedSectionTitle('QUEST HOOKS'));
+      setting.questHooks.forEach((quest) => {
+        addSection(addSingleDashedSectionTitle(quest.quest_title));
+        addSection(quest.quest_giver_encounter);
+        addSection(quest.quest_details);
+        addSection(quest.quest_giver_name);
+        addSection(quest.quest_giver_background);
+        addSection('OBJECTIVES');
+        quest.objectives.forEach((objective) => {
+          addSection(`- ${objective}`);
+        });
+        addSection('CHALLENGES');
+        quest.challenges.forEach((challenge) => {
+          addSection(`- ${challenge}`);
+        });
+        addSection('REWARDS');
+        quest.rewards.forEach((reward) => {
+          addSection(`- ${reward}`);
+        });
+        addSection('TWIST');
+        addSection(quest.twist);
+      });
 
       // Add Important Locations
       if (setting.importantLocations.length > 0) {

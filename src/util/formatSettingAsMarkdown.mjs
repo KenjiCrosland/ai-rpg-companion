@@ -113,6 +113,37 @@ function formatSettingOverview(settings) {
         });
       }
 
+      if (setting.questHooks.length > 0) {
+        addSection(addMarkdownSectionTitle('Quests'), 2);
+        setting.questHooks.forEach((quest) => {
+          addSection(addMarkdownSectionTitle(`${quest.quest_title}`, 3));
+          addSection(`{{descriptive\n ${quest.quest_giver_encounter}`);
+          addSection([quest.quest_details, '\n}}']);
+          addSection(
+            addMarkdownSectionTitle(
+              `Quest Giver: ${quest.quest_giver_name}`,
+              4,
+            ),
+          );
+          addSection(`${quest.quest_giver_background}`);
+
+          addSection(addMarkdownSectionTitle('Objectives', 4));
+          for (let objective of quest.objectives) {
+            text += `- ${objective}\n`;
+          }
+          addSection(addMarkdownSectionTitle('Challenges', 4));
+          for (let challenge of quest.challenges) {
+            text += `- ${challenge}\n`;
+          }
+          addSection(addMarkdownSectionTitle('Rewards', 4));
+          for (let reward of quest.rewards) {
+            text += `- ${reward}\n`;
+          }
+          addSection(addMarkdownSectionTitle('Twist', 4));
+          addSection(quest.twist);
+        });
+      }
+
       // Add Important Locations
       if (setting.importantLocations.length > 0) {
         addSection(addMarkdownSectionTitle('Important Locations'));

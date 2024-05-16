@@ -13,12 +13,12 @@
       <div class="copy-buttons">
         <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
         <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
-        <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Hombrewery Markdown</cdr-button>
+        <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
         <p>Use the above buttons to copy all setting info into your desired format. For homebrewery go <cdr-link
             href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
           there. You will need to add your own pagebreaks.</p>
 
-        <cdr-button @click="deleteAllSettings">Delete All Settings</cdr-button>
+        <cdr-button @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</cdr-button>
       </div>
     </div>
     <div class="main-content">
@@ -141,7 +141,7 @@
           </div>
         </cdr-tab-panel>
 
-        <cdr-tab-panel label="Factions" name="Factions" @tab-change="generateFactions">
+        <cdr-tab-panel label="Factions" name="Factions">
           <h2>Factions</h2>
           <div v-if="currentSetting.factions && currentSetting.factions.length > 0">
             <cdr-list>
@@ -177,7 +177,18 @@
               </li>
             </cdr-list>
           </div>
-          <div v-else>
+          <div v-if="!(currentSetting.factions.length > 0) && !currentSetting.loadingFactions">
+            <p>Factions can be dominant
+              factions in
+              charge of the government (like a royal family) or a group of downtrodden commoners who have informally
+              banded
+              together to voice their grievances. Factions can also be merchant guilds or clandestine organizations.
+              Essentially factions are any group of people gathered together to achieve a certain goal or cause or to
+              maintain
+              or increase their power.</p>
+            <cdr-button @click="generateFactions">Generate Factions for {{ currentSetting.place_name }}</cdr-button>
+          </div>
+          <div v-if="currentSetting.loadingFactions">
             <CdrSkeleton>
               <cdr-list>
                 <li>
@@ -233,9 +244,13 @@
                   </div>
                   <h3>Roleplaying Tips</h3>
                   <p>{{ npc.roleplaying_tips }}</p>
-                  <h3>Generate a Quest</h3>
-                  <p>Generate a Quest Hook with this NPC as a Quest Giver</p>
-                  <cdr-button @click="generateQuestHook(npc)">Generate Quest</cdr-button>
+                  <h3>Generate a Quest Hook</h3>
+                  <p>Generate a quest hook where {{ npc.name }} is the quest giver.</p>
+                  <cdr-select label="Quest Type" v-model="questType" :options="questTypes"
+                    placeholder="Select a Quest Type" />
+
+                  <cdr-button @click="generateQuestHook(npc, questType)" style="margin-top: 2rem;">Generate
+                    Quest</cdr-button>
                 </div>
               </div>
 
@@ -364,6 +379,7 @@ import '@rei/cedar/dist/style/cdr-popover.css';
 function copySettingsAsPlainText() {
   const text = formatSettingAsPlainText(settingsTree.value);
   navigator.clipboard.writeText(text);
+  console.log(text);
   alert("Settings copied to clipboard as plain text!");
 }
 
@@ -389,6 +405,7 @@ function deleteAllSettings() {
 function isNumber(value) {
   return typeof value === 'number';
 }
+const questType = ref(randomQuestString);
 const currentlyLoading = ref(false);
 const loadingQuestHooks = ref(false);
 const currentSettingIndex = ref(0);
@@ -404,6 +421,7 @@ const defaultSetting = reactive({
   npcs: [],
   questHooks: [],
   parentIndex: null,
+  loadingFactions: false,
 });
 const settings = ref([reactive({ ...defaultSetting })]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
@@ -529,7 +547,8 @@ const createNewSetting = (isSublocation, adjective = '', setting_type = '', plac
     importantLocations: [],
     npcs: [],
     questHooks: [],
-    parentIndex: isSublocation ? parentIndex : null
+    parentIndex: isSublocation ? parentIndex : null,
+    loadingFactions: false,
   });
 
   // Push the new setting to the settings array
@@ -630,6 +649,7 @@ const sublocationValidation = jsonString => {
 
 const factionValidation = jsonString => {
   try {
+    console.log('validating factions')
     const jsonObj = JSON.parse(jsonString);
     const keys = [
       'name', 'history', 'recent_event', 'current_situation', 'motto', 'influence_level',
@@ -693,6 +713,43 @@ const factionPowerDescriptions = [
   "Describes a faction that has a strong influence and perhaps a majority in one branch of government or one aspect of governance—like a majority in the Senate—but doesn't have unchecked power across the entire spectrum of government. They are a major player and can decisively influence legislation and policy outcomes in that specific context, but their power is not absolute and can be checked by other branches or levels of government.",
   "This would indicate a higher level of power, where a faction not only has significant influence but also controls multiple branches of government or has significant sway across various aspects of governance. This implies a broader control that affects a wide range of policies and a larger scale of operations, potentially directing the main course of the nation's political agenda.",
   "Reflects absolute control over society, without opposition. This level of power is marked by an absence of democratic processes and is characterized by unilateral decision-making and enforcement of policies."
+];
+
+const randomQuestString = 'Random: Generate a quest with a random objective and theme.';
+
+const questTypes = [
+  randomQuestString,
+  'Escort: Safeguard a person, creature, or caravan from one location to another.',
+  'Rescue: Save a captive or stranded individual from danger.',
+  'Investigation: Solve a mystery or uncover hidden truths.',
+  'Hunting: Track down and eliminate a dangerous creature or villain.',
+  'Diplomacy: Mediate a dispute between warring factions or negotiate a treaty.',
+  'Exploration: Chart unknown territories or discover hidden places.',
+  'Protection: Defend a village or landmark from an imminent threat.',
+  'Delivery: Transport a crucial item or message to a specific location.',
+  'Recovery: Retrieve stolen or lost items that are not artifacts.',
+  'Construction: Help build or repair a structure, like a bridge or fortification.',
+  'Training: Teach or train a group or individual in a specific skill or knowledge.',
+  'Distraction: Create a diversion to aid another operation or quest.',
+  'Sabotage: Undermine an enemy’s plans or operations.',
+  'Recruitment: Gather individuals to join a cause, guild, or army.',
+  'Research: Gather information or resources for a scholarly purpose.',
+  'Harvesting: Collect rare ingredients or resources from the environment.',
+  'Trade: Facilitate or protect a trade agreement or caravan.',
+  'Revenge: Avenge a wrong done to a character or group.',
+  'Ceremony: Perform or oversee a significant ritual or event.',
+  'Bounty: Capture or kill a wanted criminal or creature.',
+  'Alliance: Forge an alliance with a powerful entity or group.',
+  'Exorcism: Rid a location or individual of a haunting or curse.',
+  'Contest: Win a competition or tournament.',
+  'Heist: Steal a valuable item or information from a well-guarded location.',
+  'Infiltration: Gain access to a secure location or organization.',
+  'Pilgrimage: Travel to a sacred site or complete a spiritual journey.',
+  'Curse: Lift a curse or break a magical enchantment.',
+  'Mystery: Solve a series of strange occurrences or unexplained phenomena.',
+  'Prophecy: Fulfill or prevent a prophecy from coming to pass.',
+  'Assassination: Eliminate a target without being detected.',
+  'Betrayal: Uncover or prevent a betrayal within a group or organization.',
 ];
 
 const requestQueue = ref([]);
@@ -792,7 +849,11 @@ function generateFactions() {
 function generateQuestHook(npc) {
   const operationIndex = currentSettingIndex.value;
   const overviewText = getFullNPCDescription(npc);
-  const prompt = createQuestHookPrompt(overviewText);
+  let hookQuestType = questType.value;
+  if (hookQuestType === randomQuestString) {
+    hookQuestType = questTypes[Math.floor(Math.random() * questTypes.length)];
+  }
+  const prompt = createQuestHookPrompt(overviewText, hookQuestType);
 
   enqueueRequest('generateQuestHook', { operationIndex, prompt });
 }
@@ -929,13 +990,15 @@ async function handleGenerateSubLocations({ operationIndex, prompt }) {
 
 async function handleGenerateFactions({ operationIndex, prompt }) {
   try {
+    console.log("Generating factions");
     if (!settings.value[operationIndex].factions.length > 0) {
       currentlyLoading.value = true;
+      settings.value[operationIndex].loadingFactions = true;
     }
 
     const response = await generateGptResponse(prompt, factionValidation);
     currentlyLoading.value = false;
-
+    settings.value[operationIndex].loadingFactions = false;
     if (settings.value[operationIndex]) {
       const factions = JSON.parse(response);
       factions.sort((a, b) => a.influence_level - b.influence_level).reverse();
@@ -950,10 +1013,12 @@ async function handleGenerateFactions({ operationIndex, prompt }) {
         }
       });
       currentlyLoading.value = false;
+      settings.value[operationIndex].loadingFactions = false;
       saveSettingsToLocalStorage();  // Save to local storage after update
     }
   } catch (error) {
     currentlyLoading.value = false;
+    settings.value[operationIndex].loadingFactions = false;
     console.error("Error generating factions:", error);
   }
 }
