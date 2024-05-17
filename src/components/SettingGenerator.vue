@@ -24,7 +24,8 @@
     <div class="main-content">
       <div class='generator-form' v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
         <h1>Kenji's RPG Setting Generator: Build a Kingdom, Town, Empire, or Space Station!</h1>
-        <p>Welcome to the RPG Setting Generator! Use this tool to build detailed settings complete with NPCs, factions
+        <p>Welcome to the RPG Setting Generator! Use this tool to build detailed settings complete with NPCs, factions,
+          quest hooks,
           and even settings nested within settings! Enter as much info as you like here in the form fields or just click
           "Generate!" For something completely random.</p>
         <form @submit.prevent="generateSetting">
@@ -90,7 +91,7 @@
             {{ currentSetting.setting_overview.potential_solutions }}</p>
           <p>{{ currentSetting.setting_overview.conclusion }}</p>
         </cdr-tab-panel>
-        <cdr-tab-panel label="Important Locations" name="Locations" @tab-change="generateSubLocations">
+        <cdr-tab-panel label="Important Locations" name="Locations">
           <h2>Important Locations</h2>
           <cdr-accordion-group v-if="currentSetting.importantLocations && currentSetting.importantLocations.length > 0">
             <cdr-accordion v-for="(setting, index) in currentSetting.importantLocations" :key="setting.name"
@@ -136,7 +137,14 @@
               </div>
             </cdr-accordion>
           </cdr-accordion-group>
-          <div v-else>
+          <div v-if="!(currentSetting.importantLocations.length > 0) && !currentSetting.loadingSubLocations">
+            <p>Important locations are key sites within the setting that can serve as focal points for adventures or
+              intrigue. They can be anything from a grand castle to a hidden underground lair. Generate a full location
+              description to flesh out the setting.</p>
+            <cdr-button @click="generateSubLocations">Generate Important Locations for {{ currentSetting.place_name }}
+            </cdr-button>
+          </div>
+          <div v-if="currentSetting.loadingSubLocations">
             <LocationListSkeleton />
           </div>
         </cdr-tab-panel>
@@ -178,14 +186,18 @@
             </cdr-list>
           </div>
           <div v-if="!(currentSetting.factions.length > 0) && !currentSetting.loadingFactions">
-            <p>Factions can be dominant
-              factions in
-              charge of the government (like a royal family) or a group of downtrodden commoners who have informally
-              banded
-              together to voice their grievances. Factions can also be merchant guilds or clandestine organizations.
-              Essentially factions are any group of people gathered together to achieve a certain goal or cause or to
+            <p>Factions are any group of people gathered together to pursue a certain goal or to
               maintain
-              or increase their power.</p>
+              or increase their power. They can range in influence from the dominant power in the setting (like a royal
+              family)
+              to a
+              group of downtrodden commoners who have informally
+              banded
+              together to voice their grievances. They can also be smaller entities like merchant guilds, religious
+              cults, or
+              criminal
+              organizations.
+            </p>
             <cdr-button @click="generateFactions">Generate Factions for {{ currentSetting.place_name }}</cdr-button>
           </div>
           <div v-if="currentSetting.loadingFactions">
@@ -398,6 +410,7 @@ function copySettingsAsHtml() {
 function deleteAllSettings() {
   if (confirm("Are you sure you want to delete all settings?")) {
     settings.value = [reactive({ ...defaultSetting })];
+    currentSettingIndex.value = 0;
     saveSettingsToLocalStorage();
   }
 }
@@ -422,6 +435,7 @@ const defaultSetting = reactive({
   questHooks: [],
   parentIndex: null,
   loadingFactions: false,
+  loadingSubLocations: false,
 });
 const settings = ref([reactive({ ...defaultSetting })]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
@@ -549,6 +563,7 @@ const createNewSetting = (isSublocation, adjective = '', setting_type = '', plac
     questHooks: [],
     parentIndex: isSublocation ? parentIndex : null,
     loadingFactions: false,
+    loadingSubLocations: false
   });
 
   // Push the new setting to the settings array
@@ -848,12 +863,13 @@ function generateFactions() {
 
 function generateQuestHook(npc) {
   const operationIndex = currentSettingIndex.value;
-  const overviewText = getFullNPCDescription(npc);
+  const overviewText = getOverviewText(settings.value[operationIndex].setting_overview);
+  const npcText = getFullNPCDescription(npc);
   let hookQuestType = questType.value;
   if (hookQuestType === randomQuestString) {
     hookQuestType = questTypes[Math.floor(Math.random() * questTypes.length)];
   }
-  const prompt = createQuestHookPrompt(overviewText, hookQuestType);
+  const prompt = createQuestHookPrompt(overviewText, npcText, hookQuestType);
 
   enqueueRequest('generateQuestHook', { operationIndex, prompt });
 }
@@ -975,15 +991,18 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
 
 async function handleGenerateSubLocations({ operationIndex, prompt }) {
   try {
+    if (settings.value[operationIndex].importantLocations.length > 0) return;
+    if (!settings.value[operationIndex]) return;
+    settings.value[operationIndex].loadingSubLocations = true;
     currentlyLoading.value = true;
     const response = await generateGptResponse(prompt, sublocationValidation);
+    settings.value[operationIndex].importantLocations = JSON.parse(response);
+    saveSettingsToLocalStorage();  // Save to local storage after update
+    settings.value[operationIndex].loadingSubLocations = false;
     currentlyLoading.value = false;
-    if (settings.value[operationIndex]) {
-      settings.value[operationIndex].importantLocations = JSON.parse(response);
-      saveSettingsToLocalStorage();  // Save to local storage after update
-    }
   } catch (error) {
     currentlyLoading.value = false;
+    settings.value[operationIndex].loadingSubLocations = false;
     console.error("Error generating sublocations:", error);
   }
 }

@@ -17,14 +17,15 @@ export function settingOverviewPrompt(
 
   ${place_lore ? `Additional details about the setting: ${place_lore}.` : ''}
   
-  Return the description in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups:
+  Return the description in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups.
+  Don't use the following NPC names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde.:
   {
     name: '${place_name}',
     overview: 'A brief overview of the ${setting_type}, with a brief description of its current state',
     relation_to_larger_setting: 'How does the ${setting_type} relate to the larger setting? What role does it play in the larger setting? How is it situated geographically or politically in relation to the larger setting? Provide a name for the larger setting if possible',
     history: 'A very brief history of the ${setting_type}, including its founding and most significant recent events',
     title: 'A descriptive title like: The Prosperous Village of Greenhaven or The Haunted Ruins of Blackwood. The title MUST include the setting name',
-    current_ruler_sentence: 'A sentence describing the ruler of the ${setting_type}. What have they done to earn their position? What was their most recent significant action?',
+    current_ruler_sentence: 'A sentence describing the ruler of the ${setting_type}. What have they done to earn their position? What was their most recent significant action? Don't use the following names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde.',
     recent_event_current_ruler: 'describe a recent political event involving the current ruler which reflects the current state of the ${setting_type}',
     recent_event_consequences: 'describe the consequences of the recent political event involving the current ruler',
     social_history: 'A brief history of the social structure of the ${setting_type}',
@@ -63,7 +64,8 @@ export function sublocationOverviewPrompt(
   When describing events and individuals be specific about names and locations. Each key should be a sentence or two, should be detailed and specific and should flow together to create a cohesive description. Avoid common fantasy tropes and cliches. Temperature: 0.9
 
   Be sure that the description is specifically about ${place_name} and not the larger setting.
-  
+  Don't use the following NPC names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde.
+
   Return the description of ${place_name} in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups:
   {
     name: '${place_name}',
@@ -73,7 +75,7 @@ export function sublocationOverviewPrompt(
     setting_type: 'The type of setting ${place_name} is',
     title: 'A descriptive title like: The Prosperous Village of Greenhaven or The Haunted Ruins of Blackwood. The title MUST include the setting name.',
     history: 'A very brief history of ${place_name}, including its founding and most significant recent events',
-    current_ruler_sentence: 'A sentence describing the ruler of ${place_name}. This ruler may be a vassal or subordinate to the ruler of the larger setting. What have they done to earn their position? What was their most recent significant action? If the setting is too small for a leader, mention a prominent individual who frequents this setting.',
+    current_ruler_sentence: 'A sentence describing the ruler of ${place_name}. This ruler may be a vassal or subordinate to the ruler of the larger setting. What have they done to earn their position? What was their most recent significant action? If the setting is too small for a leader, mention a prominent individual who frequents this setting.  Don't use the following NPC names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde.',
     recent_event_current_ruler: 'describe a recent political event involving the current ruler which reflects the current state of ${place_name}',
     recent_event_consequences: 'describe the consequences of the recent political event involving the current ruler',
     social_history: 'Provide a brief history of ${place_name} and how it plays an important role in the larger setting',
@@ -247,6 +249,8 @@ export function createRelationshipAndTipsPrompt(npc_name, param) {
     npc_name_1 recently proposed to npc_name_2, to which she replied "Perhaps" and the ambiguity is driving him mad.
     npc_name has recently been sneaking into her father's lab late at night to create battle machines in the hopes that an adventuring group would find her useful.
     Recently, npc_name has come to the tavern not just to check on her brother but because she's nursing a crush on npc_name, hoping that he will turn his gaze her way.
+
+    Don't use the following NPC names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde.
     {
         "format": "JSON",
         "relationships": {
@@ -260,9 +264,12 @@ export function createRelationshipAndTipsPrompt(npc_name, param) {
     `;
 }
 
-export function createQuestHookPrompt(questGiver, questType) {
+export function createQuestHookPrompt(settingOverview, questGiver, questType) {
   return `
 Please create a detailed Tabletop Roleplaying Game quest hook with the following details:
+
+The quest should be set in the following setting:
+${settingOverview}
 
 Information about the quest giver:
 ${questGiver}

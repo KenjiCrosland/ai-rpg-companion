@@ -14,7 +14,7 @@
     <ItemGenerator v-if="currentPage === 'item-generator'" />
     <EncounterGenerator v-if="currentPage === 'encounter-generator'" />
     <EncounterGeneratorPremium v-if="currentPage === 'encounter-generator-premium'" />
-    <TownKingdomGenerator v-if="currentPage === 'town-kingdom-generator'" />
+    <SettingGenerator v-if="currentPage === 'setting-generator'" />
   </div>
 </template>
 
@@ -33,7 +33,7 @@ import DungeonGeneratorPremium from './components/DungeonGeneratorPremium.vue';
 import ItemGenerator from './components/ItemGenerator.vue';
 import EncounterGenerator from './components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from './components/EncounterGeneratorPremium.vue';
-import TownKingdomGenerator from './components/TownKingdomGenerator.vue';
+import SettingGenerator from './components/SettingGenerator.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -56,11 +56,11 @@ export default {
     ItemGenerator,
     EncounterGenerator,
     EncounterGeneratorPremium,
-    TownKingdomGenerator
+    SettingGenerator
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'town-kingdom-generator',
+      currentPage: this.$attrs['data-page'] || 'setting-generator',
     };
   },
   mounted() {
@@ -122,6 +122,11 @@ export default {
     if (typeof gtag === 'function' && this.currentPage === 'encounter-generator-premium') {
       gtag('config', 'UA-11925218-1', {
         'page_path': '/dnd-5e-encounter-generator-premium',
+      });
+    }
+    if (typeof gtag === 'function' && this.currentPage === 'setting-generator') {
+      gtag('config', 'UA-11925218-1', {
+        'page_path': '/setting-generator',
       });
     }
   },
