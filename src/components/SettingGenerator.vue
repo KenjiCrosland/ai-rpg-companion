@@ -7,6 +7,9 @@
       </template>
       {{ isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar' }}
     </cdr-button>
+    <!-- Overlay to close sidebar on click -->
+    <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
+
     <div class="sidebar" :style="sidebarStyle">
       <ul class="settings-tabs">
         <!-- Flatten settings tree and display each with appropriate indentation -->
@@ -131,12 +134,12 @@
                 <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                   settings[setting.main_index].setting_overview.recent_event_current_ruler
-                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_social }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                   settings[setting.main_index].setting_overview.impactful_economic_event
-                  }}</p>
+                }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_military }}
                 </p>
@@ -189,7 +192,7 @@
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
-                    }}
+                  }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -1176,6 +1179,16 @@ function randomName(setting) {
   $indentation-step: 20px;
   $transition-speed: 0.3s;
 
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); // Semi-transparent
+    z-index: 2; // Lower than sidebar but higher than content
+  }
+
   .sidebar {
     transition: transform 0.3s ease;
     background-color: $background-color;
@@ -1185,7 +1198,7 @@ function randomName(setting) {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    z-index: 2;
+    z-index: 3;
 
     &.fixed {
       position: fixed;
