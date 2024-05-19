@@ -15,6 +15,7 @@
     <EncounterGenerator v-if="currentPage === 'encounter-generator'" />
     <EncounterGeneratorPremium v-if="currentPage === 'encounter-generator-premium'" />
     <SettingGenerator v-if="currentPage === 'setting-generator'" />
+    <TabsExample v-if="currentPage === 'tabs-example'" />
   </div>
 </template>
 
@@ -34,6 +35,7 @@ import ItemGenerator from './components/ItemGenerator.vue';
 import EncounterGenerator from './components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from './components/EncounterGeneratorPremium.vue';
 import SettingGenerator from './components/SettingGenerator.vue';
+import TabsExample from './components/tabs/TabsExample.vue';
 import { CdrLink, CdrText } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -56,11 +58,12 @@ export default {
     ItemGenerator,
     EncounterGenerator,
     EncounterGeneratorPremium,
-    SettingGenerator
+    SettingGenerator,
+    TabsExample
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'setting-generator',
+      currentPage: this.$attrs['data-page'] || 'tabs-example',
     };
   },
   mounted() {

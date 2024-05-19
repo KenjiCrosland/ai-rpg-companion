@@ -58,6 +58,13 @@ function vue_app_enqueue_assets() {
         }
         .site-container .site-inner {
             max-width: none;
+            padding: 0;
+        }
+        .entry-content ul {
+            margin-bottom: 0;
+        }
+        button:focus, button:hover {
+            background-color: #fff;
         }
         .statblock ul.abilities {
             margin: 0;
