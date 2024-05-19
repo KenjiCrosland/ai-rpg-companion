@@ -3,12 +3,15 @@
     <ul class="tab-header-container" role="tablist">
       <li v-for="(tab, index) in tabs" :key="index" role="presentation">
         <button :ref="(el) => setButtonRef(el, index)" :aria-selected="currentIndex === index"
-          :tabindex="focusedIndex === index ? 0 : -1" class="tab-header-item"
-          :class="{ 'active': currentIndex === index }" role="tab" @click="selectTab(index)"
-          @keydown.right.prevent="moveFocus(focusedIndex, 'next')"
-          @keydown.down.prevent="moveFocus(focusedIndex, 'next')" @keydown.up.prevent="moveFocus(focusedIndex, 'prev')"
-          @keydown.left.prevent="moveFocus(focusedIndex, 'prev')" @keydown.enter.prevent="selectTab(focusedIndex)"
-          @keydown.space.prevent="selectTab(focusedIndex)">
+          :tabindex="focusedIndex === index && !tab.disabled ? 0 : -1" :disabled="tab.disabled" class="tab-header-item"
+          :class="{ 'active': currentIndex === index, 'disabled': tab.disabled }" role="tab"
+          @click="tab.disabled ? null : selectTab(index)"
+          @keydown.right.prevent="tab.disabled ? null : moveFocus(focusedIndex, 'next')"
+          @keydown.down.prevent="tab.disabled ? null : moveFocus(focusedIndex, 'next')"
+          @keydown.up.prevent="tab.disabled ? null : moveFocus(focusedIndex, 'prev')"
+          @keydown.left.prevent="tab.disabled ? null : moveFocus(focusedIndex, 'prev')"
+          @keydown.enter.prevent="tab.disabled ? null : selectTab(focusedIndex)"
+          @keydown.space.prevent="tab.disabled ? null : selectTab(focusedIndex)">
           {{ tab.label }}
         </button>
       </li>
@@ -18,6 +21,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, computed, provide, onMounted, watch } from 'vue';
@@ -151,6 +155,20 @@ provide('currentIndex', currentIndex);
   border-bottom: 3px solid #406eb5;
   border-top: 3px solid #f0f0f0;
   /* bolder text for active tab */
+}
+
+.tab-header-item.disabled {
+  color: #aaa;
+  /* Gray out the label */
+  cursor: not-allowed;
+}
+
+.tab-header-item.disabled:hover,
+.tab-header-item.disabled:focus {
+  background-color: transparent;
+  border: 3px solid #fff;
+  font-weight: 300;
+  color: #aaa;
 }
 
 .tab-header-item:hover,

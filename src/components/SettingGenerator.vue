@@ -123,12 +123,12 @@
                 <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                   settings[setting.main_index].setting_overview.recent_event_current_ruler
-                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_social }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                   settings[setting.main_index].setting_overview.impactful_economic_event
-                  }}</p>
+                }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_military }}
                 </p>
@@ -181,7 +181,7 @@
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
-                    }}
+                  }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -351,21 +351,20 @@
         <CdrSkeleton>
           <Tabs>
             <TabPanel label="Overview">
-              <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
-                currentSetting.setting_overview?.title) }}</h2>
-              <OverviewSkeleton />
+              <div class="tab-skeleton">
+                <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
+                  currentSetting.setting_overview?.title) }}</h2>
+                <OverviewSkeleton />
+              </div>
+
             </TabPanel>
-            <TabPanel label="Locations">
-              <LocationListSkeleton />
+            <TabPanel label="Locations" :disabled="true">
             </TabPanel>
-            <TabPanel label="Factions">
-              <FactionSkeleton />
+            <TabPanel label="Factions" :disabled="true">
             </TabPanel>
-            <TabPanel label="NPCs">
-              <NPCSkeleton />
+            <TabPanel label="NPCs" :disabled="true">
             </TabPanel>
-            <TabPanel label="Quest Hooks">
-              <OverviewSkeleton />
+            <TabPanel label="Quest Hooks" :disabled="true">
             </TabPanel>
           </Tabs>
         </CdrSkeleton>
@@ -429,7 +428,6 @@ const sidebarStyle = computed(() => {
       transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
       width: '70%', // Adjust width for mobile
       maxWidth: '400px',
-      height: '100vh',
       paddingTop: '6rem',
     };
   } else {
@@ -1176,6 +1174,7 @@ function randomName(setting) {
     background-color: $background-color;
     padding: 1rem;
     --sidebar-width: 400px; // Define sidebar width as a variable for easy changes
+    height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1295,6 +1294,12 @@ function randomName(setting) {
 .tab-skeleton {
   width: 800px;
   margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .tab-skeleton {
+    width: 100%;
+  }
 }
 
 .skeleton-hr {

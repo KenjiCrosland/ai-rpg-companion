@@ -4,7 +4,7 @@
     <Tabs :activeIndex="activeTabIndex">
       <TabPanel label="Tab 1">Content for Tab 1</TabPanel>
       <TabPanel label="Tab 2">Content for Tab 2</TabPanel>
-      <TabPanel label="Tab 3">Content for Tab 3</TabPanel>
+      <TabPanel label="Tab 3" :disabled="true">Content for Tab 3</TabPanel>
     </Tabs>
 
     <!-- Buttons to change tabs externally -->
