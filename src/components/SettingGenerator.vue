@@ -11,11 +11,16 @@
       <ul class="settings-tabs">
         <!-- Flatten settings tree and display each with appropriate indentation -->
         <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
-          :class="{ active: currentSettingIndex === setting.originalIndex }"
-          @click="selectSetting(setting.originalIndex)" :style="{ marginLeft: `${setting.depth * 20}px` }">
-          {{ setting.place_name || 'Unnamed Setting' }}
+          :class="{ 'active-tab': currentSettingIndex === setting.originalIndex }"
+          :style="{ marginLeft: `${setting.depth * 20}px` }">
+          <button class="setting-button" @click="selectSetting(setting.originalIndex)">
+            {{ setting.place_name || 'Unnamed Setting' }}
+          </button>
         </li>
-        <li v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" @click="createNewSetting">+ New Setting</li>
+        <li>
+          <button v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" class="setting-button"
+            @click="createNewSetting">+ New Setting</button>
+        </li>
       </ul>
       <div class="copy-buttons">
         <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
@@ -30,8 +35,11 @@
     </div>
     <div class="main-content">
       <div class='generator-form' v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
-        <h1>Kenji's RPG Setting Generator: Build a Kingdom, Town, Empire, or Space Station!</h1>
-        <p>Welcome to the RPG Setting Generator! Use this tool to build detailed settings complete with NPCs, factions,
+        <h1>Kenji's Setting Generator: Build a Kingdom, a Town, an Empire, or a Space Station!</h1>
+        <p>Welcome to my RPG Setting Generator and Worldbuilding Tool! Use this tool to build worlds and detailed
+          settings
+          complete
+          with NPCs, factions,
           quest hooks,
           and even settings nested within settings! Enter as much info as you like here in the form fields or just click
           "Generate!" For something completely random.</p>
@@ -49,7 +57,7 @@
                 Examples: "Kingdom", "Town", "City", "Republic"
               </template>
             </cdr-input>
-            <p>Of</p>
+            <p style="text-align: center;">Of</p>
             <cdr-input class="generator-field-input" id="place_name" v-model="currentSetting.place_name"
               background="secondary" label="Place name">
               <template #helper-text-bottom>
@@ -123,12 +131,12 @@
                 <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                   settings[setting.main_index].setting_overview.recent_event_current_ruler
-                }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_social }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                   settings[setting.main_index].setting_overview.impactful_economic_event
-                }}</p>
+                  }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_military }}
                 </p>
@@ -181,7 +189,7 @@
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
-                  }}
+                    }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -427,8 +435,7 @@ const sidebarStyle = computed(() => {
       position: 'fixed',
       transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
       width: '70%', // Adjust width for mobile
-      maxWidth: '400px',
-      paddingTop: '6rem',
+      maxWidth: '400px'
     };
   } else {
     return {
@@ -1192,20 +1199,40 @@ function randomName(setting) {
       margin: 0;
 
       li {
-        padding: 8px 16px;
-        cursor: pointer;
-        background-color: $default-background-color;
         margin-bottom: 4px;
-        border-left: 5px solid transparent;
-        transition: background-color $transition-speed;
 
-        &:hover {
-          background-color: $hover-background-color;
+        &.active-tab {
+          .setting-button {
+            background-color: $active-color;
+            border-left-color: $active-border-color;
+          }
         }
 
-        &.active {
-          background-color: $active-color;
-          border-left-color: $active-border-color;
+        .setting-button {
+          width: 100%;
+          padding: 12px 20px;
+          font-size: 1.5rem;
+          text-align: left;
+          background-color: $default-background-color;
+          border: none;
+          color: inherit; // Ensures button text color matches your design
+          cursor: pointer;
+          border-left: 5px solid transparent;
+          transition: background-color $transition-speed, border-left-color $transition-speed;
+
+          &:hover {
+            background-color: $hover-background-color;
+          }
+
+          &:focus {
+            outline: none; // Optionally, add a custom focus style
+            border-left-color: $active-border-color; // Example focus style for accessibility
+          }
+
+          &.active {
+            background-color: $active-color;
+            border-color: $active-border-color;
+          }
         }
       }
     }
@@ -1215,6 +1242,7 @@ function randomName(setting) {
       flex-direction: column;
       margin: 1rem;
       gap: 1rem;
+      margin-bottom: 7rem;
     }
   }
 
@@ -1274,8 +1302,7 @@ function randomName(setting) {
 
 @media (max-width: 768px) {
   .generator-fields {
-    flex-direction: column;
-    gap: 0;
+    display: block;
   }
 
 }

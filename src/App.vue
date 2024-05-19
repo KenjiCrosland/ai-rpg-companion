@@ -129,7 +129,7 @@ export default {
     }
     if (typeof gtag === 'function' && this.currentPage === 'setting-generator') {
       gtag('config', 'UA-11925218-1', {
-        'page_path': '/setting-generator',
+        'page_path': '/rpg-setting-generator-and-world-building-tool',
       });
     }
   },
