@@ -19,18 +19,27 @@
   </div>
 </template>
 
-
-
 <script setup>
 import { ref, computed, provide, onMounted, watch } from 'vue';
-import useWindowDimensions from '../composables/useWindowDimensions';
+// Accept an activeIndex prop
+const props = defineProps({
+  activeIndex: {
+    type: Number,
+    default: 0
+  }
+});
 
 const tabs = ref([]);
-const currentIndex = ref(0);
-const focusedIndex = ref(0); // To keep track of which tab is currently focused
-const tabRefs = ref([]); // Array to store references to the tab buttons
+const currentIndex = ref(props.activeIndex);
+const focusedIndex = ref(props.activeIndex); // Initialize with the active index prop
+const tabRefs = ref([]);
 
-// Set button ref in an array to manage focus
+watch(() => props.activeIndex, (newIndex) => {
+  if (newIndex !== currentIndex.value) {
+    selectTab(newIndex);
+  }
+}, { immediate: true });
+
 const setButtonRef = (el, index) => {
   tabRefs.value[index] = el;
 };
@@ -65,10 +74,6 @@ watch(focusedIndex, (newIndex) => {
 onMounted(() => {
   focusedIndex.value = currentIndex.value; // Initialize focused index
 });
-
-const { width } = useWindowDimensions();
-const isColumn = computed(() => width.value < 768);
-
 provide('tabs', tabs);
 provide('currentIndex', currentIndex);
 </script>
