@@ -63,7 +63,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'tabs-example',
+      currentPage: this.$attrs['data-page'] || 'setting-generator',
     };
   },
   mounted() {

@@ -1,6 +1,13 @@
 <template>
   <div class="app-container">
-    <div class="sidebar">
+    <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
+      v-show="windowWidth <= 768">
+      <template #icon-left>
+        <icon-navigation-menu inherit-color />
+      </template>
+      {{ isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar' }}
+    </cdr-button>
+    <div class="sidebar" :style="sidebarStyle">
       <ul class="settings-tabs">
         <!-- Flatten settings tree and display each with appropriate indentation -->
         <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
@@ -68,8 +75,9 @@
             modifier="secondary">Generate</cdr-button>
         </form>
       </div>
-      <cdr-tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%">
-        <cdr-tab-panel label="Overview" name="Overview">
+      <Tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%"
+        :activeIndex="activeTabIndex">
+        <TabPanel label="Overview">
           <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
             currentSetting.setting_overview.title) }}</h2>
           <p>{{ currentSetting.setting_overview.overview }} {{
@@ -90,8 +98,8 @@
           <p>{{ currentSetting.setting_overview.main_problem }}
             {{ currentSetting.setting_overview.potential_solutions }}</p>
           <p>{{ currentSetting.setting_overview.conclusion }}</p>
-        </cdr-tab-panel>
-        <cdr-tab-panel label="Important Locations" name="Locations">
+        </TabPanel>
+        <TabPanel label="Locations">
           <h2>Important Locations</h2>
           <cdr-accordion-group v-if="currentSetting.importantLocations && currentSetting.importantLocations.length > 0">
             <cdr-accordion v-for="(setting, index) in currentSetting.importantLocations" :key="setting.name"
@@ -115,12 +123,12 @@
                 <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                   settings[setting.main_index].setting_overview.recent_event_current_ruler
-                }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_social }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                   settings[setting.main_index].setting_overview.impactful_economic_event
-                }}</p>
+                  }}</p>
                 <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                   settings[setting.main_index].setting_overview.recent_event_military }}
                 </p>
@@ -147,9 +155,9 @@
           <div v-if="currentSetting.loadingSubLocations">
             <LocationListSkeleton />
           </div>
-        </cdr-tab-panel>
+        </TabPanel>
 
-        <cdr-tab-panel label="Factions" name="Factions">
+        <TabPanel label="Factions">
           <h2>Factions</h2>
           <div v-if="currentSetting.factions && currentSetting.factions.length > 0">
             <cdr-list>
@@ -173,7 +181,7 @@
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
-                  }}
+                    }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -215,8 +223,8 @@
               </cdr-list>
             </CdrSkeleton>
           </div>
-        </cdr-tab-panel>
-        <cdr-tab-panel label="Notable NPCs" name="NPCs">
+        </TabPanel>
+        <TabPanel label="NPCs" name="NPCs">
           <h2>Notable NPCs</h2>
           <cdr-accordion-group>
             <cdr-accordion v-for="(npc, index) in currentSetting.npcs" level="2" :id="'npc-' + index"
@@ -271,8 +279,8 @@
               </div>
             </cdr-accordion>
           </cdr-accordion-group>
-        </cdr-tab-panel>
-        <cdr-tab-panel name="Quest Hooks">
+        </TabPanel>
+        <TabPanel label="Quest Hooks">
           <h2>Quest Hooks</h2>
           <div v-if="currentSetting.questHooks?.length > 0">
             <cdr-accordion-group>
@@ -334,34 +342,32 @@
               </cdr-accordion>
             </cdr-accordion-group>
           </div>
-        </cdr-tab-panel>
-      </cdr-tabs>
+        </TabPanel>
+      </Tabs>
       <cdr-button class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
         @click="deleteSetting(currentSettingIndex)">Delete
         Setting</cdr-button>
       <div class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
         <CdrSkeleton>
-          <ul class="skeleton-ul">
-            <li class="skeleton-tab">
-              Overview
-            </li>
-            <li class="skeleton-tab-inactive">
-              Locations
-            </li>
-            <li class="skeleton-tab-inactive">
-              Factions
-            </li>
-            <li class="skeleton-tab-inactive">
-              NPCs
-            </li>
-            <li class="skeleton-tab-inactive">
-              Quest Hooks
-            </li>
-          </ul>
-          <hr class="skeleton-hr">
-          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
-            currentSetting.setting_overview?.title) }}</h2>
-          <OverviewSkeleton />
+          <Tabs>
+            <TabPanel label="Overview">
+              <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
+                currentSetting.setting_overview?.title) }}</h2>
+              <OverviewSkeleton />
+            </TabPanel>
+            <TabPanel label="Locations">
+              <LocationListSkeleton />
+            </TabPanel>
+            <TabPanel label="Factions">
+              <FactionSkeleton />
+            </TabPanel>
+            <TabPanel label="NPCs">
+              <NPCSkeleton />
+            </TabPanel>
+            <TabPanel label="Quest Hooks">
+              <OverviewSkeleton />
+            </TabPanel>
+          </Tabs>
         </CdrSkeleton>
       </div>
     </div>
@@ -369,13 +375,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
-import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrPopover, IconInformationStroke } from "@rei/cedar";
+import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrPopover, IconInformationStroke, IconNavigationMenu } from "@rei/cedar";
 import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt, createQuestHookPrompt } from "../util/kingdom-prompts.mjs";
 import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import LocationListSkeleton from "./skeletons/LocationListSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
 import OverviewSkeleton from "./skeletons/OverviewSkeleton.vue";
+import Tabs from './tabs/Tabs.vue';
+import TabPanel from './tabs/TabPanel.vue';
 import { formatSettingAsPlainText } from "../util/formatSettingAsPlainText.mjs";
 import { formatSettingAsMarkdown } from "../util/formatSettingAsMarkdown.mjs";
 import { formatSettingAsHtml } from "../util/formatSettingAsHTML.mjs";
@@ -385,8 +393,53 @@ import place_names from '../data/place-names.json';
 import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
-import '@rei/cedar/dist/style/cdr-tabs.css';
 import '@rei/cedar/dist/style/cdr-popover.css';
+
+const isSidebarVisible = ref(false); // Start hidden on mobile
+
+// Update based on viewport size immediately and on resize
+const updateVisibility = () => {
+  if (window.innerWidth > 768) {
+    isSidebarVisible.value = true;  // Always show on desktop
+  } else {
+    isSidebarVisible.value = false;  // Manage with toggle button on mobile
+  }
+};
+
+const windowWidth = ref(window.innerWidth);
+
+const updateWindowWidth = () => {
+  windowWidth.value = window.innerWidth;
+};
+
+onMounted(() => {
+  updateWindowWidth(); // Set initial width
+  updateVisibility();  // Set initial visibility
+  window.addEventListener('resize', updateWindowWidth);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWindowWidth);
+});
+
+const sidebarStyle = computed(() => {
+  if (windowWidth.value <= 768) {
+    return {
+      position: 'fixed',
+      transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
+      width: '70%', // Adjust width for mobile
+      maxWidth: '400px',
+      height: '100vh',
+      paddingTop: '6rem',
+    };
+  } else {
+    return {
+      width: '400px',
+      position: 'static',
+      transform: 'none'
+    };
+  }
+});
 
 function copySettingsAsPlainText() {
   const text = formatSettingAsPlainText(settingsTree.value);
@@ -422,6 +475,7 @@ const questType = ref(randomQuestString);
 const currentlyLoading = ref(false);
 const loadingQuestHooks = ref(false);
 const currentSettingIndex = ref(0);
+const activeTabIndex = ref(0);
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
 const defaultSetting = reactive({
   adjective: '',
@@ -440,7 +494,6 @@ const defaultSetting = reactive({
 const settings = ref([reactive({ ...defaultSetting })]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
 onMounted(loadSettingsFromLocalStorage);
-
 const settingsTree = computed(() => {
   let tree = [];
   let settingsMap = new Map();
@@ -541,10 +594,7 @@ const allSettingsHaveAnOverview = computed(() => {
 watch(currentSettingIndex, (newValue, oldValue) => {
   if (newValue !== oldValue) {
     nextTick(() => {
-      const tabs = document.querySelectorAll('[class^="cdr-tabs__header-item"]');
-      if (tabs.length > 0 && tabs[0]) {
-        tabs[0].click(); // Attempt to click the first tab
-      }
+      activeTabIndex.value = 0;  // Reset active tab index when switching settings
     });
   }
 });
@@ -877,10 +927,7 @@ function generateQuestHook(npc) {
 async function handleGenerateQuestHook({ operationIndex, prompt }) {
   try {
     nextTick(() => {
-      const tabs = document.querySelectorAll('[class^="cdr-tabs__header-item"]');
-      if (tabs.length > 0 && tabs[0]) {
-        tabs[tabs.length - 1].click(); // Attempt to click the last tab
-      }
+      activeTabIndex.value = 4;
     });
     currentlyLoading.value = true
     loadingQuestHooks.value = true;
@@ -1125,13 +1172,20 @@ function randomName(setting) {
   $transition-speed: 0.3s;
 
   .sidebar {
-    width: $sidebar-width;
+    transition: transform 0.3s ease;
     background-color: $background-color;
-    padding: 10px;
-    height: 100vh;
+    padding: 1rem;
+    --sidebar-width: 400px; // Define sidebar width as a variable for easy changes
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    z-index: 2;
+
+    &.fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
 
     .settings-tabs {
       list-style: none;
@@ -1164,6 +1218,19 @@ function randomName(setting) {
       gap: 1rem;
     }
   }
+
+  .sidebar-toggle {
+    display: none; // Initially hidden
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1001;
+
+    @media (max-width: 768px) {
+      display: block; // Only shown on mobile
+    }
+  }
+
 
 
   .main-content {
@@ -1204,6 +1271,14 @@ function randomName(setting) {
   display: flex;
   gap: 2rem;
   align-items: center;
+}
+
+@media (max-width: 768px) {
+  .generator-fields {
+    flex-direction: column;
+    gap: 0;
+  }
+
 }
 
 .lore-field-input {
