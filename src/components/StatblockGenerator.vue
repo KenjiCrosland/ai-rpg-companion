@@ -14,6 +14,9 @@
                 slow it can take up to two minutes to generate a creature. Once generated, you can export a creature to
                 homebrewery, foundry VTT or the Improved Initiative app.
             </p>
+
+            <p><cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/">Link to
+                    Statblock Generator -- Premium Version</cdr-link></p>
         </div>
         <form @submit.prevent="generateStatblock" class="monster-form">
             <div class="form-row-top">
@@ -49,7 +52,7 @@
 import { ref } from 'vue';
 import Statblock from './Statblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { CdrInput, CdrButton, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrList } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrCheckbox, CdrLink, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrList } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-button.css";
@@ -68,6 +71,7 @@ export default {
         CdrInput,
         CdrButton,
         CdrList,
+        CdrLink,
         CdrCheckbox,
         CdrSelect,
         CdrToggleButton,
