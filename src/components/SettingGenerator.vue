@@ -38,7 +38,7 @@
     </div>
     <div class="main-content">
       <div class='generator-form' v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
-        <h1>Kenji's Setting Generator: Build a Kingdom, a Town, an Empire, or a Space Station!</h1>
+        <h1>Kenji's Worldbuilding Dashboard: Build a Kingdom, a Town, an Empire, or a Space Station!</h1>
         <p>Welcome to my RPG Setting Generator and Worldbuilding Tool! Use this tool to build worlds and detailed
           settings
           complete
@@ -83,7 +83,7 @@
           </div>
 
           <cdr-button @click="generateSetting" class='generate-button' :full-width="true"
-            modifier="secondary">Generate</cdr-button>
+            modifier="dark">Generate</cdr-button>
         </form>
       </div>
       <Tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%"
@@ -112,55 +112,65 @@
         </TabPanel>
         <TabPanel label="Locations">
           <h2>Important Locations</h2>
-          <cdr-accordion-group v-if="currentSetting.importantLocations && currentSetting.importantLocations.length > 0">
-            <cdr-accordion v-for="(setting, index) in currentSetting.importantLocations" :key="setting.name"
-              :id="setting.name" level="2" :opened="setting.open" @accordion-toggle="setting.open = !setting.open">
-              <template #label>
-                {{ setting.name }}
-              </template>
-              <div v-if="!setting.main_index && !setting.loading">
-                <h2>{{ setting.name }}</h2>
-                <p>{{ setting.description }}</p>
-                <p>{{ setting.setting_scale }}</p>
-                <cdr-button
-                  @click="generateSetting({ sublocationIndex: index, subLocationName: setting.name, subLocationDescription: setting.description, adjective: setting.adjective, setting_type: setting.setting_type, title: setting.title })">
-                  Generate Full Description
-                </cdr-button>
-              </div>
-              <div v-if="setting.has_detailed_description && !setting.loading">
-                <h2>{{ setting.name }}</h2>
-                <p>{{ settings[setting.main_index].setting_overview.overview }} {{
-                  settings[setting.main_index].setting_overview.relation_to_larger_setting }}</p>
-                <p>{{ settings[setting.main_index].setting_overview.history }}</p>
-                <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
-                  settings[setting.main_index].setting_overview.recent_event_current_ruler
-                }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
-                <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
-                  settings[setting.main_index].setting_overview.recent_event_social }}</p>
-                <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
-                  settings[setting.main_index].setting_overview.impactful_economic_event
-                }}</p>
-                <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
-                  settings[setting.main_index].setting_overview.recent_event_military }}
-                </p>
-                <p>{{ settings[setting.main_index].setting_overview.main_problem }} {{
-                  settings[setting.main_index].setting_overview.potential_solutions }}</p>
-                <p>
-                  {{ settings[setting.main_index].setting_overview.conclusion }}
-                </p>
-              </div>
-              <div v-if="!setting.has_detailed_description && setting.loading">
-                <CdrSkeleton>
-                  <OverviewSkeleton />
-                </CdrSkeleton>
-              </div>
-            </cdr-accordion>
-          </cdr-accordion-group>
+          <div
+            v-if="currentSetting.importantLocations && currentSetting.importantLocations.length > 0 && !currentSetting.loadingSubLocations">
+            <cdr-accordion-group>
+              <cdr-accordion v-for="(setting, index) in currentSetting.importantLocations" :key="setting.name"
+                :id="setting.name" level="2" :opened="setting.open" @accordion-toggle="setting.open = !setting.open">
+                <template #label>
+                  {{ setting.name }}
+                </template>
+                <div v-if="!setting.main_index && !setting.loading">
+                  <h2>{{ setting.name }}</h2>
+                  <p>{{ setting.description }}</p>
+                  <p>{{ setting.setting_scale }}</p>
+                  <cdr-button
+                    @click="generateSetting({ sublocationIndex: index, subLocationName: setting.name, subLocationDescription: setting.description, adjective: setting.adjective, setting_type: setting.setting_type, title: setting.title })">
+                    Generate Full Description
+                  </cdr-button>
+                </div>
+                <div v-if="setting.has_detailed_description && !setting.loading">
+                  <h2>{{ setting.name }}</h2>
+                  <p>{{ settings[setting.main_index].setting_overview.overview }} {{
+                    settings[setting.main_index].setting_overview.relation_to_larger_setting }}</p>
+                  <p>{{ settings[setting.main_index].setting_overview.history }}</p>
+                  <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
+                    settings[setting.main_index].setting_overview.recent_event_current_ruler
+                    }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                  <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
+                    settings[setting.main_index].setting_overview.recent_event_social }}</p>
+                  <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
+                    settings[setting.main_index].setting_overview.impactful_economic_event
+                    }}</p>
+                  <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
+                    settings[setting.main_index].setting_overview.recent_event_military }}
+                  </p>
+                  <p>{{ settings[setting.main_index].setting_overview.main_problem }} {{
+                    settings[setting.main_index].setting_overview.potential_solutions }}</p>
+                  <p>
+                    {{ settings[setting.main_index].setting_overview.conclusion }}
+                  </p>
+                </div>
+                <div v-if="!setting.has_detailed_description && setting.loading">
+                  <CdrSkeleton>
+                    <OverviewSkeleton />
+                  </CdrSkeleton>
+                </div>
+              </cdr-accordion>
+            </cdr-accordion-group>
+            <cdr-button style="margin-top: 3rem" @click="generateSubLocations" modifier="dark">Re-Generate Important
+              Locations for {{
+                currentSetting.place_name
+              }}
+            </cdr-button>
+          </div>
+
           <div v-if="!(currentSetting.importantLocations.length > 0) && !currentSetting.loadingSubLocations">
             <p>Important locations are key sites within the setting that can serve as focal points for adventures or
               intrigue. They can be anything from a grand castle to a hidden underground lair. Generate a full location
               description to flesh out the setting.</p>
-            <cdr-button @click="generateSubLocations">Generate Important Locations for {{ currentSetting.place_name }}
+            <cdr-button modifier="dark" @click="generateSubLocations">Generate Important Locations for {{
+              currentSetting.place_name }}
             </cdr-button>
           </div>
           <div v-if="currentSetting.loadingSubLocations">
@@ -217,8 +227,12 @@
               criminal
               organizations.
             </p>
-            <cdr-button @click="generateFactions">Generate Factions for {{ currentSetting.place_name }}</cdr-button>
+            <cdr-button @click="generateFactions" modifier="dark">Generate Factions for {{ currentSetting.place_name
+              }}</cdr-button>
           </div>
+          <cdr-button v-if="currentSetting.factions.length > 0 && !currentSetting.loadingFactions"
+            @click="generateFactions" modifier="dark">Re-Generate Factions for {{ currentSetting.place_name
+            }}</cdr-button>
           <div v-if="currentSetting.loadingFactions">
             <CdrSkeleton>
               <cdr-list>
@@ -237,6 +251,19 @@
         </TabPanel>
         <TabPanel label="NPCs" name="NPCs">
           <h2>Notable NPCs</h2>
+          <p>The default NPC list below is extracted from the main setting overview and the faction descriptions.
+            However,
+            you are free to add an NPC of your own with a short description.</p>
+          <cdr-input class="npc-input" id="npc-name" v-model="npcShortDescription" background="secondary"
+            label="NPC Short Description">
+            <template #helper-text-bottom>
+              Examples: "A smuggler secretly working for the Queen", "The emperor's eccentric advisor", "The village
+              drunk"
+            </template>
+          </cdr-input>
+          <cdr-button @click="generateDetailedNPCDescription(null)" style="margin: 2rem 0;" modifier="dark"
+            :full-width="true">Create
+            NPC</cdr-button>
           <cdr-accordion-group>
             <cdr-accordion v-for="(npc, index) in currentSetting.npcs" level="2" :id="'npc-' + index"
               :key="'npc-' + index" :opened="npc.open" @accordion-toggle="npc.open = !npc.open">
@@ -452,7 +479,6 @@ const sidebarStyle = computed(() => {
 function copySettingsAsPlainText() {
   const text = formatSettingAsPlainText(settingsTree.value);
   navigator.clipboard.writeText(text);
-  console.log(text);
   alert("Settings copied to clipboard as plain text!");
 }
 
@@ -484,6 +510,7 @@ const currentlyLoading = ref(false);
 const loadingQuestHooks = ref(false);
 const currentSettingIndex = ref(0);
 const activeTabIndex = ref(0);
+const npcShortDescription = ref('');
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
 const defaultSetting = reactive({
   adjective: '',
@@ -520,7 +547,6 @@ const settingsTree = computed(() => {
     }
   });
 
-  console.log("Final TREE with Indices:", tree);
   return tree;
 });
 
@@ -722,7 +748,7 @@ const sublocationValidation = jsonString => {
 
 const factionValidation = jsonString => {
   try {
-    console.log('validating factions')
+
     const jsonObj = JSON.parse(jsonString);
     const keys = [
       'name', 'history', 'recent_event', 'current_situation', 'motto', 'influence_level',
@@ -748,7 +774,6 @@ function questHookValidation(jsonString) {
 const npcValidationPart1 = jsonString => {
   try {
     const jsonObj = JSON.parse(jsonString);
-    console.log(jsonObj);
     const keys = ['description_of_position', 'current_location', 'distinctive_features_or_mannerisms',
       'character_secret', 'read_aloud_description'];
     return keys.every(key => key in jsonObj);
@@ -761,7 +786,6 @@ const npcValidationPart1 = jsonString => {
 const npcValidationPart2 = jsonString => {
   try {
     const jsonObj = JSON.parse(jsonString);
-    console.log(jsonObj);
     const keys = ['relationships', 'roleplaying_tips'];
     return keys.every(key => key in jsonObj);
 
@@ -895,24 +919,38 @@ function generateSetting({ sublocationIndex, subLocationName, subLocationDescrip
   } else {
     prompt = settingOverviewPrompt(setting.adjective, setting.setting_type, setting.place_name, setting.place_lore);
   }
-  console.log(sublocationIndex);
-  console.log(prompt);
   enqueueRequest('generateSetting', { operationIndex, prompt, sublocationIndex: sublocationIndex, subLocationName, adjective, setting_type });
 }
 
 
 function generateSubLocations() {
   const operationIndex = currentSettingIndex.value;
-  if (settings.value[operationIndex].importantLocations.length > 0) return;
+  let currentSubLocationsText = '';
+  if (settings.value[operationIndex].importantLocations.length > 0) {
+    if (confirm("Are you sure you want to regenerate sublocations? This will erase sublocations which don't have a full description.")) {
+      settings.value[operationIndex].importantLocations = settings.value[operationIndex].importantLocations.filter(location => location.has_detailed_description);
+      currentSubLocationsText = "These sublocations already exist so don't include them in the generated results: " + settings.value[operationIndex].importantLocations.map(location => location.name).join(', ');
+    } else {
+      return;
+    }
+  }
   const overviewText = getOverviewText(settings.value[operationIndex].setting_overview);
-  const prompt = subLocationsPrompt(overviewText);
+  const prompt = subLocationsPrompt(overviewText, currentSubLocationsText);
 
   enqueueRequest('generateSubLocations', { operationIndex, prompt });
 }
 
 function generateFactions() {
   const operationIndex = currentSettingIndex.value;
-  if (settings.value[operationIndex].factions.length > 0) return;
+  if (settings.value[operationIndex].factions.length > 0) {
+    if (confirm("Are you sure you want to regenerate factions? This will erase all existing factions and will remove all npcs associated with a faction.")) {
+      settings.value[operationIndex].factions = [];
+      //remove all npcs that are part of a faction
+      settings.value[operationIndex].npcs = settings.value[operationIndex].npcs.filter(npc => !npc.faction);
+    } else {
+      return;
+    }
+  }
   const overviewText = getOverviewText(settings.value[operationIndex].setting_overview);
   const prompt = factionsPrompt(overviewText);
 
@@ -939,11 +977,9 @@ async function handleGenerateQuestHook({ operationIndex, prompt }) {
     });
     currentlyLoading.value = true
     loadingQuestHooks.value = true;
-    console.log(prompt);
     const response = await generateGptResponse(prompt, questHookValidation);
     currentlyLoading.value = false;
     loadingQuestHooks.value = false;
-    console.log(response);
     if (settings.value[operationIndex]) {
       const questHook = JSON.parse(response);
       settings.value[operationIndex].questHooks.push(questHook);
@@ -980,6 +1016,11 @@ function getFullNPCDescription(npc) {
 
 function generateDetailedNPCDescription(index, relationshipObject) {
   const operationIndex = currentSettingIndex.value;
+  if (index === null) {
+    settings.value[operationIndex].npcs.push({ name: 'New NPC', description: npcShortDescription.value });
+    index = settings.value[operationIndex].npcs.length - 1;
+    handleAccordion(index);
+  }
   const npc = settings.value[operationIndex].npcs[index];
   const npcText = getNPCText(npc);
   const settingOverviewText = getOverviewText(settings.value[operationIndex].setting_overview);
@@ -991,9 +1032,8 @@ function generateDetailedNPCDescription(index, relationshipObject) {
     if (relationshipObject) {
       prompt = createNPCRelationshipPrompt(npc.name, npcText, relationshipObject, settingOverviewText, factionOverviewText);
     } else {
-      prompt = createNPCPrompt(npc.name, settingOverviewText, factionOverviewText);
+      prompt = createNPCPrompt(npc.name, settingOverviewText, factionOverviewText, npcShortDescription.value);
     }
-    console.log(prompt);
     enqueueRequest('generateDetailedNPCDescription', { operationIndex, npcIndex: index, prompt, relationshipObject });
   }
 }
@@ -1005,7 +1045,6 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
     let parentIndex;
     if (isNumber(sublocationIndex)) {
       parentIndex = operationIndex;
-      console.log("Parent index:", parentIndex, "Sublocation index:", sublocationIndex, "Sublocation name:", subLocationName, "Adjective:", adjective, "Setting type:", setting_type);
       createNewSetting(true, adjective, setting_type, subLocationName, title, parentIndex);
       operationIndex = settings.value.length - 1;
     }
@@ -1046,12 +1085,11 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
 
 async function handleGenerateSubLocations({ operationIndex, prompt }) {
   try {
-    if (settings.value[operationIndex].importantLocations.length > 0) return;
     if (!settings.value[operationIndex]) return;
     settings.value[operationIndex].loadingSubLocations = true;
     currentlyLoading.value = true;
     const response = await generateGptResponse(prompt, sublocationValidation);
-    settings.value[operationIndex].importantLocations = JSON.parse(response);
+    settings.value[operationIndex].importantLocations = settings.value[operationIndex].importantLocations.concat(JSON.parse(response));
     saveSettingsToLocalStorage();  // Save to local storage after update
     settings.value[operationIndex].loadingSubLocations = false;
     currentlyLoading.value = false;
@@ -1064,11 +1102,8 @@ async function handleGenerateSubLocations({ operationIndex, prompt }) {
 
 async function handleGenerateFactions({ operationIndex, prompt }) {
   try {
-    console.log("Generating factions");
-    if (!settings.value[operationIndex].factions.length > 0) {
-      currentlyLoading.value = true;
-      settings.value[operationIndex].loadingFactions = true;
-    }
+    currentlyLoading.value = true;
+    settings.value[operationIndex].loadingFactions = true;
 
     const response = await generateGptResponse(prompt, factionValidation);
     currentlyLoading.value = false;
@@ -1113,17 +1148,18 @@ async function handleGenerateDetailedNPCDescription({ operationIndex, npcIndex, 
     }
 
     const npcPart1 = await generateGptResponse(prompt, npcValidationPart1);
+    npc.name = JSON.parse(npcPart1).name;  // Update the name from the response
     const relationshipsAndTips = await generateGptResponse(createRelationshipAndTipsPrompt(npc.name, npcPart1), npcValidationPart2);
-
+    npcShortDescription.value = '';
     if (npc) {
       Object.assign(npc, JSON.parse(npcPart1));
       Object.assign(npc, JSON.parse(relationshipsAndTips));
       npc.loading = false;
       currentlyLoading.value = false;
-      console.log(npc);
       saveSettingsToLocalStorage(); // Save to local storage after update
     }
   } catch (error) {
+    npcShortDescription.value = '';
     if (npc) {
       npc.loading = false; // Ensure we catch and handle the case where npc might be partially defined
       currentlyLoading.value = false;

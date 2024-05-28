@@ -97,7 +97,7 @@ export function sublocationOverviewPrompt(
   }`;
 }
 
-export function subLocationsPrompt(settingDescription) {
+export function subLocationsPrompt(settingDescription, existingSubLocations) {
   return `
   Below is a description of a setting:
   ${settingDescription}
@@ -105,6 +105,8 @@ export function subLocationsPrompt(settingDescription) {
   Return a JSON array in the following format, including the sub-locations mentioned in the text and 5-6 additional important sub-locations found within the setting. Ensure that each sub-location's scale is appropriate relative to the main location's scale. For example, if the main location is a 'Country', the sublocation may be a 'Region'. If the main location is a 'Region', describe a 'City' or 'Town'. If the main location is a 'City', describe an important 'Area'. If the main location is a 'Building', describe an important 'Room'. If the main location is an 'Area', you might describe a 'Location' within it.
   
   All sub-locations must be smaller than the location they are a part of and be contained within the larger setting. Do not include neighboring settings or locations that are not part of the setting described in the main location.
+
+  ${existingSubLocations}
   
   Temperature: 0.9
   [
@@ -153,15 +155,24 @@ export function createNPCPrompt(
   npcName,
   kingdomDescription,
   factionDescription,
+  shortDescription,
 ) {
   const factionString = factionDescription
     ? `This character is also a key member of the faction: '${factionDescription}', which influences their decisions and role within the story.`
     : '';
 
+  const shortDescriptionString = shortDescription
+    ? `Here is a brief description of ${npcName}: ${shortDescription}`
+    : '';
+
+  const npcNameText = npcName ? npcName : 'the NPC';
+
   return `
-Please create a detailed Tabletop Roleplaying NPC description for ${npcName}. Below is the character's brief and setting context:
+Please create a detailed Tabletop Roleplaying NPC description for ${npcNameText}. Below is the character's brief and setting context:
 
 - **Setting Context**: ${kingdomDescription} ${factionString}
+
+${shortDescriptionString}
 
 Please format the NPC description as a JSON object with the following keys:
 
@@ -188,14 +199,13 @@ character_secret:
 Temperature: 0.9.
 
 {
+  "name": "Put the NPC's name here",
   "description_of_position": "Provide a specific and detailed description of their job or position in society, including a detail that sets them apart from others in that position.",
-  "current_location": "Provide a location where ${npcName} can be found and explain why they are there, considering a current goal or aspiration of theirs.",
+  "current_location": "Provide a location where ${npcNameText} can be found and explain why they are there, considering a current goal or aspiration of theirs.",
   "distinctive_features_or_mannerisms": "Provide a distinctive feature or peculiar mannerism observable in their actions. Avoid cliches and consider how these traits might influence their interactions with others.",
-  "character_secret": "A hidden motivation or secret of ${npcName} that influences their behavior. Be specific about what this secret is and how it impacts their actions.",
-  "read_aloud_description": "A concise 2-3 sentence description designed for a GM to read aloud when players first encounter ${npcName}."
+  "character_secret": "A hidden motivation or secret of ${npcNameText} that influences their behavior. Be specific about what this secret is and how it impacts their actions.",
+  "read_aloud_description": "A concise 2-3 sentence description designed for a GM to read aloud when players first encounter ${npcNameText}."
 }
-
-
 `;
 }
 
