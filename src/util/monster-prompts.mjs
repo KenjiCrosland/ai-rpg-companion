@@ -132,13 +132,13 @@ export function createStatblockPrompts(options) {
   let resistanceAndImmunitiesPrompt =
     'The creature has 0 immunities and 0 resistances';
   if (template.damage_resistances) {
-    resistanceAndImmunitiesPrompt = `The creature has 1-3 damage_resistances. The creature has 0 damage_immunities.`;
+    resistanceAndImmunitiesPrompt = `The creature has 1-2 damage_resistances. The creature has 0 damage_immunities. Bludgeoning, piercing and slashing damage from non-magical weapons counts as a single damage type.`;
   }
   if (template.damage_immunities) {
-    resistanceAndImmunitiesPrompt = `The creature has 1-3 damage_immunities. The creature has 0 damage_resistances.`;
+    resistanceAndImmunitiesPrompt = `The creature has 1-2 damage_immunities. The creature has 0 damage_resistances. Bludgeoning, piercing and slashing damage from non-magical weapons counts as a single damage type.`;
   }
   if (template.damage_resistances && template.damage_immunities) {
-    resistanceAndImmunitiesPrompt = `The creature has 1 to 4 damage_resistances and 1 to 3 damage_immunities.`;
+    resistanceAndImmunitiesPrompt = `The creature has 1 to 2 damage_resistances and 1 damage_immunities. Bludgeoning, piercing and slashing damage from non-magical weapons counts as a single damage type.`;
   }
 
   const part2Obj = {
