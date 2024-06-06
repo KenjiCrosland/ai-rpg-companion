@@ -171,7 +171,7 @@ export function createStatblockPrompts(options) {
     With the above format in mind, please generate the first part of a statblock for ${monsterName}. Abilities should be passive and not require an action. ${casterPrompt}
     The creature should have a challenge_rating ${challengeRating} with a proficiency_bonus of +${
       challengeRatingObj.proficiency_bonus
-    }. The effective armor_class should be around ${
+    }. The effective armor_class should be ${
       template.armor_class
     } (depending on abilities) and hit_points should be ${template.hit_points}.
     ${savingThrowsPrompt}. ${resistanceAndImmunitiesPrompt} ${legendaryResistancePrompt}. Remember that the only possible damage types are from this list: Acid, Bludgeoning, Cold, Fire, Force, Lightning, Necrotic, Piercing, Poison, Psychic, Radiant, Slashing, Thunder as well as "Bludgeoning, Slashing and Piercing from non-magical weapons". Finally condition_immunities can only be selected from this list: Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious
