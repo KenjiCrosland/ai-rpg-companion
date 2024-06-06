@@ -4054,7 +4054,7 @@
             "hit_points": "270 (24d12 + 114)",
             "damage_resistances": true,
             "damage_immunities": false,
-            "to_hit_bonus": "+10",
+            "to_hit_bonus": "+11",
             "saving_throws": "+10, +14, +11, +11",
             "actions": [
                 {
@@ -4063,11 +4063,11 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "Melee Attack: +10 to hit, dealing 12 (2d10 + 1) damage."
+                    "description": "Melee Attack: +11 to hit, dealing 12 (2d10 + 1) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "Melee Attack: +10 to hit, dealing 15 (2d10 + 3) damage. The creature must make a DC 18 saving throw or suffer a condition"
+                    "description": "Melee Attack: +11 to hit, dealing 15 (2d10 + 3) damage. The creature must make a DC 18 saving throw or suffer a condition"
                 },
                 {
                     "name": "Action 3",
@@ -4085,7 +4085,7 @@
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 33 (6d10) damage with either a DC 18 save or a +10 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 33 (6d10) damage with either a DC 18 save or a +11 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
                 }
             ]
         },
@@ -4095,7 +4095,7 @@
             "hit_points": "347 (38d12 +100)",
             "damage_resistances": true,
             "damage_immunities": false,
-            "to_hit_bonus": "+10",
+            "to_hit_bonus": "+11",
             "saving_throws": "+10, +14, +11, +11",
             "actions": [
                 {
@@ -4104,11 +4104,11 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "Melee Attack: +10 to hit, dealing 12 (2d10 + 1) damage."
+                    "description": "Melee Attack: +11 to hit, dealing 12 (2d10 + 1) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "Melee Attack: +10 to hit, dealing 15 (2d10 + 3) damage. The creature must make a DC 18 saving throw or suffer a condition"
+                    "description": "Melee Attack: +11 to hit, dealing 15 (2d10 + 3) damage. The creature must make a DC 18 saving throw or suffer a condition"
                 },
                 {
                     "name": "Action 3",
@@ -4126,7 +4126,7 @@
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 33 (6d10) damage with either a DC 18 save or a +10 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 33 (6d10) damage with either a DC 18 save or a +11 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
                 }
             ]
         },
@@ -4136,7 +4136,7 @@
             "hit_points": "270 (24d12 + 114)",
             "damage_resistances": true,
             "damage_immunities": false,
-            "to_hit_bonus": "+12",
+            "to_hit_bonus": "+13",
             "saving_throws": "+8, +12, +9, +9",
             "actions": [
                 {
@@ -4145,11 +4145,11 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "Melee Attack: +12 to hit, dealing 13 (2d10 + 3) damage."
+                    "description": "Melee Attack: +13 to hit, dealing 13 (2d10 + 3) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "Melee Attack: +12 to hit, dealing 24 (4d10 + 2) damage. The creature must make a DC 20 saving throw or suffer a condition"
+                    "description": "Melee Attack: +13 to hit, dealing 24 (4d10 + 2) damage. The creature must make a DC 20 saving throw or suffer a condition"
                 },
                 {
                     "name": "Action 3",
@@ -4167,7 +4167,7 @@
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 44 (8d10) damage with either a DC 20 save or a +12 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 44 (8d10) damage with either a DC 20 save or a +13 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
                 }
             ]
         },
@@ -4177,7 +4177,7 @@
             "hit_points": "270 (24d12 + 114)",
             "damage_resistances": true,
             "damage_immunities": false,
-            "to_hit_bonus": "+14",
+            "to_hit_bonus": "+15",
             "saving_throws": "+6, +10, +7, +7",
             "actions": [
                 {
@@ -4186,15 +4186,15 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "Melee Attack: +14 to hit, dealing 16 (2d10 + 5) damage."
+                    "description": "Melee Attack: +15 to hit, dealing 16 (2d10 + 5) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "Melee Attack: +14 to hit, dealing 31 (5d10 + 3) damage. The creature must make a DC 20 saving throw or suffer a major condition"
+                    "description": "Melee Attack: +15 to hit, dealing 31 (5d10 + 3) damage. The creature must make a DC 22 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 20 saving throw or take 60 (11d10) damage or half as much on a successful save."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 22 saving throw or take 60 (11d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
@@ -4208,19 +4208,20 @@
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 50 (9d10) damage with either a DC 20 save or a +14 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 50 (9d10) damage with either a DC 22 save or a +15 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
                 }
             ]
         }
     ],
     "19": [
         {
-            "type": "balanced",
-            "armor_class": "19",
-            "hit_points": "270 (22d12 + 127)",
+            "type": "defensive",
+            "armor_class": "22",
+            "hit_points": "280 (22d12 + 137)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+11",
+            "saving_throws": "+10, +14, +11, +11",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -4228,29 +4229,152 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 27 (5d8 + 4) damage."
+                    "description": "Melee Attack: +11 to hit, dealing 12 (2d10 + 1) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 38 (7d8 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +11 to hit, dealing 15 (2d10 + 3) damage. The creature must make a DC 18 saving throw or suffer a condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 77 (14d10) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 18 saving throw or take 33 (6d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 27 (5d8 + 4) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or helps the creature resist damage."
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "The creature can choose to use Action 3."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 39 (7d10) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 33 (6d10) damage with either a DC 18 save or a +11 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
+                }
+            ]
+        },
+        {
+            "type": "defensive",
+            "armor_class": "16",
+            "hit_points": "360 (40d12 + 100)",
+            "damage_resistances": true,
+            "damage_immunities": false,
+            "to_hit_bonus": "+11",
+            "saving_throws": "+10, +14, +11, +11",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "Melee Attack: +11 to hit, dealing 12 (2d10 + 1) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "Melee Attack: +11 to hit, dealing 15 (2d10 + 3) damage. The creature must make a DC 18 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 18 saving throw or take 33 (6d10) damage or half as much on a successful save."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or helps the creature resist damage."
+                },
+                {
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "The creature can choose to use Action 3."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 33 (6d10) damage with either a DC 18 save or a +11 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
+                }
+            ]
+        },
+        {
+            "type": "balanced",
+            "armor_class": "19",
+            "hit_points": "285 (27d12 + 110)",
+            "damage_resistances": true,
+            "damage_immunities": false,
+            "to_hit_bonus": "+13",
+            "saving_throws": "+8, +12, +9, +9",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "Melee Attack: +13 to hit, dealing 13 (2d10 + 3) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "Melee Attack: +13 to hit, dealing 24 (4d10 + 2) damage. The creature must make a DC 20 saving throw or suffer a condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 20 saving throw or take 50 (9d10) damage or half as much on a successful save."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or helps the creature avoid damage or do more damage in subsequent turns."
+                },
+                {
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "The creature can choose to use Action 3."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 44 (8d10) damage with either a DC 20 save or a +13 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
+                }
+            ]
+        },
+        {
+            "type": "offensive",
+            "armor_class": "16",
+            "hit_points": "285 (27d12 + 110)",
+            "damage_resistances": true,
+            "damage_immunities": false,
+            "to_hit_bonus": "+15",
+            "saving_throws": "+6, +10, +7, +7",
+            "actions": [
+                {
+                    "name": "Multiattack",
+                    "description": "The creature makes two attacks with Action 1 and one attack with Action 2."
+                },
+                {
+                    "name": "Action 1",
+                    "description": "Melee Attack: +15 to hit, dealing 16 (2d10 + 5) damage."
+                },
+                {
+                    "name": "Action 2",
+                    "description": "Melee Attack: +15 to hit, dealing 31 (5d10 + 3) damage. The creature must make a DC 22 saving throw or suffer a major condition"
+                },
+                {
+                    "name": "Action 3",
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 22 saving throw or take 60 (11d10) damage or half as much on a successful save."
+                }
+            ],
+            "legendary_actions": [
+                {
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates an ability that helps the creature do more damage in subsequent turns."
+                },
+                {
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 20 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
+                },
+                {
+                    "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 50 (9d10) damage with either a DC 22 save or a +15 to hit. Consider an action that helps the creature with mobility or causes a minor condition on its targets"
                 }
             ]
         }
