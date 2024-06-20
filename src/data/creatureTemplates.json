@@ -4881,10 +4881,11 @@
         {
             "type": "balanced",
             "armor_class": "20",
-            "hit_points": "360 (32d12 + 152)",
+            "hit_points": "345 (37d12 + 105)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+15",
+            "saving_throws": "+10, +14, +11, +11",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -4892,29 +4893,29 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 44 (7d10 + 5) damage."
+                    "description": "Melee Attack: +15 to hit, dealing 14 (2d10 + 3) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 55 (9d10 + 5) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +15 to hit, dealing 27 (4d10 + 5) damage. The creature must make a DC 22 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 111 (17d12) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 22 saving throw or take 65 (12d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 38 (6d10 + 5) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates a thematic ability that helps the creature avoid damage either by imposing disadvantage, increasing mobility, or adding resistance to the next attack"
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 21 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 52 (8d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 60 (11d10) damage with a DC 22 save. Those whole fail the save suffer a minor condition for one round."
                 }
             ]
         }
@@ -4922,11 +4923,12 @@
     "24": [
         {
             "type": "balanced",
-            "armor_class": "20",
-            "hit_points": "400 (38d12 + 152)",
+            "armor_class": "21",
+            "hit_points": "360 (40d12 + 100)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+16",
+            "saving_throws": "+11, +15, +12, +12",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -4934,29 +4936,29 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 50 (8d10 + 6) damage."
+                    "description": "Melee Attack: +16 to hit, dealing 16 (2d10 + 5) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 61 (10d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +16 to hit, dealing 28 (4d10 + 6) damage. The creature must make a DC 23 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 130 (20d12) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 23 saving throw or take 65 (12d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 50 (8d10 + 6) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates a thematic ability that helps the creature avoid damage either by imposing disadvantage, increasing mobility, or adding resistance to the next attack"
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 22 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 65 (10d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 60 (11d10) damage with a DC 23 save. Those whole fail the save suffer a minor condition for one round."
                 }
             ]
         }
@@ -4964,11 +4966,12 @@
     "25": [
         {
             "type": "balanced",
-            "armor_class": "20",
-            "hit_points": "430 (43d12 + 151)",
+            "armor_class": "21",
+            "hit_points": "375 (42d12 + 102)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+16",
+            "saving_throws": "+11, +15, +12, +12",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -4976,29 +4979,29 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 56 (9d10 + 6) damage."
+                    "description": "Melee Attack: +16 to hit, dealing 16 (2d10 + 5) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 72 (12d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +16 to hit, dealing 28 (4d10 + 6) damage. The creature must make a DC 23 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 136 (21d12) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 23 saving throw or take 70 (13d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 50 (8d10 + 6) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates a thematic ability that helps the creature avoid damage either by imposing disadvantage, increasing mobility, or adding resistance to the next attack"
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 22 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 72 (11d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 65 (12d10) damage with a DC 23 save. Those whole fail the save suffer a minor condition for one round."
                 }
             ]
         }
@@ -5006,11 +5009,12 @@
     "26": [
         {
             "type": "balanced",
-            "armor_class": "20",
-            "hit_points": "465 (48d12 + 153)",
+            "armor_class": "21",
+            "hit_points": "390 (44d12 + 104)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+17",
+            "saving_throws": "+12, +16, +13, +13",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -5018,29 +5022,29 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 65 (9d12 + 6) damage."
+                    "description": "Melee Attack: +17 to hit, dealing 16 (2d10 + 5) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 72 (12d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +17 to hit, dealing 34 (5d10 + 6) damage. The creature must make a DC 24 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 136 (21d12) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 24 saving throw or take 70 (13d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 50 (8d10 + 6) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates a thematic ability that helps the creature avoid damage either by imposing disadvantage, increasing mobility, or adding resistance to the next attack"
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 24 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 72 (11d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 65 (12d10) damage with a DC 24 save. Those whole fail the save suffer a minor condition for one round."
                 }
             ]
         }
@@ -5048,11 +5052,12 @@
     "27": [
         {
             "type": "balanced",
-            "armor_class": "20",
-            "hit_points": "502 (53d12 + 158)",
+            "armor_class": "22",
+            "hit_points": "405 (47d12 + 100)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+17",
+            "saving_throws": "+12, +16, +13, +13",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -5060,29 +5065,29 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 65 (9d12 + 6) damage."
+                    "description": "Melee Attack: +17 to hit, dealing 18 (3d10 + 1) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 72 (12d10 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +17 to hit, dealing 34 (5d10 + 6) damage. The creature must make a DC 24 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 143 (22d12) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 24 saving throw or take 70 (13d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 61 (10d10 + 6) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates a thematic ability that helps the creature avoid damage either by imposing disadvantage, increasing mobility, or adding resistance to the next attack"
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 24 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 72 (11d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 65 (12d10) damage with a DC 24 save. Those whole fail the save suffer a minor condition for one round."
                 }
             ]
         }
@@ -5090,11 +5095,12 @@
     "28": [
         {
             "type": "balanced",
-            "armor_class": "20",
-            "hit_points": "540 (60d12 + 150)",
+            "armor_class": "22",
+            "hit_points": "420 (49d12 + 102)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+18",
+            "saving_throws": "+13, +17, +14, +14",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -5102,29 +5108,29 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 71 (10d12 + 6) damage."
+                    "description": "Melee Attack: +18 to hit, dealing 18 (3d10 + 1) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 78 (11d12 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +18 to hit, dealing 34 (5d10 + 6) damage. The creature must make a DC 25 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 150 (23d12) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 24 saving throw or take 75 (14d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 65 (10d10 + 10) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates a thematic ability that helps the creature avoid damage either by imposing disadvantage, increasing mobility, or adding resistance to the next attack"
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 25 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 78 (12d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 70 (13d10) damage with a DC 25 save. Those whole fail the save suffer a minor condition for one round."
                 }
             ]
         }
@@ -5132,11 +5138,12 @@
     "29": [
         {
             "type": "balanced",
-            "armor_class": "20",
-            "hit_points": "605 (70d12 + 150)",
+            "armor_class": "22",
+            "hit_points": "435 (51d12 + 104)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+18",
+            "saving_throws": "+13, +17, +14, +14",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -5144,29 +5151,29 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 84 (12d12 + 6) damage."
+                    "description": "Melee Attack: +18 to hit, dealing 20 (3d10 + 4) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 90 (13d12 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +18 to hit, dealing 34 (5d10 + 6) damage. The creature must make a DC 25 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 156 (24d12) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 24 saving throw or take 75 (14d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 65 (10d10 + 10) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates a thematic ability that helps the creature avoid damage either by imposing disadvantage, increasing mobility, or adding resistance to the next attack"
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 25 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 85 (13d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 70 (13d10) damage with a DC 25 save. Those whole fail the save suffer a minor condition for one round."
                 }
             ]
         }
@@ -5174,11 +5181,12 @@
     "30": [
         {
             "type": "balanced",
-            "armor_class": "22",
-            "hit_points": "605 (70d12 + 150)",
+            "armor_class": "23",
+            "hit_points": "450 (53d12 + 106)",
             "damage_resistances": true,
-            "damage_immunities": true,
-            "to_hit_bonus": "+12",
+            "damage_immunities": false,
+            "to_hit_bonus": "+19",
+            "saving_throws": "+14, +18, +15, +15",
             "actions": [
                 {
                     "name": "Multiattack",
@@ -5186,29 +5194,29 @@
                 },
                 {
                     "name": "Action 1",
-                    "description": "A +12 to hit melee action that does 84 (12d12 + 6) damage."
+                    "description": "Melee Attack: +19 to hit, dealing 20 (3d10 + 4) damage."
                 },
                 {
                     "name": "Action 2",
-                    "description": "A +12 to hit ranged action that does 90 (13d12 + 6) damage. The creature must make a DC 19 saving throw or suffer a condition"
+                    "description": "Melee Attack: +19 to hit, dealing 34 (5d10 + 6) damage. The creature must make a DC 26 saving throw or suffer a major condition"
                 },
                 {
                     "name": "Action 3",
-                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions) must make a DC 19 saving throw, taking 156 (24d12) damage on a failed save, or half as much damage on a successful one."
+                    "description": "Area of effect action (could be cone, line, or radius around creature--specify dimensions). Each creature within range must make a DC 24 saving throw or take 80 (15d10) damage or half as much on a successful save."
                 }
             ],
             "legendary_actions": [
                 {
-                    "name": "(Replace with actual name) Legendary Action 1 (Costs 2 Actions)",
-                    "description": "A +12 to hit melee action that does 65 (10d10 + 10) damage."
+                    "name": "(Replace with actual name) Legendary Action 1 (Costs 1 Action)",
+                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that activates a thematic ability that helps the creature avoid damage either by imposing disadvantage, increasing mobility, or adding resistance to the next attack"
                 },
                 {
-                    "name": "(Replace with actual name) Legendary Action 2 (Costs 1 Action)",
-                    "description": "A legendary non-damage dealing action that matches the flavor of this creature. As damage dealing actions are taken care of, consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "name": " (Replace with actual name) Legendary Action 2 (Costs 2 Actions)",
+                    "description": "Action targeting one creature with a DC 26 saving throw. If the creature fails the save they suffer a serious condition, potentially removing them from combat for one or more rounds."
                 },
                 {
                     "name": "(Replace with actual name) Legendary Action 3 (Costs 3 Actions)",
-                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do 85 (13d12) damage. Consider an action that helps the creature with mobility or causes a condition on its targets."
+                    "description": "A legendary action that matches the flavor of this creature. If this action does damage, it should do no more than 75 (14d10) damage with a DC 26 save. Those whole fail the save suffer a minor condition for one round."
                 }
             ]
         }
