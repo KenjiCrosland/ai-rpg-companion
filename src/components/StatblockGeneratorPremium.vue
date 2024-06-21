@@ -126,7 +126,7 @@ export default {
         caster: caster.value
       }
       const monsterPrompts = createStatblockPrompts(promptOptions);
-      //console.log(monsterPrompts.part1);
+      console.log(monsterPrompts.part1);
       let monsterStatsPart1;
       try {
         monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
@@ -140,7 +140,7 @@ export default {
         { role: 'user', content: `Please give me the first part of a D&D statblock in the following format` },
         { role: 'system', content: `${monsterStatsPart1}` }
       ];
-      //console.log(monsterPrompts.part2);
+      console.log(monsterPrompts.part2);
       let monsterStatsPart2;
       try {
         monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
