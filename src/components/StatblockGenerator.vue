@@ -1,7 +1,7 @@
 <template>
     <div class="generator-container">
         <div class="intro-container">
-            <h1>D&D 5e Monster Statblock Generator -- Free Version</h1>
+            <h1>Kenji's D&D 5e Monster Statblock Generator -- Free Version</h1>
             <p>
                 Welcome to the D&D 5e Statblock
                 Generator! This free version has a limit of 5 statblocks per day.
@@ -191,6 +191,12 @@ export default {
     display: grid;
     grid-template-columns: 4fr 1.5fr .5fr;
     gap: 2rem;
+}
+
+@media screen and (max-width: 855px) {
+    .form-row-top {
+        grid-template-columns: 1fr;
+    }
 }
 
 .form-row-mid {
