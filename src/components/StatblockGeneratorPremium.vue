@@ -1,80 +1,124 @@
 <template>
   <div class="app-container">
-
-
     <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
-      v-show="windowWidth <= 900">
+      v-show="windowWidth <= 1020">
       <template #icon-left>
         <icon-navigation-menu inherit-color />
       </template>
       {{ isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar' }}
     </cdr-button>
     <!-- Overlay to close sidebar on click -->
-    <div class="overlay" v-show="isSidebarVisible && windowWidth <= 900" @click="isSidebarVisible = false"></div>
+    <div class="overlay" v-show="isSidebarVisible && windowWidth <= 1020" @click="isSidebarVisible = false"></div>
     <div class="sidebar" :style="sidebarStyle">
-      <ul class="saved-statblocks">
-        <li v-for="(monsterItem, index) in monsters" :key="index" @click="selectMonster(index)"
-          :class="{ 'active': activeMonsterIndex === index }">
-          {{ monsterItem.name }} (CR: {{ monsterItem.challenge_rating }})
-        </li>
-      </ul>
-
+      <cdr-accordion-group>
+        <cdr-accordion level="3" v-for="(folder, folderName) in monsters" :key="folderName" :id="folderName"
+          :opened="openedFolders[folderName]"
+          @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
+          <template #label>
+            {{ folderName }}
+          </template>
+          <ul class="saved-statblocks">
+            <li v-for="(monsterItem, index) in folder" :key="index"
+              :class="{ 'active': activeMonsterIndex === index && activeFolder === folderName }">
+              <button class="monster-button" @click="selectMonster(folderName, index)" tabindex="0">
+                {{ monsterItem.name }} -- CR {{ monsterItem.challenge_rating }}
+              </button>
+            </li>
+            <li>
+              <button class="monster-button" @click="newMonster(folderName)">
+                + New Monster Statblock
+              </button>
+            </li>
+          </ul>
+        </cdr-accordion>
+      </cdr-accordion-group>
     </div>
     <div class="generator-container">
+      <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster">New
+        Monster
+        Statblock</cdr-button>
+      <div class="intro-and-form" v-show="!monster && !loadingPart1 && !loadingPart2">
+        <div class="intro-container">
+          <h1>Kenji's D&D 5e Monster Statblock Generator -- Premium Version</h1>
+          <p>
+            Welcome to the D&D 5e Statblock
+            Generator -- Premium Version! This premium version has no limits on the number of creatures you can generate
+            per
+            day.
+            Enter the name of the monster and choose a monster type and CR.
+            Monster types determine whether a monster is stronger on defense, offense or balanced. CR will determine
+            how
+            strong a monster is, with higher CRs making for stronger monsters. Finally, if you wish the creature to
+            be
+            able to cast spells, please use select the “Creature is a spellcaster” checkbox. When the ChatGPT API is
+            slow it can take up to two minutes to generate a creature. Once generated, you can export a creature to
+            homebrewery, foundry VTT or the Improved Initiative app.
+          </p>
+        </div>
+        <form @submit.prevent="generateStatblock" class="monster-form">
+          <div class="form-row-top">
+            <cdr-input id="monsterName" v-model="monsterName" background="secondary"
+              :label="'Monster Name (Example: Headless Horseman)'" required />
+            <cdr-select v-model="monsterType" label="type"
+              :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" required />
+            <cdr-select v-model="selectedChallengeRating" label="CR" prompt="CR"
+              :options="challengeRatingData.fullArray" required />
+          </div>
+          <div class="form-row-mid">
+            <cdr-input v-model="monsterDescription" :optional="true"
+              label='Monster Description / Special Instructions: Input extra details about the monster or any special instructions. Examples: "output the statblock in German", "this creature has a flying speed of 60ft", "this creature has an ability to do X". Feel free to add as much or as little detail as you like, or you can leave this field blank.'
+              :rows="4" />
+          </div>
+          <div class="form-row-end">
+            <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
+          </div>
 
-      <div class="intro-container">
-        <h1>Kenji's D&D 5e Monster Statblock Generator -- Premium Version</h1>
-        <p>
-          Welcome to the D&D 5e Statblock
-          Generator -- Premium Version! This premium version has no limits on the number of creatures you can generate
-          per
-          day.
-          Enter the name of the monster and choose a monster type and CR.
-          Monster types determine whether a monster is stronger on defense, offense or balanced. CR will determine
-          how
-          strong a monster is, with higher CRs making for stronger monsters. Finally, if you wish the creature to
-          be
-          able to cast spells, please use select the “Creature is a spellcaster” checkbox. When the ChatGPT API is
-          slow it can take up to two minutes to generate a creature. Once generated, you can export a creature to
-          homebrewery, foundry VTT or the Improved Initiative app.
-        </p>
+          <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
+            {{ 'Generate Statblock' }}
+          </cdr-button>
+        </form>
       </div>
-      <form @submit.prevent="generateStatblock" class="monster-form">
-        <div class="form-row-top">
-          <cdr-input id="monsterName" v-model="monsterName" background="secondary"
-            :label="'Monster Name (Example: Headless Horseman)'" required />
-          <cdr-select v-model="monsterType" label="type"
-            :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" required />
-          <cdr-select v-model="selectedChallengeRating" label="CR" prompt="CR" :options="challengeRatingData.fullArray"
-            required />
-        </div>
-        <div class="form-row-mid">
-          <cdr-input v-model="monsterDescription" :optional="true"
-            label='Monster Description / Special Instructions: Input extra details about the monster or any special instructions. Examples: "output the statblock in German", "this creature has a flying speed of 60ft", "this creature has an ability to do X". Feel free to add as much or as little detail as you like, or you can leave this field blank.'
-            :rows="4" />
-        </div>
-        <div class="form-row-end">
-          <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
-        </div>
-
-
-        <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
-          {{ 'Generate Statblock' }}
-        </cdr-button>
-      </form>
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+      <cdr-toggle-group v-if="shouldDisplayInterface && (monster || loadingPart1 || loadingPart2)"
+        v-model="userColumnsPreference" style="margin: 2cap;auto">
+        <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
+        <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
+      </cdr-toggle-group>
       <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
-        :loadingPart2="loadingPart2" :monster="monster" />
+        :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" />
+      <div>
+        <h2>Move Statblock to Folder</h2>
+        <form @submit.prevent="moveMonsterToFolder">
+          <cdr-input v-model="newFolder" label="New Folder Name:">
+            <template #helper-text-top>
+              Move the monster to a new folder in the sidebar
+            </template>
+          </cdr-input>
+          <cdr-select v-model="chosenFolder" label="Existing Folders" :options="folderNames">
+            <template #helper-text>
+              Move the monster to an existing folder in the sidebar
+            </template>
+          </cdr-select>
+          <cdr-button type="submit">Move To Folder</cdr-button>
+        </form>
+      </div>
+      <cdr-button class="delete-button" v-if="monster && !loadingPart2" modifier="dark" :full-width="true"
+        @click="deleteStatblock">Delete
+        Statblock</cdr-button>
+      <StatblockExports v-if="monster" :monster="monster" :loading="loadingPart1 || loadingPart2"
+        :columns="userColumnsPreference" />
     </div>
+    <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster">New
+      Monster
+      Statblock</cdr-button>
   </div>
 </template>
 
 <script>
-//Include a "Decapitate" action, but make sure that the target is already suffering a condition inflicted by the headless horseman for it to work.
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, reactive, onUnmounted } from 'vue';
 import Statblock from './Statblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { CdrInput, CdrButton, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrList, IconNavigationMenu } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconNavigationMenu } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-button.css";
@@ -82,6 +126,7 @@ import "@rei/cedar/dist/style/cdr-checkbox.css";
 import "@rei/cedar/dist/style/cdr-select.css";
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
 import "@rei/cedar/dist/style/cdr-toggle-button.css";
+import StatblockExports from './StatblockExports.vue';
 import challengeRatingData from '../data/challengeRatings.json';
 import creatureTemplates from '../data/creatureTemplates.json';
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
@@ -93,10 +138,13 @@ export default {
     CdrButton,
     CdrList,
     CdrCheckbox,
+    CdrAccordion,
+    CdrAccordionGroup,
     CdrSelect,
     CdrToggleButton,
     CdrToggleGroup,
     IconNavigationMenu,
+    StatblockExports
   },
   setup() {
     const loadingPart1 = ref(false);
@@ -109,7 +157,18 @@ export default {
     const caster = ref(false);
     const errorMessage = ref('');
     const windowWidth = ref(window.innerWidth);
-    const monsters = ref([]);
+    const monsters = ref({ 'Uncategorized': [] });
+    const newFolder = ref('');
+    const chosenFolder = ref('');
+    const activeFolder = ref('Uncategorized'); // Initialize with default folder
+    const openedFolders = reactive({ 'Uncategorized': true }); // To track the state of each accordion
+    const userColumnsPreference = ref('two_columns');
+    const shouldDisplayInterface = computed(() => {
+      return windowWidth.value > 855;
+    });
+    const folderNames = computed(() => {
+      return Object.keys(monsters.value);
+    });
 
     onMounted(() => {
       const savedMonsters = localStorage.getItem('monsters');
@@ -124,17 +183,24 @@ export default {
     // Add a ref to track the active index
     const activeMonsterIndex = ref(null);
 
+    function newMonster(folderName = 'Uncategorized') {
+      activeFolder.value = folderName;
+      activeMonsterIndex.value = null;
+      monster.value = null;
+    }
+
     // Modify selectMonster to set the active index
-    function selectMonster(index) {
-      monster.value = monsters.value[index];
-      activeMonsterIndex.value = index;  // Update the active index
+    function selectMonster(folderName = 'Uncategorized', index) {
+      activeFolder.value = folderName;
+      activeMonsterIndex.value = index;
+      monster.value = monsters.value[folderName][index];
     }
     const updateWindowWidth = () => {
       windowWidth.value = window.innerWidth;
     };
 
     const sidebarStyle = computed(() => {
-      if (windowWidth.value <= 900) {
+      if (windowWidth.value <= 1020) {
         return {
           position: 'fixed',
           transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
@@ -153,7 +219,7 @@ export default {
 
     // Update based on viewport size immediately and on resize
     const updateVisibility = () => {
-      if (window.innerWidth > 900) {
+      if (window.innerWidth > 1020) {
         isSidebarVisible.value = true;  // Always show on desktop
       } else {
         isSidebarVisible.value = false;  // Manage with toggle button on mobile
@@ -188,6 +254,25 @@ export default {
       } catch (error) {
         return false;
       }
+    }
+
+    function moveMonsterToFolder() {
+      //TODO fix this function
+      if (newFolder.value) {
+        monsters.value[newFolder.value] = monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1);
+        activeFolder.value = newFolder.value;
+      } else if (chosenFolder.value) {
+        monsters.value[chosenFolder.value].push(monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1)[0]);
+        activeFolder.value = chosenFolder.value;
+      }
+      localStorage.setItem('monsters', JSON.stringify(monsters.value));
+    }
+
+    function deleteStatblock(folderName = 'Uncategorized') {
+      monsters.value[folderName].splice(activeMonsterIndex.value, 1);
+      localStorage.setItem('monsters', JSON.stringify(monsters.value));
+      monster.value = null;
+      activeMonsterIndex.value = null;
     }
 
     async function generateStatblock() {
@@ -228,7 +313,12 @@ export default {
         ...JSON.parse(monsterStatsPart1),
         ...JSON.parse(monsterStatsPart2),
       }
-      monsters.value.push(finalMonster);  // Store the new monster in the array
+      const folderName = chosenFolder.value || 'Uncategorized';
+      if (!monsters.value[folderName]) {
+        monsters.value[folderName] = [];
+      }
+      monsters.value[folderName].push(finalMonster);
+      selectMonster(folderName, monsters.value[folderName].length - 1); // Select the newly added monster
       monster.value = finalMonster;       // Update the current monster
       localStorage.setItem('monsters', JSON.stringify(monsters.value)); // Save to local storage
       loadingPart2.value = false;
@@ -252,7 +342,19 @@ export default {
       isSidebarVisible,
       monsters,
       selectMonster,
-      activeMonsterIndex
+      activeMonsterIndex,
+      deleteStatblock,
+      userColumnsPreference,
+      shouldDisplayInterface,
+      newMonster,
+      newFolder,
+      chosenFolder,
+      folderNames,
+      updateVisibility,
+      updateWindowWidth,
+      activeFolder,
+      openedFolders,
+      moveMonsterToFolder
     }
   }
 }
@@ -276,8 +378,12 @@ export default {
   }
 }
 
+.new-monster-button {
+  margin: 2rem;
+  height: 4rem;
+}
+
 .sidebar {
-  $sidebar-width: 300px;
   $background-color: #f4f4f4;
   $active-color: #ffffff;
   $hover-background-color: #f0f0f0;
@@ -289,7 +395,6 @@ export default {
   transition: transform 0.3s ease;
   background-color: $background-color;
   padding: 1rem;
-  min-width: $sidebar-width;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -309,26 +414,41 @@ export default {
 
     li {
       margin-bottom: 4px;
-      padding: 12px 20px;
-      font-size: 1.5rem;
-      text-align: left;
-      background-color: $default-background-color;
-      cursor: pointer;
-      border-left: 5px solid transparent;
-      transition: background-color $transition-speed, border-left-color $transition-speed;
-
-      &:hover {
-        background-color: $hover-background-color;
-      }
-
-      &:focus {
-        outline: none; // Optionally, add a custom focus style
-        border-left-color: $active-border-color; // Example focus style for accessibility
-      }
 
       &.active {
-        background-color: $active-color;
-        border-left-color: $active-border-color;
+        .monster-button {
+          background-color: $active-color;
+          border-left-color: $active-border-color;
+          font-weight: bold;
+        }
+      }
+
+      .monster-button {
+        width: 100%;
+        padding: 12px 20px;
+        font-size: 1.5rem;
+        text-align: left;
+        background-color: $default-background-color;
+        border: none;
+        color: inherit; // Ensures button text color matches your design
+        cursor: pointer;
+        border-left: 5px solid transparent;
+        transition: background-color $transition-speed, border-left-color $transition-speed;
+
+        &:hover {
+          background-color: $hover-background-color;
+        }
+
+        &:focus {
+          outline: none; // Optionally, add a custom focus style
+          border-left-color: $active-border-color; // Example focus style for accessibility
+        }
+
+        &.active {
+          background-color: $active-color;
+          border-color: $active-border-color;
+          font-weight: bold;
+        }
       }
     }
   }
@@ -349,9 +469,10 @@ export default {
   left: 10px;
   z-index: 1001;
 
-  @media (max-width: 900px) {
+  @media (max-width: 1020px) {
     display: block; // Only shown on mobile
   }
+
 }
 
 .form-row-top {
@@ -360,10 +481,12 @@ export default {
   gap: 2rem;
 }
 
-@media screen and (max-width: 900px) {
+@media screen and (max-width: 1020px) {
   .form-row-top {
     grid-template-columns: 1fr;
   }
+
+
 }
 
 .form-row-mid {
@@ -384,12 +507,13 @@ export default {
 }
 
 .generator-container {
-  margin: auto;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
 .intro-container {
   max-width: 855px;
-  margin: 5px 30px;
+  margin: 5px 20px;
   padding: 0 1.5rem;
 }
 
@@ -409,10 +533,15 @@ export default {
   }
 }
 
-@media screen and (max-width: 900px) {
+.delete-button {
+  margin-bottom: 2rem;
+}
+
+@media screen and (max-width: 1020px) {
   .form-row {
     grid-template-columns: 1fr;
   }
+
 }
 
 .error-message {
