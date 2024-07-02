@@ -21,17 +21,35 @@
             <li v-for="(monsterItem, index) in folder" :key="index"
               :class="{ 'active': activeMonsterIndex === index && activeFolder === folderName }">
               <button class="monster-button" @click="selectMonster(folderName, index)" tabindex="0">
-                {{ monsterItem.name }} -- CR {{ monsterItem.challenge_rating }}
+                <span>{{ monsterItem.name }}</span>
+                <span>CR {{ getFirstNumber(monsterItem.challenge_rating) }}</span>
               </button>
             </li>
             <li>
-              <button class="monster-button" @click="newMonster(folderName)">
-                + New Monster Statblock
-              </button>
+              <button class="monster-button" @click="newMonster(folderName)"
+                :class="{ 'active': activeMonsterIndex === null && activeFolder === folderName }">
+                + New Monster Statblock</button>
             </li>
           </ul>
         </cdr-accordion>
       </cdr-accordion-group>
+
+      <div class="folder-form">
+        <h3>Move Statblock to Folder</h3>
+        <form @submit.prevent="moveMonsterToFolder">
+          <cdr-input v-model="newFolder" label="New Folder Name:">
+            <template #helper-text-top>
+              Move the monster to a new folder in the sidebar
+            </template>
+          </cdr-input>
+          <cdr-select v-model="chosenFolder" label="Existing Folders" :options="folderNames">
+            <template #helper-text>
+              Move the monster to an existing folder in the sidebar
+            </template>
+          </cdr-select>
+          <cdr-button type="submit">Move To Folder</cdr-button>
+        </form>
+      </div>
     </div>
     <div class="generator-container">
       <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster">New
@@ -86,22 +104,7 @@
       </cdr-toggle-group>
       <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
         :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" />
-      <div>
-        <h2>Move Statblock to Folder</h2>
-        <form @submit.prevent="moveMonsterToFolder">
-          <cdr-input v-model="newFolder" label="New Folder Name:">
-            <template #helper-text-top>
-              Move the monster to a new folder in the sidebar
-            </template>
-          </cdr-input>
-          <cdr-select v-model="chosenFolder" label="Existing Folders" :options="folderNames">
-            <template #helper-text>
-              Move the monster to an existing folder in the sidebar
-            </template>
-          </cdr-select>
-          <cdr-button type="submit">Move To Folder</cdr-button>
-        </form>
-      </div>
+
       <cdr-button class="delete-button" v-if="monster && !loadingPart2" modifier="dark" :full-width="true"
         @click="deleteStatblock">Delete
         Statblock</cdr-button>
@@ -183,10 +186,35 @@ export default {
     // Add a ref to track the active index
     const activeMonsterIndex = ref(null);
 
+    function getFirstNumber(text) {
+      // Split the text by spaces
+      const parts = text.split(' ');
+      // Find the first part that contains digits
+      for (let part of parts) {
+        if (/\d/.test(part)) {  // Check if the part has any digits
+          return parseInt(part, 10);  // Return the integer value
+        }
+      }
+      return null;  // Return null if no number is found
+    }
+
+
+    function sortMonstersByCR(folderName) {
+      return monsters.value[folderName].sort((a, b) => {
+        const crA = getFirstNumber(a.challenge_rating);
+        const crB = getFirstNumber(b.challenge_rating);
+        return crA - crB;
+      });
+    }
+
     function newMonster(folderName = 'Uncategorized') {
       activeFolder.value = folderName;
       activeMonsterIndex.value = null;
       monster.value = null;
+      monsterName.value = '';
+      monsterType.value = 'Random';
+      monsterDescription.value = '';
+      selectedChallengeRating.value = null;
     }
 
     // Modify selectMonster to set the active index
@@ -257,22 +285,51 @@ export default {
     }
 
     function moveMonsterToFolder() {
-      //TODO fix this function
+      //get the monster name from the active folder and index and assign it to monsterName
+      const currentMonsterName = monsters.value[activeFolder.value][activeMonsterIndex.value].name;
+      let previousActiveFolder = activeFolder.value;
       if (newFolder.value) {
         monsters.value[newFolder.value] = monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1);
         activeFolder.value = newFolder.value;
+        newFolder.value = '';
       } else if (chosenFolder.value) {
-        monsters.value[chosenFolder.value].push(monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1)[0]);
+        monsters.value[chosenFolder.value].push(...monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1));
         activeFolder.value = chosenFolder.value;
+        chosenFolder.value = '';
       }
+
+      if (monsters.value[previousActiveFolder].length === 0 && previousActiveFolder !== 'Uncategorized') {
+        delete monsters.value[previousActiveFolder];
+      }
+
+      //close the accordion if the monster was moved from it
+      if (previousActiveFolder !== activeFolder.value) {
+        openedFolders[previousActiveFolder] = false;
+      }
+
+      //If the accordion is closed, open it
+      if (!openedFolders[activeFolder.value]) {
+        openedFolders[activeFolder.value] = true;
+      }
+      monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
+      const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === currentMonsterName);
+      selectMonster(activeFolder.value, newIndex);
       localStorage.setItem('monsters', JSON.stringify(monsters.value));
     }
 
-    function deleteStatblock(folderName = 'Uncategorized') {
+    function deleteStatblock() {
+      const folderName = activeFolder.value || 'Uncategorized';
       monsters.value[folderName].splice(activeMonsterIndex.value, 1);
-      localStorage.setItem('monsters', JSON.stringify(monsters.value));
       monster.value = null;
       activeMonsterIndex.value = null;
+      if (monsters.value[folderName].length === 0) {
+        delete monsters.value[folderName];
+        activeFolder.value = 'Uncategorized';
+        if (!openedFolders['Uncategorized']) {
+          openedFolders['Uncategorized'] = true;
+        }
+      }
+      localStorage.setItem('monsters', JSON.stringify(monsters.value));
     }
 
     async function generateStatblock() {
@@ -313,13 +370,15 @@ export default {
         ...JSON.parse(monsterStatsPart1),
         ...JSON.parse(monsterStatsPart2),
       }
-      const folderName = chosenFolder.value || 'Uncategorized';
+      const folderName = activeFolder.value || 'Uncategorized';
       if (!monsters.value[folderName]) {
         monsters.value[folderName] = [];
       }
       monsters.value[folderName].push(finalMonster);
-      selectMonster(folderName, monsters.value[folderName].length - 1); // Select the newly added monster
       monster.value = finalMonster;       // Update the current monster
+      monsters.value[folderName] = sortMonstersByCR(folderName);
+      const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
+      selectMonster(folderName, newIndex); // Select the newly added monster
       localStorage.setItem('monsters', JSON.stringify(monsters.value)); // Save to local storage
       loadingPart2.value = false;
     }
@@ -354,7 +413,9 @@ export default {
       updateWindowWidth,
       activeFolder,
       openedFolders,
-      moveMonsterToFolder
+      moveMonsterToFolder,
+      getFirstNumber,
+      sortMonstersByCR
     }
   }
 }
@@ -379,6 +440,7 @@ export default {
 }
 
 .new-monster-button {
+  min-width: 210px;
   margin: 2rem;
   height: 4rem;
 }
@@ -425,6 +487,8 @@ export default {
 
       .monster-button {
         width: 100%;
+        display: flex;
+        justify-content: space-between;
         padding: 12px 20px;
         font-size: 1.5rem;
         text-align: left;
@@ -453,12 +517,15 @@ export default {
     }
   }
 
-  .copy-buttons {
+  .folder-form {
     display: flex;
     flex-direction: column;
     margin: 1rem;
-    gap: 1rem;
     margin-bottom: 7rem;
+
+    button {
+      margin-top: 2rem;
+    }
   }
 }
 
