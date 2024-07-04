@@ -52,7 +52,7 @@
       </div>
     </div>
     <div class="generator-container">
-      <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster">New
+      <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster()">New
         Monster
         Statblock</cdr-button>
       <div class="intro-and-form" v-show="!monster && !loadingPart1 && !loadingPart2">
@@ -111,7 +111,7 @@
       <StatblockExports v-if="monster" :monster="monster" :loading="loadingPart1 || loadingPart2"
         :columns="userColumnsPreference" />
     </div>
-    <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster">New
+    <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster()">New
       Monster
       Statblock</cdr-button>
   </div>
@@ -457,7 +457,7 @@ export default {
   transition: transform 0.3s ease;
   background-color: $background-color;
   padding: 1rem;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

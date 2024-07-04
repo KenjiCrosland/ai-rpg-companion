@@ -52,32 +52,29 @@
             </div>
         </div>
         <div class="generator-container">
-            <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster">New
+            <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster()">New
                 Monster
                 Statblock</cdr-button>
             <div class="intro-and-form" v-show="!monster && !loadingPart1 && !loadingPart2">
                 <div class="intro-container">
-                    <h1>Kenji's D&D 5e Monster Statblock Generator -- Premium Version</h1>
+                    <h1>Kenji's D&D 5e Monster Statblock Generator -- Free Version</h1>
                     <p>
-                        Welcome to the D&D 5e Statblock
-                        Generator -- Premium Version! This premium version has no limits on the number of creatures you
-                        can
-                        generate
-                        per
-                        day.
-                        Enter the name of the monster and choose a monster type and CR.
-                        Monster types determine whether a monster is stronger on defense, offense or balanced. CR will
-                        determine
-                        how
-                        strong a monster is, with higher CRs making for stronger monsters. Finally, if you wish the
-                        creature to
-                        be
-                        able to cast spells, please use select the “Creature is a spellcaster” checkbox. When the
-                        ChatGPT API is
-                        slow it can take up to two minutes to generate a creature. Once generated, you can export a
-                        creature to
-                        homebrewery, foundry VTT or the Improved Initiative app.
+                        Welcome to the D&D 5e Statblock Generator! This free version has a limit of 5 statblocks per
+                        day. Enter
+                        the name of the monster and choose a monster type and CR. Monster types determine whether a
+                        monster is
+                        stronger on defense, offense or balanced. CR will determine how strong a monster is, with higher
+                        CRs
+                        making for stronger monsters. Finally, if you wish the creature to be able to cast spells,
+                        please use
+                        select the “Creature is a spellcaster” checkbox. Once generated, you can export a creature to
+                        homebrewery,
+                        foundry VTT or
+                        the Improved Initiative app.
                     </p>
+                    <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/">Link to
+                        Statblock
+                        Generator -- Premium Version</cdr-link>
                 </div>
                 <form @submit.prevent="generateStatblock" class="monster-form">
                     <div class="form-row-top">
@@ -117,7 +114,7 @@
             <StatblockExports v-if="monster" :monster="monster" :loading="loadingPart1 || loadingPart2"
                 :columns="userColumnsPreference" />
         </div>
-        <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster">New
+        <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster()">New
             Monster
             Statblock</cdr-button>
     </div>
@@ -127,7 +124,7 @@
 import { ref, onMounted, computed, reactive, onUnmounted } from 'vue';
 import Statblock from './Statblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { CdrInput, CdrButton, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconNavigationMenu } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconNavigationMenu } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-button.css";
@@ -146,6 +143,7 @@ export default {
         Statblock,
         CdrInput,
         CdrButton,
+        CdrLink,
         CdrList,
         CdrCheckbox,
         CdrAccordion,
@@ -225,6 +223,10 @@ export default {
             activeFolder.value = folderName;
             activeMonsterIndex.value = null;
             monster.value = null;
+            monsterName.value = '';
+            monsterType.value = 'Random';
+            monsterDescription.value = '';
+            selectedChallengeRating.value = null;
         }
 
         // Modify selectMonster to set the active index
@@ -295,6 +297,7 @@ export default {
         }
 
         function moveMonsterToFolder() {
+            const currentMonsterName = monsters.value[activeFolder.value][activeMonsterIndex.value].name;
             let previousActiveFolder = activeFolder.value;
             if (newFolder.value) {
                 monsters.value[newFolder.value] = monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1);
@@ -320,21 +323,34 @@ export default {
                 openedFolders[activeFolder.value] = true;
             }
             monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
-            localStorage.setItem('monsters', JSON.stringify(monsters.value));
+            const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+            const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+            const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === currentMonsterName);
+            selectMonster(activeFolder.value, newIndex);
+            localStorage.setItem('monsters', JSON.stringify(dataToStore));
         }
 
-        function deleteStatblock(folderName = 'Uncategorized') {
+        function deleteStatblock() {
+            const folderName = activeFolder.value || 'Uncategorized';
             monsters.value[folderName].splice(activeMonsterIndex.value, 1);
-            monsters.value = sortMonstersByCR(folderName);
-            localStorage.setItem('monsters', JSON.stringify(monsters.value));
             monster.value = null;
             activeMonsterIndex.value = null;
+            if (monsters.value[folderName].length === 0 && folderName !== 'Uncategorized') {
+                delete monsters.value[folderName];
+                activeFolder.value = 'Uncategorized';
+                if (!openedFolders['Uncategorized']) {
+                    openedFolders['Uncategorized'] = true;
+                }
+            }
+            const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+            const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+            localStorage.setItem('monsters', JSON.stringify(dataToStore));
         }
 
         async function generateStatblock() {
             monster.value = null;
 
-            if (!canGenerateStatblock()) { // Call without monsters parameter
+            if (!canGenerateStatblock()) {
                 return;
             }
             loadingPart1.value = true;
@@ -349,7 +365,6 @@ export default {
             };
 
             const monsterPrompts = createStatblockPrompts(promptOptions);
-            console.log(monsterPrompts.part1);
 
             let monsterStatsPart1;
             try {
@@ -363,18 +378,14 @@ export default {
 
             monster.value = JSON.parse(monsterStatsPart1);
             loadingPart1.value = false;
-
             const previousContext = [
-                { role: 'user', content: 'Please give me the first part of a D&D statblock in the following format' },
-                { role: 'system', content: monsterStatsPart1 }
+                { role: 'user', content: `Please give me the first part of a D&D statblock in the following format` },
+                { role: 'system', content: `${monsterStatsPart1}` }
             ];
-
-            console.log(monsterPrompts.part2);
 
             let monsterStatsPart2;
             try {
                 monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
-                if (!monsterStatsPart2) throw new Error('Empty statblock response part 2');
             } catch (e) {
                 errorMessage.value = `There was an issue generating the second part of the description: ${e.message}`;
                 loadingPart2.value = false;
@@ -387,22 +398,19 @@ export default {
             };
 
             const folderName = activeFolder.value || 'Uncategorized';
-            updateMonstersInStorage(finalMonster, folderName); // Safely update local storage
-            selectMonster(folderName, monsters.value[folderName].length - 1); // Select the newly added monster
             monster.value = finalMonster; // Update the current monster
+            monsters.value[folderName].push(finalMonster);
             monsters.value[folderName] = sortMonstersByCR(folderName);
+            const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
+            selectMonster(folderName, newIndex); // Select the newly added monster
+            const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+            const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+            localStorage.setItem('monsters', JSON.stringify(dataToStore));
             loadingPart2.value = false;
-        }
-
-        // Helper function to safely update local storage with new monster data
-        function updateMonstersInStorage(newMonster, folderName) {
-            const storage = window.localStorage;
-            const storedData = JSON.parse(storage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
-            const folderMonsters = storedData[folderName] || [];
-
-            folderMonsters.push(newMonster);
-            storedData[folderName] = folderMonsters;
-            storage.setItem('monsters', JSON.stringify(storedData));
+            monsterName.value = '';
+            monsterType.value = 'Random';
+            monsterDescription.value = '';
+            selectedChallengeRating.value = null;
         }
 
 
@@ -480,7 +488,7 @@ export default {
     transition: transform 0.3s ease;
     background-color: $background-color;
     padding: 1rem;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
