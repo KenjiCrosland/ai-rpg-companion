@@ -68,19 +68,20 @@
             how
             strong a monster is, with higher CRs making for stronger monsters. Finally, if you wish the creature to
             be
-            able to cast spells, please use select the “Creature is a spellcaster” checkbox. When the ChatGPT API is
-            slow it can take up to two minutes to generate a creature. Once generated, you can export a creature to
+            able to cast spells, please use select the “Creature is a spellcaster” checkbox. Once generated, you can
+            export
+            a creature to
             homebrewery, foundry VTT or the Improved Initiative app.
           </p>
         </div>
         <form @submit.prevent="generateStatblock" class="monster-form">
           <div class="form-row-top">
             <cdr-input id="monsterName" v-model="monsterName" background="secondary"
-              :label="'Monster Name (Example: Headless Horseman)'" required />
+              :label="'Monster Name (Example: Headless Horseman)'" />
             <cdr-select v-model="monsterType" label="type"
-              :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" required />
+              :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
             <cdr-select v-model="selectedChallengeRating" label="CR" prompt="CR"
-              :options="challengeRatingData.fullArray" required />
+              :options="challengeRatingData.fullArray" />
           </div>
           <div class="form-row-mid">
             <cdr-input v-model="monsterDescription" :optional="true"
@@ -121,7 +122,7 @@
 import { ref, onMounted, computed, reactive, onUnmounted } from 'vue';
 import Statblock from './Statblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { CdrInput, CdrButton, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconNavigationMenu } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconNavigationMenu } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-button.css";
@@ -133,12 +134,14 @@ import StatblockExports from './StatblockExports.vue';
 import challengeRatingData from '../data/challengeRatings.json';
 import creatureTemplates from '../data/creatureTemplates.json';
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
+import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
 
 export default {
   components: {
     Statblock,
     CdrInput,
     CdrButton,
+    CdrLink,
     CdrList,
     CdrCheckbox,
     CdrAccordion,
@@ -176,12 +179,19 @@ export default {
     onMounted(() => {
       const savedMonsters = localStorage.getItem('monsters');
       if (savedMonsters) {
-        monsters.value = JSON.parse(savedMonsters);
+        let allData = JSON.parse(savedMonsters);
+        // Delete the specific keys to ensure they are not mixed into your UI state
+        delete allData.generationCount;
+        delete allData.firstGenerationTime;
+        // Now, monsters.value will only contain relevant monster data
+        monsters.value = allData;
       }
+
       updateWindowWidth(); // Set initial width
       updateVisibility();  // Set initial visibility
       window.addEventListener('resize', updateWindowWidth);
     });
+
 
     // Add a ref to track the active index
     const activeMonsterIndex = ref(null);
@@ -285,7 +295,6 @@ export default {
     }
 
     function moveMonsterToFolder() {
-      //get the monster name from the active folder and index and assign it to monsterName
       const currentMonsterName = monsters.value[activeFolder.value][activeMonsterIndex.value].name;
       let previousActiveFolder = activeFolder.value;
       if (newFolder.value) {
@@ -312,9 +321,11 @@ export default {
         openedFolders[activeFolder.value] = true;
       }
       monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
+      const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+      const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
       const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === currentMonsterName);
       selectMonster(activeFolder.value, newIndex);
-      localStorage.setItem('monsters', JSON.stringify(monsters.value));
+      localStorage.setItem('monsters', JSON.stringify(dataToStore));
     }
 
     function deleteStatblock() {
@@ -322,65 +333,81 @@ export default {
       monsters.value[folderName].splice(activeMonsterIndex.value, 1);
       monster.value = null;
       activeMonsterIndex.value = null;
-      if (monsters.value[folderName].length === 0) {
+      if (monsters.value[folderName].length === 0 && folderName !== 'Uncategorized') {
         delete monsters.value[folderName];
         activeFolder.value = 'Uncategorized';
         if (!openedFolders['Uncategorized']) {
           openedFolders['Uncategorized'] = true;
         }
       }
-      localStorage.setItem('monsters', JSON.stringify(monsters.value));
+      const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+      const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+      localStorage.setItem('monsters', JSON.stringify(dataToStore));
     }
 
     async function generateStatblock() {
       monster.value = null;
+
       loadingPart1.value = true;
       loadingPart2.value = true;
+      //return a random integer between '1' and '30' as a string
+      const randomCR = Math.floor(Math.random() * 30) + 1;
+
       const promptOptions = {
         monsterName: monsterName.value,
-        challengeRating: selectedChallengeRating.value,
+        challengeRating: selectedChallengeRating.value || randomCR.toString(),
         monsterType: monsterType.value,
         monsterDescription: monsterDescription.value,
         caster: caster.value
-      }
+      };
+
       const monsterPrompts = createStatblockPrompts(promptOptions);
-      console.log(monsterPrompts.part1);
+
       let monsterStatsPart1;
       try {
         monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
+        if (!monsterStatsPart1) throw new Error('Empty statblock response part 1');
       } catch (e) {
-        errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.'
+        errorMessage.value = `There was an issue generating the first part of the description: ${e.message}`;
+        loadingPart1.value = false;
+        return;
       }
-      //console.log(monsterStatsPart1);
+
       monster.value = JSON.parse(monsterStatsPart1);
       loadingPart1.value = false;
       const previousContext = [
         { role: 'user', content: `Please give me the first part of a D&D statblock in the following format` },
         { role: 'system', content: `${monsterStatsPart1}` }
       ];
-      console.log(monsterPrompts.part2);
+
       let monsterStatsPart2;
       try {
         monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
       } catch (e) {
-        errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.'
+        errorMessage.value = `There was an issue generating the second part of the description: ${e.message}`;
+        loadingPart2.value = false;
+        return;
       }
-      //console.log(monsterStatsPart2);
+
       const finalMonster = {
         ...JSON.parse(monsterStatsPart1),
         ...JSON.parse(monsterStatsPart2),
-      }
+      };
+
       const folderName = activeFolder.value || 'Uncategorized';
-      if (!monsters.value[folderName]) {
-        monsters.value[folderName] = [];
-      }
+      monster.value = finalMonster; // Update the current monster
       monsters.value[folderName].push(finalMonster);
-      monster.value = finalMonster;       // Update the current monster
       monsters.value[folderName] = sortMonstersByCR(folderName);
       const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
       selectMonster(folderName, newIndex); // Select the newly added monster
-      localStorage.setItem('monsters', JSON.stringify(monsters.value)); // Save to local storage
+      const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+      const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+      localStorage.setItem('monsters', JSON.stringify(dataToStore));
       loadingPart2.value = false;
+      monsterName.value = '';
+      monsterType.value = 'Random';
+      monsterDescription.value = '';
+      selectedChallengeRating.value = null;
     }
 
     return {
@@ -574,8 +601,15 @@ export default {
 }
 
 .generator-container {
+  height: 100vh;
+  overflow-y: scroll;
+  overflow-x: visible;
   margin: 0 auto;
   padding: 2rem;
+
+  @media screen and (min-width: 890px) {
+    min-width: 890px;
+  }
 }
 
 .intro-container {
