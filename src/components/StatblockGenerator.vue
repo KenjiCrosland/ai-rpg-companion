@@ -79,11 +79,11 @@
         <form @submit.prevent="generateStatblock" class="monster-form">
           <div class="form-row-top">
             <cdr-input id="monsterName" v-model="monsterName" background="secondary"
-              :label="'Monster Name (Example: Headless Horseman)'" required />
+              :label="'Monster Name (Example: Headless Horseman)'" />
             <cdr-select v-model="monsterType" label="type"
-              :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" required />
+              :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
             <cdr-select v-model="selectedChallengeRating" label="CR" prompt="CR"
-              :options="challengeRatingData.fullArray" required />
+              :options="challengeRatingData.fullArray" />
           </div>
           <div class="form-row-mid">
             <cdr-input v-model="monsterDescription" :optional="true"
@@ -355,10 +355,12 @@ export default {
       }
       loadingPart1.value = true;
       loadingPart2.value = true;
+      //return a random integer between '1' and '30' as a string
+      const randomCR = Math.floor(Math.random() * 30) + 1;
 
       const promptOptions = {
         monsterName: monsterName.value,
-        challengeRating: selectedChallengeRating.value,
+        challengeRating: selectedChallengeRating.value || randomCR.toString(),
         monsterType: monsterType.value,
         monsterDescription: monsterDescription.value,
         caster: caster.value
@@ -412,7 +414,6 @@ export default {
       monsterDescription.value = '';
       selectedChallengeRating.value = null;
     }
-
 
     return {
       loadingPart1,
@@ -605,8 +606,15 @@ export default {
 }
 
 .generator-container {
+  height: 100vh;
+  overflow-y: scroll;
+  overflow-x: visible;
   margin: 0 auto;
   padding: 2rem;
+
+  @media screen and (min-width: 890px) {
+    min-width: 890px;
+  }
 }
 
 .intro-container {
