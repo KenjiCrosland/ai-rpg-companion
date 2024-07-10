@@ -349,8 +349,9 @@ export default {
 
     async function generateStatblock() {
       monster.value = null;
+      const canGenerate = await canGenerateStatblock();
 
-      if (!canGenerateStatblock()) {
+      if (!canGenerate) {
         return;
       }
       loadingPart1.value = true;

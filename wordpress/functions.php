@@ -352,3 +352,8 @@ function vue_app_npc_generator_premium_shortcode() {
 	return '<div id="app" data-page="npc-generator-premium"></div>';
 }
 add_shortcode( 'vue_app_npc_generator_premium', 'vue_app_npc_generator_premium_shortcode' );
+
+function vue_app_test_content_shortcode() {
+	return '<div id="app" data-page="statblock-generator"></div>';
+}
+add_shortcode( 'vue_app_test_content', 'vue_app_test_content_shortcode' );
