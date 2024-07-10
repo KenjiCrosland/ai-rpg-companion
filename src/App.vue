@@ -63,7 +63,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'statblock-generator',
+      currentPage: this.$attrs['data-page'] || 'encounter-generator',
     };
   },
   mounted() {

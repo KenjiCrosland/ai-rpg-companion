@@ -1,11 +1,11 @@
 <template>
   <div class="app_container">
-    <h1>RPG Dungeon Generator -- Premium Version</h1>
+    <h1>Kenji's Dungeon Generator -- Premium Version</h1>
     <p>
       You can use this app to generate an overall summary of a dungeon, generate a potential room list based on the
       summary, and then you can create a list of more detailed room descriptions. As a bonus you can also generate
       statblock for npcs and monsters each room. This premium version has no limits on the number of statblocks you can
-      generate.
+      generate. These statblocks can be saved to a folder on the <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/">Statblock Generator App</cdr-link>.
     </p>
     <form @submit.prevent="generateDungeonSummary" class="dungeon_form">
       <cdr-input v-model="dungeonName" background="secondary" label="Dungeon Name" placeholder="Enter Dungeon Name"
@@ -187,6 +187,7 @@
               <StatblockBase v-if="(npc.loadingPart1 || npc.loadingPart2 || npc.statblock)"
                 :loadingPart1="npc.loadingPart1" :loadingPart2="npc.loadingPart2" :monster="npc.statblock"
                 :copyButtons="true" />
+                <SaveStatblock v-if="npc.statblock" :monster="npc.statblock" statblockLink="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/" />
             </div>
           </div>
         </cdr-accordion>
@@ -224,6 +225,7 @@
 <script>
 import { CdrInput, CdrSelect, CdrLink, CdrButton, CdrList, CdrText, CdrAccordion, CdrAccordionGroup, CdrSkeleton, CdrSkeletonBone, CdrTooltip, IconXSm, IconReload, IconArrowUp, IconArrowDown } from "@rei/cedar";
 import StatblockBase from './StatblockBase.vue';
+import SaveStatblock from './SaveStatblock.vue';
 import { generateGptResponse } from '../util/open-ai.mjs';
 import { dungeonFormatGuidelines } from "../util/prompts.mjs";
 import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
@@ -245,6 +247,7 @@ export default {
     IconXSm,
     IconReload,
     StatblockBase,
+    SaveStatblock,
     IconArrowUp,
     IconArrowDown,
   },

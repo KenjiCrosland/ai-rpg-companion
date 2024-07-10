@@ -1,12 +1,12 @@
 <template>
     <div class="app_container">
-        <h1>RPG Dungeon Generator -- Free Version</h1>
+        <h1>Kenji's Dungeon Generator -- Free Version</h1>
         <p>
             You can use this app to generate an overall summary of a dungeon, generate a potential room list based on
             the
             summary, and then you can create a list of more detailed room descriptions. As a bonus you can also generate
             statblock for npcs and monsters each room. This free version limits the number of statblocks you can
-            generate to 5 per day.
+            generate to 5 per day. These statblocks can be saved to a folder on the <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/">Statblock Generator App</cdr-link>.
         </p>
         <p>
             <cdr-link href="https://cros.land/ai-powered-dungeon-generator-premium/">Link to Dungeon Generator --
@@ -195,6 +195,7 @@
                             <StatblockBase v-if="(npc.loadingPart1 || npc.loadingPart2 || npc.statblock)"
                                 :loadingPart1="npc.loadingPart1" :loadingPart2="npc.loadingPart2"
                                 :monster="npc.statblock" :copyButtons="true" />
+                            <save-statblock v-if="npc.statblock" :monster="npc.statblock" statblockLink="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/" />
                         </div>
                     </div>
                 </cdr-accordion>
@@ -232,6 +233,7 @@
 <script>
 import { CdrInput, CdrSelect, CdrLink, CdrButton, CdrList, CdrText, CdrAccordion, CdrAccordionGroup, CdrSkeleton, CdrSkeletonBone, CdrTooltip, IconXSm, IconReload, IconArrowUp, IconArrowDown } from "@rei/cedar";
 import StatblockBase from './StatblockBase.vue';
+import SaveStatblock from "./SaveStatblock.vue";
 import { generateGptResponse } from '../util/open-ai.mjs';
 import { dungeonFormatGuidelines } from "../util/prompts.mjs";
 import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
@@ -255,6 +257,7 @@ export default {
         IconXSm,
         IconReload,
         StatblockBase,
+        SaveStatblock,
         IconArrowUp,
         IconArrowDown,
     },
@@ -511,9 +514,12 @@ export default {
             }
         },
         async generateMonster(npc, roomIndex, npcIndex) {
-            if (!canGenerateStatblock()) {
-                return;
+            const canGenerate = await canGenerateStatblock();
+
+            if (!canGenerate) {
+            return;
             }
+
             const { name, challenge_rating, description } = npc;
             this.detailedRooms[roomIndex].detailed_description.npc_or_monster_list[npcIndex].loadingPart1 = true
             this.detailedRooms[roomIndex].detailed_description.npc_or_monster_list[npcIndex].loadingPart2 = true

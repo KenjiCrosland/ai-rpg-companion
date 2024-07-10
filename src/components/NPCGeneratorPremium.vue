@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <h1>RPG NPC Generator -- Premium Version</h1>
+    <h1>Kenji's NPC Generator -- Premium Version</h1>
     <hr>
     <cdr-text class="intro">
       Welcome to the RPG NPC Generator! This App uses the ChatGPT API to provide engaging descriptions
@@ -8,7 +8,7 @@
       provide,
       the better. If you want to generate NPCs for your homebrew city, for example, provide some details about the
       city so that the Generator can include details about the city in its response. Finally, you can generate D&D
-      5e Statblocks for the NPCs you generate.
+      5e Statblocks for the NPCs you generate. These statblocks can be saved to folders in the <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/">Statblock Generator App</cdr-link> where you can access them later.
     </cdr-text>
 
     <cdr-list class="suggestions" modifier="unordered">
@@ -148,6 +148,7 @@
           <StatblockBase v-if="(loadingStatblockPart1 || loadingStatblockPart1 || statblock)"
             :loadingPart1="loadingStatblockPart1" :loadingPart2="loadingStatblockPart2" :monster="statblock"
             :copyButtons="true" />
+          <SaveStatblock v-if="statblock" :monster="statblock" statblockLink="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/" />
         </div>
       </div>
       <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
@@ -159,6 +160,7 @@
 import { ref } from 'vue';
 import { CdrButton, CdrInput, CdrLink, CdrText, CdrCheckbox, CdrSelect, CdrList, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import StatblockBase from './StatblockBase.vue';
+import SaveStatblock from './SaveStatblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
 import challengeRatingData from '../data/challengeRatings.json';

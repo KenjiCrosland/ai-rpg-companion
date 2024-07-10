@@ -359,8 +359,10 @@ export default {
     });
 
     async function generateStatblock(monster, index) {
-      if (!canGenerateStatblock()) {
-        return; // Exit if the limit is reached
+      const canGenerate = await canGenerateStatblock();
+
+      if (!canGenerate) {
+        return;
       }
       monsters.value[index].loadingPart1 = true;
       monsters.value[index].loadingPart2 = true;
