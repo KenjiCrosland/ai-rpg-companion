@@ -4,9 +4,9 @@
  *
  * A template to force full-width layout, remove breadcrumbs, and remove the page title.
  *
- * Template Name: RPG Companion Statblock Generator Premium
+ * Template Name: RPG Companion Test Content
  *
- * @package Genesis Custom RPG Companion Statblock Generator Premium
+ * @package Genesis Custom RPG Companion Test Content
  * @author  Your Name
  * @license GPL-2.0-or-later
  * @link    https://your-link.com/
@@ -25,8 +25,8 @@ remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs');
 
 // Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
-    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-statblock-generator-premium/dist/assets';
-    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-statblock-generator-premium/dist/assets';
+    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-test-content/dist/assets';
+    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-test-content/dist/assets';
 
     $files = scandir($vue_app_path);
     $enqueued_style_handle = '';
@@ -108,7 +108,7 @@ add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 
 //Add Vue app root element.
 function vue_app_render_root_element() {
-    echo '<div id="app" data-page="statblock-generator-premium"></div>';
+    echo '<div id="app" data-page="statblock-generator"></div>';
 }
 
 // add_action( 'genesis_entry_content', 'vue_app_render_root_element' );

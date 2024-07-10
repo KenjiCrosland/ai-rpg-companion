@@ -1,9 +1,4 @@
 <template>
-    <cdr-toggle-group v-if="shouldDisplayInterface" v-model="userColumnsPreference" style="max-width: 25rem">
-        <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
-        <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
-    </cdr-toggle-group>
-
     <div :class="`container ${columns}`">
         <div v-if="!loadingPart1" class="statblock">
             <div class="creature-heading">
@@ -38,7 +33,8 @@
                         </td>
                     </tr>
                 </table>
-                <div v-if="monster.skills && monster.skills.length > 0 && monster.skills !== 'None'" class="property-line">
+                <div v-if="monster.skills && monster.skills.length > 0 && monster.skills !== 'None'"
+                    class="property-line">
                     <h4>Skills: </h4>
                     <p> {{ monster.skills }}</p>
                 </div>
@@ -101,7 +97,8 @@
             <div v-if="monster.legendary_actions && monster.legendary_actions.length > 0">
                 <h3>Legendary Actions</h3>
                 <p>The monster can take 3 legendary actions, choosing from the options below. Only one legendary action
-                    option can be used at a time and only at the end of another creature's turn. The monster regains spent
+                    option can be used at a time and only at the end of another creature's turn. The monster regains
+                    spent
                     legendary actions at the start of its turn.</p>
                 <ul class="abilities">
                     <li v-for="(action, index) in monster.legendary_actions" :key="index">
@@ -114,53 +111,8 @@
             <StatblockSkeletonPtTwo />
         </div>
     </div>
-    <div class="exports">
-        <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
-        <h3>Use Homebrewery to Make a Beautiful PDF of Your Statblock!</h3>
-        <cdr-list tag="ol" modifier="ordered">
-            <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
-            <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
-                    rel="noopener noreferrer">Homebrewery</a>.</li>
-            <li>Paste the copied markdown into the document on the left hand side. Feel free to edit or reorder the
-                content as
-                you like.</li>
-            <li>Enjoy the beautifully formatted content!</li>
-        </cdr-list>
-        <div class="markdown-button">
-            <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
-        </div>
-    </div>
-        <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
-        <h3>Export this Monster to Foundry VTT!</h3>
-        <cdr-list tag="ol" modifier="ordered">
-            <li>Click the "Copy as Foundry VTT text" button below to copy the generated content in a text block compatible with the Foundry VTT.</li>
-            <li>Follow these <a href="https://foundryvtt.com/packages/5e-statblock-importer" target="_blank"
-                    rel="noopener noreferrer">Foundry VTT Import Instructions</a>. to import to Foundry VTT</li>
-            <li>Have Fun!</li>
-        </cdr-list>
-        <div class="markdown-button">
-            <cdr-button @click="copyAsVTT">Copy in Foundry VTT Text Format</cdr-button>
-        </div>
-    </div>
-    <div v-if="!loadingPart1 && !loadingPart2" class="instructions">
-        <h3>Export this Monster to the Improved Initiative App</h3>
-        <cdr-list tag="ol" modifier="ordered">
-            <li>Click the "Copy as Improved Initiative JSON" button below to copy the generated content in JSON format compatible with the Improved Initiative App.</li>
-            <li>Visit <a href="https://improvedinitiative.app/e/" target="_blank"
-                    rel="noopener noreferrer">The Improved Initiative App</a>.</li>
-            <li>Click "Add New" at the bottom right left of the screen.</li>
-            <li>Choose the "JSON" Editor mode and paste your copied JSON in the text area</li>
-            <li>Save the monster and have fun!</li>
-        </cdr-list>
-        <div class="markdown-button">
-            <cdr-button @click="copyAsImprovedInitiative">Copy as Improved Initiative JSON</cdr-button>
-        </div>
-    </div>
-
-    
-</div>
 </template>
-  
+
 <script setup>
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
@@ -181,6 +133,10 @@ const props = defineProps({
         type: Object,
         default: () => ({})
     },
+    columns: {
+        type: String,
+        default: 'two_columns'
+    },
     loadingPart1: {
         type: Boolean,
         default: false,
@@ -196,7 +152,6 @@ const props = defineProps({
 });
 
 const windowWidth = ref(window.innerWidth);
-const userColumnsPreference = ref('two_columns');
 const onResize = () => {
     windowWidth.value = window.innerWidth;
 };
@@ -211,11 +166,7 @@ onBeforeUnmount(() => {
 
 
 const columns = computed(() => {
-    return windowWidth.value <= 855 ? 'one_column' : userColumnsPreference.value;
-});
-
-const shouldDisplayInterface = computed(() => {
-    return windowWidth.value > 855;
+    return windowWidth.value <= 855 ? 'one_column' : props.columns;
 });
 
 
@@ -227,70 +178,10 @@ const parsedAttributes = computed(() => {
         return { stat, value };
     });
 });
-
-const copyAsMarkdown = () => {
-
-    const markdownContent = statblockToMarkdown(props.monster, columns.value);
-
-    console.log(columns.value);
-    if (markdownContent) {
-        const textarea = document.createElement('textarea');
-        textarea.textContent = markdownContent;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-
-        // Optionally, display a message that the content has been copied.
-        alert('Content copied as markdown!');
-    } else {
-        // If there is no content to copy, display a message to the user.
-        alert('No content available to copy as markdown.');
-    }
-}
-
-const copyAsVTT = () => {
-
-const VTTContent = convertToFoundryVTT(props.monster);
-
-if (VTTContent) {
-    const textarea = document.createElement('textarea');
-    textarea.textContent = VTTContent;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-
-    // Optionally, display a message that the content has been copied.
-    alert('Content copied in Foundry VTT Format!');
-} else {
-    // If there is no content to copy, display a message to the user.
-    alert('No content available to copy as markdown.');
-}
-}
-
-const copyAsImprovedInitiative = () => {
-
-    const improvedInitiativeJSON = convertToImprovedInitiative(props.monster);
-    if (improvedInitiativeJSON) {
-        const textarea = document.createElement('textarea');
-        textarea.textContent = JSON.stringify(improvedInitiativeJSON);
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-
-        // Optionally, display a message that the content has been copied.
-        alert('Copied as Improved Initiative JSON!');
-    } else {
-        // If there is no content to copy, display a message to the user.
-        alert('No content available to copy.');
-    }
-}
 </script>
 
 
-  
+
 <style lang="scss" scoped>
 .container {
     display: grid;
@@ -317,6 +208,7 @@ const copyAsImprovedInitiative = () => {
         gap: 2rem;
     }
 }
+
 .exports {
     max-width: 850px;
     display: grid;
@@ -461,8 +353,9 @@ const copyAsImprovedInitiative = () => {
 
 @media screen and (max-width: 855px) {
     .exports {
-    grid-template-columns: 1fr;
-}
+        grid-template-columns: 1fr;
+    }
+
     .container {
         background-image: none;
 

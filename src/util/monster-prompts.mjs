@@ -1,5 +1,6 @@
 import creatureTemplates from '../data/creatureTemplates.json';
 import challengeRatingObjects from '../data/challengeRatings.json';
+
 const baseCreatureTemplate = {
   name: 'Crystal Centipede',
   type_and_alignment: 'Huge monstrosity, unaligned',
@@ -19,6 +20,7 @@ const baseCreatureTemplate = {
   challenge_rating: '15 (13,000 XP)',
   proficiency_bonus: '+5',
 };
+
 export function createStatblockPrompts(options) {
   let {
     monsterName,
@@ -27,6 +29,7 @@ export function createStatblockPrompts(options) {
     monsterDescription,
     caster,
   } = options;
+
   const monsterTypeDictionary = {
     Random: 'random',
     'Stronger Defense': 'defensive',
@@ -129,17 +132,59 @@ export function createStatblockPrompts(options) {
   if (numberOfSavingThrows > 0) {
     savingThrowsPrompt = `The creature should have ${numberOfSavingThrows} saving throws of ${template.saving_throws}. Choose the most thematically appropriate attributes to match the saving throw bonuses for this creature`;
   }
-  let resistanceAndImmunitiesPrompt =
-    'The creature has 0 immunities and 0 resistances';
-  if (template.damage_resistances) {
-    resistanceAndImmunitiesPrompt = `The creature has 1-3 damage_resistances. The creature has 0 damage_immunities.`;
+
+  function generateResistanceAndImmunityPrompt(template, challengeRating) {
+    // Base thresholds for resistances and immunities based on CR
+    const baseThresholds = {
+      low: { maxResistances: 1, maxImmunities: 0 },
+      mid: { maxResistances: 2, maxImmunities: 1 },
+      high: { maxResistances: 3, maxImmunities: 1 },
+      epic: { maxResistances: 4, maxImmunities: 2 },
+    };
+
+    // Type adjustments to base thresholds
+    const typeAdjustments = {
+      defensive: { resistanceBonus: 1, immunityBonus: 1 },
+      balanced: { resistanceBonus: 0, immunityBonus: 0 },
+      offensive: { resistanceBonus: -1, immunityBonus: -1 },
+    };
+
+    // Determine the appropriate level based on CR
+    let level;
+    if (challengeRating <= 5) level = 'low';
+    else if (challengeRating <= 10) level = 'mid';
+    else if (challengeRating <= 25) level = 'high';
+    else level = 'epic';
+
+    const baseLimit = baseThresholds[level];
+    const adjustment =
+      typeAdjustments[template.type] || typeAdjustments['balanced'];
+
+    // Calculate the adjusted limits directly using the maximum allowed values
+    const totalResistances = Math.max(
+      0,
+      baseLimit.maxResistances + adjustment.resistanceBonus,
+    );
+    const totalImmunities = Math.max(
+      0,
+      baseLimit.maxImmunities + adjustment.immunityBonus,
+    );
+
+    // Construct the prompt text
+    let resistancePrompt = `The creature has ${totalResistances} resistances.`;
+    let immunityPrompt = `The creature has ${totalImmunities} immunities.`;
+
+    // Combine explanation with the generated prompts
+    let resistanceAndImmunitiesPrompt = `${resistancePrompt} ${immunityPrompt}`;
+
+    return resistanceAndImmunitiesPrompt;
   }
-  if (template.damage_immunities) {
-    resistanceAndImmunitiesPrompt = `The creature has 1-3 damage_immunities. The creature has 0 damage_resistances.`;
-  }
-  if (template.damage_resistances && template.damage_immunities) {
-    resistanceAndImmunitiesPrompt = `The creature has 1 to 4 damage_resistances and 1 to 3 damage_immunities.`;
-  }
+
+  // Example usage within your statblock creation logic
+  let resistanceAndImmunitiesPrompt = generateResistanceAndImmunityPrompt(
+    template,
+    challengeRating,
+  );
 
   const part2Obj = {
     actions: [...template.actions],
@@ -163,6 +208,7 @@ export function createStatblockPrompts(options) {
     });
     return hasMultiattack;
   }
+
   return {
     part1: `Please give me the first part of a D&D statblock in the following format:
 
@@ -171,7 +217,7 @@ export function createStatblockPrompts(options) {
     With the above format in mind, please generate the first part of a statblock for ${monsterName}. Abilities should be passive and not require an action. ${casterPrompt}
     The creature should have a challenge_rating ${challengeRating} with a proficiency_bonus of +${
       challengeRatingObj.proficiency_bonus
-    }. The effective armor_class should be around ${
+    }. The effective armor_class should be ${
       template.armor_class
     } (depending on abilities) and hit_points should be ${template.hit_points}.
     ${savingThrowsPrompt}. ${resistanceAndImmunitiesPrompt} ${legendaryResistancePrompt}. Remember that the only possible damage types are from this list: Acid, Bludgeoning, Cold, Fire, Force, Lightning, Necrotic, Piercing, Poison, Psychic, Radiant, Slashing, Thunder as well as "Bludgeoning, Slashing and Piercing from non-magical weapons". Finally condition_immunities can only be selected from this list: Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious

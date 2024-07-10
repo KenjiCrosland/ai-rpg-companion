@@ -52,8 +52,19 @@ function vue_app_enqueue_assets() {
     
     if ($enqueued_style_handle) {
         $custom_css = '
+            main.content {
+                max-width: 940px;
+                width: auto;
+            }
             .site-container .site-inner {
                 max-width: none;
+                padding: 0;
+            }
+            .site-footer {
+                display: none;
+            }
+            .page.type-page.status-publish.entry{
+                margin-bottom: 0 !important;
             }
             .statblock ul.abilities {
                 margin: 0;
