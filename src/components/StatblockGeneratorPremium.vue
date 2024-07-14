@@ -199,20 +199,29 @@ export default {
     function getFirstNumber(text) {
       // Split the text by spaces
       const parts = text.split(' ');
-      // Find the first part that contains digits
+      // Find the first part that contains digits or fractions
       for (let part of parts) {
-        if (/\d/.test(part)) {  // Check if the part has any digits
-          return parseInt(part, 10);  // Return the integer value
+        // Check if the part is a fraction or a whole number
+        if (/^\d+\/\d+$/.test(part) || /^\d+(\.\d+)?$/.test(part)) {
+          return part;  // Return the fractional or whole number part
         }
       }
       return null;  // Return null if no number is found
     }
 
 
+    function fractionToDecimal(fraction) {
+      if (fraction.includes('/')) {
+        const [numerator, denominator] = fraction.split('/').map(Number);
+        return numerator / denominator;
+      }
+      return parseFloat(fraction);
+    }
+
     function sortMonstersByCR(folderName) {
       return monsters.value[folderName].sort((a, b) => {
-        const crA = getFirstNumber(a.challenge_rating);
-        const crB = getFirstNumber(b.challenge_rating);
+        const crA = fractionToDecimal(getFirstNumber(a.challenge_rating));
+        const crB = fractionToDecimal(getFirstNumber(b.challenge_rating));
         return crA - crB;
       });
     }
