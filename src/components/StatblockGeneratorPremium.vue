@@ -494,6 +494,7 @@ export default {
   background-color: $background-color;
   padding: 1rem;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -611,6 +612,7 @@ export default {
 
 .generator-container {
   height: 100vh;
+  min-height: 100dvh;
   overflow-y: scroll;
   overflow-x: visible;
   margin: 0 auto;
