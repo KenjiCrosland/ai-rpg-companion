@@ -498,8 +498,8 @@ export default {
   transition: transform 0.3s ease;
   background-color: $background-color;
   padding: 1rem;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
