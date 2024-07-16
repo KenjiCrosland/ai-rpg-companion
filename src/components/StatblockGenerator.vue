@@ -55,12 +55,12 @@
       <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster()">New
         Monster
         Statblock</cdr-button>
-      <div class="intro-and-form" v-show="!monster && !loadingPart1 && !loadingPart2">
-        <div class="intro-container">
+      <div class="intro-and-form">
+        <div class="intro-container" v-show="!monster && !loadingPart1 && !loadingPart2">
           <h1>Kenji's D&D 5e Monster Statblock Generator -- Free Version</h1>
           <p>
-            Welcome to the D&D 5e Statblock Generator! This free version has a limit of 5 statblocks per
-            day. Enter
+            Welcome to the D&D 5e Statblock Generator! This free version has a limit of 5 statblock generations per
+            day (this includes re-generations of existing monsters). Enter
             the name of the monster and choose a monster type and CR. Monster types determine whether a
             monster is
             stronger on defense, offense or balanced. CR will determine how strong a monster is, with higher
@@ -95,7 +95,7 @@
           </div>
 
           <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
-            {{ 'Generate Statblock' }}
+            {{!monster ? 'Generate Statblock' : 'Regenerate Statblock'}}
           </cdr-button>
         </form>
       </div>
@@ -242,6 +242,11 @@ export default {
       activeFolder.value = folderName;
       activeMonsterIndex.value = index;
       monster.value = monsters.value[folderName][index];
+      monsterName.value = monster.value.name;
+      monsterType.value = monster.value.monsterType;
+      monsterDescription.value = monster.value.monsterDescription;
+      selectedChallengeRating.value = monster.value.selectedChallengeRating;
+      caster.value = monster.value.caster;
     }
     const updateWindowWidth = () => {
       windowWidth.value = window.innerWidth;
@@ -408,20 +413,29 @@ export default {
         ...JSON.parse(monsterStatsPart2),
       };
 
-      const folderName = activeFolder.value || 'Uncategorized';
-      monster.value = finalMonster; // Update the current monster
-      monsters.value[folderName].push(finalMonster);
-      monsters.value[folderName] = sortMonstersByCR(folderName);
-      const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
-      selectMonster(folderName, newIndex); // Select the newly added monster
+      finalMonster.monsterDescription = monsterDescription.value;
+      finalMonster.monsterType = monsterType.value;
+      finalMonster.selectedChallengeRating = selectedChallengeRating.value || getFirstNumber(finalMonster.challenge_rating);
+      finalMonster.monsterName = monsterName.value || monster.name;
+      finalMonster.caster = caster.value;
+
+      //replace the monster in the array if it already exists
+      if (activeMonsterIndex.value !== null) {
+        monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
+        monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
+        selectMonster(activeFolder.value, activeMonsterIndex.value);
+      } else {
+        const folderName = activeFolder.value || 'Uncategorized';
+        monster.value = finalMonster; // Update the current monster
+        monsters.value[folderName].push(finalMonster);
+        monsters.value[folderName] = sortMonstersByCR(folderName);
+        const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
+        selectMonster(folderName, newIndex); // Select the newly added monster
+      }
       const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
       const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
       localStorage.setItem('monsters', JSON.stringify(dataToStore));
       loadingPart2.value = false;
-      monsterName.value = '';
-      monsterType.value = 'Random';
-      monsterDescription.value = '';
-      selectedChallengeRating.value = null;
     }
 
     return {
@@ -669,4 +683,14 @@ export default {
   text-align: center;
   margin-top: 16px;
 }
+
+.slide-enter-active, .slide-leave-active {
+  transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+  overflow: hidden;
+}
+.slide-enter, .slide-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
 </style>
