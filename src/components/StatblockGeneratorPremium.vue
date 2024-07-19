@@ -93,7 +93,7 @@
           </div>
 
           <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
-            {{!activeMonsterIndex ? 'Generate Statblock' : 'Regenerate Statblock'}}
+            {{ activeMonsterIndex !== null ?  'Regenerate Statblock' : 'Generate Statblock'}}
           </cdr-button>
         </form>
       </div>
@@ -242,9 +242,9 @@ export default {
       activeMonsterIndex.value = index;
       monster.value = monsters.value[folderName][index];
       monsterName.value = monster.value.name;
-      monsterType.value = monster.value.monsterType;
-      monsterDescription.value = monster.value.monsterDescription;
-      selectedChallengeRating.value = monster.value.selectedChallengeRating;
+      monsterType.value = monster.value.monsterType || 'Random';
+      monsterDescription.value = monster.value.monsterDescription || '';
+      selectedChallengeRating.value = monster.value.selectedChallengeRating || getFirstNumber(monster.value.challenge_rating);
       caster.value = monster.value.caster;
     }
 
@@ -419,7 +419,8 @@ export default {
       if (activeMonsterIndex.value !== null) {
         monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
         monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
-        selectMonster(activeFolder.value, activeMonsterIndex.value);
+        const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === finalMonster.name);
+        selectMonster(activeFolder.value, newIndex);
       } else {
         const folderName = activeFolder.value || 'Uncategorized';
         monster.value = finalMonster; // Update the current monster
