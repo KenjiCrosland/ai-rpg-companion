@@ -60,6 +60,9 @@ function vue_app_enqueue_assets() {
         h1, h2 {
             padding-top: 2rem;
         }
+        select {
+            padding: 1rem;
+        }
         .exports {
             margin: auto;
         }

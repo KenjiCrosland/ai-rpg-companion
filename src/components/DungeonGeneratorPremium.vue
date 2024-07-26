@@ -577,6 +577,7 @@ export default {
         this.arraymove(this.detailedRooms, index, index - 1)
       }
       this.roomOpen[index] = false;
+      this.saveToLocalStorage();
     },
     arraymove(arr, fromIndex, toIndex) {
       var element = arr[fromIndex];
@@ -609,7 +610,7 @@ export default {
         this.dungeonDetails = dungeonData.dungeonDetails;
         this.dungeonSummary = dungeonData.dungeonSummary;
         this.dungeonList = dungeonData.dungeonList;
-        this.detailedRooms = dungeonData.detailedRooms;
+        this.detailedRooms = dungeonData.detailedRooms || [];
       }
     },
   }
