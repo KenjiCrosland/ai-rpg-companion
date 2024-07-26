@@ -55,8 +55,8 @@
       <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster()">New
         Monster
         Statblock</cdr-button>
-      <div class="intro-and-form" v-show="!monster && !loadingPart1 && !loadingPart2">
-        <div class="intro-container">
+        <div class="intro-and-form">
+          <div class="intro-container" v-show="!monster && !loadingPart1 && !loadingPart2">
           <h1>Kenji's D&D 5e Monster Statblock Generator -- Premium Version</h1>
           <p>
             Welcome to the D&D 5e Statblock
@@ -93,7 +93,7 @@
           </div>
 
           <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
-            {{ 'Generate Statblock' }}
+            {{ activeMonsterIndex !== null ?  'Regenerate Statblock' : 'Generate Statblock'}}
           </cdr-button>
         </form>
       </div>
@@ -199,20 +199,29 @@ export default {
     function getFirstNumber(text) {
       // Split the text by spaces
       const parts = text.split(' ');
-      // Find the first part that contains digits
+      // Find the first part that contains digits or fractions
       for (let part of parts) {
-        if (/\d/.test(part)) {  // Check if the part has any digits
-          return parseInt(part, 10);  // Return the integer value
+        // Check if the part is a fraction or a whole number
+        if (/^\d+\/\d+$/.test(part) || /^\d+(\.\d+)?$/.test(part)) {
+          return part;  // Return the fractional or whole number part
         }
       }
       return null;  // Return null if no number is found
     }
 
 
+    function fractionToDecimal(fraction) {
+      if (fraction.includes('/')) {
+        const [numerator, denominator] = fraction.split('/').map(Number);
+        return numerator / denominator;
+      }
+      return parseFloat(fraction);
+    }
+
     function sortMonstersByCR(folderName) {
       return monsters.value[folderName].sort((a, b) => {
-        const crA = getFirstNumber(a.challenge_rating);
-        const crB = getFirstNumber(b.challenge_rating);
+        const crA = fractionToDecimal(getFirstNumber(a.challenge_rating));
+        const crB = fractionToDecimal(getFirstNumber(b.challenge_rating));
         return crA - crB;
       });
     }
@@ -232,7 +241,13 @@ export default {
       activeFolder.value = folderName;
       activeMonsterIndex.value = index;
       monster.value = monsters.value[folderName][index];
+      monsterName.value = monster.value.name;
+      monsterType.value = monster.value.monsterType || 'Random';
+      monsterDescription.value = monster.value.monsterDescription || '';
+      selectedChallengeRating.value = monster.value.selectedChallengeRating || getFirstNumber(monster.value.challenge_rating);
+      caster.value = monster.value.caster;
     }
+
     const updateWindowWidth = () => {
       windowWidth.value = window.innerWidth;
     };
@@ -394,20 +409,30 @@ export default {
         ...JSON.parse(monsterStatsPart2),
       };
 
-      const folderName = activeFolder.value || 'Uncategorized';
-      monster.value = finalMonster; // Update the current monster
-      monsters.value[folderName].push(finalMonster);
-      monsters.value[folderName] = sortMonstersByCR(folderName);
-      const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
-      selectMonster(folderName, newIndex); // Select the newly added monster
+      finalMonster.monsterDescription = monsterDescription.value;
+      finalMonster.monsterType = monsterType.value;
+      finalMonster.selectedChallengeRating = selectedChallengeRating.value || getFirstNumber(finalMonster.challenge_rating);
+      finalMonster.monsterName = monsterName.value || monster.name;
+      finalMonster.caster = caster.value;
+
+      //replace the monster in the array if it already exists
+      if (activeMonsterIndex.value !== null) {
+        monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
+        monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
+        const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === finalMonster.name);
+        selectMonster(activeFolder.value, newIndex);
+      } else {
+        const folderName = activeFolder.value || 'Uncategorized';
+        monster.value = finalMonster; // Update the current monster
+        monsters.value[folderName].push(finalMonster);
+        monsters.value[folderName] = sortMonstersByCR(folderName);
+        const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
+        selectMonster(folderName, newIndex); // Select the newly added monster
+      }
       const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
       const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
       localStorage.setItem('monsters', JSON.stringify(dataToStore));
       loadingPart2.value = false;
-      monsterName.value = '';
-      monsterType.value = 'Random';
-      monsterDescription.value = '';
-      selectedChallengeRating.value = null;
     }
 
     return {
@@ -484,7 +509,8 @@ export default {
   transition: transform 0.3s ease;
   background-color: $background-color;
   padding: 1rem;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -602,6 +628,7 @@ export default {
 
 .generator-container {
   height: 100vh;
+  min-height: 100dvh;
   overflow-y: scroll;
   overflow-x: visible;
   margin: 0 auto;

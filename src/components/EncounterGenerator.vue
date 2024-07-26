@@ -1,13 +1,13 @@
 <template>
   <div class="app-container">
-    <h1>D&D 5e Encounter Generator -- Free Version</h1>
+    <h1>Kenji's D&D 5e Encounter Generator -- Free Version</h1>
     <p>
       Welcome to the D&D 5e Encounter Generator! Build your encounter by adding monsters and party composition, then
       type in a short location description to generate a full encounter description. You can also generate statblocks
       for the monsters you've added once the encounter description has been generated. This free version limits the
       number of stat blocks that can be generated to 5 per day. Encounters can be exported to
       homebrewery and the individual stat blocks can be exported to homebrewery, foundry VTT and the improved initiative
-      app.
+      app. Statblocks can also be saved and organized in folders in the  <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/">Statblock Generator App</cdr-link> where you can access them later.
     </p>
     <p>
       No form fields are required. You can click 'Generate Encounter' to randomly generate a full encounter description
@@ -226,6 +226,7 @@
           <StatblockBase :monster="monster.statblock"
             v-if="(monster.loadingPart1 || monster.loadingPart2 || monster.statblock)"
             :loadingPart1="monster.loadingPart1" :loadingPart2="monster.loadingPart2" :copyButtons="true" />
+          <SaveStatblock v-if="monster.statblock" :monster="monster.statblock" statblockLink="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/" />
         </div>
 
       </div>
@@ -252,6 +253,7 @@
 import { ref, reactive, watchEffect } from 'vue';
 import encounterDifficulty from '../data/encounter-difficulty.json';
 import StatblockBase from './StatblockBase.vue';
+import SaveStatblock from './SaveStatblock.vue';
 import { CdrInput, CdrButton, CdrText, CdrSelect, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip } from "@rei/cedar";
 import challengeRatingData from '../data/challengeRatings.json';
 import crToXP from '../data/cr-to-xp.json';
@@ -275,7 +277,8 @@ export default {
     CdrSkeletonBone,
     IconXSm,
     CdrTooltip,
-    StatblockBase
+    StatblockBase,
+    SaveStatblock
   },
   setup() {
     const groups = reactive([{ members: 1, level: 1 }]);
@@ -359,8 +362,10 @@ export default {
     });
 
     async function generateStatblock(monster, index) {
-      if (!canGenerateStatblock()) {
-        return; // Exit if the limit is reached
+      const canGenerate = await canGenerateStatblock();
+
+      if (!canGenerate) {
+        return;
       }
       monsters.value[index].loadingPart1 = true;
       monsters.value[index].loadingPart2 = true;

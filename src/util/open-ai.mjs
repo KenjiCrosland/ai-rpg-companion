@@ -19,7 +19,7 @@ export async function generateGptResponse(
                 ${previousJSONString}`;
       }
       const body = {
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'You are an assistant Game Master.' },
           { role: 'user', content: retryPrompt ? retryPrompt : prompt },

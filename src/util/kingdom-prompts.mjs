@@ -18,7 +18,7 @@ export function settingOverviewPrompt(
   ${place_lore ? `Additional details about the setting: ${place_lore}.` : ''}
   
   Return the description in JSON format with the following keys. Make sure the npc_list includes all npc names mentioned in the description. The NPCs in npc_list should only be individuals and NOT organizations or groups.
-  Don't use the following NPC names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde.:
+  Don't use the following NPC names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde. Space is limited so please use shorter consise sentences and avoid run-on sentences:
   {
     name: '${place_name}',
     overview: 'A brief overview of the ${setting_type}, with a brief description of its current state',
