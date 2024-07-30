@@ -112,6 +112,7 @@
         </TabPanel>
         <TabPanel label="Locations">
           <h2>Important Locations</h2>
+
           <div
             v-if="currentSetting.importantLocations && currentSetting.importantLocations.length > 0 && !currentSetting.loadingSubLocations">
             <cdr-accordion-group>
@@ -121,6 +122,19 @@
                   {{ setting.name }}
                 </template>
                 <div v-if="!setting.main_index && !setting.loading">
+                  <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
+                    <template #trigger>
+                      <cdr-button size="small" :icon-only="true" :with-background="true"
+                        @click.stop="deleteSublocation(index)">
+                        <template #icon>
+                          <icon-x-sm />
+                        </template>
+                      </cdr-button>
+                    </template>
+                    <div>
+                      Delete Sub-Location
+                    </div>
+                  </cdr-tooltip>
                   <h2>{{ setting.name }}</h2>
                   <p>{{ setting.description }}</p>
                   <p>{{ setting.setting_scale }}</p>
@@ -130,6 +144,19 @@
                   </cdr-button>
                 </div>
                 <div v-if="setting.has_detailed_description && !setting.loading">
+                  <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
+                    <template #trigger>
+                      <cdr-button size="small" :icon-only="true" :with-background="true"
+                        @click.stop="deleteSetting(setting.main_index)">
+                        <template #icon>
+                          <icon-x-sm />
+                        </template>
+                      </cdr-button>
+                    </template>
+                    <div>
+                      Delete Sub-Location
+                    </div>
+                  </cdr-tooltip>
                   <h2>{{ setting.name }}</h2>
                   <p>{{ settings[setting.main_index].setting_overview.overview }} {{
                     settings[setting.main_index].setting_overview.relation_to_larger_setting }}</p>
@@ -158,6 +185,15 @@
                 </div>
               </cdr-accordion>
             </cdr-accordion-group>
+            <div style="padding: 2rem">
+              <h3>Create New Important Location</h3>
+              <cdr-input id="location-name" v-model="newSubLocation.name" label="Location Name"></cdr-input>
+              <cdr-input :rows="4" id="location-description" v-model="newSubLocation.description"
+                label="Location Description"></cdr-input>
+              <cdr-button style="margin-top: 2rem;" @click="addNewSubLocation" modifier="secondary">Add
+                Location</cdr-button>
+            </div>
+            <hr style="margin-top: 2rem">
             <cdr-button style="margin-top: 3rem" @click="generateSubLocations" modifier="dark">Re-Generate Important
               Locations for {{
                 currentSetting.place_name
@@ -174,16 +210,32 @@
             </cdr-button>
           </div>
           <div v-if="currentSetting.loadingSubLocations">
-            <LocationListSkeleton />
+            <BlockSkeleton />
           </div>
         </TabPanel>
-
         <TabPanel label="Factions">
           <h2>Factions</h2>
           <div v-if="currentSetting.factions && currentSetting.factions.length > 0">
-            <cdr-list>
-              <li v-for="faction in currentSetting.factions" :key="faction.name">
-                <h3>{{ faction.name }}</h3>
+            <cdr-accordion-group class="factions-accordion">
+              <cdr-accordion v-for="(faction, index) in currentSetting.factions" :key="faction.name" level="2"
+                :id="'faction-' + index" :opened="faction.open" @accordion-toggle="faction.open = !faction.open">
+                <template #label>
+                  {{ faction.name }}
+                </template>
+                <h3 class="faction-header">{{ faction.name }}</h3>
+                <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
+                  <template #trigger>
+                    <cdr-button size="small" :icon-only="true" :with-background="true"
+                      @click.stop="deleteFaction(index)">
+                      <template #icon>
+                        <icon-x-sm />
+                      </template>
+                    </cdr-button>
+                  </template>
+                  <div>
+                    Delete Faction
+                  </div>
+                </cdr-tooltip>
                 <div class="influence-level">
                   <strong>Influence Level:</strong> {{ factionPowerLevels[faction.influence_level - 1] }}
                   <cdr-popover id="popover-example" position="right">
@@ -207,12 +259,40 @@
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
                 </div>
-                <p>{{ faction.history }}</p>
-                <p>{{ faction.recent_event }} {{ faction.current_situation }}</p>
-                <p>{{ faction.rites_and_ceremonies }} {{ faction.recent_ceremony }}</p>
-                <p>{{ faction.challenge_to_power }} {{ faction.challenge_event }}</p>
-              </li>
-            </cdr-list>
+                <div style="margin-top: 2rem" v-if="faction.loading">
+                  <CdrSkeleton>
+                    <OverviewSkeleton />
+                  </CdrSkeleton>
+                </div>
+                <div class="faction-description" v-if="faction.history">
+                  <p>{{ faction.history }}</p>
+                  <p>{{ faction.recent_event }} {{ faction.current_situation }}</p>
+                  <p>{{ faction.rites_and_ceremonies }} {{ faction.recent_ceremony }}</p>
+                  <p>{{ faction.challenge_to_power }} {{ faction.challenge_event }}</p>
+                </div>
+                <cdr-button style="margin-top: 2rem" v-if="!faction.history"
+                  @click="generateDetailedFaction(index)">Generate
+                  Full Description</cdr-button>
+              </cdr-accordion>
+              <cdr-accordion v-if="currentSetting.loadingNewFaction" :level="2" id="new-faction-accordion"
+                :opened="true">
+                <template #label>
+                  {{ newFaction.name }}
+                </template>
+                <CdrSkeleton>
+                  <FactionSkeleton />
+                </CdrSkeleton>
+              </cdr-accordion>
+              <div style="padding: 2rem">
+                <h3>Create New Faction</h3>
+                <cdr-input id="faction-name" v-model="newFaction.name" label="Faction Name"></cdr-input>
+                <cdr-input :rows="4" id="faction-description" v-model="newFaction.description"
+                  label="Faction Description"></cdr-input>
+                <cdr-button style="margin-top: 2rem;" @click="addNewFaction" modifier="secondary">Add
+                  Faction</cdr-button>
+              </div>
+              <hr style="margin-top: 2rem">
+            </cdr-accordion-group>
           </div>
           <div v-if="!(currentSetting.factions.length > 0) && !currentSetting.loadingFactions">
             <p>Factions are any group of people gathered together to pursue a certain goal or to
@@ -227,26 +307,16 @@
               criminal
               organizations.
             </p>
-            <cdr-button @click="generateFactions" modifier="dark">Generate Factions for {{ currentSetting.place_name
-              }}</cdr-button>
           </div>
-          <cdr-button v-if="currentSetting.factions.length > 0 && !currentSetting.loadingFactions"
-            @click="generateFactions" modifier="dark">Re-Generate Factions for {{ currentSetting.place_name
+          <cdr-button v-if="currentSetting.factions.length <= 0 && !currentSetting.loadingFactions"
+            @click="generateFactions" modifier="dark">Generate Factions for {{ currentSetting.place_name
+            }}</cdr-button>
+          <cdr-button style="margin-top: 2rem"
+            v-if="currentSetting.factions.length > 0 && !currentSetting.loadingFactions" @click="generateFactions"
+            modifier="dark">Re-Generate Factions for {{ currentSetting.place_name
             }}</cdr-button>
           <div v-if="currentSetting.loadingFactions">
-            <CdrSkeleton>
-              <cdr-list>
-                <li>
-                  <FactionSkeleton />
-                </li>
-                <li class="bone-list-item">
-                  <FactionSkeleton />
-                </li>
-                <li class="bone-list-item">
-                  <FactionSkeleton />
-                </li>
-              </cdr-list>
-            </CdrSkeleton>
+            <BlockSkeleton />
           </div>
         </TabPanel>
         <TabPanel label="NPCs" name="NPCs">
@@ -271,6 +341,18 @@
                 {{ npc.name }}
               </template>
               <div v-if="!npc.loading">
+                <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
+                  <template #trigger>
+                    <cdr-button size="small" :icon-only="true" :with-background="true" @click.stop="deleteNPC(index)">
+                      <template #icon>
+                        <icon-x-sm />
+                      </template>
+                    </cdr-button>
+                  </template>
+                  <div>
+                    Delete NPC
+                  </div>
+                </cdr-tooltip>
                 <h2>{{ npc.name }}</h2>
                 <div v-if="!npc.read_aloud_description">
                   <p>{{ npc.description }}</p>
@@ -328,6 +410,19 @@
                   {{ hook.quest_title }}
                 </template>
                 <div>
+                  <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
+                    <template #trigger>
+                      <cdr-button size="small" :icon-only="true" :with-background="true"
+                        @click.stop="deleteQuestHook(index)">
+                        <template #icon>
+                          <icon-x-sm />
+                        </template>
+                      </cdr-button>
+                    </template>
+                    <div>
+                      Delete Quest Hook
+                    </div>
+                  </cdr-tooltip>
                   <h2>{{ hook.quest_title }}</h2>
                   <p><strong>Quest Giver:</strong> {{ hook.quest_giver_name }}</p>
                   <p>{{ hook.quest_giver_background }}</p>
@@ -414,9 +509,9 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrPopover, IconInformationStroke, IconNavigationMenu } from "@rei/cedar";
-import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionsPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt, createQuestHookPrompt } from "../util/kingdom-prompts.mjs";
+import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionListPrompt, detailedFactionPrompt, singleFactionPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt, createQuestHookPrompt } from "../util/kingdom-prompts.mjs";
 import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
-import LocationListSkeleton from "./skeletons/LocationListSkeleton.vue";
+import BlockSkeleton from "./skeletons/BlockSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
 import OverviewSkeleton from "./skeletons/OverviewSkeleton.vue";
 import Tabs from './tabs/Tabs.vue';
@@ -475,6 +570,50 @@ const sidebarStyle = computed(() => {
     };
   }
 });
+
+const newSubLocation = reactive({
+  name: '',
+  description: ''
+});
+
+const newFaction = reactive({
+  name: '',
+  description: ''
+});
+
+const addNewSubLocation = () => {
+  if (!newSubLocation.name) return;
+  currentSetting.value.importantLocations.push({
+    name: newSubLocation.name,
+    description: newSubLocation.description,
+    setting_scale: '',
+    main_index: null,
+    has_detailed_description: false,
+    loading: false
+  });
+  newSubLocation.name = '';
+  newSubLocation.description = '';
+};
+
+const deleteSublocation = (index) => {
+  currentSetting.value.importantLocations.splice(index, 1);
+  saveSettingsToLocalStorage();
+};
+
+const deleteFaction = (index) => {
+  currentSetting.value.factions.splice(index, 1);
+  saveSettingsToLocalStorage();
+};
+
+const deleteNPC = (index) => {
+  currentSetting.value.npcs.splice(index, 1);
+  saveSettingsToLocalStorage();
+};
+
+const deleteQuestHook = (index) => {
+  currentSetting.value.questHooks.splice(index, 1);
+  saveSettingsToLocalStorage();
+};
 
 function copySettingsAsPlainText() {
   const text = formatSettingAsPlainText(settingsTree.value);
@@ -647,7 +786,8 @@ const createNewSetting = (isSublocation, adjective = '', setting_type = '', plac
     questHooks: [],
     parentIndex: isSublocation ? parentIndex : null,
     loadingFactions: false,
-    loadingSubLocations: false
+    loadingSubLocations: false,
+    loadingNewFaction: false,
   });
 
   // Push the new setting to the settings array
@@ -668,7 +808,13 @@ function saveSettingsToLocalStorage() {
   const settingsToSave = settings.value.map(setting => ({
     ...setting,
     setting_overview: setting.setting_overview,
-    factions: setting.factions,
+    factions: setting.factions.map(faction => ({
+      ...faction,
+      open: false // Set all faction.open properties to false before saving
+    })),
+    loadingFactions: false,  // Set loadingFactions to false before saving
+    loadingSubLocations: false,  // Set loadingSubLocations to false before saving
+    loadingsettingOverview: false,  // Set loadingsettingOverview to false before saving
     importantLocations: setting.importantLocations.map(location => ({
       ...location,
       open: false // Set all location.open properties to false before saving
@@ -746,6 +892,24 @@ const sublocationValidation = jsonString => {
   }
 }
 
+const factionListValidation = jsonString => {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    return jsonObj.every(faction => ['name', 'influence_level', 'faction_leader', 'faction_leader_description', 'key_resources_and_assets', 'motto'].every(key => key in faction));
+  } catch (error) {
+    return false;
+  }
+}
+const factionDetailValidation = jsonString => {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    const keys = ['history', 'recent_event', 'current_situation', 'rites_and_ceremonies', 'recent_ceremony', 'challenge_to_power', 'challenge_event'];
+    return keys.every(key => key in jsonObj);
+  } catch (error) {
+    return false;
+  }
+}
+
 const factionValidation = jsonString => {
   try {
 
@@ -760,6 +924,21 @@ const factionValidation = jsonString => {
     return false;
   }
 }
+
+const singleFactionValidation = jsonString => {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    const keys = [
+      'name', 'history', 'recent_event', 'current_situation', 'motto', 'influence_level',
+      'faction_leader', 'faction_leader_description', 'key_resources_and_assets', 'rites_and_ceremonies',
+      'recent_ceremony', 'challenge_to_power', 'challenge_event'
+    ];
+    return keys.every(key => key in jsonObj);
+  } catch (error) {
+    return false;
+  }
+}
+
 
 function questHookValidation(jsonString) {
   try {
@@ -799,17 +978,18 @@ const factionPowerLevels = [
   'Nonexistent', 'Marginal', 'Emerging', 'Moderate', 'Noteworthy', 'Influential',
   'Powerful', 'Dominant', 'Controlling', 'Totalitarian'
 ];
+
 const factionPowerDescriptions = [
-  "Indicates a total lack of influence and recognition within any sphere of activity. Such entities are entirely disregarded in political, social, and economic contexts.",
-  "Represents entities with very limited influence, struggling to gain recognition. They may have minor local impact but are largely ineffective on a broader scale.",
-  "Describes factions or groups that are beginning to make their presence felt but still have minimal overall influence. They are in the early stages of establishing a base and achieving initial goals.",
-  "Signifies entities with a noticeable but limited regional influence. They might sway local policies or decisions but lack the power to affect broader change.",
-  "Used for groups recognized within a larger context and starting to effect change on a significant scale. They are gaining momentum and beginning to challenge established powers.",
-  "Describes factions with significant sway in local politics and society. They have the capacity to influence major decisions and hold considerable clout in their domains.",
-  "Indicates a strong influence and the ability to mobilize considerable resources. Such factions can shape outcomes in multiple spheres and are key players in their environments.",
-  "Describes a faction that has a strong influence and perhaps a majority in one branch of government or one aspect of governance—like a majority in the Senate—but doesn't have unchecked power across the entire spectrum of government. They are a major player and can decisively influence legislation and policy outcomes in that specific context, but their power is not absolute and can be checked by other branches or levels of government.",
-  "This would indicate a higher level of power, where a faction not only has significant influence but also controls multiple branches of government or has significant sway across various aspects of governance. This implies a broader control that affects a wide range of policies and a larger scale of operations, potentially directing the main course of the nation's political agenda.",
-  "Reflects absolute control over society, without opposition. This level of power is marked by an absence of democratic processes and is characterized by unilateral decision-making and enforcement of policies."
+  "No influence or recognition in any sphere. Entirely disregarded in political, social, and economic contexts.",
+  "Very limited influence, struggling for recognition. Minor local impact but largely ineffective on a broader scale.",
+  "Beginning to make their presence felt with minimal overall influence. Early stages of establishing a base.",
+  "Noticeable but limited regional influence. May sway local policies but lack broader power.",
+  "Recognized within a larger context, starting to effect significant change. Gaining momentum.",
+  "Significant sway in local politics and society. Can influence major decisions and hold considerable clout.",
+  "Strong influence and considerable resources. Shapes outcomes in multiple spheres and key player in environments.",
+  "Strong influence in one branch of government or aspect of governance. Major player but power is not absolute.",
+  "High level of power, controls multiple branches or has significant sway across governance. Broad control over policies.",
+  "Absolute control over society, without opposition. Marked by unilateral decision-making and lack of democratic processes."
 ];
 
 const randomQuestString = 'Random: Generate a quest with a random objective and theme.';
@@ -867,6 +1047,12 @@ async function processQueue() {
       break;
     case 'generateFactions':
       await handleGenerateFactions(data);
+      break;
+    case 'generateDetailedFaction':
+      await handleGenerateDetailedFaction(data);
+      break;
+    case 'addNewFaction':
+      await handleAddNewFaction(data);
       break;
     case 'generateDetailedNPCDescription':
       await handleGenerateDetailedNPCDescription(data);
@@ -952,9 +1138,39 @@ function generateFactions() {
     }
   }
   const overviewText = getOverviewText(settings.value[operationIndex].setting_overview);
-  const prompt = factionsPrompt(overviewText);
+  const prompt = factionListPrompt(overviewText);
 
   enqueueRequest('generateFactions', { operationIndex, prompt });
+}
+
+function getFactionText(factionsArray) {
+  return factionsArray.map(faction => `Faction Name: ${faction.name} \n Influence Level: ${faction.influence_level} \n Faction Leader: ${faction.faction_leader} ${faction.faction_leader_description} \n Faction Assets: ${faction.key_resources_and_assets} \n Faction Motto: \n ${faction.motto}`).join('\n---\n\n');
+}
+
+function generateDetailedFaction(index) {
+  const operationIndex = currentSettingIndex.value;
+  const faction = settings.value[operationIndex].factions[index];
+  const factionText = getFactionText(settings.value[operationIndex].factions);
+  const settingOverviewText = getOverviewText(settings.value[operationIndex].setting_overview);
+  const prompt = detailedFactionPrompt(faction.name, factionText, settingOverviewText);
+
+  enqueueRequest('generateDetailedFaction', { operationIndex, factionIndex: index, prompt });
+}
+
+const addNewFaction = () => {
+  if (!newFaction.name) return;
+  const operationIndex = currentSettingIndex.value;
+
+  const overviewText = getOverviewText(settings.value[operationIndex].setting_overview);
+  let factionText;
+  if (settings.value[operationIndex].factions.length > 0) {
+    factionText = getFactionText(settings.value[operationIndex].factions);
+  } else {
+    factionText = null;
+  }
+  const prompt = singleFactionPrompt(newFaction.name, newFaction.description, factionText, overviewText);
+
+  enqueueRequest('addNewFaction', { operationIndex, prompt });
 }
 
 function generateQuestHook(npc) {
@@ -1105,7 +1321,7 @@ async function handleGenerateFactions({ operationIndex, prompt }) {
     currentlyLoading.value = true;
     settings.value[operationIndex].loadingFactions = true;
 
-    const response = await generateGptResponse(prompt, factionValidation);
+    const response = await generateGptResponse(prompt, factionListValidation);
     currentlyLoading.value = false;
     settings.value[operationIndex].loadingFactions = false;
     if (settings.value[operationIndex]) {
@@ -1129,6 +1345,60 @@ async function handleGenerateFactions({ operationIndex, prompt }) {
     currentlyLoading.value = false;
     settings.value[operationIndex].loadingFactions = false;
     console.error("Error generating factions:", error);
+  }
+}
+
+async function handleGenerateDetailedFaction({ operationIndex, factionIndex, prompt }) {
+  try {
+    if (settings.value[operationIndex]) {
+      settings.value[operationIndex].factions[factionIndex].loading = true;
+      currentlyLoading.value = true;
+    }
+    const response = await generateGptResponse(prompt, factionDetailValidation);
+
+    const faction = JSON.parse(response);
+    if (settings.value[operationIndex]) {
+      //merge the new faction with the existing one
+      Object.assign(settings.value[operationIndex].factions[factionIndex], faction);
+      settings.value[operationIndex].factions[factionIndex].loading = false;
+      currentlyLoading.value = false;
+      saveSettingsToLocalStorage();  // Save to local storage after update
+    }
+  } catch (error) {
+    if (settings.value[operationIndex]) {
+      settings.value[operationIndex].factions[factionIndex].loading = false;
+      currentlyLoading.value = false;
+    }
+    console.error("Error generating detailed faction description:", error);
+  }
+}
+
+async function handleAddNewFaction({ operationIndex, prompt }) {
+  try {
+    currentlyLoading.value = true;
+    settings.value[operationIndex].loadingNewFaction = true;
+    const response = await generateGptResponse(prompt, singleFactionValidation);
+    const newGeneratedFaction = JSON.parse(response);
+    settings.value[operationIndex].factions.push(newGeneratedFaction);
+    //Last faction accordion is opened
+    settings.value[operationIndex].factions[settings.value[operationIndex].factions.length - 1].open = true;
+    currentlyLoading.value = false;
+    //add the faction leader as an npc
+    if (!settings.value[operationIndex].npcs.map(npc => npc.name).includes(newGeneratedFaction.faction_leader)) {
+      settings.value[operationIndex].npcs.push({
+        name: newGeneratedFaction.faction_leader,
+        description: newGeneratedFaction.faction_leader_description,
+        faction: newGeneratedFaction.name
+      });
+    }
+    settings.value[operationIndex].loadingNewFaction = false;
+    newFaction.name = '';
+    newFaction.description = '';
+    saveSettingsToLocalStorage();  // Save to local storage after update
+  } catch (error) {
+    currentlyLoading.value = false;
+    settings.value[operationIndex].loadingNewFaction = false;
+    console.error("Error adding new faction:", error);
   }
 }
 
@@ -1330,6 +1600,18 @@ function randomName(setting) {
       border-radius: 8px;
     }
   }
+
+  p {
+    line-height: 3rem;
+    margin: 0 0 25px;
+  }
+}
+
+.delete-button {
+  position: absolute;
+  top: 65px;
+  right: 15px;
+  z-index: 1;
 }
 
 .influence-level {
@@ -1365,6 +1647,21 @@ function randomName(setting) {
   color: $cdr-color-text-secondary;
   padding: 1rem 2rem;
   font-style: italic;
+}
+
+.faction-header {
+  display: block;
+  font-size: 1.17em;
+  margin-block-start: 1.5em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  font-weight: bold;
+  unicode-bidi: isolate;
+}
+
+.faction-description {
+  margin: 1rem .5rem;
 }
 
 .tab-skeleton {
