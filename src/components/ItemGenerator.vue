@@ -45,49 +45,7 @@
       </div>
     </div>
     <div v-if="loadingItem">
-      <cdr-skeleton>
-        <h2><cdr-skeleton-bone type="line" style="width: 45%; height: 5rem" /></h2>
-        <cdr-skeleton-bone type="line" style="width:30%" />
-        <h3>Features</h3>
-        <cdr-skeleton-bone class="item-bone" type="line" style="width:80%" />
-        <div style="padding: 1rem 0">
-          <div class="flex-bone">
-            <cdr-skeleton-bone class="item-bone" type="line" style="width:20%; margin-right: 1rem" /> :
-            <cdr-skeleton-bone class="item-bone" type="line"
-              style="margin-left: 1rem; height:80%; width:80%; height: 2rem" />
-          </div>
-          <cdr-skeleton-bone class="item-bone" type="line" style="width: 95%; margin-top: 0" />
-          <cdr-skeleton-bone class="item-bone" type="line" style="width: 85%" />
-          <cdr-skeleton-bone class="item-bone" type="line" style="width: 75%" />
-        </div>
-        <div style="padding: 1rem 0">
-          <div class="flex-bone">
-            <cdr-skeleton-bone class="item-bone" type="line" style="width:20%; margin-right: 1rem" /> :
-            <cdr-skeleton-bone class="item-bone" type="line"
-              style="margin-left: 1rem; height:80%; width:80%; height: 2rem" />
-          </div>
-          <cdr-skeleton-bone class="item-bone" type="line" style="width: 95%; margin-top: 0" />
-          <cdr-skeleton-bone class="item-bone" type="line" style="width: 85%" />
-          <cdr-skeleton-bone class="item-bone" type="line" style="width: 75%" />
-        </div>
-
-        <div class="read-aloud">
-          <p class="body-text">
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 95%" />
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 75%" />
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 85%" />
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 95%" />
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 75%" />
-          </p>
-          <p class="body-text">
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 95%" />
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 75%" />
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 85%" />
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 95%" />
-            <cdr-skeleton-bone class="item-bone" type="line" style="width: 75%" />
-          </p>
-        </div>
-      </cdr-skeleton>
+      <item-skeleteon />
     </div>
   </div>
   <div v-if="magicItemDescription && !loadingItem" class="instructions">
@@ -113,6 +71,7 @@ import { CdrInput, CdrButton, CdrText, CdrSelect, CdrLink, CdrList, CdrSkeleton,
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
+import ItemSkeleteon from './skeletons/ItemSkeleteon.vue';
 
 const itemName = ref('');
 const rarity = ref('');
@@ -276,10 +235,6 @@ const copyAsMarkdown = () => {
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.item-bone {
-  height: 2rem;
-}
-
 .rarity {
   font-style: italic;
   margin-bottom: 1rem;
@@ -297,12 +252,6 @@ const copyAsMarkdown = () => {
 
 .generate-button {
   margin-top: 2rem;
-}
-
-.flex-bone {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0;
 }
 
 .read-aloud {
