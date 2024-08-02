@@ -58,6 +58,7 @@ function vue_app_enqueue_assets() {
         }
         .site-container .site-inner {
             max-width: none;
+            padding: 0;
         }
         h1, h2 {
             padding-top: 2rem;
