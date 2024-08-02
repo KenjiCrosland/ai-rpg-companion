@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
-    <h1>RPG Location Description Generator</h1>
+    <h1>Kenji's RPG Location Description Generator</h1>
     <hr>
     <cdr-text class="intro">
-      Welcome to the RPG Location Description Generator! This App uses a custom trained GPT Model to provide engaging
+      Welcome to the RPG Location Description Generator! This App uses the ChatGPT API to provide engaging
       descriptions
       of locations for your players. Some examples of types of locations might be:
     </cdr-text>
@@ -95,7 +95,7 @@ export default {
   },
 };
 </script>
-  
+
 <style scoped lang="scss">
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
