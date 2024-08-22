@@ -1,25 +1,43 @@
 <template>
-    <div :class="`container ${columns}`">
+    <div :class="`container ${columns}`" @mouseover="showEditButton = true" @mouseleave="showEditButton = false">
         <div v-if="!loadingPart1" class="statblock">
             <div class="creature-heading">
-                <h1>{{ monster.name }}</h1>
-                <h2>{{ monster.type_and_alignment }}</h2>
+                <h1 v-if="!isEditing">{{ monster.name }}</h1>
+                <input v-else v-model="editedMonster.name" />
+
+                <h2 v-if="!isEditing">{{ monster.type_and_alignment }}</h2>
+                <input v-else v-model="editedMonster.type_and_alignment" />
             </div>
+
             <svg height="5" width="100%" class="tapered-rule">
                 <polyline points="0,0 400,2.5 0,5"></polyline>
             </svg>
+
+            <!-- Property Block -->
             <div class="property-block">
-                <div class="property-line">
+                <div :class="propertyLineClass" v-if="!isEditing">
                     <h4>Armor Class</h4>
                     <p>{{ monster.armor_class }}</p>
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass" v-else>
+                    <h4>Armor Class</h4>
+                    <input v-model="editedMonster.armor_class" />
+                </div>
+                <div :class="propertyLineClass" v-if="!isEditing">
                     <h4>Hit Points: </h4>
                     <p>{{ monster.hit_points }}</p>
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass" v-else>
+                    <h4>Hit Points: </h4>
+                    <input v-model="editedMonster.hit_points" />
+                </div>
+                <div :class="propertyLineClass" v-if="!isEditing">
                     <h4>Speed: </h4>
                     <p>{{ monster.speed }}</p>
+                </div>
+                <div :class="propertyLineClass" v-else>
+                    <h4>Speed: </h4>
+                    <input v-model="editedMonster.speed" />
                 </div>
                 <table class="scores">
                     <tr>
@@ -29,61 +47,89 @@
                     </tr>
                     <tr>
                         <td v-for="attribute in parsedAttributes" :key="attribute.stat">
-                            <p>{{ attribute.value }}</p>
+                            <p v-if="!isEditing">{{ attribute.value }}</p>
+                            <input v-else v-model="attribute.value" />
                         </td>
                     </tr>
                 </table>
                 <div v-if="monster.skills && monster.skills.length > 0 && monster.skills !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Skills: </h4>
-                    <p> {{ monster.skills }}</p>
+                    <p v-if="!isEditing">{{ monster.skills }}</p>
+                    <input v-else v-model="editedMonster.skills" />
                 </div>
                 <div v-if="monster.saving_throws && monster.saving_throws.length > 0 && monster.saving_throws !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Saving Throws: </h4>
-                    <p> {{ monster.saving_throws }}</p>
+                    <p v-if="!isEditing">{{ monster.saving_throws }}</p>
+                    <input v-else v-model="editedMonster.saving_throws" />
                 </div>
                 <div v-if="monster.damage_resistances && monster.damage_resistances.length > 0 && monster.damage_resistances !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Damage Resistances: </h4>
-                    <p>{{ monster.damage_resistances }}</p>
+                    <p v-if="!isEditing">{{ monster.damage_resistances }}</p>
+                    <input v-else v-model="editedMonster.damage_resistances" />
                 </div>
                 <div v-if="monster.damage_immunities && monster.damage_immunities.length > 0 && monster.damage_immunities !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Damage Immunities: </h4>
-                    <p>{{ monster.damage_immunities }}</p>
+                    <p v-if="!isEditing">{{ monster.damage_immunities }}</p>
+                    <input v-else v-model="editedMonster.damage_immunities" />
                 </div>
                 <div v-if="monster.condition_immunities && monster.condition_immunities.length > 0 && monster.condition_immunities !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Condition Immunities: </h4>
-                    <p>{{ monster.condition_immunities }}</p>
+                    <p v-if="!isEditing">{{ monster.condition_immunities }}</p>
+                    <input v-else v-model="editedMonster.condition_immunities" />
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass">
                     <h4>Senses: </h4>
-                    <p>{{ monster.senses }}</p>
+                    <p v-if="!isEditing">{{ monster.senses }}</p>
+                    <input v-else v-model="editedMonster.senses" />
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass">
                     <h4>Languages: </h4>
-                    <p>{{ monster.languages }}</p>
+                    <p v-if="!isEditing">{{ monster.languages }}</p>
+                    <input v-else v-model="editedMonster.languages" />
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass">
                     <h4>CR:</h4>
-                    <p>{{ monster.challenge_rating }}</p>
+                    <p v-if="!isEditing">{{ monster.challenge_rating }}</p>
+                    <input v-else v-model="editedMonster.challenge_rating" />
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass">
                     <h4>Proficiency Bonus:</h4>
-                    <p>{{ monster.proficiency_bonus }}</p>
+                    <p v-if="!isEditing">{{ monster.proficiency_bonus }}</p>
+                    <input v-else v-model="editedMonster.proficiency_bonus" />
                 </div>
             </div>
+
             <svg height="5" width="100%" class="tapered-rule">
                 <polyline points="0,0 400,2.5 0,5"></polyline>
             </svg>
+
             <ul class="abilities">
-                <li v-for="(ability, index) in monster.abilities" :key="index">
-                    <strong>{{ ability.name }}. </strong>{{ ability.description }}
-                </li>
+                <div v-if="!isEditing">
+                    <li v-for="(ability, index) in monster.abilities" :key="index">
+                        <strong>{{ ability.name }}. </strong>
+                        <span>{{ ability.description }}</span>
+                    </li>
+                </div>
+                <div v-else class="ability-forms">
+                    <li v-for="(ability, index) in monster.abilities" :key="index">
+                        <input v-model="ability.name" />
+                        <textarea v-model="ability.description"></textarea>
+                    </li>
+                </div>
             </ul>
+
+            <div class="edit-save-buttons">
+                <button v-if="showEditButton && !isEditing" @click="enterEditMode">Edit</button>
+                <button v-if="isEditing" @click="saveChanges">Save</button>
+                <button v-if="isEditing" @click="cancelChanges">Cancel</button>
+            </div>
         </div>
+
         <div v-if="loadingPart1" class="statblock">
             <StatblockSkeletonPtOne />
         </div>
@@ -114,20 +160,11 @@
 </template>
 
 <script setup>
+import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
+
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
-import { ref, computed, defineProps, onMounted, onBeforeUnmount } from 'vue';
-import { CdrToggleButton, CdrToggleGroup, CdrButton, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
-import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
-import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
-import { convertToFoundryVTT } from '../util/convertToFoundryVTT.mjs';
-import "@rei/cedar/dist/style/cdr-toggle-group.css";
-import "@rei/cedar/dist/style/cdr-toggle-button.css";
-import "@rei/cedar/dist/style/cdr-list.css";
-import "@rei/cedar/dist/style/cdr-button.css";
-import "@rei/cedar/dist/style/cdr-skeleton.css";
-import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
-// Props
+
 const props = defineProps({
     monster: {
         type: Object,
@@ -151,6 +188,32 @@ const props = defineProps({
     }
 });
 
+const emit = defineEmits(['update-monster']);
+
+const showEditButton = ref(false);
+const isEditing = ref(false);
+const editedMonster = ref({ ...props.monster });
+const propertyLineClass = computed(() => isEditing.value ? 'property-line editing' : 'property-line');
+
+// Watch for changes to the monster prop and update editedMonster accordingly
+watch(() => props.monster, (newMonster) => {
+    editedMonster.value = { ...newMonster };
+}, { deep: true });
+
+const enterEditMode = () => {
+    isEditing.value = true;
+};
+
+const saveChanges = () => {
+    isEditing.value = false;
+    emit('update-monster', editedMonster.value);  // Emit the updated monster object
+};
+
+const cancelChanges = () => {
+    isEditing.value = false;
+    editedMonster.value = { ...props.monster };  // Reset changes
+};
+
 const windowWidth = ref(window.innerWidth);
 const onResize = () => {
     windowWidth.value = window.innerWidth;
@@ -164,13 +227,10 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', onResize);
 });
 
-
 const columns = computed(() => {
     return windowWidth.value <= 855 ? 'one_column' : props.columns;
 });
 
-
-// Computed properties
 const parsedAttributes = computed(() => {
     return props.monster.attributes.split(',').map(attr => {
         const [stat, ...valueParts] = attr.trim().split(' ');
@@ -181,20 +241,29 @@ const parsedAttributes = computed(() => {
 </script>
 
 
+<style scoped lang="scss">
+input,
+textarea {
+    border: 1px solid #cbab77;
+    background-color: #fefdf9;
+    padding: .5rem;
+}
 
-<style lang="scss" scoped>
+textarea {
+    height: 75px;
+}
+
 .container {
     display: grid;
-
     justify-content: center;
     background: #FDF1DC;
     background-image: url('https://cros.land/wp-content/uploads/2023/06/parchment-fee031d8.jpg');
     background-blend-mode: overlay;
     background-attachment: fixed;
-
     margin: 2rem auto;
     padding: 16px 24px;
     box-shadow: 1px 4px 14px #888;
+    position: relative;
 
     &.one_column {
         grid-template-columns: 1fr;
@@ -209,11 +278,16 @@ const parsedAttributes = computed(() => {
     }
 }
 
-.exports {
-    max-width: 850px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+.edit-save-buttons {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+
+.container:hover .edit-save-buttons {
+    display: inline-block;
 }
 
 .statblock {
@@ -222,7 +296,6 @@ const parsedAttributes = computed(() => {
     font-size: 14px;
     line-height: 1.2em;
     display: block;
-
     box-sizing: border-box;
 
     h3 {
@@ -298,28 +371,28 @@ const parsedAttributes = computed(() => {
     p {
         margin: 0 .5rem;
     }
+
+    &.editing {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: .5rem;
+
+        input {
+            flex-grow: 1;
+        }
+    }
 }
 
-.statblock-bone {
-    background-image: linear-gradient(90deg, #efdfc2 0%, #FDF4E3 15%, #efdfc2 30%);
-}
-
-.property-line-skeleton {
-    display: flex;
-    justify-content: flex-start;
-    gap: .5rem;
-}
-
-.skeleton-line-item {
-    height: 1em;
-    flex-grow: 0;
-}
-
-//linear-gradient(90deg, #e2d9ca 0%, #FDF4E3 15%, #e2d9ca 30%)
 .scores {
     width: 90%;
     text-align: center;
     margin: 1rem auto;
+
+    input {
+        width: 50px;
+        text-align: center;
+    }
 }
 
 .abilities {
@@ -334,28 +407,16 @@ const parsedAttributes = computed(() => {
     strong {
         font-style: italic;
     }
-}
 
-.instructions {
-    padding: 3rem;
-    margin: 0 auto;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-}
-
-.markdown-button {
-    display: flex;
-
-    button {
-        margin: 2rem auto 1rem;
+    .ability-forms li {
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
+        margin-bottom: 2rem;
     }
 }
 
 @media screen and (max-width: 855px) {
-    .exports {
-        grid-template-columns: 1fr;
-    }
-
     .container {
         background-image: none;
 

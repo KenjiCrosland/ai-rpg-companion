@@ -56,7 +56,7 @@
         Monster
         Statblock</cdr-button>
       <div class="intro-and-form">
-        <div class="intro-container" v-show="!monster && !loadingPart1 && !loadingPart2">
+        <div class="intro-container" v-show="!monster && !loadingPart1 && !loadingPart2 && !premium">
           <h1>Kenji's D&D 5e Monster Statblock Generator -- Free Version</h1>
           <p>
             Welcome to the D&D 5e Statblock Generator! This free version has a limit of 5 statblock generations per
@@ -75,6 +75,24 @@
           <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/">Link to
             Statblock
             Generator -- Premium Version</cdr-link>
+        </div>
+        <div class="intro-container" v-show="!monster && !loadingPart1 && !loadingPart2 && premium">
+          <h1>Kenji's D&D 5e Monster Statblock Generator -- Premium Version</h1>
+          <p>
+            Welcome to the D&D 5e Statblock
+            Generator -- Premium Version! This premium version has no limits on the number of creatures you can generate
+            per
+            day.
+            Enter the name of the monster and choose a monster type and CR.
+            Monster types determine whether a monster is stronger on defense, offense or balanced. CR will determine
+            how
+            strong a monster is, with higher CRs making for stronger monsters. Finally, if you wish the creature to
+            be
+            able to cast spells, please use select the “Creature is a spellcaster” checkbox. Once generated, you can
+            export
+            a creature to
+            homebrewery, foundry VTT or the Improved Initiative app.
+          </p>
         </div>
         <form @submit.prevent="generateStatblock" class="monster-form">
           <div class="form-row-top">
@@ -95,7 +113,7 @@
           </div>
 
           <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
-            {{ activeMonsterIndex !== null ?  'Regenerate Statblock' : 'Generate Statblock'}}
+            {{ activeMonsterIndex !== null ? 'Regenerate Statblock' : 'Generate Statblock' }}
           </cdr-button>
         </form>
       </div>
@@ -106,7 +124,8 @@
         <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
       </cdr-toggle-group>
       <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
-        :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" />
+        :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference"
+        @update-monster="updateMonster" />
 
       <cdr-button class="delete-button" v-if="monster && !loadingPart2" modifier="dark" :full-width="true"
         @click="deleteStatblock">Delete
@@ -120,7 +139,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted, computed, reactive, onUnmounted } from 'vue';
 import Statblock from './Statblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
@@ -138,345 +157,302 @@ import creatureTemplates from '../data/creatureTemplates.json';
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
 import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
 
-export default {
-  components: {
-    Statblock,
-    CdrInput,
-    CdrButton,
-    CdrLink,
-    CdrList,
-    CdrCheckbox,
-    CdrAccordion,
-    CdrAccordionGroup,
-    CdrSelect,
-    CdrToggleButton,
-    CdrToggleGroup,
-    IconNavigationMenu,
-    StatblockExports
-  },
-  setup() {
-    const loadingPart1 = ref(false);
-    const loadingPart2 = ref(false);
-    const monsterName = ref('');
-    const monsterType = ref('Random');
-    const monsterDescription = ref('');
-    const selectedChallengeRating = ref(null);
-    const monster = ref(null);
-    const caster = ref(false);
-    const errorMessage = ref('');
-    const windowWidth = ref(window.innerWidth);
-    const monsters = ref({ 'Uncategorized': [] });
-    const newFolder = ref('');
-    const chosenFolder = ref('');
-    const activeFolder = ref('Uncategorized'); // Initialize with default folder
-    const openedFolders = reactive({ 'Uncategorized': true }); // To track the state of each accordion
-    const userColumnsPreference = ref('two_columns');
-    const shouldDisplayInterface = computed(() => {
-      return windowWidth.value > 855;
-    });
-    const folderNames = computed(() => {
-      return Object.keys(monsters.value);
-    });
+const props = defineProps({
+  premium: {
+    type: Boolean,
+    default: false
+  }
+})
 
-    onMounted(() => {
-      const savedMonsters = localStorage.getItem('monsters');
-      if (savedMonsters) {
-        let allData = JSON.parse(savedMonsters);
-        // Delete the specific keys to ensure they are not mixed into your UI state
-        delete allData.generationCount;
-        delete allData.firstGenerationTime;
-        // Now, monsters.value will only contain relevant monster data
-        monsters.value = allData;
-      }
+const loadingPart1 = ref(false);
+const loadingPart2 = ref(false);
+const monsterName = ref('');
+const monsterType = ref('Random');
+const monsterDescription = ref('');
+const selectedChallengeRating = ref(null);
+const monster = ref(null);
+const caster = ref(false);
+const errorMessage = ref('');
+const windowWidth = ref(window.innerWidth);
+const monsters = ref({ 'Uncategorized': [] });
+const newFolder = ref('');
+const chosenFolder = ref('');
+const activeFolder = ref('Uncategorized'); // Initialize with default folder
+const openedFolders = reactive({ 'Uncategorized': true }); // To track the state of each accordion
+const userColumnsPreference = ref('two_columns');
+const shouldDisplayInterface = computed(() => windowWidth.value > 855);
+const folderNames = computed(() => Object.keys(monsters.value));
 
-      updateWindowWidth(); // Set initial width
-      updateVisibility();  // Set initial visibility
-      window.addEventListener('resize', updateWindowWidth);
-    });
+onMounted(() => {
+  const savedMonsters = localStorage.getItem('monsters');
+  if (savedMonsters) {
+    let allData = JSON.parse(savedMonsters);
+    // Delete the specific keys to ensure they are not mixed into your UI state
+    delete allData.generationCount;
+    delete allData.firstGenerationTime;
+    // Now, monsters.value will only contain relevant monster data
+    monsters.value = allData;
+  }
 
+  updateWindowWidth(); // Set initial width
+  updateVisibility();  // Set initial visibility
+  window.addEventListener('resize', updateWindowWidth);
+});
 
-    // Add a ref to track the active index
-    const activeMonsterIndex = ref(null);
+// Add a ref to track the active index
+const activeMonsterIndex = ref(null);
 
-    function getFirstNumber(text) {
-      // Split the text by spaces
-      const parts = text.split(' ');
-      // Find the first part that contains digits or fractions
-      for (let part of parts) {
-        // Check if the part is a fraction or a whole number
-        if (/^\d+\/\d+$/.test(part) || /^\d+(\.\d+)?$/.test(part)) {
-          return part;  // Return the fractional or whole number part
-        }
-      }
-      return null;  // Return null if no number is found
-    }
-
-    function fractionToDecimal(fraction) {
-      if (fraction.includes('/')) {
-        const [numerator, denominator] = fraction.split('/').map(Number);
-        return numerator / denominator;
-      }
-      return parseFloat(fraction);
-    }
-
-    function sortMonstersByCR(folderName) {
-      return monsters.value[folderName].sort((a, b) => {
-        const crA = fractionToDecimal(getFirstNumber(a.challenge_rating));
-        const crB = fractionToDecimal(getFirstNumber(b.challenge_rating));
-        return crA - crB;
-      });
-    }
-
-    function newMonster(folderName = 'Uncategorized') {
-      activeFolder.value = folderName;
-      activeMonsterIndex.value = null;
-      monster.value = null;
-      monsterName.value = '';
-      monsterType.value = 'Random';
-      monsterDescription.value = '';
-      selectedChallengeRating.value = null;
-    }
-
-    // Modify selectMonster to set the active index
-    function selectMonster(folderName = 'Uncategorized', index) {
-      activeFolder.value = folderName;
-      activeMonsterIndex.value = index;
-      monster.value = monsters.value[folderName][index];
-      monsterName.value = monster.value.name;
-      monsterType.value = monster.value.monsterType || 'Random';
-      monsterDescription.value = monster.value.monsterDescription || '';
-      selectedChallengeRating.value = monster.value.selectedChallengeRating || getFirstNumber(monster.value.challenge_rating);
-      caster.value = monster.value.caster;
-    }
-    const updateWindowWidth = () => {
-      windowWidth.value = window.innerWidth;
-    };
-
-    const sidebarStyle = computed(() => {
-      if (windowWidth.value <= 1020) {
-        return {
-          position: 'fixed',
-          transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
-          width: '70%', // Adjust width for mobile
-          maxWidth: '400px'
-        };
-      } else {
-        return {
-          width: '400px',
-          position: 'static',
-          transform: 'none'
-        };
-      }
-    });
-    const isSidebarVisible = ref(false); // Start hidden on mobile
-
-    // Update based on viewport size immediately and on resize
-    const updateVisibility = () => {
-      if (window.innerWidth > 1020) {
-        isSidebarVisible.value = true;  // Always show on desktop
-      } else {
-        isSidebarVisible.value = false;  // Manage with toggle button on mobile
-      }
-    };
-    function validationPart1(jsonString) {
-      try {
-        const jsonObj = JSON.parse(jsonString);
-        const keys = [
-          'armor_class',
-          'hit_points',
-          'speed',
-          'senses',
-          'languages',
-          'challenge_rating',
-          'proficiency_bonus',
-          'abilities'
-        ];
-        return keys.every((key) => key in jsonObj);
-      } catch (error) {
-        return false;
-      }
-    }
-
-    function validationPart2(jsonString) {
-      try {
-        const jsonObj = JSON.parse(jsonString);
-        const keys = [
-          'actions'
-        ];
-        return keys.every((key) => key in jsonObj);
-      } catch (error) {
-        return false;
-      }
-    }
-
-    function moveMonsterToFolder() {
-      const currentMonsterName = monsters.value[activeFolder.value][activeMonsterIndex.value].name;
-      let previousActiveFolder = activeFolder.value;
-      if (newFolder.value) {
-        monsters.value[newFolder.value] = monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1);
-        activeFolder.value = newFolder.value;
-        newFolder.value = '';
-      } else if (chosenFolder.value) {
-        monsters.value[chosenFolder.value].push(...monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1));
-        activeFolder.value = chosenFolder.value;
-        chosenFolder.value = '';
-      }
-
-      if (monsters.value[previousActiveFolder].length === 0 && previousActiveFolder !== 'Uncategorized') {
-        delete monsters.value[previousActiveFolder];
-      }
-
-      //close the accordion if the monster was moved from it
-      if (previousActiveFolder !== activeFolder.value) {
-        openedFolders[previousActiveFolder] = false;
-      }
-
-      //If the accordion is closed, open it
-      if (!openedFolders[activeFolder.value]) {
-        openedFolders[activeFolder.value] = true;
-      }
-      monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
-      const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
-      const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
-      const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === currentMonsterName);
-      selectMonster(activeFolder.value, newIndex);
-      localStorage.setItem('monsters', JSON.stringify(dataToStore));
-    }
-
-    function deleteStatblock() {
-      const folderName = activeFolder.value || 'Uncategorized';
-      monsters.value[folderName].splice(activeMonsterIndex.value, 1);
-      monster.value = null;
-      activeMonsterIndex.value = null;
-      if (monsters.value[folderName].length === 0 && folderName !== 'Uncategorized') {
-        delete monsters.value[folderName];
-        activeFolder.value = 'Uncategorized';
-        if (!openedFolders['Uncategorized']) {
-          openedFolders['Uncategorized'] = true;
-        }
-      }
-      const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
-      const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
-      localStorage.setItem('monsters', JSON.stringify(dataToStore));
-    }
-
-    async function generateStatblock() {
-      monster.value = null;
-      const canGenerate = await canGenerateStatblock();
-
-      if (!canGenerate) {
-        return;
-      }
-      loadingPart1.value = true;
-      loadingPart2.value = true;
-      //return a random integer between '1' and '30' as a string
-      const randomCR = Math.floor(Math.random() * 30) + 1;
-
-      const promptOptions = {
-        monsterName: monsterName.value,
-        challengeRating: selectedChallengeRating.value || randomCR.toString(),
-        monsterType: monsterType.value,
-        monsterDescription: monsterDescription.value,
-        caster: caster.value
-      };
-
-      const monsterPrompts = createStatblockPrompts(promptOptions);
-
-      let monsterStatsPart1;
-      try {
-        monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
-        if (!monsterStatsPart1) throw new Error('Empty statblock response part 1');
-      } catch (e) {
-        errorMessage.value = `There was an issue generating the first part of the description: ${e.message}`;
-        loadingPart1.value = false;
-        return;
-      }
-
-      monster.value = JSON.parse(monsterStatsPart1);
-      loadingPart1.value = false;
-      const previousContext = [
-        { role: 'user', content: `Please give me the first part of a D&D statblock in the following format` },
-        { role: 'system', content: `${monsterStatsPart1}` }
-      ];
-
-      let monsterStatsPart2;
-      try {
-        monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
-      } catch (e) {
-        errorMessage.value = `There was an issue generating the second part of the description: ${e.message}`;
-        loadingPart2.value = false;
-        return;
-      }
-
-      const finalMonster = {
-        ...JSON.parse(monsterStatsPart1),
-        ...JSON.parse(monsterStatsPart2),
-      };
-
-      finalMonster.monsterDescription = monsterDescription.value;
-      finalMonster.monsterType = monsterType.value;
-      finalMonster.selectedChallengeRating = selectedChallengeRating.value || getFirstNumber(finalMonster.challenge_rating);
-      finalMonster.monsterName = monsterName.value || monster.name;
-      finalMonster.caster = caster.value;
-
-      //replace the monster in the array if it already exists
-      if (activeMonsterIndex.value !== null) {
-        monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
-        monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
-        const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === finalMonster.name);
-        selectMonster(activeFolder.value, newIndex);
-      } else {
-        const folderName = activeFolder.value || 'Uncategorized';
-        monster.value = finalMonster; // Update the current monster
-        monsters.value[folderName].push(finalMonster);
-        monsters.value[folderName] = sortMonstersByCR(folderName);
-        const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
-        selectMonster(folderName, newIndex); // Select the newly added monster
-      }
-      const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
-      const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
-      localStorage.setItem('monsters', JSON.stringify(dataToStore));
-      loadingPart2.value = false;
-    }
-
-    return {
-      loadingPart1,
-      loadingPart2,
-      errorMessage,
-      monsterName,
-      monsterType,
-      monsterDescription,
-      monster,
-      caster,
-      generateStatblock,
-      challengeRatingData,
-      creatureTemplates,
-      selectedChallengeRating,
-      windowWidth,
-      sidebarStyle,
-      isSidebarVisible,
-      monsters,
-      selectMonster,
-      activeMonsterIndex,
-      deleteStatblock,
-      userColumnsPreference,
-      shouldDisplayInterface,
-      newMonster,
-      newFolder,
-      chosenFolder,
-      folderNames,
-      updateVisibility,
-      updateWindowWidth,
-      activeFolder,
-      openedFolders,
-      moveMonsterToFolder,
-      getFirstNumber,
-      sortMonstersByCR
+function getFirstNumber(text) {
+  // Split the text by spaces
+  const parts = text.split(' ');
+  // Find the first part that contains digits or fractions
+  for (let part of parts) {
+    // Check if the part is a fraction or a whole number
+    if (/^\d+\/\d+$/.test(part) || /^\d+(\.\d+)?$/.test(part)) {
+      return part;  // Return the fractional or whole number part
     }
   }
+  return null;  // Return null if no number is found
+}
+
+function fractionToDecimal(fraction) {
+  if (fraction.includes('/')) {
+    const [numerator, denominator] = fraction.split('/').map(Number);
+    return numerator / denominator;
+  }
+  return parseFloat(fraction);
+}
+
+function sortMonstersByCR(folderName) {
+  return monsters.value[folderName].sort((a, b) => {
+    const crA = fractionToDecimal(getFirstNumber(a.challenge_rating));
+    const crB = fractionToDecimal(getFirstNumber(b.challenge_rating));
+    return crA - crB;
+  });
+}
+
+function newMonster(folderName = 'Uncategorized') {
+  activeFolder.value = folderName;
+  activeMonsterIndex.value = null;
+  monster.value = null;
+  monsterName.value = '';
+  monsterType.value = 'Random';
+  monsterDescription.value = '';
+  selectedChallengeRating.value = null;
+}
+
+function updateMonster(updatedMonster) {
+  monster.value = updatedMonster;
+  monsters.value[activeFolder.value][activeMonsterIndex.value] = updatedMonster;
+  const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+  const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+  localStorage.setItem('monsters', JSON.stringify(dataToStore));
+}
+
+// Modify selectMonster to set the active index
+function selectMonster(folderName = 'Uncategorized', index) {
+  activeFolder.value = folderName;
+  activeMonsterIndex.value = index;
+  monster.value = monsters.value[folderName][index];
+  monsterName.value = monster.value.name;
+  monsterType.value = monster.value.monsterType || 'Random';
+  monsterDescription.value = monster.value.monsterDescription || '';
+  selectedChallengeRating.value = monster.value.selectedChallengeRating || getFirstNumber(monster.value.challenge_rating);
+  caster.value = monster.value.caster;
+}
+
+const updateWindowWidth = () => {
+  windowWidth.value = window.innerWidth;
+};
+
+const sidebarStyle = computed(() => {
+  if (windowWidth.value <= 1020) {
+    return {
+      position: 'fixed',
+      transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
+      width: '70%', // Adjust width for mobile
+      maxWidth: '400px'
+    };
+  } else {
+    return {
+      width: '400px',
+      position: 'static',
+      transform: 'none'
+    };
+  }
+});
+const isSidebarVisible = ref(false); // Start hidden on mobile
+
+// Update based on viewport size immediately and on resize
+const updateVisibility = () => {
+  if (window.innerWidth > 1020) {
+    isSidebarVisible.value = true;  // Always show on desktop
+  } else {
+    isSidebarVisible.value = false;  // Manage with toggle button on mobile
+  }
+};
+
+function validationPart1(jsonString) {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    const keys = [
+      'armor_class',
+      'hit_points',
+      'speed',
+      'senses',
+      'languages',
+      'challenge_rating',
+      'proficiency_bonus',
+      'abilities'
+    ];
+    return keys.every((key) => key in jsonObj);
+  } catch (error) {
+    return false;
+  }
+}
+
+function validationPart2(jsonString) {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    const keys = [
+      'actions'
+    ];
+    return keys.every((key) => key in jsonObj);
+  } catch (error) {
+    return false;
+  }
+}
+
+function moveMonsterToFolder() {
+  const currentMonsterName = monsters.value[activeFolder.value][activeMonsterIndex.value].name;
+  let previousActiveFolder = activeFolder.value;
+  if (newFolder.value) {
+    monsters.value[newFolder.value] = monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1);
+    activeFolder.value = newFolder.value;
+    newFolder.value = '';
+  } else if (chosenFolder.value) {
+    monsters.value[chosenFolder.value].push(...monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1));
+    activeFolder.value = chosenFolder.value;
+    chosenFolder.value = '';
+  }
+
+  if (monsters.value[previousActiveFolder].length === 0 && previousActiveFolder !== 'Uncategorized') {
+    delete monsters.value[previousActiveFolder];
+  }
+
+  // Close the accordion if the monster was moved from it
+  if (previousActiveFolder !== activeFolder.value) {
+    openedFolders[previousActiveFolder] = false;
+  }
+
+  // If the accordion is closed, open it
+  if (!openedFolders[activeFolder.value]) {
+    openedFolders[activeFolder.value] = true;
+  }
+  monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
+  const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+  const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+  const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === currentMonsterName);
+  selectMonster(activeFolder.value, newIndex);
+  localStorage.setItem('monsters', JSON.stringify(dataToStore));
+}
+
+function deleteStatblock() {
+  const folderName = activeFolder.value || 'Uncategorized';
+  monsters.value[folderName].splice(activeMonsterIndex.value, 1);
+  monster.value = null;
+  activeMonsterIndex.value = null;
+  if (monsters.value[folderName].length === 0 && folderName !== 'Uncategorized') {
+    delete monsters.value[folderName];
+    activeFolder.value = 'Uncategorized';
+    if (!openedFolders['Uncategorized']) {
+      openedFolders['Uncategorized'] = true;
+    }
+  }
+  const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+  const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+  localStorage.setItem('monsters', JSON.stringify(dataToStore));
+}
+
+async function generateStatblock() {
+  monster.value = null;
+  const canGenerate = await canGenerateStatblock(props.premium);
+
+  if (!canGenerate) {
+    return;
+  }
+  loadingPart1.value = true;
+  loadingPart2.value = true;
+  // Return a random integer between '1' and '30' as a string
+  const randomCR = Math.floor(Math.random() * 30) + 1;
+
+  const promptOptions = {
+    monsterName: monsterName.value,
+    challengeRating: selectedChallengeRating.value || randomCR.toString(),
+    monsterType: monsterType.value,
+    monsterDescription: monsterDescription.value,
+    caster: caster.value
+  };
+
+  const monsterPrompts = createStatblockPrompts(promptOptions);
+
+  let monsterStatsPart1;
+  try {
+    monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
+    if (!monsterStatsPart1) throw new Error('Empty statblock response part 1');
+  } catch (e) {
+    errorMessage.value = `There was an issue generating the first part of the description: ${e.message}`;
+    loadingPart1.value = false;
+    return;
+  }
+
+  monster.value = JSON.parse(monsterStatsPart1);
+  loadingPart1.value = false;
+  const previousContext = [
+    { role: 'user', content: `Please give me the first part of a D&D statblock in the following format` },
+    { role: 'system', content: `${monsterStatsPart1}` }
+  ];
+
+  let monsterStatsPart2;
+  try {
+    monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
+  } catch (e) {
+    errorMessage.value = `There was an issue generating the second part of the description: ${e.message}`;
+    loadingPart2.value = false;
+    return;
+  }
+
+  const finalMonster = {
+    ...JSON.parse(monsterStatsPart1),
+    ...JSON.parse(monsterStatsPart2),
+  };
+
+  finalMonster.monsterDescription = monsterDescription.value;
+  finalMonster.monsterType = monsterType.value;
+  finalMonster.selectedChallengeRating = selectedChallengeRating.value || getFirstNumber(finalMonster.challenge_rating);
+  finalMonster.monsterName = monsterName.value || monster.name;
+  finalMonster.caster = caster.value;
+
+  // Replace the monster in the array if it already exists
+  if (activeMonsterIndex.value !== null) {
+    monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
+    monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
+    const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === finalMonster.name);
+    selectMonster(activeFolder.value, newIndex);
+  } else {
+    const folderName = activeFolder.value || 'Uncategorized';
+    monster.value = finalMonster; // Update the current monster
+    monsters.value[folderName].push(finalMonster);
+    monsters.value[folderName] = sortMonstersByCR(folderName);
+    const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
+    selectMonster(folderName, newIndex); // Select the newly added monster
+  }
+  const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
+  const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+  localStorage.setItem('monsters', JSON.stringify(dataToStore));
+  loadingPart2.value = false;
 }
 </script>
-
 
 <style lang="scss" scoped>
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
@@ -633,7 +609,7 @@ export default {
 .generator-container {
   height: 100vh;
   min-height: 100dvh;
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: visible;
   margin: 0 auto;
   padding: 2rem;
@@ -685,13 +661,15 @@ export default {
   margin-top: 16px;
 }
 
-.slide-enter-active, .slide-leave-active {
+.slide-enter-active,
+.slide-leave-active {
   transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
   overflow: hidden;
 }
-.slide-enter, .slide-leave-to {
+
+.slide-enter,
+.slide-leave-to {
   max-height: 0;
   opacity: 0;
 }
-
 </style>

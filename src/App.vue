@@ -6,7 +6,7 @@
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
     <StatblockGenerator v-if="currentPage === 'statblock-generator'" />
-    <StatblockGeneratorPremium v-if="currentPage === 'statblock-generator-premium'" />
+    <StatblockGenerator :premium="true" v-if="currentPage === 'statblock-generator-premium'" />
     <BookGenerator v-if="currentPage === 'book-generator'" />
     <LoreGenerator v-if="currentPage === 'lore-generator'" />
     <DungeonGenerator v-if="currentPage === 'dungeon-generator'" />
@@ -27,7 +27,6 @@ import NPCGeneratorPremium from './components/NPCGeneratorPremium.vue';
 import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
 import StatblockGenerator from './components/StatblockGenerator.vue';
-import StatblockGeneratorPremium from './components/StatblockGeneratorPremium.vue';
 import BookGenerator from './components/BookGenerator.vue';
 import DungeonGenerator from './components/DungeonGenerator.vue';
 import DungeonGeneratorPremium from './components/DungeonGeneratorPremium.vue';
@@ -48,7 +47,6 @@ export default {
     Dashboard,
     DashboardPlus,
     StatblockGenerator,
-    StatblockGeneratorPremium,
     CdrLink,
     CdrText,
     BookGenerator,
@@ -63,7 +61,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'item-generator',
+      currentPage: this.$attrs['data-page'] || 'statblock-generator',
     };
   },
   mounted() {
