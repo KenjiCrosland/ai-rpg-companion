@@ -162,30 +162,41 @@
             <cdr-button size="small" :full-width="true" modifier="dark" v-if="isEditing" @click="addAction">Add
                 Action</cdr-button>
 
-            <div v-if="monster.legendary_actions && monster.legendary_actions.length > 0">
-                <h3>Legendary Actions</h3>
-                <p>The monster can take {{ monster.legendary_actions.length }} legendary actions, choosing from the
-                    options below. Only one legendary action
+            <div>
+                <h3 v-if="editedLegendaryActions.length > 0 || isEditing">Legendary Actions</h3>
+                <p v-if="editedLegendaryActions.length > 0">The monster can take {{ editedLegendaryActions.length }}
+                    legendary {{ editedLegendaryActions.length === 1 ? 'action' : 'actions' }}{{
+                        editedLegendaryActions.length > 1 ? ', choosing from the options below' : '' }}. Only one legendary
+                    action
                     option can be used at a time and only at the end of another creature's turn. The monster regains
                     spent legendary actions at the start of its turn.</p>
-                <ul class="abilities">
-                    <div v-if="!isEditing">
-                        <li v-for="(action, index) in monster.legendary_actions" :key="'legendary-' + index">
+                <ul class="abilities" v-if="editedLegendaryActions.length > 0 || isEditing">
+                    <template v-if="!isEditing">
+                        <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
                             <strong>{{ action.name }}: </strong>
                             <span>{{ action.description }}</span>
                         </li>
-                    </div>
-                    <div v-else class="ability-forms">
-                        <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
-                            <input v-model="action.name" />
-                            <textarea v-model="action.description"></textarea>
-                            <button class="remove-button" @click="removeLegendaryAction(index)">Remove</button>
-                        </li>
-                    </div>
+                    </template>
+                    <template v-else>
+                        <div class="ability-forms">
+                            <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
+                                <input v-model="action.name" />
+                                <textarea v-model="action.description"></textarea>
+                                <button class="remove-button" @click="removeLegendaryAction(index)">Remove</button>
+                            </li>
+                        </div>
+
+
+                        <cdr-button size="small" :full-width="true" modifier="dark" @click="addLegendaryAction">Add
+                            Legendary Action</cdr-button>
+                        <cdr-button size="small" :full-width="true" modifier="dark"
+                            v-if="editedLegendaryActions.length > 0" @click="clearLegendaryActions">Remove
+                            All</cdr-button>
+                    </template>
                 </ul>
-                <cdr-button size="small" :full-width="true" modifier="dark" v-if="isEditing"
-                    @click="addLegendaryAction">Add Legendary Action</cdr-button>
             </div>
+
+
         </div>
 
         <div v-if="loadingPart2" class="statblock">
@@ -288,6 +299,10 @@ const addAction = () => {
 
 const addLegendaryAction = () => {
     editedLegendaryActions.value.push({ name: '', description: '' });
+};
+
+const clearLegendaryActions = () => {
+    editedLegendaryActions.value = []; // Clear all legendary actions
 };
 
 const enterEditMode = () => {
