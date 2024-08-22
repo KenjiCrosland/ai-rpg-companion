@@ -39,16 +39,20 @@
                     <h4>Speed: </h4>
                     <input v-model="editedMonster.speed" />
                 </div>
+
+                <!-- Stat Block -->
                 <table class="scores">
                     <tr>
-                        <th v-for="attribute in parsedAttributes" :key="attribute.stat">
-                            <h4>{{ attribute.stat }}</h4>
+                        <th v-for="(stat, key) in editedAttributes" :key="key">
+                            <h4>{{ stat.stat }}</h4>
                         </th>
                     </tr>
                     <tr>
-                        <td v-for="attribute in parsedAttributes" :key="attribute.stat">
-                            <p v-if="!isEditing">{{ attribute.value }}</p>
-                            <input v-else v-model="attribute.value" />
+                        <td v-for="(stat, key) in editedAttributes" :key="key">
+                            <p v-if="!isEditing">{{ statDisplay(stat.base) }}</p>
+                            <div v-else>
+                                <input type="number" v-model.number="stat.base" />
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -195,16 +199,42 @@ const isEditing = ref(false);
 const editedMonster = ref({ ...props.monster });
 const propertyLineClass = computed(() => isEditing.value ? 'property-line editing' : 'property-line');
 
-// Watch for changes to the monster prop and update editedMonster accordingly
+// Helper function to calculate modifier
+const calculateModifier = (stat) => Math.floor((stat - 10) / 2);
+
+// Helper function to display stat with modifier
+const statDisplay = (base) => {
+    const modifier = calculateModifier(base);
+    return `${base} (${modifier >= 0 ? '+' : ''}${modifier})`;
+};
+
+// Editable attributes based on parsedAttributes
+const editedAttributes = ref([]);
+
+// Watch for changes to the monster prop and update editedAttributes accordingly
 watch(() => props.monster, (newMonster) => {
     editedMonster.value = { ...newMonster };
-}, { deep: true });
+    editedAttributes.value = newMonster.attributes.split(',').map(attr => {
+        const [stat, base] = attr.trim().split(' ');
+        const baseValue = parseInt(base.match(/\d+/)[0], 10);  // Extract base stat
+        return {
+            stat,
+            base: baseValue
+        };
+    });
+}, { immediate: true, deep: true });
 
 const enterEditMode = () => {
     isEditing.value = true;
 };
 
 const saveChanges = () => {
+    // Convert attributes back to the string format before emitting
+    editedMonster.value.attributes = editedAttributes.value.map(stat => {
+        const modifier = calculateModifier(stat.base);
+        return `${stat.stat} ${stat.base} (${modifier >= 0 ? '+' : ''}${modifier})`;
+    }).join(', ');
+
     isEditing.value = false;
     emit('update-monster', editedMonster.value);  // Emit the updated monster object
 };
@@ -229,14 +259,6 @@ onBeforeUnmount(() => {
 
 const columns = computed(() => {
     return windowWidth.value <= 855 ? 'one_column' : props.columns;
-});
-
-const parsedAttributes = computed(() => {
-    return props.monster.attributes.split(',').map(attr => {
-        const [stat, ...valueParts] = attr.trim().split(' ');
-        const value = valueParts.join(' ');
-        return { stat, value };
-    });
 });
 </script>
 
