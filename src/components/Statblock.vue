@@ -100,7 +100,9 @@
                 <div :class="propertyLineClass">
                     <h4>CR:</h4>
                     <p v-if="!isEditing">{{ monster.challenge_rating }}</p>
-                    <input v-else v-model="editedMonster.challenge_rating" />
+                    <select style="flex-grow: 1;" v-if="isEditing" v-model="editedMonster.challenge_rating">
+                        <option v-for="cr in formattedArray" :key="cr" :value="cr">{{ cr }}</option>
+                    </select>
                 </div>
                 <div :class="propertyLineClass">
                     <h4>Proficiency Bonus:</h4>
@@ -115,26 +117,34 @@
 
             <ul class="abilities">
                 <div v-if="!isEditing">
-                    <li v-for="(ability, index) in monster.abilities" :key="index">
+                    <li v-for="(ability, index) in editedAbilities" :key="index">
                         <strong>{{ ability.name }}. </strong>
                         <span>{{ ability.description }}</span>
                     </li>
                 </div>
                 <div v-else class="ability-forms">
-                    <li v-for="(ability, index) in monster.abilities" :key="index">
+                    <cdr-button size="small" :full-width="true" modifier="secondary"
+                        @click="generateAbilities(editedMonster, userSuggestion)">{{
+                            monster.abilities.length > 0 ? 'Re-Generate Abilities' :
+                                'Generate Abilities' }}</cdr-button>
+                    <li v-for="(ability, index) in editedAbilities" :key="index">
                         <input v-model="ability.name" />
                         <textarea v-model="ability.description"></textarea>
                         <button class="remove-button" @click="removeAbility(index)">Remove</button>
                     </li>
-                    <cdr-button size="small" :full-width="true" modifier="dark" @click="addAbility">Add
-                        Ability</cdr-button>
+                    <button class="add-button" size="small" :full-width="true" modifier="secondary"
+                        @click="addAbility">Add
+                        Ability</button>
                 </div>
             </ul>
 
             <div class="edit-save-buttons">
-                <button v-if="showEditButton && !isEditing" @click="enterEditMode">Edit</button>
-                <button v-if="isEditing" @click="saveChanges">Save</button>
-                <button v-if="isEditing" @click="cancelChanges">Cancel</button>
+                <cdr-button size="small" modifier="secondary" v-if="showEditButton && !isEditing"
+                    @click="enterEditMode">Edit</cdr-button>
+                <cdr-button style="margin-right: 1rem" size="small" modifier="secondary" v-if="isEditing"
+                    @click="saveChanges">Save</cdr-button>
+                <cdr-button style="margin-right: 1.5rem" size="small" modifier="secondary" v-if="isEditing"
+                    @click="cancelChanges">Cancel</cdr-button>
             </div>
         </div>
 
@@ -152,6 +162,10 @@
                     </li>
                 </div>
                 <div v-else class="ability-forms">
+                    <cdr-button style="margin-bottom: 1rem;" size="small" :full-width="true" modifier="secondary"
+                        v-if="isEditing" @click="generateActions(editedMonster, userSuggestion)">{{ editedActions.length
+                            > 0 ?
+                            'Re-Generate Actions' : 'Generate Actions' }}</cdr-button>
                     <li v-for="(action, index) in editedActions" :key="'action-' + index">
                         <input v-model="action.name" />
                         <textarea v-model="action.description"></textarea>
@@ -159,9 +173,7 @@
                     </li>
                 </div>
             </ul>
-            <cdr-button size="small" :full-width="true" modifier="dark" v-if="isEditing" @click="addAction">Add
-                Action</cdr-button>
-
+            <button class="add-button" v-if="isEditing" @click="addAction">Add Action</button>
             <div>
                 <h3 v-if="editedLegendaryActions.length > 0 || isEditing">Legendary Actions</h3>
                 <p v-if="editedLegendaryActions.length > 0">The monster can take {{ editedLegendaryActions.length }}
@@ -170,6 +182,14 @@
                     action
                     option can be used at a time and only at the end of another creature's turn. The monster regains
                     spent legendary actions at the start of its turn.</p>
+                <p v-if="isEditing && editedLegendaryActions.length === 0">Add some legendary actions to the monster.
+                    You can either add them one at at time manually or click "Generate Legendary Actions" to
+                    generate actions for you. Please note that that adding legendary actions will make this creature
+                    stronger than the CR provided.</p>
+                <cdr-button v-if="isEditing" size="small" :full-width="true" modifier="secondary"
+                    @click="generateLegendaryActions(editedMonster, userSuggestion)">{{
+                        editedLegendaryActions.length > 0 ? 'Re-Generate Legendary Actions' :
+                            'Generate Legendary Actions' }}</cdr-button>
                 <ul class="abilities" v-if="editedLegendaryActions.length > 0 || isEditing">
                     <template v-if="!isEditing">
                         <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
@@ -184,14 +204,14 @@
                                 <textarea v-model="action.description"></textarea>
                                 <button class="remove-button" @click="removeLegendaryAction(index)">Remove</button>
                             </li>
+                            <button class="add-button" size="small" :full-width="true" modifier="secondary"
+                                @click="addLegendaryAction">Add
+                                Legendary Action</button>
                         </div>
-
-
-                        <cdr-button size="small" :full-width="true" modifier="dark" @click="addLegendaryAction">Add
-                            Legendary Action</cdr-button>
-                        <cdr-button size="small" :full-width="true" modifier="dark"
+                        <cdr-button style="margin-top: .5rem" size="small" :full-width="true" modifier="secondary"
                             v-if="editedLegendaryActions.length > 0" @click="clearLegendaryActions">Remove
-                            All</cdr-button>
+                            All Legendary Actions</cdr-button>
+
                     </template>
                 </ul>
             </div>
@@ -208,6 +228,9 @@
 <script setup>
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
 import { CdrButton } from '@rei/cedar';
+import CRtoXP from '../data/cr-to-xp.json';
+import { generateGptResponse } from "../util/open-ai.mjs";
+import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt } from "../util/statblock-edit-prompts.mjs";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
 
@@ -240,8 +263,26 @@ const showEditButton = ref(false);
 const isEditing = ref(false);
 const editedMonster = ref({});
 const editedActions = ref([]);
+const editedAbilities = ref([]);
 const editedLegendaryActions = ref([]);
 const propertyLineClass = computed(() => isEditing.value ? 'property-line editing' : 'property-line');
+
+//create a formatted array of CRs but make sure that they're sorted in ascending order. It should have 0, the fractions, and the whole numbers
+function parseCR(cr) {
+    if (cr.includes('/')) {
+        const parts = cr.split('/');
+        return parseInt(parts[0], 10) / parseInt(parts[1], 10);
+    }
+    return parseInt(cr, 10);
+}
+
+// Sorting the CR values
+const formattedArray = Object.entries(CRtoXP)
+    .sort((a, b) => parseCR(a[0]) - parseCR(b[0]))
+    .map(([cr, xp]) => {
+        const formattedXp = xp.toLocaleString();
+        return `${cr} (${formattedXp} XP)`;
+    });
 
 // Helper function to calculate modifier
 const calculateModifier = (stat) => Math.floor((stat - 10) / 2);
@@ -260,6 +301,7 @@ watch(() => props.monster, (newMonster) => {
     if (newMonster) {
         editedMonster.value = { ...newMonster };
         editedActions.value = newMonster.actions ? [...newMonster.actions] : [];
+        editedAbilities.value = newMonster.abilities ? [...newMonster.abilities] : [];
         editedLegendaryActions.value = newMonster.legendary_actions ? [...newMonster.legendary_actions] : [];
         editedAttributes.value = (newMonster.attributes || '').split(',').map(attr => {
             const [stat, base] = attr.trim().split(' ');
@@ -272,13 +314,14 @@ watch(() => props.monster, (newMonster) => {
     } else {
         editedMonster.value = {};
         editedActions.value = [];
+        editedAbilities.value = [];
         editedLegendaryActions.value = [];
         editedAttributes.value = [];
     }
 }, { immediate: true });
 
 const removeAbility = (index) => {
-    editedMonster.value.abilities.splice(index, 1);
+    editedAbilities.value.splice(index, 1);
 };
 
 const removeAction = (index) => {
@@ -290,7 +333,7 @@ const removeLegendaryAction = (index) => {
 };
 
 const addAbility = () => {
-    editedMonster.value.abilities.push({ name: '', description: '' });
+    editedAbilities.value.push({ name: '', description: '' });
 };
 
 const addAction = () => {
@@ -318,6 +361,7 @@ const saveChanges = () => {
 
     editedMonster.value.actions = editedActions.value;
     editedMonster.value.legendary_actions = editedLegendaryActions.value;
+    editedMonster.value.abilities = editedAbilities.value;
 
     isEditing.value = false;
     emit('update-monster', editedMonster.value);
@@ -327,8 +371,44 @@ const cancelChanges = () => {
     isEditing.value = false;
     editedMonster.value = { ...props.monster };
     editedActions.value = [...props.monster.actions];
-    editedLegendaryActions.value = [...props.monster.legendary_actions];
+    editedLegendaryActions.value = props.monster.legendary_actions ? [...props.monster.legendary_actions] : [];
 };
+const editMonsterValidation = (json) => {
+    try {
+        const actions = JSON.parse(json);
+        if (!Array.isArray(actions)) {
+            return false;
+        }
+
+        for (const action of actions) {
+            if (!action.name || !action.description) {
+                return false;
+            }
+        }
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+async function generateLegendaryActions(monster, userSuggestion) {
+    const prompt = legendaryActionsPrompt(monster, userSuggestion);
+    const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+    const actions = JSON.parse(newActionsObject);
+    editedLegendaryActions.value = actions;
+}
+async function generateActions(monster, userSuggestion) {
+    const prompt = actionsPrompt(monster, userSuggestion);
+    const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+    const actions = JSON.parse(newActionsObject);
+    editedActions.value = actions;
+}
+async function generateAbilities(monster, userSuggestion) {
+    const prompt = monsterAbilitiesPrompt(monster, userSuggestion);
+    const newAbilitiesObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+    const abilities = JSON.parse(newAbilitiesObject);
+    editedAbilities.value = abilities;
+}
 
 const windowWidth = ref(window.innerWidth);
 const onResize = () => {
@@ -351,10 +431,16 @@ const columns = computed(() => {
 
 <style scoped lang="scss">
 input,
-textarea {
+textarea,
+select {
     border: 1px solid #cbab77;
     background-color: #fefdf9;
-    padding: .5rem;
+    padding: .75rem;
+
+    &:focus {
+        outline: none;
+        box-shadow: inset 0 0 0 0.1rem #facc81;
+    }
 }
 
 textarea {
@@ -460,7 +546,8 @@ textarea {
     width: 100%;
 }
 
-.remove-button {
+.remove-button,
+.add-button {
     background-color: #fefdf9;
     color: #8d7349;
     font-weight: bold;
@@ -475,6 +562,19 @@ textarea {
         color: #fefdf9;
         transition: .3s, color .3s;
     }
+
+    &:focus {
+        outline: 2px solid #facc81;
+    }
+}
+
+.add-button {
+    margin-bottom: 1rem;
+    // letter-spacing: -0.008rem;
+    // font-size: 1.4rem;
+    // line-height: 1.8rem;
+    // padding: 0.6rem 1.2rem;
+    width: 100%;
 }
 
 .tapered-rule {
