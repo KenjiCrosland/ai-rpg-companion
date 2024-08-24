@@ -65,9 +65,6 @@ function getChallengeRating(CRString) {
 function getRandomTemplateByCRAndType(CR, type) {
   //templates are organized by a CR key
   let templates = creatureTemplates[CR];
-  console.log(templates);
-  console.log(type);
-  console.log(CR);
   //filter the templates by type don't filter if tyle is "Random"
   if (type !== 'Random') {
     if (type === 'Stronger Offense') {
@@ -89,7 +86,6 @@ export function actionsPrompt(monster, userSuggestion) {
   let CR = getChallengeRating(monster.challenge_rating);
   let type = monster.monsterType;
   let template = getRandomTemplateByCRAndType(CR, type);
-  console.log(template);
   let prompt = `Here is a monster object:
   ${JSON.stringify(monster, null, 2)}`;
   if (!monster.actions || monster.actions.length === 0) {

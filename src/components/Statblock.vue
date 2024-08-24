@@ -122,8 +122,8 @@
                         <span>{{ ability.description }}</span>
                     </li>
                 </div>
-                <div v-else class="ability-forms">
-                    <cdr-button size="small" :full-width="true" modifier="secondary"
+                <div v-if="isEditing && !loadingAbilities" class="ability-forms">
+                    <cdr-button class="regenerate-button" size="small" :full-width="true" modifier="secondary"
                         @click="generateAbilities(editedMonster, userSuggestion)">{{
                             monster.abilities.length > 0 ? 'Re-Generate Abilities' :
                                 'Generate Abilities' }}</cdr-button>
@@ -135,6 +135,9 @@
                     <button class="add-button" size="small" :full-width="true" modifier="secondary"
                         @click="addAbility">Add
                         Ability</button>
+                </div>
+                <div v-if="loadingAbilities">
+                    <StatblockAbilitiesSkeleton />
                 </div>
             </ul>
 
@@ -161,8 +164,8 @@
                         <span>{{ action.description }}</span>
                     </li>
                 </div>
-                <div v-else class="ability-forms">
-                    <cdr-button style="margin-bottom: 1rem;" size="small" :full-width="true" modifier="secondary"
+                <div v-if="isEditing && !loadingActions" class="ability-forms">
+                    <cdr-button class="regenerate-button" size="small" :full-width="true" modifier="secondary"
                         v-if="isEditing" @click="generateActions(editedMonster, userSuggestion)">{{ editedActions.length
                             > 0 ?
                             'Re-Generate Actions' : 'Generate Actions' }}</cdr-button>
@@ -172,21 +175,27 @@
                         <button class="remove-button" @click="removeAction(index)">Remove</button>
                     </li>
                 </div>
+                <div v-if="loadingActions">
+                    <StatblockAbilitiesSkeleton />
+                </div>
             </ul>
-            <button class="add-button" v-if="isEditing" @click="addAction">Add Action</button>
+            <button class="add-button" v-if="isEditing && !loadingActions" @click="addAction">Add Action</button>
             <div>
                 <h3 v-if="editedLegendaryActions.length > 0 || isEditing">Legendary Actions</h3>
-                <p v-if="editedLegendaryActions.length > 0">The monster can take {{ editedLegendaryActions.length }}
+                <p class="statblock-p" v-if="editedLegendaryActions.length > 0">The monster can take {{
+                    editedLegendaryActions.length }}
                     legendary {{ editedLegendaryActions.length === 1 ? 'action' : 'actions' }}{{
                         editedLegendaryActions.length > 1 ? ', choosing from the options below' : '' }}. Only one legendary
                     action
                     option can be used at a time and only at the end of another creature's turn. The monster regains
                     spent legendary actions at the start of its turn.</p>
-                <p v-if="isEditing && editedLegendaryActions.length === 0">Add some legendary actions to the monster.
+                <p class="statblock-p" v-if="isEditing && editedLegendaryActions.length === 0">Add some legendary
+                    actions to the monster.
                     You can either add them one at at time manually or click "Generate Legendary Actions" to
                     generate actions for you. Please note that that adding legendary actions will make this creature
                     stronger than the CR provided.</p>
-                <cdr-button v-if="isEditing" size="small" :full-width="true" modifier="secondary"
+                <cdr-button class="regenerate-button" v-if="isEditing && !loadingLegendaryActions" size="small"
+                    :full-width="true" modifier="secondary"
                     @click="generateLegendaryActions(editedMonster, userSuggestion)">{{
                         editedLegendaryActions.length > 0 ? 'Re-Generate Legendary Actions' :
                             'Generate Legendary Actions' }}</cdr-button>
@@ -197,7 +206,7 @@
                             <span>{{ action.description }}</span>
                         </li>
                     </template>
-                    <template v-else>
+                    <template v-if="isEditing && !loadingLegendaryActions">
                         <div class="ability-forms">
                             <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
                                 <input v-model="action.name" />
@@ -213,10 +222,11 @@
                             All Legendary Actions</cdr-button>
 
                     </template>
+                    <div v-if="loadingLegendaryActions">
+                        <StatblockAbilitiesSkeleton />
+                    </div>
                 </ul>
             </div>
-
-
         </div>
 
         <div v-if="loadingPart2" class="statblock">
@@ -233,6 +243,7 @@ import { generateGptResponse } from "../util/open-ai.mjs";
 import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt } from "../util/statblock-edit-prompts.mjs";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
+import StatblockAbilitiesSkeleton from './skeletons/StatblockAbilitiesSkeleton.vue';
 
 const props = defineProps({
     monster: {
@@ -254,7 +265,11 @@ const props = defineProps({
     errorMessage: {
         type: String,
         default: '',
-    }
+    },
+    premium: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const emit = defineEmits(['update-monster']);
@@ -266,6 +281,9 @@ const editedActions = ref([]);
 const editedAbilities = ref([]);
 const editedLegendaryActions = ref([]);
 const propertyLineClass = computed(() => isEditing.value ? 'property-line editing' : 'property-line');
+const loadingAbilities = ref(false);
+const loadingActions = ref(false);
+const loadingLegendaryActions = ref(false);
 
 //create a formatted array of CRs but make sure that they're sorted in ascending order. It should have 0, the fractions, and the whole numbers
 function parseCR(cr) {
@@ -353,16 +371,23 @@ const enterEditMode = () => {
 };
 
 const saveChanges = () => {
+    // Filter out abilities, actions, and legendary actions with blank names or descriptions
+    const filteredAbilities = editedAbilities.value.filter(ability => ability.name.trim() !== '' && ability.description.trim() !== '');
+    const filteredActions = editedActions.value.filter(action => action.name.trim() !== '' && action.description.trim() !== '');
+    const filteredLegendaryActions = editedLegendaryActions.value.filter(action => action.name.trim() !== '' && action.description.trim() !== '');
+
     // Convert attributes back to the string format before emitting
     editedMonster.value.attributes = editedAttributes.value.map(stat => {
         const modifier = calculateModifier(stat.base);
         return `${stat.stat} ${stat.base} (${modifier >= 0 ? '+' : ''}${modifier})`;
     }).join(', ');
 
-    editedMonster.value.actions = editedActions.value;
-    editedMonster.value.legendary_actions = editedLegendaryActions.value;
-    editedMonster.value.abilities = editedAbilities.value;
+    // Update the monster object with filtered lists
+    editedMonster.value.abilities = filteredAbilities;
+    editedMonster.value.actions = filteredActions;
+    editedMonster.value.legendary_actions = filteredLegendaryActions;
 
+    // Emit the updated monster object
     isEditing.value = false;
     emit('update-monster', editedMonster.value);
 };
@@ -392,22 +417,49 @@ const editMonsterValidation = (json) => {
 };
 
 async function generateLegendaryActions(monster, userSuggestion) {
+    if (!props.premium) {
+        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        return;
+    }
     const prompt = legendaryActionsPrompt(monster, userSuggestion);
-    const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
-    const actions = JSON.parse(newActionsObject);
-    editedLegendaryActions.value = actions;
+    try {
+        loadingLegendaryActions.value = true;
+        const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+        const actions = JSON.parse(newActionsObject);
+        editedLegendaryActions.value = actions;
+    } finally {
+        loadingLegendaryActions.value = false;
+    }
 }
 async function generateActions(monster, userSuggestion) {
+    if (!props.premium) {
+        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        return;
+    }
     const prompt = actionsPrompt(monster, userSuggestion);
-    const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
-    const actions = JSON.parse(newActionsObject);
-    editedActions.value = actions;
+    try {
+        loadingActions.value = true;
+        const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+        const actions = JSON.parse(newActionsObject);
+        editedActions.value = actions;
+    } finally {
+        loadingActions.value = false;
+    }
 }
 async function generateAbilities(monster, userSuggestion) {
+    if (!props.premium) {
+        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        return;
+    }
     const prompt = monsterAbilitiesPrompt(monster, userSuggestion);
-    const newAbilitiesObject = await generateGptResponse(prompt, editMonsterValidation, 3);
-    const abilities = JSON.parse(newAbilitiesObject);
-    editedAbilities.value = abilities;
+    try {
+        loadingAbilities.value = true;
+        const newAbilitiesObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+        const abilities = JSON.parse(newAbilitiesObject);
+        editedAbilities.value = abilities;
+    } finally {
+        loadingAbilities.value = false;
+    }
 }
 
 const windowWidth = ref(window.innerWidth);
@@ -436,11 +488,16 @@ select {
     border: 1px solid #cbab77;
     background-color: #fefdf9;
     padding: .75rem;
+    font-size: 14px;
 
     &:focus {
         outline: none;
         box-shadow: inset 0 0 0 0.1rem #facc81;
     }
+}
+
+.regenerate-button {
+    margin: 1rem 0;
 }
 
 textarea {
@@ -502,6 +559,10 @@ textarea {
         margin: 20px 0 0;
         padding: 0 0 10px;
         text-indent: .5rem;
+    }
+
+    .statblock-p {
+        margin: 1rem 0;
     }
 }
 
@@ -608,6 +669,7 @@ textarea {
 .property-line {
     h4 {
         margin: 0;
+        white-space: nowrap;
     }
 
     p {

@@ -124,7 +124,7 @@
         <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
       </cdr-toggle-group>
       <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
-        :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference"
+        :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
         @update-monster="updateMonster" />
 
       <cdr-button class="delete-button" v-if="monster && !loadingPart2" modifier="dark" :full-width="true"
