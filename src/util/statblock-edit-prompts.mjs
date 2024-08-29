@@ -84,7 +84,7 @@ function getRandomTemplateByCRAndType(CR, type) {
 
 export function actionsPrompt(monster, userSuggestion) {
   let CR = getChallengeRating(monster.challenge_rating);
-  let type = monster.monsterType;
+  let type = monster.monsterType || 'Random';
   let template = getRandomTemplateByCRAndType(CR, type);
   let prompt = `Here is a monster object:
   ${JSON.stringify(monster, null, 2)}`;
@@ -110,7 +110,7 @@ export function actionsPrompt(monster, userSuggestion) {
           ${userSuggestion}
           `;
   }
-  prompt += `Don't return the full monster object, just the actions array in JSON format. When the template says the creature is 'affected by a condition' choose a condition from the following list: Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious.`;
+  prompt += `Don't return the full monster object, just the actions array in JSON format. When the template says the creature is 'affected by a condition' choose a condition from the following list: Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious. Also, be sure each action has a name. Replace "Action 1" or "Action 2" with a descriptive name.`;
   return prompt;
 }
 

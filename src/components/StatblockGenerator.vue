@@ -11,7 +11,7 @@
     <div class="overlay" v-show="isSidebarVisible && windowWidth <= 1020" @click="isSidebarVisible = false"></div>
     <div class="sidebar" :style="sidebarStyle">
       <cdr-accordion-group>
-        <cdr-accordion level="3" v-for="(folder, folderName) in monsters" :key="folderName" :id="folderName"
+        <cdr-accordion level="3" v-for="(folder, folderName) in filteredMonsters" :key="folderName" :id="folderName"
           :opened="openedFolders[folderName]"
           @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
           <template #label>
@@ -123,7 +123,7 @@
         <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
         <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
       </cdr-toggle-group>
-      <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
+      <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1" :width="850"
         :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
         @update-monster="updateMonster" />
 
@@ -181,17 +181,28 @@ const activeFolder = ref('Uncategorized'); // Initialize with default folder
 const openedFolders = reactive({ 'Uncategorized': true }); // To track the state of each accordion
 const userColumnsPreference = ref('two_columns');
 const shouldDisplayInterface = computed(() => windowWidth.value > 855);
-const folderNames = computed(() => Object.keys(monsters.value));
+const folderNames = computed(() => {
+  return Object.keys(monsters.value).filter(key => key !== 'firstGenerationTime' && key !== 'generationCount');
+});
+const filteredMonsters = computed(() => {
+  const filtered = { ...monsters.value };
+  delete filtered.firstGenerationTime;
+  delete filtered.generationCount;
+  return filtered;
+});
+
 
 onMounted(() => {
   const savedMonsters = localStorage.getItem('monsters');
   if (savedMonsters) {
     let allData = JSON.parse(savedMonsters);
-    // Delete the specific keys to ensure they are not mixed into your UI state
-    delete allData.generationCount;
-    delete allData.firstGenerationTime;
+    // Ensure 'Uncategorized' exists
+    allData['Uncategorized'] = allData['Uncategorized'] || [];
     // Now, monsters.value will only contain relevant monster data
     monsters.value = allData;
+  } else {
+    // Initialize with an empty 'Uncategorized' folder if nothing is saved
+    monsters.value = { 'Uncategorized': [] };
   }
 
   updateWindowWidth(); // Set initial width
@@ -441,6 +452,10 @@ async function generateStatblock() {
     selectMonster(activeFolder.value, newIndex);
   } else {
     const folderName = activeFolder.value || 'Uncategorized';
+    if (!monsters.value[folderName]) {
+      // Ensure the folder exists before trying to push to it
+      monsters.value[folderName] = [];
+    }
     monster.value = finalMonster; // Update the current monster
     monsters.value[folderName].push(finalMonster);
     monsters.value[folderName] = sortMonstersByCR(folderName);

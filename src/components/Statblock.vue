@@ -1,5 +1,6 @@
 <template>
-    <div :class="`container ${columns}`" @mouseover="showEditButton = true" @mouseleave="showEditButton = false">
+    <div :style="widthStyle" :class="`container ${columns}`" @mouseover="showEditButton = true"
+        @mouseleave="showEditButton = false">
         <div v-if="!loadingPart1" class="statblock">
             <div class="creature-heading" :class="{ 'editing': isEditing }">
                 <h1 v-if="!isEditing">{{ monster.name }}</h1>
@@ -49,7 +50,7 @@
                         </th>
                     </tr>
                     <tr>
-                        <td v-for="(stat, key) in editedAttributes" :key="key">
+                        <td v-for="(stat, key) in editedAttributes" :key="key" :class="{ 'editing': isEditing }">
                             <p v-if="!isEditing">{{ statDisplay(stat.base) }}</p>
                             <div v-else>
                                 <input type="number" v-model.number="stat.base" />
@@ -266,12 +267,17 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    width: {
+        type: Number,
+        default: 0,
+    },
     premium: {
         type: Boolean,
         default: false,
     },
 });
 
+const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `width: ${props.width}px`);
 const emit = defineEmits(['update-monster']);
 
 const showEditButton = ref(false);
@@ -524,7 +530,6 @@ textarea {
 
     &.two_columns {
         grid-template-columns: 1fr 1fr;
-        width: 850px;
         gap: 2rem;
     }
 }
@@ -697,6 +702,10 @@ textarea {
         width: 50px;
         text-align: center;
     }
+
+    td.editing {
+        padding: 1px;
+    }
 }
 
 .abilities {
@@ -706,6 +715,7 @@ textarea {
 
     li {
         margin: 1rem 0;
+        list-style-type: none;
     }
 
     strong {
@@ -717,6 +727,7 @@ textarea {
         flex-direction: column;
         gap: .75rem;
         margin-bottom: 2rem;
+        list-style-type: none;
     }
 }
 
