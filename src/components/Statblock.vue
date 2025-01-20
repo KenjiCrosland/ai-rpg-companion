@@ -1,112 +1,235 @@
 <template>
-    <div :class="`container ${columns}`">
+    <div :style="widthStyle" :class="`container ${columns}`" @mouseover="showEditButton = true"
+        @mouseleave="showEditButton = false">
         <div v-if="!loadingPart1" class="statblock">
-            <div class="creature-heading">
-                <h1>{{ monster.name }}</h1>
-                <h2>{{ monster.type_and_alignment }}</h2>
+            <div class="creature-heading" :class="{ 'editing': isEditing }">
+                <h1 v-if="!isEditing">{{ monster.name }}</h1>
+                <input v-else v-model="editedMonster.name" class="input-name" />
+
+                <h2 v-if="!isEditing">{{ monster.type_and_alignment }}</h2>
+                <input v-else v-model="editedMonster.type_and_alignment" class="input-type" />
             </div>
+
+
             <svg height="5" width="100%" class="tapered-rule">
                 <polyline points="0,0 400,2.5 0,5"></polyline>
             </svg>
+
+            <!-- Property Block -->
             <div class="property-block">
-                <div class="property-line">
+                <div :class="propertyLineClass" v-if="!isEditing">
                     <h4>Armor Class</h4>
                     <p>{{ monster.armor_class }}</p>
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass" v-else>
+                    <h4>Armor Class</h4>
+                    <input v-model="editedMonster.armor_class" />
+                </div>
+                <div :class="propertyLineClass" v-if="!isEditing">
                     <h4>Hit Points: </h4>
                     <p>{{ monster.hit_points }}</p>
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass" v-else>
+                    <h4>Hit Points: </h4>
+                    <input v-model="editedMonster.hit_points" />
+                </div>
+                <div :class="propertyLineClass" v-if="!isEditing">
                     <h4>Speed: </h4>
                     <p>{{ monster.speed }}</p>
                 </div>
+                <div :class="propertyLineClass" v-else>
+                    <h4>Speed: </h4>
+                    <input v-model="editedMonster.speed" />
+                </div>
+
+                <!-- Stat Block -->
                 <table class="scores">
                     <tr>
-                        <th v-for="attribute in parsedAttributes" :key="attribute.stat">
-                            <h4>{{ attribute.stat }}</h4>
+                        <th v-for="(stat, key) in editedAttributes" :key="key">
+                            <h4>{{ stat.stat }}</h4>
                         </th>
                     </tr>
                     <tr>
-                        <td v-for="attribute in parsedAttributes" :key="attribute.stat">
-                            <p>{{ attribute.value }}</p>
+                        <td v-for="(stat, key) in editedAttributes" :key="key" :class="{ 'editing': isEditing }">
+                            <p v-if="!isEditing">{{ statDisplay(stat.base) }}</p>
+                            <div v-else>
+                                <input type="number" v-model.number="stat.base" />
+                            </div>
                         </td>
                     </tr>
                 </table>
                 <div v-if="monster.skills && monster.skills.length > 0 && monster.skills !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Skills: </h4>
-                    <p> {{ monster.skills }}</p>
+                    <p v-if="!isEditing">{{ monster.skills }}</p>
+                    <input v-else v-model="editedMonster.skills" />
                 </div>
                 <div v-if="monster.saving_throws && monster.saving_throws.length > 0 && monster.saving_throws !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Saving Throws: </h4>
-                    <p> {{ monster.saving_throws }}</p>
+                    <p v-if="!isEditing">{{ monster.saving_throws }}</p>
+                    <input v-else v-model="editedMonster.saving_throws" />
                 </div>
                 <div v-if="monster.damage_resistances && monster.damage_resistances.length > 0 && monster.damage_resistances !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Damage Resistances: </h4>
-                    <p>{{ monster.damage_resistances }}</p>
+                    <p v-if="!isEditing">{{ monster.damage_resistances }}</p>
+                    <input v-else v-model="editedMonster.damage_resistances" />
                 </div>
                 <div v-if="monster.damage_immunities && monster.damage_immunities.length > 0 && monster.damage_immunities !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Damage Immunities: </h4>
-                    <p>{{ monster.damage_immunities }}</p>
+                    <p v-if="!isEditing">{{ monster.damage_immunities }}</p>
+                    <input v-else v-model="editedMonster.damage_immunities" />
                 </div>
                 <div v-if="monster.condition_immunities && monster.condition_immunities.length > 0 && monster.condition_immunities !== 'None'"
-                    class="property-line">
+                    :class="propertyLineClass">
                     <h4>Condition Immunities: </h4>
-                    <p>{{ monster.condition_immunities }}</p>
+                    <p v-if="!isEditing">{{ monster.condition_immunities }}</p>
+                    <input v-else v-model="editedMonster.condition_immunities" />
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass">
                     <h4>Senses: </h4>
-                    <p>{{ monster.senses }}</p>
+                    <p v-if="!isEditing">{{ monster.senses }}</p>
+                    <input v-else v-model="editedMonster.senses" />
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass">
                     <h4>Languages: </h4>
-                    <p>{{ monster.languages }}</p>
+                    <p v-if="!isEditing">{{ monster.languages }}</p>
+                    <input v-else v-model="editedMonster.languages" />
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass">
                     <h4>CR:</h4>
-                    <p>{{ monster.challenge_rating }}</p>
+                    <p v-if="!isEditing">{{ monster.challenge_rating }}</p>
+                    <select style="flex-grow: 1;" v-if="isEditing" v-model="editedMonster.challenge_rating">
+                        <option v-for="cr in formattedArray" :key="cr" :value="cr">{{ cr }}</option>
+                    </select>
                 </div>
-                <div class="property-line">
+                <div :class="propertyLineClass">
                     <h4>Proficiency Bonus:</h4>
-                    <p>{{ monster.proficiency_bonus }}</p>
+                    <p v-if="!isEditing">{{ monster.proficiency_bonus }}</p>
+                    <input v-else v-model="editedMonster.proficiency_bonus" />
                 </div>
             </div>
+
             <svg height="5" width="100%" class="tapered-rule">
                 <polyline points="0,0 400,2.5 0,5"></polyline>
             </svg>
+
             <ul class="abilities">
-                <li v-for="(ability, index) in monster.abilities" :key="index">
-                    <strong>{{ ability.name }}. </strong>{{ ability.description }}
-                </li>
+                <div v-if="!isEditing">
+                    <li v-for="(ability, index) in editedAbilities" :key="index">
+                        <strong>{{ ability.name }}. </strong>
+                        <span>{{ ability.description }}</span>
+                    </li>
+                </div>
+                <div v-if="isEditing && !loadingAbilities" class="ability-forms">
+                    <cdr-button class="regenerate-button" size="small" :full-width="true" modifier="secondary"
+                        @click="generateAbilities(editedMonster, userSuggestion)">{{
+                            monster.abilities.length > 0 ? 'Re-Generate Abilities' :
+                                'Generate Abilities' }}</cdr-button>
+                    <li v-for="(ability, index) in editedAbilities" :key="index">
+                        <input v-model="ability.name" />
+                        <textarea v-model="ability.description"></textarea>
+                        <button class="remove-button" @click="removeAbility(index)">Remove</button>
+                    </li>
+                    <button class="add-button" size="small" :full-width="true" modifier="secondary"
+                        @click="addAbility">Add
+                        Ability</button>
+                </div>
+                <div v-if="loadingAbilities">
+                    <StatblockAbilitiesSkeleton />
+                </div>
             </ul>
+
+            <div class="edit-save-buttons">
+                <cdr-button size="small" modifier="secondary" v-if="showEditButton && !isEditing"
+                    @click="enterEditMode">Edit</cdr-button>
+                <cdr-button style="margin-right: 1rem" size="small" modifier="secondary" v-if="isEditing"
+                    @click="saveChanges">Save</cdr-button>
+                <cdr-button style="margin-right: 1.5rem" size="small" modifier="secondary" v-if="isEditing"
+                    @click="cancelChanges">Cancel</cdr-button>
+            </div>
         </div>
+
         <div v-if="loadingPart1" class="statblock">
             <StatblockSkeletonPtOne />
         </div>
+
         <div v-if="!loadingPart2" class="statblock">
             <h3>Actions</h3>
             <ul class="abilities">
-                <li v-for="(action, index) in monster.actions" :key="index">
-                    <strong>{{ action.name }}: </strong>{{ action.description }}
-                </li>
-            </ul>
-            <div v-if="monster.legendary_actions && monster.legendary_actions.length > 0">
-                <h3>Legendary Actions</h3>
-                <p>The monster can take 3 legendary actions, choosing from the options below. Only one legendary action
-                    option can be used at a time and only at the end of another creature's turn. The monster regains
-                    spent
-                    legendary actions at the start of its turn.</p>
-                <ul class="abilities">
-                    <li v-for="(action, index) in monster.legendary_actions" :key="index">
-                        <strong>{{ action.name }}: </strong>{{ action.description }}
+                <div v-if="!isEditing">
+                    <li v-for="(action, index) in monster.actions" :key="'action-' + index">
+                        <strong>{{ action.name }}: </strong>
+                        <span>{{ action.description }}</span>
                     </li>
+                </div>
+                <div v-if="isEditing && !loadingActions" class="ability-forms">
+                    <cdr-button class="regenerate-button" size="small" :full-width="true" modifier="secondary"
+                        v-if="isEditing" @click="generateActions(editedMonster, userSuggestion)">{{ editedActions.length
+                            > 0 ?
+                            'Re-Generate Actions' : 'Generate Actions' }}</cdr-button>
+                    <li v-for="(action, index) in editedActions" :key="'action-' + index">
+                        <input v-model="action.name" />
+                        <textarea v-model="action.description"></textarea>
+                        <button class="remove-button" @click="removeAction(index)">Remove</button>
+                    </li>
+                </div>
+                <div v-if="loadingActions">
+                    <StatblockAbilitiesSkeleton />
+                </div>
+            </ul>
+            <button class="add-button" v-if="isEditing && !loadingActions" @click="addAction">Add Action</button>
+            <div>
+                <h3 v-if="editedLegendaryActions.length > 0 || isEditing">Legendary Actions</h3>
+                <p class="statblock-p" v-if="editedLegendaryActions.length > 0">The monster can take {{
+                    editedLegendaryActions.length }}
+                    legendary {{ editedLegendaryActions.length === 1 ? 'action' : 'actions' }}{{
+                        editedLegendaryActions.length > 1 ? ', choosing from the options below' : '' }}. Only one legendary
+                    action
+                    option can be used at a time and only at the end of another creature's turn. The monster regains
+                    spent legendary actions at the start of its turn.</p>
+                <p class="statblock-p" v-if="isEditing && editedLegendaryActions.length === 0">Add some legendary
+                    actions to the monster.
+                    You can either add them one at at time manually or click "Generate Legendary Actions" to
+                    generate actions for you. Please note that that adding legendary actions will make this creature
+                    stronger than the CR provided.</p>
+                <cdr-button class="regenerate-button" v-if="isEditing && !loadingLegendaryActions" size="small"
+                    :full-width="true" modifier="secondary"
+                    @click="generateLegendaryActions(editedMonster, userSuggestion)">{{
+                        editedLegendaryActions.length > 0 ? 'Re-Generate Legendary Actions' :
+                            'Generate Legendary Actions' }}</cdr-button>
+                <ul class="abilities" v-if="editedLegendaryActions.length > 0 || isEditing">
+                    <template v-if="!isEditing">
+                        <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
+                            <strong>{{ action.name }}: </strong>
+                            <span>{{ action.description }}</span>
+                        </li>
+                    </template>
+                    <template v-if="isEditing && !loadingLegendaryActions">
+                        <div class="ability-forms">
+                            <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
+                                <input v-model="action.name" />
+                                <textarea v-model="action.description"></textarea>
+                                <button class="remove-button" @click="removeLegendaryAction(index)">Remove</button>
+                            </li>
+                            <button class="add-button" size="small" :full-width="true" modifier="secondary"
+                                @click="addLegendaryAction">Add
+                                Legendary Action</button>
+                        </div>
+                        <cdr-button style="margin-top: .5rem" size="small" :full-width="true" modifier="secondary"
+                            v-if="editedLegendaryActions.length > 0" @click="clearLegendaryActions">Remove
+                            All Legendary Actions</cdr-button>
+
+                    </template>
+                    <div v-if="loadingLegendaryActions">
+                        <StatblockAbilitiesSkeleton />
+                    </div>
                 </ul>
             </div>
         </div>
+
         <div v-if="loadingPart2" class="statblock">
             <StatblockSkeletonPtTwo />
         </div>
@@ -114,20 +237,15 @@
 </template>
 
 <script setup>
+import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
+import { CdrButton } from '@rei/cedar';
+import CRtoXP from '../data/cr-to-xp.json';
+import { generateGptResponse } from "../util/open-ai.mjs";
+import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt } from "../util/statblock-edit-prompts.mjs";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
-import { ref, computed, defineProps, onMounted, onBeforeUnmount } from 'vue';
-import { CdrToggleButton, CdrToggleGroup, CdrButton, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
-import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
-import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
-import { convertToFoundryVTT } from '../util/convertToFoundryVTT.mjs';
-import "@rei/cedar/dist/style/cdr-toggle-group.css";
-import "@rei/cedar/dist/style/cdr-toggle-button.css";
-import "@rei/cedar/dist/style/cdr-list.css";
-import "@rei/cedar/dist/style/cdr-button.css";
-import "@rei/cedar/dist/style/cdr-skeleton.css";
-import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
-// Props
+import StatblockAbilitiesSkeleton from './skeletons/StatblockAbilitiesSkeleton.vue';
+
 const props = defineProps({
     monster: {
         type: Object,
@@ -148,8 +266,207 @@ const props = defineProps({
     errorMessage: {
         type: String,
         default: '',
-    }
+    },
+    width: {
+        type: Number,
+        default: 0,
+    },
+    premium: {
+        type: Boolean,
+        default: false,
+    },
 });
+
+const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `width: ${props.width}px`);
+const emit = defineEmits(['update-monster']);
+
+const showEditButton = ref(false);
+const isEditing = ref(false);
+const editedMonster = ref({});
+const editedActions = ref([]);
+const editedAbilities = ref([]);
+const editedLegendaryActions = ref([]);
+const propertyLineClass = computed(() => isEditing.value ? 'property-line editing' : 'property-line');
+const loadingAbilities = ref(false);
+const loadingActions = ref(false);
+const loadingLegendaryActions = ref(false);
+
+//create a formatted array of CRs but make sure that they're sorted in ascending order. It should have 0, the fractions, and the whole numbers
+function parseCR(cr) {
+    if (cr.includes('/')) {
+        const parts = cr.split('/');
+        return parseInt(parts[0], 10) / parseInt(parts[1], 10);
+    }
+    return parseInt(cr, 10);
+}
+
+// Sorting the CR values
+const formattedArray = Object.entries(CRtoXP)
+    .sort((a, b) => parseCR(a[0]) - parseCR(b[0]))
+    .map(([cr, xp]) => {
+        const formattedXp = xp.toLocaleString();
+        return `${cr} (${formattedXp} XP)`;
+    });
+
+// Helper function to calculate modifier
+const calculateModifier = (stat) => Math.floor((stat - 10) / 2);
+
+// Helper function to display stat with modifier
+const statDisplay = (base) => {
+    const modifier = calculateModifier(base);
+    return `${base} (${modifier >= 0 ? '+' : ''}${modifier})`;
+};
+
+// Editable attributes based on parsedAttributes
+const editedAttributes = ref([]);
+
+// Watch for changes to the monster prop and update editedAttributes accordingly
+watch(() => props.monster, (newMonster) => {
+    if (newMonster) {
+        editedMonster.value = { ...newMonster };
+        editedActions.value = newMonster.actions ? [...newMonster.actions] : [];
+        editedAbilities.value = newMonster.abilities ? [...newMonster.abilities] : [];
+        editedLegendaryActions.value = newMonster.legendary_actions ? [...newMonster.legendary_actions] : [];
+        editedAttributes.value = (newMonster.attributes || '').split(',').map(attr => {
+            const [stat, base] = attr.trim().split(' ');
+            const baseValue = parseInt(base.match(/\d+/)[0], 10);
+            return {
+                stat,
+                base: baseValue
+            };
+        });
+    } else {
+        editedMonster.value = {};
+        editedActions.value = [];
+        editedAbilities.value = [];
+        editedLegendaryActions.value = [];
+        editedAttributes.value = [];
+    }
+}, { immediate: true });
+
+const removeAbility = (index) => {
+    editedAbilities.value.splice(index, 1);
+};
+
+const removeAction = (index) => {
+    editedActions.value.splice(index, 1);
+};
+
+const removeLegendaryAction = (index) => {
+    editedLegendaryActions.value.splice(index, 1);
+};
+
+const addAbility = () => {
+    editedAbilities.value.push({ name: '', description: '' });
+};
+
+const addAction = () => {
+    editedActions.value.push({ name: '', description: '' });
+};
+
+const addLegendaryAction = () => {
+    editedLegendaryActions.value.push({ name: '', description: '' });
+};
+
+const clearLegendaryActions = () => {
+    editedLegendaryActions.value = []; // Clear all legendary actions
+};
+
+const enterEditMode = () => {
+    isEditing.value = true;
+};
+
+const saveChanges = () => {
+    // Filter out abilities, actions, and legendary actions with blank names or descriptions
+    const filteredAbilities = editedAbilities.value.filter(ability => ability.name.trim() !== '' && ability.description.trim() !== '');
+    const filteredActions = editedActions.value.filter(action => action.name.trim() !== '' && action.description.trim() !== '');
+    const filteredLegendaryActions = editedLegendaryActions.value.filter(action => action.name.trim() !== '' && action.description.trim() !== '');
+
+    // Convert attributes back to the string format before emitting
+    editedMonster.value.attributes = editedAttributes.value.map(stat => {
+        const modifier = calculateModifier(stat.base);
+        return `${stat.stat} ${stat.base} (${modifier >= 0 ? '+' : ''}${modifier})`;
+    }).join(', ');
+
+    // Update the monster object with filtered lists
+    editedMonster.value.abilities = filteredAbilities;
+    editedMonster.value.actions = filteredActions;
+    editedMonster.value.legendary_actions = filteredLegendaryActions;
+
+    // Emit the updated monster object
+    isEditing.value = false;
+    emit('update-monster', editedMonster.value);
+};
+
+const cancelChanges = () => {
+    isEditing.value = false;
+    editedMonster.value = { ...props.monster };
+    editedActions.value = [...props.monster.actions];
+    editedLegendaryActions.value = props.monster.legendary_actions ? [...props.monster.legendary_actions] : [];
+};
+const editMonsterValidation = (json) => {
+    try {
+        const actions = JSON.parse(json);
+        if (!Array.isArray(actions)) {
+            return false;
+        }
+
+        for (const action of actions) {
+            if (!action.name || !action.description) {
+                return false;
+            }
+        }
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+async function generateLegendaryActions(monster, userSuggestion) {
+    if (!props.premium) {
+        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        return;
+    }
+    const prompt = legendaryActionsPrompt(monster, userSuggestion);
+    try {
+        loadingLegendaryActions.value = true;
+        const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+        const actions = JSON.parse(newActionsObject);
+        editedLegendaryActions.value = actions;
+    } finally {
+        loadingLegendaryActions.value = false;
+    }
+}
+async function generateActions(monster, userSuggestion) {
+    if (!props.premium) {
+        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        return;
+    }
+    const prompt = actionsPrompt(monster, userSuggestion);
+    try {
+        loadingActions.value = true;
+        const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+        const actions = JSON.parse(newActionsObject);
+        editedActions.value = actions;
+    } finally {
+        loadingActions.value = false;
+    }
+}
+async function generateAbilities(monster, userSuggestion) {
+    if (!props.premium) {
+        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        return;
+    }
+    const prompt = monsterAbilitiesPrompt(monster, userSuggestion);
+    try {
+        loadingAbilities.value = true;
+        const newAbilitiesObject = await generateGptResponse(prompt, editMonsterValidation, 3);
+        const abilities = JSON.parse(newAbilitiesObject);
+        editedAbilities.value = abilities;
+    } finally {
+        loadingAbilities.value = false;
+    }
+}
 
 const windowWidth = ref(window.innerWidth);
 const onResize = () => {
@@ -164,37 +481,46 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', onResize);
 });
 
-
 const columns = computed(() => {
     return windowWidth.value <= 855 ? 'one_column' : props.columns;
-});
-
-
-// Computed properties
-const parsedAttributes = computed(() => {
-    return props.monster.attributes.split(',').map(attr => {
-        const [stat, ...valueParts] = attr.trim().split(' ');
-        const value = valueParts.join(' ');
-        return { stat, value };
-    });
 });
 </script>
 
 
+<style scoped lang="scss">
+input,
+textarea,
+select {
+    border: 1px solid #cbab77;
+    background-color: #fefdf9;
+    padding: .75rem;
+    font-size: 14px;
 
-<style lang="scss" scoped>
+    &:focus {
+        outline: none;
+        box-shadow: inset 0 0 0 0.1rem #facc81;
+    }
+}
+
+.regenerate-button {
+    margin: 1rem 0;
+}
+
+textarea {
+    height: 75px;
+}
+
 .container {
     display: grid;
-
     justify-content: center;
     background: #FDF1DC;
     background-image: url('https://cros.land/wp-content/uploads/2023/06/parchment-fee031d8.jpg');
     background-blend-mode: overlay;
     background-attachment: fixed;
-
     margin: 2rem auto;
     padding: 16px 24px;
     box-shadow: 1px 4px 14px #888;
+    position: relative;
 
     &.one_column {
         grid-template-columns: 1fr;
@@ -204,16 +530,20 @@ const parsedAttributes = computed(() => {
 
     &.two_columns {
         grid-template-columns: 1fr 1fr;
-        width: 850px;
         gap: 2rem;
     }
 }
 
-.exports {
-    max-width: 850px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+.edit-save-buttons {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+
+.container:hover .edit-save-buttons {
+    display: inline-block;
 }
 
 .statblock {
@@ -222,7 +552,6 @@ const parsedAttributes = computed(() => {
     font-size: 14px;
     line-height: 1.2em;
     display: block;
-
     box-sizing: border-box;
 
     h3 {
@@ -235,6 +564,10 @@ const parsedAttributes = computed(() => {
         margin: 20px 0 0;
         padding: 0 0 10px;
         text-indent: .5rem;
+    }
+
+    .statblock-p {
+        margin: 1rem 0;
     }
 }
 
@@ -260,6 +593,54 @@ const parsedAttributes = computed(() => {
         line-height: 1.2em;
         margin: 0;
     }
+
+    .editing {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.input-name {
+    font-size: 1.5em;
+    margin-bottom: 8px;
+    padding: 10px;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.input-type {
+    width: 100%;
+}
+
+.remove-button,
+.add-button {
+    background-color: #fefdf9;
+    color: #8d7349;
+    font-weight: bold;
+    border: 1px solid #cbab77;
+    padding: .5rem;
+    cursor: pointer;
+    width: 10rem;
+    border-radius: 3px;
+
+    &:hover {
+        background-color: #cbab77;
+        color: #fefdf9;
+        transition: .3s, color .3s;
+    }
+
+    &:focus {
+        outline: 2px solid #facc81;
+    }
+}
+
+.add-button {
+    margin-bottom: 1rem;
+    // letter-spacing: -0.008rem;
+    // font-size: 1.4rem;
+    // line-height: 1.8rem;
+    // padding: 0.6rem 1.2rem;
+    width: 100%;
 }
 
 .tapered-rule {
@@ -293,33 +674,38 @@ const parsedAttributes = computed(() => {
 .property-line {
     h4 {
         margin: 0;
+        white-space: nowrap;
     }
 
     p {
         margin: 0 .5rem;
     }
+
+    &.editing {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: .5rem;
+
+        input {
+            flex-grow: 1;
+        }
+    }
 }
 
-.statblock-bone {
-    background-image: linear-gradient(90deg, #efdfc2 0%, #FDF4E3 15%, #efdfc2 30%);
-}
-
-.property-line-skeleton {
-    display: flex;
-    justify-content: flex-start;
-    gap: .5rem;
-}
-
-.skeleton-line-item {
-    height: 1em;
-    flex-grow: 0;
-}
-
-//linear-gradient(90deg, #e2d9ca 0%, #FDF4E3 15%, #e2d9ca 30%)
 .scores {
     width: 90%;
     text-align: center;
     margin: 1rem auto;
+
+    input {
+        width: 50px;
+        text-align: center;
+    }
+
+    td.editing {
+        padding: 1px;
+    }
 }
 
 .abilities {
@@ -329,33 +715,23 @@ const parsedAttributes = computed(() => {
 
     li {
         margin: 1rem 0;
+        list-style-type: none;
     }
 
     strong {
         font-style: italic;
     }
-}
 
-.instructions {
-    padding: 3rem;
-    margin: 0 auto;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-}
-
-.markdown-button {
-    display: flex;
-
-    button {
-        margin: 2rem auto 1rem;
+    .ability-forms li {
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
+        margin-bottom: 2rem;
+        list-style-type: none;
     }
 }
 
 @media screen and (max-width: 855px) {
-    .exports {
-        grid-template-columns: 1fr;
-    }
-
     .container {
         background-image: none;
 

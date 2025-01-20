@@ -66,9 +66,6 @@ function vue_app_enqueue_assets() {
             .page.type-page.status-publish.entry{
                 margin-bottom: 0 !important;
             }
-            .statblock ul.abilities {
-                margin: 0;
-            }
             .read-aloud p {
                 margin-bottom: 1rem;
             }

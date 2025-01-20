@@ -1,6 +1,9 @@
 import { detectIncognito } from 'detectincognitojs';
 
-export async function canGenerateStatblock() {
+export async function canGenerateStatblock(isPremium) {
+  if (isPremium) {
+    return true;
+  }
   const incognitoResult = await detectIncognito();
 
   if (incognitoResult.isPrivate) {

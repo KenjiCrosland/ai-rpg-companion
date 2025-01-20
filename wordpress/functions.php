@@ -283,6 +283,17 @@ function wp_remote_post_with_retry($url, $args, $max_retries = 3, $retry_interva
 
     return $response; // Return the last failed response after all retries
 }
+
+function vue_app_new_dungeon_generator_shortcode() {
+	return '<div id="app" data-page="new-dungeon-generator"></div>';
+}
+
+function vue_app_new_dungeon_generator_premium_shortcode() {
+	return '<div id="app" data-page="new-dungeon-generator-premium"></div>';
+}
+add_shortcode( 'vue_app_new_dungeon_generator', 'vue_app_new_dungeon_generator_shortcode' );
+add_shortcode( 'vue_app_new_dungeon_generator_premium', 'vue_app_new_dungeon_generator_premium_shortcode' );
+
 function vue_app_setting_generator_shortcode() {
 		return '<div id="app" data-page="setting-generator"></div>';
 }

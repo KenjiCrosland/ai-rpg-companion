@@ -51,9 +51,9 @@ function vue_app_enqueue_assets() {
     if ($enqueued_style_handle) {
         $custom_css = '
         main.content {
-          max-width: 940px;
-          width: auto;
-      }
+            max-width: 940px;
+            width: auto;
+        }
         .read-aloud {
             padding: 1rem 2.5rem;
             width: 90%;
@@ -65,6 +65,11 @@ function vue_app_enqueue_assets() {
         .read-aloud p {
             margin-bottom: 1rem;
           }
+        .statblock th, .statblock td {
+            padding: 0;
+            text-align: center;
+            border: none;
+        }
         ';
         wp_add_inline_style($enqueued_style_handle, $custom_css);
     }

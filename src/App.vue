@@ -2,11 +2,11 @@
   <div id="app" v-bind="$attrs">
     <LocationGenerator v-if="currentPage === 'location-generator'" />
     <NPCGenerator v-if="currentPage === 'npc-generator'" />
-    <NPCGeneratorPremium v-if="currentPage === 'npc-generator-premium'" />
+    <NPCGenerator :premium="true" v-if="currentPage === 'npc-generator-premium'" />
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
     <StatblockGenerator v-if="currentPage === 'statblock-generator'" />
-    <StatblockGeneratorPremium v-if="currentPage === 'statblock-generator-premium'" />
+    <StatblockGenerator :premium="true" v-if="currentPage === 'statblock-generator-premium'" />
     <BookGenerator v-if="currentPage === 'book-generator'" />
     <LoreGenerator v-if="currentPage === 'lore-generator'" />
     <DungeonGenerator v-if="currentPage === 'dungeon-generator'" />
@@ -23,11 +23,9 @@
 import LocationGenerator from './components/LocationGenerator.vue';
 import LoreGenerator from './components/LoreGenerator.vue';
 import NPCGenerator from './components/NPCGenerator.vue';
-import NPCGeneratorPremium from './components/NPCGeneratorPremium.vue';
 import Dashboard from './components/Dashboard.vue';
 import DashboardPlus from './components/DashboardPlus.vue';
 import StatblockGenerator from './components/StatblockGenerator.vue';
-import StatblockGeneratorPremium from './components/StatblockGeneratorPremium.vue';
 import BookGenerator from './components/BookGenerator.vue';
 import DungeonGenerator from './components/DungeonGenerator.vue';
 import DungeonGeneratorPremium from './components/DungeonGeneratorPremium.vue';
@@ -44,11 +42,9 @@ export default {
     LocationGenerator,
     LoreGenerator,
     NPCGenerator,
-    NPCGeneratorPremium,
     Dashboard,
     DashboardPlus,
     StatblockGenerator,
-    StatblockGeneratorPremium,
     CdrLink,
     CdrText,
     BookGenerator,
@@ -63,7 +59,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'item-generator',
+      currentPage: this.$attrs['data-page'] || 'setting-generator',
     };
   },
   mounted() {
