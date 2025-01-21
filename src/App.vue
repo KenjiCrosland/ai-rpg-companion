@@ -59,7 +59,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'setting-generator',
+      currentPage: this.$attrs['data-page'] || 'dungeon-generator',
     };
   },
   mounted() {

@@ -50,6 +50,14 @@
           <cdr-button type="submit">Move To Folder</cdr-button>
         </form>
       </div>
+      <!-- Button to open the modal -->
+      <cdr-button modifier="secondary" @click="showDataManagerModal = true">
+        Save/Load Data
+      </cdr-button>
+
+      <!-- Our new DataManagerModal component -->
+      <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
+        currentApp="monsters" />
     </div>
     <div class="generator-container">
       <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster()">New
@@ -123,8 +131,8 @@
         <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
         <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
       </cdr-toggle-group>
-      <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1" :width="850"
-        :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
+      <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
+        :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
         @update-monster="updateMonster" />
 
       <cdr-button class="delete-button" v-if="monster && !loadingPart2" modifier="dark" :full-width="true"
@@ -143,7 +151,7 @@
 import { ref, onMounted, computed, reactive, onUnmounted } from 'vue';
 import Statblock from './Statblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconNavigationMenu } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconNavigationMenu, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-button.css";
@@ -152,6 +160,7 @@ import "@rei/cedar/dist/style/cdr-select.css";
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
 import "@rei/cedar/dist/style/cdr-toggle-button.css";
 import StatblockExports from './StatblockExports.vue';
+import DataManagerModal from './DataManagerModal.vue';
 import challengeRatingData from '../data/challengeRatings.json';
 import creatureTemplates from '../data/creatureTemplates.json';
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
@@ -190,6 +199,7 @@ const filteredMonsters = computed(() => {
   delete filtered.generationCount;
   return filtered;
 });
+const showDataManagerModal = ref(false);
 
 
 onMounted(() => {
