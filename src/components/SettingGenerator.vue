@@ -26,15 +26,22 @@
         </li>
       </ul>
       <div class="copy-buttons">
+
         <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
         <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
         <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
-        <p>Use the above buttons to copy all setting info into your desired format. For homebrewery go <cdr-link
-            href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
-          there. You will need to add your own pagebreaks.</p>
-
+        <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          Save/Load Data from a File
+        </cdr-button>
+        <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
+          <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
+          there. You will need to add your own pagebreaks.
+        </p>
         <cdr-button @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</cdr-button>
       </div>
+
+      <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
+        currentApp="gameSettings" />
     </div>
     <div class="main-content">
       <div class='generator-form' v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
@@ -163,12 +170,12 @@
                   <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                     settings[setting.main_index].setting_overview.recent_event_current_ruler
-                    }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                     settings[setting.main_index].setting_overview.recent_event_social }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                     settings[setting.main_index].setting_overview.impactful_economic_event
-                    }}</p>
+                  }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                     settings[setting.main_index].setting_overview.recent_event_military }}
                   </p>
@@ -254,7 +261,7 @@
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
-                  }}
+                    }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -514,6 +521,7 @@ import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import BlockSkeleton from "./skeletons/BlockSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
 import OverviewSkeleton from "./skeletons/OverviewSkeleton.vue";
+import DataManagerModal from './DataManagerModal.vue';
 import Tabs from './tabs/Tabs.vue';
 import TabPanel from './tabs/TabPanel.vue';
 import { formatSettingAsPlainText } from "../util/formatSettingAsPlainText.mjs";
@@ -527,7 +535,16 @@ import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-popover.css';
 
+const props = defineProps({
+  premium: {
+    type: Boolean,
+    default: false
+  }
+});
+
+
 const isSidebarVisible = ref(false); // Start hidden on mobile
+const showDataManagerModal = ref(false);
 
 // Update based on viewport size immediately and on resize
 const updateVisibility = () => {
@@ -1561,7 +1578,7 @@ function randomName(setting) {
       flex-direction: column;
       margin: 1rem;
       gap: 1rem;
-      margin-bottom: 7rem;
+      margin-bottom: 11rem;
     }
   }
 

@@ -23,7 +23,14 @@
           </button>
         </li>
       </ul>
+      <!-- Button to open the modal -->
+      <cdr-button modifier="dark" @click="showDataManagerModal = true" style="margin-bottom: 12rem;">
+        Save/Load Data from a File
+      </cdr-button>
 
+      <!-- Our new DataManagerModal component -->
+      <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
+        currentApp="savedItems" />
     </div>
     <div class="main-container">
       <div class="form-container">
@@ -110,6 +117,14 @@ import { generateGptResponse } from "../util/open-ai.mjs";
 import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
 import ItemSkeleton from './skeletons/ItemSkeleton.vue';
+import DataManagerModal from './DataManagerModal.vue';
+
+const props = defineProps({
+  premium: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const itemName = ref('');
 const rarity = ref('');
@@ -121,6 +136,7 @@ const savedItems = ref([]);
 const activeItemIndex = ref(null);
 const windowWidth = ref(window.innerWidth);
 const isSidebarVisible = ref(false); // Start hidden on mobile
+const showDataManagerModal = ref(false);
 
 const sidebarStyle = computed(() => {
   if (windowWidth.value <= 1020) {
