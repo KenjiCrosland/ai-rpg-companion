@@ -71,16 +71,23 @@
               {{ event.title }}
             </template>
             <cdr-text class="body-text">{{ event.details }}</cdr-text>
-            <cdr-button class="generate-button" modifier="secondary" @click="addEventToTimeline(index)" :full-width="true"
-              type="button">Add Event to Timeline</cdr-button>
+            <cdr-button class="generate-button" modifier="secondary" @click="addEventToTimeline(index)"
+              :full-width="true" type="button">Add Event to Timeline</cdr-button>
           </cdr-accordion>
         </cdr-accordion-group>
       </div>
     </div>
 
     <cdr-button class="clear-button" modifier="secondary" @click="clearLocalStorage" :full-width="true"
-      type="button">Clear All Timeline Data</cdr-button>
+      type="button">Clear
+      All Timeline Data</cdr-button>
+    <cdr-button :full-width="true" modifier="dark" @click="showDataManagerModal = true" style="margin-top: 1rem">
+      Save/Load Data from a File
+    </cdr-button>
 
+    <!-- Our new DataManagerModal component -->
+    <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="true"
+      currentApp="rpgTimelineState" />
     <div>
       <h2 v-if="timelineEvents.length > 0">Historic Timeline of {{ subject }}</h2>
       <cdr-grid class="filmstrip">
@@ -186,6 +193,7 @@ import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 import "@rei/cedar/dist/style/cdr-text.css";
 import { generateGptResponse } from "../util/open-ai.mjs";
+import DataManagerModal from './DataManagerModal.vue';
 
 export default {
   components: {
@@ -199,7 +207,8 @@ export default {
     CdrSkeleton,
     CdrSkeletonBone,
     CdrText,
-    CdrList
+    CdrList,
+    DataManagerModal
   },
   setup() {
     const subject = ref("");
@@ -239,6 +248,7 @@ export default {
     const timelineEvents = ref([]);
     const loadingEvents = ref(false);
     const loadingSummary = ref(false);
+    const showDataManagerModal = ref(false);
 
     const saveToLocalStorage = () => {
       const appState = {
@@ -647,14 +657,15 @@ export default {
       timelineEventsText,
       currentYear,
       deleteEvent,
-      loadingSummary
+      loadingSummary,
+      showDataManagerModal
     };
   },
 };
 </script>
 
 
-  
+
 <style scoped lang="scss">
 .top-container {
   display: grid;
@@ -779,4 +790,5 @@ export default {
   .top-container {
     grid-template-columns: 1fr;
   }
-}</style>
+}
+</style>

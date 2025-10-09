@@ -299,6 +299,11 @@ function vue_app_setting_generator_shortcode() {
 }
 add_shortcode( 'vue_app_setting_generator', 'vue_app_setting_generator_shortcode' );
 
+function vue_app_setting_generator_premium_shortcode() {
+	return '<div id="app" data-page="setting-generator-premium"></div>';
+}
+add_shortcode( 'vue_app_setting_generator_premium', 'vue_app_setting_generator_premium_shortcode' );
+
 function vue_app_encounter_generator_shortcode() {
 	return '<div id="app" data-page="encounter-generator"></div>';
 }
@@ -313,6 +318,11 @@ function vue_app_item_generator_shortcode() {
 		return '<div id="app" data-page="item-generator"></div>';
 }
 add_shortcode( 'vue_app_item_generator', 'vue_app_item_generator_shortcode' );
+
+function vue_app_item_generator_premium_shortcode() {
+	return '<div id="app" data-page="item-generator-premium"></div>';
+}
+add_shortcode( 'vue_app_item_generator_premium', 'vue_app_item_generator_premium_shortcode' );
 
 function vue_app_dungeon_generator_shortcode() {
     return '<div id="app" data-page="dungeon-generator"></div>';

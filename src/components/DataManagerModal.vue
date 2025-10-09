@@ -23,7 +23,8 @@
     <!-- If premium, show the normal checkboxes + download/upload UI -->
     <div v-else>
       <cdr-text id="dataManagerModalDescription" tag="p" style="margin-bottom: 1rem;">
-        Select which data you want to download. To upload, pick a file.
+        Select which data you want to download. Only apps for which there is currently saved info will appear below. To
+        upload, pick a file.
       </cdr-text>
 
       <!-- "Select All" checkbox (only appears if more than one recognized key) -->
@@ -178,6 +179,10 @@ const chosenKeys = computed(() =>
  * Close the modal
  */
 function closeModal() {
+  //uncheck all checkboxes
+  localStorageApps.value.forEach(app => {
+    checkedApps[app.key] = false;
+  });
   emit('update:opened', false);
 }
 
@@ -281,6 +286,8 @@ function handleFileChange(event) {
       });
 
       alert('Data uploaded successfully.');
+      //reload the page to show the new data
+      location.reload();
       closeModal();
     } catch (err) {
       alert('Error parsing JSON file: ' + err.message);

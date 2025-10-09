@@ -47,13 +47,13 @@
               Move the monster to an existing folder in the sidebar
             </template>
           </cdr-select>
-          <cdr-button type="submit">Move To Folder</cdr-button>
+          <cdr-button type="submit" :full-width="true">Move To Folder</cdr-button>
         </form>
+        <cdr-button modifier="dark" @click="showDataManagerModal = true" :full-width="true">
+          Save/Load Data from a File
+        </cdr-button>
       </div>
-      <!-- Button to open the modal -->
-      <cdr-button modifier="secondary" @click="showDataManagerModal = true">
-        Save/Load Data
-      </cdr-button>
+
 
       <!-- Our new DataManagerModal component -->
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
@@ -579,7 +579,7 @@ async function generateStatblock() {
     display: flex;
     flex-direction: column;
     margin: 1rem;
-    margin-bottom: 7rem;
+    margin-bottom: 9rem;
 
     button {
       margin-top: 2rem;

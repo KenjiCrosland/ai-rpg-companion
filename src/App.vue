@@ -12,9 +12,11 @@
     <DungeonGenerator v-if="currentPage === 'dungeon-generator'" />
     <DungeonGeneratorPremium v-if="currentPage === 'dungeon-generator-premium'" />
     <ItemGenerator v-if="currentPage === 'item-generator'" />
+    <ItemGenerator :premium="true" v-if="currentPage === 'item-generator-premium'" />
     <EncounterGenerator v-if="currentPage === 'encounter-generator'" />
     <EncounterGeneratorPremium v-if="currentPage === 'encounter-generator-premium'" />
     <SettingGenerator v-if="currentPage === 'setting-generator'" />
+    <SettingGenerator :premium="true" v-if="currentPage === 'setting-generator-premium'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
   </div>
 </template>
@@ -59,7 +61,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'dungeon-generator',
+      currentPage: this.$attrs['data-page'] || 'lore-generator',
     };
   },
   mounted() {
