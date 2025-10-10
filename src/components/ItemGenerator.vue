@@ -119,13 +119,22 @@
                 <label class="feature-label">Features</label>
                 <div v-for="(feature, index) in editForm.featuresArray" :key="index" class="feature-edit-row">
                   <cdr-input v-model="feature.name" label="Feature Name" background="secondary"
-                    class="feature-name-input" />
+                    class="feature-name-input">
+                    <template #helper-text-bottom>
+                      Leave blank to auto-generate a name
+                    </template>
+                  </cdr-input>
                   <cdr-input v-model="feature.description" label="Description" background="secondary" :rows="3"
                     tag="textarea" class="feature-desc-input" />
-                  <cdr-button @click="removeFeature(index)" modifier="secondary" size="small"
-                    class="remove-feature-btn">
-                    Remove
-                  </cdr-button>
+                  <div class="feature-actions">
+                    <cdr-button @click="generateFeature(index)" modifier="secondary" size="small"
+                      :disabled="feature.generating">
+                      {{ feature.generating ? 'Generating...' : 'Generate Feature' }}
+                    </cdr-button>
+                    <cdr-button @click="removeFeature(index)" modifier="dark" size="small">
+                      Remove
+                    </cdr-button>
+                  </div>
                 </div>
                 <cdr-button @click="addFeature" modifier="secondary" size="small">
                   + Add Feature
@@ -582,9 +591,10 @@ const saveEdit = () => {
   // Convert featuresArray back to features object
   const features = {};
   editForm.value.featuresArray.forEach(feature => {
-    if (feature.name && feature.description) {
-      features[feature.name] = feature.description;
-    }
+    // Handle unnamed features or features without descriptions
+    const featureName = feature.name.trim() || 'Unnamed Feature';
+    const featureDesc = feature.description.trim() || '(No description provided)';
+    features[featureName] = featureDesc;
   });
 
   // Update the magic item description
@@ -612,12 +622,92 @@ const saveEdit = () => {
 const addFeature = () => {
   editForm.value.featuresArray.push({
     name: '',
-    description: ''
+    description: '',
+    generating: false
   });
 };
 
 const removeFeature = (index) => {
   editForm.value.featuresArray.splice(index, 1);
+};
+
+const generateFeature = async (index) => {
+  // Check if user has premium access
+  if (!props.premium) {
+    alert('Generation of item features in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium item generator.');
+    return;
+  }
+
+  const feature = editForm.value.featuresArray[index];
+
+  // If description already exists, confirm before overwriting
+  if (feature.description && feature.description.trim()) {
+    const featureName = feature.name.trim() || 'Unnamed Feature';
+    const confirmed = confirm(`This will erase the current feature description and generate a new description based on the feature name "${featureName}". Proceed?`);
+    if (!confirmed) {
+      return;
+    }
+  }
+
+  feature.generating = true;
+
+  // Determine appropriate effect level based on rarity
+  const rarityToEffectLevel = {
+    'Common': 'minor_utility_or_cosmetic_effect',
+    'Uncommon': 'useful_magical_effect',
+    'Rare': 'moderate_magical_effect OR powerful_magical_effect',
+    'Very Rare': 'powerful_magical_effect OR very_powerful_magical_effect',
+    'Legendary': 'legendary_magical_effect'
+  };
+
+  const effectLevel = rarityToEffectLevel[editForm.value.rarity] || 'useful_magical_effect';
+
+  const featurePrompt = `Generate a single D&D 5e magic item feature for the following item:
+
+Item Name: ${editForm.value.name || magicItemDescription.value.name}
+Item Type: ${editForm.value.item_type}
+Rarity: ${editForm.value.rarity}
+Existing Features: ${editForm.value.featuresArray.filter((f, i) => i !== index && f.description).map(f => f.name).join(', ') || 'None yet'}
+${feature.name ? `Desired Feature Name: ${feature.name}` : ''}
+
+Create a feature appropriate for ${editForm.value.rarity} rarity (${effectLevel}).
+
+Return ONLY a JSON object with this structure:
+{
+  "name": "Feature Name (if not provided, create a thematic name)",
+  "description": "Complete mechanical description in D&D 5e style, including damage dice, save DCs, durations, ranges, etc."
+}
+
+The feature should:
+- Be balanced for ${editForm.value.rarity} rarity
+- Be thematically consistent with the item
+- Include specific game mechanics (not vague descriptions)
+- Complement existing features without being redundant`;
+
+  try {
+    const response = await generateGptResponse(featurePrompt, validateFeature, 3);
+    const generatedFeature = JSON.parse(response);
+
+    // Only update name if it wasn't provided
+    if (!feature.name.trim()) {
+      feature.name = generatedFeature.name;
+    }
+    feature.description = generatedFeature.description;
+  } catch (error) {
+    console.error('Error generating feature:', error);
+    alert('Failed to generate feature. Please try again.');
+  } finally {
+    feature.generating = false;
+  }
+};
+
+const validateFeature = (jsonString) => {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    return jsonObj.name && jsonObj.description;
+  } catch (error) {
+    return false;
+  }
 };
 
 onMounted(() => {
@@ -740,8 +830,10 @@ onMounted(() => {
       margin-bottom: 1rem;
       position: relative;
 
-      .remove-feature-btn {
-        align-self: flex-end;
+      .feature-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
         margin-top: 0.5rem;
       }
     }
