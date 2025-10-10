@@ -96,63 +96,7 @@
           </TabPanel>
 
           <TabPanel label="Quest Hooks">
-            <h2>Quest Hooks for {{ magicItemDescription.name }}</h2>
-            <p>Generate quest hooks related to this magical item. These can serve as adventure seeds for your campaign.
-            </p>
-
-            <div class="quest-generator">
-              <cdr-select v-model="questType" label="Quest Type" prompt="Choose a quest type" :options="questTypes" />
-              <cdr-button @click="generateQuestHook" :full-width="true" modifier="dark" style="margin-top: 2rem;">
-                Generate Quest Hook
-              </cdr-button>
-            </div>
-
-            <div v-if="loadingQuest" style="margin-top: 2rem;">
-              <item-skeleton />
-            </div>
-
-            <cdr-accordion-group v-if="questHooks.length > 0 && !loadingQuest" style="margin-top: 2rem;">
-              <cdr-accordion v-for="(hook, index) in questHooks" :key="index" :id="'quest-' + index" level="2">
-                <template #label>
-                  {{ hook.title }}
-                </template>
-                <div class="quest-content">
-                  <cdr-tooltip id="tooltip-quest" position="left" class="delete-button">
-                    <template #trigger>
-                      <cdr-button size="small" :icon-only="true" :with-background="true"
-                        @click.stop="deleteQuestHook(index)">
-                        <template #icon>
-                          <icon-x-sm />
-                        </template>
-                      </cdr-button>
-                    </template>
-                    <div>Delete Quest Hook</div>
-                  </cdr-tooltip>
-
-                  <h3>{{ hook.title }}</h3>
-                  <p><strong>Quest Giver:</strong> {{ hook.questGiver }}</p>
-                  <p>{{ hook.setup }}</p>
-
-                  <h4>Objectives</h4>
-                  <cdr-list modifier="unordered">
-                    <li v-for="(objective, i) in hook.objectives" :key="i">{{ objective }}</li>
-                  </cdr-list>
-
-                  <h4>Challenges</h4>
-                  <cdr-list modifier="unordered">
-                    <li v-for="(challenge, i) in hook.challenges" :key="i">{{ challenge }}</li>
-                  </cdr-list>
-
-                  <h4>Rewards</h4>
-                  <p>{{ hook.reward }}</p>
-
-                  <div v-if="hook.twist" class="quest-twist">
-                    <h4>Potential Twist</h4>
-                    <p>{{ hook.twist }}</p>
-                  </div>
-                </div>
-              </cdr-accordion>
-            </cdr-accordion-group>
+            <QuestHookTab :item="magicItemDescription" @updated-item="handleUpdatedItem" />
           </TabPanel>
 
           <TabPanel label="Export">
@@ -187,11 +131,12 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { CdrInput, CdrButton, CdrSelect, CdrLink, CdrList, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, IconNavigationMenu } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrSelect, CdrLink, CdrList, IconNavigationMenu } from "@rei/cedar";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
 import ItemSkeleton from './skeletons/ItemSkeleton.vue';
+import QuestHookTab from './item-generator-tabs/QuestHookTab.vue';
 import DataManagerModal from './DataManagerModal.vue';
 import Tabs from './tabs/Tabs.vue';
 import TabPanel from './tabs/TabPanel.vue';
@@ -209,15 +154,12 @@ const itemType = ref('');
 const itemLore = ref('');
 const magicItemDescription = ref(null);
 const loadingItem = ref(false);
-const loadingQuest = ref(false);
 const savedItems = ref([]);
 const activeItemIndex = ref(null);
 const windowWidth = ref(window.innerWidth);
 const isSidebarVisible = ref(false);
 const showDataManagerModal = ref(false);
 const activeTabIndex = ref(0);
-const questHooks = ref([]);
-const questType = ref('');
 
 const sidebarStyle = computed(() => {
   if (windowWidth.value <= 1020) {
@@ -268,25 +210,12 @@ const itemTypeOptions = [
   'Wondrous Item'
 ];
 
-const questTypes = [
-  'Recovery: Retrieve the item from a dangerous location',
-  'Protection: Defend the item from those who would steal it',
-  'Destruction: Destroy the item to prevent catastrophe',
-  'Delivery: Transport the item to its rightful owner',
-  'Investigation: Uncover the item\'s true nature and history',
-  'Curse Breaking: Free someone from the item\'s curse',
-  'Ritual: Use the item in an important ceremony',
-  'Trade: Exchange the item for something vital',
-  'Theft: Steal the item from a powerful enemy',
-  'Creation: Gather components to create or restore the item'
-];
-
 const rarityGuidelines = {
-  'Common': 'Minor magical properties or effects. No bonuses to AC or attack/damage rolls.',
-  'Uncommon': 'May include one minor feature OR a +1 bonus to AC (for armor) or to attack/damage rolls (for weapons).',
-  'Rare': 'Up to +1 bonus to AC and one minor feature for armor; up to +2 to attack/damage rolls OR one effect for weapons.',
-  'Very Rare': 'Up to +3 bonus to AC or enhanced features for armor; up to +3 to attack/damage rolls and/or effects for weapons.',
-  'Legendary': 'Significant magical features, up to +4 bonus to AC for armor; up to +4 to attack/damage rolls and major effects for weapons.'
+  'Common': 'Minor magical properties or effects. No bonuses to AC or attack/damage rolls. These items rarely cause effects requiring a saving throw.',
+  'Uncommon': 'May include one minor feature OR a +1 bonus to AC (for armor) or to attack/damage rolls (for weapons). If the item causes an effect on a creature, the saving throw DC is around  13 to 14.',
+  'Rare': 'Up to +1 bonus to AC and one minor feature for armor; up to +2 to attack/damage rolls OR one effect for weapons. If the item causes an effect on a creature, the saving throw DC is around  15 to 16.',
+  'Very Rare': 'Up to +3 bonus to AC or enhanced features for armor; up to +3 to attack/damage rolls and/or effects for weapons. If the item causes an effect on a creature, the saving throw DC is around  17 to 18.',
+  'Legendary': 'Significant magical features, up to +4 bonus to AC for armor; up to +4 to attack/damage rolls and major effects for weapons. If the item causes an effect on a creature, the saving throw DC is 19 or higher.'
 }
 
 const generateMagicItem = async () => {
@@ -300,18 +229,45 @@ const generateMagicItem = async () => {
   }
   const featuresAndBonuses = determineFeaturesAndBonuses(rarity.value);
   magicItemDescription.value = null;
-  questHooks.value = [];
 
-  const prompt = `Generate a detailed Dungeons & Dragons magic item description adhering to the provided rarity guidelines and incomplete information.
+  const prompt = `Generate a detailed Dungeons & Dragons magic item description adhering to the provided rarity guidelines and incomplete information. The item's description should align with D&D 5e mechanics, including specific spell levels, attunement requirements, and balanced recharge conditions. Emphasize the item's versatility, historical context, and potential interactions with players.
+    For "features" and "possible_uses", present them as nested objects where each feature or use is a key, and its detailed description is the corresponding value. This structure should enrich the item's narrative and mechanical clarity.
 
+    Guidelines for features based on rarity and item type:
+    - Common: Minor magical properties or effects. No bonuses to AC or attack/damage rolls.
+    - Uncommon: May include one minor effect OR a +1 bonus to AC (for armor) or to attack/damage rolls (for weapons).
+    - Rare: Up to +1 bonus to AC and one minor effect for armor; up to +2 to attack/damage rolls OR one effect for weapons.
+    - Very Rare: Up to +3 bonus to AC or enhanced effects for armor; up to +3 to attack/damage rolls and/or effects for weapons.
+    - Legendary: Significant magical effects, up to +4 bonus to AC for armor; up to +4 to attack/damage rolls and major effects for weapons.
+
+    Example of a detailed object for guidance:
     {
-      "name": "${itemName.value || ''}",
+      "name": "Armor of Shadow Veil",
+      "item_type": "Armor",
+      "rarity": "Rare // Can feature up to 6th-level spells, offers a +2 bonus, often combines features.",
+      "bonus": "+1",
+      "modifier_sentence": "While wearing this armor, you gain a +1 bonus to AC.",
+      "feature_count": 2,
+      "features": {
+        "Invisibility": "Grants invisibility when in shadows or darkness.",
+        "Darkness": "Can cast 'Darkness' once per day without expending a spell slot. Requires attunement by a rogue or bard."
+      },
+      "physical_description": "The Armor of Shadow Veil is a dark, form-fitting leather armor that shimmers in the light. It is adorned with intricate elven runes that glow faintly in the dark",
+      "reason_for_rarity_level": "The combination of invisibility and the ability to cast 'Darkness', along with the limited usage and specific attunement requirements, justifies the rare classification.",
+      "lore": "Crafted by the elf shadow-weaver Aranethil as a reward for the rogue Illyana, saving her village. Its use has turned the tide in critical battles."
+    }
+
+    Please complete and enrich the following item description based on the above guidelines, structure, and specifications:
+    {
+      "name": "${itemName.value}",
       "item_type": "${itemType.value}",
-      "rarity": "${rarity.value}",
+      "rarity": "${rarity.value} // ${rarityGuidelines[rarity.value]}",
       "bonus": "${featuresAndBonuses.bonus}",
       "modifier_sentence": "${constructModifierSentence(featuresAndBonuses.bonus, itemType.value)}",
+      "feature_guidelines": "${rarityGuidelines[rarity.value]}",
       "feature_count": ${featuresAndBonuses.feature_count},
       "features": ${JSON.stringify(featuresAndBonuses.features)},
+      "reason_for_rarity_level": "",
       "physical_description": "",
       "lore": "${itemLore.value}"
     }`
@@ -321,6 +277,8 @@ const generateMagicItem = async () => {
     const response = await generateGptResponse(prompt, itemValidation, 3);
     magicItemDescription.value = JSON.parse(response);
     magicItemDescription.value.rarity = parseRarity(magicItemDescription.value.rarity);
+    // Initialize with empty quest hooks
+    magicItemDescription.value.questHooks = [];
     loadingItem.value = false;
     saveItem(magicItemDescription.value);
     const index = savedItems.value.findIndex((item) => item.name === magicItemDescription.value.name);
@@ -334,60 +292,6 @@ const generateMagicItem = async () => {
 
 const regenerateItem = () => {
   generateMagicItem();
-};
-
-const generateQuestHook = async () => {
-  if (!questType.value) {
-    alert('Please select a quest type.');
-    return;
-  }
-
-  const questPrompt = `Generate a D&D 5e quest hook for the following magic item:
-    Item Name: ${magicItemDescription.value.name}
-    Type: ${magicItemDescription.value.item_type}
-    Rarity: ${magicItemDescription.value.rarity}
-    Features: ${JSON.stringify(magicItemDescription.value.features)}
-    Lore: ${magicItemDescription.value.lore}
-    
-    Quest Type: ${questType.value}
-    
-    Create a quest hook with the following structure:
-    {
-      "title": "A compelling quest title",
-      "questGiver": "Name and brief description of the quest giver",
-      "setup": "The initial scenario and why the party should care (2-3 sentences)",
-      "objectives": ["Primary objective", "Secondary objective", "Optional objective"],
-      "challenges": ["First major challenge", "Second major challenge", "Environmental or social obstacle"],
-      "reward": "What the party gains beyond just the item itself",
-      "twist": "An optional plot twist that could occur during the quest"
-    }`;
-
-  try {
-    loadingQuest.value = true;
-    const response = await generateGptResponse(questPrompt, questHookValidation, 3);
-    const questHook = JSON.parse(response);
-    questHooks.value.push(questHook);
-    loadingQuest.value = false;
-    saveItemWithQuests();
-  } catch (error) {
-    console.error("Error generating quest hook:", error);
-    loadingQuest.value = false;
-  }
-};
-
-const questHookValidation = (jsonString) => {
-  try {
-    const jsonObj = JSON.parse(jsonString);
-    const keys = ['title', 'questGiver', 'setup', 'objectives', 'challenges', 'reward'];
-    return keys.every((key) => key in jsonObj) && Array.isArray(jsonObj.objectives) && Array.isArray(jsonObj.challenges);
-  } catch (error) {
-    return false;
-  }
-};
-
-const deleteQuestHook = (index) => {
-  questHooks.value.splice(index, 1);
-  saveItemWithQuests();
 };
 
 const itemValidation = (jsonString) => {
@@ -427,9 +331,9 @@ const parseRarity = (rarity) => {
 const copyAsMarkdown = () => {
   let markdownContent = convertItemToMarkdown(magicItemDescription.value);
 
-  if (questHooks.value.length > 0) {
+  if (magicItemDescription.value.questHooks && magicItemDescription.value.questHooks.length > 0) {
     markdownContent += '\n\n## Quest Hooks\n\n';
-    questHooks.value.forEach((hook) => {
+    magicItemDescription.value.questHooks.forEach((hook) => {
       markdownContent += `### ${hook.title}\n\n`;
       markdownContent += `**Quest Giver:** ${hook.questGiver}\n\n`;
       markdownContent += `${hook.setup}\n\n`;
@@ -473,9 +377,9 @@ const copyAsPlainText = () => {
   plainText += `\n${magicItemDescription.value.physical_description}\n`;
   plainText += `${magicItemDescription.value.lore}\n`;
 
-  if (questHooks.value.length > 0) {
+  if (magicItemDescription.value.questHooks && magicItemDescription.value.questHooks.length > 0) {
     plainText += '\n\nQuest Hooks:\n';
-    questHooks.value.forEach((hook) => {
+    magicItemDescription.value.questHooks.forEach((hook) => {
       plainText += `\n${hook.title}\n`;
       plainText += `Quest Giver: ${hook.questGiver}\n`;
       plainText += `${hook.setup}\n`;
@@ -493,13 +397,12 @@ const copyAsPlainText = () => {
 };
 
 const saveItem = (item) => {
-  const itemWithQuests = { ...item, questHooks: questHooks.value };
   const existingIndex = savedItems.value.findIndex(saved => saved.name === item.name);
 
   if (existingIndex !== -1) {
-    savedItems.value[existingIndex] = itemWithQuests;
+    savedItems.value[existingIndex] = item;
   } else {
-    savedItems.value.push(itemWithQuests);
+    savedItems.value.push(item);
   }
 
   const rarityIndex = {
@@ -515,9 +418,10 @@ const saveItem = (item) => {
   localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
 };
 
-const saveItemWithQuests = () => {
-  if (magicItemDescription.value && activeItemIndex.value !== null) {
-    const updatedItem = { ...magicItemDescription.value, questHooks: questHooks.value };
+// Handler for updates from QuestHookTab
+const handleUpdatedItem = (updatedItem) => {
+  magicItemDescription.value = updatedItem;
+  if (activeItemIndex.value !== null) {
     savedItems.value[activeItemIndex.value] = updatedItem;
     localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
   }
@@ -533,7 +437,6 @@ const loadSavedItems = () => {
 const selectItem = (index) => {
   activeItemIndex.value = index;
   magicItemDescription.value = savedItems.value[index];
-  questHooks.value = savedItems.value[index].questHooks || [];
   itemName.value = magicItemDescription.value.name;
   rarity.value = magicItemDescription.value.rarity;
   itemType.value = magicItemDescription.value.item_type;
@@ -548,7 +451,6 @@ const deleteItem = () => {
       localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
       activeItemIndex.value = null;
       magicItemDescription.value = null;
-      questHooks.value = [];
       itemName.value = '';
       rarity.value = '';
       itemType.value = '';
@@ -560,7 +462,6 @@ const deleteItem = () => {
 const newItem = () => {
   activeItemIndex.value = null;
   magicItemDescription.value = null;
-  questHooks.value = [];
   itemName.value = '';
   rarity.value = '';
   itemType.value = '';
@@ -650,36 +551,6 @@ onMounted(() => {
   margin-top: 2rem;
 }
 
-.quest-generator {
-  padding: 1.5rem;
-  background-color: $cdr-color-background-secondary;
-  border-radius: 4px;
-  margin-top: 1rem;
-}
-
-.quest-content {
-  position: relative;
-  padding: 1rem;
-
-  h3 {
-    margin-top: 0;
-  }
-
-  h4 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: $cdr-color-text-primary;
-  }
-
-  .quest-twist {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background-color: $cdr-color-background-secondary;
-    border-left: 4px solid $cdr-color-border-primary;
-    border-radius: 4px;
-  }
-}
-
 .export-section {
   margin-top: 1.5rem;
 
@@ -690,13 +561,6 @@ onMounted(() => {
   .button-group {
     margin-top: 1.5rem;
   }
-}
-
-.delete-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1;
 }
 
 .sidebar {
@@ -766,63 +630,6 @@ onMounted(() => {
   }
 }
 
-// Tabs styling
-.tabs-container {
-  width: 100%;
-
-  .tabs-header {
-    display: flex;
-    border-bottom: 2px solid $cdr-color-border-primary;
-    margin-bottom: 2rem;
-
-    .tab-button {
-      padding: 1rem 2rem;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      cursor: pointer;
-      font-size: 1.6rem;
-      color: $cdr-color-text-secondary;
-      transition: all 0.3s ease;
-
-      &:hover:not(.active):not(:disabled) {
-        color: $cdr-color-text-primary;
-      }
-
-      &.active {
-        color: $cdr-color-text-primary;
-        border-bottom-color: $cdr-color-border-primary;
-        font-weight: 500;
-      }
-
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-    }
-  }
-
-  .tabs-content {
-    padding: 1rem 0;
-  }
-
-  .tab-panel {
-    animation: fadeIn 0.3s ease;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 // Responsive styles
 @media (max-width: 768px) {
   .main-container {
@@ -838,16 +645,6 @@ onMounted(() => {
 
     button {
       width: 100%;
-    }
-  }
-
-  .tabs-header {
-    overflow-x: auto;
-
-    .tab-button {
-      white-space: nowrap;
-      padding: 0.8rem 1.5rem;
-      font-size: 1.4rem;
     }
   }
 }
