@@ -8,11 +8,14 @@
       <cdr-button @click="generateQuestHook" :full-width="true" modifier="dark" style="margin-top: 2rem;">
         Generate Quest Hook
       </cdr-button>
+      <p v-if="!premium" class="generation-info">
+        {{ remainingGenerations }} quest hook{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
+      </p>
     </div>
 
     <cdr-accordion-group v-if="hooks.length > 0 || loadingQuest" style="margin-top: 2rem;">
       <cdr-accordion v-for="(hook, index) in hooks" :key="index" :id="'quest-' + index" level="2" :opened="hook.open"
-        @click="toggleOpen(index)">
+        @accordion-toggle="toggleOpen(index)">
         <template #label>
           {{ hook.title }}
         </template>
@@ -66,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import {
   CdrSelect,
   CdrButton,
@@ -80,11 +83,16 @@ import {
 } from '@rei/cedar';
 import QuestHookSkeleton from '../skeletons/QuestHookSkeleton.vue';
 import { generateGptResponse } from '../../util/open-ai.mjs';
+import { detectIncognito } from 'detectincognitojs';
 
 const props = defineProps({
   item: {
     type: Object,
     required: true
+  },
+  premium: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -93,6 +101,7 @@ const emit = defineEmits(['updated-item']);
 const loadingQuest = ref(false);
 const questType = ref('');
 const hooks = ref([]);
+const remainingGenerations = ref(5);
 
 // Initialize hooks from item
 const initializeHooks = () => {
@@ -106,8 +115,91 @@ const initializeHooks = () => {
   }
 };
 
+// Update remaining generations counter
+const updateRemainingGenerations = () => {
+  if (props.premium) {
+    remainingGenerations.value = Infinity;
+    return;
+  }
+
+  const MAX_GENERATIONS = 5;
+  const storage = window.localStorage;
+  const questHookData = JSON.parse(storage.getItem('questHookTracking')) || {
+    generationCount: '0',
+    firstGenerationTime: null,
+  };
+
+  let generationCount = parseInt(questHookData.generationCount) || 0;
+  let firstGenerationTime = parseInt(questHookData.firstGenerationTime);
+  const currentTime = new Date().getTime();
+
+  // Reset if 24 hours have passed
+  if (firstGenerationTime && currentTime - firstGenerationTime >= 86400000) {
+    generationCount = 0;
+    questHookData.generationCount = '0';
+    questHookData.firstGenerationTime = null;
+    storage.setItem('questHookTracking', JSON.stringify(questHookData));
+  }
+
+  remainingGenerations.value = Math.max(0, MAX_GENERATIONS - generationCount);
+};
+
+// Check if user can generate quest hook
+const canGenerateQuestHook = async () => {
+  if (props.premium) {
+    return true;
+  }
+
+  const incognitoResult = await detectIncognito();
+
+  if (incognitoResult.isPrivate) {
+    alert(
+      "The free quest hook generator is not available in incognito or private mode as we can't keep track of the number of quest hooks generated. Please disable incognito mode to use the generator or you can access unlimited quest hook generation as a $5 patron.",
+    );
+    return false;
+  }
+
+  const MAX_GENERATIONS = 5;
+  const storage = window.localStorage;
+  const questHookData = JSON.parse(storage.getItem('questHookTracking')) || {
+    generationCount: '0',
+    firstGenerationTime: null,
+  };
+
+  let generationCount = parseInt(questHookData.generationCount) || 0;
+  let firstGenerationTime = parseInt(questHookData.firstGenerationTime);
+  const currentTime = new Date().getTime();
+
+  if (generationCount >= MAX_GENERATIONS) {
+    if (!firstGenerationTime || currentTime - firstGenerationTime >= 86400000) {
+      // 24 hours in milliseconds
+      // Reset the count and set the new day's first generation time
+      questHookData.generationCount = '1';
+      questHookData.firstGenerationTime = currentTime.toString();
+    } else {
+      const resetTime = new Date(firstGenerationTime + 86400000);
+      const alertMessage = `You have reached the 5 quest hook generation limit for a 24-hour period. Please come back at ${resetTime.toLocaleString()} or you can access unlimited quest hook generation as a $5 patron.`;
+      alert(alertMessage);
+      return false;
+    }
+  } else {
+    // Increment the count
+    questHookData.generationCount = (generationCount + 1).toString();
+    if (generationCount === 0) {
+      questHookData.firstGenerationTime = currentTime.toString(); // Set the first generation time if this is the first count
+    }
+  }
+
+  storage.setItem('questHookTracking', JSON.stringify(questHookData)); // Save the updated object to local storage
+  updateRemainingGenerations();
+  return true;
+};
+
 // Initialize on mount
-initializeHooks();
+onMounted(() => {
+  initializeHooks();
+  updateRemainingGenerations();
+});
 
 // Watch for item changes (when switching between saved items)
 watch(
@@ -116,6 +208,14 @@ watch(
     initializeHooks();
   },
   { deep: true }
+);
+
+// Watch for premium changes
+watch(
+  () => props.premium,
+  () => {
+    updateRemainingGenerations();
+  }
 );
 
 const questTypes = [
@@ -170,6 +270,10 @@ const generateQuestHook = async () => {
   }
   if (!props.item) return;
 
+  // Check if user can generate
+  const canGenerate = await canGenerateQuestHook();
+  if (!canGenerate) return;
+
   const questPrompt = `Generate a D&D 5e quest hook for the following magic item:
     Item Name: ${props.item.name}
     Type: ${props.item.item_type}
@@ -215,6 +319,14 @@ const generateQuestHook = async () => {
   background-color: $cdr-color-background-secondary;
   border-radius: 4px;
   margin-top: 1rem;
+
+  .generation-info {
+    margin-top: 1rem;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    color: $cdr-color-text-secondary;
+    text-align: center;
+  }
 }
 
 .quest-content {

@@ -155,8 +155,12 @@
           </TabPanel>
 
           <TabPanel label="Quest Hooks">
-            <QuestHookTab :item="magicItemDescription" @updated-item="handleUpdatedItem" />
+            <QuestHookTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
           </TabPanel>
+
+          <!-- <TabPanel label="Lore Builder">
+            <LoreBuilderTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
+          </TabPanel> -->
 
           <TabPanel label="Export">
             <h2>Export Your Magic Item</h2>
@@ -196,6 +200,7 @@ import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
 import ItemSkeleton from './skeletons/ItemSkeleton.vue';
 import QuestHookTab from './item-generator-tabs/QuestHookTab.vue';
+//import LoreBuilderTab from './item-generator-tabs/LoreBuilderTab.vue';
 import DataManagerModal from './DataManagerModal.vue';
 import Tabs from './tabs/Tabs.vue';
 import TabPanel from './tabs/TabPanel.vue';
@@ -643,7 +648,7 @@ const generateFeature = async (index) => {
   // If description already exists, confirm before overwriting
   if (feature.description && feature.description.trim()) {
     const featureName = feature.name.trim() || 'Unnamed Feature';
-    const confirmed = confirm(`This will erase the current feature description and generate a new description based on the feature name "${featureName}". Proceed?`);
+    const confirmed = confirm(`This will erase and regenerate this feature based on the feature name "${featureName}". Proceed?`);
     if (!confirmed) {
       return;
     }
