@@ -76,22 +76,72 @@
       <div v-if="magicItemDescription && !loadingItem" class="form-container">
         <Tabs :activeIndex="activeTabIndex" @tabChange="activeTabIndex = $event">
           <TabPanel label="Item Details">
-            <h2>{{ magicItemDescription.name }}</h2>
-            <p class="rarity">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}</p>
+            <!-- View Mode -->
+            <div v-if="!isEditing">
+              <h2>{{ magicItemDescription.name }}</h2>
+              <p class="rarity">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}</p>
 
-            <h3>Features</h3>
-            <p v-if="magicItemDescription.modifier_sentence">{{ magicItemDescription.modifier_sentence }}</p>
-            <p class="body-text" v-for="(description, feature) in magicItemDescription.features" :key="feature">
-              <strong>{{ feature }}</strong>: {{ description }}
-            </p>
-            <div class="read-aloud">
-              <p class="body-text">{{ magicItemDescription.physical_description }}</p>
-              <p class="body-text">{{ magicItemDescription.lore }}</p>
+              <h3>Features</h3>
+              <p v-if="magicItemDescription.modifier_sentence">{{ magicItemDescription.modifier_sentence }}</p>
+              <p class="body-text" v-for="(description, feature) in magicItemDescription.features" :key="feature">
+                <strong>{{ feature }}</strong>: {{ description }}
+              </p>
+              <div class="read-aloud">
+                <p class="body-text">{{ magicItemDescription.physical_description }}</p>
+                <p class="body-text">{{ magicItemDescription.lore }}</p>
+              </div>
+
+              <div class="button-group">
+                <cdr-button @click="startEditing" modifier="secondary">Edit Item</cdr-button>
+                <cdr-button @click="deleteItem" modifier="dark">Delete Item</cdr-button>
+              </div>
             </div>
 
-            <div class="button-group">
-              <cdr-button @click="regenerateItem" modifier="secondary">Re-Generate Item</cdr-button>
-              <cdr-button @click="deleteItem" modifier="dark">Delete Item</cdr-button>
+            <!-- Edit Mode -->
+            <div v-else class="edit-form">
+              <h2>Edit Magic Item</h2>
+
+              <cdr-input v-model="editForm.name" label="Item Name" background="secondary" class="edit-field" />
+
+              <cdr-select v-model="editForm.item_type" label="Item Type" :options="itemTypeOptions"
+                class="edit-field" />
+
+              <cdr-select v-model="editForm.rarity" label="Rarity" :options="rarityOptions" class="edit-field" />
+
+              <cdr-input v-model="editForm.modifier_sentence" label="Modifier Sentence (optional)"
+                background="secondary" class="edit-field">
+                <template #helper-text-bottom>
+                  Example: "While wearing this armor, you gain a +1 bonus to AC."
+                </template>
+              </cdr-input>
+
+              <div class="features-edit">
+                <label class="feature-label">Features</label>
+                <div v-for="(feature, index) in editForm.featuresArray" :key="index" class="feature-edit-row">
+                  <cdr-input v-model="feature.name" label="Feature Name" background="secondary"
+                    class="feature-name-input" />
+                  <cdr-input v-model="feature.description" label="Description" background="secondary" :rows="3"
+                    tag="textarea" class="feature-desc-input" />
+                  <cdr-button @click="removeFeature(index)" modifier="secondary" size="small"
+                    class="remove-feature-btn">
+                    Remove
+                  </cdr-button>
+                </div>
+                <cdr-button @click="addFeature" modifier="secondary" size="small">
+                  + Add Feature
+                </cdr-button>
+              </div>
+
+              <cdr-input v-model="editForm.physical_description" label="Physical Description" background="secondary"
+                :rows="4" tag="textarea" class="edit-field" />
+
+              <cdr-input v-model="editForm.lore" label="Lore" background="secondary" :rows="5" tag="textarea"
+                class="edit-field" />
+
+              <div class="button-group">
+                <cdr-button @click="saveEdit">Save Changes</cdr-button>
+                <cdr-button @click="cancelEdit" modifier="secondary">Cancel</cdr-button>
+              </div>
             </div>
           </TabPanel>
 
@@ -160,6 +210,16 @@ const windowWidth = ref(window.innerWidth);
 const isSidebarVisible = ref(false);
 const showDataManagerModal = ref(false);
 const activeTabIndex = ref(0);
+const isEditing = ref(false);
+const editForm = ref({
+  name: '',
+  item_type: '',
+  rarity: '',
+  modifier_sentence: '',
+  featuresArray: [],
+  physical_description: '',
+  lore: ''
+});
 
 const sidebarStyle = computed(() => {
   if (windowWidth.value <= 1020) {
@@ -308,10 +368,6 @@ Do this: {"Verdant Resilience": "While wearing this armor, you have advantage on
     alert('Failed to generate magic item. Please try again.');
     loadingItem.value = false;
   }
-};
-
-const regenerateItem = () => {
-  generateMagicItem();
 };
 
 const itemValidation = (jsonString) => {
@@ -496,6 +552,72 @@ const newItem = () => {
   rarity.value = '';
   itemType.value = '';
   itemLore.value = '';
+  isEditing.value = false;
+};
+
+const startEditing = () => {
+  // Convert features object to array for easier editing
+  const featuresArray = Object.entries(magicItemDescription.value.features || {}).map(([name, description]) => ({
+    name,
+    description
+  }));
+
+  editForm.value = {
+    name: magicItemDescription.value.name || '',
+    item_type: magicItemDescription.value.item_type || '',
+    rarity: magicItemDescription.value.rarity || '',
+    modifier_sentence: magicItemDescription.value.modifier_sentence || '',
+    featuresArray: featuresArray,
+    physical_description: magicItemDescription.value.physical_description || '',
+    lore: magicItemDescription.value.lore || ''
+  };
+  isEditing.value = true;
+};
+
+const cancelEdit = () => {
+  isEditing.value = false;
+};
+
+const saveEdit = () => {
+  // Convert featuresArray back to features object
+  const features = {};
+  editForm.value.featuresArray.forEach(feature => {
+    if (feature.name && feature.description) {
+      features[feature.name] = feature.description;
+    }
+  });
+
+  // Update the magic item description
+  magicItemDescription.value = {
+    ...magicItemDescription.value,
+    name: editForm.value.name,
+    item_type: editForm.value.item_type,
+    rarity: editForm.value.rarity,
+    modifier_sentence: editForm.value.modifier_sentence,
+    features: features,
+    physical_description: editForm.value.physical_description,
+    lore: editForm.value.lore,
+    feature_count: Object.keys(features).length
+  };
+
+  // Save to localStorage
+  if (activeItemIndex.value !== null) {
+    savedItems.value[activeItemIndex.value] = magicItemDescription.value;
+    localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
+  }
+
+  isEditing.value = false;
+};
+
+const addFeature = () => {
+  editForm.value.featuresArray.push({
+    name: '',
+    description: ''
+  });
+};
+
+const removeFeature = (index) => {
+  editForm.value.featuresArray.splice(index, 1);
 };
 
 onMounted(() => {
@@ -590,6 +712,47 @@ onMounted(() => {
 
   .button-group {
     margin-top: 1.5rem;
+  }
+}
+
+.edit-form {
+  .edit-field {
+    margin-bottom: 1.5rem;
+  }
+
+  .features-edit {
+    margin-bottom: 2rem;
+
+    .feature-label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: $cdr-color-text-primary;
+    }
+
+    .feature-edit-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 1rem;
+      background-color: $cdr-color-background-secondary;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      position: relative;
+
+      .remove-feature-btn {
+        align-self: flex-end;
+        margin-top: 0.5rem;
+      }
+    }
+
+    .feature-name-input {
+      flex: 1;
+    }
+
+    .feature-desc-input {
+      flex: 2;
+    }
   }
 }
 
