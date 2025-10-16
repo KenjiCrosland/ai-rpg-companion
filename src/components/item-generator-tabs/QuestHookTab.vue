@@ -21,37 +21,83 @@
         </template>
 
         <div class="quest-content">
-          <cdr-tooltip id="tooltip-quest" position="left" class="delete-button">
-            <template #trigger>
-              <cdr-button size="small" :icon-only="true" :with-background="true" @click.stop="deleteHook(index)">
-                <template #icon>
-                  <icon-x-sm />
-                </template>
+          <div v-if="editingIndex === index" class="edit-form">
+            <cdr-input v-model="editForm.title" label="Title" background="secondary" class="edit-field" />
+
+            <cdr-input v-model="editForm.questGiver" label="Quest Giver" background="secondary" class="edit-field" />
+
+            <cdr-input v-model="editForm.setup" label="Setup" background="secondary" :rows="4" tag="textarea"
+              class="edit-field" />
+
+            <div class="objectives-edit edit-field">
+              <label class="section-label">Objectives</label>
+              <div v-for="(objective, i) in editForm.objectives" :key="'obj-' + i" class="array-item-row">
+                <cdr-input v-model="editForm.objectives[i]" background="secondary" class="array-item-input" :rows="2"
+                  :label="`Objective ${i + 1}`" />
+                <cdr-button size="small" modifier="dark" @click="removeObjective(i)"
+                  v-if="editForm.objectives.length > 1" class="remove-button">
+                  Remove
+                </cdr-button>
+              </div>
+              <cdr-button size="small" modifier="secondary" @click="addObjective">
+                + Add Objective
               </cdr-button>
-            </template>
-            <div>Delete Quest Hook</div>
-          </cdr-tooltip>
+            </div>
 
-          <h3>{{ hook.title }}</h3>
-          <p><strong>Quest Giver:</strong> {{ hook.questGiver }}</p>
-          <p>{{ hook.setup }}</p>
+            <div class="challenges-edit edit-field">
+              <label class="section-label">Challenges</label>
+              <div v-for="(challenge, i) in editForm.challenges" :key="'chal-' + i" class="array-item-row">
+                <cdr-input v-model="editForm.challenges[i]" background="secondary" class="array-item-input" :rows="2"
+                  :label="`Challenge ${i + 1}`" />
+                <cdr-button size="small" modifier="dark" @click="removeChallenge(i)"
+                  v-if="editForm.challenges.length > 1" class="remove-button">
+                  Remove
+                </cdr-button>
+              </div>
+              <cdr-button size="small" modifier="secondary" @click="addChallenge">
+                + Add Challenge
+              </cdr-button>
+            </div>
 
-          <h4>Objectives</h4>
-          <cdr-list modifier="unordered">
-            <li v-for="(objective, i) in hook.objectives" :key="i">{{ objective }}</li>
-          </cdr-list>
+            <cdr-input v-model="editForm.reward" label="Reward" background="secondary" :rows="3" tag="textarea"
+              class="edit-field" />
 
-          <h4>Challenges</h4>
-          <cdr-list modifier="unordered">
-            <li v-for="(challenge, i) in hook.challenges" :key="i">{{ challenge }}</li>
-          </cdr-list>
+            <cdr-input v-model="editForm.twist" label="Potential Twist (Optional)" background="secondary" :rows="3"
+              tag="textarea" class="edit-field" />
 
-          <h4>Rewards</h4>
-          <p>{{ hook.reward }}</p>
+            <div class="button-group">
+              <cdr-button @click="saveEdit">Save Changes</cdr-button>
+              <cdr-button @click="cancelEdit" modifier="secondary">Cancel</cdr-button>
+            </div>
+          </div>
 
-          <div v-if="hook.twist" class="quest-twist">
-            <h4>Potential Twist</h4>
-            <p>{{ hook.twist }}</p>
+          <div v-else>
+            <h3>{{ hook.title }}</h3>
+            <p><strong>Quest Giver:</strong> {{ hook.questGiver }}</p>
+            <p>{{ hook.setup }}</p>
+
+            <h4>Objectives</h4>
+            <cdr-list modifier="unordered">
+              <li v-for="(objective, i) in hook.objectives" :key="i">{{ objective }}</li>
+            </cdr-list>
+
+            <h4>Challenges</h4>
+            <cdr-list modifier="unordered">
+              <li v-for="(challenge, i) in hook.challenges" :key="i">{{ challenge }}</li>
+            </cdr-list>
+
+            <h4>Rewards</h4>
+            <p>{{ hook.reward }}</p>
+
+            <div v-if="hook.twist" class="quest-twist">
+              <h4>Potential Twist</h4>
+              <p>{{ hook.twist }}</p>
+            </div>
+
+            <div class="button-group">
+              <cdr-button @click="startEdit(index)" modifier="secondary">Edit Quest Hook</cdr-button>
+              <cdr-button @click="deleteHook(index)" modifier="dark">Delete Quest Hook</cdr-button>
+            </div>
           </div>
         </div>
       </cdr-accordion>
@@ -76,7 +122,7 @@ import {
   CdrList,
   CdrAccordionGroup,
   CdrAccordion,
-  CdrTooltip,
+  CdrInput,
   IconXSm,
   CdrSkeleton,
   CdrSkeletonBone
@@ -102,6 +148,16 @@ const loadingQuest = ref(false);
 const questType = ref('');
 const hooks = ref([]);
 const remainingGenerations = ref(5);
+const editingIndex = ref(null);
+const editForm = ref({
+  title: '',
+  questGiver: '',
+  setup: '',
+  objectives: [],
+  challenges: [],
+  reward: '',
+  twist: ''
+});
 
 // Initialize hooks from item
 const initializeHooks = () => {
@@ -263,6 +319,66 @@ const deleteHook = (index) => {
   }
 };
 
+const startEdit = (index) => {
+  editingIndex.value = index;
+  const hook = hooks.value[index];
+  editForm.value = {
+    title: hook.title,
+    questGiver: hook.questGiver,
+    setup: hook.setup,
+    objectives: [...hook.objectives],
+    challenges: [...hook.challenges],
+    reward: hook.reward,
+    twist: hook.twist || ''
+  };
+};
+
+const cancelEdit = () => {
+  editingIndex.value = null;
+  editForm.value = {
+    title: '',
+    questGiver: '',
+    setup: '',
+    objectives: [],
+    challenges: [],
+    reward: '',
+    twist: ''
+  };
+};
+
+const saveEdit = () => {
+  if (editingIndex.value !== null) {
+    hooks.value[editingIndex.value] = {
+      ...hooks.value[editingIndex.value],
+      title: editForm.value.title,
+      questGiver: editForm.value.questGiver,
+      setup: editForm.value.setup,
+      objectives: editForm.value.objectives.filter(obj => obj.trim() !== ''),
+      challenges: editForm.value.challenges.filter(chal => chal.trim() !== ''),
+      reward: editForm.value.reward,
+      twist: editForm.value.twist
+    };
+    emitUpdatedItem();
+    cancelEdit();
+  }
+};
+
+const addObjective = () => {
+  editForm.value.objectives.push('');
+};
+
+const removeObjective = (index) => {
+  editForm.value.objectives.splice(index, 1);
+};
+
+const addChallenge = () => {
+  editForm.value.challenges.push('');
+};
+
+const removeChallenge = (index) => {
+  editForm.value.challenges.splice(index, 1);
+};
+
 const generateQuestHook = async () => {
   if (!questType.value) {
     alert('Please select a quest type.');
@@ -330,8 +446,38 @@ const generateQuestHook = async () => {
 }
 
 .quest-content {
-  position: relative;
   padding: 1rem;
+
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .edit-form {
+    .edit-field {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: $cdr-color-text-primary;
+    }
+
+    .objectives-edit,
+    .challenges-edit {
+      .array-item-row {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 13fr 1fr;
+        margin-bottom: 1rem;
+        align-items: end;
+        width: 100%;
+      }
+    }
+  }
 
   h3 {
     margin-top: 0;
@@ -350,12 +496,5 @@ const generateQuestHook = async () => {
     border-left: 4px solid $cdr-color-border-primary;
     border-radius: 4px;
   }
-}
-
-.delete-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1;
 }
 </style>

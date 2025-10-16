@@ -37,7 +37,7 @@
         <h1>Kenji's D&D 5e Magic Item Generator</h1>
         <div>
           <p>
-            Welcome to the D&D 5th Edition Magic Item Generator, powered by the ChatGPT API. To start, select an item
+            Welcome to my D&D 5th Edition Magic Item Generator! To start, select an item
             type
             (armor, weapon, etc.), which is the only required field. You may also specify the item's name, rarity, and
             lore
@@ -158,9 +158,9 @@
             <QuestHookTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
           </TabPanel>
 
-          <!-- <TabPanel label="Lore Builder">
+          <TabPanel label="Lore Builder">
             <LoreBuilderTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
-          </TabPanel> -->
+          </TabPanel>
 
           <TabPanel label="Export">
             <h2>Export Your Magic Item</h2>
@@ -200,7 +200,7 @@ import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
 import ItemSkeleton from './skeletons/ItemSkeleton.vue';
 import QuestHookTab from './item-generator-tabs/QuestHookTab.vue';
-//import LoreBuilderTab from './item-generator-tabs/LoreBuilderTab.vue';
+import LoreBuilderTab from './item-generator-tabs/LoreBuilderTab.vue';
 import DataManagerModal from './DataManagerModal.vue';
 import Tabs from './tabs/Tabs.vue';
 import TabPanel from './tabs/TabPanel.vue';
@@ -534,7 +534,51 @@ const loadSavedItems = () => {
   }
 };
 
+// Add a watcher to detect changes in edit form
+const detectEditChanges = () => {
+  if (!isEditing.value) return;
+
+  // Compare current edit form with original item
+  const original = magicItemDescription.value;
+
+  // Check basic fields
+  if (editForm.value.name !== original.name) return true;
+  if (editForm.value.item_type !== original.item_type) return true;
+  if (editForm.value.rarity !== original.rarity) return true;
+  if (editForm.value.modifier_sentence !== (original.modifier_sentence || '')) return true;
+  if (editForm.value.physical_description !== (original.physical_description || '')) return true;
+  if (editForm.value.lore !== (original.lore || '')) return true;
+
+  // Check features array
+  const originalFeatures = Object.entries(original.features || {}).map(([name, description]) => ({
+    name,
+    description
+  }));
+
+  if (editForm.value.featuresArray.length !== originalFeatures.length) return true;
+
+  for (let i = 0; i < editForm.value.featuresArray.length; i++) {
+    if (editForm.value.featuresArray[i].name !== originalFeatures[i].name ||
+      editForm.value.featuresArray[i].description !== originalFeatures[i].description) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const selectItem = (index) => {
+  // Check for unsaved changes if in edit mode
+  if (isEditing.value && detectEditChanges()) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch items without saving?');
+    if (!confirmed) {
+      return; // Don't switch items
+    }
+  }
+
+  // Exit edit mode when selecting a different item
+  isEditing.value = false;
+
   activeItemIndex.value = index;
   magicItemDescription.value = savedItems.value[index];
   itemName.value = magicItemDescription.value.name;
