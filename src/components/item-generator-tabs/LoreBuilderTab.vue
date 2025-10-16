@@ -38,11 +38,51 @@
         </cdr-button>
 
         <div class="filmstrip" ref="filmstrip" @scroll="checkScroll">
-          <!-- Add first event card (only show when showAddButtons is true) -->
-          <div v-if="showAddButtons && generatingPosition !== 0" class="timeline-card add-card">
-            <cdr-button @click="startGeneratingEvent(0)" modifier="secondary" :full-width="true"
-              class="add-event-button">
-              {{ timelineEvents.length > 0 ? '+ Add Previous Event' : '+ Add First Event' }}
+          <!-- If no events and showing cards, show the first event form directly -->
+          <div v-if="timelineEvents.length === 0 && showTimelineCards" class="timeline-card generating-card">
+            <div class="generating-content">
+              <h4>Create First Event</h4>
+
+              <cdr-select v-model="firstEventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
+                size="small" />
+
+              <cdr-select v-model="firstTimePeriod" label="Time Period" prompt="Choose when"
+                :options="getAvailablePeriodsForPosition(0)" size="small" />
+
+              <cdr-input v-model="firstAdditionalContext" label="Context (optional)" tag="textarea" :rows="2"
+                background="secondary" size="small" />
+
+              <div v-if="!pendingEvent" class="button-row">
+                <cdr-button @click="generateFirstEvent" :disabled="!firstEventType || !firstTimePeriod || loadingEvents"
+                  size="small" :full-width="true">
+                  {{ loadingEvents ? 'Generating...' : 'Generate' }}
+                </cdr-button>
+              </div>
+
+              <div v-if="pendingEvent" class="event-result">
+                <div class="result-header">
+                  <h5>{{ pendingEvent.title }}</h5>
+                  <p class="result-year">{{ pendingEvent.eventYear }}</p>
+                </div>
+                <p class="result-text">{{ pendingEvent.description }}</p>
+
+                <div class="button-row">
+                  <cdr-button @click="confirmFirstEvent" size="small">
+                    Add to Timeline
+                  </cdr-button>
+                  <cdr-button @click="regenerateFirstEvent" modifier="secondary" size="small">
+                    Try Different Event
+                  </cdr-button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Regular add button for subsequent events -->
+          <div v-else-if="showAddButtons && generatingPosition !== 0 && timelineEvents.length > 0"
+            class="timeline-card add-card compact">
+            <cdr-button @click="startGeneratingEvent(0)" modifier="secondary" size="small" class="add-event-button">
+              <span class="button-text">+ Add</span>
             </cdr-button>
           </div>
 
@@ -94,21 +134,47 @@
             <!-- Existing event card -->
             <cdr-card class="timeline-card event-card">
               <div class="card-content">
-                <h4>{{ event.title }}</h4>
-                <p class="time-period">{{ event.eventYear }}</p>
-                <cdr-text class="event-text">{{ event.description }}</cdr-text>
-                <cdr-button modifier="dark" size="small" @click="removeFromTimeline(index)" :full-width="true"
-                  style="margin-top: auto;">
-                  Remove
-                </cdr-button>
+                <div v-if="editingEventIndex !== index">
+                  <h4>{{ event.title }}</h4>
+                  <p class="time-period">{{ event.eventYear }}</p>
+                  <cdr-text class="event-text">{{ event.description }}</cdr-text>
+                  <div class="button-row-bottom">
+                    <cdr-button modifier="secondary" size="small" @click="startEditingEvent(index)">
+                      Edit
+                    </cdr-button>
+                    <cdr-button modifier="dark" size="small" @click="removeFromTimeline(index)">
+                      Remove
+                    </cdr-button>
+                  </div>
+                </div>
+
+                <!-- Edit mode for this event -->
+                <div v-else class="event-edit-form">
+                  <cdr-input v-model="editingEvent.title" label="Event Title" background="secondary" size="small" />
+
+                  <cdr-input v-model="editingEvent.eventYear" label="Event Year" background="secondary" size="small"
+                    placeholder="e.g., 1462 DR" />
+
+                  <cdr-input v-model="editingEvent.description" label="Description" tag="textarea" :rows="5"
+                    background="secondary" size="small" />
+
+                  <div class="button-row-bottom">
+                    <cdr-button size="small" @click="saveEventEdit(index)">
+                      Save
+                    </cdr-button>
+                    <cdr-button modifier="secondary" size="small" @click="cancelEventEdit">
+                      Cancel
+                    </cdr-button>
+                  </div>
+                </div>
               </div>
             </cdr-card>
 
             <!-- Add event after card (only show when showAddButtons is true) -->
-            <div v-if="showAddButtons && generatingPosition !== index + 1" class="timeline-card add-card">
-              <cdr-button @click="startGeneratingEvent(index + 1)" modifier="secondary" :full-width="true"
+            <div v-if="showAddButtons && generatingPosition !== index + 1" class="timeline-card add-card compact">
+              <cdr-button @click="startGeneratingEvent(index + 1)" modifier="secondary" size="small"
                 class="add-event-button">
-                + Add After
+                <span class="button-text">+ Add</span>
               </cdr-button>
             </div>
 
@@ -185,22 +251,48 @@
         </cdr-text>
       </div>
 
-      <cdr-button v-if="timelineEvents.length >= 2" @click="generateSummary" :disabled="loadingSummary"
-        modifier="secondary" style="margin-top: 1rem;">
-        {{ historicalSummary ? 'Regenerate' : 'Generate' }} Historical Summary
-      </cdr-button>
+      <div class="summary-buttons">
+        <cdr-button v-if="timelineEvents.length >= 2" @click="generateSummary" :disabled="loadingSummary"
+          modifier="secondary">
+          {{ historicalSummary ? 'Regenerate' : 'Generate' }} Historical Summary
+        </cdr-button>
+
+        <cdr-button v-if="historicalSummary && itemLegacy" @click="updateItemLore" modifier="primary"
+          title="Replace the item's current lore with the generated historical summary">
+          Update Item Lore
+        </cdr-button>
+      </div>
     </div>
 
     <!-- Export Section -->
     <div class="export-section" v-if="timelineEvents.length > 0">
       <h3>Export Item History</h3>
-      <div class="button-group">
-        <cdr-button @click="exportToMarkdown" modifier="secondary">
-          Copy History as Markdown
-        </cdr-button>
-        <cdr-button @click="exportToPlainText" modifier="secondary">
-          Copy History as Plain Text
-        </cdr-button>
+      <p class="export-description">
+        Export your item's historical timeline in different formats. The markdown format works perfectly with
+        <cdr-link href="https://homebrewery.naturalcrit.com/new" target="_blank">Homebrewery</cdr-link>
+        for creating beautifully formatted D&D handouts.
+      </p>
+
+      <div class="export-options">
+        <div class="export-option">
+          <cdr-button @click="exportToMarkdown" modifier="secondary" :full-width="true">
+            Copy History as Markdown
+          </cdr-button>
+          <p class="option-description">For use with Homebrewery or other markdown tools</p>
+        </div>
+
+        <div class="export-option">
+          <cdr-button @click="exportToPlainText" modifier="secondary" :full-width="true">
+            Copy History as Plain Text
+          </cdr-button>
+          <p class="option-description">Simple format for notes or sharing in chat</p>
+        </div>
+      </div>
+
+      <div class="export-tip">
+        <strong>Quick tip:</strong> After copying as markdown, visit
+        <cdr-link href="https://homebrewery.naturalcrit.com/new" target="_blank">Homebrewery</cdr-link>,
+        paste your content on the left side, and watch it transform into a beautiful D&D-styled document!
       </div>
     </div>
   </div>
@@ -215,9 +307,11 @@ import {
   CdrSkeleton,
   CdrSkeletonBone,
   CdrSelect,
-  CdrInput
+  CdrInput,
+  CdrLink
 } from '@rei/cedar';
 import { generateGptResponse } from '../../util/open-ai.mjs';
+import { detectIncognito } from 'detectincognitojs';
 import {
   generateEventPrompt,
   generateSummaryPrompt,
@@ -245,6 +339,9 @@ const yearErrorMessage = ref('');
 const eventType = ref('');
 const timePeriod = ref('');
 const additionalContext = ref('');
+const firstEventType = ref('Creation/Forging'); // Default for first event
+const firstTimePeriod = ref('');
+const firstAdditionalContext = ref('');
 const timelineEvents = ref(props.item.timelineEvents || []);
 const historicalSummary = ref(props.item.historicalSummary || '');
 const itemLegacy = ref(props.item.itemLegacy || '');
@@ -254,6 +351,9 @@ const generatingPosition = ref(null);
 const pendingEvent = ref(null);
 const showTimelineCards = ref(false);
 const showAddButtons = ref(false); // Toggle for add buttons
+const remainingGenerations = ref(0); // Track remaining generations for non-premium
+const editingEventIndex = ref(null); // Track which event is being edited
+const editingEvent = ref({}); // Store the event being edited
 
 // Filmstrip navigation
 const filmstrip = ref(null);
@@ -399,13 +499,84 @@ const calculateEventYear = (yearsAgo) => {
   return currentYear.value.replace(/\d+/, eventYearNum.toString());
 };
 
-// Check if premium features are needed
-const checkPremiumAccess = () => {
-  if (!props.premium) {
-    alert('The Lore Builder feature is only available to premium patrons. Please consider becoming a patron to access this feature.');
+// Check if user can generate events (premium or under limit)
+const canGenerateEvent = async () => {
+  if (props.premium) {
+    return true;
+  }
+
+  const incognitoResult = await detectIncognito();
+
+  if (incognitoResult.isPrivate) {
+    alert(
+      "The free lore builder is not available in incognito or private mode as we can't keep track of the number of events generated. Please disable incognito mode to use the generator or you can access unlimited event generation as a $5 patron.",
+    );
     return false;
   }
+
+  const MAX_GENERATIONS = 5;
+  const storage = window.localStorage;
+  const loreData = JSON.parse(storage.getItem('loreBuilderTracking')) || {
+    generationCount: '0',
+    firstGenerationTime: null,
+  };
+
+  let generationCount = parseInt(loreData.generationCount) || 0;
+  let firstGenerationTime = parseInt(loreData.firstGenerationTime);
+  const currentTime = new Date().getTime();
+
+  if (generationCount >= MAX_GENERATIONS) {
+    if (!firstGenerationTime || currentTime - firstGenerationTime >= 86400000) {
+      // 24 hours in milliseconds
+      // Reset the count and set the new day's first generation time
+      loreData.generationCount = '1';
+      loreData.firstGenerationTime = currentTime.toString();
+    } else {
+      const resetTime = new Date(firstGenerationTime + 86400000);
+      const alertMessage = `You have reached the 5 event generation limit for a 24-hour period. Please come back at ${resetTime.toLocaleString()} or you can access unlimited event generation as a $5 patron.`;
+      alert(alertMessage);
+      return false;
+    }
+  } else {
+    // Increment the count
+    loreData.generationCount = (generationCount + 1).toString();
+    if (generationCount === 0) {
+      loreData.firstGenerationTime = currentTime.toString(); // Set the first generation time if this is the first count
+    }
+  }
+
+  storage.setItem('loreBuilderTracking', JSON.stringify(loreData)); // Save the updated object to local storage
+  updateRemainingGenerations();
   return true;
+};
+
+// Update remaining generations display
+const updateRemainingGenerations = () => {
+  if (props.premium) {
+    remainingGenerations.value = Infinity;
+    return;
+  }
+
+  const MAX_GENERATIONS = 5;
+  const storage = window.localStorage;
+  const loreData = JSON.parse(storage.getItem('loreBuilderTracking')) || {
+    generationCount: '0',
+    firstGenerationTime: null,
+  };
+
+  let generationCount = parseInt(loreData.generationCount) || 0;
+  let firstGenerationTime = parseInt(loreData.firstGenerationTime);
+  const currentTime = new Date().getTime();
+
+  // Reset if 24 hours have passed
+  if (firstGenerationTime && currentTime - firstGenerationTime >= 86400000) {
+    generationCount = 0;
+    loreData.generationCount = '0';
+    loreData.firstGenerationTime = null;
+    storage.setItem('loreBuilderTracking', JSON.stringify(loreData));
+  }
+
+  remainingGenerations.value = Math.max(0, MAX_GENERATIONS - generationCount);
 };
 
 // Start the timeline
@@ -415,8 +586,7 @@ const startTimeline = () => {
     return;
   }
 
-  if (!checkPremiumAccess()) return;
-
+  // No premium check here - allow everyone to start a timeline
   showTimelineCards.value = true;
   showAddButtons.value = true; // Show add buttons immediately
 };
@@ -428,7 +598,7 @@ const startGeneratingEvent = (position) => {
     return;
   }
 
-  if (!checkPremiumAccess()) return;
+  // No premium check here - generation limits are handled by canGenerateEvent()
 
   generatingPosition.value = position;
   pendingEvent.value = null;
@@ -452,9 +622,98 @@ const startGeneratingEvent = (position) => {
   });
 };
 
+// Generate first event
+const generateFirstEvent = async () => {
+  if (!firstEventType.value || !firstTimePeriod.value) return;
+
+  // Check generation limit for non-premium users
+  const canGenerate = await canGenerateEvent();
+  if (!canGenerate) return;
+
+  loadingEvents.value = true;
+  pendingEvent.value = null;
+
+  const yearsAgo = getYearFromSelection(firstTimePeriod.value, 0);
+  const eventYear = calculateEventYear(yearsAgo);
+
+  try {
+    const prompt = generateEventPrompt({
+      itemName: props.item.name,
+      itemType: props.item.item_type,
+      rarity: props.item.rarity,
+      features: props.item.features,
+      physicalDescription: props.item.physical_description,
+      itemLore: props.item.lore,
+      eventBefore: null,
+      eventAfter: null,
+      eventType: firstEventType.value,
+      eventYear,
+      yearsAgo,
+      additionalContext: firstAdditionalContext.value,
+      recentEvents: []
+    });
+
+    const response = await generateGptResponse(prompt, validateEventJson, 3);
+    const data = JSON.parse(response);
+
+    pendingEvent.value = {
+      title: data.title,
+      description: data.description,
+      timePeriod: firstTimePeriod.value,
+      eventYear: eventYear,
+      yearsAgo: yearsAgo
+    };
+
+  } catch (error) {
+    console.error('Error generating event:', error);
+    alert('Failed to generate event. Please try again.');
+  } finally {
+    loadingEvents.value = false;
+  }
+};
+
+// Regenerate first event
+const regenerateFirstEvent = () => {
+  pendingEvent.value = null;
+  generateFirstEvent();
+};
+
+// Confirm first event
+const confirmFirstEvent = () => {
+  if (!pendingEvent.value) return;
+
+  timelineEvents.value.push(pendingEvent.value);
+
+  // Clear state
+  pendingEvent.value = null;
+  firstEventType.value = 'Creation/Forging';
+  firstTimePeriod.value = '';
+  firstAdditionalContext.value = '';
+
+  // Hide add buttons to show clean timeline
+  showAddButtons.value = false;
+
+  updateItem();
+
+  // Scroll to show the new event
+  nextTick(() => {
+    if (filmstrip.value) {
+      filmstrip.value.scrollTo({
+        left: 0,
+        behavior: 'smooth'
+      });
+    }
+    setTimeout(checkScroll, 500);
+  });
+};
+
 // Generate event
 const generateEvent = async () => {
   if (!eventType.value || !timePeriod.value) return;
+
+  // Check generation limit for non-premium users
+  const canGenerate = await canGenerateEvent();
+  if (!canGenerate) return;
 
   loadingEvents.value = true;
   pendingEvent.value = null;
@@ -477,6 +736,8 @@ const generateEvent = async () => {
       itemType: props.item.item_type,
       rarity: props.item.rarity,
       features: props.item.features,
+      physicalDescription: props.item.physical_description,
+      itemLore: props.item.lore,
       eventBefore,
       eventAfter,
       eventType: eventType.value,
@@ -529,7 +790,7 @@ const confirmAddEvent = () => {
 
   updateItem();
 
-  // Check scroll after hiding buttons
+  // Just check scroll, no automatic scrolling
   nextTick(() => {
     checkScroll();
   });
@@ -547,6 +808,66 @@ const cancelGeneration = () => {
   if (timelineEvents.value.length > 0) {
     showAddButtons.value = false;
   }
+};
+
+// Start editing an event
+const startEditingEvent = (index) => {
+  const sortedEvents = sortedTimelineEvents.value;
+  const event = sortedEvents[index];
+
+  editingEventIndex.value = index;
+  editingEvent.value = {
+    title: event.title,
+    eventYear: event.eventYear,
+    description: event.description,
+    timePeriod: event.timePeriod,
+    yearsAgo: event.yearsAgo
+  };
+};
+
+// Save event edit
+const saveEventEdit = (index) => {
+  const sortedEvents = sortedTimelineEvents.value;
+  const originalEvent = sortedEvents[index];
+  const originalIndex = timelineEvents.value.findIndex(e => e === originalEvent);
+
+  if (originalIndex !== -1) {
+    // Calculate years ago from the event year if it was changed
+    let updatedYearsAgo = editingEvent.value.yearsAgo;
+
+    // If user edited the year, try to calculate new yearsAgo
+    if (editingEvent.value.eventYear !== originalEvent.eventYear && currentYear.value) {
+      const eventYearMatch = editingEvent.value.eventYear.match(/\d+/g);
+      const currentYearMatch = currentYear.value.match(/\d+/g);
+
+      if (eventYearMatch && eventYearMatch.length === 1 && currentYearMatch && currentYearMatch.length === 1) {
+        const eventYearNum = parseInt(eventYearMatch[0], 10);
+        const currentYearNum = parseInt(currentYearMatch[0], 10);
+        updatedYearsAgo = currentYearNum - eventYearNum;
+      }
+    }
+
+    // Update the event
+    timelineEvents.value[originalIndex] = {
+      ...originalEvent,
+      title: editingEvent.value.title,
+      eventYear: editingEvent.value.eventYear,
+      description: editingEvent.value.description,
+      yearsAgo: updatedYearsAgo
+    };
+
+    // Clear edit state
+    editingEventIndex.value = null;
+    editingEvent.value = {};
+
+    updateItem();
+  }
+};
+
+// Cancel event edit
+const cancelEventEdit = () => {
+  editingEventIndex.value = null;
+  editingEvent.value = {};
 };
 
 // Remove event from timeline
@@ -600,9 +921,39 @@ const updateItem = () => {
     ...props.item,
     timelineEvents: timelineEvents.value,
     historicalSummary: historicalSummary.value,
-    itemLegacy: itemLegacy.value
+    itemLegacy: itemLegacy.value,
+    currentYear: currentYear.value // Save current year with the item
   };
   emit('updated-item', updatedItem);
+};
+
+// Update item lore with historical summary
+const updateItemLore = () => {
+  // Combine the historical summary and legacy into a comprehensive lore text
+  const newLore = `${historicalSummary.value}${itemLegacy.value ? `\n\n${itemLegacy.value}` : ''}`;
+
+  // Confirm with user since this will replace existing lore
+  const confirmed = confirm(
+    'This will replace the item\'s current lore with the generated historical summary and legacy. ' +
+    'The original lore will be lost unless you\'ve saved it elsewhere. Continue?'
+  );
+
+  if (!confirmed) return;
+
+  // Update the item with the new lore
+  const updatedItem = {
+    ...props.item,
+    lore: newLore,
+    timelineEvents: timelineEvents.value,
+    historicalSummary: historicalSummary.value,
+    itemLegacy: itemLegacy.value,
+    currentYear: currentYear.value
+  };
+
+  emit('updated-item', updatedItem);
+
+  // Show success message
+  alert('Item lore has been updated with the historical summary!');
 };
 
 // Filmstrip navigation
@@ -653,7 +1004,7 @@ const exportToMarkdown = () => {
   });
 
   navigator.clipboard.writeText(markdown);
-  alert('History copied as markdown!');
+  alert('History copied as markdown! Paste it into Homebrewery to see it formatted.');
 };
 
 const exportToPlainText = () => {
@@ -679,6 +1030,7 @@ const exportToPlainText = () => {
 // Initialize and watch for item changes
 onMounted(() => {
   loadTimelineData();
+  updateRemainingGenerations(); // Check generation limits on mount
 
   nextTick(() => {
     checkScroll();
@@ -707,6 +1059,13 @@ const loadTimelineData = () => {
     itemLegacy.value = '';
   }
 
+  // Load current year ONLY from the specific item
+  if (props.item.currentYear) {
+    currentYear.value = props.item.currentYear;
+  } else {
+    currentYear.value = ''; // Always start blank for new items
+  }
+
   // Reset form state when loading new item
   generatingPosition.value = null;
   pendingEvent.value = null;
@@ -725,11 +1084,20 @@ watch(() => props.item, () => {
 }, { deep: true });
 
 // Watch for add buttons toggle
-watch(showAddButtons, () => {
+watch(showAddButtons, (newValue) => {
   nextTick(() => {
     checkScroll();
-    // Double-check after DOM settles
-    setTimeout(checkScroll, 100);
+    // If showing add buttons, scroll to the end to see the most recent events
+    if (newValue && filmstrip.value) {
+      setTimeout(() => {
+        filmstrip.value.scrollTo({
+          left: filmstrip.value.scrollWidth,
+          behavior: 'smooth'
+        });
+        // Double-check scroll arrows after animation
+        setTimeout(checkScroll, 300);
+      }, 100);
+    }
   });
 });
 
@@ -741,8 +1109,10 @@ watch(generatingPosition, () => {
   });
 });
 
-// Watch for other updates
-watch(currentYear, validateYear);
+// Watch for current year changes (but don't save to localStorage)
+watch(currentYear, () => {
+  validateYear();
+});
 watch(() => timelineEvents.value.length, async () => {
   await nextTick();
   checkScroll();
@@ -840,15 +1210,45 @@ watch(() => timelineEvents.value.length, async () => {
       background-color: $cdr-color-background-secondary;
       border-radius: 8px;
 
-      .add-event-button {
-        padding: 2rem 1rem;
-        background: transparent;
-        border: none;
-        width: 100%;
-        height: 100%;
+      &.compact {
+        flex: 0 0 80px;
+        min-height: 120px;
+        border: 1px dashed rgba($cdr-color-text-secondary, 0.5);
+        background-color: rgba($cdr-color-background-secondary, 0.7);
 
-        &:hover {
-          background-color: $cdr-color-background-primary;
+        .add-event-button {
+          padding: 0.5rem;
+          background: transparent;
+          border: none;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          .button-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 0.9rem;
+          }
+
+          &:hover {
+            background-color: rgba($cdr-color-background-primary, 0.8);
+          }
+        }
+      }
+
+      &:not(.compact) {
+        .add-event-button {
+          padding: 2rem 1rem;
+          background: transparent;
+          border: none;
+          width: 100%;
+          height: 100%;
+
+          &:hover {
+            background-color: $cdr-color-background-primary;
+          }
         }
       }
     }
@@ -894,6 +1294,43 @@ watch(() => timelineEvents.value.length, async () => {
           }
         }
 
+        .event-result {
+          background: linear-gradient(135deg,
+              rgba($cdr-color-text-brand, 0.05) 0%,
+              rgba($cdr-color-background-secondary, 1) 100%);
+          border: 1px solid rgba($cdr-color-text-brand, 0.2);
+          padding: 1rem;
+          border-radius: 6px;
+          margin-top: 0.75rem;
+
+          .result-header {
+            border-bottom: 1px solid $cdr-color-background-secondary;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+
+            h5 {
+              margin: 0 0 0.25rem 0;
+              font-size: 1.1rem;
+              color: $cdr-color-text-primary;
+              font-weight: 600;
+            }
+
+            .result-year {
+              font-style: italic;
+              color: $cdr-color-text-secondary;
+              font-size: 0.9rem;
+              margin: 0;
+            }
+          }
+
+          .result-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0 0 1rem 0;
+            color: $cdr-color-text-primary;
+          }
+        }
+
         .button-row {
           display: flex;
           gap: 0.25rem;
@@ -913,6 +1350,12 @@ watch(() => timelineEvents.value.length, async () => {
         height: 100%;
         padding: 1rem;
 
+        >div {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+
         h4 {
           margin-top: 0;
           margin-bottom: 0.5rem;
@@ -930,6 +1373,51 @@ watch(() => timelineEvents.value.length, async () => {
           flex: 1;
           line-height: 1.5;
           margin-bottom: 1rem;
+        }
+
+        .button-row-bottom {
+          display: flex;
+          gap: 0.5rem;
+          margin-top: auto;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+
+          button {
+            flex: 1;
+          }
+        }
+
+        .event-edit-form {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          height: 100%;
+
+          .button-row-bottom {
+            margin-top: auto;
+            padding-top: 0.5rem;
+            opacity: 1; // Always visible in edit mode
+          }
+        }
+      }
+
+      // Show buttons on hover or focus
+      &:hover .card-content .button-row-bottom,
+      &:focus-within .card-content .button-row-bottom {
+        opacity: 1;
+      }
+
+      // Always show buttons on touch devices
+      @media (hover: none) and (pointer: coarse) {
+        .card-content .button-row-bottom {
+          opacity: 1;
+        }
+      }
+
+      // Also always show on smaller screens
+      @media (max-width: 768px) {
+        .card-content .button-row-bottom {
+          opacity: 1;
         }
       }
     }
@@ -959,6 +1447,21 @@ watch(() => timelineEvents.value.length, async () => {
     padding-top: 1rem;
     border-top: 1px solid $cdr-color-background-secondary;
   }
+
+  .summary-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
 }
 
 .export-section {
@@ -971,10 +1474,35 @@ watch(() => timelineEvents.value.length, async () => {
     margin-bottom: 1rem;
   }
 
-  .button-group {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+  .export-description {
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+    color: $cdr-color-text-secondary;
+  }
+
+  .export-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .export-option {
+    .option-description {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: $cdr-color-text-secondary;
+      font-style: italic;
+    }
+  }
+
+  .export-tip {
+    padding: 1rem;
+    background-color: rgba($cdr-color-text-brand, 0.05);
+    border-left: 3px solid $cdr-color-text-brand;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 }
 
@@ -991,6 +1519,12 @@ watch(() => timelineEvents.value.length, async () => {
 
   .timeline-card {
     flex: 0 0 280px;
+  }
+
+  .export-section {
+    .export-options {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>

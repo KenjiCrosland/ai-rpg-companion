@@ -98,6 +98,24 @@
               <cdr-button @click="startEdit(index)" modifier="secondary">Edit Quest Hook</cdr-button>
               <cdr-button @click="deleteHook(index)" modifier="dark">Delete Quest Hook</cdr-button>
             </div>
+
+            <!-- Export Section for this quest hook -->
+            <div class="quest-export-section">
+              <h4>Export This Quest</h4>
+              <div class="export-options">
+                <cdr-button @click="exportQuestAsMarkdown(hook)" modifier="secondary" size="small">
+                  Copy as Markdown
+                </cdr-button>
+                <cdr-button @click="exportQuestAsPlainText(hook)" modifier="secondary" size="small">
+                  Copy as Plain Text
+                </cdr-button>
+              </div>
+              <p class="export-tip">
+                Use markdown with <cdr-link href="https://homebrewery.naturalcrit.com/new"
+                  target="_blank">Homebrewery</cdr-link>
+                for beautiful D&D-styled handouts
+              </p>
+            </div>
           </div>
         </div>
       </cdr-accordion>
@@ -111,6 +129,32 @@
         <div><quest-hook-skeleton /></div>
       </cdr-accordion>
     </cdr-accordion-group>
+
+    <!-- Export All Section -->
+    <div v-if="hooks.length > 0" class="export-all-section">
+      <h3>Export All Quest Hooks</h3>
+      <p class="export-description">
+        Export all quest hooks for this item together. Perfect for creating a campaign handout with multiple adventure
+        options.
+      </p>
+
+      <div class="export-options">
+        <div class="export-option">
+          <cdr-button @click="exportAllQuestsAsMarkdown" modifier="secondary" :full-width="true">
+            Copy All as Markdown
+          </cdr-button>
+          <p class="option-description">For use with <a href="https://homebrewery.naturalcrit.com/new"
+              target="_blank">Homebrewery</a> or other markdown tools</p>
+        </div>
+
+        <div class="export-option">
+          <cdr-button @click="exportAllQuestsAsPlainText" modifier="secondary" :full-width="true">
+            Copy All as Plain Text
+          </cdr-button>
+          <p class="option-description">Simple format for notes or sharing in chat</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -123,6 +167,7 @@ import {
   CdrAccordionGroup,
   CdrAccordion,
   CdrInput,
+  CdrLink,
   IconXSm,
   CdrSkeleton,
   CdrSkeletonBone
@@ -249,6 +294,106 @@ const canGenerateQuestHook = async () => {
   storage.setItem('questHookTracking', JSON.stringify(questHookData)); // Save the updated object to local storage
   updateRemainingGenerations();
   return true;
+};
+
+// Export functions for individual quest hooks
+const exportQuestAsMarkdown = (hook) => {
+  let markdown = `## ${hook.title}\n\n`;
+  markdown += `**Quest Giver:** ${hook.questGiver}\n\n`;
+  markdown += `${hook.setup}\n\n`;
+  markdown += `### Objectives\n`;
+  hook.objectives.forEach(obj => {
+    markdown += `- ${obj}\n`;
+  });
+  markdown += `\n### Challenges\n`;
+  hook.challenges.forEach(challenge => {
+    markdown += `- ${challenge}\n`;
+  });
+  markdown += `\n### Rewards\n${hook.reward}\n`;
+  if (hook.twist) {
+    markdown += `\n### Potential Twist\n${hook.twist}\n`;
+  }
+  markdown += `\n---\n\n*Quest hook for ${props.item.name}*`;
+
+  navigator.clipboard.writeText(markdown);
+  alert('Quest hook copied as markdown! Paste it into Homebrewery to see it formatted.');
+};
+
+const exportQuestAsPlainText = (hook) => {
+  let text = `${hook.title}\n\n`;
+  text += `Quest Giver: ${hook.questGiver}\n\n`;
+  text += `${hook.setup}\n\n`;
+  text += `Objectives:\n`;
+  hook.objectives.forEach(obj => {
+    text += `• ${obj}\n`;
+  });
+  text += `\nChallenges:\n`;
+  hook.challenges.forEach(challenge => {
+    text += `• ${challenge}\n`;
+  });
+  text += `\nRewards: ${hook.reward}\n`;
+  if (hook.twist) {
+    text += `\nPotential Twist: ${hook.twist}\n`;
+  }
+  text += `\n---\n\nQuest hook for ${props.item.name}`;
+
+  navigator.clipboard.writeText(text);
+  alert('Quest hook copied as plain text!');
+};
+
+// Export all quest hooks
+const exportAllQuestsAsMarkdown = () => {
+  let markdown = `# Quest Hooks for ${props.item.name}\n\n`;
+
+  hooks.value.forEach((hook, index) => {
+    if (index > 0) markdown += '\n---\n\n';
+    markdown += `## ${hook.title}\n\n`;
+    markdown += `**Quest Giver:** ${hook.questGiver}\n\n`;
+    markdown += `${hook.setup}\n\n`;
+    markdown += `### Objectives\n`;
+    hook.objectives.forEach(obj => {
+      markdown += `- ${obj}\n`;
+    });
+    markdown += `\n### Challenges\n`;
+    hook.challenges.forEach(challenge => {
+      markdown += `- ${challenge}\n`;
+    });
+    markdown += `\n### Rewards\n${hook.reward}\n`;
+    if (hook.twist) {
+      markdown += `\n### Potential Twist\n${hook.twist}\n`;
+    }
+  });
+
+  navigator.clipboard.writeText(markdown);
+  alert('All quest hooks copied as markdown! Paste into Homebrewery to see them formatted.');
+};
+
+const exportAllQuestsAsPlainText = () => {
+  let text = `Quest Hooks for ${props.item.name}\n`;
+  text += `${props.item.item_type}, ${props.item.rarity}\n`;
+  text += `${'='.repeat(50)}\n\n`;
+
+  hooks.value.forEach((hook, index) => {
+    if (index > 0) text += `\n${'-'.repeat(50)}\n\n`;
+    text += `${hook.title}\n\n`;
+    text += `Quest Giver: ${hook.questGiver}\n\n`;
+    text += `${hook.setup}\n\n`;
+    text += `Objectives:\n`;
+    hook.objectives.forEach(obj => {
+      text += `• ${obj}\n`;
+    });
+    text += `\nChallenges:\n`;
+    hook.challenges.forEach(challenge => {
+      text += `• ${challenge}\n`;
+    });
+    text += `\nRewards: ${hook.reward}\n`;
+    if (hook.twist) {
+      text += `\nPotential Twist: ${hook.twist}\n`;
+    }
+  });
+
+  navigator.clipboard.writeText(text);
+  alert('All quest hooks copied as plain text!');
 };
 
 // Initialize on mount
@@ -495,6 +640,98 @@ const generateQuestHook = async () => {
     background-color: $cdr-color-background-secondary;
     border-left: 4px solid $cdr-color-border-primary;
     border-radius: 4px;
+  }
+
+  // Individual quest export section
+  .quest-export-section {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: rgba($cdr-color-background-secondary, 0.5);
+    border-radius: 4px;
+    border: 1px solid $cdr-color-border-secondary;
+
+    h4 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .export-options {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .export-tip {
+      font-size: 0.85rem;
+      color: $cdr-color-text-secondary;
+      font-style: italic;
+      margin: 0;
+    }
+  }
+}
+
+// Export all section at the bottom
+.export-all-section {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background-color: $cdr-color-background-secondary;
+  border-radius: 8px;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+
+  .export-description {
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+    color: $cdr-color-text-secondary;
+  }
+
+  .export-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .export-option {
+    .option-description {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: $cdr-color-text-secondary;
+      font-style: italic;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .quest-content {
+    .button-group {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+
+    .quest-export-section {
+      .export-options {
+        flex-direction: column;
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  .export-all-section {
+    .export-options {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>

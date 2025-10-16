@@ -95,6 +95,39 @@
                 <cdr-button @click="startEditing" modifier="secondary">Edit Item</cdr-button>
                 <cdr-button @click="deleteItem" modifier="dark">Delete Item</cdr-button>
               </div>
+
+              <!-- Export Section -->
+              <div class="export-section">
+                <h3>Export Magic Item</h3>
+                <p class="export-description">
+                  Copy your item details in different formats. The markdown format works perfectly with
+                  <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
+                  for creating beautifully formatted D&D handouts.
+                </p>
+
+                <div class="export-options">
+                  <div class="export-option">
+                    <cdr-button @click="copyAsMarkdown" modifier="secondary" :full-width="true">
+                      Copy as Markdown
+                    </cdr-button>
+                    <p class="option-description">For use with Homebrewery or other markdown tools</p>
+                  </div>
+
+                  <div class="export-option">
+                    <cdr-button @click="copyAsPlainText" modifier="secondary" :full-width="true">
+                      Copy as Plain Text
+                    </cdr-button>
+                    <p class="option-description">Simple format for notes or sharing in chat</p>
+                  </div>
+                </div>
+
+                <div class="export-tip">
+                  <strong>Quick tip:</strong> After copying as markdown, visit
+                  <cdr-link href="https://homebrewery.naturalcrit.com/new"
+                    target="_blank">homebrewery.naturalcrit.com</cdr-link>,
+                  paste your content on the left side, and watch it transform into a beautiful D&D-styled document!
+                </div>
+              </div>
             </div>
 
             <!-- Edit Mode -->
@@ -154,33 +187,12 @@
             </div>
           </TabPanel>
 
-          <TabPanel label="Quest Hooks">
-            <QuestHookTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
-          </TabPanel>
-
           <TabPanel label="Lore Builder">
             <LoreBuilderTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
           </TabPanel>
 
-          <TabPanel label="Export">
-            <h2>Export Your Magic Item</h2>
-            <p>Use these tools to export your generated content in various formats.</p>
-
-            <div class="export-section">
-              <h3>Homebrewery Export</h3>
-              <cdr-list tag="ol" modifier="ordered">
-                <li>Click the "Copy as Markdown" button below to copy the generated content in markdown format.</li>
-                <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
-                    rel="noopener noreferrer">Homebrewery</a>.</li>
-                <li>Paste the copied markdown into the document on the left-hand side. Feel free to edit or reorder the
-                  content as you like.</li>
-                <li>Enjoy the beautifully formatted content!</li>
-              </cdr-list>
-              <div class="button-group">
-                <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
-                <cdr-button @click="copyAsPlainText" modifier="secondary">Copy as Plain Text</cdr-button>
-              </div>
-            </div>
+          <TabPanel label="Quest Hooks">
+            <QuestHookTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
           </TabPanel>
         </Tabs>
       </div>
@@ -194,7 +206,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { CdrInput, CdrButton, CdrSelect, CdrLink, CdrList, IconNavigationMenu } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrSelect, CdrLink, IconNavigationMenu } from "@rei/cedar";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
@@ -429,33 +441,12 @@ const parseRarity = (rarity) => {
 }
 
 const copyAsMarkdown = () => {
-  let markdownContent = convertItemToMarkdown(magicItemDescription.value);
-
-  if (magicItemDescription.value.questHooks && magicItemDescription.value.questHooks.length > 0) {
-    markdownContent += '\n\n## Quest Hooks\n\n';
-    magicItemDescription.value.questHooks.forEach((hook) => {
-      markdownContent += `### ${hook.title}\n\n`;
-      markdownContent += `**Quest Giver:** ${hook.questGiver}\n\n`;
-      markdownContent += `${hook.setup}\n\n`;
-      markdownContent += `**Objectives:**\n`;
-      hook.objectives.forEach(obj => {
-        markdownContent += `- ${obj}\n`;
-      });
-      markdownContent += `\n**Challenges:**\n`;
-      hook.challenges.forEach(challenge => {
-        markdownContent += `- ${challenge}\n`;
-      });
-      markdownContent += `\n**Reward:** ${hook.reward}\n`;
-      if (hook.twist) {
-        markdownContent += `\n**Twist:** ${hook.twist}\n`;
-      }
-      markdownContent += '\n';
-    });
-  }
+  // Use the existing convertItemToMarkdown utility function
+  const markdownContent = convertItemToMarkdown(magicItemDescription.value);
 
   if (markdownContent) {
     navigator.clipboard.writeText(markdownContent);
-    alert('Content copied as markdown!');
+    alert('Magic item copied as markdown! Paste it into Homebrewery to see it formatted.');
   } else {
     alert('No content available to copy as markdown.');
   }
@@ -466,34 +457,19 @@ const copyAsPlainText = () => {
   plainText += `${magicItemDescription.value.item_type}, ${magicItemDescription.value.rarity}\n\n`;
 
   if (magicItemDescription.value.modifier_sentence) {
-    plainText += `${magicItemDescription.value.modifier_sentence}\n`;
+    plainText += `${magicItemDescription.value.modifier_sentence}\n\n`;
   }
 
-  plainText += `\nFeatures:\n`;
+  plainText += `Features:\n`;
   Object.entries(magicItemDescription.value.features).forEach(([feature, description]) => {
-    plainText += `${feature}: ${description}\n`;
+    plainText += `• ${feature}: ${description}\n`;
   });
 
-  plainText += `\n${magicItemDescription.value.physical_description}\n`;
-  plainText += `${magicItemDescription.value.lore}\n`;
-
-  if (magicItemDescription.value.questHooks && magicItemDescription.value.questHooks.length > 0) {
-    plainText += '\n\nQuest Hooks:\n';
-    magicItemDescription.value.questHooks.forEach((hook) => {
-      plainText += `\n${hook.title}\n`;
-      plainText += `Quest Giver: ${hook.questGiver}\n`;
-      plainText += `${hook.setup}\n`;
-      plainText += `Objectives: ${hook.objectives.join(', ')}\n`;
-      plainText += `Challenges: ${hook.challenges.join(', ')}\n`;
-      plainText += `Reward: ${hook.reward}\n`;
-      if (hook.twist) {
-        plainText += `Twist: ${hook.twist}\n`;
-      }
-    });
-  }
+  plainText += `\nDescription:\n${magicItemDescription.value.physical_description}\n`;
+  plainText += `\nLore:\n${magicItemDescription.value.lore}\n`;
 
   navigator.clipboard.writeText(plainText);
-  alert('Content copied as plain text!');
+  alert('Magic item copied as plain text!');
 };
 
 const saveItem = (item) => {
@@ -842,15 +818,47 @@ onMounted(() => {
   margin-top: 2rem;
 }
 
+// Export Section Styles
 .export-section {
-  margin-top: 1.5rem;
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background-color: $cdr-color-background-secondary;
+  border-radius: 8px;
 
   h3 {
+    margin-top: 0;
     margin-bottom: 1rem;
   }
 
-  .button-group {
-    margin-top: 1.5rem;
+  .export-description {
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+    color: $cdr-color-text-secondary;
+  }
+
+  .export-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .export-option {
+    .option-description {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: $cdr-color-text-secondary;
+      font-style: italic;
+    }
+  }
+
+  .export-tip {
+    padding: 1rem;
+    background-color: rgba($cdr-color-text-brand, 0.05);
+    border-left: 3px solid $cdr-color-text-brand;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 }
 
@@ -979,6 +987,12 @@ onMounted(() => {
 
     button {
       width: 100%;
+    }
+  }
+
+  .export-section {
+    .export-options {
+      grid-template-columns: 1fr;
     }
   }
 }

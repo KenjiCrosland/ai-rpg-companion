@@ -147,6 +147,8 @@ export const generateEventPrompt = ({
   itemType,
   rarity,
   features,
+  physicalDescription,
+  itemLore,
   eventBefore,
   eventAfter,
   eventType,
@@ -199,7 +201,10 @@ export const generateEventPrompt = ({
   return `
     Generate ONE historical event for the magic item "${itemName}" (${itemType}, ${rarity}).
     
-    Item Powers: ${featuresString}
+    ITEM DETAILS:
+    Physical Description: ${physicalDescription}
+    Original Lore: ${itemLore}
+    Magical Powers: ${featuresString}
     
     ${contextPrompt}
     
@@ -218,9 +223,10 @@ export const generateEventPrompt = ({
     1. This MUST be a ${eventType} event - follow the specific requirements above
     2. Maximum 2-3 sentences, 50-70 words total
     3. Include specific names of people, places, and factions
-    4. Show the item's specific magical properties in action
-    5. Concrete details: blood, iron, fire, bone, gold - visceral and specific
-    6. Clear cause → action → consequence structure
+    4. Reference the item's SPECIFIC appearance and powers from the description above
+    5. Build on the original lore - reference locations, people, or events mentioned there
+    6. Concrete details: blood, iron, fire, bone, gold - visceral and specific
+    7. Clear cause → action → consequence structure
     
     ${
       eventBefore
@@ -238,7 +244,7 @@ export const generateEventPrompt = ({
       "title": "Short title (3-6 words) that clearly indicates this is a ${eventType}",
       "description": "A ${eventType} event following the requirements above. ${
     typeInstructions.mustInclude
-  }. 2-3 sentences maximum."
+  }. Reference specific details from the item's description and lore. 2-3 sentences maximum."
     }
   `;
 };
