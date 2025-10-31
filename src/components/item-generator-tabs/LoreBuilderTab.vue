@@ -43,36 +43,58 @@
             <div class="generating-content">
               <h4>Create First Event</h4>
 
-              <cdr-select v-model="firstEventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
-                size="small" />
-
-              <cdr-select v-model="firstTimePeriod" label="Time Period" prompt="Choose when"
-                :options="getAvailablePeriodsForPosition(0)" size="small" />
-
-              <cdr-input v-model="firstAdditionalContext" label="Context (optional)" tag="textarea" :rows="2"
-                background="secondary" size="small" />
-
-              <div v-if="!pendingEvent" class="button-row">
-                <cdr-button @click="generateFirstEvent" :disabled="!firstEventType || !firstTimePeriod || loadingEvents"
-                  size="small" :full-width="true">
-                  {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                </cdr-button>
+              <!-- Custom compact toggle when we have a pending event -->
+              <div v-if="pendingEvent" class="custom-toggle">
+                <button :class="['toggle-btn', { active: viewMode === 'form' }]" @click="viewMode = 'form'">
+                  Event Form
+                </button>
+                <button :class="['toggle-btn', { active: viewMode === 'preview' }]" @click="viewMode = 'preview'">
+                  Preview
+                </button>
               </div>
 
-              <div v-if="pendingEvent" class="event-result">
-                <div class="result-header">
-                  <h5>{{ pendingEvent.title }}</h5>
-                  <p class="result-year">{{ pendingEvent.eventYear }}</p>
-                </div>
-                <p class="result-text">{{ pendingEvent.description }}</p>
+              <!-- Form View -->
+              <div v-show="!pendingEvent || viewMode === 'form'" class="form-view">
+                <cdr-select v-model="firstEventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
+                  size="small" />
 
-                <div class="button-row">
-                  <cdr-button @click="confirmFirstEvent" size="small">
-                    Add to Timeline
+                <cdr-select v-model="firstTimePeriod" label="Time Period" prompt="Choose when"
+                  :options="getAvailablePeriodsForPosition(0)" size="small" />
+
+                <cdr-input v-model="firstAdditionalContext" label="Context (optional)" tag="textarea" :rows="2"
+                  background="secondary" size="small" />
+
+                <div v-if="!pendingEvent" class="button-row">
+                  <cdr-button @click="generateFirstEvent"
+                    :disabled="!firstEventType || !firstTimePeriod || loadingEvents" size="small" :full-width="true">
+                    {{ loadingEvents ? 'Generating...' : 'Generate' }}
                   </cdr-button>
-                  <cdr-button @click="regenerateFirstEvent" modifier="secondary" size="small">
-                    Try Different Event
+                </div>
+
+                <div v-else class="button-row">
+                  <cdr-button @click="regenerateFirstEvent" modifier="secondary" size="small" :full-width="true">
+                    Regenerate
                   </cdr-button>
+                </div>
+              </div>
+
+              <!-- Preview View -->
+              <div v-show="pendingEvent && viewMode === 'preview'" class="preview-view">
+                <div class="event-result compact">
+                  <div class="result-header">
+                    <h4>{{ pendingEvent?.title }}</h4>
+                    <p class="result-year">{{ pendingEvent?.eventYear }}</p>
+                  </div>
+                  <p class="result-text">{{ pendingEvent?.description }}</p>
+
+                  <div class="button-row compact-buttons">
+                    <cdr-button @click="confirmFirstEvent" size="small">
+                      Add
+                    </cdr-button>
+                    <cdr-button @click="regenerateFirstEvent" modifier="secondary" size="small">
+                      Regen
+                    </cdr-button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -91,40 +113,64 @@
             <div class="generating-content">
               <h4>Generate New Event</h4>
 
-              <cdr-select v-model="eventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
-                size="small" />
-
-              <cdr-select v-model="timePeriod" label="Time Period" prompt="Choose when"
-                :options="getAvailablePeriodsForPosition(0)" size="small" />
-
-              <cdr-input v-model="additionalContext" label="Context (optional)" tag="textarea" :rows="2"
-                background="secondary" size="small" />
-
-              <div v-if="!pendingEvent" class="button-row">
-                <cdr-button @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents" size="small"
-                  :full-width="true">
-                  {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                </cdr-button>
-                <cdr-button @click="cancelGeneration" modifier="secondary" size="small" :full-width="true">
-                  Cancel
-                </cdr-button>
+              <!-- Custom compact toggle when we have a pending event -->
+              <div v-if="pendingEvent" class="custom-toggle">
+                <button :class="['toggle-btn', { active: viewMode === 'form' }]" @click="viewMode = 'form'">
+                  Event Form
+                </button>
+                <button :class="['toggle-btn', { active: viewMode === 'preview' }]" @click="viewMode = 'preview'">
+                  Preview
+                </button>
               </div>
 
-              <div v-if="pendingEvent" class="event-preview">
-                <h5>{{ pendingEvent.title }}</h5>
-                <p class="preview-year">{{ pendingEvent.eventYear }}</p>
-                <p class="preview-text">{{ pendingEvent.description }}</p>
+              <!-- Form View -->
+              <div v-show="!pendingEvent || viewMode === 'form'" class="form-view">
+                <cdr-select v-model="eventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
+                  size="small" />
 
-                <div class="button-row">
-                  <cdr-button @click="confirmAddEvent" size="small">
-                    Add
+                <cdr-select v-model="timePeriod" label="Time Period" prompt="Choose when"
+                  :options="getAvailablePeriodsForPosition(0)" size="small" />
+
+                <cdr-input v-model="additionalContext" label="Context (optional)" tag="textarea" :rows="2"
+                  background="secondary" size="small" />
+
+                <div v-if="!pendingEvent" class="button-row">
+                  <cdr-button @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents" size="small"
+                    :full-width="true">
+                    {{ loadingEvents ? 'Generating...' : 'Generate' }}
                   </cdr-button>
-                  <cdr-button @click="regenerateEvent" modifier="secondary" size="small">
-                    Retry
-                  </cdr-button>
-                  <cdr-button @click="cancelGeneration" modifier="dark" size="small">
+                  <cdr-button @click="cancelGeneration" modifier="secondary" size="small" :full-width="true">
                     Cancel
                   </cdr-button>
+                </div>
+
+                <div v-else class="button-row">
+                  <cdr-button @click="regenerateEvent" modifier="secondary" size="small" :full-width="true">
+                    Regenerate
+                  </cdr-button>
+                </div>
+              </div>
+
+              <!-- Preview View -->
+              <div v-show="pendingEvent && viewMode === 'preview'" class="preview-view">
+                <div class="event-result compact">
+                  <div class="result-header">
+                    <h4>{{ pendingEvent?.title }}</h4>
+                    <p class="result-year">{{ pendingEvent?.eventYear }}</p>
+                  </div>
+                  <p class="result-text">{{ pendingEvent?.description }}</p>
+
+                  <div class="button-row compact-buttons">
+                    <cdr-button @click="confirmAddEvent" size="small">
+                      Add
+                    </cdr-button>
+                    <cdr-button @click="regenerateEvent" modifier="secondary" size="small">
+                      Regen
+                    </cdr-button>
+                    <cdr-button @click="cancelGeneration" modifier="dark" size="small">
+                      Cancel
+                    </cdr-button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -183,40 +229,64 @@
               <div class="generating-content">
                 <h4>Generate New Event</h4>
 
-                <cdr-select v-model="eventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
-                  size="small" />
-
-                <cdr-select v-model="timePeriod" label="Time Period" prompt="Choose when"
-                  :options="getAvailablePeriodsForPosition(index + 1)" size="small" />
-
-                <cdr-input v-model="additionalContext" label="Context (optional)" tag="textarea" :rows="2"
-                  background="secondary" size="small" />
-
-                <div v-if="!pendingEvent" class="button-row">
-                  <cdr-button @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents" size="small"
-                    :full-width="true">
-                    {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                  </cdr-button>
-                  <cdr-button @click="cancelGeneration" modifier="secondary" size="small" :full-width="true">
-                    Cancel
-                  </cdr-button>
+                <!-- Custom compact toggle when we have a pending event -->
+                <div v-if="pendingEvent" class="custom-toggle">
+                  <button :class="['toggle-btn', { active: viewMode === 'form' }]" @click="viewMode = 'form'">
+                    Event Form
+                  </button>
+                  <button :class="['toggle-btn', { active: viewMode === 'preview' }]" @click="viewMode = 'preview'">
+                    Preview
+                  </button>
                 </div>
 
-                <div v-if="pendingEvent" class="event-preview">
-                  <h5>{{ pendingEvent.title }}</h5>
-                  <p class="preview-year">{{ pendingEvent.eventYear }}</p>
-                  <p class="preview-text">{{ pendingEvent.description }}</p>
+                <!-- Form View -->
+                <div v-show="!pendingEvent || viewMode === 'form'" class="form-view">
+                  <cdr-select v-model="eventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
+                    size="small" />
 
-                  <div class="button-row">
-                    <cdr-button @click="confirmAddEvent" size="small">
-                      Add
+                  <cdr-select v-model="timePeriod" label="Time Period" prompt="Choose when"
+                    :options="getAvailablePeriodsForPosition(index + 1)" size="small" />
+
+                  <cdr-input v-model="additionalContext" label="Context (optional)" tag="textarea" :rows="2"
+                    background="secondary" size="small" />
+
+                  <div v-if="!pendingEvent" class="button-row">
+                    <cdr-button @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents"
+                      size="small" :full-width="true">
+                      {{ loadingEvents ? 'Generating...' : 'Generate' }}
                     </cdr-button>
-                    <cdr-button @click="regenerateEvent" modifier="secondary" size="small">
-                      Retry
-                    </cdr-button>
-                    <cdr-button @click="cancelGeneration" modifier="dark" size="small">
+                    <cdr-button @click="cancelGeneration" modifier="secondary" size="small" :full-width="true">
                       Cancel
                     </cdr-button>
+                  </div>
+
+                  <div v-else class="button-row">
+                    <cdr-button @click="regenerateEvent" modifier="secondary" size="small" :full-width="true">
+                      Regenerate
+                    </cdr-button>
+                  </div>
+                </div>
+
+                <!-- Preview View -->
+                <div v-show="pendingEvent && viewMode === 'preview'" class="preview-view">
+                  <div class="event-result compact">
+                    <div class="result-header">
+                      <h4>{{ pendingEvent?.title }}</h4>
+                      <p class="result-year">{{ pendingEvent?.eventYear }}</p>
+                    </div>
+                    <p class="result-text">{{ pendingEvent?.description }}</p>
+
+                    <div class="button-row compact-buttons">
+                      <cdr-button @click="confirmAddEvent" size="small">
+                        Add
+                      </cdr-button>
+                      <cdr-button @click="regenerateEvent" modifier="secondary" size="small">
+                        Regen
+                      </cdr-button>
+                      <cdr-button @click="cancelGeneration" modifier="dark" size="small">
+                        Cancel
+                      </cdr-button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -269,7 +339,7 @@
       <h3>Export Item History</h3>
       <p class="export-description">
         Export your item's historical timeline in different formats. The markdown format works perfectly with
-        <cdr-link href="https://homebrewery.naturalcrit.com/new" target="_blank">Homebrewery</cdr-link>
+        <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
         for creating beautifully formatted D&D handouts.
       </p>
 
@@ -291,7 +361,7 @@
 
       <div class="export-tip">
         <strong>Quick tip:</strong> After copying as markdown, visit
-        <cdr-link href="https://homebrewery.naturalcrit.com/new" target="_blank">Homebrewery</cdr-link>,
+        <cdr-link href="https://homebrewery.naturalcrit.com/new" target="_blank">homebrewery.naturalcrit.com</cdr-link>,
         paste your content on the left side, and watch it transform into a beautiful D&D-styled document!
       </div>
     </div>
@@ -303,7 +373,6 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import {
   CdrButton,
   CdrCard,
-  CdrText,
   CdrSkeleton,
   CdrSkeletonBone,
   CdrSelect,
@@ -354,6 +423,7 @@ const showAddButtons = ref(false); // Toggle for add buttons
 const remainingGenerations = ref(0); // Track remaining generations for non-premium
 const editingEventIndex = ref(null); // Track which event is being edited
 const editingEvent = ref({}); // Store the event being edited
+const viewMode = ref('form'); // Toggle between 'form' and 'preview' for generated events
 
 // Filmstrip navigation
 const filmstrip = ref(null);
@@ -525,12 +595,18 @@ const canGenerateEvent = async () => {
   let firstGenerationTime = parseInt(loreData.firstGenerationTime);
   const currentTime = new Date().getTime();
 
+  console.log('Current generation count:', generationCount);
+  console.log('First generation time:', firstGenerationTime);
+  console.log('Current time:', currentTime);
+
   if (generationCount >= MAX_GENERATIONS) {
     if (!firstGenerationTime || currentTime - firstGenerationTime >= 86400000) {
       // 24 hours in milliseconds
       // Reset the count and set the new day's first generation time
+      console.log('Resetting count - 24 hours passed or no first generation time');
       loreData.generationCount = '1';
       loreData.firstGenerationTime = currentTime.toString();
+      storage.setItem('loreBuilderTracking', JSON.stringify(loreData));
     } else {
       const resetTime = new Date(firstGenerationTime + 86400000);
       const alertMessage = `You have reached the 5 event generation limit for a 24-hour period. Please come back at ${resetTime.toLocaleString()} or you can access unlimited event generation as a $5 patron.`;
@@ -539,13 +615,14 @@ const canGenerateEvent = async () => {
     }
   } else {
     // Increment the count
+    console.log('Incrementing count from', generationCount, 'to', generationCount + 1);
     loreData.generationCount = (generationCount + 1).toString();
     if (generationCount === 0) {
       loreData.firstGenerationTime = currentTime.toString(); // Set the first generation time if this is the first count
     }
+    storage.setItem('loreBuilderTracking', JSON.stringify(loreData));
   }
 
-  storage.setItem('loreBuilderTracking', JSON.stringify(loreData)); // Save the updated object to local storage
   updateRemainingGenerations();
   return true;
 };
@@ -605,17 +682,40 @@ const startGeneratingEvent = (position) => {
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
+  viewMode.value = 'form'; // Reset to form view
 
   // Suggest creation/forging for first event
   if (position === 0 && timelineEvents.value.length === 0) {
     eventType.value = 'Creation/Forging';
   }
 
-  // Scroll to the generating card and check arrows
+  // Scroll to the generating card with better positioning
   nextTick(() => {
     const generatingCard = document.querySelector('.generating-card');
     if (generatingCard) {
-      generatingCard.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+      // Scroll horizontally within filmstrip (keep this behavior)
+      generatingCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+      // Then adjust vertical scroll if needed to ensure card is visible
+      setTimeout(() => {
+        const rect = generatingCard.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const cardHeight = rect.height;
+
+        // Check if card is too close to top or bottom of viewport
+        if (rect.top < 100) { // Too close to top
+          window.scrollBy({
+            top: rect.top - 150, // Give some padding from top
+            behavior: 'smooth'
+          });
+        } else if (rect.bottom > viewportHeight - 50) { // Too close to bottom
+          window.scrollBy({
+            top: rect.bottom - viewportHeight + 100, // Give some padding from bottom
+            behavior: 'smooth'
+          });
+        }
+        // If card is reasonably visible, don't scroll vertically at all
+      }, 100);
     }
     // Check scroll after position change
     setTimeout(checkScroll, 100);
@@ -631,6 +731,7 @@ const generateFirstEvent = async () => {
   if (!canGenerate) return;
 
   loadingEvents.value = true;
+  // Only clear pending event after we know we can generate
   pendingEvent.value = null;
 
   const yearsAgo = getYearFromSelection(firstTimePeriod.value, 0);
@@ -664,6 +765,9 @@ const generateFirstEvent = async () => {
       yearsAgo: yearsAgo
     };
 
+    // Switch to preview mode to show the generated event
+    viewMode.value = 'preview';
+
   } catch (error) {
     console.error('Error generating event:', error);
     alert('Failed to generate event. Please try again.');
@@ -674,7 +778,8 @@ const generateFirstEvent = async () => {
 
 // Regenerate first event
 const regenerateFirstEvent = () => {
-  pendingEvent.value = null;
+  // Don't clear pendingEvent - keep it visible while regenerating
+  viewMode.value = 'form'; // Go back to form when regenerating
   generateFirstEvent();
 };
 
@@ -716,6 +821,7 @@ const generateEvent = async () => {
   if (!canGenerate) return;
 
   loadingEvents.value = true;
+  // Only clear pending event after we know we can generate
   pendingEvent.value = null;
 
   const position = generatingPosition.value;
@@ -758,6 +864,9 @@ const generateEvent = async () => {
       yearsAgo: yearsAgo
     };
 
+    // Switch to preview mode to show the generated event
+    viewMode.value = 'preview';
+
   } catch (error) {
     console.error('Error generating event:', error);
     alert('Failed to generate event. Please try again.');
@@ -768,7 +877,8 @@ const generateEvent = async () => {
 
 // Regenerate event
 const regenerateEvent = () => {
-  pendingEvent.value = null;
+  // Don't clear pendingEvent - keep it visible while regenerating
+  viewMode.value = 'form'; // Go back to form when regenerating
   generateEvent();
 };
 
@@ -784,6 +894,7 @@ const confirmAddEvent = () => {
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
+  viewMode.value = 'form'; // Reset view mode
 
   // Hide add buttons after adding an event so user sees the complete timeline
   showAddButtons.value = false;
@@ -803,6 +914,7 @@ const cancelGeneration = () => {
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
+  viewMode.value = 'form'; // Reset view mode
 
   // Also hide add buttons on cancel for consistency
   if (timelineEvents.value.length > 0) {
@@ -1073,6 +1185,7 @@ const loadTimelineData = () => {
   timePeriod.value = '';
   additionalContext.value = '';
   showAddButtons.value = false;
+  viewMode.value = 'form'; // Reset view mode
 };
 
 // Watch for prop changes (when switching items)
@@ -1266,7 +1379,7 @@ watch(() => timelineEvents.value.length, async () => {
 
         h4 {
           margin: 0 0 0.5rem 0;
-          font-size: 1.1rem;
+          font-size: 1.6rem;
         }
 
         .event-preview {
@@ -1303,6 +1416,11 @@ watch(() => timelineEvents.value.length, async () => {
           border-radius: 6px;
           margin-top: 0.75rem;
 
+          &.compact {
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+          }
+
           .result-header {
             border-bottom: 1px solid $cdr-color-background-secondary;
             padding-bottom: 0.5rem;
@@ -1329,12 +1447,60 @@ watch(() => timelineEvents.value.length, async () => {
             margin: 0 0 1rem 0;
             color: $cdr-color-text-primary;
           }
+
+          &.compact .result-text {
+            font-size: 1.4rem;
+            line-height: 1.6;
+          }
+        }
+
+        .custom-toggle {
+          display: flex;
+          gap: 0.25rem;
+          background-color: $cdr-color-background-secondary;
+          padding: 0.25rem;
+          border-radius: 4px;
+          margin-bottom: 0.5rem;
+
+          .toggle-btn {
+            flex: 1;
+            padding: 0.35rem 0.5rem;
+            border: none;
+            background: transparent;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: $cdr-color-text-secondary;
+            transition: all 0.2s ease;
+
+            &:hover {
+              background-color: rgba($cdr-color-text-primary, 0.05);
+              color: $cdr-color-text-primary;
+            }
+
+            &.active {
+              background-color: white;
+              color: $cdr-color-text-brand;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+          }
         }
 
         .button-row {
           display: flex;
           gap: 0.25rem;
           margin-top: 0.5rem;
+
+          &.compact-buttons {
+            gap: 0.35rem;
+            margin-top: 0.75rem;
+
+            button {
+              font-size: 1rem;
+              padding: 0.4rem 0.6rem;
+            }
+          }
 
           button {
             flex: 1;

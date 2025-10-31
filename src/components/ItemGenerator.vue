@@ -33,7 +33,7 @@
         currentApp="savedItems" />
     </div>
     <div class="main-container">
-      <div class="form-container" v-if="!magicItemDescription">
+      <div class="form-container" v-if="!magicItemDescription && !loadingItem">
         <h1>Kenji's D&D 5e Magic Item Generator</h1>
         <div>
           <p>
@@ -61,13 +61,7 @@
           <cdr-select v-model="itemType" label="Item Type" prompt="Choose an item type" :options="itemTypeOptions" />
           <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore"
             placeholder="Enter any any details about the item lore" class="item-lore-details">
-            <template #helper-text-bottom>
-              Write any details about your item that you want to include. Need help coming up with lore for your
-              magical item? Use the <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore
-                Generator</cdr-link> and paste in the generated summary!
-            </template>
           </cdr-input>
-
           <cdr-button class="generate-button" type="submit" :full-width="true">Generate Magic Item</cdr-button>
         </form>
       </div>
@@ -781,7 +775,6 @@ onMounted(() => {
 }
 
 .form-container {
-  @include cdr-text-body-400();
   color: $cdr-color-text-primary;
   padding: 2rem 3rem;
   background-color: #ffffff;

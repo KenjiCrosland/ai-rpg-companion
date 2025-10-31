@@ -1,4 +1,9 @@
 <template>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
   <div id="app" v-bind="$attrs">
     <LocationGenerator v-if="currentPage === 'location-generator'" />
     <NPCGenerator v-if="currentPage === 'npc-generator'" />
@@ -36,8 +41,7 @@ import EncounterGenerator from './components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from './components/EncounterGeneratorPremium.vue';
 import SettingGenerator from './components/SettingGenerator.vue';
 import TabsExample from './components/tabs/TabsExample.vue';
-import { CdrLink, CdrText } from '@rei/cedar';
-import '@rei/cedar/dist/style/cdr-text.css';
+import { CdrLink } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-link.css';
 export default {
   components: {
@@ -48,7 +52,6 @@ export default {
     DashboardPlus,
     StatblockGenerator,
     CdrLink,
-    CdrText,
     BookGenerator,
     DungeonGenerator,
     DungeonGeneratorPremium,
@@ -61,7 +64,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'item-generator',
+      currentPage: this.$attrs['data-page'] || 'item-generator-premium',
     };
   },
   mounted() {
@@ -133,3 +136,43 @@ export default {
   },
 };
 </script>
+
+<style>
+:root {
+  --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+html,
+body {
+  font-family: var(--font-sans);
+}
+
+/* Make form controls inherit too */
+body,
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Nuclear option to beat most component styles (use sparingly) */
+:where(html, body, #root) :where(*) {
+  font-family: var(--font-sans) !important;
+}
+
+/* Don’t break code/mono/icon fonts */
+pre,
+code,
+kbd,
+samp,
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+
+[class*="icon"],
+.icon,
+i.icon {
+  font-family: inherit !important;
+}
+</style>

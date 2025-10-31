@@ -72,14 +72,14 @@
             <cdr-text class="body-text">{{ bookDescriptions[index].secret_found }}</cdr-text>
           </div>
           <div v-if="loadingDescriptions[index]">
-            <BookSkeleton/>
+            <BookSkeleton />
           </div>
         </div>
       </cdr-accordion>
     </cdr-accordion-group>
   </div>
 </template>
-  
+
 
 <script>
 import { ref } from 'vue';
@@ -210,7 +210,7 @@ export default {
   }
 };
 </script>
-  
+
 <style scoped lang="scss">
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -239,7 +239,6 @@ export default {
 }
 
 .body-text {
-  @include cdr-text-body-400();
   margin: 1rem 0;
 }
 
@@ -274,4 +273,5 @@ hr {
 
 .book-title {
   @include cdr-text-body-500();
-}</style>
+}
+</style>

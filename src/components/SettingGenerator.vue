@@ -106,7 +106,7 @@
             {{ currentSetting.setting_overview.recent_event_current_ruler }}
             {{ currentSetting.setting_overview.recent_event_consequences }}</p>
           <p>{{ currentSetting.setting_overview.social_history }} {{ currentSetting.setting_overview.recent_event_social
-            }}
+          }}
           </p>
           <p>{{ currentSetting.setting_overview.economic_history }} {{
             currentSetting.setting_overview.impactful_economic_event }}</p>
@@ -170,12 +170,12 @@
                   <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                     settings[setting.main_index].setting_overview.recent_event_current_ruler
-                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                    }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                     settings[setting.main_index].setting_overview.recent_event_social }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                     settings[setting.main_index].setting_overview.impactful_economic_event
-                  }}</p>
+                    }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                     settings[setting.main_index].setting_overview.recent_event_military }}
                   </p>
@@ -261,7 +261,7 @@
                 <div class="focus-text">
                   <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
                     faction.faction_leader_description
-                    }}
+                  }}
                   </p>
                   <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
                   <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
@@ -530,7 +530,6 @@ import { formatSettingAsHtml } from "../util/formatSettingAsHTML.mjs";
 import { generateGptResponse } from "../util/open-ai.mjs";
 import placeAdjectives from '../data/place-adjectives.json';
 import place_names from '../data/place-names.json';
-import '@rei/cedar/dist/style/cdr-text.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-popover.css';
