@@ -64,7 +64,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'item-generator-premium',
+      currentPage: this.$attrs['data-page'] || 'item-generator',
     };
   },
   mounted() {
