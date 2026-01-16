@@ -10,8 +10,65 @@
  * @link    https://www.studiopress.com/
  */
 
- ini_set('max_execution_time', 300); // Set the maximum execution time to 5 minutes (300 seconds)
- 
+ini_set('max_execution_time', 300); // Set the maximum execution time to 5 minutes (300 seconds)
+
+// -----------------------------------------------------------------------------
+// ✅ SECURITY/LICENSING OPTIMIZATIONS (ADDED)
+// -----------------------------------------------------------------------------
+
+/**
+ * Send a Content-Security-Policy that blocks third-party fonts by default,
+ * but allows Google Fonts delivery for Inter (fonts.gstatic.com) and self-hosted fonts.
+ *
+ * If you self-host Inter, you can simplify to:
+ *   header("Content-Security-Policy: font-src 'self' data:;");
+ */
+add_action('send_headers', function () {
+    // Note: only a font-src directive is set to avoid breaking other resources.
+    header("Content-Security-Policy: font-src 'self' https://fonts.gstatic.com data:;");
+});
+
+/**
+ * Dequeue the theme's font stylesheet if present.
+ * This prevents styles that might import proprietary fonts via @import.
+ */
+add_action('wp_enqueue_scripts', function () {
+    $handle = genesis_get_theme_handle() . '-fonts';
+    // Remove the Genesis theme font stylesheet (if any).
+    wp_dequeue_style($handle);
+    wp_deregister_style($handle);
+}, 100);
+
+/**
+ * Strip any <link rel="stylesheet"> tags that point to REI font assets.
+ * Belt-and-suspenders in case a plugin/theme adds them directly.
+ */
+add_filter('style_loader_tag', function ($html, $handle, $href) {
+    if (
+        strpos($href, 'rei.com/satchel/media/font-optimized/Graphik') !== false ||
+        strpos($href, 'rei.com/satchel/media/font-optimized/Stuart') !== false
+    ) {
+        return ''; // drop the tag entirely
+    }
+    return $html;
+}, 10, 3);
+
+/**
+ * Remove preconnect/preload hints to REI font hosts to avoid wasted handshakes.
+ */
+add_filter('wp_resource_hints', function ($urls, $relation) {
+    if ($relation === 'preconnect' || $relation === 'preload') {
+        $urls = array_values(array_filter($urls, function ($u) {
+            return strpos($u, 'rei.com') === false;
+        }));
+    }
+    return $urls;
+}, 10, 2);
+
+// -----------------------------------------------------------------------------
+// (END) SECURITY/LICENSING OPTIMIZATIONS
+// -----------------------------------------------------------------------------
+
 // Starts the engine.
 require_once get_template_directory() . '/lib/init.php';
 
@@ -73,6 +130,7 @@ function genesis_sample_enqueue_scripts_styles() {
 
 	$appearance = genesis_get_config( 'appearance' );
 
+	// NOTE: This originally enqueued the theme's fonts stylesheet. We now dequeue it above.
 	wp_enqueue_style(
 		genesis_get_theme_handle() . '-fonts',
 		$appearance['fonts-url'],
@@ -241,13 +299,12 @@ add_action('rest_api_init', function () {
 function whisper_api_proxy( WP_REST_Request $request ) {
     $url = 'https://api.openai.com/v1/chat/completions';
 
-	$request_data = $request->get_json_params();
+    $request_data = $request->get_json_params();
 
-	$headers = array(
-		'Content-Type' => 'application/json',
-		'Authorization' => 'Bearer ' . OPENAI_API_KEY,
-	);
-	
+    $headers = array(
+        'Content-Type' => 'application/json',
+        'Authorization' => 'Bearer ' . OPENAI_API_KEY,
+    );
 
     $response = wp_remote_post_with_retry($url, [
         'headers' => $headers,

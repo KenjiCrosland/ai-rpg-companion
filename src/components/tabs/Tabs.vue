@@ -109,7 +109,6 @@ provide('currentIndex', currentIndex);
 }
 
 .tab-header-item {
-  font-family: Graphik, Helvetica Neue, sans-serif;
   padding: 12px 16px;
   text-align: center;
   border: none;
