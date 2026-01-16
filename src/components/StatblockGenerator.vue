@@ -1,4 +1,5 @@
 <template>
+  <ToolSuiteShowcase :premium="premium" display-mode="banner" />
   <div class="app-container">
     <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
       v-show="windowWidth <= 1020">
@@ -165,6 +166,7 @@ import challengeRatingData from '../data/challengeRatings.json';
 import creatureTemplates from '../data/creatureTemplates.json';
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
 import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
+import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
 
 const props = defineProps({
   premium: {

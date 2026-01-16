@@ -1,4 +1,5 @@
 <template>
+  <ToolSuiteShowcase :premium="premium" display-mode="banner" />
   <div class="app-container">
     <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
       v-show="windowWidth <= 1020">
@@ -210,6 +211,7 @@ import LoreBuilderTab from './item-generator-tabs/LoreBuilderTab.vue';
 import DataManagerModal from './DataManagerModal.vue';
 import Tabs from './tabs/Tabs.vue';
 import TabPanel from './tabs/TabPanel.vue';
+import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
 
 const props = defineProps({
   premium: {
