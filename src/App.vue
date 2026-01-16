@@ -31,6 +31,7 @@
     <SettingGenerator v-if="currentPage === 'setting-generator'" />
     <SettingGenerator :premium="true" v-if="currentPage === 'setting-generator-premium'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
+    <LandingPage v-if="currentPage === 'category-landing'" />
   </div>
 </template>
 
@@ -50,6 +51,7 @@ import EncounterGeneratorPremium from './components/EncounterGeneratorPremium.vu
 import SettingGenerator from './components/SettingGenerator.vue';
 import TabsExample from './components/tabs/TabsExample.vue';
 import ToolSuiteShowcase from './components/ToolSuiteShowcase.vue';
+import LandingPage from './components/LandingPage.vue';
 import { CdrLink } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-link.css';
 
@@ -70,11 +72,12 @@ export default {
     EncounterGenerator,
     EncounterGeneratorPremium,
     SettingGenerator,
-    TabsExample
+    TabsExample,
+    LandingPage
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'encounter-generator-premium',
+      currentPage: this.$attrs['data-page'] || 'category-landing',
     };
   },
   mounted() {
