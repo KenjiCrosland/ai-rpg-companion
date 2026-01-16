@@ -1,4 +1,5 @@
 <template>
+    <ToolSuiteShowcase :premium="premium" display-mode="banner" />
     <div class="app-container">
         <h1 v-if="premium">Kenji's NPC Generator -- Premium Version</h1>
         <h1 v-else>Kenji's NPC Generator -- Free Version</h1>
@@ -194,7 +195,7 @@ import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-skeleton.css';
 import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
-
+import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
 
 const npcDescriptionPart1 = ref('');
 const npcDescriptionPart2 = ref('');
@@ -335,7 +336,7 @@ function validationPart2(jsonString) {
 .app-container {
     @include cdr-text-body-400();
     color: $cdr-color-text-primary;
-    max-width: 800px;
+    max-width: 940px;
     margin: 20px auto;
     padding: 2px 30px 30px 30px;
     background-color: #ffffff;
@@ -391,15 +392,6 @@ div[class^="cdr-skeleton-bone"] {
     @include cdr-text-body-400();
     margin: 5px auto;
     text-align: center;
-}
-
-h1 {
-    font-family: Roboto, "Helvetica Neue", sans-serif;
-    font-style: normal;
-    font-weight: 500;
-    letter-spacing: 0px;
-    font-size: 4.2rem;
-    line-height: 3rem;
 }
 
 form {

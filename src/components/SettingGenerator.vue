@@ -1,4 +1,5 @@
 <template>
+  <ToolSuiteShowcase :premium="premium" display-mode="banner" />
   <div class="app-container">
     <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
       v-show="windowWidth <= 768">
@@ -533,6 +534,7 @@ import place_names from '../data/place-names.json';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-popover.css';
+import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
 
 const props = defineProps({
   premium: {

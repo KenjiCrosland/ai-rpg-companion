@@ -1,4 +1,5 @@
 <template>
+  <ToolSuiteShowcase :premium="false" display-mode="banner" />
   <div class="app-container">
     <h1>Kenji's RPG Location Description Generator</h1>
     <hr>
@@ -58,6 +59,7 @@ import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 import LocationForm from "./LocationForm.vue";
+import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
 
 export default {
   data() {
@@ -83,6 +85,7 @@ export default {
     CdrSkeleton,
     CdrSkeletonBone,
     LocationForm,
+    ToolSuiteShowcase,
   },
   methods: {
     setInputValue(value) {
