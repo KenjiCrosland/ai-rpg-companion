@@ -2,117 +2,197 @@
 /**
  * Genesis Custom RPG Companion Template.
  *
- * A template to force full-width layout, remove breadcrumbs, and remove the page title.
- *
  * Template Name: RPG Companion Encounter Generator Premium
  *
+ * Forces full-width layout, removes Genesis chrome, enqueues Vue assets,
+ * and renders the Vue root mount.
+ *
  * @package Genesis Custom RPG Companion Encounter Generator Premium
- * @author  Your Name
  * @license GPL-2.0-or-later
- * @link    https://your-link.com/
  */
 
-// Removes the entry header markup and page title.
+// ----------------------------------------------------------------------------
+// ✅ Remove Genesis chrome (match Item Generator behavior)
+// ----------------------------------------------------------------------------
+
+// Remove header entirely
+remove_action( 'genesis_header', 'genesis_header_markup_open', 5 );
+remove_action( 'genesis_header', 'genesis_do_header' );
+remove_action( 'genesis_header', 'genesis_header_markup_close', 15 );
+
+// Remove entry header/title
 remove_action( 'genesis_entry_header', 'genesis_entry_header_markup_open', 5 );
 remove_action( 'genesis_entry_header', 'genesis_entry_header_markup_close', 15 );
 remove_action( 'genesis_entry_header', 'genesis_do_post_title' );
 
-// Forces full width content layout.
+// Remove navigation menus
+remove_theme_support( 'genesis-menus' );
+
+// Remove breadcrumbs
+remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs' );
+
+// Remove footer widgets
+remove_theme_support( 'genesis-footer-widgets' );
+
+// Remove footer entirely
+remove_action( 'genesis_footer', 'genesis_footer_markup_open', 5 );
+remove_action( 'genesis_footer', 'genesis_do_footer' );
+remove_action( 'genesis_footer', 'genesis_footer_markup_close', 15 );
+
+// Force full-width content layout
 add_filter( 'genesis_site_layout', '__genesis_return_full_width_content' );
 
-// Removes the breadcrumbs.
-remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs');
+// ----------------------------------------------------------------------------
+// ✅ Enqueue Vue assets (Vite build output)
+// ----------------------------------------------------------------------------
 
-// Enqueue Vue app assets.
-function vue_app_enqueue_assets() {
-    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-encounter-generator-premium/dist/assets';
-    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-encounter-generator-premium/dist/assets';
+if ( ! function_exists( 'rpg_companion_encounter_premium_enqueue_assets' ) ) {
+	function rpg_companion_encounter_premium_enqueue_assets() {
+		$vue_app_path = get_stylesheet_directory() . '/rpg-companion-encounter-generator-premium/dist/assets';
+		$vue_app_url  = get_stylesheet_directory_uri() . '/rpg-companion-encounter-generator-premium/dist/assets';
 
-    $files = scandir($vue_app_path);
-    $enqueued_style_handle = '';
+		if ( ! is_dir( $vue_app_path ) ) {
+			return;
+		}
 
-    foreach ($files as $file) {
-        $file_path = $vue_app_path . '/' . $file; // Add the missing slash
-        $file_url = $vue_app_url . '/' . $file; // Add the missing slash
+		$files = scandir( $vue_app_path );
+		$enqueued_style_handle = '';
 
-        if (is_file($file_path)) {
-            $ext = pathinfo($file, PATHINFO_EXTENSION);
+		foreach ( $files as $file ) {
+			if ( $file === '.' || $file === '..' ) {
+				continue;
+			}
 
-            $version = '1.0.0';
+			$file_path = $vue_app_path . '/' . $file;
+			$file_url  = $vue_app_url . '/' . $file;
 
-            if ($ext === 'css') {
-                $handle = 'index-' . md5($file);
-                wp_enqueue_style($handle, $file_url, [], $version);
-                $enqueued_style_handle = $handle;
-            } elseif ($ext === 'js') {
-                wp_enqueue_script('index-' . md5($file), $file_url, [], $version, true);
-            }
-        }
-    }
-    
-    if ($enqueued_style_handle) {
-        $custom_css = '
-        main.content {
-            max-width: 940px;
-            width: auto;
-        }
-        .site-container .site-inner {
-            max-width: none;
-        }
-        h1, h2 {
-            padding-top: 2rem;
-        }
-        h2 {
-          margin-bottom: 1rem;
-        }
-        h3 {
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-        }
-        select {
-            padding: 1rem;
-        }
-        p {
-          margin: 1rem 0;
-        }
-        .read-aloud p {
-            margin-bottom: 1rem;
-        }
-        .read-aloud {
-            margin-bottom: 2rem;
-        }
-        .statblock ul.abilities {
-          margin-left: 0;
-        }
-        #genesis-content,
-        #app {
-            max-width: 100%;
-            width: 100%;
-        }
-        .entry-content ul > li {
-            list-style-type: none;
-        }
-        .entry-content ul ul > li {
-            list-style-type: none;
-        }
-        .entry-content ul {
-            padding-left: 0;
-        }
-        button:focus, button:hover, input[type="button"]:focus, input[type="button"]:hover, input[type="reset"]:focus, input[type="reset"]:hover, input[type="submit"]:focus, input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:hover, .button:focus, .button:hover {
-            color: inherit;
-        }
-        ';
-        wp_add_inline_style($enqueued_style_handle, $custom_css);
-    }
+			if ( ! is_file( $file_path ) ) {
+				continue;
+			}
+
+			$ext = pathinfo( $file, PATHINFO_EXTENSION );
+
+			// Cache-bust using file modified time
+			$version = filemtime( $file_path );
+
+			if ( $ext === 'css' ) {
+				$handle = 'encounter-premium-' . md5( $file );
+				wp_enqueue_style( $handle, $file_url, [], $version );
+				$enqueued_style_handle = $handle;
+			}
+
+			if ( $ext === 'js' ) {
+				wp_enqueue_script( 'encounter-premium-' . md5( $file ), $file_url, [], $version, true );
+			}
+		}
+
+		// Inline overrides (match Item Generator standard)
+		if ( $enqueued_style_handle ) {
+			$custom_css = '
+			/* --- Layout normalization --- */
+			main.content {
+				max-width: 940px;
+				width: auto;
+			}
+
+			.site-container .site-inner {
+				max-width: none;
+				padding: 0;
+			}
+
+			#genesis-content,
+			#app {
+				max-width: 100%;
+				width: 100%;
+			}
+
+			/* --- Typography spacing --- */
+			h1, h2 {
+				padding-top: 2rem;
+			}
+
+			h2 {
+				margin-bottom: 1rem;
+			}
+
+			h3 {
+				margin-top: 1rem;
+				margin-bottom: 1rem;
+			}
+
+			p {
+				margin: 1rem 0;
+			}
+
+			select {
+				padding: 1rem;
+			}
+
+			/* --- Read aloud block spacing --- */
+			.read-aloud p {
+				margin-bottom: 1rem;
+			}
+
+			.read-aloud {
+				margin-bottom: 2rem;
+			}
+
+			/* --- Genesis list resets --- */
+			.entry-content ul {
+				padding-left: 0;
+			}
+
+			.entry-content ul > li,
+			.entry-content ul ul > li {
+				list-style-type: none;
+			}
+
+			/* --- Statblock special case --- */
+			.statblock ul.abilities {
+				margin-left: 0;
+				padding-left: 0;
+			}
+
+			/* --- Avoid Genesis hover overriding Cedar colors --- */
+			button:focus,
+			button:hover,
+			input[type="button"]:focus,
+			input[type="button"]:hover,
+			input[type="reset"]:focus,
+			input[type="reset"]:hover,
+			input[type="submit"]:focus,
+			input[type="submit"]:hover,
+			.site-container div.wpforms-container-full .wpforms-form input[type="submit"]:focus,
+			.site-container div.wpforms-container-full .wpforms-form input[type="submit"]:hover,
+			.site-container div.wpforms-container-full .wpforms-form button[type="submit"]:focus,
+			.site-container div.wpforms-container-full .wpforms-form button[type="submit"]:hover,
+			.button:focus,
+			.button:hover {
+				color: inherit;
+			}
+			';
+
+			wp_add_inline_style( $enqueued_style_handle, $custom_css );
+		}
+	}
 }
-add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 
-//Add Vue app root element.
-function vue_app_render_root_element() {
-    echo '<div id="app" data-page="encounter-generator-premium"></div>';
+add_action( 'wp_enqueue_scripts', 'rpg_companion_encounter_premium_enqueue_assets' );
+
+// ----------------------------------------------------------------------------
+// ✅ Render Vue root mount element
+// ----------------------------------------------------------------------------
+
+if ( ! function_exists( 'rpg_companion_encounter_premium_render_root_element' ) ) {
+	function rpg_companion_encounter_premium_render_root_element() {
+		echo '<div id="app" data-page="encounter-generator-premium"></div>';
+	}
 }
 
-// add_action( 'genesis_entry_content', 'vue_app_render_root_element' );
+add_action( 'genesis_entry_content', 'rpg_companion_encounter_premium_render_root_element' );
 
-// Runs the Genesis loop.
+// ----------------------------------------------------------------------------
+// ✅ Run Genesis
+// ----------------------------------------------------------------------------
+
 genesis();

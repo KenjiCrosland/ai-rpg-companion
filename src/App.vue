@@ -27,7 +27,7 @@
     <ItemGenerator v-if="currentPage === 'item-generator'" />
     <ItemGenerator :premium="true" v-if="currentPage === 'item-generator-premium'" />
     <EncounterGenerator v-if="currentPage === 'encounter-generator'" />
-    <EncounterGeneratorPremium v-if="currentPage === 'encounter-generator-premium'" />
+    <EncounterGenerator :premium="true" v-if="currentPage === 'encounter-generator-premium'" />
     <SettingGenerator v-if="currentPage === 'setting-generator'" />
     <SettingGenerator :premium="true" v-if="currentPage === 'setting-generator-premium'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
@@ -74,7 +74,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'location-generator',
+      currentPage: this.$attrs['data-page'] || 'encounter-generator-premium',
     };
   },
   mounted() {
