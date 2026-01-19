@@ -5,43 +5,36 @@
       <div class="hero-overlay"></div>
 
       <div class="hero-content">
-        <div class="hero-pill">
-          <span class="material-symbols-outlined">auto_awesome</span>
-          AI-powered GM tools for D&D 5e
-        </div>
+        <div class="hero-top-spacer"></div>
 
-        <h1 class="hero-title">Kenji’s AI Powered Game Master Tools</h1>
+
+        <h1 class="hero-title">Kenji’s Game Master Tools</h1>
 
         <p class="hero-subtitle">
           Generate magic items, monster statblocks, NPCs, dungeons, and campaign-building content in minutes —
           designed for real prep workflows.
         </p>
 
+        <div class="hero-callouts">
+          <span class="callout">
+            <span class="material-symbols-outlined">file_export</span>
+            Export-friendly
+          </span>
+          <span class="callout">
+            <span class="material-symbols-outlined">description</span>
+            Homebrewery-ready
+          </span>
+          <span class="callout">
+            <span class="material-symbols-outlined">casino</span>
+            Built by a GM
+          </span>
+        </div>
+
         <div class="hero-ctas">
           <a class="btn primary" :href="primaryCta.url">
             <span class="material-symbols-outlined">bolt</span>
             {{ primaryCta.label }}
           </a>
-
-          <button class="btn ghost" @click="scrollToTools">
-            <span class="material-symbols-outlined">apps</span>
-            Browse all tools
-          </button>
-        </div>
-
-        <div class="hero-badges">
-          <span class="badge">
-            <span class="material-symbols-outlined">file_export</span>
-            Export-friendly
-          </span>
-          <span class="badge">
-            <span class="material-symbols-outlined">description</span>
-            Homebrewery-ready
-          </span>
-          <span class="badge">
-            <span class="material-symbols-outlined">sports_esports</span>
-            Built by a GM
-          </span>
         </div>
       </div>
     </section>
@@ -51,7 +44,7 @@
       <div class="section-header">
         <h2>Start here</h2>
         <p>
-          Three tools that give the fastest “I can run a session tonight” payoff.
+          The highest impact tools to try first.
         </p>
       </div>
 
@@ -91,12 +84,12 @@
       </div>
     </section>
 
-    <!-- ALL TOOLS -->
+    <!-- MORE TOOLS -->
     <section ref="toolsRef" class="section">
       <div class="section-header">
-        <h2>All tools</h2>
+        <h2>More Tools</h2>
         <p>
-          Everything in the suite — quick access to the free version, or jump straight to premium features.
+          Everything else in the suite — quick access to the free version, or jump straight to premium features.
         </p>
       </div>
 
@@ -141,20 +134,27 @@
           <p>
             I created these AI-powered Game Master tools because I'm a GM myself.
             I know what it feels like to get burnt out generating content by hand every week.
-            The moment I saw what AI could do, I immediately recognized the potential: not to replace creativity,
-            but to amplify it.
+            The moment I saw what AI could do, I immediately recognized the potential to augment a Game Master's
+            workflow.
           </p>
 
           <p>
-            One thing I noticed early on is that using ChatGPT directly often produces generic results.
+            One thing I noticed early on is that using ChatGPT directly often produces generic and very boring results.
+            I learned, however, that meticulous instruction on how to structure content can yield far better outputs.
             So my goal with these tools is to guide AI toward content that feels playable and compelling —
             monsters, NPCs, and settings that players actually care about and remember.
           </p>
 
           <p>
-            A few years ago I took a nine-month trip around the southern United States to figure out where I wanted to
-            live,
-            and I eventually settled in San Antonio. I live here now with my fiancé and two cats.
+            I’m a front-end developer by day, and outside of code I’m an enthusiastic practitioner of
+            <a href="https://en.wikipedia.org/wiki/Gongfu_tea_ceremony" target="_blank" rel="noopener">Gongfu tea</a> —
+            I serve tea regularly for friends and the community.
+            I live with my fiancé and two cats —
+            <a href="https://cros.land/wp-content/uploads/2026/01/rumi-goblin-enhanced.jpg" target="_blank"
+              rel="noopener">Rumi</a>
+            and
+            <a href="https://cros.land/wp-content/uploads/2026/01/daphne-sleeping-happy-scaled.jpg" target="_blank"
+              rel="noopener">Daphne</a>.
           </p>
 
           <div class="about-links">
@@ -169,6 +169,8 @@
             </a>
           </div>
         </div>
+
+
       </div>
     </section>
   </div>
@@ -190,18 +192,6 @@ const HERO_IMAGE =
  * - image optional (featured)
  */
 const tools = [
-  {
-    id: "items",
-    name: "Magic Item Generator",
-    shortName: "Items",
-    icon: "auto_fix_high",
-    description: "Create unique magic items with lore and balanced mechanics.",
-    longDescription:
-      "Generate items that feel like they belong in a real campaign — with flavorful lore, balanced mechanics, and built-in hooks for adventure.",
-    freeUrl: "https://cros.land/dnd-5e-magic-item-generator/",
-    premiumUrl: "https://cros.land/dnd-5e-magic-item-generator-premium-version/",
-    image: "https://cros.land/wp-content/uploads/2026/01/little-guys-making-magic-sword.png?auto=format&fit=crop&w=1400&q=80",
-  },
   {
     id: "monsters",
     name: "Monster Statblock Generator",
@@ -226,7 +216,18 @@ const tools = [
     freeUrl: "https://cros.land/kenjis-dungeon-generator-2-0/",
     premiumUrl: "https://cros.land/dungeon-generator-2-0-premium-version/",
     image: "https://cros.land/wp-content/uploads/2026/01/dungeon-generator.png?auto=format&fit=crop&w=1400&q=80",
-    ribbon: { icon: "favorite", label: "My proudest build" },
+  },
+  {
+    id: "items",
+    name: "Magic Item Generator",
+    shortName: "Items",
+    icon: "auto_fix_high",
+    description: "Create unique magic items with lore and balanced mechanics.",
+    longDescription:
+      "Generate items that feel like they belong in a real campaign — with flavorful lore, balanced mechanics, and built-in hooks for adventure.",
+    freeUrl: "https://cros.land/dnd-5e-magic-item-generator/",
+    premiumUrl: "https://cros.land/dnd-5e-magic-item-generator-premium-version/",
+    image: "https://cros.land/wp-content/uploads/2026/01/little-guys-making-magic-sword.png?auto=format&fit=crop&w=1400&q=80",
   },
   {
     id: "npcs",
@@ -246,6 +247,7 @@ const tools = [
     freeUrl: "https://cros.land/rpg-setting-generator-and-world-building-tool/",
     premiumUrl:
       "https://cros.land/rpg-setting-generator-and-world-building-tool-premium-version/",
+    image: "https://cros.land/wp-content/uploads/2024/05/dragonreach-1-1536x878.jpg?auto=format&fit=crop&w=1400&q=80",
   },
   {
     id: "encounters",
@@ -284,7 +286,7 @@ const tools = [
   },
 ];
 
-const featuredIds = new Set(["items", "monsters", "dungeons"]);
+const featuredIds = new Set(["monsters", "dungeons", "settings"]);
 const featuredTools = computed(() => tools.filter((t) => featuredIds.has(t.id)));
 const nonFeaturedTools = computed(() => tools.filter((t) => !featuredIds.has(t.id)));
 
@@ -347,16 +349,8 @@ function toolImageStyle(tool) {
   color: white;
 }
 
-.hero-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 13px;
+.hero-top-spacer {
+  height: 14px;
 }
 
 .hero-title {
@@ -376,7 +370,7 @@ function toolImageStyle(tool) {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-top: 24px;
 }
 
 .hero-badges {
@@ -385,14 +379,11 @@ function toolImageStyle(tool) {
   flex-wrap: wrap;
 }
 
-.badge {
+.callout {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  padding: 6px 10px;
-  border-radius: 999px;
+  padding: 6px 25px 0 0;
   font-weight: 800;
   font-size: 13px;
 }
