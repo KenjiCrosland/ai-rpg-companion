@@ -435,3 +435,8 @@ function vue_app_test_content_shortcode() {
 	return '<div id="app" data-page="statblock-generator"></div>';
 }
 add_shortcode( 'vue_app_test_content', 'vue_app_test_content_shortcode' );
+
+function vue_app_landing_page_shortcode() {
+    return '<div id="app" data-page="category-landing"></div>';
+}
+add_shortcode( 'vue_app_landing_page', 'vue_app_landing_page_shortcode' );
