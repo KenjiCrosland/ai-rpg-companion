@@ -570,15 +570,6 @@
                   </cdr-input>
                   <cdr-button @click="generateNewRelationship(index)" :full-width="true">Generate
                     Relationship</cdr-button>
-
-                  <hr style="margin: 2rem 0;">
-
-                  <h3>Generate a Quest Hook</h3>
-                  <p>Generate a quest hook where {{ npc.name }} is the quest giver.</p>
-                  <cdr-select label="Quest Type" v-model="questType" :options="questTypes"
-                    placeholder="Select a Quest Type" />
-                  <cdr-button @click="generateQuestHook(npc, questType)" style="margin-top: 2rem;">Generate
-                    Quest</cdr-button>
                 </div>
 
                 <!-- Edit Mode -->
@@ -634,6 +625,9 @@
         </TabPanel>
         <TabPanel label="Quest Hooks">
           <h2>Quest Hooks</h2>
+          <p style="margin-bottom: 2rem; color: #666; font-style: italic;">
+            Quest hooks can be generated from any NPC, but fully generated NPCs (with complete descriptions and relationships) will produce richer, more detailed quests than basic NPCs.
+          </p>
           <div v-if="currentSetting.questHooks?.length > 0">
             <cdr-accordion-group>
               <cdr-accordion v-for="(hook, index) in currentSetting.questHooks" :key="index" :id="'hook-' + index"
@@ -655,31 +649,99 @@
                       Delete Quest Hook
                     </div>
                   </cdr-tooltip>
-                  <h2>{{ hook.quest_title }}</h2>
-                  <p><strong>Quest Giver:</strong> {{ hook.quest_giver_name }}</p>
-                  <p>{{ hook.quest_giver_background }}</p>
-                  <p>{{ hook.quest_giver_encounter }}</p>
-                  <p>{{ hook.quest_details }}</p>
-                  <h3>Objectives</h3>
-                  <cdr-list v-for="(objective, index) in hook.objectives" modifier="unordered" :key="index">
-                    <li>
-                      {{ objective }}
-                    </li>
-                  </cdr-list>
-                  <h3>Challenges</h3>
-                  <cdr-list v-for="(challenge, index) in hook.challenges" modifier="unordered" :key="index">
-                    <li>
-                      {{ challenge }}
-                    </li>
-                  </cdr-list>
-                  <h3>Rewards</h3>
-                  <cdr-list v-for="(reward, index) in hook.rewards" modifier="unordered" :key="index">
-                    <li>
-                      {{ reward }}
-                    </li>
-                  </cdr-list>
-                  <h3>Twist</h3>
-                  <p>{{ hook.twist }}</p>
+
+                  <!-- View Mode -->
+                  <div v-if="editingQuestHookIndex !== index">
+                    <h2>{{ hook.quest_title }}</h2>
+                    <p><strong>Quest Giver:</strong> {{ hook.quest_giver_name }}</p>
+
+                    <div v-if="hook.combined_giver_and_quest">
+                      <p v-for="(paragraph, pIndex) in hook.combined_giver_and_quest.split('\n\n')" :key="pIndex">
+                        {{ paragraph }}
+                      </p>
+                    </div>
+                    <div v-else>
+                      <p>{{ hook.quest_giver_background }}</p>
+                      <p>{{ hook.quest_giver_encounter }}</p>
+                      <p>{{ hook.quest_details }}</p>
+                    </div>
+
+                    <h3>Objectives</h3>
+                    <cdr-list v-for="(objective, objIndex) in hook.objectives" modifier="unordered" :key="objIndex">
+                      <li>{{ objective }}</li>
+                    </cdr-list>
+
+                    <h3>Challenges</h3>
+                    <cdr-list v-for="(challenge, chalIndex) in hook.challenges" modifier="unordered" :key="chalIndex">
+                      <li>{{ challenge }}</li>
+                    </cdr-list>
+
+                    <h3>Rewards</h3>
+                    <cdr-list v-for="(reward, rewIndex) in hook.rewards" modifier="unordered" :key="rewIndex">
+                      <li>{{ reward }}</li>
+                    </cdr-list>
+
+                    <h3>Twist</h3>
+                    <p>{{ hook.twist }}</p>
+
+                    <div class="button-group" style="margin-top: 2rem;">
+                      <cdr-button @click="startEditingQuestHook(index)" modifier="secondary">Edit Quest Hook</cdr-button>
+                    </div>
+                  </div>
+
+                  <!-- Edit Mode -->
+                  <div v-else class="edit-form">
+                    <h2>Edit Quest Hook</h2>
+
+                    <cdr-input v-model="questHookEditForm.quest_title" label="Quest Title" background="secondary"
+                      class="edit-field" />
+
+                    <cdr-input v-model="questHookEditForm.quest_giver_name" label="Quest Giver Name" background="secondary"
+                      class="edit-field" />
+
+                    <cdr-input v-model="questHookEditForm.combined_giver_and_quest" label="Quest Giver & Quest Details"
+                      background="secondary" :rows="10" tag="textarea" class="edit-field">
+                      <template #helper-text-bottom>
+                        Giver background, encounter description, and quest details. Use double line breaks for paragraphs.
+                      </template>
+                    </cdr-input>
+
+                    <h3>Objectives</h3>
+                    <div v-for="(objective, objIndex) in questHookEditForm.objectives" :key="objIndex"
+                      style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                      <cdr-input v-model="questHookEditForm.objectives[objIndex]" label="Objective" background="secondary" />
+                      <cdr-button size="small" @click="removeQuestObjective(objIndex)" style="margin-top: 0.5rem;">Remove</cdr-button>
+                    </div>
+                    <cdr-button @click="addQuestObjective" modifier="secondary" size="small">Add Objective</cdr-button>
+
+                    <h3 style="margin-top: 2rem;">Challenges</h3>
+                    <div v-for="(challenge, chalIndex) in questHookEditForm.challenges" :key="chalIndex"
+                      style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                      <cdr-input v-model="questHookEditForm.challenges[chalIndex]" label="Challenge" background="secondary" />
+                      <cdr-button size="small" @click="removeQuestChallenge(chalIndex)" style="margin-top: 0.5rem;">Remove</cdr-button>
+                    </div>
+                    <cdr-button @click="addQuestChallenge" modifier="secondary" size="small">Add Challenge</cdr-button>
+
+                    <h3 style="margin-top: 2rem;">Rewards</h3>
+                    <div v-for="(reward, rewIndex) in questHookEditForm.rewards" :key="rewIndex"
+                      style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                      <cdr-input v-model="questHookEditForm.rewards[rewIndex]" label="Reward" background="secondary" />
+                      <cdr-button size="small" @click="removeQuestReward(rewIndex)" style="margin-top: 0.5rem;">Remove</cdr-button>
+                    </div>
+                    <cdr-button @click="addQuestReward" modifier="secondary" size="small">Add Reward</cdr-button>
+
+                    <cdr-input v-model="questHookEditForm.twist" label="Twist" background="secondary" :rows="3"
+                      tag="textarea" class="edit-field" style="margin-top: 2rem;">
+                      <template #helper-text-bottom>
+                        An unexpected element that adds complexity to the quest
+                      </template>
+                    </cdr-input>
+
+                    <div class="button-group">
+                      <cdr-button @click="saveEditQuestHook">Save Changes</cdr-button>
+                      <cdr-button @click="cancelEditQuestHook" modifier="secondary">Cancel</cdr-button>
+                    </div>
+                  </div>
                 </div>
               </cdr-accordion>
               <cdr-accordion class="accordion" level="2" id="loading-location" v-if="loadingQuestHooks">
@@ -692,9 +754,7 @@
             </cdr-accordion-group>
           </div>
           <div v-if="!(currentSetting.questHooks?.length > 0) && !loadingQuestHooks">
-            <p>Quest hooks are generated by using fully generated NPCs as quest givers. Generate a full NPC description
-              in
-              order to create a quest hook.</p>
+            <p>Generate quest hooks using NPCs from your setting as quest givers.</p>
           </div>
           <div v-if="!(currentSetting.questHooks?.length > 0) && loadingQuestHooks">
             <cdr-accordion-group>
@@ -706,6 +766,29 @@
                 </template>
               </cdr-accordion>
             </cdr-accordion-group>
+          </div>
+
+          <hr style="margin: 2rem 0;">
+
+          <h3>Generate New Quest Hook</h3>
+          <p v-if="!currentSetting.npcs || currentSetting.npcs.length === 0" style="font-style: italic; color: #666;">
+            You need to have NPCs generated before you can create quest hooks. Visit the NPCs tab to generate some NPCs first.
+          </p>
+          <div v-else>
+            <cdr-select v-model="selectedQuestGiverIndex" label="Quest Giver" :options="questGiverOptions"
+              placeholder="Select an NPC" background="secondary" style="margin-bottom: 1rem;">
+              <template #helper-text-bottom>
+                Fully generated NPCs will produce more detailed quests
+              </template>
+            </cdr-select>
+
+            <cdr-select label="Quest Type" v-model="questType" :options="questTypes"
+              placeholder="Select a Quest Type" background="secondary" style="margin-bottom: 1rem;" />
+
+            <cdr-button @click="generateQuestHookFromTab" :full-width="true"
+              :disabled="selectedQuestGiverIndex === null">
+              Generate Quest Hook
+            </cdr-button>
           </div>
         </TabPanel>
       </Tabs>
@@ -887,6 +970,7 @@ function isNumber(value) {
   return typeof value === 'number';
 }
 const questType = ref(randomQuestString);
+const selectedQuestGiverIndex = ref(null);
 const currentlyLoading = ref(false);
 const loadingQuestHooks = ref(false);
 const currentSettingIndex = ref(0);
@@ -927,6 +1011,16 @@ const newRelationship = reactive({
   description: ''
 });
 const loadingNewRelationship = ref(false);
+const editingQuestHookIndex = ref(null);
+const questHookEditForm = ref({
+  quest_title: '',
+  quest_giver_name: '',
+  combined_giver_and_quest: '',
+  objectives: [],
+  challenges: [],
+  rewards: [],
+  twist: ''
+});
 const defaultSetting = reactive({
   adjective: '',
   setting_type: '',
@@ -1013,6 +1107,15 @@ const selectSetting = (index) => {
     editingNPCIndex.value = null;
   }
 
+  // Exit quest hook edit mode
+  if (editingQuestHookIndex.value !== null) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch settings without saving?');
+    if (!confirmed) {
+      return;
+    }
+    editingQuestHookIndex.value = null;
+  }
+
   currentSettingIndex.value = index;
   isNewSetting.value = false;  // Not new since it's selected from existing ones
 };
@@ -1090,6 +1193,7 @@ const createNewSetting = (isSublocation, adjective = '', setting_type = '', plac
   editingLocationIndex.value = null;
   editingFactionIndex.value = null;
   editingNPCIndex.value = null;
+  editingQuestHookIndex.value = null;
 
   const newSetting = reactive({
     adjective: adjective,
@@ -1328,6 +1432,23 @@ const influenceLevelOptions = computed(() => {
   }));
 });
 
+// Create dropdown options for quest giver NPCs
+const questGiverOptions = computed(() => {
+  if (!currentSetting.value?.npcs) return [];
+
+  return currentSetting.value.npcs.map((npc, index) => {
+    const isFullyGenerated = !!npc.read_aloud_description;
+    const label = isFullyGenerated
+      ? `${npc.name} (Fully Generated)`
+      : `${npc.name} (Basic)`;
+
+    return {
+      text: label,
+      value: index
+    };
+  });
+});
+
 const randomQuestString = 'Random: Generate a quest with a random objective and theme.';
 
 const questTypes = [
@@ -1537,6 +1658,8 @@ async function handleGenerateQuestHook({ operationIndex, prompt }) {
     loadingQuestHooks.value = false;
     if (settings.value[operationIndex]) {
       const questHook = JSON.parse(response);
+      // Auto-combine quest giver and quest detail fields for inline editing
+      questHook.combined_giver_and_quest = combineQuestGiverAndDetails(questHook);
       settings.value[operationIndex].questHooks.push(questHook);
       saveSettingsToLocalStorage();
     }
@@ -1596,9 +1719,24 @@ function getNPCText(npc) {
 }
 
 function getFullNPCDescription(npc) {
-  const relationshipText = Object.entries(npc.relationships).map(([name, description]) => `${name}: ${description}`).join(' ');
-  return `${npc.read_aloud_description} ${npc.description_of_position} ${npc.current_location} ${npc.distinctive_features_or_mannerisms} ${npc.character_secret}
-  Relationships:\n ${relationshipText}`;
+  // Check if this is a fully generated NPC
+  const isFullyGenerated = !!npc.read_aloud_description;
+
+  if (!isFullyGenerated) {
+    // For basic NPCs, use simpler description
+    return `${npc.name}: ${npc.description || 'A character in the setting'}`;
+  }
+
+  // For fully generated NPCs, include all details
+  let description = `${npc.read_aloud_description || ''} ${npc.description_of_position || ''} ${npc.current_location || ''} ${npc.distinctive_features_or_mannerisms || ''} ${npc.character_secret || ''}`.trim();
+
+  // Add relationships if they exist
+  if (npc.relationships && Object.keys(npc.relationships).length > 0) {
+    const relationshipText = Object.entries(npc.relationships).map(([name, description]) => `${name}: ${description}`).join(' ');
+    description += `\n  Relationships:\n ${relationshipText}`;
+  }
+
+  return description;
 }
 
 function generateDetailedNPCDescription(index, relationshipObject) {
@@ -2088,6 +2226,103 @@ const deleteRelationship = (relationshipIndex) => {
   if (editingNPCIndex.value !== null) {
     npcEditForm.value.relationshipsArray.splice(relationshipIndex, 1);
   }
+};
+
+// Helper function to combine quest giver and quest detail fields
+const combineQuestGiverAndDetails = (hook) => {
+  if (!hook) return '';
+
+  const parts = [];
+
+  if (hook.quest_giver_background) {
+    parts.push(hook.quest_giver_background);
+  }
+
+  if (hook.quest_giver_encounter) {
+    parts.push(hook.quest_giver_encounter);
+  }
+
+  if (hook.quest_details) {
+    parts.push(hook.quest_details);
+  }
+
+  return parts.filter(Boolean).join('\n\n');
+};
+
+// Inline editing functions for Quest Hooks
+const startEditingQuestHook = (index) => {
+  const hook = currentSetting.value.questHooks[index];
+
+  questHookEditForm.value = {
+    quest_title: hook.quest_title || '',
+    quest_giver_name: hook.quest_giver_name || '',
+    combined_giver_and_quest: hook.combined_giver_and_quest || combineQuestGiverAndDetails(hook),
+    objectives: [...(hook.objectives || [])],
+    challenges: [...(hook.challenges || [])],
+    rewards: [...(hook.rewards || [])],
+    twist: hook.twist || ''
+  };
+
+  editingQuestHookIndex.value = index;
+};
+
+const cancelEditQuestHook = () => {
+  editingQuestHookIndex.value = null;
+};
+
+const saveEditQuestHook = () => {
+  if (editingQuestHookIndex.value !== null) {
+    const hook = currentSetting.value.questHooks[editingQuestHookIndex.value];
+
+    hook.quest_title = questHookEditForm.value.quest_title;
+    hook.quest_giver_name = questHookEditForm.value.quest_giver_name;
+    hook.combined_giver_and_quest = questHookEditForm.value.combined_giver_and_quest;
+    hook.objectives = [...questHookEditForm.value.objectives];
+    hook.challenges = [...questHookEditForm.value.challenges];
+    hook.rewards = [...questHookEditForm.value.rewards];
+    hook.twist = questHookEditForm.value.twist;
+
+    // Save to localStorage
+    saveSettingsToLocalStorage();
+
+    editingQuestHookIndex.value = null;
+  }
+};
+
+// Array manipulation functions for quest hooks
+const addQuestObjective = () => {
+  questHookEditForm.value.objectives.push('');
+};
+
+const removeQuestObjective = (index) => {
+  questHookEditForm.value.objectives.splice(index, 1);
+};
+
+const addQuestChallenge = () => {
+  questHookEditForm.value.challenges.push('');
+};
+
+const removeQuestChallenge = (index) => {
+  questHookEditForm.value.challenges.splice(index, 1);
+};
+
+const addQuestReward = () => {
+  questHookEditForm.value.rewards.push('');
+};
+
+const removeQuestReward = (index) => {
+  questHookEditForm.value.rewards.splice(index, 1);
+};
+
+// Generate quest hook from the Quest Hooks tab
+const generateQuestHookFromTab = () => {
+  if (selectedQuestGiverIndex.value === null) {
+    alert('Please select a quest giver');
+    return;
+  }
+
+  const npc = currentSetting.value.npcs[selectedQuestGiverIndex.value];
+  generateQuestHook(npc);
 };
 
 const generateNewRelationship = (npcIndex) => {
