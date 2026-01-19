@@ -392,3 +392,36 @@ Please format the quest hook as a JSON object with the following keys:
 }
 `;
 }
+
+export function generateSingleRelationshipPrompt(npcDescription, settingOverview, relationshipName, relationshipShortDescription) {
+  return `
+Please create a relationship description for ${relationshipName} who is ${relationshipShortDescription}.
+
+Here is the information about the NPC who needs this relationship:
+${npcDescription}
+
+Here is context about the setting:
+${settingOverview}
+
+For the description, provide 2 sentences:
+
+Sentence 1 should describe the nature of the relationship and describe how the relationship has changed or evolved or how they met. Describe a scene which occurred between the NPCs. Examples:
+- The relationship between Empress Cyndra Moonscale and Sir Garrick Stormwarden began when he pledged his sword to her cause during a rebellion in a remote province, cementing a bond built on trust and shared purpose.
+- npc_name_1 is a celebrated firedancer whose performances are sought by nobles of the highest echelons. npc_name_2 met her when trying to steal a brooch from npc_name_1's rival in the green room and despite her better judgement, she fell hopelessly in love with him.
+
+Sentence 2 should describe a recent event or development either the relationship or the person's life. Don't say that it's a 'meaningful event' but rather show it through details. Show don't tell:
+- Recently, Sir Garrick has been grappling with doubts about the integrity of some noble houses, seeking Cyndra's guidance as he navigates a path between loyalty to his oath and the growing unrest in the realm.
+- npc_name_1 recently proposed to npc_name_2, to which she replied "Perhaps" and the ambiguity is driving him mad.
+
+Don't use the following NPC names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde.
+
+Temperature: 0.9
+
+Please format as a JSON object:
+
+{
+  "name": "${relationshipName}",
+  "relationship": "Two sentence description following the format above"
+}
+`;
+}
