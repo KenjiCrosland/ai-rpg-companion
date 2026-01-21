@@ -118,7 +118,8 @@
                         </p>
                     </CdrSkeleton>
                 </div>
-                <div v-if="npcDescriptionPart1 && !loadingPart1">
+                <!-- View Mode -->
+                <div v-if="npcDescriptionPart1 && !loadingPart1 && !isEditingNPC">
                     <h2>{{ npcDescriptionPart1.character_name }}</h2>
                     <div class="focus-text">{{ npcDescriptionPart1.read_aloud_description }}</div>
 
@@ -127,6 +128,53 @@
                             :key="pIndex">
                             {{ paragraph }}
                         </p>
+                    </div>
+
+                    <hr style="margin: 2rem 0;">
+                </div>
+
+                <!-- Edit Mode -->
+                <div v-if="npcDescriptionPart1 && !loadingPart1 && isEditingNPC" class="edit-form">
+                    <h2>Edit NPC</h2>
+
+                    <cdr-input v-model="npcEditForm.character_name" label="NPC Name" background="secondary"
+                        class="edit-field" />
+
+                    <cdr-input v-model="npcEditForm.read_aloud_description" label="Read-Aloud Description"
+                        background="secondary" :rows="4" tag="textarea" class="edit-field">
+                        <template #helper-text-bottom>
+                            The initial description when the NPC is first encountered
+                        </template>
+                    </cdr-input>
+
+                    <cdr-input v-model="npcEditForm.combined_details" label="NPC Details" background="secondary"
+                        :rows="10" tag="textarea" class="edit-field">
+                        <template #helper-text-bottom>
+                            Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for
+                            paragraphs.
+                        </template>
+                    </cdr-input>
+
+                    <h3>Relationships</h3>
+                    <div v-if="npcEditForm.relationshipsArray.length > 0">
+                        <div v-for="(relationship, index) in npcEditForm.relationshipsArray" :key="index"
+                            style="margin-bottom: 1.5rem; padding: 1.5rem; background: #f4f2ed; border-radius: 4px;">
+                            <cdr-input v-model="relationship.name" label="Name" background="secondary"
+                                style="margin-bottom: 1rem;" />
+                            <cdr-input v-model="relationship.description" label="Relationship Description"
+                                background="secondary" :rows="2" tag="textarea" style="margin-bottom: 1rem;" />
+                            <cdr-button size="small" @click="deleteRelationship(index)" modifier="secondary">Remove
+                                Relationship</cdr-button>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <p style="font-style: italic; color: #666; margin-bottom: 1rem;">No relationships to edit.
+                            Generate them in view mode first.</p>
+                    </div>
+
+                    <div class="button-group">
+                        <cdr-button @click="saveEditNPC">Save Changes</cdr-button>
+                        <cdr-button @click="cancelEditNPC" modifier="secondary">Cancel</cdr-button>
                     </div>
 
                     <hr style="margin: 2rem 0;">
@@ -165,7 +213,7 @@
                         </div>
                     </CdrSkeleton>
                 </div>
-                <div v-if="npcDescriptionPart2 && !loadingPart2">
+                <div v-if="npcDescriptionPart2 && !loadingPart2 && !isEditingNPC">
                     <h3>Relationships</h3>
                     <div
                         v-if="npcDescriptionPart2.relationships && Object.keys(npcDescriptionPart2.relationships).length > 0">
@@ -182,8 +230,9 @@
                         <p style="font-style: italic; color: #666;">No relationships generated.</p>
                     </div>
 
-                    <!-- Delete NPC Button -->
+                    <!-- Action Buttons -->
                     <div class="button-group" style="margin-top: 2rem;">
+                        <cdr-button @click="startEditingNPC" modifier="secondary">Edit NPC</cdr-button>
                         <cdr-button @click="deleteCurrentNPC" modifier="dark">Delete NPC</cdr-button>
                     </div>
                 </div>
@@ -277,6 +326,15 @@ const props = defineProps({
 const isSidebarVisible = ref(false);
 const windowWidth = ref(window.innerWidth);
 const showDataManagerModal = ref(false);
+
+// Inline editing
+const isEditingNPC = ref(false);
+const npcEditForm = ref({
+    character_name: '',
+    read_aloud_description: '',
+    combined_details: '',
+    relationshipsArray: []
+});
 
 const updateWindowWidth = () => {
     windowWidth.value = window.innerWidth;
@@ -383,6 +441,11 @@ function loadNPCIntoView(index) {
 
 // NPC Management functions
 function createNewNPC() {
+    // Exit edit mode if active
+    if (isEditingNPC.value) {
+        isEditingNPC.value = false;
+    }
+
     // Reset current view
     npcDescriptionPart1.value = null;
     npcDescriptionPart2.value = null;
@@ -397,6 +460,11 @@ function createNewNPC() {
 }
 
 function selectNPC(index) {
+    // Exit edit mode if active
+    if (isEditingNPC.value) {
+        isEditingNPC.value = false;
+    }
+
     // Save current NPC before switching
     if (npcDescriptionPart1.value) {
         saveCurrentNPCToList();
@@ -428,6 +496,60 @@ function deleteAllNPCs() {
         createNewNPC();
         saveNPCsToLocalStorage();
     }
+}
+
+// Inline editing functions
+function startEditingNPC() {
+    // Convert relationships object to array for easier editing
+    const relationshipsArray = npcDescriptionPart2.value?.relationships
+        ? Object.entries(npcDescriptionPart2.value.relationships).map(([name, description]) => ({
+            name,
+            description
+        }))
+        : [];
+
+    npcEditForm.value = {
+        character_name: npcDescriptionPart1.value.character_name || '',
+        read_aloud_description: npcDescriptionPart1.value.read_aloud_description || '',
+        combined_details: npcDescriptionPart1.value.combined_details || combineNPCDetails(npcDescriptionPart1.value),
+        relationshipsArray: relationshipsArray
+    };
+
+    isEditingNPC.value = true;
+}
+
+function cancelEditNPC() {
+    isEditingNPC.value = false;
+}
+
+function saveEditNPC() {
+    // Update part1 fields
+    npcDescriptionPart1.value.character_name = npcEditForm.value.character_name;
+    npcDescriptionPart1.value.read_aloud_description = npcEditForm.value.read_aloud_description;
+    npcDescriptionPart1.value.combined_details = npcEditForm.value.combined_details;
+
+    // Convert relationships array back to object
+    const relationshipsObject = {};
+    npcEditForm.value.relationshipsArray.forEach(rel => {
+        if (rel.name && rel.description) {
+            relationshipsObject[rel.name] = rel.description;
+        }
+    });
+
+    // Update part2 relationships
+    if (!npcDescriptionPart2.value) {
+        npcDescriptionPart2.value = {};
+    }
+    npcDescriptionPart2.value.relationships = relationshipsObject;
+
+    // Save to localStorage
+    saveCurrentNPCToList();
+
+    isEditingNPC.value = false;
+}
+
+function deleteRelationship(relationshipIndex) {
+    npcEditForm.value.relationshipsArray.splice(relationshipIndex, 1);
 }
 
 // Copy functions
@@ -830,6 +952,17 @@ div[class^="cdr-skeleton-bone"] {
     display: flex;
     gap: 1rem;
     margin-top: 2rem;
+}
+
+.edit-form {
+    .edit-field {
+        margin-bottom: 1.5rem;
+    }
+
+    h3 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
 }
 
 .credits {

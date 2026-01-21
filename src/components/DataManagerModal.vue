@@ -108,6 +108,11 @@ const knownApps = [
     premiumLink: 'https://cros.land/dnd-5e-magic-item-generator-premium-version/'
   },
   {
+    key: 'npcGeneratorNPCs',
+    appName: 'NPC Generator',
+    premiumLink: 'https://cros.land/npc-generator-premium-version/'
+  },
+  {
     key: 'rpgTimelineState',
     appName: 'Timeline Generator',
     premiumLink: null
