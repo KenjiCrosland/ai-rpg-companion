@@ -41,9 +41,10 @@
                 href="https://cros.land/ai-rpg-location-generator/">location
                 description generator</cdr-link> and copy and paste the results into the NPC generator here!
         </cdr-text>
-        <NPCForm :inputValue="typeOfPlace" labelText="Give me an NPC Description For:"
-            @npc-description-generated="displayNPCDescription" @npc-description-error="handleError"
-            @set-loading-state="setLoadingState" @example-clicked="setInputValue"></NPCForm>
+        <form @submit.prevent="handleGenerateNPC">
+            <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary" label="Give me an NPC Description For:" required />
+            <cdr-button type="submit" :disabled="loadingPart1">Generate NPC</cdr-button>
+        </form>
         <div class="location-description"
             v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
             <div v-if="loadingPart1">
@@ -81,13 +82,15 @@
             </div>
             <div v-if="npcDescriptionPart1 && !loadingPart1">
                 <h2>{{ npcDescriptionPart1.character_name }}</h2>
-                <div class="read-aloud">
-                    <p>{{ npcDescriptionPart1.read_aloud_description }}</p>
+                <div class="focus-text">{{ npcDescriptionPart1.read_aloud_description }}</div>
+
+                <div v-if="npcDescriptionPart1.combined_details" style="margin-top: 1.5rem;">
+                    <p v-for="(paragraph, pIndex) in npcDescriptionPart1.combined_details.split('\n\n')" :key="pIndex">
+                        {{ paragraph }}
+                    </p>
                 </div>
-                <p>{{ npcDescriptionPart1.description_of_position }}</p>
-                <p>{{ npcDescriptionPart1.reason_for_being_there }}</p>
-                <p>{{ npcDescriptionPart1.distinctive_feature_or_mannerism }}</p>
-                <p>{{ npcDescriptionPart1.character_secret }}</p>
+
+                <hr style="margin: 2rem 0;">
             </div>
             <div v-if="loadingPart2">
                 <h3>Relationships</h3>
@@ -121,31 +124,23 @@
                         <CdrSkeletonBone type="line" style="width:90%;" />
                         <CdrSkeletonBone type="line" style="width:85%;" />
                     </div>
-
-
-                    <h3>Roleplaying Tips</h3>
-
-                    <p style="margin-top: 0">
-                        <CdrSkeletonBone type="line" style="width:95%" />
-                        <CdrSkeletonBone type="line" style="width:90%" />
-                        <CdrSkeletonBone type="line" style="width:85%" />
-                        <CdrSkeletonBone type="line" style="width:95%" />
-                        <CdrSkeletonBone type="line" style="width:60%" />
-                    </p>
                 </CdrSkeleton>
             </div>
             <div v-if="npcDescriptionPart2 && !loadingPart2">
                 <h3>Relationships</h3>
-                <ul>
-                    <li v-for="(relationshipDescription, relationshipName) in npcDescriptionPart2.relationships"
-                        :key="relationshipName">
-                        <strong>{{ relationshipName }}:</strong> {{ relationshipDescription }}
-                    </li>
-                </ul>
-
-                <h3>Roleplaying Tips</h3>
-                <p>{{ npcDescriptionPart2.roleplaying_tips }}
-                </p>
+                <div v-if="npcDescriptionPart2.relationships && Object.keys(npcDescriptionPart2.relationships).length > 0">
+                    <div v-for="(relationshipDescription, relationshipName) in npcDescriptionPart2.relationships"
+                        :key="relationshipName"
+                        style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                        <p style="margin: 0;">
+                            <strong>Name:</strong> {{ relationshipName }}<br>
+                            <strong>Relationship:</strong> {{ relationshipDescription }}
+                        </p>
+                    </div>
+                </div>
+                <div v-else>
+                    <p style="font-style: italic; color: #666;">No relationships generated.</p>
+                </div>
             </div>
             <div v-if="npcDescriptionPart2 && !loadingPart2">
                 <h3>Generate D&D 5e Statblock for {{ npcDescriptionPart1.character_name }}</h3>
@@ -179,14 +174,13 @@
 
 <script setup>
 import { ref } from 'vue';
-import { CdrButton, CdrLink, CdrText, CdrCheckbox, CdrSelect, CdrList, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import { CdrButton, CdrLink, CdrText, CdrCheckbox, CdrSelect, CdrList, CdrSkeleton, CdrSkeletonBone, CdrInput } from '@rei/cedar';
 import Statblock from './Statblock.vue';
 import SaveStatblock from './SaveStatblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
+import { requestNPCDescription } from "../util/request-npc-description.mjs";
 import challengeRatingData from '../data/challengeRatings.json';
-import creatureTemplates from '../data/creatureTemplates.json';
-import NPCForm from './NPCForm.vue';
 import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
@@ -195,6 +189,7 @@ import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-skeleton.css';
 import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
+import '@rei/cedar/dist/style/cdr-input.css';
 import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
 
 const npcDescriptionPart1 = ref('');
@@ -242,8 +237,39 @@ function setLoadingState({ part, isLoading }) {
     }
 }
 
+// Helper function to combine NPC detail fields into a single content block
+function combineNPCDetails(npc) {
+    if (!npc) return '';
+
+    const parts = [];
+
+    if (npc.description_of_position) {
+        parts.push(npc.description_of_position);
+    }
+
+    if (npc.reason_for_being_there) {
+        parts.push(npc.reason_for_being_there);
+    }
+
+    if (npc.distinctive_feature_or_mannerism) {
+        parts.push(npc.distinctive_feature_or_mannerism);
+    }
+
+    if (npc.character_secret) {
+        parts.push(npc.character_secret);
+    }
+
+    if (npc.roleplaying_tips) {
+        parts.push(npc.roleplaying_tips);
+    }
+
+    return parts.filter(Boolean).join('\n\n');
+}
+
 function displayNPCDescription({ part, npcDescription }) {
     if (part === 1) {
+        // Combine detail fields into a single content block
+        npcDescription.combined_details = combineNPCDetails(npcDescription);
         npcDescriptionPart1.value = npcDescription;
         loadingPart1.value = false;
     } else if (part === 2) {
@@ -257,6 +283,23 @@ function handleError(message) {
     loadingPart1.value = false;
     loadingPart2.value = false;
     errorMessage.value = message || null;
+}
+
+async function handleGenerateNPC() {
+    await requestNPCDescription(
+        typeOfPlace.value,
+        {}, // extraDescription - not used in basic generator
+        false, // sequentialLoading
+        (event, payload) => {
+            if (event === 'npc-description-generated') {
+                displayNPCDescription(payload);
+            } else if (event === 'npc-description-error') {
+                handleError(payload);
+            } else if (event === 'set-loading-state') {
+                setLoadingState(payload);
+            }
+        }
+    );
 }
 
 async function generateStatblock() {
@@ -356,7 +399,7 @@ hr {
     margin: 1rem 0;
 }
 
-.read-aloud {
+.focus-text {
     background-color: $cdr-color-background-secondary;
     color: $cdr-color-text-secondary;
     padding: 1rem 2rem;

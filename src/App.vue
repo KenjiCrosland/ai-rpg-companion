@@ -77,7 +77,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'setting-generator-premium',
+      currentPage: this.$attrs['data-page'] || 'npc-generator',
     };
   },
   mounted() {
