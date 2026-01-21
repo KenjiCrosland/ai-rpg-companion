@@ -1,6 +1,32 @@
 <template>
     <ToolSuiteShowcase :premium="premium" display-mode="banner" />
     <div class="app-container">
+        <!-- Overlay to close sidebar on click -->
+        <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
+
+        <div class="sidebar" :style="sidebarStyle">
+            <div class="sidebar-content">
+                <ul class="npc-list">
+                    <li v-for="(npc, index) in npcs" :key="index"
+                        :class="{ 'active-tab': currentNPCIndex === index }"
+                        @click="selectNPC(index)">
+                        <button class="npc-button">
+                            {{ npc.npcDescriptionPart1?.character_name || 'Unnamed NPC' }}
+                        </button>
+                    </li>
+                    <li>
+                        <button v-if="!loadingPart1" class="npc-button" @click="createNewNPC">+ New NPC</button>
+                    </li>
+                </ul>
+                <div class="sidebar-buttons">
+                    <cdr-button @click="deleteAllNPCs" v-if="npcs.length > 0 && !loadingPart1" modifier="secondary">
+                        Delete All NPCs
+                    </cdr-button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
         <h1 v-if="premium">Kenji's NPC Generator -- Premium Version</h1>
         <h1 v-else>Kenji's NPC Generator -- Free Version</h1>
         <hr>
@@ -166,15 +192,29 @@
             </div>
             <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
         </div>
+
         <div class="patreon" v-if="!premium">
             <cdr-link href="https://www.patreon.com/bePatron?u=2356190">Support Me on Patreon!</cdr-link>
         </div>
+        </div>
+
+        <!-- Bottom Menu Button for Mobile -->
+        <button
+            class="mobile-menu-button"
+            v-show="windowWidth <= 768"
+            @click="isSidebarVisible = !isSidebarVisible"
+            :class="{ active: isSidebarVisible }"
+            aria-label="Toggle NPC menu"
+        >
+            <icon-navigation-menu inherit-color />
+            <span class="button-label">Menu</span>
+        </button>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { CdrButton, CdrLink, CdrText, CdrCheckbox, CdrSelect, CdrList, CdrSkeleton, CdrSkeletonBone, CdrInput } from '@rei/cedar';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { CdrButton, CdrLink, CdrText, CdrCheckbox, CdrSelect, CdrList, CdrSkeleton, CdrSkeletonBone, CdrInput, IconNavigationMenu } from '@rei/cedar';
 import Statblock from './Statblock.vue';
 import SaveStatblock from './SaveStatblock.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
@@ -192,6 +232,11 @@ import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
 import '@rei/cedar/dist/style/cdr-input.css';
 import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
 
+// NPC list for sidebar - each entry stores the full NPC data
+const npcs = ref([]);
+const currentNPCIndex = ref(0);
+
+// Current NPC data (what's currently being displayed/edited)
 const npcDescriptionPart1 = ref('');
 const npcDescriptionPart2 = ref('');
 const typeOfPlace = ref('');
@@ -221,8 +266,150 @@ const examples = ref([
     'A completely random NPC. Surprise me'
 ]);
 
+// Sidebar responsive
+const isSidebarVisible = ref(false);
+const windowWidth = ref(window.innerWidth);
+
+const updateWindowWidth = () => {
+    windowWidth.value = window.innerWidth;
+};
+
+const updateVisibility = () => {
+    if (window.innerWidth > 768) {
+        isSidebarVisible.value = true;
+    } else {
+        isSidebarVisible.value = false;
+    }
+};
+
+const sidebarStyle = computed(() => {
+    if (windowWidth.value <= 768) {
+        return {
+            position: 'fixed',
+            transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
+            width: '70%',
+            maxWidth: '400px'
+        };
+    } else {
+        return {
+            width: '400px'
+        };
+    }
+});
+
+onMounted(() => {
+    loadNPCsFromLocalStorage();
+    updateWindowWidth();
+    updateVisibility();
+    window.addEventListener('resize', updateWindowWidth);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateWindowWidth);
+});
+
+watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
+    if (width <= 768 && sidebarOpen) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+});
+
+// Local Storage functions
+function saveNPCsToLocalStorage() {
+    localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcs.value));
+}
+
+function loadNPCsFromLocalStorage() {
+    const stored = localStorage.getItem('npcGeneratorNPCs');
+    if (stored) {
+        try {
+            const parsed = JSON.parse(stored);
+            if (parsed.length > 0) {
+                npcs.value = parsed;
+                // Load the first NPC into current view
+                if (npcs.value[0]) {
+                    loadNPCIntoView(0);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to parse NPCs from local storage:', error);
+        }
+    }
+}
+
+// Save current NPC to the list
+function saveCurrentNPCToList() {
+    const npcData = {
+        npcDescriptionPart1: npcDescriptionPart1.value,
+        npcDescriptionPart2: npcDescriptionPart2.value,
+        typeOfPlace: typeOfPlace.value,
+        statblock: statblock.value,
+        selectedChallengeRating: selectedChallengeRating.value,
+        isSpellcaster: isSpellcaster.value
+    };
+
+    // If current index exists, update it; otherwise add new
+    if (currentNPCIndex.value < npcs.value.length) {
+        npcs.value[currentNPCIndex.value] = npcData;
+    } else {
+        npcs.value.push(npcData);
+        currentNPCIndex.value = npcs.value.length - 1;
+    }
+
+    saveNPCsToLocalStorage();
+}
+
+// Load an NPC from the list into the current view
+function loadNPCIntoView(index) {
+    if (npcs.value[index]) {
+        const npc = npcs.value[index];
+        npcDescriptionPart1.value = npc.npcDescriptionPart1 || '';
+        npcDescriptionPart2.value = npc.npcDescriptionPart2 || '';
+        typeOfPlace.value = npc.typeOfPlace || '';
+        statblock.value = npc.statblock || null;
+        selectedChallengeRating.value = npc.selectedChallengeRating || '1';
+        isSpellcaster.value = npc.isSpellcaster || false;
+        currentNPCIndex.value = index;
+    }
+}
+
+// NPC Management functions
+function createNewNPC() {
+    // Reset current view
+    npcDescriptionPart1.value = '';
+    npcDescriptionPart2.value = '';
+    typeOfPlace.value = '';
+    errorMessage.value = '';
+    loadingPart1.value = false;
+    loadingPart2.value = false;
+    statblock.value = null;
+    selectedChallengeRating.value = '1';
+    isSpellcaster.value = false;
+    currentNPCIndex.value = npcs.value.length;
+}
+
+function selectNPC(index) {
+    // Save current NPC before switching
+    if (npcDescriptionPart1.value) {
+        saveCurrentNPCToList();
+    }
+    loadNPCIntoView(index);
+}
+
+function deleteAllNPCs() {
+    if (confirm('Are you sure you want to delete all NPCs? This cannot be undone.')) {
+        npcs.value = [];
+        createNewNPC();
+        saveNPCsToLocalStorage();
+    }
+}
+
 function updateStatblock(monster) {
     statblock.value = monster;
+    // Save the updated statblock to the NPC list
+    saveCurrentNPCToList();
 }
 
 function setInputValue({ value }) {
@@ -268,13 +455,17 @@ function combineNPCDetails(npc) {
 
 function displayNPCDescription({ part, npcDescription }) {
     if (part === 1) {
-        // Combine detail fields into a single content block
+        // Combine detail fields into a single content block (this is the key for inline editing later!)
         npcDescription.combined_details = combineNPCDetails(npcDescription);
         npcDescriptionPart1.value = npcDescription;
         loadingPart1.value = false;
+        // Save to list after part 1
+        saveCurrentNPCToList();
     } else if (part === 2) {
         npcDescriptionPart2.value = npcDescription;
         loadingPart2.value = false;
+        // Save to list after part 2
+        saveCurrentNPCToList();
     }
 }
 
@@ -336,6 +527,8 @@ async function generateStatblock() {
             ...JSON.parse(npcStatsPart2),
         };
         statblock.value = finalStatblock;
+        // Save the statblock to the NPC list
+        saveCurrentNPCToList();
     } catch (e) {
         errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.';
     }
@@ -377,14 +570,154 @@ function validationPart2(jsonString) {
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 .app-container {
-    @include cdr-text-body-400();
-    color: $cdr-color-text-primary;
-    max-width: 940px;
-    margin: 20px auto;
-    padding: 2px 30px 30px 30px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+
+    $sidebar-width: 350px;
+    $background-color: #f4f4f4;
+    $active-color: #ffffff;
+    $hover-background-color: #f0f0f0;
+    $default-background-color: #e0e0e0;
+    $active-border-color: #007BFF;
+
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+
+    .sidebar {
+        transition: transform 0.3s ease;
+        background-color: $background-color;
+        width: $sidebar-width;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        z-index: 1001;
+        overflow: hidden;
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .npc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2rem 0;
+
+            li {
+                margin-bottom: 4px;
+
+                &.active-tab {
+                    .npc-button {
+                        background-color: $active-color;
+                        border-left: 4px solid $active-border-color;
+                    }
+                }
+
+                .npc-button {
+                    width: 100%;
+                    padding: 12px 20px;
+                    font-size: 1.25rem;
+                    text-align: left;
+                    background-color: $default-background-color;
+                    border: none;
+                    border-left: 4px solid transparent;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                    font-family: 'Roboto', sans-serif;
+
+                    &:hover {
+                        background-color: $hover-background-color;
+                    }
+
+                    &:focus {
+                        outline: none;
+                        border-left-color: $active-border-color;
+                    }
+                }
+            }
+        }
+
+        .sidebar-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+
+    .main-content {
+        flex-grow: 1;
+        @include cdr-text-body-400();
+        color: $cdr-color-text-primary;
+        max-width: 940px;
+        margin: 20px auto;
+        padding: 2px 30px 30px 30px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .mobile-menu-button {
+        display: none;
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 64px;
+        height: 64px;
+        background-color: #e0e0e0;
+        color: #333;
+        border: none;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        z-index: 998;
+        transition: all 0.3s ease;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+
+        @media (max-width: 768px) {
+            display: flex;
+        }
+
+        svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .button-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        &:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background-color: #d0d0d0;
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
+
+        &.active {
+            background-color: #333;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+    }
 }
 
 hr {
