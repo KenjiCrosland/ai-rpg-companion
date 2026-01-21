@@ -1,44 +1,39 @@
 <template>
   <ToolSuiteShowcase :premium="premium" display-mode="banner" />
   <div class="app-container">
-    <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
-      v-show="windowWidth <= 768">
-      <template #icon-left>
-        <icon-navigation-menu inherit-color />
-      </template>
-      {{ isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar' }}
-    </cdr-button>
     <!-- Overlay to close sidebar on click -->
     <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
 
     <div class="sidebar" :style="sidebarStyle">
-      <ul class="settings-tabs">
-        <!-- Flatten settings tree and display each with appropriate indentation -->
-        <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
-          :class="{ 'active-tab': currentSettingIndex === setting.originalIndex }"
-          :style="{ marginLeft: `${setting.depth * 20}px` }">
-          <button class="setting-button" @click="selectSetting(setting.originalIndex)">
-            {{ setting.place_name || 'Unnamed Setting' }}
-          </button>
-        </li>
-        <li>
-          <button v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" class="setting-button"
-            @click="createNewSetting">+ New Setting</button>
-        </li>
-      </ul>
-      <div class="copy-buttons">
+      <div class="sidebar-content">
+        <ul class="settings-tabs">
+          <!-- Flatten settings tree and display each with appropriate indentation -->
+          <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
+            :class="{ 'active-tab': currentSettingIndex === setting.originalIndex }"
+            :style="{ marginLeft: `${setting.depth * 20}px` }">
+            <button class="setting-button" @click="selectSetting(setting.originalIndex)">
+              {{ setting.place_name || 'Unnamed Setting' }}
+            </button>
+          </li>
+          <li>
+            <button v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" class="setting-button"
+              @click="createNewSetting">+ New Setting</button>
+          </li>
+        </ul>
+        <div class="copy-buttons">
 
-        <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
-        <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
-        <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
-        <cdr-button modifier="dark" @click="showDataManagerModal = true">
-          Save/Load Data from a File
-        </cdr-button>
-        <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
-          <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
-          there. You will need to add your own pagebreaks.
-        </p>
-        <cdr-button @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</cdr-button>
+          <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
+          <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
+          <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
+          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            Save/Load Data from a File
+          </cdr-button>
+          <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
+            <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
+            there. You will need to add your own pagebreaks.
+          </p>
+          <cdr-button @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</cdr-button>
+        </div>
       </div>
 
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
@@ -818,6 +813,18 @@
         </CdrSkeleton>
       </div>
     </div>
+
+    <!-- Bottom Menu Button for Mobile -->
+    <button
+      class="mobile-menu-button"
+      v-show="windowWidth <= 768"
+      @click="isSidebarVisible = !isSidebarVisible"
+      :class="{ active: isSidebarVisible }"
+      aria-label="Toggle settings menu"
+    >
+      <icon-navigation-menu inherit-color />
+      <span class="button-label">Menu</span>
+    </button>
   </div>
 </template>
 
@@ -877,6 +884,15 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateWindowWidth);
+});
+
+// Prevent body scrolling when sidebar is open on mobile
+watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
+  if (width <= 768 && sidebarOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 });
 
 const sidebarStyle = computed(() => {
@@ -2393,19 +2409,18 @@ function randomName(setting) {
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5); // Semi-transparent
-    z-index: 2; // Lower than sidebar but higher than content
+    z-index: 1000; // Between content and sidebar
   }
 
   .sidebar {
     transition: transform 0.3s ease;
     background-color: $background-color;
-    padding: 1rem;
     --sidebar-width: 400px; // Define sidebar width as a variable for easy changes
     height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    z-index: 3;
+    z-index: 1001; // Above mobile header
+    overflow: hidden; // No overflow on sidebar itself
 
     &.fixed {
       position: fixed;
@@ -2413,10 +2428,19 @@ function randomName(setting) {
       left: 0;
     }
 
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto; // Single scrollable container
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
     .settings-tabs {
       list-style: none;
       padding: 0;
       margin: 0;
+      margin-bottom: 1rem;
 
       li {
         margin-bottom: 4px;
@@ -2460,21 +2484,60 @@ function randomName(setting) {
     .copy-buttons {
       display: flex;
       flex-direction: column;
-      margin: 1rem;
       gap: 1rem;
-      margin-bottom: 11rem;
     }
   }
 
-  .sidebar-toggle {
-    display: none; // Initially hidden
+  .mobile-menu-button {
+    display: none;
     position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1001;
+    bottom: 24px;
+    right: 24px;
+    width: 64px;
+    height: 64px;
+    background-color: #e0e0e0;
+    color: #333;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    z-index: 998; // Below sidebar but above content
+    transition: all 0.3s ease;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 
     @media (max-width: 768px) {
-      display: block; // Only shown on mobile
+      display: flex;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .button-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      background-color: #d0d0d0;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &.active {
+      background-color: #333;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
   }
 
@@ -2488,7 +2551,6 @@ function randomName(setting) {
     align-items: center;
     margin: 3rem auto;
     max-width: 800px;
-
 
     .generate-button {
       margin-top: 2rem;
