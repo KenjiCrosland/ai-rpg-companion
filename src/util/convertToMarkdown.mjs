@@ -206,6 +206,126 @@ function dungeonPageBreaks(text) {
   return result;
 }
 
+export function convertNPCToMarkdown(npc) {
+  let markdown = `### ${npc.character_name.toUpperCase()}\n\n`;
+
+  if (npc.read_aloud_description) {
+    markdown += `{{descriptive\n${npc.read_aloud_description}\n}}\n\n`;
+  }
+
+  if (npc.combined_details) {
+    const paragraphs = npc.combined_details.split('\n\n');
+    paragraphs.forEach(para => {
+      markdown += `${para}\n:\n\n`;
+    });
+  }
+
+  if (npc.relationships && Object.keys(npc.relationships).length > 0) {
+    markdown += `#### Relationships\n:\n\n`;
+    Object.entries(npc.relationships).forEach(([name, description]) => {
+      markdown += `**${name}:** ${description}\n:\n\n`;
+    });
+  }
+
+  // Add statblock if it exists
+  if (npc.statblock && npc.statblock.name) {
+    markdown += statblockToMarkdown(npc.statblock, 'two_columns') + '\n\n';
+  }
+
+  return markdown;
+}
+
+export function convertNPCToPlainText(npc) {
+  const characterName = npc.character_name.toUpperCase();
+  const dashes = '-'.repeat(characterName.length);
+  let plainText = `${characterName}\n${dashes}\n\n`;
+
+  if (npc.read_aloud_description) {
+    plainText += `${npc.read_aloud_description}\n\n`;
+  }
+
+  if (npc.combined_details) {
+    const paragraphs = npc.combined_details.split('\n\n');
+    paragraphs.forEach(para => {
+      plainText += `${para}\n\n`;
+    });
+  }
+
+  if (npc.relationships && Object.keys(npc.relationships).length > 0) {
+    plainText += `Relationships\n\n`;
+    Object.entries(npc.relationships).forEach(([name, description]) => {
+      plainText += `${name}: ${description}\n\n`;
+    });
+  }
+
+  // Add statblock if it exists
+  if (npc.statblock && npc.statblock.name) {
+    plainText += statblockToPlainText(npc.statblock) + '\n\n';
+  }
+
+  return plainText;
+}
+
+export function statblockToPlainText(obj) {
+  let plainText = '';
+
+  plainText += `${obj.name.toUpperCase()}\n`;
+  plainText += `${'='.repeat(obj.name.length)}\n\n`;
+  plainText += `${obj.type_and_alignment}\n\n`;
+  plainText += `Armor Class: ${obj.armor_class}\n`;
+  plainText += `Hit Points: ${obj.hit_points}\n`;
+  plainText += `Speed: ${obj.speed}\n\n`;
+
+  // Attributes
+  const attrs = obj.attributes.split(', ');
+  plainText += 'STR     DEX     CON     INT     WIS     CHA\n';
+  attrs.forEach((attr) => {
+    const parts = attr.split(' ');
+    plainText += `${parts[1]} ${parts[2]}  `;
+  });
+  plainText += '\n\n';
+
+  if (obj.saving_throws?.trim() !== '') {
+    plainText += `Saving Throws: ${obj.saving_throws}\n`;
+  }
+  if (obj.skills?.trim() !== '') {
+    plainText += `Skills: ${obj.skills}\n`;
+  }
+  if (obj.damage_resistances?.trim() !== '') {
+    plainText += `Damage Resistances: ${obj.damage_resistances}\n`;
+  }
+  if (obj.damage_immunities?.trim() !== '') {
+    plainText += `Damage Immunities: ${obj.damage_immunities}\n`;
+  }
+  plainText += `Condition Immunities: ${obj.condition_immunities}\n`;
+  plainText += `Senses: ${obj.senses}\n`;
+  plainText += `Languages: ${obj.languages}\n`;
+  plainText += `Challenge: ${obj.challenge_rating}\n\n`;
+
+  // Abilities
+  if (obj.abilities && obj.abilities.length > 0) {
+    obj.abilities.forEach((ability) => {
+      plainText += `${ability.name}. ${ability.description}\n\n`;
+    });
+  }
+
+  // Actions
+  plainText += 'ACTIONS\n-------\n';
+  obj.actions.forEach((action) => {
+    plainText += `${action.name}. ${action.description}\n\n`;
+  });
+
+  // Legendary Actions
+  if (obj.legendary_actions && obj.legendary_actions.length > 0) {
+    plainText += 'LEGENDARY ACTIONS\n-----------------\n';
+    obj.legendary_actions.forEach((action) => {
+      plainText += `${action.name}. ${action.description}\n\n`;
+    });
+  }
+
+  return plainText;
+}
+
 export function statblockToMarkdown(obj, columns) {
   let wide = '';
   if (columns === 'two_columns') {

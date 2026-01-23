@@ -89,7 +89,7 @@ export function getLocationJSON() {
 }
 
 export function createNPCPrompt(param) {
-  return `Please create an Tabletop Roleplaying NPC description for ${param} in the form of a JSON object using the given instructions and examples as guidelines. The JSON object should include the following keys: character_name, description_of_position, reason_for_being_there, distinctive_feature_or_mannerism, and character_secret. Temperature: 0.9.
+  return `Please create an Tabletop Roleplaying NPC description for ${param} in the form of a JSON object using the given instructions and examples as guidelines. The JSON object should include the following keys: character_name, description_of_position, reason_for_being_there, distinctive_feature_or_mannerism, character_secret, read_aloud_description, and roleplaying_tips. Temperature: 0.9.
     {
         "format": "JSON",
         "instructions": {
@@ -100,18 +100,19 @@ export function createNPCPrompt(param) {
             "distinctive_feature_or_mannerism": "Provide a distinctive feature or peculiar mannerism observable in their actions. && Examples: His pale face is flushed with sweat and exertion from walking around in the plate armor, and he has a bit of a squeaky voice. && npc_name absentmindedly tinkers with a small mechanical spider, occasionally muttering to himself as he makes adjustments. && npc_name is easy to pick out from a crowd, as he often gestures dramatically with his hands as he spins tales of his past exploits, punctuating his words with sips of his drink.",
             "character_secret": "Provide a secret or hidden motivation that the character has that they are keeping from others. && Examples: npc_name secretly hopes that by completing a heroic quest, he will win the approval of his family and be recognized as a true hero. && Although npc_name manages to keep a calm facade, he is actually on the run from a rival inventor who wants to steal his clockwork mantis design.",
             "read_aloud_description": "Provide a concise 2-3 sentence description that provides evocative character details. This is meant for a GM to read aloud to players when they meet this character.",
+            "roleplaying_tips": "Provide 1-2 sentences of roleplaying tips for this NPC. && Examples: When roleplaying npc_name, your high pitched voice often breaks. You stutter often out of nervousness. Occasionally you pepper your speech cliched platitudes like \"I just wish to live my life to the fullest! And sometime be known throughout the land!\" && When roleplaying npc_name, speak with a thick accent and use technical jargon about cybernetics. Refer to the body as \"meat\" and augmentations as \"chrome.\""
         }
     }`;
 }
 
 export function createRelationshipAndTipsPrompt(param) {
-  return `Please create description of an relationships for an NPC descrbed by the following JSON object:
-    
+  return `Please create description of relationships for an NPC described by the following JSON object:
+
     ${param}
-    
-    Please respond in JSON Format with the following keys: relationships, roleplaying_tips. When describing relationships please mention one meaningful event that occurred between the npc and the character they have a relationship with.
+
+    Please respond in JSON Format with the following key: relationships. When describing relationships please mention one meaningful event that occurred between the npc and the character they have a relationship with.
     For the descriptions, provide 2 sentences:
-    
+
     Sentence 1 should describe the nature of the relationship and describe how the relationship has changed or evolved or how they met. Describe a scene which occured between the npc and this character. Examples Below:
     npc_name_1 is a celebrated firedancer whose performances are sought by nobles of the highest echelons. npc_name_2 met her when trying to steal a brooch from npc_name_1's rival in the green room and despite her better judgement, she fell hopelessly in love with him.
     Aside from tinkering, npc_name_1's adopted human daughter npc_name_2 has been the greatest joy of his life. However, she has been frequenting the Tarnished Sword tavern listening to tales of adventurers which is causing him no end of worry.
@@ -126,9 +127,8 @@ export function createRelationshipAndTipsPrompt(param) {
         "relationships": {
             "npc_name_1": "Description (see format above). This should be a single string without brackets",
             "npc_name_2":  "Description (see format above). This should be a single string without brackets",
-            "npc_name_3": "Description (see format above). This should be a single string without brackets",
-        },
-        "roleplaying_tips": "1-2 sentences of roleplaing tips for this npc. Example: When roleplaying npc_name, your high pitched voice often breaks. You stutter often out of nervousness. Occasionally you pepper your speech cliched platitudes like \"I just wish to live my life to the fullest! And sometime be known throughout the land!\""
+            "npc_name_3": "Description (see format above). This should be a single string without brackets"
+        }
     }
     Please replace "npc_name" with actual names. This should be a proper noun for an individual not their title or position. Be sure that the relationships object has child keys with the names of each character the npc has relationships with.
     `;

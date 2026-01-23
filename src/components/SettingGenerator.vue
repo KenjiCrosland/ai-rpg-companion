@@ -1,44 +1,39 @@
 <template>
   <ToolSuiteShowcase :premium="premium" display-mode="banner" />
   <div class="app-container">
-    <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
-      v-show="windowWidth <= 768">
-      <template #icon-left>
-        <icon-navigation-menu inherit-color />
-      </template>
-      {{ isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar' }}
-    </cdr-button>
     <!-- Overlay to close sidebar on click -->
     <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
 
     <div class="sidebar" :style="sidebarStyle">
-      <ul class="settings-tabs">
-        <!-- Flatten settings tree and display each with appropriate indentation -->
-        <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
-          :class="{ 'active-tab': currentSettingIndex === setting.originalIndex }"
-          :style="{ marginLeft: `${setting.depth * 20}px` }">
-          <button class="setting-button" @click="selectSetting(setting.originalIndex)">
-            {{ setting.place_name || 'Unnamed Setting' }}
-          </button>
-        </li>
-        <li>
-          <button v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" class="setting-button"
-            @click="createNewSetting">+ New Setting</button>
-        </li>
-      </ul>
-      <div class="copy-buttons">
+      <div class="sidebar-content">
+        <ul class="settings-tabs">
+          <!-- Flatten settings tree and display each with appropriate indentation -->
+          <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
+            :class="{ 'active-tab': currentSettingIndex === setting.originalIndex }"
+            :style="{ marginLeft: `${setting.depth * 20}px` }">
+            <button class="setting-button" @click="selectSetting(setting.originalIndex)">
+              {{ setting.place_name || 'Unnamed Setting' }}
+            </button>
+          </li>
+          <li>
+            <button v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" class="setting-button"
+              @click="createNewSetting">+ New Setting</button>
+          </li>
+        </ul>
+        <div class="copy-buttons">
 
-        <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
-        <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
-        <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
-        <cdr-button modifier="dark" @click="showDataManagerModal = true">
-          Save/Load Data from a File
-        </cdr-button>
-        <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
-          <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
-          there. You will need to add your own pagebreaks.
-        </p>
-        <cdr-button @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</cdr-button>
+          <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
+          <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
+          <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
+          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            Save/Load Data from a File
+          </cdr-button>
+          <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
+            <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
+            there. You will need to add your own pagebreaks.
+          </p>
+          <cdr-button @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</cdr-button>
+        </div>
       </div>
 
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
@@ -97,26 +92,65 @@
       <Tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%"
         :activeIndex="activeTabIndex">
         <TabPanel label="Overview">
-          <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
-            currentSetting.setting_overview.title) }}</h2>
-          <p>{{ currentSetting.setting_overview.overview }} {{
-            currentSetting.setting_overview.relation_to_larger_setting }}
-          </p>
-          <p>{{ currentSetting.setting_overview.history }}</p>
-          <p>{{ currentSetting.setting_overview.current_ruler_sentence }}
-            {{ currentSetting.setting_overview.recent_event_current_ruler }}
-            {{ currentSetting.setting_overview.recent_event_consequences }}</p>
-          <p>{{ currentSetting.setting_overview.social_history }} {{ currentSetting.setting_overview.recent_event_social
-          }}
-          </p>
-          <p>{{ currentSetting.setting_overview.economic_history }} {{
-            currentSetting.setting_overview.impactful_economic_event }}</p>
-          <p>{{ currentSetting.setting_overview.military_history }}
-            {{ currentSetting.setting_overview.recent_event_military }}
-          </p>
-          <p>{{ currentSetting.setting_overview.main_problem }}
-            {{ currentSetting.setting_overview.potential_solutions }}</p>
-          <p>{{ currentSetting.setting_overview.conclusion }}</p>
+          <!-- View Mode -->
+          <div v-if="!isEditing">
+            <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
+              currentSetting.setting_overview.title) }}</h2>
+            <div v-if="currentSetting.setting_overview.combined_content" class="overview-content">
+              <p v-for="(paragraph, index) in currentSetting.setting_overview.combined_content.split('\n\n')"
+                :key="index">
+                {{ paragraph }}
+              </p>
+            </div>
+            <div v-else class="overview-content">
+              <p>{{ currentSetting.setting_overview.overview }} {{
+                currentSetting.setting_overview.relation_to_larger_setting }}
+              </p>
+              <p>{{ currentSetting.setting_overview.history }}</p>
+              <p>{{ currentSetting.setting_overview.current_ruler_sentence }}
+                {{ currentSetting.setting_overview.recent_event_current_ruler }}
+                {{ currentSetting.setting_overview.recent_event_consequences }}</p>
+              <p>{{ currentSetting.setting_overview.social_history }} {{
+                currentSetting.setting_overview.recent_event_social
+                }}
+              </p>
+              <p>{{ currentSetting.setting_overview.economic_history }} {{
+                currentSetting.setting_overview.impactful_economic_event }}</p>
+              <p>{{ currentSetting.setting_overview.military_history }}
+                {{ currentSetting.setting_overview.recent_event_military }}
+              </p>
+              <p>{{ currentSetting.setting_overview.main_problem }}
+                {{ currentSetting.setting_overview.potential_solutions }}</p>
+              <p>{{ currentSetting.setting_overview.conclusion }}</p>
+            </div>
+
+            <div class="button-group">
+              <cdr-button @click="startEditing" modifier="secondary">Edit Overview</cdr-button>
+            </div>
+          </div>
+
+          <!-- Edit Mode -->
+          <div v-else class="edit-form">
+            <h2>Edit Setting Overview</h2>
+
+            <cdr-input v-model="editForm.title" label="Title" background="secondary" class="edit-field">
+              <template #helper-text-bottom>
+                The title of your setting
+              </template>
+            </cdr-input>
+
+            <cdr-input v-model="editForm.content" label="Overview Content" background="secondary" :rows="15"
+              tag="textarea" class="edit-field">
+              <template #helper-text-bottom>
+                The main content of your setting overview. Use double line breaks for paragraphs.
+              </template>
+            </cdr-input>
+
+            <div class="button-group">
+              <cdr-button @click="saveEdit">Save Changes</cdr-button>
+              <cdr-button @click="cancelEdit" modifier="secondary">Cancel</cdr-button>
+            </div>
+          </div>
         </TabPanel>
         <TabPanel label="Locations">
           <h2>Important Locations</h2>
@@ -143,13 +177,44 @@
                       Delete Sub-Location
                     </div>
                   </cdr-tooltip>
-                  <h2>{{ setting.name }}</h2>
-                  <p>{{ setting.description }}</p>
-                  <p>{{ setting.setting_scale }}</p>
-                  <cdr-button
-                    @click="generateSetting({ sublocationIndex: index, subLocationName: setting.name, subLocationDescription: setting.description, adjective: setting.adjective, setting_type: setting.setting_type, title: setting.title })">
-                    Generate Full Description
-                  </cdr-button>
+
+                  <!-- View Mode -->
+                  <div v-if="editingLocationIndex !== index">
+                    <h2>{{ setting.name }}</h2>
+                    <p>{{ setting.description }}</p>
+                    <p v-if="setting.setting_scale">{{ setting.setting_scale }}</p>
+
+                    <div class="button-group">
+                      <cdr-button @click="startEditingLocation(index)" modifier="secondary">Edit Location</cdr-button>
+                      <cdr-button
+                        @click="generateSetting({ sublocationIndex: index, subLocationName: setting.name, subLocationDescription: setting.description, adjective: setting.adjective, setting_type: setting.setting_type, title: setting.title })">
+                        Generate Full Description
+                      </cdr-button>
+                    </div>
+                  </div>
+
+                  <!-- Edit Mode -->
+                  <div v-else class="edit-form">
+                    <h2>Edit Location</h2>
+
+                    <cdr-input v-model="locationEditForm.name" label="Location Name" background="secondary"
+                      class="edit-field" />
+
+                    <cdr-input v-model="locationEditForm.description" label="Location Description"
+                      background="secondary" :rows="5" tag="textarea" class="edit-field" />
+
+                    <cdr-input v-model="locationEditForm.setting_scale" label="Setting Scale (optional)"
+                      background="secondary" class="edit-field">
+                      <template #helper-text-bottom>
+                        Additional context about the scale or scope of this location
+                      </template>
+                    </cdr-input>
+
+                    <div class="button-group">
+                      <cdr-button @click="saveEditLocation">Save Changes</cdr-button>
+                      <cdr-button @click="cancelEditLocation" modifier="secondary">Cancel</cdr-button>
+                    </div>
+                  </div>
                 </div>
                 <div v-if="setting.has_detailed_description && !setting.loading">
                   <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
@@ -171,12 +236,12 @@
                   <p>{{ settings[setting.main_index].setting_overview.history }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.current_ruler_sentence }} {{
                     settings[setting.main_index].setting_overview.recent_event_current_ruler
-                    }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
+                  }} {{ settings[setting.main_index].setting_overview.recent_event_consequences }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.social_history }} {{
                     settings[setting.main_index].setting_overview.recent_event_social }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.economic_history }} {{
                     settings[setting.main_index].setting_overview.impactful_economic_event
-                    }}</p>
+                  }}</p>
                   <p>{{ settings[setting.main_index].setting_overview.military_history }} {{
                     settings[setting.main_index].setting_overview.recent_event_military }}
                   </p>
@@ -185,6 +250,13 @@
                   <p>
                     {{ settings[setting.main_index].setting_overview.conclusion }}
                   </p>
+
+                  <div class="info-message"
+                    style="margin-top: 2rem; padding: 1rem; background-color: #f4f2ed; border-radius: 4px;">
+                    <p style="margin: 0;"><strong>Note:</strong> To edit this location's details, select "{{
+                      setting.name
+                      }}" from the sidebar to open its full setting page.</p>
+                  </div>
                 </div>
                 <div v-if="!setting.has_detailed_description && setting.loading">
                   <CdrSkeleton>
@@ -230,7 +302,7 @@
                 <template #label>
                   {{ faction.name }}
                 </template>
-                <h3 class="faction-header">{{ faction.name }}</h3>
+
                 <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
                   <template #trigger>
                     <cdr-button size="small" :icon-only="true" :with-background="true"
@@ -244,43 +316,104 @@
                     Delete Faction
                   </div>
                 </cdr-tooltip>
-                <div class="influence-level">
-                  <strong>Influence Level:</strong> {{ factionPowerLevels[faction.influence_level - 1] }}
-                  <cdr-popover id="popover-example" position="right">
-                    <template #trigger>
-                      <cdr-button :icon-only="true" :with-background="true">
-                        <template #icon>
-                          <icon-information-stroke />
-                        </template>
-                      </cdr-button>
-                    </template>
-                    <div>
-                      {{ factionPowerDescriptions[faction.influence_level - 1] }}
+
+                <!-- View Mode -->
+                <div v-if="editingFactionIndex !== index">
+                  <h3 class="faction-header">{{ faction.name }}</h3>
+
+                  <div class="influence-level">
+                    <strong>Influence Level:</strong> {{ factionPowerLevels[faction.influence_level - 1] }}
+                    <cdr-popover id="popover-example" position="right">
+                      <template #trigger>
+                        <cdr-button :icon-only="true" :with-background="true">
+                          <template #icon>
+                            <icon-information-stroke />
+                          </template>
+                        </cdr-button>
+                      </template>
+                      <div>
+                        {{ factionPowerDescriptions[faction.influence_level - 1] }}
+                      </div>
+                    </cdr-popover>
+                  </div>
+
+                  <div class="focus-text">
+                    <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
+                      faction.faction_leader_description
+                      }}
+                    </p>
+                    <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
+                    <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
+                  </div>
+
+                  <div style="margin-top: 2rem" v-if="faction.loading">
+                    <CdrSkeleton>
+                      <OverviewSkeleton />
+                    </CdrSkeleton>
+                  </div>
+
+                  <div class="faction-description" v-if="faction.combined_content || faction.history">
+                    <div v-if="faction.combined_content">
+                      <p v-for="(paragraph, pIndex) in faction.combined_content.split('\n\n')" :key="pIndex">
+                        {{ paragraph }}
+                      </p>
                     </div>
-                  </cdr-popover>
+                    <div v-else>
+                      <p>{{ faction.history }}</p>
+                      <p>{{ faction.recent_event }} {{ faction.current_situation }}</p>
+                      <p>{{ faction.rites_and_ceremonies }} {{ faction.recent_ceremony }}</p>
+                      <p>{{ faction.challenge_to_power }} {{ faction.challenge_event }}</p>
+                    </div>
+                  </div>
+
+                  <div class="button-group">
+                    <cdr-button @click="startEditingFaction(index)" modifier="secondary">Edit Faction</cdr-button>
+                    <cdr-button v-if="!faction.history && !faction.combined_content"
+                      @click="generateDetailedFaction(index)">
+                      Generate Full Description
+                    </cdr-button>
+                  </div>
                 </div>
-                <div class="focus-text">
-                  <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{
-                    faction.faction_leader_description
-                  }}
-                  </p>
-                  <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
-                  <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
+
+                <!-- Edit Mode -->
+                <div v-else class="edit-form">
+                  <h2>Edit Faction</h2>
+
+                  <cdr-input v-model="factionEditForm.name" label="Faction Name" background="secondary"
+                    class="edit-field" />
+
+                  <cdr-select v-model.number="factionEditForm.influence_level" label="Influence Level"
+                    :options="influenceLevelOptions" class="edit-field">
+                    <template #helper-text-bottom>
+                      {{ factionPowerLevels[factionEditForm.influence_level - 1] }}: {{
+                        factionPowerDescriptions[factionEditForm.influence_level - 1] }}
+                    </template>
+                  </cdr-select>
+
+                  <cdr-input v-model="factionEditForm.faction_leader" label="Faction Leader" background="secondary"
+                    class="edit-field" />
+
+                  <cdr-input v-model="factionEditForm.faction_leader_description" label="Faction Leader Description"
+                    background="secondary" :rows="3" tag="textarea" class="edit-field" />
+
+                  <cdr-input v-model="factionEditForm.key_resources_and_assets" label="Key Strengths/Resources"
+                    background="secondary" :rows="3" tag="textarea" class="edit-field" />
+
+                  <cdr-input v-model="factionEditForm.motto" label="Faction Motto" background="secondary"
+                    class="edit-field" />
+
+                  <cdr-input v-model="factionEditForm.detailed_content" label="Detailed Description"
+                    background="secondary" :rows="12" tag="textarea" class="edit-field">
+                    <template #helper-text-bottom>
+                      The full history and details of the faction. Use double line breaks for paragraphs.
+                    </template>
+                  </cdr-input>
+
+                  <div class="button-group">
+                    <cdr-button @click="saveEditFaction">Save Changes</cdr-button>
+                    <cdr-button @click="cancelEditFaction" modifier="secondary">Cancel</cdr-button>
+                  </div>
                 </div>
-                <div style="margin-top: 2rem" v-if="faction.loading">
-                  <CdrSkeleton>
-                    <OverviewSkeleton />
-                  </CdrSkeleton>
-                </div>
-                <div class="faction-description" v-if="faction.history">
-                  <p>{{ faction.history }}</p>
-                  <p>{{ faction.recent_event }} {{ faction.current_situation }}</p>
-                  <p>{{ faction.rites_and_ceremonies }} {{ faction.recent_ceremony }}</p>
-                  <p>{{ faction.challenge_to_power }} {{ faction.challenge_event }}</p>
-                </div>
-                <cdr-button style="margin-top: 2rem" v-if="!faction.history"
-                  @click="generateDetailedFaction(index)">Generate
-                  Full Description</cdr-button>
               </cdr-accordion>
               <cdr-accordion v-if="currentSetting.loadingNewFaction" :level="2" id="new-faction-accordion"
                 :opened="true">
@@ -361,44 +494,121 @@
                     Delete NPC
                   </div>
                 </cdr-tooltip>
-                <h2>{{ npc.name }}</h2>
-                <div v-if="!npc.read_aloud_description">
+
+                <!-- View Mode - No Detailed Description -->
+                <div v-if="!npc.read_aloud_description && editingNPCIndex !== index">
+                  <h2>{{ npc.name }}</h2>
                   <p>{{ npc.description }}</p>
                   <cdr-button @click="generateDetailedNPCDescription(index)">Generate Detailed
                     Description</cdr-button>
                 </div>
-                <div v-else>
+
+                <!-- View Mode - Has Detailed Description -->
+                <div v-else-if="npc.read_aloud_description && editingNPCIndex !== index">
+                  <h2>{{ npc.name }}</h2>
                   <div class="focus-text">{{ npc.read_aloud_description }}</div>
-                  <p>{{ npc.description_of_position }}</p>
-                  <p>{{ npc.current_location }}</p>
-                  <p>{{ npc.distinctive_features_or_mannerisms }}</p>
-                  <p>{{ npc.character_secret }}</p>
-                  <h3>Relationships</h3>
-                  <div v-for="(relationship, npcName) in npc.relationships" :key="npcName">
-                    <p>
-                      <strong>{{ npcName }}</strong>: {{ relationship }}
+
+                  <div v-if="npc.combined_details" style="margin-top: 1.5rem;">
+                    <p v-for="(paragraph, pIndex) in npc.combined_details.split('\n\n')" :key="pIndex">
+                      {{ paragraph }}
                     </p>
                   </div>
-                  <div class="relationship-buttons">
-                    <h4>Generate a full description for:</h4>
-                    <cdr-list modifier="inline" class="relationship-npc-buttons">
-                      <li v-for="(relationshipDescription, relationshipName) in npc.relationships"
-                        :key="relationshipName">
-                        <cdr-button
-                          @click="generateDetailedNPCDescription(index, { name: relationshipName, description: relationshipDescription })">{{
-                            relationshipName }}</cdr-button>
-                      </li>
-                    </cdr-list>
+                  <div v-else style="margin-top: 1.5rem;">
+                    <p>{{ npc.description_of_position }}</p>
+                    <p>{{ npc.current_location }}</p>
+                    <p>{{ npc.distinctive_features_or_mannerisms }}</p>
+                    <p>{{ npc.character_secret }}</p>
+                    <p>{{ npc.roleplaying_tips }}</p>
                   </div>
-                  <h3>Roleplaying Tips</h3>
-                  <p>{{ npc.roleplaying_tips }}</p>
-                  <h3>Generate a Quest Hook</h3>
-                  <p>Generate a quest hook where {{ npc.name }} is the quest giver.</p>
-                  <cdr-select label="Quest Type" v-model="questType" :options="questTypes"
-                    placeholder="Select a Quest Type" />
 
-                  <cdr-button @click="generateQuestHook(npc, questType)" style="margin-top: 2rem;">Generate
-                    Quest</cdr-button>
+                  <hr style="margin: 2rem 0;">
+
+                  <h3>Relationships</h3>
+                  <div v-if="npc.relationships && Object.keys(npc.relationships).length > 0">
+                    <div v-for="(relationship, npcName) in npc.relationships" :key="npcName"
+                      style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                      <p style="margin: 0;">
+                        <strong>Name:</strong> {{ npcName }}<br>
+                        <strong>Relationship:</strong> {{ relationship }}
+                      </p>
+                    </div>
+                  </div>
+                  <div v-else-if="!loadingNewRelationship">
+                    <p style="font-style: italic; color: #666;">No relationships yet. Generate one below!</p>
+                  </div>
+
+                  <div v-if="loadingNewRelationship"
+                    style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                    <CdrSkeleton>
+                      <cdr-skeleton-bone type="line" style="margin-bottom: 0.5rem;" />
+                      <cdr-skeleton-bone type="line" />
+                      <cdr-skeleton-bone type="line" style="width: 80%;" />
+                    </CdrSkeleton>
+                  </div>
+
+                  <div class="button-group" style="margin-top: 2rem;">
+                    <cdr-button @click="startEditingNPC(index)" modifier="secondary">Edit NPC</cdr-button>
+                  </div>
+
+                  <h4 style="margin-top: 2rem;">Generate New Relationship</h4>
+                  <cdr-input v-model="newRelationship.name" label="Name" background="secondary"
+                    style="margin-bottom: 1rem;">
+                    <template #helper-text-bottom>
+                      The name of the related NPC
+                    </template>
+                  </cdr-input>
+                  <cdr-input v-model="newRelationship.description" label="Short Description" background="secondary"
+                    :rows="2" tag="textarea" style="margin-bottom: 1rem;">
+                    <template #helper-text-bottom>
+                      Brief description of their relationship (e.g., "the wizard's familiar", "his estranged sister")
+                    </template>
+                  </cdr-input>
+                  <cdr-button @click="generateNewRelationship(index)" :full-width="true">Generate
+                    Relationship</cdr-button>
+                </div>
+
+                <!-- Edit Mode -->
+                <div v-else class="edit-form">
+                  <h2>Edit NPC</h2>
+
+                  <cdr-input v-model="npcEditForm.name" label="NPC Name" background="secondary" class="edit-field" />
+
+                  <cdr-input v-model="npcEditForm.read_aloud_description" label="Read-Aloud Description"
+                    background="secondary" :rows="4" tag="textarea" class="edit-field">
+                    <template #helper-text-bottom>
+                      The initial description when the NPC is first encountered
+                    </template>
+                  </cdr-input>
+
+                  <cdr-input v-model="npcEditForm.combined_details" label="NPC Details" background="secondary"
+                    :rows="10" tag="textarea" class="edit-field">
+                    <template #helper-text-bottom>
+                      Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for
+                      paragraphs.
+                    </template>
+                  </cdr-input>
+
+                  <h3>Relationships</h3>
+                  <div v-if="npcEditForm.relationshipsArray.length > 0">
+                    <div v-for="(relationship, index) in npcEditForm.relationshipsArray" :key="index"
+                      style="margin-bottom: 1.5rem; padding: 1.5rem; background: #f4f2ed; border-radius: 4px;">
+                      <cdr-input v-model="relationship.name" label="Name" background="secondary"
+                        style="margin-bottom: 1rem;" />
+                      <cdr-input v-model="relationship.description" label="Short Description" background="secondary"
+                        :rows="2" tag="textarea" style="margin-bottom: 1rem;" />
+                      <cdr-button size="small" @click="deleteRelationship(index)">Remove Relationship</cdr-button>
+                    </div>
+                  </div>
+                  <div v-else>
+                    <p style="font-style: italic; color: #666; margin-bottom: 1rem;">No relationships to edit. Generate
+                      them
+                      in view mode first.</p>
+                  </div>
+
+                  <div class="button-group">
+                    <cdr-button @click="saveEditNPC">Save Changes</cdr-button>
+                    <cdr-button @click="cancelEditNPC" modifier="secondary">Cancel</cdr-button>
+                  </div>
                 </div>
               </div>
 
@@ -410,6 +620,9 @@
         </TabPanel>
         <TabPanel label="Quest Hooks">
           <h2>Quest Hooks</h2>
+          <p style="margin-bottom: 2rem; color: #666; font-style: italic;">
+            Quest hooks can be generated from any NPC, but fully generated NPCs (with complete descriptions and relationships) will produce richer, more detailed quests than basic NPCs.
+          </p>
           <div v-if="currentSetting.questHooks?.length > 0">
             <cdr-accordion-group>
               <cdr-accordion v-for="(hook, index) in currentSetting.questHooks" :key="index" :id="'hook-' + index"
@@ -431,31 +644,99 @@
                       Delete Quest Hook
                     </div>
                   </cdr-tooltip>
-                  <h2>{{ hook.quest_title }}</h2>
-                  <p><strong>Quest Giver:</strong> {{ hook.quest_giver_name }}</p>
-                  <p>{{ hook.quest_giver_background }}</p>
-                  <p>{{ hook.quest_giver_encounter }}</p>
-                  <p>{{ hook.quest_details }}</p>
-                  <h3>Objectives</h3>
-                  <cdr-list v-for="(objective, index) in hook.objectives" modifier="unordered" :key="index">
-                    <li>
-                      {{ objective }}
-                    </li>
-                  </cdr-list>
-                  <h3>Challenges</h3>
-                  <cdr-list v-for="(challenge, index) in hook.challenges" modifier="unordered" :key="index">
-                    <li>
-                      {{ challenge }}
-                    </li>
-                  </cdr-list>
-                  <h3>Rewards</h3>
-                  <cdr-list v-for="(reward, index) in hook.rewards" modifier="unordered" :key="index">
-                    <li>
-                      {{ reward }}
-                    </li>
-                  </cdr-list>
-                  <h3>Twist</h3>
-                  <p>{{ hook.twist }}</p>
+
+                  <!-- View Mode -->
+                  <div v-if="editingQuestHookIndex !== index">
+                    <h2>{{ hook.quest_title }}</h2>
+                    <p><strong>Quest Giver:</strong> {{ hook.quest_giver_name }}</p>
+
+                    <div v-if="hook.combined_giver_and_quest">
+                      <p v-for="(paragraph, pIndex) in hook.combined_giver_and_quest.split('\n\n')" :key="pIndex">
+                        {{ paragraph }}
+                      </p>
+                    </div>
+                    <div v-else>
+                      <p>{{ hook.quest_giver_background }}</p>
+                      <p>{{ hook.quest_giver_encounter }}</p>
+                      <p>{{ hook.quest_details }}</p>
+                    </div>
+
+                    <h3>Objectives</h3>
+                    <cdr-list v-for="(objective, objIndex) in hook.objectives" modifier="unordered" :key="objIndex">
+                      <li>{{ objective }}</li>
+                    </cdr-list>
+
+                    <h3>Challenges</h3>
+                    <cdr-list v-for="(challenge, chalIndex) in hook.challenges" modifier="unordered" :key="chalIndex">
+                      <li>{{ challenge }}</li>
+                    </cdr-list>
+
+                    <h3>Rewards</h3>
+                    <cdr-list v-for="(reward, rewIndex) in hook.rewards" modifier="unordered" :key="rewIndex">
+                      <li>{{ reward }}</li>
+                    </cdr-list>
+
+                    <h3>Twist</h3>
+                    <p>{{ hook.twist }}</p>
+
+                    <div class="button-group" style="margin-top: 2rem;">
+                      <cdr-button @click="startEditingQuestHook(index)" modifier="secondary">Edit Quest Hook</cdr-button>
+                    </div>
+                  </div>
+
+                  <!-- Edit Mode -->
+                  <div v-else class="edit-form">
+                    <h2>Edit Quest Hook</h2>
+
+                    <cdr-input v-model="questHookEditForm.quest_title" label="Quest Title" background="secondary"
+                      class="edit-field" />
+
+                    <cdr-input v-model="questHookEditForm.quest_giver_name" label="Quest Giver Name" background="secondary"
+                      class="edit-field" />
+
+                    <cdr-input v-model="questHookEditForm.combined_giver_and_quest" label="Quest Giver & Quest Details"
+                      background="secondary" :rows="10" tag="textarea" class="edit-field">
+                      <template #helper-text-bottom>
+                        Giver background, encounter description, and quest details. Use double line breaks for paragraphs.
+                      </template>
+                    </cdr-input>
+
+                    <h3>Objectives</h3>
+                    <div v-for="(objective, objIndex) in questHookEditForm.objectives" :key="objIndex"
+                      style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                      <cdr-input v-model="questHookEditForm.objectives[objIndex]" label="Objective" background="secondary" />
+                      <cdr-button size="small" @click="removeQuestObjective(objIndex)" style="margin-top: 0.5rem;">Remove</cdr-button>
+                    </div>
+                    <cdr-button @click="addQuestObjective" modifier="secondary" size="small">Add Objective</cdr-button>
+
+                    <h3 style="margin-top: 2rem;">Challenges</h3>
+                    <div v-for="(challenge, chalIndex) in questHookEditForm.challenges" :key="chalIndex"
+                      style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                      <cdr-input v-model="questHookEditForm.challenges[chalIndex]" label="Challenge" background="secondary" />
+                      <cdr-button size="small" @click="removeQuestChallenge(chalIndex)" style="margin-top: 0.5rem;">Remove</cdr-button>
+                    </div>
+                    <cdr-button @click="addQuestChallenge" modifier="secondary" size="small">Add Challenge</cdr-button>
+
+                    <h3 style="margin-top: 2rem;">Rewards</h3>
+                    <div v-for="(reward, rewIndex) in questHookEditForm.rewards" :key="rewIndex"
+                      style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
+                      <cdr-input v-model="questHookEditForm.rewards[rewIndex]" label="Reward" background="secondary" />
+                      <cdr-button size="small" @click="removeQuestReward(rewIndex)" style="margin-top: 0.5rem;">Remove</cdr-button>
+                    </div>
+                    <cdr-button @click="addQuestReward" modifier="secondary" size="small">Add Reward</cdr-button>
+
+                    <cdr-input v-model="questHookEditForm.twist" label="Twist" background="secondary" :rows="3"
+                      tag="textarea" class="edit-field" style="margin-top: 2rem;">
+                      <template #helper-text-bottom>
+                        An unexpected element that adds complexity to the quest
+                      </template>
+                    </cdr-input>
+
+                    <div class="button-group">
+                      <cdr-button @click="saveEditQuestHook">Save Changes</cdr-button>
+                      <cdr-button @click="cancelEditQuestHook" modifier="secondary">Cancel</cdr-button>
+                    </div>
+                  </div>
                 </div>
               </cdr-accordion>
               <cdr-accordion class="accordion" level="2" id="loading-location" v-if="loadingQuestHooks">
@@ -468,9 +749,7 @@
             </cdr-accordion-group>
           </div>
           <div v-if="!(currentSetting.questHooks?.length > 0) && !loadingQuestHooks">
-            <p>Quest hooks are generated by using fully generated NPCs as quest givers. Generate a full NPC description
-              in
-              order to create a quest hook.</p>
+            <p>Generate quest hooks using NPCs from your setting as quest givers.</p>
           </div>
           <div v-if="!(currentSetting.questHooks?.length > 0) && loadingQuestHooks">
             <cdr-accordion-group>
@@ -482,6 +761,29 @@
                 </template>
               </cdr-accordion>
             </cdr-accordion-group>
+          </div>
+
+          <hr style="margin: 2rem 0;">
+
+          <h3>Generate New Quest Hook</h3>
+          <p v-if="!currentSetting.npcs || currentSetting.npcs.length === 0" style="font-style: italic; color: #666;">
+            You need to have NPCs generated before you can create quest hooks. Visit the NPCs tab to generate some NPCs first.
+          </p>
+          <div v-else>
+            <cdr-select v-model="selectedQuestGiverIndex" label="Quest Giver" :options="questGiverOptions"
+              placeholder="Select an NPC" background="secondary" style="margin-bottom: 1rem;">
+              <template #helper-text-bottom>
+                Fully generated NPCs will produce more detailed quests
+              </template>
+            </cdr-select>
+
+            <cdr-select label="Quest Type" v-model="questType" :options="questTypes"
+              placeholder="Select a Quest Type" background="secondary" style="margin-bottom: 1rem;" />
+
+            <cdr-button @click="generateQuestHookFromTab" :full-width="true"
+              :disabled="selectedQuestGiverIndex === null">
+              Generate Quest Hook
+            </cdr-button>
           </div>
         </TabPanel>
       </Tabs>
@@ -511,13 +813,25 @@
         </CdrSkeleton>
       </div>
     </div>
+
+    <!-- Bottom Menu Button for Mobile -->
+    <button
+      class="mobile-menu-button"
+      v-show="windowWidth <= 768"
+      @click="isSidebarVisible = !isSidebarVisible"
+      :class="{ active: isSidebarVisible }"
+      aria-label="Toggle settings menu"
+    >
+      <icon-navigation-menu inherit-color />
+      <span class="button-label">Menu</span>
+    </button>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { CdrInput, CdrButton, CdrText, CdrSelect, CdrTabs, CdrTabPanel, CdrCheckbox, CdrLink, CdrList, CdrSkeleton, CdrSkeletonBone, IconXSm, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrPopover, IconInformationStroke, IconNavigationMenu } from "@rei/cedar";
-import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionListPrompt, detailedFactionPrompt, singleFactionPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt, createQuestHookPrompt } from "../util/kingdom-prompts.mjs";
+import { settingOverviewPrompt, sublocationOverviewPrompt, subLocationsPrompt, factionListPrompt, detailedFactionPrompt, singleFactionPrompt, createNPCPrompt, createRelationshipAndTipsPrompt, createNPCRelationshipPrompt, createQuestHookPrompt, generateSingleRelationshipPrompt } from "../util/kingdom-prompts.mjs";
 import FactionSkeleton from "./skeletons/FactionSkeleton.vue";
 import BlockSkeleton from "./skeletons/BlockSkeleton.vue";
 import NPCSkeleton from "./skeletons/NPCSkeleton.vue";
@@ -570,6 +884,15 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateWindowWidth);
+});
+
+// Prevent body scrolling when sidebar is open on mobile
+watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
+  if (width <= 768 && sidebarOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 });
 
 const sidebarStyle = computed(() => {
@@ -663,12 +986,57 @@ function isNumber(value) {
   return typeof value === 'number';
 }
 const questType = ref(randomQuestString);
+const selectedQuestGiverIndex = ref(null);
 const currentlyLoading = ref(false);
 const loadingQuestHooks = ref(false);
 const currentSettingIndex = ref(0);
 const activeTabIndex = ref(0);
 const npcShortDescription = ref('');
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
+const isEditing = ref(false);
+const editForm = ref({
+  title: '',
+  content: ''
+});
+const editingLocationIndex = ref(null);
+const locationEditForm = ref({
+  name: '',
+  description: '',
+  setting_scale: ''
+});
+const editingFactionIndex = ref(null);
+const factionEditForm = ref({
+  name: '',
+  influence_level: 1,
+  faction_leader: '',
+  faction_leader_description: '',
+  key_resources_and_assets: '',
+  motto: '',
+  detailed_content: ''
+});
+const editingNPCIndex = ref(null);
+const npcEditForm = ref({
+  name: '',
+  read_aloud_description: '',
+  combined_details: '',
+  relationshipsArray: []
+});
+const newRelationship = reactive({
+  npcIndex: null,
+  name: '',
+  description: ''
+});
+const loadingNewRelationship = ref(false);
+const editingQuestHookIndex = ref(null);
+const questHookEditForm = ref({
+  quest_title: '',
+  quest_giver_name: '',
+  combined_giver_and_quest: '',
+  objectives: [],
+  challenges: [],
+  rewards: [],
+  twist: ''
+});
 const defaultSetting = reactive({
   adjective: '',
   setting_type: '',
@@ -719,6 +1087,51 @@ function flattenSettings(tree, depth = 0) {
 }
 
 const selectSetting = (index) => {
+  // Exit edit mode when selecting a different setting
+  if (isEditing.value) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch settings without saving?');
+    if (!confirmed) {
+      return; // Don't switch settings
+    }
+    isEditing.value = false;
+  }
+
+  // Exit location edit mode
+  if (editingLocationIndex.value !== null) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch settings without saving?');
+    if (!confirmed) {
+      return;
+    }
+    editingLocationIndex.value = null;
+  }
+
+  // Exit faction edit mode
+  if (editingFactionIndex.value !== null) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch settings without saving?');
+    if (!confirmed) {
+      return;
+    }
+    editingFactionIndex.value = null;
+  }
+
+  // Exit NPC edit mode
+  if (editingNPCIndex.value !== null) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch settings without saving?');
+    if (!confirmed) {
+      return;
+    }
+    editingNPCIndex.value = null;
+  }
+
+  // Exit quest hook edit mode
+  if (editingQuestHookIndex.value !== null) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch settings without saving?');
+    if (!confirmed) {
+      return;
+    }
+    editingQuestHookIndex.value = null;
+  }
+
   currentSettingIndex.value = index;
   isNewSetting.value = false;  // Not new since it's selected from existing ones
 };
@@ -791,6 +1204,13 @@ watch(currentSettingIndex, (newValue, oldValue) => {
 });
 
 const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', title = '', parentIndex = null) => {
+  // Exit edit mode when creating a new setting
+  isEditing.value = false;
+  editingLocationIndex.value = null;
+  editingFactionIndex.value = null;
+  editingNPCIndex.value = null;
+  editingQuestHookIndex.value = null;
+
   const newSetting = reactive({
     adjective: adjective,
     setting_type: setting_type,
@@ -991,6 +1411,16 @@ const npcValidationPart2 = jsonString => {
   }
 }
 
+const singleRelationshipValidation = jsonString => {
+  try {
+    const jsonObj = JSON.parse(jsonString);
+    const keys = ['name', 'relationship'];
+    return keys.every(key => key in jsonObj);
+  } catch (error) {
+    return false;
+  }
+}
+
 // Faction power levels (constant)
 const factionPowerLevels = [
   'Nonexistent', 'Marginal', 'Emerging', 'Moderate', 'Noteworthy', 'Influential',
@@ -1009,6 +1439,31 @@ const factionPowerDescriptions = [
   "High level of power, controls multiple branches or has significant sway across governance. Broad control over policies.",
   "Absolute control over society, without opposition. Marked by unilateral decision-making and lack of democratic processes."
 ];
+
+// Create dropdown options for influence levels
+const influenceLevelOptions = computed(() => {
+  return factionPowerLevels.map((level, index) => ({
+    text: `${index + 1} - ${level}`,
+    value: index + 1
+  }));
+});
+
+// Create dropdown options for quest giver NPCs
+const questGiverOptions = computed(() => {
+  if (!currentSetting.value?.npcs) return [];
+
+  return currentSetting.value.npcs.map((npc, index) => {
+    const isFullyGenerated = !!npc.read_aloud_description;
+    const label = isFullyGenerated
+      ? `${npc.name} (Fully Generated)`
+      : `${npc.name} (Basic)`;
+
+    return {
+      text: label,
+      value: index
+    };
+  });
+});
 
 const randomQuestString = 'Random: Generate a quest with a random objective and theme.';
 
@@ -1077,6 +1532,9 @@ async function processQueue() {
       break;
     case 'generateQuestHook':
       await handleGenerateQuestHook(data);
+      break;
+    case 'generateNewRelationship':
+      await handleGenerateNewRelationship(data);
       break;
     default:
       console.error("Unknown request type:", type);
@@ -1216,6 +1674,8 @@ async function handleGenerateQuestHook({ operationIndex, prompt }) {
     loadingQuestHooks.value = false;
     if (settings.value[operationIndex]) {
       const questHook = JSON.parse(response);
+      // Auto-combine quest giver and quest detail fields for inline editing
+      questHook.combined_giver_and_quest = combineQuestGiverAndDetails(questHook);
       settings.value[operationIndex].questHooks.push(questHook);
       saveSettingsToLocalStorage();
     }
@@ -1225,6 +1685,38 @@ async function handleGenerateQuestHook({ operationIndex, prompt }) {
     console.error("Error generating quest hooks:", error);
   }
 
+}
+
+async function handleGenerateNewRelationship({ operationIndex, npcIndex, npcDescription, settingOverviewText, relationshipName, relationshipDescription }) {
+  try {
+    currentlyLoading.value = true;
+    loadingNewRelationship.value = true;
+    const prompt = generateSingleRelationshipPrompt(npcDescription, settingOverviewText, relationshipName, relationshipDescription);
+    const response = await generateGptResponse(prompt, singleRelationshipValidation);
+    currentlyLoading.value = false;
+    loadingNewRelationship.value = false;
+
+    if (settings.value[operationIndex]) {
+      const relationshipData = JSON.parse(response);
+      const npc = settings.value[operationIndex].npcs[npcIndex];
+
+      if (!npc.relationships) {
+        npc.relationships = {};
+      }
+
+      npc.relationships[relationshipData.name] = relationshipData.relationship;
+
+      // Clear the form
+      newRelationship.name = '';
+      newRelationship.description = '';
+
+      saveSettingsToLocalStorage();
+    }
+  } catch (error) {
+    currentlyLoading.value = false;
+    loadingNewRelationship.value = false;
+    console.error("Error generating new relationship:", error);
+  }
 }
 
 function findObjectByName(objects, name) {
@@ -1243,9 +1735,24 @@ function getNPCText(npc) {
 }
 
 function getFullNPCDescription(npc) {
-  const relationshipText = Object.entries(npc.relationships).map(([name, description]) => `${name}: ${description}`).join(' ');
-  return `${npc.read_aloud_description} ${npc.description_of_position} ${npc.current_location} ${npc.distinctive_features_or_mannerisms} ${npc.character_secret}
-  Relationships:\n ${relationshipText}`;
+  // Check if this is a fully generated NPC
+  const isFullyGenerated = !!npc.read_aloud_description;
+
+  if (!isFullyGenerated) {
+    // For basic NPCs, use simpler description
+    return `${npc.name}: ${npc.description || 'A character in the setting'}`;
+  }
+
+  // For fully generated NPCs, include all details
+  let description = `${npc.read_aloud_description || ''} ${npc.description_of_position || ''} ${npc.current_location || ''} ${npc.distinctive_features_or_mannerisms || ''} ${npc.character_secret || ''}`.trim();
+
+  // Add relationships if they exist
+  if (npc.relationships && Object.keys(npc.relationships).length > 0) {
+    const relationshipText = Object.entries(npc.relationships).map(([name, description]) => `${name}: ${description}`).join(' ');
+    description += `\n  Relationships:\n ${relationshipText}`;
+  }
+
+  return description;
 }
 
 function generateDetailedNPCDescription(index, relationshipObject) {
@@ -1297,6 +1804,8 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
         settings.value[operationIndex].place_name = overview.name;
       }
       settings.value[operationIndex].setting_overview = overview;
+      // Combine overview fields into a single content block for easier editing
+      settings.value[operationIndex].setting_overview.combined_content = combineOverviewFields(overview);
       settings.value[operationIndex].npcs = overview.npc_list || [];
       settings.value[operationIndex].loadingsettingOverview = false;
       currentlyLoading.value = false;
@@ -1378,6 +1887,8 @@ async function handleGenerateDetailedFaction({ operationIndex, factionIndex, pro
     if (settings.value[operationIndex]) {
       //merge the new faction with the existing one
       Object.assign(settings.value[operationIndex].factions[factionIndex], faction);
+      // Combine detailed fields into a single content block for easier editing
+      settings.value[operationIndex].factions[factionIndex].combined_content = combineFactionDetails(faction);
       settings.value[operationIndex].factions[factionIndex].loading = false;
       currentlyLoading.value = false;
       saveSettingsToLocalStorage();  // Save to local storage after update
@@ -1397,6 +1908,8 @@ async function handleAddNewFaction({ operationIndex, prompt }) {
     settings.value[operationIndex].loadingNewFaction = true;
     const response = await generateGptResponse(prompt, singleFactionValidation);
     const newGeneratedFaction = JSON.parse(response);
+    // Combine detailed fields into a single content block for easier editing
+    newGeneratedFaction.combined_content = combineFactionDetails(newGeneratedFaction);
     settings.value[operationIndex].factions.push(newGeneratedFaction);
     //Last faction accordion is opened
     settings.value[operationIndex].factions[settings.value[operationIndex].factions.length - 1].open = true;
@@ -1442,6 +1955,8 @@ async function handleGenerateDetailedNPCDescription({ operationIndex, npcIndex, 
     if (npc) {
       Object.assign(npc, JSON.parse(npcPart1));
       Object.assign(npc, JSON.parse(relationshipsAndTips));
+      // Combine detail fields into a single content block for easier editing
+      npc.combined_details = combineNPCDetails(npc);
       npc.loading = false;
       currentlyLoading.value = false;
       saveSettingsToLocalStorage(); // Save to local storage after update
@@ -1465,6 +1980,390 @@ function handleAccordion(npcIndex) {
     }
   });
 }
+
+// Helper function to combine overview fields into a single content block
+const combineOverviewFields = (overview) => {
+  if (!overview) return '';
+
+  const parts = [];
+
+  // Combine related fields into paragraphs
+  if (overview.overview || overview.relation_to_larger_setting) {
+    parts.push([overview.overview, overview.relation_to_larger_setting].filter(Boolean).join(' '));
+  }
+
+  if (overview.history) {
+    parts.push(overview.history);
+  }
+
+  if (overview.current_ruler_sentence || overview.recent_event_current_ruler || overview.recent_event_consequences) {
+    parts.push([
+      overview.current_ruler_sentence,
+      overview.recent_event_current_ruler,
+      overview.recent_event_consequences
+    ].filter(Boolean).join(' '));
+  }
+
+  if (overview.social_history || overview.recent_event_social) {
+    parts.push([overview.social_history, overview.recent_event_social].filter(Boolean).join(' '));
+  }
+
+  if (overview.economic_history || overview.impactful_economic_event) {
+    parts.push([overview.economic_history, overview.impactful_economic_event].filter(Boolean).join(' '));
+  }
+
+  if (overview.military_history || overview.recent_event_military) {
+    parts.push([overview.military_history, overview.recent_event_military].filter(Boolean).join(' '));
+  }
+
+  if (overview.main_problem || overview.potential_solutions) {
+    parts.push([overview.main_problem, overview.potential_solutions].filter(Boolean).join(' '));
+  }
+
+  if (overview.conclusion) {
+    parts.push(overview.conclusion);
+  }
+
+  return parts.filter(Boolean).join('\n\n');
+};
+
+// Inline editing functions for Overview
+const startEditing = () => {
+  const overview = currentSetting.value.setting_overview;
+
+  editForm.value = {
+    title: overview?.title || formatTitle(
+      currentSetting.value.adjective,
+      currentSetting.value.setting_type,
+      currentSetting.value.place_name,
+      overview?.title
+    ),
+    content: overview?.combined_content || combineOverviewFields(overview)
+  };
+
+  isEditing.value = true;
+};
+
+const cancelEdit = () => {
+  isEditing.value = false;
+};
+
+const saveEdit = () => {
+  // Update the setting overview with the edited content
+  if (settings.value[currentSettingIndex.value].setting_overview) {
+    settings.value[currentSettingIndex.value].setting_overview.title = editForm.value.title;
+    settings.value[currentSettingIndex.value].setting_overview.combined_content = editForm.value.content;
+  }
+
+  // Save to localStorage
+  saveSettingsToLocalStorage();
+
+  isEditing.value = false;
+};
+
+// Inline editing functions for Locations
+const startEditingLocation = (index) => {
+  const location = currentSetting.value.importantLocations[index];
+
+  locationEditForm.value = {
+    name: location.name || '',
+    description: location.description || '',
+    setting_scale: location.setting_scale || ''
+  };
+
+  editingLocationIndex.value = index;
+};
+
+const cancelEditLocation = () => {
+  editingLocationIndex.value = null;
+};
+
+const saveEditLocation = () => {
+  if (editingLocationIndex.value !== null) {
+    const location = currentSetting.value.importantLocations[editingLocationIndex.value];
+
+    location.name = locationEditForm.value.name;
+    location.description = locationEditForm.value.description;
+    location.setting_scale = locationEditForm.value.setting_scale;
+
+    // Save to localStorage
+    saveSettingsToLocalStorage();
+
+    editingLocationIndex.value = null;
+  }
+};
+
+// Helper function to combine faction detail fields into a single content block
+const combineFactionDetails = (faction) => {
+  if (!faction) return '';
+
+  const parts = [];
+
+  if (faction.history) {
+    parts.push(faction.history);
+  }
+
+  if (faction.recent_event || faction.current_situation) {
+    parts.push([faction.recent_event, faction.current_situation].filter(Boolean).join(' '));
+  }
+
+  if (faction.rites_and_ceremonies || faction.recent_ceremony) {
+    parts.push([faction.rites_and_ceremonies, faction.recent_ceremony].filter(Boolean).join(' '));
+  }
+
+  if (faction.challenge_to_power || faction.challenge_event) {
+    parts.push([faction.challenge_to_power, faction.challenge_event].filter(Boolean).join(' '));
+  }
+
+  return parts.filter(Boolean).join('\n\n');
+};
+
+// Inline editing functions for Factions
+const startEditingFaction = (index) => {
+  const faction = currentSetting.value.factions[index];
+
+  factionEditForm.value = {
+    name: faction.name || '',
+    influence_level: faction.influence_level || 1,
+    faction_leader: faction.faction_leader || '',
+    faction_leader_description: faction.faction_leader_description || '',
+    key_resources_and_assets: faction.key_resources_and_assets || '',
+    motto: faction.motto || '',
+    detailed_content: faction.combined_content || combineFactionDetails(faction)
+  };
+
+  editingFactionIndex.value = index;
+};
+
+const cancelEditFaction = () => {
+  editingFactionIndex.value = null;
+};
+
+const saveEditFaction = () => {
+  if (editingFactionIndex.value !== null) {
+    const faction = currentSetting.value.factions[editingFactionIndex.value];
+
+    faction.name = factionEditForm.value.name;
+    faction.influence_level = factionEditForm.value.influence_level;
+    faction.faction_leader = factionEditForm.value.faction_leader;
+    faction.faction_leader_description = factionEditForm.value.faction_leader_description;
+    faction.key_resources_and_assets = factionEditForm.value.key_resources_and_assets;
+    faction.motto = factionEditForm.value.motto;
+    faction.combined_content = factionEditForm.value.detailed_content;
+
+    // Save to localStorage
+    saveSettingsToLocalStorage();
+
+    editingFactionIndex.value = null;
+  }
+};
+
+// Helper function to combine NPC detail fields into a single content block
+const combineNPCDetails = (npc) => {
+  if (!npc) return '';
+
+  const parts = [];
+
+  if (npc.description_of_position) {
+    parts.push(npc.description_of_position);
+  }
+
+  if (npc.current_location) {
+    parts.push(npc.current_location);
+  }
+
+  if (npc.distinctive_features_or_mannerisms) {
+    parts.push(npc.distinctive_features_or_mannerisms);
+  }
+
+  if (npc.character_secret) {
+    parts.push(npc.character_secret);
+  }
+
+  if (npc.roleplaying_tips) {
+    parts.push(npc.roleplaying_tips);
+  }
+
+  return parts.filter(Boolean).join('\n\n');
+};
+
+// Inline editing functions for NPCs
+const startEditingNPC = (index) => {
+  const npc = currentSetting.value.npcs[index];
+
+  // Convert relationships object to array for easier editing
+  const relationshipsArray = npc.relationships
+    ? Object.entries(npc.relationships).map(([name, description]) => ({
+      name,
+      description
+    }))
+    : [];
+
+  npcEditForm.value = {
+    name: npc.name || '',
+    read_aloud_description: npc.read_aloud_description || '',
+    combined_details: npc.combined_details || combineNPCDetails(npc),
+    relationshipsArray: relationshipsArray
+  };
+
+  editingNPCIndex.value = index;
+};
+
+const cancelEditNPC = () => {
+  editingNPCIndex.value = null;
+};
+
+const saveEditNPC = () => {
+  if (editingNPCIndex.value !== null) {
+    const npc = currentSetting.value.npcs[editingNPCIndex.value];
+
+    npc.name = npcEditForm.value.name;
+    npc.read_aloud_description = npcEditForm.value.read_aloud_description;
+    npc.combined_details = npcEditForm.value.combined_details;
+
+    // Convert relationships array back to object
+    const relationshipsObject = {};
+    npcEditForm.value.relationshipsArray.forEach(rel => {
+      if (rel.name && rel.description) {
+        relationshipsObject[rel.name] = rel.description;
+      }
+    });
+    npc.relationships = relationshipsObject;
+
+    // Save to localStorage
+    saveSettingsToLocalStorage();
+
+    editingNPCIndex.value = null;
+  }
+};
+
+// Relationship management functions
+const deleteRelationship = (relationshipIndex) => {
+  if (editingNPCIndex.value !== null) {
+    npcEditForm.value.relationshipsArray.splice(relationshipIndex, 1);
+  }
+};
+
+// Helper function to combine quest giver and quest detail fields
+const combineQuestGiverAndDetails = (hook) => {
+  if (!hook) return '';
+
+  const parts = [];
+
+  if (hook.quest_giver_background) {
+    parts.push(hook.quest_giver_background);
+  }
+
+  if (hook.quest_giver_encounter) {
+    parts.push(hook.quest_giver_encounter);
+  }
+
+  if (hook.quest_details) {
+    parts.push(hook.quest_details);
+  }
+
+  return parts.filter(Boolean).join('\n\n');
+};
+
+// Inline editing functions for Quest Hooks
+const startEditingQuestHook = (index) => {
+  const hook = currentSetting.value.questHooks[index];
+
+  questHookEditForm.value = {
+    quest_title: hook.quest_title || '',
+    quest_giver_name: hook.quest_giver_name || '',
+    combined_giver_and_quest: hook.combined_giver_and_quest || combineQuestGiverAndDetails(hook),
+    objectives: [...(hook.objectives || [])],
+    challenges: [...(hook.challenges || [])],
+    rewards: [...(hook.rewards || [])],
+    twist: hook.twist || ''
+  };
+
+  editingQuestHookIndex.value = index;
+};
+
+const cancelEditQuestHook = () => {
+  editingQuestHookIndex.value = null;
+};
+
+const saveEditQuestHook = () => {
+  if (editingQuestHookIndex.value !== null) {
+    const hook = currentSetting.value.questHooks[editingQuestHookIndex.value];
+
+    hook.quest_title = questHookEditForm.value.quest_title;
+    hook.quest_giver_name = questHookEditForm.value.quest_giver_name;
+    hook.combined_giver_and_quest = questHookEditForm.value.combined_giver_and_quest;
+    hook.objectives = [...questHookEditForm.value.objectives];
+    hook.challenges = [...questHookEditForm.value.challenges];
+    hook.rewards = [...questHookEditForm.value.rewards];
+    hook.twist = questHookEditForm.value.twist;
+
+    // Save to localStorage
+    saveSettingsToLocalStorage();
+
+    editingQuestHookIndex.value = null;
+  }
+};
+
+// Array manipulation functions for quest hooks
+const addQuestObjective = () => {
+  questHookEditForm.value.objectives.push('');
+};
+
+const removeQuestObjective = (index) => {
+  questHookEditForm.value.objectives.splice(index, 1);
+};
+
+const addQuestChallenge = () => {
+  questHookEditForm.value.challenges.push('');
+};
+
+const removeQuestChallenge = (index) => {
+  questHookEditForm.value.challenges.splice(index, 1);
+};
+
+const addQuestReward = () => {
+  questHookEditForm.value.rewards.push('');
+};
+
+const removeQuestReward = (index) => {
+  questHookEditForm.value.rewards.splice(index, 1);
+};
+
+// Generate quest hook from the Quest Hooks tab
+const generateQuestHookFromTab = () => {
+  if (selectedQuestGiverIndex.value === null) {
+    alert('Please select a quest giver');
+    return;
+  }
+
+  const npc = currentSetting.value.npcs[selectedQuestGiverIndex.value];
+  generateQuestHook(npc);
+};
+
+const generateNewRelationship = (npcIndex) => {
+  if (!newRelationship.name || !newRelationship.description) {
+    alert('Please provide both a name and short description for the relationship');
+    return;
+  }
+
+  const operationIndex = currentSettingIndex.value;
+  const npc = settings.value[operationIndex].npcs[npcIndex];
+
+  const npcDescription = getFullNPCDescription(npc);
+  const settingOverviewText = getOverviewText(settings.value[operationIndex].setting_overview);
+  const relationshipName = newRelationship.name;
+  const relationshipDescription = newRelationship.description;
+
+  enqueueRequest('generateNewRelationship', {
+    operationIndex,
+    npcIndex,
+    npcDescription,
+    settingOverviewText,
+    relationshipName,
+    relationshipDescription
+  });
+};
 
 // Random type, adjective, and name functions
 function randomType(setting) {
@@ -1510,19 +2409,18 @@ function randomName(setting) {
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5); // Semi-transparent
-    z-index: 2; // Lower than sidebar but higher than content
+    z-index: 1000; // Between content and sidebar
   }
 
   .sidebar {
     transition: transform 0.3s ease;
     background-color: $background-color;
-    padding: 1rem;
     --sidebar-width: 400px; // Define sidebar width as a variable for easy changes
     height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    z-index: 3;
+    z-index: 1001; // Above mobile header
+    overflow: hidden; // No overflow on sidebar itself
 
     &.fixed {
       position: fixed;
@@ -1530,10 +2428,19 @@ function randomName(setting) {
       left: 0;
     }
 
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto; // Single scrollable container
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
     .settings-tabs {
       list-style: none;
       padding: 0;
       margin: 0;
+      margin-bottom: 1rem;
 
       li {
         margin-bottom: 4px;
@@ -1577,21 +2484,60 @@ function randomName(setting) {
     .copy-buttons {
       display: flex;
       flex-direction: column;
-      margin: 1rem;
       gap: 1rem;
-      margin-bottom: 11rem;
     }
   }
 
-  .sidebar-toggle {
-    display: none; // Initially hidden
+  .mobile-menu-button {
+    display: none;
     position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1001;
+    bottom: 24px;
+    right: 24px;
+    width: 64px;
+    height: 64px;
+    background-color: #e0e0e0;
+    color: #333;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    z-index: 998; // Below sidebar but above content
+    transition: all 0.3s ease;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 
     @media (max-width: 768px) {
-      display: block; // Only shown on mobile
+      display: flex;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .button-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      background-color: #d0d0d0;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &.active {
+      background-color: #333;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
   }
 
@@ -1605,7 +2551,6 @@ function randomName(setting) {
     align-items: center;
     margin: 3rem auto;
     max-width: 800px;
-
 
     .generate-button {
       margin-top: 2rem;
@@ -1739,6 +2684,33 @@ function randomName(setting) {
   ul {
     justify-content: center;
     margin: 0;
+  }
+}
+
+// Inline editing styles
+.edit-form {
+  .edit-field {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.overview-content {
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .button-group {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
   }
 }
 </style>

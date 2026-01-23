@@ -11,6 +11,7 @@ export function validateNPCDescription(jsonString) {
       'distinctive_feature_or_mannerism',
       'character_secret',
       'read_aloud_description',
+      'roleplaying_tips',
     ];
     return keys.every((key) => key in jsonObj);
   } catch (error) {
@@ -21,7 +22,7 @@ export function validateNPCDescription(jsonString) {
 export function validatePart2(jsonString) {
   try {
     const jsonObj = JSON.parse(jsonString);
-    const keys = ['relationships', 'roleplaying_tips'];
+    const keys = ['relationships'];
     return keys.every((key) => key in jsonObj);
   } catch (error) {
     return false;
