@@ -90,6 +90,9 @@ function vue_app_enqueue_assets() {
                 text-align: center;
                 border: none;
             }
+            .statblock ul.abilities {
+             margin-left: 0;
+          }
             select {
                 padding: 1rem;
             }

@@ -65,78 +65,68 @@ function vue_app_enqueue_assets() {
 
     if ($enqueued_style_handle) {
         $custom_css = '
-            .site-container .site-inner {
+        main.content {
+            max-width: 940px;
+            width: auto;
+        }
+        .site-container .site-inner {
             max-width: none;
             padding: 0;
-            }
-
-            /* Let the Vue root actually be full width */
-            #genesis-content,
-            #app {
-            max-width: 100%;
-            width: 100%;
-            }
-
-            main.content {
-            max-width: none;
-            width: 100%;
-            }
-
-            h1, h2 {
+        }
+        h1, h2 {
             padding-top: 2rem;
-            }
-            h2 {
-            margin-bottom: 1rem;
-            }
-            h3 {
+        }
+        h2 {
+          margin-bottom: 1rem;
+        }
+        h3 {
             margin-top: 1rem;
             margin-bottom: 1rem;
-            }
-            p {
-            margin: 1rem 0;
-            }
-
-            /* Form controls */
-            select {
+        }
+        select {
             padding: 1rem;
-            }
-
-            /* Lists like item generator */
-            .entry-content ul > li,
-            .entry-content ul ul > li {
-            list-style-type: none;
-            }
-            .entry-content ul {
-            padding-left: 0;
-            }
-
-
-            button:focus, button:hover,
-            input[type="button"]:focus, input[type="button"]:hover,
-            input[type="reset"]:focus, input[type="reset"]:hover,
-            input[type="submit"]:focus, input[type="submit"]:hover,
-            .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:focus,
-            .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:hover,
-            .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:focus,
-            .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:hover,
-            .button:focus, .button:hover {
-            color: inherit;
-            }
-
-            .read-aloud {
-            padding: 1rem 2.5rem;
-            width: 90%;
-            margin: 2rem auto;
-            }
-            .read-aloud p {
+        }
+        p {
+          margin: 1rem 0;
+        }
+        .read-aloud p {
             margin-bottom: 1rem;
-            }
-
-            .statblock th, .statblock td {
+        }
+        .read-aloud {
+            margin-bottom: 2rem;
+        }
+        #genesis-content,
+        #app {
+            max-width: 100%;
+            width: 100%;
+        }
+        .entry-content ul > li {
+            list-style-type: none;
+        }
+        .entry-content ul ul > li {
+            list-style-type: none;
+        }
+        .entry-content ul {
+            padding-left: 0;
+        }
+        .quest-content li {
+            margin-left: 3rem;
+        }
+        /* Override default button styles */
+        button, input[type="button"], input[type="reset"], input[type="submit"], .button {
+            color: inherit;
+        }
+        button:focus, button:hover, input[type="button"]:focus, input[type="button"]:hover, input[type="reset"]:focus, input[type="reset"]:hover, input[type="submit"]:focus, input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:hover, .button:focus, .button:hover {
+            color: inherit;
+        }
+        .statblock th, .statblock td {
             padding: 0;
             text-align: center;
             border: none;
-            }
+        }
+        .statblock ul.abilities {
+            margin-left: 0;
+        }
         ';
         wp_add_inline_style($enqueued_style_handle, $custom_css);
     }

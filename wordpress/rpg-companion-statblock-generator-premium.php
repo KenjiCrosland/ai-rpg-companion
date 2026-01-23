@@ -83,7 +83,7 @@ function vue_app_enqueue_assets() {
                 margin-bottom: 0 !important;
             }
             .statblock ul.abilities {
-                margin: 0;
+                margin-left: 0;
             }
             .read-aloud p {
                 margin-bottom: 1rem;

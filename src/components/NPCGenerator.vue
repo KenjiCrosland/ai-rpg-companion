@@ -63,7 +63,8 @@
                         Generate engaging NPCs for your RPG campaign. Provide context about your setting for richer
                         descriptions—mention the city, faction, or situation to get more detailed results.
                         <span v-if="!premium">
-                            <cdr-link href="https://cros.land/npc-generator-premium-version/">Upgrade to Premium</cdr-link>
+                            <cdr-link href="https://cros.land/npc-generator-premium-version/">Upgrade to
+                                Premium</cdr-link>
                             for unlimited statblock generation and data export.
                         </span>
                     </p>
@@ -71,7 +72,8 @@
                 <form @submit.prevent="handleGenerateNPC">
                     <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
                         label="Give me an NPC Description For:" required>
-                        <template #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix clan, a
+                        <template #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix clan,
+                            a
                             sentient gazebo named Gary, an
                             edgerunner
                             suffering from bouts
@@ -812,6 +814,7 @@ function validationPart2(jsonString) {
                     text-align: left;
                     background-color: $default-background-color;
                     border: none;
+                    color: inherit;
                     border-left: 4px solid transparent;
                     border-radius: 4px;
                     cursor: pointer;
@@ -839,7 +842,6 @@ function validationPart2(jsonString) {
     }
 
     .main-content {
-        flex-grow: 1;
         @include cdr-text-body-400();
         color: $cdr-color-text-primary;
         max-width: 940px;
@@ -848,6 +850,7 @@ function validationPart2(jsonString) {
         background-color: #ffffff;
         border-radius: 8px;
         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        max-height: fit-content;
     }
 
     .mobile-menu-button {
