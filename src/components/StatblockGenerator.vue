@@ -76,7 +76,7 @@
             CRs
             making for stronger monsters. Finally, if you wish the creature to be able to cast spells,
             please use
-            select the “Creature is a spellcaster” checkbox. Once generated, you can export a creature to
+            select the “Creature is a spellcaster” checkbox. Once generated, you can export a creature to Roll20,
             homebrewery,
             foundry VTT or
             the Improved Initiative app.
@@ -99,7 +99,7 @@
             be
             able to cast spells, please use select the “Creature is a spellcaster” checkbox. Once generated, you can
             export
-            a creature to
+            a creature to Roll20,
             homebrewery, foundry VTT or the Improved Initiative app.
           </p>
         </div>
@@ -146,6 +146,12 @@
       Monster
       Statblock</cdr-button>
   </div>
+
+  <!-- Footer -->
+  <footer class="ogl-footer">
+    This content uses the D&D 5e SRD under the <cdr-link href="https://cros.land/ogl" target="_blank">Open Gaming
+      License</cdr-link>
+  </footer>
 </template>
 
 <script setup>
@@ -698,5 +704,14 @@ async function generateStatblock() {
 .slide-leave-to {
   max-height: 0;
   opacity: 0;
+}
+
+.ogl-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-top: 3rem;
+  border-top: 1px solid #dee2e6;
+  color: $cdr-color-text-secondary;
+  font-size: 1.5rem;
 }
 </style>

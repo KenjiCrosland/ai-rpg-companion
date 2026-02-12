@@ -77,7 +77,7 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'encounter-generator-premium',
+      currentPage: this.$attrs['data-page'] || 'statblock-generator',
     };
   },
   mounted() {
