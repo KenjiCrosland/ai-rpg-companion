@@ -173,6 +173,11 @@
 
       </div>
     </section>
+
+    <!-- Footer -->
+    <footer class="ogl-footer">
+      This content uses the D&D 5e SRD under the <a href="https://cros.land/ogl" target="_blank" rel="noopener">Open Gaming License</a>
+    </footer>
   </div>
 </template>
 
@@ -710,5 +715,23 @@ function toolImageStyle(tool) {
   .about-photo {
     max-height: 280px;
   }
+}
+
+/* ---- Footer ---- */
+.ogl-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-top: 3rem;
+  color: rgba(15, 23, 42, 0.6);
+  font-size: 0.875rem;
+}
+
+.ogl-footer a {
+  color: #135d4a;
+  text-decoration: none;
+}
+
+.ogl-footer a:hover {
+  text-decoration: underline;
 }
 </style>

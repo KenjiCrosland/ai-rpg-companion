@@ -1,6 +1,18 @@
 <template>
   <div class="exports">
     <div v-if="!loading" class="instructions">
+      <h4>Export to Roll20!</h4>
+      <p>Streamline your homebrew workflow: create D&D monsters at cros.land, export to Roll20.</p>
+      <ol>
+        <li>Install the <a
+            href="https://chromewebstore.google.com/detail/conjure-creature/oepoeaoeoaaedbgobaegpfamofhkbifo"
+            target="_blank" rel="noopener noreferrer">Conjure Creature Chrome Extension</a>.</li>
+        <li>Generate your monsters here (they sync automatically to the extension).</li>
+        <li>Open a new Roll20 NPC sheet and click the extension.</li>
+        <li>Select your monster in the extension and click "Export to Roll20" — done!</li>
+      </ol>
+    </div>
+    <div v-if="!loading" class="instructions">
       <h4>Use Homebrewery to Make a Beautiful PDF of Your Statblock!</h4>
       <ol>
         <li>Click "Copy as Markdown" to copy the content.</li>
@@ -38,7 +50,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import { CdrButton } from "@rei/cedar";
 import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
 import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
