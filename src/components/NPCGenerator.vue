@@ -440,6 +440,7 @@ function deleteCurrentNPC() {
         if (currentNPCIndex.value < npcs.value.length) {
             npcs.value.splice(currentNPCIndex.value, 1);
             saveNPCsToLocalStorage();
+            toast.success('NPC deleted.');
 
             if (npcs.value.length > 0) {
                 const newIndex = Math.max(0, currentNPCIndex.value - 1);
@@ -456,6 +457,7 @@ function deleteAllNPCs() {
         npcs.value = [];
         createNewNPC();
         saveNPCsToLocalStorage();
+        toast.success('All NPCs deleted.');
     }
 }
 

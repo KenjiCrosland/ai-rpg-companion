@@ -55,8 +55,13 @@
 
             <cdr-select v-model="rarity" label="Rarity Level (optional)" prompt="Choose a rarity level"
               :options="rarityOptions" />
-            <cdr-select v-model="itemType" label="Item Type" prompt="Choose an item type" :options="itemTypeOptions" />
-            <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore"
+            <cdr-select v-model="itemType" label="Item Type (optional)" prompt="Random" :options="itemTypeOptions" />
+            <cdr-select v-model="itemOrigin" label="Item Origin (optional)" prompt="Random" :options="originOptions">
+              <template #helper-text-bottom>
+                Influences theme, aesthetics, and naming. Auto-selected when name and lore are blank.
+              </template>
+            </cdr-select>
+            <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore (optional)"
               placeholder="Enter any details about the item lore" class="item-lore-details">
             </cdr-input>
             <cdr-button class="generate-button" type="submit" :full-width="true">Generate Magic Item</cdr-button>
@@ -112,7 +117,7 @@
                 <h3>Export Magic Item</h3>
                 <p class="export-description">
                   Copy your item details in different formats. The markdown format works perfectly with
-                  <cdr-link href="https://homebrewery.naturalcrit.com/new" target="_blank">Homebrewery</cdr-link>
+                  <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
                   for creating beautifully formatted D&D handouts.
                 </p>
 
@@ -147,7 +152,7 @@
 
               <cdr-input v-model="editForm.name" label="Item Name" background="secondary" class="edit-field" />
 
-              <cdr-select v-model="editForm.item_type" label="Item Type" :options="itemTypeOptions"
+              <cdr-select v-model="editForm.item_type" label="Item Type" :options="concreteItemTypeOptions"
                 class="edit-field" />
 
               <cdr-select v-model="editForm.rarity" label="Rarity" :options="rarityOptions" class="edit-field" />
@@ -246,6 +251,7 @@ const props = defineProps({
 const itemName = ref('');
 const rarity = ref('');
 const itemType = ref('');
+const itemOrigin = ref('');
 const itemLore = ref('');
 const magicItemDescription = ref(null);
 const loadingItem = ref(false);
@@ -284,6 +290,36 @@ const itemTypeOptions = [
   'Wondrous Item'
 ];
 
+// Same list used in edit mode and for random selection
+const concreteItemTypeOptions = itemTypeOptions;
+
+const originOptions = [
+  'Abyssal',
+  'Alchemical',
+  'Aberrant',
+  'Astral',
+  'Celestial',
+  'Deep Sea',
+  'Draconic',
+  'Dwarven',
+  'Elven',
+  'Elemental',
+  'Fey',
+  'Giant',
+  'Gnomish',
+  'Goblinoid',
+  'Infernal',
+  'Lycanthropic',
+  'Necromantic',
+  'Orcish',
+  'Primordial',
+  'Shadow',
+  'Technomagical',
+  'Vampiric',
+  'Verdant',
+  'Wizardry'
+];
+
 const rarityGuidelines = {
   'Common': 'Minor magical properties or effects with no combat bonuses. Purely cosmetic or minor utility effects. Save DC: N/A (no saves required).',
   'Uncommon': 'Either a +1 bonus to AC/attack rolls OR one useful magical feature (not both). Save DC: 13.',
@@ -293,21 +329,225 @@ const rarityGuidelines = {
 };
 
 const generateMagicItem = async () => {
-  if (!itemType.value) {
-    toast.warning('Please select an item type.');
-    return;
-  }
   if (!rarity.value) {
     const randomIndex = Math.floor(Math.random() * rarityOptions.length);
     rarity.value = rarityOptions[randomIndex];
   }
 
-  const featuresAndBonuses = determineFeaturesAndBonuses(rarity.value, itemType.value);
+  // Resolve item type: use selection, or pick randomly if empty/Random
+  const resolvedItemType = (!itemType.value || itemType.value === 'Random')
+    ? concreteItemTypeOptions[Math.floor(Math.random() * concreteItemTypeOptions.length)]
+    : itemType.value;
+
+  // Determine origin: use user's pick, or pick a random one if no name/lore provided
+  const userProvidedContext = itemName.value.trim() || itemLore.value.trim();
+  let resolvedOrigin = '';
+  if (itemOrigin.value) {
+    resolvedOrigin = itemOrigin.value;
+  } else if (!userProvidedContext) {
+    resolvedOrigin = originOptions[Math.floor(Math.random() * originOptions.length)];
+  }
+
+  // Pre-select a physical form for Wondrous Items
+  const wondrousItemForms = [
+    'boots', 'gloves', 'gauntlets', 'belt', 'cloak', 'bag', 'lantern', 'mask',
+    'goggles', 'compass', 'hourglass', 'mirror', 'musical instrument', 'figurine',
+    'orb', 'brazier', 'carpet', 'helm', 'circlet', 'tattoo', 'earring', 'brooch',
+    'chalice', 'tome', 'candle', 'gemstone', 'set of dice', 'map', 'feather',
+    'bone carving', 'tooth', 'coin', 'idol', 'pendulum', 'prism', 'totem',
+    'monocle', 'quill', 'veil', 'crown', 'locket', 'mantle', 'sash', 'fan',
+    'music box', 'puzzle box', 'sundial', 'spyglass', 'bell', 'incense burner',
+    'dreamcatcher', 'snow globe', 'jar', 'saddle', 'banner', 'tapestry',
+    'chess piece', 'hand mirror', 'armband', 'anklet', 'nose ring', 'headband',
+    'pauldron', 'eye patch', 'scarf', 'cape', 'tabard', 'satchel', 'quiver',
+    'tankard', 'pipe', 'lodestone', 'wind chime', 'prayer beads', 'deck of cards'
+  ];
+  const selectedWondrousForm = wondrousItemForms[Math.floor(Math.random() * wondrousItemForms.length)];
+
+  // Pre-select a weapon type for Weapons
+  const weaponTypes = [
+    'longsword', 'shortsword', 'greatsword', 'rapier', 'scimitar', 'dagger',
+    'handaxe', 'battleaxe', 'greataxe', 'warhammer', 'maul', 'mace',
+    'morningstar', 'flail', 'spear', 'javelin', 'halberd', 'glaive', 'pike',
+    'trident', 'lance', 'whip', 'longbow', 'shortbow', 'light crossbow',
+    'heavy crossbow', 'hand crossbow', 'sling', 'war pick', 'quarterstaff',
+    'club', 'greatclub', 'sickle', 'blowgun', 'net', 'double-bladed scimitar'
+  ];
+  const selectedWeaponType = weaponTypes[Math.floor(Math.random() * weaponTypes.length)];
+
+  // Pre-select a naming palette — linked to origin when available for coherence
+  const originPaletteMap = {
+    'Abyssal': 'Abyssal-inspired: guttural, chaotic (e.g., Ghar\'zuul, Rotmaw, Vilesung)',
+    'Alchemical': 'Latin/Roman-inspired: formal, structured (e.g., Aurelium, Ferrata, Nexus Imperium)',
+    'Aberrant': 'Alien and unsettling: unpronounceable clusters, wrong-sounding (e.g., Xith\'vaar, Qolenth, Uurm)',
+    'Astral': 'Greek-inspired: mythological weight, melodic (e.g., Thyrsion, Aeoliphos, Kymera)',
+    'Celestial': 'Latin/Roman-inspired: formal, radiant (e.g., Solverium, Luxcaris, Auranthis)',
+    'Deep Sea': 'Polynesian-inspired: flowing vowels, oceanic (e.g., Moanakai, Tahurei, Levaleva)',
+    'Draconic': 'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax, Vyrmokk, Kaelsithur)',
+    'Dwarven': 'Dwarven/Germanic-inspired: guttural, industrial (e.g., Grundrak, Hammerfel, Eisenmark)',
+    'Elven': 'Elvish/Sindarin-inspired: elegant, vowel-rich (e.g., Galadhriel, Thindol, Nimrathel)',
+    'Elemental': 'Norse-inspired: harsh consonants, primal force (e.g., Stormbreak, Ashveil, Grimthorn)',
+    'Fey': 'Fey-inspired: whimsical, unexpected (e.g., Thistlewick, Moonpetal, Laughing Brook)',
+    'Giant': 'Norse-inspired: heavy, booming (e.g., Thrundvalk, Jotmark, Bergskald)',
+    'Gnomish': 'Gnomish: clever, playful, mechanical (e.g., Fizzwocket, Cogsworth, Tinberlin)',
+    'Goblinoid': 'Goblin-inspired: sharp, crude, percussive (e.g., Skragbit, Mukgash, Krik-tak)',
+    'Infernal': 'Infernal-inspired: sharp, aggressive (e.g., Vex\'tharion, Morkaal, Sazrith)',
+    'Lycanthropic': 'Celtic-inspired: earthy, primal (e.g., Branmhor, Caelith, Dunmara)',
+    'Necromantic': 'Slavic-inspired: dark, archaic (e.g., Voronsk, Morghul, Kresnik)',
+    'Orcish': 'Orcish: brutal, guttural (e.g., Grokthash, Uzgark, Dra\'mok)',
+    'Primordial': 'Ancient and alien: pre-language sounds, elemental (e.g., Aath\'kol, Rumblith, Dross)',
+    'Shadow': 'Arabic/Persian-inspired: mysterious, flowing (e.g., Qamar al-Sahir, Zafira, Sayyid)',
+    'Technomagical': 'Clinical with flair: compound technical-arcane (e.g., Arcanaforge Mark IV, Voltspire, Aethercog)',
+    'Vampiric': 'Eastern European-inspired: aristocratic, dark (e.g., Draculesti, Volkhara, Nachtfürst)',
+    'Verdant': 'Celtic-inspired: soft consonants, nature references (e.g., Branwen, Caelith, Dunmara)',
+    'Wizardry': 'Latin/Roman-inspired: academic, arcane (e.g., Magistrix, Archanum Volaris, Thesophor)'
+  };
+
+  // All palettes available for fully random selection (when no origin)
+  const allPalettes = [
+    ...Object.values(originPaletteMap),
+    'Japanese-inspired: clean syllables, natural imagery (e.g., Kagezuki, Honokaji, Tsubasa)',
+    'Mesoamerican-inspired: bold sounds, astronomical themes (e.g., Tezcamil, Ixchara, Coatlwing)',
+    'West African-inspired: rhythmic, strong vowels (e.g., Asante, Orunla, Ife-kari)'
+  ];
+
+  // If origin is set, use its matched palette. Otherwise pick randomly from all palettes.
+  const selectedPalette = resolvedOrigin
+    ? originPaletteMap[resolvedOrigin]
+    : allPalettes[Math.floor(Math.random() * allPalettes.length)];
+
+  // Pre-select a mood/tone
+  const moods = [
+    'ominous and foreboding — something feels wrong about this item',
+    'whimsical and playful — this item has a mischievous personality',
+    'tragic and melancholy — this item carries the weight of loss',
+    'utilitarian and pragmatic — built for function, not glory',
+    'regal and imperious — this item demands respect',
+    'wild and untamed — this item pulses with primal energy',
+    'eerie and unsettling — beautiful but deeply wrong',
+    'warm and protective — this item feels like a guardian',
+    'mysterious and cryptic — its true purpose is unclear',
+    'brutal and unsubtle — this item was made for war',
+    'serene and meditative — this item radiates calm',
+    'darkly humorous — this item has an ironic or sardonic edge',
+    'ancient and weathered — this item has survived ages',
+    'volatile and unstable — this item is barely contained power',
+    'cunning and deceptive — this item is not what it appears',
+    'joyful and celebratory — this item was made for a great occasion',
+    'haunted and sorrowful — something lingers within this item',
+    'rebellious and defiant — this item was forged in resistance'
+  ];
+  const selectedMood = moods[Math.floor(Math.random() * moods.length)];
+
+  // Pre-select an item quirk
+  const quirks = [
+    'The item is sentient and has a distinct personality. Describe its temperament and how it communicates (speech, emotions, images, etc.).',
+    'The item has a minor cosmetic curse — an odd but non-harmful side effect when used (e.g., the wielder\'s hair changes color, they hear faint music, flowers wilt nearby).',
+    'The item changes its appearance based on the wielder\'s emotional state.',
+    'The item hums, vibrates, or emits a faint sound under certain conditions.',
+    'The item was clearly broken at some point and repaired — the mend is visible and part of its identity.',
+    'The item is warm to the touch, as if alive or recently near a fire.',
+    'The item is uncomfortably cold, and frost forms on surfaces near it.',
+    'The item is heavier or lighter than it should be for its size and material.',
+    'The item casts no shadow, or casts a shadow that doesn\'t match its shape.',
+    'The item smells faintly of something unexpected (e.g., pine forests, iron, cinnamon, ozone, old books).',
+    'The item attracts a specific type of small creature (e.g., moths, cats, ravens, fireflies).',
+    'The item occasionally whispers a word or phrase in an unknown language.',
+    'The item leaves a faint, glowing trail when moved quickly through the air.',
+    'The item cannot be set down on bare earth — it always slides or rolls to a hard surface.',
+    'The item has a previous owner\'s initials or personal mark scratched into it.',
+    'The item slowly rotates to point toward the nearest source of a specific element (fire, water, etc.).',
+    'The item has no quirk — it is straightforward and unremarkable in its behavior.'
+  ];
+  const selectedQuirk = quirks[Math.floor(Math.random() * quirks.length)];
+
+  // Pre-select a lore framing device
+  const loreFramings = [
+    'Tell the lore as a tavern rumor — secondhand, slightly embellished, with a storyteller\'s flair.',
+    'Write the lore as a dry scholar\'s catalog entry — clinical, precise, with academic detachment.',
+    'Frame the lore as a warning inscription found on the item itself or its container.',
+    'Tell the lore as the dying words of the item\'s previous owner.',
+    'Write the lore as a fragment of a longer ballad or epic poem (in prose, not verse).',
+    'Frame the lore as a merchant\'s sales pitch — enthusiastic, possibly omitting key dangers.',
+    'Tell the lore as a child\'s fairy tale passed down through generations.',
+    'Write the lore as an entry from a military officer\'s field report.',
+    'Frame the lore as a confession — someone admitting what they did with this item.',
+    'Tell the lore as competing accounts — two conflicting stories about the item\'s origin.',
+    'Write the lore as a divine prophecy or oracle\'s vision about the item\'s significance.',
+    'Frame the lore as graffiti or desperate scratching found in a dungeon near where the item was discovered.',
+    'Tell the lore matter-of-factly, as if the item\'s history is well-documented common knowledge.',
+    'Write the lore as a letter from the item\'s creator, explaining why they made it.'
+  ];
+  const selectedLoreFraming = loreFramings[Math.floor(Math.random() * loreFramings.length)];
+
+  // Pre-select a primary material
+  const materials = [
+    'frozen flame — perpetually burning ice that radiates cold light',
+    'living wood — bark that slowly grows and repairs itself, with tiny leaf buds',
+    'volcanic glass — black obsidian veined with glowing magma',
+    'woven spider silk — impossibly light, stronger than steel, slightly sticky',
+    'fossilized bone — ancient creature remains, hard as stone, faintly warm',
+    'liquid mercury suspended in crystal — shifting silver that flows within its container',
+    'star metal — ore from a fallen meteorite, faintly magnetic, covered in pitting',
+    'petrified coral — ocean-born stone in pale pinks and blues, smells of salt',
+    'singing crystal — translucent mineral that resonates with a clear tone when struck',
+    'shadow-forged iron — metal quenched in magical darkness, absorbs light around it',
+    'amber with trapped insects — ancient resin preserving tiny creatures that seem to move',
+    'storm-charged copper — green-patinated metal that sparks when gripped tightly',
+    'mycelium-threaded leather — fungal fibers woven through cured hide, faintly luminescent',
+    'sand-fused glass — desert lightning strike captured in jagged, beautiful form',
+    'wyrm scale — a single massive dragon scale, iridescent and impossibly tough',
+    'clockwork brass — precision-engineered gears and plates, ticking faintly',
+    'ghost wood — wood from a tree that died and was resurrected by magic, pale white',
+    'blood iron — metal smelted with alchemical blood, dark red with a metallic sheen',
+    'cloud marble — white stone so light it nearly floats, swirled with grey wisps',
+    'chitin — polished insectoid shell plates, iridescent greens and purples'
+  ];
+  const selectedMaterial = materials[Math.floor(Math.random() * materials.length)];
+
+  // Pre-select an era / historical context
+  const eras = [
+    'recently forged — the item is newly created, its magic still settling, its story just beginning',
+    'from a golden age of magic — crafted when magical knowledge was at its peak, before some great decline',
+    'ancient pre-civilization artifact — predates all known cultures, its original purpose may be lost',
+    'from a fallen empire — created by a once-great civilization that no longer exists',
+    'created during a magical catastrophe — forged in desperation during a cataclysm, scarred by that event',
+    'cobbled together from battlefield scraps — improvised from broken weapons and armor, unexpectedly powerful',
+    'a divine commission — created by mortals at the direct request of a god or powerful entity',
+    'smuggled out of a forbidden vault — this item was locked away for good reason',
+    'inherited through a bloodline — passed down through generations of a specific family',
+    'salvaged from a shipwreck — recovered from the ocean floor, changed by centuries underwater',
+    'grown, not made — this item formed naturally through magical processes over centuries',
+    'a failed experiment — the creator intended something else entirely, but the result is remarkable',
+    'a trophy from a great hunt — taken from or made to commemorate the defeat of a legendary creature',
+    'stolen from the gods — this item was not meant for mortal hands'
+  ];
+  const selectedEra = eras[Math.floor(Math.random() * eras.length)];
+
+  // Rotating feature examples to avoid anchoring
+  const featureExamples = [
+    '{"Verdant Resilience": "While wearing this armor, you have advantage on saving throws against poison and resistance to poison damage."}',
+    '{"Hungering Edge": "When you hit a creature with this weapon, you regain hit points equal to half the damage dealt. This property can activate once per turn."}',
+    '{"Tidewalker": "While attuned, you can breathe underwater and gain a swimming speed of 60 feet. Once per day, you can cast Control Water without expending a spell slot."}',
+    '{"Ironbound Memory": "You can touch this item to a written text and it absorbs the content. As an action, you can project the stored text as glowing letters in the air. The item can store up to 100 pages."}',
+    '{"Fracture Point": "As a bonus action, you can mark a creature you can see within 60 feet. Your next attack against that creature scores a critical hit on a roll of 18-20. Once used, this property recharges at dawn."}',
+    '{"Creeping Frost": "When you deal damage with this weapon, the target\'s speed is reduced by 10 feet until the start of your next turn. If a creature\'s speed is reduced to 0 by this effect, it is restrained until the end of your next turn."}',
+    '{"Echoing Shield": "When you are hit by a spell attack, you can use your reaction to reflect the spell back at the caster. The caster must make the original attack roll against their own AC. Once used, this property recharges after a short or long rest."}',
+    '{"Gravity Well": "As an action, you can activate this item to create a 20-foot radius sphere of intensified gravity centered on a point within 60 feet. Creatures in the area must succeed on a DC 16 Strength save or be pulled to the center and knocked prone. Lasts 1 minute. Recharges at dawn."}'
+  ];
+  const selectedExample = featureExamples[Math.floor(Math.random() * featureExamples.length)];
+
+  const featuresAndBonuses = determineFeaturesAndBonuses(rarity.value, resolvedItemType);
   magicItemDescription.value = null;
 
   const effectDefsString = Object.entries(featuresAndBonuses.effectDefinitions)
     .map(([key, value]) => `${key}: ${value}`)
     .join('\n');
+
+  const originInstruction = resolvedOrigin
+    ? `\nITEM ORIGIN: ${resolvedOrigin}
+The item's theme, aesthetics, and lore MUST reflect its ${resolvedOrigin} origin. Let the origin deeply influence the item's appearance, magical properties, cultural context, and the world it comes from.\n`
+    : '';
 
   const prompt = `Generate a detailed Dungeons & Dragons 5e magic item description adhering to the provided rarity guidelines and incomplete information.
 
@@ -319,7 +559,54 @@ IMPORTANT D&D 5e DESIGN RULES:
 - Balance bonuses with features: high bonus = fewer features
 - Use the effect definitions below to understand the appropriate power level for each feature type
 
-${itemType.value === 'Potion' ? `SPECIAL RULES FOR POTIONS:
+CRITICAL — ITEM TYPE ENFORCEMENT:
+- The item_type is "${resolvedItemType}". The generated item MUST be a ${resolvedItemType}.
+- A Weapon must be a weapon (sword, axe, bow, dagger, mace, halberd, etc.) — NEVER a wand, staff, or rod.
+- Armor must be armor (plate, chain mail, leather, shield, etc.) — NEVER a cloak, ring, or amulet.
+- A Wondrous Item can be almost anything EXCEPT weapon/armor/wand/rod/staff/ring/scroll/potion.
+- Do NOT substitute one item type for another under any circumstances.
+${resolvedItemType === 'Wondrous Item' ? `
+WONDROUS ITEM FORM:
+This wondrous item takes the form of: ${selectedWondrousForm}.
+Design the item around this physical form. Its name, appearance, features, and lore should all make sense for a magical ${selectedWondrousForm}.
+` : ''}
+${resolvedItemType === 'Weapon' ? `
+WEAPON TYPE:
+This weapon is a ${selectedWeaponType}. Design the item around this specific weapon type. Its name, appearance, and features should fit a ${selectedWeaponType}.
+` : ''}
+${originInstruction}
+${!itemName.value.trim() ? `NAMING STYLE:
+Use this linguistic palette for ALL names — the item name, character names, faction names, and location names: ${selectedPalette}
+All names should feel like they belong to the same world. A Japanese-named item should not have lore characters with generic Western fantasy names.
+` : ''}
+MOOD & TONE:
+The overall feel of this item should be: ${selectedMood}
+Let this mood influence the name, description, features, and lore. Not every item needs to be heroic or epic.
+
+MAGICAL MATERIAL:
+The item incorporates: ${selectedMaterial}
+This material should appear as a notable component, accent, or magical element of the item — not necessarily the entire construction. For example, a leather armor might have copper rivets or inlays, a wooden staff might have a crystal tip. Let the item type dictate the base construction; weave this material in naturally.
+
+ITEM QUIRK:
+${selectedQuirk}
+${selectedQuirk.includes('no quirk') ? '' : 'Weave this quirk naturally into the physical_description or as a note at the end of a feature.'}
+
+HISTORICAL CONTEXT:
+This item is ${selectedEra}.
+Let this context shape the lore — the item\'s age, condition, and story should reflect when and how it came to exist.
+
+LORE STYLE:
+${!itemLore.value.trim() ? selectedLoreFraming : 'The user has provided lore context. Expand on it while keeping their intent.'}
+
+COHERENCE:
+All of the creative seeds above (origin, mood, material, quirk, era, naming style, lore style) describe ONE item. They must work together as a unified concept, not as independent checkboxes. If the naming style is Japanese-inspired and the origin is Fey, then the result should feel like a fey item from a Japanese-inspired culture — not a generic fantasy item with a Japanese name bolted on.
+
+CREATIVITY:
+- Powerful items can draw from ANY theme: shadow, elemental fury, undead craftsmanship, fey trickery, abyssal corruption, dwarven engineering, oceanic depths, volcanic forge, fungal growth, temporal magic, gravity manipulation, etc.
+- Light and celestial themes are valid but should not dominate. Explore the full spectrum.
+- Every item should feel genuinely unique. Surprise the user.
+
+${resolvedItemType === 'Potion' ? `SPECIAL RULES FOR POTIONS:
 - Potions are CONSUMABLE items (single use, destroyed after drinking)
 - Effects are TEMPORARY (typically 1 hour, or until triggered/expended)
 - Potions SET stats rather than add bonuses (e.g., "Strength becomes 25" not "+5 to Strength")
@@ -336,33 +623,34 @@ ${effectDefsString}
 
 ITEM STRUCTURE TO COMPLETE:
 {
-  "name": "${itemName.value || '[Generate an evocative, fantasy-appropriate name]'}",
-  "item_type": "${itemType.value}",
+  "name": "${itemName.value || '[Generate a unique, evocative name — avoid generic fantasy clichés]'}",
+  "item_type": "${resolvedItemType}",
   "rarity": "${rarity.value}",
   "bonus": "${featuresAndBonuses.bonus}",
-  "modifier_sentence": "${constructModifierSentence(featuresAndBonuses.bonus, itemType.value)}",
+  "modifier_sentence": "${constructModifierSentence(featuresAndBonuses.bonus, resolvedItemType)}",
   "feature_guidelines": "${rarityGuidelines[rarity.value]}",
   "feature_count": ${featuresAndBonuses.feature_count},
   "features": ${JSON.stringify(featuresAndBonuses.features)},
   "reason_for_rarity_level": "[Explain why this item fits its rarity based on the guidelines above]",
-  "physical_description": "[2-3 sentences describing the item's appearance, feel, and any visual magical effects${itemType.value === 'Potion' ? '. For potions: describe the liquid color, consistency, swirls, particles, smell, and taste' : ''}]",
-  "lore": "${itemLore.value || '[Create compelling backstory: origin, creator, historical significance, or legendary tales]'}"
+  "physical_description": "[2-3 sentences describing the item's appearance incorporating the magical material, mood, and any quirk. ${resolvedItemType === 'Potion' ? 'For potions: describe the liquid color, consistency, swirls, particles, smell, and taste.' : ''}]",
+  "lore": "${itemLore.value || '[Create compelling backstory using the lore style and historical context above. All character names, faction names, and location names must use the same linguistic palette as the item name.]'}"
 }
 
 INSTRUCTIONS:
 1. Replace all placeholder values with actual content
 2. For the "features" object: 
    - Replace BOTH the key names (e.g., "feature_name_1") AND the values (e.g., "useful_magical_effect")
-   - Use descriptive, thematic feature names as keys (e.g., "Blazing Strike", "Protective Aura", "Ethereal Shift")
+   - Use descriptive, thematic feature names as keys
    - Replace effect types with specific, mechanically-detailed descriptions as values
 3. Include specific mechanics: damage dice, save DCs, spell levels, recharge times, ranges, durations
-4. ${itemType.value === 'Potion' ? 'For potions: Always include duration, specify if it is consumed on use, describe immediate and ongoing effects' : 'Ensure all features align with the rarity guidelines and effect definitions'}
+4. ${resolvedItemType === 'Potion' ? 'For potions: Always include duration, specify if it is consumed on use, describe immediate and ongoing effects' : 'Ensure all features align with the rarity guidelines and effect definitions'}
 5. Make features synergistic and thematic
 6. Write features in D&D 5e stat block style (clear, concise, mechanical)
+7. The "item_type" in the output MUST be exactly "${resolvedItemType}" — do not change it
 
 EXAMPLE of correct "features" format:
 Instead of: {"feature_name_1": "useful_magical_effect"}
-Do this: {"Verdant Resilience": "While wearing this armor, you have advantage on saving throws against poison and resistance to poison damage."}${itemType.value === 'Potion' ? '\n\nPOTION EXAMPLE:\n{"Giant\'s Might": "Your Strength score becomes 25 for 1 hour. You have advantage on Strength checks and Strength saving throws during this time.", "Enhanced Fortitude": "For the duration, you gain 20 temporary hit points."}' : ''}`;
+Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE:\n{"Giant\'s Might": "Your Strength score becomes 25 for 1 hour. You have advantage on Strength checks and Strength saving throws during this time.", "Enhanced Fortitude": "For the duration, you gain 20 temporary hit points."}' : ''}`;
 
   try {
     loadingItem.value = true;
@@ -553,6 +841,7 @@ const deleteItem = () => {
       itemName.value = '';
       rarity.value = '';
       itemType.value = '';
+      itemOrigin.value = '';
       itemLore.value = '';
     }
   }
@@ -564,6 +853,7 @@ const newItem = () => {
   itemName.value = '';
   rarity.value = '';
   itemType.value = '';
+  itemOrigin.value = '';
   itemLore.value = '';
   isEditing.value = false;
 };
@@ -848,10 +1138,11 @@ onMounted(() => {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
 }
 
 .generate-button {
-  margin-top: 2rem;
+  margin-top: 0.5rem;
 }
 
 .read-aloud {
