@@ -1,10 +1,6 @@
 <template>
-    <ToolSuiteShowcase :premium="premium" display-mode="banner" />
-    <div class="app-container">
-        <!-- Overlay to close sidebar on click -->
-        <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
-
-        <div class="sidebar" :style="sidebarStyle">
+    <GeneratorLayout :premium="premium">
+        <template #sidebar>
             <div class="sidebar-content">
                 <ul class="npc-list">
                     <li v-for="(npc, index) in npcs" :key="index" :class="{ 'active-tab': currentNPCIndex === index }"
@@ -48,45 +44,69 @@
                     </cdr-button>
                 </div>
             </div>
-        </div>
+        </template>
 
         <!-- Data Manager Modal -->
         <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
             :premium="premium" currentApp="npcGeneratorNPCs" />
 
         <div class="main-content">
-            <!-- Form (shown only when no NPC is loaded) -->
-            <div v-if="!npcDescriptionPart1 && !loadingPart1">
-                <h1>Kenji's NPC Generator</h1>
-                <div>
-                    <p>
-                        Generate engaging NPCs for your RPG campaign. Provide context about your setting for richer
-                        descriptions—mention the city, faction, or situation to get more detailed results.
-                        <span v-if="!premium">
-                            <cdr-link href="https://cros.land/npc-generator-premium-version/">Upgrade to
-                                Premium</cdr-link>
-                            for unlimited statblock generation and data export.
-                        </span>
+            <!-- LANDING STATE: Three-zone layout -->
+            <div class="landing-wrapper" v-if="!npcDescriptionPart1 && !loadingPart1">
+
+                <!-- ZONE 1: Hero header -->
+                <div class="hero-header">
+                    <div class="brand-line">
+                        <span class="brand-name">Kenji's NPC Generator</span>
+                        <span v-if="!premium" class="version-pill">Free</span>
+                        <span v-else class="version-pill premium">Premium</span>
+                    </div>
+                    <h1>Bring Your World to Life with Detailed NPCs</h1>
+                    <p class="value-prop">Generate memorable characters with backstories, relationships, and combat
+                        statblocks —
+                        ready for any session.</p>
+                </div>
+
+                <!-- ZONE 2: Form card -->
+                <div class="form-card">
+                    <form @submit.prevent="handleGenerateNPC">
+                        <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
+                            label="Give me an NPC Description For:" required>
+                            <template #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix
+                                clan,
+                                a sentient gazebo named Gary, an edgerunner suffering from bouts of cyberpsychosis, a
+                                goblin named Boblin</template>
+                        </cdr-input>
+                        <cdr-button type="submit" :disabled="loadingPart1" class="generate-button">Generate
+                            NPC</cdr-button>
+                    </form>
+                </div>
+
+                <!-- ZONE 3: Footer meta -->
+                <div class="footer-meta">
+                    <p v-if="!premium" class="limit-info">
+                        NPC generation is unlimited. Combat statblocks are limited to 5/day on the free plan.
+                        <cdr-link href="https://cros.land/npc-generator-premium-version/">Go Premium for unlimited
+                            access
+                            &rarr;</cdr-link>
+                    </p>
+                    <p v-else class="limit-info">
+                        All features unlimited. Export your NPCs in Homebrewery-compatible markdown format.
                     </p>
                 </div>
-                <form @submit.prevent="handleGenerateNPC">
-                    <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
-                        label="Give me an NPC Description For:" required>
-                        <template #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix clan,
-                            a
-                            sentient gazebo named Gary, an
-                            edgerunner
-                            suffering from bouts
-                            of
-                            cyberpsychosis, a goblin named Boblin</template>
-                    </cdr-input>
-                    <cdr-button type="submit" :disabled="loadingPart1">Generate NPC</cdr-button>
-                </form>
             </div>
 
             <!-- NPC Content (shown when NPC is loaded or loading) -->
             <div class="location-description"
                 v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
+
+                <!-- Premium banner for generated NPC view -->
+                <div v-if="!premium && npcDescriptionPart1 && !loadingPart1" class="premium-banner">
+                    Statblock generation is limited to 5/day on the free plan.
+                    <cdr-link href="https://cros.land/npc-generator-premium-version/">Go Premium for unlimited access
+                        &rarr;</cdr-link>
+                </div>
+
                 <div v-if="loadingPart1">
                     <CdrSkeleton>
                         <CdrSkeletonBone type="heading" style="width: 50%; height: 50px" />
@@ -263,24 +283,15 @@
                 </div>
                 <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
             </div>
-
-            <div class="patreon" v-if="!premium">
-                <cdr-link href="https://www.patreon.com/bePatron?u=2356190">Support Me on Patreon!</cdr-link>
-            </div>
         </div>
-
-        <!-- Bottom Menu Button for Mobile -->
-        <button class="mobile-menu-button" v-show="windowWidth <= 768" @click="isSidebarVisible = !isSidebarVisible"
-            :class="{ active: isSidebarVisible }" aria-label="Toggle NPC menu">
-            <icon-navigation-menu inherit-color />
-            <span class="button-label">Menu</span>
-        </button>
-    </div>
+    </GeneratorLayout>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, IconNavigationMenu } from '@rei/cedar';
+import { ref, onMounted } from 'vue';
+import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput } from '@rei/cedar';
+import { useToast } from '../composables/useToast';
+import GeneratorLayout from './GeneratorLayout.vue';
 import Statblock from './Statblock.vue';
 import SaveStatblock from './SaveStatblock.vue';
 import DataManagerModal from './DataManagerModal.vue';
@@ -298,7 +309,8 @@ import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-skeleton.css';
 import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
 import '@rei/cedar/dist/style/cdr-input.css';
-import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
+
+const toast = useToast();
 
 // NPC list for sidebar - each entry stores the full NPC data
 const npcs = ref([]);
@@ -325,8 +337,6 @@ const props = defineProps({
 });
 
 // Sidebar responsive
-const isSidebarVisible = ref(false);
-const windowWidth = ref(window.innerWidth);
 const showDataManagerModal = ref(false);
 
 // Inline editing
@@ -338,50 +348,8 @@ const npcEditForm = ref({
     relationshipsArray: []
 });
 
-const updateWindowWidth = () => {
-    windowWidth.value = window.innerWidth;
-};
-
-const updateVisibility = () => {
-    if (window.innerWidth > 768) {
-        isSidebarVisible.value = true;
-    } else {
-        isSidebarVisible.value = false;
-    }
-};
-
-const sidebarStyle = computed(() => {
-    if (windowWidth.value <= 768) {
-        return {
-            position: 'fixed',
-            transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
-            width: '70%',
-            maxWidth: '400px'
-        };
-    } else {
-        return {
-            width: '400px'
-        };
-    }
-});
-
 onMounted(() => {
     loadNPCsFromLocalStorage();
-    updateWindowWidth();
-    updateVisibility();
-    window.addEventListener('resize', updateWindowWidth);
-});
-
-onUnmounted(() => {
-    window.removeEventListener('resize', updateWindowWidth);
-});
-
-watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
-    if (width <= 768 && sidebarOpen) {
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = '';
-    }
 });
 
 // Local Storage functions
@@ -396,7 +364,6 @@ function loadNPCsFromLocalStorage() {
             const parsed = JSON.parse(stored);
             if (parsed.length > 0) {
                 npcs.value = parsed;
-                // Don't auto-load first NPC - let user choose from sidebar or create new one
             }
         } catch (error) {
             console.error('Failed to parse NPCs from local storage:', error);
@@ -415,12 +382,10 @@ function saveCurrentNPCToList() {
         isSpellcaster: isSpellcaster.value
     };
 
-    // If current index is null or >= length, add as new NPC
     if (currentNPCIndex.value === null || currentNPCIndex.value >= npcs.value.length) {
         npcs.value.push(npcData);
         currentNPCIndex.value = npcs.value.length - 1;
     } else {
-        // Update existing NPC
         npcs.value[currentNPCIndex.value] = npcData;
     }
 
@@ -443,12 +408,10 @@ function loadNPCIntoView(index) {
 
 // NPC Management functions
 function createNewNPC() {
-    // Exit edit mode if active
     if (isEditingNPC.value) {
         isEditingNPC.value = false;
     }
 
-    // Reset current view
     npcDescriptionPart1.value = null;
     npcDescriptionPart2.value = null;
     typeOfPlace.value = '';
@@ -462,12 +425,10 @@ function createNewNPC() {
 }
 
 function selectNPC(index) {
-    // Exit edit mode if active
     if (isEditingNPC.value) {
         isEditingNPC.value = false;
     }
 
-    // Save current NPC before switching
     if (npcDescriptionPart1.value) {
         saveCurrentNPCToList();
     }
@@ -480,9 +441,7 @@ function deleteCurrentNPC() {
             npcs.value.splice(currentNPCIndex.value, 1);
             saveNPCsToLocalStorage();
 
-            // Load another NPC or create a new one
             if (npcs.value.length > 0) {
-                // Load the previous NPC, or the first one if we deleted the first
                 const newIndex = Math.max(0, currentNPCIndex.value - 1);
                 loadNPCIntoView(newIndex);
             } else {
@@ -502,7 +461,6 @@ function deleteAllNPCs() {
 
 // Inline editing functions
 function startEditingNPC() {
-    // Convert relationships object to array for easier editing
     const relationshipsArray = npcDescriptionPart2.value?.relationships
         ? Object.entries(npcDescriptionPart2.value.relationships).map(([name, description]) => ({
             name,
@@ -525,12 +483,10 @@ function cancelEditNPC() {
 }
 
 function saveEditNPC() {
-    // Update part1 fields
     npcDescriptionPart1.value.character_name = npcEditForm.value.character_name;
     npcDescriptionPart1.value.read_aloud_description = npcEditForm.value.read_aloud_description;
     npcDescriptionPart1.value.combined_details = npcEditForm.value.combined_details;
 
-    // Convert relationships array back to object
     const relationshipsObject = {};
     npcEditForm.value.relationshipsArray.forEach(rel => {
         if (rel.name && rel.description) {
@@ -538,13 +494,11 @@ function saveEditNPC() {
         }
     });
 
-    // Update part2 relationships
     if (!npcDescriptionPart2.value) {
         npcDescriptionPart2.value = {};
     }
     npcDescriptionPart2.value.relationships = relationshipsObject;
 
-    // Save to localStorage
     saveCurrentNPCToList();
 
     isEditingNPC.value = false;
@@ -557,11 +511,10 @@ function deleteRelationship(relationshipIndex) {
 // Copy functions
 function copyNPCAsMarkdown() {
     if (!npcDescriptionPart1.value) {
-        alert('No NPC to copy.');
+        toast.warning('No NPC to copy.');
         return;
     }
 
-    // Combine NPC data for conversion
     const npcData = {
         character_name: npcDescriptionPart1.value.character_name,
         read_aloud_description: npcDescriptionPart1.value.read_aloud_description,
@@ -572,16 +525,15 @@ function copyNPCAsMarkdown() {
 
     const markdown = convertNPCToMarkdown(npcData);
     navigator.clipboard.writeText(markdown);
-    alert('NPC copied as markdown! Paste it into Homebrewery to see it formatted.');
+    toast.success('NPC copied as markdown! Paste it into Homebrewery to see it formatted.');
 }
 
 function copyNPCAsPlainText() {
     if (!npcDescriptionPart1.value) {
-        alert('No NPC to copy.');
+        toast.warning('No NPC to copy.');
         return;
     }
 
-    // Combine NPC data for conversion
     const npcData = {
         character_name: npcDescriptionPart1.value.character_name,
         read_aloud_description: npcDescriptionPart1.value.read_aloud_description,
@@ -592,12 +544,11 @@ function copyNPCAsPlainText() {
 
     const plainText = convertNPCToPlainText(npcData);
     navigator.clipboard.writeText(plainText);
-    alert('NPC copied as plain text!');
+    toast.success('NPC copied as plain text!');
 }
 
 function updateStatblock(monster) {
     statblock.value = monster;
-    // Save the updated statblock to the NPC list
     saveCurrentNPCToList();
 }
 
@@ -609,7 +560,6 @@ function setLoadingState({ part, isLoading }) {
     }
 }
 
-// Helper function to combine NPC detail fields into a single content block
 function combineNPCDetails(npc) {
     if (!npc) return '';
 
@@ -640,16 +590,13 @@ function combineNPCDetails(npc) {
 
 function displayNPCDescription({ part, npcDescription }) {
     if (part === 1) {
-        // Combine detail fields into a single content block (this is the key for inline editing later!)
         npcDescription.combined_details = combineNPCDetails(npcDescription);
         npcDescriptionPart1.value = npcDescription;
         loadingPart1.value = false;
-        // Save to list after part 1
         saveCurrentNPCToList();
     } else if (part === 2) {
         npcDescriptionPart2.value = npcDescription;
         loadingPart2.value = false;
-        // Save to list after part 2
         saveCurrentNPCToList();
     }
 }
@@ -664,8 +611,8 @@ function handleError(message) {
 async function handleGenerateNPC() {
     await requestNPCDescription(
         typeOfPlace.value,
-        {}, // extraDescription - not used in basic generator
-        false, // sequentialLoading
+        {},
+        false,
         (event, payload) => {
             if (event === 'npc-description-generated') {
                 displayNPCDescription(payload);
@@ -712,7 +659,6 @@ async function generateStatblock() {
             ...JSON.parse(npcStatsPart2),
         };
         statblock.value = finalStatblock;
-        // Save the statblock to the NPC list
         saveCurrentNPCToList();
     } catch (e) {
         errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.';
@@ -754,157 +700,201 @@ function validationPart2(jsonString) {
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-.app-container {
+$sidebar-width: 350px;
+$background-color: #f4f4f4;
+$active-color: #ffffff;
+$hover-background-color: #f0f0f0;
+$default-background-color: #e0e0e0;
+$active-border-color: #007BFF;
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
     display: flex;
+    flex-direction: column;
 
-    $sidebar-width: 350px;
-    $background-color: #f4f4f4;
-    $active-color: #ffffff;
-    $hover-background-color: #f0f0f0;
-    $default-background-color: #e0e0e0;
-    $active-border-color: #007BFF;
+    .npc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 2rem 0;
 
-    .overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-    }
+        li {
+            margin-bottom: 4px;
 
-    .sidebar {
-        transition: transform 0.3s ease;
-        background-color: $background-color;
-        width: $sidebar-width;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        z-index: 1001;
-        overflow: hidden;
+            &.active-tab {
+                .npc-button {
+                    background-color: $active-color;
+                    border-left: 4px solid $active-border-color;
+                }
+            }
 
-        .sidebar-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-        }
+            .npc-button {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 1.25rem;
+                text-align: left;
+                background-color: $default-background-color;
+                border: none;
+                color: inherit;
+                border-left: 4px solid transparent;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+                font-family: 'Roboto', sans-serif;
 
-        .npc-list {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 2rem 0;
-
-            li {
-                margin-bottom: 4px;
-
-                &.active-tab {
-                    .npc-button {
-                        background-color: $active-color;
-                        border-left: 4px solid $active-border-color;
-                    }
+                &:hover {
+                    background-color: $hover-background-color;
                 }
 
-                .npc-button {
-                    width: 100%;
-                    padding: 12px 20px;
-                    font-size: 1.25rem;
-                    text-align: left;
-                    background-color: $default-background-color;
-                    border: none;
-                    color: inherit;
-                    border-left: 4px solid transparent;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    transition: background-color 0.2s;
-                    font-family: 'Roboto', sans-serif;
-
-                    &:hover {
-                        background-color: $hover-background-color;
-                    }
-
-                    &:focus {
-                        outline: none;
-                        border-left-color: $active-border-color;
-                    }
+                &:focus {
+                    outline: none;
+                    border-left-color: $active-border-color;
                 }
             }
         }
-
-        .sidebar-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-
-        }
     }
 
-    .main-content {
-        @include cdr-text-body-400();
-        color: $cdr-color-text-primary;
-        max-width: 940px;
-        margin: 20px auto;
-        padding: 2px 30px 30px 30px;
-        background-color: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        max-height: fit-content;
-    }
-
-    .mobile-menu-button {
-        display: none;
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        width: 64px;
-        height: 64px;
-        background-color: #e0e0e0;
-        color: #333;
-        border: none;
-        border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        cursor: pointer;
-        z-index: 998;
-        transition: all 0.3s ease;
+    .sidebar-buttons {
+        display: flex;
         flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+/* ========================================
+   LANDING PAGE: Three-zone layout
+   ======================================== */
+
+.landing-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ZONE 1: Hero header */
+.hero-header {
+    text-align: center;
+    padding: 2rem 1rem 2.5rem;
+
+    .brand-line {
+        display: flex;
         align-items: center;
         justify-content: center;
-        gap: 4px;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
 
-        @media (max-width: 768px) {
-            display: flex;
-        }
+    .brand-name {
+        font-size: 1.4rem;
+        font-weight: 500;
+        color: $cdr-color-text-secondary;
+        letter-spacing: 0.02em;
+    }
 
-        svg {
-            width: 24px;
-            height: 24px;
-        }
+    .version-pill {
+        display: inline-block;
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 0.2rem 0.8rem;
+        border-radius: 100px;
+        background-color: #ededed;
+        color: $cdr-color-text-secondary;
 
-        .button-label {
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        &:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            background-color: #d0d0d0;
-        }
-
-        &:active {
-            transform: scale(0.95);
-        }
-
-        &.active {
-            background-color: #333;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        &.premium {
+            background-color: #fdf3e0;
+            color: #9c6a0a;
         }
     }
+
+    h1 {
+        font-size: 3.2rem;
+        line-height: 1.15;
+        margin: 0 0 0.75rem;
+        color: $cdr-color-text-primary;
+    }
+
+    .value-prop {
+        font-size: 1.6rem;
+        font-weight: 400;
+        color: $cdr-color-text-secondary;
+        margin: 0;
+    }
+}
+
+/* ZONE 2: Form card */
+.form-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e2e2;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    padding: 2.5rem 3rem;
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        background-color: transparent;
+        border-radius: 0;
+        padding: 0;
+        margin-bottom: 0;
+    }
+
+    .generate-button {
+        align-self: flex-start;
+    }
+}
+
+/* ZONE 3: Footer meta */
+.footer-meta {
+    text-align: center;
+    padding: 1.5rem 1rem 0;
+
+    .limit-info {
+        font-size: 1.2rem;
+        color: $cdr-color-text-secondary;
+        margin: 0;
+        line-height: 1.6;
+    }
+}
+
+/* ========================================
+   PREMIUM INDICATOR
+   ======================================== */
+
+.premium-banner {
+    font-size: 1.2rem;
+    color: $cdr-color-text-secondary;
+    background-color: #fdf8ef;
+    border: 1px solid #f0e4cc;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* ========================================
+   NPC CONTENT (post-generation)
+   ======================================== */
+
+.main-content {
+    @include cdr-text-body-400();
+    color: $cdr-color-text-primary;
+    max-width: 940px;
+    width: 100%;
+    margin: 20px auto;
+    padding: 2px 30px 30px 30px;
+}
+
+.location-description {
+    @include cdr-text-body-500();
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 hr {
@@ -914,21 +904,11 @@ hr {
     margin-bottom: 2rem;
 }
 
-.intro {
-    @include cdr-text-body-400();
-    margin: 1rem 0;
-}
-
 .focus-text {
     background-color: $cdr-color-background-secondary;
     color: $cdr-color-text-secondary;
     padding: 1rem 2rem;
     font-style: italic;
-}
-
-.suggestions {
-    margin-left: 2rem;
-    padding: 2rem;
 }
 
 div[class^="cdr-skeleton-bone"] {
@@ -968,35 +948,6 @@ div[class^="cdr-skeleton-bone"] {
     }
 }
 
-.credits {
-    @include cdr-text-body-400();
-    margin: 5px auto;
-    text-align: center;
-}
-
-form {
-    background-color: $cdr-color-background-secondary;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.generate-button {
-    align-self: flex-start;
-}
-
-.location-description {
-    @include cdr-text-body-500();
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
-}
-
 .error-message {
     border: 1px solid $cdr-color-border-error;
     padding: $cdr-space-inset-one-x-stretch;
@@ -1006,8 +957,19 @@ form {
     margin-top: 16px;
 }
 
-.patreon {
-    margin: 30px auto 0 auto;
-    text-align: center;
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-header {
+        padding: 1.5rem 0.5rem 2rem;
+
+        h1 {
+            font-size: 2.4rem;
+        }
+    }
+
+    .form-card {
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
 }
 </style>

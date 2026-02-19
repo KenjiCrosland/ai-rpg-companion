@@ -1,132 +1,113 @@
 <template>
-  <ToolSuiteShowcase :premium="premium" display-mode="banner" />
-  <div class="app-container">
-    <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
-      v-show="windowWidth <= 1020">
-      <template #icon-left>
-        <icon-navigation-menu inherit-color />
-      </template>
-      {{ isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar' }}
-    </cdr-button>
-    <!-- Overlay to close sidebar on click -->
-    <div class="overlay" v-show="isSidebarVisible && windowWidth <= 1020" @click="isSidebarVisible = false"></div>
-    <div class="sidebar" :style="sidebarStyle">
-      <cdr-accordion-group>
-        <cdr-accordion level="3" v-for="(folder, folderName) in filteredMonsters" :key="folderName" :id="folderName"
-          :opened="openedFolders[folderName]"
-          @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
-          <template #label>
-            {{ folderName }}
-          </template>
-          <ul class="saved-statblocks">
-            <li v-for="(monsterItem, index) in folder" :key="index"
-              :class="{ 'active': activeMonsterIndex === index && activeFolder === folderName }">
-              <button class="monster-button" @click="selectMonster(folderName, index)" tabindex="0">
-                <span>{{ monsterItem.name }}</span>
-                <span>CR {{ getFirstNumber(monsterItem.challenge_rating) }}</span>
-              </button>
-            </li>
-            <li>
-              <button class="monster-button" @click="newMonster(folderName)"
-                :class="{ 'active': activeMonsterIndex === null && activeFolder === folderName }">
-                + New Monster Statblock</button>
-            </li>
-          </ul>
-        </cdr-accordion>
-      </cdr-accordion-group>
+  <GeneratorLayout :premium="premium">
+    <template #sidebar>
+      <div class="sidebar-content">
+        <cdr-accordion-group>
+          <cdr-accordion level="3" v-for="(folder, folderName) in filteredMonsters" :key="folderName" :id="folderName"
+            :opened="openedFolders[folderName]"
+            @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
+            <template #label>
+              {{ folderName }}
+            </template>
+            <ul class="saved-statblocks">
+              <li v-for="(monsterItem, index) in folder" :key="index"
+                :class="{ 'active': activeMonsterIndex === index && activeFolder === folderName }">
+                <button class="monster-button" @click="selectMonster(folderName, index)" tabindex="0">
+                  <span>{{ monsterItem.name }}</span>
+                  <span>CR {{ getFirstNumber(monsterItem.challenge_rating) }}</span>
+                </button>
+              </li>
+              <li>
+                <button class="monster-button" @click="newMonster(folderName)"
+                  :class="{ 'active': activeMonsterIndex === null && activeFolder === folderName }">
+                  + New Monster Statblock</button>
+              </li>
+            </ul>
+          </cdr-accordion>
+        </cdr-accordion-group>
 
-      <div class="folder-form">
-        <h3>Move Statblock to Folder</h3>
-        <form @submit.prevent="moveMonsterToFolder">
-          <cdr-input v-model="newFolder" label="New Folder Name:">
-            <template #helper-text-top>
-              Move the monster to a new folder in the sidebar
-            </template>
-          </cdr-input>
-          <cdr-select v-model="chosenFolder" label="Existing Folders" :options="folderNames">
-            <template #helper-text>
-              Move the monster to an existing folder in the sidebar
-            </template>
-          </cdr-select>
-          <cdr-button type="submit" :full-width="true">Move To Folder</cdr-button>
-        </form>
-        <cdr-button modifier="dark" @click="showDataManagerModal = true" :full-width="true">
-          Save/Load Data from a File
-        </cdr-button>
+        <div class="folder-form">
+          <h3>Move Statblock to Folder</h3>
+          <form @submit.prevent="moveMonsterToFolder">
+            <cdr-input v-model="newFolder" label="New Folder Name:">
+              <template #helper-text-top>
+                Move the monster to a new folder in the sidebar
+              </template>
+            </cdr-input>
+            <cdr-select v-model="chosenFolder" label="Existing Folders" :options="folderNames">
+              <template #helper-text>
+                Move the monster to an existing folder in the sidebar
+              </template>
+            </cdr-select>
+            <cdr-button type="submit" :full-width="true">Move To Folder</cdr-button>
+          </form>
+          <cdr-button modifier="dark" @click="showDataManagerModal = true" :full-width="true">
+            Save/Load Data from a File
+          </cdr-button>
+        </div>
+
+
+        <!-- Our new DataManagerModal component -->
+        <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
+          :premium="premium" currentApp="monsters" />
       </div>
+    </template>
 
-
-      <!-- Our new DataManagerModal component -->
-      <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
-        currentApp="monsters" />
-    </div>
     <div class="generator-container">
       <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster()">New
         Monster
         Statblock</cdr-button>
-      <div class="intro-and-form">
-        <div class="intro-container" v-show="!monster && !loadingPart1 && !loadingPart2 && !premium">
-          <h1>Kenji's D&D 5e Monster Statblock Generator -- Free Version</h1>
-          <p>
-            Welcome to the D&D 5e Statblock Generator! This free version has a limit of 5 statblock generations per
-            day (this includes re-generations of existing monsters). Enter
-            the name of the monster and choose a monster type and CR. Monster types determine whether a
-            monster is
-            stronger on defense, offense or balanced. CR will determine how strong a monster is, with higher
-            CRs
-            making for stronger monsters. Finally, if you wish the creature to be able to cast spells,
-            please use
-            select the “Creature is a spellcaster” checkbox. Once generated, you can export a creature to Roll20,
-            homebrewery,
-            foundry VTT or
-            the Improved Initiative app.
-          </p>
-          <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/">Link to
-            Statblock
-            Generator -- Premium Version</cdr-link>
-        </div>
-        <div class="intro-container" v-show="!monster && !loadingPart1 && !loadingPart2 && premium">
-          <h1>Kenji's D&D 5e Monster Statblock Generator -- Premium Version</h1>
-          <p>
-            Welcome to the D&D 5e Statblock
-            Generator -- Premium Version! This premium version has no limits on the number of creatures you can generate
-            per
-            day.
-            Enter the name of the monster and choose a monster type and CR.
-            Monster types determine whether a monster is stronger on defense, offense or balanced. CR will determine
-            how
-            strong a monster is, with higher CRs making for stronger monsters. Finally, if you wish the creature to
-            be
-            able to cast spells, please use select the “Creature is a spellcaster” checkbox. Once generated, you can
-            export
-            a creature to Roll20,
-            homebrewery, foundry VTT or the Improved Initiative app.
-          </p>
-        </div>
-        <form @submit.prevent="generateStatblock" class="monster-form">
-          <div class="form-row-top">
-            <cdr-input id="monsterName" v-model="monsterName" background="secondary"
-              :label="'Monster Name (Example: Headless Horseman)'" />
-            <cdr-select v-model="monsterType" label="type"
-              :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
-            <cdr-select v-model="selectedChallengeRating" label="CR" prompt="CR"
-              :options="challengeRatingData.fullArray" />
-          </div>
-          <div class="form-row-mid">
-            <cdr-input v-model="monsterDescription" :optional="true"
-              label='Monster Description / Special Instructions: Input extra details about the monster or any special instructions. Examples: "output the statblock in German", "this creature has a flying speed of 60ft", "this creature has an ability to do X". Feel free to add as much or as little detail as you like, or you can leave this field blank.'
-              :rows="4" />
-          </div>
-          <div class="form-row-end">
-            <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
-          </div>
 
-          <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
-            {{ activeMonsterIndex !== null ? 'Regenerate Statblock' : 'Generate Statblock' }}
-          </cdr-button>
-        </form>
+      <div class="landing-wrapper" v-if="!monster && !loadingPart1 && !loadingPart2">
+        <!-- ZONE 1: Brand + Headline (lives outside the card) -->
+        <div class="hero-header">
+          <div class="brand-line">
+            <span class="brand-name">Kenji's Statblock Generator</span>
+            <span v-if="!premium" class="version-pill">Free</span>
+            <span v-else class="version-pill premium">Premium</span>
+          </div>
+          <h1>Build Custom D&D 5e Monsters in Seconds</h1>
+          <p class="value-prop">Create balanced, export-ready 5e statblocks — no math required.</p>
+        </div>
+
+        <!-- ZONE 2: The form card -->
+        <div class="form-card">
+          <form @submit.prevent="generateStatblock" class="monster-form">
+            <div class="form-row-top">
+              <cdr-input id="monsterName" v-model="monsterName" background="secondary"
+                :label="'Monster Name (Example: Headless Horseman)'" />
+              <cdr-select v-model="monsterType" label="type"
+                :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
+              <cdr-select v-model="selectedChallengeRating" label="CR" prompt="CR"
+                :options="challengeRatingData.fullArray" />
+            </div>
+            <div class="form-row-mid">
+              <cdr-input v-model="monsterDescription" :optional="true" label='Description / Special Instructions'
+                placeholder='E.g. "Flying speed of 60ft", "Can turn invisible once per day", "Output statblock in German"'
+                :rows="4" />
+            </div>
+            <div class="form-row-end">
+              <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
+            </div>
+
+            <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
+              {{ activeMonsterIndex !== null ? 'Regenerate Monster' : 'Generate Monster' }}
+            </cdr-button>
+          </form>
+        </div>
+
+        <!-- ZONE 3: Secondary info (below the card, low-key) -->
+        <div class="footer-meta">
+          <p v-if="!premium" class="limit-info">
+            Free: 5 generations per 24 hours (includes re-generations). Exports to Roll20, Homebrewery, Foundry VTT, and
+            Improved Initiative.
+            <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/">Need more than 5
+              per
+              day? Go Premium &rarr;</cdr-link>
+          </p>
+        </div>
       </div>
-      <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+
       <cdr-toggle-group v-if="shouldDisplayInterface && (monster || loadingPart1 || loadingPart2)"
         v-model="userColumnsPreference" style="margin: 2cap;auto">
         <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
@@ -145,20 +126,15 @@
     <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster()">New
       Monster
       Statblock</cdr-button>
-  </div>
-
-  <!-- Footer -->
-  <footer class="ogl-footer">
-    This content uses the D&D 5e SRD under the <cdr-link href="https://cros.land/ogl" target="_blank">Open Gaming
-      License</cdr-link>
-  </footer>
+  </GeneratorLayout>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive, onUnmounted } from 'vue';
+import { ref, onMounted, computed, reactive } from 'vue';
 import Statblock from './Statblock.vue';
+import GeneratorLayout from './GeneratorLayout.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconNavigationMenu, IconDownload, IconUpload } from "@rei/cedar";
+import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
 import "@rei/cedar/dist/style/cdr-button.css";
@@ -172,7 +148,9 @@ import challengeRatingData from '../data/challengeRatings.json';
 import creatureTemplates from '../data/creatureTemplates.json';
 import { createStatblockPrompts } from "../util/monster-prompts.mjs";
 import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
-import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
+import { useToast } from '../composables/useToast';
+
+const toast = useToast();
 
 const props = defineProps({
   premium: {
@@ -194,8 +172,8 @@ const windowWidth = ref(window.innerWidth);
 const monsters = ref({ 'Uncategorized': [] });
 const newFolder = ref('');
 const chosenFolder = ref('');
-const activeFolder = ref('Uncategorized'); // Initialize with default folder
-const openedFolders = reactive({ 'Uncategorized': true }); // To track the state of each accordion
+const activeFolder = ref('Uncategorized');
+const openedFolders = reactive({ 'Uncategorized': true });
 const userColumnsPreference = ref('two_columns');
 const shouldDisplayInterface = computed(() => windowWidth.value > 855);
 const folderNames = computed(() => {
@@ -214,34 +192,26 @@ onMounted(() => {
   const savedMonsters = localStorage.getItem('monsters');
   if (savedMonsters) {
     let allData = JSON.parse(savedMonsters);
-    // Ensure 'Uncategorized' exists
     allData['Uncategorized'] = allData['Uncategorized'] || [];
-    // Now, monsters.value will only contain relevant monster data
     monsters.value = allData;
   } else {
-    // Initialize with an empty 'Uncategorized' folder if nothing is saved
     monsters.value = { 'Uncategorized': [] };
   }
 
-  updateWindowWidth(); // Set initial width
-  updateVisibility();  // Set initial visibility
+  updateWindowWidth();
   window.addEventListener('resize', updateWindowWidth);
 });
 
-// Add a ref to track the active index
 const activeMonsterIndex = ref(null);
 
 function getFirstNumber(text) {
-  // Split the text by spaces
   const parts = text.split(' ');
-  // Find the first part that contains digits or fractions
   for (let part of parts) {
-    // Check if the part is a fraction or a whole number
     if (/^\d+\/\d+$/.test(part) || /^\d+(\.\d+)?$/.test(part)) {
-      return part;  // Return the fractional or whole number part
+      return part;
     }
   }
-  return null;  // Return null if no number is found
+  return null;
 }
 
 function fractionToDecimal(fraction) {
@@ -278,7 +248,6 @@ function updateMonster(updatedMonster) {
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
 }
 
-// Modify selectMonster to set the active index
 function selectMonster(folderName = 'Uncategorized', index) {
   activeFolder.value = folderName;
   activeMonsterIndex.value = index;
@@ -292,33 +261,6 @@ function selectMonster(folderName = 'Uncategorized', index) {
 
 const updateWindowWidth = () => {
   windowWidth.value = window.innerWidth;
-};
-
-const sidebarStyle = computed(() => {
-  if (windowWidth.value <= 1020) {
-    return {
-      position: 'fixed',
-      transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
-      width: '70%', // Adjust width for mobile
-      maxWidth: '400px'
-    };
-  } else {
-    return {
-      width: '400px',
-      position: 'static',
-      transform: 'none'
-    };
-  }
-});
-const isSidebarVisible = ref(false); // Start hidden on mobile
-
-// Update based on viewport size immediately and on resize
-const updateVisibility = () => {
-  if (window.innerWidth > 1020) {
-    isSidebarVisible.value = true;  // Always show on desktop
-  } else {
-    isSidebarVisible.value = false;  // Manage with toggle button on mobile
-  }
 };
 
 function validationPart1(jsonString) {
@@ -369,12 +311,10 @@ function moveMonsterToFolder() {
     delete monsters.value[previousActiveFolder];
   }
 
-  // Close the accordion if the monster was moved from it
   if (previousActiveFolder !== activeFolder.value) {
     openedFolders[previousActiveFolder] = false;
   }
 
-  // If the accordion is closed, open it
   if (!openedFolders[activeFolder.value]) {
     openedFolders[activeFolder.value] = true;
   }
@@ -405,6 +345,7 @@ function deleteStatblock() {
 
 async function generateStatblock() {
   monster.value = null;
+  errorMessage.value = '';
   const canGenerate = await canGenerateStatblock(props.premium);
 
   if (!canGenerate) {
@@ -412,7 +353,6 @@ async function generateStatblock() {
   }
   loadingPart1.value = true;
   loadingPart2.value = true;
-  // Return a random integer between '1' and '30' as a string
   const randomCR = Math.floor(Math.random() * 30) + 1;
 
   const promptOptions = {
@@ -430,7 +370,8 @@ async function generateStatblock() {
     monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
     if (!monsterStatsPart1) throw new Error('Empty statblock response part 1');
   } catch (e) {
-    errorMessage.value = `There was an issue generating the first part of the description: ${e.message}`;
+    errorMessage.value = e.message;
+    toast.error('Failed to generate statblock. Please try again.');
     loadingPart1.value = false;
     return;
   }
@@ -446,7 +387,8 @@ async function generateStatblock() {
   try {
     monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
   } catch (e) {
-    errorMessage.value = `There was an issue generating the second part of the description: ${e.message}`;
+    errorMessage.value = e.message;
+    toast.error('Failed to generate statblock. Please try again.');
     loadingPart2.value = false;
     return;
   }
@@ -462,7 +404,6 @@ async function generateStatblock() {
   finalMonster.monsterName = monsterName.value || monster.name;
   finalMonster.caster = caster.value;
 
-  // Replace the monster in the array if it already exists
   if (activeMonsterIndex.value !== null) {
     monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
     monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
@@ -471,38 +412,25 @@ async function generateStatblock() {
   } else {
     const folderName = activeFolder.value || 'Uncategorized';
     if (!monsters.value[folderName]) {
-      // Ensure the folder exists before trying to push to it
       monsters.value[folderName] = [];
     }
-    monster.value = finalMonster; // Update the current monster
+    monster.value = finalMonster;
     monsters.value[folderName].push(finalMonster);
     monsters.value[folderName] = sortMonstersByCR(folderName);
     const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
-    selectMonster(folderName, newIndex); // Select the newly added monster
+    selectMonster(folderName, newIndex);
   }
   const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
   const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
   loadingPart2.value = false;
+  toast.success('Statblock generated and saved.');
 }
 </script>
 
 <style lang="scss" scoped>
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 
-.app-container {
-  display: flex;
-
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5); // Semi-transparent
-    z-index: 2; // Lower than sidebar but higher than content
-  }
-}
 
 .new-monster-button {
   min-width: 210px;
@@ -510,7 +438,7 @@ async function generateStatblock() {
   height: 4rem;
 }
 
-.sidebar {
+.sidebar-content {
   $background-color: #f4f4f4;
   $active-color: #ffffff;
   $hover-background-color: #f0f0f0;
@@ -519,21 +447,11 @@ async function generateStatblock() {
   $indentation-step: 20px;
   $transition-speed: 0.3s;
 
-  transition: transform 0.3s ease;
-  background-color: $background-color;
-  padding: 1rem;
-  height: 100vh;
+  flex: 1;
   overflow-y: auto;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  z-index: 3;
-
-  &.fixed {
-    position: fixed;
-    top: 0;
-    left: 0;
-  }
 
   .saved-statblocks {
     list-style: none;
@@ -560,7 +478,7 @@ async function generateStatblock() {
         text-align: left;
         background-color: $default-background-color;
         border: none;
-        color: inherit; // Ensures button text color matches your design
+        color: inherit;
         cursor: pointer;
         border-left: 5px solid transparent;
         transition: background-color $transition-speed, border-left-color $transition-speed;
@@ -570,8 +488,8 @@ async function generateStatblock() {
         }
 
         &:focus {
-          outline: none; // Optionally, add a custom focus style
-          border-left-color: $active-border-color; // Example focus style for accessibility
+          outline: none;
+          border-left-color: $active-border-color;
         }
 
         &.active {
@@ -595,18 +513,90 @@ async function generateStatblock() {
   }
 }
 
-.sidebar-toggle {
-  display: none; // Initially hidden
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 1001;
+/* ========================================
+   LANDING PAGE: Three-zone layout
+   ======================================== */
 
-  @media (max-width: 1020px) {
-    display: block; // Only shown on mobile
+.landing-wrapper {
+  max-width: 855px;
+  margin: 0 auto;
+}
+
+/* ZONE 1: Hero header — brand, headline, value prop */
+.hero-header {
+  text-align: center;
+  padding: 2rem 1rem 2.5rem;
+
+  .brand-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
   }
 
+  .brand-name {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: $cdr-color-text-secondary;
+    letter-spacing: 0.02em;
+  }
+
+  .version-pill {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.2rem 0.8rem;
+    border-radius: 100px;
+    background-color: #ededed;
+    color: $cdr-color-text-secondary;
+
+    &.premium {
+      background-color: #fdf3e0;
+      color: #9c6a0a;
+    }
+  }
+
+  h1 {
+    font-size: 3.2rem;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+    color: $cdr-color-text-primary;
+  }
+
+  .value-prop {
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: $cdr-color-text-secondary;
+    margin: 0;
+  }
 }
+
+/* ZONE 2: Form card — elevated, clearly interactive */
+.form-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem 3rem;
+}
+
+/* ZONE 3: Footer meta — limit info, upsell */
+.footer-meta {
+  text-align: center;
+  padding: 1.5rem 1rem 0;
+
+  .limit-info {
+    font-size: 1.2rem;
+    color: $cdr-color-text-secondary;
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+/* ========================================
+   FORM INTERNALS
+   ======================================== */
 
 .form-row-top {
   display: grid;
@@ -618,8 +608,6 @@ async function generateStatblock() {
   .form-row-top {
     grid-template-columns: 1fr;
   }
-
-
 }
 
 .form-row-mid {
@@ -652,26 +640,20 @@ async function generateStatblock() {
   }
 }
 
-.intro-container {
-  max-width: 855px;
-  margin: 5px 20px;
-  padding: 0 1.5rem;
-}
-
 .monster-form {
   display: flex;
   flex-direction: column;
-  max-width: 855px;
-  margin: 20px;
-  padding: 2px 30px 30px 30px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 
   button {
     align-self: flex-start;
     margin-top: 1.5rem;
   }
+}
+
+.intro-container {
+  max-width: 855px;
+  margin: 5px 20px;
+  padding: 0 1.5rem;
 }
 
 .delete-button {
@@ -682,16 +664,21 @@ async function generateStatblock() {
   .form-row {
     grid-template-columns: 1fr;
   }
-
 }
 
-.error-message {
-  border: 1px solid $cdr-color-border-error;
-  padding: $cdr-space-inset-one-x-stretch;
-  color: $cdr-color-text-message-error;
-  background-color: $cdr-color-background-message-error-01;
-  text-align: center;
-  margin-top: 16px;
+@media screen and (max-width: 600px) {
+  .hero-header {
+    padding: 1.5rem 0.5rem 2rem;
+
+    h1 {
+      font-size: 2.4rem;
+    }
+  }
+
+  .form-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
 }
 
 .slide-enter-active,
@@ -704,14 +691,5 @@ async function generateStatblock() {
 .slide-leave-to {
   max-height: 0;
   opacity: 0;
-}
-
-.ogl-footer {
-  text-align: center;
-  padding: 2rem 1rem;
-  margin-top: 3rem;
-  border-top: 1px solid #dee2e6;
-  color: $cdr-color-text-secondary;
-  font-size: 1.5rem;
 }
 </style>

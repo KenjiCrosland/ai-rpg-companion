@@ -29,6 +29,9 @@
         <cdr-button @click="showAddButtons = !showAddButtons" modifier="secondary" size="small">
           {{ showAddButtons ? 'Hide Add Buttons' : 'Add Events to Timeline' }}
         </cdr-button>
+        <p v-if="!premium" class="generation-info">
+          {{ remainingGenerations }} lore generation{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
+        </p>
       </div>
 
       <div v-if="showTimelineCards || timelineEvents.length > 0" class="filmstrip-container">
@@ -387,6 +390,9 @@ import {
   validateEventJson,
   validateSummaryJson
 } from '../../util/loreBuilderPrompts.mjs';
+import { useToast } from '../../composables/useToast';
+
+const toast = useToast();
 
 const props = defineProps({
   item: {
@@ -578,8 +584,9 @@ const canGenerateEvent = async () => {
   const incognitoResult = await detectIncognito();
 
   if (incognitoResult.isPrivate) {
-    alert(
-      "The free lore builder is not available in incognito or private mode as we can't keep track of the number of events generated. Please disable incognito mode to use the generator or you can access unlimited event generation as a $5 patron.",
+    toast.warning(
+      "The free lore builder is not available in incognito or private mode. Please disable incognito mode or become a $5 patron for unlimited access.",
+      8000
     );
     return false;
   }
@@ -609,8 +616,7 @@ const canGenerateEvent = async () => {
       storage.setItem('loreBuilderTracking', JSON.stringify(loreData));
     } else {
       const resetTime = new Date(firstGenerationTime + 86400000);
-      const alertMessage = `You have reached the 5 event generation limit for a 24-hour period. Please come back at ${resetTime.toLocaleString()} or you can access unlimited event generation as a $5 patron.`;
-      alert(alertMessage);
+      toast.warning(`You've reached the 5 event generation limit. Come back at ${resetTime.toLocaleString()} or become a $5 patron for unlimited access.`, 8000);
       return false;
     }
   } else {
@@ -659,7 +665,7 @@ const updateRemainingGenerations = () => {
 // Start the timeline
 const startTimeline = () => {
   if (!currentYear.value) {
-    alert('Please set the current year in your world before creating a timeline.');
+    toast.warning('Please set the current year in your world before creating a timeline.');
     return;
   }
 
@@ -671,7 +677,7 @@ const startTimeline = () => {
 // Start generating an event at a specific position
 const startGeneratingEvent = (position) => {
   if (!currentYear.value) {
-    alert('Please set the current year in your world before adding events.');
+    toast.warning('Please set the current year in your world before adding events.');
     return;
   }
 
@@ -770,7 +776,7 @@ const generateFirstEvent = async () => {
 
   } catch (error) {
     console.error('Error generating event:', error);
-    alert('Failed to generate event. Please try again.');
+    toast.error('Failed to generate event. Please try again.');
   } finally {
     loadingEvents.value = false;
   }
@@ -869,7 +875,7 @@ const generateEvent = async () => {
 
   } catch (error) {
     console.error('Error generating event:', error);
-    alert('Failed to generate event. Please try again.');
+    toast.error('Failed to generate event. Please try again.');
   } finally {
     loadingEvents.value = false;
   }
@@ -1021,7 +1027,7 @@ const generateSummary = async () => {
 
   } catch (error) {
     console.error('Error generating summary:', error);
-    alert('Failed to generate historical summary. Please try again.');
+    toast.error('Failed to generate historical summary. Please try again.');
   } finally {
     loadingSummary.value = false;
   }
@@ -1065,7 +1071,7 @@ const updateItemLore = () => {
   emit('updated-item', updatedItem);
 
   // Show success message
-  alert('Item lore has been updated with the historical summary!');
+  toast.success('Item lore has been updated with the historical summary!');
 };
 
 // Filmstrip navigation
@@ -1116,7 +1122,7 @@ const exportToMarkdown = () => {
   });
 
   navigator.clipboard.writeText(markdown);
-  alert('History copied as markdown! Paste it into Homebrewery to see it formatted.');
+  toast.success('History copied as markdown! Paste it into Homebrewery to see it formatted.');
 };
 
 const exportToPlainText = () => {
@@ -1136,7 +1142,7 @@ const exportToPlainText = () => {
   });
 
   navigator.clipboard.writeText(text);
-  alert('History copied as plain text!');
+  toast.success('History copied as plain text!');
 };
 
 // Initialize and watch for item changes
@@ -1258,10 +1264,25 @@ watch(() => timelineEvents.value.length, async () => {
     padding: 3rem 1rem;
     background-color: $cdr-color-background-secondary;
     border-radius: 8px;
+
+    .generation-info {
+      margin-top: 1rem;
+      margin-bottom: 0;
+      font-size: 0.875rem;
+      color: $cdr-color-text-secondary;
+    }
   }
 
   .timeline-controls {
     margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .generation-info {
+    margin-top: 0.75rem;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    color: $cdr-color-text-secondary;
     text-align: center;
   }
 

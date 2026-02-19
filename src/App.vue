@@ -13,6 +13,8 @@
     rel="stylesheet">
 
   <div id="app" v-bind="$attrs">
+    <!-- App-wide toast notifications -->
+    <AppToast ref="toast" position="top-center" />
     <LocationGenerator v-if="currentPage === 'location-generator'" />
     <NPCGenerator v-if="currentPage === 'npc-generator'" />
     <NPCGenerator :premium="true" v-if="currentPage === 'npc-generator-premium'" />
@@ -32,6 +34,8 @@
     <SettingGenerator :premium="true" v-if="currentPage === 'setting-generator-premium'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
     <LandingPage v-if="currentPage === 'category-landing'" />
+
+
   </div>
 </template>
 
@@ -52,6 +56,8 @@ import SettingGenerator from './components/SettingGenerator.vue';
 import TabsExample from './components/tabs/TabsExample.vue';
 import ToolSuiteShowcase from './components/ToolSuiteShowcase.vue';
 import LandingPage from './components/LandingPage.vue';
+import AppToast from './components/AppToast.vue';
+import { registerToast } from './composables/useToast';
 import { CdrLink } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-link.css';
 
@@ -73,14 +79,16 @@ export default {
     EncounterGeneratorPremium,
     SettingGenerator,
     TabsExample,
-    LandingPage
+    LandingPage,
+    AppToast
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'statblock-generator',
+      currentPage: this.$attrs['data-page'] || 'item-generator',
     };
   },
   mounted() {
+    registerToast(this.$refs.toast);
     if (typeof gtag === 'function' && this.currentPage === 'location-generator') {
       gtag('config', 'UA-11925218-1', { 'page_path': '/ai-rpg-location-generator' });
     }

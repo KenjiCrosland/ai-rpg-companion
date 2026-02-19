@@ -1,74 +1,90 @@
 <template>
-  <ToolSuiteShowcase :premium="premium" display-mode="banner" />
-  <div class="app-container">
-    <cdr-button modifier="secondary" class="sidebar-toggle" @click="isSidebarVisible = !isSidebarVisible"
-      v-show="windowWidth <= 1020">
-      <template #icon-left>
-        <icon-navigation-menu inherit-color />
-      </template>
-      {{ isSidebarVisible ? 'Hide Sidebar' : 'Show Sidebar' }}
-    </cdr-button>
-    <!-- Overlay to close sidebar on click -->
-    <div class="overlay" v-show="isSidebarVisible && windowWidth <= 1020" @click="isSidebarVisible = false"></div>
-    <div class="sidebar" :style="sidebarStyle">
-      <ul class="saved-items">
-        <li v-for="(item, index) in savedItems" :key="index" :class="{ 'active': activeItemIndex === index }">
-          <button class="item-button" @click="selectItem(index)">
-            <span>{{ item.name }}</span>
-            <span>{{ item.rarity }}</span>
-          </button>
-        </li>
-        <li>
-          <button class="item-button" @click="newItem" :class="{ 'active': activeItemIndex === null }">
-            + New Magic Item
-          </button>
-        </li>
-      </ul>
-      <!-- Button to open the modal -->
-      <cdr-button modifier="dark" @click="showDataManagerModal = true" style="margin-bottom: 12rem;">
-        Save/Load Data from a File
-      </cdr-button>
+  <GeneratorLayout :premium="premium">
+    <template #sidebar>
+      <div class="sidebar-content">
+        <ul class="saved-items">
+          <li v-for="(item, index) in savedItems" :key="index" :class="{ 'active': activeItemIndex === index }">
+            <button class="item-button" @click="selectItem(index)">
+              <span>{{ item.name }}</span>
+              <span>{{ item.rarity }}</span>
+            </button>
+          </li>
+          <li>
+            <button class="item-button" @click="newItem" :class="{ 'active': activeItemIndex === null }">
+              + New Magic Item
+            </button>
+          </li>
+        </ul>
+        <!-- Button to open the modal -->
+        <cdr-button modifier="dark" @click="showDataManagerModal = true" style="margin-bottom: 12rem;">
+          Save/Load Data from a File
+        </cdr-button>
 
-      <!-- Our new DataManagerModal component -->
-      <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
-        currentApp="savedItems" />
-    </div>
+        <!-- Our new DataManagerModal component -->
+        <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
+          :premium="premium" currentApp="savedItems" />
+      </div>
+    </template>
+
     <div class="main-container">
-      <div class="form-container" v-if="!magicItemDescription && !loadingItem">
-        <h1>Kenji's D&D 5e Magic Item Generator</h1>
-        <div>
-          <p>
-            Welcome to my D&D 5th Edition Magic Item Generator! To start, select an item
-            type
-            (armor, weapon, etc.), which is the only required field. You may also specify the item's name, rarity, and
-            lore
-            to
-            customize your creation further. If you prefer, simply choose an item type and click "Generate Item" to
-            receive
-            a
-            magic item tailored to your selection. Enjoy crafting your unique magical artifacts!
+      <!-- LANDING STATE: Three-zone layout -->
+      <div class="landing-wrapper" v-if="!magicItemDescription && !loadingItem">
+
+        <!-- ZONE 1: Hero header -->
+        <div class="hero-header">
+          <div class="brand-line">
+            <span class="brand-name">Kenji's Item Generator</span>
+            <span v-if="!premium" class="version-pill">Free</span>
+            <span v-else class="version-pill premium">Premium</span>
+          </div>
+          <h1>Craft Unique D&D 5e Magic Items in Seconds</h1>
+          <p class="value-prop">Generate balanced magic items with lore, quest hooks, and Homebrewery export — powered
+            by
+            AI.</p>
+        </div>
+
+        <!-- ZONE 2: Form card -->
+        <div class="form-card">
+          <form class="item-form" @submit.prevent="generateMagicItem">
+            <cdr-input class="form-input" id="item-name" v-model="itemName" background="secondary"
+              label="Magic Item Name (optional):">
+              <template #helper-text-bottom>
+                Example: "Goblet of the Firmament". Leave blank for a random name.
+              </template>
+            </cdr-input>
+
+            <cdr-select v-model="rarity" label="Rarity Level (optional)" prompt="Choose a rarity level"
+              :options="rarityOptions" />
+            <cdr-select v-model="itemType" label="Item Type" prompt="Choose an item type" :options="itemTypeOptions" />
+            <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore"
+              placeholder="Enter any details about the item lore" class="item-lore-details">
+            </cdr-input>
+            <cdr-button class="generate-button" type="submit" :full-width="true">Generate Magic Item</cdr-button>
+          </form>
+        </div>
+
+        <!-- ZONE 3: Footer meta -->
+        <div class="footer-meta">
+          <p v-if="!premium" class="limit-info">
+            Item generation is unlimited. Lore Builder and Quest Hook features are limited to 5/day on the free plan.
+            <cdr-link href="https://cros.land/dnd-5e-magic-item-generator-premium-version/">Go Premium for unlimited
+              access
+              &rarr;</cdr-link>
+          </p>
+          <p v-else class="limit-info">
+            All features unlimited. Export your creations in Homebrewery-compatible markdown format.
           </p>
         </div>
-        <form class="item-form" @submit.prevent="generateMagicItem">
-          <cdr-input class="form-input" id="item-name" v-model="itemName" background="secondary"
-            label="Magic Item Name (optional):">
-            <template #helper-text-bottom>
-              Example: "Goblet of the Firmament". Leave blank for a random name.
-            </template>
-          </cdr-input>
-
-          <cdr-select v-model="rarity" label="Rarity Level (optional)" prompt="Choose a rarity level"
-            :options="rarityOptions" />
-          <cdr-select v-model="itemType" label="Item Type" prompt="Choose an item type" :options="itemTypeOptions" />
-          <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore"
-            placeholder="Enter any any details about the item lore" class="item-lore-details">
-          </cdr-input>
-          <cdr-button class="generate-button" type="submit" :full-width="true">Generate Magic Item</cdr-button>
-        </form>
       </div>
 
-      <!-- Tabbed Content for Generated Item -->
+      <!-- Tabbed Content for Generated Item (UNCHANGED) -->
       <div v-if="magicItemDescription && !loadingItem" class="form-container">
+        <div v-if="!premium" class="premium-banner">
+          Lore Builder and Quest Hooks are limited to 5 generations/day on the free plan.
+          <cdr-link href="https://cros.land/dnd-5e-magic-item-generator-premium-version/">Go Premium for unlimited
+            access
+            &rarr;</cdr-link>
+        </div>
         <Tabs :activeIndex="activeTabIndex" @tabChange="activeTabIndex = $event">
           <TabPanel label="Item Details">
             <!-- View Mode -->
@@ -96,7 +112,7 @@
                 <h3>Export Magic Item</h3>
                 <p class="export-description">
                   Copy your item details in different formats. The markdown format works perfectly with
-                  <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
+                  <cdr-link href="https://homebrewery.naturalcrit.com/new" target="_blank">Homebrewery</cdr-link>
                   for creating beautifully formatted D&D handouts.
                 </p>
 
@@ -155,10 +171,14 @@
                   <cdr-input v-model="feature.description" label="Description" background="secondary" :rows="3"
                     tag="textarea" class="feature-desc-input" />
                   <div class="feature-actions">
-                    <cdr-button @click="generateFeature(index)" modifier="secondary" size="small"
+                    <cdr-button v-if="premium" @click="generateFeature(index)" modifier="secondary" size="small"
                       :disabled="feature.generating">
                       {{ feature.generating ? 'Generating...' : 'Generate Feature' }}
                     </cdr-button>
+                    <span v-else class="premium-feature-label">
+                      <cdr-link href="https://cros.land/dnd-5e-magic-item-generator-premium-version/">Generate Feature
+                        (Premium)</cdr-link>
+                    </span>
                     <cdr-button @click="removeFeature(index)" modifier="dark" size="small">
                       Remove
                     </cdr-button>
@@ -196,12 +216,13 @@
         <item-skeleton />
       </div>
     </div>
-  </div>
+  </GeneratorLayout>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { CdrInput, CdrButton, CdrSelect, CdrLink, IconNavigationMenu } from "@rei/cedar";
+import { ref, onMounted } from 'vue';
+import { CdrInput, CdrButton, CdrSelect, CdrLink } from "@rei/cedar";
+import GeneratorLayout from './GeneratorLayout.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
@@ -211,7 +232,9 @@ import LoreBuilderTab from './item-generator-tabs/LoreBuilderTab.vue';
 import DataManagerModal from './DataManagerModal.vue';
 import Tabs from './tabs/Tabs.vue';
 import TabPanel from './tabs/TabPanel.vue';
-import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
+import { useToast } from '../composables/useToast';
+
+const toast = useToast();
 
 const props = defineProps({
   premium: {
@@ -228,8 +251,6 @@ const magicItemDescription = ref(null);
 const loadingItem = ref(false);
 const savedItems = ref([]);
 const activeItemIndex = ref(null);
-const windowWidth = ref(window.innerWidth);
-const isSidebarVisible = ref(false);
 const showDataManagerModal = ref(false);
 const activeTabIndex = ref(0);
 const isEditing = ref(false);
@@ -242,35 +263,6 @@ const editForm = ref({
   physical_description: '',
   lore: ''
 });
-
-const sidebarStyle = computed(() => {
-  if (windowWidth.value <= 1020) {
-    return {
-      position: 'fixed',
-      transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
-      width: '70%',
-      maxWidth: '400px'
-    };
-  } else {
-    return {
-      width: '400px',
-      position: 'static',
-      transform: 'none'
-    };
-  }
-});
-
-const updateWindowWidth = () => {
-  windowWidth.value = window.innerWidth;
-};
-
-const updateVisibility = () => {
-  if (window.innerWidth > 768) {
-    isSidebarVisible.value = true;
-  } else {
-    isSidebarVisible.value = false;
-  }
-};
 
 const rarityOptions = [
   'Common',
@@ -302,7 +294,7 @@ const rarityGuidelines = {
 
 const generateMagicItem = async () => {
   if (!itemType.value) {
-    alert('Please select an item type.');
+    toast.warning('Please select an item type.');
     return;
   }
   if (!rarity.value) {
@@ -310,11 +302,9 @@ const generateMagicItem = async () => {
     rarity.value = rarityOptions[randomIndex];
   }
 
-  // Pass itemType to the function
   const featuresAndBonuses = determineFeaturesAndBonuses(rarity.value, itemType.value);
   magicItemDescription.value = null;
 
-  // Build effect definitions string for the prompt
   const effectDefsString = Object.entries(featuresAndBonuses.effectDefinitions)
     .map(([key, value]) => `${key}: ${value}`)
     .join('\n');
@@ -385,9 +375,10 @@ Do this: {"Verdant Resilience": "While wearing this armor, you have advantage on
     const index = savedItems.value.findIndex((item) => item.name === magicItemDescription.value.name);
     selectItem(index);
     activeTabIndex.value = 0;
+    toast.success('Magic item generated and saved.');
   } catch (error) {
     console.error("Error generating magic item:", error);
-    alert('Failed to generate magic item. Please try again.');
+    toast.error('Failed to generate magic item. Please try again.');
     loadingItem.value = false;
   }
 };
@@ -437,14 +428,13 @@ const parseRarity = (rarity) => {
 }
 
 const copyAsMarkdown = () => {
-  // Use the existing convertItemToMarkdown utility function
   const markdownContent = convertItemToMarkdown(magicItemDescription.value);
 
   if (markdownContent) {
     navigator.clipboard.writeText(markdownContent);
-    alert('Magic item copied as markdown! Paste it into Homebrewery to see it formatted.');
+    toast.success('Copied as markdown!');
   } else {
-    alert('No content available to copy as markdown.');
+    toast.error('No content available to copy.');
   }
 };
 
@@ -465,7 +455,7 @@ const copyAsPlainText = () => {
   plainText += `\nLore:\n${magicItemDescription.value.lore}\n`;
 
   navigator.clipboard.writeText(plainText);
-  alert('Magic item copied as plain text!');
+  toast.success('Copied as plain text!');
 };
 
 const saveItem = (item) => {
@@ -490,7 +480,6 @@ const saveItem = (item) => {
   localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
 };
 
-// Handler for updates from QuestHookTab
 const handleUpdatedItem = (updatedItem) => {
   magicItemDescription.value = updatedItem;
   if (activeItemIndex.value !== null) {
@@ -506,14 +495,11 @@ const loadSavedItems = () => {
   }
 };
 
-// Add a watcher to detect changes in edit form
 const detectEditChanges = () => {
   if (!isEditing.value) return;
 
-  // Compare current edit form with original item
   const original = magicItemDescription.value;
 
-  // Check basic fields
   if (editForm.value.name !== original.name) return true;
   if (editForm.value.item_type !== original.item_type) return true;
   if (editForm.value.rarity !== original.rarity) return true;
@@ -521,7 +507,6 @@ const detectEditChanges = () => {
   if (editForm.value.physical_description !== (original.physical_description || '')) return true;
   if (editForm.value.lore !== (original.lore || '')) return true;
 
-  // Check features array
   const originalFeatures = Object.entries(original.features || {}).map(([name, description]) => ({
     name,
     description
@@ -540,15 +525,13 @@ const detectEditChanges = () => {
 };
 
 const selectItem = (index) => {
-  // Check for unsaved changes if in edit mode
   if (isEditing.value && detectEditChanges()) {
     const confirmed = confirm('You have unsaved changes. Are you sure you want to switch items without saving?');
     if (!confirmed) {
-      return; // Don't switch items
+      return;
     }
   }
 
-  // Exit edit mode when selecting a different item
   isEditing.value = false;
 
   activeItemIndex.value = index;
@@ -586,7 +569,6 @@ const newItem = () => {
 };
 
 const startEditing = () => {
-  // Convert features object to array for easier editing
   const featuresArray = Object.entries(magicItemDescription.value.features || {}).map(([name, description]) => ({
     name,
     description
@@ -609,16 +591,13 @@ const cancelEdit = () => {
 };
 
 const saveEdit = () => {
-  // Convert featuresArray back to features object
   const features = {};
   editForm.value.featuresArray.forEach(feature => {
-    // Handle unnamed features or features without descriptions
     const featureName = feature.name.trim() || 'Unnamed Feature';
     const featureDesc = feature.description.trim() || '(No description provided)';
     features[featureName] = featureDesc;
   });
 
-  // Update the magic item description
   magicItemDescription.value = {
     ...magicItemDescription.value,
     name: editForm.value.name,
@@ -631,7 +610,6 @@ const saveEdit = () => {
     feature_count: Object.keys(features).length
   };
 
-  // Save to localStorage
   if (activeItemIndex.value !== null) {
     savedItems.value[activeItemIndex.value] = magicItemDescription.value;
     localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
@@ -653,15 +631,14 @@ const removeFeature = (index) => {
 };
 
 const generateFeature = async (index) => {
-  // Check if user has premium access
+  // Premium-only: free users see a link instead of this button,
+  // but keep this guard as a safety net
   if (!props.premium) {
-    alert('Generation of item features in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium item generator.');
     return;
   }
 
   const feature = editForm.value.featuresArray[index];
 
-  // If description already exists, confirm before overwriting
   if (feature.description && feature.description.trim()) {
     const featureName = feature.name.trim() || 'Unnamed Feature';
     const confirmed = confirm(`This will erase and regenerate this feature based on the feature name "${featureName}". Proceed?`);
@@ -672,7 +649,6 @@ const generateFeature = async (index) => {
 
   feature.generating = true;
 
-  // Determine appropriate effect level based on rarity
   const rarityToEffectLevel = {
     'Common': 'minor_utility_or_cosmetic_effect',
     'Uncommon': 'useful_magical_effect',
@@ -709,14 +685,13 @@ The feature should:
     const response = await generateGptResponse(featurePrompt, validateFeature, 3);
     const generatedFeature = JSON.parse(response);
 
-    // Only update name if it wasn't provided
     if (!feature.name.trim()) {
       feature.name = generatedFeature.name;
     }
     feature.description = generatedFeature.description;
   } catch (error) {
     console.error('Error generating feature:', error);
-    alert('Failed to generate feature. Please try again.');
+    toast.error('Failed to generate feature. Please try again.');
   } finally {
     feature.generating = false;
   }
@@ -733,9 +708,6 @@ const validateFeature = (jsonString) => {
 
 onMounted(() => {
   loadSavedItems();
-  updateWindowWidth();
-  updateVisibility();
-  window.addEventListener('resize', updateWindowWidth);
 });
 </script>
 
@@ -743,38 +715,121 @@ onMounted(() => {
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-.app-container {
-  display: flex;
-
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 2;
-  }
-}
-
-.sidebar-toggle {
-  display: none;
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 1001;
-
-  @media (max-width: 1020px) {
-    display: block;
-  }
-}
-
 .main-container {
   margin: 3rem auto;
   max-width: 800px;
   width: 100%;
   padding: 0 1rem;
 }
+
+/* ========================================
+   LANDING PAGE: Three-zone layout
+   ======================================== */
+
+.landing-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ZONE 1: Hero header */
+.hero-header {
+  text-align: center;
+  padding: 2rem 1rem 2.5rem;
+
+  .brand-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .brand-name {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: $cdr-color-text-secondary;
+    letter-spacing: 0.02em;
+  }
+
+  .version-pill {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.2rem 0.8rem;
+    border-radius: 100px;
+    background-color: #ededed;
+    color: $cdr-color-text-secondary;
+
+    &.premium {
+      background-color: #fdf3e0;
+      color: #9c6a0a;
+    }
+  }
+
+  h1 {
+    font-size: 3.2rem;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+    color: $cdr-color-text-primary;
+  }
+
+  .value-prop {
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: $cdr-color-text-secondary;
+    margin: 0;
+  }
+}
+
+/* ZONE 2: Form card */
+.form-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem 3rem;
+}
+
+/* ZONE 3: Footer meta */
+.footer-meta {
+  text-align: center;
+  padding: 1.5rem 1rem 0;
+
+  .limit-info {
+    font-size: 1.2rem;
+    color: $cdr-color-text-secondary;
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+/* ========================================
+   PREMIUM INDICATORS
+   ======================================== */
+
+.premium-banner {
+  font-size: 1.2rem;
+  color: $cdr-color-text-secondary;
+  background-color: #fdf8ef;
+  border: 1px solid #f0e4cc;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.premium-feature-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.2rem;
+  color: $cdr-color-text-secondary;
+  padding: 0.4rem 0;
+}
+
+/* ========================================
+   POST-GENERATION: Tabbed content card
+   ======================================== */
 
 .form-container {
   color: $cdr-color-text-primary;
@@ -900,7 +955,7 @@ onMounted(() => {
   }
 }
 
-.sidebar {
+.sidebar-content {
   $background-color: #f4f4f4;
   $active-color: #ffffff;
   $hover-background-color: #f0f0f0;
@@ -908,21 +963,11 @@ onMounted(() => {
   $active-border-color: #007BFF;
   $transition-speed: 0.3s;
 
-  transition: transform 0.3s ease;
-  background-color: $background-color;
-  padding: 1rem;
-  height: 100vh;
+  flex: 1;
   overflow-y: auto;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  z-index: 3;
-
-  &.fixed {
-    position: fixed;
-    top: 0;
-    left: 0;
-  }
 
   .saved-items {
     list-style: none;
@@ -967,10 +1012,23 @@ onMounted(() => {
   }
 }
 
-// Responsive styles
+// Responsive
 @media (max-width: 768px) {
   .main-container {
     margin: 1rem auto;
+  }
+
+  .hero-header {
+    padding: 1.5rem 0.5rem 2rem;
+
+    h1 {
+      font-size: 2.4rem;
+    }
+  }
+
+  .form-card {
+    padding: 1.5rem;
+    border-radius: 8px;
   }
 
   .form-container {

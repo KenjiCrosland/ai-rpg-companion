@@ -175,6 +175,9 @@ import {
 import QuestHookSkeleton from '../skeletons/QuestHookSkeleton.vue';
 import { generateGptResponse } from '../../util/open-ai.mjs';
 import { detectIncognito } from 'detectincognitojs';
+import { useToast } from '../../composables/useToast';
+
+const toast = useToast();
 
 const props = defineProps({
   item: {
@@ -254,8 +257,9 @@ const canGenerateQuestHook = async () => {
   const incognitoResult = await detectIncognito();
 
   if (incognitoResult.isPrivate) {
-    alert(
-      "The free quest hook generator is not available in incognito or private mode as we can't keep track of the number of quest hooks generated. Please disable incognito mode to use the generator or you can access unlimited quest hook generation as a $5 patron.",
+    toast.warning(
+      "The free quest hook generator is not available in incognito or private mode. Please disable incognito mode or become a $5 patron for unlimited access.",
+      8000
     );
     return false;
   }
@@ -279,8 +283,7 @@ const canGenerateQuestHook = async () => {
       questHookData.firstGenerationTime = currentTime.toString();
     } else {
       const resetTime = new Date(firstGenerationTime + 86400000);
-      const alertMessage = `You have reached the 5 quest hook generation limit for a 24-hour period. Please come back at ${resetTime.toLocaleString()} or you can access unlimited quest hook generation as a $5 patron.`;
-      alert(alertMessage);
+      toast.warning(`You've reached the 5 quest hook generation limit. Come back at ${resetTime.toLocaleString()} or become a $5 patron for unlimited access.`, 8000);
       return false;
     }
   } else {
@@ -316,7 +319,7 @@ const exportQuestAsMarkdown = (hook) => {
   markdown += `\n---\n\n*Quest hook for ${props.item.name}*`;
 
   navigator.clipboard.writeText(markdown);
-  alert('Quest hook copied as markdown! Paste it into Homebrewery to see it formatted.');
+  toast.success('Quest hook copied as markdown! Paste it into Homebrewery to see it formatted.');
 };
 
 const exportQuestAsPlainText = (hook) => {
@@ -338,7 +341,7 @@ const exportQuestAsPlainText = (hook) => {
   text += `\n---\n\nQuest hook for ${props.item.name}`;
 
   navigator.clipboard.writeText(text);
-  alert('Quest hook copied as plain text!');
+  toast.success('Quest hook copied as plain text!');
 };
 
 // Export all quest hooks
@@ -365,7 +368,7 @@ const exportAllQuestsAsMarkdown = () => {
   });
 
   navigator.clipboard.writeText(markdown);
-  alert('All quest hooks copied as markdown! Paste into Homebrewery to see them formatted.');
+  toast.success('All quest hooks copied as markdown! Paste into Homebrewery to see them formatted.');
 };
 
 const exportAllQuestsAsPlainText = () => {
@@ -393,7 +396,7 @@ const exportAllQuestsAsPlainText = () => {
   });
 
   navigator.clipboard.writeText(text);
-  alert('All quest hooks copied as plain text!');
+  toast.success('All quest hooks copied as plain text!');
 };
 
 // Initialize on mount
@@ -526,7 +529,7 @@ const removeChallenge = (index) => {
 
 const generateQuestHook = async () => {
   if (!questType.value) {
-    alert('Please select a quest type.');
+    toast.warning('Please select a quest type.');
     return;
   }
   if (!props.item) return;
@@ -565,7 +568,7 @@ const generateQuestHook = async () => {
     emitUpdatedItem();
   } catch (err) {
     console.error('Error generating quest hook:', err);
-    alert('Failed to generate quest hook. Please try again.');
+    toast.error('Failed to generate quest hook. Please try again.');
   } finally {
     loadingQuest.value = false;
   }
