@@ -149,7 +149,7 @@ import {
 import OverviewSkeleton from '../skeletons/OverviewSkeleton.vue';
 import BlockSkeleton from '../skeletons/BlockSkeleton.vue';
 import { generateGptResponse } from '../../util/open-ai.mjs';
-import { subLocationsPrompt } from '../../util/kingdom-prompts.mjs';
+import { subLocationsPrompt } from '../../util/prompts/index.mjs';
 
 const props = defineProps({
   setting: {

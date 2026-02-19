@@ -181,7 +181,7 @@ import {
   factionListPrompt,
   detailedFactionPrompt,
   singleFactionPrompt,
-} from '../../util/kingdom-prompts.mjs';
+} from '../../util/prompts/index.mjs';
 
 const props = defineProps({
   setting: {

@@ -208,7 +208,7 @@ import {
   IconXSm,
 } from '@rei/cedar';
 import { generateGptResponse } from '../../util/open-ai.mjs';
-import { createQuestHookPrompt } from '../../util/kingdom-prompts.mjs';
+import { createQuestHookPrompt } from '../../util/prompts/index.mjs';
 
 const props = defineProps({
   setting: {

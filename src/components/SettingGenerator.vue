@@ -1,10 +1,6 @@
 <template>
-  <ToolSuiteShowcase :premium="premium" display-mode="banner" />
-  <div class="app-container">
-    <!-- Overlay to close sidebar on click -->
-    <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
-
-    <div class="sidebar" :style="sidebarStyle">
+  <GeneratorLayout :premium="premium">
+    <template #sidebar>
       <div class="sidebar-content">
         <ul class="settings-tabs">
           <!-- Flatten settings tree and display each with appropriate indentation -->
@@ -38,7 +34,8 @@
 
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
         currentApp="gameSettings" />
-    </div>
+    </template>
+
     <div class="main-content">
       <div class="landing-wrapper" v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
         <!-- ZONE 1: Brand + Headline -->
@@ -84,9 +81,9 @@
         <!-- ZONE 3: Footer meta -->
         <div class="footer-meta">
           <p v-if="!premium" class="limit-info">
-            Free: 5 generations per 24 hours. Generates overview, locations, factions, NPCs, and quest hooks.
-            Export to plain text, HTML, or Homebrewery Markdown.
-            <cdr-link href="https://cros.land/rpg-setting-generator-and-world-building-tool-premium/">Need unlimited? Go
+            Free: Unlimited generation of settings and locations, premium allows saving and loading information from a
+            file.
+            <cdr-link href="https://cros.land/rpg-setting-generator-and-world-building-tool-premium/">Go
               Premium
               &rarr;</cdr-link>
           </p>
@@ -95,42 +92,21 @@
       <Tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%"
         :activeIndex="activeTabIndex">
         <TabPanel label="Overview">
-          <OverviewTab
-            :setting="currentSetting"
-            :premium="premium"
-            @updated-setting="onOverviewUpdated"
-          />
+          <OverviewTab :setting="currentSetting" :premium="premium" @updated-setting="onOverviewUpdated" />
         </TabPanel>
         <TabPanel label="Locations">
-          <LocationsTab
-            :setting="currentSetting"
-            :all-settings="settings"
-            :premium="premium"
-            @updated-setting="onLocationsUpdated"
-            @generate-sublocation="generateSetting"
-            @delete-sublocation-setting="deleteSetting"
-          />
+          <LocationsTab :setting="currentSetting" :all-settings="settings" :premium="premium"
+            @updated-setting="onLocationsUpdated" @generate-sublocation="generateSetting"
+            @delete-sublocation-setting="deleteSetting" />
         </TabPanel>
         <TabPanel label="Factions">
-          <FactionsTab
-            :setting="currentSetting"
-            :premium="premium"
-            @updated-setting="onFactionsUpdated"
-          />
+          <FactionsTab :setting="currentSetting" :premium="premium" @updated-setting="onFactionsUpdated" />
         </TabPanel>
         <TabPanel label="NPCs" name="NPCs">
-          <NPCsTab
-            :setting="currentSetting"
-            :premium="premium"
-            @updated-setting="onNPCsUpdated"
-          />
+          <NPCsTab :setting="currentSetting" :premium="premium" @updated-setting="onNPCsUpdated" />
         </TabPanel>
         <TabPanel label="Quest Hooks">
-          <QuestHooksTab
-            :setting="currentSetting"
-            :premium="premium"
-            @updated-setting="onQuestHooksUpdated"
-          />
+          <QuestHooksTab :setting="currentSetting" :premium="premium" @updated-setting="onQuestHooksUpdated" />
         </TabPanel>
       </Tabs>
       <cdr-button class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
@@ -159,20 +135,13 @@
         </CdrSkeleton>
       </div>
     </div>
-
-    <!-- Bottom Menu Button for Mobile -->
-    <button class="mobile-menu-button" v-show="windowWidth <= 768" @click="isSidebarVisible = !isSidebarVisible"
-      :class="{ active: isSidebarVisible }" aria-label="Toggle settings menu">
-      <icon-navigation-menu inherit-color />
-      <span class="button-label">Menu</span>
-    </button>
-  </div>
+  </GeneratorLayout>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { CdrInput, CdrButton, CdrLink, CdrSkeleton, IconNavigationMenu } from "@rei/cedar";
-import { settingOverviewPrompt, sublocationOverviewPrompt } from "../util/kingdom-prompts.mjs";
+import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
+import { CdrInput, CdrButton, CdrLink, CdrSkeleton } from "@rei/cedar";
+import { settingOverviewPrompt, sublocationOverviewPrompt } from "../util/prompts/index.mjs";
 import OverviewSkeleton from "./skeletons/OverviewSkeleton.vue";
 import DataManagerModal from './DataManagerModal.vue';
 import Tabs from './tabs/Tabs.vue';
@@ -186,12 +155,12 @@ import place_names from '../data/place-names.json';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-popover.css';
-import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
 import QuestHooksTab from './setting-generator-tabs/QuestHooksTab.vue';
 import OverviewTab from './setting-generator-tabs/OverviewTab.vue';
 import FactionsTab from './setting-generator-tabs/FactionsTab.vue';
 import LocationsTab from './setting-generator-tabs/LocationsTab.vue';
 import NPCsTab from './setting-generator-tabs/NPCsTab.vue';
+import GeneratorLayout from './GeneratorLayout.vue';
 
 const props = defineProps({
   premium: {
@@ -201,59 +170,7 @@ const props = defineProps({
 });
 
 
-const isSidebarVisible = ref(false); // Start hidden on mobile
 const showDataManagerModal = ref(false);
-
-// Update based on viewport size immediately and on resize
-const updateVisibility = () => {
-  if (window.innerWidth > 768) {
-    isSidebarVisible.value = true;  // Always show on desktop
-  } else {
-    isSidebarVisible.value = false;  // Manage with toggle button on mobile
-  }
-};
-
-const windowWidth = ref(window.innerWidth);
-
-const updateWindowWidth = () => {
-  windowWidth.value = window.innerWidth;
-};
-
-onMounted(() => {
-  updateWindowWidth(); // Set initial width
-  updateVisibility();  // Set initial visibility
-  window.addEventListener('resize', updateWindowWidth);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateWindowWidth);
-});
-
-// Prevent body scrolling when sidebar is open on mobile
-watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
-  if (width <= 768 && sidebarOpen) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
-  }
-});
-
-const sidebarStyle = computed(() => {
-  if (windowWidth.value <= 768) {
-    return {
-      position: 'fixed',
-      transform: isSidebarVisible.value ? 'translateX(0)' : 'translateX(-100%)',
-      width: '70%', // Adjust width for mobile
-      maxWidth: '400px'
-    };
-  } else {
-    return {
-      width: '400px',
-      position: 'static',
-      transform: 'none'
-    };
-  }
-});
 
 // Handler for LocationsTab emit — persists updated importantLocations
 const onLocationsUpdated = (updatedSetting) => {
@@ -652,7 +569,7 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
     const overview = JSON.parse(response);
 
     if (settings.value[operationIndex]) {
-      if (!settings.value.place_name) {
+      if (!settings.value[operationIndex].place_name) {
         settings.value[operationIndex].place_name = overview.name;
       }
       settings.value[operationIndex].setting_overview = overview;
@@ -701,296 +618,209 @@ function randomName(setting) {
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-.app-container {
+// Sidebar-specific styles
+$active-color: #ffffff;
+$hover-background-color: #f0f0f0;
+$default-background-color: #e0e0e0;
+$active-border-color: #007BFF;
+$transition-speed: 0.3s;
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
   display: flex;
+  flex-direction: column;
+}
 
-  $sidebar-width: 400px;
-  $background-color: #f4f4f4;
-  $active-color: #ffffff;
-  $hover-background-color: #f0f0f0;
-  $default-background-color: #e0e0e0;
-  $active-border-color: #007BFF;
-  $indentation-step: 20px;
-  $transition-speed: 0.3s;
+.settings-tabs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  margin-bottom: 1rem;
 
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5); // Semi-transparent
-    z-index: 1000; // Between content and sidebar
-  }
+  li {
+    margin-bottom: 4px;
 
-  .sidebar {
-    transition: transform 0.3s ease;
-    background-color: $background-color;
-    --sidebar-width: 400px; // Define sidebar width as a variable for easy changes
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    z-index: 1001; // Above mobile header
-    overflow: hidden; // No overflow on sidebar itself
-
-    &.fixed {
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-
-    .sidebar-content {
-      flex: 1;
-      overflow-y: auto; // Single scrollable container
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .settings-tabs {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      margin-bottom: 1rem;
-
-      li {
-        margin-bottom: 4px;
-
-        &.active-tab {
-          .setting-button {
-            background-color: $active-color;
-            border-left-color: $active-border-color;
-          }
-        }
-
-        .setting-button {
-          width: 100%;
-          padding: 12px 20px;
-          font-size: 1.5rem;
-          text-align: left;
-          background-color: $default-background-color;
-          border: none;
-          color: inherit; // Ensures button text color matches your design
-          cursor: pointer;
-          border-left: 5px solid transparent;
-          transition: background-color $transition-speed, border-left-color $transition-speed;
-
-          &:hover {
-            background-color: $hover-background-color;
-          }
-
-          &:focus {
-            outline: none; // Optionally, add a custom focus style
-            border-left-color: $active-border-color; // Example focus style for accessibility
-          }
-
-          &.active {
-            background-color: $active-color;
-            border-color: $active-border-color;
-          }
-        }
+    &.active-tab {
+      .setting-button {
+        background-color: $active-color;
+        border-left-color: $active-border-color;
       }
     }
 
-    .copy-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    .setting-button {
+      width: 100%;
+      padding: 12px 20px;
+      font-size: 1.5rem;
+      text-align: left;
+      background-color: $default-background-color;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      border-left: 5px solid transparent;
+      transition: background-color $transition-speed, border-left-color $transition-speed;
+
+      &:hover {
+        background-color: $hover-background-color;
+      }
+
+      &:focus {
+        outline: none;
+        border-left-color: $active-border-color;
+      }
+
+      &.active {
+        background-color: $active-color;
+        border-color: $active-border-color;
+      }
     }
   }
+}
 
-  .mobile-menu-button {
-    display: none;
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 64px;
-    height: 64px;
-    background-color: #e0e0e0;
-    color: #333;
-    border: none;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    z-index: 998; // Below sidebar but above content
-    transition: all 0.3s ease;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
+.copy-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
-    @media (max-width: 768px) {
-      display: flex;
-    }
+// Main content styles
+.main-content {
+  flex-grow: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 3rem auto;
+  max-width: 800px;
 
-    svg {
-      width: 24px;
-      height: 24px;
-    }
-
-    .button-label {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    &:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      background-color: #d0d0d0;
-    }
-
-    &:active {
-      transform: scale(0.95);
-    }
-
-    &.active {
-      background-color: #333;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-  }
-
-
-
-  .main-content {
-    flex-grow: 1;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 3rem auto;
-    max-width: 800px;
-
-    .content-tabs {
-      box-shadow: 0 4px 6px #0000001a;
-      padding: 3rem;
-      border-radius: 8px;
-    }
+  .content-tabs {
+    box-shadow: 0 4px 6px #0000001a;
+    padding: 3rem;
+    border-radius: 8px;
   }
 
   p {
     line-height: 3rem;
     margin: 0 0 25px;
   }
+}
 
-  /* ========================================
-   LANDING PAGE: Three-zone layout
-   ======================================== */
+/* ========================================
+ LANDING PAGE: Three-zone layout
+ ======================================== */
 
-  .landing-wrapper {
-    max-width: 800px;
-    width: 100%;
+.landing-wrapper {
+  max-width: 800px;
+  width: 100%;
+}
+
+/* ZONE 1: Hero header */
+.hero-header {
+  text-align: center;
+  padding: 2rem 1rem 2.5rem;
+
+  .brand-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
   }
 
-  /* ZONE 1: Hero header */
+  .brand-name {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: $cdr-color-text-secondary;
+    letter-spacing: 0.02em;
+  }
+
+  .version-pill {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.2rem 0.8rem;
+    border-radius: 100px;
+    background-color: #ededed;
+    color: $cdr-color-text-secondary;
+
+    &.premium {
+      background-color: #fdf3e0;
+      color: #9c6a0a;
+    }
+  }
+
+  h1 {
+    font-size: 3.2rem;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+    color: $cdr-color-text-primary;
+  }
+
+  .value-prop {
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: $cdr-color-text-secondary;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+/* ZONE 2: Form card */
+.form-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem 3rem;
+}
+
+.setting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row-identity {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-row-lore {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+/* ZONE 3: Footer meta */
+.footer-meta {
+  text-align: center;
+  padding: 1.5rem 1rem 0;
+
+  .limit-info {
+    font-size: 1.2rem;
+    color: $cdr-color-text-secondary;
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+@media screen and (max-width: 768px) {
   .hero-header {
-    text-align: center;
-    padding: 2rem 1rem 2.5rem;
-
-    .brand-line {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-
-    .brand-name {
-      font-size: 1.4rem;
-      font-weight: 500;
-      color: $cdr-color-text-secondary;
-      letter-spacing: 0.02em;
-    }
-
-    .version-pill {
-      display: inline-block;
-      font-size: 1.1rem;
-      font-weight: 600;
-      padding: 0.2rem 0.8rem;
-      border-radius: 100px;
-      background-color: #ededed;
-      color: $cdr-color-text-secondary;
-
-      &.premium {
-        background-color: #fdf3e0;
-        color: #9c6a0a;
-      }
-    }
+    padding: 1.5rem 0.5rem 2rem;
 
     h1 {
-      font-size: 3.2rem;
-      line-height: 1.15;
-      margin: 0 0 0.75rem;
-      color: $cdr-color-text-primary;
-    }
-
-    .value-prop {
-      font-size: 1.6rem;
-      font-weight: 400;
-      color: $cdr-color-text-secondary;
-      margin: 0;
-      line-height: 1.5;
+      font-size: 2.4rem;
     }
   }
 
-  /* ZONE 2: Form card */
   .form-card {
-    background-color: #ffffff;
-    border: 1px solid #e2e2e2;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    padding: 2.5rem 3rem;
-  }
-
-  .setting-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
   }
 
   .form-row-identity {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
-  }
-
-  .form-row-lore {
-    display: grid;
     grid-template-columns: 1fr;
-  }
-
-  /* ZONE 3: Footer meta */
-  .footer-meta {
-    text-align: center;
-    padding: 1.5rem 1rem 0;
-
-    .limit-info {
-      font-size: 1.2rem;
-      color: $cdr-color-text-secondary;
-      margin: 0;
-      line-height: 1.6;
-    }
-  }
-
-  @media screen and (max-width: 768px) {
-    .hero-header {
-      padding: 1.5rem 0.5rem 2rem;
-
-      h1 {
-        font-size: 2.4rem;
-      }
-    }
-
-    .form-card {
-      padding: 1.5rem;
-      border-radius: 8px;
-    }
-
-    .form-row-identity {
-      grid-template-columns: 1fr;
-    }
   }
 }
 
