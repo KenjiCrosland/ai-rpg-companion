@@ -40,48 +40,13 @@ remove_action( 'genesis_footer', 'genesis_footer_markup_close', 15 );
 // Force full width layout.
 add_filter( 'genesis_site_layout', '__genesis_return_full_width_content' );
 
-// Enqueue Vue landing page assets.
+// Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
+    rpg_companion_enqueue_entry( 'landing' );
 
-    // ✅ Change this folder name to whatever your landing page build folder is.
-    // Example suggestions:
-    // /rpg-companion-landing
-    // /rpg-tool-suite-landing
-    // /rpg-companion-suite-landing
-    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-landing-page/dist/assets';
-    $vue_app_url  = get_stylesheet_directory_uri() . '/rpg-companion-landing-page/dist/assets';
-
-    // Bail if the build folder doesn't exist (prevents PHP warnings).
-    if ( ! file_exists( $vue_app_path ) ) {
-        return;
-    }
-
-    $files = scandir( $vue_app_path );
-    $enqueued_style_handle = '';
-
-    foreach ( $files as $file ) {
-        $file_path = $vue_app_path . '/' . $file;
-        $file_url  = $vue_app_url . '/' . $file;
-
-        if ( is_file( $file_path ) ) {
-            $ext = pathinfo( $file, PATHINFO_EXTENSION );
-
-            // Bump version whenever you deploy a new build (or use filemtime if you want).
-            $version = '1.0.0';
-
-            if ( $ext === 'css' ) {
-                $handle = 'landing-' . md5( $file );
-                wp_enqueue_style( $handle, $file_url, [], $version );
-                $enqueued_style_handle = $handle;
-            } elseif ( $ext === 'js' ) {
-                wp_enqueue_script( 'landing-' . md5( $file ), $file_url, [], $version, true );
-            }
-        }
-    }
-
-    // Inline CSS overrides to match your “clean app canvas” style.
-    if ( $enqueued_style_handle ) {
-        $custom_css = '
+    wp_register_style( 'rpg-companion-overrides', false );
+    wp_enqueue_style( 'rpg-companion-overrides' );
+    wp_add_inline_style( 'rpg-companion-overrides', '
         main.content {
             max-width: 940px;
             width: auto;
@@ -122,9 +87,7 @@ function vue_app_enqueue_assets() {
         .button:hover {
             color: inherit;
         }
-        ';
-        wp_add_inline_style( $enqueued_style_handle, $custom_css );
-    }
+        ' );
 }
 add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 

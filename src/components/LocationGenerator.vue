@@ -7,7 +7,7 @@
         <h1>Kenji's RPG Location Description Generator</h1>
 
         <cdr-text class="intro">
-          Welcome to the RPG Location Description Generator! This app uses the ChatGPT API to generate engaging
+          Welcome to the RPG Location Description Generator! This app instantly generates engaging
           descriptions of locations for your players.
         </cdr-text>
 

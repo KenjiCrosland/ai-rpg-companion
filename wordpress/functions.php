@@ -341,6 +341,87 @@ function wp_remote_post_with_retry($url, $args, $max_retries = 3, $retry_interva
     return $response; // Return the last failed response after all retries
 }
 
+// -----------------------------------------------------------------------------
+// RPG Companion — Vite manifest asset loader
+// -----------------------------------------------------------------------------
+
+/**
+ * Enqueue JS + CSS for a single Vite entry (and all its shared chunks)
+ * by reading dist/.vite/manifest.json.
+ *
+ * Deploy the entire dist/ folder to:
+ *   {theme}/rpg-companion/dist/
+ *
+ * @param string $entry_key  Key matching a name in vite.config.js rollupOptions.input
+ *                           (e.g. 'statblock', 'npc', 'dungeon-premium').
+ */
+function rpg_companion_enqueue_entry( $entry_key ) {
+    static $manifest = null;
+    static $enqueued = [];
+
+    if ( $manifest === null ) {
+        $path = get_stylesheet_directory() . '/rpg-companion/dist/manifest.json';
+        if ( ! file_exists( $path ) ) {
+            return;
+        }
+        $manifest = json_decode( file_get_contents( $path ), true );
+    }
+
+    $entry_file = "src/entries/{$entry_key}.js";
+    if ( ! isset( $manifest[ $entry_file ] ) ) {
+        return;
+    }
+
+    $dist_url = get_stylesheet_directory_uri() . '/rpg-companion/dist';
+    rpg_companion_enqueue_chunk( $manifest, $manifest[ $entry_file ], $dist_url, $enqueued );
+
+    // Google Fonts (Inter + Material Icons + Material Symbols Outlined)
+    wp_enqueue_style( 'rpg-font-inter', 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap', [], null );
+    wp_enqueue_style( 'rpg-material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', [], null );
+    wp_enqueue_style( 'rpg-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap', [], null );
+}
+
+/**
+ * Recursively enqueue a Vite chunk and all its imports/CSS.
+ *
+ * @param array  $manifest  Full parsed manifest.json.
+ * @param array  $chunk     The specific chunk entry from the manifest.
+ * @param string $dist_url  Absolute URL to the dist folder.
+ * @param array  &$enqueued Files already enqueued (dedup guard).
+ */
+function rpg_companion_enqueue_chunk( $manifest, $chunk, $dist_url, &$enqueued ) {
+    $file = $chunk['file'];
+
+    if ( in_array( $file, $enqueued, true ) ) {
+        return;
+    }
+    $enqueued[] = $file;
+
+    wp_enqueue_script( 'rpg-' . md5( $file ), $dist_url . '/' . $file, [], null, true );
+
+    foreach ( $chunk['css'] ?? [] as $css_file ) {
+        wp_enqueue_style( 'rpg-' . md5( $css_file ), $dist_url . '/' . $css_file, [], null );
+    }
+
+    foreach ( $chunk['imports'] ?? [] as $import_key ) {
+        if ( isset( $manifest[ $import_key ] ) ) {
+            rpg_companion_enqueue_chunk( $manifest, $manifest[ $import_key ], $dist_url, $enqueued );
+        }
+    }
+}
+
+// Make all RPG companion scripts load as ES modules.
+add_filter( 'script_loader_tag', function ( $tag, $handle, $src ) {
+    if ( strpos( $handle, 'rpg-' ) === 0 ) {
+        return '<script type="module" src="' . esc_url( $src ) . '"></script>' . "\n";
+    }
+    return $tag;
+}, 10, 3 );
+
+// -----------------------------------------------------------------------------
+// (END) RPG Companion asset loader
+// -----------------------------------------------------------------------------
+
 function vue_app_new_dungeon_generator_shortcode() {
 	return '<div id="app" data-page="new-dungeon-generator"></div>';
 }
@@ -352,12 +433,12 @@ add_shortcode( 'vue_app_new_dungeon_generator', 'vue_app_new_dungeon_generator_s
 add_shortcode( 'vue_app_new_dungeon_generator_premium', 'vue_app_new_dungeon_generator_premium_shortcode' );
 
 function vue_app_setting_generator_shortcode() {
-		return '<div id="app" data-page="setting-generator"></div>';
+	return '<div id="app" data-page="setting-generator"></div>';
 }
 add_shortcode( 'vue_app_setting_generator', 'vue_app_setting_generator_shortcode' );
 
 function vue_app_setting_generator_premium_shortcode() {
-	return '<div id="app" data-page="setting-generator-premium"></div>';
+	return '<div id="app" data-page="setting-generator-premium" data-premium="true"></div>';
 }
 add_shortcode( 'vue_app_setting_generator_premium', 'vue_app_setting_generator_premium_shortcode' );
 
@@ -367,17 +448,17 @@ function vue_app_encounter_generator_shortcode() {
 add_shortcode( 'vue_app_encounter-generator', 'vue_app_encounter_generator_shortcode' );
 
 function vue_app_encounter_generator_premium_shortcode() {
-	return '<div id="app" data-page="encounter-generator-premium"></div>';
+	return '<div id="app" data-page="encounter-generator-premium" data-premium="true"></div>';
 }
 add_shortcode( 'vue_app_encounter-generator_premium', 'vue_app_encounter_generator_premium_shortcode' );
 
 function vue_app_item_generator_shortcode() {
-		return '<div id="app" data-page="item-generator"></div>';
+	return '<div id="app" data-page="item-generator"></div>';
 }
 add_shortcode( 'vue_app_item_generator', 'vue_app_item_generator_shortcode' );
 
 function vue_app_item_generator_premium_shortcode() {
-	return '<div id="app" data-page="item-generator-premium"></div>';
+	return '<div id="app" data-page="item-generator-premium" data-premium="true"></div>';
 }
 add_shortcode( 'vue_app_item_generator_premium', 'vue_app_item_generator_premium_shortcode' );
 
@@ -389,7 +470,7 @@ add_shortcode( 'vue_app_dungeon_generator', 'vue_app_dungeon_generator_shortcode
 function vue_app_dungeon_generator_premium_shortcode() {
 	return '<div id="app" data-page="dungeon-generator"></div>';
 }
-add_shortcode( 'vue_app_dungeon_generator_premium', 'vue_app_dungeon_generator_shortcode' );
+add_shortcode( 'vue_app_dungeon_generator_premium', 'vue_app_dungeon_generator_premium_shortcode' );
 
 function vue_app_lore_generator_shortcode() {
     return '<div id="app" data-page="lore-generator"></div>';
@@ -417,7 +498,7 @@ function vue_app_statblock_generator_shortcode() {
 add_shortcode( 'vue_app_statblock_generator', 'vue_app_statblock_generator_shortcode' );
 
 function vue_app_statblock_generator_premium_shortcode() {
-	return '<div id="app" data-page="statblock-generator-premium"></div>';
+	return '<div id="app" data-page="statblock-generator-premium" data-premium="true"></div>';
 }
 add_shortcode( 'vue_app_statblock_generator_premium', 'vue_app_statblock_generator_premium_shortcode' );
 
@@ -427,7 +508,7 @@ function vue_app_npc_generator_shortcode() {
 add_shortcode( 'vue_app_npc_generator', 'vue_app_npc_generator_shortcode' );
 
 function vue_app_npc_generator_premium_shortcode() {
-	return '<div id="app" data-page="npc-generator-premium"></div>';
+	return '<div id="app" data-page="npc-generator-premium" data-premium="true"></div>';
 }
 add_shortcode( 'vue_app_npc_generator_premium', 'vue_app_npc_generator_premium_shortcode' );
 
