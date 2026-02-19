@@ -1,59 +1,85 @@
 <template>
-  <div class="exports">
-    <div v-if="!loading" class="instructions">
-      <h4>Export to Roll20!</h4>
-      <p>Streamline your homebrew workflow: create D&D monsters at cros.land, export to Roll20.</p>
-      <ol>
-        <li>Install the <a
-            href="https://chromewebstore.google.com/detail/conjure-creature/oepoeaoeoaaedbgobaegpfamofhkbifo"
-            target="_blank" rel="noopener noreferrer">Conjure Creature Chrome Extension</a>.</li>
-        <li>Generate your monsters here (they sync automatically to the extension).</li>
-        <li>Open a new Roll20 NPC sheet and click the extension.</li>
-        <li>Select your monster in the extension and click "Export to Roll20" — done!</li>
-      </ol>
-    </div>
-    <div v-if="!loading" class="instructions">
-      <h4>Use Homebrewery to Make a Beautiful PDF of Your Statblock!</h4>
-      <ol>
-        <li>Click "Copy as Markdown" to copy the content.</li>
-        <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
-            rel="noopener noreferrer">Homebrewery</a>.</li>
-        <li>Paste the markdown and edit as you like.</li>
-        <li>Enjoy the formatted content!</li>
-      </ol>
-      <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
-    </div>
-    <div v-if="!loading" class="instructions">
-      <h4>Export Statblock to Improved Initiative App</h4>
-      <ol>
-        <li>Click "Copy as Improved Initiative JSON" to copy the content.</li>
-        <li>Visit <a href="https://improvedinitiative.app/e/" target="_blank" rel="noopener noreferrer">The Improved
-            Initiative App</a>.</li>
-        <li>Click "Add New" and choose "JSON" mode.</li>
-        <li>Paste your JSON and save the monster.</li>
-        <li>Have fun!</li>
-      </ol>
-      <cdr-button @click="copyAsImprovedInitiative">Copy as Improved Initiative JSON</cdr-button>
-    </div>
-    <div v-if="!loading" class="instructions">
-      <h4>Export this Monster to Foundry VTT!</h4>
-      <ol>
-        <li>Click "Copy as Foundry VTT text" to copy the content.</li>
-        <li>Follow the <a href="https://foundryvtt.com/packages/5e-statblock-importer" target="_blank"
-            rel="noopener noreferrer">Import Instructions</a>.</li>
-        <li>Have Fun!</li>
-      </ol>
-      <cdr-button @click="copyAsVTT">Copy in Foundry VTT Text Format</cdr-button>
+  <div v-if="!loading" class="exports-section">
+    <h3 class="exports-heading">Export Your Statblock</h3>
+
+    <div class="export-buttons">
+      <cdr-button @click="copyAsMarkdown" modifier="secondary">
+        Copy as Markdown
+      </cdr-button>
+      <cdr-button @click="copyAsVTT" modifier="secondary">
+        Copy for Foundry VTT
+      </cdr-button>
+      <cdr-button @click="copyAsImprovedInitiative" modifier="secondary">
+        Copy for Improved Initiative
+      </cdr-button>
     </div>
 
+    <div class="roll20-callout">
+      <strong>Roll20 users:</strong> Export directly via the
+      <a href="https://chromewebstore.google.com/detail/conjure-creature/oepoeaoeoaaedbgobaegpfamofhkbifo"
+        target="_blank" rel="noopener noreferrer">Conjure Creature Chrome Extension</a>
+      — your monsters sync automatically.
+    </div>
+
+    <cdr-accordion-group class="export-help">
+      <cdr-accordion level="4" id="export-help-markdown" :opened="openAccordion === 'markdown'"
+        @accordion-toggle="toggleAccordion('markdown')">
+        <template #label>How to use with Homebrewery</template>
+        <ol>
+          <li>Click "Copy as Markdown" above.</li>
+          <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
+              rel="noopener noreferrer">Homebrewery</a>
+            and paste on the left side.</li>
+          <li>Edit as you like — your statblock renders as a beautiful D&D-styled PDF.</li>
+        </ol>
+      </cdr-accordion>
+
+      <cdr-accordion level="4" id="export-help-foundry" :opened="openAccordion === 'foundry'"
+        @accordion-toggle="toggleAccordion('foundry')">
+        <template #label>How to import into Foundry VTT</template>
+        <ol>
+          <li>Click "Copy for Foundry VTT" above.</li>
+          <li>Install the <a href="https://foundryvtt.com/packages/5e-statblock-importer" target="_blank"
+              rel="noopener noreferrer">5e Statblock Importer</a> module in Foundry.</li>
+          <li>Open the importer, paste, and import.</li>
+        </ol>
+      </cdr-accordion>
+
+      <cdr-accordion level="4" id="export-help-initiative" :opened="openAccordion === 'initiative'"
+        @accordion-toggle="toggleAccordion('initiative')">
+        <template #label>How to import into Improved Initiative</template>
+        <ol>
+          <li>Click "Copy for Improved Initiative" above.</li>
+          <li>Visit <a href="https://improvedinitiative.app/e/" target="_blank" rel="noopener noreferrer">Improved
+              Initiative</a>.</li>
+          <li>Click "Add New", choose "JSON" mode, paste, and save.</li>
+        </ol>
+      </cdr-accordion>
+
+      <cdr-accordion level="4" id="export-help-roll20" :opened="openAccordion === 'roll20'"
+        @accordion-toggle="toggleAccordion('roll20')">
+        <template #label>How to export to Roll20</template>
+        <ol>
+          <li>Install the <a
+              href="https://chromewebstore.google.com/detail/conjure-creature/oepoeaoeoaaedbgobaegpfamofhkbifo"
+              target="_blank" rel="noopener noreferrer">Conjure Creature Chrome Extension</a>.</li>
+          <li>Generate your monsters here — they sync automatically to the extension.</li>
+          <li>Open a Roll20 NPC sheet, click the extension, select your monster, and export.</li>
+        </ol>
+      </cdr-accordion>
+    </cdr-accordion-group>
   </div>
 </template>
 
 <script setup>
-import { CdrButton } from "@rei/cedar";
+import { ref } from 'vue';
+import { CdrButton, CdrAccordion, CdrAccordionGroup } from "@rei/cedar";
 import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
 import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
 import { convertToFoundryVTT } from '../util/convertToFoundryVTT.mjs';
+import { useToast } from '../composables/useToast';
+
+const toast = useToast();
 
 const props = defineProps({
   monster: Object,
@@ -61,47 +87,94 @@ const props = defineProps({
   loading: { type: Boolean, default: false }
 });
 
+const openAccordion = ref(null);
+
+const toggleAccordion = (id) => {
+  openAccordion.value = openAccordion.value === id ? null : id;
+};
+
 const copyAsMarkdown = () => {
   navigator.clipboard.writeText(statblockToMarkdown(props.monster, props.columns))
-    .then(() => alert('Content copied as markdown!'))
-    .catch(() => alert('Failed to copy content.'));
+    .then(() => toast.success('Copied as markdown — paste into Homebrewery to format.'))
+    .catch(() => toast.error('Failed to copy content.'));
 };
 
 const copyAsVTT = () => {
   navigator.clipboard.writeText(convertToFoundryVTT(props.monster))
-    .then(() => alert('Content copied in Foundry VTT Format!'))
-    .catch(() => alert('Failed to copy content.'));
+    .then(() => toast.success('Copied for Foundry VTT.'))
+    .catch(() => toast.error('Failed to copy content.'));
 };
 
 const copyAsImprovedInitiative = () => {
   navigator.clipboard.writeText(JSON.stringify(convertToImprovedInitiative(props.monster)))
-    .then(() => alert('Copied as Improved Initiative JSON!'))
-    .catch(() => alert('Failed to copy content.'));
+    .then(() => toast.success('Copied for Improved Initiative.'))
+    .catch(() => toast.error('Failed to copy content.'));
 };
 </script>
 
-<style scoped>
-.exports {
+<style scoped lang="scss">
+@import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
+
+.exports-section {
   max-width: 850px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-.instructions {
-  padding: 0 3rem 1rem;
-  margin: 0 auto;
+  margin: 2rem 0;
+  padding: 2rem;
+  background-color: $cdr-color-background-secondary;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 
-button {
-  margin: 2rem auto 1rem;
+.exports-heading {
+  margin: 0 0 1.25rem;
+  font-size: 1.6rem;
 }
 
-@media screen and (max-width: 855px) {
-  .exports {
-    grid-template-columns: 1fr;
+.export-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.roll20-callout {
+  font-size: 1.3rem;
+  color: $cdr-color-text-secondary;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+
+  a {
+    color: $cdr-color-text-brand;
+  }
+}
+
+.export-help {
+
+  ol {
+    margin: 0.5rem 0 0.5rem 1.5rem;
+    padding: 0;
+    font-size: 1.3rem;
+    line-height: 1.6;
+
+    li {
+      margin-bottom: 0.25rem;
+    }
+
+    a {
+      color: $cdr-color-text-brand;
+    }
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .export-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .exports-section {
+    padding: 1.5rem;
   }
 }
 </style>

@@ -577,7 +577,11 @@ This weapon is a ${selectedWeaponType}. Design the item around this specific wea
 ${originInstruction}
 ${!itemName.value.trim() ? `NAMING STYLE:
 Use this linguistic palette for ALL names — the item name, character names, faction names, and location names: ${selectedPalette}
-All names should feel like they belong to the same world. A Japanese-named item should not have lore characters with generic Western fantasy names.
+All names should feel like they belong to the same world. Do not blend or mix linguistic origins within a single name — commit fully to one style.
+
+NAMING — AVOID OVERUSED DESCRIPTORS:
+Do not use these words in the item name: Whispering, Luminous, Celestial, Ethereal, Arcane, Glimmering, Radiant, Verdant.
+Use vivid, specific adjectives that match the item's origin and mood instead.
 ` : ''}
 MOOD & TONE:
 The overall feel of this item should be: ${selectedMood}

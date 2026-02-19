@@ -2,52 +2,38 @@
   <GeneratorLayout :premium="premium">
     <template #sidebar>
       <div class="sidebar-content">
-        <cdr-accordion-group>
-          <cdr-accordion level="3" v-for="(folder, folderName) in filteredMonsters" :key="folderName" :id="folderName"
-            :opened="openedFolders[folderName]"
-            @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
-            <template #label>
-              {{ folderName }}
-            </template>
-            <ul class="saved-statblocks">
-              <li v-for="(monsterItem, index) in folder" :key="index"
-                :class="{ 'active': activeMonsterIndex === index && activeFolder === folderName }">
-                <button class="monster-button" @click="selectMonster(folderName, index)" tabindex="0">
-                  <span>{{ monsterItem.name }}</span>
-                  <span>CR {{ getFirstNumber(monsterItem.challenge_rating) }}</span>
-                </button>
-              </li>
-              <li>
-                <button class="monster-button" @click="newMonster(folderName)"
-                  :class="{ 'active': activeMonsterIndex === null && activeFolder === folderName }">
-                  + New Monster Statblock</button>
-              </li>
-            </ul>
-          </cdr-accordion>
-        </cdr-accordion-group>
+        <div class="sidebar-scroll">
+          <cdr-accordion-group>
+            <cdr-accordion level="3" v-for="(folder, folderName) in filteredMonsters" :key="folderName" :id="folderName"
+              :opened="openedFolders[folderName]"
+              @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
+              <template #label>
+                {{ folderName }}
+              </template>
+              <ul class="saved-statblocks">
+                <li v-for="(monsterItem, index) in folder" :key="index"
+                  :class="{ 'active': activeMonsterIndex === index && activeFolder === folderName }">
+                  <button class="monster-button" @click="selectMonster(folderName, index)" tabindex="0">
+                    <span>{{ monsterItem.name }}</span>
+                    <span>CR {{ getFirstNumber(monsterItem.challenge_rating) }}</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="monster-button" @click="newMonster(folderName)"
+                    :class="{ 'active': activeMonsterIndex === null && activeFolder === folderName }">
+                    + New Monster Statblock</button>
+                </li>
+              </ul>
+            </cdr-accordion>
+          </cdr-accordion-group>
+        </div>
 
-        <div class="folder-form">
-          <h3>Move Statblock to Folder</h3>
-          <form @submit.prevent="moveMonsterToFolder">
-            <cdr-input v-model="newFolder" label="New Folder Name:">
-              <template #helper-text-top>
-                Move the monster to a new folder in the sidebar
-              </template>
-            </cdr-input>
-            <cdr-select v-model="chosenFolder" label="Existing Folders" :options="folderNames">
-              <template #helper-text>
-                Move the monster to an existing folder in the sidebar
-              </template>
-            </cdr-select>
-            <cdr-button type="submit" :full-width="true">Move To Folder</cdr-button>
-          </form>
+        <div class="sidebar-footer">
           <cdr-button modifier="dark" @click="showDataManagerModal = true" :full-width="true">
             Save/Load Data from a File
           </cdr-button>
         </div>
 
-
-        <!-- Our new DataManagerModal component -->
         <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
           :premium="premium" currentApp="monsters" />
       </div>
@@ -117,9 +103,28 @@
         :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
         @update-monster="updateMonster" />
 
-      <cdr-button class="delete-button" v-if="monster && !loadingPart2" modifier="dark" :full-width="true"
-        @click="deleteStatblock">Delete
-        Statblock</cdr-button>
+      <!-- Action bar: Move + Delete -->
+      <div class="action-bar" v-if="monster && !loadingPart2">
+        <cdr-button modifier="secondary" @click="showFolderMover = !showFolderMover">
+          {{ showFolderMover ? 'Cancel' : 'Move to Folder' }}
+        </cdr-button>
+        <cdr-button modifier="dark" @click="deleteStatblock">
+          Delete Statblock
+        </cdr-button>
+      </div>
+
+      <!-- Inline folder mover (appears when toggled) -->
+      <div class="folder-mover" v-if="showFolderMover && monster && !loadingPart2">
+        <div class="folder-mover-inner">
+          <cdr-select v-model="folderMoveTarget" label="Destination folder" prompt="Select a folder"
+            :options="folderMoveOptions" />
+          <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolder" label="New folder name"
+            background="secondary" />
+          <cdr-button @click="handleFolderMove" :disabled="!canMove">
+            Move
+          </cdr-button>
+        </div>
+      </div>
       <StatblockExports v-if="monster" :monster="monster" :loading="loadingPart1 || loadingPart2"
         :columns="userColumnsPreference" />
     </div>
@@ -171,7 +176,6 @@ const errorMessage = ref('');
 const windowWidth = ref(window.innerWidth);
 const monsters = ref({ 'Uncategorized': [] });
 const newFolder = ref('');
-const chosenFolder = ref('');
 const activeFolder = ref('Uncategorized');
 const openedFolders = reactive({ 'Uncategorized': true });
 const userColumnsPreference = ref('two_columns');
@@ -186,6 +190,23 @@ const filteredMonsters = computed(() => {
   return filtered;
 });
 const showDataManagerModal = ref(false);
+const showFolderMover = ref(false);
+const folderMoveTarget = ref('');
+
+const folderMoveOptions = computed(() => {
+  const current = activeFolder.value;
+  const folders = folderNames.value
+    .filter(name => name !== current)
+    .map(name => ({ text: name, value: name }));
+  folders.push({ text: '＋ Create new folder...', value: '__new__' });
+  return folders;
+});
+
+const canMove = computed(() => {
+  if (!folderMoveTarget.value) return false;
+  if (folderMoveTarget.value === '__new__') return newFolder.value.trim().length > 0;
+  return true;
+});
 
 
 onMounted(() => {
@@ -294,39 +315,58 @@ function validationPart2(jsonString) {
   }
 }
 
-function moveMonsterToFolder() {
+function handleFolderMove() {
+  if (activeMonsterIndex.value === null) return;
+
+  const targetFolder = folderMoveTarget.value === '__new__'
+    ? newFolder.value.trim()
+    : folderMoveTarget.value;
+
+  if (!targetFolder) return;
+
   const currentMonsterName = monsters.value[activeFolder.value][activeMonsterIndex.value].name;
-  let previousActiveFolder = activeFolder.value;
-  if (newFolder.value) {
-    monsters.value[newFolder.value] = monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1);
-    activeFolder.value = newFolder.value;
-    newFolder.value = '';
-  } else if (chosenFolder.value) {
-    monsters.value[chosenFolder.value].push(...monsters.value[activeFolder.value].splice(activeMonsterIndex.value, 1));
-    activeFolder.value = chosenFolder.value;
-    chosenFolder.value = '';
+  const previousActiveFolder = activeFolder.value;
+
+  // Create folder if new
+  if (!monsters.value[targetFolder]) {
+    monsters.value[targetFolder] = [];
   }
 
+  // Move the monster
+  monsters.value[targetFolder].push(...monsters.value[previousActiveFolder].splice(activeMonsterIndex.value, 1));
+  activeFolder.value = targetFolder;
+
+  // Clean up empty folders (except Uncategorized)
   if (monsters.value[previousActiveFolder].length === 0 && previousActiveFolder !== 'Uncategorized') {
     delete monsters.value[previousActiveFolder];
   }
 
+  // Update accordion state
   if (previousActiveFolder !== activeFolder.value) {
     openedFolders[previousActiveFolder] = false;
   }
-
   if (!openedFolders[activeFolder.value]) {
     openedFolders[activeFolder.value] = true;
   }
+
+  // Sort and re-select
   monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
   const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
   const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
-  const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === currentMonsterName);
+  const newIndex = monsters.value[activeFolder.value].findIndex(m => m.name === currentMonsterName);
   selectMonster(activeFolder.value, newIndex);
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
+
+  // Reset and close
+  showFolderMover.value = false;
+  folderMoveTarget.value = '';
+  newFolder.value = '';
+  toast.success(`Moved to ${targetFolder}.`);
 }
 
 function deleteStatblock() {
+  if (!confirm(`Delete "${monster.value.name}"? This cannot be undone.`)) return;
+
   const folderName = activeFolder.value || 'Uncategorized';
   monsters.value[folderName].splice(activeMonsterIndex.value, 1);
   monster.value = null;
@@ -448,10 +488,22 @@ async function generateStatblock() {
   $transition-speed: 0.3s;
 
   flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  .sidebar-footer {
+    flex-shrink: 0;
+    padding: 1rem;
+    border-top: 1px solid #e0e0e0;
+    background-color: $background-color;
+  }
 
   .saved-statblocks {
     list-style: none;
@@ -498,17 +550,6 @@ async function generateStatblock() {
           font-weight: bold;
         }
       }
-    }
-  }
-
-  .folder-form {
-    display: flex;
-    flex-direction: column;
-    margin: 1rem;
-    margin-bottom: 9rem;
-
-    button {
-      margin-top: 2rem;
     }
   }
 }
@@ -656,8 +697,43 @@ async function generateStatblock() {
   padding: 0 1.5rem;
 }
 
-.delete-button {
+/* ========================================
+   ACTION BAR + FOLDER MOVER
+   ======================================== */
+
+.action-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  max-width: 850px;
+}
+
+.folder-mover {
+  max-width: 850px;
   margin-bottom: 2rem;
+  background-color: #ffffff;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.folder-mover-inner {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media screen and (max-width: 600px) {
+  .action-bar {
+    flex-direction: column;
+  }
+
+  .folder-mover-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 @media screen and (max-width: 1020px) {
