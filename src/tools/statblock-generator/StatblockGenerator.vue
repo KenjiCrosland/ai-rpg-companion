@@ -136,9 +136,9 @@
 
 <script setup>
 import { ref, onMounted, computed, reactive } from 'vue';
-import Statblock from './Statblock.vue';
-import GeneratorLayout from './GeneratorLayout.vue';
-import { generateGptResponse } from "../util/open-ai.mjs";
+import Statblock from '@/components/Statblock.vue';
+import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import { generateGptResponse } from "@/util/open-ai.mjs";
 import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
@@ -147,13 +147,13 @@ import "@rei/cedar/dist/style/cdr-checkbox.css";
 import "@rei/cedar/dist/style/cdr-select.css";
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
 import "@rei/cedar/dist/style/cdr-toggle-button.css";
-import StatblockExports from './StatblockExports.vue';
-import DataManagerModal from './DataManagerModal.vue';
-import challengeRatingData from '../data/challengeRatings.json';
-import creatureTemplates from '../data/creatureTemplates.json';
-import { createStatblockPrompts } from "../prompts/monster-prompts.mjs";
-import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
-import { useToast } from '../composables/useToast';
+import StatblockExports from './components/StatblockExports.vue';
+import DataManagerModal from '@/components/DataManagerModal.vue';
+import challengeRatingData from '@/data/challengeRatings.json';
+import creatureTemplates from '@/data/creatureTemplates.json';
+import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
+import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
+import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
 

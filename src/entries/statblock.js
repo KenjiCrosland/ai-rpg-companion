@@ -1,4 +1,4 @@
 import { mountApp } from './base.js';
-import StatblockGenerator from '../components/StatblockGenerator.vue';
+import StatblockGenerator from '@/tools/statblock-generator/StatblockGenerator.vue';
 
 mountApp(StatblockGenerator, true);

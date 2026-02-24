@@ -50,7 +50,8 @@
     "moduleFileExtensions": ["js", "json", "vue", "mjs"],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1",
-      "^(\\.{1,2}/.*)\\.mjs$": "$1"
+      "^(\\.{1,2}/.*)\\.mjs$": "$1",
+      "\\.(css|less|scss|sass)$": "<rootDir>/jest.mock.css.js"
     },
     "transformIgnorePatterns": [
       "node_modules/(?!(@rei|@vue)/)"

@@ -74,10 +74,10 @@
 <script setup>
 import { ref } from 'vue';
 import { CdrButton, CdrAccordion, CdrAccordionGroup } from "@rei/cedar";
-import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
-import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
-import { convertToFoundryVTT } from '../util/convertToFoundryVTT.mjs';
-import { useToast } from '../composables/useToast';
+import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
+import { convertToImprovedInitiative } from '@/util/convertToImprovedInitiative.mjs';
+import { convertToFoundryVTT } from '@/util/convertToFoundryVTT.mjs';
+import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
 

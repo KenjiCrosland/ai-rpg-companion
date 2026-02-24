@@ -93,25 +93,25 @@
 </template>
 
 <script>
-import LocationGenerator from './components/LocationGenerator.vue';
-import LoreGenerator from './components/LoreGenerator.vue';
-import NPCGenerator from './components/NPCGenerator.vue';
-import Dashboard from './components/Dashboard.vue';
-import DashboardPlus from './components/DashboardPlus.vue';
-import StatblockGenerator from './components/StatblockGenerator.vue';
-import BookGenerator from './components/BookGenerator.vue';
-import DungeonGenerator from './components/DungeonGenerator.vue';
-import DungeonGeneratorPremium from './components/DungeonGeneratorPremium.vue';
-import ItemGenerator from './tools/item-generator/ItemGenerator.vue';
-import EncounterGenerator from './components/EncounterGenerator.vue';
-import EncounterGeneratorPremium from './components/EncounterGeneratorPremium.vue';
-import SettingGenerator from './components/SettingGenerator.vue';
-import NewDungeonGenerator from './dungeon-generator/components/DungeonGeneratorWrapper.vue';
-import TabsExample from './components/tabs/TabsExample.vue';
-import ToolSuiteShowcase from './components/ToolSuiteShowcase.vue';
-import LandingPage from './components/LandingPage.vue';
-import AppToast from './components/AppToast.vue';
-import { registerToast } from './composables/useToast';
+import LocationGenerator from '@/components/LocationGenerator.vue';
+import LoreGenerator from '@/components/LoreGenerator.vue';
+import NPCGenerator from '@/components/NPCGenerator.vue';
+import Dashboard from '@/components/Dashboard.vue';
+import DashboardPlus from '@/components/DashboardPlus.vue';
+import StatblockGenerator from '@/tools/statblock-generator/StatblockGenerator.vue';
+import BookGenerator from '@/components/BookGenerator.vue';
+import DungeonGenerator from '@/components/DungeonGenerator.vue';
+import DungeonGeneratorPremium from '@/components/DungeonGeneratorPremium.vue';
+import ItemGenerator from '@/tools/item-generator/ItemGenerator.vue';
+import EncounterGenerator from '@/components/EncounterGenerator.vue';
+import EncounterGeneratorPremium from '@/components/EncounterGeneratorPremium.vue';
+import SettingGenerator from '@/components/SettingGenerator.vue';
+import NewDungeonGenerator from '@/dungeon-generator/components/DungeonGeneratorWrapper.vue';
+import TabsExample from '@/components/tabs/TabsExample.vue';
+import ToolSuiteShowcase from '@/components/ToolSuiteShowcase.vue';
+import LandingPage from '@/components/LandingPage.vue';
+import AppToast from '@/components/AppToast.vue';
+import { registerToast } from '@/composables/useToast';
 import { CdrLink } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-link.css';
 
