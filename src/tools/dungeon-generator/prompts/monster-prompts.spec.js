@@ -1,7 +1,7 @@
 import { createStatblockPrompts } from './monster-prompts.mjs';
 
 // Mock the imported JSON files
-jest.mock('../../data/creatureTemplates.json', () => ({
+jest.mock('@/data/creatureTemplates.json', () => ({
   '1': [
     {
       type: 'balanced',
@@ -78,7 +78,7 @@ jest.mock('../../data/creatureTemplates.json', () => ({
   ],
 }));
 
-jest.mock('../../data/challengeRatings.json', () => ({
+jest.mock('@/data/challengeRatings.json', () => ({
   '1': {
     proficiency_bonus: 2,
     attack_bonus: 3,

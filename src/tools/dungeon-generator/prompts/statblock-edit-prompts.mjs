@@ -1,4 +1,4 @@
-import creatureTemplates from '../../data/creatureTemplates.json';
+import creatureTemplates from '@/data/creatureTemplates.json';
 
 export function legendaryActionsPrompt(monster, userSuggestion) {
   let prompt = `Here is a monster object:

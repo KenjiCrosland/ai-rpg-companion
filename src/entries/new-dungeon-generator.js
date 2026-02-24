@@ -2,7 +2,7 @@ import { createApp, h, ref, onMounted } from 'vue';
 import { createPinia } from 'pinia';
 import AppToast from '../components/AppToast.vue';
 import { registerToast } from '../composables/useToast';
-import DungeonGenerator from '../dungeon-generator/components/DungeonGenerator.vue';
+import DungeonGenerator from '../tools/dungeon-generator/components/DungeonGenerator.vue';
 
 // Cedar design system CSS — loaded once, shared by all tools
 import '@rei/cedar/dist/cdr-fonts.css';
@@ -26,7 +26,7 @@ import '@rei/cedar/dist/style/cdr-toggle-button.css';
 import '@rei/cedar/dist/style/cdr-toggle-group.css';
 import '@rei/cedar/dist/style/cdr-tooltip.css';
 
-import '../dungeon-generator/style.css';
+import '../tools/dungeon-generator/style.css';
 
 const el = document.getElementById('app');
 const isPremium = el?.dataset.premium === 'true';

@@ -28,22 +28,62 @@ npm test -- calculateCR.spec.js            # Run a single test file
 
 **Entry Point & Routing**: The app uses a simple page-based routing system via `App.vue`. Pages are selected using the `data-page` attribute on the root div element, which is typically set by WordPress shortcodes in production.
 
-**Generator Components**: Each tool is a standalone Vue component (e.g., `StatblockGenerator.vue`, `NPCGenerator.vue`, `LocationGenerator.vue`). These components:
+**Generator Tools**: Tools are being migrated to a modular structure in `src/tools/`. Each tool is a self-contained directory with its own components, tests, and documentation. These components:
 - Manage their own state for generated content
 - Handle localStorage persistence of user-generated content organized in folders
 - Support both free and premium versions (controlled by a `premium` prop)
 - Include DataManagerModal for importing/exporting saved data
 
+**Tool Documentation**: Each tool has its own CLAUDE.md file with tool-specific implementation details:
+- [Statblock Generator](/src/tools/statblock-generator/CLAUDE.md) - D&D 5e monster creation with two-part generation
+- [Item Generator](/src/tools/item-generator/CLAUDE.md) - Magic item creation with rarity enforcement and lore building
+- [Dungeon Generator](/src/tools/dungeon-generator/CLAUDE.md) - Complex dungeon creation with rooms, NPCs, monsters, and map generation
+
 **WordPress Integration**: The `wordpress/` directory contains PHP files that act as shortcodes to embed the Vue app in WordPress pages. The `functions.php` file includes an OpenAI proxy endpoint (`/wp-json/open-ai-proxy/api/v1/proxy`) used in production to avoid exposing API keys.
 
 ### Key Directories
 
-- `src/components/` - Vue components for each generator tool
+- `src/tools/` - **MODULAR TOOL STRUCTURE**: Each tool is self-contained
+  - `statblock-generator/` - Monster statblock creation
+  - `item-generator/` - Magic item creation with quest hooks and lore builder
+  - `dungeon-generator/` - Dungeon creation with stores, composables, and complex state
+  - Each tool contains: main component, tests, sub-components, and CLAUDE.md
+- `src/components/` - Shared Vue components (GeneratorLayout, DataManagerModal, etc.)
 - `src/components/skeletons/` - Loading skeleton components
 - `src/components/tabs/` - Reusable tab navigation components
-- `src/util/` - Utility functions and AI prompt templates
+- `src/util/` - Shared utility functions (AI integration, CR calculation, export converters)
+- `src/prompts/` - Shared AI prompt templates (monster-prompts.mjs, loreBuilderPrompts.mjs)
 - `src/data/` - JSON data files for D&D 5e rules (CR calculations, creature templates, etc.)
+- `src/entries/` - Vite entry points for each tool
 - `wordpress/` - WordPress theme integration files
+
+### Path Aliases
+
+The project uses Vite path aliases for clean imports:
+
+```javascript
+// vite.config.js
+resolve: {
+  alias: {
+    '@': path.resolve(__dirname, './src'),
+  },
+}
+```
+
+**Usage:**
+```javascript
+// Instead of: import Foo from '../../components/Foo.vue'
+import Foo from '@/components/Foo.vue';
+
+// Instead of: import { bar } from '../../../util/bar.mjs'
+import { bar } from '@/util/bar.mjs';
+```
+
+**Benefits:**
+- Location-independent imports
+- Easier refactoring (moving files doesn't break imports)
+- More readable and maintainable code
+- Works in both source code and Jest tests
 
 ### AI Integration
 
@@ -53,7 +93,7 @@ npm test -- calculateCR.spec.js            # Run a single test file
 - Uses direct OpenAI API in dev (via VITE_OPENAI_API_KEY), WordPress proxy in production
 - Validates and extracts JSON from AI responses
 
-**Prompt Templates**: Prompt files in `src/util/` (e.g., `monster-prompts.mjs`, `kingdom-prompts.mjs`, `loreBuilderPrompts.mjs`) define structured prompts that guide the AI to generate game content with specific JSON schemas.
+**Prompt Templates**: Prompt files in `src/prompts/` (e.g., `monster-prompts.mjs`, `loreBuilderPrompts.mjs`) define structured prompts that guide the AI to generate game content with specific JSON schemas.
 
 ### D&D 5e CR Calculation
 
@@ -76,10 +116,12 @@ No Vuex/Pinia - each generator component manages its own state and localStorage 
 
 ### Export Formats
 
-Statblock generators support multiple export formats:
-- Homebrewery/GMBinder Markdown (`convertToMarkdown.mjs`)
-- Foundry VTT JSON (`convertToFoundryVTT.mjs`)
-- Improved Initiative JSON (`convertToImprovedInitiative.mjs`)
+Shared export utilities in `src/util/`:
+- **Markdown Export**: `convertToMarkdown.mjs` - Converts statblocks and items to Homebrewery/GMBinder format
+- **Foundry VTT Export**: `convertToFoundryVTT.mjs` - Converts statblocks to Foundry VTT JSON
+- **Improved Initiative Export**: `convertToImprovedInitiative.mjs` - Converts statblocks for Improved Initiative
+
+See tool-specific CLAUDE.md files for details on which exports each tool supports.
 
 ## Environment Variables
 
@@ -89,6 +131,55 @@ VITE_OPENAI_API_KEY=your-api-key-here
 ```
 
 **Security Note**: The `.env.local` file in this repository contains a placeholder/invalid key. Never commit actual API keys.
+
+## Testing
+
+The project uses Jest with Vue Test Utils for component testing.
+
+### Test Configuration
+
+- **Test Environment**: jsdom (simulates browser environment)
+- **Test Runner**: Jest with babel-jest for JS/MJS, @vue/vue3-jest for Vue files
+- **Module Mapping**: Uses `@` alias (same as Vite) for consistent imports
+- **CSS Mocking**: CSS imports are mocked via `jest.mock.css.js`
+
+### Test Patterns
+
+Each tool should have comprehensive test coverage including:
+1. **Prompt Generation Tests**: Verify correct options/parameters passed to prompt functions
+2. **API Call Tests**: Verify `generateGptResponse()` called with correct arguments
+3. **localStorage Tests**: Verify save/load operations preserve data structure
+4. **User Input Protection Tests**: (Item Generator) Verify user input respected
+5. **Validation Tests**: Verify JSON response validation works correctly
+
+See tool-specific CLAUDE.md files for detailed test coverage information.
+
+### Running Tests
+
+```bash
+npm test                                    # Run all tests
+npm test -- StatblockGenerator.spec.js     # Run specific test file
+npm test -- --maxWorkers=1                 # Run tests sequentially (helps with flaky tests)
+```
+
+## Migration Status
+
+The project is undergoing a migration to organize tools into `src/tools/`:
+
+**Completed:**
+- ✅ Statblock Generator → `src/tools/statblock-generator/`
+- ✅ Item Generator → `src/tools/item-generator/`
+- ✅ Dungeon Generator → `src/tools/dungeon-generator/`
+- ✅ Path aliases configured (`@` → `./src`)
+- ✅ All external imports use `@` alias
+
+**Pending Migration:**
+- ⏳ NPC Generator
+- ⏳ Encounter Generator
+- ⏳ Setting Generator
+- ⏳ Location Generator
+- ⏳ Lore Generator
+- ⏳ Book Generator
 
 ## Build & Deployment
 

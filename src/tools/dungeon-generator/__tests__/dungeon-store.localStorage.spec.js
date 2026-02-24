@@ -7,7 +7,7 @@
  */
 
 // Mock all API-related modules BEFORE importing the store
-jest.mock('../../util/open-ai.mjs', () => ({
+jest.mock('@/util/open-ai.mjs', () => ({
   generateGptResponse: jest.fn(),
 }));
 

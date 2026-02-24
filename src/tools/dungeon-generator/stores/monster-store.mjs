@@ -1,8 +1,8 @@
 import { currentDungeon, monsterLoadingStates } from './dungeon-state.mjs';
 import { currentDungeonOverviewString } from './overview-store.mjs';
 import { saveDungeons, findMonsterById } from './dungeon-utils.mjs';
-import { canGenerateStatblock } from '../../util/can-generate-statblock.mjs';
-import { generateGptResponse } from '../../util/open-ai.mjs';
+import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
 import {
   monsterDescriptionPrompt,

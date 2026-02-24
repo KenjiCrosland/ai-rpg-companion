@@ -1,5 +1,5 @@
-import creatureTemplates from '../../data/creatureTemplates.json';
-import challengeRatingObjects from '../../data/challengeRatings.json';
+import creatureTemplates from '@/data/creatureTemplates.json';
+import challengeRatingObjects from '@/data/challengeRatings.json';
 
 const baseCreatureTemplate = {
   name: 'Crystal Centipede',

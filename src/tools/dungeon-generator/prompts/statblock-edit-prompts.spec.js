@@ -8,7 +8,7 @@ import {
 } from './statblock-edit-prompts.mjs';
 
 // Mock creature templates
-jest.mock('../../data/creatureTemplates.json', () => ({
+jest.mock('@/data/creatureTemplates.json', () => ({
   '5': [
     {
       type: 'balanced',

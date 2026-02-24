@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import adjectives from '../data/adjectives.json';
 import potentialNames from '../data/dungeon-names.json';
-import { generateGptResponse } from '../../util/open-ai.mjs';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import {
   dungeonOverviewPrompt,
   validateDungeonOverview,

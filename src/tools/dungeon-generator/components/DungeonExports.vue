@@ -55,7 +55,7 @@ import { CdrButton, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { dungeonToMarkdown } from '../util/dungeon-to-markdown.mjs';
 import { dungeonToHTML } from '../util/dungeon-to-html.mjs';
 import { dungeonToPlainText } from '../util/dungeon-to-plain-text.mjs';
-import { useToast } from '../../composables/useToast';
+import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
 

@@ -11,20 +11,20 @@
 import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import ItemGenerator from './ItemGenerator.vue';
-import * as openAi from '../../util/open-ai.mjs';
+import * as openAi from '@/util/open-ai.mjs';
 
 // Mock the open-ai module
-jest.mock('../../util/open-ai.mjs', () => ({
+jest.mock('@/util/open-ai.mjs', () => ({
   generateGptResponse: jest.fn(),
 }));
 
 // Mock convertToMarkdown
-jest.mock('../../util/convertToMarkdown.mjs', () => ({
+jest.mock('@/util/convertToMarkdown.mjs', () => ({
   convertItemToMarkdown: jest.fn(),
 }));
 
 // Mock determineFeaturesAndBonuses
-jest.mock('../../util/determine-features-and-bonuses.mjs', () => ({
+jest.mock('@/util/determine-features-and-bonuses.mjs', () => ({
   __esModule: true,
   default: jest.fn(() => ({
     bonus: '+1',
@@ -42,21 +42,21 @@ jest.mock('../../util/determine-features-and-bonuses.mjs', () => ({
 }));
 
 // Mock GeneratorLayout component
-jest.mock('../../components/GeneratorLayout.vue', () => ({
+jest.mock('@/components/GeneratorLayout.vue', () => ({
   name: 'GeneratorLayout',
   template: '<div><slot name="sidebar"></slot><slot></slot></div>',
   props: ['premium']
 }));
 
 // Mock DataManagerModal component
-jest.mock('../../components/DataManagerModal.vue', () => ({
+jest.mock('@/components/DataManagerModal.vue', () => ({
   name: 'DataManagerModal',
   template: '<div></div>',
   props: ['opened', 'premium', 'currentApp']
 }));
 
 // Mock ItemSkeleton
-jest.mock('../../components/skeletons/ItemSkeleton.vue', () => ({
+jest.mock('@/components/skeletons/ItemSkeleton.vue', () => ({
   name: 'ItemSkeleton',
   template: '<div>Loading...</div>'
 }));
@@ -104,20 +104,20 @@ jest.mock('@rei/cedar', () => ({
 }));
 
 // Mock Tabs components
-jest.mock('../../components/tabs/Tabs.vue', () => ({
+jest.mock('@/components/tabs/Tabs.vue', () => ({
   name: 'Tabs',
   template: '<div><slot></slot></div>',
   props: ['activeIndex']
 }));
 
-jest.mock('../../components/tabs/TabPanel.vue', () => ({
+jest.mock('@/components/tabs/TabPanel.vue', () => ({
   name: 'TabPanel',
   template: '<div><slot></slot></div>',
   props: ['label']
 }));
 
 // Mock toast composable
-jest.mock('../../composables/useToast', () => ({
+jest.mock('@/composables/useToast', () => ({
   useToast: () => ({
     success: jest.fn(),
     error: jest.fn()

@@ -172,10 +172,10 @@ import {
   CdrSkeleton,
   CdrSkeletonBone
 } from '@rei/cedar';
-import QuestHookSkeleton from '../../../components/skeletons/QuestHookSkeleton.vue';
-import { generateGptResponse } from '../../../util/open-ai.mjs';
+import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import { detectIncognito } from 'detectincognitojs';
-import { useToast } from '../../../composables/useToast';
+import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
 

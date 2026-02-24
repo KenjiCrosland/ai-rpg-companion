@@ -382,15 +382,15 @@ import {
   CdrInput,
   CdrLink
 } from '@rei/cedar';
-import { generateGptResponse } from '../../../util/open-ai.mjs';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import { detectIncognito } from 'detectincognitojs';
 import {
   generateEventPrompt,
   generateSummaryPrompt,
   validateEventJson,
   validateSummaryJson
-} from '../../../prompts/loreBuilderPrompts.mjs';
-import { useToast } from '../../../composables/useToast';
+} from '@/prompts/loreBuilderPrompts.mjs';
+import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
 

@@ -127,13 +127,13 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
-import { useToast } from '../../composables/useToast';
+import { useToast } from '@/composables/useToast';
 
 import { CdrButton, CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
-import GeneratorLayout from '../../components/GeneratorLayout.vue';
-import Tabs from '../../components/tabs/Tabs.vue';
-import TabPanel from '../../components/tabs/TabPanel.vue';
-import DataManagerModal from '../../components/DataManagerModal.vue';
+import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import Tabs from '@/components/tabs/Tabs.vue';
+import TabPanel from '@/components/tabs/TabPanel.vue';
+import DataManagerModal from '@/components/DataManagerModal.vue';
 
 // The tabs as separate components
 import OverviewTab from './OverviewTab.vue';

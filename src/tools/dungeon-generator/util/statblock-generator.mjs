@@ -1,6 +1,6 @@
-import { generateGptResponse } from '../../util/open-ai.mjs';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
-import { canGenerateStatblock } from '../../util/can-generate-statblock.mjs';
+import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
 
 function validationPart1(jsonString) {
   try {

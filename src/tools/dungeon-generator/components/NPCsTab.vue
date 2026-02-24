@@ -201,7 +201,7 @@
 import { ref, reactive, onBeforeMount, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
-import Statblock from '../../components/Statblock.vue';
+import Statblock from '@/components/Statblock.vue';
 import {
   CdrFormGroup,
   CdrInput,

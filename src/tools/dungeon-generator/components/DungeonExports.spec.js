@@ -20,7 +20,7 @@ const mockToast = {
   error: jest.fn(),
 };
 
-jest.mock('../../composables/useToast', () => ({
+jest.mock('@/composables/useToast', () => ({
   useToast: () => mockToast,
 }));
 

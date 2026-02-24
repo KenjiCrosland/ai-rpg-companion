@@ -191,7 +191,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
-import Statblock from '../../components/Statblock.vue';
+import Statblock from '@/components/Statblock.vue';
 import {
   CdrSelect,
   CdrCheckbox,

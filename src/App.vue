@@ -106,7 +106,7 @@ import ItemGenerator from '@/tools/item-generator/ItemGenerator.vue';
 import EncounterGenerator from '@/components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from '@/components/EncounterGeneratorPremium.vue';
 import SettingGenerator from '@/components/SettingGenerator.vue';
-import NewDungeonGenerator from '@/dungeon-generator/components/DungeonGeneratorWrapper.vue';
+import NewDungeonGenerator from '@/tools/dungeon-generator/components/DungeonGeneratorWrapper.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
 import ToolSuiteShowcase from '@/components/ToolSuiteShowcase.vue';
 import LandingPage from '@/components/LandingPage.vue';

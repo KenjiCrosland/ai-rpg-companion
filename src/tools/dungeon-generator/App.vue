@@ -13,7 +13,7 @@
 
 <script setup>
 import DungeonGenerator from './components/DungeonGenerator.vue';
-import ToolSuiteShowcase from '../components/ToolSuiteShowcase.vue';
+import ToolSuiteShowcase from '@/components/ToolSuiteShowcase.vue';
 </script>
 
 <style lang="scss"></style>

@@ -1,7 +1,7 @@
 // useRoomDescription.js
 
 import { ref } from 'vue';
-import { generateGptResponse } from '../../util/open-ai.mjs';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import {
   contentArrayToString,
   dungeonOverviewToString,

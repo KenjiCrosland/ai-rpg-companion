@@ -11,8 +11,8 @@ import {
   validateDungeonNPCResponse,
   validateDungeonNPCRelationshipsResponse,
 } from '../prompts/dungeon-npcs.mjs';
-import { canGenerateStatblock } from '../../util/can-generate-statblock.mjs';
-import { generateGptResponse } from '../../util/open-ai.mjs';
+import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
 import { ref } from 'vue';
 
