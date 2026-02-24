@@ -261,7 +261,7 @@ import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'v
 import { CdrButton } from '@rei/cedar';
 import CRtoXP from '../data/cr-to-xp.json';
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt, singleAbilityPrompt, singleActionPrompt, singleLegendaryActionPrompt } from "../util/statblock-edit-prompts.mjs";
+import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt, singleAbilityPrompt, singleActionPrompt, singleLegendaryActionPrompt } from "../prompts/statblock-edit-prompts.mjs";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
 import StatblockAbilitiesSkeleton from './skeletons/StatblockAbilitiesSkeleton.vue';
@@ -345,14 +345,17 @@ const editedAttributes = ref([]);
 
 // Watch for changes to the monster prop and update editedAttributes accordingly
 watch(() => props.monster, (newMonster) => {
-    if (newMonster) {
+    if (newMonster && newMonster.attributes) {
         editedMonster.value = { ...newMonster };
         editedActions.value = newMonster.actions ? [...newMonster.actions] : [];
         editedAbilities.value = newMonster.abilities ? [...newMonster.abilities] : [];
         editedLegendaryActions.value = newMonster.legendary_actions ? [...newMonster.legendary_actions] : [];
         editedAttributes.value = (newMonster.attributes || '').split(',').map(attr => {
             const [stat, base] = attr.trim().split(' ');
-            const baseValue = parseInt(base.match(/\d+/)[0], 10);
+            // Safety check: ensure base exists and can be matched
+            if (!base) return { stat: stat || '', base: 10 };
+            const match = base.match(/\d+/);
+            const baseValue = match ? parseInt(match[0], 10) : 10;
             return {
                 stat,
                 base: baseValue

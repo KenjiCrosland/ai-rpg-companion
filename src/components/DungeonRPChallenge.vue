@@ -34,7 +34,7 @@
       
 <script>
 import { ref } from 'vue';
-import { dungeonFormatGuidelines } from "../util/prompts.mjs";
+import { dungeonFormatGuidelines } from "../prompts/prompts.mjs";
 import { CdrInput, CdrButton, CdrText, CdrSelect } from "@rei/cedar";
 import StatblockBase from './StatblockBase.vue';
 import _ from 'lodash';

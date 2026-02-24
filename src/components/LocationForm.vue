@@ -16,7 +16,7 @@ import { generateGptResponse } from "../util/open-ai.mjs";
 import { CdrInput, CdrButton } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-button.css";
-import { createLocationPrompt, getLocationJSON } from "../util/prompts.mjs";
+import { createLocationPrompt, getLocationJSON } from "../prompts/prompts.mjs";
 
 export default {
     data() {

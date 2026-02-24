@@ -151,7 +151,7 @@ import StatblockExports from './StatblockExports.vue';
 import DataManagerModal from './DataManagerModal.vue';
 import challengeRatingData from '../data/challengeRatings.json';
 import creatureTemplates from '../data/creatureTemplates.json';
-import { createStatblockPrompts } from "../util/monster-prompts.mjs";
+import { createStatblockPrompts } from "../prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
 import { useToast } from '../composables/useToast';
 

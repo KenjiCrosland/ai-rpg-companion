@@ -389,7 +389,7 @@ import {
   generateSummaryPrompt,
   validateEventJson,
   validateSummaryJson
-} from '../../util/loreBuilderPrompts.mjs';
+} from '../../prompts/loreBuilderPrompts.mjs';
 import { useToast } from '../../composables/useToast';
 
 const toast = useToast();

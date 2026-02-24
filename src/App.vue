@@ -12,6 +12,57 @@
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
     rel="stylesheet">
 
+  <!-- Dev Mode Switcher -->
+  <div v-if="isDev" :class="['dev-switcher', { minimized: !devSwitcherVisible }]">
+    <button
+      v-if="!devSwitcherVisible"
+      @click="toggleDevSwitcher"
+      class="dev-toggle-btn"
+      title="Show Dev Switcher (Ctrl+D)"
+    >
+      🔧
+    </button>
+    <template v-else>
+      <button
+        @click="toggleDevSwitcher"
+        class="dev-close-btn"
+        title="Hide Dev Switcher (Ctrl+D)"
+      >
+        ×
+      </button>
+      <label for="page-select">Dev Mode: </label>
+      <select id="page-select" v-model="currentPage" @change="saveDevPage">
+        <optgroup label="Generators">
+          <option value="statblock-generator">Statblock Generator</option>
+          <option value="statblock-generator-premium">Statblock Generator (Premium)</option>
+          <option value="npc-generator">NPC Generator</option>
+          <option value="npc-generator-premium">NPC Generator (Premium)</option>
+          <option value="item-generator">Item Generator</option>
+          <option value="item-generator-premium">Item Generator (Premium)</option>
+          <option value="encounter-generator">Encounter Generator</option>
+          <option value="encounter-generator-premium">Encounter Generator (Premium)</option>
+          <option value="setting-generator">Setting Generator</option>
+          <option value="setting-generator-premium">Setting Generator (Premium)</option>
+          <option value="dungeon-generator">Dungeon Generator (Legacy)</option>
+          <option value="dungeon-generator-premium">Dungeon Generator Premium (Legacy)</option>
+          <option value="new-dungeon-generator">New Dungeon Generator</option>
+          <option value="new-dungeon-generator-premium">New Dungeon Generator (Premium)</option>
+          <option value="location-generator">Location Generator</option>
+          <option value="lore-generator">Lore Builder</option>
+          <option value="book-generator">Book Generator</option>
+        </optgroup>
+        <optgroup label="Dashboards">
+          <option value="gm-dashboard">GM Dashboard</option>
+          <option value="gm-dashboard-plus">GM Dashboard Plus</option>
+          <option value="category-landing">Landing Page</option>
+        </optgroup>
+        <optgroup label="Examples">
+          <option value="tabs-example">Tabs Example</option>
+        </optgroup>
+      </select>
+    </template>
+  </div>
+
   <div id="app" v-bind="$attrs">
     <!-- App-wide toast notifications -->
     <AppToast ref="toast" position="top-center" />
@@ -32,6 +83,8 @@
     <EncounterGenerator :premium="true" v-if="currentPage === 'encounter-generator-premium'" />
     <SettingGenerator v-if="currentPage === 'setting-generator'" />
     <SettingGenerator :premium="true" v-if="currentPage === 'setting-generator-premium'" />
+    <NewDungeonGenerator v-if="currentPage === 'new-dungeon-generator'" />
+    <NewDungeonGenerator :premium="true" v-if="currentPage === 'new-dungeon-generator-premium'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
     <LandingPage v-if="currentPage === 'category-landing'" />
 
@@ -53,6 +106,7 @@ import ItemGenerator from './components/ItemGenerator.vue';
 import EncounterGenerator from './components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from './components/EncounterGeneratorPremium.vue';
 import SettingGenerator from './components/SettingGenerator.vue';
+import NewDungeonGenerator from './dungeon-generator/components/DungeonGeneratorWrapper.vue';
 import TabsExample from './components/tabs/TabsExample.vue';
 import ToolSuiteShowcase from './components/ToolSuiteShowcase.vue';
 import LandingPage from './components/LandingPage.vue';
@@ -73,6 +127,7 @@ export default {
     BookGenerator,
     DungeonGenerator,
     DungeonGeneratorPremium,
+    NewDungeonGenerator,
     LoreGenerator,
     ItemGenerator,
     EncounterGenerator,
@@ -84,11 +139,51 @@ export default {
   },
   data() {
     return {
-      currentPage: this.$attrs['data-page'] || 'setting-generator',
+      isDev: import.meta.env.DEV,
+      currentPage: this.getInitialPage(),
+      devSwitcherVisible: this.getDevSwitcherVisibility(),
     };
+  },
+  methods: {
+    getInitialPage() {
+      // In dev mode, check localStorage first
+      if (import.meta.env.DEV) {
+        const savedPage = localStorage.getItem('dev-current-page');
+        if (savedPage) return savedPage;
+      }
+      // Otherwise use data-page attribute or default
+      return this.$attrs['data-page'] || 'statblock-generator-premium';
+    },
+    getDevSwitcherVisibility() {
+      if (!import.meta.env.DEV) return false;
+      const saved = localStorage.getItem('dev-switcher-visible');
+      return saved !== null ? saved === 'true' : true; // default to visible
+    },
+    saveDevPage() {
+      if (import.meta.env.DEV) {
+        localStorage.setItem('dev-current-page', this.currentPage);
+      }
+    },
+    toggleDevSwitcher() {
+      this.devSwitcherVisible = !this.devSwitcherVisible;
+      localStorage.setItem('dev-switcher-visible', this.devSwitcherVisible.toString());
+    },
+    handleKeyDown(e) {
+      // Toggle dev switcher with Ctrl+D (or Cmd+D on Mac)
+      if (import.meta.env.DEV && (e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        this.toggleDevSwitcher();
+      }
+    },
   },
   mounted() {
     registerToast(this.$refs.toast);
+
+    // Add keyboard shortcut for dev switcher
+    if (import.meta.env.DEV) {
+      window.addEventListener('keydown', this.handleKeyDown);
+    }
+
     if (typeof gtag === 'function' && this.currentPage === 'location-generator') {
       gtag('config', 'UA-11925218-1', { 'page_path': '/ai-rpg-location-generator' });
     }
@@ -129,10 +224,103 @@ export default {
       gtag('config', 'UA-11925218-1', { 'page_path': '/rpg-setting-generator-and-world-building-tool' });
     }
   },
+  beforeUnmount() {
+    // Clean up keyboard listener
+    if (import.meta.env.DEV) {
+      window.removeEventListener('keydown', this.handleKeyDown);
+    }
+  },
 };
 </script>
 
 <style>
+/* Dev Mode Switcher */
+.dev-switcher {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 12px 40px 12px 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.dev-switcher.minimized {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dev-toggle-btn {
+  background: rgba(0, 0, 0, 0.9);
+  border: none;
+  color: white;
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.dev-toggle-btn:hover {
+  background: rgba(0, 0, 0, 1);
+  transform: scale(1.1);
+}
+
+.dev-close-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.dev-close-btn:hover {
+  color: #fff;
+}
+
+.dev-switcher label {
+  margin-right: 8px;
+  font-weight: 600;
+  color: #4ade80;
+}
+
+.dev-switcher select {
+  background: white;
+  color: black;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 250px;
+  cursor: pointer;
+}
+
+.dev-switcher select:focus {
+  outline: 2px solid #4ade80;
+  outline-offset: 2px;
+}
+
 :root {
   --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }

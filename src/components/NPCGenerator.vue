@@ -296,7 +296,7 @@ import Statblock from './Statblock.vue';
 import SaveStatblock from './SaveStatblock.vue';
 import DataManagerModal from './DataManagerModal.vue';
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { createStatblockPrompts } from "../util/monster-prompts.mjs";
+import { createStatblockPrompts } from "../prompts/monster-prompts.mjs";
 import { requestNPCDescription } from "../util/request-npc-description.mjs";
 import { convertNPCToMarkdown, convertNPCToPlainText } from '../util/convertToMarkdown.mjs';
 import challengeRatingData from '../data/challengeRatings.json';

@@ -1,4 +1,4 @@
-import { createNPCPrompt, createRelationshipAndTipsPrompt } from './prompts.mjs';
+import { createNPCPrompt, createRelationshipAndTipsPrompt } from '../prompts/prompts.mjs';
 import { generateGptResponse } from './open-ai.mjs';
 
 export function validateNPCDescription(jsonString) {

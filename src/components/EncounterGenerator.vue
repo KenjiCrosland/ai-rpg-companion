@@ -277,9 +277,9 @@ import challengeRatingData from '../data/challengeRatings.json';
 import crToXP from '../data/cr-to-xp.json';
 
 import { generateGptResponse } from "../util/open-ai.mjs";
-import { createLocationPrompt } from '../util/prompts.mjs';
+import { createLocationPrompt } from '../prompts/prompts.mjs';
 import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
-import encounterPrompt from '../util/encounter-prompt.mjs';
+import encounterPrompt from '../prompts/encounter-prompt.mjs';
 import { convertEncounterToMarkdown } from '../util/convertToMarkdown.mjs';
 import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
 
