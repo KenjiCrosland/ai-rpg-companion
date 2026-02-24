@@ -227,17 +227,17 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { CdrInput, CdrButton, CdrSelect, CdrLink } from "@rei/cedar";
-import GeneratorLayout from './GeneratorLayout.vue';
-import { generateGptResponse } from "../util/open-ai.mjs";
-import { convertItemToMarkdown } from '../util/convertToMarkdown.mjs';
-import determineFeaturesAndBonuses from '../util/determine-features-and-bonuses.mjs';
-import ItemSkeleton from './skeletons/ItemSkeleton.vue';
-import QuestHookTab from './item-generator-tabs/QuestHookTab.vue';
-import LoreBuilderTab from './item-generator-tabs/LoreBuilderTab.vue';
-import DataManagerModal from './DataManagerModal.vue';
-import Tabs from './tabs/Tabs.vue';
-import TabPanel from './tabs/TabPanel.vue';
-import { useToast } from '../composables/useToast';
+import GeneratorLayout from '../../components/GeneratorLayout.vue';
+import { generateGptResponse } from "../../util/open-ai.mjs";
+import { convertItemToMarkdown } from '../../util/convertToMarkdown.mjs';
+import determineFeaturesAndBonuses from '../../util/determine-features-and-bonuses.mjs';
+import ItemSkeleton from '../../components/skeletons/ItemSkeleton.vue';
+import QuestHookTab from './components/QuestHookTab.vue';
+import LoreBuilderTab from './components/LoreBuilderTab.vue';
+import DataManagerModal from '../../components/DataManagerModal.vue';
+import Tabs from '../../components/tabs/Tabs.vue';
+import TabPanel from '../../components/tabs/TabPanel.vue';
+import { useToast } from '../../composables/useToast';
 
 const toast = useToast();
 

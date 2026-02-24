@@ -1,4 +1,4 @@
 import { mountApp } from './base.js';
-import ItemGenerator from '../components/ItemGenerator.vue';
+import ItemGenerator from '../tools/item-generator/ItemGenerator.vue';
 
 mountApp(ItemGenerator, true);

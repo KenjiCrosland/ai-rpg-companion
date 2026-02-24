@@ -102,7 +102,7 @@ import StatblockGenerator from './components/StatblockGenerator.vue';
 import BookGenerator from './components/BookGenerator.vue';
 import DungeonGenerator from './components/DungeonGenerator.vue';
 import DungeonGeneratorPremium from './components/DungeonGeneratorPremium.vue';
-import ItemGenerator from './components/ItemGenerator.vue';
+import ItemGenerator from './tools/item-generator/ItemGenerator.vue';
 import EncounterGenerator from './components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from './components/EncounterGeneratorPremium.vue';
 import SettingGenerator from './components/SettingGenerator.vue';
