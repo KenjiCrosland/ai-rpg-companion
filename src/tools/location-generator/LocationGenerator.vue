@@ -57,7 +57,7 @@
 import { ref } from 'vue';
 import { CdrText, CdrList, CdrLink, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import LocationForm from './LocationForm.vue';
-import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
+import ToolSuiteShowcase from '@/components/ToolSuiteShowcase.vue';
 
 const loading = ref(false);
 const gptResponse = ref(null);

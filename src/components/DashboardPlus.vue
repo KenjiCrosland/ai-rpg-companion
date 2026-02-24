@@ -168,7 +168,7 @@
 <script>
 import { ref, reactive, nextTick, computed, onMounted } from 'vue';
 import { CdrText, CdrList, CdrLink, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone, IconXSm } from '@rei/cedar';
-import LocationForm from './LocationForm.vue';
+import LocationForm from '@/tools/location-generator/LocationForm.vue';
 import NPCGenerationButton from './NPCGenerationButton.vue';
 import NPCForm from './NPCForm.vue';
 import RelationshipSkeleton from "./RelationshipSkeleton.vue";

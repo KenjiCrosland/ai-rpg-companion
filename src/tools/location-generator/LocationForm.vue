@@ -9,14 +9,14 @@
         </cdr-button>
     </div>
 </template>
-  
+
 <script>
 import { startCase } from 'lodash';
-import { generateGptResponse } from "../util/open-ai.mjs";
+import { generateGptResponse } from "@/util/open-ai.mjs";
 import { CdrInput, CdrButton } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-button.css";
-import { createLocationPrompt, getLocationJSON } from "../prompts/prompts.mjs";
+import { createLocationPrompt, getLocationJSON } from "./location-prompts.mjs";
 
 export default {
     data() {
@@ -95,7 +95,7 @@ export default {
             } else {
                 prompt = createLocationPrompt(this.typeOfPlace);
             }
-             
+
             try {
                 const response = await generateGptResponse(prompt, null, 3, previousContext);
                 previousContext = [
@@ -124,4 +124,3 @@ export default {
     margin-top: 2rem;
 }
 </style>
-  

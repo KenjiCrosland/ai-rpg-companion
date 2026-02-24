@@ -1,4 +1,4 @@
 import { mountApp } from './base.js';
-import LocationGenerator from '../components/LocationGenerator.vue';
+import LocationGenerator from '@/tools/location-generator/LocationGenerator.vue';
 
 mountApp(LocationGenerator);

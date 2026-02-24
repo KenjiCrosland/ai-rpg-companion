@@ -170,6 +170,7 @@ The project is undergoing a migration to organize tools into `src/tools/`:
 - ✅ Statblock Generator → `src/tools/statblock-generator/`
 - ✅ Item Generator → `src/tools/item-generator/`
 - ✅ Dungeon Generator → `src/tools/dungeon-generator/`
+- ✅ Location Generator → `src/tools/location-generator/`
 - ✅ Path aliases configured (`@` → `./src`)
 - ✅ All external imports use `@` alias
 
@@ -177,7 +178,6 @@ The project is undergoing a migration to organize tools into `src/tools/`:
 - ⏳ NPC Generator
 - ⏳ Encounter Generator
 - ⏳ Setting Generator
-- ⏳ Location Generator
 - ⏳ Lore Generator
 - ⏳ Book Generator
 

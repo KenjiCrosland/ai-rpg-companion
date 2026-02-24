@@ -27,7 +27,7 @@
 
   
 <script>
-import LocationGenerator from './LocationGenerator.vue';
+import LocationGenerator from '@/tools/location-generator/LocationGenerator.vue';
 import NPCGenerator from './NPCGenerator.vue';
 
 export default {

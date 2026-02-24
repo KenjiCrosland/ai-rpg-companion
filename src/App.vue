@@ -93,7 +93,7 @@
 </template>
 
 <script>
-import LocationGenerator from '@/components/LocationGenerator.vue';
+import LocationGenerator from '@/tools/location-generator/LocationGenerator.vue';
 import LoreGenerator from '@/components/LoreGenerator.vue';
 import NPCGenerator from '@/components/NPCGenerator.vue';
 import Dashboard from '@/components/Dashboard.vue';
