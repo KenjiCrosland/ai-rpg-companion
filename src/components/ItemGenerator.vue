@@ -339,12 +339,14 @@ const generateMagicItem = async () => {
     ? concreteItemTypeOptions[Math.floor(Math.random() * concreteItemTypeOptions.length)]
     : itemType.value;
 
-  // Determine origin: use user's pick, or pick a random one if no name/lore provided
-  const userProvidedContext = itemName.value.trim() || itemLore.value.trim();
+  // Origin logic:
+  // - User explicitly picked from dropdown → always use it
+  // - User typed a name or lore → skip random origin (they have a vision)
+  // - Blank canvas → pick random origin for variety
   let resolvedOrigin = '';
   if (itemOrigin.value) {
     resolvedOrigin = itemOrigin.value;
-  } else if (!userProvidedContext) {
+  } else if (!itemName.value.trim() && !itemLore.value.trim()) {
     resolvedOrigin = originOptions[Math.floor(Math.random() * originOptions.length)];
   }
 
@@ -544,9 +546,13 @@ const generateMagicItem = async () => {
     .map(([key, value]) => `${key}: ${value}`)
     .join('\n');
 
+  // Only reaches here if user explicitly picked an origin from dropdown
+  // (random origin is never assigned when user provides name/lore)
+  const userExplicitlyChoseOrigin = !!itemOrigin.value;
   const originInstruction = resolvedOrigin
-    ? `\nITEM ORIGIN: ${resolvedOrigin}
-The item's theme, aesthetics, and lore MUST reflect its ${resolvedOrigin} origin. Let the origin deeply influence the item's appearance, magical properties, cultural context, and the world it comes from.\n`
+    ? (userExplicitlyChoseOrigin && itemName.value.trim())
+      ? `\nITEM ORIGIN HINT: ${resolvedOrigin} (the user chose this origin AND provided a name — use the origin as thematic influence, but their name "${itemName.value}" is final)\n`
+      : `\nITEM ORIGIN: ${resolvedOrigin}\nThe item's theme, aesthetics, and lore MUST reflect its ${resolvedOrigin} origin. Let the origin deeply influence the item's appearance, magical properties, cultural context, and the world it comes from.\n`
     : '';
 
   const prompt = `Generate a detailed Dungeons & Dragons 5e magic item description adhering to the provided rarity guidelines and incomplete information.
@@ -575,14 +581,16 @@ WEAPON TYPE:
 This weapon is a ${selectedWeaponType}. Design the item around this specific weapon type. Its name, appearance, and features should fit a ${selectedWeaponType}.
 ` : ''}
 ${originInstruction}
-${!itemName.value.trim() ? `NAMING STYLE:
+${itemName.value.trim() ? `USER-PROVIDED NAME — DO NOT CHANGE:
+The user has named this item "${itemName.value}". This name is FINAL and MUST appear exactly as written in the "name" field of your output. Do NOT rename, alter, translate, or "improve" it. Build the item's identity AROUND this name — the origin, lore, description, and all features should support and complement the name the user chose.
+` : `NAMING STYLE:
 Use this linguistic palette for ALL names — the item name, character names, faction names, and location names: ${selectedPalette}
 All names should feel like they belong to the same world. Do not blend or mix linguistic origins within a single name — commit fully to one style.
 
 NAMING — AVOID OVERUSED DESCRIPTORS:
 Do not use these words in the item name: Whispering, Luminous, Celestial, Ethereal, Arcane, Glimmering, Radiant, Verdant.
 Use vivid, specific adjectives that match the item's origin and mood instead.
-` : ''}
+`}
 MOOD & TONE:
 The overall feel of this item should be: ${selectedMood}
 Let this mood influence the name, description, features, and lore. Not every item needs to be heroic or epic.
@@ -599,11 +607,12 @@ HISTORICAL CONTEXT:
 This item is ${selectedEra}.
 Let this context shape the lore — the item\'s age, condition, and story should reflect when and how it came to exist.
 
-LORE STYLE:
-${!itemLore.value.trim() ? selectedLoreFraming : 'The user has provided lore context. Expand on it while keeping their intent.'}
+${itemLore.value.trim() ? `USER-PROVIDED LORE — PRESERVE INTENT:
+The user provided this lore: "${itemLore.value}"
+Expand on it and enrich it, but keep the core narrative, characters, and events the user described. Do not replace their story with a different one.` : `LORE STYLE:\n${selectedLoreFraming}`}
 
 COHERENCE:
-All of the creative seeds above (origin, mood, material, quirk, era, naming style, lore style) describe ONE item. They must work together as a unified concept, not as independent checkboxes. If the naming style is Japanese-inspired and the origin is Fey, then the result should feel like a fey item from a Japanese-inspired culture — not a generic fantasy item with a Japanese name bolted on.
+All of the creative seeds above describe ONE item and must work together as a unified concept.${itemName.value.trim() || itemLore.value.trim() ? ' USER INPUT TAKES PRIORITY — if the user provided a name or lore, the creative seeds (origin, mood, material) should adapt to fit the user\'s vision, not the other way around. The user\'s name and lore are the anchor; the seeds are supporting flavor.' : ' If the naming style is Japanese-inspired and the origin is Fey, then the result should feel like a fey item from a Japanese-inspired culture — not a generic fantasy item with a Japanese name bolted on.'}
 
 CREATIVITY:
 - Powerful items can draw from ANY theme: shadow, elemental fury, undead craftsmanship, fey trickery, abyssal corruption, dwarven engineering, oceanic depths, volcanic forge, fungal growth, temporal magic, gravity manipulation, etc.
@@ -627,7 +636,7 @@ ${effectDefsString}
 
 ITEM STRUCTURE TO COMPLETE:
 {
-  "name": "${itemName.value || '[Generate a unique, evocative name — avoid generic fantasy clichés]'}",
+  "name": "${itemName.value || '[Generate a unique, evocative name — avoid generic fantasy clichés]'}",${itemName.value.trim() ? ' // USER-PROVIDED — DO NOT CHANGE THIS VALUE' : ''}
   "item_type": "${resolvedItemType}",
   "rarity": "${rarity.value}",
   "bonus": "${featuresAndBonuses.bonus}",
