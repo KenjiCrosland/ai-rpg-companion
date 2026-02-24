@@ -3,7 +3,6 @@ import { createPinia } from 'pinia';
 import AppToast from '../components/AppToast.vue';
 import { registerToast } from '../composables/useToast';
 import DungeonGenerator from '../dungeon-generator/components/DungeonGenerator.vue';
-import ToolSuiteShowcase from '../components/ToolSuiteShowcase.vue';
 
 // Cedar design system CSS — loaded once, shared by all tools
 import '@rei/cedar/dist/cdr-fonts.css';
@@ -47,7 +46,6 @@ const Root = {
         rel: 'stylesheet'
       }),
       h(AppToast, { ref: toastRef, position: 'top-center' }),
-      h(ToolSuiteShowcase, { displayMode: 'banner', premium: isPremium }),
       h(DungeonGenerator, { premium: isPremium }),
     ];
   },

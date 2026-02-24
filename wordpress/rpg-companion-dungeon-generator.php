@@ -41,7 +41,7 @@ remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs');
 
 // Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
-    rpg_companion_enqueue_entry( 'dungeon' );
+    rpg_companion_enqueue_entry( 'new-dungeon-generator' );
 
     wp_register_style( 'rpg-companion-overrides', false );
     wp_enqueue_style( 'rpg-companion-overrides' );
@@ -110,7 +110,7 @@ add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 
 //Add Vue app root element.
 function vue_app_render_root_element() {
-    echo '<div id="app" data-page="dungeon-generator"></div>';
+    echo '<div id="app" data-page="new-dungeon-generator"></div>';
 }
 
 // add_action( 'genesis_entry_content', 'vue_app_render_root_element' );

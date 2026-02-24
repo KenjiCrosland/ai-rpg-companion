@@ -41,7 +41,7 @@ remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs');
 
 // Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
-    rpg_companion_enqueue_entry( 'dungeon' );
+    rpg_companion_enqueue_entry( 'new-dungeon-generator' );
 
     wp_register_style( 'rpg-companion-overrides', false );
     wp_enqueue_style( 'rpg-companion-overrides' );

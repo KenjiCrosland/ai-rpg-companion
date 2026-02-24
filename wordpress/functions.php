@@ -463,12 +463,12 @@ function vue_app_item_generator_premium_shortcode() {
 add_shortcode( 'vue_app_item_generator_premium', 'vue_app_item_generator_premium_shortcode' );
 
 function vue_app_dungeon_generator_shortcode() {
-    return '<div id="app" data-page="dungeon-generator"></div>';
+    return '<div id="app" data-page="new-dungeon-generator"></div>';
 }
 add_shortcode( 'vue_app_dungeon_generator', 'vue_app_dungeon_generator_shortcode' );
 
 function vue_app_dungeon_generator_premium_shortcode() {
-	return '<div id="app" data-page="dungeon-generator"></div>';
+	return '<div id="app" data-page="new-dungeon-generator-premium"></div>';
 }
 add_shortcode( 'vue_app_dungeon_generator_premium', 'vue_app_dungeon_generator_premium_shortcode' );
 
