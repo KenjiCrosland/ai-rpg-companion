@@ -1,0 +1,86 @@
+[
+  {
+    "id": "dungeon-1",
+    "dungeonOverview": {
+      "name": "The Forgotten Temple",
+      "overview": "An ancient temple lost to time.",
+      "relation_to_larger_setting": "It sits on the edge of the kingdom.",
+      "finding_the_dungeon": "Follow the old road through the forest.",
+      "history": "Built centuries ago by a forgotten civilization.",
+      "dominant_power": "A lich named Malakar rules here.",
+      "dominant_power_goals": "He seeks immortality and knowledge.",
+      "dominant_power_minions": "Undead servants patrol the halls.",
+      "dominant_power_event": "Recently, adventurers disturbed his rest.",
+      "recent_event_consequences": "The lich has increased patrols.",
+      "secondary_power": "A group of bandits hiding in the lower levels.",
+      "secondary_power_event": "They found a secret cache of gold.",
+      "main_problem": "The lich threatens nearby villages.",
+      "potential_solutions": "Destroy the phylactery or seal the temple.",
+      "conclusion": "The fate of the region hangs in the balance.",
+      "difficulty_level": "Tier 2: Expert"
+    },
+    "npcs": [
+      {
+        "id": "npc-1",
+        "name": "Brother Marcus",
+        "short_description": "A wise old monk who guards the entrance.",
+        "read_aloud_description": "",
+        "description_of_position": "",
+        "why_in_dungeon": "",
+        "distinctive_features_or_mannerisms": "",
+        "character_secret": "",
+        "relationships": {},
+        "roleplaying_tips": ""
+      }
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "name": "The Entrance Hall",
+        "contentArray": [
+          {
+            "format": "read_aloud",
+            "content": "Dust swirls in the dim light."
+          },
+          {
+            "format": "paragraph",
+            "content": "The walls are covered in ancient frescoes."
+          }
+        ]
+      }
+    ],
+    "monsters": [
+      {
+        "id": "monster-1",
+        "name": "Shadow Beast",
+        "description": "A creature of pure darkness.",
+        "detailedDescription": null,
+        "statblock": null
+      }
+    ]
+  },
+  {
+    "id": "dungeon-2",
+    "dungeonOverview": {
+      "name": "The Lost Mines",
+      "overview": "Abandoned mines filled with danger.",
+      "relation_to_larger_setting": "Once provided ore to the kingdom.",
+      "finding_the_dungeon": "Follow the mountain trail.",
+      "history": "Closed after a cave-in 50 years ago.",
+      "dominant_power": "A black dragon has claimed it.",
+      "dominant_power_goals": "Hoarding treasure.",
+      "dominant_power_minions": "Kobolds worship the dragon.",
+      "dominant_power_event": "Recently raided a nearby village.",
+      "recent_event_consequences": "Villagers seek heroes.",
+      "secondary_power": "Dwarven miners.",
+      "secondary_power_event": "Want to reclaim their home.",
+      "main_problem": "The dragon must be defeated.",
+      "potential_solutions": "Negotiate or fight.",
+      "conclusion": "The mines hold secrets.",
+      "difficulty_level": "Tier 2: Expert"
+    },
+    "npcs": [],
+    "rooms": [],
+    "monsters": []
+  }
+]

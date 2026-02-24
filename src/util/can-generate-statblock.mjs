@@ -20,10 +20,26 @@ export async function canGenerateStatblock(isPremium) {
 
   const MAX_GENERATIONS = 5;
   const storage = window.localStorage;
-  const monsters = JSON.parse(storage.getItem('monsters')) || {
-    generationCount: '0',
-    firstGenerationTime: null,
-  };
+  let monsters;
+
+  try {
+    const stored = JSON.parse(storage.getItem('monsters'));
+    // Ensure it's an object with the expected structure
+    if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+      monsters = stored;
+    } else {
+      monsters = {
+        generationCount: '0',
+        firstGenerationTime: null,
+      };
+    }
+  } catch (e) {
+    // If JSON parse fails, start fresh
+    monsters = {
+      generationCount: '0',
+      firstGenerationTime: null,
+    };
+  }
 
   let generationCount = parseInt(monsters.generationCount) || 0;
   let firstGenerationTime = parseInt(monsters.firstGenerationTime);

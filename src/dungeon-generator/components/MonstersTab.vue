@@ -109,7 +109,10 @@
             </div>
 
             <div class="monster-buttons">
-              <cdr-button size="small" @click="dungeonStore.generateDescriptionAndStatblock(monster.id, premium)">
+              <cdr-button
+                size="small"
+                @click="dungeonStore.generateDescriptionAndStatblock(monster.id, premium)"
+                :disabled="dungeonStore.monsterLoadingStates[monster.id]?.generating">
                 {{
                   dungeonStore.monsterLoadingStates[monster.id]?.generating
                     ? 'Generating...'
@@ -118,11 +121,19 @@
                       : 'Generate Description & Statblock')
                 }}
               </cdr-button>
-              <cdr-button v-if="monster.detailedDescription" size="small" @click="generateMonsterDescription(monster)">
+              <cdr-button
+                v-if="monster.detailedDescription"
+                size="small"
+                @click="generateMonsterDescription(monster)"
+                :disabled="dungeonStore.monsterLoadingStates[monster.id]?.description">
                 Regenerate Description
               </cdr-button>
-              <cdr-button v-if="monster.statblock" @click="dungeonStore.generateMonsterStatblock(monster.id, premium)"
-                size="small" variant="secondary">
+              <cdr-button
+                v-if="monster.statblock"
+                @click="dungeonStore.generateMonsterStatblock(monster.id, premium)"
+                size="small"
+                variant="secondary"
+                :disabled="dungeonStore.monsterLoadingStates[monster.id]?.generating">
                 Regenerate Statblock
               </cdr-button>
             </div>

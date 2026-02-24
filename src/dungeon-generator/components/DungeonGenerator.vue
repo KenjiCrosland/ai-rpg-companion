@@ -147,8 +147,8 @@ const props = defineProps({
 });
 
 const dungeonStore = useDungeonStore();
-const showDataManagerModal = ref(false);
 const toast = useToast();
+const showDataManagerModal = ref(false);
 
 const difficultyOptions = [
   'Tier 1: Basic - A local hero in the making.',
@@ -162,6 +162,7 @@ function deleteAllDungeons() {
   const confirmed = window.confirm('Are you sure you want to delete all dungeons?');
   if (confirmed) {
     dungeonStore.deleteAllDungeons();
+    toast.success('All dungeons deleted successfully');
   }
 }
 
