@@ -23,16 +23,18 @@
                     <p>{{ monster.speed }}</p>
                 </div>
                 <table class="scores">
-                    <tr>
-                        <th v-for="attribute in parsedAttributes" :key="attribute.stat">
-                            <h4>{{ attribute.stat }}</h4>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td v-for="attribute in parsedAttributes" :key="attribute.stat">
-                            <p>{{ attribute.value }}</p>
-                        </td>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <th v-for="attribute in parsedAttributes" :key="attribute.stat">
+                                <h4>{{ attribute.stat }}</h4>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td v-for="attribute in parsedAttributes" :key="attribute.stat">
+                                <p>{{ attribute.value }}</p>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
                 <div v-if="monster.skills && monster.skills.length > 0 && monster.skills !== 'None'" class="property-line">
                     <h4>Skills: </h4>

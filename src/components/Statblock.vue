@@ -44,19 +44,21 @@
 
                 <!-- Stat Block -->
                 <table class="scores">
-                    <tr>
-                        <th v-for="(stat, key) in editedAttributes" :key="key">
-                            <h4>{{ stat.stat }}</h4>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td v-for="(stat, key) in editedAttributes" :key="key" :class="{ 'editing': isEditing }">
-                            <p v-if="!isEditing">{{ statDisplay(stat.base) }}</p>
-                            <div v-else>
-                                <input type="number" v-model.number="stat.base" />
-                            </div>
-                        </td>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <th v-for="(stat, key) in editedAttributes" :key="key">
+                                <h4>{{ stat.stat }}</h4>
+                            </th>
+                        </tr>
+                        <tr>
+                            <td v-for="(stat, key) in editedAttributes" :key="key" :class="{ 'editing': isEditing }">
+                                <p v-if="!isEditing">{{ statDisplay(stat.base) }}</p>
+                                <div v-else>
+                                    <input type="number" v-model.number="stat.base" />
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
                 <div v-if="monster.skills && monster.skills.length > 0 && monster.skills !== 'None'"
                     :class="propertyLineClass">
