@@ -95,7 +95,7 @@
 <script>
 import LocationGenerator from '@/tools/location-generator/LocationGenerator.vue';
 import LoreGenerator from '@/components/LoreGenerator.vue';
-import NPCGenerator from '@/components/NPCGenerator.vue';
+import NPCGenerator from '@/tools/npc-generator/NPCGenerator.vue';
 import Dashboard from '@/components/Dashboard.vue';
 import DashboardPlus from '@/components/DashboardPlus.vue';
 import StatblockGenerator from '@/tools/statblock-generator/StatblockGenerator.vue';

@@ -1,5 +1,5 @@
-import { createNPCPrompt, createRelationshipAndTipsPrompt } from '../prompts/prompts.mjs';
-import { generateGptResponse } from './open-ai.mjs';
+import { createNPCPrompt, createRelationshipAndTipsPrompt } from '../npc-prompts.mjs';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 
 export function validateNPCDescription(jsonString) {
   try {
@@ -34,15 +34,15 @@ export async function generateNPCDescription(typeOfPlace, callbacks) {
       const npcPrompt = createNPCPrompt(typeOfPlace);
       const npcJsonString = await generateGptResponse(npcPrompt, validateNPCDescription);
       const npcDescriptionPart1 = JSON.parse(npcJsonString);
-  
+
       if (callbacks && callbacks.part1) {
         callbacks.part1(npcDescriptionPart1);
       }
-  
+
       const part2Prompt = createRelationshipAndTipsPrompt(JSON.stringify(npcDescriptionPart1));
       const relationshipJsonString = await generateGptResponse(part2Prompt, validatePart2);
       const npcDescriptionPart2 = JSON.parse(relationshipJsonString);
-  
+
       if (callbacks && callbacks.part2) {
         callbacks.part2(npcDescriptionPart2);
       }
@@ -63,7 +63,7 @@ export async function generateNPCDescription(typeOfPlace, callbacks) {
       throw error;
     }
   }
-  
-  
-  
-  
+
+
+
+

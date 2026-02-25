@@ -171,11 +171,11 @@ The project is undergoing a migration to organize tools into `src/tools/`:
 - ✅ Item Generator → `src/tools/item-generator/`
 - ✅ Dungeon Generator → `src/tools/dungeon-generator/`
 - ✅ Location Generator → `src/tools/location-generator/`
+- ✅ NPC Generator → `src/tools/npc-generator/`
 - ✅ Path aliases configured (`@` → `./src`)
 - ✅ All external imports use `@` alias
 
 **Pending Migration:**
-- ⏳ NPC Generator
 - ⏳ Encounter Generator
 - ⏳ Setting Generator
 - ⏳ Lore Generator

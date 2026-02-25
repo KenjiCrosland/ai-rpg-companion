@@ -9,7 +9,7 @@
 
 <script>
 import { CdrInput, CdrButton } from '@rei/cedar';
-import { requestNPCDescription } from "../util/request-npc-description.mjs";
+import { requestNPCDescription } from "../utils/request-npc-description.mjs";
 import '@rei/cedar/dist/style/cdr-input.css';
 import '@rei/cedar/dist/style/cdr-button.css';
 export default {

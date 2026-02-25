@@ -1,10 +1,10 @@
 <template>
     <cdr-button size="small" :disabled="disabledButton" @click="handleRequestNPCDescription()">{{ buttonText }}</cdr-button>
 </template>
-  
+
 <script>
 import { CdrButton } from '@rei/cedar';
-import { requestNPCDescription } from "../util/request-npc-description.mjs";
+import { requestNPCDescription } from "../utils/request-npc-description.mjs";
 import '@rei/cedar/dist/style/cdr-button.css';
 export default {
     props: {
@@ -38,6 +38,5 @@ export default {
     },
 };
 </script>
-  
+
 <style scoped lang="scss"></style>
-  

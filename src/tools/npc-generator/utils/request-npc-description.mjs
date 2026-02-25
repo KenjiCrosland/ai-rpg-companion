@@ -25,7 +25,7 @@ export async function requestNPCDescription(typeOfNPC, extraDescription = {}, se
       part,
       npcDescription,
     });
-  
+
     if (sequentialLoading && part === 1) {
       emit("set-loading-state", { part: 1, isLoading: false });
       emit("set-loading-state", { part: 2, isLoading: true });

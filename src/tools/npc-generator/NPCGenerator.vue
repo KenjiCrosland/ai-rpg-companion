@@ -290,17 +290,17 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput } from '@rei/cedar';
-import { useToast } from '../composables/useToast';
-import GeneratorLayout from './GeneratorLayout.vue';
-import Statblock from './Statblock.vue';
-import SaveStatblock from './SaveStatblock.vue';
-import DataManagerModal from './DataManagerModal.vue';
-import { generateGptResponse } from "../util/open-ai.mjs";
-import { createStatblockPrompts } from "../prompts/monster-prompts.mjs";
-import { requestNPCDescription } from "../util/request-npc-description.mjs";
-import { convertNPCToMarkdown, convertNPCToPlainText } from '../util/convertToMarkdown.mjs';
-import challengeRatingData from '../data/challengeRatings.json';
-import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
+import { useToast } from '@/composables/useToast';
+import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import Statblock from '@/components/Statblock.vue';
+import SaveStatblock from '@/components/SaveStatblock.vue';
+import DataManagerModal from '@/components/DataManagerModal.vue';
+import { generateGptResponse } from "@/util/open-ai.mjs";
+import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
+import { requestNPCDescription } from "./utils/request-npc-description.mjs";
+import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMarkdown.mjs';
+import challengeRatingData from '@/data/challengeRatings.json';
+import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
