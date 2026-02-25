@@ -38,6 +38,8 @@ npm test -- calculateCR.spec.js            # Run a single test file
 - [Statblock Generator](/src/tools/statblock-generator/CLAUDE.md) - D&D 5e monster creation with two-part generation
 - [Item Generator](/src/tools/item-generator/CLAUDE.md) - Magic item creation with rarity enforcement and lore building
 - [Dungeon Generator](/src/tools/dungeon-generator/CLAUDE.md) - Complex dungeon creation with rooms, NPCs, monsters, and map generation
+- [Location Generator](/src/tools/location-generator/CLAUDE.md) - Location creation with contextual details and integration
+- [NPC Generator](/src/tools/npc-generator/CLAUDE.md) - NPC creation with two-part generation (description + relationships)
 
 **WordPress Integration**: The `wordpress/` directory contains PHP files that act as shortcodes to embed the Vue app in WordPress pages. The `functions.php` file includes an OpenAI proxy endpoint (`/wp-json/open-ai-proxy/api/v1/proxy`) used in production to avoid exposing API keys.
 
@@ -47,6 +49,9 @@ npm test -- calculateCR.spec.js            # Run a single test file
   - `statblock-generator/` - Monster statblock creation
   - `item-generator/` - Magic item creation with quest hooks and lore builder
   - `dungeon-generator/` - Dungeon creation with stores, composables, and complex state
+  - `location-generator/` - Location generation for taverns, shops, dungeons, etc.
+  - `npc-generator/` - NPC creation with descriptions, relationships, and statblocks
+  - `legacy-tools/dungeon-generator/` - Legacy dungeon generator (superseded by new version)
   - Each tool contains: main component, tests, sub-components, and CLAUDE.md
 - `src/components/` - Shared Vue components (GeneratorLayout, DataManagerModal, etc.)
 - `src/components/skeletons/` - Loading skeleton components
@@ -174,6 +179,14 @@ The project is undergoing a migration to organize tools into `src/tools/`:
 - ✅ NPC Generator → `src/tools/npc-generator/`
 - ✅ Path aliases configured (`@` → `./src`)
 - ✅ All external imports use `@` alias
+
+**Legacy Tools:**
+- 📦 Legacy Dungeon Generator → `src/tools/legacy-tools/dungeon-generator/`
+  - Contains old DungeonGenerator.vue and DungeonGeneratorPremium.vue
+  - Renamed to LegacyDungeonGenerator.vue and LegacyDungeonGeneratorPremium.vue
+  - Entry files: legacy-dungeon-generator.js and legacy-dungeon-generator-premium.js
+  - Page identifiers: 'legacy-dungeon-generator' and 'legacy-dungeon-generator-premium'
+  - No tests (legacy code, superseded by new Dungeon Generator)
 
 **Pending Migration:**
 - ⏳ Encounter Generator

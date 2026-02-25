@@ -43,8 +43,8 @@
           <option value="encounter-generator-premium">Encounter Generator (Premium)</option>
           <option value="setting-generator">Setting Generator</option>
           <option value="setting-generator-premium">Setting Generator (Premium)</option>
-          <option value="dungeon-generator">Dungeon Generator (Legacy)</option>
-          <option value="dungeon-generator-premium">Dungeon Generator Premium (Legacy)</option>
+          <option value="legacy-dungeon-generator">Dungeon Generator (Legacy)</option>
+          <option value="legacy-dungeon-generator-premium">Dungeon Generator Premium (Legacy)</option>
           <option value="new-dungeon-generator">New Dungeon Generator</option>
           <option value="new-dungeon-generator-premium">New Dungeon Generator (Premium)</option>
           <option value="location-generator">Location Generator</option>
@@ -75,8 +75,8 @@
     <StatblockGenerator :premium="true" v-if="currentPage === 'statblock-generator-premium'" />
     <BookGenerator v-if="currentPage === 'book-generator'" />
     <LoreGenerator v-if="currentPage === 'lore-generator'" />
-    <DungeonGenerator v-if="currentPage === 'dungeon-generator'" />
-    <DungeonGeneratorPremium v-if="currentPage === 'dungeon-generator-premium'" />
+    <LegacyDungeonGenerator v-if="currentPage === 'legacy-dungeon-generator'" />
+    <LegacyDungeonGeneratorPremium v-if="currentPage === 'legacy-dungeon-generator-premium'" />
     <ItemGenerator v-if="currentPage === 'item-generator'" />
     <ItemGenerator :premium="true" v-if="currentPage === 'item-generator-premium'" />
     <EncounterGenerator v-if="currentPage === 'encounter-generator'" />
@@ -100,8 +100,8 @@ import Dashboard from '@/components/Dashboard.vue';
 import DashboardPlus from '@/components/DashboardPlus.vue';
 import StatblockGenerator from '@/tools/statblock-generator/StatblockGenerator.vue';
 import BookGenerator from '@/components/BookGenerator.vue';
-import DungeonGenerator from '@/components/DungeonGenerator.vue';
-import DungeonGeneratorPremium from '@/components/DungeonGeneratorPremium.vue';
+import LegacyDungeonGenerator from '@/tools/legacy-tools/dungeon-generator/LegacyDungeonGenerator.vue';
+import LegacyDungeonGeneratorPremium from '@/tools/legacy-tools/dungeon-generator/LegacyDungeonGeneratorPremium.vue';
 import ItemGenerator from '@/tools/item-generator/ItemGenerator.vue';
 import EncounterGenerator from '@/components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from '@/components/EncounterGeneratorPremium.vue';
@@ -125,8 +125,8 @@ export default {
     StatblockGenerator,
     CdrLink,
     BookGenerator,
-    DungeonGenerator,
-    DungeonGeneratorPremium,
+    LegacyDungeonGenerator,
+    LegacyDungeonGeneratorPremium,
     NewDungeonGenerator,
     LoreGenerator,
     ItemGenerator,
@@ -190,10 +190,10 @@ export default {
     if (typeof gtag === 'function' && this.currentPage === 'town-kingdom-generator') {
       gtag('config', 'UA-11925218-1', { 'page_path': '/town-kingdom-generator' });
     }
-    if (typeof gtag === 'function' && this.currentPage === 'dungeon-generator') {
+    if (typeof gtag === 'function' && this.currentPage === 'legacy-dungeon-generator') {
       gtag('config', 'UA-11925218-1', { 'page_path': '/ai-powered-dungeon-generator' });
     }
-    if (typeof gtag === 'function' && this.currentPage === 'dungeon-generator-premium') {
+    if (typeof gtag === 'function' && this.currentPage === 'legacy-dungeon-generator-premium') {
       gtag('config', 'UA-11925218-1', { 'page_path': '/ai-powered-dungeon-generator-premium' });
     }
     if (typeof gtag === 'function' && this.currentPage === 'npc-generator') {

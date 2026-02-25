@@ -224,13 +224,13 @@
 
 <script>
 import { CdrInput, CdrSelect, CdrLink, CdrButton, CdrList, CdrText, CdrAccordion, CdrAccordionGroup, CdrSkeleton, CdrSkeletonBone, CdrTooltip, IconXSm, IconReload, IconArrowUp, IconArrowDown } from "@rei/cedar";
-import StatblockBase from './StatblockBase.vue';
-import SaveStatblock from './SaveStatblock.vue';
-import { generateGptResponse } from '../util/open-ai.mjs';
-import { dungeonFormatGuidelines } from "../prompts/prompts.mjs";
-import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
-import { convertDungeonToMarkdown } from '../util/convertToMarkdown.mjs';
-import challengeRatingData from '../data/challengeRatings.json';
+import StatblockBase from '@/components/StatblockBase.vue';
+import SaveStatblock from '@/components/SaveStatblock.vue';
+import { generateGptResponse } from '@/util/open-ai.mjs';
+import { dungeonFormatGuidelines } from "@/prompts/prompts.mjs";
+import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';
+import { convertDungeonToMarkdown } from '@/util/convertToMarkdown.mjs';
+import challengeRatingData from '@/data/challengeRatings.json';
 export default {
   components: {
     CdrInput,
