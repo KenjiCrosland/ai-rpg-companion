@@ -141,26 +141,26 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrButton, CdrLink, CdrSkeleton } from "@rei/cedar";
-import { settingOverviewPrompt, sublocationOverviewPrompt } from "../prompts/index.mjs";
-import OverviewSkeleton from "./skeletons/OverviewSkeleton.vue";
-import DataManagerModal from './DataManagerModal.vue';
-import Tabs from './tabs/Tabs.vue';
-import TabPanel from './tabs/TabPanel.vue';
-import { formatSettingAsPlainText } from "../util/formatSettingAsPlainText.mjs";
-import { formatSettingAsMarkdown } from "../util/formatSettingAsMarkdown.mjs";
-import { formatSettingAsHtml } from "../util/formatSettingAsHTML.mjs";
-import { generateGptResponse } from "../util/open-ai.mjs";
-import placeAdjectives from '../data/place-adjectives.json';
-import place_names from '../data/place-names.json';
+import { settingOverviewPrompt, sublocationOverviewPrompt } from "@/prompts/index.mjs";
+import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
+import DataManagerModal from '@/components/DataManagerModal.vue';
+import Tabs from '@/components/tabs/Tabs.vue';
+import TabPanel from '@/components/tabs/TabPanel.vue';
+import { formatSettingAsPlainText } from "@/util/formatSettingAsPlainText.mjs";
+import { formatSettingAsMarkdown } from "@/util/formatSettingAsMarkdown.mjs";
+import { formatSettingAsHtml } from "@/util/formatSettingAsHTML.mjs";
+import { generateGptResponse } from "@/util/open-ai.mjs";
+import placeAdjectives from '@/data/place-adjectives.json';
+import place_names from '@/data/place-names.json';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-popover.css';
-import QuestHooksTab from './setting-generator-tabs/QuestHooksTab.vue';
-import OverviewTab from './setting-generator-tabs/OverviewTab.vue';
-import FactionsTab from './setting-generator-tabs/FactionsTab.vue';
-import LocationsTab from './setting-generator-tabs/LocationsTab.vue';
-import NPCsTab from './setting-generator-tabs/NPCsTab.vue';
-import GeneratorLayout from './GeneratorLayout.vue';
+import QuestHooksTab from './components/tabs/QuestHooksTab.vue';
+import OverviewTab from './components/tabs/OverviewTab.vue';
+import FactionsTab from './components/tabs/FactionsTab.vue';
+import LocationsTab from './components/tabs/LocationsTab.vue';
+import NPCsTab from './components/tabs/NPCsTab.vue';
+import GeneratorLayout from '@/components/GeneratorLayout.vue';
 
 const props = defineProps({
   premium: {

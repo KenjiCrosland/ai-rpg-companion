@@ -180,13 +180,13 @@ import {
   CdrSkeletonBone,
   IconXSm,
 } from '@rei/cedar';
-import NPCSkeleton from '../skeletons/NPCSkeleton.vue';
-import { generateGptResponse } from '../../util/open-ai.mjs';
+import NPCSkeleton from '@/components/skeletons/NPCSkeleton.vue';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import {
   createNPCPrompt,
   createRelationshipAndTipsPrompt,
   generateSingleRelationshipPrompt,
-} from '../../prompts/index.mjs';
+} from '@/prompts/index.mjs';
 
 const props = defineProps({
   setting: {

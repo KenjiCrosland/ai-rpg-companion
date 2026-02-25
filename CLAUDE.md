@@ -180,6 +180,10 @@ The project is undergoing a migration to organize tools into `src/tools/`:
   - WordPress templates: `rpg-companion-dungeon-generator.php` and `rpg-companion-dungeon-generator-premium.php`
 - ✅ Location Generator → `src/tools/location-generator/`
 - ✅ NPC Generator → `src/tools/npc-generator/`
+- ✅ Setting Generator → `src/tools/setting-generator/`
+  - Test coverage: 20 tests (localStorage data layer, API integration, export formats)
+  - Entry file: `setting.js`
+  - Tab components in `components/tabs/` subdirectory
 - ✅ Path aliases configured (`@` → `./src`)
 - ✅ All external imports use `@` alias
 
@@ -194,7 +198,6 @@ The project is undergoing a migration to organize tools into `src/tools/`:
 
 **Pending Migration:**
 - ⏳ Encounter Generator
-- ⏳ Setting Generator
 - ⏳ Lore Generator
 - ⏳ Book Generator
 

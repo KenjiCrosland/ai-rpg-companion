@@ -173,15 +173,15 @@ import {
   IconXSm,
   IconInformationStroke,
 } from '@rei/cedar';
-import FactionSkeleton from '../skeletons/FactionSkeleton.vue';
-import OverviewSkeleton from '../skeletons/OverviewSkeleton.vue';
-import BlockSkeleton from '../skeletons/BlockSkeleton.vue';
-import { generateGptResponse } from '../../util/open-ai.mjs';
+import FactionSkeleton from '@/components/skeletons/FactionSkeleton.vue';
+import OverviewSkeleton from '@/components/skeletons/OverviewSkeleton.vue';
+import BlockSkeleton from '@/components/skeletons/BlockSkeleton.vue';
+import { generateGptResponse } from '@/util/open-ai.mjs';
 import {
   factionListPrompt,
   detailedFactionPrompt,
   singleFactionPrompt,
-} from '../../prompts/index.mjs';
+} from '@/prompts/index.mjs';
 
 const props = defineProps({
   setting: {
