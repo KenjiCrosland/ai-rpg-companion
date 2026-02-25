@@ -175,6 +175,9 @@ The project is undergoing a migration to organize tools into `src/tools/`:
 - ✅ Statblock Generator → `src/tools/statblock-generator/`
 - ✅ Item Generator → `src/tools/item-generator/`
 - ✅ Dungeon Generator → `src/tools/dungeon-generator/`
+  - Entry file: `dungeon-generator.js` (formerly `new-dungeon-generator.js`)
+  - Page identifiers: `'dungeon-generator'` and `'dungeon-generator-premium'`
+  - WordPress templates: `rpg-companion-dungeon-generator.php` and `rpg-companion-dungeon-generator-premium.php`
 - ✅ Location Generator → `src/tools/location-generator/`
 - ✅ NPC Generator → `src/tools/npc-generator/`
 - ✅ Path aliases configured (`@` → `./src`)
@@ -184,9 +187,10 @@ The project is undergoing a migration to organize tools into `src/tools/`:
 - 📦 Legacy Dungeon Generator → `src/tools/legacy-tools/dungeon-generator/`
   - Contains old DungeonGenerator.vue and DungeonGeneratorPremium.vue
   - Renamed to LegacyDungeonGenerator.vue and LegacyDungeonGeneratorPremium.vue
-  - Entry files: legacy-dungeon-generator.js and legacy-dungeon-generator-premium.js
-  - Page identifiers: 'legacy-dungeon-generator' and 'legacy-dungeon-generator-premium'
-  - No tests (legacy code, superseded by new Dungeon Generator)
+  - Entry files: `legacy-dungeon-generator.js` and `legacy-dungeon-generator-premium.js`
+  - Page identifiers: `'legacy-dungeon-generator'` and `'legacy-dungeon-generator-premium'`
+  - WordPress templates: `rpg-companion-legacy-dungeon-generator.php` and `rpg-companion-legacy-dungeon-generator-premium.php`
+  - No tests (legacy code, superseded by Dungeon Generator in `/src/tools/dungeon-generator/`)
 
 **Pending Migration:**
 - ⏳ Encounter Generator

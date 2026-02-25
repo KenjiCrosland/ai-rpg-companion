@@ -1,37 +1,39 @@
 <template>
-  <CdrSkeletonBone type="line" style="width:95%" />
-  <CdrSkeletonBone type="line" style="width:90%" />
-  <CdrSkeletonBone type="line" style="width:85%" />
-  <CdrSkeletonBone type="line" style="width:95%" />
-  <p>
+  <CdrSkeleton>
     <CdrSkeletonBone type="line" style="width:95%" />
     <CdrSkeletonBone type="line" style="width:90%" />
     <CdrSkeletonBone type="line" style="width:85%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-  </p>
-  <p>
     <CdrSkeletonBone type="line" style="width:95%" />
-    <CdrSkeletonBone type="line" style="width:90%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-    <CdrSkeletonBone type="line" style="width:90%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-  </p>
-  <p>
-    <CdrSkeletonBone type="line" style="width:95%" />
-    <CdrSkeletonBone type="line" style="width:90%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-    <CdrSkeletonBone type="line" style="width:90%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-  </p>
-  <p>
-    <CdrSkeletonBone type="line" style="width:95%" />
-    <CdrSkeletonBone type="line" style="width:90%" />
-    <CdrSkeletonBone type="line" style="width:90%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-    <CdrSkeletonBone type="line" style="width:85%" />
-  </p>
+    <p>
+      <CdrSkeletonBone type="line" style="width:95%" />
+      <CdrSkeletonBone type="line" style="width:90%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+    </p>
+    <p>
+      <CdrSkeletonBone type="line" style="width:95%" />
+      <CdrSkeletonBone type="line" style="width:90%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+      <CdrSkeletonBone type="line" style="width:90%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+    </p>
+    <p>
+      <CdrSkeletonBone type="line" style="width:95%" />
+      <CdrSkeletonBone type="line" style="width:90%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+      <CdrSkeletonBone type="line" style="width:90%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+    </p>
+    <p>
+      <CdrSkeletonBone type="line" style="width:95%" />
+      <CdrSkeletonBone type="line" style="width:90%" />
+      <CdrSkeletonBone type="line" style="width:90%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+      <CdrSkeletonBone type="line" style="width:85%" />
+    </p>
+  </CdrSkeleton>
 </template>
 
 <script setup>

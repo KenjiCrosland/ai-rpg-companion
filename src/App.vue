@@ -43,10 +43,10 @@
           <option value="encounter-generator-premium">Encounter Generator (Premium)</option>
           <option value="setting-generator">Setting Generator</option>
           <option value="setting-generator-premium">Setting Generator (Premium)</option>
+          <option value="dungeon-generator">Dungeon Generator</option>
+          <option value="dungeon-generator-premium">Dungeon Generator (Premium)</option>
           <option value="legacy-dungeon-generator">Dungeon Generator (Legacy)</option>
           <option value="legacy-dungeon-generator-premium">Dungeon Generator Premium (Legacy)</option>
-          <option value="new-dungeon-generator">New Dungeon Generator</option>
-          <option value="new-dungeon-generator-premium">New Dungeon Generator (Premium)</option>
           <option value="location-generator">Location Generator</option>
           <option value="lore-generator">Lore Builder</option>
           <option value="book-generator">Book Generator</option>
@@ -75,6 +75,8 @@
     <StatblockGenerator :premium="true" v-if="currentPage === 'statblock-generator-premium'" />
     <BookGenerator v-if="currentPage === 'book-generator'" />
     <LoreGenerator v-if="currentPage === 'lore-generator'" />
+    <DungeonGenerator v-if="currentPage === 'dungeon-generator'" />
+    <DungeonGenerator :premium="true" v-if="currentPage === 'dungeon-generator-premium'" />
     <LegacyDungeonGenerator v-if="currentPage === 'legacy-dungeon-generator'" />
     <LegacyDungeonGeneratorPremium v-if="currentPage === 'legacy-dungeon-generator-premium'" />
     <ItemGenerator v-if="currentPage === 'item-generator'" />
@@ -83,8 +85,6 @@
     <EncounterGenerator :premium="true" v-if="currentPage === 'encounter-generator-premium'" />
     <SettingGenerator v-if="currentPage === 'setting-generator'" />
     <SettingGenerator :premium="true" v-if="currentPage === 'setting-generator-premium'" />
-    <NewDungeonGenerator v-if="currentPage === 'new-dungeon-generator'" />
-    <NewDungeonGenerator :premium="true" v-if="currentPage === 'new-dungeon-generator-premium'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
     <LandingPage v-if="currentPage === 'category-landing'" />
 
@@ -106,7 +106,7 @@ import ItemGenerator from '@/tools/item-generator/ItemGenerator.vue';
 import EncounterGenerator from '@/components/EncounterGenerator.vue';
 import EncounterGeneratorPremium from '@/components/EncounterGeneratorPremium.vue';
 import SettingGenerator from '@/components/SettingGenerator.vue';
-import NewDungeonGenerator from '@/tools/dungeon-generator/components/DungeonGeneratorWrapper.vue';
+import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGeneratorWrapper.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
 import ToolSuiteShowcase from '@/components/ToolSuiteShowcase.vue';
 import LandingPage from '@/components/LandingPage.vue';
@@ -127,7 +127,7 @@ export default {
     BookGenerator,
     LegacyDungeonGenerator,
     LegacyDungeonGeneratorPremium,
-    NewDungeonGenerator,
+    DungeonGenerator,
     LoreGenerator,
     ItemGenerator,
     EncounterGenerator,

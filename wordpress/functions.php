@@ -422,16 +422,6 @@ add_filter( 'script_loader_tag', function ( $tag, $handle, $src ) {
 // (END) RPG Companion asset loader
 // -----------------------------------------------------------------------------
 
-function vue_app_new_dungeon_generator_shortcode() {
-	return '<div id="app" data-page="new-dungeon-generator"></div>';
-}
-
-function vue_app_new_dungeon_generator_premium_shortcode() {
-	return '<div id="app" data-page="new-dungeon-generator-premium"></div>';
-}
-add_shortcode( 'vue_app_new_dungeon_generator', 'vue_app_new_dungeon_generator_shortcode' );
-add_shortcode( 'vue_app_new_dungeon_generator_premium', 'vue_app_new_dungeon_generator_premium_shortcode' );
-
 function vue_app_setting_generator_shortcode() {
 	return '<div id="app" data-page="setting-generator"></div>';
 }
@@ -463,12 +453,12 @@ function vue_app_item_generator_premium_shortcode() {
 add_shortcode( 'vue_app_item_generator_premium', 'vue_app_item_generator_premium_shortcode' );
 
 function vue_app_dungeon_generator_shortcode() {
-    return '<div id="app" data-page="new-dungeon-generator"></div>';
+    return '<div id="app" data-page="dungeon-generator"></div>';
 }
 add_shortcode( 'vue_app_dungeon_generator', 'vue_app_dungeon_generator_shortcode' );
 
 function vue_app_dungeon_generator_premium_shortcode() {
-	return '<div id="app" data-page="new-dungeon-generator-premium"></div>';
+	return '<div id="app" data-page="dungeon-generator-premium" data-premium="true"></div>';
 }
 add_shortcode( 'vue_app_dungeon_generator_premium', 'vue_app_dungeon_generator_premium_shortcode' );
 

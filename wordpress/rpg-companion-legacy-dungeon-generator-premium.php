@@ -4,15 +4,15 @@
  *
  * A template to force full-width layout, remove breadcrumbs, and remove the page title.
  *
- * Template Name: RPG Companion New Dungeon Generator
+ * Template Name: RPG Companion Legacy Dungeon Generator Premium
  *
- * @package Genesis Custom RPG Companion New Dungeon Generator
+ * @package Genesis Custom RPG Companion Legacy Dungeon Generator Premium
  * @author  Your Name
  * @license GPL-2.0-or-later
  * @link    https://your-link.com/
  */
 
-//* Remove site header elements
+// Removes the entry header markup and page title.
 remove_action( 'genesis_header', 'genesis_header_markup_open', 5 );
 remove_action( 'genesis_header', 'genesis_do_header' );
 remove_action( 'genesis_header', 'genesis_header_markup_close', 15 );
@@ -41,7 +41,7 @@ remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs');
 
 // Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
-    rpg_companion_enqueue_entry( 'new-dungeon-generator' );
+    rpg_companion_enqueue_entry( 'legacy-dungeon-generator' );
 
     wp_register_style( 'rpg-companion-overrides', false );
     wp_enqueue_style( 'rpg-companion-overrides' );
@@ -52,13 +52,6 @@ function vue_app_enqueue_assets() {
         }
         .site-container .site-inner {
             max-width: none;
-            padding: 0;
-        }
-        .entry-content ul {
-            margin-bottom: 0;
-        }
-        button:focus, button:hover {
-            background-color: #fff;
         }
         .statblock ul.abilities {
             margin: 0;
@@ -117,10 +110,10 @@ add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 
 //Add Vue app root element.
 function vue_app_render_root_element() {
-    echo '<div id="app" data-page="new-dungeon-generator"></div>';
+    echo '<div id="app" data-page="legacy-dungeon-generator-premium"></div>';
 }
 
-// add_action( 'genesis_entry_content', 'vue_app_render_root_element' );
+//add_action( 'genesis_entry_content', 'vue_app_render_root_element' );
 
 // Runs the Genesis loop.
 genesis();
