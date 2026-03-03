@@ -103,8 +103,7 @@ import BookGenerator from '@/components/BookGenerator.vue';
 import LegacyDungeonGenerator from '@/tools/legacy-tools/dungeon-generator/LegacyDungeonGenerator.vue';
 import LegacyDungeonGeneratorPremium from '@/tools/legacy-tools/dungeon-generator/LegacyDungeonGeneratorPremium.vue';
 import ItemGenerator from '@/tools/item-generator/ItemGenerator.vue';
-import EncounterGenerator from '@/components/EncounterGenerator.vue';
-import EncounterGeneratorPremium from '@/components/EncounterGeneratorPremium.vue';
+import EncounterGenerator from '@/tools/encounter-generator/EncounterGenerator.vue';
 import SettingGenerator from '@/tools/setting-generator/SettingGenerator.vue';
 import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGeneratorWrapper.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
@@ -131,7 +130,6 @@ export default {
     LoreGenerator,
     ItemGenerator,
     EncounterGenerator,
-    EncounterGeneratorPremium,
     SettingGenerator,
     TabsExample,
     LandingPage,

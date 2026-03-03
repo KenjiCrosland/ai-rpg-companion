@@ -27,3 +27,17 @@ launch.json
 *.njsproj
 *.sln
 *.sw?
+
+# ══════════════════════════════════════════════════════════════════════════
+# Data Processing Artifacts (not needed at runtime)
+# ══════════════════════════════════════════════════════════════════════════
+
+# AI-generated batches (temporary outputs from creature intelligence generation)
+/creature-intelligence-batches/
+
+# Intermediate/backup data files (only processed versions are used)
+/src/data/srd-monsters-raw.json
+/src/data/srd-monsters-raw.json.bak
+/src/data/srd-monsters-temp.json
+/src/data/srd-alt.json
+/src/data/srd-monsters-statblocks.json

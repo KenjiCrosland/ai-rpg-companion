@@ -1,4 +1,4 @@
 import { mountApp } from './base.js';
-import EncounterGenerator from '../components/EncounterGenerator.vue';
+import EncounterGenerator from '@/tools/encounter-generator/EncounterGenerator.vue';
 
 mountApp(EncounterGenerator, true);

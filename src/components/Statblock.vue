@@ -169,7 +169,7 @@
             <h3>Actions</h3>
             <ul class="abilities">
                 <div v-if="!isEditing">
-                    <li v-for="(action, index) in monster.actions" :key="'action-' + index">
+                    <li v-for="(action, index) in editedActions" :key="'action-' + index">
                         <strong>{{ action.name }}: </strong>
                         <span>{{ action.description }}</span>
                     </li>

@@ -3,6 +3,7 @@ export async function generateGptResponse(
   validateJSONKeys = null,
   maxAttempts = 3,
   previousContext,
+  model = 'gpt-4o-mini',
 ) {
   let attempts = 0;
   let validJson = false;
@@ -19,7 +20,7 @@ export async function generateGptResponse(
                 ${previousJSONString}`;
       }
       const body = {
-        model: 'gpt-4o-mini',
+        model: model,
         messages: [
           { role: 'system', content: 'You are an assistant Game Master.' },
           { role: 'user', content: retryPrompt ? retryPrompt : prompt },

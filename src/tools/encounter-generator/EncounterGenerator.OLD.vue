@@ -220,9 +220,9 @@
             </div>
 
             <div v-if="monster.statblock || monster.loadingPart1 || monster.loadingPart2">
-              <StatblockBase v-if="monster.loadingPart1 || monster.loadingPart2 || monster.statblock"
+              <Statblock v-if="monster.loadingPart1 || monster.loadingPart2 || monster.statblock"
                 :monster="monster.statblock" :loadingPart1="monster.loadingPart1" :loadingPart2="monster.loadingPart2"
-                :copyButtons="true" />
+                :premium="premium" />
 
               <SaveStatblock v-if="monster.statblock" :monster="monster.statblock" :statblockLink="statblockAppLink" />
             </div>
@@ -268,20 +268,20 @@ import {
   CdrTooltip
 } from "@rei/cedar";
 
-import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
-import StatblockBase from './StatblockBase.vue';
-import SaveStatblock from './SaveStatblock.vue';
+import ToolSuiteShowcase from '@/components/ToolSuiteShowcase.vue';
+import Statblock from '@/components/Statblock.vue';
+import SaveStatblock from '@/components/SaveStatblock.vue';
 
-import encounterDifficulty from '../data/encounter-difficulty.json';
-import challengeRatingData from '../data/challengeRatings.json';
-import crToXP from '../data/cr-to-xp.json';
+import encounterDifficulty from '@/data/encounter-difficulty.json';
+import challengeRatingData from '@/data/challengeRatings.json';
+import crToXP from '@/data/cr-to-xp.json';
 
-import { generateGptResponse } from "../util/open-ai.mjs";
-import { createLocationPrompt } from '../prompts/prompts.mjs';
-import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
-import encounterPrompt from '../prompts/encounter-prompt.mjs';
-import { convertEncounterToMarkdown } from '../util/convertToMarkdown.mjs';
-import { canGenerateStatblock } from "../util/can-generate-statblock.mjs";
+import { generateGptResponse } from "@/util/open-ai.mjs";
+import { createLocationPrompt } from '@/prompts/prompts.mjs';
+import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';
+import encounterPrompt from '@/prompts/encounter-prompt.mjs';
+import { convertEncounterToMarkdown } from '@/util/convertToMarkdown.mjs';
+import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 
 const props = defineProps({
   premium: {

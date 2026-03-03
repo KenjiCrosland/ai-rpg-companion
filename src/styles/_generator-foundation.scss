@@ -1,0 +1,234 @@
+// Generator Foundation
+// Shared SCSS partial for all generator tools.
+// Import this in each tool's <style lang="scss" scoped> block.
+//
+// Usage:
+//   @import '@/styles/generator-foundation';
+//
+// This file uses the SAME class names as the existing tools.
+// No renaming. No .gen-* prefix on shared layout classes.
+
+@import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
+
+// ════════════════════════════════════════════════════════════════
+// SIDEBAR
+// ════════════════════════════════════════════════════════════════
+
+$sidebar-bg: #f4f4f4;
+$sidebar-active-color: #ffffff;
+$sidebar-hover-bg: #f0f0f0;
+$sidebar-default-bg: #e0e0e0;
+$sidebar-active-border: #007BFF;
+$sidebar-transition: 0.3s;
+
+.sidebar-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  .sidebar-footer {
+    flex-shrink: 0;
+    padding: 1rem;
+    border-top: 1px solid #e0e0e0;
+    background-color: $sidebar-bg;
+  }
+}
+
+// Mixin for sidebar list buttons — each tool uses a different
+// list class name (.saved-statblocks, .npc-list, .settings-tabs,
+// .saved-encounters) but the button pattern is identical.
+@mixin sidebar-item-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 20px;
+  font-size: 1.5rem;
+  text-align: left;
+  background-color: $sidebar-default-bg;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  border-left: 5px solid transparent;
+  transition: background-color $sidebar-transition, border-left-color $sidebar-transition;
+
+  &:hover {
+    background-color: $sidebar-hover-bg;
+  }
+
+  &:focus {
+    outline: none;
+    border-left-color: $sidebar-active-border;
+  }
+
+  &.active {
+    background-color: $sidebar-active-color;
+    border-left-color: $sidebar-active-border;
+    font-weight: bold;
+  }
+}
+
+// Mixin for the active list item state (parent li.active)
+@mixin sidebar-item-active($button-class) {
+  &.active {
+    .#{$button-class} {
+      background-color: $sidebar-active-color;
+      border-left-color: $sidebar-active-border;
+      font-weight: bold;
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// LANDING PAGE: THREE-ZONE LAYOUT
+// ════════════════════════════════════════════════════════════════
+
+.landing-wrapper {
+  max-width: 855px;
+  margin: 0 auto;
+}
+
+// ZONE 1: Hero header
+.hero-header {
+  text-align: center;
+  padding: 2rem 1rem 2.5rem;
+
+  .brand-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .brand-name {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: $cdr-color-text-secondary;
+    letter-spacing: 0.02em;
+  }
+
+  .version-pill {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.2rem 0.8rem;
+    border-radius: 100px;
+    background-color: #ededed;
+    color: $cdr-color-text-secondary;
+
+    &.premium {
+      background-color: #fdf3e0;
+      color: #9c6a0a;
+    }
+  }
+
+  h1 {
+    font-size: 3.2rem;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+    color: $cdr-color-text-primary;
+  }
+
+  .value-prop {
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: $cdr-color-text-secondary;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+// ZONE 2: Form card
+.form-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem 3rem;
+}
+
+// ZONE 3: Footer meta
+.footer-meta {
+  text-align: center;
+  padding: 1.5rem 1rem 0;
+
+  .limit-info {
+    font-size: 1.2rem;
+    color: $cdr-color-text-secondary;
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// SHARED COMPONENTS
+// ════════════════════════════════════════════════════════════════
+
+// Focus/blockquote text (used in NPC, item generators)
+.focus-text {
+  background-color: $cdr-color-background-secondary;
+  color: $cdr-color-text-secondary;
+  padding: 1rem 2rem;
+  font-style: italic;
+}
+
+// Button groups (used in NPC, item, statblock generators)
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+// Edit form fields (used in NPC, item generators)
+.edit-form {
+  .edit-field {
+    margin-bottom: 1.5rem;
+  }
+}
+
+// Action bar (used in statblock, encounter generators)
+.action-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+// ════════════════════════════════════════════════════════════════
+// RESPONSIVE
+// ════════════════════════════════════════════════════════════════
+
+@media (max-width: 768px) {
+  .hero-header {
+    padding: 1.5rem 0.5rem 2rem;
+
+    h1 {
+      font-size: 2.4rem;
+    }
+  }
+
+  .form-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .action-bar {
+    flex-direction: column;
+  }
+
+  .button-group {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
