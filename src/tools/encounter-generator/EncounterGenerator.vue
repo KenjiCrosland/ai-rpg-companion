@@ -151,7 +151,13 @@
             <cdr-skeleton-bone style="width: 60%; height: 1.5rem; margin-bottom: 1rem;" />
           </cdr-skeleton>
         </div>
-        <h3 v-else-if="generatedEncounter && generatedEncounter.place_name">{{ generatedEncounter.place_name }}</h3>
+        <div v-else-if="generatedEncounter && generatedEncounter.place_name" class="encounter-header">
+          <h3>{{ generatedEncounter.place_name }}</h3>
+          <cdr-button v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details"
+            modifier="secondary" size="small" @click="startEditingEncounter">
+            Edit
+          </cdr-button>
+        </div>
 
         <!-- Skeleton for read-aloud while Call 1 loads -->
         <div v-if="loading && (!generatedEncounter || !generatedEncounter.contentArray)" class="read-aloud-skeleton">
@@ -163,8 +169,9 @@
           </cdr-skeleton>
         </div>
 
-        <!-- Render contentArray like dungeon rooms -->
-        <div v-else-if="generatedEncounter && generatedEncounter.contentArray" class="encounter-content">
+        <!-- View Mode: Render contentArray like dungeon rooms -->
+        <div v-if="!isEditingEncounter && generatedEncounter && generatedEncounter.contentArray"
+          class="encounter-content">
           <div v-for="(item, index) in generatedEncounter.contentArray" :key="index">
             <div v-if="item.format === 'read_aloud'" class="read-aloud-box">
               <p><em>{{ item.content }}</em></p>
@@ -176,6 +183,36 @@
                 <template v-else>{{ seg.text }}</template>
               </template>
             </p>
+          </div>
+        </div>
+
+        <!-- Edit Mode: Edit form for encounter -->
+        <div v-else-if="isEditingEncounter" class="edit-form">
+          <h3>Edit Encounter</h3>
+
+          <cdr-input v-model="encounterEditForm.place_name" label="Place Name" background="secondary"
+            class="edit-field">
+            <template #helper-text-bottom>
+              The name of the encounter location
+            </template>
+          </cdr-input>
+
+          <cdr-input v-model="encounterEditForm.content" label="Encounter Content (Markup Format)"
+            background="secondary" :rows="20" tag="textarea" class="edit-field">
+            <template #helper-text-bottom>
+              <div class="markup-help">
+                <strong>Markup Format Guide:</strong><br>
+                • Use <code>[READ_ALOUD]...[/READ_ALOUD]</code> for read-aloud text boxes<br>
+                • Use <code>## Header Text</code> for section headers<br>
+                • Leave blank lines between paragraphs<br>
+                • Multiple [READ_ALOUD] blocks are supported
+              </div>
+            </template>
+          </cdr-input>
+
+          <div class="button-group">
+            <cdr-button size="small" @click="saveEditEncounter">Save Changes</cdr-button>
+            <cdr-button size="small" @click="cancelEditEncounter" modifier="secondary">Cancel</cdr-button>
           </div>
         </div>
 
@@ -355,6 +392,13 @@ const showDataManagerModal = ref(false);
 const showFolderMover = ref(false);
 const folderMoveTarget = ref('');
 const newFolderName = ref('');
+
+// ─── Edit mode state ─────────────────────────────────────────────────────────
+const isEditingEncounter = ref(false);
+const encounterEditForm = ref({
+  place_name: '',
+  content: ''
+});
 
 // ─── Party calculations ──────────────────────────────────────────────────────
 const totalPartySize = computed(() =>
@@ -939,6 +983,161 @@ async function exportToMarkdown() {
   }
 }
 
+// ─── Inline editing ──────────────────────────────────────────────────────────
+// Convert contentArray to markup format
+function contentArrayToMarkup(contentArr) {
+  if (!contentArr || contentArr.length === 0) {
+    return '';
+  }
+
+  const parts = [];
+
+  contentArr.forEach(item => {
+    if (item.format === 'read_aloud') {
+      parts.push(`[READ_ALOUD]\n${item.content}\n[/READ_ALOUD]`);
+    } else if (item.format === 'header') {
+      parts.push(`## ${item.content}`);
+    } else if (item.format === 'paragraph') {
+      parts.push(item.content);
+    }
+  });
+
+  return parts.join('\n\n');
+}
+
+// Convert markup format to contentArray
+function markupToContentArray(markup) {
+  if (!markup || !markup.trim()) {
+    return [];
+  }
+
+  const contentArray = [];
+  const lines = markup.split('\n');
+  let inReadAloud = false;
+  let readAloudContent = [];
+  let currentParagraph = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Check for read-aloud block start
+    if (trimmed === '[READ_ALOUD]') {
+      // Save any accumulated paragraph first
+      if (currentParagraph.length > 0) {
+        contentArray.push({
+          format: 'paragraph',
+          content: currentParagraph.join(' ').trim()
+        });
+        currentParagraph = [];
+      }
+      inReadAloud = true;
+      readAloudContent = [];
+      continue;
+    }
+
+    // Check for read-aloud block end
+    if (trimmed === '[/READ_ALOUD]') {
+      if (inReadAloud && readAloudContent.length > 0) {
+        contentArray.push({
+          format: 'read_aloud',
+          content: readAloudContent.join(' ').trim()
+        });
+      }
+      inReadAloud = false;
+      readAloudContent = [];
+      continue;
+    }
+
+    // If we're in a read-aloud block
+    if (inReadAloud) {
+      if (trimmed) {
+        readAloudContent.push(trimmed);
+      }
+      continue;
+    }
+
+    // Check for headers (##)
+    if (trimmed.startsWith('## ')) {
+      // Save any accumulated paragraph first
+      if (currentParagraph.length > 0) {
+        contentArray.push({
+          format: 'paragraph',
+          content: currentParagraph.join(' ').trim()
+        });
+        currentParagraph = [];
+      }
+      // Add header
+      contentArray.push({
+        format: 'header',
+        content: trimmed.substring(3).trim()
+      });
+      continue;
+    }
+
+    // Handle regular content
+    if (trimmed === '') {
+      // Empty line indicates paragraph break
+      if (currentParagraph.length > 0) {
+        contentArray.push({
+          format: 'paragraph',
+          content: currentParagraph.join(' ').trim()
+        });
+        currentParagraph = [];
+      }
+    } else {
+      // Add to current paragraph
+      currentParagraph.push(trimmed);
+    }
+  }
+
+  // Add any remaining paragraph
+  if (currentParagraph.length > 0) {
+    contentArray.push({
+      format: 'paragraph',
+      content: currentParagraph.join(' ').trim()
+    });
+  }
+
+  return contentArray;
+}
+
+// Start editing encounter
+function startEditingEncounter() {
+  if (!generatedEncounter.value) return;
+
+  encounterEditForm.value = {
+    place_name: generatedEncounter.value.place_name || '',
+    content: contentArrayToMarkup(generatedEncounter.value.contentArray || [])
+  };
+
+  isEditingEncounter.value = true;
+}
+
+// Cancel editing encounter
+function cancelEditEncounter() {
+  isEditingEncounter.value = false;
+}
+
+// Save edited encounter
+function saveEditEncounter() {
+  if (!generatedEncounter.value) return;
+
+  // Update encounter name
+  generatedEncounter.value.place_name = encounterEditForm.value.place_name;
+
+  // Update contentArray from markup
+  generatedEncounter.value.contentArray = markupToContentArray(encounterEditForm.value.content);
+
+  // Save to localStorage
+  autoSaveEncounter();
+
+  // Exit edit mode
+  isEditingEncounter.value = false;
+
+  toast.success('Encounter updated');
+}
+
 // ─── Watchers for autosave ──────────────────────────────────────────────────
 watch(encounterMonsters, () => {
   autoSaveEncounter();
@@ -960,6 +1159,40 @@ onMounted(async () => {
   loadEncounters();
   loadPartyConfig();
 
+  // Check for monster query parameter from statblock generator
+  const urlParams = new URLSearchParams(window.location.search);
+  const monsterName = urlParams.get('monster');
+
+  if (monsterName) {
+    try {
+      // Import monster loading utilities
+      const { loadSRDMonsters, loadCustomMonsters } = await import('./util/monster-adapter.mjs');
+
+      // Load both SRD and custom monsters
+      const [srdMonsters, customMonsters] = await Promise.all([
+        loadSRDMonsters(),
+        Promise.resolve(loadCustomMonsters())
+      ]);
+
+      // Search for monster by name (case-insensitive)
+      const allMonsters = [...srdMonsters, ...customMonsters];
+      const foundMonster = allMonsters.find(
+        m => m.name.toLowerCase() === monsterName.toLowerCase()
+      );
+
+      if (foundMonster) {
+        // Add monster to encounter with quantity 1
+        encounterMonsters.value = [{ ...foundMonster, quantity: 1 }];
+
+        // Clear query param to prevent re-adding on refresh
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    } catch (error) {
+      console.error('Failed to load monster from query param:', error);
+    }
+  }
+
   // Migrate and cleanup enrichment data
   try {
     const { migrateOldEnrichmentFormat, cleanupOrphanedIntelligence } = await import('@/util/statblock-enrichment.mjs');
@@ -969,30 +1202,25 @@ onMounted(async () => {
     console.warn('[ENRICHMENT] Failed to run migration/cleanup:', error);
   }
 
-  // Setup ResizeObserver
-  if (partyColumnRef.value) {
-    const updatePickerHeight = () => {
-      if (partyColumnRef.value && pickerColumnRef.value) {
-        const rightHeight = partyColumnRef.value.offsetHeight;
-        const pickerHeight = Math.max(400, rightHeight);
-        pickerColumnRef.value.style.height = `${pickerHeight}px`;
-      }
-    };
+  // Wait for loaded data to render before measuring
+  await nextTick();
 
+  // Setup ResizeObserver after data has rendered
+  if (partyColumnRef.value && pickerColumnRef.value) {
+    // Initial size calculation
+    const rightHeight = partyColumnRef.value.offsetHeight;
+    pickerColumnRef.value.style.height = `${Math.max(400, rightHeight)}px`;
+
+    // Then observe for future changes
     resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const rightHeight = entry.contentRect.height;
         if (pickerColumnRef.value) {
-          const pickerHeight = Math.max(400, rightHeight);
-          pickerColumnRef.value.style.height = `${pickerHeight}px`;
+          pickerColumnRef.value.style.height = `${Math.max(400, rightHeight)}px`;
         }
       }
     });
     resizeObserver.observe(partyColumnRef.value);
-
-    // Trigger initial height calculation after DOM is fully rendered
-    await nextTick();
-    setTimeout(updatePickerHeight, 100);
   }
 });
 
@@ -1391,6 +1619,54 @@ onUnmounted(() => {
 
 .export-action {
   flex-shrink: 0;
+}
+
+/* ─── Encounter Header with Edit Button ────────────────────────────────── */
+.encounter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.encounter-header h3 {
+  margin: 0;
+  flex: 1;
+}
+
+/* ─── Edit Form ──────────────────────────────────────────────────────────── */
+.edit-form {
+  margin-bottom: 2rem;
+}
+
+.edit-form h3 {
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+}
+
+.edit-field {
+  margin-bottom: 1.5rem;
+}
+
+.markup-help {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #666;
+}
+
+.markup-help code {
+  background: #f5f5f5;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8125rem;
+}
+
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */

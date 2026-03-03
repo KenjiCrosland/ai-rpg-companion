@@ -108,6 +108,9 @@
         <cdr-button modifier="secondary" @click="showFolderMover = !showFolderMover">
           {{ showFolderMover ? 'Cancel' : 'Move to Folder' }}
         </cdr-button>
+        <cdr-button modifier="secondary" @click="useInEncounter">
+          Use in Encounter
+        </cdr-button>
         <cdr-button modifier="dark" @click="deleteStatblock">
           Delete Statblock
         </cdr-button>
@@ -362,6 +365,21 @@ function handleFolderMove() {
   folderMoveTarget.value = '';
   newFolder.value = '';
   toast.success(`Moved to ${targetFolder}.`);
+}
+
+function useInEncounter() {
+  if (!monster.value) return;
+
+  // Navigate to encounter generator with monster name as query param
+  const monsterName = encodeURIComponent(monster.value.name);
+
+  // Use localhost in dev, production URL in prod
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const baseUrl = isDev
+    ? 'http://localhost:5173/encounter.html'
+    : 'https://cros.land/dnd-5e-encounter-generator/';
+
+  window.location.href = `${baseUrl}?monster=${monsterName}`;
 }
 
 async function deleteStatblock() {
