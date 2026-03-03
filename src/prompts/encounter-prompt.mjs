@@ -18,14 +18,66 @@ import creatureIntelligenceData from '@/data/creature-intelligence.json';
 // ─── CREATURE INTELLIGENCE HELPERS ────────────────────────────────────────
 
 /**
- * Get creature intelligence data for creatures in the encounter
+ * Get creature intelligence data for creatures in the encounter.
+ * Checks localStorage first for custom/enriched creatures, then falls back to creature-intelligence.json.
+ * If a custom creature has no enrichment data, triggers lazy enrichment.
+ *
+ * @param {Array} encounterCreatures - Array of creature objects with full statblock data
+ * @returns {Promise<Object>} Map of creature names to intelligence data
  */
-export function getCreatureIntelligence(encounterCreatures) {
+export async function getCreatureIntelligence(encounterCreatures) {
   const result = {};
-  for (const creature of encounterCreatures) {
-    const intel = creatureIntelligenceData[creature.name];
-    if (intel) result[creature.name] = intel;
+
+  // Load all custom intelligence data once
+  let customIntelligence = {};
+  try {
+    const stored = localStorage.getItem('creature-intelligence');
+    if (stored) {
+      customIntelligence = JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('[CREATURE INTELLIGENCE] Failed to load custom intelligence from localStorage:', error);
   }
+
+  for (const creature of encounterCreatures) {
+    // Check custom intelligence first (for custom statblocks)
+    if (customIntelligence[creature.name]) {
+      result[creature.name] = customIntelligence[creature.name];
+      console.log(`[CREATURE INTELLIGENCE] Using enriched data for ${creature.name} from localStorage`);
+      continue;
+    }
+
+    // Fall back to creature-intelligence.json (for SRD creatures)
+    const intel = creatureIntelligenceData[creature.name];
+    if (intel) {
+      result[creature.name] = intel;
+      console.log(`[CREATURE INTELLIGENCE] Using SRD data for ${creature.name}`);
+      continue;
+    }
+
+    // Lazy enrichment: If no data found and creature has statblock data, enrich on-demand
+    // Custom creatures have 'source: custom' or have statblock fields like 'attributes', 'actions', 'abilities'
+    const isCustomCreature = creature.source === 'custom' ||
+                            creature.attributes !== undefined ||
+                            (creature.actions && Array.isArray(creature.actions));
+
+    if (isCustomCreature) {
+      console.log(`[CREATURE INTELLIGENCE] No data found for ${creature.name}, triggering lazy enrichment...`);
+      try {
+        const { enrichCustomStatblock, saveEnrichment } = await import('@/util/statblock-enrichment.mjs');
+        const enrichment = await enrichCustomStatblock(creature);
+        saveEnrichment(creature.name, enrichment);
+        result[creature.name] = enrichment;
+        console.log(`[CREATURE INTELLIGENCE] Lazy enrichment complete for ${creature.name}`);
+      } catch (error) {
+        console.warn(`[CREATURE INTELLIGENCE] Lazy enrichment failed for ${creature.name}:`, error);
+        // Continue without intelligence data - encounter will be more generic
+      }
+    } else {
+      console.warn(`[CREATURE INTELLIGENCE] No intelligence data found for ${creature.name} and no statblock data to enrich`);
+    }
+  }
+
   return result;
 }
 

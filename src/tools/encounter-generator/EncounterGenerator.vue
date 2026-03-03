@@ -560,12 +560,10 @@ async function newEncounter(folderName = 'Uncategorized') {
   location.value = '';
   generatedEncounter.value = null;
 
-  // Wait for DOM update and trigger resize recalculation
+  // Set picker to minimum height since encounter is empty
   await nextTick();
-  if (partyColumnRef.value && pickerColumnRef.value) {
-    const rightHeight = partyColumnRef.value.offsetHeight;
-    const pickerHeight = Math.max(400, rightHeight);
-    pickerColumnRef.value.style.height = `${pickerHeight}px`;
+  if (pickerColumnRef.value) {
+    pickerColumnRef.value.style.height = '400px';
   }
 }
 
@@ -660,8 +658,8 @@ async function generateEncounter() {
   };
 
   try {
-    // Get creature intelligence data
-    const creatureIntel = getCreatureIntelligence(encounterMonsters.value);
+    // Get creature intelligence data (async - supports lazy enrichment for custom creatures)
+    const creatureIntel = await getCreatureIntelligence(encounterMonsters.value);
     console.log('=== CREATURE INTELLIGENCE ===');
     console.log(creatureIntel);
 
@@ -793,12 +791,10 @@ async function resetEncounter() {
   generatedEncounter.value = null;
   activeEncounterIndex.value = null;
 
-  // Wait for DOM update and trigger resize recalculation
+  // Set picker to minimum height since encounter is empty
   await nextTick();
-  if (partyColumnRef.value && pickerColumnRef.value) {
-    const rightHeight = partyColumnRef.value.offsetHeight;
-    const pickerHeight = Math.max(400, rightHeight);
-    pickerColumnRef.value.style.height = `${pickerHeight}px`;
+  if (pickerColumnRef.value) {
+    pickerColumnRef.value.style.height = '400px';
   }
 }
 
@@ -960,11 +956,29 @@ watch(location, () => {
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 let resizeObserver = null;
 
-onMounted(() => {
+onMounted(async () => {
   loadEncounters();
   loadPartyConfig();
 
+  // Migrate and cleanup enrichment data
+  try {
+    const { migrateOldEnrichmentFormat, cleanupOrphanedIntelligence } = await import('@/util/statblock-enrichment.mjs');
+    migrateOldEnrichmentFormat();
+    cleanupOrphanedIntelligence();
+  } catch (error) {
+    console.warn('[ENRICHMENT] Failed to run migration/cleanup:', error);
+  }
+
+  // Setup ResizeObserver
   if (partyColumnRef.value) {
+    const updatePickerHeight = () => {
+      if (partyColumnRef.value && pickerColumnRef.value) {
+        const rightHeight = partyColumnRef.value.offsetHeight;
+        const pickerHeight = Math.max(400, rightHeight);
+        pickerColumnRef.value.style.height = `${pickerHeight}px`;
+      }
+    };
+
     resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const rightHeight = entry.contentRect.height;
@@ -975,6 +989,10 @@ onMounted(() => {
       }
     });
     resizeObserver.observe(partyColumnRef.value);
+
+    // Trigger initial height calculation after DOM is fully rendered
+    await nextTick();
+    setTimeout(updatePickerHeight, 100);
   }
 });
 

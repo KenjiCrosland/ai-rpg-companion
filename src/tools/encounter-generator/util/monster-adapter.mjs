@@ -33,13 +33,67 @@ function getXPForCR(cr) {
  * @param {string} folderName - Name of folder monster belongs to
  * @returns {object} - Normalized monster object
  */
+/**
+ * Parse ability scores from attributes string
+ * Format: "STR 18 (+4), DEX 16 (+3), CON 15 (+2), INT 3 (-4), WIS 10 (+0), CHA 16 (+3)"
+ */
+function parseAttributes(attributesString) {
+  const defaults = { STR: '10', DEX: '10', CON: '10', INT: '10', WIS: '10', CHA: '10' };
+  if (!attributesString) return defaults;
+
+  const regex = /(STR|DEX|CON|INT|WIS|CHA)\s+(\d+)/gi;
+  const matches = attributesString.matchAll(regex);
+
+  for (const match of matches) {
+    const ability = match[1].toUpperCase();
+    const score = match[2];
+    defaults[ability] = score;
+  }
+
+  return defaults;
+}
+
 export function normalizeCustomMonster(monster, folderName = 'Uncategorized') {
   const cr = extractCR(monster.challenge_rating);
   const xp = getXPForCR(cr);
 
+  // Parse creature type from meta field or type_and_alignment
+  // Format: "Large dragon, chaotic evil" or "Large undead, neutral evil"
+  const typeField = monster.type_and_alignment || monster.meta || '';
+  const metaParts = typeField.split(',');
+  const sizeAndType = metaParts[0].trim().split(' ');
+  const creatureType = sizeAndType.slice(1).join(' ') || 'creature';
+
+  // Parse ability scores from attributes string if present
+  const abilities = parseAttributes(monster.attributes);
+
   return {
     // Flatten statblock fields first
     ...monster,
+
+    // Ensure uppercase ability scores (handles multiple formats)
+    STR: String(monster.STR || monster.str || abilities.STR),
+    DEX: String(monster.DEX || monster.dex || abilities.DEX),
+    CON: String(monster.CON || monster.con || abilities.CON),
+    INT: String(monster.INT || monster.int || abilities.INT),
+    WIS: String(monster.WIS || monster.wis || abilities.WIS),
+    CHA: String(monster.CHA || monster.cha || abilities.CHA),
+
+    // Ensure capitalized field names for enrichment and encounter-enrichment
+    Speed: monster.speed || monster.Speed || '',
+    Senses: monster.senses || monster.Senses || '',
+    Languages: monster.languages || monster.Languages || '',
+    'Damage Immunities': monster.damage_immunities || monster['Damage Immunities'] || '',
+    'Damage Resistances': monster.damage_resistances || monster['Damage Resistances'] || '',
+    'Damage Vulnerabilities': monster.damage_vulnerabilities || monster['Damage Vulnerabilities'] || '',
+    'Condition Immunities': monster.condition_immunities || monster['Condition Immunities'] || '',
+
+    // Custom statblocks use lowercase, keep both for compatibility
+    Actions: monster.actions || monster.Actions || '',
+    Traits: monster.abilities || monster.Traits || monster.traits || monster['Special Abilities'] || '',
+    Reactions: monster.reactions || monster.Reactions || '',
+    'Legendary Actions': monster.legendary_actions || monster['Legendary Actions'] || '',
+
     // Then override with normalized fields
     name: monster.name || 'Unnamed Monster',
     cr,
@@ -50,6 +104,7 @@ export function normalizeCustomMonster(monster, folderName = 'Uncategorized') {
     statblock: monster, // Full statblock available for display
     description: '',
     type: 'Balanced',
+    creatureType,
     isSpellcaster: false,
   };
 }

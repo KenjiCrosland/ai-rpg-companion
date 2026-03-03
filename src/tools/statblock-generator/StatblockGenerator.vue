@@ -364,10 +364,12 @@ function handleFolderMove() {
   toast.success(`Moved to ${targetFolder}.`);
 }
 
-function deleteStatblock() {
+async function deleteStatblock() {
   if (!confirm(`Delete "${monster.value.name}"? This cannot be undone.`)) return;
 
+  const deletedName = monster.value.name;
   const folderName = activeFolder.value || 'Uncategorized';
+
   monsters.value[folderName].splice(activeMonsterIndex.value, 1);
   monster.value = null;
   activeMonsterIndex.value = null;
@@ -381,6 +383,14 @@ function deleteStatblock() {
   const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
   const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
+
+  // Delete associated intelligence data
+  try {
+    const { deleteEnrichment } = await import('@/util/statblock-enrichment.mjs');
+    deleteEnrichment(deletedName);
+  } catch (error) {
+    console.warn(`[ENRICHMENT] Failed to delete intelligence for ${deletedName}:`, error);
+  }
 }
 
 async function generateStatblock() {
@@ -444,6 +454,7 @@ async function generateStatblock() {
   finalMonster.monsterName = monsterName.value || monster.name;
   finalMonster.caster = caster.value;
 
+  // Save and display statblock immediately
   if (activeMonsterIndex.value !== null) {
     monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
     monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
@@ -465,6 +476,16 @@ async function generateStatblock() {
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
   loadingPart2.value = false;
   toast.success('Statblock generated and saved.');
+
+  // Enrich custom statblock in background (non-blocking)
+  try {
+    const { enrichCustomStatblock, saveEnrichment } = await import('@/util/statblock-enrichment.mjs');
+    const enrichment = await enrichCustomStatblock(finalMonster);
+    saveEnrichment(finalMonster.name, enrichment);
+  } catch (error) {
+    console.warn(`[ENRICHMENT] Failed to enrich ${finalMonster.name}:`, error);
+    // Non-fatal: statblock still works, just won't have intelligence data for encounters
+  }
 }
 </script>
 

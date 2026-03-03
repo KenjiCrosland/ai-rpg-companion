@@ -9,9 +9,14 @@
         <div class="monster-info">
           <div class="monster-header">
             <span class="monster-name">{{ monster.name }}</span>
-            <span :class="['source-badge', getSourceClass(monster.source)]">
-              {{ monster.sourceLabel || monster.source || 'Unknown' }}
-            </span>
+            <div class="badge-group">
+              <span :class="['source-badge', getSourceClass(monster.source)]">
+                {{ getSourceLabel(monster) }}
+              </span>
+              <span v-if="shouldShowFolderBadge(monster)" class="folder-badge">
+                {{ monster.sourceLabel }}
+              </span>
+            </div>
           </div>
           <div class="monster-stats">
             <span class="stat">CR {{ monster.cr }}</span>
@@ -92,6 +97,20 @@ function getSourceClass(source) {
   if (s === 'custom') return 'source-custom';
   if (s === 'saved') return 'source-saved';
   return 'source-other';
+}
+
+function getSourceLabel(monster) {
+  // Show "Custom" for custom creatures instead of folder name
+  if (monster.source === 'custom') return 'Custom';
+  // Otherwise use the sourceLabel or source
+  return monster.sourceLabel || monster.source || 'Unknown';
+}
+
+function shouldShowFolderBadge(monster) {
+  // Show folder badge only for custom creatures with a folder name that's not Uncategorized
+  return monster.source === 'custom' &&
+         monster.sourceLabel &&
+         monster.sourceLabel !== 'Uncategorized';
 }
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -230,6 +249,27 @@ function removeMonster(index) {
   background: #f5f5f5;
   color: #757575;
   border: 1px solid #e0e0e0;
+}
+
+/* ─── Badge group layout ────────────────────────────────────────────────────── */
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.folder-badge {
+  padding: 0.0625rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffcc80;
 }
 
 /* ─── Monster stats ─────────────────────────────────────────────────────────── */
