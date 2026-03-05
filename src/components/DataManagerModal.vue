@@ -126,6 +126,11 @@ const knownApps = [
     key: 'dungeons',
     appName: 'Dungeon Generator',
     premiumLink: 'https://cros.land/dungeon-generator-2-0-premium-version/'
+  },
+  {
+    key: 'encounters',
+    appName: 'Encounter Generator',
+    premiumLink: 'https://cros.land/dnd-5e-encounter-generator/'
   }
 ];
 

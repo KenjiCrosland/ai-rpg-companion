@@ -43,6 +43,7 @@
 
         <div class="button-group">
           <cdr-button @click="startEditing" modifier="secondary">Edit Overview</cdr-button>
+          <cdr-button @click="confirmDelete" modifier="dark">Delete Current Dungeon</cdr-button>
         </div>
       </div>
 
@@ -162,6 +163,16 @@ const saveEdit = () => {
   dungeonStore.saveDungeons();
 
   isEditing.value = false;
+};
+
+// Confirm and delete current dungeon
+const confirmDelete = () => {
+  const dungeonName = dungeonStore.currentDungeon?.dungeonOverview?.title || 'this dungeon';
+  const confirmed = window.confirm(`Are you sure you want to delete "${dungeonName}"? This action cannot be undone.`);
+
+  if (confirmed) {
+    dungeonStore.deleteDungeon(dungeonStore.currentDungeonId);
+  }
 };
 </script>
 

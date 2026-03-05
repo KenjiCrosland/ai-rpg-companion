@@ -277,7 +277,7 @@
       </div>
 
       <!-- Footer with save/load or upgrade prompt -->
-      <div v-if="generatedEncounter || loading" class="encounter-footer">
+      <div class="encounter-footer">
         <!-- Free users: Show message + unlock button -->
         <div v-if="!premium">
           <p>

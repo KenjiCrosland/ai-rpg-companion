@@ -130,6 +130,40 @@ function rpg_companion_encounter_enqueue_assets() {
 			.button:hover {
 				color: inherit;
 			}
+
+			/* --- Patreon Button Overrides --- */
+			.patreon-universal-button a {
+				text-decoration: none;
+			}
+			.patreon-universal-button .patreon-responsive-button {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
+				padding: 0.75rem 1.5rem;
+				background: #F96854;
+				color: #fff;
+				font-weight: 700;
+				font-size: 0.9375rem;
+				font-variant: small-caps;
+				text-decoration: none;
+				border-radius: 6px;
+				transition: all 0.2s ease;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+				border: none;
+			}
+			.patreon-universal-button .patreon-responsive-button:hover {
+				background: #e63946;
+				transform: translateY(-1px);
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+			}
+			.patreon-universal-button .patreon-responsive-button:active {
+				transform: translateY(0);
+			}
+			.patreon-universal-button .patreon_logo {
+				width: 20px;
+				height: 20px;
+			}
 			' );
 }
 add_action( 'wp_enqueue_scripts', 'rpg_companion_encounter_enqueue_assets' );

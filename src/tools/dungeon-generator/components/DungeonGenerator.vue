@@ -20,9 +20,6 @@
         </div>
 
         <div class="sidebar-footer">
-          <cdr-button modifier="dark" @click="showDataManagerModal = true" :full-width="true">
-            Save/Load Data from a File
-          </cdr-button>
           <cdr-button @click="deleteAllDungeons" modifier="secondary" :full-width="true">Delete All
             Dungeons</cdr-button>
         </div>
@@ -78,18 +75,30 @@
           </form>
         </div>
 
-        <!-- ZONE 3: Footer meta -->
-        <div class="footer-meta">
-          <p v-if="!premium" class="limit-info">
-            Free: 5 statblock generations per 24 hours. Full dungeon creation, maps, NPCs, and exports included.
-            <cdr-link href="https://cros.land/dungeon-generator-2-0-premium-version/">Go Premium for unlimited
-              statblocks
-              &rarr;</cdr-link>
-          </p>
-          <p v-else class="limit-info">
-            Premium: Unlimited statblocks, NPCs, monsters, and map generation. Export to Homebrewery, HTML, or plain
-            text.
-          </p>
+        <!-- ZONE 3: Footer with save/load or upgrade prompt -->
+        <div class="dungeon-footer">
+          <div v-if="!premium">
+            <p>
+              All dungeon generations are currently free. Dungeon data is saved on this browser. 5 statblock generations per 24 hours. To save/load dungeon data for use in another computer or browser, or unlock unlimited statblocks, requires a premium Patreon subscription.
+            </p>
+            <div class="patreon-universal-button">
+              <a :href="patreonLoginUrl">
+                <div class="patreon-responsive-button-wrapper">
+                  <div class="patreon-responsive-button">
+                    <img class="patreon_logo"
+                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                      alt="Unlock with Patreon"> Unlock with Patreon
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div v-else>
+            <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
+            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+              Save/Load Data from a File
+            </cdr-button>
+          </div>
         </div>
       </div>
       <div v-if="dungeonStore.currentDungeon || dungeonStore.loadingOverview" class="content-container">
@@ -115,17 +124,37 @@
         <DungeonExports :dungeon="dungeonStore.currentDungeon" />
       </div>
 
-      <!-- Delete Button -->
-      <cdr-button v-if="dungeonStore.currentDungeon" class="delete-dungeon-button" size="small" modifier="secondary"
-        @click="dungeonStore.deleteDungeon(dungeonStore.currentDungeonId)">
-        Delete Current Dungeon
-      </cdr-button>
+      <!-- Footer below content -->
+      <div v-if="dungeonStore.currentDungeon || dungeonStore.loadingOverview" class="dungeon-footer">
+        <div v-if="!premium">
+          <p>
+            All dungeon generations are currently free. Dungeon data is saved on this browser. 5 statblock generations per 24 hours. To save/load dungeon data for use in another computer or browser, or unlock unlimited statblocks, requires a premium Patreon subscription.
+          </p>
+          <div class="patreon-universal-button">
+            <a :href="patreonLoginUrl">
+              <div class="patreon-responsive-button-wrapper">
+                <div class="patreon-responsive-button">
+                  <img class="patreon_logo"
+                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                    alt="Unlock with Patreon"> Unlock with Patreon
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div v-else>
+          <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
+          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            Save/Load Data from a File
+          </cdr-button>
+        </div>
+      </div>
     </div>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
 
@@ -149,6 +178,12 @@ const props = defineProps({
 const dungeonStore = useDungeonStore();
 const toast = useToast();
 const showDataManagerModal = ref(false);
+
+// Patreon OAuth URL with return to current page
+const patreonLoginUrl = computed(() => {
+  const returnUrl = encodeURIComponent(window.location.href);
+  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
+});
 
 const difficultyOptions = [
   'Tier 1: Basic - A local hero in the making.',
@@ -344,16 +379,61 @@ onMounted(() => {
   }
 }
 
-/* ZONE 3: Footer meta */
-.footer-meta {
+/* ZONE 3: Dungeon Footer (below form and content) */
+.dungeon-footer {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   text-align: center;
-  padding: 1.5rem 1rem 0;
 
-  .limit-info {
-    font-size: 1.4rem;
-    color: #6c757d;
-    margin: 0;
+  p {
+    margin: 0 0 1rem 0;
+    color: #6b7280;
+    font-size: 1.6rem;
     line-height: 1.6;
+  }
+}
+
+/* ─── Patreon Button ────────────────────────────────────────────────────── */
+.patreon-universal-button {
+  margin-top: 0.75rem;
+
+  a {
+    text-decoration: none;
+  }
+
+  .patreon-responsive-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #F96854;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    font-variant: small-caps;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .patreon_logo {
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      background: #e63946;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 
@@ -366,10 +446,6 @@ onMounted(() => {
   padding: 2.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   margin-bottom: 2rem;
-}
-
-.delete-dungeon-button {
-  margin-top: 2rem;
 }
 
 /* ========================================
