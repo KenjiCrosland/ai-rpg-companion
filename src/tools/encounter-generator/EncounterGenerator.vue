@@ -37,11 +37,7 @@
           </cdr-accordion-group>
         </div>
 
-        <div class="sidebar-footer">
-          <cdr-button modifier="dark" @click="showDataManagerModal = true" :full-width="true">
-            Save/Load Data from a File
-          </cdr-button>
-        </div>
+        <!-- Sidebar footer removed - save/load moved to main footer -->
 
         <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
           :premium="premium" currentApp="encounters" />
@@ -75,12 +71,12 @@
 
           <!-- Monster Picker + Party/Encounter List side by side -->
           <section class="form-section monster-party-row">
-            <div ref="pickerColumnRef" class="picker-column">
+            <div class="picker-column">
               <h2>Monsters</h2>
               <MonsterPicker @add-monster="addMonster" />
             </div>
 
-            <div ref="partyColumnRef" class="party-encounter-column">
+            <div class="party-encounter-column">
               <div class="party-bar">
                 <h2>
                   Party
@@ -153,8 +149,8 @@
         </div>
         <div v-else-if="generatedEncounter && generatedEncounter.place_name" class="encounter-header">
           <h3>{{ generatedEncounter.place_name }}</h3>
-          <cdr-button v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details"
-            modifier="secondary" size="small" @click="startEditingEncounter">
+          <cdr-button v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" modifier="secondary"
+            size="small" @click="startEditingEncounter">
             Edit
           </cdr-button>
         </div>
@@ -279,12 +275,43 @@
           </div>
         </div>
       </div>
+
+      <!-- Footer with save/load or upgrade prompt -->
+      <div v-if="generatedEncounter || loading" class="encounter-footer">
+        <!-- Free users: Show message + unlock button -->
+        <div v-if="!premium">
+          <p>
+            All encounter generations are currently free. Encounter data is saved on this browser. To save/load
+            encounter
+            data for use in another computer or browser requires a premium Patreon subscription.
+          </p>
+          <div class="patreon-universal-button">
+            <a :href="patreonLoginUrl">
+              <div class="patreon-responsive-button-wrapper">
+                <div class="patreon-responsive-button">
+                  <img class="patreon_logo"
+                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                    alt="Unlock with Patreon"> Unlock with Patreon
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Premium users: Show save/load button -->
+        <div v-else>
+          <p>Encounter data is saved on this browser. Export to a file to use on another device.</p>
+          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            Save/Load Data from a File
+          </cdr-button>
+        </div>
+      </div>
     </div>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { CdrButton, CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
@@ -377,16 +404,18 @@ const location = ref('');
 const loading = ref(false);
 const generatedEncounter = ref(null);
 
-// ─── Template refs for height matching ──────────────────────────────────────
-const pickerColumnRef = ref(null);
-const partyColumnRef = ref(null);
-
 // ─── localStorage state ──────────────────────────────────────────────────────
 const savedEncounters = ref({});
 const activeEncounterIndex = ref(null);
 const activeFolder = ref('Uncategorized');
 const openedFolders = ref({ 'Uncategorized': true });
 const showDataManagerModal = ref(false);
+
+// ─── Premium / Patreon ───────────────────────────────────────────────────────
+const patreonLoginUrl = computed(() => {
+  const returnUrl = encodeURIComponent(window.location.href);
+  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
+});
 
 // ─── Folder management ───────────────────────────────────────────────────────
 const showFolderMover = ref(false);
@@ -595,7 +624,7 @@ function selectEncounter(folderName, index) {
   generatedEncounter.value = encounter.generatedEncounter || null;
 }
 
-async function newEncounter(folderName = 'Uncategorized') {
+function newEncounter(folderName = 'Uncategorized') {
   activeFolder.value = folderName;
   activeEncounterIndex.value = null;
 
@@ -603,12 +632,6 @@ async function newEncounter(folderName = 'Uncategorized') {
   encounterMonsters.value = [];
   location.value = '';
   generatedEncounter.value = null;
-
-  // Set picker to minimum height since encounter is empty
-  await nextTick();
-  if (pickerColumnRef.value) {
-    pickerColumnRef.value.style.height = '400px';
-  }
 }
 
 function generateDefaultName() {
@@ -828,18 +851,12 @@ async function generateEncounter() {
   }
 }
 
-async function resetEncounter() {
+function resetEncounter() {
   // Clear all encounter data (but keep party config)
   encounterMonsters.value = [];
   location.value = '';
   generatedEncounter.value = null;
   activeEncounterIndex.value = null;
-
-  // Set picker to minimum height since encounter is empty
-  await nextTick();
-  if (pickerColumnRef.value) {
-    pickerColumnRef.value.style.height = '400px';
-  }
 }
 
 // ─── Folder management ──────────────────────────────────────────────────────
@@ -895,6 +912,7 @@ function handleFolderMove() {
   toast.success(`Moved to ${targetFolder}`);
 }
 
+// ─── Data Manager ────────────────────────────────────────────────────────────
 function deleteEncounter() {
   if (activeEncounterIndex.value === null) return;
 
@@ -1153,7 +1171,6 @@ watch(location, () => {
 });
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
-let resizeObserver = null;
 
 onMounted(async () => {
   loadEncounters();
@@ -1200,33 +1217,6 @@ onMounted(async () => {
     cleanupOrphanedIntelligence();
   } catch (error) {
     console.warn('[ENRICHMENT] Failed to run migration/cleanup:', error);
-  }
-
-  // Wait for loaded data to render before measuring
-  await nextTick();
-
-  // Setup ResizeObserver after data has rendered
-  if (partyColumnRef.value && pickerColumnRef.value) {
-    // Initial size calculation
-    const rightHeight = partyColumnRef.value.offsetHeight;
-    pickerColumnRef.value.style.height = `${Math.max(400, rightHeight)}px`;
-
-    // Then observe for future changes
-    resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const rightHeight = entry.contentRect.height;
-        if (pickerColumnRef.value) {
-          pickerColumnRef.value.style.height = `${Math.max(400, rightHeight)}px`;
-        }
-      }
-    });
-    resizeObserver.observe(partyColumnRef.value);
-  }
-});
-
-onUnmounted(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect();
   }
 });
 </script>
@@ -1356,6 +1346,8 @@ onUnmounted(() => {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  height: 600px;
+  overflow: hidden;
 
   h2 {
     font-size: 1.25rem;
@@ -1650,7 +1642,7 @@ onUnmounted(() => {
 }
 
 .markup-help {
-  font-size: 0.875rem;
+  font-size: 1.6rem;
   line-height: 1.6;
   color: #666;
 }
@@ -1660,13 +1652,71 @@ onUnmounted(() => {
   padding: 0.125rem 0.375rem;
   border-radius: 3px;
   font-family: 'Courier New', monospace;
-  font-size: 0.8125rem;
+  font-size: 1.6rem;
 }
 
 .button-group {
   display: flex;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+/* ─── Patreon Button ────────────────────────────────────────────────────── */
+.patreon-universal-button {
+  margin-top: 0.75rem;
+
+  a {
+    text-decoration: none;
+  }
+
+  .patreon-responsive-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #F96854;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    font-variant: small-caps;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .patreon_logo {
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      background: #e63946;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ─── Encounter Footer ──────────────────────────────────────────────────── */
+.encounter-footer {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  text-align: center;
+
+  p {
+    margin: 0 0 1rem 0;
+    color: #6b7280;
+    font-size: 1.6rem;
+    line-height: 1.6;
+  }
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */

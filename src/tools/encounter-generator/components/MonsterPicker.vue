@@ -238,7 +238,7 @@ const paginatedMonsters = computed(() => {
   padding: 2rem;
   text-align: center;
   color: #666;
-  font-size: 0.875rem;
+  font-size: 1.2rem;
   line-height: 1.5;
 }
 

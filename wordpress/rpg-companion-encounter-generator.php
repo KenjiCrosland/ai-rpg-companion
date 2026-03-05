@@ -135,18 +135,6 @@ function rpg_companion_encounter_enqueue_assets() {
 add_action( 'wp_enqueue_scripts', 'rpg_companion_encounter_enqueue_assets' );
 
 // ----------------------------------------------------------------------------
-// ✅ Render Vue root mount element
-// ----------------------------------------------------------------------------
-
-if ( ! function_exists( 'rpg_companion_encounter_render_root_element' ) ) {
-	function rpg_companion_encounter_render_root_element() {
-		echo '<div id="app" data-page="encounter-generator"></div>';
-	}
-}
-
-add_action( 'genesis_entry_content', 'rpg_companion_encounter_render_root_element' );
-
-// ----------------------------------------------------------------------------
 // ✅ Run Genesis
 // ----------------------------------------------------------------------------
 

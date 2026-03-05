@@ -433,7 +433,8 @@ function vue_app_setting_generator_premium_shortcode() {
 add_shortcode( 'vue_app_setting_generator_premium', 'vue_app_setting_generator_premium_shortcode' );
 
 function vue_app_encounter_generator_shortcode() {
-	return '<div id="app" data-page="encounter-generator"></div>';
+    $premium = function_exists( 'kenji_is_premium' ) && kenji_is_premium() ? 'true' : 'false';
+    return '<div id="app" data-page="encounter-generator" data-premium="' . $premium . '"></div>';
 }
 add_shortcode( 'vue_app_encounter-generator', 'vue_app_encounter_generator_shortcode' );
 
