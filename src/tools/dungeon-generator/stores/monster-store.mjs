@@ -113,13 +113,24 @@ export async function generateMonsterStatblock(monsterId, premium) {
   }
 
   const canGen = await canGenerateStatblock(premium);
-  if (!canGen) return;
+  if (!canGen) {
+    // Set flag to show limit message in UI
+    monsterLoadingStates.value[monsterId] = {
+      part1: false,
+      part2: false,
+      description: false,
+      generating: false,
+      limitReached: true,
+    };
+    return;
+  }
 
   monsterLoadingStates.value[monsterId] = {
     part1: true,
     part2: true,
     description: false,
     generating: true,
+    limitReached: false,
   };
 
   let part1Data = null;
@@ -156,6 +167,7 @@ export async function generateMonsterStatblock(monsterId, premium) {
       part2: true,
       description: false,
       generating: true,
+      limitReached: false,
     };
 
     // Provide conversation context for GPT
@@ -194,6 +206,7 @@ export async function generateMonsterStatblock(monsterId, premium) {
       part2: false,
       description: false,
       generating: false,
+      limitReached: false,
     };
     saveDungeons();
   }

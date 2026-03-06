@@ -94,6 +94,24 @@
                 @update-monster="updateMonsterStatblock(monster, $event)" />
             </div>
 
+            <!-- Statblock Limit Message -->
+            <div v-if="dungeonStore.monsterLoadingStates[monster.id]?.limitReached"
+              class="statblock-limit-message">
+              <p><strong>Statblock generation limit reached</strong></p>
+              <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
+              <div class="patreon-universal-button">
+                <a :href="patreonLoginUrl">
+                  <div class="patreon-responsive-button-wrapper">
+                    <div class="patreon-responsive-button">
+                      <img class="patreon_logo"
+                        src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                        alt="Unlock with Patreon"> Unlock with Patreon
+                    </div>
+                  </div>
+                </a>
+              </div>
+            </div>
+
             <div v-if="!dungeonStore.monsterLoadingStates[monster.id]?.generating">
               <div class="monster-statblock-selects">
                 <cdr-select v-model="monster.CR" label="CR" background="secondary" :options="crOptions"
@@ -189,7 +207,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import Statblock from '@/components/Statblock.vue';
 import {
@@ -208,6 +226,12 @@ import MonsterDescriptionSkeleton from './skeletons/MonsterDescriptionSkeleton.v
 
 const dungeonStore = useDungeonStore();
 const props = defineProps({ premium: { type: Boolean, default: false } });
+
+// Patreon OAuth URL
+const patreonLoginUrl = computed(() => {
+  const returnUrl = encodeURIComponent(window.location.href);
+  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
+});
 
 const crOptions = crList.fullArray;
 
@@ -384,6 +408,65 @@ function saveEditMonster() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.statblock-limit-message {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+
+  p {
+    margin: 0.5rem 0;
+    color: #6b7280;
+    font-size: 1.4rem;
+    line-height: 1.6;
+
+    strong {
+      color: #374151;
+      font-size: 1.6rem;
+    }
+  }
+
+  .patreon-universal-button {
+    margin-top: 1rem;
+
+    a {
+      text-decoration: none;
+    }
+
+    .patreon-responsive-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: #F96854;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9375rem;
+      font-variant: small-caps;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      .patreon_logo {
+        width: 20px;
+        height: 20px;
+      }
+
+      &:hover {
+        background: #e63946;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
 }
 
 .form-row-top {

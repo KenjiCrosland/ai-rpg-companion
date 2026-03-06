@@ -150,6 +150,24 @@
                   @update-monster="updateNpcStatblock(index, $event)" />
               </div>
 
+              <!-- Statblock Limit Message -->
+              <div v-if="dungeonStore.npcStatblockLoadingStates[index]?.limitReached"
+                class="statblock-limit-message">
+                <p><strong>Statblock generation limit reached</strong></p>
+                <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
+                <div class="patreon-universal-button">
+                  <a :href="patreonLoginUrl">
+                    <div class="patreon-responsive-button-wrapper">
+                      <div class="patreon-responsive-button">
+                        <img class="patreon_logo"
+                          src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                          alt="Unlock with Patreon"> Unlock with Patreon
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
               <!-- Simple form to generate a new statblock for the NPC -->
               <form v-if="npc.description_of_position" @submit.prevent="generateNpcStatblock(index, premium)"
                 class="npc-statblock-form">
@@ -198,7 +216,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onBeforeMount, watch } from 'vue';
+import { ref, reactive, computed, onBeforeMount, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
 import Statblock from '@/components/Statblock.vue';
@@ -217,6 +235,12 @@ import crList from '../data/cr-list.json';
 const props = defineProps({ premium: { type: Boolean, default: false } });
 const dungeonStore = useDungeonStore();
 const modelError = ref(null);
+
+// Patreon OAuth URL
+const patreonLoginUrl = computed(() => {
+  const returnUrl = encodeURIComponent(window.location.href);
+  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
+});
 
 // The CR dropdown data
 const crOptions = crList.fullArray;
@@ -446,5 +470,64 @@ function addRelationship() {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.statblock-limit-message {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.statblock-limit-message p {
+  margin: 0.5rem 0;
+  color: #6b7280;
+  font-size: 1.4rem;
+  line-height: 1.6;
+}
+
+.statblock-limit-message p strong {
+  color: #374151;
+  font-size: 1.6rem;
+}
+
+.statblock-limit-message .patreon-universal-button {
+  margin-top: 1rem;
+}
+
+.statblock-limit-message .patreon-universal-button a {
+  text-decoration: none;
+}
+
+.statblock-limit-message .patreon-universal-button .patreon-responsive-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #F96854;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  font-variant: small-caps;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.statblock-limit-message .patreon-universal-button .patreon_logo {
+  width: 20px;
+  height: 20px;
+}
+
+.statblock-limit-message .patreon-universal-button .patreon-responsive-button:hover {
+  background: #e63946;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.statblock-limit-message .patreon-universal-button .patreon-responsive-button:active {
+  transform: translateY(0);
 }
 </style>

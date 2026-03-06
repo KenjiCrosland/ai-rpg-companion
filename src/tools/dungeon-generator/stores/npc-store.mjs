@@ -61,12 +61,22 @@ export async function generateNPCStatblock(
 
   // Quick check for premium usage:
   const canGen = await canGenerateStatblock(premium);
-  if (!canGen) return;
+  if (!canGen) {
+    // Set flag to show limit message in UI
+    npcStatblockLoadingStates.value[index] = {
+      part1: false,
+      part2: false,
+      generating: false,
+      limitReached: true,
+    };
+    return;
+  }
 
   npcStatblockLoadingStates.value[index] = {
     part1: true,
     part2: true,
     generating: true,
+    limitReached: false,
   };
 
   try {
@@ -121,6 +131,7 @@ export async function generateNPCStatblock(
       part1: false,
       part2: false,
       generating: false,
+      limitReached: false,
     };
     saveDungeons();
   }
