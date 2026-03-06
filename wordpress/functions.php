@@ -496,7 +496,8 @@ function vue_app_statblock_generator_premium_shortcode() {
 add_shortcode( 'vue_app_statblock_generator_premium', 'vue_app_statblock_generator_premium_shortcode' );
 
 function vue_app_npc_generator_shortcode() {
-    return '<div id="app" data-page="npc-generator"></div>';
+    $premium = function_exists( 'kenji_is_premium' ) && kenji_is_premium() ? 'true' : 'false';
+    return '<div id="app" data-page="npc-generator" data-premium="' . $premium . '"></div>';
 }
 add_shortcode( 'vue_app_npc_generator', 'vue_app_npc_generator_shortcode' );
 

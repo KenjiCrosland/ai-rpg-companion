@@ -14,30 +14,6 @@
                     </li>
                 </ul>
                 <div class="sidebar-buttons">
-                    <!-- Export Section -->
-                    <div v-if="npcDescriptionPart1" class="export-section">
-                        <h3 class="export-title">Export NPC</h3>
-                        <p class="export-description">
-                            Copy your NPC in different formats. Markdown works with
-                            <cdr-link href="https://homebrewery.naturalcrit.com/new"
-                                target="_blank">Homebrewery</cdr-link>.
-                        </p>
-                        <cdr-button @click="copyNPCAsMarkdown" modifier="secondary"
-                            style="margin-bottom: 0.5rem; width: 100%;">
-                            Copy as Markdown
-                        </cdr-button>
-                        <cdr-button @click="copyNPCAsPlainText" modifier="secondary"
-                            style="margin-bottom: 1rem; width: 100%;">
-                            Copy as Plain Text
-                        </cdr-button>
-                    </div>
-
-                    <!-- Data Manager -->
-                    <cdr-button modifier="dark" @click="showDataManagerModal = true"
-                        style="margin-bottom: 1rem; width: 100%;">
-                        Save/Load Data from a File
-                    </cdr-button>
-
                     <cdr-button @click="deleteAllNPCs" v-if="npcs.length > 0 && !loadingPart1" modifier="secondary"
                         style="width: 100%;">
                         Delete All NPCs
@@ -84,28 +60,43 @@
 
                 <!-- ZONE 3: Footer meta -->
                 <div class="footer-meta">
-                    <p v-if="!premium" class="limit-info">
-                        NPC generation is unlimited. Combat statblocks are limited to 5/day on the free plan.
-                        <cdr-link href="https://cros.land/npc-generator-premium-version/">Go Premium for unlimited
-                            access
-                            &rarr;</cdr-link>
-                    </p>
-                    <p v-else class="limit-info">
-                        All features unlimited. Export your NPCs in Homebrewery-compatible markdown format.
-                    </p>
+                    <!-- Free users: Show message + unlock button -->
+                    <div v-if="!premium">
+                        <p>
+                            NPC generation is unlimited. Combat statblocks are limited to 5 per 24 hours. NPC data is
+                            saved on this browser. To save/load NPC data for use in another computer or browser requires
+                            a premium Patreon subscription.
+                        </p>
+                        <div class="patreon-universal-button">
+                            <a :href="patreonLoginUrl">
+                                <div class="patreon-responsive-button-wrapper">
+                                    <div class="patreon-responsive-button">
+                                        <img class="patreon_logo"
+                                            src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                                            alt="Unlock with Patreon"> Unlock with Patreon
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Premium users: Show save/load button -->
+                    <div v-else>
+                        <p>
+                            All features unlimited. NPC data is saved on this browser. Export to a file to use on
+                            another
+                            device.
+                        </p>
+                        <cdr-button modifier="dark" @click="showDataManagerModal = true">
+                            Save/Load Data from a File
+                        </cdr-button>
+                    </div>
                 </div>
             </div>
 
             <!-- NPC Content (shown when NPC is loaded or loading) -->
             <div class="location-description"
                 v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
-
-                <!-- Premium banner for generated NPC view -->
-                <div v-if="!premium && npcDescriptionPart1 && !loadingPart1" class="premium-banner">
-                    Statblock generation is limited to 5/day on the free plan.
-                    <cdr-link href="https://cros.land/npc-generator-premium-version/">Go Premium for unlimited access
-                        &rarr;</cdr-link>
-                </div>
 
                 <div v-if="loadingPart1">
                     <CdrSkeleton>
@@ -142,7 +133,10 @@
                 </div>
                 <!-- View Mode -->
                 <div v-if="npcDescriptionPart1 && !loadingPart1 && !isEditingNPC">
-                    <h2>{{ npcDescriptionPart1.character_name }}</h2>
+                    <div class="npc-header">
+                        <h2>{{ npcDescriptionPart1.character_name }}</h2>
+                        <cdr-button @click="startEditingNPC" modifier="secondary" size="small">Edit NPC</cdr-button>
+                    </div>
                     <div class="focus-text">{{ npcDescriptionPart1.read_aloud_description }}</div>
 
                     <div v-if="npcDescriptionPart1.combined_details" style="margin-top: 1.5rem;">
@@ -252,10 +246,33 @@
                         <p style="font-style: italic; color: #666;">No relationships generated.</p>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="button-group" style="margin-top: 2rem;">
-                        <cdr-button @click="startEditingNPC" modifier="secondary">Edit NPC</cdr-button>
-                        <cdr-button @click="deleteCurrentNPC" modifier="dark">Delete NPC</cdr-button>
+                    <!-- Actions Row -->
+                    <div class="actions-row" style="margin-top: 2rem;">
+                        <!-- Management Actions (Left) -->
+                        <div class="management-actions">
+                            <cdr-button @click="deleteCurrentNPC" modifier="dark">
+                                Delete
+                            </cdr-button>
+                        </div>
+
+                        <!-- Export Actions (Right) -->
+                        <div class="export-actions">
+                            <cdr-button @click="copyNPCAsPlainText" modifier="secondary">
+                                Copy as Plain Text
+                            </cdr-button>
+                            <cdr-button @click="copyNPCAsMarkdown">
+                                Copy as Homebrewery Markdown
+                            </cdr-button>
+                        </div>
+                    </div>
+
+                    <!-- Homebrewery Link Message -->
+                    <div v-if="showHomebreweryLink" class="homebrewery-link-message">
+                        <p>
+                            Markdown copied! Paste it into
+                            <a href="https://homebrewery.naturalcrit.com/new" target="_blank">Homebrewery</a>
+                            to format your NPC.
+                        </p>
                     </div>
                 </div>
                 <div v-if="npcDescriptionPart2 && !loadingPart2">
@@ -277,18 +294,70 @@
                             :loadingPart1="loadingStatblockPart1" :loadingPart2="loadingStatblockPart2"
                             :monster="statblock" :premium="premium" :copyButtons="true"
                             @update-monster="updateStatblock" />
+
+                        <!-- Statblock Limit Message -->
+                        <div v-if="statblockLimitReached" class="statblock-limit-message">
+                            <p><strong>Statblock generation limit reached</strong></p>
+                            <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
+                            <div class="patreon-universal-button">
+                                <a :href="patreonLoginUrl">
+                                    <div class="patreon-responsive-button-wrapper">
+                                        <div class="patreon-responsive-button">
+                                            <img class="patreon_logo"
+                                                src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                                                alt="Unlock with Patreon"> Unlock with Patreon
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
                         <SaveStatblock v-if="statblock" :monster="statblock"
                             :statblockLink="premium ? 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/' : 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/'" />
                     </div>
                 </div>
                 <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
             </div>
+
+            <!-- Footer below NPC content (separate card) -->
+            <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1">
+                <!-- Free users: Show message + unlock button -->
+                <div v-if="!premium">
+                    <p>
+                        NPC generation is unlimited. Combat statblocks are limited to 5 per 24 hours. NPC data is
+                        saved on this browser. To save/load NPC data for use in another computer or browser requires
+                        a premium Patreon subscription.
+                    </p>
+                    <div class="patreon-universal-button">
+                        <a :href="patreonLoginUrl">
+                            <div class="patreon-responsive-button-wrapper">
+                                <div class="patreon-responsive-button">
+                                    <img class="patreon_logo"
+                                        src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                                        alt="Unlock with Patreon"> Unlock with Patreon
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Premium users: Show save/load button -->
+                <div v-else>
+                    <p>
+                        All features unlimited. NPC data is saved on this browser. Export to a file to use on another
+                        device.
+                    </p>
+                    <cdr-button modifier="dark" @click="showDataManagerModal = true">
+                        Save/Load Data from a File
+                    </cdr-button>
+                </div>
+            </div>
         </div>
     </GeneratorLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -328,6 +397,7 @@ const loadingStatblockPart2 = ref(false);
 const statblock = ref(null);
 const selectedChallengeRating = ref('1');
 const isSpellcaster = ref(false);
+const statblockLimitReached = ref(false);
 
 const props = defineProps({
     premium: {
@@ -336,8 +406,14 @@ const props = defineProps({
     }
 });
 
+const patreonLoginUrl = computed(() => {
+    const returnUrl = encodeURIComponent(window.location.href);
+    return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
+});
+
 // Sidebar responsive
 const showDataManagerModal = ref(false);
+const showHomebreweryLink = ref(false);
 
 // Inline editing
 const isEditingNPC = ref(false);
@@ -421,6 +497,7 @@ function createNewNPC() {
     statblock.value = null;
     selectedChallengeRating.value = '1';
     isSpellcaster.value = false;
+    showHomebreweryLink.value = false;
     currentNPCIndex.value = npcs.value.length;
 }
 
@@ -432,6 +509,7 @@ function selectNPC(index) {
     if (npcDescriptionPart1.value) {
         saveCurrentNPCToList();
     }
+    showHomebreweryLink.value = false;
     loadNPCIntoView(index);
 }
 
@@ -511,7 +589,7 @@ function deleteRelationship(relationshipIndex) {
 }
 
 // Copy functions
-function copyNPCAsMarkdown() {
+async function copyNPCAsMarkdown() {
     if (!npcDescriptionPart1.value) {
         toast.warning('No NPC to copy.');
         return;
@@ -526,11 +604,25 @@ function copyNPCAsMarkdown() {
     };
 
     const markdown = convertNPCToMarkdown(npcData);
-    navigator.clipboard.writeText(markdown);
-    toast.success('NPC copied as markdown! Paste it into Homebrewery to see it formatted.');
+
+    try {
+        await navigator.clipboard.writeText(markdown);
+        showHomebreweryLink.value = true;
+        toast.success('NPC copied to clipboard in Homebrewery format!');
+    } catch {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.textContent = markdown;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showHomebreweryLink.value = true;
+        toast.success('NPC copied to clipboard in Homebrewery format!');
+    }
 }
 
-function copyNPCAsPlainText() {
+async function copyNPCAsPlainText() {
     if (!npcDescriptionPart1.value) {
         toast.warning('No NPC to copy.');
         return;
@@ -545,8 +637,20 @@ function copyNPCAsPlainText() {
     };
 
     const plainText = convertNPCToPlainText(npcData);
-    navigator.clipboard.writeText(plainText);
-    toast.success('NPC copied as plain text!');
+
+    try {
+        await navigator.clipboard.writeText(plainText);
+        toast.success('NPC copied as plain text!');
+    } catch {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.textContent = plainText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        toast.success('NPC copied as plain text!');
+    }
 }
 
 function updateStatblock(monster) {
@@ -628,13 +732,16 @@ async function handleGenerateNPC() {
 }
 
 async function generateStatblock() {
-    statblock.value = null;
+    statblockLimitReached.value = false;
     const canGenerate = await canGenerateStatblock(props.premium);
 
     if (!canGenerate) {
+        statblockLimitReached.value = true;
         return;
     }
 
+    // Only clear existing statblock if we're actually generating a new one
+    statblock.value = null;
     loadingStatblockPart1.value = true;
     loadingStatblockPart2.value = true;
     const fullNPCDescription = `Description of Position: ${npcDescriptionPart1.value.description_of_position}. Distinctive Feature: ${npcDescriptionPart1.value.distinctive_feature_or_mannerism}. Character Secret: ${npcDescriptionPart1.value.character_secret}. Read Aloud Description: ${npcDescriptionPart1.value.read_aloud_description}`;
@@ -849,11 +956,27 @@ $active-border-color: #007BFF;
 /* ZONE 3: Footer meta */
 .footer-meta {
     text-align: center;
-    padding: 1.5rem 1rem 0;
+    margin-top: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    max-width: 940px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+
+    p {
+        font-size: 1.4rem;
+        color: #6b7280;
+        margin: 0 0 1rem 0;
+        line-height: 1.6;
+    }
 
     .limit-info {
         font-size: 1.2rem;
-        color: $cdr-color-text-secondary;
+        color: #6b7280;
         margin: 0;
         line-height: 1.6;
     }
@@ -939,6 +1062,60 @@ div[class^="cdr-skeleton-bone"] {
     margin-top: 2rem;
 }
 
+.npc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    h2 {
+        margin: 0;
+    }
+}
+
+.actions-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.management-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.export-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.homebrewery-link-message {
+    padding: 0.75rem 1rem;
+    background: #f0fdf4;
+    border: 1px solid #22c55e;
+    border-radius: 6px;
+    margin-top: 1rem;
+
+    p {
+        margin: 0;
+        color: #14532d;
+        font-size: 1.6rem;
+    }
+
+    a {
+        color: #16a34a;
+        font-weight: 600;
+        text-decoration: underline;
+
+        &:hover {
+            color: #22c55e;
+        }
+    }
+}
+
 .edit-form {
     .edit-field {
         margin-bottom: 1.5rem;
@@ -957,6 +1134,67 @@ div[class^="cdr-skeleton-bone"] {
     background-color: $cdr-color-background-message-error-01;
     text-align: center;
     margin-top: 16px;
+}
+
+.statblock-limit-message {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #fdf8ef;
+    border: 1px solid #f0e4cc;
+    border-radius: 6px;
+
+    p {
+        font-size: 1.6rem;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.5;
+
+        &:last-of-type {
+            margin-bottom: 0;
+        }
+    }
+}
+
+/* Patreon Button Overrides */
+.patreon-universal-button {
+    margin-top: 1rem;
+
+    a {
+        text-decoration: none;
+    }
+
+    .patreon-responsive-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #F96854;
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.2rem;
+        font-variant: small-caps;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border: none;
+
+        &:hover {
+            background: #e63946;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    .patreon_logo {
+        width: 20px;
+        height: 20px;
+    }
 }
 
 /* Responsive */

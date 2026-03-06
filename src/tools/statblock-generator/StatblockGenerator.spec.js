@@ -4,8 +4,9 @@
  * These tests verify:
  * 1. Two-part prompt generation (createStatblockPrompts)
  * 2. Two-part API calls to generateGptResponse
- * 3. localStorage operations preserve user-saved statblocks
- * 4. Folder structure for organizing monsters
+ * 3. Statblock enrichment with creature intelligence data
+ * 4. localStorage operations preserve user-saved statblocks
+ * 5. Folder structure for organizing monsters
  */
 
 import { mount, flushPromises } from '@vue/test-utils';
@@ -30,6 +31,18 @@ jest.mock('@/prompts/monster-prompts.mjs', () => ({
 // Mock can-generate-statblock
 jest.mock('@/util/can-generate-statblock.mjs', () => ({
   canGenerateStatblock: jest.fn(() => true)
+}));
+
+// Mock statblock-enrichment to prevent third API call in tests
+jest.mock('@/util/statblock-enrichment.mjs', () => ({
+  enrichCustomStatblock: jest.fn(() => Promise.resolve({
+    signature: 'Test signature',
+    abilities: [],
+    tactical_identity: 'Test tactical identity',
+    encounter_hooks: []
+  })),
+  saveEnrichment: jest.fn(),
+  deleteEnrichment: jest.fn()
 }));
 
 // Mock GeneratorLayout component
@@ -308,7 +321,40 @@ describe('StatblockGenerator - Prompt Generation', () => {
       await form.trigger('submit');
       await flushPromises();
 
+      // Should call generateGptResponse twice (part1 and part2)
       expect(openAi.generateGptResponse).toHaveBeenCalledTimes(2);
+    });
+
+    it('should enrich statblock with creature intelligence after generation', async () => {
+      const { enrichCustomStatblock, saveEnrichment } = await import('@/util/statblock-enrichment.mjs');
+
+      wrapper = mount(StatblockGenerator, {
+        props: { premium: true }
+      });
+
+      const form = wrapper.find('form');
+      await form.trigger('submit');
+      await flushPromises();
+
+      // Should enrich the generated statblock
+      expect(enrichCustomStatblock).toHaveBeenCalledTimes(1);
+      expect(enrichCustomStatblock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Test Goblin'
+        })
+      );
+
+      // Should save the enrichment data
+      expect(saveEnrichment).toHaveBeenCalledTimes(1);
+      expect(saveEnrichment).toHaveBeenCalledWith(
+        'Test Goblin',
+        expect.objectContaining({
+          signature: 'Test signature',
+          abilities: expect.any(Array),
+          tactical_identity: expect.any(String),
+          encounter_hooks: expect.any(Array)
+        })
+      );
     });
 
     it('should pass part1 prompt to first API call', async () => {
