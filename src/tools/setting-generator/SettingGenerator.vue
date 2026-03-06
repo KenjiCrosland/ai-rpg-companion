@@ -21,9 +21,6 @@
           <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
           <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
           <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
-            Save/Load Data from a File
-          </cdr-button>
           <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
             <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
             there. You will need to add your own pagebreaks.
@@ -80,13 +77,28 @@
 
         <!-- ZONE 3: Footer meta -->
         <div class="footer-meta">
-          <p v-if="!premium" class="limit-info">
-            Free: Unlimited generation of settings and locations, premium allows saving and loading information from a
-            file.
-            <cdr-link href="https://cros.land/rpg-setting-generator-and-world-building-tool-premium/">Go
-              Premium
-              &rarr;</cdr-link>
-          </p>
+          <div v-if="!premium">
+            <p>
+              All setting generation is currently free. Setting data is saved on this browser. To save/load setting data for use in another computer or browser requires a premium Patreon subscription.
+            </p>
+            <div class="patreon-universal-button">
+              <a :href="patreonLoginUrl">
+                <div class="patreon-responsive-button-wrapper">
+                  <div class="patreon-responsive-button">
+                    <img class="patreon_logo"
+                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                      alt="Unlock with Patreon"> Unlock with Patreon
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div v-else>
+            <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
+            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+              Save/Load Data from a File
+            </cdr-button>
+          </div>
         </div>
       </div>
       <Tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%"
@@ -112,6 +124,33 @@
       <cdr-button class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
         @click="deleteSetting(currentSettingIndex)">Delete
         Setting</cdr-button>
+
+      <!-- Footer below content -->
+      <div class="footer-meta" v-if="settingOverviewExists">
+        <div v-if="!premium">
+          <p>
+            All setting generation is currently free. Setting data is saved on this browser. To save/load setting data for use in another computer or browser requires a premium Patreon subscription.
+          </p>
+          <div class="patreon-universal-button">
+            <a :href="patreonLoginUrl">
+              <div class="patreon-responsive-button-wrapper">
+                <div class="patreon-responsive-button">
+                  <img class="patreon_logo"
+                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                    alt="Unlock with Patreon"> Unlock with Patreon
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div v-else>
+          <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
+          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            Save/Load Data from a File
+          </cdr-button>
+        </div>
+      </div>
+
       <div class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
         <CdrSkeleton>
           <Tabs>
@@ -169,6 +208,11 @@ const props = defineProps({
   }
 });
 
+// Patreon OAuth URL
+const patreonLoginUrl = computed(() => {
+  const returnUrl = encodeURIComponent(window.location.href);
+  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
+});
 
 const showDataManagerModal = ref(false);
 
@@ -794,14 +838,58 @@ $transition-speed: 0.3s;
 
 /* ZONE 3: Footer meta */
 .footer-meta {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   text-align: center;
-  padding: 1.5rem 1rem 0;
 
-  .limit-info {
-    font-size: 1.2rem;
-    color: $cdr-color-text-secondary;
-    margin: 0;
+  p {
+    margin: 0 0 1rem 0;
+    color: #6b7280;
+    font-size: 1.6rem;
     line-height: 1.6;
+  }
+
+  .patreon-universal-button {
+    margin-top: 0.75rem;
+
+    a {
+      text-decoration: none;
+    }
+
+    .patreon-responsive-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: #F96854;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9375rem;
+      font-variant: small-caps;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      .patreon_logo {
+        width: 20px;
+        height: 20px;
+      }
+
+      &:hover {
+        background: #e63946;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
   }
 }
 

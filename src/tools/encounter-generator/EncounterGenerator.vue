@@ -268,10 +268,26 @@
               Delete
             </cdr-button>
           </div>
-          <div class="export-action">
-            <cdr-button @click="exportToMarkdown">
-              Export to Homebrewery
-            </cdr-button>
+          <div class="export-actions-wrapper">
+            <div class="export-actions">
+              <cdr-button @click="exportAsPlainText" modifier="secondary">
+                Copy as Plain Text
+              </cdr-button>
+              <cdr-button @click="exportToMarkdown">
+                Copy as Homebrewery Markdown
+              </cdr-button>
+            </div>
+
+            <!-- Homebrewery link shown after copying markdown -->
+            <div v-if="showHomebreweryLink" class="homebrewery-link-message">
+              <p>
+                Markdown copied! Paste it into
+                <a href="https://homebrewery.naturalcrit.com/new" target="_blank" rel="noopener noreferrer">
+                  Homebrewery
+                </a>
+                to format your encounter.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -335,7 +351,7 @@ import {
   getCreatureIntelligence
 } from '@/prompts/encounter-prompt.mjs';
 import { buildEnrichedMonsterBrief, getEncounterProfile } from '@/util/encounter-enrichment.mjs';
-import { convertEncounterToMarkdown } from '@/util/convertToMarkdown.mjs';
+import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
 import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
 import { useToast } from '@/composables/useToast';
@@ -428,6 +444,9 @@ const encounterEditForm = ref({
   place_name: '',
   content: ''
 });
+
+// ─── Export state ────────────────────────────────────────────────────────────
+const showHomebreweryLink = ref(false);
 
 // ─── Party calculations ──────────────────────────────────────────────────────
 const totalPartySize = computed(() =>
@@ -622,6 +641,7 @@ function selectEncounter(folderName, index) {
   partyGroups.value = encounter.partyGroups || currentPartyConfig;
   location.value = encounter.location || '';
   generatedEncounter.value = encounter.generatedEncounter || null;
+  showHomebreweryLink.value = false;
 }
 
 function newEncounter(folderName = 'Uncategorized') {
@@ -632,6 +652,7 @@ function newEncounter(folderName = 'Uncategorized') {
   encounterMonsters.value = [];
   location.value = '';
   generatedEncounter.value = null;
+  showHomebreweryLink.value = false;
 }
 
 function generateDefaultName() {
@@ -983,22 +1004,161 @@ async function generateStatblock(index) {
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────────
+function convertContentArrayToPlainText(contentArray) {
+  if (!contentArray || !Array.isArray(contentArray)) return '';
+
+  return contentArray.map(item => {
+    if (item.format === 'read_aloud') {
+      return `READ ALOUD:\n${item.content}\n`;
+    } else if (item.format === 'header') {
+      return `\n${item.content.toUpperCase()}\n`;
+    } else if (item.format === 'paragraph') {
+      // Remove markdown bold markers
+      const plainContent = item.content.replace(/\*\*(.*?)\*\*/g, '$1');
+      return `${plainContent}\n`;
+    }
+    return item.content + '\n';
+  }).join('\n');
+}
+
+function convertContentArrayToMarkdown(contentArray) {
+  if (!contentArray || !Array.isArray(contentArray)) return '';
+
+  return contentArray.map(item => {
+    if (item.format === 'read_aloud') {
+      return `{{descriptive\n${item.content}\n}}\n`;
+    } else if (item.format === 'header') {
+      return `### ${item.content}\n`;
+    } else if (item.format === 'paragraph') {
+      return `${item.content}\n`;
+    }
+    return item.content + '\n';
+  }).join('\n');
+}
+
+async function exportAsPlainText() {
+  if (!generatedEncounter.value) return;
+
+  let plainText = `${generatedEncounter.value.place_name}\n${'='.repeat(generatedEncounter.value.place_name.length)}\n\n`;
+  plainText += convertContentArrayToPlainText(generatedEncounter.value.contentArray);
+  plainText += '\n\nMONSTERS\n========\n\n';
+
+  encounterMonsters.value.forEach(monster => {
+    plainText += `${monster.name}`;
+    if (monster.quantity > 1) {
+      plainText += ` (×${monster.quantity})`;
+    }
+    plainText += `\nCR: ${monster.cr}\n\n`;
+
+    if (monster.statblock) {
+      plainText += convertStatblockToPlainText(monster.statblock);
+      plainText += '\n\n';
+    }
+  });
+
+  try {
+    await navigator.clipboard.writeText(plainText);
+    toast.success('Encounter copied to clipboard as plain text!');
+  } catch {
+    const textarea = document.createElement('textarea');
+    textarea.textContent = plainText;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    toast.success('Encounter copied to clipboard as plain text!');
+  }
+}
+
 async function exportToMarkdown() {
-  const markdown = convertEncounterToMarkdown(generatedEncounter.value, encounterMonsters.value);
+  if (!generatedEncounter.value) return;
+
+  let markdown = `## ${generatedEncounter.value.place_name}\n\n`;
+  markdown += convertContentArrayToMarkdown(generatedEncounter.value.contentArray);
+  markdown += '\n';
+
+  encounterMonsters.value.forEach(monster => {
+    if (monster.statblock) {
+      markdown += statblockToMarkdown(monster.statblock, 'two_columns') + '\n\n';
+    } else {
+      markdown += `### ${monster.name}`;
+      if (monster.quantity > 1) {
+        markdown += ` (×${monster.quantity})`;
+      }
+      markdown += `\n*CR ${monster.cr}*\n\n`;
+    }
+  });
 
   try {
     await navigator.clipboard.writeText(markdown);
+    showHomebreweryLink.value = true;
     toast.success('Encounter copied to clipboard in Homebrewery format!');
   } catch {
-    // Fallback for older browsers / non-HTTPS
     const textarea = document.createElement('textarea');
     textarea.textContent = markdown;
     document.body.appendChild(textarea);
     textarea.select();
     document.execCommand('copy');
     document.body.removeChild(textarea);
+    showHomebreweryLink.value = true;
     toast.success('Encounter copied to clipboard in Homebrewery format!');
   }
+}
+
+function convertStatblockToPlainText(statblock) {
+  let text = `${statblock.name}\n`;
+  text += `${statblock.size} ${statblock.type}, ${statblock.alignment}\n\n`;
+  text += `Armor Class: ${statblock.armor_class}\n`;
+  text += `Hit Points: ${statblock.hit_points}\n`;
+  text += `Speed: ${statblock.speed}\n\n`;
+
+  const abilities = statblock.abilities;
+  text += `STR: ${abilities.STR} DEX: ${abilities.DEX} CON: ${abilities.CON} INT: ${abilities.INT} WIS: ${abilities.WIS} CHA: ${abilities.CHA}\n\n`;
+
+  if (statblock.saving_throws) {
+    text += `Saving Throws: ${statblock.saving_throws}\n`;
+  }
+  if (statblock.skills) {
+    text += `Skills: ${statblock.skills}\n`;
+  }
+  if (statblock.damage_resistances) {
+    text += `Damage Resistances: ${statblock.damage_resistances}\n`;
+  }
+  if (statblock.damage_immunities) {
+    text += `Damage Immunities: ${statblock.damage_immunities}\n`;
+  }
+  if (statblock.condition_immunities) {
+    text += `Condition Immunities: ${statblock.condition_immunities}\n`;
+  }
+  text += `Senses: ${statblock.senses}\n`;
+  text += `Languages: ${statblock.languages}\n`;
+  text += `Challenge: ${statblock.challenge_rating} (${statblock.experience_points} XP)\n`;
+  if (statblock.proficiency_bonus) {
+    text += `Proficiency Bonus: ${statblock.proficiency_bonus}\n`;
+  }
+  text += '\n';
+
+  if (statblock.special_abilities && statblock.special_abilities.length > 0) {
+    statblock.special_abilities.forEach(ability => {
+      text += `${ability.name}. ${ability.description}\n\n`;
+    });
+  }
+
+  if (statblock.actions && statblock.actions.length > 0) {
+    text += 'ACTIONS\n';
+    statblock.actions.forEach(action => {
+      text += `${action.name}. ${action.description}\n\n`;
+    });
+  }
+
+  if (statblock.legendary_actions && statblock.legendary_actions.length > 0) {
+    text += 'LEGENDARY ACTIONS\n';
+    statblock.legendary_actions.forEach(action => {
+      text += `${action.name}. ${action.description}\n\n`;
+    });
+  }
+
+  return text;
 }
 
 // ─── Inline editing ──────────────────────────────────────────────────────────
@@ -1609,8 +1769,39 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-.export-action {
-  flex-shrink: 0;
+.export-actions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.export-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.homebrewery-link-message {
+  padding: 0.75rem 1rem;
+  background: #f0fdf4;
+  border: 1px solid #22c55e;
+  border-radius: 6px;
+
+  p {
+    margin: 0;
+    color: #14532d;
+    font-size: 1.2rem
+  }
+
+  a {
+    color: #16a34a;
+    font-weight: 600;
+    text-decoration: underline;
+
+    &:hover {
+      color: #22c55e;
+    }
+  }
 }
 
 /* ─── Encounter Header with Edit Button ────────────────────────────────── */
@@ -1749,7 +1940,13 @@ onMounted(async () => {
     align-items: stretch;
   }
 
-  .export-action {
+  .management-actions,
+  .export-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .export-actions button {
     width: 100%;
   }
 }

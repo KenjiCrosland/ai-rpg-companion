@@ -109,8 +109,8 @@ function getSourceLabel(monster) {
 function shouldShowFolderBadge(monster) {
   // Show folder badge only for custom creatures with a folder name that's not Uncategorized
   return monster.source === 'custom' &&
-         monster.sourceLabel &&
-         monster.sourceLabel !== 'Uncategorized';
+    monster.sourceLabel &&
+    monster.sourceLabel !== 'Uncategorized';
 }
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -180,7 +180,7 @@ function removeMonster(index) {
   padding: 1.5rem 1rem;
   text-align: center;
   color: #888;
-  font-size: 0.875rem;
+  font-size: 1.2rem;
 }
 
 .monster-list {

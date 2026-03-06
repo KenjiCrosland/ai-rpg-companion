@@ -423,7 +423,8 @@ add_filter( 'script_loader_tag', function ( $tag, $handle, $src ) {
 // -----------------------------------------------------------------------------
 
 function vue_app_setting_generator_shortcode() {
-	return '<div id="app" data-page="setting-generator"></div>';
+    $premium = function_exists( 'kenji_is_premium' ) && kenji_is_premium() ? 'true' : 'false';
+    return '<div id="app" data-page="setting-generator" data-premium="' . $premium . '"></div>';
 }
 add_shortcode( 'vue_app_setting_generator', 'vue_app_setting_generator_shortcode' );
 
