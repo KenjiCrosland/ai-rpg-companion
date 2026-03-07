@@ -270,8 +270,6 @@ export function validateEnrichmentOutput(jsonString) {
  * @returns {Promise<Object>} Enrichment data
  */
 export async function enrichCustomStatblock(statblock) {
-  console.log(`[ENRICHMENT] Generating intelligence for ${statblock.name}...`);
-
   const prompt = buildEnrichmentPrompt(statblock);
   const response = await generateGptResponse(
     prompt,
@@ -282,7 +280,6 @@ export async function enrichCustomStatblock(statblock) {
   );
 
   const enrichment = JSON.parse(response);
-  console.log(`[ENRICHMENT] Generated intelligence for ${statblock.name}:`, enrichment);
 
   return enrichment;
 }
@@ -304,7 +301,6 @@ export function saveEnrichment(creatureName, enrichmentData) {
 
     // Save back to localStorage
     localStorage.setItem('creature-intelligence', JSON.stringify(allIntelligence));
-    console.log(`[ENRICHMENT] Saved intelligence for ${creatureName} to localStorage`);
   } catch (error) {
     console.error(`[ENRICHMENT] Failed to save intelligence for ${creatureName}:`, error);
   }
@@ -325,7 +321,6 @@ export function loadEnrichment(creatureName) {
     const intelligence = allIntelligence[creatureName];
 
     if (intelligence) {
-      console.log(`[ENRICHMENT] Loaded intelligence for ${creatureName} from localStorage`);
       return intelligence;
     }
 
@@ -350,7 +345,6 @@ export function deleteEnrichment(creatureName) {
     delete allIntelligence[creatureName];
 
     localStorage.setItem('creature-intelligence', JSON.stringify(allIntelligence));
-    console.log(`[ENRICHMENT] Deleted intelligence for ${creatureName} from localStorage`);
   } catch (error) {
     console.error(`[ENRICHMENT] Failed to delete intelligence for ${creatureName}:`, error);
   }
@@ -376,7 +370,6 @@ export function renameEnrichment(oldName, newName) {
       delete allIntelligence[oldName];
 
       localStorage.setItem('creature-intelligence', JSON.stringify(allIntelligence));
-      console.log(`[ENRICHMENT] Renamed intelligence from ${oldName} to ${newName}`);
     }
   } catch (error) {
     console.error(`[ENRICHMENT] Failed to rename intelligence:`, error);
@@ -442,7 +435,6 @@ export function cleanupOrphanedIntelligence() {
 
     if (orphaned.length > 0) {
       localStorage.setItem('creature-intelligence', JSON.stringify(allIntelligence));
-      console.log(`[ENRICHMENT] Cleaned up ${orphaned.length} orphaned intelligence entries:`, orphaned);
     }
 
     return orphaned;
@@ -463,7 +455,6 @@ export function migrateOldEnrichmentFormat() {
     // Check if new format already exists
     const newFormat = localStorage.getItem('creature-intelligence');
     if (newFormat) {
-      console.log('[ENRICHMENT] New format already exists, skipping migration');
       return 0;
     }
 
@@ -496,11 +487,9 @@ export function migrateOldEnrichmentFormat() {
     // Save to new format
     if (migrated > 0) {
       localStorage.setItem('creature-intelligence', JSON.stringify(allIntelligence));
-      console.log(`[ENRICHMENT] Migrated ${migrated} creatures to new format`);
 
       // Remove old keys
       oldKeys.forEach(key => localStorage.removeItem(key));
-      console.log(`[ENRICHMENT] Removed ${oldKeys.length} old storage keys`);
     }
 
     return migrated;

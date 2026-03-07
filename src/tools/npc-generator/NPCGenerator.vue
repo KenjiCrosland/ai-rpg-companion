@@ -298,18 +298,7 @@
                         <!-- Statblock Limit Message -->
                         <div v-if="statblockLimitReached" class="statblock-limit-message">
                             <p><strong>Statblock generation limit reached</strong></p>
-                            <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
-                            <div class="patreon-universal-button">
-                                <a :href="patreonLoginUrl">
-                                    <div class="patreon-responsive-button-wrapper">
-                                        <div class="patreon-responsive-button">
-                                            <img class="patreon_logo"
-                                                src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                                                alt="Unlock with Patreon"> Unlock with Patreon
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
+                            <p>You've reached your daily statblock generation limit (5 per 24 hours). Unlock unlimited access below.</p>
                         </div>
 
                         <SaveStatblock v-if="statblock" :monster="statblock"
@@ -357,7 +346,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -426,7 +415,31 @@ const npcEditForm = ref({
 
 onMounted(() => {
     loadNPCsFromLocalStorage();
+    // Listen for localStorage changes from other tabs
+    window.addEventListener('storage', handleStorageChange);
 });
+
+onUnmounted(() => {
+    window.removeEventListener('storage', handleStorageChange);
+});
+
+// Handle storage changes from other tabs
+function handleStorageChange(e) {
+    // When another tab changes the statblock counter, sync our state
+    if (e.key === 'monsters') {
+        try {
+            const monsters = JSON.parse(e.newValue);
+            const generationCount = parseInt(monsters?.generationCount) || 0;
+
+            // If count was reset (less than 5), clear the limit flag
+            if (generationCount < 5 && statblockLimitReached.value) {
+                statblockLimitReached.value = false;
+            }
+        } catch (err) {
+            // Ignore parse errors
+        }
+    }
+}
 
 // Local Storage functions
 function saveNPCsToLocalStorage() {

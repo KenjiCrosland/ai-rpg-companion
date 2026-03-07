@@ -30,3 +30,28 @@ export const currentDungeon = computed(() => {
     (dungeon) => dungeon.id === currentDungeonId.value,
   );
 });
+
+// Handle storage changes from other tabs to sync statblock generation limits
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    // When another tab changes the statblock counter, sync our state
+    if (e.key === 'monsters') {
+      try {
+        const monsters = JSON.parse(e.newValue);
+        const generationCount = parseInt(monsters?.generationCount) || 0;
+
+        // If count was reset (less than 5), clear all limit flags
+        if (generationCount < 5) {
+          // Reset monster loading states
+          Object.keys(monsterLoadingStates.value).forEach(key => {
+            if (monsterLoadingStates.value[key]?.limitReached) {
+              monsterLoadingStates.value[key].limitReached = false;
+            }
+          });
+        }
+      } catch (err) {
+        // Ignore parse errors
+      }
+    }
+  });
+}

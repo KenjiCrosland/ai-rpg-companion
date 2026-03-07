@@ -43,7 +43,6 @@ export async function getCreatureIntelligence(encounterCreatures) {
     // Check custom intelligence first (for custom statblocks)
     if (customIntelligence[creature.name]) {
       result[creature.name] = customIntelligence[creature.name];
-      console.log(`[CREATURE INTELLIGENCE] Using enriched data for ${creature.name} from localStorage`);
       continue;
     }
 
@@ -51,7 +50,6 @@ export async function getCreatureIntelligence(encounterCreatures) {
     const intel = creatureIntelligenceData[creature.name];
     if (intel) {
       result[creature.name] = intel;
-      console.log(`[CREATURE INTELLIGENCE] Using SRD data for ${creature.name}`);
       continue;
     }
 
@@ -62,13 +60,11 @@ export async function getCreatureIntelligence(encounterCreatures) {
                             (creature.actions && Array.isArray(creature.actions));
 
     if (isCustomCreature) {
-      console.log(`[CREATURE INTELLIGENCE] No data found for ${creature.name}, triggering lazy enrichment...`);
       try {
         const { enrichCustomStatblock, saveEnrichment } = await import('@/util/statblock-enrichment.mjs');
         const enrichment = await enrichCustomStatblock(creature);
         saveEnrichment(creature.name, enrichment);
         result[creature.name] = enrichment;
-        console.log(`[CREATURE INTELLIGENCE] Lazy enrichment complete for ${creature.name}`);
       } catch (error) {
         console.warn(`[CREATURE INTELLIGENCE] Lazy enrichment failed for ${creature.name}:`, error);
         // Continue without intelligence data - encounter will be more generic
@@ -131,10 +127,6 @@ export function buildMinimalBrief(monsterBrief, creatureIntelligence, call1Resul
   // Determine which creature is disguised (if any)
   const disguisedCreature = call1Result ? getDisguisedCreatureName(call1Result, monsterBrief) : null;
 
-  if (disguisedCreature && call1Result?.disguised_as) {
-    console.log(`[DISGUISE SWAP] Creature "${disguisedCreature}" will use disguise: "${call1Result.disguised_as}"`);
-  }
-
   for (const line of lines) {
     // Match pattern like "- 1× Oni (fiend, CR 7)"
     // buildEnrichedMonsterBrief outputs (type, CR X) without size
@@ -157,7 +149,6 @@ export function buildMinimalBrief(monsterBrief, creatureIntelligence, call1Resul
           // Swap description for disguised creature (Call 2 only)
           const isDisguised = disguisedCreature && creatureName === disguisedCreature;
           if (isDisguised && call1Result.disguised_as) {
-            console.log(`[DISGUISE SWAP] Replacing true description with: "${call1Result.disguised_as}"`);
             minimalLines.push(`  ${call1Result.disguised_as}`);
           } else if (intel?.description) {
             minimalLines.push(`  ${intel.description}`);
@@ -809,10 +800,6 @@ export function buildCall2ScenePrompt(
   // The key_npc field contains the creature's true appearance ("a **giant oni** with blue skin...")
   // which would leak into the read-aloud. Call 2 only needs the situation and creature brief.
   const call2Npc = call1Result.disguised_as ? null : call1Result.key_npc;
-
-  if (call1Result.disguised_as && call1Result.key_npc) {
-    console.log(`[DISGUISE PROTECTION] Hiding key_npc from Call 2 to prevent leak: "${call1Result.key_npc}"`);
-  }
 
   const npcReminder = call2Npc
     ? '\n- Do NOT name NPCs in the read-aloud. Describe them ("a massive serpent," "a hobgoblin in dented armor"). The DM has the NPC name from Call 1.'

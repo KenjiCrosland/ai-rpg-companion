@@ -186,7 +186,7 @@
                 <div v-if="editingEventIndex !== index">
                   <h4>{{ event.title }}</h4>
                   <p class="time-period">{{ event.eventYear }}</p>
-                  <cdr-text class="event-text">{{ event.description }}</cdr-text>
+                  <p class="event-text">{{ event.description }}</p>
                   <div class="button-row-bottom">
                     <cdr-button modifier="secondary" size="small" @click="startEditingEvent(index)">
                       Edit
@@ -318,10 +318,10 @@
       </div>
 
       <div v-else-if="historicalSummary">
-        <cdr-text class="summary-text">{{ historicalSummary }}</cdr-text>
-        <cdr-text class="legacy-text" v-if="itemLegacy">
+        <p class="summary-text">{{ historicalSummary }}</p>
+        <p class="legacy-text" v-if="itemLegacy">
           <strong>Legacy & Significance:</strong> {{ itemLegacy }}
-        </cdr-text>
+        </p>
       </div>
 
       <div class="summary-buttons">
@@ -602,15 +602,10 @@ const canGenerateEvent = async () => {
   let firstGenerationTime = parseInt(loreData.firstGenerationTime);
   const currentTime = new Date().getTime();
 
-  console.log('Current generation count:', generationCount);
-  console.log('First generation time:', firstGenerationTime);
-  console.log('Current time:', currentTime);
-
   if (generationCount >= MAX_GENERATIONS) {
     if (!firstGenerationTime || currentTime - firstGenerationTime >= 86400000) {
       // 24 hours in milliseconds
       // Reset the count and set the new day's first generation time
-      console.log('Resetting count - 24 hours passed or no first generation time');
       loreData.generationCount = '1';
       loreData.firstGenerationTime = currentTime.toString();
       storage.setItem('loreBuilderTracking', JSON.stringify(loreData));
@@ -621,7 +616,6 @@ const canGenerateEvent = async () => {
     }
   } else {
     // Increment the count
-    console.log('Incrementing count from', generationCount, 'to', generationCount + 1);
     loreData.generationCount = (generationCount + 1).toString();
     if (generationCount === 0) {
       loreData.firstGenerationTime = currentTime.toString(); // Set the first generation time if this is the first count

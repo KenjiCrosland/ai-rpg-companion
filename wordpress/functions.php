@@ -445,7 +445,8 @@ function vue_app_encounter_generator_premium_shortcode() {
 add_shortcode( 'vue_app_encounter-generator_premium', 'vue_app_encounter_generator_premium_shortcode' );
 
 function vue_app_item_generator_shortcode() {
-	return '<div id="app" data-page="item-generator"></div>';
+    $premium = function_exists( 'kenji_is_premium' ) && kenji_is_premium() ? 'true' : 'false';
+    return '<div id="app" data-page="item-generator" data-premium="' . $premium . '"></div>';
 }
 add_shortcode( 'vue_app_item_generator', 'vue_app_item_generator_shortcode' );
 

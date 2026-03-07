@@ -246,3 +246,27 @@ export function addNPC() {
   generateDungeonNPC(currentDungeon.value.npcs.length - 1);
   saveDungeons();
 }
+
+// Handle storage changes from other tabs to sync statblock generation limits
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    // When another tab changes the statblock counter, sync our NPC statblock loading states
+    if (e.key === 'monsters') {
+      try {
+        const monsters = JSON.parse(e.newValue);
+        const generationCount = parseInt(monsters?.generationCount) || 0;
+
+        // If count was reset (less than 5), clear NPC statblock limit flags
+        if (generationCount < 5) {
+          Object.keys(npcStatblockLoadingStates.value).forEach(key => {
+            if (npcStatblockLoadingStates.value[key]?.limitReached) {
+              npcStatblockLoadingStates.value[key].limitReached = false;
+            }
+          });
+        }
+      } catch (err) {
+        // Ignore parse errors
+      }
+    }
+  });
+}

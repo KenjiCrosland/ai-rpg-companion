@@ -530,12 +530,6 @@ const canMoveEncounter = computed(() => {
 
 // ─── Monster management ──────────────────────────────────────────────────────
 function addMonster(monster) {
-  console.log('=== ADDING MONSTER ===');
-  console.log('Monster data:', monster);
-  console.log('Has STR?', monster.STR);
-  console.log('Has Actions?', monster.Actions);
-  console.log('Has Traits?', monster.Traits);
-
   const existingIndex = encounterMonsters.value.findIndex(
     m => m.name === monster.name && m.source === monster.source
   );
@@ -629,10 +623,6 @@ function selectEncounter(folderName, index) {
   activeEncounterIndex.value = index;
 
   const encounter = savedEncounters.value[folderName][index];
-  console.log('=== LOADING ENCOUNTER FROM SIDEBAR ===');
-  console.log('Folder:', folderName, 'Index:', index);
-  console.log('Encounter data:', encounter);
-  console.log('Generated encounter:', encounter.generatedEncounter);
 
   const currentPartyConfig = [...partyGroups.value]; // Save current party config
 
@@ -748,21 +738,13 @@ async function generateEncounter() {
   try {
     // Get creature intelligence data (async - supports lazy enrichment for custom creatures)
     const creatureIntel = await getCreatureIntelligence(encounterMonsters.value);
-    console.log('=== CREATURE INTELLIGENCE ===');
-    console.log(creatureIntel);
 
     // Build monster briefs (minimal for Calls 1+2, tactical for Call 3)
     const baseBrief = buildEnrichedMonsterBrief(encounterMonsters.value);
     const minimalBrief = buildMinimalBrief(baseBrief, creatureIntel);
     const tacticalBrief = buildTacticalBrief(baseBrief, creatureIntel);
-    console.log('=== MINIMAL BRIEF (Calls 1+2) ===');
-    console.log(minimalBrief);
-    console.log('=== TACTICAL BRIEF (Call 3) ===');
-    console.log(tacticalBrief);
 
     const encounterProfile = getEncounterProfile(encounterMonsters.value);
-    console.log('=== ENCOUNTER PROFILE ===');
-    console.log(encounterProfile);
 
     const locationText = location.value || '';
 
@@ -771,9 +753,6 @@ async function generateEncounter() {
 
     // Get tone and matching centerpieces (uses creature intelligence)
     const { tone, centerpieceShortlist } = getReadAloudToneAndCenterpieces(creatureIntel);
-    console.log('=== SELECTED TONE ===');
-    console.log(`Tone: ${tone.label}`);
-    console.log(`Centerpieces: ${centerpieceShortlist.length} options selected`);
 
     // ── Call 1: Structure (Story + Metadata) ────────────────────
     const call1Prompt = buildCall1StructurePrompt(
@@ -783,35 +762,21 @@ async function generateEncounter() {
       tone,
       centerpieceShortlist
     );
-    console.log('=== CALL 1 STRUCTURE PROMPT ===');
-    console.log(call1Prompt);
     const call1Response = await generateGptResponse(call1Prompt, validateCall1Structure, 3, undefined, 'gpt-4.1-mini');
-    console.log('=== CALL 1 STRUCTURE RESPONSE ===');
-    console.log(call1Response);
     const call1Result = JSON.parse(call1Response);
-    console.log('=== CALL 1 STRUCTURE PARSED ===');
-    console.log(call1Result);
 
     // ── Call 2: Scene (Read-Aloud Prose) ────────────────────────
     // IMPORTANT: Rebuild minimal brief with call1Result for disguise swapping
     // If call1Result.disguised_as is not null, buildMinimalBrief will replace
     // the disguised creature's true description with the false appearance
     const minimalBriefForCall2 = buildMinimalBrief(baseBrief, creatureIntel, call1Result);
-    console.log('=== MINIMAL BRIEF FOR CALL 2 (with disguise swap) ===');
-    console.log(minimalBriefForCall2);
 
     const call2Prompt = buildCall2ScenePrompt(
       call1Result,
       minimalBriefForCall2
     );
-    console.log('=== CALL 2 SCENE PROMPT ===');
-    console.log(call2Prompt);
     const call2Response = await generateGptResponse(call2Prompt, validateCall2Scene, 3, undefined, 'gpt-4.1-mini');
-    console.log('=== CALL 2 SCENE RESPONSE ===');
-    console.log(call2Response);
     const call2Result = JSON.parse(call2Response);
-    console.log('=== CALL 2 SCENE PARSED ===');
-    console.log(call2Result);
 
     // Show read-aloud immediately while Call 3 runs
     generatedEncounter.value = {
@@ -841,19 +806,11 @@ async function generateEncounter() {
       encounterProfile,
       creatureIntel
     );
-    console.log('=== CALL 3 DETAILS PROMPT ===');
-    console.log(call3Prompt);
     const call3Response = await generateGptResponse(call3Prompt, validateCall3Details, 3, undefined, 'gpt-4.1-mini');
-    console.log('=== CALL 3 DETAILS RESPONSE ===');
-    console.log(call3Response);
     const call3Result = JSON.parse(call3Response);
-    console.log('=== CALL 3 DETAILS PARSED ===');
-    console.log(call3Result);
 
     // Combine all 3 calls into final encounter
     const finalEncounter = processEncounterResponse(call1Result, call2Result, call3Result, baseBrief);
-    console.log('=== FINAL ENCOUNTER ===');
-    console.log(finalEncounter);
 
     // Merge into final contentArray
     generatedEncounter.value = {
@@ -1434,9 +1391,9 @@ onMounted(async () => {
 
 /* ─── Difficulty badges ───────────────────────────────────────────────────── */
 .difficulty-badge {
-  padding: 0.125rem 0.5rem;
+  padding: 0.1875rem 0.625rem;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 1rem;
   border-radius: 4px;
   white-space: nowrap;
   flex-shrink: 0;

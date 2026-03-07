@@ -15,18 +15,13 @@
             </button>
           </li>
         </ul>
-        <!-- Button to open the modal -->
-        <cdr-button modifier="dark" @click="showDataManagerModal = true" style="margin-bottom: 12rem;">
-          Save/Load Data from a File
-        </cdr-button>
-
-        <!-- Our new DataManagerModal component -->
-        <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
-          :premium="premium" currentApp="savedItems" />
       </div>
     </template>
 
     <div class="main-container">
+      <!-- DataManagerModal component -->
+      <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
+        :premium="premium" currentApp="savedItems" />
       <!-- LANDING STATE: Three-zone layout -->
       <div class="landing-wrapper" v-if="!magicItemDescription && !loadingItem">
 
@@ -70,26 +65,40 @@
 
         <!-- ZONE 3: Footer meta -->
         <div class="footer-meta">
-          <p v-if="!premium" class="limit-info">
-            Item generation is unlimited. Lore Builder and Quest Hook features are limited to 5/day on the free plan.
-            <cdr-link href="https://cros.land/dnd-5e-magic-item-generator-premium-version/">Go Premium for unlimited
-              access
-              &rarr;</cdr-link>
-          </p>
-          <p v-else class="limit-info">
-            All features unlimited. Export your creations in Homebrewery-compatible markdown format.
-          </p>
+          <!-- Free users: Show message + unlock button -->
+          <div v-if="!premium">
+            <p>
+              Item generation is unlimited. Lore Builder and Quest Hook features are limited to 5 per 24 hours. Item
+              data is saved on this browser. To save/load item data for use in another computer or browser requires a
+              premium Patreon subscription.
+            </p>
+            <div class="patreon-universal-button">
+              <a :href="patreonLoginUrl">
+                <div class="patreon-responsive-button-wrapper">
+                  <div class="patreon-responsive-button">
+                    <img class="patreon_logo"
+                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                      alt="Unlock with Patreon"> Unlock with Patreon
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Premium users: Show save/load button -->
+          <div v-else>
+            <p>
+              All features unlimited. Item data is saved on this browser. Export to a file to use on another device.
+            </p>
+            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+              Save/Load Data from a File
+            </cdr-button>
+          </div>
         </div>
       </div>
 
-      <!-- Tabbed Content for Generated Item (UNCHANGED) -->
+      <!-- Tabbed Content for Generated Item -->
       <div v-if="magicItemDescription && !loadingItem" class="form-container">
-        <div v-if="!premium" class="premium-banner">
-          Lore Builder and Quest Hooks are limited to 5 generations/day on the free plan.
-          <cdr-link href="https://cros.land/dnd-5e-magic-item-generator-premium-version/">Go Premium for unlimited
-            access
-            &rarr;</cdr-link>
-        </div>
         <Tabs :activeIndex="activeTabIndex" @tabChange="activeTabIndex = $event">
           <TabPanel label="Item Details">
             <!-- View Mode -->
@@ -217,6 +226,39 @@
         </Tabs>
       </div>
 
+      <!-- Footer below item content (separate card) -->
+      <div class="footer-meta" v-if="magicItemDescription && !loadingItem">
+        <!-- Free users: Show message + unlock button -->
+        <div v-if="!premium">
+          <p>
+            Item generation is unlimited. Lore Builder and Quest Hook features are limited to 5 per 24 hours. Item
+            data is saved on this browser. To save/load item data for use in another computer or browser requires a
+            premium Patreon subscription.
+          </p>
+          <div class="patreon-universal-button">
+            <a :href="patreonLoginUrl">
+              <div class="patreon-responsive-button-wrapper">
+                <div class="patreon-responsive-button">
+                  <img class="patreon_logo"
+                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                    alt="Unlock with Patreon"> Unlock with Patreon
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Premium users: Show save/load button -->
+        <div v-else>
+          <p>
+            All features unlimited. Item data is saved on this browser. Export to a file to use on another device.
+          </p>
+          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            Save/Load Data from a File
+          </cdr-button>
+        </div>
+      </div>
+
       <div v-if="loadingItem" class="form-container">
         <item-skeleton />
       </div>
@@ -225,7 +267,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { CdrInput, CdrButton, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import { generateGptResponse } from "@/util/open-ai.mjs";
@@ -246,6 +288,11 @@ const props = defineProps({
     type: Boolean,
     default: false
   }
+});
+
+const patreonLoginUrl = computed(() => {
+  const returnUrl = encodeURIComponent(window.location.href);
+  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
 
 const itemName = ref('');
@@ -1096,13 +1143,70 @@ onMounted(() => {
 /* ZONE 3: Footer meta */
 .footer-meta {
   text-align: center;
-  padding: 1.5rem 1rem 0;
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  max-width: 940px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+
+  p {
+    font-size: 1.4rem;
+    color: #6b7280;
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+  }
 
   .limit-info {
     font-size: 1.2rem;
-    color: $cdr-color-text-secondary;
+    color: #6b7280;
     margin: 0;
     line-height: 1.6;
+  }
+}
+
+.patreon-universal-button {
+  margin-top: 1rem;
+
+  a {
+    text-decoration: none;
+  }
+
+  .patreon-responsive-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #F96854;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.2rem;
+    font-variant: small-caps;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: none;
+
+    &:hover {
+      background: #e63946;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .patreon_logo {
+    width: 20px;
+    height: 20px;
   }
 }
 
