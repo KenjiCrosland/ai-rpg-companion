@@ -859,6 +859,11 @@ $transition-speed: 0.3s;
       text-decoration: none;
     }
 
+    .patreon-responsive-button-wrapper {
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
     .patreon-responsive-button {
       display: inline-flex;
       align-items: center;

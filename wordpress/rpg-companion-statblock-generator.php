@@ -94,8 +94,42 @@ function vue_app_enqueue_assets() {
             .entry-content h4 {
                 margin-top: 0;
             }
+            /* Override default button styles */
+            button, input[type="button"], input[type="reset"], input[type="submit"], .button {
+                color: inherit;
+            }
             button:focus, button:hover, input[type="button"]:focus, input[type="button"]:hover, input[type="reset"]:focus, input[type="reset"]:hover, input[type="submit"]:focus, input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:hover, .button:focus, .button:hover {
                 color: inherit;
+            }
+
+            /* Patreon Button Overrides */
+            .patreon-universal-button a {
+                text-decoration: none;
+            }
+            .patreon-universal-button .patreon-responsive-button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                padding: 0.75rem 1.5rem;
+                background: #F96854;
+                color: #fff;
+                font-weight: 700;
+                font-size: 0.9375rem;
+                font-variant: small-caps;
+                text-decoration: none;
+                border-radius: 6px;
+                transition: all 0.2s ease;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                border: none;
+            }
+            .patreon-universal-button .patreon-responsive-button:hover {
+                background: #e63946;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            }
+            .patreon-universal-button .patreon-responsive-button:active {
+                transform: translateY(0);
             }
         ' );
 }

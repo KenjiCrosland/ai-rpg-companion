@@ -54,6 +54,7 @@
           </div>
           <h1>Build Custom D&D 5e Monsters in Seconds</h1>
           <p class="value-prop">Create balanced, export-ready 5e statblocks — no math required.</p>
+          <p class="export-formats">Exports to Roll20, Homebrewery, Foundry VTT, and Improved Initiative</p>
         </div>
 
         <!-- ZONE 2: The form card -->
@@ -84,13 +85,33 @@
 
         <!-- ZONE 3: Secondary info (below the card, low-key) -->
         <div class="footer-meta">
-          <p v-if="!premium" class="limit-info">
-            Free: 5 generations per 24 hours (includes re-generations). Exports to Roll20, Homebrewery, Foundry VTT, and
-            Improved Initiative.
-            <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/">Need more than 5
-              per
-              day? Go Premium &rarr;</cdr-link>
-          </p>
+          <!-- Free users: Show message + unlock button -->
+          <div v-if="!premium">
+            <p>
+              Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load data across browsers with a premium Patreon subscription.
+            </p>
+            <div class="patreon-universal-button">
+              <a :href="patreonLoginUrl">
+                <div class="patreon-responsive-button-wrapper">
+                  <div class="patreon-responsive-button">
+                    <img class="patreon_logo"
+                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                      alt="Unlock with Patreon"> Unlock with Patreon
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Premium users: Show message -->
+          <div v-else>
+            <p>
+              Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.
+            </p>
+            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+              Save/Load Data from a File
+            </cdr-button>
+          </div>
         </div>
       </div>
 
@@ -130,6 +151,37 @@
       </div>
       <StatblockExports v-if="monster" :monster="monster" :loading="loadingPart1 || loadingPart2"
         :columns="userColumnsPreference" />
+
+      <!-- Footer below monster content -->
+      <div class="footer-meta" v-if="monster && !loadingPart2">
+        <!-- Free users: Show message + unlock button -->
+        <div v-if="!premium">
+          <p>
+            Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load data across browsers with a premium Patreon subscription.
+          </p>
+          <div class="patreon-universal-button">
+            <a :href="patreonLoginUrl">
+              <div class="patreon-responsive-button-wrapper">
+                <div class="patreon-responsive-button">
+                  <img class="patreon_logo"
+                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                    alt="Unlock with Patreon"> Unlock with Patreon
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Premium users: Show message -->
+        <div v-else>
+          <p>
+            Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.
+          </p>
+          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            Save/Load Data from a File
+          </cdr-button>
+        </div>
+      </div>
     </div>
     <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster()">New
       Monster
@@ -166,6 +218,11 @@ const props = defineProps({
     default: false
   }
 })
+
+const patreonLoginUrl = computed(() => {
+  const returnUrl = encodeURIComponent(window.location.href);
+  return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
+});
 
 const loadingPart1 = ref(false);
 const loadingPart2 = ref(false);
@@ -650,6 +707,13 @@ async function generateStatblock() {
     color: $cdr-color-text-secondary;
     margin: 0;
   }
+
+  .export-formats {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #666;
+    margin: 0.75rem 0 0 0;
+  }
 }
 
 /* ZONE 2: Form card — elevated, clearly interactive */
@@ -664,13 +728,75 @@ async function generateStatblock() {
 /* ZONE 3: Footer meta — limit info, upsell */
 .footer-meta {
   text-align: center;
-  padding: 1.5rem 1rem 0;
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  max-width: 940px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+
+  p {
+    font-size: 1.4rem;
+    color: #6b7280;
+    margin: 0 0 1rem 0;
+    line-height: 1.6;
+  }
 
   .limit-info {
     font-size: 1.2rem;
-    color: $cdr-color-text-secondary;
+    color: #6b7280;
     margin: 0;
     line-height: 1.6;
+  }
+}
+
+.patreon-universal-button {
+  margin-top: 1rem;
+
+  a {
+    text-decoration: none;
+  }
+
+  .patreon-responsive-button-wrapper {
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .patreon-responsive-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #F96854;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.2rem;
+    font-variant: small-caps;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: none;
+
+    &:hover {
+      background: #e63946;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .patreon_logo {
+    width: 20px;
+    height: 20px;
   }
 }
 

@@ -487,7 +487,8 @@ function vue_app_gm_dashboard_plus_shortcode() {
 add_shortcode( 'vue_app_gm_dashboard_plus', 'vue_app_gm_dashboard_plus_shortcode' );
 
 function vue_app_statblock_generator_shortcode() {
-    return '<div id="app" data-page="statblock-generator"></div>';
+    $premium = function_exists( 'kenji_is_premium' ) && kenji_is_premium() ? 'true' : 'false';
+    return '<div id="app" data-page="statblock-generator" data-premium="' . $premium . '"></div>';
 }
 add_shortcode( 'vue_app_statblock_generator', 'vue_app_statblock_generator_shortcode' );
 

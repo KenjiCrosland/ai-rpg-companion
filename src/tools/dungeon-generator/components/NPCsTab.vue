@@ -499,6 +499,11 @@ function addRelationship() {
   text-decoration: none;
 }
 
+.statblock-limit-message .patreon-universal-button .patreon-responsive-button-wrapper {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
 .statblock-limit-message .patreon-universal-button .patreon-responsive-button {
   display: inline-flex;
   align-items: center;

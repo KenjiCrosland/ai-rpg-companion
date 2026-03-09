@@ -1817,6 +1817,11 @@ onMounted(async () => {
     text-decoration: none;
   }
 
+  .patreon-responsive-button-wrapper {
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
   .patreon-responsive-button {
     display: inline-flex;
     align-items: center;

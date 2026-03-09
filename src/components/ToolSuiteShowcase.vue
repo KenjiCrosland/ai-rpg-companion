@@ -22,39 +22,18 @@
 
       <transition name="slide">
         <div v-if="isExpanded" class="banner-content">
-          <!-- Blog Link in corner -->
-          <div class="top-corner-links">
-            <a href="https://cros.land/" class="blog-link">
-              <span class="material-symbols-outlined">home</span>
-              <span>Blog & Resources</span>
-            </a>
-          </div>
-
-          <!-- Premium Toggle -->
-          <div class="premium-toggle">
-            <span :class="{ 'active': !showPremium }">Free Tools</span>
-            <label class="toggle-switch">
-              <input type="checkbox" v-model="showPremium" />
-              <span class="slider"></span>
-            </label>
-            <span :class="{ 'active': showPremium }">
-              <span class="material-symbols-outlined premium-icon">star</span>
-              Premium Tools
-            </span>
-          </div>
-
-          <!-- Tools Grid -->
+          <!-- Tools Grid — all tools in one grid -->
           <div class="tools-grid">
             <a v-for="tool in currentTools" :key="tool.url" :href="tool.url" class="tool-card"
-              :class="{ current: isCurrentTool(tool.url), premium: tool.premium }">
-              <div class="tool-icon">
-                <span class="material-symbols-outlined">{{ tool.icon }}</span>
+              :class="{ current: isCurrentTool(tool.url) }">
+              <div class="tool-icon" :style="{ backgroundColor: tool.iconColor + '15' }">
+                <span class="material-symbols-outlined" :style="{ color: tool.iconColor }">{{ tool.icon }}</span>
               </div>
               <div class="tool-info">
                 <h4>{{ tool.name }}</h4>
                 <p>{{ tool.description }}</p>
-                <span v-if="tool.premium" class="premium-badge">
-                  <span class="material-symbols-outlined">star</span> Premium
+                <span v-if="tool.patronOnly" class="patron-badge">
+                  <span class="material-symbols-outlined">star</span> Patron
                 </span>
               </div>
               <div v-if="isCurrentTool(tool.url)" class="current-indicator">
@@ -63,50 +42,24 @@
             </a>
           </div>
 
-          <!-- Premium Features Info -->
-          <div v-if="showPremium" class="premium-features-info">
-            <p class="features-note">
-              <strong>Premium features:</strong> Unlimited generations • Save & export • Cross-browser access •
-              Additional features per tool
-            </p>
-          </div>
-
-          <!-- Premium CTA (only when NOT a supporter) -->
-          <div v-if="!showPremium && premiumTools.length > 0 && !isSupporter" class="premium-cta">
-            <div class="cta-content">
-              <span class="material-symbols-outlined cta-icon">workspace_premium</span>
-              <div>
-                <strong>Unlock {{ premiumTools.length }} Premium Tools</strong>
-                <p>Get access to advanced features and exclusive generators</p>
-              </div>
-              <button class="cta-button primary" @click="showPremium = true">
-                View Premium Tools
-              </button>
-            </div>
-          </div>
-
-          <!-- Supporter Thank-You (replaces Patreon CTA when premium=true) -->
-          <div v-if="isSupporter && showPremium" class="supporter-thanks" role="status" aria-live="polite">
-            <div class="cta-content">
-              <span class="material-symbols-outlined cta-icon">favorite</span>
-              <div>
-                <strong>Thank you for supporting my work ❤️</strong>
-                <p>Your patronage enables ongoing development and improvements.</p>
-              </div>
-            </div>
-          </div>
-
           <!-- Patreon CTA (only when NOT a supporter) -->
-          <div v-if="showPremium && !isSupporter" class="patreon-cta">
+          <div v-if="!isSupporter" class="patreon-cta">
             <div class="cta-content">
               <span class="material-symbols-outlined cta-icon">favorite</span>
               <div>
-                <strong>Become a Patron</strong>
-                <p>Support development and unlock all premium features for $5/month</p>
+                <strong>Support Development</strong>
+                <p>Unlock patron-exclusive tools and features for $5/month</p>
               </div>
-              <a class="cta-button primary" href="https://patreon.com/ai_rpg_tookit" target="_blank" rel="noopener">
-                Join on Patreon
-              </a>
+              <div class="patreon-universal-button">
+                <a href="https://patreon.com/ai_rpg_tookit" target="_blank" rel="noopener">
+                  <div class="patreon-responsive-button">
+                    <img class="patreon_logo"
+                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
+                      alt="Join on Patreon">
+                    Join on Patreon
+                  </div>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -156,7 +109,6 @@ const props = defineProps({
 });
 
 const isExpanded = ref(false);
-const showPremium = ref(false);
 const widgetOpen = ref(false);
 const showFloatingWidget = ref(false);
 const isMobile = ref(false);
@@ -167,29 +119,20 @@ const mq = typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)
 const setMobile = () => (isMobile.value = mq ? mq.matches : false);
 
 const tools = [
-  // Free
-  { name: 'Monster Statblock Generator', shortName: 'Monsters', description: 'Create balanced D&D 5e monster statblocks', url: 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/', icon: 'pest_control', premium: false, category: 'combat' },
-  { name: 'Dungeon Generator', shortName: 'Dungeons', description: 'Generate complete dungeons with rooms, encounters, and boss battles', url: 'https://cros.land/kenjis-dungeon-generator-2-0/', icon: 'map', premium: false, category: 'exploration' },
-  { name: 'Magic Item Generator', shortName: 'Items', description: 'Create unique magic items with lore and balanced mechanics.', url: 'https://cros.land/dnd-5e-magic-item-generator/', icon: 'auto_fix_high', premium: false, category: 'items' },
-  { name: 'Encounter Generator', shortName: 'Encounters', description: 'Build balanced combat encounters for any party composition', url: 'https://cros.land/dnd-5e-encounter-generator/', icon: 'sports_kabaddi', premium: false, category: 'combat' },
-  { name: 'Setting Generator', shortName: 'Settings', description: 'World-building tool for creating rich campaign settings.', url: 'https://cros.land/rpg-setting-generator-and-world-building-tool/', icon: 'public', premium: false, category: 'worldbuilding' },
-  { name: 'Location Description Generator', shortName: 'Locations', description: 'Generate detailed location descriptions for immediate use in your campaign', url: 'https://cros.land/ai-rpg-location-generator/', icon: 'fort', premium: false, category: 'worldbuilding' },
-  { name: 'NPC Generator', shortName: 'NPCs', description: 'Create memorable NPCs with personalities and backstories', url: 'https://cros.land/rpg-ai-npc-generator/', icon: 'person', premium: false, category: 'roleplaying' },
-  // Premium
-  { name: 'Bookshelf Generator', shortName: 'Books', description: 'Generate libraries full of books with titles and contents', url: 'https://cros.land/ai-powered-bookshelf-generator/', icon: 'menu_book', premium: true, category: 'roleplaying' },
-  { name: 'Lore & Timeline Generator', shortName: 'Lore', description: 'Create detailed histories and timelines for your world', url: 'https://cros.land/ai-powered-lore-and-timeline-generator/', icon: 'history', premium: true, category: 'worldbuilding' },
-  { name: 'Dungeon Generator Premium', shortName: 'Dungeons+', description: 'Generate complete dungeons with rooms, encounters, and boss battles. Includes save/export features and unlimited statblock generations.', url: 'https://cros.land/dungeon-generator-2-0-premium-version/', icon: 'map', premium: true, category: 'exploration' },
-  { name: 'Monster Generator Premium', shortName: 'Monsters+', description: 'Unlimited D&D 5e statblock generation with save/export features', url: 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/', icon: 'pest_control', premium: true, category: 'combat' },
-  { name: 'Setting Generator Premium', shortName: 'Settings+', description: 'World-building tool for creating rich campaign settings.', url: 'https://cros.land/rpg-setting-generator-and-world-building-tool-premium-version/', icon: 'public', premium: true, category: 'worldbuilding' },
-  { name: 'Magic Item Generator Premium', shortName: 'Items+', description: 'D&D 5e magic item generator. Create unique magic items with lore and balanced mechanics. Includes unlimited generations of quest hooks and lore events for each item timeline. Save/export features included.', url: 'https://cros.land/dnd-5e-magic-item-generator-premium-version/', icon: 'auto_fix_high', premium: true, category: 'items' },
-  { name: 'Encounter Generator Premium', shortName: 'Encounters+', description: 'Unlimited encounter generation with save/export features', url: 'https://cros.land/dnd-5e-encounter-generator-premium/', icon: 'sports_kabaddi', premium: true, category: 'combat' },
-  { name: 'NPC Generator Premium', shortName: 'NPCs', description: 'Create memorable NPCs with personalities and backstories', url: 'https://cros.land/npc-generator-premium-version/', icon: 'person', premium: true, category: 'roleplaying' },
-  { name: 'Town Generator (Legacy)', shortName: 'GM Dashboard', description: "This town generator is the first iteration of the setting generator tool. It allows you to create detailed towns and kingdoms for your RPG campaigns. It focuses on location descriptions so it's great for building out a town quickly.", url: 'https://cros.land/ai-powered-game-master-dashboard/', icon: 'dashboard', premium: true, category: 'management' }
+  { name: 'Monster Statblock Generator', shortName: 'Monsters', description: 'Create balanced D&D 5e monster statblocks', url: 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/', icon: 'pest_control', iconColor: '#c62828' },
+  { name: 'Dungeon Generator', shortName: 'Dungeons', description: 'Generate complete dungeons with rooms, encounters, and boss battles', url: 'https://cros.land/kenjis-dungeon-generator-2-0/', icon: 'map', iconColor: '#4e342e' },
+  { name: 'Magic Item Generator', shortName: 'Items', description: 'Create unique magic items with lore and balanced mechanics', url: 'https://cros.land/dnd-5e-magic-item-generator/', icon: 'auto_fix_high', iconColor: '#6a1b9a' },
+  { name: 'Encounter Generator', shortName: 'Encounters', description: 'Build balanced combat encounters for any party composition', url: 'https://cros.land/dnd-5e-encounter-generator/', icon: 'sports_kabaddi', iconColor: '#e65100' },
+  { name: 'Setting Generator', shortName: 'Settings', description: 'World-building tool for creating rich campaign settings', url: 'https://cros.land/rpg-setting-generator-and-world-building-tool/', icon: 'public', iconColor: '#1565c0' },
+  { name: 'Location Description Generator', shortName: 'Locations', description: 'Generate detailed location descriptions for immediate use', url: 'https://cros.land/ai-rpg-location-generator/', icon: 'fort', iconColor: '#558b2f' },
+  { name: 'NPC Generator', shortName: 'NPCs', description: 'Create memorable NPCs with personalities and backstories', url: 'https://cros.land/rpg-ai-npc-generator/', icon: 'person', iconColor: '#00838f' },
+  // Patron-exclusive apps
+  { name: 'Bookshelf Generator', shortName: 'Books', description: 'Generate libraries full of books with titles and contents', url: 'https://cros.land/ai-powered-bookshelf-generator/', icon: 'menu_book', iconColor: '#5d4037', patronOnly: true },
+  { name: 'Lore & Timeline Generator', shortName: 'Lore', description: 'Create detailed histories and timelines for your world', url: 'https://cros.land/ai-powered-lore-and-timeline-generator/', icon: 'history', iconColor: '#6a1b9a', patronOnly: true },
+  { name: 'Town Generator', shortName: 'Town', description: 'Create detailed towns and kingdoms with location descriptions', url: 'https://cros.land/ai-powered-game-master-dashboard/', icon: 'dashboard', iconColor: '#1565c0', patronOnly: true },
 ];
 
-const freeTools = computed(() => tools.filter(t => !t.premium));
-const premiumTools = computed(() => tools.filter(t => t.premium));
-const currentTools = computed(() => (showPremium.value ? premiumTools.value : freeTools.value));
+const currentTools = computed(() => tools);
 
 const currentToolName = computed(() => {
   const currentUrl = window.location.href.toLowerCase();
@@ -220,7 +163,6 @@ const toggleExpanded = () => {
 };
 
 onMounted(() => {
-  showPremium.value = !!props.premium;              // default to Premium for supporters
   if (props.displayMode === 'widget') showFloatingWidget.value = true;
   setMobile();
   mq && mq.addEventListener('change', setMobile);
@@ -266,15 +208,14 @@ onBeforeUnmount(() => {
 }
 
 .expand-button {
-  background: #FF991C;
-  color: #fff;
-  border-color: #d78119;
+  background: #fff;
+  color: #333;
+  border-color: #ccc;
 
   &:hover,
   &:focus {
-    background: #fc8b00;
-
-    border-color: #d78119;
+    background: #f5f5f5;
+    border-color: #999;
   }
 }
 
@@ -339,13 +280,13 @@ onBeforeUnmount(() => {
       }
 
       .tool-count {
-        background: #FF991C;
-        color: #fff;
+        background: none;
+        color: #666;
         padding: 0.35rem 0.9rem;
+        border: 1px solid #ccc;
         border-radius: 20px;
-        font-size: 1.125rem;
-        /* larger */
-        font-weight: 800;
+        font-size: 0.875rem;
+        font-weight: 600;
         white-space: nowrap;
       }
     }
@@ -378,99 +319,6 @@ onBeforeUnmount(() => {
   }
 }
 
-/* ---------- Corner link (larger) ---------- */
-.top-corner-links {
-  text-align: right;
-
-  .blog-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.6rem 1.1rem;
-    color: $cdr-color-text-secondary;
-    text-decoration: none;
-    /* larger */
-    border-radius: 6px;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: #f8f9fa;
-      color: $cdr-color-text-primary;
-    }
-
-    .material-symbols-outlined {
-      font-size: 20px;
-    }
-  }
-}
-
-/* ---------- Premium Toggle (medium) ---------- */
-.premium-toggle {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-
-  /* medium size per request */
-  span {
-    transition: color 0.3s;
-
-    &.active {
-      color: $cdr-color-text-primary;
-      font-weight: 700;
-    }
-  }
-
-  .premium-icon {
-    font-size: 16px;
-    color: gold;
-    margin-right: 0.25rem;
-  }
-
-  .toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 28px;
-
-    input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-
-      &:checked+.slider {
-        background: linear-gradient(135deg, #ffd700, #ffed4e);
-
-        &:before {
-          transform: translateX(32px);
-        }
-      }
-    }
-
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background: #ccc;
-      transition: 0.4s;
-      border-radius: 28px;
-
-      &:before {
-        content: "";
-        position: absolute;
-        height: 20px;
-        width: 20px;
-        left: 4px;
-        bottom: 4px;
-        background: white;
-        transition: 0.4s;
-        border-radius: 50%;
-      }
-    }
-  }
-}
-
 /* ---------- Tools Grid (larger text) ---------- */
 .tools-grid {
   display: grid;
@@ -481,34 +329,26 @@ onBeforeUnmount(() => {
   .tool-card {
     display: flex;
     align-items: flex-start;
-    padding: 1.1rem;
-    background: #f8f9fa;
-    border: 2px solid transparent;
+    padding: 1.25rem;
+    background: #fff;
+    border: 1px solid #e5e5e5;
     border-radius: 8px;
     text-decoration: none;
     color: inherit;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
     &:hover {
-      background: #fff;
       border-color: $cdr-color-text-brand;
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     &.current {
       background: linear-gradient(135deg, #e3f2fd, #bbdefb);
       border-color: #2196f3;
-    }
-
-    &.premium {
-      background: linear-gradient(135deg, #fff9e6, #fff3cd);
-
-      &:hover {
-        border-color: gold;
-      }
     }
 
     .tool-icon {
@@ -517,13 +357,11 @@ onBeforeUnmount(() => {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff;
-      border-radius: 8px;
+      border-radius: 10px;
       margin-right: 1rem;
       flex-shrink: 0;
 
       .material-symbols-outlined {
-        color: $cdr-color-text-brand;
         font-size: 28px;
       }
     }
@@ -544,17 +382,17 @@ onBeforeUnmount(() => {
         line-height: 1.6;
       }
 
-      .premium-badge {
+      .patron-badge {
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
         margin-top: 0.55rem;
         padding: 0.3rem 0.65rem;
-        background: linear-gradient(135deg, #ffd700, #ffed4e);
-        color: #856404;
+        background: #F96854;
+        color: #fff;
         border-radius: 4px;
-        font-size: 0.95rem;
-        font-weight: 800;
+        font-size: 0.85rem;
+        font-weight: 600;
 
         .material-symbols-outlined {
           font-size: 14px;
@@ -577,69 +415,78 @@ onBeforeUnmount(() => {
 }
 
 /* ---------- Info & CTAs (larger) ---------- */
-.premium-features-info {
-  margin-top: 1rem;
-  padding: 0;
-
-  .features-note {
-    margin: 0;
-    color: $cdr-color-text-secondary;
-    text-align: center;
-    line-height: 1.6;
-
-    strong {
-      color: #856404;
-      font-weight: 800;
-    }
-  }
-}
-
-.premium-cta,
-.patreon-cta,
-.supporter-thanks {
+.patreon-cta {
   margin-top: 2rem;
 }
 
-.premium-cta .cta-content,
-.patreon-cta .cta-content,
-.supporter-thanks .cta-content {
+.patreon-cta .cta-content {
   display: flex;
   align-items: center;
   gap: 1.6rem;
-  padding: 1.6rem;
-  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
-  border: 2px solid #0ea5e9;
+  padding: 1rem 1.6rem;
 
   .cta-icon {
-    font-size: 52px;
-    color: #0ea5e9;
-    flex-shrink: 0;
+    font-size: 24px;
+    color: #999;
   }
 
   div {
-    flex: 1;
 
     strong {
+      font-size: 1rem;
       display: block;
       margin-bottom: 0.3rem;
-      font-size: 1.375rem;
     }
 
     p {
+      font-size: 0.875rem;
       margin: 0;
       color: $cdr-color-text-secondary;
-      font-size: 1.0625rem;
     }
   }
-}
 
-.patreon-cta .cta-content {
-  background: linear-gradient(135deg, #fff0f5, #ffe4e1);
-  border-color: #f43f5e;
+  .patreon-universal-button {
+    margin-left: auto;
 
-  .cta-icon {
-    color: #f43f5e;
+    a {
+      text-decoration: none;
+    }
+
+    .patreon-responsive-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: #F96854;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.2rem;
+      font-variant: small-caps;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border: none;
+
+      &:hover {
+        background: #e63946;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+
+    .patreon_logo {
+      width: 20px;
+      height: 20px;
+    }
   }
 }
 
