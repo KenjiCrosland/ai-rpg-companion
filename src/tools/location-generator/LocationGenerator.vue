@@ -1,7 +1,8 @@
 <template>
-  <ToolSuiteShowcase :premium="false" display-mode="banner" />
+  <div class="location-wrapper">
+    <ToolNavigation />
 
-  <div class="app-container">
+    <div class="app-container">
     <div class="main-container">
       <div class="form-container">
         <h1>Kenji's RPG Location Description Generator</h1>
@@ -42,27 +43,55 @@
           <h2>{{ gptResponse.locationName }}</h2>
           <p class="body-text">{{ gptResponse.locationDescription }}</p>
         </div>
-
-        <div class="footer-link">
-          <cdr-link href="https://www.patreon.com/bePatron?u=2356190" target="_blank">
-            Support Me on Patreon!
-          </cdr-link>
-        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="ogl-footer">
+    <div class="footer-title">Kenji's Game Master Tools</div>
+    <div class="footer-links">
+      <cdr-link href="https://cros.land" target="_blank">Blog</cdr-link>
+      <span class="separator">•</span>
+      <cdr-link href="https://discord.gg/DJVTbkH4VG" target="_blank">Discord</cdr-link>
+      <span class="separator">•</span>
+      <cdr-link href="https://www.patreon.com/c/ai_rpg_tookit" target="_blank">Patreon</cdr-link>
+    </div>
+    <div class="ogl-text">
+      This content uses the D&D 5e SRD under the <cdr-link href="https://cros.land/ogl" target="_blank">Open Gaming License</cdr-link>
+    </div>
+  </footer>
+
+  <!-- Mobile Bottom Bar (no sidebar, just navigation) -->
+  <div class="mobile-bottom-bar">
+    <select :value="currentSlug" @change="navigate($event.target.value)">
+      <optgroup label="Generators">
+        <option v-for="tool in mainTools" :key="tool.slug" :value="tool.slug">
+          {{ tool.name }}
+        </option>
+      </optgroup>
+      <optgroup label="Patron Exclusive">
+        <option v-for="tool in patronTools" :key="tool.slug" :value="tool.slug">
+          ★ {{ tool.name }}
+        </option>
+      </optgroup>
+    </select>
+  </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { CdrText, CdrList, CdrLink, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import LocationForm from './LocationForm.vue';
-import ToolSuiteShowcase from '@/components/ToolSuiteShowcase.vue';
+import ToolNavigation from '@/components/ToolNavigation.vue';
+import { mainTools, patronTools, getCurrentSlug, navigate as navigateToTool } from '@/data/tool-navigation.js';
 
 const loading = ref(false);
 const gptResponse = ref(null);
 
 const locationFormRef = ref(null);
+const currentSlug = computed(() => getCurrentSlug());
 
 const examples = [
   "The captain's quarters on a spelljammer ship",
@@ -80,10 +109,19 @@ const handleError = (errorMessage) => {
   console.error(errorMessage);
   loading.value = false;
 };
+
+function navigate(slug) {
+  if (slug === currentSlug.value) return;
+  navigateToTool(slug);
+}
 </script>
 
 <style scoped lang="scss">
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
+
+.location-wrapper {
+  position: relative;
+}
 
 .app-container {
   display: flex;
@@ -132,18 +170,79 @@ div[class^="cdr-skeleton-bone"] {
   margin: 1.1rem 0;
 }
 
-.footer-link {
-  margin-top: 2rem;
+.ogl-footer {
   text-align: center;
+  padding: 2rem 1rem;
+  margin-top: 3rem;
+  border-top: 1px solid #dee2e6;
+  color: $cdr-color-text-secondary;
+  font-size: 1.5rem;
+
+  .footer-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: $cdr-color-text-primary;
+  }
+
+  .footer-links {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    .separator {
+      color: #999;
+      margin: 0 0.25rem;
+    }
+  }
+
+  .ogl-text {
+    font-size: 1.5rem;
+    color: $cdr-color-text-secondary;
+  }
+}
+
+.mobile-bottom-bar {
+  display: none;
 }
 
 @media (max-width: 768px) {
   .main-container {
     margin: 1rem auto;
+    padding-bottom: 5rem;
   }
 
   .form-container {
     padding: 1.5rem;
+  }
+
+  .mobile-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1002;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border-top: 1px solid #e5e5e5;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .mobile-bottom-bar select {
+    width: 100%;
+    max-width: 600px;
+    font-size: 1.125rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
   }
 }
 </style>

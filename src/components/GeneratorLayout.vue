@@ -1,6 +1,7 @@
 <template>
-  <ToolSuiteShowcase :premium="premium" display-mode="banner" />
-  <div class="app-container">
+  <div class="layout-wrapper">
+    <ToolNavigation />
+    <div class="app-container">
     <!-- Overlay to close sidebar on click (mobile only) -->
     <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
 
@@ -24,17 +25,49 @@
     </button>
   </div>
 
-  <!-- Footer -->
-  <footer class="ogl-footer">
-    This content uses the D&D 5e SRD under the <cdr-link href="https://cros.land/ogl" target="_blank">Open Gaming License</cdr-link>
-  </footer>
+    <!-- Mobile Bottom Bar -->
+    <div class="mobile-bottom-bar">
+      <select :value="currentSlug" @change="navigate($event.target.value)">
+        <optgroup label="Generators">
+          <option v-for="tool in mainTools" :key="tool.slug" :value="tool.slug">
+            {{ tool.name }}
+          </option>
+        </optgroup>
+        <optgroup label="Patron Exclusive">
+          <option v-for="tool in patronTools" :key="tool.slug" :value="tool.slug">
+            ★ {{ tool.name }}
+          </option>
+        </optgroup>
+      </select>
+      <button class="menu-button" @click="isSidebarVisible = !isSidebarVisible">
+        <icon-navigation-menu inherit-color />
+        <span>Menu</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="ogl-footer">
+      <div class="footer-title">Kenji's Game Master Tools</div>
+      <div class="footer-links">
+        <cdr-link href="https://cros.land" target="_blank">Blog</cdr-link>
+        <span class="separator">•</span>
+        <cdr-link href="https://discord.gg/DJVTbkH4VG" target="_blank">Discord</cdr-link>
+        <span class="separator">•</span>
+        <cdr-link href="https://www.patreon.com/c/ai_rpg_tookit" target="_blank">Patreon</cdr-link>
+      </div>
+      <div class="ogl-text">
+        This content uses the D&D 5e SRD under the <cdr-link href="https://cros.land/ogl" target="_blank">Open Gaming License</cdr-link>
+      </div>
+    </footer>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { IconNavigationMenu, CdrLink } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-link.css';
-import ToolSuiteShowcase from './ToolSuiteShowcase.vue';
+import ToolNavigation from './ToolNavigation.vue';
+import { mainTools, patronTools, getCurrentSlug, navigate as navigateToTool } from '@/data/tool-navigation.js';
 
 const props = defineProps({
   premium: {
@@ -45,12 +78,19 @@ const props = defineProps({
 
 const isSidebarVisible = ref(false);
 const windowWidth = ref(window.innerWidth);
+const currentSlug = computed(() => getCurrentSlug());
+
+function navigate(slug) {
+  if (slug === currentSlug.value) return;
+  navigateToTool(slug);
+}
 
 function updateWindowWidth() {
   windowWidth.value = window.innerWidth;
 }
 
 function updateVisibility() {
+  // Show sidebar on tablet and desktop, hide on mobile
   if (windowWidth.value > 768) {
     isSidebarVisible.value = true;
   } else {
@@ -96,6 +136,10 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
 <style scoped lang="scss">
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 
+.layout-wrapper {
+  position: relative;
+}
+
 .app-container {
   display: flex;
 
@@ -113,6 +157,7 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
     transition: transform 0.3s ease;
     background-color: #f4f4f4;
     width: 400px;
+    min-width: 320px;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -139,10 +184,6 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
     align-items: center;
     justify-content: center;
     gap: 4px;
-
-    @media (max-width: 768px) {
-      display: flex;
-    }
 
     svg {
       width: 24px;
@@ -174,6 +215,10 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
   }
 }
 
+.mobile-bottom-bar {
+  display: none;
+}
+
 .ogl-footer {
   text-align: center;
   padding: 2rem 1rem;
@@ -181,5 +226,85 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
   border-top: 1px solid #dee2e6;
   color: $cdr-color-text-secondary;
   font-size: 1.5rem;
+
+  .footer-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: $cdr-color-text-primary;
+  }
+
+  .footer-links {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    .separator {
+      color: #999;
+      margin: 0 0.25rem;
+    }
+  }
+
+  .ogl-text {
+    font-size: 1.5rem;
+    color: $cdr-color-text-secondary;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    padding-bottom: 5rem;
+  }
+
+  .mobile-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1002;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border-top: 1px solid #e5e5e5;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .mobile-bottom-bar select {
+    flex: 1;
+    min-width: 0;
+    font-size: 1.125rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
+    margin-right: 1rem;
+  }
+
+  .mobile-bottom-bar .menu-button {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.75rem 1.125rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .mobile-bottom-bar .menu-button svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 </style>

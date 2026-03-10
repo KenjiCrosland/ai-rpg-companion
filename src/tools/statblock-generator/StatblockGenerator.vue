@@ -810,7 +810,7 @@ async function generateStatblock() {
   gap: 2rem;
 }
 
-@media screen and (max-width: 1020px) {
+@media screen and (max-width: 1300px) {
   .form-row-top {
     grid-template-columns: 1fr;
   }
@@ -838,12 +838,10 @@ async function generateStatblock() {
   min-height: 100dvh;
   overflow-y: auto;
   overflow-x: visible;
+  max-width: 940px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem;
-
-  @media screen and (min-width: 890px) {
-    min-width: 890px;
-  }
 }
 
 .monster-form {
@@ -901,7 +899,7 @@ async function generateStatblock() {
   }
 }
 
-@media screen and (max-width: 1020px) {
+@media screen and (max-width: 1300px) {
   .form-row {
     grid-template-columns: 1fr;
   }

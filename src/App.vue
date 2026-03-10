@@ -107,7 +107,6 @@ import EncounterGenerator from '@/tools/encounter-generator/EncounterGenerator.v
 import SettingGenerator from '@/tools/setting-generator/SettingGenerator.vue';
 import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGeneratorWrapper.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
-import ToolSuiteShowcase from '@/components/ToolSuiteShowcase.vue';
 import LandingPage from '@/components/LandingPage.vue';
 import AppToast from '@/components/AppToast.vue';
 import { registerToast } from '@/composables/useToast';
