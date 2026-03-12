@@ -9,7 +9,6 @@ import {
 import {
   dungeons,
   currentDungeonId,
-  loadingOverview,
   activeTabIndex,
   overviewForm,
   currentDungeon,
@@ -41,7 +40,6 @@ ${currentDungeon.value.dungeonOverview.conclusion}`;
 
 export async function generateDungeonOverview() {
   try {
-    loadingOverview.value = true;
     activeTabIndex.value = 0;
 
     const potentialSettingTypes = [
@@ -120,6 +118,11 @@ export async function generateDungeonOverview() {
       overviewForm.value.difficulty,
     );
     const response = await generateGptResponse(prompt, validateDungeonOverview);
+
+    if (!response) {
+      throw new Error('No response received from AI');
+    }
+
     const overview = JSON.parse(response);
 
     const newDungeon = {
@@ -158,10 +161,10 @@ export async function generateDungeonOverview() {
     overviewForm.value.place_lore = '';
     overviewForm.value.difficulty = '';
 
-    loadingOverview.value = false;
     saveDungeons();
   } catch (error) {
-    loadingOverview.value = false;
     console.error('Error generating dungeon overview:', error);
+    alert(`Failed to generate dungeon overview: ${error.message}\n\nPlease try again.`);
+    throw error;
   }
 }

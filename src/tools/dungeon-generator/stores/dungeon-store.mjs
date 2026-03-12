@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import {
   dungeons,
   currentDungeonId,
-  loadingOverview,
   selectedRoomId,
   lastClickedRoomX,
   isMapSidebarCollapsed,
@@ -78,7 +77,6 @@ export const useDungeonStore = defineStore('dungeon', () => {
     // State
     dungeons,
     currentDungeonId,
-    loadingOverview,
     selectedRoomId,
     lastClickedRoomX,
     isMapSidebarCollapsed,

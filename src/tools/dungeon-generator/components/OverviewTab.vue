@@ -1,7 +1,7 @@
 <template>
   <div>
-    <OverviewSkeleton v-if="dungeonStore.loadingOverview" />
-    <div v-if="dungeonStore.currentDungeon && dungeonStore.currentDungeon.dungeonOverview" class="dungeon-overview">
+    <OverviewSkeleton v-if="props.isLoading" />
+    <div v-if="!props.isLoading && dungeonStore.currentDungeon?.dungeonOverview" class="dungeon-overview">
       <!-- View Mode -->
       <div v-if="!isEditing">
         <h2>{{ dungeonStore.currentDungeon.dungeonOverview.title }}</h2>
@@ -80,6 +80,13 @@ import OverviewSkeleton from './skeletons/OverviewSkeleton.vue';
 import { CdrButton, CdrInput } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-button.css';
 import '@rei/cedar/dist/style/cdr-input.css';
+
+const props = defineProps({
+  isLoading: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const dungeonStore = useDungeonStore();
 

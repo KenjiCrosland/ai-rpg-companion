@@ -2,7 +2,6 @@ import { ref, computed } from 'vue';
 
 export const dungeons = ref([]);
 export const currentDungeonId = ref(null);
-export const loadingOverview = ref(false);
 export const selectedRoomId = ref(null);
 export const lastClickedRoomX = ref(null);
 export const isMapSidebarCollapsed = ref(true);

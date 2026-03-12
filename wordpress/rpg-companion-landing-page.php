@@ -93,12 +93,9 @@ add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 
 // Vue app mount point.
 function vue_app_render_root_element() {
-    echo '<div id="app" data-page="tool-suite-landing"></div>';
+    echo '<div id="app"></div>';
 }
-
-// If you want Genesis to print a normal content area *and then* mount inside it,
-// hook genesis_entry_content. But you're already using full-page takeover style.
-// add_action( "genesis_entry_content", "vue_app_render_root_element" );
+add_action( 'genesis_entry_content', 'vue_app_render_root_element' );
 
 // Run Genesis.
 genesis();

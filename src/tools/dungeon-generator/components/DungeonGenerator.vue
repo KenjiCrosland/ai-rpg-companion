@@ -31,7 +31,7 @@
 
     <!-- Main Content -->
     <div class="generator-container">
-      <div v-if="!dungeonStore.currentDungeon && !dungeonStore.loadingOverview" class="landing-wrapper">
+      <div v-if="!dungeonStore.currentDungeon && !isGenerating" class="landing-wrapper">
         <!-- ZONE 1: Hero header -->
         <div class="hero-header">
           <div class="brand-line">
@@ -46,7 +46,7 @@
 
         <!-- ZONE 2: Form card -->
         <div class="form-card">
-          <form @submit.prevent="dungeonStore.generateDungeonOverview">
+          <form @submit.prevent="handleGenerateDungeon">
             <div class="generator-fields">
               <cdr-input id="adjective" v-model="dungeonStore.overviewForm.adjective" background="secondary"
                 label="Adjective (optional)" placeholder="e.g. Forgotten, Decaying, Sunken" />
@@ -101,10 +101,10 @@
           </div>
         </div>
       </div>
-      <div v-if="dungeonStore.currentDungeon || dungeonStore.loadingOverview" class="content-container">
+      <div v-if="dungeonStore.currentDungeon || isGenerating" class="content-container">
         <Tabs :activeIndex="dungeonStore.activeTabIndex" @tab-changed="onTabChanged" class="tabs">
           <TabPanel label="Overview">
-            <OverviewTab />
+            <OverviewTab :is-loading="isGenerating" />
           </TabPanel>
 
           <TabPanel label="Map">
@@ -120,12 +120,12 @@
           </TabPanel>
         </Tabs>
 
-        <!-- Export Section -->
-        <DungeonExports :dungeon="dungeonStore.currentDungeon" />
+        <!-- Export Section - only show when dungeon exists -->
+        <DungeonExports v-if="dungeonStore.currentDungeon" :dungeon="dungeonStore.currentDungeon" />
       </div>
 
       <!-- Footer below content -->
-      <div v-if="dungeonStore.currentDungeon || dungeonStore.loadingOverview" class="dungeon-footer">
+      <div v-if="dungeonStore.currentDungeon || isGenerating" class="dungeon-footer">
         <div v-if="!premium">
           <p>
             All dungeon generations are currently free. Dungeon data is saved on this browser. 5 statblock generations per 24 hours. To save/load dungeon data for use in another computer or browser, or unlock unlimited statblocks, requires a premium Patreon subscription.
@@ -154,7 +154,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
 
@@ -178,12 +178,27 @@ const props = defineProps({
 const dungeonStore = useDungeonStore();
 const toast = useToast();
 const showDataManagerModal = ref(false);
+const isGenerating = ref(false);
+
+// Provide motionToggle for Cedar skeleton components
+const motionToggle = ref(true);
+provide('motionToggle', motionToggle);
 
 // Patreon OAuth URL with return to current page
 const patreonLoginUrl = computed(() => {
   const returnUrl = encodeURIComponent(window.location.href);
   return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
+
+// Handle dungeon generation with local loading state
+async function handleGenerateDungeon() {
+  isGenerating.value = true;
+  try {
+    await dungeonStore.generateDungeonOverview();
+  } finally {
+    isGenerating.value = false;
+  }
+}
 
 const difficultyOptions = [
   'Tier 1: Basic - A local hero in the making.',

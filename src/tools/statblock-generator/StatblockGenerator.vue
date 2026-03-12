@@ -27,15 +27,6 @@
             </cdr-accordion>
           </cdr-accordion-group>
         </div>
-
-        <div class="sidebar-footer">
-          <cdr-button modifier="dark" @click="showDataManagerModal = true" :full-width="true">
-            Save/Load Data from a File
-          </cdr-button>
-        </div>
-
-        <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
-          :premium="premium" currentApp="monsters" />
       </div>
     </template>
 
@@ -186,6 +177,9 @@
     <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster()">New
       Monster
       Statblock</cdr-button>
+
+    <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
+      :premium="premium" currentApp="monsters" />
   </GeneratorLayout>
 </template>
 
@@ -592,13 +586,6 @@ async function generateStatblock() {
     flex: 1;
     overflow-y: auto;
     padding: 1rem;
-  }
-
-  .sidebar-footer {
-    flex-shrink: 0;
-    padding: 1rem;
-    border-top: 1px solid #e0e0e0;
-    background-color: $background-color;
   }
 
   .saved-statblocks {

@@ -33,6 +33,7 @@ export async function generateGptResponse(
           { role: 'user', content: retryPrompt ? retryPrompt : prompt },
         ];
       }
+
       const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,8 +54,24 @@ export async function generateGptResponse(
           requestOptions,
         );
       }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
       responseData = await response.json();
+
+      // Check for API errors
+      if (responseData.error) {
+        throw new Error(`OpenAI API error: ${responseData.error.message || JSON.stringify(responseData.error)}`);
+      }
+
+      if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
+        throw new Error('Invalid API response structure');
+      }
+
       const responseContent = responseData.choices[0].message.content;
+
       if (!validateJSONKeys) {
         return responseContent;
       }
