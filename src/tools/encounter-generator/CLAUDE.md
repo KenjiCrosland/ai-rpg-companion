@@ -58,22 +58,36 @@ Calculated per party member based on level:
 
 ### AI Generation Process
 
-**Two-Part Generation** - Encounter narratives are generated in two sequential API calls:
+**Three-Part Generation** - Encounter narratives are generated in three sequential API calls:
 
-**Call 1: Scene Introduction**
-- Selects random tone (Grim, Surreal, Poetic, etc.)
-- Selects random centerpiece (environmental feature)
-- Generates place name and read-aloud intro
-- Shows immediately while Call 2 runs
+**Call 1: Structure** (`buildCall1StructurePrompt`)
+- Selects random tone (Grim, Surreal, Poetic, etc.) from 12 tone presets
+- Selects random centerpiece (environmental feature) from 30+ options
+- Generates place name for the encounter
+- Decides whether to include a key NPC based on monster composition
+- Checks if monsters have disguises (`disguised_as` field)
+- Returns JSON with structure data
 
-**Call 2: DM Notes**
-- Uses Call 1 context + enriched monster briefs
-- Generates tactical notes, objectives, complications
-- Uses creature intelligence data for tactical accuracy
+**Call 2: Scene** (`buildCall2ScenePrompt`)
+- Uses Call 1 result as context
+- Rebuilds monster brief with disguise data (prevents true-form leaks in read-aloud)
+- Generates immersive read-aloud text for the encounter opening
+- **Shows immediately to user while Call 3 loads** (streaming UX)
 - Processed via `processCall2Response()` into contentArray
 
+**Call 3: Details** (`buildCall3DetailsPrompt`)
+- Uses both Call 1 and Call 2 results as context
+- Generates tactical DM notes (situation, space/terrain)
+- Includes turn-by-turn guidance (`turn_readaloud`, `turn_dm_notes`)
+- Adds aftermath suggestions for after the encounter
+- Uses creature intelligence data for tactical accuracy
+- Loads in background while user reads Call 2 content
+
 **Monster Enrichment**
-- `buildEnrichedMonsterBrief()` adds tactical abilities from creature-intelligence.json
+- `buildMinimalBrief()` creates basic monster descriptions for Calls 1+2
+- `buildTacticalBrief()` adds detailed abilities for Call 3
+- `getCreatureIntelligence()` loads tactical data from creature-intelligence.json
+- `buildEnrichedMonsterBrief()` adds tactical abilities from creature intelligence
 - `getEncounterProfile()` analyzes overall encounter composition
 - AI receives both mechanical stats and tactical context
 
@@ -163,19 +177,22 @@ Both versions have unlimited encounter narrative generation.
 ```
 src/tools/encounter-generator/
 ├── EncounterGenerator.vue          # Main component
+├── EncounterGenerator.spec.js      # Test suite (53 tests)
 ├── CLAUDE.md                        # This file
+├── TEST-IMPROVEMENTS-SUMMARY.md    # Detailed test coverage documentation
 ├── components/
 │   ├── MonsterPicker.vue           # SRD/Custom monster picker with tabs
 │   └── EncounterMonsterList.vue    # Selected monsters list with XP calc
+├── prompts/
+│   └── encounter-prompt.mjs        # Three-part prompt generation
+└── util/
+    └── monster-adapter.mjs          # Normalizes monster data from SRD/custom
 src/util/
-├── monster-adapter.mjs              # Normalizes monster data from SRD/custom
 ├── encounter-enrichment.mjs         # Adds tactical intelligence to monsters
 └── convertToMarkdown.mjs            # Exports encounter to Homebrewery format
-src/prompts/
-└── encounter-prompt.mjs             # Two-part prompt generation
 src/data/
 ├── srd-monsters.json                # 327 SRD creatures (469KB)
-├── creature-intelligence.json       # Tactical data for all 327 creatures
+├── creature-intelligence.json       # Tactical data for all 328 creatures (663KB)
 └── encounter-difficulty.json        # XP thresholds by level
 ```
 
@@ -196,17 +213,106 @@ Encounter composition shown inline with difficulty badges:
 - Quantity text is smaller and lighter (0.85em, #666)
 - Difficulty badges match EncounterMonsterList colors with borders
 
-## Testing
+## Test Coverage
 
-TODO: Add test coverage for:
-- Monster adapter normalization
-- XP calculation and encounter multipliers
-- Difficulty determination (Trivial → Deadly)
-- localStorage folder management (save, load, move, delete)
-- Encounter generation prompts (Call 1 + Call 2)
-- Monster enrichment with creature intelligence data
-- Height matching ResizeObserver logic
-- Folder management state transitions
+**Test Suite:** `EncounterGenerator.spec.js` (53 tests, 100% passing)
+
+See [TEST-IMPROVEMENTS-SUMMARY.md](./TEST-IMPROVEMENTS-SUMMARY.md) for detailed test documentation.
+
+### Test Categories (53 tests total)
+
+**Component Mounting (4 tests)**
+- Mount successfully
+- Load encounters from localStorage
+- Load party config from localStorage
+- Handle corrupted localStorage gracefully
+
+**localStorage Operations (3 tests)**
+- Save encounters to localStorage
+- Save party config to localStorage
+- Preserve folder structure when saving
+
+**Three-Part Generation (3 tests)**
+- Make three API calls for encounter generation
+- Pass party info to first API call
+- Use Call 1 response as context for Call 2
+
+**Prompt Verification (5 tests)**
+- Call buildCall1StructurePrompt with correct parameters
+- Call buildCall2ScenePrompt with Call 1 result as context
+- Call buildCall3DetailsPrompt with both Call 1 and Call 2 results
+- Pass party description to buildCall3DetailsPrompt
+- Use monster count to build briefs correctly
+
+**Party Management (3 tests)**
+- Add party group
+- Remove party group
+- Calculate party XP thresholds
+
+**Monster Selection (2 tests)**
+- Add monster to encounter
+- Increment quantity when adding same monster twice
+
+**CRUD Operations (3 tests)**
+- Delete encounter
+- Save new encounter after generation
+- Switch between saved encounters
+
+**Error Handling (2 tests)**
+- Handle API errors gracefully
+- Handle empty party gracefully
+
+**Streaming Display (1 test)**
+- Show read-aloud from Call 2 while Call 3 is loading
+
+**Disguise Swap (1 test)**
+- Rebuild minimal brief with disguise data for Call 2
+
+**Creature Intelligence (1 test)**
+- Load creature intelligence before building briefs
+
+**Empty State Guard (1 test)**
+- Block generation when no monsters selected
+
+**Difficulty Calculation (6 tests)**
+- Calculate correct XP for monsters
+- Apply encounter multiplier for multiple monsters
+- Return "None" when no monsters
+- Return "Unknown" when no party configured
+- Handle fractional CR values
+- Adjust multiplier for small parties
+
+**Reset Encounter (2 tests)**
+- Clear form state on reset
+- Preserve party config on reset
+
+**NPC Naming (4 tests)**
+- Include NPC for solo creature
+- Include NPC when leader type is present
+- Don't include NPC for pack of beasts
+- Include NPC for single beast (reputation name)
+
+**Folder Management (4 tests)**
+- Move encounter between folders
+- Create new folder when moving
+- Clean up empty non-default folders after move
+- Don't delete Uncategorized folder when empty
+
+**Inline Editing (3 tests)**
+- Enter edit mode with current content
+- Save edits and exit edit mode
+- Cancel edits without saving
+
+**Export Functions (2 tests)**
+- Export as plain text
+- Show homebrewery link after markdown export
+
+**Premium Gating (2 tests)**
+- Show save/load button for premium users
+- Show upgrade prompt for free users
+
+**Cross-Tool Navigation (1 test)**
+- Load monster from URL query parameter
 
 ## Known Issues
 
