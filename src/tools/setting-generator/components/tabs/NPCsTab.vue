@@ -186,7 +186,7 @@ import {
   createNPCPrompt,
   createRelationshipAndTipsPrompt,
   generateSingleRelationshipPrompt,
-} from '@/prompts/index.mjs';
+} from '../../prompts/index.mjs';
 
 const props = defineProps({
   setting: {

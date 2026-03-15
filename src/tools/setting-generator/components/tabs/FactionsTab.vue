@@ -181,7 +181,7 @@ import {
   factionListPrompt,
   detailedFactionPrompt,
   singleFactionPrompt,
-} from '@/prompts/index.mjs';
+} from '../../prompts/index.mjs';
 
 const props = defineProps({
   setting: {

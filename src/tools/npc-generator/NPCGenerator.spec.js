@@ -404,6 +404,9 @@ describe('NPCGenerator', () => {
     it('should display error message when generation fails', async () => {
       const errorMessage = 'Failed to generate NPC';
 
+      // Mock console.error to suppress expected error output during test
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
       npcGenerator.generateNPCDescription.mockImplementation(async (typeOfNPC, callbacks) => {
         throw new Error(errorMessage);
       });
@@ -422,6 +425,12 @@ describe('NPCGenerator', () => {
 
       // Error should be handled gracefully
       expect(wrapper.exists()).toBe(true);
+
+      // Verify error was logged
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      // Restore console.error
+      consoleErrorSpy.mockRestore();
     });
   });
 

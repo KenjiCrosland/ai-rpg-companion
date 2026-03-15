@@ -36,7 +36,7 @@ jest.mock('@/util/formatSettingAsHTML.mjs', () => ({
 }));
 
 // Mock prompts
-jest.mock('@/prompts/index.mjs', () => ({
+jest.mock('../prompts/index.mjs', () => ({
   settingOverviewPrompt: jest.fn((adjective, type, name, lore) =>
     `Setting Overview Prompt: ${adjective} ${type} of ${name} - ${lore}`
   ),
@@ -655,7 +655,7 @@ describe('SettingGenerator - API Integration', () => {
 
   describe('Prompt Generation', () => {
     it('should call settingOverviewPrompt for new top-level setting', async () => {
-      const { settingOverviewPrompt } = require('@/prompts/index.mjs');
+      const { settingOverviewPrompt } = require('../prompts/index.mjs');
 
       const wrapper = mount(SettingGenerator, {
         props: { premium: false }

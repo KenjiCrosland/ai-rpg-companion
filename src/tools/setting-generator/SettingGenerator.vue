@@ -180,7 +180,7 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrButton, CdrLink, CdrSkeleton } from "@rei/cedar";
-import { settingOverviewPrompt, sublocationOverviewPrompt } from "@/prompts/index.mjs";
+import { settingOverviewPrompt, sublocationOverviewPrompt } from "./prompts/index.mjs";
 import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';

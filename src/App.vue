@@ -105,7 +105,7 @@ import LegacyDungeonGeneratorPremium from '@/tools/legacy-tools/dungeon-generato
 import ItemGenerator from '@/tools/item-generator/ItemGenerator.vue';
 import EncounterGenerator from '@/tools/encounter-generator/EncounterGenerator.vue';
 import SettingGenerator from '@/tools/setting-generator/SettingGenerator.vue';
-import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGeneratorWrapper.vue';
+import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGenerator.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
 import LandingPage from '@/components/LandingPage.vue';
 import AppToast from '@/components/AppToast.vue';

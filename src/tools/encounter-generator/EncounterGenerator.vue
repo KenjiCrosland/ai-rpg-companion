@@ -349,7 +349,7 @@ import {
   parseInlineMarkup,
   getReadAloudToneAndCenterpieces,
   getCreatureIntelligence
-} from '@/prompts/encounter-prompt.mjs';
+} from './prompts/encounter-prompt.mjs';
 import { buildEnrichedMonsterBrief, getEncounterProfile } from '@/util/encounter-enrichment.mjs';
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
 import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';

@@ -80,7 +80,6 @@ src/tools/dungeon-generator/
 - `selectedRoomId` - Currently selected room in map
 - `activeTabIndex` - Active tab (Overview, Map, NPCs, Monsters)
 - `overviewForm` - Form data for dungeon creation
-- `loadingOverview` - Loading state for overview generation
 - `currentlyLoadingNPCs` - Loading states for NPC generation
 - `monsterLoadingStates` - Loading states for monster generation
 
