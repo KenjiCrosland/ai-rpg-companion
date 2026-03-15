@@ -35,46 +35,16 @@ remove_action( 'genesis_footer', 'genesis_footer_markup_close', 15 );
 // Force full-width layout
 add_filter( 'genesis_site_layout', '__genesis_return_full_width_content' );
 
-// -------------------------
-// Enqueue Vue app assets
-// -------------------------
+// Don't render the page editor body — prevents stray empty <p> tags above the app.
+remove_action( 'genesis_entry_content', 'genesis_do_post_content' );
 
+// Enqueue Vue app assets.
 function kenji_location_generator_enqueue_assets() {
-    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-location/dist/assets';
-    $vue_app_url  = get_stylesheet_directory_uri() . '/rpg-companion-location/dist/assets';
+    rpg_companion_enqueue_entry( 'location' );
 
-    if ( ! is_dir( $vue_app_path ) ) {
-        return;
-    }
-
-    $files = scandir( $vue_app_path );
-    $enqueued_style_handle = '';
-
-    foreach ( $files as $file ) {
-        $file_path = $vue_app_path . '/' . $file;
-        $file_url  = $vue_app_url . '/' . $file;
-
-        if ( ! is_file( $file_path ) ) {
-            continue;
-        }
-
-        $ext = pathinfo( $file, PATHINFO_EXTENSION );
-
-        // You can bump this manually when you deploy
-        $version = '1.0.0';
-
-        if ( $ext === 'css' ) {
-            $handle = 'location-index-' . md5( $file );
-            wp_enqueue_style( $handle, $file_url, [], $version );
-            $enqueued_style_handle = $handle;
-        } elseif ( $ext === 'js' ) {
-            wp_enqueue_script( 'location-index-' . md5( $file ), $file_url, [], $version, true );
-        }
-    }
-
-    // Inline CSS overrides (copied from item generator for consistency)
-    if ( $enqueued_style_handle ) {
-        $custom_css = '
+    wp_register_style( 'rpg-companion-overrides', false );
+    wp_enqueue_style( 'rpg-companion-overrides' );
+    wp_add_inline_style( 'rpg-companion-overrides', '
         main.content {
             max-width: 940px;
             width: auto;
@@ -125,10 +95,7 @@ function kenji_location_generator_enqueue_assets() {
         button:focus, button:hover, input[type="button"]:focus, input[type="button"]:hover, input[type="reset"]:focus, input[type="reset"]:hover, input[type="submit"]:focus, input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:hover, .button:focus, .button:hover {
             color: inherit;
         }
-        ';
-
-        wp_add_inline_style( $enqueued_style_handle, $custom_css );
-    }
+        ' );
 }
 add_action( 'wp_enqueue_scripts', 'kenji_location_generator_enqueue_assets' );
 

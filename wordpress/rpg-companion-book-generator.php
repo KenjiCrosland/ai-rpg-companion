@@ -25,33 +25,11 @@ remove_action( 'genesis_before_loop', 'genesis_do_breadcrumbs');
 
 // Enqueue Vue app assets.
 function vue_app_enqueue_assets() {
-    $vue_app_path = get_stylesheet_directory() . '/rpg-companion-book-generator/dist/assets';
-    $vue_app_url = get_stylesheet_directory_uri() . '/rpg-companion-book-generator/dist/assets';
+    rpg_companion_enqueue_entry( 'book' );
 
-    $files = scandir($vue_app_path);
-    $enqueued_style_handle = '';
-
-    foreach ($files as $file) {
-        $file_path = $vue_app_path . '/' . $file; // Add the missing slash
-        $file_url = $vue_app_url . '/' . $file; // Add the missing slash
-
-        if (is_file($file_path)) {
-            $ext = pathinfo($file, PATHINFO_EXTENSION);
-
-            $version = '1.0.0';
-
-            if ($ext === 'css') {
-                $handle = 'index-' . md5($file);
-                wp_enqueue_style($handle, $file_url, [], $version);
-                $enqueued_style_handle = $handle;
-            } elseif ($ext === 'js') {
-                wp_enqueue_script('index-' . md5($file), $file_url, [], $version, true);
-            }
-        }
-    }
-    
-    if ($enqueued_style_handle) {
-        $custom_css = '
+    wp_register_style( 'rpg-companion-overrides', false );
+    wp_enqueue_style( 'rpg-companion-overrides' );
+    wp_add_inline_style( 'rpg-companion-overrides', '
         .entry-content ul > li {
             list-style-type: none;
         }
@@ -67,9 +45,7 @@ function vue_app_enqueue_assets() {
         button:focus, button:hover, input[type="button"]:focus, input[type="button"]:hover, input[type="reset"]:focus, input[type="reset"]:hover, input[type="submit"]:focus, input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form input[type="submit"]:hover, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:focus, .site-container div.wpforms-container-full .wpforms-form button[type="submit"]:hover, .button:focus, .button:hover {
             color: inherit;
         }
-        ';
-        wp_add_inline_style($enqueued_style_handle, $custom_css);
-    }
+        ' );
 }
 add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 

@@ -68,14 +68,10 @@
               </div>
             </div>
             <div class="featured-actions">
-              <a v-if="tool.freeUrl" class="btn small primary" :href="tool.freeUrl">
-                Free
+              <span v-if="tool.patronOnly" class="patron-badge">★ Patron</span>
+              <a class="btn small primary" :href="tool.url">
+                Try it
                 <span class="material-symbols-outlined">arrow_forward</span>
-              </a>
-
-              <a v-if="tool.premiumUrl" class="btn small gold" :href="tool.premiumUrl">
-                Premium
-                <span class="material-symbols-outlined">star</span>
               </a>
             </div>
 
@@ -89,7 +85,7 @@
       <div class="section-header">
         <h2>More Tools</h2>
         <p>
-          Everything else in the suite — quick access to the free version, or jump straight to premium features.
+          Everything else in the suite.
         </p>
       </div>
 
@@ -108,14 +104,10 @@
 
           <!-- Buttons at bottom (NOT hoverable, tile not clickable) -->
           <div class="tile-actions">
-            <a v-if="tool.freeUrl" class="btn tiny primary" :href="tool.freeUrl">
-              Free
+            <span v-if="tool.patronOnly" class="patron-badge">★ Patron</span>
+            <a class="btn tiny primary" :href="tool.url">
+              Try it
               <span class="material-symbols-outlined">arrow_forward</span>
-            </a>
-
-            <a v-if="tool.premiumUrl" class="btn tiny gold" :href="tool.premiumUrl">
-              Premium
-              <span class="material-symbols-outlined">star</span>
             </a>
           </div>
         </article>
@@ -192,9 +184,9 @@ const HERO_IMAGE =
 
 /**
  * Tools model:
- * - freeUrl optional (premium-only tools exist)
- * - premiumUrl optional
- * - image optional (featured)
+ * - url: single URL for each tool
+ * - patronOnly: boolean flag for patron-exclusive tools
+ * - image: optional (for featured tools)
  */
 const tools = [
   {
@@ -204,10 +196,8 @@ const tools = [
     icon: "pest_control",
     description: "Create balanced D&D 5e monster statblocks.",
     longDescription:
-      "Build encounter-ready monsters fast — with stats that hit the table cleanly and don’t require a balancing spreadsheet.",
-    freeUrl: "https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/",
-    premiumUrl:
-      "https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/",
+      "Build encounter-ready monsters fast — with stats that hit the table cleanly and don't require a balancing spreadsheet.",
+    url: "https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/",
     image: "https://cros.land/wp-content/uploads/2024/07/statblock-generator-robots.jpg?auto=format&fit=crop&w=1400&q=80",
   },
   {
@@ -218,8 +208,7 @@ const tools = [
     description: "Generate complete dungeons with rooms, obstacles, twists, and bosses.",
     longDescription:
       "This one is built for playable structure — rooms, encounter beats, twists, and bosses that you can run without rewriting everything.",
-    freeUrl: "https://cros.land/kenjis-dungeon-generator-2-0/",
-    premiumUrl: "https://cros.land/dungeon-generator-2-0-premium-version/",
+    url: "https://cros.land/kenjis-dungeon-generator-2-0/",
     image: "https://cros.land/wp-content/uploads/2026/01/dungeon-generator.png?auto=format&fit=crop&w=1400&q=80",
   },
   {
@@ -230,8 +219,7 @@ const tools = [
     description: "Create unique magic items with lore and balanced mechanics.",
     longDescription:
       "Generate items that feel like they belong in a real campaign — with flavorful lore, balanced mechanics, and built-in hooks for adventure.",
-    freeUrl: "https://cros.land/dnd-5e-magic-item-generator/",
-    premiumUrl: "https://cros.land/dnd-5e-magic-item-generator-premium-version/",
+    url: "https://cros.land/dnd-5e-magic-item-generator/",
     image: "https://cros.land/wp-content/uploads/2026/01/little-guys-making-magic-sword.png?auto=format&fit=crop&w=1400&q=80",
   },
   {
@@ -240,8 +228,7 @@ const tools = [
     shortName: "NPCs",
     icon: "person",
     description: "Generate memorable NPCs with personalities and hooks.",
-    freeUrl: "https://cros.land/rpg-ai-npc-generator/",
-    premiumUrl: "https://cros.land/npc-generator-premium-version/",
+    url: "https://cros.land/rpg-ai-npc-generator/",
   },
   {
     id: "settings",
@@ -249,9 +236,7 @@ const tools = [
     shortName: "Settings",
     icon: "public",
     description: "World-building dashboard for towns, factions, NPCs, and sublocations.",
-    freeUrl: "https://cros.land/rpg-setting-generator-and-world-building-tool/",
-    premiumUrl:
-      "https://cros.land/rpg-setting-generator-and-world-building-tool-premium-version/",
+    url: "https://cros.land/rpg-setting-generator-and-world-building-tool/",
     image: "https://cros.land/wp-content/uploads/2024/05/dragonreach-1-1536x878.jpg?auto=format&fit=crop&w=1400&q=80",
   },
   {
@@ -260,8 +245,7 @@ const tools = [
     shortName: "Encounters",
     icon: "sports_kabaddi",
     description: "Build balanced combat encounters for any party composition.",
-    freeUrl: "https://cros.land/dnd-5e-encounter-generator/",
-    premiumUrl: "https://cros.land/dnd-5e-encounter-generator-premium/",
+    url: "https://cros.land/dnd-5e-encounter-generator/",
   },
   {
     id: "locations",
@@ -269,25 +253,27 @@ const tools = [
     shortName: "Locations",
     icon: "fort",
     description: "Generate detailed location descriptions for immediate use.",
-    freeUrl: "https://cros.land/ai-rpg-location-generator/",
+    url: "https://cros.land/ai-rpg-location-generator/",
   },
 
-  // Premium-only (as requested)
+  // Patron-only tools
   {
     id: "lore",
     name: "Lore & Timeline Generator",
-    shortName: "Lore (Premium only)",
+    shortName: "Lore Generator",
     icon: "history",
     description: "Create detailed histories and timelines for your world.",
-    premiumUrl: "https://cros.land/ai-powered-lore-and-timeline-generator/",
+    url: "https://cros.land/ai-powered-lore-and-timeline-generator/",
+    patronOnly: true,
   },
   {
     id: "books",
     name: "Bookshelf Generator",
-    shortName: "Books (Premium only)",
+    shortName: "Bookshelf Generator",
     icon: "menu_book",
     description: "Generate libraries full of books with titles and contents.",
-    premiumUrl: "https://cros.land/ai-powered-bookshelf-generator/",
+    url: "https://cros.land/ai-powered-bookshelf-generator/",
+    patronOnly: true,
   },
 ];
 
@@ -297,7 +283,7 @@ const nonFeaturedTools = computed(() => tools.filter((t) => !featuredIds.has(t.i
 
 const primaryCta = computed(() => ({
   label: "Start with the Magic Item Generator",
-  url: tools.find((t) => t.id === "items")?.freeUrl || tools[0].premiumUrl || "#",
+  url: tools.find((t) => t.id === "items")?.url || tools[0].url || "#",
 }));
 
 const toolsRef = ref(null);
@@ -558,6 +544,15 @@ function toolImageStyle(tool) {
   margin-top: 10px;
   margin-left: 54px;
   /* ✅ aligns with the text column (44px icon + 10px gap) */
+}
+
+.patron-badge {
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 209, 102, 0.25);
+  color: #4a3b00;
 }
 
 

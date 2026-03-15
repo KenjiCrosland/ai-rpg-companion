@@ -3,6 +3,7 @@ export async function generateGptResponse(
   validateJSONKeys = null,
   maxAttempts = 3,
   previousContext,
+  model = 'gpt-4o-mini',
 ) {
   let attempts = 0;
   let validJson = false;
@@ -19,7 +20,7 @@ export async function generateGptResponse(
                 ${previousJSONString}`;
       }
       const body = {
-        model: 'gpt-4o-mini',
+        model: model,
         messages: [
           { role: 'system', content: 'You are an assistant Game Master.' },
           { role: 'user', content: retryPrompt ? retryPrompt : prompt },
@@ -32,6 +33,7 @@ export async function generateGptResponse(
           { role: 'user', content: retryPrompt ? retryPrompt : prompt },
         ];
       }
+
       const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,8 +54,24 @@ export async function generateGptResponse(
           requestOptions,
         );
       }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
       responseData = await response.json();
+
+      // Check for API errors
+      if (responseData.error) {
+        throw new Error(`OpenAI API error: ${responseData.error.message || JSON.stringify(responseData.error)}`);
+      }
+
+      if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
+        throw new Error('Invalid API response structure');
+      }
+
       const responseContent = responseData.choices[0].message.content;
+
       if (!validateJSONKeys) {
         return responseContent;
       }

@@ -42,53 +42,13 @@ remove_action( 'genesis_footer', 'genesis_footer_markup_close', 15 );
 // Force full-width content layout
 add_filter( 'genesis_site_layout', '__genesis_return_full_width_content' );
 
-// ----------------------------------------------------------------------------
-// ✅ Enqueue Vue assets (Vite build output)
-// ----------------------------------------------------------------------------
+// Enqueue Vue app assets.
+function rpg_companion_encounter_enqueue_assets() {
+    rpg_companion_enqueue_entry( 'encounter' );
 
-if ( ! function_exists( 'rpg_companion_encounter_enqueue_assets' ) ) {
-	function rpg_companion_encounter_enqueue_assets() {
-		$vue_app_path = get_stylesheet_directory() . '/rpg-companion-encounter-generator/dist/assets';
-		$vue_app_url  = get_stylesheet_directory_uri() . '/rpg-companion-encounter-generator/dist/assets';
-
-		if ( ! is_dir( $vue_app_path ) ) {
-			return;
-		}
-
-		$files = scandir( $vue_app_path );
-		$enqueued_style_handle = '';
-
-		foreach ( $files as $file ) {
-			if ( $file === '.' || $file === '..' ) {
-				continue;
-			}
-
-			$file_path = $vue_app_path . '/' . $file;
-			$file_url  = $vue_app_url . '/' . $file;
-
-			if ( ! is_file( $file_path ) ) {
-				continue;
-			}
-
-			$ext = pathinfo( $file, PATHINFO_EXTENSION );
-
-			// Cache-bust using file modified time
-			$version = filemtime( $file_path );
-
-			if ( $ext === 'css' ) {
-				$handle = 'encounter-' . md5( $file );
-				wp_enqueue_style( $handle, $file_url, [], $version );
-				$enqueued_style_handle = $handle;
-			}
-
-			if ( $ext === 'js' ) {
-				wp_enqueue_script( 'encounter-' . md5( $file ), $file_url, [], $version, true );
-			}
-		}
-
-		// Inline overrides (match Item Generator standard)
-		if ( $enqueued_style_handle ) {
-			$custom_css = '
+    wp_register_style( 'rpg-companion-overrides', false );
+    wp_enqueue_style( 'rpg-companion-overrides' );
+    wp_add_inline_style( 'rpg-companion-overrides', '
 			/* --- Layout normalization --- */
 			main.content {
 				max-width: 940px;
@@ -170,26 +130,43 @@ if ( ! function_exists( 'rpg_companion_encounter_enqueue_assets' ) ) {
 			.button:hover {
 				color: inherit;
 			}
-			';
 
-			wp_add_inline_style( $enqueued_style_handle, $custom_css );
-		}
-	}
+			/* --- Patreon Button Overrides --- */
+			.patreon-universal-button a {
+				text-decoration: none;
+			}
+			.patreon-universal-button .patreon-responsive-button {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
+				padding: 0.75rem 1.5rem;
+				background: #F96854;
+				color: #fff;
+				font-weight: 700;
+				font-size: 0.9375rem;
+				font-variant: small-caps;
+				text-decoration: none;
+				border-radius: 6px;
+				transition: all 0.2s ease;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+				border: none;
+			}
+			.patreon-universal-button .patreon-responsive-button:hover {
+				background: #e63946;
+				transform: translateY(-1px);
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+			}
+			.patreon-universal-button .patreon-responsive-button:active {
+				transform: translateY(0);
+			}
+			.patreon-universal-button .patreon_logo {
+				width: 20px;
+				height: 20px;
+			}
+			' );
 }
-
 add_action( 'wp_enqueue_scripts', 'rpg_companion_encounter_enqueue_assets' );
-
-// ----------------------------------------------------------------------------
-// ✅ Render Vue root mount element
-// ----------------------------------------------------------------------------
-
-if ( ! function_exists( 'rpg_companion_encounter_render_root_element' ) ) {
-	function rpg_companion_encounter_render_root_element() {
-		echo '<div id="app" data-page="encounter-generator"></div>';
-	}
-}
-
-add_action( 'genesis_entry_content', 'rpg_companion_encounter_render_root_element' );
 
 // ----------------------------------------------------------------------------
 // ✅ Run Genesis

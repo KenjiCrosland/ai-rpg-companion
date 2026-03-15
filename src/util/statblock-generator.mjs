@@ -1,5 +1,5 @@
 import { generateGptResponse } from "./open-ai.mjs";
-import { createStatblockPrompts } from "./monster-prompts.mjs";
+import { createStatblockPrompts } from "../prompts/monster-prompts.mjs";
 
 
 export async function generateStatblockPart1({ 

@@ -80,9 +80,14 @@ export function getArmorClassCr(hitPointCR, armorClass, crObjects) {
 }
 
 function getEffectiveDamageFactors(damageFactorsString) {
+  // Return false if damageFactorsString is not a valid string
+  if (!damageFactorsString || typeof damageFactorsString !== 'string' || damageFactorsString.trim() === '') {
+    return false;
+  }
+
   // Define damage types to be searched
   const damageTypes = [
-    "acid", "cold", "fire", "force", "lightning", "necrotic", "poison", 
+    "acid", "cold", "fire", "force", "lightning", "necrotic", "poison",
     "psychic", "radiant", "thunder", "bludgeoning", "slashing", "piercing"
   ];
 
@@ -90,7 +95,7 @@ function getEffectiveDamageFactors(damageFactorsString) {
   const lowerCaseFactors = damageFactorsString.toLowerCase();
 
   let effectiveFactorCount = 0;
-  
+
   damageTypes.forEach((type) => {
     if (lowerCaseFactors.includes(type)) {
       effectiveFactorCount++;
