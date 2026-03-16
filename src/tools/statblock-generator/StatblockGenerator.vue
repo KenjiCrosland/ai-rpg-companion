@@ -273,6 +273,39 @@ onMounted(() => {
     monsters.value = { 'Uncategorized': [] };
   }
 
+  // Check for URL parameters to open a specific statblock
+  const urlParams = new URLSearchParams(window.location.search);
+  const monsterName = urlParams.get('monster');
+  const folderName = urlParams.get('folder');
+
+  if (monsterName) {
+    // Check specified folder first
+    if (folderName && monsters.value[folderName]) {
+      const index = monsters.value[folderName].findIndex(
+        m => m.name === monsterName
+      );
+      if (index !== -1) {
+        // Open this folder and select this statblock
+        openedFolders[folderName] = true;
+        selectMonster(folderName, index);
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    } else {
+      // Fallback: search all folders
+      for (const [folder, monstersInFolder] of Object.entries(monsters.value)) {
+        if (!Array.isArray(monstersInFolder)) continue;
+        const index = monstersInFolder.findIndex(m => m.name === monsterName);
+        if (index !== -1) {
+          openedFolders[folder] = true;
+          selectMonster(folder, index);
+          window.history.replaceState({}, '', window.location.pathname);
+          break;
+        }
+      }
+    }
+  }
+
   updateWindowWidth();
   window.addEventListener('resize', updateWindowWidth);
 });

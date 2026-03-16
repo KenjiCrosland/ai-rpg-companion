@@ -2,20 +2,35 @@
     <GeneratorLayout :premium="premium">
         <template #sidebar>
             <div class="sidebar-content">
-                <ul class="npc-list">
-                    <li v-for="(npc, index) in npcs" :key="index" :class="{ 'active-tab': currentNPCIndex === index }"
-                        @click="selectNPC(index)">
-                        <button class="npc-button">
-                            {{ npc.npcDescriptionPart1?.character_name || 'Unnamed NPC' }}
-                        </button>
-                    </li>
-                    <li>
-                        <button v-if="!loadingPart1" class="npc-button" @click="createNewNPC">+ New NPC</button>
-                    </li>
-                </ul>
+                <div class="sidebar-scroll">
+                    <cdr-accordion-group>
+                        <cdr-accordion level="3" v-for="(folder, folderName) in npcs" :key="folderName"
+                            :id="folderName" :opened="openedFolders[folderName]"
+                            @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
+                            <template #label>
+                                {{ folderName }}
+                            </template>
+                            <ul class="npc-list">
+                                <li v-for="(npc, index) in folder" :key="index"
+                                    :class="{ 'active-tab': currentNPCIndex === index && activeFolder === folderName }">
+                                    <button class="npc-button" @click="selectNPC(folderName, index)">
+                                        {{ npc.npcDescriptionPart1?.character_name || 'Unnamed NPC' }}
+                                    </button>
+                                </li>
+                                <li>
+                                    <button v-if="!loadingPart1" class="npc-button" @click="createNewNPC(folderName)"
+                                        :class="{ 'active-tab': currentNPCIndex === null && activeFolder === folderName }">
+                                        + New NPC
+                                    </button>
+                                </li>
+                            </ul>
+                        </cdr-accordion>
+                    </cdr-accordion-group>
+                </div>
+
                 <div class="sidebar-buttons">
-                    <cdr-button @click="deleteAllNPCs" v-if="npcs.length > 0 && !loadingPart1" modifier="secondary"
-                        style="width: 100%;">
+                    <cdr-button @click="deleteAllNPCs" v-if="Object.keys(npcs).length > 0 && !loadingPart1"
+                        modifier="secondary" style="width: 100%;">
                         Delete All NPCs
                     </cdr-button>
                 </div>
@@ -250,7 +265,10 @@
                     <div class="actions-row" style="margin-top: 2rem;">
                         <!-- Management Actions (Left) -->
                         <div class="management-actions">
-                            <cdr-button @click="deleteCurrentNPC" modifier="dark">
+                            <cdr-button @click="showFolderMover = !showFolderMover" modifier="secondary" size="small">
+                                Move to Folder
+                            </cdr-button>
+                            <cdr-button @click="deleteCurrentNPC" modifier="dark" size="small">
                                 Delete
                             </cdr-button>
                         </div>
@@ -262,6 +280,27 @@
                             </cdr-button>
                             <cdr-button @click="copyNPCAsMarkdown">
                                 Copy as Homebrewery Markdown
+                            </cdr-button>
+                        </div>
+                    </div>
+
+                    <!-- Folder Mover Interface -->
+                    <div v-if="showFolderMover" class="folder-mover" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                        <h4 style="margin-top: 0; margin-bottom: 1rem;">Move NPC to Folder</h4>
+
+                        <cdr-select v-model="folderMoveTarget" label="Destination folder" prompt="Select a folder" background="secondary" style="margin-bottom: 1rem;">
+                            <option v-for="folder in folderOptions" :key="folder" :value="folder">{{ folder }}</option>
+                            <option value="__new__">+ Create new folder</option>
+                        </cdr-select>
+
+                        <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name" background="secondary" style="margin-bottom: 1rem;" />
+
+                        <div class="button-group" style="margin-top: 1rem;">
+                            <cdr-button @click="handleFolderMove" :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
+                                Move NPC
+                            </cdr-button>
+                            <cdr-button @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';" modifier="secondary">
+                                Cancel
                             </cdr-button>
                         </div>
                     </div>
@@ -301,8 +340,13 @@
                             <p>You've reached your daily statblock generation limit (5 per 24 hours). Unlock unlimited access below.</p>
                         </div>
 
-                        <SaveStatblock v-if="statblock" :monster="statblock"
-                            :statblockLink="premium ? 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/' : 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/'" />
+                        <!-- Statblock Saved Message -->
+                        <div v-if="npcDescriptionPart1?.statblock_name" class="statblock-saved-message">
+                            <p>
+                                This statblock is available in the
+                                <a :href="statblockGeneratorUrl" target="_blank">Statblock Generator</a>.
+                            </p>
+                        </div>
                     </div>
                 </div>
                 <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
@@ -347,11 +391,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput } from '@rei/cedar';
+import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import Statblock from '@/components/Statblock.vue';
-import SaveStatblock from '@/components/SaveStatblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import { generateGptResponse } from "@/util/open-ai.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
@@ -359,6 +402,7 @@ import { requestNPCDescription } from "./utils/request-npc-description.mjs";
 import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMarkdown.mjs';
 import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
+import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
@@ -367,12 +411,16 @@ import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-skeleton.css';
 import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
 import '@rei/cedar/dist/style/cdr-input.css';
+import '@rei/cedar/dist/style/cdr-accordion.css';
+import '@rei/cedar/dist/style/cdr-accordion-group.css';
 
 const toast = useToast();
 
-// NPC list for sidebar - each entry stores the full NPC data
-const npcs = ref([]);
+// NPC list for sidebar - organized by folders
+const npcs = ref({});
 const currentNPCIndex = ref(null);
+const activeFolder = ref('Uncategorized');
+const openedFolders = ref({ 'Uncategorized': true });
 
 // Current NPC data (what's currently being displayed/edited)
 const npcDescriptionPart1 = ref(null);
@@ -400,6 +448,26 @@ const patreonLoginUrl = computed(() => {
     return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
 
+const statblockGeneratorUrl = computed(() => {
+    const base = 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/';
+
+    const params = new URLSearchParams();
+    if (npcDescriptionPart1.value?.statblock_name) {
+        params.set('monster', npcDescriptionPart1.value.statblock_name);
+    }
+    if (npcDescriptionPart1.value?.statblock_folder) {
+        params.set('folder', npcDescriptionPart1.value.statblock_folder);
+    }
+
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+});
+
+// Folder options for moving NPCs (exclude current folder)
+const folderOptions = computed(() => {
+    return Object.keys(npcs.value).filter(folderName => folderName !== activeFolder.value);
+});
+
 // Sidebar responsive
 const showDataManagerModal = ref(false);
 const showHomebreweryLink = ref(false);
@@ -412,6 +480,11 @@ const npcEditForm = ref({
     combined_details: '',
     relationshipsArray: []
 });
+
+// Folder management
+const showFolderMover = ref(false);
+const folderMoveTarget = ref('');
+const newFolderName = ref('');
 
 onMounted(() => {
     loadNPCsFromLocalStorage();
@@ -446,17 +519,94 @@ function saveNPCsToLocalStorage() {
     localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcs.value));
 }
 
+function migrateNPCStorage() {
+    const stored = localStorage.getItem('npcGeneratorNPCs');
+    if (!stored) return;
+
+    try {
+        const parsed = JSON.parse(stored);
+
+        // Check if it's the old flat array format
+        if (Array.isArray(parsed)) {
+            console.log('[NPC MIGRATION] Migrating flat array to folder structure...');
+            // Old flat format — migrate to folders
+            const migrated = {
+                'Uncategorized': parsed
+            };
+            localStorage.setItem('npcGeneratorNPCs', JSON.stringify(migrated));
+            npcs.value = migrated;
+            console.log(`[NPC MIGRATION] Migrated ${parsed.length} NPCs to Uncategorized folder`);
+        } else {
+            // Already in folder format
+            npcs.value = parsed;
+        }
+    } catch (error) {
+        console.error('Failed to migrate NPCs from local storage:', error);
+        // Initialize with empty folder structure if migration fails
+        npcs.value = { 'Uncategorized': [] };
+    }
+}
+
 function loadNPCsFromLocalStorage() {
     const stored = localStorage.getItem('npcGeneratorNPCs');
     if (stored) {
         try {
             const parsed = JSON.parse(stored);
-            if (parsed.length > 0) {
+
+            // Check if it's the old flat array format
+            if (Array.isArray(parsed)) {
+                // Migrate on load
+                migrateNPCStorage();
+            } else {
+                // Already in folder format
                 npcs.value = parsed;
             }
+
+            // Migrate nested statblocks to shared storage
+            migrateNestedStatblocks();
         } catch (error) {
             console.error('Failed to parse NPCs from local storage:', error);
+            npcs.value = { 'Uncategorized': [] };
         }
+    } else {
+        npcs.value = { 'Uncategorized': [] };
+    }
+}
+
+function migrateNestedStatblocks() {
+    let migrationNeeded = false;
+
+    // Iterate through all folders
+    for (const [folderName, npcList] of Object.entries(npcs.value)) {
+        if (!Array.isArray(npcList)) continue;
+
+        // Iterate through NPCs in this folder
+        for (const npc of npcList) {
+            // Check if NPC has a nested statblock but no statblock_name reference
+            if (npc.statblock && npc.statblock.name && !npc.npcDescriptionPart1?.statblock_name) {
+                // All NPC statblocks go to "NPC Statblocks" folder
+                const statblockFolderName = 'NPC Statblocks';
+
+                // Save to shared storage
+                saveStatblockToStorage(npc.statblock, statblockFolderName);
+
+                // Set the reference on the NPC
+                if (!npc.npcDescriptionPart1) {
+                    npc.npcDescriptionPart1 = {};
+                }
+                npc.npcDescriptionPart1.statblock_name = npc.statblock.name;
+                npc.npcDescriptionPart1.statblock_folder = statblockFolderName;
+
+                migrationNeeded = true;
+                console.log(`[NPC STATBLOCK MIGRATION] Migrated statblock "${npc.statblock.name}" to shared storage in folder "NPC Statblocks"`);
+            }
+        }
+    }
+
+    // Save if any migrations occurred
+    if (migrationNeeded) {
+        saveNPCsToLocalStorage();
+        console.log('[NPC STATBLOCK MIGRATION] Migration complete, NPCs saved with statblock references');
     }
 }
 
@@ -466,37 +616,61 @@ function saveCurrentNPCToList() {
         npcDescriptionPart1: npcDescriptionPart1.value,
         npcDescriptionPart2: npcDescriptionPart2.value,
         typeOfPlace: typeOfPlace.value,
-        statblock: statblock.value,
+        // statblock_name is stored on npcDescriptionPart1, not as a separate field
+        // statblock is kept in memory for the current session but not saved to localStorage
         selectedChallengeRating: selectedChallengeRating.value,
         isSpellcaster: isSpellcaster.value
     };
 
-    if (currentNPCIndex.value === null || currentNPCIndex.value >= npcs.value.length) {
-        npcs.value.push(npcData);
-        currentNPCIndex.value = npcs.value.length - 1;
+    const folderName = activeFolder.value || 'Uncategorized';
+
+    // Ensure folder exists
+    if (!npcs.value[folderName]) {
+        npcs.value[folderName] = [];
+    }
+
+    // Add or update NPC in current folder
+    if (currentNPCIndex.value === null || currentNPCIndex.value >= npcs.value[folderName].length) {
+        npcs.value[folderName].push(npcData);
+        currentNPCIndex.value = npcs.value[folderName].length - 1;
     } else {
-        npcs.value[currentNPCIndex.value] = npcData;
+        npcs.value[folderName][currentNPCIndex.value] = npcData;
     }
 
     saveNPCsToLocalStorage();
 }
 
 // Load an NPC from the list into the current view
-function loadNPCIntoView(index) {
-    if (npcs.value[index]) {
-        const npc = npcs.value[index];
+function loadNPCIntoView(folderName, index) {
+    const folder = npcs.value[folderName];
+    if (folder && folder[index]) {
+        const npc = folder[index];
         npcDescriptionPart1.value = npc.npcDescriptionPart1 || null;
         npcDescriptionPart2.value = npc.npcDescriptionPart2 || null;
         typeOfPlace.value = npc.typeOfPlace || '';
-        statblock.value = npc.statblock || null;
+
+        // Resolve statblock reference from shared storage
+        if (npc.npcDescriptionPart1?.statblock_name) {
+            statblock.value = getStatblockFromStorage(
+                npc.npcDescriptionPart1.statblock_name,
+                npc.npcDescriptionPart1.statblock_folder
+            );
+        } else if (npc.statblock) {
+            // Support legacy NPCs that have statblock embedded
+            statblock.value = npc.statblock;
+        } else {
+            statblock.value = null;
+        }
+
         selectedChallengeRating.value = npc.selectedChallengeRating || '1';
         isSpellcaster.value = npc.isSpellcaster || false;
+        activeFolder.value = folderName;
         currentNPCIndex.value = index;
     }
 }
 
 // NPC Management functions
-function createNewNPC() {
+function createNewNPC(folderName = 'Uncategorized') {
     if (isEditingNPC.value) {
         isEditingNPC.value = false;
     }
@@ -511,10 +685,11 @@ function createNewNPC() {
     selectedChallengeRating.value = '1';
     isSpellcaster.value = false;
     showHomebreweryLink.value = false;
-    currentNPCIndex.value = npcs.value.length;
+    activeFolder.value = folderName;
+    currentNPCIndex.value = null;
 }
 
-function selectNPC(index) {
+function selectNPC(folderName, index) {
     if (isEditingNPC.value) {
         isEditingNPC.value = false;
     }
@@ -523,19 +698,31 @@ function selectNPC(index) {
         saveCurrentNPCToList();
     }
     showHomebreweryLink.value = false;
-    loadNPCIntoView(index);
+    loadNPCIntoView(folderName, index);
 }
 
 function deleteCurrentNPC() {
-    if (confirm('Are you sure you want to delete this NPC?')) {
-        if (currentNPCIndex.value < npcs.value.length) {
-            npcs.value.splice(currentNPCIndex.value, 1);
+    const folderName = activeFolder.value || 'Uncategorized';
+    const npcName = npcs.value[folderName]?.[currentNPCIndex.value]?.npcDescriptionPart1?.character_name || 'this NPC';
+
+    if (confirm(`Are you sure you want to delete ${npcName}?`)) {
+        if (npcs.value[folderName] && currentNPCIndex.value < npcs.value[folderName].length) {
+            npcs.value[folderName].splice(currentNPCIndex.value, 1);
+
+            // Clean up empty folders (except Uncategorized)
+            if (npcs.value[folderName].length === 0 && folderName !== 'Uncategorized') {
+                delete npcs.value[folderName];
+                activeFolder.value = 'Uncategorized';
+                openedFolders.value['Uncategorized'] = true;
+            }
+
             saveNPCsToLocalStorage();
             toast.success('NPC deleted.');
 
-            if (npcs.value.length > 0) {
-                const newIndex = Math.max(0, currentNPCIndex.value - 1);
-                loadNPCIntoView(newIndex);
+            // Load next NPC or create new one
+            if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
+                const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
+                loadNPCIntoView(activeFolder.value, newIndex);
             } else {
                 createNewNPC();
             }
@@ -545,11 +732,75 @@ function deleteCurrentNPC() {
 
 function deleteAllNPCs() {
     if (confirm('Are you sure you want to delete all NPCs? This cannot be undone.')) {
-        npcs.value = [];
+        npcs.value = { 'Uncategorized': [] };
         createNewNPC();
         saveNPCsToLocalStorage();
         toast.success('All NPCs deleted.');
     }
+}
+
+// Folder management
+function handleFolderMove() {
+    if (!folderMoveTarget.value) {
+        toast.warning('Please select a folder.');
+        return;
+    }
+
+    let targetFolder = folderMoveTarget.value;
+
+    // If creating a new folder, validate name
+    if (targetFolder === '__new__') {
+        if (!newFolderName.value.trim()) {
+            toast.warning('Please enter a folder name.');
+            return;
+        }
+        targetFolder = newFolderName.value.trim();
+    }
+
+    const sourceFolderName = activeFolder.value;
+    const npcIndex = currentNPCIndex.value;
+
+    if (!npcs.value[sourceFolderName] || npcIndex === null || npcIndex >= npcs.value[sourceFolderName].length) {
+        toast.warning('No NPC to move.');
+        return;
+    }
+
+    // Get the NPC data
+    const npcData = npcs.value[sourceFolderName][npcIndex];
+
+    // Create target folder if it doesn't exist
+    if (!npcs.value[targetFolder]) {
+        npcs.value[targetFolder] = [];
+    }
+
+    // Add NPC to target folder
+    npcs.value[targetFolder].push(npcData);
+    const newIndex = npcs.value[targetFolder].length - 1;
+
+    // Remove NPC from source folder
+    npcs.value[sourceFolderName].splice(npcIndex, 1);
+
+    // Clean up empty folders (except Uncategorized)
+    if (npcs.value[sourceFolderName].length === 0 && sourceFolderName !== 'Uncategorized') {
+        delete npcs.value[sourceFolderName];
+    }
+
+    // Update active folder and index
+    activeFolder.value = targetFolder;
+    currentNPCIndex.value = newIndex;
+
+    // Ensure target folder is opened
+    openedFolders.value[targetFolder] = true;
+
+    // Save to localStorage
+    saveNPCsToLocalStorage();
+
+    // Reset folder mover UI
+    showFolderMover.value = false;
+    folderMoveTarget.value = '';
+    newFolderName.value = '';
+
+    toast.success(`NPC moved to ${targetFolder}.`);
 }
 
 // Inline editing functions
@@ -781,6 +1032,20 @@ async function generateStatblock() {
             ...JSON.parse(npcStatsPart2),
         };
         statblock.value = finalStatblock;
+
+        // Auto-save statblock to shared storage (all NPC statblocks go to "NPC Statblocks" folder)
+        const folderName = 'NPC Statblocks';
+
+        saveStatblockToStorage(finalStatblock, folderName);
+
+        // Store reference to statblock on NPC instead of full object
+        if (npcDescriptionPart1.value) {
+            npcDescriptionPart1.value.statblock_name = finalStatblock.name;
+            npcDescriptionPart1.value.statblock_folder = folderName;
+        }
+
+        toast.success(`${finalStatblock.name} saved to your statblocks`);
+
         saveCurrentNPCToList();
     } catch (e) {
         errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.';
@@ -1164,6 +1429,30 @@ div[class^="cdr-skeleton-bone"] {
 
         &:last-of-type {
             margin-bottom: 0;
+        }
+    }
+}
+
+.statblock-saved-message {
+    margin-top: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: #f0fdf4;
+    border: 1px solid #22c55e;
+    border-radius: 6px;
+
+    p {
+        margin: 0;
+        color: #14532d;
+        font-size: 1.6rem;
+    }
+
+    a {
+        color: #16a34a;
+        font-weight: 600;
+        text-decoration: underline;
+
+        &:hover {
+            color: #22c55e;
         }
     }
 }
