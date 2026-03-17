@@ -9,6 +9,7 @@ import {
   validateMonsterDescription,
 } from '../prompts/monster-description.mjs';
 import { generateStatblockForCreature } from '../util/statblock-generator.mjs';
+import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
 
 function sbValidationPart1(jsonString) {
   try {
@@ -190,7 +191,15 @@ export async function generateMonsterStatblock(monsterId, premium) {
     part2Data = JSON.parse(npcStatsPart2);
 
     // Assign final statblock
-    monster.statblock = { id: monster.id, ...part1Data, ...part2Data };
+    const finalStatblock = { id: monster.id, ...part1Data, ...part2Data };
+    monster.statblock = finalStatblock;
+
+    // Auto-save to shared storage
+    const folderName = currentDungeon.value?.dungeonOverview?.name || 'Dungeon Creatures';
+    saveStatblockToStorage(finalStatblock, folderName);
+    monster.statblock_name = finalStatblock.name;
+    monster.statblock_folder = folderName;
+
     saveDungeons();
   } catch (error) {
     console.error('Error generating monster statblock:', error);

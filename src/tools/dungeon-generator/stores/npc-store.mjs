@@ -15,6 +15,7 @@ import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
 import { generateGptResponse } from '@/util/open-ai.mjs';
 import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
 import { ref } from 'vue';
+import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
 
 // We can store loading states for NPC statblock generation:
 export const npcStatblockLoadingStates = ref({});
@@ -122,7 +123,15 @@ export async function generateNPCStatblock(
     const part2Data = JSON.parse(npcStatsPart2);
 
     // Combine for final
-    npc.statblock = { ...npc.statblock, ...part2Data };
+    const finalStatblock = { ...npc.statblock, ...part2Data };
+    npc.statblock = finalStatblock;
+
+    // Auto-save to shared storage
+    const folderName = currentDungeon.value?.dungeonOverview?.name || 'Dungeon NPCs';
+    saveStatblockToStorage(finalStatblock, folderName);
+    npc.statblock_name = finalStatblock.name;
+    npc.statblock_folder = folderName;
+
     saveDungeons();
   } catch (error) {
     console.error('Error generating NPC statblock:', error);

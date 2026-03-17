@@ -113,3 +113,14 @@ export const useDungeonStore = defineStore('dungeon', () => {
     updateStatblock,
   };
 });
+
+// Listen for localStorage changes from other tabs (e.g., statblock renames)
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'dungeons' && e.newValue) {
+      // Dungeons were updated in another tab, reload them
+      const store = useDungeonStore();
+      store.loadDungeons();
+    }
+  });
+}

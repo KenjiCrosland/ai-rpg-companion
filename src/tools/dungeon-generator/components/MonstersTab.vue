@@ -82,16 +82,34 @@
               </div>
             </div>
 
+            <!-- Statblock Not Found Warning -->
+            <div v-if="monster.statblock_name && !monster.statblock && !dungeonStore?.monsterLoadingStates[monster.id]?.part1 && !dungeonStore?.monsterLoadingStates[monster.id]?.part2" class="statblock-not-found-message">
+              <p><strong>Statblock not found</strong></p>
+              <p>The statblock "{{ monster.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
+              <div class="button-group">
+                <cdr-button @click="dungeonStore.generateMonsterStatblock(monster.id, premium)" size="small">Regenerate Statblock</cdr-button>
+                <cdr-button @click="clearMonsterStatblockReference(monster)" modifier="secondary" size="small">Clear Reference</cdr-button>
+              </div>
+            </div>
+
             <!-- If monster has (or is generating) a statblock, show it -->
             <div v-if="
               monster.statblock ||
               dungeonStore?.monsterLoadingStates[monster.id]?.part1 ||
               dungeonStore?.monsterLoadingStates[monster.id]?.part2
             " style="margin-top: 1rem;">
-              <Statblock :monster="monster.statblock" :premium="premium"
+              <Statblock :monster="monster.statblock" :premium="premium" :readonly="true"
                 :loadingPart1="dungeonStore.monsterLoadingStates[monster.id]?.part1 || false"
                 :loadingPart2="dungeonStore.monsterLoadingStates[monster.id]?.part2 || false"
                 @update-monster="updateMonsterStatblock(monster, $event)" />
+
+              <!-- Statblock Saved Message -->
+              <div v-if="monster.statblock && monster.statblock_name" class="statblock-saved-message">
+                <p>
+                  Edit this statblock in the
+                  <a :href="getStatblockGeneratorUrl(monster.statblock_name, monster.statblock_folder)" target="_blank">Statblock Generator</a>
+                </p>
+              </div>
             </div>
 
             <!-- Statblock Limit Message -->
@@ -233,6 +251,16 @@ const patreonLoginUrl = computed(() => {
   return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
 
+// Statblock Generator URL with query params
+function getStatblockGeneratorUrl(monsterName, folderName) {
+  const base = 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/';
+  const params = new URLSearchParams();
+  if (monsterName) params.set('monster', monsterName);
+  if (folderName) params.set('folder', folderName);
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
 const crOptions = crList.fullArray;
 
 // Edit mode state
@@ -299,7 +327,14 @@ function updateMonsterStatblock(monster, updatedMonster) {
   dungeonStore.updateStatblock(monster.id, updatedMonster);
 }
 
-// Regenerate only the monster’s description
+function clearMonsterStatblockReference(monster) {
+  delete monster.statblock_name;
+  delete monster.statblock_folder;
+  monster.statblock = null;
+  dungeonStore.saveDungeons();
+}
+
+// Regenerate only the monster's description
 async function generateMonsterDescription(monster) {
   try {
     await dungeonStore.generateMonsterDescription(monster);
@@ -471,6 +506,58 @@ function saveEditMonster() {
         transform: translateY(0);
       }
     }
+  }
+}
+
+.statblock-saved-message {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f0fdf4;
+  border: 1px solid #22c55e;
+  border-radius: 6px;
+
+  p {
+    margin: 0;
+    color: #14532d;
+    font-size: 1.6rem;
+  }
+
+  a {
+    color: #16a34a;
+    font-weight: 600;
+    text-decoration: underline;
+
+    &:hover {
+      color: #22c55e;
+    }
+  }
+}
+
+.statblock-not-found-message {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+
+  p {
+    margin: 0 0 0.5rem 0;
+    color: #7f1d1d;
+    font-size: 1.6rem;
+
+    &:last-of-type {
+      margin-bottom: 1rem;
+    }
+
+    strong {
+      color: #991b1b;
+    }
+  }
+
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
   }
 }
 

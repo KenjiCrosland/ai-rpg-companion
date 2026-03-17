@@ -329,9 +329,19 @@
                             <cdr-button @click="generateStatblock()">Generate Statblock</cdr-button>
                         </div>
 
+                        <!-- Statblock Not Found Warning -->
+                        <div v-if="npcDescriptionPart1?.statblock_name && !statblock && !loadingStatblockPart1 && !loadingStatblockPart2" class="statblock-not-found-message">
+                            <p><strong>Statblock not found</strong></p>
+                            <p>The statblock "{{ npcDescriptionPart1.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
+                            <div class="button-group">
+                                <cdr-button @click="generateStatblock()" size="small">Regenerate Statblock</cdr-button>
+                                <cdr-button @click="clearStatblockReference()" modifier="secondary" size="small">Clear Reference</cdr-button>
+                            </div>
+                        </div>
+
                         <Statblock v-if="(loadingStatblockPart1 || loadingStatblockPart1 || statblock)"
                             :loadingPart1="loadingStatblockPart1" :loadingPart2="loadingStatblockPart2"
-                            :monster="statblock" :premium="premium" :copyButtons="true"
+                            :monster="statblock" :premium="premium" :copyButtons="true" :readonly="true"
                             @update-monster="updateStatblock" />
 
                         <!-- Statblock Limit Message -->
@@ -341,10 +351,10 @@
                         </div>
 
                         <!-- Statblock Saved Message -->
-                        <div v-if="npcDescriptionPart1?.statblock_name" class="statblock-saved-message">
+                        <div v-if="statblock && npcDescriptionPart1?.statblock_name" class="statblock-saved-message">
                             <p>
-                                This statblock is available in the
-                                <a :href="statblockGeneratorUrl" target="_blank">Statblock Generator</a>.
+                                Edit this statblock in the
+                                <a :href="statblockGeneratorUrl" target="_blank">Statblock Generator</a>
                             </p>
                         </div>
                     </div>
@@ -508,8 +518,27 @@ function handleStorageChange(e) {
             if (generationCount < 5 && statblockLimitReached.value) {
                 statblockLimitReached.value = false;
             }
+
+            // Reload current NPC's statblock if it has a reference
+            if (npcDescriptionPart1.value?.statblock_name && statblock.value) {
+                const updatedStatblock = getStatblockFromStorage(
+                    npcDescriptionPart1.value.statblock_name,
+                    npcDescriptionPart1.value.statblock_folder
+                );
+                if (updatedStatblock) {
+                    statblock.value = updatedStatblock;
+                }
+            }
         } catch (err) {
             // Ignore parse errors
+        }
+    }
+
+    // When NPCs are updated in another tab (e.g., from statblock renames), reload them
+    if (e.key === 'npcGeneratorNPCs' && e.newValue) {
+        loadNPCsFromLocalStorage();
+        if (currentNPCIndex.value !== null) {
+            loadNPCIntoView(currentNPCIndex.value);
         }
     }
 }
@@ -528,14 +557,12 @@ function migrateNPCStorage() {
 
         // Check if it's the old flat array format
         if (Array.isArray(parsed)) {
-            console.log('[NPC MIGRATION] Migrating flat array to folder structure...');
             // Old flat format — migrate to folders
             const migrated = {
                 'Uncategorized': parsed
             };
             localStorage.setItem('npcGeneratorNPCs', JSON.stringify(migrated));
             npcs.value = migrated;
-            console.log(`[NPC MIGRATION] Migrated ${parsed.length} NPCs to Uncategorized folder`);
         } else {
             // Already in folder format
             npcs.value = parsed;
@@ -598,7 +625,6 @@ function migrateNestedStatblocks() {
                 npc.npcDescriptionPart1.statblock_folder = statblockFolderName;
 
                 migrationNeeded = true;
-                console.log(`[NPC STATBLOCK MIGRATION] Migrated statblock "${npc.statblock.name}" to shared storage in folder "NPC Statblocks"`);
             }
         }
     }
@@ -606,7 +632,6 @@ function migrateNestedStatblocks() {
     // Save if any migrations occurred
     if (migrationNeeded) {
         saveNPCsToLocalStorage();
-        console.log('[NPC STATBLOCK MIGRATION] Migration complete, NPCs saved with statblock references');
     }
 }
 
@@ -1081,6 +1106,16 @@ function validationPart2(jsonString) {
         return false;
     }
 }
+
+function clearStatblockReference() {
+    if (npcDescriptionPart1.value) {
+        delete npcDescriptionPart1.value.statblock_name;
+        delete npcDescriptionPart1.value.statblock_folder;
+        statblock.value = null;
+        saveCurrentNPCToList();
+        toast.success('Statblock reference cleared');
+    }
+}
 </script>
 
 <style scoped lang="scss">
@@ -1454,6 +1489,34 @@ div[class^="cdr-skeleton-bone"] {
         &:hover {
             color: #22c55e;
         }
+    }
+}
+
+.statblock-not-found-message {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #fef2f2;
+    border: 1px solid #ef4444;
+    border-radius: 6px;
+
+    p {
+        margin: 0 0 0.5rem 0;
+        color: #7f1d1d;
+        font-size: 1.6rem;
+
+        &:last-of-type {
+            margin-bottom: 1rem;
+        }
+
+        strong {
+            color: #991b1b;
+        }
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
     }
 }
 

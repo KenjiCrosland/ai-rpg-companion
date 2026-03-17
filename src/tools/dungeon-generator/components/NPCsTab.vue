@@ -144,10 +144,28 @@
                 dungeonStore.npcStatblockLoadingStates[index]?.part1 ||
                 dungeonStore.npcStatblockLoadingStates[index]?.part2
               " style="margin-top: 1rem;">
-                <Statblock :monster="npc.statblock" :premium="premium"
+                <Statblock :monster="npc.statblock" :premium="premium" :readonly="true"
                   :loadingPart1="dungeonStore.npcStatblockLoadingStates[index]?.part1 || false"
                   :loadingPart2="dungeonStore.npcStatblockLoadingStates[index]?.part2 || false"
                   @update-monster="updateNpcStatblock(index, $event)" />
+
+                <!-- Statblock Saved Message -->
+                <div v-if="npc.statblock && npc.statblock_name" class="statblock-saved-message">
+                  <p>
+                    Edit this statblock in the
+                    <a :href="getStatblockGeneratorUrl(npc.statblock_name, npc.statblock_folder)" target="_blank">Statblock Generator</a>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Statblock Not Found Warning -->
+              <div v-if="npc.statblock_name && !npc.statblock && !dungeonStore.npcStatblockLoadingStates[index]?.part1 && !dungeonStore.npcStatblockLoadingStates[index]?.part2" class="statblock-not-found-message">
+                <p><strong>Statblock not found</strong></p>
+                <p>The statblock "{{ npc.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
+                <div class="button-group">
+                  <cdr-button @click="generateNpcStatblock(index, premium)" size="small">Regenerate Statblock</cdr-button>
+                  <cdr-button @click="clearNpcStatblockReference(index)" modifier="secondary" size="small">Clear Reference</cdr-button>
+                </div>
               </div>
 
               <!-- Statblock Limit Message -->
@@ -241,6 +259,16 @@ const patreonLoginUrl = computed(() => {
   const returnUrl = encodeURIComponent(window.location.href);
   return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
+
+// Statblock Generator URL with query params
+function getStatblockGeneratorUrl(monsterName, folderName) {
+  const base = 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/';
+  const params = new URLSearchParams();
+  if (monsterName) params.set('monster', monsterName);
+  if (folderName) params.set('folder', folderName);
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
+}
 
 // The CR dropdown data
 const crOptions = crList.fullArray;
@@ -430,6 +458,16 @@ function deleteRelationship(relationshipIndex) {
 function addRelationship() {
   npcEditForm.value.relationshipsArray.push({ name: '', description: '' });
 }
+
+// Clear NPC statblock reference
+function clearNpcStatblockReference(index) {
+  const npc = dungeonStore.currentDungeon.npcs[index];
+  if (!npc) return;
+  delete npc.statblock_name;
+  delete npc.statblock_folder;
+  npc.statblock = null;
+  dungeonStore.saveDungeons();
+}
 </script>
 
 <style scoped>
@@ -534,5 +572,53 @@ function addRelationship() {
 
 .statblock-limit-message .patreon-universal-button .patreon-responsive-button:active {
   transform: translateY(0);
+}
+
+.statblock-saved-message {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f0fdf4;
+  border: 1px solid #22c55e;
+  border-radius: 6px;
+}
+
+.statblock-saved-message p {
+  margin: 0;
+  color: #14532d;
+  font-size: 1.6rem;
+}
+
+.statblock-saved-message a {
+  color: #16a34a;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.statblock-saved-message a:hover {
+  color: #22c55e;
+}
+
+.statblock-not-found-message {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+}
+
+.statblock-not-found-message p {
+  margin: 0 0 1rem 0;
+  color: #7f1d1d;
+  font-size: 1.6rem;
+}
+
+.statblock-not-found-message p strong {
+  color: #991b1b;
+  font-size: 1.8rem;
+}
+
+.statblock-not-found-message .button-group {
+  margin-top: 1rem;
+  margin-bottom: 0;
 }
 </style>
