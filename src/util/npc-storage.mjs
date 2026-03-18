@@ -18,9 +18,17 @@
  * @param {string} folderName - Folder name (typically dungeon/setting title)
  */
 export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
-  const stored = JSON.parse(
-    localStorage.getItem('npcGeneratorNPCs') || '{"Uncategorized":[]}'
-  );
+  let stored;
+
+  try {
+    stored = JSON.parse(
+      localStorage.getItem('npcGeneratorNPCs') || '{"Uncategorized":[]}'
+    );
+  } catch (error) {
+    // If localStorage is corrupted, start fresh
+    console.warn('Corrupted NPC storage detected, starting fresh:', error);
+    stored = { 'Uncategorized': [] };
+  }
 
   if (!stored[folderName]) {
     stored[folderName] = [];
@@ -28,6 +36,26 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
 
   const name = getNPCName(npc);
   let id = npc.npc_id || npc.id;
+
+  // AUTO-MIGRATION: If NPC has an ID, remove it from other folders (handles dungeon/setting renames)
+  if (id) {
+    for (const otherFolder in stored) {
+      if (otherFolder !== folderName) {
+        const duplicateIndex = stored[otherFolder].findIndex(n =>
+          (n.npc_id === id || n.id === id)
+        );
+        if (duplicateIndex !== -1) {
+          // Remove NPC from old folder
+          stored[otherFolder].splice(duplicateIndex, 1);
+
+          // Clean up empty folders
+          if (stored[otherFolder].length === 0) {
+            delete stored[otherFolder];
+          }
+        }
+      }
+    }
+  }
 
   // Deduplicate by ID first (if present), then by name
   let existingIndex = -1;

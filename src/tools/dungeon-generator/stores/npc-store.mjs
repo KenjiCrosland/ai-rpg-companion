@@ -24,6 +24,27 @@ const toast = useToast();
 // We can store loading states for NPC statblock generation:
 export const npcStatblockLoadingStates = ref({});
 
+/**
+ * Ensure NPC has a unique ID (handles old stubs created before ID system)
+ */
+function ensureNPCHasId(npc) {
+  if (!npc.npc_id) {
+    npc.npc_id = `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    saveDungeons();
+  }
+}
+
+/**
+ * Sync NPC ID back from canonical format (handles deduplication by name)
+ */
+function syncNPCIdFromCanonical(canonicalNPC, dungeonNPC, npcIndex) {
+  if (canonicalNPC.npc_id && canonicalNPC.npc_id !== dungeonNPC.npc_id) {
+    dungeonNPC.npc_id = canonicalNPC.npc_id;
+    currentDungeon.value.npcs[npcIndex].npc_id = canonicalNPC.npc_id;
+    saveDungeons();
+  }
+}
+
 function sbValidationPart1(jsonString) {
   try {
     const data = JSON.parse(jsonString);
@@ -64,11 +85,7 @@ export async function generateNPCStatblock(
     return;
   }
 
-  // Ensure NPC has an ID before statblock generation
-  if (!npc.npc_id) {
-    npc.npc_id = `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    saveDungeons();
-  }
+  ensureNPCHasId(npc);
 
   // Quick check for premium usage:
   const canGen = await canGenerateStatblock(premium);
@@ -148,14 +165,7 @@ export async function generateNPCStatblock(
     if (npc.read_aloud_description) {
       const canonicalNPC = dungeonNPCToCanonical(npc, folderName);
       saveNPCToStorage(canonicalNPC, folderName);
-
-      // Sync ID back if it changed (saveNPCToStorage may have found existing by name)
-      if (canonicalNPC.npc_id && canonicalNPC.npc_id !== npc.npc_id) {
-        npc.npc_id = canonicalNPC.npc_id;
-        currentDungeon.value.npcs[index].npc_id = canonicalNPC.npc_id;
-        saveDungeons();
-      }
-
+      syncNPCIdFromCanonical(canonicalNPC, npc, index);
       toast.success(`${npc.name} statblock saved to your NPCs`);
     }
   } catch (error) {
@@ -204,11 +214,7 @@ export async function generateDungeonNPC(npcIndex) {
       return;
     }
 
-    // Ensure NPC has an ID before generation (handles old stubs without IDs)
-    if (!npc.npc_id) {
-      npc.npc_id = `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      saveDungeons(); // Save immediately so ID persists
-    }
+    ensureNPCHasId(npc);
 
     const npcNameVal = npc.name;
     const npcShortDescriptionVal = npc.short_description;
@@ -255,14 +261,7 @@ export async function generateDungeonNPC(npcIndex) {
       const dungeonTitle = currentDungeon.value.dungeonOverview?.name || 'Dungeon NPCs';
       const canonicalNPC = dungeonNPCToCanonical(completeNPC, dungeonTitle);
       saveNPCToStorage(canonicalNPC, dungeonTitle);
-
-      // CRITICAL: Always sync the ID back (saveNPCToStorage may have found existing by name)
-      if (canonicalNPC.npc_id && canonicalNPC.npc_id !== completeNPC.npc_id) {
-        completeNPC.npc_id = canonicalNPC.npc_id;
-        currentDungeon.value.npcs[npcIndex].npc_id = canonicalNPC.npc_id;
-        saveDungeons(); // Re-save with correct ID
-      }
-
+      syncNPCIdFromCanonical(canonicalNPC, completeNPC, npcIndex);
       toast.success(`${completeNPC.name} saved to your NPCs`);
     }
   } catch (error) {

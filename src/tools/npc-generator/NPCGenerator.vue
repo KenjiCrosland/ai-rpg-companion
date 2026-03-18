@@ -151,8 +151,8 @@
                     v-if="npcDescriptionPart1 && !loadingPart1 && npcDescriptionPart2"
                     :npc="normalizeGeneratorNPC(currentNPC)"
                     :is-editing="isEditingNPC"
-                    :show-relationship-generator="false"
-                    :is-generating-relationship="false"
+                    :show-relationship-generator="true"
+                    :is-generating-relationship="loadingNewRelationship"
                     :has-statblock="!!(npcDescriptionPart1.statblock_name)"
                     :statblock-url="statblockGeneratorUrl"
                     :editable="true"
@@ -162,6 +162,7 @@
                     @save-edit="handleSaveEdit($event)"
                     @cancel-edit="cancelEditNPC"
                     @delete="deleteCurrentNPC"
+                    @generate-relationship="handleGenerateRelationship($event)"
                 />
 
                 <!-- Relationships Loading Skeleton -->
@@ -354,6 +355,7 @@ import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { normalizeGeneratorNPC, migrateNPCIds } from '@/util/npc-storage.mjs';
+import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
@@ -386,6 +388,7 @@ const statblock = ref(null);
 const selectedChallengeRating = ref('1');
 const isSpellcaster = ref(false);
 const statblockLimitReached = ref(false);
+const loadingNewRelationship = ref(false);
 
 const props = defineProps({
     premium: {
@@ -1099,6 +1102,78 @@ function validationPart2(jsonString) {
         return keys.every((key) => key in jsonObj);
     } catch (error) {
         return false;
+    }
+}
+
+function singleRelationshipValidation(jsonString) {
+    try {
+        const jsonObj = JSON.parse(jsonString);
+        const keys = ['name', 'relationship'];
+        return keys.every((key) => key in jsonObj);
+    } catch (error) {
+        return false;
+    }
+}
+
+async function handleGenerateRelationship(relationshipData) {
+    if (!relationshipData.name || !relationshipData.description) {
+        toast.warning('Please provide both a name and description for the relationship');
+        return;
+    }
+
+    if (!npcDescriptionPart1.value) {
+        toast.warning('No NPC to generate relationship for');
+        return;
+    }
+
+    // Build NPC description for context
+    const npcDescription = `
+NAME: ${npcDescriptionPart1.value.character_name}
+
+APPEARANCE: ${npcDescriptionPart1.value.read_aloud_description || 'Not specified'}
+
+ROLE: ${npcDescriptionPart1.value.description_of_position || 'Unknown'}
+
+REASON FOR BEING THERE: ${npcDescriptionPart1.value.reason_for_being_there || 'Unknown'}
+
+DISTINCTIVE TRAITS: ${npcDescriptionPart1.value.distinctive_feature_or_mannerism || 'None noted'}
+
+SECRET: ${npcDescriptionPart1.value.character_secret || 'None'}
+
+ROLEPLAYING TIPS: ${npcDescriptionPart1.value.roleplaying_tips || 'None'}
+`.trim();
+
+    try {
+        loadingNewRelationship.value = true;
+
+        const prompt = generateSingleRelationshipPrompt(
+            npcDescription,
+            relationshipData.name,
+            relationshipData.description
+        );
+
+        const response = await generateGptResponse(prompt, singleRelationshipValidation);
+        const generatedRelationship = JSON.parse(response);
+
+        // Add relationship to NPC
+        if (!npcDescriptionPart2.value) {
+            npcDescriptionPart2.value = { relationships: {} };
+        }
+        if (!npcDescriptionPart2.value.relationships) {
+            npcDescriptionPart2.value.relationships = {};
+        }
+
+        npcDescriptionPart2.value.relationships[generatedRelationship.name] = generatedRelationship.relationship;
+
+        // Save to localStorage
+        saveCurrentNPCToList();
+
+        toast.success(`Relationship with ${generatedRelationship.name} added!`);
+    } catch (error) {
+        console.error('Error generating relationship:', error);
+        toast.error('Failed to generate relationship. Please try again.');
+    } finally {
+        loadingNewRelationship.value = false;
     }
 }
 

@@ -427,15 +427,16 @@ function handleSaveEdit(index, editedData) {
     const canonicalNPC = dungeonNPCToCanonical(npc, dungeonTitle);
     saveNPCToStorage(canonicalNPC, dungeonTitle);
 
-    // Save the ID back to the dungeon NPC
-    if (canonicalNPC.npc_id && !npc.npc_id) {
+    // Sync the ID back to the dungeon NPC
+    if (canonicalNPC.npc_id && canonicalNPC.npc_id !== npc.npc_id) {
       npc.npc_id = canonicalNPC.npc_id;
+      dungeonStore.currentDungeon.npcs[index].npc_id = canonicalNPC.npc_id;
     }
 
     toast.success(`${npc.name} updated in your NPCs`);
   }
 
-  // Save to dungeons localStorage (now with ID)
+  // Save to dungeons localStorage after ID sync
   dungeonStore.saveDungeons();
 
   editingNPCIndex.value = null;
@@ -499,17 +500,23 @@ BOSS: ${overview.boss?.name || 'Unknown'} - ${overview.boss?.description || ''}
     }
     npc.relationships[generatedRelationship.name] = generatedRelationship.relationship;
 
-    // Save to dungeons localStorage
-    dungeonStore.saveDungeons();
-
-    // Save to shared NPC storage
+    // Save to shared NPC storage first (this assigns/preserves ID)
     if (npc.read_aloud_description) {
       const dungeonTitle = dungeonStore.currentDungeon.dungeonOverview?.name || 'Dungeon NPCs';
       const canonicalNPC = dungeonNPCToCanonical(npc, dungeonTitle);
       saveNPCToStorage(canonicalNPC, dungeonTitle);
 
+      // Sync the ID back to the dungeon NPC
+      if (canonicalNPC.npc_id && canonicalNPC.npc_id !== npc.npc_id) {
+        npc.npc_id = canonicalNPC.npc_id;
+        dungeonStore.currentDungeon.npcs[npcIndex].npc_id = canonicalNPC.npc_id;
+      }
+
       toast.success(`${npc.name} updated in your NPCs`);
     }
+
+    // Save to dungeons localStorage after ID sync
+    dungeonStore.saveDungeons();
   } catch (error) {
     console.error('Error generating new relationship:', error);
     alert('Failed to generate relationship. Please try again.');

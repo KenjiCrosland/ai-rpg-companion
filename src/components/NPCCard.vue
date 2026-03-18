@@ -463,7 +463,7 @@ function generateRelationship() {
   font-size: 2rem;
   float: left;
   line-height: 1;
-  margin: 2px 6px 0 0;
+  margin: 2px 2px 0 0;
   color: #7b2d26;
   font-weight: 500;
 }
