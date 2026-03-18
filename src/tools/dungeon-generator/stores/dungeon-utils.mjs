@@ -1,5 +1,6 @@
 import { dungeons } from './dungeon-state.mjs';
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
+import { saveNPCToStorage, dungeonNPCToCanonical } from '@/util/npc-storage.mjs';
 
 export function saveDungeons() {
   // Prepare dungeons for save by stripping resolved statblocks
@@ -18,14 +19,14 @@ export function loadDungeons(currentDungeonId) {
     // Migrate and resolve statblocks for all dungeons
     let anyMigrated = false;
     dungeons.value.forEach(dungeon => {
-      const migrated = migrateDungeonStatblocks(dungeon);
-      if (migrated) anyMigrated = true;
+      const statblockMigrated = migrateDungeonStatblocks(dungeon);
+      const npcMigrated = migrateDungeonNPCs(dungeon);
+      if (statblockMigrated || npcMigrated) anyMigrated = true;
       resolveDungeonStatblocks(dungeon);
     });
 
     // Save if any migrations occurred
     if (anyMigrated) {
-      // console.log('[DUNGEON MIGRATION] Saving migrated references to localStorage');
       saveDungeons();
     }
   }
@@ -167,4 +168,77 @@ function migrateDungeonStatblocks(dungeon) {
   // }
 
   return migrated; // Return true if migration happened
+}
+
+function migrateDungeonNPCs(dungeon) {
+  const dungeonTitle = dungeon.dungeonOverview?.name || 'Dungeon NPCs';
+  let migrated = false;
+
+  if (dungeon.npcs) {
+    // Load shared storage once
+    const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+    const sharedNPCs = stored[dungeonTitle] || [];
+
+    dungeon.npcs.forEach((npc) => {
+      // Skip if already migrated AND has an ID (fully processed)
+      if (npc.migrated_to_shared && npc.npc_id) {
+        return;
+      }
+
+      // If marked as migrated but no ID, try to sync ID from shared storage
+      if (npc.migrated_to_shared && !npc.npc_id) {
+        const existingNPC = sharedNPCs.find(n =>
+          n.npcDescriptionPart1?.character_name === npc.name
+        );
+        if (existingNPC) {
+          // Check both npc_id and id fields
+          const existingId = existingNPC.npc_id || existingNPC.id;
+          if (existingId) {
+            npc.npc_id = existingId;
+            migrated = true;
+            return;
+          } else {
+            npc.migrated_to_shared = false; // Reset flag so we can re-migrate
+          }
+        } else {
+          npc.migrated_to_shared = false; // Reset flag so we can re-migrate
+        }
+      }
+
+      // Only migrate NPCs with full descriptions (read_aloud_description)
+      if (npc.read_aloud_description) {
+        // Check if NPC already exists in shared storage
+        const existingNPC = sharedNPCs.find(n =>
+          (n.npc_id && (n.npc_id === npc.npc_id || n.id === npc.npc_id)) ||
+          (n.npcDescriptionPart1?.character_name === npc.name)
+        );
+
+        if (existingNPC) {
+          // NPC already in shared storage - just sync ID back, don't overwrite
+          // Check both npc_id and id fields (shared storage might use either)
+          const existingId = existingNPC.npc_id || existingNPC.id;
+          if (existingId && !npc.npc_id) {
+            npc.npc_id = existingId;
+            migrated = true;
+          }
+        } else {
+          // NPC not in shared storage - save it (initial migration)
+          const canonicalNPC = dungeonNPCToCanonical(npc, dungeonTitle);
+          saveNPCToStorage(canonicalNPC, dungeonTitle);
+
+          // Sync ID back
+          if (canonicalNPC.npc_id) {
+            npc.npc_id = canonicalNPC.npc_id;
+            migrated = true;
+          }
+        }
+
+        // Mark as migrated so we don't overwrite on subsequent loads
+        npc.migrated_to_shared = true;
+        migrated = true;
+      }
+    });
+  }
+
+  return migrated;
 }

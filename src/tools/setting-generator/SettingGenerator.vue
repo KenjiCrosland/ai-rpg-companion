@@ -189,6 +189,7 @@ import { formatSettingAsPlainText } from "@/util/formatSettingAsPlainText.mjs";
 import { formatSettingAsMarkdown } from "@/util/formatSettingAsMarkdown.mjs";
 import { formatSettingAsHtml } from "@/util/formatSettingAsHTML.mjs";
 import { generateGptResponse } from "@/util/open-ai.mjs";
+import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import placeAdjectives from '@/data/place-adjectives.json';
 import place_names from '@/data/place-names.json';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -485,10 +486,97 @@ function loadSettingsFromLocalStorage() {
     try {
       const parsedSettings = JSON.parse(serializedSettings);
       settings.value = parsedSettings.map(setting => reactive(setting));
+
+      // Migrate existing NPCs to shared storage
+      settings.value.forEach(setting => {
+        migrateSettingNPCs(setting);
+      });
     } catch (error) {
       console.error("Failed to parse settings from local storage:", error);
     }
   }
+}
+
+function migrateSettingNPCs(setting) {
+  const settingName = setting.setting_overview?.name
+    || setting.place_name
+    || 'Setting NPCs';
+  let migrated = false;
+
+  if (setting.npcs) {
+    // Load shared storage once
+    const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+    const sharedNPCs = stored[settingName] || [];
+
+    setting.npcs.forEach(npc => {
+      // Skip if already migrated AND has an ID (fully processed)
+      if (npc.migrated_to_shared && npc.npc_id) {
+        return;
+      }
+
+      // If marked as migrated but no ID, try to sync ID from shared storage
+      if (npc.migrated_to_shared && !npc.npc_id) {
+        const existingNPC = sharedNPCs.find(n =>
+          n.npcDescriptionPart1?.character_name === npc.name
+        );
+        if (existingNPC) {
+          // Check both npc_id and id fields
+          const existingId = existingNPC.npc_id || existingNPC.id;
+          if (existingId) {
+            npc.npc_id = existingId;
+            migrated = true;
+            return;
+          } else {
+            npc.migrated_to_shared = false; // Reset flag so we can re-migrate
+          }
+        } else {
+          npc.migrated_to_shared = false; // Reset flag so we can re-migrate
+        }
+      }
+
+      // Only migrate NPCs with full descriptions (read_aloud_description)
+      if (npc.read_aloud_description) {
+        // Check if NPC already exists in shared storage
+        const existingNPC = sharedNPCs.find(n =>
+          (n.npc_id && (n.npc_id === npc.npc_id || n.id === npc.npc_id)) ||
+          (n.npcDescriptionPart1?.character_name === npc.name)
+        );
+
+        if (existingNPC) {
+          // NPC already in shared storage - just sync ID back, don't overwrite
+          // Check both npc_id and id fields (shared storage might use either)
+          const existingId = existingNPC.npc_id || existingNPC.id;
+          if (existingId && !npc.npc_id) {
+            npc.npc_id = existingId;
+            migrated = true;
+          }
+        } else {
+          // NPC not in shared storage - save it (initial migration)
+          const canonicalNPC = settingNPCToCanonical(npc, settingName);
+          saveNPCToStorage(canonicalNPC, settingName);
+
+          // Sync ID back
+          if (canonicalNPC.npc_id && !npc.npc_id) {
+            npc.npc_id = canonicalNPC.npc_id;
+            migrated = true;
+          }
+        }
+
+        // Mark as migrated so we don't overwrite on subsequent loads
+        npc.migrated_to_shared = true;
+        migrated = true;
+      }
+    });
+  }
+
+  if (migrated) {
+    // Save settings after ID sync
+    saveSettingsToLocalStorage();
+  }
+
+  // if (migrated) {
+  //   console.log(`[MIGRATION] Extracted NPCs from setting "${settingName}" to shared NPC storage and synced IDs`);
+  // }
 }
 
 
@@ -617,7 +705,11 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
         settings.value[operationIndex].place_name = overview.name;
       }
       settings.value[operationIndex].setting_overview = overview;
-      settings.value[operationIndex].npcs = overview.npc_list || [];
+      // Add unique IDs to NPCs from npc_list
+      settings.value[operationIndex].npcs = (overview.npc_list || []).map((npc, index) => ({
+        npc_id: `npc_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
+        ...npc
+      }));
       settings.value[operationIndex].loadingsettingOverview = false;
       currentlyLoading.value = false;
       if (isNumber(parentIndex)) {

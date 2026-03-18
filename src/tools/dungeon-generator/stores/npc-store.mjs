@@ -16,6 +16,10 @@ import { generateGptResponse } from '@/util/open-ai.mjs';
 import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
 import { ref } from 'vue';
 import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
+import { saveNPCToStorage, dungeonNPCToCanonical } from '@/util/npc-storage.mjs';
+import { useToast } from '@/composables/useToast.js';
+
+const toast = useToast();
 
 // We can store loading states for NPC statblock generation:
 export const npcStatblockLoadingStates = ref({});
@@ -58,6 +62,12 @@ export async function generateNPCStatblock(
   if (!npc) {
     console.error('NPC not found at index', index);
     return;
+  }
+
+  // Ensure NPC has an ID before statblock generation
+  if (!npc.npc_id) {
+    npc.npc_id = `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    saveDungeons();
   }
 
   // Quick check for premium usage:
@@ -133,6 +143,21 @@ export async function generateNPCStatblock(
     npc.statblock_folder = folderName;
 
     saveDungeons();
+
+    // Update shared NPC storage with statblock reference
+    if (npc.read_aloud_description) {
+      const canonicalNPC = dungeonNPCToCanonical(npc, folderName);
+      saveNPCToStorage(canonicalNPC, folderName);
+
+      // Sync ID back if it changed (saveNPCToStorage may have found existing by name)
+      if (canonicalNPC.npc_id && canonicalNPC.npc_id !== npc.npc_id) {
+        npc.npc_id = canonicalNPC.npc_id;
+        currentDungeon.value.npcs[index].npc_id = canonicalNPC.npc_id;
+        saveDungeons();
+      }
+
+      toast.success(`${npc.name} statblock saved to your NPCs`);
+    }
   } catch (error) {
     console.error('Error generating NPC statblock:', error);
   } finally {
@@ -179,6 +204,12 @@ export async function generateDungeonNPC(npcIndex) {
       return;
     }
 
+    // Ensure NPC has an ID before generation (handles old stubs without IDs)
+    if (!npc.npc_id) {
+      npc.npc_id = `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      saveDungeons(); // Save immediately so ID persists
+    }
+
     const npcNameVal = npc.name;
     const npcShortDescriptionVal = npc.short_description;
     const dungeonOverviewText = getDungeonOverviewText(
@@ -218,6 +249,22 @@ export async function generateDungeonNPC(npcIndex) {
     currentDungeon.value.npcs.splice(npcIndex, 1, completeNPC);
     currentlyLoadingNPCs.value[npcIndex] = false;
     saveDungeons();
+
+    // Save NPC to shared storage if it has read_aloud_description (full NPC, not stub)
+    if (completeNPC.read_aloud_description) {
+      const dungeonTitle = currentDungeon.value.dungeonOverview?.name || 'Dungeon NPCs';
+      const canonicalNPC = dungeonNPCToCanonical(completeNPC, dungeonTitle);
+      saveNPCToStorage(canonicalNPC, dungeonTitle);
+
+      // CRITICAL: Always sync the ID back (saveNPCToStorage may have found existing by name)
+      if (canonicalNPC.npc_id && canonicalNPC.npc_id !== completeNPC.npc_id) {
+        completeNPC.npc_id = canonicalNPC.npc_id;
+        currentDungeon.value.npcs[npcIndex].npc_id = canonicalNPC.npc_id;
+        saveDungeons(); // Re-save with correct ID
+      }
+
+      toast.success(`${completeNPC.name} saved to your NPCs`);
+    }
   } catch (error) {
     console.error('Error generating dungeon NPC:', error);
     currentlyLoadingNPCs.value[npcIndex] = false;
@@ -243,7 +290,11 @@ export function addNPC() {
     return;
   }
 
+  // Generate unique ID for NPC
+  const npcId = `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
   currentDungeon.value.npcs.push({
+    npc_id: npcId,
     name: nameVal,
     short_description: shortDesc,
     opened: false,

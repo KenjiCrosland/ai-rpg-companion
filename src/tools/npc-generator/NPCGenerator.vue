@@ -146,71 +146,26 @@
                         </p>
                     </CdrSkeleton>
                 </div>
-                <!-- View Mode -->
-                <div v-if="npcDescriptionPart1 && !loadingPart1 && !isEditingNPC">
-                    <div class="npc-header">
-                        <h2>{{ npcDescriptionPart1.character_name }}</h2>
-                        <cdr-button @click="startEditingNPC" modifier="secondary" size="small">Edit NPC</cdr-button>
-                    </div>
-                    <div class="focus-text">{{ npcDescriptionPart1.read_aloud_description }}</div>
+                <!-- NPC Card (View/Edit Mode) -->
+                <NPCCard
+                    v-if="npcDescriptionPart1 && !loadingPart1 && npcDescriptionPart2"
+                    :npc="normalizeGeneratorNPC(currentNPC)"
+                    :is-editing="isEditingNPC"
+                    :show-relationship-generator="false"
+                    :is-generating-relationship="false"
+                    :has-statblock="!!(npcDescriptionPart1.statblock_name)"
+                    :statblock-url="statblockGeneratorUrl"
+                    :editable="true"
+                    :show-delete="true"
+                    :show-origin-note="!!(currentNPC?.typeOfPlace && currentNPC.typeOfPlace !== 'Uncategorized')"
+                    @start-edit="startEditingNPC"
+                    @save-edit="handleSaveEdit($event)"
+                    @cancel-edit="cancelEditNPC"
+                    @delete="deleteCurrentNPC"
+                />
 
-                    <div v-if="npcDescriptionPart1.combined_details" style="margin-top: 1.5rem;">
-                        <p v-for="(paragraph, pIndex) in npcDescriptionPart1.combined_details.split('\n\n')"
-                            :key="pIndex">
-                            {{ paragraph }}
-                        </p>
-                    </div>
-
-                    <hr style="margin: 2rem 0;">
-                </div>
-
-                <!-- Edit Mode -->
-                <div v-if="npcDescriptionPart1 && !loadingPart1 && isEditingNPC" class="edit-form">
-                    <h2>Edit NPC</h2>
-
-                    <cdr-input v-model="npcEditForm.character_name" label="NPC Name" background="secondary"
-                        class="edit-field" />
-
-                    <cdr-input v-model="npcEditForm.read_aloud_description" label="Read-Aloud Description"
-                        background="secondary" :rows="4" tag="textarea" class="edit-field">
-                        <template #helper-text-bottom>
-                            The initial description when the NPC is first encountered
-                        </template>
-                    </cdr-input>
-
-                    <cdr-input v-model="npcEditForm.combined_details" label="NPC Details" background="secondary"
-                        :rows="10" tag="textarea" class="edit-field">
-                        <template #helper-text-bottom>
-                            Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for
-                            paragraphs.
-                        </template>
-                    </cdr-input>
-
-                    <h3>Relationships</h3>
-                    <div v-if="npcEditForm.relationshipsArray.length > 0">
-                        <div v-for="(relationship, index) in npcEditForm.relationshipsArray" :key="index"
-                            style="margin-bottom: 1.5rem; padding: 1.5rem; background: #f4f2ed; border-radius: 4px;">
-                            <cdr-input v-model="relationship.name" label="Name" background="secondary"
-                                style="margin-bottom: 1rem;" />
-                            <cdr-input v-model="relationship.description" label="Relationship Description"
-                                background="secondary" :rows="2" tag="textarea" style="margin-bottom: 1rem;" />
-                            <cdr-button size="small" @click="deleteRelationship(index)" modifier="secondary">Remove
-                                Relationship</cdr-button>
-                        </div>
-                    </div>
-                    <div v-else>
-                        <p style="font-style: italic; color: #666; margin-bottom: 1rem;">No relationships to edit.
-                            Generate them in view mode first.</p>
-                    </div>
-
-                    <div class="button-group">
-                        <cdr-button @click="saveEditNPC">Save Changes</cdr-button>
-                        <cdr-button @click="cancelEditNPC" modifier="secondary">Cancel</cdr-button>
-                    </div>
-
-                    <hr style="margin: 2rem 0;">
-                </div>
-                <div v-if="loadingPart2">
+                <!-- Relationships Loading Skeleton -->
+                <div v-if="npcDescriptionPart1 && !loadingPart1 && loadingPart2">
                     <h3>Relationships</h3>
                     <CdrSkeleton>
                         <div>
@@ -244,22 +199,9 @@
                         </div>
                     </CdrSkeleton>
                 </div>
+
+                <!-- Actions and Management (after NPC Card) -->
                 <div v-if="npcDescriptionPart2 && !loadingPart2 && !isEditingNPC">
-                    <h3>Relationships</h3>
-                    <div
-                        v-if="npcDescriptionPart2.relationships && Object.keys(npcDescriptionPart2.relationships).length > 0">
-                        <div v-for="(relationshipDescription, relationshipName) in npcDescriptionPart2.relationships"
-                            :key="relationshipName"
-                            style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
-                            <p style="margin: 0;">
-                                <strong>Name:</strong> {{ relationshipName }}<br>
-                                <strong>Relationship:</strong> {{ relationshipDescription }}
-                            </p>
-                        </div>
-                    </div>
-                    <div v-else>
-                        <p style="font-style: italic; color: #666;">No relationships generated.</p>
-                    </div>
 
                     <!-- Actions Row -->
                     <div class="actions-row" style="margin-top: 2rem;">
@@ -267,9 +209,6 @@
                         <div class="management-actions">
                             <cdr-button @click="showFolderMover = !showFolderMover" modifier="secondary" size="small">
                                 Move to Folder
-                            </cdr-button>
-                            <cdr-button @click="deleteCurrentNPC" modifier="dark" size="small">
-                                Delete
                             </cdr-button>
                         </div>
 
@@ -404,6 +343,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import NPCCard from '@/components/NPCCard.vue';
 import Statblock from '@/components/Statblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import { generateGptResponse } from "@/util/open-ai.mjs";
@@ -413,6 +353,7 @@ import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMar
 import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
+import { normalizeGeneratorNPC, migrateNPCIds } from '@/util/npc-storage.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
@@ -478,18 +419,20 @@ const folderOptions = computed(() => {
     return Object.keys(npcs.value).filter(folderName => folderName !== activeFolder.value);
 });
 
+// Current NPC being viewed
+const currentNPC = computed(() => {
+    const folderName = activeFolder.value || 'Uncategorized';
+    const index = currentNPCIndex.value;
+    if (index === null || !npcs.value[folderName]) return null;
+    return npcs.value[folderName][index];
+});
+
 // Sidebar responsive
 const showDataManagerModal = ref(false);
 const showHomebreweryLink = ref(false);
 
 // Inline editing
 const isEditingNPC = ref(false);
-const npcEditForm = ref({
-    character_name: '',
-    read_aloud_description: '',
-    combined_details: '',
-    relationshipsArray: []
-});
 
 // Folder management
 const showFolderMover = ref(false);
@@ -498,6 +441,26 @@ const newFolderName = ref('');
 
 onMounted(() => {
     loadNPCsFromLocalStorage();
+
+    // Check for URL parameters to load specific NPC
+    const urlParams = new URLSearchParams(window.location.search);
+    const folder = urlParams.get('folder');
+    const name = urlParams.get('name');
+
+    if (folder && name) {
+        // Find the NPC in the specified folder
+        const folderNPCs = npcs.value[folder];
+        if (folderNPCs) {
+            const npcIndex = folderNPCs.findIndex(npc =>
+                npc.npcDescriptionPart1?.character_name === name
+            );
+            if (npcIndex !== -1) {
+                // NPC found - select it
+                selectNPC(folder, npcIndex);
+            }
+        }
+    }
+
     // Listen for localStorage changes from other tabs
     window.addEventListener('storage', handleStorageChange);
 });
@@ -591,6 +554,20 @@ function loadNPCsFromLocalStorage() {
 
             // Migrate nested statblocks to shared storage
             migrateNestedStatblocks();
+
+            // Migrate statblock references from top level to npcDescriptionPart1
+            migrateStatblockReferences();
+
+            // Migrate NPCs without IDs
+            const migratedCount = migrateNPCIds();
+            if (migratedCount > 0) {
+                console.log(`Migrated ${migratedCount} NPCs to include unique IDs`);
+                // Reload NPCs after migration
+                const updatedStored = localStorage.getItem('npcGeneratorNPCs');
+                if (updatedStored) {
+                    npcs.value = JSON.parse(updatedStored);
+                }
+            }
         } catch (error) {
             console.error('Failed to parse NPCs from local storage:', error);
             npcs.value = { 'Uncategorized': [] };
@@ -635,8 +612,53 @@ function migrateNestedStatblocks() {
     }
 }
 
+function migrateStatblockReferences() {
+    let migrationNeeded = false;
+
+    // Iterate through all folders
+    for (const [folderName, npcList] of Object.entries(npcs.value)) {
+        if (!Array.isArray(npcList)) continue;
+
+        // Iterate through NPCs in this folder
+        for (const npc of npcList) {
+            // Check if NPC has statblock references at top level instead of in npcDescriptionPart1
+            if ((npc.statblock_name || npc.statblock_folder) && npc.npcDescriptionPart1) {
+                // Move references into npcDescriptionPart1 if not already there
+                if (!npc.npcDescriptionPart1.statblock_name && npc.statblock_name) {
+                    npc.npcDescriptionPart1.statblock_name = npc.statblock_name;
+                    delete npc.statblock_name;
+                    migrationNeeded = true;
+                }
+                if (!npc.npcDescriptionPart1.statblock_folder && npc.statblock_folder) {
+                    npc.npcDescriptionPart1.statblock_folder = npc.statblock_folder;
+                    delete npc.statblock_folder;
+                    migrationNeeded = true;
+                }
+            }
+        }
+    }
+
+    // Save if any migrations occurred
+    if (migrationNeeded) {
+        saveNPCsToLocalStorage();
+    }
+}
+
 // Save current NPC to the list
 function saveCurrentNPCToList() {
+    const folderName = activeFolder.value || 'Uncategorized';
+
+    // Ensure folder exists
+    if (!npcs.value[folderName]) {
+        npcs.value[folderName] = [];
+    }
+
+    // Preserve existing npc_id if updating an existing NPC
+    let existingNpcId = null;
+    if (currentNPCIndex.value !== null && currentNPCIndex.value < npcs.value[folderName].length) {
+        existingNpcId = npcs.value[folderName][currentNPCIndex.value]?.npc_id;
+    }
+
     const npcData = {
         npcDescriptionPart1: npcDescriptionPart1.value,
         npcDescriptionPart2: npcDescriptionPart2.value,
@@ -647,11 +669,9 @@ function saveCurrentNPCToList() {
         isSpellcaster: isSpellcaster.value
     };
 
-    const folderName = activeFolder.value || 'Uncategorized';
-
-    // Ensure folder exists
-    if (!npcs.value[folderName]) {
-        npcs.value[folderName] = [];
+    // CRITICAL: Preserve npc_id to maintain reference integrity with dungeon/setting generators
+    if (existingNpcId) {
+        npcData.npc_id = existingNpcId;
     }
 
     // Add or update NPC in current folder
@@ -830,20 +850,6 @@ function handleFolderMove() {
 
 // Inline editing functions
 function startEditingNPC() {
-    const relationshipsArray = npcDescriptionPart2.value?.relationships
-        ? Object.entries(npcDescriptionPart2.value.relationships).map(([name, description]) => ({
-            name,
-            description
-        }))
-        : [];
-
-    npcEditForm.value = {
-        character_name: npcDescriptionPart1.value.character_name || '',
-        read_aloud_description: npcDescriptionPart1.value.read_aloud_description || '',
-        combined_details: npcDescriptionPart1.value.combined_details || combineNPCDetails(npcDescriptionPart1.value),
-        relationshipsArray: relationshipsArray
-    };
-
     isEditingNPC.value = true;
 }
 
@@ -851,30 +857,19 @@ function cancelEditNPC() {
     isEditingNPC.value = false;
 }
 
-function saveEditNPC() {
-    npcDescriptionPart1.value.character_name = npcEditForm.value.character_name;
-    npcDescriptionPart1.value.read_aloud_description = npcEditForm.value.read_aloud_description;
-    npcDescriptionPart1.value.combined_details = npcEditForm.value.combined_details;
-
-    const relationshipsObject = {};
-    npcEditForm.value.relationshipsArray.forEach(rel => {
-        if (rel.name && rel.description) {
-            relationshipsObject[rel.name] = rel.description;
-        }
-    });
+function handleSaveEdit(editedData) {
+    npcDescriptionPart1.value.character_name = editedData.name;
+    npcDescriptionPart1.value.read_aloud_description = editedData.read_aloud_description;
+    npcDescriptionPart1.value.combined_details = editedData.combined_details;
 
     if (!npcDescriptionPart2.value) {
         npcDescriptionPart2.value = {};
     }
-    npcDescriptionPart2.value.relationships = relationshipsObject;
+    npcDescriptionPart2.value.relationships = editedData.relationships;
 
     saveCurrentNPCToList();
 
     isEditingNPC.value = false;
-}
-
-function deleteRelationship(relationshipIndex) {
-    npcEditForm.value.relationshipsArray.splice(relationshipIndex, 1);
 }
 
 // Copy functions
@@ -1342,13 +1337,6 @@ hr {
     margin-bottom: 2rem;
 }
 
-.focus-text {
-    background-color: $cdr-color-background-secondary;
-    color: $cdr-color-text-secondary;
-    padding: 1rem 2rem;
-    font-style: italic;
-}
-
 div[class^="cdr-skeleton-bone"] {
     block-size: 2rem;
     margin: 1.1rem 0;
@@ -1373,17 +1361,6 @@ div[class^="cdr-skeleton-bone"] {
     display: flex;
     gap: 1rem;
     margin-top: 2rem;
-}
-
-.npc-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-
-    h2 {
-        margin: 0;
-    }
 }
 
 .actions-row {
@@ -1426,17 +1403,6 @@ div[class^="cdr-skeleton-bone"] {
         &:hover {
             color: #22c55e;
         }
-    }
-}
-
-.edit-form {
-    .edit-field {
-        margin-bottom: 1.5rem;
-    }
-
-    h3 {
-        margin-top: 2rem;
-        margin-bottom: 1rem;
     }
 }
 

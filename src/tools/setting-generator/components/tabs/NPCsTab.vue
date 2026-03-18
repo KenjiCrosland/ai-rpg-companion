@@ -3,6 +3,10 @@
     <h2>Notable NPCs</h2>
     <p>The default NPC list below is extracted from the main setting overview and the faction descriptions.
       However, you are free to add an NPC of your own with a short description.</p>
+    <p class="npc-tab-note">
+      NPCs with full descriptions are automatically saved to your <strong>NPC Generator</strong>.
+      Click "View in NPC Generator" at the bottom of any NPC card to see them there.
+    </p>
     <cdr-input class="npc-input" id="npc-name" v-model="npcShortDescription" background="secondary"
       label="NPC Short Description">
       <template #helper-text-bottom>
@@ -18,146 +22,45 @@
 
     <cdr-accordion-group>
       <cdr-accordion
-        v-for="(npc, index) in setting.npcs"
+        v-for="(npc, index) in enrichedNPCs"
         level="2"
         :id="'npc-' + index"
-        :key="'npc-' + index"
+        :key="npc.npc_id || index"
         :opened="npc.open"
-        @accordion-toggle="npc.open = !npc.open"
+        @accordion-toggle="setting.npcs[index].open = !setting.npcs[index].open"
       >
         <template #label>
           {{ npc.name }}
         </template>
 
         <div v-if="loadingNPCIndex !== index">
-          <cdr-tooltip id="tooltip-npc-delete" position="left" class="delete-button">
-            <template #trigger>
-              <cdr-button size="small" :icon-only="true" :with-background="true" @click.stop="deleteNPC(index)">
-                <template #icon>
-                  <icon-x-sm />
-                </template>
-              </cdr-button>
-            </template>
-            <div>Delete NPC</div>
-          </cdr-tooltip>
-
           <!-- View Mode - No Detailed Description -->
           <div v-if="!npc.read_aloud_description && editingNPCIndex !== index">
             <h2>{{ npc.name }}</h2>
             <p>{{ npc.description }}</p>
-            <cdr-button @click="generateDetailedNPCDescription(index)">Generate Detailed Description</cdr-button>
-          </div>
-
-          <!-- View Mode - Has Detailed Description -->
-          <div v-else-if="npc.read_aloud_description && editingNPCIndex !== index">
-            <h2>{{ npc.name }}</h2>
-            <div class="focus-text">{{ npc.read_aloud_description }}</div>
-
-            <div v-if="npc.combined_details" style="margin-top: 1.5rem;">
-              <p v-for="(paragraph, pIndex) in npc.combined_details.split('\n\n')" :key="pIndex">
-                {{ paragraph }}
-              </p>
-            </div>
-            <div v-else style="margin-top: 1.5rem;">
-              <p>{{ npc.description_of_position }}</p>
-              <p>{{ npc.current_location }}</p>
-              <p>{{ npc.distinctive_features_or_mannerisms }}</p>
-              <p>{{ npc.character_secret }}</p>
-              <p>{{ npc.roleplaying_tips }}</p>
-            </div>
-
-            <hr style="margin: 2rem 0;">
-
-            <h3>Relationships</h3>
-            <div v-if="npc.relationships && Object.keys(npc.relationships).length > 0">
-              <div
-                v-for="(relationship, npcName) in npc.relationships"
-                :key="npcName"
-                style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;"
-              >
-                <p style="margin: 0;">
-                  <strong>Name:</strong> {{ npcName }}<br>
-                  <strong>Relationship:</strong> {{ relationship }}
-                </p>
-              </div>
-            </div>
-            <div v-else-if="!loadingNewRelationship">
-              <p style="font-style: italic; color: #666;">No relationships yet. Generate one below!</p>
-            </div>
-
-            <div v-if="loadingNewRelationship"
-              style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
-              <CdrSkeleton>
-                <cdr-skeleton-bone type="line" style="margin-bottom: 0.5rem;" />
-                <cdr-skeleton-bone type="line" />
-                <cdr-skeleton-bone type="line" style="width: 80%;" />
-              </CdrSkeleton>
-            </div>
-
-            <div class="button-group" style="margin-top: 2rem;">
-              <cdr-button @click="startEditingNPC(index)" modifier="secondary">Edit NPC</cdr-button>
-            </div>
-
-            <h4 style="margin-top: 2rem;">Generate New Relationship</h4>
-            <cdr-input v-model="newRelationship.name" label="Name" background="secondary"
-              style="margin-bottom: 1rem;">
-              <template #helper-text-bottom>
-                The name of the related NPC
-              </template>
-            </cdr-input>
-            <cdr-input v-model="newRelationship.description" label="Short Description" background="secondary"
-              :rows="2" tag="textarea" style="margin-bottom: 1rem;">
-              <template #helper-text-bottom>
-                Brief description of their relationship (e.g., "the wizard's familiar", "his estranged sister")
-              </template>
-            </cdr-input>
-            <cdr-button @click="generateNewRelationship(index)" :full-width="true">Generate Relationship</cdr-button>
-          </div>
-
-          <!-- Edit Mode -->
-          <div v-else class="edit-form">
-            <h2>Edit NPC</h2>
-
-            <cdr-input v-model="npcEditForm.name" label="NPC Name" background="secondary" class="edit-field" />
-
-            <cdr-input v-model="npcEditForm.read_aloud_description" label="Read-Aloud Description"
-              background="secondary" :rows="4" tag="textarea" class="edit-field">
-              <template #helper-text-bottom>
-                The initial description when the NPC is first encountered
-              </template>
-            </cdr-input>
-
-            <cdr-input v-model="npcEditForm.combined_details" label="NPC Details" background="secondary"
-              :rows="10" tag="textarea" class="edit-field">
-              <template #helper-text-bottom>
-                Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for paragraphs.
-              </template>
-            </cdr-input>
-
-            <h3>Relationships</h3>
-            <div v-if="npcEditForm.relationshipsArray.length > 0">
-              <div
-                v-for="(relationship, relIndex) in npcEditForm.relationshipsArray"
-                :key="relIndex"
-                style="margin-bottom: 1.5rem; padding: 1.5rem; background: #f4f2ed; border-radius: 4px;"
-              >
-                <cdr-input v-model="relationship.name" label="Name" background="secondary"
-                  style="margin-bottom: 1rem;" />
-                <cdr-input v-model="relationship.description" label="Short Description" background="secondary"
-                  :rows="2" tag="textarea" style="margin-bottom: 1rem;" />
-                <cdr-button size="small" @click="deleteRelationship(relIndex)">Remove Relationship</cdr-button>
-              </div>
-            </div>
-            <div v-else>
-              <p style="font-style: italic; color: #666; margin-bottom: 1rem;">No relationships to edit. Generate
-                them in view mode first.</p>
-            </div>
-
-            <div class="button-group">
-              <cdr-button @click="saveEditNPC">Save Changes</cdr-button>
-              <cdr-button @click="cancelEditNPC" modifier="secondary">Cancel</cdr-button>
+            <div style="display: flex; gap: 0.5rem;">
+              <cdr-button @click="generateDetailedNPCDescription(index)">Generate Detailed Description</cdr-button>
+              <cdr-button @click="deleteNPC(index)" modifier="secondary" size="small">Delete</cdr-button>
             </div>
           </div>
+
+          <!-- View/Edit Mode - Has Detailed Description -->
+          <NPCCard
+            v-else-if="npc.read_aloud_description"
+            :npc="normalizeSettingNPC(npc)"
+            :origin="setting.setting_overview?.name || setting.place_name"
+            :is-editing="editingNPCIndex === index"
+            :show-relationship-generator="true"
+            :is-generating-relationship="loadingNewRelationship"
+            :has-statblock="false"
+            :editable="true"
+            :show-delete="true"
+            @start-edit="startEditingNPC(index)"
+            @save-edit="handleSaveEdit(index, $event)"
+            @cancel-edit="cancelEditNPC"
+            @delete="deleteNPC(index)"
+            @generate-relationship="handleGenerateRelationship(index, $event)"
+          />
         </div>
 
         <div v-if="loadingNPCIndex === index">
@@ -169,24 +72,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue';
+import { ref, reactive, watch, nextTick, computed, onMounted, onUnmounted } from 'vue';
 import {
   CdrButton,
   CdrInput,
   CdrAccordionGroup,
   CdrAccordion,
-  CdrTooltip,
-  CdrSkeleton,
-  CdrSkeletonBone,
-  IconXSm,
 } from '@rei/cedar';
 import NPCSkeleton from '@/components/skeletons/NPCSkeleton.vue';
+import NPCCard from '@/components/NPCCard.vue';
 import { generateGptResponse } from '@/util/open-ai.mjs';
 import {
   createNPCPrompt,
   createRelationshipAndTipsPrompt,
   generateSingleRelationshipPrompt,
 } from '../../prompts/index.mjs';
+import { saveNPCToStorage, settingNPCToCanonical, normalizeSettingNPC } from '@/util/npc-storage.mjs';
+import { useToast } from '@/composables/useToast.js';
 
 const props = defineProps({
   setting: {
@@ -201,21 +103,63 @@ const props = defineProps({
 
 const emit = defineEmits(['updated-setting']);
 
+const toast = useToast();
+
+// Reactive trigger for localStorage changes
+const storageVersion = ref(0);
+
+// -------------------------
+// Computed: Enrich NPCs with data from shared storage (by ID reference)
+// Falls back to nested data if not found in shared storage
+// -------------------------
+const enrichedNPCs = computed(() => {
+  // Depend on storageVersion to re-run when localStorage changes
+  storageVersion.value;
+
+  if (!props.setting?.npcs) return [];
+
+  const settingName = props.setting.setting_overview?.name
+    || props.setting.place_name
+    || 'Setting NPCs';
+  const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+  const sharedNPCs = stored[settingName] || [];
+
+  return props.setting.npcs.map(settingNPC => {
+    // If NPC has an ID, try to fetch from shared storage
+    if (settingNPC.npc_id) {
+      const sharedNPC = sharedNPCs.find(n =>
+        (n.npc_id === settingNPC.npc_id || n.id === settingNPC.npc_id)
+      );
+
+      if (sharedNPC) {
+        // Use shared storage data, but preserve setting-specific fields
+        return {
+          ...settingNPC, // Keep setting-specific data (open, faction, etc.)
+          name: sharedNPC.npcDescriptionPart1?.character_name || settingNPC.name,
+          description_of_position: sharedNPC.npcDescriptionPart1?.description_of_position,
+          current_location: sharedNPC.npcDescriptionPart1?.reason_for_being_there,
+          distinctive_features_or_mannerisms: sharedNPC.npcDescriptionPart1?.distinctive_feature_or_mannerism,
+          character_secret: sharedNPC.npcDescriptionPart1?.character_secret,
+          read_aloud_description: sharedNPC.npcDescriptionPart1?.read_aloud_description,
+          roleplaying_tips: sharedNPC.npcDescriptionPart1?.roleplaying_tips,
+          combined_details: sharedNPC.npcDescriptionPart1?.combined_details,
+          relationships: sharedNPC.npcDescriptionPart2?.relationships || {},
+          statblock_name: sharedNPC.statblock_name || settingNPC.statblock_name,
+          statblock_folder: sharedNPC.statblock_folder || settingNPC.statblock_folder,
+        };
+      }
+    }
+
+    // Fallback to nested data if not found in shared storage or no ID
+    return settingNPC;
+  });
+});
+
 // -------------------------
 // Local state
 // -------------------------
 const npcShortDescription = ref('');
 const editingNPCIndex = ref(null);
-const npcEditForm = ref({
-  name: '',
-  read_aloud_description: '',
-  combined_details: '',
-  relationshipsArray: [],
-});
-const newRelationship = reactive({
-  name: '',
-  description: '',
-});
 const loadingNewRelationship = ref(false);
 const loadingNPCIndex = ref(null);
 const loadingNewNPC = ref(false);
@@ -253,10 +197,38 @@ const singleRelationshipValidation = (jsonString) => {
 // -------------------------
 function getOverviewText(overviewObject) {
   if (!overviewObject) return '';
-  return Object.entries(overviewObject).map(([, value]) => {
-    if (Array.isArray(value)) return '';
-    return `${value}`;
-  }).join('\n');
+
+  // Build structured setting context with clear labels
+  const parts = [];
+
+  if (props.setting.place_name) {
+    parts.push(`SETTING NAME: ${props.setting.place_name}`);
+  }
+
+  if (overviewObject.description) {
+    parts.push(`\nDESCRIPTION: ${overviewObject.description}`);
+  }
+
+  if (overviewObject.history) {
+    parts.push(`\nHISTORY: ${overviewObject.history}`);
+  }
+
+  if (overviewObject.current_events) {
+    parts.push(`\nCURRENT EVENTS: ${overviewObject.current_events}`);
+  }
+
+  if (overviewObject.atmosphere) {
+    parts.push(`\nATMOSPHERE: ${overviewObject.atmosphere}`);
+  }
+
+  if (props.setting.factions && props.setting.factions.length > 0) {
+    const factionText = props.setting.factions
+      .map(f => `  - ${f.name}: ${f.goals || f.description || 'Active in the setting'}`)
+      .join('\n');
+    parts.push(`\nFACTIONS:\n${factionText}`);
+  }
+
+  return parts.join('');
 }
 
 function getFullNPCDescription(npc) {
@@ -264,41 +236,49 @@ function getFullNPCDescription(npc) {
   if (!isFullyGenerated) {
     return `${npc.name}: ${npc.description || 'A character in the setting'}`;
   }
-  let description = `${npc.read_aloud_description || ''} ${npc.description_of_position || ''} ${npc.current_location || ''} ${npc.distinctive_features_or_mannerisms || ''} ${npc.character_secret || ''}`.trim();
+
+  // Build structured description with clear labels
+  const parts = [];
+  parts.push(`NAME: ${npc.name || 'Unknown'}`);
+
+  if (npc.read_aloud_description) {
+    parts.push(`\nAPPEARANCE: ${npc.read_aloud_description}`);
+  }
+
+  if (npc.description_of_position) {
+    parts.push(`\nROLE: ${npc.description_of_position}`);
+  }
+
+  if (npc.current_location) {
+    parts.push(`\nCURRENT LOCATION: ${npc.current_location}`);
+  }
+
+  if (npc.distinctive_features_or_mannerisms) {
+    parts.push(`\nDISTINCTIVE TRAITS: ${npc.distinctive_features_or_mannerisms}`);
+  }
+
+  if (npc.character_secret) {
+    parts.push(`\nSECRET: ${npc.character_secret}`);
+  }
+
+  if (npc.roleplaying_tips) {
+    parts.push(`\nROLEPLAYING TIPS: ${npc.roleplaying_tips}`);
+  }
+
   if (npc.relationships && Object.keys(npc.relationships).length > 0) {
     const relationshipText = Object.entries(npc.relationships)
-      .map(([name, desc]) => `${name}: ${desc}`)
-      .join(' ');
-    description += `\n  Relationships:\n ${relationshipText}`;
+      .map(([name, desc]) => `  - ${name}: ${desc}`)
+      .join('\n');
+    parts.push(`\nEXISTING RELATIONSHIPS:\n${relationshipText}`);
   }
-  return description;
-}
 
-const combineNPCDetails = (npc) => {
-  if (!npc) return '';
-  const parts = [];
-  if (npc.description_of_position) parts.push(npc.description_of_position);
-  if (npc.current_location) parts.push(npc.current_location);
-  if (npc.distinctive_features_or_mannerisms) parts.push(npc.distinctive_features_or_mannerisms);
-  if (npc.character_secret) parts.push(npc.character_secret);
-  if (npc.roleplaying_tips) parts.push(npc.roleplaying_tips);
-  return parts.filter(Boolean).join('\n\n');
-};
+  return parts.join('');
+}
 
 // -------------------------
 // Edit NPC
 // -------------------------
 const startEditingNPC = (index) => {
-  const npc = props.setting.npcs[index];
-  const relationshipsArray = npc.relationships
-    ? Object.entries(npc.relationships).map(([name, description]) => ({ name, description }))
-    : [];
-  npcEditForm.value = {
-    name: npc.name || '',
-    read_aloud_description: npc.read_aloud_description || '',
-    combined_details: npc.combined_details || combineNPCDetails(npc),
-    relationshipsArray,
-  };
   editingNPCIndex.value = index;
 };
 
@@ -306,28 +286,57 @@ const cancelEditNPC = () => {
   editingNPCIndex.value = null;
 };
 
-const saveEditNPC = () => {
-  if (editingNPCIndex.value === null) return;
+const handleSaveEdit = (index, editedData) => {
+  const originalNPC = props.setting.npcs[index];
+  const settingName = props.setting.setting_overview?.name
+    || props.setting.place_name
+    || 'Setting NPCs';
 
-  const relationshipsObject = {};
-  npcEditForm.value.relationshipsArray.forEach(rel => {
-    if (rel.name && rel.description) {
-      relationshipsObject[rel.name] = rel.description;
+  // If renaming and no ID, look up existing NPC by original name to get its ID
+  let existingId = originalNPC.npc_id;
+  if (!existingId && originalNPC.name !== editedData.name && originalNPC.read_aloud_description) {
+    const stored = JSON.parse(
+      localStorage.getItem('npcGeneratorNPCs') || '{}'
+    );
+    if (stored[settingName]) {
+      const existingNPC = stored[settingName].find(n =>
+        n.npcDescriptionPart1?.character_name === originalNPC.name
+      );
+      if (existingNPC) {
+        existingId = existingNPC.npc_id || existingNPC.id;
+      }
     }
-  });
+  }
 
   const updatedNPCs = props.setting.npcs.map((npc, i) => {
-    if (i !== editingNPCIndex.value) return npc;
+    if (i !== index) return npc;
     return {
       ...npc,
-      name: npcEditForm.value.name,
-      read_aloud_description: npcEditForm.value.read_aloud_description,
-      combined_details: npcEditForm.value.combined_details,
-      relationships: relationshipsObject,
+      npc_id: existingId || npc.npc_id,
+      name: editedData.name,
+      read_aloud_description: editedData.read_aloud_description,
+      combined_details: editedData.combined_details,
+      relationships: editedData.relationships,
     };
   });
 
+  // Save to shared NPC storage first (this assigns/preserves ID)
+  const updatedNPC = updatedNPCs[index];
+  if (updatedNPC.read_aloud_description) {
+    const canonicalNPC = settingNPCToCanonical(updatedNPC, settingName);
+    saveNPCToStorage(canonicalNPC, settingName);
+
+    // Save the ID back to the setting NPC
+    if (canonicalNPC.npc_id && !updatedNPC.npc_id) {
+      updatedNPC.npc_id = canonicalNPC.npc_id;
+    }
+
+    toast.success(`${updatedNPC.name} updated in your NPCs`);
+  }
+
+  // Emit updated setting with ID included
   emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+
   editingNPCIndex.value = null;
 };
 
@@ -337,10 +346,6 @@ const saveEditNPC = () => {
 const deleteNPC = (index) => {
   const updatedNPCs = props.setting.npcs.filter((_, i) => i !== index);
   emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
-};
-
-const deleteRelationship = (relIndex) => {
-  npcEditForm.value.relationshipsArray.splice(relIndex, 1);
 };
 
 // -------------------------
@@ -355,7 +360,12 @@ const generateDetailedNPCDescription = async (passedIndex) => {
 
   if (npcIndex === null) {
     // Creating a new NPC
-    workingNPCs.push({ name: npcShortDescription.value || 'New NPC', description: npcShortDescription.value });
+    const npcId = `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    workingNPCs.push({
+      npc_id: npcId,
+      name: npcShortDescription.value || 'New NPC',
+      description: npcShortDescription.value
+    });
     npcIndex = workingNPCs.length - 1;
     loadingNewNPC.value = true;
   } else {
@@ -390,7 +400,31 @@ const generateDetailedNPCDescription = async (passedIndex) => {
       ...part2Data,
       open: true,
     };
-    workingNPCs[npcIndex].combined_details = combineNPCDetails(workingNPCs[npcIndex]);
+    // Combine details from individual fields into combined_details
+    const parts = [];
+    if (part1Data.description_of_position) parts.push(part1Data.description_of_position);
+    if (part1Data.current_location) parts.push(part1Data.current_location);
+    if (part1Data.distinctive_features_or_mannerisms) parts.push(part1Data.distinctive_features_or_mannerisms);
+    if (part1Data.character_secret) parts.push(part1Data.character_secret);
+    if (part2Data.roleplaying_tips) parts.push(part2Data.roleplaying_tips);
+    workingNPCs[npcIndex].combined_details = parts.filter(Boolean).join('\n\n');
+
+    // Save NPC to shared storage first if it has read_aloud_description (full NPC, not stub)
+    const updatedNPC = workingNPCs[npcIndex];
+    if (updatedNPC.read_aloud_description) {
+      const settingName = props.setting.setting_overview?.name
+        || props.setting.place_name
+        || 'Setting NPCs';
+      const canonicalNPC = settingNPCToCanonical(updatedNPC, settingName);
+      saveNPCToStorage(canonicalNPC, settingName);
+
+      // Save the ID back to the working NPC
+      if (canonicalNPC.npc_id && !updatedNPC.npc_id) {
+        updatedNPC.npc_id = canonicalNPC.npc_id;
+      }
+
+      toast.success(`${updatedNPC.name} saved to your NPCs`);
+    }
 
     npcShortDescription.value = '';
     emit('updated-setting', { ...props.setting, npcs: workingNPCs });
@@ -414,9 +448,8 @@ const generateDetailedNPCDescription = async (passedIndex) => {
 // -------------------------
 // Generate new relationship
 // -------------------------
-const generateNewRelationship = async (npcIndex) => {
-  if (!newRelationship.name || !newRelationship.description) {
-    alert('Please provide both a name and short description for the relationship');
+const handleGenerateRelationship = async (npcIndex, relationshipData) => {
+  if (!relationshipData.name || !relationshipData.description) {
     return;
   }
 
@@ -429,11 +462,11 @@ const generateNewRelationship = async (npcIndex) => {
     const prompt = generateSingleRelationshipPrompt(
       npcDescription,
       settingOverviewText,
-      newRelationship.name,
-      newRelationship.description,
+      relationshipData.name,
+      relationshipData.description,
     );
     const response = await generateGptResponse(prompt, singleRelationshipValidation);
-    const relationshipData = JSON.parse(response);
+    const generatedRelationship = JSON.parse(response);
 
     const updatedNPCs = props.setting.npcs.map((n, i) => {
       if (i !== npcIndex) return n;
@@ -441,13 +474,29 @@ const generateNewRelationship = async (npcIndex) => {
         ...n,
         relationships: {
           ...(n.relationships || {}),
-          [relationshipData.name]: relationshipData.relationship,
+          [generatedRelationship.name]: generatedRelationship.relationship,
         },
       };
     });
 
-    newRelationship.name = '';
-    newRelationship.description = '';
+    // Save to shared NPC storage first (this assigns/preserves ID)
+    const updatedNPC = updatedNPCs[npcIndex];
+    if (updatedNPC.read_aloud_description) {
+      const settingName = props.setting.setting_overview?.name
+        || props.setting.place_name
+        || 'Setting NPCs';
+      const canonicalNPC = settingNPCToCanonical(updatedNPC, settingName);
+      saveNPCToStorage(canonicalNPC, settingName);
+
+      // Save the ID back to the setting NPC
+      if (canonicalNPC.npc_id && !updatedNPC.npc_id) {
+        updatedNPC.npc_id = canonicalNPC.npc_id;
+      }
+
+      toast.success(`${updatedNPC.name} updated in your NPCs`);
+    }
+
+    // Emit updated setting with ID included
     emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
   } catch (error) {
     console.error('Error generating new relationship:', error);
@@ -462,43 +511,37 @@ watch(
   (newSetting, oldSetting) => {
     if (newSetting !== oldSetting) {
       editingNPCIndex.value = null;
+      storageVersion.value++;
     }
   },
 );
+
+// Listen for localStorage changes (e.g., edits from NPC Generator in different tab)
+const handleStorageChange = (event) => {
+  if (event.key === 'npcGeneratorNPCs' || event.key === null) {
+    storageVersion.value++;
+  }
+};
+
+onMounted(() => {
+  // Refresh on mount
+  storageVersion.value++;
+  window.addEventListener('storage', handleStorageChange);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange);
+});
 </script>
 
 <style scoped>
-.delete-button {
-  position: absolute;
-  top: 65px;
-  right: 15px;
-  z-index: 1;
-}
-
-.focus-text {
-  background-color: #f4f2ed;
-  color: #423b2f;
-  padding: 1rem 2rem;
-  font-style: italic;
-}
-
-.edit-form .edit-field {
+.npc-tab-note {
+  font-size: 14px;
+  color: #666;
   margin-bottom: 1.5rem;
-}
-
-.button-group {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-@media (max-width: 768px) {
-  .button-group {
-    flex-direction: column;
-  }
-
-  .button-group button {
-    width: 100%;
-  }
+  padding: 0.75rem 1rem;
+  background: #f5f5f5;
+  border-left: 3px solid #4a90e2;
+  border-radius: 3px;
 }
 </style>

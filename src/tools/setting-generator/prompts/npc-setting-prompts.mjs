@@ -123,33 +123,53 @@ export function createRelationshipAndTipsPrompt(npc_name, param) {
 
 export function generateSingleRelationshipPrompt(npcDescription, settingOverview, relationshipName, relationshipShortDescription) {
   return `
-Please create a relationship description for ${relationshipName} who is ${relationshipShortDescription}.
+You are creating a compelling NPC relationship for a tabletop RPG setting. This relationship must be SPECIFIC, DRAMATIC, and immediately usable at the game table.
 
-Here is the information about the NPC who needs this relationship:
+=== THE NPC WHO NEEDS THIS RELATIONSHIP ===
 ${npcDescription}
 
-Here is context about the setting:
+=== SETTING CONTEXT ===
 ${settingOverview}
 
-For the description, provide 2 sentences:
+=== THE RELATIONSHIP TARGET ===
+Name: ${relationshipName}
+Description: ${relationshipShortDescription}
 
-Sentence 1 should describe the nature of the relationship and describe how the relationship has changed or evolved or how they met. Describe a scene which occurred between the NPCs. Examples:
-- The relationship between Empress Cyndra Moonscale and Sir Garrick Stormwarden began when he pledged his sword to her cause during a rebellion in a remote province, cementing a bond built on trust and shared purpose.
-- npc_name_1 is a celebrated firedancer whose performances are sought by nobles of the highest echelons. npc_name_2 met her when trying to steal a brooch from npc_name_1's rival in the green room and despite her better judgement, she fell hopelessly in love with him.
+CRITICAL REQUIREMENTS:
+1. Make this relationship DRAMATIC and SPECIFIC - avoid generic descriptions
+2. Connect the relationship to the setting's themes, factions, or current events
+3. Include a CONCRETE EVENT that happened between them - not vague history
+4. The relationship should create roleplaying opportunities and potential conflicts
+5. Use the NPC's secret, role, or personality to inform the dynamic
 
-Sentence 2 should describe a recent event or development either the relationship or the person's life. Don't say that it's a 'meaningful event' but rather show it through details. Show don't tell:
-- Recently, Sir Garrick has been grappling with doubts about the integrity of some noble houses, seeking Cyndra's guidance as he navigates a path between loyalty to his oath and the growing unrest in the realm.
-- npc_name_1 recently proposed to npc_name_2, to which she replied "Perhaps" and the ambiguity is driving him mad.
+FORMAT (exactly 2 sentences):
 
-Don't use the following NPC names: Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde.
+SENTENCE 1: Describe HOW they met or how the relationship formed through a SPECIFIC EVENT. Include:
+- A concrete scene or moment (not "they've known each other for years")
+- The nature of their connection (ally, rival, complicated history, etc.)
+- A detail that makes it memorable and unique to this setting
 
-Temperature: 0.9
+SENTENCE 2: Describe a RECENT DEVELOPMENT that creates tension or opportunity:
+- Something that happened in the last few weeks/days
+- A change in their dynamic, a betrayal, a favor owed, new information revealed
+- Something that a DM can USE at the table to create drama
+- Show, don't tell - use specific details, not emotional adjectives
 
-Please format as a JSON object:
+EXAMPLES OF COMPELLING RELATIONSHIPS:
+✓ GOOD: "${relationshipName} discovered them taking bribes from the merchant's guild three nights ago, and rather than report it to the council, demanded a seat at their table and a cut of whatever scheme they're running—they've been avoiding each other in public ever since, but the debt remains."
 
+✓ GOOD: "They saved ${relationshipName}'s life during the assassination attempt at the winter gala, taking a poisoned blade meant for the ambassador, but ${relationshipName} saw them plant false evidence on the assassin's corpse afterward and now carries that terrible knowledge in silence."
+
+✗ BAD: "They have a complicated history together and sometimes argue about their different approaches to handling political matters."
+
+✗ BAD: "${relationshipName} is an old friend who they trust completely and rely on for emotional support during difficult times."
+
+FORBIDDEN NAMES (do not use): Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde, Morgana, Raven, Thorne
+
+Return ONLY valid JSON:
 {
   "name": "${relationshipName}",
-  "relationship": "Two sentence description following the format above"
+  "relationship": "Two sentences as specified above"
 }
 `;
 }
