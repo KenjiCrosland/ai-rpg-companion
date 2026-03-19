@@ -12,6 +12,7 @@
                             </template>
                             <ul class="npc-list">
                                 <li v-for="(npc, index) in folder" :key="index"
+                                    :id="`npc-${folderName}-${index}`"
                                     :class="{ 'active-tab': currentNPCIndex === index && activeFolder === folderName }">
                                     <button class="npc-button" @click="selectNPC(folderName, index)">
                                         {{ npc.npcDescriptionPart1?.character_name || 'Unnamed NPC' }}
@@ -110,46 +111,67 @@
             </div>
 
             <!-- NPC Content (shown when NPC is loaded or loading) -->
-            <div class="location-description"
+            <div id="npc-content-area" class="location-description"
                 v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
 
-                <div v-if="loadingPart1">
+                <div v-if="loadingPart1" class="npc-card">
                     <CdrSkeleton>
-                        <CdrSkeletonBone type="heading" style="width: 50%; height: 50px" />
-                        <p>
-                            <CdrSkeletonBone type="line" style="width:95%" />
-                            <CdrSkeletonBone type="line" style="width:90%" />
-                            <CdrSkeletonBone type="line" style="width:85%" />
-                            <CdrSkeletonBone type="line" style="width:95%" />
-                            <CdrSkeletonBone type="line" style="width:50%" />
-                        </p>
-                        <p>
-                            <CdrSkeletonBone type="line" style="width:95%" />
-                            <CdrSkeletonBone type="line" style="width:90%" />
-                            <CdrSkeletonBone type="line" style="width:85%" />
-                            <CdrSkeletonBone type="line" style="width:95%" />
-                            <CdrSkeletonBone type="line" style="width:75%" />
-                        </p>
-                        <p>
-                            <CdrSkeletonBone type="line" style="width:95%" />
-                            <CdrSkeletonBone type="line" style="width:90%" />
-                            <CdrSkeletonBone type="line" style="width:85%" />
-                            <CdrSkeletonBone type="line" style="width:95%" />
-                            <CdrSkeletonBone type="line" style="width:30%" />
-                        </p>
-                        <p>
-                            <CdrSkeletonBone type="line" style="width:95%" />
-                            <CdrSkeletonBone type="line" style="width:90%" />
-                            <CdrSkeletonBone type="line" style="width:85%" />
-                            <CdrSkeletonBone type="line" style="width:95%" />
-                            <CdrSkeletonBone type="line" style="width:60%" />
-                        </p>
+                        <div class="npc-card-header">
+                            <CdrSkeletonBone type="heading" style="width: 45%; height: 36px; margin-bottom: 0.25rem;" />
+                            <CdrSkeletonBone type="line" style="width: 30%; height: 12px;" />
+                        </div>
+                        <div class="npc-card-read-aloud">
+                            <CdrSkeletonBone type="line" style="width:95%; margin-bottom: 0.5rem;" />
+                            <CdrSkeletonBone type="line" style="width:88%;" />
+                        </div>
+                        <div class="npc-card-body">
+                            <CdrSkeletonBone type="line" style="width:95%; margin-bottom: 0.5rem;" />
+                            <CdrSkeletonBone type="line" style="width:90%; margin-bottom: 0.5rem;" />
+                            <CdrSkeletonBone type="line" style="width:85%; margin-bottom: 0.5rem;" />
+                            <CdrSkeletonBone type="line" style="width:92%; margin-bottom: 1rem;" />
+                            <CdrSkeletonBone type="line" style="width:88%; margin-bottom: 0.5rem;" />
+                            <CdrSkeletonBone type="line" style="width:93%; margin-bottom: 0.5rem;" />
+                            <CdrSkeletonBone type="line" style="width:87%; margin-bottom: 1rem;" />
+                            <CdrSkeletonBone type="line" style="width:91%; margin-bottom: 0.5rem;" />
+                            <CdrSkeletonBone type="line" style="width:86%; margin-bottom: 0.5rem;" />
+                            <CdrSkeletonBone type="line" style="width:60%;" />
+                        </div>
+
+                        <!-- SVG Flourish -->
+                        <svg viewBox="0 0 400 12" xmlns="http://www.w3.org/2000/svg" class="npc-flourish">
+                            <line x1="0" y1="6" x2="188" y2="6" stroke="#c9b99a" stroke-width="0.75" />
+                            <line x1="212" y1="6" x2="400" y2="6" stroke="#c9b99a" stroke-width="0.75" />
+                            <polygon points="200,1 206,6 200,11 194,6" fill="#7b2d26" />
+                        </svg>
+
+                        <!-- Relationships -->
+                        <div class="npc-card-relationships">
+                            <CdrSkeletonBone type="line" style="width: 25%; height: 13px; margin-bottom: 0.625rem;" />
+                            <div class="npc-relationship-card">
+                                <CdrSkeletonBone type="line" style="width: 40%; height: 13px; margin-bottom: 0.25rem;" />
+                                <CdrSkeletonBone type="line" style="width: 90%;" />
+                                <CdrSkeletonBone type="line" style="width: 75%;" />
+                            </div>
+                            <div class="npc-relationship-card">
+                                <CdrSkeletonBone type="line" style="width: 35%; height: 13px; margin-bottom: 0.25rem;" />
+                                <CdrSkeletonBone type="line" style="width: 85%;" />
+                                <CdrSkeletonBone type="line" style="width: 80%;" />
+                            </div>
+                            <div class="npc-relationship-card">
+                                <CdrSkeletonBone type="line" style="width: 38%; height: 13px; margin-bottom: 0.25rem;" />
+                                <CdrSkeletonBone type="line" style="width: 88%;" />
+                                <CdrSkeletonBone type="line" style="width: 70%;" />
+                            </div>
+                        </div>
                     </CdrSkeleton>
                 </div>
                 <!-- NPC Card (View/Edit Mode) -->
                 <NPCCard
                     v-if="npcDescriptionPart1 && !loadingPart1 && npcDescriptionPart2"
                     :npc="normalizeGeneratorNPC(currentNPC)"
+                    :origin="currentNPC?.typeOfPlace"
+                    :source-type="currentNPC?.sourceType"
+                    :npc-id="currentNPC?.npc_id || currentNPC?.id"
                     :is-editing="isEditingNPC"
                     :show-relationship-generator="true"
                     :is-generating-relationship="loadingNewRelationship"
@@ -157,6 +179,7 @@
                     :statblock-url="statblockGeneratorUrl"
                     :editable="true"
                     :show-delete="true"
+                    :show-npc-generator-link="false"
                     :show-origin-note="!!(currentNPC?.typeOfPlace && currentNPC.typeOfPlace !== 'Uncategorized')"
                     @start-edit="startEditingNPC"
                     @save-edit="handleSaveEdit($event)"
@@ -354,7 +377,7 @@ import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMar
 import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
-import { normalizeGeneratorNPC, migrateNPCIds } from '@/util/npc-storage.mjs';
+import { normalizeGeneratorNPC, migrateNPCIds, migrateSourceTypes } from '@/util/npc-storage.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
@@ -442,24 +465,30 @@ const showFolderMover = ref(false);
 const folderMoveTarget = ref('');
 const newFolderName = ref('');
 
-onMounted(() => {
+onMounted(async () => {
     loadNPCsFromLocalStorage();
 
     // Check for URL parameters to load specific NPC
     const urlParams = new URLSearchParams(window.location.search);
     const folder = urlParams.get('folder');
-    const name = urlParams.get('name');
+    const npcName = urlParams.get('npc_name');
 
-    if (folder && name) {
+    if (folder && npcName) {
         // Find the NPC in the specified folder
         const folderNPCs = npcs.value[folder];
         if (folderNPCs) {
             const npcIndex = folderNPCs.findIndex(npc =>
-                npc.npcDescriptionPart1?.character_name === name
+                npc.npcDescriptionPart1?.character_name === npcName
             );
             if (npcIndex !== -1) {
-                // NPC found - select it
+                // Open the folder accordion
+                openedFolders.value[folder] = true;
+
+                // Select the NPC
                 selectNPC(folder, npcIndex);
+
+                // Clean up URL params
+                window.history.replaceState({}, '', window.location.pathname);
             }
         }
     }
@@ -565,7 +594,16 @@ function loadNPCsFromLocalStorage() {
             const migratedCount = migrateNPCIds();
             if (migratedCount > 0) {
                 console.log(`Migrated ${migratedCount} NPCs to include unique IDs`);
-                // Reload NPCs after migration
+            }
+
+            // Migrate NPCs without sourceType
+            const sourceTypeMigratedCount = migrateSourceTypes();
+            if (sourceTypeMigratedCount > 0) {
+                console.log(`Migrated ${sourceTypeMigratedCount} NPCs to include sourceType`);
+            }
+
+            // Reload NPCs after migration (if either migration ran)
+            if (migratedCount > 0 || sourceTypeMigratedCount > 0) {
                 const updatedStored = localStorage.getItem('npcGeneratorNPCs');
                 if (updatedStored) {
                     npcs.value = JSON.parse(updatedStored);
@@ -1606,6 +1644,53 @@ div[class^="cdr-skeleton-bone"] {
         width: 20px;
         height: 20px;
     }
+}
+
+/* NPC Card Skeleton Styles */
+.npc-card {
+    background: #faf8f3;
+    border: 1.5px solid #c9b99a;
+    border-top: 3px solid #7b2d26;
+    border-radius: 2px;
+    font-family: Georgia, 'Times New Roman', serif;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.npc-card-header {
+    padding: 1.25rem 1.5rem 0.75rem;
+}
+
+.npc-card-read-aloud {
+    border-top: 1px solid #c9b99a;
+    border-bottom: 1px solid #c9b99a;
+    margin: 0 1.5rem;
+    padding: 1rem 0;
+}
+
+.npc-card-body {
+    padding: 0.75rem 1.5rem 1rem;
+    color: #3d3d3d;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.npc-flourish {
+    width: 60%;
+    height: 12px;
+    display: block;
+    margin: 1rem auto;
+}
+
+.npc-card-relationships {
+    padding: 0.75rem 1.5rem 1rem;
+}
+
+.npc-relationship-card {
+    background: #f4f0e8;
+    border-radius: 3px;
+    padding: 0.625rem 0.75rem;
+    margin-bottom: 0.75rem;
 }
 
 /* Responsive */

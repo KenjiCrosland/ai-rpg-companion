@@ -143,6 +143,7 @@ export function dungeonNPCToCanonical(npc, dungeonTitle) {
       relationships: npc.relationships || {},
     },
     typeOfPlace: dungeonTitle || 'Dungeon',
+    sourceType: 'dungeon',
   };
 }
 
@@ -176,6 +177,7 @@ export function settingNPCToCanonical(npc, settingName) {
       relationships: npc.relationships || {},
     },
     typeOfPlace: settingName || 'Setting',
+    sourceType: 'setting',
   };
 }
 
@@ -301,6 +303,68 @@ export function migrateNPCIds() {
         npc.npc_id = `npc_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
         migratedCount++;
         needsSave = true;
+      }
+    }
+  }
+
+  // Save back to localStorage if any NPCs were migrated
+  if (needsSave) {
+    localStorage.setItem('npcGeneratorNPCs', JSON.stringify(stored));
+  }
+
+  return migratedCount;
+}
+
+/**
+ * One-time migration: Add sourceType to all NPCs in localStorage that don't have one.
+ * Infers sourceType by checking if folder name matches a dungeon or setting.
+ * Should be called when NPC Generator loads.
+ *
+ * @returns {number} Number of NPCs migrated
+ */
+export function migrateSourceTypes() {
+  const stored = JSON.parse(
+    localStorage.getItem('npcGeneratorNPCs') || '{}'
+  );
+
+  // Get list of dungeon names
+  const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+  const dungeonNames = new Set(
+    dungeons.map(d => d.dungeonOverview?.name).filter(Boolean)
+  );
+
+  // Get list of setting names
+  const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+  const settingNames = new Set(
+    settings.map(s => s.place_name).filter(Boolean)
+  );
+
+  let migratedCount = 0;
+  let needsSave = false;
+
+  // Loop through all folders
+  for (const folderName in stored) {
+    const npcs = stored[folderName];
+    if (!Array.isArray(npcs)) continue;
+
+    // Loop through all NPCs in this folder
+    for (let i = 0; i < npcs.length; i++) {
+      const npc = npcs[i];
+
+      // Check if NPC already has sourceType
+      if (!npc.sourceType) {
+        // Infer sourceType from folder name
+        if (dungeonNames.has(folderName)) {
+          npc.sourceType = 'dungeon';
+          migratedCount++;
+          needsSave = true;
+        } else if (settingNames.has(folderName)) {
+          npc.sourceType = 'setting';
+          migratedCount++;
+          needsSave = true;
+        }
+        // If folder name doesn't match anything, don't add sourceType
+        // (these are NPCs created directly in NPC Generator)
       }
     }
   }

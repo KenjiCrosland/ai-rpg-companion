@@ -26,7 +26,8 @@
             <div v-if="npc.description_of_position || npc.combined_details">
               <NPCCard
                 :npc="normalizeDungeonNPC(npc)"
-                :origin="dungeonStore.currentDungeon.dungeonOverview?.title"
+                :origin="dungeonStore.currentDungeon.dungeonOverview?.name"
+                :source-type="'dungeon'"
                 :is-editing="editingNPCIndex === index"
                 :show-relationship-generator="true"
                 :is-generating-relationship="loadingNewRelationship && loadingRelationshipForIndex === index"

@@ -315,7 +315,37 @@ const defaultSetting = reactive({
 });
 const settings = ref([reactive({ ...defaultSetting })]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
-onMounted(loadSettingsFromLocalStorage);
+
+onMounted(async () => {
+  loadSettingsFromLocalStorage();
+
+  // Handle deep linking from NPC Generator
+  const urlParams = new URLSearchParams(window.location.search);
+  const sourceName = urlParams.get('source');
+  const tab = urlParams.get('tab');
+
+  if (sourceName && tab === 'npcs') {
+    // Find setting by name
+    const settingIndex = settings.value.findIndex(s =>
+      s.place_name === sourceName
+    );
+
+    if (settingIndex !== -1) {
+      // Select the setting
+      currentSettingIndex.value = settingIndex;
+
+      // Wait for the watcher to reset tab index (it runs on nextTick)
+      await nextTick();
+      await nextTick();
+
+      // NOW switch to NPCs tab (index 3) after the watcher has run
+      activeTabIndex.value = 3;
+
+      // Clean up URL params
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }
+});
 const settingsTree = computed(() => {
   let tree = [];
   let settingsMap = new Map();

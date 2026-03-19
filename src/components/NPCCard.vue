@@ -5,9 +5,12 @@
       <div>
         <h2 class="npc-card-name">{{ npc.name }}</h2>
         <p v-if="origin || npc.type_info" class="npc-card-subtitle">
-          <span v-if="origin">From {{ origin }}</span>
-          <span v-if="origin && npc.type_info"> · </span>
-          <span v-if="npc.type_info">{{ npc.type_info }}</span>
+          <span v-if="origin">
+            From <a v-if="sourceLink" :href="sourceLink" class="npc-source-link">{{ origin }}</a>
+            <template v-else>{{ origin }}</template>
+          </span>
+          <span v-if="origin && npc.type_info && npc.type_info !== origin"> · </span>
+          <span v-if="npc.type_info && npc.type_info !== origin">{{ npc.type_info }}</span>
         </p>
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -15,34 +18,36 @@
       </div>
     </div>
 
-    <!-- Origin note (for imported NPCs) -->
-    <div v-if="showOriginNote && origin && !isEditing" class="npc-card-origin-note">
-      <p>Created in {{ origin }}. Changes here won't update it there.</p>
-    </div>
+    <!-- Content wrapper for view mode (centers all content with shared left edge) -->
+    <div v-if="!isEditing" class="npc-card-content">
+      <!-- Read-aloud -->
+      <div v-if="npc.read_aloud_description" class="npc-card-read-aloud">
+        <p>{{ npc.read_aloud_description }}</p>
+      </div>
 
-    <!-- Read-aloud -->
-    <div v-if="npc.read_aloud_description && !isEditing" class="npc-card-read-aloud">
-      <p>{{ npc.read_aloud_description }}</p>
-    </div>
+      <!-- Body: description paragraphs (view mode) -->
+      <div v-if="npc.combined_details" class="npc-card-body">
+        <p v-for="(paragraph, index) in bodyParagraphs" :key="index">
+          {{ paragraph }}
+        </p>
+      </div>
 
-    <!-- Body: description paragraphs (view mode) -->
-    <div v-if="!isEditing && npc.combined_details" class="npc-card-body">
-      <p v-for="(paragraph, index) in bodyParagraphs" :key="index">
-        {{ paragraph }}
-      </p>
-      <svg v-if="npc.combined_details && !isEditing" viewBox="0 0 400 12" xmlns="http://www.w3.org/2000/svg"
+      <!-- Flourish divider -->
+      <svg v-if="hasRelationships && npc.combined_details" viewBox="0 0 400 12" xmlns="http://www.w3.org/2000/svg"
         class="npc-flourish">
         <line x1="0" y1="6" x2="188" y2="6" stroke="#c9b99a" stroke-width="0.75" />
         <line x1="212" y1="6" x2="400" y2="6" stroke="#c9b99a" stroke-width="0.75" />
         <polygon points="200,1 206,6 200,11 194,6" fill="#7b2d26" />
       </svg>
 
-      <p v-if="npc.secret">
-        <span class="npc-card-label">Secret:</span> {{ npc.secret }}
-      </p>
-      <p v-if="npc.roleplaying_tips">
-        <span class="npc-card-label">Roleplaying:</span> {{ npc.roleplaying_tips }}
-      </p>
+      <!-- Relationships (view mode) -->
+      <div v-if="hasRelationships" class="npc-card-relationships">
+        <p class="npc-card-relationships-title">Relationships</p>
+        <div v-for="(description, name) in npc.relationships" :key="name" class="npc-relationship-card">
+          <p class="npc-relationship-name">{{ name }}</p>
+          <p class="npc-relationship-description">{{ description }}</p>
+        </div>
+      </div>
     </div>
 
     <!-- Edit form (replaces body when editing) -->
@@ -118,23 +123,6 @@
       </div>
     </div>
 
-    <!-- Flourish divider -->
-    <svg v-if="hasRelationships && npc.combined_details && !isEditing" viewBox="0 0 400 12"
-      xmlns="http://www.w3.org/2000/svg" class="npc-flourish">
-      <line x1="0" y1="6" x2="188" y2="6" stroke="#c9b99a" stroke-width="0.75" />
-      <line x1="212" y1="6" x2="400" y2="6" stroke="#c9b99a" stroke-width="0.75" />
-      <polygon points="200,1 206,6 200,11 194,6" fill="#7b2d26" />
-    </svg>
-
-    <!-- Relationships (view mode) -->
-    <div v-if="hasRelationships && !isEditing" class="npc-card-relationships">
-      <p class="npc-card-relationships-title">Relationships</p>
-      <div v-for="(description, name) in npc.relationships" :key="name" class="npc-relationship-card">
-        <p class="npc-relationship-name">{{ name }}</p>
-        <p class="npc-relationship-description">{{ description }}</p>
-      </div>
-    </div>
-
     <!-- Footer -->
     <div class="npc-card-footer">
       <button v-if="showDelete" class="npc-footer-link npc-delete-text" @click="$emit('delete')">
@@ -161,6 +149,18 @@ const props = defineProps({
 
   // Where this NPC came from (shown in subtitle)
   origin: {
+    type: String,
+    default: null,
+  },
+
+  // Source type ('dungeon' or 'setting')
+  sourceType: {
+    type: String,
+    default: null,
+  },
+
+  // NPC ID for deep linking
+  npcId: {
     type: String,
     default: null,
   },
@@ -207,6 +207,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+
+  // Show "View in NPC Generator" link in footer
+  showNpcGeneratorLink: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits([
@@ -230,8 +236,32 @@ const hasRelationships = computed(() => {
   return props.npc.relationships && Object.keys(props.npc.relationships).length > 0;
 });
 
+// Computed: Link to source generator
+const sourceLink = computed(() => {
+  if (!props.sourceType || !props.origin) return null;
+
+  const paths = {
+    dungeon: 'kenjis-dungeon-generator-2-0',
+    setting: 'rpg-setting-generator-and-world-building-tool'
+  };
+
+  const path = paths[props.sourceType];
+  if (!path) return null;
+
+  const params = new URLSearchParams();
+  params.set('source', props.origin);
+  params.set('tab', 'npcs');
+
+  return `https://cros.land/${path}/?${params.toString()}`;
+});
+
 // Computed: NPC Generator URL with params
 const npcGeneratorLink = computed(() => {
+  // Don't show link if prop is set to false
+  if (!props.showNpcGeneratorLink) {
+    return null;
+  }
+
   // If URL explicitly provided, use it
   if (props.npcGeneratorUrl) {
     return props.npcGeneratorUrl;
@@ -239,10 +269,10 @@ const npcGeneratorLink = computed(() => {
 
   // Auto-generate URL if we have required fields (origin and name)
   if (props.origin && props.npc.name) {
-    const base = 'https://cros.land/npc-generator/';
+    const base = 'https://cros.land/rpg-ai-npc-generator/';
     const params = new URLSearchParams();
     params.set('folder', props.origin);
-    params.set('name', props.npc.name);
+    params.set('npc_name', props.npc.name);
     return `${base}?${params.toString()}`;
   }
 
@@ -361,11 +391,24 @@ function generateRelationship() {
   font-family: Georgia, 'Times New Roman', serif;
   overflow: hidden;
   margin-bottom: 1.5rem;
+  /* Priority 2: Hardcode font sizing to prevent WordPress theme overrides */
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+/* Content wrapper - centers all view mode content with shared left edge */
+.npc-card-content {
+  /* Priority 1: Limit line length for readability - applied to wrapper so all content shares one left edge */
+  max-width: 65ch;
+  margin-inline: auto;
 }
 
 /* Header */
 .npc-card-header {
-  padding: 1.25rem 1.5rem 0.75rem;
+  /* Priority 5: Increase horizontal padding */
+  padding: 2rem 3rem 2rem;
+  margin-bottom: 1.5rem;
+  background: rgba(0, 0, 0, 0.03);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -373,21 +416,32 @@ function generateRelationship() {
 
 .npc-card-name {
   margin: 0 0 0.125rem;
-  font-size: 24px;
+  font-size: 2.8rem;
   font-weight: 500;
   color: #7b2d26;
   letter-spacing: 0.02em;
 }
 
 .npc-card-subtitle {
-  margin: 0;
-  font-size: 12px;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
   color: #8a7e6b;
   font-style: italic;
 }
 
+.npc-source-link {
+  color: #7b2d26;
+  text-decoration: underline;
+  font-style: normal;
+}
+
+.npc-source-link:hover {
+  color: #5a1f1a;
+  text-decoration: none;
+}
+
 .npc-edit-button {
-  font-size: 12px;
+  font-size: 1.2rem;
   color: #7b2d26;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   padding: 3px 10px;
@@ -404,7 +458,8 @@ function generateRelationship() {
 
 /* Origin note */
 .npc-card-origin-note {
-  padding: 0.5rem 1.5rem;
+  /* Priority 5: Increase horizontal padding */
+  padding: 0.5rem 2rem;
   background: #f4f0e8;
   border-top: 1px solid #c9b99a;
   border-bottom: 1px solid #c9b99a;
@@ -413,7 +468,7 @@ function generateRelationship() {
 
 .npc-card-origin-note p {
   margin: 0;
-  font-size: 11px;
+  font-size: 1.1rem;
   color: #8a7e6b;
   font-style: italic;
 }
@@ -422,16 +477,19 @@ function generateRelationship() {
 .npc-card-read-aloud {
   border-top: 1px solid #c9b99a;
   border-bottom: 1px solid #c9b99a;
-  margin: 0 1.5rem;
-  padding: 1rem 0;
+  /* Priority 6: Add left border accent for quick scanning */
+  border-left: 3px solid #7b2d26;
+  /* Priority 5: Increase horizontal padding */
+  margin: 2rem 1.5rem 2rem;
+  padding: 1rem 0 1rem 1.25rem;
 }
 
 .npc-card-read-aloud p {
   margin: 0;
-  font-size: 14px;
+  font-size: 1.6rem;
   font-style: italic;
   color: #4a4236;
-  line-height: 1.65;
+  line-height: 3rem;
 }
 
 /* Flourish divider */
@@ -444,14 +502,20 @@ function generateRelationship() {
 
 /* Body */
 .npc-card-body {
-  padding: 0.75rem 1.5rem 1rem;
+  /* Priority 5: Increase horizontal padding */
+  padding: 0.75rem 2rem 2rem;
 }
 
 .npc-card-body p {
   margin: 0 0 0.75rem;
-  font-size: 13.5px;
+  font-size: 1.6rem;
   color: #4a4236;
-  line-height: 1.65;
+  line-height: 3rem;
+}
+
+/* Priority 3: Add more spacing between consecutive paragraphs */
+.npc-card-body p+p {
+  margin-top: 1em;
 }
 
 .npc-card-body p:last-child {
@@ -471,11 +535,13 @@ function generateRelationship() {
 .npc-card-label {
   color: #7b2d26;
   font-weight: 500;
+  font-size: 1.6rem;
 }
 
 /* Edit form */
 .npc-card-edit-form {
-  padding: 0.75rem 1.5rem 1.5rem;
+  /* Priority 5: Increase horizontal padding */
+  padding: 0.75rem 2rem 1.5rem;
   background: #faf8f3;
 }
 
@@ -485,7 +551,7 @@ function generateRelationship() {
 
 .relationships-edit-title {
   margin: 1.5rem 0 0.75rem;
-  font-size: 15px;
+  font-size: 1.6rem;
   font-weight: 500;
   color: #7b2d26;
 }
@@ -505,12 +571,13 @@ function generateRelationship() {
 
 /* Relationships */
 .npc-card-relationships {
-  padding: 0.75rem 1.5rem 1rem;
+  /* Priority 5: Increase horizontal padding */
+  padding: 0.75rem 2rem 3rem;
 }
 
 .npc-card-relationships-title {
   margin: 0 0 0.625rem;
-  font-size: 13px;
+  font-size: 1.4rem;
   font-weight: 500;
   color: #7b2d26;
   text-transform: uppercase;
@@ -524,34 +591,41 @@ function generateRelationship() {
   margin-bottom: 0.75rem;
 }
 
+/* Priority 4: Better spacing between relationship cards */
+.npc-relationship-card+.npc-relationship-card {
+  margin-top: 1.25rem;
+}
+
 .npc-relationship-card:last-child {
   margin-bottom: 0;
 }
 
 .npc-relationship-name {
   margin: 0 0 0.25rem;
-  font-size: 13px;
-  font-weight: 500;
-  color: #4a4236;
+  font-size: 1.6rem;
+  /* Priority 4: Bolder and red accent for visual hierarchy */
+  font-weight: 700;
+  color: #7b2d26;
 }
 
 .npc-relationship-description {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 1.6rem;
   color: #6b5f4f;
-  line-height: 1.55;
+  line-height: 3rem;
 }
 
 /* Relationship generator */
 .npc-card-relationship-generator {
   border-top: 1px solid #c9b99a;
-  padding: 1rem 1.5rem 1.25rem;
+  /* Priority 5: Increase horizontal padding */
+  padding: 1rem 2rem 1.25rem;
   background: #f9f6f0;
 }
 
 .relationship-gen-title {
   margin: 0 0 1rem;
-  font-size: 14px;
+  font-size: 1.6rem;
   font-weight: 500;
   color: #7b2d26;
 }
@@ -566,7 +640,8 @@ function generateRelationship() {
 /* Footer */
 .npc-card-footer {
   border-top: 1px solid #c9b99a;
-  padding: 0.625rem 1.5rem;
+  /* Priority 5: Increase horizontal padding */
+  padding: 0.625rem 2rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -574,7 +649,7 @@ function generateRelationship() {
 }
 
 .npc-footer-link {
-  font-size: 12px;
+  font-size: 1.2rem;
   color: #7b2d26;
   text-decoration: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
