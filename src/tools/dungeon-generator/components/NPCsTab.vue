@@ -1,24 +1,17 @@
 <template>
   <div>
     <h2>Notable NPCs</h2>
-    <cdr-accordion-group v-if="dungeonStore.currentDungeon && dungeonStore.currentDungeon.npcs">
-      <cdr-accordion v-for="(npc, index) in dungeonStore.currentDungeon.npcs" :key="index" :id="'npc-' + index"
-        :opened="npc.opened" @accordion-toggle="npc.opened = !npc.opened" level="2">
+    <p class="npc-tab-note">
+      NPCs with full descriptions are automatically saved to your <strong>NPC Generator</strong>.
+      Click "View in NPC Generator" at the bottom of any NPC card to see them there.
+      Statblocks are also saved and linked automatically.
+    </p>
+    <cdr-accordion-group v-if="enrichedNPCs.length > 0">
+      <cdr-accordion v-for="(npc, index) in enrichedNPCs" :key="npc.npc_id || index" :id="'npc-' + index"
+        :opened="npc.opened" @accordion-toggle="dungeonStore.currentDungeon.npcs[index].opened = !dungeonStore.currentDungeon.npcs[index].opened" level="2">
         <template #label>
           {{ npc.name }}
         </template>
-
-        <!-- The "Delete NPC" tooltip/button -->
-        <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
-          <template #trigger>
-            <cdr-button size="small" :icon-only="true" :with-background="true" @click="dungeonStore.deleteNPC(index)">
-              <template #icon>
-                <icon-x-sm />
-              </template>
-            </cdr-button>
-          </template>
-          <div>Delete NPC</div>
-        </cdr-tooltip>
 
         <!-- NPC content -->
         <div>
@@ -29,109 +22,40 @@
 
           <!-- NPC Details -->
           <div v-else>
-            <!-- View Mode -->
-            <div v-if="editingNPCIndex !== index">
+            <!-- Full NPC with NPCCard -->
+            <div v-if="npc.description_of_position || npc.combined_details">
+              <NPCCard
+                :npc="normalizeDungeonNPC(npc)"
+                :origin="dungeonStore.currentDungeon.dungeonOverview?.name"
+                :source-type="'dungeon'"
+                :is-editing="editingNPCIndex === index"
+                :show-relationship-generator="true"
+                :is-generating-relationship="loadingNewRelationship && loadingRelationshipForIndex === index"
+                :has-statblock="!!npc.statblock || !!npc.statblock_name"
+                :statblock-url="getStatblockGeneratorUrl(npc.statblock_name, npc.statblock_folder)"
+                :editable="true"
+                :show-delete="true"
+                @start-edit="startEditingNPC(index)"
+                @save-edit="handleSaveEdit(index, $event)"
+                @cancel-edit="cancelEditNPC"
+                @delete="dungeonStore.deleteNPC(index)"
+                @generate-relationship="handleGenerateRelationship(index, $event)"
+              />
+            </div>
+
+            <!-- Stub NPC (no full description yet) -->
+            <div v-else>
               <h2>{{ npc.name }}</h2>
-
-              <!-- Full generated details if we have them -->
-              <div v-if="npc.description_of_position || npc.combined_details">
-                <div class="read-aloud-box">
-                  <p>{{ npc.read_aloud_description }}</p>
-                </div>
-
-                <!-- Use combined_details if available, otherwise show individual fields -->
-                <div v-if="npc.combined_details" style="margin-top: 1.5rem;">
-                  <p v-for="(paragraph, pIndex) in npc.combined_details.split('\n\n')" :key="pIndex">
-                    {{ paragraph }}
-                  </p>
-                </div>
-                <div v-else>
-                  <p>{{ npc.description_of_position }}</p>
-                  <p>{{ npc.why_in_dungeon }}</p>
-                  <p>{{ npc.distinctive_features_or_mannerisms }}</p>
-                  <p>{{ npc.character_secret }}</p>
-                  <p>{{ npc.roleplaying_tips }}</p>
-                </div>
-
-                <h3>Relationships</h3>
-                <div v-if="npc.relationships && Object.keys(npc.relationships).length > 0">
-                  <div v-for="(relationship, relatedNpcName) in npc.relationships" :key="relatedNpcName"
-                    style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
-                    <p style="margin: 0;">
-                      <strong>{{ relatedNpcName }}:</strong> {{ relationship }}
-                    </p>
-                  </div>
-                </div>
-                <div v-else>
-                  <p style="font-style: italic; color: #666;">No relationships generated.</p>
-                </div>
-
-                <!-- Edit NPC Button -->
-                <div class="button-group" style="margin-top: 2rem;">
-                  <cdr-button @click="startEditingNPC(index)" modifier="secondary">Edit NPC</cdr-button>
-                </div>
-              </div>
-
-              <!-- If no full description yet, show short desc + "Generate Full Description" button -->
-              <div v-else>
-                <p>{{ npc.short_description }}</p>
+              <p>{{ npc.short_description }}</p>
+              <div style="display: flex; gap: 0.5rem;">
                 <cdr-button @click="dungeonStore.generateDungeonNPC(index)"
                   :disabled="dungeonStore.currentlyLoadingNPCs[index]">
                   Generate Full Description
                 </cdr-button>
+                <cdr-button @click="dungeonStore.deleteNPC(index)" modifier="secondary" size="small">
+                  Delete
+                </cdr-button>
               </div>
-            </div>
-
-            <!-- Edit Mode -->
-            <div v-else class="edit-form">
-              <h2>Edit NPC</h2>
-
-              <cdr-input v-model="npcEditForm.name" label="NPC Name" background="secondary" class="edit-field" />
-
-              <cdr-input v-model="npcEditForm.read_aloud_description" label="Read-Aloud Description"
-                background="secondary" :rows="4" tag="textarea" class="edit-field">
-                <template #helper-text-bottom>
-                  The initial description when the NPC is first encountered
-                </template>
-              </cdr-input>
-
-              <cdr-input v-model="npcEditForm.combined_details" label="NPC Details" background="secondary" :rows="10"
-                tag="textarea" class="edit-field">
-                <template #helper-text-bottom>
-                  Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for
-                  paragraphs.
-                </template>
-              </cdr-input>
-
-              <h3>Relationships</h3>
-              <div v-if="npcEditForm.relationshipsArray.length > 0">
-                <div v-for="(relationship, relIndex) in npcEditForm.relationshipsArray" :key="relIndex"
-                  style="margin-bottom: 1.5rem; padding: 1.5rem; background: #f4f2ed; border-radius: 4px;">
-                  <cdr-input v-model="relationship.name" label="Name" background="secondary"
-                    style="margin-bottom: 1rem;" />
-                  <cdr-input v-model="relationship.description" label="Relationship Description" background="secondary"
-                    :rows="2" tag="textarea" style="margin-bottom: 1rem;" />
-                  <cdr-button size="small" @click="deleteRelationship(relIndex)" modifier="secondary">
-                    Remove Relationship
-                  </cdr-button>
-                </div>
-              </div>
-              <div v-else>
-                <p style="font-style: italic; color: #666; margin-bottom: 1rem;">
-                  No relationships to edit. Add one below or generate them in view mode first.
-                </p>
-              </div>
-
-              <cdr-button size="small" @click="addRelationship" modifier="secondary" style="margin-bottom: 1.5rem;">
-                Add Relationship
-              </cdr-button>
-
-              <div class="button-group">
-                <cdr-button @click="saveEditNPC">Save Changes</cdr-button>
-                <cdr-button @click="cancelEditNPC" modifier="secondary">Cancel</cdr-button>
-              </div>
-
-              <hr style="margin: 2rem 0;">
             </div>
 
             <!-- NPC Statblock Section -->
@@ -144,10 +68,28 @@
                 dungeonStore.npcStatblockLoadingStates[index]?.part1 ||
                 dungeonStore.npcStatblockLoadingStates[index]?.part2
               " style="margin-top: 1rem;">
-                <Statblock :monster="npc.statblock" :premium="premium"
+                <Statblock :monster="npc.statblock" :premium="premium" :readonly="true"
                   :loadingPart1="dungeonStore.npcStatblockLoadingStates[index]?.part1 || false"
                   :loadingPart2="dungeonStore.npcStatblockLoadingStates[index]?.part2 || false"
                   @update-monster="updateNpcStatblock(index, $event)" />
+
+                <!-- Statblock Saved Message -->
+                <div v-if="npc.statblock && npc.statblock_name" class="statblock-saved-message">
+                  <p>
+                    Edit this statblock in the
+                    <a :href="getStatblockGeneratorUrl(npc.statblock_name, npc.statblock_folder)" target="_blank">Statblock Generator</a>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Statblock Not Found Warning -->
+              <div v-if="npc.statblock_name && !npc.statblock && !dungeonStore.npcStatblockLoadingStates[index]?.part1 && !dungeonStore.npcStatblockLoadingStates[index]?.part2" class="statblock-not-found-message">
+                <p><strong>Statblock not found</strong></p>
+                <p>The statblock "{{ npc.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
+                <div class="button-group">
+                  <cdr-button @click="generateNpcStatblock(index, premium)" size="small">Regenerate Statblock</cdr-button>
+                  <cdr-button @click="clearNpcStatblockReference(index)" modifier="secondary" size="small">Clear Reference</cdr-button>
+                </div>
               </div>
 
               <!-- Statblock Limit Message -->
@@ -216,25 +158,88 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onBeforeMount, watch } from 'vue';
+import { ref, reactive, computed, onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
 import Statblock from '@/components/Statblock.vue';
+import NPCCard from '@/components/NPCCard.vue';
+import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC } from '@/util/npc-storage.mjs';
+import { getStatblockFromStorage } from '@/util/statblock-storage.mjs';
+import { useToast } from '@/composables/useToast.js';
+import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateSingleRelationshipPrompt, validateSingleRelationshipResponse } from '../prompts/dungeon-npcs.mjs';
 import {
   CdrFormGroup,
   CdrInput,
   CdrButton,
-  CdrTooltip,
   CdrAccordionGroup,
   CdrAccordion,
-  IconXSm,
   CdrSelect,
   CdrCheckbox,
 } from '@rei/cedar';
 import crList from '../data/cr-list.json';
 const props = defineProps({ premium: { type: Boolean, default: false } });
 const dungeonStore = useDungeonStore();
+const toast = useToast();
 const modelError = ref(null);
+
+// Reactive trigger for localStorage changes
+const storageVersion = ref(0);
+
+// Computed property: Enrich NPCs with data from shared storage (by ID reference)
+// Falls back to nested data if not found in shared storage
+const enrichedNPCs = computed(() => {
+  // Depend on storageVersion to re-run when localStorage changes
+  storageVersion.value;
+
+  if (!dungeonStore.currentDungeon?.npcs) return [];
+
+  const dungeonTitle = dungeonStore.currentDungeon.dungeonOverview?.name || 'Dungeon NPCs';
+  const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+  const sharedNPCs = stored[dungeonTitle] || [];
+
+  return dungeonStore.currentDungeon.npcs.map(dungeonNPC => {
+    // If NPC has an ID, try to fetch from shared storage
+    if (dungeonNPC.npc_id) {
+      const sharedNPC = sharedNPCs.find(n =>
+        (n.npc_id === dungeonNPC.npc_id || n.id === dungeonNPC.npc_id)
+      );
+
+      if (sharedNPC) {
+        // Use shared storage data, but preserve dungeon-specific fields
+        const enrichedNPC = {
+          ...dungeonNPC, // Keep dungeon-specific data (opened, etc.)
+          name: sharedNPC.npcDescriptionPart1?.character_name || dungeonNPC.name,
+          description_of_position: sharedNPC.npcDescriptionPart1?.description_of_position,
+          why_in_dungeon: sharedNPC.npcDescriptionPart1?.reason_for_being_there,
+          distinctive_features_or_mannerisms: sharedNPC.npcDescriptionPart1?.distinctive_feature_or_mannerism,
+          character_secret: sharedNPC.npcDescriptionPart1?.character_secret,
+          read_aloud_description: sharedNPC.npcDescriptionPart1?.read_aloud_description,
+          roleplaying_tips: sharedNPC.npcDescriptionPart1?.roleplaying_tips,
+          combined_details: sharedNPC.npcDescriptionPart1?.combined_details,
+          relationships: sharedNPC.npcDescriptionPart2?.relationships || {},
+          statblock_name: sharedNPC.statblock_name || dungeonNPC.statblock_name,
+          statblock_folder: sharedNPC.statblock_folder || dungeonNPC.statblock_folder,
+        };
+
+        // Resolve statblock from storage if reference exists
+        if (enrichedNPC.statblock_name) {
+          enrichedNPC.statblock = getStatblockFromStorage(
+            enrichedNPC.statblock_name,
+            enrichedNPC.statblock_folder
+          );
+        } else {
+          enrichedNPC.statblock = null;
+        }
+
+        return enrichedNPC;
+      }
+    }
+
+    // Fallback to nested data if not found in shared storage or no ID
+    return dungeonNPC;
+  });
+});
 
 // Patreon OAuth URL
 const patreonLoginUrl = computed(() => {
@@ -242,17 +247,25 @@ const patreonLoginUrl = computed(() => {
   return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
 
+// Statblock Generator URL with query params
+function getStatblockGeneratorUrl(monsterName, folderName) {
+  const base = 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/';
+  const params = new URLSearchParams();
+  if (monsterName) params.set('monster', monsterName);
+  if (folderName) params.set('folder', folderName);
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
 // The CR dropdown data
 const crOptions = crList.fullArray;
 
 // Edit mode state
 const editingNPCIndex = ref(null);
-const npcEditForm = ref({
-  name: '',
-  read_aloud_description: '',
-  combined_details: '',
-  relationshipsArray: []
-});
+
+// Relationship generation state
+const loadingNewRelationship = ref(false);
+const loadingRelationshipForIndex = ref(null);
 
 // We'll keep an object that holds per-NPC data for statblock generation
 // so each NPC can have different CR / isSpellcaster etc.
@@ -292,6 +305,42 @@ watch(
   },
   { deep: true }
 );
+
+// Watch for dungeon changes to refresh NPC data from shared storage
+watch(
+  () => dungeonStore.currentDungeonId,
+  () => {
+    storageVersion.value++;
+  }
+);
+
+// Watch for tab changes - refresh when NPCs tab is viewed
+watch(
+  () => dungeonStore.activeTabIndex,
+  (newTab) => {
+    // NPCs tab is index 2
+    if (newTab === 2) {
+      storageVersion.value++;
+    }
+  }
+);
+
+// Listen for localStorage changes (e.g., edits from NPC Generator in different tab)
+const handleStorageChange = (event) => {
+  if (event.key === 'npcGeneratorNPCs' || event.key === null) {
+    storageVersion.value++;
+  }
+};
+
+onMounted(() => {
+  // Refresh on mount
+  storageVersion.value++;
+  window.addEventListener('storage', handleStorageChange);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange);
+});
 
 // Whenever the NPC list changes, make sure our form data is in sync
 //ensureNpcStatblockData();
@@ -335,55 +384,8 @@ async function generateNpcStatblock(index, premium) {
   });
 }
 
-// Helper function to combine NPC detail fields
-function combineNPCDetails(npc) {
-  if (!npc) return '';
-
-  const parts = [];
-
-  if (npc.description_of_position) {
-    parts.push(npc.description_of_position);
-  }
-
-  if (npc.why_in_dungeon) {
-    parts.push(npc.why_in_dungeon);
-  }
-
-  if (npc.distinctive_features_or_mannerisms) {
-    parts.push(npc.distinctive_features_or_mannerisms);
-  }
-
-  if (npc.character_secret) {
-    parts.push(npc.character_secret);
-  }
-
-  if (npc.roleplaying_tips) {
-    parts.push(npc.roleplaying_tips);
-  }
-
-  return parts.filter(Boolean).join('\n\n');
-}
-
 // Start editing NPC
 function startEditingNPC(index) {
-  const npc = dungeonStore.currentDungeon.npcs[index];
-  if (!npc) return;
-
-  // Convert relationships object to array
-  const relationshipsArray = [];
-  if (npc.relationships) {
-    Object.entries(npc.relationships).forEach(([name, description]) => {
-      relationshipsArray.push({ name, description });
-    });
-  }
-
-  npcEditForm.value = {
-    name: npc.name || '',
-    read_aloud_description: npc.read_aloud_description || '',
-    combined_details: combineNPCDetails(npc),
-    relationshipsArray: relationshipsArray
-  };
-
   editingNPCIndex.value = index;
 }
 
@@ -392,54 +394,151 @@ function cancelEditNPC() {
   editingNPCIndex.value = null;
 }
 
-// Save edited NPC
-function saveEditNPC() {
-  if (editingNPCIndex.value === null) return;
-
-  const npc = dungeonStore.currentDungeon.npcs[editingNPCIndex.value];
+// Handle save edit from NPCCard
+function handleSaveEdit(index, editedData) {
+  const npc = dungeonStore.currentDungeon.npcs[index];
   if (!npc) return;
 
-  // Update NPC fields
-  npc.name = npcEditForm.value.name;
-  npc.read_aloud_description = npcEditForm.value.read_aloud_description;
+  const originalName = npc.name;
+  const dungeonTitle = dungeonStore.currentDungeon.dungeonOverview?.name || 'Dungeon NPCs';
 
-  // Store combined details
-  npc.combined_details = npcEditForm.value.combined_details;
-
-  // Convert relationships array back to object
-  const relationshipsObject = {};
-  npcEditForm.value.relationshipsArray.forEach(rel => {
-    if (rel.name && rel.description) {
-      relationshipsObject[rel.name] = rel.description;
+  // If renaming and no ID, look up existing NPC by original name to get its ID
+  if (!npc.npc_id && originalName !== editedData.name && npc.read_aloud_description) {
+    const stored = JSON.parse(
+      localStorage.getItem('npcGeneratorNPCs') || '{}'
+    );
+    if (stored[dungeonTitle]) {
+      const existingNPC = stored[dungeonTitle].find(n =>
+        n.npcDescriptionPart1?.character_name === originalName
+      );
+      if (existingNPC) {
+        npc.npc_id = existingNPC.npc_id || existingNPC.id;
+      }
     }
-  });
-  npc.relationships = relationshipsObject;
+  }
 
-  // Save to localStorage
+  // Update NPC with edited data
+  npc.name = editedData.name;
+  npc.read_aloud_description = editedData.read_aloud_description;
+  npc.combined_details = editedData.combined_details;
+  npc.relationships = editedData.relationships;
+
+  // Save to shared NPC storage first (this assigns/preserves ID)
+  if (npc.read_aloud_description) {
+    const canonicalNPC = dungeonNPCToCanonical(npc, dungeonTitle);
+    saveNPCToStorage(canonicalNPC, dungeonTitle);
+
+    // Sync the ID back to the dungeon NPC
+    if (canonicalNPC.npc_id && canonicalNPC.npc_id !== npc.npc_id) {
+      npc.npc_id = canonicalNPC.npc_id;
+      dungeonStore.currentDungeon.npcs[index].npc_id = canonicalNPC.npc_id;
+    }
+
+    toast.success(`${npc.name} updated in your NPCs`);
+  }
+
+  // Save to dungeons localStorage after ID sync
   dungeonStore.saveDungeons();
 
   editingNPCIndex.value = null;
 }
 
-// Delete relationship
-function deleteRelationship(relationshipIndex) {
-  npcEditForm.value.relationshipsArray.splice(relationshipIndex, 1);
+// Handle relationship generation from NPCCard
+async function handleGenerateRelationship(npcIndex, relationshipData) {
+  const npc = dungeonStore.currentDungeon.npcs[npcIndex];
+  if (!npc) return;
+
+  // Build NPC description for context with proper structure
+  const npcDescription = `
+NAME: ${npc.name}
+
+APPEARANCE: ${npc.read_aloud_description || 'Not specified'}
+
+ROLE: ${npc.description_of_position || 'Unknown'}
+
+REASON IN DUNGEON: ${npc.why_in_dungeon || 'Unknown'}
+
+DISTINCTIVE TRAITS: ${npc.distinctive_features_or_mannerisms || 'None noted'}
+
+SECRET: ${npc.character_secret || 'None'}
+
+ROLEPLAYING TIPS: ${npc.roleplaying_tips || 'None'}
+`.trim();
+
+  // Get dungeon overview for context with structure
+  const overview = dungeonStore.currentDungeon.dungeonOverview;
+  const dungeonOverview = overview ? `
+DUNGEON NAME: ${overview.name || 'Unknown'}
+
+THEME: ${overview.theme || 'Unknown'}
+
+HISTORY: ${overview.history || 'Unknown'}
+
+CURRENT STATE: ${overview.current_state || 'Unknown'}
+
+FACTIONS: ${overview.factions ? overview.factions.map(f => `${f.name}: ${f.description}`).join(', ') : 'None'}
+
+BOSS: ${overview.boss?.name || 'Unknown'} - ${overview.boss?.description || ''}
+`.trim() : '';
+
+  try {
+    loadingNewRelationship.value = true;
+    loadingRelationshipForIndex.value = npcIndex;
+
+    const prompt = generateSingleRelationshipPrompt(
+      npcDescription,
+      dungeonOverview,
+      relationshipData.name,
+      relationshipData.description
+    );
+
+    const response = await generateGptResponse(prompt, validateSingleRelationshipResponse);
+    const generatedRelationship = JSON.parse(response);
+
+    // Add relationship to NPC
+    if (!npc.relationships) {
+      npc.relationships = {};
+    }
+    npc.relationships[generatedRelationship.name] = generatedRelationship.relationship;
+
+    // Save to shared NPC storage first (this assigns/preserves ID)
+    if (npc.read_aloud_description) {
+      const dungeonTitle = dungeonStore.currentDungeon.dungeonOverview?.name || 'Dungeon NPCs';
+      const canonicalNPC = dungeonNPCToCanonical(npc, dungeonTitle);
+      saveNPCToStorage(canonicalNPC, dungeonTitle);
+
+      // Sync the ID back to the dungeon NPC
+      if (canonicalNPC.npc_id && canonicalNPC.npc_id !== npc.npc_id) {
+        npc.npc_id = canonicalNPC.npc_id;
+        dungeonStore.currentDungeon.npcs[npcIndex].npc_id = canonicalNPC.npc_id;
+      }
+
+      toast.success(`${npc.name} updated in your NPCs`);
+    }
+
+    // Save to dungeons localStorage after ID sync
+    dungeonStore.saveDungeons();
+  } catch (error) {
+    console.error('Error generating new relationship:', error);
+    alert('Failed to generate relationship. Please try again.');
+  } finally {
+    loadingNewRelationship.value = false;
+    loadingRelationshipForIndex.value = null;
+  }
 }
 
-// Add relationship
-function addRelationship() {
-  npcEditForm.value.relationshipsArray.push({ name: '', description: '' });
+// Clear NPC statblock reference
+function clearNpcStatblockReference(index) {
+  const npc = dungeonStore.currentDungeon.npcs[index];
+  if (!npc) return;
+  delete npc.statblock_name;
+  delete npc.statblock_folder;
+  npc.statblock = null;
+  dungeonStore.saveDungeons();
 }
 </script>
 
 <style scoped>
-.delete-button {
-  position: absolute;
-  top: 65px;
-  right: 15px;
-  z-index: 1;
-}
-
 .read-aloud-box {
   background-color: #fafaf6;
   padding: 1rem 2rem;
@@ -534,5 +633,63 @@ function addRelationship() {
 
 .statblock-limit-message .patreon-universal-button .patreon-responsive-button:active {
   transform: translateY(0);
+}
+
+.statblock-saved-message {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #f0fdf4;
+  border: 1px solid #22c55e;
+  border-radius: 6px;
+}
+
+.statblock-saved-message p {
+  margin: 0;
+  color: #14532d;
+  font-size: 1.6rem;
+}
+
+.statblock-saved-message a {
+  color: #16a34a;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.statblock-saved-message a:hover {
+  color: #22c55e;
+}
+
+.npc-tab-note {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: #f5f5f5;
+  border-left: 3px solid #4a90e2;
+  border-radius: 3px;
+}
+
+.statblock-not-found-message {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+}
+
+.statblock-not-found-message p {
+  margin: 0 0 1rem 0;
+  color: #7f1d1d;
+  font-size: 1.6rem;
+}
+
+.statblock-not-found-message p strong {
+  color: #991b1b;
+  font-size: 1.8rem;
+}
+
+.statblock-not-found-message .button-group {
+  margin-top: 1rem;
+  margin-bottom: 0;
 }
 </style>

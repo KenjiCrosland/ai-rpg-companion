@@ -136,7 +136,8 @@ export async function generateDungeonOverview() {
     };
 
     if (overview.npc_list) {
-      newDungeon.npcs = overview.npc_list.map((npc) => ({
+      newDungeon.npcs = overview.npc_list.map((npc, index) => ({
+        npc_id: `npc_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
         name: npc.name,
         short_description: npc.description,
         opened: false,

@@ -96,3 +96,67 @@ export function validateDungeonNPCRelationshipsResponse(jsonString) {
     return false;
   }
 }
+
+export function generateSingleRelationshipPrompt(npcDescription, dungeonOverview, relationshipName, relationshipShortDescription) {
+  return `
+You are creating a compelling NPC relationship for a tabletop RPG dungeon. This relationship must be SPECIFIC, DRAMATIC, and immediately usable at the game table.
+
+=== THE NPC WHO NEEDS THIS RELATIONSHIP ===
+${npcDescription}
+
+=== DUNGEON CONTEXT ===
+${dungeonOverview}
+
+=== THE RELATIONSHIP TARGET ===
+Name: ${relationshipName}
+Description: ${relationshipShortDescription}
+
+CRITICAL REQUIREMENTS:
+1. Make this relationship DRAMATIC and SPECIFIC - avoid generic descriptions
+2. Connect the relationship to the dungeon's themes, factions, or current events
+3. Include a CONCRETE EVENT that happened between them - not vague history
+4. The relationship should create roleplaying opportunities and potential conflicts
+5. Use the NPC's secret, role, or personality to inform the dynamic
+
+FORMAT (exactly 2 sentences):
+
+SENTENCE 1: Describe HOW they met or how the relationship formed through a SPECIFIC EVENT. Include:
+- A concrete scene or moment (not "they've known each other for years")
+- The nature of their connection (ally, rival, complicated history, etc.)
+- A detail that makes it memorable and unique to this dungeon
+
+SENTENCE 2: Describe a RECENT DEVELOPMENT that creates tension or opportunity:
+- Something that happened in the last few weeks/days
+- A change in their dynamic, a betrayal, a favor owed, new information revealed
+- Something that a DM can USE at the table to create drama
+- Show, don't tell - use specific details, not emotional adjectives
+
+EXAMPLES OF COMPELLING RELATIONSHIPS:
+✓ GOOD: "${relationshipName} discovered them stealing rations from the supply cache three nights ago, and rather than sound the alarm, demanded half the haul and a cut of whatever they're planning—the dwarf's been avoiding them ever since, but the debt remains."
+
+✓ GOOD: "They saved ${relationshipName}'s life during the cave-in that sealed the eastern passage, taking a blade meant for the merchant, but ${relationshipName} saw them plant evidence on the foreman's corpse afterward and now carries that terrible knowledge in silence."
+
+✗ BAD: "They have a complicated history together and sometimes argue about their different approaches to handling dungeon politics."
+
+✗ BAD: "${relationshipName} is an old friend who they trust completely and rely on for emotional support during difficult times."
+
+FORBIDDEN NAMES (do not use): Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde, Morgana, Raven, Thorne
+
+Return ONLY valid JSON:
+{
+  "name": "${relationshipName}",
+  "relationship": "Two sentences as specified above"
+}
+`;
+}
+
+export function validateSingleRelationshipResponse(jsonString) {
+  try {
+    const data = JSON.parse(jsonString);
+    const requiredKeys = ['name', 'relationship'];
+    return requiredKeys.every(key => key in data);
+  } catch (e) {
+    console.error('Invalid JSON:', e);
+    return false;
+  }
+}

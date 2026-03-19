@@ -222,6 +222,29 @@ function onTabChanged(index) {
 
 onMounted(() => {
   dungeonStore.loadDungeons();
+
+  // Handle deep linking from NPC Generator
+  const urlParams = new URLSearchParams(window.location.search);
+  const sourceName = urlParams.get('source');
+  const tab = urlParams.get('tab');
+
+  if (sourceName && tab === 'npcs') {
+    // Find dungeon by name
+    const dungeon = dungeonStore.dungeons.find(d =>
+      d.dungeonOverview?.name === sourceName
+    );
+
+    if (dungeon) {
+      // Select the dungeon
+      dungeonStore.selectDungeon(dungeon.id);
+
+      // Switch to NPCs tab (index 2)
+      dungeonStore.activeTabIndex = 2;
+
+      // Clean up URL params
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }
 });
 </script>
 

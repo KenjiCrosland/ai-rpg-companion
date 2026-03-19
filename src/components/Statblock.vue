@@ -151,7 +151,7 @@
                 </div>
             </ul>
 
-            <div class="edit-save-buttons">
+            <div class="edit-save-buttons" v-if="!readonly">
                 <cdr-button size="small" modifier="secondary" v-if="showEditButton && !isEditing"
                     @click="enterEditMode">Edit</cdr-button>
                 <cdr-button style="margin-right: 1rem" size="small" modifier="secondary" v-if="isEditing"
@@ -294,6 +294,10 @@ const props = defineProps({
         default: 0,
     },
     premium: {
+        type: Boolean,
+        default: false,
+    },
+    readonly: {
         type: Boolean,
         default: false,
     },

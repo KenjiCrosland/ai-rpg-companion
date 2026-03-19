@@ -31,10 +31,6 @@
     </template>
 
     <div class="generator-container">
-      <cdr-button :full-width="true" v-if="monster && windowWidth <= 1280" @click="newMonster()">New
-        Monster
-        Statblock</cdr-button>
-
       <div class="landing-wrapper" v-if="!monster && !loadingPart1 && !loadingPart2">
         <!-- ZONE 1: Brand + Headline (lives outside the card) -->
         <div class="hero-header">
@@ -79,7 +75,9 @@
           <!-- Free users: Show message + unlock button -->
           <div v-if="!premium">
             <p>
-              Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load data across browsers with a premium Patreon subscription.
+              Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load
+              data
+              across browsers with a premium Patreon subscription.
             </p>
             <div class="patreon-universal-button">
               <a :href="patreonLoginUrl">
@@ -148,7 +146,8 @@
         <!-- Free users: Show message + unlock button -->
         <div v-if="!premium">
           <p>
-            Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load data across browsers with a premium Patreon subscription.
+            Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load data
+            across browsers with a premium Patreon subscription.
           </p>
           <div class="patreon-universal-button">
             <a :href="patreonLoginUrl">
@@ -178,8 +177,8 @@
       Monster
       Statblock</cdr-button>
 
-    <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
-      :premium="premium" currentApp="monsters" />
+    <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
+      currentApp="monsters" />
   </GeneratorLayout>
 </template>
 
@@ -202,6 +201,7 @@ import challengeRatingData from '@/data/challengeRatings.json';
 import creatureTemplates from '@/data/creatureTemplates.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
+import { renameStatblockReferences } from '@/util/statblock-storage.mjs';
 import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
@@ -273,6 +273,39 @@ onMounted(() => {
     monsters.value = { 'Uncategorized': [] };
   }
 
+  // Check for URL parameters to open a specific statblock
+  const urlParams = new URLSearchParams(window.location.search);
+  const monsterName = urlParams.get('monster');
+  const folderName = urlParams.get('folder');
+
+  if (monsterName) {
+    // Check specified folder first
+    if (folderName && monsters.value[folderName]) {
+      const index = monsters.value[folderName].findIndex(
+        m => m.name === monsterName
+      );
+      if (index !== -1) {
+        // Open this folder and select this statblock
+        openedFolders[folderName] = true;
+        selectMonster(folderName, index);
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    } else {
+      // Fallback: search all folders
+      for (const [folder, monstersInFolder] of Object.entries(monsters.value)) {
+        if (!Array.isArray(monstersInFolder)) continue;
+        const index = monstersInFolder.findIndex(m => m.name === monsterName);
+        if (index !== -1) {
+          openedFolders[folder] = true;
+          selectMonster(folder, index);
+          window.history.replaceState({}, '', window.location.pathname);
+          break;
+        }
+      }
+    }
+  }
+
   updateWindowWidth();
   window.addEventListener('resize', updateWindowWidth);
 });
@@ -316,11 +349,25 @@ function newMonster(folderName = 'Uncategorized') {
 }
 
 function updateMonster(updatedMonster) {
+  // Store old name to detect renames
+  const oldMonster = monsters.value[activeFolder.value][activeMonsterIndex.value];
+  const oldName = oldMonster?.name;
+  const newName = updatedMonster.name;
+
+  // Update the monster
   monster.value = updatedMonster;
   monsters.value[activeFolder.value][activeMonsterIndex.value] = updatedMonster;
   const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
   const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
+
+  // If the name changed, update all references across other tools
+  if (oldName && newName && oldName !== newName) {
+    const result = renameStatblockReferences(oldName, newName);
+    if (result.totalUpdated > 0) {
+      toast.success(`Renamed "${oldName}" to "${newName}" and updated ${result.totalUpdated} reference${result.totalUpdated > 1 ? 's' : ''} in other tools`);
+    }
+  }
 }
 
 function selectMonster(folderName = 'Uncategorized', index) {

@@ -43,3 +43,53 @@ export function createRelationshipAndTipsPrompt(param) {
     Please replace "npc_name" with actual names. This should be a proper noun for an individual not their title or position. Be sure that the relationships object has child keys with the names of each character the npc has relationships with.
     `;
 }
+
+export function generateSingleRelationshipPrompt(npcDescription, relationshipName, relationshipShortDescription) {
+  return `
+You are creating a compelling NPC relationship for a tabletop RPG. This relationship must be SPECIFIC, DRAMATIC, and immediately usable at the game table.
+
+=== THE NPC WHO NEEDS THIS RELATIONSHIP ===
+${npcDescription}
+
+=== THE RELATIONSHIP TARGET ===
+Name: ${relationshipName}
+Description: ${relationshipShortDescription}
+
+CRITICAL REQUIREMENTS:
+1. Make this relationship DRAMATIC and SPECIFIC - avoid generic descriptions
+2. Include a CONCRETE EVENT that happened between them - not vague history
+3. The relationship should create roleplaying opportunities and potential conflicts
+4. Use the NPC's personality, role, or secrets to inform the dynamic
+5. Create tension or opportunity that a DM can USE at the table
+
+FORMAT (exactly 2 sentences):
+
+SENTENCE 1: Describe HOW they met or how the relationship formed through a SPECIFIC EVENT. Include:
+- A concrete scene or moment (not "they've known each other for years")
+- The nature of their connection (ally, rival, complicated history, etc.)
+- A detail that makes it memorable and unique
+
+SENTENCE 2: Describe a RECENT DEVELOPMENT that creates tension or opportunity:
+- Something that happened in the last few weeks/days
+- A change in their dynamic, a betrayal, a favor owed, new information revealed
+- Something that a DM can USE at the table to create drama
+- Show, don't tell - use specific details, not emotional adjectives
+
+EXAMPLES OF COMPELLING RELATIONSHIPS:
+✓ GOOD: "${relationshipName} discovered them taking bribes from the merchant's guild three nights ago, and rather than report it to the council, demanded a seat at their table and a cut of whatever scheme they're running—they've been avoiding each other in public ever since, but the debt remains."
+
+✓ GOOD: "They saved ${relationshipName}'s life during the assassination attempt at the winter gala, taking a poisoned blade meant for the ambassador, but ${relationshipName} saw them plant false evidence on the assassin's corpse afterward and now carries that terrible knowledge in silence."
+
+✗ BAD: "They have a complicated history together and sometimes argue about their different approaches to handling political matters."
+
+✗ BAD: "${relationshipName} is an old friend who they trust completely and rely on for emotional support during difficult times."
+
+FORBIDDEN NAMES (do not use): Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde, Morgana, Raven, Thorne
+
+Return ONLY valid JSON:
+{
+  "name": "${relationshipName}",
+  "relationship": "Two sentences as specified above"
+}
+`;
+}

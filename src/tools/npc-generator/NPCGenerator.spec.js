@@ -94,8 +94,8 @@ jest.mock('@rei/cedar', () => ({
   },
   CdrSelect: {
     name: 'CdrSelect',
-    template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option></select>',
-    props: ['modelValue', 'label', 'prompt', 'options']
+    template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><option v-if="options" v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option><slot v-else></slot></select>',
+    props: ['modelValue', 'label', 'prompt', 'options', 'background']
   },
   CdrCheckbox: {
     name: 'CdrCheckbox',
@@ -115,6 +115,15 @@ jest.mock('@rei/cedar', () => ({
     name: 'CdrSkeletonBone',
     template: '<div></div>',
     props: ['type', 'style']
+  },
+  CdrAccordion: {
+    name: 'CdrAccordion',
+    template: '<div class="cdr-accordion"><slot name="label"></slot><slot></slot></div>',
+    props: ['level', 'id', 'opened']
+  },
+  CdrAccordionGroup: {
+    name: 'CdrAccordionGroup',
+    template: '<div class="cdr-accordion-group"><slot></slot></div>'
   }
 }));
 
@@ -155,11 +164,13 @@ describe('NPCGenerator', () => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     if (wrapper) {
       wrapper.unmount();
+      wrapper = null;
     }
     localStorageMock.clear();
+    await flushPromises();
   });
 
   describe('Two-Part NPC Generation', () => {
@@ -286,40 +297,21 @@ describe('NPCGenerator', () => {
     });
   });
 
-  describe('localStorage Operations', () => {
-    it('should save generated NPC to localStorage', async () => {
-      const mockNPCPart1 = {
-        character_name: 'Saved NPC',
-        description_of_position: 'Test',
-        reason_for_being_there: 'Test',
-        distinctive_feature_or_mannerism: 'Test',
-        character_secret: 'Test',
-        read_aloud_description: 'Test',
-        roleplaying_tips: 'Test'
-      };
-
-      const mockNPCPart2 = {
-        relationships: {}
-      };
-
-      // Skip localStorage tests for now - they require integration testing
-      // This would require mocking the entire flow through requestNPCDescription
-      // which is tested separately. The component logic for saving is covered
-      // by the fact that NPCs are saved after generation.
-
-      wrapper = mount(NPCGenerator, {
-        props: { premium: false }
-      });
-
-      // Just verify the component exists
-      expect(wrapper.exists()).toBe(true);
+  describe('localStorage Operations (Folder Structure)', () => {
+    beforeEach(() => {
+      // Ensure clean state before each test in this block
+      if (wrapper) {
+        wrapper.unmount();
+        wrapper = null;
+      }
+      localStorageMock.clear();
     });
 
-    it('should load NPCs from localStorage on mount', async () => {
+    it('should migrate old flat array format to folder structure on mount', async () => {
       const mockStoredNPCs = [
         {
           npcDescriptionPart1: {
-            character_name: 'Stored NPC',
+            character_name: 'Old Format NPC',
             description_of_position: 'Test position',
             reason_for_being_there: 'Test reason',
             distinctive_feature_or_mannerism: 'Test feature',
@@ -333,7 +325,7 @@ describe('NPCGenerator', () => {
         }
       ];
 
-      // Set the data in localStorage before mounting
+      // Set old flat array format in localStorage
       localStorage.setItem('npcGeneratorNPCs', JSON.stringify(mockStoredNPCs));
 
       wrapper = mount(NPCGenerator, {
@@ -342,18 +334,70 @@ describe('NPCGenerator', () => {
 
       await flushPromises();
 
-      // Verify the NPC was loaded by checking the UI contains the NPC's name
-      // (same pattern as StatblockGenerator tests)
-      const sidebarContent = wrapper.find('.sidebar-content');
-      expect(sidebarContent.text()).toContain('Stored NPC');
+      // Verify migration happened
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored).toHaveProperty('Uncategorized');
+      expect(Array.isArray(stored.Uncategorized)).toBe(true);
+      expect(stored.Uncategorized[0].npcDescriptionPart1.character_name).toBe('Old Format NPC');
 
-      // Verify component rendered without errors
-      expect(wrapper.exists()).toBe(true);
+      // Verify the NPC appears in UI
+      const sidebarContent = wrapper.find('.sidebar-content');
+      expect(sidebarContent.text()).toContain('Old Format NPC');
+    });
+
+    it('should load NPCs from folder structure on mount', async () => {
+      const mockStoredNPCs = {
+        'Uncategorized': [
+          {
+            npcDescriptionPart1: {
+              character_name: 'Uncategorized NPC',
+              description_of_position: 'Test',
+              reason_for_being_there: 'Test',
+              distinctive_feature_or_mannerism: 'Test',
+              character_secret: 'Test',
+              read_aloud_description: 'Test',
+              roleplaying_tips: 'Test'
+            },
+            npcDescriptionPart2: { relationships: {} }
+          }
+        ],
+        'Important NPCs': [
+          {
+            npcDescriptionPart1: {
+              character_name: 'Important NPC',
+              description_of_position: 'Test',
+              reason_for_being_there: 'Test',
+              distinctive_feature_or_mannerism: 'Test',
+              character_secret: 'Test',
+              read_aloud_description: 'Test',
+              roleplaying_tips: 'Test'
+            },
+            npcDescriptionPart2: { relationships: {} }
+          }
+        ]
+      };
+
+      // Set folder format in localStorage
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify(mockStoredNPCs));
+
+      wrapper = mount(NPCGenerator, {
+        props: { premium: false }
+      });
+
+      await flushPromises();
+
+      // Verify both NPCs appear in UI
+      const sidebarContent = wrapper.find('.sidebar-content');
+      expect(sidebarContent.text()).toContain('Uncategorized NPC');
+      expect(sidebarContent.text()).toContain('Important NPC');
+
+      // Verify folder names appear
+      expect(sidebarContent.text()).toContain('Uncategorized');
+      expect(sidebarContent.text()).toContain('Important NPCs');
     });
 
     it('should handle empty localStorage gracefully', async () => {
-      localStorageMock.clear();
-
+      // beforeEach already cleared localStorage
       expect(() => {
         wrapper = mount(NPCGenerator, {
           props: { premium: false }
@@ -362,18 +406,52 @@ describe('NPCGenerator', () => {
 
       await flushPromises();
 
-      // Should not throw error
+      // Should initialize with Uncategorized folder (verify structure, not exact contents due to test isolation complexity)
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored).toHaveProperty('Uncategorized');
+      expect(Array.isArray(stored.Uncategorized)).toBe(true);
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should preserve NPC data structure when saving', async () => {
-      // Skip - this is an integration test that requires the full flow
-      // The component structure is verified through other tests
+    it('should save NPCs in folder structure', async () => {
+      // beforeEach already cleared localStorage
       wrapper = mount(NPCGenerator, {
         props: { premium: false }
       });
 
-      expect(wrapper.exists()).toBe(true);
+      await flushPromises();
+
+      // Record initial length
+      const initialLength = wrapper.vm.npcs.Uncategorized?.length || 0;
+
+      // Manually set NPC data to simulate generation
+      wrapper.vm.npcDescriptionPart1 = {
+        character_name: 'Test NPC Save Verification',
+        description_of_position: 'Test',
+        reason_for_being_there: 'Test',
+        distinctive_feature_or_mannerism: 'Test',
+        character_secret: 'Test',
+        read_aloud_description: 'Test',
+        roleplaying_tips: 'Test',
+        combined_details: 'Test'
+      };
+      wrapper.vm.npcDescriptionPart2 = { relationships: {} };
+      wrapper.vm.activeFolder = 'Uncategorized';
+
+      // Call save function
+      wrapper.vm.saveCurrentNPCToList();
+
+      await flushPromises();
+
+      // Verify saved in folder structure (verify the new NPC was added)
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored).toHaveProperty('Uncategorized');
+      expect(stored.Uncategorized).toHaveLength(initialLength + 1);
+      const savedNPC = stored.Uncategorized.find(npc =>
+        npc.npcDescriptionPart1.character_name === 'Test NPC Save Verification'
+      );
+      expect(savedNPC).toBeDefined();
+      expect(savedNPC.npcDescriptionPart1.character_name).toBe('Test NPC Save Verification');
     });
   });
 
@@ -504,6 +582,228 @@ describe('NPCGenerator', () => {
       expect(combined).toContain('Feature text');
       expect(combined).toContain('Secret text');
       expect(combined).toContain('Tips text');
+    });
+  });
+
+  describe('Folder Management', () => {
+    beforeEach(() => {
+      // Setup initial folder structure
+      const mockNPCs = {
+        'Uncategorized': [
+          {
+            npcDescriptionPart1: {
+              character_name: 'Test NPC',
+              description_of_position: 'Test',
+              reason_for_being_there: 'Test',
+              distinctive_feature_or_mannerism: 'Test',
+              character_secret: 'Test',
+              read_aloud_description: 'Test',
+              roleplaying_tips: 'Test'
+            },
+            npcDescriptionPart2: { relationships: {} }
+          }
+        ],
+        'Campaign NPCs': []
+      };
+
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify(mockNPCs));
+    });
+
+    it('should move NPC to existing folder', async () => {
+      wrapper = mount(NPCGenerator, {
+        props: { premium: false }
+      });
+
+      await flushPromises();
+
+      // Load the NPC from Uncategorized
+      wrapper.vm.loadNPCIntoView('Uncategorized', 0);
+
+      // Set folder move target
+      wrapper.vm.folderMoveTarget = 'Campaign NPCs';
+
+      // Execute move
+      wrapper.vm.handleFolderMove();
+
+      await flushPromises();
+
+      // Verify NPC moved to Campaign NPCs
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored['Campaign NPCs']).toHaveLength(1);
+      expect(stored['Campaign NPCs'][0].npcDescriptionPart1.character_name).toBe('Test NPC');
+
+      // Verify removed from Uncategorized
+      expect(stored['Uncategorized']).toHaveLength(0);
+
+      // Verify activeFolder updated
+      expect(wrapper.vm.activeFolder).toBe('Campaign NPCs');
+    });
+
+    it('should create new folder when moving NPC', async () => {
+      wrapper = mount(NPCGenerator, {
+        props: { premium: false }
+      });
+
+      await flushPromises();
+
+      // Load the NPC from Uncategorized
+      wrapper.vm.loadNPCIntoView('Uncategorized', 0);
+
+      // Set folder move target to create new
+      wrapper.vm.folderMoveTarget = '__new__';
+      wrapper.vm.newFolderName = 'Boss NPCs';
+
+      // Execute move
+      wrapper.vm.handleFolderMove();
+
+      await flushPromises();
+
+      // Verify new folder created
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored).toHaveProperty('Boss NPCs');
+      expect(stored['Boss NPCs']).toHaveLength(1);
+      expect(stored['Boss NPCs'][0].npcDescriptionPart1.character_name).toBe('Test NPC');
+
+      // Verify activeFolder updated
+      expect(wrapper.vm.activeFolder).toBe('Boss NPCs');
+    });
+
+    it('should clean up empty folders after move (except Uncategorized)', async () => {
+      // Add NPC to a custom folder
+      const mockNPCs = {
+        'Uncategorized': [],
+        'Temporary Folder': [
+          {
+            npcDescriptionPart1: {
+              character_name: 'Moving NPC',
+              description_of_position: 'Test',
+              reason_for_being_there: 'Test',
+              distinctive_feature_or_mannerism: 'Test',
+              character_secret: 'Test',
+              read_aloud_description: 'Test',
+              roleplaying_tips: 'Test'
+            },
+            npcDescriptionPart2: { relationships: {} }
+          }
+        ],
+        'Destination Folder': []
+      };
+
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify(mockNPCs));
+
+      wrapper = mount(NPCGenerator, {
+        props: { premium: false }
+      });
+
+      await flushPromises();
+
+      // Load the NPC from Temporary Folder
+      wrapper.vm.loadNPCIntoView('Temporary Folder', 0);
+
+      // Move to Destination Folder
+      wrapper.vm.folderMoveTarget = 'Destination Folder';
+      wrapper.vm.handleFolderMove();
+
+      await flushPromises();
+
+      // Verify Temporary Folder was deleted (empty)
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored).not.toHaveProperty('Temporary Folder');
+
+      // Verify Uncategorized still exists (even though empty)
+      expect(stored).toHaveProperty('Uncategorized');
+    });
+
+    it('should not move NPC without folder selection', async () => {
+      wrapper = mount(NPCGenerator, {
+        props: { premium: false }
+      });
+
+      await flushPromises();
+
+      // Load the NPC
+      wrapper.vm.loadNPCIntoView('Uncategorized', 0);
+
+      // Try to move without selecting folder
+      wrapper.vm.folderMoveTarget = '';
+      wrapper.vm.handleFolderMove();
+
+      await flushPromises();
+
+      // Verify NPC still in Uncategorized
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored['Uncategorized']).toHaveLength(1);
+      expect(wrapper.vm.activeFolder).toBe('Uncategorized');
+    });
+
+    it('should not create new folder without name', async () => {
+      wrapper = mount(NPCGenerator, {
+        props: { premium: false }
+      });
+
+      await flushPromises();
+
+      // Load the NPC
+      wrapper.vm.loadNPCIntoView('Uncategorized', 0);
+
+      // Try to create new folder without name
+      wrapper.vm.folderMoveTarget = '__new__';
+      wrapper.vm.newFolderName = '';
+      wrapper.vm.handleFolderMove();
+
+      await flushPromises();
+
+      // Verify NPC still in Uncategorized
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored['Uncategorized']).toHaveLength(1);
+      expect(wrapper.vm.activeFolder).toBe('Uncategorized');
+    });
+
+    it('should delete NPC and clean up empty folder', async () => {
+      // Create folder with single NPC
+      const mockNPCs = {
+        'Uncategorized': [],
+        'Single NPC Folder': [
+          {
+            npcDescriptionPart1: {
+              character_name: 'Only NPC',
+              description_of_position: 'Test',
+              reason_for_being_there: 'Test',
+              distinctive_feature_or_mannerism: 'Test',
+              character_secret: 'Test',
+              read_aloud_description: 'Test',
+              roleplaying_tips: 'Test'
+            },
+            npcDescriptionPart2: { relationships: {} }
+          }
+        ]
+      };
+
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify(mockNPCs));
+
+      // Mock window.confirm to auto-accept
+      global.confirm = jest.fn(() => true);
+
+      wrapper = mount(NPCGenerator, {
+        props: { premium: false }
+      });
+
+      await flushPromises();
+
+      // Load the NPC
+      wrapper.vm.loadNPCIntoView('Single NPC Folder', 0);
+
+      // Delete the NPC
+      wrapper.vm.deleteCurrentNPC();
+
+      await flushPromises();
+
+      // Verify folder was deleted (empty after delete)
+      const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(stored).not.toHaveProperty('Single NPC Folder');
+
+      // Verify switched back to Uncategorized
+      expect(wrapper.vm.activeFolder).toBe('Uncategorized');
     });
   });
 });
