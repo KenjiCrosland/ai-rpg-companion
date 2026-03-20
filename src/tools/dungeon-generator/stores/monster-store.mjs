@@ -161,7 +161,7 @@ export async function generateMonsterStatblock(monsterId, premium) {
 
     // Assign partial statblock so user sees progress
     monster.statblock = { id: monster.id, ...part1Data };
-    saveDungeons();
+    // Don't save yet - wait until generation is complete
 
     monsterLoadingStates.value[monsterId] = {
       part1: false,
@@ -200,14 +200,15 @@ export async function generateMonsterStatblock(monsterId, premium) {
     monster.statblock_name = finalStatblock.name;
     monster.statblock_folder = folderName;
 
+    // Success - save once at the end
     saveDungeons();
   } catch (error) {
     console.error('Error generating monster statblock:', error);
     if (part1Data && !part2Data) {
-      // If we got part1 but failed to get part2
+      // If we got part1 but failed to get part2, clear the partial data
       monster.statblock = undefined;
-      saveDungeons();
     }
+    // Don't save here - let finally block handle it
     throw error;
   } finally {
     monsterLoadingStates.value[monsterId] = {
@@ -217,7 +218,11 @@ export async function generateMonsterStatblock(monsterId, premium) {
       generating: false,
       limitReached: false,
     };
-    saveDungeons();
+    // Only save if we didn't already save in success path
+    // (This handles error case where we cleared partial statblock)
+    if (!part2Data) {
+      saveDungeons();
+    }
   }
 }
 

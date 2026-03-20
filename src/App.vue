@@ -110,6 +110,7 @@ import TabsExample from '@/components/tabs/TabsExample.vue';
 import LandingPage from '@/components/LandingPage.vue';
 import AppToast from '@/components/AppToast.vue';
 import { registerToast } from '@/composables/useToast';
+import { runPendingMigrations } from '@/util/migration-runner.mjs';
 import { CdrLink } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-link.css';
 
@@ -175,6 +176,9 @@ export default {
   },
   mounted() {
     registerToast(this.$refs.toast);
+
+    // Run pending data migrations
+    runPendingMigrations();
 
     // Add keyboard shortcut for dev switcher
     if (import.meta.env.DEV) {

@@ -121,6 +121,9 @@
         <cdr-button modifier="secondary" @click="useInEncounter">
           Use in Encounter
         </cdr-button>
+        <cdr-button modifier="secondary" @click="createNPC">
+          Create NPC
+        </cdr-button>
         <cdr-button modifier="dark" @click="deleteStatblock">
           Delete Statblock
         </cdr-button>
@@ -480,11 +483,42 @@ function useInEncounter() {
   window.location.href = `${baseUrl}?monster=${monsterName}`;
 }
 
+function createNPC() {
+  if (!monster.value) return;
+
+  // Navigate to NPC generator with statblock info as query params
+  const statblockName = encodeURIComponent(monster.value.name);
+  const statblockFolder = encodeURIComponent(activeFolder.value || 'Uncategorized');
+
+  // Use localhost in dev, production URL in prod
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+  if (isDev) {
+    // In dev mode, pass statblock info via localStorage (query params don't survive page reload)
+    localStorage.setItem('dev-current-page', 'npc-generator');
+    localStorage.setItem('dev-statblock-link', JSON.stringify({
+      statblock: decodeURIComponent(statblockName),
+      folder: decodeURIComponent(statblockFolder)
+    }));
+    window.location.href = `/`;
+  } else {
+    // In production, deep link to NPC generator with query params
+    const baseUrl = 'https://cros.land/rpg-ai-npc-generator/';
+    window.location.href = `${baseUrl}?statblock=${statblockName}&folder=${statblockFolder}`;
+  }
+}
+
 async function deleteStatblock() {
   if (!confirm(`Delete "${monster.value.name}"? This cannot be undone.`)) return;
 
   const deletedName = monster.value.name;
   const folderName = activeFolder.value || 'Uncategorized';
+  const statblockId = `${deletedName}__${folderName}`;
+
+  // Remove references for this statblock
+  import('@/util/reference-storage.mjs').then(({ removeReferencesForEntity }) => {
+    removeReferencesForEntity('statblock', statblockId);
+  });
 
   monsters.value[folderName].splice(activeMonsterIndex.value, 1);
   monster.value = null;

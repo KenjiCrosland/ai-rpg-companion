@@ -1,8 +1,14 @@
 import { generateNPCDescription } from "./npc-generator.mjs";
+import { isIntelligentCreature } from "./statblock-context.mjs";
 
 export async function requestNPCDescription(typeOfNPC, extraDescription = {}, sequentialLoading = false, emit) {
     //TODO: pass an options object
   const fullPrompt = () => {
+    // Check for statblock context first
+    if (extraDescription.statblockContext) {
+      return typeOfNPC + '\n\n' + extraDescription.statblockContext;
+    }
+
     if (extraDescription.location && extraDescription.locationName) {
       return (
         extraDescription.location +
@@ -18,7 +24,10 @@ export async function requestNPCDescription(typeOfNPC, extraDescription = {}, se
     return typeOfNPC;
   };
 
-
+  // Detect if this is a creature profile (low-INT creature)
+  const isCreatureProfile = extraDescription.statblock
+    ? !isIntelligentCreature(extraDescription.statblock)
+    : false;
 
   const handlePart = (part, npcDescription) => {
     emit("npc-description-generated", {
@@ -58,7 +67,7 @@ export async function requestNPCDescription(typeOfNPC, extraDescription = {}, se
       part2: (npcDescription) => handlePart(2, npcDescription),
       error1: (error) => handleError(error),
       error2: (error) => handleError(error),
-    });
+    }, { isCreatureProfile });
   } catch (error) {
     handleError(error);
   }

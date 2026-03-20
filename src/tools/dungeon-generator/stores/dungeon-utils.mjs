@@ -11,24 +11,27 @@ export function saveDungeons() {
 export function loadDungeons(currentDungeonId) {
   const savedDungeons = localStorage.getItem('dungeons');
   if (savedDungeons) {
-    dungeons.value = JSON.parse(savedDungeons);
-    currentDungeonId.value = dungeons.value.length
-      ? dungeons.value[0].id
-      : null;
+    // Save the current selection before replacing the object tree
+    const previousId = currentDungeonId.value;
 
-    // Migrate and resolve statblocks for all dungeons
-    let anyMigrated = false;
+    dungeons.value = JSON.parse(savedDungeons);
+
+    // Preserve current dungeon selection if it still exists
+    const dungeonStillExists = previousId && dungeons.value.some(d => d.id === previousId);
+    if (dungeonStillExists) {
+      currentDungeonId.value = previousId;
+    } else {
+      // Only fallback to first dungeon if current one was deleted
+      currentDungeonId.value = dungeons.value.length
+        ? dungeons.value[0].id
+        : null;
+    }
+
+    // Only resolve statblock references, don't migrate on every load
+    // Migration should be handled explicitly, not automatically
     dungeons.value.forEach(dungeon => {
-      const statblockMigrated = migrateDungeonStatblocks(dungeon);
-      const npcMigrated = migrateDungeonNPCs(dungeon);
-      if (statblockMigrated || npcMigrated) anyMigrated = true;
       resolveDungeonStatblocks(dungeon);
     });
-
-    // Save if any migrations occurred
-    if (anyMigrated) {
-      saveDungeons();
-    }
   }
 }
 

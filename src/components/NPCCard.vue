@@ -3,8 +3,8 @@
     <!-- Header: name + buttons -->
     <div class="npc-card-header">
       <div>
-        <h2 class="npc-card-name">{{ npc.name }}</h2>
-        <p v-if="origin || npc.type_info" class="npc-card-subtitle">
+        <h2 v-if="!loadingDescription" class="npc-card-name">{{ npc.name }}</h2>
+        <p v-if="!loadingDescription && (origin || npc.type_info)" class="npc-card-subtitle">
           <span v-if="origin">
             From <a v-if="sourceLink" :href="sourceLink" class="npc-source-link">{{ origin }}</a>
             <template v-else>{{ origin }}</template>
@@ -14,39 +14,89 @@
         </p>
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <button v-if="editable && !isEditing" class="npc-edit-button" @click="$emit('start-edit')">Edit NPC</button>
+        <button v-if="editable && !isEditing && !loadingDescription" class="npc-edit-button"
+          @click="$emit('start-edit')">Edit
+          NPC</button>
       </div>
     </div>
 
     <!-- Content wrapper for view mode (centers all content with shared left edge) -->
     <div v-if="!isEditing" class="npc-card-content">
-      <!-- Read-aloud -->
-      <div v-if="npc.read_aloud_description" class="npc-card-read-aloud">
-        <p>{{ npc.read_aloud_description }}</p>
+      <!-- Read-aloud - skeleton or content -->
+      <div class="npc-card-read-aloud">
+        <CdrSkeleton v-if="loadingDescription">
+          <CdrSkeletonBone type="line" style="width:95%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:88%;" />
+        </CdrSkeleton>
+        <p v-else>{{ npc.read_aloud_description }}</p>
       </div>
 
-      <!-- Body: description paragraphs (view mode) -->
-      <div v-if="npc.combined_details" class="npc-card-body">
-        <p v-for="(paragraph, index) in bodyParagraphs" :key="index">
-          {{ paragraph }}
-        </p>
+      <!-- Body: description paragraphs - skeleton or content -->
+      <div class="npc-card-body">
+        <CdrSkeleton v-if="loadingDescription">
+          <CdrSkeletonBone type="line" style="width:95%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:90%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:85%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:92%; margin-bottom: 1rem;" />
+          <CdrSkeletonBone type="line" style="width:88%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:93%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:87%; margin-bottom: 1rem;" />
+          <CdrSkeletonBone type="line" style="width:91%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:86%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:60%;" />
+        </CdrSkeleton>
+        <template v-else>
+          <p v-for="(paragraph, index) in bodyParagraphs" :key="index">
+            {{ paragraph }}
+          </p>
+        </template>
       </div>
 
       <!-- Flourish divider -->
-      <svg v-if="hasRelationships && npc.combined_details" viewBox="0 0 400 12" xmlns="http://www.w3.org/2000/svg"
-        class="npc-flourish">
+      <svg v-if="(hasRelationships || loadingRelationships) && (npc.combined_details || loadingDescription)"
+        viewBox="0 0 400 12" xmlns="http://www.w3.org/2000/svg" class="npc-flourish">
         <line x1="0" y1="6" x2="188" y2="6" stroke="#c9b99a" stroke-width="0.75" />
         <line x1="212" y1="6" x2="400" y2="6" stroke="#c9b99a" stroke-width="0.75" />
         <polygon points="200,1 206,6 200,11 194,6" fill="#7b2d26" />
       </svg>
 
-      <!-- Relationships (view mode) -->
-      <div v-if="hasRelationships" class="npc-card-relationships">
+      <!-- Relationships - skeleton or content -->
+      <div v-if="hasRelationships || loadingRelationships" class="npc-card-relationships">
         <p class="npc-card-relationships-title">Relationships</p>
-        <div v-for="(description, name) in npc.relationships" :key="name" class="npc-relationship-card">
-          <p class="npc-relationship-name">{{ name }}</p>
-          <p class="npc-relationship-description">{{ description }}</p>
-        </div>
+        <CdrSkeleton v-if="loadingRelationships">
+          <div>
+            <div style="display: flex; gap: 0.5rem; align-items: baseline; margin-bottom: 0.25rem;">
+              <CdrSkeletonBone type="line" style="width:20%; height: 1.6rem;" />
+            </div>
+            <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
+            <CdrSkeletonBone type="line" style="width:90%;" />
+            <CdrSkeletonBone type="line" style="width:85%; margin-bottom: 1.25rem;" />
+          </div>
+
+          <div>
+            <div style="display: flex; gap: 0.5rem; align-items: baseline; margin-bottom: 0.25rem;">
+              <CdrSkeletonBone type="line" style="width:20%; height: 1.6rem;" />
+            </div>
+            <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
+            <CdrSkeletonBone type="line" style="width:90%;" />
+            <CdrSkeletonBone type="line" style="width:85%; margin-bottom: 1.25rem;" />
+          </div>
+
+          <div>
+            <div style="display: flex; gap: 0.5rem; align-items: baseline; margin-bottom: 0.25rem;">
+              <CdrSkeletonBone type="line" style="width:20%; height: 1.6rem;" />
+            </div>
+            <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
+            <CdrSkeletonBone type="line" style="width:90%;" />
+            <CdrSkeletonBone type="line" style="width:85%;" />
+          </div>
+        </CdrSkeleton>
+        <template v-else>
+          <div v-for="(description, name) in npc.relationships" :key="name" class="npc-relationship-card">
+            <p class="npc-relationship-name">{{ name }}</p>
+            <p class="npc-relationship-description">{{ description }}</p>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -125,11 +175,12 @@
 
     <!-- Footer -->
     <div class="npc-card-footer">
-      <button v-if="showDelete" class="npc-footer-link npc-delete-text" @click="$emit('delete')">
+      <button v-if="showDelete && !loadingDescription && !loadingRelationships" class="npc-footer-link npc-delete-text"
+        @click="$emit('delete')">
         Delete NPC
       </button>
       <div v-else></div>
-      <a v-if="npcGeneratorLink" :href="npcGeneratorLink" class="npc-footer-link">
+      <a v-if="npcGeneratorLink && !loadingDescription" :href="npcGeneratorLink" class="npc-footer-link">
         View in NPC Generator
       </a>
     </div>
@@ -144,7 +195,7 @@ const props = defineProps({
   // NPC data in normalized format
   npc: {
     type: Object,
-    required: true,
+    default: () => ({}),
   },
 
   // Where this NPC came from (shown in subtitle)
@@ -212,6 +263,17 @@ const props = defineProps({
   showNpcGeneratorLink: {
     type: Boolean,
     default: true,
+  },
+
+  // Loading states for skeleton display
+  loadingDescription: {
+    type: Boolean,
+    default: false,
+  },
+
+  loadingRelationships: {
+    type: Boolean,
+    default: false,
   },
 });
 

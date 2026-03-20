@@ -30,7 +30,7 @@ export const npcStatblockLoadingStates = ref({});
 function ensureNPCHasId(npc) {
   if (!npc.npc_id) {
     npc.npc_id = `npc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    saveDungeons();
+    // Don't save here - let caller save once at the end
   }
 }
 
@@ -41,7 +41,7 @@ function syncNPCIdFromCanonical(canonicalNPC, dungeonNPC, npcIndex) {
   if (canonicalNPC.npc_id && canonicalNPC.npc_id !== dungeonNPC.npc_id) {
     dungeonNPC.npc_id = canonicalNPC.npc_id;
     currentDungeon.value.npcs[npcIndex].npc_id = canonicalNPC.npc_id;
-    saveDungeons();
+    // Don't save here - let caller save once at the end
   }
 }
 
@@ -107,6 +107,8 @@ export async function generateNPCStatblock(
     limitReached: false,
   };
 
+  let part2Data = null;
+
   try {
     // Build up the "description" from the NPC data
     const npcBodyString = buildNPCString(npc); // Something like "This NPC named X is..."
@@ -130,6 +132,7 @@ export async function generateNPCStatblock(
     );
     const part1Data = JSON.parse(npcStatsPart1);
     npc.statblock = { id: npc.name, ...part1Data }; // Just some ID, or use crypto.randomUUID()
+    // Don't save yet - wait until generation is complete
 
     // PART 2
     // Provide GPT the context of part1
@@ -147,7 +150,7 @@ export async function generateNPCStatblock(
       3,
       previousContext,
     );
-    const part2Data = JSON.parse(npcStatsPart2);
+    part2Data = JSON.parse(npcStatsPart2);
 
     // Combine for final
     const finalStatblock = { ...npc.statblock, ...part2Data };
@@ -159,8 +162,6 @@ export async function generateNPCStatblock(
     npc.statblock_name = finalStatblock.name;
     npc.statblock_folder = folderName;
 
-    saveDungeons();
-
     // Update shared NPC storage with statblock reference
     if (npc.read_aloud_description) {
       const canonicalNPC = dungeonNPCToCanonical(npc, folderName);
@@ -168,6 +169,9 @@ export async function generateNPCStatblock(
       syncNPCIdFromCanonical(canonicalNPC, npc, index);
       toast.success(`${npc.name} statblock saved to your NPCs`);
     }
+
+    // Success - save once at the end
+    saveDungeons();
   } catch (error) {
     console.error('Error generating NPC statblock:', error);
   } finally {
@@ -177,7 +181,11 @@ export async function generateNPCStatblock(
       generating: false,
       limitReached: false,
     };
-    saveDungeons();
+    // Only save if we didn't already save in success path
+    // (This handles error case where generation failed)
+    if (!part2Data) {
+      saveDungeons();
+    }
   }
 }
 
@@ -254,7 +262,6 @@ export async function generateDungeonNPC(npcIndex) {
 
     currentDungeon.value.npcs.splice(npcIndex, 1, completeNPC);
     currentlyLoadingNPCs.value[npcIndex] = false;
-    saveDungeons();
 
     // Save NPC to shared storage if it has read_aloud_description (full NPC, not stub)
     if (completeNPC.read_aloud_description) {
@@ -264,6 +271,9 @@ export async function generateDungeonNPC(npcIndex) {
       syncNPCIdFromCanonical(canonicalNPC, completeNPC, npcIndex);
       toast.success(`${completeNPC.name} saved to your NPCs`);
     }
+
+    // Save once at the very end after all modifications complete
+    saveDungeons();
   } catch (error) {
     console.error('Error generating dungeon NPC:', error);
     currentlyLoadingNPCs.value[npcIndex] = false;
@@ -272,8 +282,66 @@ export async function generateDungeonNPC(npcIndex) {
 
 export function deleteNPC(npcIndex) {
   if (!currentDungeon.value) return;
-  currentDungeon.value.npcs.splice(npcIndex, 1);
-  saveDungeons();
+
+  const npc = currentDungeon.value.npcs[npcIndex];
+  const npcId = npc?.npc_id || npc?.id;
+  const npcName = npc?.name || 'this NPC';
+
+  if (!npcId) {
+    // Fallback for NPCs without IDs
+    if (confirm(`Are you sure you want to delete ${npcName}?`)) {
+      currentDungeon.value.npcs.splice(npcIndex, 1);
+      saveDungeons();
+    }
+    return;
+  }
+
+  // Find all locations where this NPC exists
+  import('@/util/npc-storage.mjs').then(({ findNPCLocations, deleteNPCFromAllLocations }) => {
+    const locations = findNPCLocations(npcId);
+
+    // Build confirmation message
+    let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
+    confirmMessage += 'This NPC will be deleted from:\n';
+
+    if (locations.dungeons.length > 0) {
+      if (locations.dungeons.length === 1) {
+        confirmMessage += `- Dungeon Generator (${locations.dungeons[0]})\n`;
+      } else {
+        confirmMessage += `- Dungeon Generator (${locations.dungeons.length} dungeons)\n`;
+      }
+    }
+
+    if (locations.npcGenerator.length > 0) {
+      if (locations.npcGenerator.length === 1) {
+        confirmMessage += `- NPC Generator (${locations.npcGenerator[0]})\n`;
+      } else {
+        confirmMessage += `- NPC Generator (${locations.npcGenerator.length} folders)\n`;
+      }
+    }
+
+    if (confirm(confirmMessage)) {
+      // Remove references for this NPC
+      import('@/util/reference-storage.mjs').then(({ removeReferencesForEntity }) => {
+        removeReferencesForEntity('npc', npcId);
+      });
+
+      // Delete from all locations (this handles localStorage for NPC Generator)
+      deleteNPCFromAllLocations(npcId);
+
+      // Update reactive state - remove from current dungeon's NPC array
+      if (currentDungeon.value && currentDungeon.value.npcs) {
+        const npcIndex = currentDungeon.value.npcs.findIndex(n =>
+          (n.npc_id === npcId || n.id === npcId)
+        );
+        if (npcIndex !== -1) {
+          currentDungeon.value.npcs.splice(npcIndex, 1);
+          // Save dungeon state after removing NPC
+          saveDungeons();
+        }
+      }
+    }
+  });
 }
 
 export function addNPC() {

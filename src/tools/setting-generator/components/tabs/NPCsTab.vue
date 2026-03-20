@@ -343,9 +343,64 @@ const handleSaveEdit = (index, editedData) => {
 // -------------------------
 // Delete
 // -------------------------
-const deleteNPC = (index) => {
-  const updatedNPCs = props.setting.npcs.filter((_, i) => i !== index);
-  emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+const deleteNPC = async (index) => {
+  const npc = props.setting.npcs[index];
+  const npcId = npc?.npc_id || npc?.id;
+  const npcName = npc?.name || 'this NPC';
+
+  if (!npcId) {
+    // Fallback for NPCs without IDs
+    if (confirm(`Are you sure you want to delete ${npcName}?`)) {
+      const updatedNPCs = props.setting.npcs.filter((_, i) => i !== index);
+      emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+    }
+    return;
+  }
+
+  // Find all locations where this NPC exists
+  const { findNPCLocations, deleteNPCFromAllLocations } = await import('@/util/npc-storage.mjs');
+  const locations = findNPCLocations(npcId);
+
+  // Build confirmation message
+  let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
+  confirmMessage += 'This NPC will be deleted from:\n';
+
+  const settingName = props.setting.setting_overview?.name || props.setting.place_name;
+
+  // Check if in settings
+  if (locations.npcGenerator.some(folder => folder === settingName)) {
+    confirmMessage += `- Setting Generator (${settingName})\n`;
+  }
+
+  if (locations.npcGenerator.length > 0) {
+    const otherFolders = locations.npcGenerator.filter(f => f !== settingName);
+    if (otherFolders.length === 1) {
+      confirmMessage += `- NPC Generator (${otherFolders[0]})\n`;
+    } else if (otherFolders.length > 1) {
+      confirmMessage += `- NPC Generator (${otherFolders.length} other folders)\n`;
+    }
+  }
+
+  if (locations.dungeons.length > 0) {
+    if (locations.dungeons.length === 1) {
+      confirmMessage += `- Dungeon Generator (${locations.dungeons[0]})\n`;
+    } else {
+      confirmMessage += `- Dungeon Generator (${locations.dungeons.length} dungeons)\n`;
+    }
+  }
+
+  if (confirm(confirmMessage)) {
+    // Remove references for this NPC
+    const { removeReferencesForEntity } = await import('@/util/reference-storage.mjs');
+    removeReferencesForEntity('npc', npcId);
+
+    // Delete from all locations
+    deleteNPCFromAllLocations(npcId);
+
+    // Update local state
+    const updatedNPCs = props.setting.npcs.filter((_, i) => i !== index);
+    emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+  }
 };
 
 // -------------------------

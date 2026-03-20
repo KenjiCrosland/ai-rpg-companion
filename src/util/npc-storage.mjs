@@ -182,6 +182,36 @@ export function settingNPCToCanonical(npc, settingName) {
 }
 
 /**
+ * Convert a canonical NPC to dungeon format for saving to dungeon's npcs array.
+ *
+ * Maps canonical field names to dungeon-specific field names:
+ * - reason_for_being_there → why_in_dungeon
+ * - distinctive_feature_or_mannerism → distinctive_features_or_mannerisms
+ *
+ * @param {Object} canonicalNPC - NPC in canonical format
+ * @returns {Object} NPC in dungeon format
+ */
+export function canonicalToDungeonNPC(canonicalNPC) {
+  const part1 = canonicalNPC.npcDescriptionPart1 || {};
+  const part2 = canonicalNPC.npcDescriptionPart2 || {};
+
+  return {
+    npc_id: canonicalNPC.npc_id || canonicalNPC.id || null,
+    name: part1.character_name || '',
+    description_of_position: part1.description_of_position || '',
+    why_in_dungeon: part1.reason_for_being_there || '',
+    distinctive_features_or_mannerisms: part1.distinctive_feature_or_mannerism || '',
+    character_secret: part1.character_secret || '',
+    read_aloud_description: part1.read_aloud_description || '',
+    roleplaying_tips: part1.roleplaying_tips || '',
+    combined_details: part1.combined_details || '',
+    relationships: part2.relationships || {},
+    statblock_name: part1.statblock_name || null,
+    statblock_folder: part1.statblock_folder || null,
+  };
+}
+
+/**
  * Normalize a dungeon NPC to NPCCard format for display.
  *
  * @param {Object} npc - Dungeon NPC object
@@ -248,6 +278,16 @@ export function normalizeSettingNPC(npc) {
  * @returns {Object} Normalized NPC for NPCCard component
  */
 export function normalizeGeneratorNPC(npc) {
+  // Handle null/undefined NPC (e.g., during initial loading)
+  if (!npc) {
+    return {
+      name: '',
+      read_aloud_description: '',
+      combined_details: '',
+      relationships: {}
+    };
+  }
+
   const part1 = npc.npcDescriptionPart1 || {};
   const part2 = npc.npcDescriptionPart2 || {};
 
@@ -272,6 +312,172 @@ export function normalizeGeneratorNPC(npc) {
     relationships: part2.relationships || {},
     type_info: npc.typeOfPlace || '',
   };
+}
+
+/**
+ * Save an NPC to a dungeon's npcs array.
+ * Deduplicates by NPC ID or name.
+ *
+ * @param {Object} canonicalNPC - NPC in canonical format
+ * @param {string} dungeonName - Name of the dungeon (matches dungeonOverview.name)
+ * @returns {boolean} True if successfully saved, false if dungeon not found
+ */
+export function saveNPCToDungeon(canonicalNPC, dungeonName) {
+  try {
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+
+    // Find the dungeon by dungeonOverview.name
+    const dungeonIndex = dungeons.findIndex(d => d.dungeonOverview?.name === dungeonName);
+
+    if (dungeonIndex === -1) {
+      console.warn(`Dungeon "${dungeonName}" not found`);
+      return false;
+    }
+
+    const dungeon = dungeons[dungeonIndex];
+
+    // Ensure npcs array exists
+    if (!dungeon.npcs) {
+      dungeon.npcs = [];
+    }
+
+    // Convert canonical NPC to dungeon format
+    const dungeonNPC = canonicalToDungeonNPC(canonicalNPC);
+
+    // Find existing NPC by ID or name
+    let existingIndex = -1;
+    const npcId = dungeonNPC.npc_id;
+
+    if (npcId) {
+      existingIndex = dungeon.npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
+    }
+
+    if (existingIndex === -1) {
+      existingIndex = dungeon.npcs.findIndex(n => n.name === dungeonNPC.name);
+    }
+
+    if (existingIndex !== -1) {
+      // Update existing NPC
+      dungeon.npcs[existingIndex] = dungeonNPC;
+    } else {
+      // Add new NPC
+      dungeon.npcs.push(dungeonNPC);
+    }
+
+    // Save back to localStorage
+    localStorage.setItem('dungeons', JSON.stringify(dungeons));
+
+    return true;
+  } catch (error) {
+    console.error('Error saving NPC to dungeon:', error);
+    return false;
+  }
+}
+
+/**
+ * Find all locations where an NPC exists (by npc_id).
+ * Returns an object describing where the NPC is found.
+ *
+ * @param {string} npcId - The NPC's unique ID
+ * @returns {Object} Object with locations: { npcGenerator: [], dungeons: [] }
+ */
+export function findNPCLocations(npcId) {
+  const locations = {
+    npcGenerator: [], // Array of folder names in npcGeneratorNPCs
+    dungeons: []      // Array of dungeon names
+  };
+
+  if (!npcId) return locations;
+
+  try {
+    // Check NPC Generator storage
+    const npcGeneratorStorage = JSON.parse(
+      localStorage.getItem('npcGeneratorNPCs') || '{}'
+    );
+
+    for (const folderName in npcGeneratorStorage) {
+      const npcs = npcGeneratorStorage[folderName];
+      if (Array.isArray(npcs)) {
+        const found = npcs.find(n => n.npc_id === npcId || n.id === npcId);
+        if (found) {
+          locations.npcGenerator.push(folderName);
+        }
+      }
+    }
+
+    // Check Dungeon Generator storage
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+    for (const dungeon of dungeons) {
+      if (dungeon.npcs && Array.isArray(dungeon.npcs)) {
+        const found = dungeon.npcs.find(n => n.npc_id === npcId || n.id === npcId);
+        if (found && dungeon.dungeonOverview?.name) {
+          locations.dungeons.push(dungeon.dungeonOverview.name);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error finding NPC locations:', error);
+  }
+
+  return locations;
+}
+
+/**
+ * Delete an NPC from all storage locations (by npc_id).
+ *
+ * @param {string} npcId - The NPC's unique ID
+ * @returns {Object} Object with deletion results: { npcGenerator: number, dungeons: number }
+ */
+export function deleteNPCFromAllLocations(npcId) {
+  const results = {
+    npcGenerator: 0, // Number of folders where NPC was deleted
+    dungeons: 0      // Number of dungeons where NPC was deleted
+  };
+
+  if (!npcId) return results;
+
+  try {
+    // Delete from NPC Generator storage
+    const npcGeneratorStorage = JSON.parse(
+      localStorage.getItem('npcGeneratorNPCs') || '{}'
+    );
+
+    for (const folderName in npcGeneratorStorage) {
+      const npcs = npcGeneratorStorage[folderName];
+      if (Array.isArray(npcs)) {
+        const index = npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
+        if (index !== -1) {
+          npcs.splice(index, 1);
+          results.npcGenerator++;
+
+          // Clean up empty folders (except Uncategorized)
+          if (npcs.length === 0 && folderName !== 'Uncategorized') {
+            delete npcGeneratorStorage[folderName];
+          }
+        }
+      }
+    }
+
+    localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcGeneratorStorage));
+
+    // Delete from Dungeon Generator storage
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+    for (const dungeon of dungeons) {
+      if (dungeon.npcs && Array.isArray(dungeon.npcs)) {
+        const index = dungeon.npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
+        if (index !== -1) {
+          dungeon.npcs.splice(index, 1);
+          results.dungeons++;
+        }
+      }
+    }
+
+    localStorage.setItem('dungeons', JSON.stringify(dungeons));
+  } catch (error) {
+    console.error('Error deleting NPC from all locations:', error);
+  }
+
+  return results;
 }
 
 /**
