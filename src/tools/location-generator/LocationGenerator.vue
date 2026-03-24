@@ -132,6 +132,7 @@ function navigate(slug) {
   max-width: 800px;
   width: 100%;
   padding: 0 1rem;
+  min-height: 70vh;
 }
 
 .form-container {
@@ -171,6 +172,7 @@ div[class^="cdr-skeleton-bone"] {
 }
 
 .ogl-footer {
+  display: none; /* Hidden - footer now in WordPress template */
   text-align: center;
   padding: 2rem 1rem;
   margin-top: 3rem;

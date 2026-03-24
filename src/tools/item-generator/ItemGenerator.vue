@@ -1,5 +1,5 @@
 <template>
-  <GeneratorLayout :premium="premium">
+  <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
     <template #sidebar>
       <div class="sidebar-content">
         <ul class="saved-items">
@@ -322,7 +322,8 @@ const rarityOptions = [
   'Uncommon',
   'Rare',
   'Very Rare',
-  'Legendary'
+  'Legendary',
+  'Artifact'
 ];
 
 const itemTypeOptions = [
@@ -372,7 +373,8 @@ const rarityGuidelines = {
   'Uncommon': 'Either a +1 bonus to AC/attack rolls OR one useful magical feature (not both). Save DC: 13.',
   'Rare': 'Either a +2 bonus OR a +1 bonus with a moderate feature OR one powerful feature without bonus. Save DC: 15.',
   'Very Rare': 'Either a +3 bonus (possibly with minor feature) OR +2 with powerful feature OR +1 with very powerful feature. Save DC: 17.',
-  'Legendary': '+3 with multiple features OR +2 with legendary features OR multiple legendary features. Very rarely +4. Save DC: 19+'
+  'Legendary': '+3 with multiple features OR +2 with legendary features OR multiple legendary features. Very rarely +4. Save DC: 19+',
+  'Artifact': 'Campaign-defining relics with +3 bonus and 5-6 legendary effects. MUST include major drawbacks, curses, or dangerous side effects. Save DC: 20+. Examples: Eye of Vecna, Book of Vile Darkness, Wand of Orcus.'
 };
 
 const generateMagicItem = async () => {
@@ -680,7 +682,33 @@ ${resolvedItemType === 'Potion' ? `SPECIAL RULES FOR POTIONS:
 ` : ''}
 EFFECT DEFINITIONS:
 ${effectDefsString}
+${rarity.value === 'Artifact' ? `
+CRITICAL — ARTIFACT REQUIREMENTS:
+Artifacts are campaign-defining relics that MUST include major drawbacks alongside their incredible power.
 
+MANDATORY DRAWBACK ENFORCEMENT:
+At least TWO of your features must be CURSES or DRAWBACKS, not benefits. These are not optional flavor text — they must be mechanical penalties that create real risk for the wielder.
+
+At least ONE drawback must be PERSISTENT and ESCALATING — it should get worse the longer the item is used or attuned, creating narrative tension about whether to keep wielding it. Examples: corruption that spreads over time, madness that accumulates, physical transformation, mounting divine displeasure.
+
+Examples of proper drawbacks:
+- "Corrupting Influence": Each day you remain attuned to this item, you must succeed on a DC 18 Wisdom saving throw or have your alignment shift one step toward chaotic evil. If you become chaotic evil, you are controlled by the DM until the item is removed.
+- "Soul Drain": Each time you use a feature of this item, you take 2d10 necrotic damage that cannot be reduced or avoided. This damage persists even if you are resistant or immune to necrotic damage.
+- "Maddening Whispers": While attuned, you hear the voices of those who previously wielded this artifact. Make a DC 17 Wisdom saving throw at the end of each long rest or gain one level of exhaustion.
+- "Divine Wrath": If you willingly end your attunement to this item, a deity associated with the artifact becomes aware of your location and sends agents to retrieve it or punish you.
+
+ARTIFACT FEATURE DESIGN PHILOSOPHY:
+Artifact features should RESHAPE GAMEPLAY, not just add damage. Prioritize features that:
+- Give new tactical options (battlefield control, environment manipulation, summoning)
+- Alter the environment (create terrain, change weather, warp reality)
+- Interact with the narrative (affect factions, attract enemies, reveal secrets)
+- Transform the wielder (physical changes, new senses, planar awareness)
+
+Avoid generic damage riders like "deals +3d6 fire damage." If you include damage features, make them interesting — require positioning, have area effects, scale with story elements, or come with tactical trade-offs.
+
+DRAWBACK PLACEMENT:
+Include the drawbacks as named features within the "features" object, alongside the beneficial features. Do NOT hide them in lore text or physical_description — they must be distinct, named features with clear mechanics.
+` : ''}
 ITEM STRUCTURE TO COMPLETE:
 {
   "name": "${itemName.value || '[Generate a unique, evocative name — avoid generic fantasy clichés]'}",${itemName.value.trim() ? ' // USER-PROVIDED — DO NOT CHANGE THIS VALUE' : ''}
@@ -820,7 +848,8 @@ const saveItem = (item) => {
     'Uncommon': 1,
     'Rare': 2,
     'Very Rare': 3,
-    'Legendary': 4
+    'Legendary': 4,
+    'Artifact': 5
   };
   savedItems.value.sort((a, b) => {
     return rarityIndex[a.rarity] - rarityIndex[b.rarity];
@@ -1004,7 +1033,8 @@ const generateFeature = async (index) => {
     'Uncommon': 'useful_magical_effect',
     'Rare': 'moderate_magical_effect OR powerful_magical_effect',
     'Very Rare': 'powerful_magical_effect OR very_powerful_magical_effect',
-    'Legendary': 'legendary_magical_effect'
+    'Legendary': 'legendary_magical_effect',
+    'Artifact': 'legendary_magical_effect (with major drawback)'
   };
 
   const effectLevel = rarityToEffectLevel[editForm.value.rarity] || 'useful_magical_effect';
