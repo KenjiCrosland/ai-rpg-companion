@@ -1,18 +1,17 @@
 <template>
-    <GeneratorLayout :premium="premium">
+    <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
         <template #sidebar>
             <div class="sidebar-content">
                 <div class="sidebar-scroll">
                     <cdr-accordion-group>
-                        <cdr-accordion level="3" v-for="(folder, folderName) in npcs" :key="folderName"
-                            :id="folderName" :opened="openedFolders[folderName]"
+                        <cdr-accordion level="3" v-for="(folder, folderName) in npcs" :key="folderName" :id="folderName"
+                            :opened="openedFolders[folderName]"
                             @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
                             <template #label>
                                 {{ folderName }}
                             </template>
                             <ul class="npc-list">
-                                <li v-for="(npc, index) in folder" :key="index"
-                                    :id="`npc-${folderName}-${index}`"
+                                <li v-for="(npc, index) in folder" :key="index" :id="`npc-${folderName}-${index}`"
                                     :class="{ 'active-tab': currentNPCIndex === index && activeFolder === folderName }">
                                     <button class="npc-button" @click="selectNPC(folderName, index)">
                                         {{ npc.npcDescriptionPart1?.character_name || 'Unnamed NPC' }}
@@ -148,17 +147,20 @@
                         <div class="npc-card-relationships">
                             <CdrSkeletonBone type="line" style="width: 25%; height: 13px; margin-bottom: 0.625rem;" />
                             <div class="npc-relationship-card">
-                                <CdrSkeletonBone type="line" style="width: 40%; height: 13px; margin-bottom: 0.25rem;" />
+                                <CdrSkeletonBone type="line"
+                                    style="width: 40%; height: 13px; margin-bottom: 0.25rem;" />
                                 <CdrSkeletonBone type="line" style="width: 90%;" />
                                 <CdrSkeletonBone type="line" style="width: 75%;" />
                             </div>
                             <div class="npc-relationship-card">
-                                <CdrSkeletonBone type="line" style="width: 35%; height: 13px; margin-bottom: 0.25rem;" />
+                                <CdrSkeletonBone type="line"
+                                    style="width: 35%; height: 13px; margin-bottom: 0.25rem;" />
                                 <CdrSkeletonBone type="line" style="width: 85%;" />
                                 <CdrSkeletonBone type="line" style="width: 80%;" />
                             </div>
                             <div class="npc-relationship-card">
-                                <CdrSkeletonBone type="line" style="width: 38%; height: 13px; margin-bottom: 0.25rem;" />
+                                <CdrSkeletonBone type="line"
+                                    style="width: 38%; height: 13px; margin-bottom: 0.25rem;" />
                                 <CdrSkeletonBone type="line" style="width: 88%;" />
                                 <CdrSkeletonBone type="line" style="width: 70%;" />
                             </div>
@@ -166,27 +168,16 @@
                     </CdrSkeleton>
                 </div>
                 <!-- NPC Card (View/Edit Mode) -->
-                <NPCCard
-                    v-if="npcDescriptionPart1 && !loadingPart1 && npcDescriptionPart2"
-                    :npc="normalizeGeneratorNPC(currentNPC)"
-                    :origin="currentNPC?.typeOfPlace"
-                    :source-type="currentNPC?.sourceType"
-                    :npc-id="currentNPC?.npc_id || currentNPC?.id"
-                    :is-editing="isEditingNPC"
-                    :show-relationship-generator="true"
+                <NPCCard v-if="npcDescriptionPart1 && !loadingPart1 && npcDescriptionPart2"
+                    :npc="normalizeGeneratorNPC(currentNPC)" :origin="currentNPC?.typeOfPlace"
+                    :source-type="currentNPC?.sourceType" :npc-id="currentNPC?.npc_id || currentNPC?.id"
+                    :is-editing="isEditingNPC" :show-relationship-generator="true"
                     :is-generating-relationship="loadingNewRelationship"
-                    :has-statblock="!!(npcDescriptionPart1.statblock_name)"
-                    :statblock-url="statblockGeneratorUrl"
-                    :editable="true"
-                    :show-delete="true"
-                    :show-npc-generator-link="false"
+                    :has-statblock="!!(npcDescriptionPart1.statblock_name)" :statblock-url="statblockGeneratorUrl"
+                    :editable="true" :show-delete="true" :show-npc-generator-link="false"
                     :show-origin-note="!!(currentNPC?.typeOfPlace && currentNPC.typeOfPlace !== 'Uncategorized')"
-                    @start-edit="startEditingNPC"
-                    @save-edit="handleSaveEdit($event)"
-                    @cancel-edit="cancelEditNPC"
-                    @delete="deleteCurrentNPC"
-                    @generate-relationship="handleGenerateRelationship($event)"
-                />
+                    @start-edit="startEditingNPC" @save-edit="handleSaveEdit($event)" @cancel-edit="cancelEditNPC"
+                    @delete="deleteCurrentNPC" @generate-relationship="handleGenerateRelationship($event)" />
 
                 <!-- Relationships Loading Skeleton -->
                 <div v-if="npcDescriptionPart1 && !loadingPart1 && loadingPart2">
@@ -248,21 +239,26 @@
                     </div>
 
                     <!-- Folder Mover Interface -->
-                    <div v-if="showFolderMover" class="folder-mover" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <div v-if="showFolderMover" class="folder-mover"
+                        style="margin-top: 1.5rem; padding: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
                         <h4 style="margin-top: 0; margin-bottom: 1rem;">Move NPC to Folder</h4>
 
-                        <cdr-select v-model="folderMoveTarget" label="Destination folder" prompt="Select a folder" background="secondary" style="margin-bottom: 1rem;">
+                        <cdr-select v-model="folderMoveTarget" label="Destination folder" prompt="Select a folder"
+                            background="secondary" style="margin-bottom: 1rem;">
                             <option v-for="folder in folderOptions" :key="folder" :value="folder">{{ folder }}</option>
                             <option value="__new__">+ Create new folder</option>
                         </cdr-select>
 
-                        <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name" background="secondary" style="margin-bottom: 1rem;" />
+                        <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name"
+                            background="secondary" style="margin-bottom: 1rem;" />
 
                         <div class="button-group" style="margin-top: 1rem;">
-                            <cdr-button @click="handleFolderMove" :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
+                            <cdr-button @click="handleFolderMove"
+                                :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
                                 Move NPC
                             </cdr-button>
-                            <cdr-button @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';" modifier="secondary">
+                            <cdr-button @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';"
+                                modifier="secondary">
                                 Cancel
                             </cdr-button>
                         </div>
@@ -293,12 +289,16 @@
                         </div>
 
                         <!-- Statblock Not Found Warning -->
-                        <div v-if="npcDescriptionPart1?.statblock_name && !statblock && !loadingStatblockPart1 && !loadingStatblockPart2" class="statblock-not-found-message">
+                        <div v-if="npcDescriptionPart1?.statblock_name && !statblock && !loadingStatblockPart1 && !loadingStatblockPart2"
+                            class="statblock-not-found-message">
                             <p><strong>Statblock not found</strong></p>
-                            <p>The statblock "{{ npcDescriptionPart1.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
+                            <p>The statblock "{{ npcDescriptionPart1.statblock_name }}" was not found. It may have been
+                                deleted
+                                or renamed in the Statblock Generator.</p>
                             <div class="button-group">
                                 <cdr-button @click="generateStatblock()" size="small">Regenerate Statblock</cdr-button>
-                                <cdr-button @click="clearStatblockReference()" modifier="secondary" size="small">Clear Reference</cdr-button>
+                                <cdr-button @click="clearStatblockReference()" modifier="secondary" size="small">Clear
+                                    Reference</cdr-button>
                             </div>
                         </div>
 
@@ -310,7 +310,9 @@
                         <!-- Statblock Limit Message -->
                         <div v-if="statblockLimitReached" class="statblock-limit-message">
                             <p><strong>Statblock generation limit reached</strong></p>
-                            <p>You've reached your daily statblock generation limit (5 per 24 hours). Unlock unlimited access below.</p>
+                            <p>You've reached your daily statblock generation limit (5 per 24 hours). Unlock unlimited
+                                access
+                                below.</p>
                         </div>
 
                         <!-- Statblock Saved Message -->
@@ -1428,8 +1430,8 @@ $active-border-color: #007BFF;
     color: $cdr-color-text-primary;
     max-width: 940px;
     width: 100%;
-    margin: 20px auto;
-    padding: 2px 30px 30px 30px;
+    margin: 20px auto 0;
+    padding: 2px 30px 0;
 }
 
 .location-description {

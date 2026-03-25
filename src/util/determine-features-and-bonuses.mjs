@@ -203,6 +203,37 @@ export default function determineFeaturesAndBonuses(rarity, itemType) {
       }
       break;
 
+    case 'Artifact':
+      // Artifact items: Campaign-defining relics with major drawbacks
+      // +3 bonus (consistent), 5-6 legendary effects with serious consequences
+      // Examples: Eye of Vecna, Hand of Vecna, Book of Vile Darkness, Wand of Orcus
+      if (supportsBonus) {
+        bonus = '+3';
+        features = {
+          feature_name_1: 'legendary_magical_effect',
+          feature_name_2: 'legendary_magical_effect',
+          feature_name_3: 'legendary_magical_effect',
+          feature_name_4: 'very_powerful_magical_effect',
+          feature_name_5: 'powerful_magical_effect',
+        };
+        // 50% chance for a sixth feature (artifacts are campaign-defining)
+        if (Math.random() < 0.5) {
+          features.feature_name_6 = 'powerful_magical_effect';
+        }
+      } else {
+        // Non-combat artifacts get many legendary features
+        features = {
+          feature_name_1: 'legendary_magical_effect',
+          feature_name_2: 'legendary_magical_effect',
+          feature_name_3: 'legendary_magical_effect',
+          feature_name_4: 'very_powerful_magical_effect',
+          feature_name_5: 'very_powerful_magical_effect',
+        };
+        // Always include a sixth feature for non-combat artifacts
+        features.feature_name_6 = 'powerful_magical_effect';
+      }
+      break;
+
     default:
       features = { Error: 'Rarity not recognized.' };
   }

@@ -2,28 +2,24 @@
   <div class="layout-wrapper">
     <ToolNavigation />
     <div class="app-container">
-    <!-- Overlay to close sidebar on click (mobile only) -->
-    <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
+      <!-- Overlay to close sidebar on click (mobile only) -->
+      <div class="overlay" v-show="isSidebarVisible && windowWidth <= 768" @click="isSidebarVisible = false"></div>
 
-    <!-- Sidebar -->
-    <div class="sidebar" :style="sidebarStyle">
-      <slot name="sidebar"></slot>
+      <!-- Sidebar -->
+      <div class="sidebar" :class="{ flexible: flexibleSidebar }" :style="sidebarStyle">
+        <slot name="sidebar"></slot>
+      </div>
+
+      <!-- Main Content -->
+      <slot></slot>
+
+      <!-- Bottom Menu Button for Mobile -->
+      <button class="mobile-menu-button" v-show="windowWidth <= 768" @click="isSidebarVisible = !isSidebarVisible"
+        :class="{ active: isSidebarVisible }" aria-label="Toggle menu">
+        <icon-navigation-menu inherit-color />
+        <span class="button-label">Menu</span>
+      </button>
     </div>
-
-    <!-- Main Content -->
-    <slot></slot>
-
-    <!-- Bottom Menu Button for Mobile -->
-    <button
-      class="mobile-menu-button"
-      v-show="windowWidth <= 768"
-      @click="isSidebarVisible = !isSidebarVisible"
-      :class="{ active: isSidebarVisible }"
-      aria-label="Toggle menu">
-      <icon-navigation-menu inherit-color />
-      <span class="button-label">Menu</span>
-    </button>
-  </div>
 
     <!-- Mobile Bottom Bar -->
     <div class="mobile-bottom-bar">
@@ -45,8 +41,8 @@
       </button>
     </div>
 
-    <!-- Footer -->
-    <footer class="ogl-footer">
+    <!-- Footer (hidden when Genesis handles it) -->
+    <footer v-if="showFooter" class="ogl-footer">
       <div class="footer-title">Kenji's Game Master Tools</div>
       <div class="footer-links">
         <cdr-link href="https://cros.land" target="_blank">Blog</cdr-link>
@@ -56,7 +52,8 @@
         <cdr-link href="https://www.patreon.com/c/ai_rpg_tookit" target="_blank">Patreon</cdr-link>
       </div>
       <div class="ogl-text">
-        This content uses the D&D 5e SRD under the <cdr-link href="https://cros.land/ogl" target="_blank">Open Gaming License</cdr-link>
+        This content uses the D&D 5e SRD under the <cdr-link href="https://cros.land/ogl" target="_blank">Open Gaming
+          License</cdr-link>
       </div>
     </footer>
   </div>
@@ -73,6 +70,14 @@ const props = defineProps({
   premium: {
     type: Boolean,
     default: false
+  },
+  flexibleSidebar: {
+    type: Boolean,
+    default: false
+  },
+  showFooter: {
+    type: Boolean,
+    default: true
   }
 });
 
@@ -90,7 +95,6 @@ function updateWindowWidth() {
 }
 
 function updateVisibility() {
-  // Show sidebar on tablet and desktop, hide on mobile
   if (windowWidth.value > 768) {
     isSidebarVisible.value = true;
   } else {
@@ -123,7 +127,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', updateWindowWidth);
 });
 
-// Lock body scroll when sidebar is open on mobile
 watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
   if (width <= 768 && sidebarOpen) {
     document.body.style.overflow = 'hidden';
@@ -163,6 +166,11 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
     flex-direction: column;
     z-index: 1001;
     overflow: hidden;
+
+    &.flexible {
+      height: auto;
+      min-height: 200px;
+    }
   }
 
   .mobile-menu-button {
