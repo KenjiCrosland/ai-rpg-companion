@@ -1,6 +1,6 @@
 <template>
   <div class="statblock-fuzzy-search">
-    <div class="input-wrapper">
+    <div class="input-wrapper" :class="{ 'statblock-field-highlight': shouldHighlight }" ref="inputWrapperRef">
       <!-- Using CdrInput for consistency with the main form field -->
       <cdr-input :id="inputId" v-model="displayValue" :label="label" background="secondary" :placeholder="placeholder"
         autocomplete="off" :readonly="!!selectedStatblock" @focus="handleFocus" @blur="handleBlur" @input="handleInput">
@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { CdrInput } from '@rei/cedar';
 
 const props = defineProps({
@@ -63,6 +63,10 @@ const props = defineProps({
   inputId: {
     type: String,
     default: 'statblock-search'
+  },
+  highlightOnMount: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -72,6 +76,8 @@ const searchQuery = ref('');
 const showDropdown = ref(false);
 const selectedStatblock = ref(props.modelValue);
 const allStatblocks = ref([]);
+const shouldHighlight = ref(false);
+const inputWrapperRef = ref(null);
 
 // Display value - shows search query or selected statblock
 const displayValue = computed({
@@ -100,6 +106,29 @@ onMounted(() => {
   // Initialize with modelValue if provided
   if (props.modelValue) {
     selectedStatblock.value = props.modelValue;
+  }
+});
+
+// Watch for highlight animation trigger from parent
+watch(() => props.highlightOnMount, async (newValue) => {
+  if (newValue && selectedStatblock.value) {
+    await nextTick();
+
+    // Scroll field into view
+    if (inputWrapperRef.value) {
+      inputWrapperRef.value.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+
+    // Trigger highlight animation
+    shouldHighlight.value = true;
+
+    // Remove highlight class after animation completes (1.5s)
+    setTimeout(() => {
+      shouldHighlight.value = false;
+    }, 1500);
   }
 });
 
@@ -264,11 +293,11 @@ function handleBlur() {
 }
 
 .search-result-item:hover {
-  background: rgba(139, 26, 26, 0.04);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .search-result-item:active {
-  background: rgba(139, 26, 26, 0.08);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .result-name {
@@ -300,5 +329,22 @@ function handleBlur() {
     min-width: 44px;
     min-height: 44px;
   }
+}
+
+/* Highlight animation for deep link pre-population */
+@keyframes field-highlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+  }
+}
+
+.statblock-field-highlight {
+  animation: field-highlight 1.5s ease-out;
 }
 </style>

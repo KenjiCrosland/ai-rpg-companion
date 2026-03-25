@@ -117,7 +117,7 @@ const copyAsImprovedInitiative = () => {
 
 .exports-section {
   max-width: 850px;
-  margin: 2rem 0;
+  margin: 2rem auto;
   padding: 2rem;
   background-color: $cdr-color-background-secondary;
   border-radius: 8px;

@@ -121,7 +121,10 @@
               <EncounterMonsterList :monsters="encounterMonsters" :party-size="totalPartySize"
                 :difficulty-thresholds="difficultyThresholds" :raw-xp="rawXp" :adjusted-xp="adjustedXp"
                 :difficulty-rating="difficultyRating" :encounter-multiplier="currentEncounterMultiplier"
-                @update-monsters="encounterMonsters = $event" />
+                :highlight-on-mount="highlightDeepLink"
+                :highlight-index="highlightMonsterIndex"
+                @update-monsters="encounterMonsters = $event"
+                @highlight-complete="highlightMonsterIndex = -1" />
             </div>
           </section>
 
@@ -415,6 +418,8 @@ function getEncounterMultiplier(monsterCount, partySize) {
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const encounterMonsters = ref([]);
+const highlightDeepLink = ref(false);
+const highlightMonsterIndex = ref(-1);
 const partyGroups = ref([{ players: null, level: null }]);
 const location = ref('');
 const loading = ref(false);
@@ -540,8 +545,12 @@ function addMonster(monster) {
       ...encounterMonsters.value[existingIndex],
       quantity: encounterMonsters.value[existingIndex].quantity + 1
     };
+    // Highlight the existing monster that was incremented
+    highlightMonsterIndex.value = existingIndex;
   } else {
     encounterMonsters.value.push({ ...monster, quantity: 1 });
+    // Highlight the newly added monster (last in array)
+    highlightMonsterIndex.value = encounterMonsters.value.length - 1;
   }
 }
 
@@ -1294,8 +1303,9 @@ onMounted(async () => {
   loadPartyConfig();
 
   // Check for monster query parameter from statblock generator
-  const urlParams = new URLSearchParams(window.location.search);
-  const monsterName = urlParams.get('monster');
+  const { getNavigationParams } = await import('@/util/navigation.mjs');
+  const params = getNavigationParams();
+  const monsterName = params.monster;
 
   if (monsterName) {
     try {
@@ -1318,9 +1328,15 @@ onMounted(async () => {
         // Add monster to encounter with quantity 1
         encounterMonsters.value = [{ ...foundMonster, quantity: 1 }];
 
-        // Clear query param to prevent re-adding on refresh
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
+        // Enable highlight animation for deep link (using both methods for consistency)
+        highlightDeepLink.value = true;
+        highlightMonsterIndex.value = 0;
+
+        // Clear query param to prevent re-adding on refresh (production only)
+        if (window.location.search) {
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        }
       }
     } catch (error) {
       console.error('Failed to load monster from query param:', error);

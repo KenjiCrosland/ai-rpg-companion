@@ -173,16 +173,21 @@
       </div>
     </div>
 
-    <!-- Footer -->
-    <div class="npc-card-footer">
-      <button v-if="showDelete && !loadingDescription && !loadingRelationships" class="npc-footer-link npc-delete-text"
-        @click="$emit('delete')">
-        Delete NPC
-      </button>
-      <div v-else></div>
-      <a v-if="npcGeneratorLink && !loadingDescription" :href="npcGeneratorLink" class="npc-footer-link">
-        View in NPC Generator
-      </a>
+    <!-- Footer Bar -->
+    <div v-if="!loadingDescription && !loadingRelationships && !isEditing" class="card-footer-bar">
+      <div class="card-footer-bar__actions">
+        <CardFooterAction v-if="npcGeneratorLink" @click="navigateToNPCGenerator">
+          <template #icon>📝</template>
+          View in NPC Generator
+        </CardFooterAction>
+
+        <!-- Add other NPC-specific actions here as needed -->
+      </div>
+
+      <CardFooterAction v-if="showDelete" @click="$emit('delete')" variant="danger">
+        <template #icon>🗑️</template>
+        Delete
+      </CardFooterAction>
     </div>
   </div>
 </template>
@@ -190,6 +195,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import CardFooterAction from './CardFooterAction.vue';
 
 const props = defineProps({
   // NPC data in normalized format
@@ -439,6 +445,12 @@ function generateRelationship() {
   // Clear form after emit (parent will handle the actual generation)
   relationshipForm.value.name = '';
   relationshipForm.value.description = '';
+}
+
+function navigateToNPCGenerator() {
+  if (npcGeneratorLink.value) {
+    window.location.href = npcGeneratorLink.value;
+  }
 }
 </script>
 
@@ -710,37 +722,29 @@ function generateRelationship() {
   border-radius: 3px;
 }
 
-/* Footer */
-.npc-card-footer {
-  border-top: 1px solid #c9b99a;
-  /* Priority 5: Increase horizontal padding */
-  padding: 0.625rem 2rem 1.5rem;
+/* Footer bar for card actions */
+.card-footer-bar {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: #f4f0e8;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid #e0d6c2;
+  background: rgba(0, 0, 0, 0.02);
 }
 
-.npc-footer-link {
-  font-size: 1.2rem;
-  color: #7b2d26;
-  text-decoration: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+.card-footer-bar__actions {
+  display: flex;
+  gap: 0.25rem;
 }
 
-.npc-footer-link:hover {
-  text-decoration: underline;
-}
+@media (max-width: 480px) {
+  .card-footer-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 
-.npc-delete-text {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  color: #8a7e6b;
-}
-
-.npc-delete-text:hover {
-  color: #7b2d26;
+  .card-footer-bar__actions {
+    flex-wrap: wrap;
+  }
 }
 </style>

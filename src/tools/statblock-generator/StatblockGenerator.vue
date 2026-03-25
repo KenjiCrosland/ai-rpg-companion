@@ -111,23 +111,11 @@
       </cdr-toggle-group>
       <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
         :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
-        @update-monster="updateMonster" />
-
-      <!-- Action bar: Move + Delete -->
-      <div class="action-bar" v-if="monster && !loadingPart2">
-        <cdr-button modifier="secondary" @click="showFolderMover = !showFolderMover">
-          {{ showFolderMover ? 'Cancel' : 'Move to Folder' }}
-        </cdr-button>
-        <cdr-button modifier="secondary" @click="useInEncounter">
-          Use in Encounter
-        </cdr-button>
-        <cdr-button modifier="secondary" @click="createNPC">
-          Create NPC
-        </cdr-button>
-        <cdr-button modifier="dark" @click="deleteStatblock">
-          Delete Statblock
-        </cdr-button>
-      </div>
+        @update-monster="updateMonster"
+        @move-to-folder="showFolderMover = !showFolderMover"
+        @use-in-encounter="useInEncounter"
+        @create-npc="createNPC"
+        @delete="deleteStatblock" />
 
       <!-- Inline folder mover (appears when toggled) -->
       <div class="folder-mover" v-if="showFolderMover && monster && !loadingPart2">
@@ -176,9 +164,6 @@
         </div>
       </div>
     </div>
-    <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster()">New
-      Monster
-      Statblock</cdr-button>
 
     <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
       currentApp="monsters" />
@@ -205,6 +190,7 @@ import creatureTemplates from '@/data/creatureTemplates.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { renameStatblockReferences } from '@/util/statblock-storage.mjs';
+import { navigateToTool } from '@/util/navigation.mjs';
 import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
@@ -470,42 +456,19 @@ function handleFolderMove() {
 
 function useInEncounter() {
   if (!monster.value) return;
-
-  // Navigate to encounter generator with monster name as query param
-  const monsterName = encodeURIComponent(monster.value.name);
-
-  // Use localhost in dev, production URL in prod
-  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const baseUrl = isDev
-    ? 'http://localhost:5173/encounter.html'
-    : 'https://cros.land/dnd-5e-encounter-generator/';
-
-  window.location.href = `${baseUrl}?monster=${monsterName}`;
+  navigateToTool('encounter-generator', {
+    monster: monster.value.name
+  });
 }
 
 function createNPC() {
   if (!monster.value) return;
 
-  // Navigate to NPC generator with statblock info as query params
-  const statblockName = encodeURIComponent(monster.value.name);
-  const statblockFolder = encodeURIComponent(activeFolder.value || 'Uncategorized');
-
-  // Use localhost in dev, production URL in prod
-  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-  if (isDev) {
-    // In dev mode, pass statblock info via localStorage (query params don't survive page reload)
-    localStorage.setItem('dev-current-page', 'npc-generator');
-    localStorage.setItem('dev-statblock-link', JSON.stringify({
-      statblock: decodeURIComponent(statblockName),
-      folder: decodeURIComponent(statblockFolder)
-    }));
-    window.location.href = `/`;
-  } else {
-    // In production, deep link to NPC generator with query params
-    const baseUrl = 'https://cros.land/rpg-ai-npc-generator/';
-    window.location.href = `${baseUrl}?statblock=${statblockName}&folder=${statblockFolder}`;
-  }
+  // Navigate to NPC generator with statblock info
+  navigateToTool('npc-generator', {
+    statblock: monster.value.name,
+    folder: activeFolder.value || 'Uncategorized'
+  });
 }
 
 async function deleteStatblock() {
@@ -642,12 +605,6 @@ async function generateStatblock() {
 <style lang="scss" scoped>
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 
-
-.new-monster-button {
-  min-width: 210px;
-  margin: 2rem;
-  height: 4rem;
-}
 
 .sidebar-content {
   $background-color: #f4f4f4;

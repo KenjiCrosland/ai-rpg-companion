@@ -255,12 +255,38 @@
         <div v-if="loadingPart2" class="statblock">
             <StatblockSkeletonPtTwo />
         </div>
+
+        <!-- Footer Bar -->
+        <div v-if="monster && !loadingPart2 && !readonly" class="card-footer-bar">
+            <div class="card-footer-bar__actions">
+                <CardFooterAction @click="$emit('move-to-folder')">
+                    <template #icon>📁</template>
+                    Move to Folder
+                </CardFooterAction>
+
+                <CardFooterAction @click="$emit('use-in-encounter')">
+                    <template #icon>⚔️</template>
+                    Use in Encounter
+                </CardFooterAction>
+
+                <CardFooterAction @click="$emit('create-npc')">
+                    <template #icon>👤</template>
+                    Create NPC
+                </CardFooterAction>
+            </div>
+
+            <CardFooterAction @click="$emit('delete')" variant="danger">
+                <template #icon>🗑️</template>
+                Delete
+            </CardFooterAction>
+        </div>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
 import { CdrButton } from '@rei/cedar';
+import CardFooterAction from './CardFooterAction.vue';
 import CRtoXP from '../data/cr-to-xp.json';
 import { generateGptResponse } from "../util/open-ai.mjs";
 import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt, singleAbilityPrompt, singleActionPrompt, singleLegendaryActionPrompt } from "../prompts/statblock-edit-prompts.mjs";
@@ -304,7 +330,7 @@ const props = defineProps({
 });
 
 const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `width: ${props.width}px`);
-const emit = defineEmits(['update-monster']);
+const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete']);
 
 const showEditButton = ref(false);
 const isEditing = ref(false);
@@ -864,6 +890,38 @@ textarea {
         &.one_column {
             width: inherit;
         }
+    }
+}
+
+/* Footer bar for card actions */
+.card-footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid #e0d6c2;
+    background: rgba(0, 0, 0, 0.02);
+    margin: 0 -24px -16px -24px; /* Extend to edges of container (container has 24px horizontal, 16px bottom padding) */
+}
+
+/* In two-column layout, footer spans both columns */
+.container.two_columns .card-footer-bar {
+    grid-column: span 2;
+}
+
+.card-footer-bar__actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+@media (max-width: 480px) {
+    .card-footer-bar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .card-footer-bar__actions {
+        flex-wrap: wrap;
     }
 }
 </style>

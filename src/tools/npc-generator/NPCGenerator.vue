@@ -75,6 +75,7 @@
                             label="Associated Statblock"
                             placeholder="Search for a statblock..."
                             :optional="true"
+                            :highlight-on-mount="isDeepLink"
                         />
 
                         <cdr-button type="submit" :disabled="loadingPart1" class="generate-button">Generate
@@ -320,6 +321,7 @@ import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { normalizeGeneratorNPC, migrateNPCIds, migrateSourceTypes, saveNPCToDungeon, findNPCLocations, deleteNPCFromAllLocations } from '@/util/npc-storage.mjs';
+import { getNavigationParams } from '@/util/navigation.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import { buildStatblockContext } from './utils/statblock-context.mjs';
 import { addReference } from '@/util/reference-storage.mjs';
@@ -357,6 +359,7 @@ const isSpellcaster = ref(false);
 const statblockLimitReached = ref(false);
 const loadingNewRelationship = ref(false);
 const selectedStatblock = ref(null);
+const isDeepLink = ref(false);
 const showAttachStatblockModal = ref(false);
 const attachStatblockSelection = ref(null);
 
@@ -501,42 +504,41 @@ const newFolderName = ref('');
 onMounted(async () => {
     loadNPCsFromLocalStorage();
 
-    // Check for URL parameters to load specific NPC or statblock
-    const urlParams = new URLSearchParams(window.location.search);
-    const folder = urlParams.get('folder');
-    const npcName = urlParams.get('npc_name');
-    const statblockName = urlParams.get('statblock');
+    // Get navigation parameters (works in both dev and production)
+    const params = getNavigationParams();
 
     // Handle statblock deep link from statblock generator
-    if (statblockName && folder) {
-        // Use nextTick to ensure StatblockFuzzySearch component has mounted and loaded its data
+    if (params.statblock && params.folder) {
+        // Use nextTick to ensure StatblockFuzzySearch component has mounted
         await nextTick();
 
-        const statblock = getStatblockFromStorage(decodeURIComponent(statblockName), decodeURIComponent(folder));
+        const statblock = getStatblockFromStorage(params.statblock, params.folder);
 
         if (statblock) {
             selectedStatblock.value = {
                 name: statblock.name,
-                folder: decodeURIComponent(folder),
+                folder: params.folder,
                 statblock: statblock
             };
+            // Enable highlight animation for deep link
+            isDeepLink.value = true;
         }
     }
 
-    // Handle NPC deep link
-    if (folder && npcName) {
+    // Handle NPC deep link (keep existing NPC-specific deep linking)
+    if (params.folder && params.npc_name) {
         // Find the NPC in the specified folder
-        const folderNPCs = npcs.value[folder];
+        const folderNPCs = npcs.value[params.folder];
         if (folderNPCs) {
             const npcIndex = folderNPCs.findIndex(npc =>
-                npc.npcDescriptionPart1?.character_name === npcName
+                npc.npcDescriptionPart1?.character_name === params.npc_name
             );
             if (npcIndex !== -1) {
                 // Open the folder accordion
-                openedFolders.value[folder] = true;
+                openedFolders.value[params.folder] = true;
 
                 // Select the NPC
-                selectNPC(folder, npcIndex);
+                selectNPC(params.folder, npcIndex);
 
                 // Clean up URL params
                 window.history.replaceState({}, '', window.location.pathname);
