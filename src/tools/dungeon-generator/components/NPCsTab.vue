@@ -28,6 +28,7 @@
                 :npc="normalizeDungeonNPC(npc)"
                 :origin="dungeonStore.currentDungeon.dungeonOverview?.name"
                 :source-type="'dungeon'"
+                :display-type="'dungeon'"
                 :is-editing="editingNPCIndex === index"
                 :show-relationship-generator="true"
                 :is-generating-relationship="loadingNewRelationship && loadingRelationshipForIndex === index"
@@ -332,14 +333,21 @@ const handleStorageChange = (event) => {
   }
 };
 
+// Listen for same-tab NPC storage updates (custom event)
+const handleNPCStorageUpdate = () => {
+  storageVersion.value++;
+};
+
 onMounted(() => {
   // Refresh on mount
   storageVersion.value++;
   window.addEventListener('storage', handleStorageChange);
+  window.addEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 
 onUnmounted(() => {
   window.removeEventListener('storage', handleStorageChange);
+  window.removeEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 
 // Whenever the NPC list changes, make sure our form data is in sync

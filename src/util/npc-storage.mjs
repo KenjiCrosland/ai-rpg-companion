@@ -98,6 +98,12 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
   }
 
   localStorage.setItem('npcGeneratorNPCs', JSON.stringify(stored));
+
+  // Dispatch custom event for same-tab updates
+  // (storage event only fires for other tabs)
+  window.dispatchEvent(new CustomEvent('npc-storage-updated', {
+    detail: { npcId: npc.npc_id, action: 'save', folderName }
+  }));
 }
 
 /**
@@ -473,6 +479,12 @@ export function deleteNPCFromAllLocations(npcId) {
     }
 
     localStorage.setItem('dungeons', JSON.stringify(dungeons));
+
+    // Dispatch custom event for same-tab updates
+    // (storage event only fires for other tabs)
+    window.dispatchEvent(new CustomEvent('npc-storage-updated', {
+      detail: { npcId, action: 'delete', results }
+    }));
   } catch (error) {
     console.error('Error deleting NPC from all locations:', error);
   }

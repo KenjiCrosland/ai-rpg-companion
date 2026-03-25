@@ -126,8 +126,8 @@
                 <NPCCard
                     v-if="loadingPart1 || npcDescriptionPart1"
                     :npc="normalizeGeneratorNPC(currentNPC)"
-                    :origin="currentNPC?.typeOfPlace"
-                    :source-type="currentNPC?.sourceType"
+                    :origin="computedOrigin"
+                    :source-type="computedSourceType"
                     :npc-id="currentNPC?.npc_id || currentNPC?.id"
                     :is-editing="isEditingNPC"
                     :show-relationship-generator="true"
@@ -400,6 +400,52 @@ const currentNPC = computed(() => {
     return npcs.value[folderName][index];
 });
 
+// Computed origin: dungeon or setting name (not typeOfPlace prompt)
+const computedOrigin = computed(() => {
+    const npc = currentNPC.value;
+    if (!npc) return null;
+
+    const folder = npc.npcDescriptionPart1?.statblock_folder;
+    if (!folder) return null;
+
+    // Check if folder matches a dungeon name
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+    if (dungeons.some(d => d.dungeonOverview?.name === folder)) {
+        return folder;
+    }
+
+    // Check if folder matches a setting name
+    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+    if (settings.some(s => s.place_name === folder)) {
+        return folder;
+    }
+
+    return null;
+});
+
+// Computed source type: 'dungeon' or 'setting'
+const computedSourceType = computed(() => {
+    const npc = currentNPC.value;
+    if (!npc) return null;
+
+    const folder = npc.npcDescriptionPart1?.statblock_folder;
+    if (!folder) return null;
+
+    // Check if it's a dungeon
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+    if (dungeons.some(d => d.dungeonOverview?.name === folder)) {
+        return 'dungeon';
+    }
+
+    // Check if it's a setting
+    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+    if (settings.some(s => s.place_name === folder)) {
+        return 'setting';
+    }
+
+    return null;
+});
+
 // Sidebar responsive
 const showDataManagerModal = ref(false);
 const showHomebreweryLink = ref(false);
@@ -408,8 +454,32 @@ const showHomebreweryLink = ref(false);
 const isEditingNPC = ref(false);
 
 // Watch for statblock selection and auto-set folder
-watch(selectedStatblock, (newStatblock) => {
-    if (newStatblock?.folder && newStatblock.folder !== 'Uncategorized') {
+watch(selectedStatblock, (newStatblock, oldStatblock) => {
+    const currentFolder = activeFolder.value;
+
+    // Clean up empty folder if deselecting statblock
+    if (!newStatblock) {
+        if (currentFolder &&
+            currentFolder !== 'Uncategorized' &&
+            npcs.value[currentFolder]?.length === 0) {
+            delete npcs.value[currentFolder];
+            delete openedFolders.value[currentFolder];
+            activeFolder.value = 'Uncategorized';
+        }
+        return;
+    }
+
+    // Handle statblock selection
+    if (newStatblock.folder && newStatblock.folder !== 'Uncategorized') {
+        // If the previous active folder is empty and not "Uncategorized", remove it
+        if (currentFolder &&
+            currentFolder !== 'Uncategorized' &&
+            currentFolder !== newStatblock.folder &&
+            npcs.value[currentFolder]?.length === 0) {
+            delete npcs.value[currentFolder];
+            delete openedFolders.value[currentFolder];
+        }
+
         // Set the active folder to match the statblock's folder
         activeFolder.value = newStatblock.folder;
 
@@ -1108,8 +1178,12 @@ function displayNPCDescription({ part, npcDescription }) {
         const dungeonName = npcDescriptionPart1.value?.statblock_folder || activeFolder.value;
 
         if (dungeonName && dungeonName !== 'Uncategorized') {
+            // Get the NPC ID from the saved NPC in the npcs array (not from npcDescriptionPart1)
+            const savedNPC = npcs.value[activeFolder.value]?.[currentNPCIndex.value];
+            const npcId = savedNPC?.npc_id || null;
+
             const currentNPC = {
-                npc_id: npcDescriptionPart1.value.npc_id,
+                npc_id: npcId,
                 npcDescriptionPart1: npcDescriptionPart1.value,
                 npcDescriptionPart2: npcDescriptionPart2.value,
                 typeOfPlace: typeOfPlace.value

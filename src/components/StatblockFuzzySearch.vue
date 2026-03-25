@@ -1,60 +1,47 @@
 <template>
   <div class="statblock-fuzzy-search">
-    <label :for="inputId" class="search-label">
-      {{ label }}
-      <span v-if="optional" class="optional-text">(Optional)</span>
-    </label>
-    <div class="search-wrapper">
-      <input
-        :id="inputId"
-        v-model="searchQuery"
-        type="text"
-        :placeholder="placeholder"
-        class="search-input"
-        @focus="showDropdown = true"
-        @blur="handleBlur"
-        @input="handleInput"
-      />
-      <button
-        v-if="selectedStatblock"
-        type="button"
-        class="clear-button"
-        @click="clearSelection"
-        title="Clear selection"
-      >
+    <div class="input-wrapper">
+      <!-- Using CdrInput for consistency with the main form field -->
+      <cdr-input :id="inputId" v-model="displayValue" :label="label" background="secondary" :placeholder="placeholder"
+        autocomplete="off" :readonly="!!selectedStatblock" @focus="handleFocus" @blur="handleBlur" @input="handleInput">
+        <template v-if="optional" #label>
+          {{ label }} <span class="optional-text">(Optional)</span>
+        </template>
+      </cdr-input>
+
+      <!-- Clear button - positioned inside the input -->
+      <button v-if="selectedStatblock" type="button" class="clear-button" @click="clearSelection"
+        title="Clear selection" aria-label="Clear selection">
         ×
       </button>
     </div>
 
-    <!-- Selected statblock display -->
-    <div v-if="selectedStatblock && !showDropdown" class="selected-statblock">
-      <strong>{{ selectedStatblock.name }}</strong>
-      <span class="folder-badge">{{ selectedStatblock.folder }}</span>
-    </div>
-
-    <!-- Dropdown results -->
-    <div v-if="showDropdown && filteredStatblocks.length > 0" class="search-results">
-      <button
-        v-for="(item, index) in filteredStatblocks"
-        :key="`${item.folder}_${item.name}`"
-        type="button"
-        class="search-result-item"
-        @mousedown.prevent="selectStatblock(item)"
-      >
-        <div class="result-name">{{ item.name }}</div>
-        <div class="result-folder">{{ item.folder }}</div>
+    <!-- Dropdown results - absolute positioned overlay -->
+    <div v-if="showDropdown && !selectedStatblock && (filteredStatblocks.length > 0 || searchQuery)"
+      class="search-results">
+      <!-- Results list -->
+      <button v-for="(item, index) in filteredStatblocks" :key="`${item.folder}_${item.name}`" type="button"
+        class="search-result-item" @mousedown.prevent="selectStatblock(item)">
+        <span class="result-name">{{ item.name }}</span>
+        <span class="result-folder"> · {{ item.folder }}</span>
       </button>
-    </div>
 
-    <!-- No results message -->
-    <div v-if="showDropdown && searchQuery && filteredStatblocks.length === 0" class="no-results">
-      No statblocks found matching "{{ searchQuery }}"
+      <!-- No results message -->
+      <div v-if="searchQuery && filteredStatblocks.length === 0" class="no-results">
+        No statblocks found
+      </div>
+
+      <!-- Empty state hint -->
+      <div v-if="!searchQuery && allStatblocks.length === 0" class="no-results">
+        No statblocks available
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { CdrInput } from '@rei/cedar';
 
 const props = defineProps({
   modelValue: {
@@ -86,14 +73,24 @@ const showDropdown = ref(false);
 const selectedStatblock = ref(props.modelValue);
 const allStatblocks = ref([]);
 
+// Display value - shows search query or selected statblock
+const displayValue = computed({
+  get() {
+    if (selectedStatblock.value) {
+      return `${selectedStatblock.value.name} · ${selectedStatblock.value.folder}`;
+    }
+    return searchQuery.value;
+  },
+  set(value) {
+    if (!selectedStatblock.value) {
+      searchQuery.value = value;
+    }
+  }
+});
+
 // Watch for external changes to modelValue
 watch(() => props.modelValue, (newValue) => {
   selectedStatblock.value = newValue;
-  if (newValue) {
-    searchQuery.value = newValue.name;
-  } else {
-    searchQuery.value = '';
-  }
 }, { immediate: true });
 
 // Load all statblocks from localStorage
@@ -103,7 +100,6 @@ onMounted(() => {
   // Initialize with modelValue if provided
   if (props.modelValue) {
     selectedStatblock.value = props.modelValue;
-    searchQuery.value = props.modelValue.name;
   }
 });
 
@@ -137,7 +133,10 @@ function loadStatblocks() {
 // Filter statblocks based on search query
 const filteredStatblocks = computed(() => {
   if (!searchQuery.value) {
-    return allStatblocks.value.slice(0, 20); // Show first 20 if no query
+    // Show all statblocks when focused but no query (if manageable count)
+    return allStatblocks.value.length <= 30
+      ? allStatblocks.value
+      : allStatblocks.value.slice(0, 20);
   }
 
   const query = searchQuery.value.toLowerCase();
@@ -151,7 +150,7 @@ const filteredStatblocks = computed(() => {
 
 function selectStatblock(item) {
   selectedStatblock.value = item;
-  searchQuery.value = item.name;
+  searchQuery.value = '';
   showDropdown.value = false;
   emit('update:modelValue', item);
 }
@@ -159,15 +158,19 @@ function selectStatblock(item) {
 function clearSelection() {
   selectedStatblock.value = null;
   searchQuery.value = '';
+  showDropdown.value = false;
   emit('update:modelValue', null);
 }
 
+function handleFocus() {
+  if (!selectedStatblock.value) {
+    showDropdown.value = true;
+  }
+}
+
 function handleInput() {
-  showDropdown.value = true;
-  // Clear selection if user is typing a new query
-  if (selectedStatblock.value && searchQuery.value !== selectedStatblock.value.name) {
-    selectedStatblock.value = null;
-    emit('update:modelValue', null);
+  if (!selectedStatblock.value) {
+    showDropdown.value = true;
   }
 }
 
@@ -185,121 +188,117 @@ function handleBlur() {
   margin-bottom: 1.5rem;
 }
 
-.search-label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.optional-text {
-  font-weight: normal;
-  color: #666;
-  font-size: 0.85rem;
-}
-
-.search-wrapper {
+/* Input wrapper for positioning clear button */
+.input-wrapper {
   position: relative;
 }
 
-.search-input {
-  width: 100%;
-  padding: 0.75rem;
+/* Optional text styling */
+.optional-text {
+  font-weight: normal;
+  color: #6b7280;
+  font-size: 0.9em;
+}
+
+/* Add padding to Cedar's input element to make room for clear button */
+.input-wrapper :deep(.cdr-input__input) {
   padding-right: 2.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  background: white;
 }
 
-.search-input:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+/* Folder text inside the input - muted */
+.input-wrapper :deep(.cdr-input__input[readonly]) {
+  cursor: default;
+  color: #333;
 }
 
+/* Clear button - positioned inside the input field */
 .clear-button {
   position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 0.75rem;
+  bottom: -.1rem;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   color: #999;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 
 .clear-button:hover {
   color: #333;
 }
 
-.selected-statblock {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: #f0f8ff;
-  border: 1px solid #4a90e2;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.folder-badge {
-  padding: 0.25rem 0.5rem;
-  background: #e8e8e8;
-  border-radius: 3px;
-  font-size: 0.75rem;
-  color: #666;
-}
-
+/* Dropdown results - absolute overlay with shadow */
 .search-results {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 0.25rem);
   left: 0;
   right: 0;
   background: white;
   border: 1px solid #ddd;
-  border-top: none;
-  border-radius: 0 0 4px 4px;
-  max-height: 300px;
+  border-radius: 4px;
+  max-height: 250px;
   overflow-y: auto;
   z-index: 1000;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Result items - compact spacing */
 .search-result-item {
   width: 100%;
-  padding: 0.75rem;
+  padding: 8px 12px;
   border: none;
   background: none;
   text-align: left;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: baseline;
+  transition: background-color 0.15s ease;
 }
 
 .search-result-item:hover {
-  background: #f5f5f5;
+  background: rgba(139, 26, 26, 0.04);
+}
+
+.search-result-item:active {
+  background: rgba(139, 26, 26, 0.08);
 }
 
 .result-name {
-  font-weight: 600;
+  font-size: 1rem;
   color: #333;
 }
 
 .result-folder {
   font-size: 0.85rem;
-  color: #666;
+  color: #6b7280;
 }
 
+/* No results / empty state message */
 .no-results {
   padding: 1rem;
   text-align: center;
-  color: #999;
-  font-style: italic;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* Mobile tap targets */
+@media (max-width: 768px) {
+  .search-result-item {
+    min-height: 44px;
+    padding: 12px;
+  }
+
+  .clear-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 </style>

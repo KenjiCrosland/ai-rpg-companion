@@ -210,6 +210,13 @@ const props = defineProps({
     default: null,
   },
 
+  // Display context ('dungeon', 'setting', or 'generator')
+  // Used to prevent showing links when viewing NPC in its source context
+  displayType: {
+    type: String,
+    default: 'generator',
+  },
+
   // NPC ID for deep linking
   npcId: {
     type: String,
@@ -301,6 +308,10 @@ const hasRelationships = computed(() => {
 // Computed: Link to source generator
 const sourceLink = computed(() => {
   if (!props.sourceType || !props.origin) return null;
+
+  // Don't show link if viewing NPC in its source context
+  // (e.g., viewing a dungeon NPC while in that dungeon)
+  if (props.displayType === props.sourceType) return null;
 
   const paths = {
     dungeon: 'kenjis-dungeon-generator-2-0',

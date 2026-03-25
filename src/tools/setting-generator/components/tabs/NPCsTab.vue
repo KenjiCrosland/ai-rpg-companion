@@ -49,6 +49,8 @@
             v-else-if="npc.read_aloud_description"
             :npc="normalizeSettingNPC(npc)"
             :origin="setting.setting_overview?.name || setting.place_name"
+            :source-type="'setting'"
+            :display-type="'setting'"
             :is-editing="editingNPCIndex === index"
             :show-relationship-generator="true"
             :is-generating-relationship="loadingNewRelationship"
@@ -578,14 +580,21 @@ const handleStorageChange = (event) => {
   }
 };
 
+// Listen for same-tab NPC storage updates (custom event)
+const handleNPCStorageUpdate = () => {
+  storageVersion.value++;
+};
+
 onMounted(() => {
   // Refresh on mount
   storageVersion.value++;
   window.addEventListener('storage', handleStorageChange);
+  window.addEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 
 onUnmounted(() => {
   window.removeEventListener('storage', handleStorageChange);
+  window.removeEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 </script>
 
