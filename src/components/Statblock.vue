@@ -1,5 +1,5 @@
 <template>
-    <div :style="widthStyle" :class="`container ${columns}`" @mouseover="showEditButton = true"
+    <div ref="containerRef" :style="widthStyle" :class="`container ${columns}`" @mouseover="showEditButton = true"
         @mouseleave="showEditButton = false">
         <div v-if="!loadingPart1" class="statblock">
             <div class="creature-heading" :class="{ 'editing': isEditing }">
@@ -271,7 +271,12 @@
 
                 <CardFooterAction @click="$emit('create-npc')">
                     <template #icon>👤</template>
-                    Create NPC
+                    {{ createNpcButtonText }}
+                </CardFooterAction>
+
+                <CardFooterAction @click="$emit('toggle-export')">
+                    <template #icon>📤</template>
+                    Export
                 </CardFooterAction>
             </div>
 
@@ -327,10 +332,18 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    linkedNpcsCount: {
+        type: Number,
+        default: 0,
+    },
 });
 
-const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `width: ${props.width}px`);
-const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete']);
+const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `max-width: ${props.width}px; width: 100%`);
+const createNpcButtonText = computed(() => props.linkedNpcsCount > 0 ? 'Create Another NPC' : 'Create NPC');
+const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export']);
+
+const containerRef = ref(null);
+const containerWidth = ref(850);
 
 const showEditButton = ref(false);
 const isEditing = ref(false);
@@ -601,21 +614,25 @@ async function regenerateLegendaryAction(index) {
     }
 }
 
-const windowWidth = ref(window.innerWidth);
-const onResize = () => {
-    windowWidth.value = window.innerWidth;
-};
-
+// Set up ResizeObserver to measure container width
 onMounted(() => {
-    window.addEventListener('resize', onResize);
+    if (containerRef.value) {
+        const observer = new ResizeObserver(entries => {
+            containerWidth.value = entries[0].contentRect.width;
+            // Emit whether column switching is available
+            emit('can-switch-columns', containerWidth.value >= 700);
+        });
+        observer.observe(containerRef.value);
+
+        onBeforeUnmount(() => {
+            observer.disconnect();
+        });
+    }
 });
 
-onBeforeUnmount(() => {
-    window.removeEventListener('resize', onResize);
-});
-
+// Switch to one column when container is too narrow (< 700px)
 const columns = computed(() => {
-    return windowWidth.value <= 855 ? 'one_column' : props.columns;
+    return containerWidth.value < 700 ? 'one_column' : props.columns;
 });
 </script>
 
@@ -898,7 +915,7 @@ textarea {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 1.5rem;
+    padding: 1rem 1.5rem;
     border-top: 1px solid #e0d6c2;
     background: rgba(0, 0, 0, 0.02);
     margin: 0 -24px -16px -24px; /* Extend to edges of container (container has 24px horizontal, 16px bottom padding) */

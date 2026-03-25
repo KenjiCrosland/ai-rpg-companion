@@ -594,3 +594,107 @@ export function migrateSourceTypes() {
 
   return migratedCount;
 }
+
+/**
+ * One-time migration: Sync all dungeon NPCs to npcGeneratorNPCs if not already there.
+ * Should be called when Dungeon Generator or NPC Generator loads.
+ *
+ * @returns {number} Number of NPCs migrated
+ */
+export function migrateDungeonNPCsToSharedStorage() {
+  try {
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+    let migratedCount = 0;
+
+    for (const dungeon of dungeons) {
+      if (!dungeon.npcs || !Array.isArray(dungeon.npcs)) continue;
+
+      const dungeonTitle = dungeon.dungeonOverview?.name || 'Dungeon NPCs';
+
+      for (const dungeonNPC of dungeon.npcs) {
+        // Skip if NPC doesn't have a full description (just a stub)
+        if (!dungeonNPC.read_aloud_description && !dungeonNPC.description_of_position) {
+          continue;
+        }
+
+        // Convert to canonical format
+        const canonicalNPC = dungeonNPCToCanonical(dungeonNPC, dungeonTitle);
+
+        // Check if NPC already exists in shared storage
+        const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+        const folderNPCs = stored[dungeonTitle] || [];
+
+        const exists = canonicalNPC.npc_id && folderNPCs.some(n =>
+          n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+        );
+
+        if (!exists) {
+          // Save to shared storage
+          saveNPCToStorage(canonicalNPC, dungeonTitle);
+          migratedCount++;
+        }
+      }
+    }
+
+    if (migratedCount > 0) {
+      console.log(`Migrated ${migratedCount} dungeon NPCs to shared storage`);
+    }
+
+    return migratedCount;
+  } catch (error) {
+    console.error('Error migrating dungeon NPCs:', error);
+    return 0;
+  }
+}
+
+/**
+ * One-time migration: Sync all setting NPCs to npcGeneratorNPCs if not already there.
+ * Should be called when Setting Generator or NPC Generator loads.
+ *
+ * @returns {number} Number of NPCs migrated
+ */
+export function migrateSettingNPCsToSharedStorage() {
+  try {
+    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+    let migratedCount = 0;
+
+    for (const setting of settings) {
+      if (!setting.npcs || !Array.isArray(setting.npcs)) continue;
+
+      const settingName = setting.setting_overview?.name || setting.place_name || 'Setting NPCs';
+
+      for (const settingNPC of setting.npcs) {
+        // Skip if NPC doesn't have a full description (just a stub)
+        if (!settingNPC.read_aloud_description && !settingNPC.description_of_position) {
+          continue;
+        }
+
+        // Convert to canonical format
+        const canonicalNPC = settingNPCToCanonical(settingNPC, settingName);
+
+        // Check if NPC already exists in shared storage
+        const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+        const folderNPCs = stored[settingName] || [];
+
+        const exists = canonicalNPC.npc_id && folderNPCs.some(n =>
+          n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+        );
+
+        if (!exists) {
+          // Save to shared storage
+          saveNPCToStorage(canonicalNPC, settingName);
+          migratedCount++;
+        }
+      }
+    }
+
+    if (migratedCount > 0) {
+      console.log(`Migrated ${migratedCount} setting NPCs to shared storage`);
+    }
+
+    return migratedCount;
+  } catch (error) {
+    console.error('Error migrating setting NPCs:', error);
+    return 0;
+  }
+}

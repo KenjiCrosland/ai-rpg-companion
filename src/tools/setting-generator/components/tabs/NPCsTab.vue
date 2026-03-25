@@ -369,20 +369,19 @@ const deleteNPC = async (index) => {
 
   const settingName = props.setting.setting_overview?.name || props.setting.place_name;
 
-  // Check if in settings
-  if (locations.npcGenerator.some(folder => folder === settingName)) {
-    confirmMessage += `- Setting Generator (${settingName})\n`;
-  }
+  // Always show current setting
+  confirmMessage += `- Setting Generator (${settingName})\n`;
 
+  // Show all NPC Generator folders (don't filter out current setting name)
   if (locations.npcGenerator.length > 0) {
-    const otherFolders = locations.npcGenerator.filter(f => f !== settingName);
-    if (otherFolders.length === 1) {
-      confirmMessage += `- NPC Generator (${otherFolders[0]})\n`;
-    } else if (otherFolders.length > 1) {
-      confirmMessage += `- NPC Generator (${otherFolders.length} other folders)\n`;
+    if (locations.npcGenerator.length === 1) {
+      confirmMessage += `- NPC Generator (${locations.npcGenerator[0]})\n`;
+    } else {
+      confirmMessage += `- NPC Generator (${locations.npcGenerator.length} folders)\n`;
     }
   }
 
+  // Show all dungeons
   if (locations.dungeons.length > 0) {
     if (locations.dungeons.length === 1) {
       confirmMessage += `- Dungeon Generator (${locations.dungeons[0]})\n`;
@@ -402,6 +401,9 @@ const deleteNPC = async (index) => {
     // Update local state
     const updatedNPCs = props.setting.npcs.filter((_, i) => i !== index);
     emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+
+    // Show success toast
+    toast.success(`${npcName} deleted from all locations`);
   }
 };
 

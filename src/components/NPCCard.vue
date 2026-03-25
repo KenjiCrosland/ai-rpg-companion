@@ -6,7 +6,7 @@
         <h2 v-if="!loadingDescription" class="npc-card-name">{{ npc.name }}</h2>
         <p v-if="!loadingDescription && (origin || npc.type_info)" class="npc-card-subtitle">
           <span v-if="origin">
-            From <a v-if="sourceLink" :href="sourceLink" class="npc-source-link">{{ origin }}</a>
+            From <a v-if="shouldShowSourceLink" @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ origin }}</a>
             <template v-else>{{ origin }}</template>
           </span>
           <span v-if="origin && npc.type_info && npc.type_info !== origin"> · </span>
@@ -176,7 +176,7 @@
     <!-- Footer Bar -->
     <div v-if="!loadingDescription && !loadingRelationships && !isEditing" class="card-footer-bar">
       <div class="card-footer-bar__actions">
-        <CardFooterAction v-if="npcGeneratorLink" @click="navigateToNPCGenerator">
+        <CardFooterAction v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
           <template #icon>📝</template>
           View in NPC Generator
         </CardFooterAction>
@@ -196,6 +196,7 @@
 import { ref, computed, watch } from 'vue';
 import { CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import CardFooterAction from './CardFooterAction.vue';
+import { navigateToTool } from '@/util/navigation.mjs';
 
 const props = defineProps({
   // NPC data in normalized format
@@ -311,51 +312,22 @@ const hasRelationships = computed(() => {
   return props.npc.relationships && Object.keys(props.npc.relationships).length > 0;
 });
 
-// Computed: Link to source generator
-const sourceLink = computed(() => {
-  if (!props.sourceType || !props.origin) return null;
-
+// Computed: Should show link to source generator?
+const shouldShowSourceLink = computed(() => {
+  if (!props.sourceType || !props.origin) return false;
   // Don't show link if viewing NPC in its source context
-  // (e.g., viewing a dungeon NPC while in that dungeon)
-  if (props.displayType === props.sourceType) return null;
-
-  const paths = {
-    dungeon: 'kenjis-dungeon-generator-2-0',
-    setting: 'rpg-setting-generator-and-world-building-tool'
-  };
-
-  const path = paths[props.sourceType];
-  if (!path) return null;
-
-  const params = new URLSearchParams();
-  params.set('source', props.origin);
-  params.set('tab', 'npcs');
-
-  return `https://cros.land/${path}/?${params.toString()}`;
+  if (props.displayType === props.sourceType) return false;
+  return true;
 });
 
-// Computed: NPC Generator URL with params
-const npcGeneratorLink = computed(() => {
-  // Don't show link if prop is set to false
-  if (!props.showNpcGeneratorLink) {
-    return null;
-  }
-
-  // If URL explicitly provided, use it
-  if (props.npcGeneratorUrl) {
-    return props.npcGeneratorUrl;
-  }
-
-  // Auto-generate URL if we have required fields (origin and name)
-  if (props.origin && props.npc.name) {
-    const base = 'https://cros.land/rpg-ai-npc-generator/';
-    const params = new URLSearchParams();
-    params.set('folder', props.origin);
-    params.set('npc_name', props.npc.name);
-    return `${base}?${params.toString()}`;
-  }
-
-  return null;
+// Computed: Should show link to NPC Generator?
+const shouldShowNpcGeneratorLink = computed(() => {
+  if (!props.showNpcGeneratorLink) return false;
+  // If URL explicitly provided, we can navigate
+  if (props.npcGeneratorUrl) return true;
+  // Or if we have required fields (origin and name)
+  if (props.origin && props.npc.name) return true;
+  return false;
 });
 
 // Edit form state
@@ -447,10 +419,30 @@ function generateRelationship() {
   relationshipForm.value.description = '';
 }
 
+function navigateToSource() {
+  if (!shouldShowSourceLink.value) return;
+
+  const toolMap = {
+    dungeon: 'dungeon-generator',
+    setting: 'setting-generator'
+  };
+
+  const toolName = toolMap[props.sourceType];
+  if (!toolName) return;
+
+  navigateToTool(toolName, {
+    source: props.origin,
+    tab: 'npcs'
+  });
+}
+
 function navigateToNPCGenerator() {
-  if (npcGeneratorLink.value) {
-    window.location.href = npcGeneratorLink.value;
-  }
+  if (!shouldShowNpcGeneratorLink.value) return;
+
+  navigateToTool('npc-generator', {
+    folder: props.origin,
+    npc_name: props.npc.name
+  });
 }
 </script>
 
@@ -727,7 +719,7 @@ function navigateToNPCGenerator() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid #e0d6c2;
   background: rgba(0, 0, 0, 0.02);
 }

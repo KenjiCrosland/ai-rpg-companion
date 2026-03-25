@@ -320,11 +320,11 @@ import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMar
 import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
-import { normalizeGeneratorNPC, migrateNPCIds, migrateSourceTypes, saveNPCToDungeon, findNPCLocations, deleteNPCFromAllLocations } from '@/util/npc-storage.mjs';
+import { normalizeGeneratorNPC, migrateNPCIds, migrateSourceTypes, migrateDungeonNPCsToSharedStorage, migrateSettingNPCsToSharedStorage, saveNPCToDungeon, findNPCLocations, deleteNPCFromAllLocations } from '@/util/npc-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import { buildStatblockContext } from './utils/statblock-context.mjs';
-import { addReference } from '@/util/reference-storage.mjs';
+import { addReference, getReferencesForEntity } from '@/util/reference-storage.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
@@ -408,8 +408,9 @@ const computedOrigin = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    const folder = npc.npcDescriptionPart1?.statblock_folder;
-    if (!folder) return null;
+    // Use the active folder name (where the NPC is stored)
+    const folder = activeFolder.value;
+    if (!folder || folder === 'Uncategorized') return null;
 
     // Check if folder matches a dungeon name
     const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
@@ -431,8 +432,9 @@ const computedSourceType = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    const folder = npc.npcDescriptionPart1?.statblock_folder;
-    if (!folder) return null;
+    // Use the active folder name (where the NPC is stored)
+    const folder = activeFolder.value;
+    if (!folder || folder === 'Uncategorized') return null;
 
     // Check if it's a dungeon
     const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
@@ -539,9 +541,6 @@ onMounted(async () => {
 
                 // Select the NPC
                 selectNPC(params.folder, npcIndex);
-
-                // Clean up URL params
-                window.history.replaceState({}, '', window.location.pathname);
             }
         }
     }
@@ -643,6 +642,18 @@ function loadNPCsFromLocalStorage() {
             // Migrate statblock references from top level to npcDescriptionPart1
             migrateStatblockReferences();
 
+            // Migrate dungeon NPCs to shared storage (for old data compatibility)
+            const dungeonMigratedCount = migrateDungeonNPCsToSharedStorage();
+            if (dungeonMigratedCount > 0) {
+                console.log(`Migrated ${dungeonMigratedCount} dungeon NPCs to shared NPC storage`);
+            }
+
+            // Migrate setting NPCs to shared storage (for old data compatibility)
+            const settingMigratedCount = migrateSettingNPCsToSharedStorage();
+            if (settingMigratedCount > 0) {
+                console.log(`Migrated ${settingMigratedCount} setting NPCs to shared NPC storage`);
+            }
+
             // Migrate NPCs without IDs
             const migratedCount = migrateNPCIds();
             if (migratedCount > 0) {
@@ -655,8 +666,14 @@ function loadNPCsFromLocalStorage() {
                 console.log(`Migrated ${sourceTypeMigratedCount} NPCs to include sourceType`);
             }
 
-            // Reload NPCs after migration (if either migration ran)
-            if (migratedCount > 0 || sourceTypeMigratedCount > 0) {
+            // Migrate NPC statblock references (create references for NPCs with statblocks)
+            const referencesMigratedCount = migrateNPCStatblockReferences();
+            if (referencesMigratedCount > 0) {
+                console.log(`Created ${referencesMigratedCount} references for existing NPC statblocks`);
+            }
+
+            // Reload NPCs after migration (if any migration ran)
+            if (migratedCount > 0 || sourceTypeMigratedCount > 0 || dungeonMigratedCount > 0 || settingMigratedCount > 0 || referencesMigratedCount > 0) {
                 const updatedStored = localStorage.getItem('npcGeneratorNPCs');
                 if (updatedStored) {
                     npcs.value = JSON.parse(updatedStored);
@@ -736,6 +753,48 @@ function migrateStatblockReferences() {
     if (migrationNeeded) {
         saveNPCsToLocalStorage();
     }
+}
+
+function migrateNPCStatblockReferences() {
+    let referencesCreated = 0;
+
+    // Iterate through all folders
+    for (const [folderName, npcList] of Object.entries(npcs.value)) {
+        if (!Array.isArray(npcList)) continue;
+
+        // Iterate through NPCs in this folder
+        for (const npc of npcList) {
+            // Check if NPC has a statblock reference but no reference in reference-storage
+            if (npc.npc_id && npc.npcDescriptionPart1?.statblock_name && npc.npcDescriptionPart1?.statblock_folder) {
+                const statblockId = `${npc.npcDescriptionPart1.statblock_name}__${npc.npcDescriptionPart1.statblock_folder}`;
+
+                // Check if reference already exists
+                const existingRefs = getReferencesForEntity('npc', npc.npc_id);
+                const hasStatblockRef = existingRefs.some(ref =>
+                    ref.relationship === 'has_statblock' &&
+                    ref.target_type === 'statblock' &&
+                    ref.target_id === statblockId
+                );
+
+                if (!hasStatblockRef) {
+                    // Create the reference
+                    addReference({
+                        source_type: 'npc',
+                        source_id: npc.npc_id,
+                        source_name: npc.npcDescriptionPart1.character_name || 'Unknown NPC',
+                        target_type: 'statblock',
+                        target_id: statblockId,
+                        target_name: npc.npcDescriptionPart1.statblock_name,
+                        relationship: 'has_statblock',
+                        context: ''
+                    });
+                    referencesCreated++;
+                }
+            }
+        }
+    }
+
+    return referencesCreated;
 }
 
 // Save current NPC to the list
@@ -844,6 +903,7 @@ function createNewNPC(folderName = 'Uncategorized') {
     loadingPart1.value = false;
     loadingPart2.value = false;
     statblock.value = null;
+    selectedStatblock.value = null; // Clear associated statblock selection
     selectedChallengeRating.value = '1';
     isSpellcaster.value = false;
     showHomebreweryLink.value = false;
@@ -1041,6 +1101,20 @@ function handleSaveEdit(editedData) {
     npcDescriptionPart2.value.relationships = editedData.relationships;
 
     saveCurrentNPCToList();
+
+    // Show toast indicating where the NPC was updated
+    const npcName = editedData.name || 'NPC';
+    const origin = computedOrigin.value;
+    const sourceType = computedSourceType.value;
+
+    if (origin && sourceType) {
+        // NPC is synced to a dungeon or setting
+        const toolName = sourceType === 'dungeon' ? 'Dungeon Generator' : 'Setting Generator';
+        toast.success(`${npcName} updated in NPC Generator and ${toolName} (${origin})`);
+    } else {
+        // NPC is only in NPC Generator
+        toast.success(`${npcName} updated`);
+    }
 
     isEditingNPC.value = false;
 }
@@ -1281,6 +1355,21 @@ async function generateStatblock() {
         if (npcDescriptionPart1.value) {
             npcDescriptionPart1.value.statblock_name = finalStatblock.name;
             npcDescriptionPart1.value.statblock_folder = folderName;
+        }
+
+        // Create reference linking this NPC to the statblock
+        const npcId = currentNPC.value?.npc_id;
+        if (npcId) {
+            addReference({
+                source_type: 'npc',
+                source_id: npcId,
+                source_name: npcDescriptionPart1.value.character_name || 'Unknown NPC',
+                target_type: 'statblock',
+                target_id: `${finalStatblock.name}__${folderName}`,
+                target_name: finalStatblock.name,
+                relationship: 'has_statblock',
+                context: ''
+            });
         }
 
         toast.success(`${finalStatblock.name} saved to your statblocks`);

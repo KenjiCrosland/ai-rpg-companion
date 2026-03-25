@@ -224,7 +224,9 @@ describe('Dungeon Store - Local Storage Data Layer (CRITICAL)', () => {
     it('should handle corrupted JSON gracefully', () => {
       localStorage.setItem('dungeons', '{invalid json');
 
-      expect(() => store.loadDungeons()).toThrow();
+      // Should not throw, but should reset to empty array
+      expect(() => store.loadDungeons()).not.toThrow();
+      expect(store.dungeons).toEqual([]);
     });
 
     it('should preserve all dungeon properties after load', () => {

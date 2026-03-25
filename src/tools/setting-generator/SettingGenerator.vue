@@ -190,6 +190,7 @@ import { formatSettingAsMarkdown } from "@/util/formatSettingAsMarkdown.mjs";
 import { formatSettingAsHtml } from "@/util/formatSettingAsHTML.mjs";
 import { generateGptResponse } from "@/util/open-ai.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
+import { getNavigationParams } from '@/util/navigation.mjs';
 import placeAdjectives from '@/data/place-adjectives.json';
 import place_names from '@/data/place-names.json';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -320,14 +321,12 @@ onMounted(async () => {
   loadSettingsFromLocalStorage();
 
   // Handle deep linking from NPC Generator
-  const urlParams = new URLSearchParams(window.location.search);
-  const sourceName = urlParams.get('source');
-  const tab = urlParams.get('tab');
+  const params = getNavigationParams();
 
-  if (sourceName && tab === 'npcs') {
+  if (params.source && params.tab === 'npcs') {
     // Find setting by name
     const settingIndex = settings.value.findIndex(s =>
-      s.place_name === sourceName
+      s.place_name === params.source
     );
 
     if (settingIndex !== -1) {
@@ -340,9 +339,6 @@ onMounted(async () => {
 
       // NOW switch to NPCs tab (index 3) after the watcher has run
       activeTabIndex.value = 3;
-
-      // Clean up URL params
-      window.history.replaceState({}, '', window.location.pathname);
     }
   }
 });

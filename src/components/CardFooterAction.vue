@@ -40,13 +40,13 @@ defineEmits(['click']);
   /* Layout */
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.65rem 1rem;
+  gap: 0.5rem;
+  padding: 0.8rem 1.25rem;
 
   /* Typography — match the sourcebook's serif font */
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.15rem;
-  font-weight: 500;
+  font-size: 1.3rem;
+  font-weight: 600;
   font-variant: small-caps;
   letter-spacing: 0.03em;
   color: #58180d; /* D&D sourcebook dark red-brown */
@@ -86,7 +86,7 @@ defineEmits(['click']);
 
 /* Icon slot */
 .card-footer-action__icon {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   line-height: 1;
   display: inline-flex;
   align-items: center;

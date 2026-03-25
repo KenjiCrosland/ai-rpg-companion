@@ -168,6 +168,22 @@ export async function generateNPCStatblock(
       saveNPCToStorage(canonicalNPC, folderName);
       syncNPCIdFromCanonical(canonicalNPC, npc, index);
       toast.success(`${npc.name} statblock saved to your NPCs`);
+
+      // Create reference linking this NPC to the statblock
+      if (npc.npc_id) {
+        import('@/util/reference-storage.mjs').then(({ addReference }) => {
+          addReference({
+            source_type: 'npc',
+            source_id: npc.npc_id,
+            source_name: npc.name,
+            target_type: 'statblock',
+            target_id: `${finalStatblock.name}__${folderName}`,
+            target_name: finalStatblock.name,
+            relationship: 'has_statblock',
+            context: ''
+          });
+        });
+      }
     }
 
     // Success - save once at the end
@@ -338,6 +354,9 @@ export function deleteNPC(npcIndex) {
           currentDungeon.value.npcs.splice(npcIndex, 1);
           // Save dungeon state after removing NPC
           saveDungeons();
+
+          // Show success toast
+          toast.success(`${npcName} deleted from all locations`);
         }
       }
     }
