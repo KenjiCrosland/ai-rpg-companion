@@ -1,5 +1,5 @@
 <template>
-  <GeneratorLayout :premium="premium">
+  <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
     <template #sidebar>
       <div class="sidebar-content">
         <ul class="settings-tabs">
@@ -43,7 +43,7 @@
             <span v-else class="version-pill premium">Premium</span>
           </div>
           <h1>Generate Rich RPG Settings with Factions, NPCs &amp; Quests</h1>
-          <p class="value-prop">AI-powered worldbuilding — from a single name to a fully detailed kingdom with nested
+          <p class="value-prop">From a single name to a fully detailed kingdom, town or empire with nested
             locations, political factions, and quest hooks.</p>
         </div>
 

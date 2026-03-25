@@ -1,5 +1,5 @@
 <template>
-    <GeneratorLayout :premium="premium">
+    <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
         <template #sidebar>
             <div class="sidebar-content">
                 <div class="sidebar-scroll">
