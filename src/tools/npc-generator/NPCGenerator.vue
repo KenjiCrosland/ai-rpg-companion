@@ -63,7 +63,7 @@
                 <div class="form-card">
                     <form @submit.prevent="handleGenerateNPC">
                         <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
-                            label="Give me an NPC Description For:" required>
+                            label="Give me an NPC Description For:" :optional="true">
                             <template #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix
                                 clan,
                                 a sentient gazebo named Gary, an edgerunner suffering from bouts of cyberpsychosis, a
@@ -256,7 +256,8 @@
                         </div>
 
                         <!-- Statblock Saved Message -->
-                        <div v-if="statblock && npcDescriptionPart1?.statblock_name" class="statblock-saved-message">
+                        <!-- Show link for custom statblocks (or legacy NPCs without source field) -->
+                        <div v-if="statblock && npcDescriptionPart1?.statblock_name && npcDescriptionPart1?.statblock_source !== 'srd'" class="statblock-saved-message">
                             <p>
                                 Edit this statblock in the
                                 <a :href="statblockGeneratorUrl" target="_blank">Statblock Generator</a>
@@ -320,7 +321,7 @@ import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMar
 import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
-import { normalizeGeneratorNPC, migrateNPCIds, migrateSourceTypes, migrateDungeonNPCsToSharedStorage, migrateSettingNPCsToSharedStorage, saveNPCToDungeon, findNPCLocations, deleteNPCFromAllLocations } from '@/util/npc-storage.mjs';
+import { normalizeGeneratorNPC, migrateNPCIds, migrateDungeonNPCsToSharedStorage, migrateSettingNPCsToSharedStorage, findNPCLocations, deleteNPCFromAllLocations } from '@/util/npc-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import { buildStatblockContext } from './utils/statblock-context.mjs';
@@ -403,49 +404,62 @@ const currentNPC = computed(() => {
     return npcs.value[folderName][index];
 });
 
-// Computed origin: dungeon or setting name (not typeOfPlace prompt)
+// Computed origin: dungeon or setting name from NPC sourceType or reference store
 const computedOrigin = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    // Use the active folder name (where the NPC is stored)
-    const folder = activeFolder.value;
-    if (!folder || folder === 'Uncategorized') return null;
-
-    // Check if folder matches a dungeon name
-    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-    if (dungeons.some(d => d.dungeonOverview?.name === folder)) {
-        return folder;
+    // First, check if NPC was created by dungeon/setting generator (has sourceType field)
+    if (npc.sourceType) {
+        // Return the typeOfPlace which should be the dungeon/setting name
+        if (npc.typeOfPlace && npc.typeOfPlace !== 'Uncategorized') {
+            return npc.typeOfPlace;
+        }
     }
 
-    // Check if folder matches a setting name
-    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
-    if (settings.some(s => s.place_name === folder)) {
-        return folder;
+    // Fallback: check reference store for explicit relationships
+    if (npc.npc_id) {
+        const refs = getReferencesForEntity('npc', npc.npc_id);
+
+        // Look for appears_in_dungeon relationship
+        const dungeonRef = refs.find(ref => ref.relationship === 'appears_in_dungeon');
+        if (dungeonRef) {
+            return dungeonRef.target_name;
+        }
+
+        // Look for appears_in_setting relationship
+        const settingRef = refs.find(ref => ref.relationship === 'appears_in_setting');
+        if (settingRef) {
+            return settingRef.target_name;
+        }
     }
 
     return null;
 });
 
-// Computed source type: 'dungeon' or 'setting'
+// Computed source type: 'dungeon' or 'setting' from NPC sourceType or reference store
 const computedSourceType = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    // Use the active folder name (where the NPC is stored)
-    const folder = activeFolder.value;
-    if (!folder || folder === 'Uncategorized') return null;
-
-    // Check if it's a dungeon
-    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-    if (dungeons.some(d => d.dungeonOverview?.name === folder)) {
-        return 'dungeon';
+    // First, check if NPC was created by dungeon/setting generator (has sourceType field)
+    if (npc.sourceType === 'dungeon' || npc.sourceType === 'setting') {
+        return npc.sourceType;
     }
 
-    // Check if it's a setting
-    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
-    if (settings.some(s => s.place_name === folder)) {
-        return 'setting';
+    // Fallback: check reference store for explicit relationships
+    if (npc.npc_id) {
+        const refs = getReferencesForEntity('npc', npc.npc_id);
+
+        // Look for appears_in_dungeon relationship
+        if (refs.some(ref => ref.relationship === 'appears_in_dungeon')) {
+            return 'dungeon';
+        }
+
+        // Look for appears_in_setting relationship
+        if (refs.some(ref => ref.relationship === 'appears_in_setting')) {
+            return 'setting';
+        }
     }
 
     return null;
@@ -458,7 +472,7 @@ const showHomebreweryLink = ref(false);
 // Inline editing
 const isEditingNPC = ref(false);
 
-// Watch for statblock selection and auto-set folder
+// Watch for statblock deselection - clean up empty folders
 watch(selectedStatblock, (newStatblock, oldStatblock) => {
     const currentFolder = activeFolder.value;
 
@@ -471,31 +485,11 @@ watch(selectedStatblock, (newStatblock, oldStatblock) => {
             delete openedFolders.value[currentFolder];
             activeFolder.value = 'Uncategorized';
         }
-        return;
     }
 
-    // Handle statblock selection
-    if (newStatblock.folder && newStatblock.folder !== 'Uncategorized') {
-        // If the previous active folder is empty and not "Uncategorized", remove it
-        if (currentFolder &&
-            currentFolder !== 'Uncategorized' &&
-            currentFolder !== newStatblock.folder &&
-            npcs.value[currentFolder]?.length === 0) {
-            delete npcs.value[currentFolder];
-            delete openedFolders.value[currentFolder];
-        }
-
-        // Set the active folder to match the statblock's folder
-        activeFolder.value = newStatblock.folder;
-
-        // Ensure the folder exists in npcs
-        if (!npcs.value[newStatblock.folder]) {
-            npcs.value[newStatblock.folder] = [];
-        }
-
-        // Open the folder in the sidebar
-        openedFolders.value[newStatblock.folder] = true;
-    }
+    // Note: We no longer auto-switch folders when selecting a statblock.
+    // NPCs always stay in the user's current working folder, regardless of
+    // which folder the selected statblock comes from.
 });
 
 // Folder management
@@ -660,10 +654,10 @@ function loadNPCsFromLocalStorage() {
                 console.log(`Migrated ${migratedCount} NPCs to include unique IDs`);
             }
 
-            // Migrate NPCs without sourceType
-            const sourceTypeMigratedCount = migrateSourceTypes();
+            // Migrate sourceType based on typeOfPlace (for NPCs created by dungeon/setting generators)
+            const sourceTypeMigratedCount = migrateSourceTypeFromTypeOfPlace();
             if (sourceTypeMigratedCount > 0) {
-                console.log(`Migrated ${sourceTypeMigratedCount} NPCs to include sourceType`);
+                console.log(`Migrated ${sourceTypeMigratedCount} NPCs to include sourceType based on typeOfPlace`);
             }
 
             // Migrate NPC statblock references (create references for NPCs with statblocks)
@@ -673,7 +667,7 @@ function loadNPCsFromLocalStorage() {
             }
 
             // Reload NPCs after migration (if any migration ran)
-            if (migratedCount > 0 || sourceTypeMigratedCount > 0 || dungeonMigratedCount > 0 || settingMigratedCount > 0 || referencesMigratedCount > 0) {
+            if (migratedCount > 0 || dungeonMigratedCount > 0 || settingMigratedCount > 0 || sourceTypeMigratedCount > 0 || referencesMigratedCount > 0) {
                 const updatedStored = localStorage.getItem('npcGeneratorNPCs');
                 if (updatedStored) {
                     npcs.value = JSON.parse(updatedStored);
@@ -753,6 +747,50 @@ function migrateStatblockReferences() {
     if (migrationNeeded) {
         saveNPCsToLocalStorage();
     }
+}
+
+function migrateSourceTypeFromTypeOfPlace() {
+    let migratedCount = 0;
+
+    // Get list of actual dungeons and settings
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+    const dungeonNames = new Set(
+        dungeons.map(d => d.dungeonOverview?.name || d.overview?.name).filter(Boolean)
+    );
+
+    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+    const settingNames = new Set(
+        settings.map(s => s.place_name || s.setting_overview?.name).filter(Boolean)
+    );
+
+    // Iterate through all folders
+    for (const [folderName, npcList] of Object.entries(npcs.value)) {
+        if (!Array.isArray(npcList)) continue;
+
+        // Iterate through NPCs in this folder
+        for (const npc of npcList) {
+            // Skip if NPC already has sourceType
+            if (npc.sourceType) continue;
+
+            // Check if typeOfPlace matches a real dungeon or setting
+            if (npc.typeOfPlace) {
+                if (dungeonNames.has(npc.typeOfPlace)) {
+                    npc.sourceType = 'dungeon';
+                    migratedCount++;
+                } else if (settingNames.has(npc.typeOfPlace)) {
+                    npc.sourceType = 'setting';
+                    migratedCount++;
+                }
+            }
+        }
+    }
+
+    // Save if any migrations occurred
+    if (migratedCount > 0) {
+        saveNPCsToLocalStorage();
+    }
+
+    return migratedCount;
 }
 
 function migrateNPCStatblockReferences() {
@@ -853,12 +891,6 @@ function saveCurrentNPCToList() {
     }
 
     saveNPCsToLocalStorage();
-
-    // Sync to dungeon if this NPC is associated with a dungeon
-    const dungeonName = npcData.npcDescriptionPart1?.statblock_folder || folderName;
-    if (dungeonName && dungeonName !== 'Uncategorized' && npcData.npc_id) {
-        saveNPCToDungeon(npcData, dungeonName);
-    }
 }
 
 // Load an NPC from the list into the current view
@@ -872,12 +904,25 @@ function loadNPCIntoView(folderName, index) {
 
         // Resolve statblock reference from shared storage
         if (npc.npcDescriptionPart1?.statblock_name) {
-            statblock.value = getStatblockFromStorage(
+            const loadedStatblock = getStatblockFromStorage(
                 npc.npcDescriptionPart1.statblock_name,
-                npc.npcDescriptionPart1.statblock_folder
+                npc.npcDescriptionPart1.statblock_folder,
+                {
+                    npcId: npc.npc_id,
+                    folderName: folderName
+                }
             );
+
+            // If statblock not found in storage, check for embedded statblock (SRD monsters)
+            if (loadedStatblock) {
+                statblock.value = loadedStatblock;
+            } else if (npc.npcDescriptionPart1.statblock) {
+                statblock.value = npc.npcDescriptionPart1.statblock;
+            } else {
+                statblock.value = null;
+            }
         } else if (npc.statblock) {
-            // Support legacy NPCs that have statblock embedded
+            // Support legacy NPCs that have statblock embedded at root level
             statblock.value = npc.statblock;
         } else {
             statblock.value = null;
@@ -1232,13 +1277,21 @@ function displayNPCDescription({ part, npcDescription }) {
         // If a statblock was selected during generation, attach it to the NPC
         if (selectedStatblock.value) {
             npcDescription.statblock_name = selectedStatblock.value.name;
-            npcDescription.statblock_folder = selectedStatblock.value.folder;
+            npcDescription.statblock_source = selectedStatblock.value.source; // 'srd' or 'custom'
 
-            // Load the statblock for display from storage (same way as loadNPCIntoView)
-            statblock.value = getStatblockFromStorage(
-                npcDescription.statblock_name,
-                npcDescription.statblock_folder
-            );
+            // For SRD monsters, embed the full statblock since they're not in localStorage
+            if (selectedStatblock.value.source === 'srd') {
+                npcDescription.statblock_folder = 'SRD'; // Marker for embedded SRD statblock
+                npcDescription.statblock = selectedStatblock.value.statblock;
+                statblock.value = selectedStatblock.value.statblock;
+            } else {
+                // For custom statblocks, store folder reference for localStorage lookup
+                npcDescription.statblock_folder = selectedStatblock.value.folder;
+                statblock.value = getStatblockFromStorage(
+                    npcDescription.statblock_name,
+                    npcDescription.statblock_folder
+                );
+            }
         }
 
         npcDescriptionPart1.value = npcDescription;
@@ -1248,29 +1301,6 @@ function displayNPCDescription({ part, npcDescription }) {
         npcDescriptionPart2.value = npcDescription;
         loadingPart2.value = false;
         saveCurrentNPCToList();
-
-        // If this NPC was generated from a dungeon monster, save it to the dungeon's npcs array
-        // Use the statblock's folder if available, otherwise use activeFolder
-        const dungeonName = npcDescriptionPart1.value?.statblock_folder || activeFolder.value;
-
-        if (dungeonName && dungeonName !== 'Uncategorized') {
-            // Get the NPC ID from the saved NPC in the npcs array (not from npcDescriptionPart1)
-            const savedNPC = npcs.value[activeFolder.value]?.[currentNPCIndex.value];
-            const npcId = savedNPC?.npc_id || null;
-
-            const currentNPC = {
-                npc_id: npcId,
-                npcDescriptionPart1: npcDescriptionPart1.value,
-                npcDescriptionPart2: npcDescriptionPart2.value,
-                typeOfPlace: typeOfPlace.value
-            };
-
-            const savedToDungeon = saveNPCToDungeon(currentNPC, dungeonName);
-
-            if (savedToDungeon) {
-                toast.success(`${npcDescriptionPart1.value.character_name} added to ${dungeonName} dungeon NPCs!`);
-            }
-        }
     }
 }
 
@@ -1492,7 +1522,11 @@ function confirmAttachStatblock() {
     // Load the statblock for display
     const loadedStatblock = getStatblockFromStorage(
         attachStatblockSelection.value.name,
-        attachStatblockSelection.value.folder
+        attachStatblockSelection.value.folder,
+        {
+            npcId: currentNPC.value?.npc_id,
+            folderName: activeFolder.value
+        }
     );
 
     if (loadedStatblock) {

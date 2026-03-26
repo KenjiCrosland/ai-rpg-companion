@@ -248,6 +248,45 @@ export function buildStatblockContext(statblockItem) {
     }
   }
 
+  // Add creature intelligence data (if available from SRD)
+  if (statblock.creatureIntelligence) {
+    const ci = statblock.creatureIntelligence;
+
+    if (!additionalContext) {
+      additionalContext = '\n\nCREATURE INTELLIGENCE DATA:';
+    } else {
+      additionalContext += '\n\nCREATURE INTELLIGENCE DATA:';
+    }
+
+    if (ci.signature) {
+      additionalContext += `\n\nSignature: ${ci.signature}`;
+    }
+
+    if (ci.description) {
+      additionalContext += `\n\nDescription: ${ci.description}`;
+    }
+
+    if (ci.tactical_identity) {
+      additionalContext += `\n\nTactical Identity: ${ci.tactical_identity}`;
+    }
+
+    if (ci.abilities && Array.isArray(ci.abilities)) {
+      additionalContext += `\n\nKey Abilities: ${ci.abilities.join('; ')}`;
+    }
+
+    if (ci.encounter_hooks && Array.isArray(ci.encounter_hooks)) {
+      additionalContext += `\n\nEncounter Hooks: ${ci.encounter_hooks.join('; ')}`;
+    }
+
+    if (ci.social) {
+      additionalContext += `\n\nSocial Behavior: ${ci.social}`;
+    }
+
+    if (ci.retreat) {
+      additionalContext += `\n\nRetreat Behavior: ${ci.retreat}`;
+    }
+  }
+
   if (intScore >= 6) {
     // Intelligent creature - generate NPC
     return `

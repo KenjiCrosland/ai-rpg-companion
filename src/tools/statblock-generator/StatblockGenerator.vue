@@ -121,7 +121,7 @@
         Linked NPCs:
         <span v-for="(npc, index) in linkedNPCs" :key="npc.npc_id">
           <a href="#" @click.prevent="navigateToLinkedNPC(npc.folder, npc.name)" class="linked-npc-link">{{ npc.name
-            }}</a><span v-if="index < linkedNPCs.length - 1">, </span>
+          }}</a><span v-if="index < linkedNPCs.length - 1">, </span>
         </span>
       </div>
 
@@ -970,6 +970,7 @@ async function generateStatblock() {
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  margin: auto;
 }
 
 .folder-mover-inner {

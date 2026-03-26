@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "jest --verbose"
+    "test": "jest --verbose",
+    "generate-srd-index": "node scripts/generate-srd-index.mjs"
   },
   "dependencies": {
     "@rei/cedar": "^13.3.1",
