@@ -1,4 +1,25 @@
-export function createNPCPrompt(param) {
+export function createNPCPrompt(param, { isCreatureProfile = false } = {}) {
+  // Use different key names for creature profiles to avoid person-priming
+  if (isCreatureProfile) {
+    return `CRITICAL: This is a CREATURE PROFILE, not an NPC. Use "it" pronouns only. Do not anthropomorphize.
+
+Please create a creature profile for ${param} in the form of a JSON object. The JSON object should include the following keys: creature_title, creature_description, origin_and_circumstance, observable_behaviors, hidden_truth, encounter_description, and dm_guidance. Temperature: 0.9.
+    {
+        "format": "JSON",
+        "instructions": {
+            "note": "This is a CREATURE, not a person. Each key should flow into the next. Use transition words between them. NEVER use he/she/they pronouns — only 'it'.",
+            "creature_title": "The local name or title people use for this creature. Examples: 'The Shredder of Iron Row', 'Old Cutter', 'The Whirling Death', 'The Thing in the Cellar'. This should sound like a local legend or nickname, NOT a person's given name.",
+            "creature_description": "What the creature IS and what it does. Describe it as a THING, not a person with a job. Examples: 'A whirling construct of blades that patrols the east gate mechanically, attacking anything that crosses an invisible perimeter.' NOT 'A skilled guardian stationed at the gates.' Focus on WHAT IT IS physically and WHAT IT DOES mechanically.",
+            "origin_and_circumstance": "Origin and circumstance — who or what created, summoned, or brought it here? Why hasn't it been destroyed, moved, or contained? What keeps it in this location? Examples: 'A wizard's failed experiment abandoned when the tower burned, now territorial over the ruins it cannot leave.' NOT 'It chose to stay because it loves the area.'",
+            "observable_behaviors": "Observable behaviors ONLY. Patrol routes, damage marks, sounds it makes, how it reacts to different stimuli (fire, loud noises, movement, time of day). Examples: 'It carves spiraling patterns into any wooden surface it encounters, and freezes motionless when hearing running water.' NOT 'It has a penchant for humming' or 'It pauses contemplatively.'",
+            "hidden_truth": "A hidden truth about the creature that locals don't know. A vulnerability, a trigger, something about its origin, a way to control or disable it, or an unintended side effect of its existence. Examples: 'It will ignore anyone carrying a lit candle — a remnant of its original protection programming.' NOT 'It secretly yearns for friendship' or 'It dreams of freedom.'",
+            "encounter_description": "Describe the creature as a THING the party encounters. Emphasize sensory details — what they see, hear, smell, and feel as they approach. Frame it as a potential threat or wonder, not a character introduction. Do NOT use 'you meet' or 'you see [name] standing' — instead describe the creature in action or at rest. Example: 'The grinding of metal on stone echoes from the gate — a mass of spinning blades suspended in a vaguely humanoid frame, etching endless patterns into the cobblestones as it pivots in mechanical arcs.'",
+            "dm_guidance": "How a DM should RUN this creature at the table — movement patterns, aggression triggers, threat escalation, retreat behavior, environmental interaction. NOT dialogue advice. This creature does not speak. Examples: 'It attacks the first target that crosses within 15 feet of the gate. If damaged below half health, it retreats to the gate's center and spins faster, creating a defensive barrier. It ignores targets that remain motionless.' NOT 'Speak in a gravelly voice' or 'It will try to negotiate.'"
+        }
+    }`;
+  }
+
+  // Standard NPC prompt (existing)
   return `Please create an Tabletop Roleplaying NPC description for ${param} in the form of a JSON object using the given instructions and examples as guidelines. The JSON object should include the following keys: character_name, description_of_position, reason_for_being_there, distinctive_feature_or_mannerism, character_secret, read_aloud_description, and roleplaying_tips. Temperature: 0.9.
     {
         "format": "JSON",
@@ -15,7 +36,64 @@ export function createNPCPrompt(param) {
     }`;
 }
 
-export function createRelationshipAndTipsPrompt(param) {
+export function createRelationshipAndTipsPrompt(param, { isCreatureProfile = false } = {}) {
+  // Branch based on whether this is a creature profile or standard NPC
+  if (isCreatureProfile) {
+    return `Please create descriptions of ASSOCIATED FIGURES for the creature described by the following JSON object:
+
+    ${param}
+
+    CRITICAL RULES:
+    - These are NOT interpersonal relationships. This creature does not have friendships, romantic interests, or emotional bonds.
+    - These are PEOPLE OR CREATURES who have encountered, been affected by, or interact with this creature in observable ways.
+    - Focus on what locals DO in response to this creature, NOT what they feel.
+    - Describe observable interactions, not emotional connections.
+
+    Please respond in JSON Format with the following key: relationships.
+
+    For each associated figure, provide 2 sentences:
+
+    SENTENCE 1 — How this person/creature interacts with or has been affected by the creature:
+    Examples:
+    - Marrik the blacksmith feeds it scraps twice daily at dawn and dusk, maintaining a pattern that began when the creature spared his daughter during its first rampage three years ago.
+    - Captain Yendra has been tracking its movement patterns for months, placing scent markers around the perimeter to test whether it can be conditioned to avoid the eastern quarter.
+    - Old Greta walks the long route to market every morning to avoid the alley where it nests, and warns newcomers to do the same with hand gestures and urgent whispers.
+    - Brother Talmund discovered that it recoils from the sound of temple bells, and now rings them every evening at sundown as a ward against intrusion.
+
+    SENTENCE 2 — A recent observable event or change in their interaction:
+    Examples:
+    - Last week it appeared at the forge late at night when Marrik forgot the evening feeding, clawing deep grooves into the door but leaving before dawn.
+    - Three days ago it followed one of Yendra's scouts for two miles beyond its usual territory, then stopped at the river and turned back—the first time she's seen it cross its own boundary.
+    - Yesterday Greta saw it carrying something in its jaws into the alley—something the size of a child—and has stopped eating since.
+    - Two nights ago the creature arrived during evening prayers despite the bells, sat motionless in the courtyard for an hour, then departed without attacking—Talmund has not rung the bells since.
+
+    DO NOT INCLUDE:
+    - Emotional bonds ("they became friends", "she loves it", "he trusts it")
+    - Dialogue or communication between the person and creature
+    - The creature having preferences for specific people
+    - People understanding the creature's intentions or feelings
+
+    DO INCLUDE:
+    - Observable actions and responses
+    - Patterns of behavior (feeding, avoidance, tracking)
+    - Consequences and effects on the local area
+    - Practical adaptations people have made
+    - Recent changes that create tension or questions
+
+    {
+        "format": "JSON",
+        "relationships": {
+            "person_name_1": "Description (see format above). This should be a single string without brackets",
+            "person_name_2":  "Description (see format above). This should be a single string without brackets",
+            "person_name_3": "Description (see format above). This should be a single string without brackets"
+        }
+    }
+
+    Please replace "person_name" with actual names. Use proper nouns for individuals, not titles. Be sure that the relationships object has child keys with the names of each person associated with this creature.
+    `;
+  }
+
+  // Standard NPC relationship prompt (existing)
   return `Please create description of relationships for an NPC described by the following JSON object:
 
     ${param}

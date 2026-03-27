@@ -104,26 +104,25 @@
         </div>
       </div>
 
-      <cdr-toggle-group v-if="shouldDisplayInterface && (monster || loadingPart1 || loadingPart2)"
+      <cdr-toggle-group v-if="shouldDisplayInterface && canSwitchColumns && (monster || loadingPart1 || loadingPart2)"
         v-model="userColumnsPreference" style="margin: 2cap;auto">
         <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
         <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
       </cdr-toggle-group>
       <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
         :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
-        @update-monster="updateMonster" />
+        :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
+        @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
+        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+        @toggle-export="showExports = !showExports" />
 
-      <!-- Action bar: Move + Delete -->
-      <div class="action-bar" v-if="monster && !loadingPart2">
-        <cdr-button modifier="secondary" @click="showFolderMover = !showFolderMover">
-          {{ showFolderMover ? 'Cancel' : 'Move to Folder' }}
-        </cdr-button>
-        <cdr-button modifier="secondary" @click="useInEncounter">
-          Use in Encounter
-        </cdr-button>
-        <cdr-button modifier="dark" @click="deleteStatblock">
-          Delete Statblock
-        </cdr-button>
+      <!-- Linked NPCs (appears when references exist) -->
+      <div v-if="linkedNPCs.length > 0 && monster && !loadingPart2" class="linked-npcs">
+        Linked NPCs:
+        <span v-for="(npc, index) in linkedNPCs" :key="npc.npc_id">
+          <a href="#" @click.prevent="navigateToLinkedNPC(npc.folder, npc.name)" class="linked-npc-link">{{ npc.name
+          }}</a><span v-if="index < linkedNPCs.length - 1">, </span>
+        </span>
       </div>
 
       <!-- Inline folder mover (appears when toggled) -->
@@ -138,8 +137,10 @@
           </cdr-button>
         </div>
       </div>
-      <StatblockExports v-if="monster" :monster="monster" :loading="loadingPart1 || loadingPart2"
-        :columns="userColumnsPreference" />
+
+      <!-- Export options (appears when toggled) -->
+      <StatblockExports v-if="showExports && monster && !loadingPart2" :monster="monster"
+        :loading="loadingPart1 || loadingPart2" :columns="userColumnsPreference" />
 
       <!-- Footer below monster content -->
       <div class="footer-meta" v-if="monster && !loadingPart2">
@@ -173,9 +174,6 @@
         </div>
       </div>
     </div>
-    <cdr-button class="new-monster-button" v-if="monster && windowWidth >= 1280" @click="newMonster()">New
-      Monster
-      Statblock</cdr-button>
 
     <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
       currentApp="monsters" />
@@ -202,7 +200,9 @@ import creatureTemplates from '@/data/creatureTemplates.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { renameStatblockReferences } from '@/util/statblock-storage.mjs';
+import { navigateToTool } from '@/util/navigation.mjs';
 import { useToast } from '@/composables/useToast';
+import { getReferencesForEntity } from '@/util/reference-storage.mjs';
 
 const toast = useToast();
 
@@ -233,6 +233,7 @@ const newFolder = ref('');
 const activeFolder = ref('Uncategorized');
 const openedFolders = reactive({ 'Uncategorized': true });
 const userColumnsPreference = ref('two_columns');
+const canSwitchColumns = ref(true);
 const shouldDisplayInterface = computed(() => windowWidth.value > 855);
 const folderNames = computed(() => {
   return Object.keys(monsters.value).filter(key => key !== 'firstGenerationTime' && key !== 'generationCount');
@@ -245,6 +246,7 @@ const filteredMonsters = computed(() => {
 });
 const showDataManagerModal = ref(false);
 const showFolderMover = ref(false);
+const showExports = ref(false);
 const folderMoveTarget = ref('');
 
 const folderMoveOptions = computed(() => {
@@ -260,6 +262,52 @@ const canMove = computed(() => {
   if (!folderMoveTarget.value) return false;
   if (folderMoveTarget.value === '__new__') return newFolder.value.trim().length > 0;
   return true;
+});
+
+const linkedNPCs = computed(() => {
+  if (!monster.value || !activeFolder.value) return [];
+
+  const statblockId = `${monster.value.name}__${activeFolder.value}`;
+  const references = getReferencesForEntity('statblock', statblockId);
+
+  // Filter for has_statblock relationships where this statblock is the target
+  const linkedRefs = references.filter(
+    ref => ref.relationship === 'has_statblock' && ref.target_type === 'statblock'
+  );
+
+  // Look up each NPC in localStorage to find its folder
+  // Note: We need error handling here because localStorage can be corrupted
+  // (e.g., if user manually edited it, browser storage got corrupted, etc.)
+  // Rather than crash the entire component, we gracefully degrade to empty object
+  let npcGeneratorNPCs = {};
+  try {
+    npcGeneratorNPCs = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+  } catch (error) {
+    console.warn('Failed to parse npcGeneratorNPCs from localStorage:', error);
+    // Default to empty object - linked NPCs will show "Uncategorized" folder
+  }
+
+  return linkedRefs.map(ref => {
+    // Find which folder contains this NPC
+    let npcFolder = 'Uncategorized';
+    for (const [folderName, npcsInFolder] of Object.entries(npcGeneratorNPCs)) {
+      if (Array.isArray(npcsInFolder)) {
+        const foundNPC = npcsInFolder.find(npc =>
+          npc.npc_id === ref.source_id || npc.id === ref.source_id
+        );
+        if (foundNPC) {
+          npcFolder = folderName;
+          break;
+        }
+      }
+    }
+
+    return {
+      name: ref.source_name,
+      folder: npcFolder,
+      npc_id: ref.source_id
+    };
+  });
 });
 
 
@@ -467,17 +515,26 @@ function handleFolderMove() {
 
 function useInEncounter() {
   if (!monster.value) return;
+  navigateToTool('encounter-generator', {
+    monster: monster.value.name
+  });
+}
 
-  // Navigate to encounter generator with monster name as query param
-  const monsterName = encodeURIComponent(monster.value.name);
+function createNPC() {
+  if (!monster.value) return;
 
-  // Use localhost in dev, production URL in prod
-  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const baseUrl = isDev
-    ? 'http://localhost:5173/encounter.html'
-    : 'https://cros.land/dnd-5e-encounter-generator/';
+  // Navigate to NPC generator with statblock info
+  navigateToTool('npc-generator', {
+    statblock: monster.value.name,
+    folder: activeFolder.value || 'Uncategorized'
+  });
+}
 
-  window.location.href = `${baseUrl}?monster=${monsterName}`;
+function navigateToLinkedNPC(npcFolder, npcName) {
+  navigateToTool('npc-generator', {
+    folder: npcFolder,
+    npc_name: npcName
+  });
 }
 
 async function deleteStatblock() {
@@ -485,6 +542,12 @@ async function deleteStatblock() {
 
   const deletedName = monster.value.name;
   const folderName = activeFolder.value || 'Uncategorized';
+  const statblockId = `${deletedName}__${folderName}`;
+
+  // Remove references for this statblock
+  import('@/util/reference-storage.mjs').then(({ removeReferencesForEntity }) => {
+    removeReferencesForEntity('statblock', statblockId);
+  });
 
   monsters.value[folderName].splice(activeMonsterIndex.value, 1);
   monster.value = null;
@@ -608,12 +671,6 @@ async function generateStatblock() {
 <style lang="scss" scoped>
 @import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
 
-
-.new-monster-button {
-  min-width: 210px;
-  margin: 2rem;
-  height: 4rem;
-}
 
 .sidebar-content {
   $background-color: #f4f4f4;
@@ -913,6 +970,7 @@ async function generateStatblock() {
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  margin: auto;
 }
 
 .folder-mover-inner {
@@ -920,6 +978,27 @@ async function generateStatblock() {
   align-items: flex-end;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.linked-npcs {
+  max-width: 850px;
+  margin: 0 auto 2rem auto;
+  padding: 0.75rem;
+  color: #6b7280;
+  font-size: 1.4rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.6;
+}
+
+.linked-npc-link {
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #374151;
+    text-decoration: underline;
+  }
 }
 
 @media screen and (max-width: 600px) {

@@ -40,6 +40,8 @@ npm test -- calculateCR.spec.js            # Run a single test file
 - [Dungeon Generator](/src/tools/dungeon-generator/CLAUDE.md) - Complex dungeon creation with rooms, NPCs, monsters, and map generation
 - [Location Generator](/src/tools/location-generator/CLAUDE.md) - Location creation with contextual details and integration
 - [NPC Generator](/src/tools/npc-generator/CLAUDE.md) - NPC creation with two-part generation (description + relationships)
+- [Encounter Generator](/src/tools/encounter-generator/CLAUDE.md) - Combat encounter generation with monster selection and difficulty balancing
+- [Setting Generator](/src/tools/setting-generator/CLAUDE.md) - Campaign setting creation with locations, factions, and hooks
 
 **WordPress Integration**: The `wordpress/` directory contains PHP files that act as shortcodes to embed the Vue app in WordPress pages. The `functions.php` file includes an OpenAI proxy endpoint (`/wp-json/open-ai-proxy/api/v1/proxy`) used in production to avoid exposing API keys.
 
@@ -51,6 +53,8 @@ npm test -- calculateCR.spec.js            # Run a single test file
   - `dungeon-generator/` - Dungeon creation with stores, composables, and complex state
   - `location-generator/` - Location generation for taverns, shops, dungeons, etc.
   - `npc-generator/` - NPC creation with descriptions, relationships, and statblocks
+  - `encounter-generator/` - Combat encounter creation with monster selection and balancing
+  - `setting-generator/` - Campaign setting creation with tab-based organization
   - `legacy-tools/dungeon-generator/` - Legacy dungeon generator (superseded by new version)
   - Each tool contains: main component, tests, sub-components, and CLAUDE.md
 - `src/components/` - Shared Vue components (GeneratorLayout, DataManagerModal, etc.)
@@ -169,7 +173,11 @@ npm test -- --maxWorkers=1                 # Run tests sequentially (helps with 
 
 ## Migration Status
 
-The project is undergoing a migration to organize tools into `src/tools/`:
+The project has undergone two major types of migrations:
+
+### Tool Structure Migrations
+
+Tools have been migrated to a modular structure in `src/tools/`:
 
 **Completed:**
 - ✅ Statblock Generator → `src/tools/statblock-generator/`
@@ -180,6 +188,7 @@ The project is undergoing a migration to organize tools into `src/tools/`:
   - WordPress templates: `rpg-companion-dungeon-generator.php` and `rpg-companion-dungeon-generator-premium.php`
 - ✅ Location Generator → `src/tools/location-generator/`
 - ✅ NPC Generator → `src/tools/npc-generator/`
+- ✅ Encounter Generator → `src/tools/encounter-generator/`
 - ✅ Setting Generator → `src/tools/setting-generator/`
   - Test coverage: 20 tests (localStorage data layer, API integration, export formats)
   - Entry file: `setting.js`
@@ -197,9 +206,34 @@ The project is undergoing a migration to organize tools into `src/tools/`:
   - No tests (legacy code, superseded by Dungeon Generator in `/src/tools/dungeon-generator/`)
 
 **Pending Migration:**
-- ⏳ Encounter Generator
 - ⏳ Lore Generator
 - ⏳ Book Generator
+
+### Data Architecture Migrations
+
+The project has migrated from nested objects to a **reference-based architecture** for cross-tool data sharing:
+
+**Completed:**
+- ✅ **Statblock References** - Dungeons/NPCs store `statblock_name` + `statblock_folder` instead of full statblock objects
+- ✅ **NPC References** - NPCs can be referenced from dungeons and settings via reference store
+- ✅ **Reference Store** (`tool-references` in localStorage) - Tracks relationships like `appears_in_dungeon`, `has_statblock`
+- ✅ **Global Migration Runner** (`src/util/migration-runner.mjs`) - Ensures one-time migrations run exactly once
+- ✅ **Cross-tab Sync** - Changes in one browser tab trigger reloads in other tabs
+
+**Migration Utilities:**
+- `src/util/statblock-storage.mjs` - Shared statblock storage utilities
+- `src/util/npc-storage.mjs` - Shared NPC storage utilities
+- `src/util/extract-existing-references.mjs` - Extracts references from existing data
+- `src/util/migration-runner.mjs` - Global migration orchestration
+- `MIGRATION-GUIDE.md` - Complete guide for implementing reference-based migrations
+
+**Key Benefits:**
+- Single source of truth for shared data
+- Cross-tool updates (rename in one tool updates all references)
+- Reduced localStorage size (no data duplication)
+- Better data integrity
+
+See `MIGRATION-GUIDE.md` for detailed patterns and best practices.
 
 ## Build & Deployment
 

@@ -3,10 +3,10 @@
     <!-- Header: name + buttons -->
     <div class="npc-card-header">
       <div>
-        <h2 class="npc-card-name">{{ npc.name }}</h2>
-        <p v-if="origin || npc.type_info" class="npc-card-subtitle">
+        <h2 v-if="!loadingDescription" class="npc-card-name">{{ npc.name }}</h2>
+        <p v-if="!loadingDescription && (origin || npc.type_info)" class="npc-card-subtitle">
           <span v-if="origin">
-            From <a v-if="sourceLink" :href="sourceLink" class="npc-source-link">{{ origin }}</a>
+            From <a v-if="shouldShowSourceLink" @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ origin }}</a>
             <template v-else>{{ origin }}</template>
           </span>
           <span v-if="origin && npc.type_info && npc.type_info !== origin"> · </span>
@@ -14,39 +14,89 @@
         </p>
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <button v-if="editable && !isEditing" class="npc-edit-button" @click="$emit('start-edit')">Edit NPC</button>
+        <button v-if="editable && !isEditing && !loadingDescription" class="npc-edit-button"
+          @click="$emit('start-edit')">Edit
+          NPC</button>
       </div>
     </div>
 
     <!-- Content wrapper for view mode (centers all content with shared left edge) -->
     <div v-if="!isEditing" class="npc-card-content">
-      <!-- Read-aloud -->
-      <div v-if="npc.read_aloud_description" class="npc-card-read-aloud">
-        <p>{{ npc.read_aloud_description }}</p>
+      <!-- Read-aloud - skeleton or content -->
+      <div class="npc-card-read-aloud">
+        <CdrSkeleton v-if="loadingDescription">
+          <CdrSkeletonBone type="line" style="width:95%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:88%;" />
+        </CdrSkeleton>
+        <p v-else>{{ npc.read_aloud_description }}</p>
       </div>
 
-      <!-- Body: description paragraphs (view mode) -->
-      <div v-if="npc.combined_details" class="npc-card-body">
-        <p v-for="(paragraph, index) in bodyParagraphs" :key="index">
-          {{ paragraph }}
-        </p>
+      <!-- Body: description paragraphs - skeleton or content -->
+      <div class="npc-card-body">
+        <CdrSkeleton v-if="loadingDescription">
+          <CdrSkeletonBone type="line" style="width:95%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:90%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:85%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:92%; margin-bottom: 1rem;" />
+          <CdrSkeletonBone type="line" style="width:88%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:93%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:87%; margin-bottom: 1rem;" />
+          <CdrSkeletonBone type="line" style="width:91%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:86%; margin-bottom: 0.5rem;" />
+          <CdrSkeletonBone type="line" style="width:60%;" />
+        </CdrSkeleton>
+        <template v-else>
+          <p v-for="(paragraph, index) in bodyParagraphs" :key="index">
+            {{ paragraph }}
+          </p>
+        </template>
       </div>
 
       <!-- Flourish divider -->
-      <svg v-if="hasRelationships && npc.combined_details" viewBox="0 0 400 12" xmlns="http://www.w3.org/2000/svg"
-        class="npc-flourish">
+      <svg v-if="(hasRelationships || loadingRelationships) && (npc.combined_details || loadingDescription)"
+        viewBox="0 0 400 12" xmlns="http://www.w3.org/2000/svg" class="npc-flourish">
         <line x1="0" y1="6" x2="188" y2="6" stroke="#c9b99a" stroke-width="0.75" />
         <line x1="212" y1="6" x2="400" y2="6" stroke="#c9b99a" stroke-width="0.75" />
         <polygon points="200,1 206,6 200,11 194,6" fill="#7b2d26" />
       </svg>
 
-      <!-- Relationships (view mode) -->
-      <div v-if="hasRelationships" class="npc-card-relationships">
+      <!-- Relationships - skeleton or content -->
+      <div v-if="hasRelationships || loadingRelationships" class="npc-card-relationships">
         <p class="npc-card-relationships-title">Relationships</p>
-        <div v-for="(description, name) in npc.relationships" :key="name" class="npc-relationship-card">
-          <p class="npc-relationship-name">{{ name }}</p>
-          <p class="npc-relationship-description">{{ description }}</p>
-        </div>
+        <CdrSkeleton v-if="loadingRelationships">
+          <div>
+            <div style="display: flex; gap: 0.5rem; align-items: baseline; margin-bottom: 0.25rem;">
+              <CdrSkeletonBone type="line" style="width:20%; height: 1.6rem;" />
+            </div>
+            <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
+            <CdrSkeletonBone type="line" style="width:90%;" />
+            <CdrSkeletonBone type="line" style="width:85%; margin-bottom: 1.25rem;" />
+          </div>
+
+          <div>
+            <div style="display: flex; gap: 0.5rem; align-items: baseline; margin-bottom: 0.25rem;">
+              <CdrSkeletonBone type="line" style="width:20%; height: 1.6rem;" />
+            </div>
+            <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
+            <CdrSkeletonBone type="line" style="width:90%;" />
+            <CdrSkeletonBone type="line" style="width:85%; margin-bottom: 1.25rem;" />
+          </div>
+
+          <div>
+            <div style="display: flex; gap: 0.5rem; align-items: baseline; margin-bottom: 0.25rem;">
+              <CdrSkeletonBone type="line" style="width:20%; height: 1.6rem;" />
+            </div>
+            <CdrSkeletonBone type="line" style="width:100%; margin-top: 0" />
+            <CdrSkeletonBone type="line" style="width:90%;" />
+            <CdrSkeletonBone type="line" style="width:85%;" />
+          </div>
+        </CdrSkeleton>
+        <template v-else>
+          <div v-for="(description, name) in npc.relationships" :key="name" class="npc-relationship-card">
+            <p class="npc-relationship-name">{{ name }}</p>
+            <p class="npc-relationship-description">{{ description }}</p>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -123,15 +173,21 @@
       </div>
     </div>
 
-    <!-- Footer -->
-    <div class="npc-card-footer">
-      <button v-if="showDelete" class="npc-footer-link npc-delete-text" @click="$emit('delete')">
-        Delete NPC
-      </button>
-      <div v-else></div>
-      <a v-if="npcGeneratorLink" :href="npcGeneratorLink" class="npc-footer-link">
-        View in NPC Generator
-      </a>
+    <!-- Footer Bar -->
+    <div v-if="!loadingDescription && !loadingRelationships && !isEditing" class="card-footer-bar">
+      <div class="card-footer-bar__actions">
+        <CardFooterAction v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
+          <template #icon>📝</template>
+          View in NPC Generator
+        </CardFooterAction>
+
+        <!-- Add other NPC-specific actions here as needed -->
+      </div>
+
+      <CardFooterAction v-if="showDelete" @click="$emit('delete')" variant="danger">
+        <template #icon>🗑️</template>
+        Delete
+      </CardFooterAction>
     </div>
   </div>
 </template>
@@ -139,12 +195,14 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import CardFooterAction from './CardFooterAction.vue';
+import { navigateToTool } from '@/util/navigation.mjs';
 
 const props = defineProps({
   // NPC data in normalized format
   npc: {
     type: Object,
-    required: true,
+    default: () => ({}),
   },
 
   // Where this NPC came from (shown in subtitle)
@@ -157,6 +215,13 @@ const props = defineProps({
   sourceType: {
     type: String,
     default: null,
+  },
+
+  // Display context ('dungeon', 'setting', or 'generator')
+  // Used to prevent showing links when viewing NPC in its source context
+  displayType: {
+    type: String,
+    default: 'generator',
   },
 
   // NPC ID for deep linking
@@ -213,6 +278,17 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+
+  // Loading states for skeleton display
+  loadingDescription: {
+    type: Boolean,
+    default: false,
+  },
+
+  loadingRelationships: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([
@@ -236,47 +312,22 @@ const hasRelationships = computed(() => {
   return props.npc.relationships && Object.keys(props.npc.relationships).length > 0;
 });
 
-// Computed: Link to source generator
-const sourceLink = computed(() => {
-  if (!props.sourceType || !props.origin) return null;
-
-  const paths = {
-    dungeon: 'kenjis-dungeon-generator-2-0',
-    setting: 'rpg-setting-generator-and-world-building-tool'
-  };
-
-  const path = paths[props.sourceType];
-  if (!path) return null;
-
-  const params = new URLSearchParams();
-  params.set('source', props.origin);
-  params.set('tab', 'npcs');
-
-  return `https://cros.land/${path}/?${params.toString()}`;
+// Computed: Should show link to source generator?
+const shouldShowSourceLink = computed(() => {
+  if (!props.sourceType || !props.origin) return false;
+  // Don't show link if viewing NPC in its source context
+  if (props.displayType === props.sourceType) return false;
+  return true;
 });
 
-// Computed: NPC Generator URL with params
-const npcGeneratorLink = computed(() => {
-  // Don't show link if prop is set to false
-  if (!props.showNpcGeneratorLink) {
-    return null;
-  }
-
-  // If URL explicitly provided, use it
-  if (props.npcGeneratorUrl) {
-    return props.npcGeneratorUrl;
-  }
-
-  // Auto-generate URL if we have required fields (origin and name)
-  if (props.origin && props.npc.name) {
-    const base = 'https://cros.land/rpg-ai-npc-generator/';
-    const params = new URLSearchParams();
-    params.set('folder', props.origin);
-    params.set('npc_name', props.npc.name);
-    return `${base}?${params.toString()}`;
-  }
-
-  return null;
+// Computed: Should show link to NPC Generator?
+const shouldShowNpcGeneratorLink = computed(() => {
+  if (!props.showNpcGeneratorLink) return false;
+  // If URL explicitly provided, we can navigate
+  if (props.npcGeneratorUrl) return true;
+  // Or if we have required fields (origin and name)
+  if (props.origin && props.npc.name) return true;
+  return false;
 });
 
 // Edit form state
@@ -366,6 +417,32 @@ function generateRelationship() {
   // Clear form after emit (parent will handle the actual generation)
   relationshipForm.value.name = '';
   relationshipForm.value.description = '';
+}
+
+function navigateToSource() {
+  if (!shouldShowSourceLink.value) return;
+
+  const toolMap = {
+    dungeon: 'dungeon-generator',
+    setting: 'setting-generator'
+  };
+
+  const toolName = toolMap[props.sourceType];
+  if (!toolName) return;
+
+  navigateToTool(toolName, {
+    source: props.origin,
+    tab: 'npcs'
+  });
+}
+
+function navigateToNPCGenerator() {
+  if (!shouldShowNpcGeneratorLink.value) return;
+
+  navigateToTool('npc-generator', {
+    folder: props.origin,
+    npc_name: props.npc.name
+  });
 }
 </script>
 
@@ -637,37 +714,29 @@ function generateRelationship() {
   border-radius: 3px;
 }
 
-/* Footer */
-.npc-card-footer {
-  border-top: 1px solid #c9b99a;
-  /* Priority 5: Increase horizontal padding */
-  padding: 0.625rem 2rem 1.5rem;
+/* Footer bar for card actions */
+.card-footer-bar {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: #f4f0e8;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e0d6c2;
+  background: rgba(0, 0, 0, 0.02);
 }
 
-.npc-footer-link {
-  font-size: 1.2rem;
-  color: #7b2d26;
-  text-decoration: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+.card-footer-bar__actions {
+  display: flex;
+  gap: 0.25rem;
 }
 
-.npc-footer-link:hover {
-  text-decoration: underline;
-}
+@media (max-width: 480px) {
+  .card-footer-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
 
-.npc-delete-text {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  color: #8a7e6b;
-}
-
-.npc-delete-text:hover {
-  color: #7b2d26;
+  .card-footer-bar__actions {
+    flex-wrap: wrap;
+  }
 }
 </style>

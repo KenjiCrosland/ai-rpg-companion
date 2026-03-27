@@ -5,7 +5,10 @@
     </div>
 
     <div v-else class="monster-list">
-      <div v-for="(monster, index) in monsters" :key="index" class="monster-entry">
+      <div v-for="(monster, index) in monsters" :key="index"
+        class="monster-entry"
+        :class="{ 'monster-entry-highlight': shouldHighlight && index === highlightTargetIndex }"
+        :ref="el => { if (index === highlightTargetIndex) highlightedMonsterRef = el }">
         <div class="monster-info">
           <div class="monster-header">
             <span class="monster-name">{{ monster.name }}</span>
@@ -62,6 +65,8 @@
 </template>
 
 <script setup>
+import { ref, watch, nextTick } from 'vue';
+
 // ─── CR-to-XP lookup (for per-monster display only) ──────────────────────────
 const CR_TO_XP = {
   '0': 10, '1/8': 25, '1/4': 50, '1/2': 100,
@@ -143,9 +148,60 @@ const props = defineProps({
     type: Number,
     default: 1,
   },
+  highlightOnMount: {
+    type: Boolean,
+    default: false,
+  },
+  highlightIndex: {
+    type: Number,
+    default: -1,
+  },
 });
 
-const emit = defineEmits(['update-monsters']);
+const emit = defineEmits(['update-monsters', 'highlight-complete']);
+
+// ─── Highlight animation ─────────────────────────────────────────────────────
+const shouldHighlight = ref(false);
+const highlightTargetIndex = ref(-1);
+const highlightedMonsterRef = ref(null);
+
+// Function to trigger highlight animation
+async function triggerHighlight(index) {
+  highlightTargetIndex.value = index;
+  await nextTick();
+
+  // Scroll monster into view
+  if (highlightedMonsterRef.value) {
+    highlightedMonsterRef.value.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest'
+    });
+  }
+
+  // Trigger highlight animation
+  shouldHighlight.value = true;
+
+  // Remove highlight class after animation completes (1.5s)
+  setTimeout(() => {
+    shouldHighlight.value = false;
+    highlightTargetIndex.value = -1;
+    emit('highlight-complete');
+  }, 1500);
+}
+
+// Watch for highlight on mount (deep link from statblock generator)
+watch(() => props.highlightOnMount, async (newValue) => {
+  if (newValue && props.monsters.length > 0) {
+    triggerHighlight(0); // Deep link always highlights first monster
+  }
+});
+
+// Watch for highlight index changes (when monsters are added)
+watch(() => props.highlightIndex, async (newIndex) => {
+  if (newIndex >= 0 && newIndex < props.monsters.length) {
+    triggerHighlight(newIndex);
+  }
+});
 
 // ─── Monster controls ────────────────────────────────────────────────────────
 function incrementQuantity(index) {
@@ -443,5 +499,22 @@ function removeMonster(index) {
 .difficulty-deadly {
   background: #ffcdd2;
   color: #c62828;
+}
+
+/* Highlight animation for deep link monster addition */
+@keyframes monster-highlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+  }
+}
+
+.monster-entry-highlight {
+  animation: monster-highlight 1.5s ease-out;
 }
 </style>

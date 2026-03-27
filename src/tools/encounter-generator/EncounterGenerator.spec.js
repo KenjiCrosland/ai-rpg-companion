@@ -1585,35 +1585,25 @@ describe('EncounterGenerator', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('Cross-Tool Navigation', () => {
-    it('should load monster from URL query parameter', async () => {
-      // Save original URLSearchParams
-      const OriginalURLSearchParams = global.URLSearchParams;
-
-      // Mock URLSearchParams to return query param
-      global.URLSearchParams = jest.fn().mockImplementation(() => ({
-        get: jest.fn((key) => key === 'monster' ? 'Goblin' : null)
-      }));
-
-      // Mock window.history.replaceState
-      const originalReplaceState = window.history.replaceState;
-      window.history.replaceState = jest.fn();
+    it('should load monster from navigation params', async () => {
+      // Set up navigation params in sessionStorage (dev mode)
+      const navParams = { monster: 'Goblin' };
+      sessionStorage.setItem('tool-navigation-params', JSON.stringify(navParams));
 
       wrapper = mount(EncounterGenerator, { props: { premium: false } });
 
       await flushPromises();
 
-      // Should have loaded the goblin from the query param
+      // Should have loaded the goblin from navigation params
       expect(wrapper.vm.encounterMonsters.length).toBe(1);
       expect(wrapper.vm.encounterMonsters[0].name).toBe('Goblin');
       expect(wrapper.vm.encounterMonsters[0].quantity).toBe(1);
 
-      // Should have cleared the query param (called with current pathname)
-      expect(window.history.replaceState).toHaveBeenCalled();
-      expect(window.history.replaceState).toHaveBeenCalledWith({}, '', expect.any(String));
+      // Should have cleared the navigation params
+      expect(sessionStorage.getItem('tool-navigation-params')).toBeNull();
 
-      // Restore
-      global.URLSearchParams = OriginalURLSearchParams;
-      window.history.replaceState = originalReplaceState;
+      // Cleanup
+      sessionStorage.removeItem('tool-navigation-params');
     });
   });
 });

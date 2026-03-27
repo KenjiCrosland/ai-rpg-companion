@@ -1,6 +1,7 @@
 import { dungeons } from './dungeon-state.mjs';
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { saveNPCToStorage, dungeonNPCToCanonical } from '@/util/npc-storage.mjs';
+import { addReference, getReferencesForEntity } from '@/util/reference-storage.mjs';
 
 export function saveDungeons() {
   // Prepare dungeons for save by stripping resolved statblocks
@@ -11,23 +12,42 @@ export function saveDungeons() {
 export function loadDungeons(currentDungeonId) {
   const savedDungeons = localStorage.getItem('dungeons');
   if (savedDungeons) {
-    dungeons.value = JSON.parse(savedDungeons);
-    currentDungeonId.value = dungeons.value.length
-      ? dungeons.value[0].id
-      : null;
+    try {
+      // Save the current selection before replacing the object tree
+      const previousId = currentDungeonId.value;
 
-    // Migrate and resolve statblocks for all dungeons
-    let anyMigrated = false;
-    dungeons.value.forEach(dungeon => {
-      const statblockMigrated = migrateDungeonStatblocks(dungeon);
-      const npcMigrated = migrateDungeonNPCs(dungeon);
-      if (statblockMigrated || npcMigrated) anyMigrated = true;
-      resolveDungeonStatblocks(dungeon);
-    });
+      dungeons.value = JSON.parse(savedDungeons);
 
-    // Save if any migrations occurred
-    if (anyMigrated) {
-      saveDungeons();
+      // Preserve current dungeon selection if it still exists
+      const dungeonStillExists = previousId && dungeons.value.some(d => d.id === previousId);
+      if (dungeonStillExists) {
+        currentDungeonId.value = previousId;
+      } else {
+        // Only fallback to first dungeon if current one was deleted
+        currentDungeonId.value = dungeons.value.length
+          ? dungeons.value[0].id
+          : null;
+      }
+
+      // Migrate statblocks and NPCs to shared storage (one-time for old data)
+      let migratedAny = false;
+      dungeons.value.forEach(dungeon => {
+        const statblockMigrated = migrateDungeonStatblocks(dungeon);
+        const npcMigrated = migrateDungeonNPCs(dungeon);
+        const referencesMigrated = migrateDungeonNPCStatblockReferences(dungeon);
+        if (statblockMigrated || npcMigrated || referencesMigrated) {
+          migratedAny = true;
+        }
+        resolveDungeonStatblocks(dungeon);
+      });
+
+      // Save back to localStorage if any migrations occurred
+      if (migratedAny) {
+        saveDungeons();
+      }
+    } catch (error) {
+      console.warn('Failed to load dungeons from localStorage, corrupted data:', error);
+      dungeons.value = [];
     }
   }
 }
@@ -241,4 +261,47 @@ function migrateDungeonNPCs(dungeon) {
   }
 
   return migrated;
+}
+
+function migrateDungeonNPCStatblockReferences(dungeon) {
+  const dungeonTitle = dungeon.dungeonOverview?.name || 'Dungeon NPCs';
+  let referencesCreated = 0;
+
+  if (dungeon.npcs) {
+    dungeon.npcs.forEach((npc) => {
+      // Check if NPC has a statblock reference and an npc_id
+      if (npc.npc_id && npc.statblock_name && npc.statblock_folder) {
+        const statblockId = `${npc.statblock_name}__${npc.statblock_folder}`;
+
+        // Check if reference already exists
+        const existingRefs = getReferencesForEntity('npc', npc.npc_id);
+        const hasStatblockRef = existingRefs.some(ref =>
+          ref.relationship === 'has_statblock' &&
+          ref.target_type === 'statblock' &&
+          ref.target_id === statblockId
+        );
+
+        if (!hasStatblockRef) {
+          // Create the reference
+          addReference({
+            source_type: 'npc',
+            source_id: npc.npc_id,
+            source_name: npc.name,
+            target_type: 'statblock',
+            target_id: statblockId,
+            target_name: npc.statblock_name,
+            relationship: 'has_statblock',
+            context: ''
+          });
+          referencesCreated++;
+        }
+      }
+    });
+
+    if (referencesCreated > 0) {
+      console.log(`[DUNGEON MIGRATION] Created ${referencesCreated} NPC statblock references for "${dungeonTitle}"`);
+    }
+  }
+
+  return referencesCreated > 0;
 }

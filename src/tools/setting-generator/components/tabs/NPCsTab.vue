@@ -49,6 +49,8 @@
             v-else-if="npc.read_aloud_description"
             :npc="normalizeSettingNPC(npc)"
             :origin="setting.setting_overview?.name || setting.place_name"
+            :source-type="'setting'"
+            :display-type="'setting'"
             :is-editing="editingNPCIndex === index"
             :show-relationship-generator="true"
             :is-generating-relationship="loadingNewRelationship"
@@ -343,9 +345,66 @@ const handleSaveEdit = (index, editedData) => {
 // -------------------------
 // Delete
 // -------------------------
-const deleteNPC = (index) => {
-  const updatedNPCs = props.setting.npcs.filter((_, i) => i !== index);
-  emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+const deleteNPC = async (index) => {
+  const npc = props.setting.npcs[index];
+  const npcId = npc?.npc_id || npc?.id;
+  const npcName = npc?.name || 'this NPC';
+
+  if (!npcId) {
+    // Fallback for NPCs without IDs
+    if (confirm(`Are you sure you want to delete ${npcName}?`)) {
+      const updatedNPCs = props.setting.npcs.filter((_, i) => i !== index);
+      emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+    }
+    return;
+  }
+
+  // Find all locations where this NPC exists
+  const { findNPCLocations, deleteNPCFromAllLocations } = await import('@/util/npc-storage.mjs');
+  const locations = findNPCLocations(npcId);
+
+  // Build confirmation message
+  let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
+  confirmMessage += 'This NPC will be deleted from:\n';
+
+  const settingName = props.setting.setting_overview?.name || props.setting.place_name;
+
+  // Always show current setting
+  confirmMessage += `- Setting Generator (${settingName})\n`;
+
+  // Show all NPC Generator folders (don't filter out current setting name)
+  if (locations.npcGenerator.length > 0) {
+    if (locations.npcGenerator.length === 1) {
+      confirmMessage += `- NPC Generator (${locations.npcGenerator[0]})\n`;
+    } else {
+      confirmMessage += `- NPC Generator (${locations.npcGenerator.length} folders)\n`;
+    }
+  }
+
+  // Show all dungeons
+  if (locations.dungeons.length > 0) {
+    if (locations.dungeons.length === 1) {
+      confirmMessage += `- Dungeon Generator (${locations.dungeons[0]})\n`;
+    } else {
+      confirmMessage += `- Dungeon Generator (${locations.dungeons.length} dungeons)\n`;
+    }
+  }
+
+  if (confirm(confirmMessage)) {
+    // Remove references for this NPC
+    const { removeReferencesForEntity } = await import('@/util/reference-storage.mjs');
+    removeReferencesForEntity('npc', npcId);
+
+    // Delete from all locations
+    deleteNPCFromAllLocations(npcId);
+
+    // Update local state
+    const updatedNPCs = props.setting.npcs.filter((_, i) => i !== index);
+    emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+
+    // Show success toast
+    toast.success(`${npcName} deleted from all locations`);
+  }
 };
 
 // -------------------------
@@ -523,14 +582,21 @@ const handleStorageChange = (event) => {
   }
 };
 
+// Listen for same-tab NPC storage updates (custom event)
+const handleNPCStorageUpdate = () => {
+  storageVersion.value++;
+};
+
 onMounted(() => {
   // Refresh on mount
   storageVersion.value++;
   window.addEventListener('storage', handleStorageChange);
+  window.addEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 
 onUnmounted(() => {
   window.removeEventListener('storage', handleStorageChange);
+  window.removeEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 </script>
 

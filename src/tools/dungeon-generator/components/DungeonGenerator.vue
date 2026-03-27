@@ -157,6 +157,7 @@
 import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
+import { getNavigationParams } from '@/util/navigation.mjs';
 
 import { CdrButton, CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -224,14 +225,12 @@ onMounted(() => {
   dungeonStore.loadDungeons();
 
   // Handle deep linking from NPC Generator
-  const urlParams = new URLSearchParams(window.location.search);
-  const sourceName = urlParams.get('source');
-  const tab = urlParams.get('tab');
+  const params = getNavigationParams();
 
-  if (sourceName && tab === 'npcs') {
+  if (params.source && params.tab === 'npcs') {
     // Find dungeon by name
     const dungeon = dungeonStore.dungeons.find(d =>
-      d.dungeonOverview?.name === sourceName
+      d.dungeonOverview?.name === params.source
     );
 
     if (dungeon) {
@@ -240,9 +239,6 @@ onMounted(() => {
 
       // Switch to NPCs tab (index 2)
       dungeonStore.activeTabIndex = 2;
-
-      // Clean up URL params
-      window.history.replaceState({}, '', window.location.pathname);
     }
   }
 });
