@@ -6,6 +6,21 @@ Tool-specific documentation for the D&D 5e NPC Generator.
 
 The NPC Generator creates detailed tabletop RPG NPCs with rich personalities, backgrounds, relationships, and optional combat statblocks. It uses a two-part AI generation process to create coherent characters with depth. NPCs are saved to localStorage and can be edited, exported, and integrated with statblock generation.
 
+## Key Architectural Principles
+
+**IMPORTANT: Folders vs. Relationships**
+
+The NPC Generator follows a critical design principle established in 2026:
+
+**"Folders are for organization. References are for relationships. Don't mix them."**
+
+This means:
+- **Folders**: User's personal organization system. NPCs can be moved between folders freely without affecting their actual relationships to dungeons/settings.
+- **sourceType field**: Set by dungeon/setting generators when they create NPCs. Indicates the NPC was created by that generator (not manually placed in a folder).
+- **Reference Store** (`tool-references` in localStorage): Tracks actual relationships like `appears_in_dungeon`, `appears_in_setting`, `has_statblock`.
+
+**Never infer dungeon/setting membership from folder names alone.** A folder named "The Cursed Tomb" doesn't mean NPCs in it are actually in that dungeon - they might just be organized there.
+
 ## Architecture
 
 ### Component Structure
@@ -174,34 +189,89 @@ Both formats include statblock if one was generated.
 
 ### localStorage Structure
 
-NPCs stored as array:
+NPCs are stored in a folder-based structure with additional metadata fields:
 
 ```javascript
-[
-  {
-    npcDescriptionPart1: {
-      character_name: "Eldrin Shadowmoon",
-      description_of_position: "A mysterious elven rogue...",
-      reason_for_being_there: "Seeking revenge...",
-      distinctive_feature_or_mannerism: "Always wears a silver pendant",
-      character_secret: "Once betrayed his guild",
-      read_aloud_description: "A tall elf with piercing eyes",
-      roleplaying_tips: "Speak softly with distrust",
-      combined_details: "A mysterious elven rogue...\n\nSeeking revenge..."
-    },
-    npcDescriptionPart2: {
-      relationships: {
-        "Aria Moonwhisper": "Former lover who betrayed him...",
-        "Grimjaw": "The dwarf who saved his life..."
-      }
-    },
-    typeOfPlace: "a mysterious elven rogue",
-    statblock: { /* if generated */ },
-    selectedChallengeRating: "5",
-    isSpellcaster: false
-  }
-]
+{
+  "Uncategorized": [
+    {
+      npc_id: "npc_1234567890_abc123",
+      npcDescriptionPart1: {
+        character_name: "Eldrin Shadowmoon",
+        description_of_position: "A mysterious elven rogue...",
+        reason_for_being_there: "Seeking revenge...",
+        distinctive_feature_or_mannerism: "Always wears a silver pendant",
+        character_secret: "Once betrayed his guild",
+        read_aloud_description: "A tall elf with piercing eyes",
+        roleplaying_tips: "Speak softly with distrust",
+        combined_details: "A mysterious elven rogue...\n\nSeeking revenge...",
+        statblock_name: "Elven Assassin",     // Reference to statblock
+        statblock_folder: "Custom Creatures"   // Folder in statblock storage
+      },
+      npcDescriptionPart2: {
+        relationships: {
+          "Aria Moonwhisper": "Former lover who betrayed him...",
+          "Grimjaw": "The dwarf who saved his life..."
+        }
+      },
+      typeOfPlace: "a mysterious elven rogue",  // Original user input
+      sourceType: undefined  // Not set for standalone NPCs
+    }
+  ],
+  "The Cursed Tomb": [
+    {
+      npc_id: "npc_9876543210_xyz789",
+      npcDescriptionPart1: { /* ... */ },
+      npcDescriptionPart2: { /* ... */ },
+      typeOfPlace: "The Cursed Tomb",  // Set by Dungeon Generator
+      sourceType: "dungeon"             // Indicates created by Dungeon Generator
+    }
+  ]
+}
 ```
+
+**Key Fields:**
+- `npc_id`: Unique identifier in format `npc_${timestamp}_${random}`
+- `sourceType`: Only set when NPC created by dungeon/setting generator ('dungeon' or 'setting')
+- `typeOfPlace`: Original context - either user input OR dungeon/setting name if created by generator
+- `statblock_name` + `statblock_folder`: References to statblocks in shared storage
+
+### Data Migrations
+
+The NPC Generator runs several migrations on mount to maintain data integrity:
+
+**1. `migrateNPCIds()`**: Adds unique `npc_id` to NPCs that don't have one (old data)
+
+**2. `migrateDungeonNPCsToSharedStorage()`**: Syncs NPCs from dungeon `npcs` arrays to shared NPC storage
+
+**3. `migrateSettingNPCsToSharedStorage()`**: Syncs NPCs from setting `npcs` arrays to shared NPC storage
+
+**4. `migrateSourceTypeFromTypeOfPlace()`**: **Critical migration for dungeon/setting links**
+- Checks NPCs with `typeOfPlace` field but no `sourceType`
+- Verifies `typeOfPlace` matches a real dungeon or setting name in localStorage
+- Sets `sourceType: 'dungeon'` or `sourceType: 'setting'` accordingly
+- **Why this is safe**: `typeOfPlace` is only set by dungeon/setting generators, never by user folder organization
+- **Example**: NPC with `typeOfPlace: "The Cursed Tomb"` gets `sourceType: "dungeon"` if a dungeon named "The Cursed Tomb" exists
+
+**5. `migrateNPCStatblockReferences()`**: Creates references in reference store for NPCs with statblocks
+
+**Important**: Never infer `sourceType` from folder names. Folders are for user organization only.
+
+### Dungeon/Setting Link Logic
+
+How the subtitle link "From [Dungeon/Setting Name]" is determined:
+
+**`computedOrigin` (returns dungeon/setting name for display):**
+1. Check NPC's `sourceType` field - if set, return `typeOfPlace`
+2. Fallback: Check reference store for `appears_in_dungeon` or `appears_in_setting` relationship
+3. Return target name from reference if found
+
+**`computedSourceType` (returns 'dungeon' or 'setting' for link navigation):**
+1. Check NPC's `sourceType` field - if 'dungeon' or 'setting', return it
+2. Fallback: Check reference store for `appears_in_dungeon` or `appears_in_setting` relationship
+3. Return relationship type if found
+
+**Result**: NPCs created by dungeon/setting generators show clickable links. NPCs just organized in folders don't.
 
 ### Data Manager Integration
 
