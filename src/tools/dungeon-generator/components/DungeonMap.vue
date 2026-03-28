@@ -54,6 +54,8 @@
           <template v-if="room.shape === 'circular'">
             <path :d="buildCircularRoomPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
               stroke-linecap="round" filter="url(#pencil-stroke)" />
+            <!-- Connector lines from arc to bounding box — rendered as separate elements -->
+            <g v-html="buildCircularConnectorsSvg(room)" filter="url(#pencil-stroke)"></g>
           </template>
           <!-- Domed room — rect with one curved wall -->
           <template v-else-if="room.shape === 'domed'">
@@ -342,10 +344,9 @@ function buildCircularRoomPath(room) {
     return `M ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy}`;
   }
 
-  // Compute exact gap endpoints as angles on the circle
   const ox = room.x * T, oy = room.y * T;
   const w = room.width * T, h = room.height * T;
-  const gapAngles = []; // [{a1, a2, side, pts}] — angular range to skip + connector endpoints
+  const gapAngles = [];
 
   doorways.forEach(dw => {
     const p = dw.position;
@@ -358,11 +359,7 @@ function buildCircularRoomPath(room) {
       const iy2 = dw.side === 'top' ? cy - Math.sqrt(v2) : cy + Math.sqrt(v2);
       const a1 = Math.atan2(iy1 - cy, x1 - cx);
       const a2 = Math.atan2(iy2 - cy, x2 - cx);
-      const edgeY = dw.side === 'top' ? oy : oy + h;
-      gapAngles.push({
-        a1: Math.min(a1, a2), a2: Math.max(a1, a2), side: dw.side,
-        p1: { x: x1, cy: iy1, ey: edgeY }, p2: { x: x2, cy: iy2, ey: edgeY }
-      });
+      gapAngles.push({ a1: Math.min(a1, a2), a2: Math.max(a1, a2) });
     } else {
       const y1 = oy + p * T, y2 = oy + (p + 1) * T;
       const v1 = r * r - (y1 - cy) * (y1 - cy);
@@ -372,28 +369,20 @@ function buildCircularRoomPath(room) {
       const ix2 = dw.side === 'left' ? cx - Math.sqrt(v2) : cx + Math.sqrt(v2);
       const a1 = Math.atan2(y1 - cy, ix1 - cx);
       const a2 = Math.atan2(y2 - cy, ix2 - cx);
-      const edgeX = dw.side === 'left' ? ox : ox + w;
-      gapAngles.push({
-        a1: Math.min(a1, a2), a2: Math.max(a1, a2), side: dw.side,
-        p1: { y: y1, cx: ix1, ex: edgeX }, p2: { y: y2, cx: ix2, ex: edgeX }
-      });
+      gapAngles.push({ a1: Math.min(a1, a2), a2: Math.max(a1, a2) });
     }
   });
 
-  // Sort gaps by start angle
   gapAngles.sort((a, b) => a.a1 - b.a1);
 
   if (gapAngles.length === 0) {
     return `M ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy}`;
   }
 
-  // Draw arcs between gaps, with connector lines at gap edges
   let d = '';
   for (let i = 0; i < gapAngles.length; i++) {
-    const gap = gapAngles[i];
-    const gapEnd = gap.a2;
-    const nextGap = gapAngles[(i + 1) % gapAngles.length];
-    const nextGapStart = nextGap.a1;
+    const gapEnd = gapAngles[i].a2;
+    const nextGapStart = gapAngles[(i + 1) % gapAngles.length].a1;
 
     const startX = cx + r * Math.cos(gapEnd);
     const startY = cy + r * Math.sin(gapEnd);
@@ -404,25 +393,48 @@ function buildCircularRoomPath(room) {
     if (sweep < 0) sweep += 2 * Math.PI;
     const largeArc = sweep > Math.PI ? 1 : 0;
 
-    // Connector line from arc endpoint INTO the gap (toward bounding box edge)
-    if (gap.side === 'top' || gap.side === 'bottom') {
-      d += `M ${gap.p2.x} ${gap.p2.ey} L ${gap.p2.x} ${gap.p2.cy} `;
-    } else {
-      d += `M ${gap.p2.ex} ${gap.p2.y} L ${gap.p2.cx} ${gap.p2.y} `;
-    }
-
-    // The arc
     d += `M ${startX.toFixed(1)} ${startY.toFixed(1)} A ${r} ${r} 0 ${largeArc} 1 ${endX.toFixed(1)} ${endY.toFixed(1)} `;
-
-    // Connector line from arc endpoint INTO the next gap
-    if (nextGap.side === 'top' || nextGap.side === 'bottom') {
-      d += `M ${nextGap.p1.x} ${nextGap.p1.cy} L ${nextGap.p1.x} ${nextGap.p1.ey} `;
-    } else {
-      d += `M ${nextGap.p1.cx} ${nextGap.p1.y} L ${nextGap.p1.ex} ${nextGap.p1.y} `;
-    }
   }
 
   return d;
+}
+
+// Build connector lines from circle arc endpoints to bounding box edges
+function buildCircularConnectorsSvg(room) {
+  const T = props.tileSize;
+  const { cx, cy, r } = getCircleParams(room);
+  const ox = room.x * T, oy = room.y * T;
+  const w = room.width * T, h = room.height * T;
+  const doorways = (room.doorways || []).filter(dw => dw.type !== 'merged');
+  const stroke = 'rgba(55,55,55,0.8)';
+  let svg = '';
+
+  doorways.forEach(dw => {
+    const p = dw.position;
+    if (dw.side === 'top' || dw.side === 'bottom') {
+      const x1 = ox + p * T, x2 = ox + (p + 1) * T;
+      const v1 = r * r - (x1 - cx) * (x1 - cx);
+      const v2 = r * r - (x2 - cx) * (x2 - cx);
+      if (v1 < 0 || v2 < 0) return;
+      const edgeY = dw.side === 'top' ? oy : oy + h;
+      const iy1 = dw.side === 'top' ? cy - Math.sqrt(v1) : cy + Math.sqrt(v1);
+      const iy2 = dw.side === 'top' ? cy - Math.sqrt(v2) : cy + Math.sqrt(v2);
+      svg += `<line x1="${x1}" y1="${edgeY}" x2="${x1}" y2="${iy1.toFixed(1)}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+      svg += `<line x1="${x2}" y1="${edgeY}" x2="${x2}" y2="${iy2.toFixed(1)}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    } else {
+      const y1 = oy + p * T, y2 = oy + (p + 1) * T;
+      const v1 = r * r - (y1 - cy) * (y1 - cy);
+      const v2 = r * r - (y2 - cy) * (y2 - cy);
+      if (v1 < 0 || v2 < 0) return;
+      const edgeX = dw.side === 'left' ? ox : ox + w;
+      const ix1 = dw.side === 'left' ? cx - Math.sqrt(v1) : cx + Math.sqrt(v1);
+      const ix2 = dw.side === 'left' ? cx - Math.sqrt(v2) : cx + Math.sqrt(v2);
+      svg += `<line x1="${edgeX}" y1="${y1}" x2="${ix1.toFixed(1)}" y2="${y1}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+      svg += `<line x1="${edgeX}" y1="${y2}" x2="${ix2.toFixed(1)}" y2="${y2}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    }
+  });
+
+  return svg;
 }
 
 // Build a domed room path — rect with one curved wall, doorway gaps on straight sides
@@ -438,7 +450,6 @@ function buildDomedRoomPath(room) {
 
   const nonMergedDoors = (doorways || []).filter(dw => dw.type !== 'merged');
 
-  // Helper: build a straight side with doorway gaps
   function straightSide(side) {
     const doors = nonMergedDoors.filter(dw => dw.side === side).sort((a, b) => a.position - b.position);
     let d = '';
@@ -467,7 +478,6 @@ function buildDomedRoomPath(room) {
 
   sides.forEach(side => {
     if (side === curvedSide) {
-      // Draw the curved wall
       if (side === 'top') d += `M ${ox + w} ${oy} Q ${ox + w / 2} ${oy - arcDepth} ${ox} ${oy} `;
       else if (side === 'bottom') d += `M ${ox} ${oy + h} Q ${ox + w / 2} ${oy + h + arcDepth} ${ox + w} ${oy + h} `;
       else if (side === 'left') d += `M ${ox} ${oy + h} Q ${ox - arcDepth} ${oy + h / 2} ${ox} ${oy} `;
@@ -491,7 +501,6 @@ function buildCapsuleRoomPath(room) {
   const arcDepth = Math.min(w, h) * 0.3;
   const nonMergedDoors = (doorways || []).filter(dw => dw.type !== 'merged');
 
-  // Helper: build a straight side with doorway gaps
   function straightSide(side) {
     const doors = nonMergedDoors.filter(dw => dw.side === side).sort((a, b) => a.position - b.position);
     let d = '';
@@ -518,13 +527,11 @@ function buildCapsuleRoomPath(room) {
   let d = '';
 
   if (w >= h) {
-    // Wider than tall — curve left and right, straight top and bottom
     d += straightSide('top');
     d += `M ${ox + w} ${oy} Q ${ox + w + arcDepth} ${oy + h / 2} ${ox + w} ${oy + h} `;
     d += straightSide('bottom');
     d += `M ${ox} ${oy + h} Q ${ox - arcDepth} ${oy + h / 2} ${ox} ${oy} `;
   } else {
-    // Taller than wide — curve top and bottom, straight left and right
     d += `M ${ox} ${oy} Q ${ox + w / 2} ${oy - arcDepth} ${ox + w} ${oy} `;
     d += straightSide('right');
     d += `M ${ox + w} ${oy + h} Q ${ox + w / 2} ${oy + h + arcDepth} ${ox} ${oy + h} `;
@@ -539,7 +546,6 @@ function buildMergedRoomPerimeterPath(room) {
   const T = props.tileSize;
   const tiles = new Set();
 
-  // Collect all tiles from all sections
   room.sections.forEach(section => {
     for (let i = 0; i < section.width; i++) {
       for (let j = 0; j < section.height; j++) {
@@ -548,7 +554,6 @@ function buildMergedRoomPerimeterPath(room) {
     }
   });
 
-  // Collect non-merged doorway edges to skip
   const doorwayEdges = new Set();
   room.sections.forEach(section => {
     (section.doorways || []).forEach(dw => {
@@ -561,31 +566,25 @@ function buildMergedRoomPerimeterPath(room) {
     });
   });
 
-  // Collect horizontal perimeter edges keyed by y (tile coords)
   const hEdges = {};
-  // Collect vertical perimeter edges keyed by x (tile coords)
   const vEdges = {};
 
   tiles.forEach(key => {
     const [tx, ty] = key.split(',').map(Number);
 
-    // Top edge — no neighbor above
     if (!tiles.has(`${tx},${ty - 1}`) && !doorwayEdges.has(`h,${ty},${tx}`)) {
       if (!hEdges[ty]) hEdges[ty] = [];
       hEdges[ty].push(tx);
     }
-    // Bottom edge — no neighbor below
     if (!tiles.has(`${tx},${ty + 1}`) && !doorwayEdges.has(`h,${ty + 1},${tx}`)) {
       const by = ty + 1;
       if (!hEdges[by]) hEdges[by] = [];
       hEdges[by].push(tx);
     }
-    // Left edge — no neighbor to the left
     if (!tiles.has(`${tx - 1},${ty}`) && !doorwayEdges.has(`v,${tx},${ty}`)) {
       if (!vEdges[tx]) vEdges[tx] = [];
       vEdges[tx].push(ty);
     }
-    // Right edge — no neighbor to the right
     if (!tiles.has(`${tx + 1},${ty}`) && !doorwayEdges.has(`v,${tx + 1},${ty}`)) {
       const rx = tx + 1;
       if (!vEdges[rx]) vEdges[rx] = [];
@@ -595,7 +594,6 @@ function buildMergedRoomPerimeterPath(room) {
 
   let d = '';
 
-  // Merge adjacent horizontal edges at each y into longer lines
   for (const y in hEdges) {
     const xCoords = hEdges[y].sort((a, b) => a - b);
     let startX = xCoords[0];
@@ -612,7 +610,6 @@ function buildMergedRoomPerimeterPath(room) {
     d += `M ${startX * T} ${y * T} L ${endX * T} ${y * T} `;
   }
 
-  // Merge adjacent vertical edges at each x into longer lines
   for (const x in vEdges) {
     const yCoords = vEdges[x].sort((a, b) => a - b);
     let startY = yCoords[0];
@@ -649,13 +646,12 @@ function buildDoorSvg(room, doorway, isLocked) {
   const ox = x * T;
   const oy = y * T;
 
-  // Door dimensions — rect spans full tile width, sits between straight walls
-  const doorDepth = Math.max(T / 3, 3);          // thickness of the door rectangle
-  const totalExt = T;                              // total extension from room wall
-  const wallLen = (totalExt - doorDepth) / 2;      // wall length on each side of door
-  const stroke = 'rgba(55,55,55,0.8)';
-  const wallSw = '2.2';   // match room walls
-  const doorSw = '1.5';   // thin stroke for door rectangle
+  const doorDepth = Math.max(T / 3, 3);
+  const totalExt = T;
+  const wallLen = (totalExt - doorDepth) / 2;
+  const stroke = 'rgba(70,70,70,0.65)';
+  const wallSw = '2.2';
+  const doorSw = '1.5';
 
   let svg = '';
 
@@ -716,7 +712,7 @@ function buildSecretDoorSvg(room, doorway) {
   const ox = x * T;
   const oy = y * T;
   const wallSeg = (T - T / 2) / 2;
-  const stroke = 'rgba(55,55,55,0.8)';
+  const stroke = 'rgba(70,70,70,0.65)';
   const sw = '2.2';
   let svg = '';
 
@@ -760,7 +756,7 @@ function buildCorridorWallsSvg(room, doorway) {
   const T = props.tileSize;
   const ox = x * T;
   const oy = y * T;
-  const stroke = 'rgba(55,55,55,0.8)';
+  const stroke = 'rgba(70,70,70,0.65)';
   let svg = '';
 
   if (doorway.side === 'top') {
@@ -918,12 +914,10 @@ function findAdjacentRoom(room, doorway) {
   });
 }
 
-// Unused but kept for API compat — rooms don't need individual outline props
 function roomOutlinePaths() {
   return {};
 }
 
-// Event handlers
 function handleRoomClick(pos) {
   clickedRoomId.value = pos.roomId;
   emit('roomClicked', { roomId: pos.roomId, x: pos.x, y: pos.y });
