@@ -1,11 +1,107 @@
 <template>
   <div class="dungeon-map">
-    <canvas class="responsive-canvas" ref="dungeonCanvas"></canvas>
+    <svg ref="dungeonSvg" class="responsive-svg" :viewBox="`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`"
+      :width="viewBox.w" :height="viewBox.h" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision"
+      @click="handleMapClick">
+      <defs>
+        <!-- Grid pattern -->
+        <pattern id="grid-pattern" :width="tileSize" :height="tileSize" patternUnits="userSpaceOnUse">
+          <rect :width="tileSize" :height="tileSize" fill="none" stroke="#b8d4e3" stroke-width="0.35" opacity="0.7" />
+        </pattern>
+
+        <!-- Pencil filter — soft blur + slight opacity for hand-drawn feel -->
+        <filter id="pencil-stroke" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.45" result="softened" />
+          <feComponentTransfer in="softened">
+            <feFuncA type="linear" slope="0.88" />
+          </feComponentTransfer>
+        </filter>
+      </defs>
+
+      <!-- Background -->
+      <rect :x="viewBox.x" :y="viewBox.y" :width="viewBox.w" :height="viewBox.h" fill="#f3f3e8" />
+      <!-- Grid -->
+      <rect :x="viewBox.x" :y="viewBox.y" :width="viewBox.w" :height="viewBox.h" fill="url(#grid-pattern)" />
+
+      <!-- Rooms -->
+      <template v-for="room in rooms" :key="'room-' + room.id">
+        <template v-if="room.type === 'merged'">
+          <template v-for="(section, si) in room.sections" :key="'section-' + room.id + '-' + si">
+            <g v-bind="roomOutlinePaths({ ...section, id: room.id })"></g>
+          </template>
+        </template>
+        <template v-else>
+          <g v-bind="roomOutlinePaths(room)"></g>
+        </template>
+      </template>
+
+      <!-- Room outlines and doorways rendered via path elements -->
+      <template v-for="room in rooms" :key="'outline-' + room.id">
+        <template v-if="room.type === 'merged'">
+          <!-- Single perimeter path for the entire merged room -->
+          <path :d="buildMergedRoomPerimeterPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
+            stroke-linecap="round" filter="url(#pencil-stroke)" />
+          <!-- Doorways from each section (non-merged only) -->
+          <template v-for="(section, si) in room.sections" :key="'sdw-' + room.id + '-' + si">
+            <template v-for="(dw, di) in (section.doorways || [])" :key="'dw-' + room.id + '-' + si + '-' + di">
+              <g v-if="dw.type !== 'merged'" v-html="buildDoorwaySvg({ ...section, id: room.id }, dw)"
+                filter="url(#pencil-stroke)"></g>
+            </template>
+          </template>
+        </template>
+        <template v-else>
+          <!-- Circular room -->
+          <template v-if="room.shape === 'circular'">
+            <path :d="buildCircularRoomPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
+              stroke-linecap="round" filter="url(#pencil-stroke)" />
+          </template>
+          <!-- Domed room — rect with one curved wall -->
+          <template v-else-if="room.shape === 'domed'">
+            <path :d="buildDomedRoomPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
+              stroke-linecap="round" filter="url(#pencil-stroke)" />
+          </template>
+          <!-- Capsule room — curved narrow ends, straight long sides -->
+          <template v-else-if="room.shape === 'capsule'">
+            <path :d="buildCapsuleRoomPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
+              stroke-linecap="round" filter="url(#pencil-stroke)" />
+          </template>
+          <!-- Standard rectangular room -->
+          <template v-else>
+            <path :d="buildRoomOutlinePath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
+              stroke-linecap="round" filter="url(#pencil-stroke)" />
+          </template>
+          <!-- Doorways (all shapes) -->
+          <template v-for="(dw, di) in (room.doorways || [])" :key="'dw-' + room.id + '-' + di">
+            <g v-if="dw.type !== 'merged'" v-html="buildDoorwaySvg(room, dw)" filter="url(#pencil-stroke)"></g>
+          </template>
+          <!-- Merged wall extensions (rectangular rooms only) -->
+          <template v-for="(dw, di) in (room.doorways || [])" :key="'mw-' + room.id + '-' + di">
+            <path v-if="dw.type === 'merged' && !room.shape" :d="buildMergedWallPath(room, dw)" fill="none"
+              stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2" stroke-linecap="round" filter="url(#pencil-stroke)" />
+          </template>
+        </template>
+      </template>
+
+      <!-- Room numbers (interactive) -->
+      <g v-for="pos in numberPositions" :key="'num-' + pos.roomId" class="room-number"
+        :class="{ hovered: hoveredRoomId === pos.roomId, clicked: clickedRoomId === pos.roomId }"
+        @click.stop="handleRoomClick(pos)" @mouseenter="hoveredRoomId = pos.roomId" @mouseleave="hoveredRoomId = null"
+        @mousedown="clickedRoomId = pos.roomId" style="cursor: pointer;">
+        <!-- Invisible hit area -->
+        <circle :cx="pos.x" :cy="pos.y" r="10" fill="transparent" />
+        <!-- Room number text -->
+        <text :x="pos.x" :y="pos.y" text-anchor="middle" dominant-baseline="central" fill="#222"
+          :font-size="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 16 : 14"
+          :font-weight="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 'bold' : 'normal'"
+          font-family="Arial, sans-serif" filter="url(#pencil-stroke)">{{ pos.roomId }}</text>
+      </g>
+    </svg>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
+
 const emit = defineEmits(['roomClicked', 'mapClicked']);
 
 const props = defineProps({
@@ -15,7 +111,7 @@ const props = defineProps({
   },
   tileSize: {
     type: Number,
-    default: 16, // Adjust tile size as needed
+    default: 16,
   },
   dungeonName: {
     type: String,
@@ -23,968 +119,833 @@ const props = defineProps({
   },
 });
 
-const dungeonCanvas = ref(null);
+const dungeonSvg = ref(null);
+const hoveredRoomId = ref(null);
+const clickedRoomId = ref(null);
 
 defineExpose({
   downloadCanvasAsImage() {
-    const canvas = dungeonCanvas.value;
-    const link = document.createElement('a');
-    link.download = `${props.dungeonName}-map.png`;
-    link.href = canvas.toDataURL();
-    link.click();
+    const svg = dungeonSvg.value;
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    canvas.width = viewBox.value.w;
+    canvas.height = viewBox.value.h;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      const link = document.createElement('a');
+      link.download = `${props.dungeonName}-map.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+    img.src = url;
   },
 });
-const resizeCanvas = () => {
-  const canvas = dungeonCanvas.value;
-  const tileSize = props.tileSize;
 
-  // Calculate minimum and maximum coordinates
+// Compute the viewBox from room extents
+const viewBox = computed(() => {
+  const T = props.tileSize;
+  const padding = 2;
+
   const allX = props.rooms.flatMap(room => {
     if (room.type === 'merged') {
-      return room.sections.flatMap(section => [section.x, section.x + section.width]);
-    } else {
-      return [room.x, room.x + room.width];
+      return room.sections.flatMap(s => [s.x, s.x + s.width]);
     }
+    return [room.x, room.x + room.width];
   });
 
   const allY = props.rooms.flatMap(room => {
     if (room.type === 'merged') {
-      return room.sections.flatMap(section => [section.y, section.y + section.height]);
-    } else {
-      return [room.y, room.y + room.height];
+      return room.sections.flatMap(s => [s.y, s.y + s.height]);
     }
+    return [room.y, room.y + room.height];
   });
 
-  let minX = Math.min(...allX);
-  let maxX = Math.max(...allX);
-  let minY = Math.min(...allY);
-  let maxY = Math.max(...allY);
+  const minX = Math.min(...allX) - padding;
+  const maxX = Math.max(...allX) + padding;
+  const minY = Math.min(...allY) - padding;
+  const maxY = Math.max(...allY) + padding;
 
-  // Adjust minX, minY, maxX, maxY to add padding
-  const paddingTiles = 2; // Number of tiles to pad around the dungeon
-  minX -= paddingTiles;
-  minY -= paddingTiles;
-  maxX += paddingTiles;
-  maxY += paddingTiles;
+  return {
+    x: minX * T,
+    y: minY * T,
+    w: (maxX - minX) * T,
+    h: (maxY - minY) * T,
+  };
+});
 
-  // Calculate width and height based on adjusted min and max coordinates
-  canvas.width = (maxX - minX) * tileSize;
-  canvas.height = (maxY - minY) * tileSize;
-
-  // Store minX and minY to adjust the drawing positions
-  canvas.minX = minX;
-  canvas.minY = minY;
-};
-
-//add a background color to the canvas
-const drawBackground = (ctx) => {
-  const { width, height } = ctx.canvas;
-  ctx.fillStyle = '#f3f3e8'; // Light gray color for background
-  ctx.fillRect(0, 0, width, height);
-};
-
-const drawGrid = (ctx) => {
-  const { width, height } = ctx.canvas;
-  const tileSize = props.tileSize;
-
-  ctx.strokeStyle = '#add8e6'; // Light blue color for grid lines
-  ctx.lineWidth = 0.5;
-
-  // Draw vertical lines
-  for (let x = 0; x <= width; x += tileSize) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-    ctx.stroke();
-  }
-
-  // Draw horizontal lines
-  for (let y = 0; y <= height; y += tileSize) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
-  }
-};
-
-let groupMap;
-
-const computeGroupMap = () => {
-  groupMap = new Map();
+// Compute group map for room number positioning
+const groupMap = computed(() => {
+  const map = new Map();
 
   props.rooms.forEach(room => {
     const roomId = room.id;
-
-    if (!groupMap.has(roomId)) {
-      groupMap.set(roomId, {
-        tiles: new Set(),
-        minX: Infinity,
-        maxX: -Infinity,
-        minY: Infinity,
-        maxY: -Infinity,
-        roomId: roomId,
-      });
+    if (!map.has(roomId)) {
+      map.set(roomId, { tiles: new Set(), minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity, roomId });
     }
-    const group = groupMap.get(roomId);
+    const group = map.get(roomId);
 
-    // Handle merged rooms
+    const collectTiles = (r) => {
+      for (let i = 0; i < r.width; i++) {
+        for (let j = 0; j < r.height; j++) {
+          const tileX = r.x + i;
+          const tileY = r.y + j;
+          group.tiles.add(`${tileX},${tileY}`);
+          group.minX = Math.min(group.minX, tileX);
+          group.maxX = Math.max(group.maxX, tileX + 1);
+          group.minY = Math.min(group.minY, tileY);
+          group.maxY = Math.max(group.maxY, tileY + 1);
+        }
+      }
+    };
+
     if (room.type === 'merged') {
-      room.sections.forEach(section => {
-        collectRoomTiles(group, section);
-      });
+      room.sections.forEach(collectTiles);
     } else {
-      collectRoomTiles(group, room);
-    }
-  });
-};
-
-const collectRoomTiles = (group, room) => {
-  // Collect all tiles occupied by this room
-  for (let i = 0; i < room.width; i++) {
-    for (let j = 0; j < room.height; j++) {
-      const tileX = room.x + i;
-      const tileY = room.y + j;
-      const tileKey = `${tileX},${tileY}`;
-      group.tiles.add(tileKey);
-
-      // Update group's bounding box
-      group.minX = Math.min(group.minX, tileX);
-      group.maxX = Math.max(group.maxX, tileX + 1);
-      group.minY = Math.min(group.minY, tileY);
-      group.maxY = Math.max(group.maxY, tileY + 1);
-    }
-  }
-};
-
-const drawRooms = (ctx) => {
-  computeGroupMap(); // Compute group map before drawing
-
-  drawBackground(ctx); // Draw background first
-
-  drawGrid(ctx); // Draw grid first
-
-  // Draw room outlines
-  props.rooms.forEach(room => {
-    if (room.type === 'merged') {
-      // For merged rooms, draw each section
-      room.sections.forEach(section => {
-        section.id = room.id; // Assign parent room id to section
-        drawRoomOutline(ctx, section);
-      });
-    } else {
-      drawRoomOutline(ctx, room);
+      collectTiles(room);
     }
   });
 
+  return map;
+});
 
-  // Draw room numbers
-  drawRoomNumbers(ctx);
-};
+// Compute number positions from group map
+const numberPositions = computed(() => {
+  const T = props.tileSize;
+  const positions = [];
 
-let numberPositions = []; // Store positions of the room numbers
-let hoveredRoomId = null; // Track hovered room ID
-let clickedRoomId = null; // Track clicked room ID
-
-const drawRoomNumbers = (ctx) => {
-  const tileSize = props.tileSize;
-  numberPositions = [];
-
-  groupMap.forEach((group) => {
-    const tileCoordinates = Array.from(group.tiles).map(tileKey => {
-      const [x, y] = tileKey.split(',').map(Number);
+  groupMap.value.forEach((group) => {
+    const tiles = Array.from(group.tiles).map(key => {
+      const [x, y] = key.split(',').map(Number);
       return { x, y };
     });
+    if (tiles.length === 0) return;
 
-    if (tileCoordinates.length === 0) return;
+    const sumX = tiles.reduce((acc, t) => acc + t.x + 0.5, 0);
+    const sumY = tiles.reduce((acc, t) => acc + t.y + 0.5, 0);
+    let cx = sumX / tiles.length;
+    let cy = sumY / tiles.length;
+    cx = Math.max(group.minX, Math.min(cx, group.maxX));
+    cy = Math.max(group.minY, Math.min(cy, group.maxY));
 
-    const sumX = tileCoordinates.reduce((acc, tile) => acc + tile.x + 0.5, 0);
-    const sumY = tileCoordinates.reduce((acc, tile) => acc + tile.y + 0.5, 0);
-    let centroidX = sumX / tileCoordinates.length;
-    let centroidY = sumY / tileCoordinates.length;
-
-    centroidX = Math.max(group.minX, Math.min(centroidX, group.maxX));
-    centroidY = Math.max(group.minY, Math.min(centroidY, group.maxY));
-
-    const centerX = (centroidX - ctx.canvas.minX) * tileSize;
-    const centerY = (centroidY - ctx.canvas.minY) * tileSize;
-
-    numberPositions.push({
+    positions.push({
       roomId: group.roomId,
-      x: centerX,
-      y: centerY,
-      radius: 10,
+      x: cx * T,
+      y: cy * T,
     });
-
-    // Change style for hovered or clicked state
-    ctx.font = '14px Arial';
-    if (group.roomId === hoveredRoomId || group.roomId === clickedRoomId) {
-      ctx.font = 'bold 16px Arial';
-    }
-    ctx.fillStyle = '#333';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${group.roomId}`, centerX, centerY);
   });
-};
 
+  return positions;
+});
 
+// Find all flat rooms (expanding merged rooms into sections)
+function getAllFlatRooms() {
+  const all = [];
+  props.rooms.forEach(r => {
+    if (r.type === 'merged') {
+      all.push(...r.sections);
+    } else {
+      all.push(r);
+    }
+  });
+  return all;
+}
 
-const drawRoomOutline = (ctx, room) => {
+// Build the room outline path, leaving gaps for doorways
+function buildRoomOutlinePath(room) {
   const { x, y, width, height, doorways } = room;
-  const tileSize = props.tileSize;
-  const offsetX = (x - ctx.canvas.minX) * tileSize;
-  const offsetY = (y - ctx.canvas.minY) * tileSize;
+  const T = props.tileSize;
+  const ox = x * T;
+  const oy = y * T;
 
-  ctx.beginPath();
+  const hasMerged = (side) => doorways?.some(d => d.side === side && d.type === 'merged');
 
-  // Function to check if there's a merged connection on a given side
-  const hasMergedConnection = (side) => {
-    return doorways?.some(d => d.side === side && d.type === 'merged');
-  };
+  let d = '';
 
-  // For each side, draw it if there is no merged connection
-  if (!hasMergedConnection('top')) {
-    // Top side with potential doorways (from left to right)
-    ctx.moveTo(offsetX, offsetY);
-    const topDoorways = doorways?.filter(d => d.side === 'top' && d.type !== 'merged') || [];
-    topDoorways.sort((a, b) => a.position - b.position).forEach(doorway => {
-      ctx.lineTo(offsetX + doorway.position * tileSize, offsetY);
-      ctx.moveTo(offsetX + (doorway.position + 1) * tileSize, offsetY);
+  // Top side
+  if (!hasMerged('top')) {
+    const topDoors = (doorways?.filter(dw => dw.side === 'top' && dw.type !== 'merged') || []).sort((a, b) => a.position - b.position);
+    let curX = ox;
+    d += `M ${curX} ${oy} `;
+    topDoors.forEach(dw => {
+      const doorX = ox + dw.position * T;
+      d += `L ${doorX} ${oy} `;
+      d += `M ${doorX + T} ${oy} `;
+      curX = doorX + T;
     });
-    ctx.lineTo(offsetX + width * tileSize, offsetY);
+    d += `L ${ox + width * T} ${oy} `;
   }
 
-  if (!hasMergedConnection('right')) {
-    // Right side with potential doorways (from top to bottom)
-    ctx.moveTo(offsetX + width * tileSize, offsetY);
-    const rightDoorways = doorways?.filter(d => d.side === 'right' && d.type !== 'merged') || [];
-    rightDoorways.sort((a, b) => a.position - b.position).forEach(doorway => {
-      ctx.lineTo(offsetX + width * tileSize, offsetY + doorway.position * tileSize);
-      ctx.moveTo(offsetX + width * tileSize, offsetY + (doorway.position + 1) * tileSize);
+  // Right side
+  if (!hasMerged('right')) {
+    const rightDoors = (doorways?.filter(dw => dw.side === 'right' && dw.type !== 'merged') || []).sort((a, b) => a.position - b.position);
+    let curY = oy;
+    d += `M ${ox + width * T} ${oy} `;
+    rightDoors.forEach(dw => {
+      const doorY = oy + dw.position * T;
+      d += `L ${ox + width * T} ${doorY} `;
+      d += `M ${ox + width * T} ${doorY + T} `;
+      curY = doorY + T;
     });
-    ctx.lineTo(offsetX + width * tileSize, offsetY + height * tileSize);
+    d += `L ${ox + width * T} ${oy + height * T} `;
   }
 
-  if (!hasMergedConnection('bottom')) {
-    // Bottom side with potential doorways (from right to left)
-    ctx.moveTo(offsetX + width * tileSize, offsetY + height * tileSize);
-    const bottomDoorways = doorways?.filter(d => d.side === 'bottom' && d.type !== 'merged') || [];
-    bottomDoorways.sort((a, b) => b.position - a.position).forEach(doorway => {
-      ctx.lineTo(offsetX + (doorway.position + 1) * tileSize, offsetY + height * tileSize);
-      ctx.moveTo(offsetX + doorway.position * tileSize, offsetY + height * tileSize);
+  // Bottom side
+  if (!hasMerged('bottom')) {
+    const bottomDoors = (doorways?.filter(dw => dw.side === 'bottom' && dw.type !== 'merged') || []).sort((a, b) => b.position - a.position);
+    d += `M ${ox + width * T} ${oy + height * T} `;
+    bottomDoors.forEach(dw => {
+      const doorX = ox + (dw.position + 1) * T;
+      d += `L ${doorX} ${oy + height * T} `;
+      d += `M ${ox + dw.position * T} ${oy + height * T} `;
     });
-    ctx.lineTo(offsetX, offsetY + height * tileSize);
+    d += `L ${ox} ${oy + height * T} `;
   }
 
-  if (!hasMergedConnection('left')) {
-    // Left side with potential doorways (from bottom to top)
-    ctx.moveTo(offsetX, offsetY + height * tileSize);
-    const leftDoorways = doorways?.filter(d => d.side === 'left' && d.type !== 'merged') || [];
-    leftDoorways.sort((a, b) => b.position - a.position).forEach(doorway => {
-      ctx.lineTo(offsetX, offsetY + (doorway.position + 1) * tileSize);
-      ctx.moveTo(offsetX, offsetY + doorway.position * tileSize);
+  // Left side
+  if (!hasMerged('left')) {
+    const leftDoors = (doorways?.filter(dw => dw.side === 'left' && dw.type !== 'merged') || []).sort((a, b) => b.position - a.position);
+    d += `M ${ox} ${oy + height * T} `;
+    leftDoors.forEach(dw => {
+      const doorY = oy + (dw.position + 1) * T;
+      d += `L ${ox} ${doorY} `;
+      d += `M ${ox} ${oy + dw.position * T} `;
     });
-    ctx.lineTo(offsetX, offsetY);
+    d += `L ${ox} ${oy} `;
   }
 
-  ctx.strokeStyle = 'rgba(51, 51, 51, 0.8)'; // Dark gray color with reduced opacity
-  ctx.lineWidth = 2.5; // Thicker lines for room outlines
-  ctx.lineCap = 'round'; // Round line caps for smoother lines
-  ctx.stroke();
+  return d;
+}
 
-  // Draw doorways (excluding merged connections)
-  doorways?.forEach(doorway => {
-    if (doorway.type !== 'merged') {
-      drawCorridor(ctx, room, doorway);
+// Shared circle geometry — true circle inscribed in the bounding box
+function getCircleParams(room) {
+  const T = props.tileSize;
+  const ox = room.x * T, oy = room.y * T;
+  const w = room.width * T, h = room.height * T;
+  const r = Math.min(w, h) / 2 - 2;
+  return { cx: ox + w / 2, cy: oy + h / 2, r };
+}
+
+// Build a true circular room path with gaps at exact doorway intersection points
+function buildCircularRoomPath(room) {
+  const T = props.tileSize;
+  const { cx, cy, r } = getCircleParams(room);
+  const doorways = (room.doorways || []).filter(dw => dw.type !== 'merged');
+
+  if (doorways.length === 0) {
+    return `M ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy}`;
+  }
+
+  // Compute exact gap endpoints as angles on the circle
+  const ox = room.x * T, oy = room.y * T;
+  const w = room.width * T, h = room.height * T;
+  const gapAngles = []; // [{a1, a2, side, pts}] — angular range to skip + connector endpoints
+
+  doorways.forEach(dw => {
+    const p = dw.position;
+    if (dw.side === 'top' || dw.side === 'bottom') {
+      const x1 = ox + p * T, x2 = ox + (p + 1) * T;
+      const v1 = r * r - (x1 - cx) * (x1 - cx);
+      const v2 = r * r - (x2 - cx) * (x2 - cx);
+      if (v1 < 0 || v2 < 0) return;
+      const iy1 = dw.side === 'top' ? cy - Math.sqrt(v1) : cy + Math.sqrt(v1);
+      const iy2 = dw.side === 'top' ? cy - Math.sqrt(v2) : cy + Math.sqrt(v2);
+      const a1 = Math.atan2(iy1 - cy, x1 - cx);
+      const a2 = Math.atan2(iy2 - cy, x2 - cx);
+      const edgeY = dw.side === 'top' ? oy : oy + h;
+      gapAngles.push({
+        a1: Math.min(a1, a2), a2: Math.max(a1, a2), side: dw.side,
+        p1: { x: x1, cy: iy1, ey: edgeY }, p2: { x: x2, cy: iy2, ey: edgeY }
+      });
+    } else {
+      const y1 = oy + p * T, y2 = oy + (p + 1) * T;
+      const v1 = r * r - (y1 - cy) * (y1 - cy);
+      const v2 = r * r - (y2 - cy) * (y2 - cy);
+      if (v1 < 0 || v2 < 0) return;
+      const ix1 = dw.side === 'left' ? cx - Math.sqrt(v1) : cx + Math.sqrt(v1);
+      const ix2 = dw.side === 'left' ? cx - Math.sqrt(v2) : cx + Math.sqrt(v2);
+      const a1 = Math.atan2(y1 - cy, ix1 - cx);
+      const a2 = Math.atan2(y2 - cy, ix2 - cx);
+      const edgeX = dw.side === 'left' ? ox : ox + w;
+      gapAngles.push({
+        a1: Math.min(a1, a2), a2: Math.max(a1, a2), side: dw.side,
+        p1: { y: y1, cx: ix1, ex: edgeX }, p2: { y: y2, cx: ix2, ex: edgeX }
+      });
     }
   });
 
-  // Handle extensions for merged connections
-  doorways?.forEach(doorway => {
-    if (doorway.type === 'merged') {
-      const adjacentRoom = findAdjacentRoom(room, doorway);
-      if (adjacentRoom) {
-        extendWallsForMergedRooms(ctx, room, adjacentRoom, doorway);
+  // Sort gaps by start angle
+  gapAngles.sort((a, b) => a.a1 - b.a1);
+
+  if (gapAngles.length === 0) {
+    return `M ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy}`;
+  }
+
+  // Draw arcs between gaps, with connector lines at gap edges
+  let d = '';
+  for (let i = 0; i < gapAngles.length; i++) {
+    const gap = gapAngles[i];
+    const gapEnd = gap.a2;
+    const nextGap = gapAngles[(i + 1) % gapAngles.length];
+    const nextGapStart = nextGap.a1;
+
+    const startX = cx + r * Math.cos(gapEnd);
+    const startY = cy + r * Math.sin(gapEnd);
+    const endX = cx + r * Math.cos(nextGapStart);
+    const endY = cy + r * Math.sin(nextGapStart);
+
+    let sweep = nextGapStart - gapEnd;
+    if (sweep < 0) sweep += 2 * Math.PI;
+    const largeArc = sweep > Math.PI ? 1 : 0;
+
+    // Connector line from arc endpoint INTO the gap (toward bounding box edge)
+    if (gap.side === 'top' || gap.side === 'bottom') {
+      d += `M ${gap.p2.x} ${gap.p2.ey} L ${gap.p2.x} ${gap.p2.cy} `;
+    } else {
+      d += `M ${gap.p2.ex} ${gap.p2.y} L ${gap.p2.cx} ${gap.p2.y} `;
+    }
+
+    // The arc
+    d += `M ${startX.toFixed(1)} ${startY.toFixed(1)} A ${r} ${r} 0 ${largeArc} 1 ${endX.toFixed(1)} ${endY.toFixed(1)} `;
+
+    // Connector line from arc endpoint INTO the next gap
+    if (nextGap.side === 'top' || nextGap.side === 'bottom') {
+      d += `M ${nextGap.p1.x} ${nextGap.p1.cy} L ${nextGap.p1.x} ${nextGap.p1.ey} `;
+    } else {
+      d += `M ${nextGap.p1.cx} ${nextGap.p1.y} L ${nextGap.p1.ex} ${nextGap.p1.y} `;
+    }
+  }
+
+  return d;
+}
+
+// Build a domed room path — rect with one curved wall, doorway gaps on straight sides
+function buildDomedRoomPath(room) {
+  const { x, y, width, height, doorways } = room;
+  const T = props.tileSize;
+  const ox = x * T;
+  const oy = y * T;
+  const w = width * T;
+  const h = height * T;
+  const curvedSide = room.domedSide || 'top';
+  const arcDepth = Math.min(w, h) * 0.3;
+
+  const nonMergedDoors = (doorways || []).filter(dw => dw.type !== 'merged');
+
+  // Helper: build a straight side with doorway gaps
+  function straightSide(side) {
+    const doors = nonMergedDoors.filter(dw => dw.side === side).sort((a, b) => a.position - b.position);
+    let d = '';
+    if (side === 'top') {
+      d += `M ${ox} ${oy} `;
+      doors.forEach(dw => { d += `L ${ox + dw.position * T} ${oy} M ${ox + (dw.position + 1) * T} ${oy} `; });
+      d += `L ${ox + w} ${oy} `;
+    } else if (side === 'bottom') {
+      d += `M ${ox + w} ${oy + h} `;
+      doors.sort((a, b) => b.position - a.position).forEach(dw => { d += `L ${ox + (dw.position + 1) * T} ${oy + h} M ${ox + dw.position * T} ${oy + h} `; });
+      d += `L ${ox} ${oy + h} `;
+    } else if (side === 'left') {
+      d += `M ${ox} ${oy + h} `;
+      doors.sort((a, b) => b.position - a.position).forEach(dw => { d += `L ${ox} ${oy + (dw.position + 1) * T} M ${ox} ${oy + dw.position * T} `; });
+      d += `L ${ox} ${oy} `;
+    } else if (side === 'right') {
+      d += `M ${ox + w} ${oy} `;
+      doors.forEach(dw => { d += `L ${ox + w} ${oy + dw.position * T} M ${ox + w} ${oy + (dw.position + 1) * T} `; });
+      d += `L ${ox + w} ${oy + h} `;
+    }
+    return d;
+  }
+
+  let d = '';
+  const sides = ['top', 'right', 'bottom', 'left'];
+
+  sides.forEach(side => {
+    if (side === curvedSide) {
+      // Draw the curved wall
+      if (side === 'top') d += `M ${ox + w} ${oy} Q ${ox + w / 2} ${oy - arcDepth} ${ox} ${oy} `;
+      else if (side === 'bottom') d += `M ${ox} ${oy + h} Q ${ox + w / 2} ${oy + h + arcDepth} ${ox + w} ${oy + h} `;
+      else if (side === 'left') d += `M ${ox} ${oy + h} Q ${ox - arcDepth} ${oy + h / 2} ${ox} ${oy} `;
+      else if (side === 'right') d += `M ${ox + w} ${oy} Q ${ox + w + arcDepth} ${oy + h / 2} ${ox + w} ${oy + h} `;
+    } else {
+      d += straightSide(side);
+    }
+  });
+
+  return d;
+}
+
+// Build a capsule room path — straight long sides, curved narrow ends, doorway gaps on straight sides
+function buildCapsuleRoomPath(room) {
+  const { x, y, width, height, doorways } = room;
+  const T = props.tileSize;
+  const ox = x * T;
+  const oy = y * T;
+  const w = width * T;
+  const h = height * T;
+  const arcDepth = Math.min(w, h) * 0.3;
+  const nonMergedDoors = (doorways || []).filter(dw => dw.type !== 'merged');
+
+  // Helper: build a straight side with doorway gaps
+  function straightSide(side) {
+    const doors = nonMergedDoors.filter(dw => dw.side === side).sort((a, b) => a.position - b.position);
+    let d = '';
+    if (side === 'top') {
+      d += `M ${ox} ${oy} `;
+      doors.forEach(dw => { d += `L ${ox + dw.position * T} ${oy} M ${ox + (dw.position + 1) * T} ${oy} `; });
+      d += `L ${ox + w} ${oy} `;
+    } else if (side === 'bottom') {
+      d += `M ${ox + w} ${oy + h} `;
+      doors.sort((a, b) => b.position - a.position).forEach(dw => { d += `L ${ox + (dw.position + 1) * T} ${oy + h} M ${ox + dw.position * T} ${oy + h} `; });
+      d += `L ${ox} ${oy + h} `;
+    } else if (side === 'left') {
+      d += `M ${ox} ${oy + h} `;
+      doors.sort((a, b) => b.position - a.position).forEach(dw => { d += `L ${ox} ${oy + (dw.position + 1) * T} M ${ox} ${oy + dw.position * T} `; });
+      d += `L ${ox} ${oy} `;
+    } else if (side === 'right') {
+      d += `M ${ox + w} ${oy} `;
+      doors.forEach(dw => { d += `L ${ox + w} ${oy + dw.position * T} M ${ox + w} ${oy + (dw.position + 1) * T} `; });
+      d += `L ${ox + w} ${oy + h} `;
+    }
+    return d;
+  }
+
+  let d = '';
+
+  if (w >= h) {
+    // Wider than tall — curve left and right, straight top and bottom
+    d += straightSide('top');
+    d += `M ${ox + w} ${oy} Q ${ox + w + arcDepth} ${oy + h / 2} ${ox + w} ${oy + h} `;
+    d += straightSide('bottom');
+    d += `M ${ox} ${oy + h} Q ${ox - arcDepth} ${oy + h / 2} ${ox} ${oy} `;
+  } else {
+    // Taller than wide — curve top and bottom, straight left and right
+    d += `M ${ox} ${oy} Q ${ox + w / 2} ${oy - arcDepth} ${ox + w} ${oy} `;
+    d += straightSide('right');
+    d += `M ${ox + w} ${oy + h} Q ${ox + w / 2} ${oy + h + arcDepth} ${ox} ${oy + h} `;
+    d += straightSide('left');
+  }
+
+  return d;
+}
+
+// Build a single perimeter path for a merged room by tracing outer tile edges
+function buildMergedRoomPerimeterPath(room) {
+  const T = props.tileSize;
+  const tiles = new Set();
+
+  // Collect all tiles from all sections
+  room.sections.forEach(section => {
+    for (let i = 0; i < section.width; i++) {
+      for (let j = 0; j < section.height; j++) {
+        tiles.add(`${section.x + i},${section.y + j}`);
       }
     }
   });
-};
 
-const findAdjacentRoom = (room, doorway) => {
-  const side = doorway.side;
-  const position = doorway.position;
+  // Collect non-merged doorway edges to skip
+  const doorwayEdges = new Set();
+  room.sections.forEach(section => {
+    (section.doorways || []).forEach(dw => {
+      if (dw.type === 'merged') return;
+      const sx = section.x, sy = section.y;
+      if (dw.side === 'top') doorwayEdges.add(`h,${sy},${sx + dw.position}`);
+      if (dw.side === 'bottom') doorwayEdges.add(`h,${sy + section.height},${sx + dw.position}`);
+      if (dw.side === 'left') doorwayEdges.add(`v,${sx},${sy + dw.position}`);
+      if (dw.side === 'right') doorwayEdges.add(`v,${sx + section.width},${sy + dw.position}`);
+    });
+  });
 
-  // Calculate the expected position of the adjacent room
-  let adjacentX = room.x;
-  let adjacentY = room.y;
+  // Collect horizontal perimeter edges keyed by y (tile coords)
+  const hEdges = {};
+  // Collect vertical perimeter edges keyed by x (tile coords)
+  const vEdges = {};
 
-  if (side === 'top') {
-    adjacentY = room.y - 1; // Directly above
-    adjacentX = room.x + position;
-  } else if (side === 'bottom') {
-    adjacentY = room.y + room.height; // Directly below
-    adjacentX = room.x + position;
-  } else if (side === 'left') {
-    adjacentX = room.x - 1; // Directly to the left
-    adjacentY = room.y + position;
-  } else if (side === 'right') {
-    adjacentX = room.x + room.width; // Directly to the right
-    adjacentY = room.y + position;
-  }
+  tiles.forEach(key => {
+    const [tx, ty] = key.split(',').map(Number);
 
-  // Find the adjacent room in props.rooms or in merged room sections
-  let allRooms = [];
-  props.rooms.forEach(r => {
-    if (r.type === 'merged') {
-      allRooms.push(...r.sections);
-    } else {
-      allRooms.push(r);
+    // Top edge — no neighbor above
+    if (!tiles.has(`${tx},${ty - 1}`) && !doorwayEdges.has(`h,${ty},${tx}`)) {
+      if (!hEdges[ty]) hEdges[ty] = [];
+      hEdges[ty].push(tx);
+    }
+    // Bottom edge — no neighbor below
+    if (!tiles.has(`${tx},${ty + 1}`) && !doorwayEdges.has(`h,${ty + 1},${tx}`)) {
+      const by = ty + 1;
+      if (!hEdges[by]) hEdges[by] = [];
+      hEdges[by].push(tx);
+    }
+    // Left edge — no neighbor to the left
+    if (!tiles.has(`${tx - 1},${ty}`) && !doorwayEdges.has(`v,${tx},${ty}`)) {
+      if (!vEdges[tx]) vEdges[tx] = [];
+      vEdges[tx].push(ty);
+    }
+    // Right edge — no neighbor to the right
+    if (!tiles.has(`${tx + 1},${ty}`) && !doorwayEdges.has(`v,${tx + 1},${ty}`)) {
+      const rx = tx + 1;
+      if (!vEdges[rx]) vEdges[rx] = [];
+      vEdges[rx].push(ty);
     }
   });
 
-  return allRooms.find(r => {
-    if (side === 'top' || side === 'bottom') {
-      return (
-        r.y === adjacentY &&
-        r.x <= adjacentX &&
-        adjacentX < r.x + r.width
-      );
-    } else {
-      return (
-        r.x === adjacentX &&
-        r.y <= adjacentY &&
-        adjacentY < r.y + r.height
-      );
+  let d = '';
+
+  // Merge adjacent horizontal edges at each y into longer lines
+  for (const y in hEdges) {
+    const xCoords = hEdges[y].sort((a, b) => a - b);
+    let startX = xCoords[0];
+    let endX = startX + 1;
+    for (let i = 1; i < xCoords.length; i++) {
+      if (xCoords[i] === endX) {
+        endX = xCoords[i] + 1;
+      } else {
+        d += `M ${startX * T} ${y * T} L ${endX * T} ${y * T} `;
+        startX = xCoords[i];
+        endX = startX + 1;
+      }
     }
-  });
-};
-
-const extendWallsForMergedRooms = (ctx, room1, room2, doorway) => {
-  const tileSize = props.tileSize;
-
-  // Determine the side of connection
-  const side = doorway.side;
-
-  // Calculate positions
-  const room1OffsetX = (room1.x - ctx.canvas.minX) * tileSize;
-  const room1OffsetY = (room1.y - ctx.canvas.minY) * tileSize;
-  const room2OffsetX = (room2.x - ctx.canvas.minX) * tileSize;
-  const room2OffsetY = (room2.y - ctx.canvas.minY) * tileSize;
-
-  ctx.beginPath();
-  ctx.strokeStyle = 'rgba(51, 51, 51, 0.8)';
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = 'round';
-
-  if (side === 'right' || side === 'left') {
-    // Vertical extension
-
-    // Determine the x-coordinate of the wall to draw
-    const wallX = side === 'right' ? room1OffsetX + room1.width * tileSize : room1OffsetX;
-
-    // Calculate the overlap in y-direction
-    const overlapTop = Math.max(room1OffsetY, room2OffsetY);
-    const overlapBottom = Math.min(
-      room1OffsetY + room1.height * tileSize,
-      room2OffsetY + room2.height * tileSize
-    );
-
-    // Draw wall segments above and below the overlapping area
-    if (overlapTop > Math.min(room1OffsetY, room2OffsetY)) {
-      ctx.moveTo(wallX, Math.min(room1OffsetY, room2OffsetY));
-      ctx.lineTo(wallX, overlapTop);
-    }
-    if (overlapBottom < Math.max(room1OffsetY + room1.height * tileSize, room2OffsetY + room2.height * tileSize)) {
-      ctx.moveTo(wallX, overlapBottom);
-      ctx.lineTo(wallX, Math.max(room1OffsetY + room1.height * tileSize, room2OffsetY + room2.height * tileSize));
-    }
-  } else if (side === 'top' || side === 'bottom') {
-    // Horizontal extension
-
-    // Determine the y-coordinate of the wall to draw
-    const wallY = side === 'bottom' ? room1OffsetY + room1.height * tileSize : room1OffsetY;
-
-    // Calculate the overlap in x-direction
-    const overlapLeft = Math.max(room1OffsetX, room2OffsetX);
-    const overlapRight = Math.min(
-      room1OffsetX + room1.width * tileSize,
-      room2OffsetX + room2.width * tileSize
-    );
-
-    // Draw wall segments to the left and right of the overlapping area
-    if (overlapLeft > Math.min(room1OffsetX, room2OffsetX)) {
-      ctx.moveTo(Math.min(room1OffsetX, room2OffsetX), wallY);
-      ctx.lineTo(overlapLeft, wallY);
-    }
-    if (overlapRight < Math.max(room1OffsetX + room1.width * tileSize, room2OffsetX + room2.width * tileSize)) {
-      ctx.moveTo(overlapRight, wallY);
-      ctx.lineTo(Math.max(room1OffsetX + room1.width * tileSize, room2OffsetX + room2.width * tileSize), wallY);
-    }
+    d += `M ${startX * T} ${y * T} L ${endX * T} ${y * T} `;
   }
 
-  ctx.stroke();
-};
-
-const drawCorridor = (ctx, room, doorway) => {
-  const doorwayType = doorway.type || 'door';
-
-  if (doorwayType === 'door') {
-    drawDoor(ctx, room, doorway, false);
-  } else if (doorwayType === 'locked-door') {
-    drawDoor(ctx, room, doorway, true);
-  } else if (doorwayType === 'secret') {
-    drawSecretDoor(ctx, room, doorway);
-  } else if (doorwayType === 'corridor') {
-    drawCorridorWalls(ctx, room, doorway);
-  } else if (doorwayType === 'stairs' && room.id < doorway.connectedRoomId) {
-    drawStairs(ctx, room, doorway);
-  } else if (doorwayType === 'merged') {
-    // Do nothing for merged connections
+  // Merge adjacent vertical edges at each x into longer lines
+  for (const x in vEdges) {
+    const yCoords = vEdges[x].sort((a, b) => a - b);
+    let startY = yCoords[0];
+    let endY = startY + 1;
+    for (let i = 1; i < yCoords.length; i++) {
+      if (yCoords[i] === endY) {
+        endY = yCoords[i] + 1;
+      } else {
+        d += `M ${x * T} ${startY * T} L ${x * T} ${endY * T} `;
+        startY = yCoords[i];
+        endY = startY + 1;
+      }
+    }
+    d += `M ${x * T} ${startY * T} L ${x * T} ${endY * T} `;
   }
-};
-const drawSecretDoor = (ctx, room, doorway) => {
+
+  return d;
+}
+
+// Build doorway SVG strings
+function buildDoorwaySvg(room, doorway) {
+  const type = doorway.type || 'door';
+  if (type === 'door') return buildDoorSvg(room, doorway, false);
+  if (type === 'locked-door') return buildDoorSvg(room, doorway, true);
+  if (type === 'secret') return buildSecretDoorSvg(room, doorway);
+  if (type === 'corridor') return buildCorridorWallsSvg(room, doorway);
+  if (type === 'stairs' && room.id < doorway.connectedRoomId) return buildStairsSvg(room, doorway);
+  return '';
+}
+
+function buildDoorSvg(room, doorway, isLocked) {
   const { x, y, width, height } = room;
-  const tileSize = props.tileSize;
-  const offsetX = (x - ctx.canvas.minX) * tileSize;
-  const offsetY = (y - ctx.canvas.minY) * tileSize;
+  const T = props.tileSize;
+  const ox = x * T;
+  const oy = y * T;
 
-  // Define the gap size (you've increased it to 1/2, so we'll use that)
-  const gapSize = tileSize / 2;
+  // Door dimensions — rect spans full tile width, sits between straight walls
+  const doorDepth = Math.max(T / 3, 3);          // thickness of the door rectangle
+  const totalExt = T;                              // total extension from room wall
+  const wallLen = (totalExt - doorDepth) / 2;      // wall length on each side of door
+  const stroke = 'rgba(55,55,55,0.8)';
+  const wallSw = '2.2';   // match room walls
+  const doorSw = '1.5';   // thin stroke for door rectangle
 
-  // Wall segments should be adjusted accordingly
-  const wallSegmentLength = (tileSize - gapSize) / 2;
-
-  ctx.strokeStyle = 'rgba(51, 51, 51, 0.8)';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
+  let svg = '';
 
   if (doorway.side === 'top') {
-    const startX = offsetX + doorway.position * tileSize;
-    const startY = offsetY;
-
-    // Left wall segment
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX, startY - wallSegmentLength);
-    ctx.stroke();
-
-    // Right wall segment
-    ctx.beginPath();
-    ctx.moveTo(startX + tileSize, startY);
-    ctx.lineTo(startX + tileSize, startY - wallSegmentLength);
-    ctx.stroke();
-
-    // Connect the two segments with a horizontal line
-    ctx.beginPath();
-    ctx.moveTo(startX, startY - wallSegmentLength);
-    ctx.lineTo(startX + tileSize, startY - wallSegmentLength);
-    ctx.stroke();
-  } else if (doorway.side === 'bottom') {
-    const startX = offsetX + doorway.position * tileSize;
-    const startY = offsetY + height * tileSize;
-
-    // Left wall segment
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX, startY + wallSegmentLength);
-    ctx.stroke();
-
-    // Right wall segment
-    ctx.beginPath();
-    ctx.moveTo(startX + tileSize, startY);
-    ctx.lineTo(startX + tileSize, startY + wallSegmentLength);
-    ctx.stroke();
-
-    // Connect the two segments with a horizontal line
-    ctx.beginPath();
-    ctx.moveTo(startX, startY + wallSegmentLength);
-    ctx.lineTo(startX + tileSize, startY + wallSegmentLength);
-    ctx.stroke();
-  } else if (doorway.side === 'left') {
-    const startX = offsetX;
-    const startY = offsetY + doorway.position * tileSize;
-
-    // Top wall segment
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX - wallSegmentLength, startY);
-    ctx.stroke();
-
-    // Bottom wall segment
-    ctx.beginPath();
-    ctx.moveTo(startX, startY + tileSize);
-    ctx.lineTo(startX - wallSegmentLength, startY + tileSize);
-    ctx.stroke();
-
-    // Connect the two segments with a vertical line
-    ctx.beginPath();
-    ctx.moveTo(startX - wallSegmentLength, startY);
-    ctx.lineTo(startX - wallSegmentLength, startY + tileSize);
-    ctx.stroke();
-  } else if (doorway.side === 'right') {
-    const startX = offsetX + width * tileSize;
-    const startY = offsetY + doorway.position * tileSize;
-
-    // Top wall segment
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX + wallSegmentLength, startY);
-    ctx.stroke();
-
-    // Bottom wall segment
-    ctx.beginPath();
-    ctx.moveTo(startX, startY + tileSize);
-    ctx.lineTo(startX + wallSegmentLength, startY + tileSize);
-    ctx.stroke();
-
-    // Connect the two segments with a vertical line
-    ctx.beginPath();
-    ctx.moveTo(startX + wallSegmentLength, startY);
-    ctx.lineTo(startX + wallSegmentLength, startY + tileSize);
-    ctx.stroke();
-  }
-};
-
-
-
-
-const drawDoor = (ctx, room, doorway, isLocked) => {
-  const { x, y, width, height } = room;
-  const tileSize = props.tileSize;
-  const offsetX = (x - ctx.canvas.minX) * tileSize;
-  const offsetY = (y - ctx.canvas.minY) * tileSize;
-
-  // Define dimensions
-  const doorSegmentLength = tileSize / 3 - 2; // Adjusted door length
-  const doorWidth = tileSize * 0.6 + 4;       // Adjusted door width
-  const maxDoorWidth = tileSize - 4;
-  const adjustedDoorWidth = Math.min(doorWidth, maxDoorWidth);
-  const totalGap = tileSize;
-  const corridorSegmentLength = (totalGap - doorSegmentLength) / 2;
-
-  ctx.strokeStyle = 'rgba(51, 51, 51, 0.8)';
-  ctx.lineWidth = 2;
-  ctx.fillStyle = isLocked ? '#eee' : '#fff'; // Darker fill for locked doors
-  ctx.lineCap = 'round';
-
-  if (doorway.side === 'top') {
-    const startX = offsetX + doorway.position * tileSize;
-    const startY = offsetY;
-
-    // Left wall
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX, startY - corridorSegmentLength);
-    ctx.lineTo(startX + (tileSize - adjustedDoorWidth) / 2, startY - corridorSegmentLength);
-    ctx.stroke();
-
-    // Right wall
-    ctx.beginPath();
-    ctx.moveTo(startX + tileSize, startY);
-    ctx.lineTo(startX + tileSize, startY - corridorSegmentLength);
-    ctx.lineTo(startX + tileSize - (tileSize - adjustedDoorWidth) / 2, startY - corridorSegmentLength);
-    ctx.stroke();
-
-    // Door rectangle
-    const doorX = startX + (tileSize - adjustedDoorWidth) / 2;
-    const doorY = startY - corridorSegmentLength - doorSegmentLength;
-    ctx.fillRect(doorX, doorY, adjustedDoorWidth, doorSegmentLength);
-    ctx.strokeRect(doorX, doorY, adjustedDoorWidth, doorSegmentLength);
-
-    // Draw lock line if the door is locked
+    const sx = ox + doorway.position * T;
+    const sy = oy;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy - wallLen}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy - wallLen}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<rect x="${sx}" y="${sy - wallLen - doorDepth}" width="${T}" height="${doorDepth}" fill="#fff" stroke="${stroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      ctx.beginPath();
-      ctx.moveTo(doorX + 2, doorY + doorSegmentLength / 2);
-      ctx.lineTo(doorX + adjustedDoorWidth - 2, doorY + doorSegmentLength / 2);
-      ctx.stroke();
+      svg += `<line x1="${sx + 2}" y1="${sy - wallLen - doorDepth + 1}" x2="${sx + T - 2}" y2="${sy - wallLen - 1}" stroke="${stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${sx + 2}" y1="${sy - wallLen - 1}" x2="${sx + T - 2}" y2="${sy - wallLen - doorDepth + 1}" stroke="${stroke}" stroke-width="1.2"/>`;
     }
   }
 
   if (doorway.side === 'bottom') {
-    const startX = offsetX + doorway.position * tileSize;
-    const startY = offsetY + height * tileSize;
-
-    // Left wall
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX, startY + corridorSegmentLength);
-    ctx.lineTo(startX + (tileSize - adjustedDoorWidth) / 2, startY + corridorSegmentLength);
-    ctx.stroke();
-
-    // Right wall
-    ctx.beginPath();
-    ctx.moveTo(startX + tileSize, startY);
-    ctx.lineTo(startX + tileSize, startY + corridorSegmentLength);
-    ctx.lineTo(startX + tileSize - (tileSize - adjustedDoorWidth) / 2, startY + corridorSegmentLength);
-    ctx.stroke();
-
-    // Door rectangle
-    const doorX = startX + (tileSize - adjustedDoorWidth) / 2;
-    const doorY = startY + corridorSegmentLength;
-    ctx.fillRect(doorX, doorY, adjustedDoorWidth, doorSegmentLength);
-    ctx.strokeRect(doorX, doorY, adjustedDoorWidth, doorSegmentLength);
-
-    // Draw lock line if the door is locked
+    const sx = ox + doorway.position * T;
+    const sy = oy + height * T;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy + wallLen}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy + wallLen}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<rect x="${sx}" y="${sy + wallLen}" width="${T}" height="${doorDepth}" fill="#fff" stroke="${stroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      ctx.beginPath();
-      ctx.moveTo(doorX + 2, doorY + doorSegmentLength / 2);
-      ctx.lineTo(doorX + adjustedDoorWidth - 2, doorY + doorSegmentLength / 2);
-      ctx.stroke();
+      svg += `<line x1="${sx + 2}" y1="${sy + wallLen + 1}" x2="${sx + T - 2}" y2="${sy + wallLen + doorDepth - 1}" stroke="${stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${sx + 2}" y1="${sy + wallLen + doorDepth - 1}" x2="${sx + T - 2}" y2="${sy + wallLen + 1}" stroke="${stroke}" stroke-width="1.2"/>`;
     }
   }
 
   if (doorway.side === 'left') {
-    const startX = offsetX;
-    const startY = offsetY + doorway.position * tileSize;
-
-    // Top wall
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX - corridorSegmentLength, startY);
-    ctx.lineTo(startX - corridorSegmentLength, startY + (tileSize - adjustedDoorWidth) / 2);
-    ctx.stroke();
-
-    // Bottom wall
-    ctx.beginPath();
-    ctx.moveTo(startX, startY + tileSize);
-    ctx.lineTo(startX - corridorSegmentLength, startY + tileSize);
-    ctx.lineTo(startX - corridorSegmentLength, startY + tileSize - (tileSize - adjustedDoorWidth) / 2);
-    ctx.stroke();
-
-    // Door rectangle
-    const doorX = startX - corridorSegmentLength - doorSegmentLength;
-    const doorY = startY + (tileSize - adjustedDoorWidth) / 2;
-    ctx.fillRect(doorX, doorY, doorSegmentLength, adjustedDoorWidth);
-    ctx.strokeRect(doorX, doorY, doorSegmentLength, adjustedDoorWidth);
-
-    // Draw lock line if the door is locked
+    const sx = ox;
+    const sy = oy + doorway.position * T;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx - wallLen}" y2="${sy}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx - wallLen}" y2="${sy + T}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<rect x="${sx - wallLen - doorDepth}" y="${sy}" width="${doorDepth}" height="${T}" fill="#fff" stroke="${stroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      ctx.beginPath();
-      ctx.moveTo(doorX + doorSegmentLength / 2, doorY + 2);
-      ctx.lineTo(doorX + doorSegmentLength / 2, doorY + adjustedDoorWidth - 2);
-      ctx.stroke();
+      svg += `<line x1="${sx - wallLen - doorDepth + 1}" y1="${sy + 2}" x2="${sx - wallLen - 1}" y2="${sy + T - 2}" stroke="${stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${sx - wallLen - doorDepth + 1}" y1="${sy + T - 2}" x2="${sx - wallLen - 1}" y2="${sy + 2}" stroke="${stroke}" stroke-width="1.2"/>`;
     }
   }
 
   if (doorway.side === 'right') {
-    const startX = offsetX + width * tileSize;
-    const startY = offsetY + doorway.position * tileSize;
-
-    // Top wall
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(startX + corridorSegmentLength, startY);
-    ctx.lineTo(startX + corridorSegmentLength, startY + (tileSize - adjustedDoorWidth) / 2);
-    ctx.stroke();
-
-    // Bottom wall
-    ctx.beginPath();
-    ctx.moveTo(startX, startY + tileSize);
-    ctx.lineTo(startX + corridorSegmentLength, startY + tileSize);
-    ctx.lineTo(startX + corridorSegmentLength, startY + tileSize - (tileSize - adjustedDoorWidth) / 2);
-    ctx.stroke();
-
-    // Door rectangle
-    const doorX = startX + corridorSegmentLength;
-    const doorY = startY + (tileSize - adjustedDoorWidth) / 2;
-    ctx.fillRect(doorX, doorY, doorSegmentLength, adjustedDoorWidth);
-    ctx.strokeRect(doorX, doorY, doorSegmentLength, adjustedDoorWidth);
-
-    // Draw lock line if the door is locked
+    const sx = ox + width * T;
+    const sy = oy + doorway.position * T;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx + wallLen}" y2="${sy}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx + wallLen}" y2="${sy + T}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<rect x="${sx + wallLen}" y="${sy}" width="${doorDepth}" height="${T}" fill="#fff" stroke="${stroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      ctx.beginPath();
-      ctx.moveTo(doorX + doorSegmentLength / 2, doorY + 2);
-      ctx.lineTo(doorX + doorSegmentLength / 2, doorY + adjustedDoorWidth - 2);
-      ctx.stroke();
+      svg += `<line x1="${sx + wallLen + 1}" y1="${sy + 2}" x2="${sx + wallLen + doorDepth - 1}" y2="${sy + T - 2}" stroke="${stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${sx + wallLen + 1}" y1="${sy + T - 2}" x2="${sx + wallLen + doorDepth - 1}" y2="${sy + 2}" stroke="${stroke}" stroke-width="1.2"/>`;
     }
   }
-};
 
-const drawStairs = (ctx, room, doorway) => {
+  return svg;
+}
+
+function buildSecretDoorSvg(room, doorway) {
   const { x, y, width, height } = room;
-  const tileSize = props.tileSize;
-  const offsetX = (x - ctx.canvas.minX) * tileSize;
-  const offsetY = (y - ctx.canvas.minY) * tileSize;
-
-  const stepHeight = tileSize / 5; // Spacing between steps
-  const numSteps = 3; // Number of steps
-  const minStepLength = tileSize / 3; // Ensure the smallest step isn't a dot
-  const firstStepLength = tileSize * 0.75; // Shorten the first step length
-
-  ctx.strokeStyle = '#666'; // Line color for the stairs
-  ctx.lineWidth = 2;
+  const T = props.tileSize;
+  const ox = x * T;
+  const oy = y * T;
+  const wallSeg = (T - T / 2) / 2;
+  const stroke = 'rgba(55,55,55,0.8)';
+  const sw = '2.2';
+  let svg = '';
 
   if (doorway.side === 'top') {
-    const startX = offsetX + doorway.position * tileSize;
-    const startY = offsetY;
-
-    // Shift the starting point of the first step by one "space" forward
-    const shiftForward = stepHeight;
-
-    // Draw the shortened wide line at the top (first step)
-    ctx.beginPath();
-    ctx.moveTo(startX + (tileSize - firstStepLength) / 2, startY - shiftForward);
-    ctx.lineTo(startX + (tileSize + firstStepLength) / 2, startY - shiftForward);
-    ctx.stroke();
-
-    // Draw progressively shorter lines (steps) moving downward
-    for (let i = 1; i <= numSteps; i++) {
-      const stepLength = Math.max(minStepLength, firstStepLength - i * (firstStepLength / numSteps));
-      const stepY = startY - (i + 1) * stepHeight;
-      ctx.beginPath();
-      ctx.moveTo(startX + (tileSize - stepLength) / 2, stepY);
-      ctx.lineTo(startX + (tileSize + stepLength) / 2, stepY);
-      ctx.stroke();
-    }
-  } else if (doorway.side === 'bottom') {
-    const startX = offsetX + doorway.position * tileSize;
-    const startY = offsetY + height * tileSize;
-
-    // Shift the starting point of the first step by one "space" forward
-    const shiftForward = stepHeight;
-
-    // Draw the shortened wide line at the bottom (first step)
-    ctx.beginPath();
-    ctx.moveTo(startX + (tileSize - firstStepLength) / 2, startY + shiftForward);
-    ctx.lineTo(startX + (tileSize + firstStepLength) / 2, startY + shiftForward);
-    ctx.stroke();
-
-    // Draw progressively shorter lines (steps) moving upward
-    for (let i = 1; i <= numSteps; i++) {
-      const stepLength = Math.max(minStepLength, firstStepLength - i * (firstStepLength / numSteps));
-      const stepY = startY + (i + 1) * stepHeight;
-      ctx.beginPath();
-      ctx.moveTo(startX + (tileSize - stepLength) / 2, stepY);
-      ctx.lineTo(startX + (tileSize + stepLength) / 2, stepY);
-      ctx.stroke();
-    }
-  } else if (doorway.side === 'left') {
-    const startX = offsetX;
-    const startY = offsetY + doorway.position * tileSize;
-
-    // Shift the starting point of the first step by one "space" forward
-    const shiftForward = stepHeight;
-
-    // Draw the shortened wide line on the left (first step)
-    ctx.beginPath();
-    ctx.moveTo(startX - shiftForward, startY + (tileSize - firstStepLength) / 2);
-    ctx.lineTo(startX - shiftForward, startY + (tileSize + firstStepLength) / 2);
-    ctx.stroke();
-
-    // Draw progressively shorter lines (steps) moving right
-    for (let i = 1; i <= numSteps; i++) {
-      const stepLength = Math.max(minStepLength, firstStepLength - i * (firstStepLength / numSteps));
-      const stepX = startX - (i + 1) * stepHeight;
-      ctx.beginPath();
-      ctx.moveTo(stepX, startY + (tileSize - stepLength) / 2);
-      ctx.lineTo(stepX, startY + (tileSize + stepLength) / 2);
-      ctx.stroke();
-    }
-  } else if (doorway.side === 'right') {
-    const startX = offsetX + width * tileSize;
-    const startY = offsetY + doorway.position * tileSize;
-
-    // Shift the starting point of the first step by one "space" forward
-    const shiftForward = stepHeight;
-
-    // Draw the shortened wide line on the right (first step)
-    ctx.beginPath();
-    ctx.moveTo(startX + shiftForward, startY + (tileSize - firstStepLength) / 2);
-    ctx.lineTo(startX + shiftForward, startY + (tileSize + firstStepLength) / 2);
-    ctx.stroke();
-
-    // Draw progressively shorter lines (steps) moving left
-    for (let i = 1; i <= numSteps; i++) {
-      const stepLength = Math.max(minStepLength, firstStepLength - i * (firstStepLength / numSteps));
-      const stepX = startX + (i + 1) * stepHeight;
-      ctx.beginPath();
-      ctx.moveTo(stepX, startY + (tileSize - stepLength) / 2);
-      ctx.lineTo(stepX, startY + (tileSize + stepLength) / 2);
-      ctx.stroke();
-    }
+    const sx = ox + doorway.position * T;
+    const sy = oy;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy - wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy - wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${sy - wallSeg}" x2="${sx + T}" y2="${sy - wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
   }
-};
 
-const drawCorridorWalls = (ctx, room, doorway) => {
+  if (doorway.side === 'bottom') {
+    const sx = ox + doorway.position * T;
+    const sy = oy + height * T;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy + wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy + wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${sy + wallSeg}" x2="${sx + T}" y2="${sy + wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  }
+
+  if (doorway.side === 'left') {
+    const sx = ox;
+    const sy = oy + doorway.position * T;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx - wallSeg}" y2="${sy}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx - wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx - wallSeg}" y1="${sy}" x2="${sx - wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  }
+
+  if (doorway.side === 'right') {
+    const sx = ox + width * T;
+    const sy = oy + doorway.position * T;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx + wallSeg}" y2="${sy}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx + wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + wallSeg}" y1="${sy}" x2="${sx + wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  }
+
+  return svg;
+}
+
+function buildCorridorWallsSvg(room, doorway) {
   const { x, y, width, height } = room;
-  const tileSize = props.tileSize;
-  const offsetX = (x - ctx.canvas.minX) * tileSize;
-  const offsetY = (y - ctx.canvas.minY) * tileSize;
-
-  const corridorWidth = tileSize; // Width of the corridor (1 tile)
-  const corridorLength = tileSize; // Length of the corridor (1 tile gap)
-
-  ctx.strokeStyle = 'rgba(51, 51, 51, 0.8)'; // Same color as room outlines
-  ctx.lineWidth = 2.5; // Same line width as room outlines
-  ctx.lineCap = 'round'; // Ensure lines have rounded ends
+  const T = props.tileSize;
+  const ox = x * T;
+  const oy = y * T;
+  const stroke = 'rgba(55,55,55,0.8)';
+  let svg = '';
 
   if (doorway.side === 'top') {
-    const corridorX = offsetX + doorway.position * tileSize;
-    const corridorYStart = offsetY;
-    const corridorYEnd = offsetY - corridorLength;
-
-    // Left wall of the corridor
-    ctx.beginPath();
-    ctx.moveTo(corridorX, corridorYStart);
-    ctx.lineTo(corridorX, corridorYEnd);
-    ctx.stroke();
-
-    // Right wall of the corridor
-    ctx.beginPath();
-    ctx.moveTo(corridorX + tileSize, corridorYStart);
-    ctx.lineTo(corridorX + tileSize, corridorYEnd);
-    ctx.stroke();
-  } else if (doorway.side === 'bottom') {
-    const corridorX = offsetX + doorway.position * tileSize;
-    const corridorYStart = offsetY + height * tileSize;
-    const corridorYEnd = corridorYStart + corridorLength;
-
-    // Left wall of the corridor
-    ctx.beginPath();
-    ctx.moveTo(corridorX, corridorYStart);
-    ctx.lineTo(corridorX, corridorYEnd);
-    ctx.stroke();
-
-    // Right wall of the corridor
-    ctx.beginPath();
-    ctx.moveTo(corridorX + tileSize, corridorYStart);
-    ctx.lineTo(corridorX + tileSize, corridorYEnd);
-    ctx.stroke();
-  } else if (doorway.side === 'left') {
-    const corridorXStart = offsetX;
-    const corridorXEnd = offsetX - corridorLength;
-    const corridorY = offsetY + doorway.position * tileSize;
-
-    // Top wall of the corridor
-    ctx.beginPath();
-    ctx.moveTo(corridorXStart, corridorY);
-    ctx.lineTo(corridorXEnd, corridorY);
-    ctx.stroke();
-
-    // Bottom wall of the corridor
-    ctx.beginPath();
-    ctx.moveTo(corridorXStart, corridorY + tileSize);
-    ctx.lineTo(corridorXEnd, corridorY + tileSize);
-    ctx.stroke();
-  } else if (doorway.side === 'right') {
-    const corridorXStart = offsetX + width * tileSize;
-    const corridorXEnd = corridorXStart + corridorLength;
-    const corridorY = offsetY + doorway.position * tileSize;
-
-    // Top wall of the corridor
-    ctx.beginPath();
-    ctx.moveTo(corridorXStart, corridorY);
-    ctx.lineTo(corridorXEnd, corridorY);
-    ctx.stroke();
-
-    // Bottom wall of the corridor
-    ctx.beginPath();
-    ctx.moveTo(corridorXStart, corridorY + tileSize);
-    ctx.lineTo(corridorXEnd, corridorY + tileSize);
-    ctx.stroke();
+    const cx = ox + doorway.position * T;
+    svg += `<line x1="${cx}" y1="${oy}" x2="${cx}" y2="${oy - T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${cx + T}" y1="${oy}" x2="${cx + T}" y2="${oy - T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
   }
-};
 
-onMounted(() => {
-  const canvas = dungeonCanvas.value;
-  const ctx = canvas.getContext('2d');
+  if (doorway.side === 'bottom') {
+    const cx = ox + doorway.position * T;
+    const sy = oy + height * T;
+    svg += `<line x1="${cx}" y1="${sy}" x2="${cx}" y2="${sy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${cx + T}" y1="${sy}" x2="${cx + T}" y2="${sy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+  }
 
-  resizeCanvas();
-  drawRooms(ctx);
+  if (doorway.side === 'left') {
+    const cy = oy + doorway.position * T;
+    svg += `<line x1="${ox}" y1="${cy}" x2="${ox - T}" y2="${cy}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${ox}" y1="${cy + T}" x2="${ox - T}" y2="${cy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+  }
 
-  // Handle mousemove event for hover effect
-  canvas.addEventListener('mousemove', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-    let isHovering = false;
+  if (doorway.side === 'right') {
+    const sx = ox + width * T;
+    const cy = oy + doorway.position * T;
+    svg += `<line x1="${sx}" y1="${cy}" x2="${sx + T}" y2="${cy}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${cy + T}" x2="${sx + T}" y2="${cy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+  }
 
-    numberPositions.forEach(position => {
-      const distance = Math.sqrt(
-        (mouseX - position.x) ** 2 + (mouseY - position.y) ** 2
-      );
-      if (distance <= position.radius) {
-        hoveredRoomId = position.roomId;
-        isHovering = true;
-        canvas.style.cursor = 'pointer';
-      }
-    });
+  return svg;
+}
 
-    if (!isHovering) {
-      hoveredRoomId = null;
-      canvas.style.cursor = 'default';
+function buildStairsSvg(room, doorway) {
+  const { x, y, width, height } = room;
+  const T = props.tileSize;
+  const ox = x * T;
+  const oy = y * T;
+  const stepH = T / 5;
+  const numSteps = 3;
+  const minStepLen = T / 3;
+  const firstStepLen = T * 0.75;
+  const stroke = '#666';
+  let svg = '';
+
+  if (doorway.side === 'top') {
+    const sx = ox + doorway.position * T;
+    const sy = oy;
+    const shift = stepH;
+    svg += `<line x1="${sx + (T - firstStepLen) / 2}" y1="${sy - shift}" x2="${sx + (T + firstStepLen) / 2}" y2="${sy - shift}" stroke="${stroke}" stroke-width="2"/>`;
+    for (let i = 1; i <= numSteps; i++) {
+      const len = Math.max(minStepLen, firstStepLen - i * (firstStepLen / numSteps));
+      const stepY = sy - (i + 1) * stepH;
+      svg += `<line x1="${sx + (T - len) / 2}" y1="${stepY}" x2="${sx + (T + len) / 2}" y2="${stepY}" stroke="${stroke}" stroke-width="2"/>`;
     }
+  }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawRooms(ctx);
-  });
-
-  // Handle click event
-  canvas.addEventListener('click', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-
-    let roomClicked = false;
-
-    numberPositions.forEach((position) => {
-      const distance = Math.sqrt(
-        (clickX - position.x) ** 2 + (clickY - position.y) ** 2
-      );
-      if (distance <= position.radius) {
-        roomClicked = true;
-        clickedRoomId = position.roomId;
-        emit('roomClicked', { roomId: position.roomId, x: position.x, y: position.y });
-      }
-    });
-
-    if (!roomClicked) {
-      // Emit an event indicating that the map was clicked but no room was selected
-      emit('mapClicked');
+  if (doorway.side === 'bottom') {
+    const sx = ox + doorway.position * T;
+    const sy = oy + height * T;
+    const shift = stepH;
+    svg += `<line x1="${sx + (T - firstStepLen) / 2}" y1="${sy + shift}" x2="${sx + (T + firstStepLen) / 2}" y2="${sy + shift}" stroke="${stroke}" stroke-width="2"/>`;
+    for (let i = 1; i <= numSteps; i++) {
+      const len = Math.max(minStepLen, firstStepLen - i * (firstStepLen / numSteps));
+      const stepY = sy + (i + 1) * stepH;
+      svg += `<line x1="${sx + (T - len) / 2}" y1="${stepY}" x2="${sx + (T + len) / 2}" y2="${stepY}" stroke="${stroke}" stroke-width="2"/>`;
     }
+  }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawRooms(ctx);
+  if (doorway.side === 'left') {
+    const sx = ox;
+    const sy = oy + doorway.position * T;
+    const shift = stepH;
+    svg += `<line x1="${sx - shift}" y1="${sy + (T - firstStepLen) / 2}" x2="${sx - shift}" y2="${sy + (T + firstStepLen) / 2}" stroke="${stroke}" stroke-width="2"/>`;
+    for (let i = 1; i <= numSteps; i++) {
+      const len = Math.max(minStepLen, firstStepLen - i * (firstStepLen / numSteps));
+      const stepX = sx - (i + 1) * stepH;
+      svg += `<line x1="${stepX}" y1="${sy + (T - len) / 2}" x2="${stepX}" y2="${sy + (T + len) / 2}" stroke="${stroke}" stroke-width="2"/>`;
+    }
+  }
+
+  if (doorway.side === 'right') {
+    const sx = ox + width * T;
+    const sy = oy + doorway.position * T;
+    const shift = stepH;
+    svg += `<line x1="${sx + shift}" y1="${sy + (T - firstStepLen) / 2}" x2="${sx + shift}" y2="${sy + (T + firstStepLen) / 2}" stroke="${stroke}" stroke-width="2"/>`;
+    for (let i = 1; i <= numSteps; i++) {
+      const len = Math.max(minStepLen, firstStepLen - i * (firstStepLen / numSteps));
+      const stepX = sx + (i + 1) * stepH;
+      svg += `<line x1="${stepX}" y1="${sy + (T - len) / 2}" x2="${stepX}" y2="${sy + (T + len) / 2}" stroke="${stroke}" stroke-width="2"/>`;
+    }
+  }
+
+  return svg;
+}
+
+function buildMergedWallPath(room, doorway) {
+  const T = props.tileSize;
+  const side = doorway.side;
+
+  const adjacentRoom = findAdjacentRoom(room, doorway);
+  if (!adjacentRoom) return '';
+
+  const r1ox = room.x * T;
+  const r1oy = room.y * T;
+  const r2ox = adjacentRoom.x * T;
+  const r2oy = adjacentRoom.y * T;
+
+  let d = '';
+
+  if (side === 'right' || side === 'left') {
+    const wallX = side === 'right' ? r1ox + room.width * T : r1ox;
+    const overlapTop = Math.max(r1oy, r2oy);
+    const overlapBottom = Math.min(r1oy + room.height * T, r2oy + adjacentRoom.height * T);
+
+    if (overlapTop > Math.min(r1oy, r2oy)) {
+      d += `M ${wallX} ${Math.min(r1oy, r2oy)} L ${wallX} ${overlapTop} `;
+    }
+    if (overlapBottom < Math.max(r1oy + room.height * T, r2oy + adjacentRoom.height * T)) {
+      d += `M ${wallX} ${overlapBottom} L ${wallX} ${Math.max(r1oy + room.height * T, r2oy + adjacentRoom.height * T)} `;
+    }
+  } else if (side === 'top' || side === 'bottom') {
+    const wallY = side === 'bottom' ? r1oy + room.height * T : r1oy;
+    const overlapLeft = Math.max(r1ox, r2ox);
+    const overlapRight = Math.min(r1ox + room.width * T, r2ox + adjacentRoom.width * T);
+
+    if (overlapLeft > Math.min(r1ox, r2ox)) {
+      d += `M ${Math.min(r1ox, r2ox)} ${wallY} L ${overlapLeft} ${wallY} `;
+    }
+    if (overlapRight < Math.max(r1ox + room.width * T, r2ox + adjacentRoom.width * T)) {
+      d += `M ${overlapRight} ${wallY} L ${Math.max(r1ox + room.width * T, r2ox + adjacentRoom.width * T)} ${wallY} `;
+    }
+  }
+
+  return d;
+}
+
+function findAdjacentRoom(room, doorway) {
+  const side = doorway.side;
+  const position = doorway.position;
+  let adjX = room.x;
+  let adjY = room.y;
+
+  if (side === 'top') { adjY = room.y - 1; adjX = room.x + position; }
+  else if (side === 'bottom') { adjY = room.y + room.height; adjX = room.x + position; }
+  else if (side === 'left') { adjX = room.x - 1; adjY = room.y + position; }
+  else if (side === 'right') { adjX = room.x + room.width; adjY = room.y + position; }
+
+  const allRooms = getAllFlatRooms();
+
+  return allRooms.find(r => {
+    if (side === 'top' || side === 'bottom') {
+      return r.y === adjY && r.x <= adjX && adjX < r.x + r.width;
+    } else {
+      return r.x === adjX && r.y <= adjY && adjY < r.y + r.height;
+    }
   });
+}
 
+// Unused but kept for API compat — rooms don't need individual outline props
+function roomOutlinePaths() {
+  return {};
+}
 
+// Event handlers
+function handleRoomClick(pos) {
+  clickedRoomId.value = pos.roomId;
+  emit('roomClicked', { roomId: pos.roomId, x: pos.x, y: pos.y });
+}
 
-  // Handle mousedown event for visual feedback
-  canvas.addEventListener('mousedown', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-
-    numberPositions.forEach(position => {
-      const distance = Math.sqrt(
-        (mouseX - position.x) ** 2 + (mouseY - position.y) ** 2
-      );
-      if (distance <= position.radius) {
-        clickedRoomId = position.roomId;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawRooms(ctx);
-      }
-    });
-  });
-});
-
-watch(
-  () => props.rooms,
-  () => {
-    const canvas = dungeonCanvas.value;
-    const ctx = canvas.getContext('2d');
-
-    resizeCanvas();
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before redrawing
-    drawRooms(ctx);
-  },
-  { deep: true }
-);
+function handleMapClick() {
+  emit('mapClicked');
+}
 </script>
 
 <style scoped>
 .dungeon-map {
   margin: auto;
   display: flex;
+}
+
+.responsive-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.room-number text {
+  transition: font-size 0.15s;
 }
 </style>
