@@ -54,8 +54,6 @@
           <template v-if="room.shape === 'circular' && isCircleSafe(room)">
             <path :d="buildCircularRoomPath(room)" fill="none" stroke="#6b6b6b" stroke-width="2.2"
               stroke-linecap="round" filter="url(#pencil-stroke)" />
-            <!-- Connector lines from arc to bounding box — rendered as separate elements -->
-            <g v-html="buildCircularConnectorsSvg(room)" filter="url(#pencil-stroke)"></g>
           </template>
           <!-- Domed room — rect with one curved wall -->
           <template v-else-if="room.shape === 'domed'">
@@ -574,12 +572,14 @@ function buildCircularConnectorsSvg(room) {
   const stroke = '#6b6b6b';
   let svg = '';
 
+  const inset = 1; // offset lines inward from grid so they sit inside the opening
+
   doorways.forEach(dw => {
     const p = dw.position;
     if (dw.side === 'top' || dw.side === 'bottom') {
-      const x1 = ox + p * T, x2 = ox + (p + 1) * T;
-      const v1 = r * r - (x1 - cx) * (x1 - cx);
-      const v2 = r * r - (x2 - cx) * (x2 - cx);
+      const x1 = ox + p * T + inset, x2 = ox + (p + 1) * T - inset;
+      const v1 = r * r - ((ox + p * T) - cx) * ((ox + p * T) - cx);
+      const v2 = r * r - ((ox + (p + 1) * T) - cx) * ((ox + (p + 1) * T) - cx);
       if (v1 < 0 || v2 < 0) return;
       const edgeY = dw.side === 'top' ? oy : oy + h;
       const iy1 = dw.side === 'top' ? cy - Math.sqrt(v1) : cy + Math.sqrt(v1);
@@ -587,9 +587,9 @@ function buildCircularConnectorsSvg(room) {
       svg += `<line x1="${x1}" y1="${edgeY}" x2="${x1}" y2="${iy1.toFixed(1)}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
       svg += `<line x1="${x2}" y1="${edgeY}" x2="${x2}" y2="${iy2.toFixed(1)}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
     } else {
-      const y1 = oy + p * T, y2 = oy + (p + 1) * T;
-      const v1 = r * r - (y1 - cy) * (y1 - cy);
-      const v2 = r * r - (y2 - cy) * (y2 - cy);
+      const y1 = oy + p * T + inset, y2 = oy + (p + 1) * T - inset;
+      const v1 = r * r - ((oy + p * T) - cy) * ((oy + p * T) - cy);
+      const v2 = r * r - ((oy + (p + 1) * T) - cy) * ((oy + (p + 1) * T) - cy);
       if (v1 < 0 || v2 < 0) return;
       const edgeX = dw.side === 'left' ? ox : ox + w;
       const ix1 = dw.side === 'left' ? cx - Math.sqrt(v1) : cx + Math.sqrt(v1);
@@ -833,72 +833,91 @@ function buildDoorSvg(room, doorway, isLocked) {
   const ox = x * T;
   const oy = y * T;
 
-  // Flanking walls run full tile length — same color/weight as room walls
   const wallStroke = '#6b6b6b';
   const wallSw = '2.2';
-  // Door rect is narrower than tile, slightly darker, thinner stroke
   const doorStroke = '#555';
   const doorSw = '1.2';
   const doorDepth = Math.max(T / 3, 3);
-  const doorInset = 0; // door rect spans full width between walls
+
+  // For circular rooms, extend flanking walls inward to the arc
+  function arcY(px) {
+    if (room.shape !== 'circular') return null;
+    const { cx, cy, r } = getCircleParams(room);
+    const val = r * r - (px - cx) * (px - cx);
+    if (val < 0) return null;
+    return { top: cy - Math.sqrt(val), bottom: cy + Math.sqrt(val) };
+  }
+  function arcX(py) {
+    if (room.shape !== 'circular') return null;
+    const { cx, cy, r } = getCircleParams(room);
+    const val = r * r - (py - cy) * (py - cy);
+    if (val < 0) return null;
+    return { left: cx - Math.sqrt(val), right: cx + Math.sqrt(val) };
+  }
 
   let svg = '';
 
   if (doorway.side === 'top') {
     const sx = ox + doorway.position * T;
     const sy = oy;
-    // Continuous flanking walls
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy - T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy - T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    // Door rect on top
-    const dx = sx + doorInset, dw = T - doorInset * 2;
+    const lA = arcY(sx), rA = arcY(sx + T);
+    const ly1 = lA ? lA.top : sy;
+    const ry1 = rA ? rA.top : sy;
+    svg += `<line x1="${sx}" y1="${ly1.toFixed ? ly1.toFixed(1) : ly1}" x2="${sx}" y2="${sy - T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${ry1.toFixed ? ry1.toFixed(1) : ry1}" x2="${sx + T}" y2="${sy - T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
     const dy = sy - T / 2 - doorDepth / 2;
-    svg += `<rect x="${dx}" y="${dy}" width="${dw}" height="${doorDepth}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
+    svg += `<rect x="${sx}" y="${dy}" width="${T}" height="${doorDepth}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      svg += `<line x1="${dx + 1}" y1="${dy + 1}" x2="${dx + dw - 1}" y2="${dy + doorDepth - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
-      svg += `<line x1="${dx + 1}" y1="${dy + doorDepth - 1}" x2="${dx + dw - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${sx + 1}" y1="${dy + 1}" x2="${sx + T - 1}" y2="${dy + doorDepth - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${sx + 1}" y1="${dy + doorDepth - 1}" x2="${sx + T - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
     }
   }
 
   if (doorway.side === 'bottom') {
     const sx = ox + doorway.position * T;
     const sy = oy + height * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    const dx = sx + doorInset, dw = T - doorInset * 2;
+    const lA = arcY(sx), rA = arcY(sx + T);
+    const ly1 = lA ? lA.bottom : sy;
+    const ry1 = rA ? rA.bottom : sy;
+    svg += `<line x1="${sx}" y1="${ly1.toFixed ? ly1.toFixed(1) : ly1}" x2="${sx}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${ry1.toFixed ? ry1.toFixed(1) : ry1}" x2="${sx + T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
     const dy = sy + T / 2 - doorDepth / 2;
-    svg += `<rect x="${dx}" y="${dy}" width="${dw}" height="${doorDepth}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
+    svg += `<rect x="${sx}" y="${dy}" width="${T}" height="${doorDepth}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      svg += `<line x1="${dx + 1}" y1="${dy + 1}" x2="${dx + dw - 1}" y2="${dy + doorDepth - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
-      svg += `<line x1="${dx + 1}" y1="${dy + doorDepth - 1}" x2="${dx + dw - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${sx + 1}" y1="${dy + 1}" x2="${sx + T - 1}" y2="${dy + doorDepth - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${sx + 1}" y1="${dy + doorDepth - 1}" x2="${sx + T - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
     }
   }
 
   if (doorway.side === 'left') {
     const sx = ox;
     const sy = oy + doorway.position * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx - T}" y2="${sy}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx - T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    const dy = sy + doorInset, dh = T - doorInset * 2;
+    const tA = arcX(sy), bA = arcX(sy + T);
+    const tx1 = tA ? tA.left : sx;
+    const bx1 = bA ? bA.left : sx;
+    svg += `<line x1="${tx1.toFixed ? tx1.toFixed(1) : tx1}" y1="${sy}" x2="${sx - T}" y2="${sy}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${bx1.toFixed ? bx1.toFixed(1) : bx1}" y1="${sy + T}" x2="${sx - T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
     const dx = sx - T / 2 - doorDepth / 2;
-    svg += `<rect x="${dx}" y="${dy}" width="${doorDepth}" height="${dh}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
+    svg += `<rect x="${dx}" y="${sy}" width="${doorDepth}" height="${T}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      svg += `<line x1="${dx + 1}" y1="${dy + 1}" x2="${dx + doorDepth - 1}" y2="${dy + dh - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
-      svg += `<line x1="${dx + 1}" y1="${dy + dh - 1}" x2="${dx + doorDepth - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${dx + 1}" y1="${sy + 1}" x2="${dx + doorDepth - 1}" y2="${sy + T - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${dx + 1}" y1="${sy + T - 1}" x2="${dx + doorDepth - 1}" y2="${sy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
     }
   }
 
   if (doorway.side === 'right') {
     const sx = ox + width * T;
     const sy = oy + doorway.position * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx + T}" y2="${sy}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx + T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    const dy = sy + doorInset, dh = T - doorInset * 2;
+    const tA = arcX(sy), bA = arcX(sy + T);
+    const tx1 = tA ? tA.right : sx;
+    const bx1 = bA ? bA.right : sx;
+    svg += `<line x1="${tx1.toFixed ? tx1.toFixed(1) : tx1}" y1="${sy}" x2="${sx + T}" y2="${sy}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${bx1.toFixed ? bx1.toFixed(1) : bx1}" y1="${sy + T}" x2="${sx + T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
     const dx = sx + T / 2 - doorDepth / 2;
-    svg += `<rect x="${dx}" y="${dy}" width="${doorDepth}" height="${dh}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
+    svg += `<rect x="${dx}" y="${sy}" width="${doorDepth}" height="${T}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      svg += `<line x1="${dx + 1}" y1="${dy + 1}" x2="${dx + doorDepth - 1}" y2="${dy + dh - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
-      svg += `<line x1="${dx + 1}" y1="${dy + dh - 1}" x2="${dx + doorDepth - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${dx + 1}" y1="${sy + 1}" x2="${dx + doorDepth - 1}" y2="${sy + T - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${dx + 1}" y1="${sy + T - 1}" x2="${dx + doorDepth - 1}" y2="${sy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
     }
   }
 
@@ -956,32 +975,59 @@ function buildCorridorWallsSvg(room, doorway) {
   const ox = x * T;
   const oy = y * T;
   const stroke = '#6b6b6b';
+
+  // For circular rooms, extend walls to arc
+  function arcY(px) {
+    if (room.shape !== 'circular') return null;
+    const c = getCircleParams(room);
+    const val = c.r * c.r - (px - c.cx) * (px - c.cx);
+    return val < 0 ? null : { top: c.cy - Math.sqrt(val), bottom: c.cy + Math.sqrt(val) };
+  }
+  function arcX(py) {
+    if (room.shape !== 'circular') return null;
+    const c = getCircleParams(room);
+    const val = c.r * c.r - (py - c.cy) * (py - c.cy);
+    return val < 0 ? null : { left: c.cx - Math.sqrt(val), right: c.cx + Math.sqrt(val) };
+  }
+
   let svg = '';
 
   if (doorway.side === 'top') {
     const cx = ox + doorway.position * T;
-    svg += `<line x1="${cx}" y1="${oy}" x2="${cx}" y2="${oy - T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
-    svg += `<line x1="${cx + T}" y1="${oy}" x2="${cx + T}" y2="${oy - T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    const lA = arcY(cx), rA = arcY(cx + T);
+    const ly = lA ? lA.top : oy;
+    const ry = rA ? rA.top : oy;
+    svg += `<line x1="${cx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${cx}" y2="${oy - T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${cx + T}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${cx + T}" y2="${oy - T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
   }
 
   if (doorway.side === 'bottom') {
     const cx = ox + doorway.position * T;
     const sy = oy + height * T;
-    svg += `<line x1="${cx}" y1="${sy}" x2="${cx}" y2="${sy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
-    svg += `<line x1="${cx + T}" y1="${sy}" x2="${cx + T}" y2="${sy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    const lA = arcY(cx), rA = arcY(cx + T);
+    const ly = lA ? lA.bottom : sy;
+    const ry = rA ? rA.bottom : sy;
+    svg += `<line x1="${cx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${cx}" y2="${sy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${cx + T}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${cx + T}" y2="${sy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
   }
 
   if (doorway.side === 'left') {
     const cy = oy + doorway.position * T;
-    svg += `<line x1="${ox}" y1="${cy}" x2="${ox - T}" y2="${cy}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
-    svg += `<line x1="${ox}" y1="${cy + T}" x2="${ox - T}" y2="${cy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    const tA = arcX(cy), bA = arcX(cy + T);
+    const tx = tA ? tA.left : ox;
+    const bx = bA ? bA.left : ox;
+    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${cy}" x2="${ox - T}" y2="${cy}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${cy + T}" x2="${ox - T}" y2="${cy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
   }
 
   if (doorway.side === 'right') {
     const sx = ox + width * T;
     const cy = oy + doorway.position * T;
-    svg += `<line x1="${sx}" y1="${cy}" x2="${sx + T}" y2="${cy}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${cy + T}" x2="${sx + T}" y2="${cy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    const tA = arcX(cy), bA = arcX(cy + T);
+    const tx = tA ? tA.right : sx;
+    const bx = bA ? bA.right : sx;
+    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${cy}" x2="${sx + T}" y2="${cy}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${cy + T}" x2="${sx + T}" y2="${cy + T}" stroke="${stroke}" stroke-width="2.2" stroke-linecap="round"/>`;
   }
 
   return svg;
