@@ -138,7 +138,7 @@ function generateTree(
           { type: 'door', weight: 30 },
           { type: 'corridor', weight: 25 },
           { type: 'stairs', weight: 15 },
-          { type: 'merged', weight: 5 },
+          { type: 'merged', weight: 12 },
         ];
 
         // For depth > 1, allow additional locked or secret doors that lead to one room
