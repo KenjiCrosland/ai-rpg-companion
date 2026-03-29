@@ -1,7 +1,8 @@
 <template>
   <div class="dungeon-map">
-    <svg ref="dungeonSvg" class="responsive-svg" :viewBox="`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`"
-      :width="viewBox.w" :height="viewBox.h" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision"
+    <svg ref="dungeonSvg" class="responsive-svg"
+      :viewBox="`${displayViewBox.x} ${displayViewBox.y} ${displayViewBox.w} ${displayViewBox.h}`" :width="viewBox.w"
+      :height="viewBox.h" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision"
       @click="handleMapClick">
       <defs>
         <!-- Grid pattern -->
@@ -90,10 +91,10 @@
         <!-- Invisible hit area -->
         <circle :cx="pos.x" :cy="pos.y" r="10" fill="transparent" />
         <!-- Room number text -->
-        <text :x="pos.x" :y="pos.y" text-anchor="middle" dominant-baseline="central" fill="#5a5a5a"
+        <text :x="pos.x" :y="pos.y" text-anchor="middle" dominant-baseline="central" fill="#222"
           :font-size="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 16 : 14"
           :font-weight="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 'bold' : 'normal'"
-          font-family="Times New Roman, serif">{{ pos.roomId }}</text>
+          font-family="Arial, sans-serif">{{ pos.roomId }}</text>
       </g>
 
       <!-- Boss room star icon -->
@@ -129,6 +130,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  focusedRoomId: {
+    type: Number,
+    default: null,
+  },
 });
 
 const dungeonSvg = ref(null);
@@ -139,11 +144,17 @@ defineExpose({
   downloadCanvasAsImage() {
     const svg = dungeonSvg.value;
     if (!svg) return;
+    // Clone SVG and set viewBox to full dungeon extent for download
+    const clone = svg.cloneNode(true);
+    const vb = viewBox.value;
+    clone.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+    clone.setAttribute('width', vb.w);
+    clone.setAttribute('height', vb.h);
     const serializer = new XMLSerializer();
-    const svgString = serializer.serializeToString(svg);
+    const svgString = serializer.serializeToString(clone);
     const canvas = document.createElement('canvas');
-    canvas.width = viewBox.value.w;
-    canvas.height = viewBox.value.h;
+    canvas.width = vb.w;
+    canvas.height = vb.h;
     const ctx = canvas.getContext('2d');
     const img = new Image();
     const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
@@ -189,6 +200,36 @@ const viewBox = computed(() => {
     y: minY * T,
     w: (maxX - minX) * T,
     h: (maxY - minY) * T,
+  };
+});
+
+// When a room is focused, pan the viewBox left to keep it visible alongside sidebar
+const displayViewBox = computed(() => {
+  const base = viewBox.value;
+  if (!props.focusedRoomId) return base;
+
+  const room = props.rooms.find(r => r.id === props.focusedRoomId);
+  if (!room) return base;
+
+  const T = props.tileSize;
+  let roomCx;
+
+  if (room.type === 'merged') {
+    const minRx = Math.min(...room.sections.map(s => s.x));
+    const maxRx = Math.max(...room.sections.map(s => s.x + s.width));
+    roomCx = ((minRx + maxRx) / 2) * T;
+  } else {
+    roomCx = (room.x + room.width / 2) * T;
+  }
+
+  // Shift so the room sits at ~40% from the left (leaving right side for sidebar)
+  const targetX = roomCx - base.w * 0.35;
+
+  return {
+    x: targetX,
+    y: base.y,
+    w: base.w,
+    h: base.h,
   };
 });
 
