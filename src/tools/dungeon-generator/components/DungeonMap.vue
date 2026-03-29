@@ -90,10 +90,10 @@
         <!-- Invisible hit area -->
         <circle :cx="pos.x" :cy="pos.y" r="10" fill="transparent" />
         <!-- Room number text -->
-        <text :x="pos.x" :y="pos.y" text-anchor="middle" dominant-baseline="central" fill="#222"
+        <text :x="pos.x" :y="pos.y" text-anchor="middle" dominant-baseline="central" fill="#5a5a5a"
           :font-size="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 16 : 14"
           :font-weight="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 'bold' : 'normal'"
-          font-family="Arial, sans-serif" filter="url(#pencil-stroke)">{{ pos.roomId }}</text>
+          font-family="Times New Roman, serif">{{ pos.roomId }}</text>
       </g>
 
       <!-- Boss room star icon -->

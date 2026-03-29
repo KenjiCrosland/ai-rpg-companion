@@ -44,6 +44,7 @@ function roomsOverlap(room1, room2) {
 
 // Global room ID counter
 let nextRoomId = 1; // Reset the ID counter before generating the dungeon
+let corridorCount = 0; // Track corridor-shaped rooms (cap at 2)
 
 function generateTree(
   room,
@@ -194,8 +195,23 @@ function generateTree(
     const oppositeSide = getOppositeSide(parentDoorwaySide);
 
     // Randomly generate dimensions for the child room
-    let width = Math.floor(Math.random() * 5) + 3;
-    let height = Math.floor(Math.random() * 5) + 3;
+    let width, height;
+    let isCorridor = false;
+
+    // 60% chance to be a corridor, but only 1-2 per dungeon, never at depth 0-1
+    if (corridorCount < 2 && depth >= 2 && Math.random() < 0.6) {
+      isCorridor = true;
+      if (parentDoorwaySide === 'top' || parentDoorwaySide === 'bottom') {
+        width = Math.floor(Math.random() * 2) + 2; // 2-3 wide
+        height = Math.floor(Math.random() * 4) + 5; // 5-8 long
+      } else {
+        width = Math.floor(Math.random() * 4) + 5; // 5-8 long
+        height = Math.floor(Math.random() * 2) + 2; // 2-3 wide
+      }
+    } else {
+      width = Math.floor(Math.random() * 5) + 3;
+      height = Math.floor(Math.random() * 5) + 3;
+    }
 
     // The position of the doorway in the child room that connects to the parent room
     let childDoorwayPosition = doorway.position;
@@ -265,6 +281,9 @@ function generateTree(
     if (!overlaps) {
       // Now assign an ID to the new room
       newRoom.id = nextRoomId++;
+
+      // Track corridor rooms
+      if (isCorridor) corridorCount++;
 
       // Set connectedRoomId in doorways here
 
@@ -385,6 +404,7 @@ function findAdjacentRoom(room, doorway, rooms) {
 export function generateDungeon() {
   // Reset nextRoomId before generating the dungeon
   nextRoomId = 1;
+  corridorCount = 0;
 
   // Initialize existingRooms and generate the tree
   let existingRooms = [];
