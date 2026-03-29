@@ -497,6 +497,9 @@ function buildCircularRoomPath(room) {
   const w = room.width * T, h = room.height * T;
   const gapAngles = [];
 
+  // Normalize angle to [0, 2π)
+  function norm(a) { return ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI); }
+
   doorways.forEach(dw => {
     const p = dw.position;
     if (dw.side === 'top' || dw.side === 'bottom') {
@@ -506,9 +509,13 @@ function buildCircularRoomPath(room) {
       if (v1 < 0 || v2 < 0) return;
       const iy1 = dw.side === 'top' ? cy - Math.sqrt(v1) : cy + Math.sqrt(v1);
       const iy2 = dw.side === 'top' ? cy - Math.sqrt(v2) : cy + Math.sqrt(v2);
-      const a1 = Math.atan2(iy1 - cy, x1 - cx);
-      const a2 = Math.atan2(iy2 - cy, x2 - cx);
-      gapAngles.push({ a1: Math.min(a1, a2), a2: Math.max(a1, a2) });
+      let a1 = norm(Math.atan2(iy1 - cy, x1 - cx));
+      let a2 = norm(Math.atan2(iy2 - cy, x2 - cx));
+      // Ensure a1 < a2, taking the short arc
+      if (a1 > a2) { const tmp = a1; a1 = a2; a2 = tmp; }
+      // If the gap is more than π, it's the wrong way around
+      if (a2 - a1 > Math.PI) { gapAngles.push({ a1: a2, a2: a1 + 2 * Math.PI }); }
+      else { gapAngles.push({ a1, a2 }); }
     } else {
       const y1 = oy + p * T, y2 = oy + (p + 1) * T;
       const v1 = r * r - (y1 - cy) * (y1 - cy);
@@ -516,9 +523,11 @@ function buildCircularRoomPath(room) {
       if (v1 < 0 || v2 < 0) return;
       const ix1 = dw.side === 'left' ? cx - Math.sqrt(v1) : cx + Math.sqrt(v1);
       const ix2 = dw.side === 'left' ? cx - Math.sqrt(v2) : cx + Math.sqrt(v2);
-      const a1 = Math.atan2(y1 - cy, ix1 - cx);
-      const a2 = Math.atan2(y2 - cy, ix2 - cx);
-      gapAngles.push({ a1: Math.min(a1, a2), a2: Math.max(a1, a2) });
+      let a1 = norm(Math.atan2(y1 - cy, ix1 - cx));
+      let a2 = norm(Math.atan2(y2 - cy, ix2 - cx));
+      if (a1 > a2) { const tmp = a1; a1 = a2; a2 = tmp; }
+      if (a2 - a1 > Math.PI) { gapAngles.push({ a1: a2, a2: a1 + 2 * Math.PI }); }
+      else { gapAngles.push({ a1, a2 }); }
     }
   });
 
@@ -532,14 +541,17 @@ function buildCircularRoomPath(room) {
   for (let i = 0; i < gapAngles.length; i++) {
     const gapEnd = gapAngles[i].a2;
     const nextGapStart = gapAngles[(i + 1) % gapAngles.length].a1;
+    // Adjust nextGapStart to be after gapEnd
+    let ngs = nextGapStart;
+    while (ngs < gapEnd) ngs += 2 * Math.PI;
 
     const startX = cx + r * Math.cos(gapEnd);
     const startY = cy + r * Math.sin(gapEnd);
-    const endX = cx + r * Math.cos(nextGapStart);
-    const endY = cy + r * Math.sin(nextGapStart);
+    const endX = cx + r * Math.cos(ngs);
+    const endY = cy + r * Math.sin(ngs);
 
-    let sweep = nextGapStart - gapEnd;
-    if (sweep < 0) sweep += 2 * Math.PI;
+    let sweep = ngs - gapEnd;
+    if (sweep <= 0.01) continue; // skip zero-length arcs
     const largeArc = sweep > Math.PI ? 1 : 0;
 
     d += `M ${startX.toFixed(1)} ${startY.toFixed(1)} A ${r} ${r} 0 ${largeArc} 1 ${endX.toFixed(1)} ${endY.toFixed(1)} `;
