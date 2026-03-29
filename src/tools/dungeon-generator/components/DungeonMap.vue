@@ -39,7 +39,7 @@
       <template v-for="room in rooms" :key="'outline-' + room.id">
         <template v-if="room.type === 'merged'">
           <!-- Single perimeter path for the entire merged room -->
-          <path :d="buildMergedRoomPerimeterPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
+          <path :d="buildMergedRoomPerimeterPath(room)" fill="none" stroke="#6b6b6b" stroke-width="2.2"
             stroke-linecap="round" filter="url(#pencil-stroke)" />
           <!-- Doorways from each section (non-merged only) -->
           <template v-for="(section, si) in room.sections" :key="'sdw-' + room.id + '-' + si">
@@ -50,27 +50,27 @@
           </template>
         </template>
         <template v-else>
-          <!-- Circular room -->
-          <template v-if="room.shape === 'circular'">
-            <path :d="buildCircularRoomPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
+          <!-- Circular room (only if safe — truly square enough) -->
+          <template v-if="room.shape === 'circular' && isCircleSafe(room)">
+            <path :d="buildCircularRoomPath(room)" fill="none" stroke="#6b6b6b" stroke-width="2.2"
               stroke-linecap="round" filter="url(#pencil-stroke)" />
             <!-- Connector lines from arc to bounding box — rendered as separate elements -->
             <g v-html="buildCircularConnectorsSvg(room)" filter="url(#pencil-stroke)"></g>
           </template>
           <!-- Domed room — rect with one curved wall -->
           <template v-else-if="room.shape === 'domed'">
-            <path :d="buildDomedRoomPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
-              stroke-linecap="round" filter="url(#pencil-stroke)" />
+            <path :d="buildDomedRoomPath(room)" fill="none" stroke="#6b6b6b" stroke-width="2.2" stroke-linecap="round"
+              filter="url(#pencil-stroke)" />
           </template>
           <!-- Capsule room — curved narrow ends, straight long sides -->
           <template v-else-if="room.shape === 'capsule'">
-            <path :d="buildCapsuleRoomPath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
-              stroke-linecap="round" filter="url(#pencil-stroke)" />
+            <path :d="buildCapsuleRoomPath(room)" fill="none" stroke="#6b6b6b" stroke-width="2.2" stroke-linecap="round"
+              filter="url(#pencil-stroke)" />
           </template>
           <!-- Standard rectangular room -->
           <template v-else>
-            <path :d="buildRoomOutlinePath(room)" fill="none" stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2"
-              stroke-linecap="round" filter="url(#pencil-stroke)" />
+            <path :d="buildRoomOutlinePath(room)" fill="none" stroke="#6b6b6b" stroke-width="2.2" stroke-linecap="round"
+              filter="url(#pencil-stroke)" />
           </template>
           <!-- Doorways (all shapes) -->
           <template v-for="(dw, di) in (room.doorways || [])" :key="'dw-' + room.id + '-' + di">
@@ -79,7 +79,7 @@
           <!-- Merged wall extensions (rectangular rooms only) -->
           <template v-for="(dw, di) in (room.doorways || [])" :key="'mw-' + room.id + '-' + di">
             <path v-if="dw.type === 'merged' && !room.shape" :d="buildMergedWallPath(room, dw)" fill="none"
-              stroke="rgba(55, 55, 55, 0.8)" stroke-width="2.2" stroke-linecap="round" filter="url(#pencil-stroke)" />
+              stroke="#6b6b6b" stroke-width="2.2" stroke-linecap="round" filter="url(#pencil-stroke)" />
           </template>
         </template>
       </template>
@@ -97,6 +97,18 @@
           :font-weight="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 'bold' : 'normal'"
           font-family="Arial, sans-serif" filter="url(#pencil-stroke)">{{ pos.roomId }}</text>
       </g>
+
+      <!-- Boss room star icon -->
+      <template v-for="pos in numberPositions" :key="'boss-' + pos.roomId">
+        <g v-if="isBossRoom(pos.roomId)" filter="url(#pencil-stroke)">
+          <path :d="buildStarPath(bossStarPos(pos.roomId).x, bossStarPos(pos.roomId).y, 3.5, 1.5)" fill="#4a4a4a" />
+          <circle :cx="bossStarPos(pos.roomId).x" :cy="bossStarPos(pos.roomId).y" r="5" fill="none" stroke="#4a4a4a"
+            stroke-width="0.8" />
+        </g>
+      </template>
+
+      <!-- Entrance arrow -->
+      <g v-if="entranceGap" v-html="buildEntranceArrowSvg()" filter="url(#pencil-stroke)"></g>
     </svg>
   </div>
 </template>
@@ -246,6 +258,132 @@ const numberPositions = computed(() => {
   return positions;
 });
 
+// Compute entrance gap info — pick a free side that doesn't collide with other rooms
+const entranceGap = computed(() => {
+  const room = props.rooms.find(r => r.roomType === 'entrance');
+  if (!room || room.type === 'merged') return null;
+
+  const T = props.tileSize;
+  const usedSides = new Set((room.doorways || []).map(d => d.side));
+
+  // Collect all occupied tile positions from every room
+  const occupiedTiles = new Set();
+  props.rooms.forEach(r => {
+    if (r.id === room.id) return;
+    const addTiles = (rm) => {
+      for (let i = -1; i <= rm.width; i++) {
+        for (let j = -1; j <= rm.height; j++) {
+          occupiedTiles.add(`${rm.x + i},${rm.y + j}`);
+        }
+      }
+    };
+    if (r.type === 'merged') {
+      r.sections.forEach(addTiles);
+    } else {
+      addTiles(r);
+    }
+  });
+
+  // Check if a candidate entrance position collides with other rooms
+  function isBlocked(side, position) {
+    // Check the 2 tiles extending outward from the gap (corridor + arrow space)
+    for (let ext = 1; ext <= 2; ext++) {
+      let tx, ty;
+      if (side === 'bottom') { tx = room.x + position; ty = room.y + room.height + ext - 1; }
+      else if (side === 'top') { tx = room.x + position; ty = room.y - ext; }
+      else if (side === 'left') { tx = room.x - ext; ty = room.y + position; }
+      else { tx = room.x + room.width + ext - 1; ty = room.y + position; }
+      if (occupiedTiles.has(`${tx},${ty}`)) return true;
+    }
+    return false;
+  }
+
+  // Try each side, pick first that's free and unblocked
+  const candidates = ['bottom', 'top', 'left', 'right'];
+  let bestSide = null;
+  let bestPosition = 0;
+
+  for (const side of candidates) {
+    if (usedSides.has(side)) continue;
+    const dim = (side === 'top' || side === 'bottom') ? room.width : room.height;
+    const position = Math.floor(dim / 2);
+    if (!isBlocked(side, position)) {
+      bestSide = side;
+      bestPosition = position;
+      break;
+    }
+    // Try other positions on this side
+    for (let p = 1; p < dim - 1; p++) {
+      if (p === position) continue;
+      if (!isBlocked(side, p)) {
+        bestSide = side;
+        bestPosition = p;
+        break;
+      }
+    }
+    if (bestSide) break;
+  }
+
+  if (!bestSide) return null;
+
+  return { roomId: room.id, side: bestSide, position: bestPosition };
+});
+
+// Build entrance arrow SVG — short corridor + triangle pointing into the room
+function buildEntranceArrowSvg() {
+  const eg = entranceGap.value;
+  if (!eg) return '';
+  const room = props.rooms.find(r => r.id === eg.roomId);
+  if (!room) return '';
+
+  const T = props.tileSize;
+  const ox = room.x * T, oy = room.y * T;
+  const w = room.width * T, h = room.height * T;
+  const stroke = '#6b6b6b';
+  const sw = '2.2';
+  const p = eg.position;
+  let svg = '';
+
+  // Short corridor walls extending outward from the gap
+  const corridorLen = T * 0.8;
+  // Arrow triangle dimensions
+  const arrowW = T * 0.35;
+  const arrowH = T * 0.4;
+
+  if (eg.side === 'bottom') {
+    const lx = ox + p * T, rx = ox + (p + 1) * T;
+    const sy = oy + h;
+    svg += `<line x1="${lx}" y1="${sy}" x2="${lx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${rx}" y1="${sy}" x2="${rx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    // Triangle pointing up (into the room)
+    const cx = (lx + rx) / 2, ty = sy + corridorLen + arrowH + 2;
+    svg += `<polygon points="${cx},${ty - arrowH} ${cx - arrowW},${ty} ${cx + arrowW},${ty}" fill="#4a4a4a"/>`;
+  } else if (eg.side === 'top') {
+    const lx = ox + p * T, rx = ox + (p + 1) * T;
+    const sy = oy;
+    svg += `<line x1="${lx}" y1="${sy}" x2="${lx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${rx}" y1="${sy}" x2="${rx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const cx = (lx + rx) / 2, ty = sy - corridorLen - arrowH - 2;
+    svg += `<polygon points="${cx},${ty + arrowH} ${cx - arrowW},${ty} ${cx + arrowW},${ty}" fill="#4a4a4a"/>`;
+  } else if (eg.side === 'left') {
+    const ty = oy + p * T, by = oy + (p + 1) * T;
+    const sx = ox;
+    svg += `<line x1="${sx}" y1="${ty}" x2="${sx - corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${by}" x2="${sx - corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const cy = (ty + by) / 2, tx = sx - corridorLen - arrowH - 2;
+    svg += `<polygon points="${tx + arrowH},${cy} ${tx},${cy - arrowW} ${tx},${cy + arrowW}" fill="#4a4a4a"/>`;
+  } else {
+    const ty = oy + p * T, by = oy + (p + 1) * T;
+    const sx = ox + w;
+    svg += `<line x1="${sx}" y1="${ty}" x2="${sx + corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${by}" x2="${sx + corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const cy = (ty + by) / 2, tx = sx + corridorLen + arrowH + 2;
+    svg += `<polygon points="${tx - arrowH},${cy} ${tx},${cy - arrowW} ${tx},${cy + arrowW}" fill="#4a4a4a"/>`;
+  }
+
+  return svg;
+}
+
 // Find all flat rooms (expanding merged rooms into sections)
 function getAllFlatRooms() {
   const all = [];
@@ -261,10 +399,17 @@ function getAllFlatRooms() {
 
 // Build the room outline path, leaving gaps for doorways
 function buildRoomOutlinePath(room) {
-  const { x, y, width, height, doorways } = room;
+  const { x, y, width, height } = room;
   const T = props.tileSize;
   const ox = x * T;
   const oy = y * T;
+
+  // Include entrance gap as a virtual doorway if this is the entrance room
+  let doorways = room.doorways || [];
+  const eg = entranceGap.value;
+  if (eg && eg.roomId === room.id) {
+    doorways = [...doorways, { side: eg.side, position: eg.position, type: 'entrance' }];
+  }
 
   const hasMerged = (side) => doorways?.some(d => d.side === side && d.type === 'merged');
 
@@ -338,7 +483,11 @@ function getCircleParams(room) {
 function buildCircularRoomPath(room) {
   const T = props.tileSize;
   const { cx, cy, r } = getCircleParams(room);
-  const doorways = (room.doorways || []).filter(dw => dw.type !== 'merged');
+  let doorways = (room.doorways || []).filter(dw => dw.type !== 'merged');
+  const eg = entranceGap.value;
+  if (eg && eg.roomId === room.id) {
+    doorways = [...doorways, { side: eg.side, position: eg.position, type: 'entrance' }];
+  }
 
   if (doorways.length === 0) {
     return `M ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy}`;
@@ -405,8 +554,12 @@ function buildCircularConnectorsSvg(room) {
   const { cx, cy, r } = getCircleParams(room);
   const ox = room.x * T, oy = room.y * T;
   const w = room.width * T, h = room.height * T;
-  const doorways = (room.doorways || []).filter(dw => dw.type !== 'merged');
-  const stroke = 'rgba(55,55,55,0.8)';
+  let doorways = (room.doorways || []).filter(dw => dw.type !== 'merged');
+  const eg = entranceGap.value;
+  if (eg && eg.roomId === room.id) {
+    doorways = [...doorways, { side: eg.side, position: eg.position, type: 'entrance' }];
+  }
+  const stroke = '#6b6b6b';
   let svg = '';
 
   doorways.forEach(dw => {
@@ -439,7 +592,7 @@ function buildCircularConnectorsSvg(room) {
 
 // Build a domed room path — rect with one curved wall, doorway gaps on straight sides
 function buildDomedRoomPath(room) {
-  const { x, y, width, height, doorways } = room;
+  const { x, y, width, height } = room;
   const T = props.tileSize;
   const ox = x * T;
   const oy = y * T;
@@ -448,7 +601,12 @@ function buildDomedRoomPath(room) {
   const curvedSide = room.domedSide || 'top';
   const arcDepth = Math.min(w, h) * 0.3;
 
-  const nonMergedDoors = (doorways || []).filter(dw => dw.type !== 'merged');
+  let doorways = room.doorways || [];
+  const eg = entranceGap.value;
+  if (eg && eg.roomId === room.id) {
+    doorways = [...doorways, { side: eg.side, position: eg.position, type: 'entrance' }];
+  }
+  const nonMergedDoors = doorways.filter(dw => dw.type !== 'merged');
 
   function straightSide(side) {
     const doors = nonMergedDoors.filter(dw => dw.side === side).sort((a, b) => a.position - b.position);
@@ -478,10 +636,16 @@ function buildDomedRoomPath(room) {
 
   sides.forEach(side => {
     if (side === curvedSide) {
-      if (side === 'top') d += `M ${ox + w} ${oy} Q ${ox + w / 2} ${oy - arcDepth} ${ox} ${oy} `;
-      else if (side === 'bottom') d += `M ${ox} ${oy + h} Q ${ox + w / 2} ${oy + h + arcDepth} ${ox + w} ${oy + h} `;
-      else if (side === 'left') d += `M ${ox} ${oy + h} Q ${ox - arcDepth} ${oy + h / 2} ${ox} ${oy} `;
-      else if (side === 'right') d += `M ${ox + w} ${oy} Q ${ox + w + arcDepth} ${oy + h / 2} ${ox + w} ${oy + h} `;
+      // If any doorway is on the curved side, fall back to straight with gaps
+      const hasDoorOnCurve = nonMergedDoors.some(dw => dw.side === curvedSide);
+      if (hasDoorOnCurve) {
+        d += straightSide(side);
+      } else {
+        if (side === 'top') d += `M ${ox + w} ${oy} Q ${ox + w / 2} ${oy - arcDepth} ${ox} ${oy} `;
+        else if (side === 'bottom') d += `M ${ox} ${oy + h} Q ${ox + w / 2} ${oy + h + arcDepth} ${ox + w} ${oy + h} `;
+        else if (side === 'left') d += `M ${ox} ${oy + h} Q ${ox - arcDepth} ${oy + h / 2} ${ox} ${oy} `;
+        else if (side === 'right') d += `M ${ox + w} ${oy} Q ${ox + w + arcDepth} ${oy + h / 2} ${ox + w} ${oy + h} `;
+      }
     } else {
       d += straightSide(side);
     }
@@ -492,14 +656,19 @@ function buildDomedRoomPath(room) {
 
 // Build a capsule room path — straight long sides, curved narrow ends, doorway gaps on straight sides
 function buildCapsuleRoomPath(room) {
-  const { x, y, width, height, doorways } = room;
+  const { x, y, width, height } = room;
   const T = props.tileSize;
   const ox = x * T;
   const oy = y * T;
   const w = width * T;
   const h = height * T;
   const arcDepth = Math.min(w, h) * 0.3;
-  const nonMergedDoors = (doorways || []).filter(dw => dw.type !== 'merged');
+  let doorways = room.doorways || [];
+  const eg = entranceGap.value;
+  if (eg && eg.roomId === room.id) {
+    doorways = [...doorways, { side: eg.side, position: eg.position, type: 'entrance' }];
+  }
+  const nonMergedDoors = doorways.filter(dw => dw.type !== 'merged');
 
   function straightSide(side) {
     const doors = nonMergedDoors.filter(dw => dw.side === side).sort((a, b) => a.position - b.position);
@@ -527,14 +696,20 @@ function buildCapsuleRoomPath(room) {
   let d = '';
 
   if (w >= h) {
+    // Wider than tall — left and right are curved
+    const hasRightDoor = nonMergedDoors.some(dw => dw.side === 'right');
+    const hasLeftDoor = nonMergedDoors.some(dw => dw.side === 'left');
     d += straightSide('top');
-    d += `M ${ox + w} ${oy} Q ${ox + w + arcDepth} ${oy + h / 2} ${ox + w} ${oy + h} `;
+    d += hasRightDoor ? straightSide('right') : `M ${ox + w} ${oy} Q ${ox + w + arcDepth} ${oy + h / 2} ${ox + w} ${oy + h} `;
     d += straightSide('bottom');
-    d += `M ${ox} ${oy + h} Q ${ox - arcDepth} ${oy + h / 2} ${ox} ${oy} `;
+    d += hasLeftDoor ? straightSide('left') : `M ${ox} ${oy + h} Q ${ox - arcDepth} ${oy + h / 2} ${ox} ${oy} `;
   } else {
-    d += `M ${ox} ${oy} Q ${ox + w / 2} ${oy - arcDepth} ${ox + w} ${oy} `;
+    // Taller than wide — top and bottom are curved
+    const hasTopDoor = nonMergedDoors.some(dw => dw.side === 'top');
+    const hasBottomDoor = nonMergedDoors.some(dw => dw.side === 'bottom');
+    d += hasTopDoor ? straightSide('top') : `M ${ox} ${oy} Q ${ox + w / 2} ${oy - arcDepth} ${ox + w} ${oy} `;
     d += straightSide('right');
-    d += `M ${ox + w} ${oy + h} Q ${ox + w / 2} ${oy + h + arcDepth} ${ox} ${oy + h} `;
+    d += hasBottomDoor ? straightSide('bottom') : `M ${ox + w} ${oy + h} Q ${ox + w / 2} ${oy + h + arcDepth} ${ox} ${oy + h} `;
     d += straightSide('left');
   }
 
@@ -646,60 +821,72 @@ function buildDoorSvg(room, doorway, isLocked) {
   const ox = x * T;
   const oy = y * T;
 
-  const doorDepth = Math.max(T / 3, 3);
-  const totalExt = T;
-  const wallLen = (totalExt - doorDepth) / 2;
-  const stroke = 'rgba(70,70,70,0.65)';
+  // Flanking walls run full tile length — same color/weight as room walls
+  const wallStroke = '#6b6b6b';
   const wallSw = '2.2';
-  const doorSw = '1.5';
+  // Door rect is narrower than tile, slightly darker, thinner stroke
+  const doorStroke = '#555';
+  const doorSw = '1.2';
+  const doorDepth = Math.max(T / 3, 3);
+  const doorInset = 0; // door rect spans full width between walls
 
   let svg = '';
 
   if (doorway.side === 'top') {
     const sx = ox + doorway.position * T;
     const sy = oy;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy - wallLen}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy - wallLen}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<rect x="${sx}" y="${sy - wallLen - doorDepth}" width="${T}" height="${doorDepth}" fill="#fff" stroke="${stroke}" stroke-width="${doorSw}"/>`;
+    // Continuous flanking walls
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy - T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy - T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    // Door rect on top
+    const dx = sx + doorInset, dw = T - doorInset * 2;
+    const dy = sy - T / 2 - doorDepth / 2;
+    svg += `<rect x="${dx}" y="${dy}" width="${dw}" height="${doorDepth}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      svg += `<line x1="${sx + 2}" y1="${sy - wallLen - doorDepth + 1}" x2="${sx + T - 2}" y2="${sy - wallLen - 1}" stroke="${stroke}" stroke-width="1.2"/>`;
-      svg += `<line x1="${sx + 2}" y1="${sy - wallLen - 1}" x2="${sx + T - 2}" y2="${sy - wallLen - doorDepth + 1}" stroke="${stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${dx + 1}" y1="${dy + 1}" x2="${dx + dw - 1}" y2="${dy + doorDepth - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${dx + 1}" y1="${dy + doorDepth - 1}" x2="${dx + dw - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
     }
   }
 
   if (doorway.side === 'bottom') {
     const sx = ox + doorway.position * T;
     const sy = oy + height * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy + wallLen}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy + wallLen}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<rect x="${sx}" y="${sy + wallLen}" width="${T}" height="${doorDepth}" fill="#fff" stroke="${stroke}" stroke-width="${doorSw}"/>`;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    const dx = sx + doorInset, dw = T - doorInset * 2;
+    const dy = sy + T / 2 - doorDepth / 2;
+    svg += `<rect x="${dx}" y="${dy}" width="${dw}" height="${doorDepth}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      svg += `<line x1="${sx + 2}" y1="${sy + wallLen + 1}" x2="${sx + T - 2}" y2="${sy + wallLen + doorDepth - 1}" stroke="${stroke}" stroke-width="1.2"/>`;
-      svg += `<line x1="${sx + 2}" y1="${sy + wallLen + doorDepth - 1}" x2="${sx + T - 2}" y2="${sy + wallLen + 1}" stroke="${stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${dx + 1}" y1="${dy + 1}" x2="${dx + dw - 1}" y2="${dy + doorDepth - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${dx + 1}" y1="${dy + doorDepth - 1}" x2="${dx + dw - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
     }
   }
 
   if (doorway.side === 'left') {
     const sx = ox;
     const sy = oy + doorway.position * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx - wallLen}" y2="${sy}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx - wallLen}" y2="${sy + T}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<rect x="${sx - wallLen - doorDepth}" y="${sy}" width="${doorDepth}" height="${T}" fill="#fff" stroke="${stroke}" stroke-width="${doorSw}"/>`;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx - T}" y2="${sy}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx - T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    const dy = sy + doorInset, dh = T - doorInset * 2;
+    const dx = sx - T / 2 - doorDepth / 2;
+    svg += `<rect x="${dx}" y="${dy}" width="${doorDepth}" height="${dh}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      svg += `<line x1="${sx - wallLen - doorDepth + 1}" y1="${sy + 2}" x2="${sx - wallLen - 1}" y2="${sy + T - 2}" stroke="${stroke}" stroke-width="1.2"/>`;
-      svg += `<line x1="${sx - wallLen - doorDepth + 1}" y1="${sy + T - 2}" x2="${sx - wallLen - 1}" y2="${sy + 2}" stroke="${stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${dx + 1}" y1="${dy + 1}" x2="${dx + doorDepth - 1}" y2="${dy + dh - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${dx + 1}" y1="${dy + dh - 1}" x2="${dx + doorDepth - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
     }
   }
 
   if (doorway.side === 'right') {
     const sx = ox + width * T;
     const sy = oy + doorway.position * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx + wallLen}" y2="${sy}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx + wallLen}" y2="${sy + T}" stroke="${stroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
-    svg += `<rect x="${sx + wallLen}" y="${sy}" width="${doorDepth}" height="${T}" fill="#fff" stroke="${stroke}" stroke-width="${doorSw}"/>`;
+    svg += `<line x1="${sx}" y1="${sy}" x2="${sx + T}" y2="${sy}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx + T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="${wallSw}" stroke-linecap="round"/>`;
+    const dy = sy + doorInset, dh = T - doorInset * 2;
+    const dx = sx + T / 2 - doorDepth / 2;
+    svg += `<rect x="${dx}" y="${dy}" width="${doorDepth}" height="${dh}" fill="#fff" stroke="${doorStroke}" stroke-width="${doorSw}"/>`;
     if (isLocked) {
-      svg += `<line x1="${sx + wallLen + 1}" y1="${sy + 2}" x2="${sx + wallLen + doorDepth - 1}" y2="${sy + T - 2}" stroke="${stroke}" stroke-width="1.2"/>`;
-      svg += `<line x1="${sx + wallLen + 1}" y1="${sy + T - 2}" x2="${sx + wallLen + doorDepth - 1}" y2="${sy + 2}" stroke="${stroke}" stroke-width="1.2"/>`;
+      svg += `<line x1="${dx + 1}" y1="${dy + 1}" x2="${dx + doorDepth - 1}" y2="${dy + dh - 1}" stroke="${doorStroke}" stroke-width="1"/>`;
+      svg += `<line x1="${dx + 1}" y1="${dy + dh - 1}" x2="${dx + doorDepth - 1}" y2="${dy + 1}" stroke="${doorStroke}" stroke-width="1"/>`;
     }
   }
 
@@ -712,7 +899,7 @@ function buildSecretDoorSvg(room, doorway) {
   const ox = x * T;
   const oy = y * T;
   const wallSeg = (T - T / 2) / 2;
-  const stroke = 'rgba(70,70,70,0.65)';
+  const stroke = '#6b6b6b';
   const sw = '2.2';
   let svg = '';
 
@@ -756,7 +943,7 @@ function buildCorridorWallsSvg(room, doorway) {
   const T = props.tileSize;
   const ox = x * T;
   const oy = y * T;
-  const stroke = 'rgba(70,70,70,0.65)';
+  const stroke = '#6b6b6b';
   let svg = '';
 
   if (doorway.side === 'top') {
@@ -916,6 +1103,94 @@ function findAdjacentRoom(room, doorway) {
 
 function roomOutlinePaths() {
   return {};
+}
+
+// Check if a circular room is safe to render — all doorways must fall within circle radius
+function isCircleSafe(room) {
+  const T = props.tileSize;
+  const { cx, cy, r } = getCircleParams(room);
+  const ox = room.x * T, oy = room.y * T;
+  const w = room.width * T, h = room.height * T;
+  let doorways = (room.doorways || []).filter(dw => dw.type !== 'merged');
+  const eg = entranceGap.value;
+  if (eg && eg.roomId === room.id) {
+    doorways = [...doorways, { side: eg.side, position: eg.position, type: 'entrance' }];
+  }
+
+  for (const dw of doorways) {
+    const p = dw.position;
+    if (dw.side === 'top' || dw.side === 'bottom') {
+      const x1 = ox + p * T, x2 = ox + (p + 1) * T;
+      if (r * r - (x1 - cx) * (x1 - cx) < 0) return false;
+      if (r * r - (x2 - cx) * (x2 - cx) < 0) return false;
+    } else {
+      const y1 = oy + p * T, y2 = oy + (p + 1) * T;
+      if (r * r - (y1 - cy) * (y1 - cy) < 0) return false;
+      if (r * r - (y2 - cy) * (y2 - cy) < 0) return false;
+    }
+  }
+  return true;
+}
+
+// Check if a room is a boss room
+function isBossRoom(roomId) {
+  const room = props.rooms.find(r => r.id === roomId);
+  return room && room.roomType === 'boss';
+}
+
+// Position the boss star at the far end of the room's longest axis, away from doorways
+function bossStarPos(roomId) {
+  const room = props.rooms.find(r => r.id === roomId);
+  if (!room) return { x: 0, y: 0 };
+
+  const T = props.tileSize;
+  let ox, oy, w, h;
+
+  if (room.type === 'merged') {
+    ox = Math.min(...room.sections.map(s => s.x)) * T;
+    oy = Math.min(...room.sections.map(s => s.y)) * T;
+    w = (Math.max(...room.sections.map(s => s.x + s.width)) * T) - ox;
+    h = (Math.max(...room.sections.map(s => s.y + s.height)) * T) - oy;
+  } else {
+    ox = room.x * T;
+    oy = room.y * T;
+    w = room.width * T;
+    h = room.height * T;
+  }
+
+  const cx = ox + w / 2;
+  const cy = oy + h / 2;
+  const margin = T * 0.7;
+
+  // Count doorways on each side to find the "far" end
+  const doorways = room.type === 'merged'
+    ? room.sections.flatMap(s => s.doorways || [])
+    : (room.doorways || []);
+
+  const doorCount = { top: 0, bottom: 0, left: 0, right: 0 };
+  doorways.forEach(d => { if (doorCount[d.side] !== undefined) doorCount[d.side]++; });
+
+  if (w >= h) {
+    // Wide room — place star at left or right end, whichever has fewer doors
+    const x = doorCount.right <= doorCount.left ? ox + w - margin : ox + margin;
+    return { x, y: cy };
+  } else {
+    // Tall room — place star at top or bottom end, whichever has fewer doors
+    const y = doorCount.bottom <= doorCount.top ? oy + h - margin : oy + margin;
+    return { x: cx, y };
+  }
+}
+
+// Build a 5-pointed star SVG path centered at (cx, cy)
+function buildStarPath(cx, cy, outerR, innerR) {
+  const pts = [];
+  for (let i = 0; i < 5; i++) {
+    const outerAngle = (i * 72 - 90) * Math.PI / 180;
+    const innerAngle = ((i * 72 + 36) - 90) * Math.PI / 180;
+    pts.push(`${cx + outerR * Math.cos(outerAngle)},${cy + outerR * Math.sin(outerAngle)}`);
+    pts.push(`${cx + innerR * Math.cos(innerAngle)},${cy + innerR * Math.sin(innerAngle)}`);
+  }
+  return `M ${pts.join(' L ')} Z`;
 }
 
 function handleRoomClick(pos) {

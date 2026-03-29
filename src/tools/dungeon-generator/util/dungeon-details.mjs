@@ -391,10 +391,10 @@ export function addDungeonDetails(dungeonData) {
     roomsArray.forEach((room) => {
       if (room.type === 'merged') return;
       if (!['boss', 'purpose', 'entrance'].includes(room.roomType)) return;
-      if (Math.random() > 0.25) return;
+      if (Math.random() > 0.4) return;
 
       const ratio = room.width / room.height;
-      const isSquarish = ratio > 0.7 && ratio < 1.4;
+      const isSquarish = ratio >= 0.75 && ratio <= 1.35;
 
       if (isSquarish && Math.random() < 0.5) {
         room.shape = 'circular';
