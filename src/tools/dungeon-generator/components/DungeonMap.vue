@@ -90,8 +90,9 @@
         @mousedown="clickedRoomId = pos.roomId" style="cursor: pointer;">
         <!-- Invisible hit area -->
         <circle :cx="pos.x" :cy="pos.y" r="10" fill="transparent" />
-        <!-- Room number text -->
-        <text :x="pos.x" :y="pos.y" text-anchor="middle" dominant-baseline="central" fill="#222"
+        <!-- Room number text — gray if no description, dark if described -->
+        <text :x="pos.x" :y="pos.y" text-anchor="middle" dominant-baseline="central"
+          :fill="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? '#222' : roomHasDescription(pos.roomId) ? '#222' : '#aaa'"
           :font-size="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 16 : 14"
           :font-weight="hoveredRoomId === pos.roomId || clickedRoomId === pos.roomId ? 'bold' : 'normal'"
           font-family="Arial, sans-serif">{{ pos.roomId }}</text>
@@ -113,7 +114,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 const emit = defineEmits(['roomClicked', 'mapClicked']);
 
@@ -139,6 +140,11 @@ const props = defineProps({
 const dungeonSvg = ref(null);
 const hoveredRoomId = ref(null);
 const clickedRoomId = ref(null);
+
+// Sync clickedRoomId with focusedRoomId prop (e.g., when sidebar link is clicked)
+watch(() => props.focusedRoomId, (newId) => {
+  clickedRoomId.value = newId;
+});
 
 defineExpose({
   downloadCanvasAsImage() {
@@ -595,15 +601,30 @@ function buildCircularRoomPath(room) {
 
   gapAngles.sort((a, b) => a.a1 - b.a1);
 
-  if (gapAngles.length === 0) {
+  // Merge overlapping or adjacent gaps
+  const mergedGaps = [];
+  for (const gap of gapAngles) {
+    if (mergedGaps.length === 0) {
+      mergedGaps.push({ a1: gap.a1, a2: gap.a2 });
+    } else {
+      const last = mergedGaps[mergedGaps.length - 1];
+      if (gap.a1 <= last.a2 + 0.01) {
+        // Overlapping or adjacent — extend
+        last.a2 = Math.max(last.a2, gap.a2);
+      } else {
+        mergedGaps.push({ a1: gap.a1, a2: gap.a2 });
+      }
+    }
+  }
+
+  if (mergedGaps.length === 0) {
     return `M ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy}`;
   }
 
   let d = '';
-  for (let i = 0; i < gapAngles.length; i++) {
-    const gapEnd = gapAngles[i].a2;
-    const nextGapStart = gapAngles[(i + 1) % gapAngles.length].a1;
-    // Adjust nextGapStart to be after gapEnd
+  for (let i = 0; i < mergedGaps.length; i++) {
+    const gapEnd = mergedGaps[i].a2;
+    const nextGapStart = mergedGaps[(i + 1) % mergedGaps.length].a1;
     let ngs = nextGapStart;
     while (ngs < gapEnd) ngs += 2 * Math.PI;
 
@@ -613,7 +634,7 @@ function buildCircularRoomPath(room) {
     const endY = cy + r * Math.sin(ngs);
 
     let sweep = ngs - gapEnd;
-    if (sweep <= 0.01) continue; // skip zero-length arcs
+    if (sweep <= 0.01) continue;
     const largeArc = sweep > Math.PI ? 1 : 0;
 
     d += `M ${startX.toFixed(1)} ${startY.toFixed(1)} A ${r} ${r} 0 ${largeArc} 1 ${endX.toFixed(1)} ${endY.toFixed(1)} `;
@@ -887,7 +908,11 @@ function buildDoorwaySvg(room, doorway) {
   if (type === 'locked-door') return buildDoorSvg(room, doorway, true);
   if (type === 'secret') return buildSecretDoorSvg(room, doorway);
   if (type === 'corridor') return buildCorridorWallsSvg(room, doorway);
-  if (type === 'stairs' && room.id < doorway.connectedRoomId) return buildStairsSvg(room, doorway);
+  if (type === 'stairs') {
+    if (room.id < doorway.connectedRoomId) return buildStairsSvg(room, doorway);
+    // Non-drawing side still needs flanking walls
+    return buildCorridorWallsSvg(room, doorway);
+  }
   return '';
 }
 
@@ -996,37 +1021,64 @@ function buildSecretDoorSvg(room, doorway) {
   const wallSeg = (T - T / 2) / 2;
   const stroke = '#6b6b6b';
   const sw = '2.2';
+
+  // Arc helpers for circular rooms
+  function arcY(px) {
+    if (room.shape !== 'circular') return null;
+    const c = getCircleParams(room);
+    const val = c.r * c.r - (px - c.cx) * (px - c.cx);
+    return val < 0 ? null : { top: c.cy - Math.sqrt(val), bottom: c.cy + Math.sqrt(val) };
+  }
+  function arcX(py) {
+    if (room.shape !== 'circular') return null;
+    const c = getCircleParams(room);
+    const val = c.r * c.r - (py - c.cy) * (py - c.cy);
+    return val < 0 ? null : { left: c.cx - Math.sqrt(val), right: c.cx + Math.sqrt(val) };
+  }
+
   let svg = '';
 
   if (doorway.side === 'top') {
     const sx = ox + doorway.position * T;
     const sy = oy;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy - wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy - wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const lA = arcY(sx), rA = arcY(sx + T);
+    const ly = lA ? lA.top : sy;
+    const ry = rA ? rA.top : sy;
+    svg += `<line x1="${sx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${sx}" y2="${sy - wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${sx + T}" y2="${sy - wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
     svg += `<line x1="${sx}" y1="${sy - wallSeg}" x2="${sx + T}" y2="${sy - wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
   }
 
   if (doorway.side === 'bottom') {
     const sx = ox + doorway.position * T;
     const sy = oy + height * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx}" y2="${sy + wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx + T}" y1="${sy}" x2="${sx + T}" y2="${sy + wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const lA = arcY(sx), rA = arcY(sx + T);
+    const ly = lA ? lA.bottom : sy;
+    const ry = rA ? rA.bottom : sy;
+    svg += `<line x1="${sx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${sx}" y2="${sy + wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${sx + T}" y2="${sy + wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
     svg += `<line x1="${sx}" y1="${sy + wallSeg}" x2="${sx + T}" y2="${sy + wallSeg}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
   }
 
   if (doorway.side === 'left') {
     const sx = ox;
     const sy = oy + doorway.position * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx - wallSeg}" y2="${sy}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx - wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const tA = arcX(sy), bA = arcX(sy + T);
+    const tx = tA ? tA.left : sx;
+    const bx = bA ? bA.left : sx;
+    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${sy}" x2="${sx - wallSeg}" y2="${sy}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${sy + T}" x2="${sx - wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
     svg += `<line x1="${sx - wallSeg}" y1="${sy}" x2="${sx - wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
   }
 
   if (doorway.side === 'right') {
     const sx = ox + width * T;
     const sy = oy + doorway.position * T;
-    svg += `<line x1="${sx}" y1="${sy}" x2="${sx + wallSeg}" y2="${sy}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${sy + T}" x2="${sx + wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const tA = arcX(sy), bA = arcX(sy + T);
+    const tx = tA ? tA.right : sx;
+    const bx = bA ? bA.right : sx;
+    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${sy}" x2="${sx + wallSeg}" y2="${sy}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${sy + T}" x2="${sx + wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
     svg += `<line x1="${sx + wallSeg}" y1="${sy}" x2="${sx + wallSeg}" y2="${sy + T}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
   }
 
@@ -1292,6 +1344,12 @@ function isCircleSafe(room) {
   return true;
 }
 
+// Check if a room has a generated description
+function roomHasDescription(roomId) {
+  const room = props.rooms.find(r => r.id === roomId);
+  return room && (room.contentArray?.length > 0 || room.name);
+}
+
 // Check if a room is a boss room
 function isBossRoom(roomId) {
   const room = props.rooms.find(r => r.id === roomId);
@@ -1330,15 +1388,29 @@ function bossStarPos(roomId) {
   const doorCount = { top: 0, bottom: 0, left: 0, right: 0 };
   doorways.forEach(d => { if (doorCount[d.side] !== undefined) doorCount[d.side]++; });
 
+  let pos;
   if (w >= h) {
-    // Wide room — place star at left or right end, whichever has fewer doors
     const x = doorCount.right <= doorCount.left ? ox + w - margin : ox + margin;
-    return { x, y: cy };
+    pos = { x, y: cy };
   } else {
-    // Tall room — place star at top or bottom end, whichever has fewer doors
     const y = doorCount.bottom <= doorCount.top ? oy + h - margin : oy + margin;
-    return { x: cx, y };
+    pos = { x: cx, y };
   }
+
+  // For circular rooms, clamp inside the circle with margin for the icon
+  if (room.shape === 'circular') {
+    const circ = getCircleParams(room);
+    const dx = pos.x - circ.cx;
+    const dy = pos.y - circ.cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const maxDist = circ.r - 8; // keep icon 8px inside the arc
+    if (dist > maxDist && dist > 0) {
+      pos.x = circ.cx + (dx / dist) * maxDist;
+      pos.y = circ.cy + (dy / dist) * maxDist;
+    }
+  }
+
+  return pos;
 }
 
 // Build a 5-pointed star SVG path centered at (cx, cy)
