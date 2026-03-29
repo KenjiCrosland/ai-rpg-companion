@@ -98,7 +98,7 @@
 
       <!-- Boss room star icon -->
       <template v-for="pos in numberPositions" :key="'boss-' + pos.roomId">
-        <g v-if="isBossRoom(pos.roomId)" filter="url(#pencil-stroke)">
+        <g v-if="isBossRoom(pos.roomId)">
           <path :d="buildStarPath(bossStarPos(pos.roomId).x, bossStarPos(pos.roomId).y, 3.5, 1.5)" fill="#4a4a4a" />
           <circle :cx="bossStarPos(pos.roomId).x" :cy="bossStarPos(pos.roomId).y" r="5" fill="none" stroke="#4a4a4a"
             stroke-width="0.8" />
@@ -106,7 +106,7 @@
       </template>
 
       <!-- Entrance arrow -->
-      <g v-if="entranceGap" v-html="buildEntranceArrowSvg()" filter="url(#pencil-stroke)"></g>
+      <g v-if="entranceGap" v-html="buildEntranceArrowSvg()"></g>
     </svg>
   </div>
 </template>
@@ -342,41 +342,64 @@ function buildEntranceArrowSvg() {
   const p = eg.position;
   let svg = '';
 
-  // Short corridor walls extending outward from the gap
+  // Arc intersection helpers for circular rooms
+  function arcY(px) {
+    if (room.shape !== 'circular') return null;
+    const c = getCircleParams(room);
+    const val = c.r * c.r - (px - c.cx) * (px - c.cx);
+    return val < 0 ? null : { top: c.cy - Math.sqrt(val), bottom: c.cy + Math.sqrt(val) };
+  }
+  function arcX(py) {
+    if (room.shape !== 'circular') return null;
+    const c = getCircleParams(room);
+    const val = c.r * c.r - (py - c.cy) * (py - c.cy);
+    return val < 0 ? null : { left: c.cx - Math.sqrt(val), right: c.cx + Math.sqrt(val) };
+  }
+
   const corridorLen = T * 0.8;
-  // Arrow triangle dimensions
   const arrowW = T * 0.35;
   const arrowH = T * 0.4;
 
   if (eg.side === 'bottom') {
     const lx = ox + p * T, rx = ox + (p + 1) * T;
     const sy = oy + h;
-    svg += `<line x1="${lx}" y1="${sy}" x2="${lx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${rx}" y1="${sy}" x2="${rx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    // Triangle pointing up (into the room)
+    const lA = arcY(lx), rA = arcY(rx);
+    const ly = lA ? lA.bottom : sy;
+    const ry = rA ? rA.bottom : sy;
+    svg += `<line x1="${lx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${lx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${rx}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${rx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
     const cx = (lx + rx) / 2, ty = sy + corridorLen + arrowH + 2;
     svg += `<polygon points="${cx},${ty - arrowH} ${cx - arrowW},${ty} ${cx + arrowW},${ty}" fill="#4a4a4a"/>`;
   } else if (eg.side === 'top') {
     const lx = ox + p * T, rx = ox + (p + 1) * T;
     const sy = oy;
-    svg += `<line x1="${lx}" y1="${sy}" x2="${lx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${rx}" y1="${sy}" x2="${rx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const lA = arcY(lx), rA = arcY(rx);
+    const ly = lA ? lA.top : sy;
+    const ry = rA ? rA.top : sy;
+    svg += `<line x1="${lx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${lx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${rx}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${rx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
     const cx = (lx + rx) / 2, ty = sy - corridorLen - arrowH - 2;
     svg += `<polygon points="${cx},${ty + arrowH} ${cx - arrowW},${ty} ${cx + arrowW},${ty}" fill="#4a4a4a"/>`;
   } else if (eg.side === 'left') {
     const ty = oy + p * T, by = oy + (p + 1) * T;
     const sx = ox;
-    svg += `<line x1="${sx}" y1="${ty}" x2="${sx - corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${by}" x2="${sx - corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    const cy = (ty + by) / 2, tx = sx - corridorLen - arrowH - 2;
-    svg += `<polygon points="${tx + arrowH},${cy} ${tx},${cy - arrowW} ${tx},${cy + arrowW}" fill="#4a4a4a"/>`;
+    const tA = arcX(ty), bA = arcX(by);
+    const tx = tA ? tA.left : sx;
+    const bx = bA ? bA.left : sx;
+    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${ty}" x2="${sx - corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${by}" x2="${sx - corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const cy = (ty + by) / 2, ttx = sx - corridorLen - arrowH - 2;
+    svg += `<polygon points="${ttx + arrowH},${cy} ${ttx},${cy - arrowW} ${ttx},${cy + arrowW}" fill="#4a4a4a"/>`;
   } else {
     const ty = oy + p * T, by = oy + (p + 1) * T;
     const sx = ox + w;
-    svg += `<line x1="${sx}" y1="${ty}" x2="${sx + corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${sx}" y1="${by}" x2="${sx + corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    const cy = (ty + by) / 2, tx = sx + corridorLen + arrowH + 2;
-    svg += `<polygon points="${tx - arrowH},${cy} ${tx},${cy - arrowW} ${tx},${cy + arrowW}" fill="#4a4a4a"/>`;
+    const tA = arcX(ty), bA = arcX(by);
+    const tx = tA ? tA.right : sx;
+    const bx = bA ? bA.right : sx;
+    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${ty}" x2="${sx + corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${by}" x2="${sx + corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+    const cy = (ty + by) / 2, ttx = sx + corridorLen + arrowH + 2;
+    svg += `<polygon points="${ttx - arrowH},${cy} ${ttx},${cy - arrowW} ${ttx},${cy + arrowW}" fill="#4a4a4a"/>`;
   }
 
   return svg;
@@ -473,7 +496,7 @@ function getCircleParams(room) {
   const T = props.tileSize;
   const ox = room.x * T, oy = room.y * T;
   const w = room.width * T, h = room.height * T;
-  const r = Math.min(w, h) / 2 - 2;
+  const r = Math.min(w, h) / 2 - 1;
   return { cx: ox + w / 2, cy: oy + h / 2, r };
 }
 
@@ -1043,11 +1066,34 @@ function buildStairsSvg(room, doorway) {
   const minStepLen = T / 3;
   const firstStepLen = T * 0.75;
   const stroke = '#666';
+  const wallStroke = '#6b6b6b';
+
+  // Arc helpers for circular rooms
+  function arcY(px) {
+    if (room.shape !== 'circular') return null;
+    const c = getCircleParams(room);
+    const val = c.r * c.r - (px - c.cx) * (px - c.cx);
+    return val < 0 ? null : { top: c.cy - Math.sqrt(val), bottom: c.cy + Math.sqrt(val) };
+  }
+  function arcX(py) {
+    if (room.shape !== 'circular') return null;
+    const c = getCircleParams(room);
+    const val = c.r * c.r - (py - c.cy) * (py - c.cy);
+    return val < 0 ? null : { left: c.cx - Math.sqrt(val), right: c.cx + Math.sqrt(val) };
+  }
+
   let svg = '';
 
   if (doorway.side === 'top') {
     const sx = ox + doorway.position * T;
     const sy = oy;
+    const lA = arcY(sx), rA = arcY(sx + T);
+    const ly = lA ? lA.top : sy;
+    const ry = rA ? rA.top : sy;
+    // Flanking walls
+    svg += `<line x1="${sx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${sx}" y2="${sy - T}" stroke="${wallStroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${sx + T}" y2="${sy - T}" stroke="${wallStroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    // Steps
     const shift = stepH;
     svg += `<line x1="${sx + (T - firstStepLen) / 2}" y1="${sy - shift}" x2="${sx + (T + firstStepLen) / 2}" y2="${sy - shift}" stroke="${stroke}" stroke-width="2"/>`;
     for (let i = 1; i <= numSteps; i++) {
@@ -1060,6 +1106,11 @@ function buildStairsSvg(room, doorway) {
   if (doorway.side === 'bottom') {
     const sx = ox + doorway.position * T;
     const sy = oy + height * T;
+    const lA = arcY(sx), rA = arcY(sx + T);
+    const ly = lA ? lA.bottom : sy;
+    const ry = rA ? rA.bottom : sy;
+    svg += `<line x1="${sx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${sx}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${sx + T}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${sx + T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="2.2" stroke-linecap="round"/>`;
     const shift = stepH;
     svg += `<line x1="${sx + (T - firstStepLen) / 2}" y1="${sy + shift}" x2="${sx + (T + firstStepLen) / 2}" y2="${sy + shift}" stroke="${stroke}" stroke-width="2"/>`;
     for (let i = 1; i <= numSteps; i++) {
@@ -1072,6 +1123,11 @@ function buildStairsSvg(room, doorway) {
   if (doorway.side === 'left') {
     const sx = ox;
     const sy = oy + doorway.position * T;
+    const tA = arcX(sy), bA = arcX(sy + T);
+    const tx = tA ? tA.left : sx;
+    const bx = bA ? bA.left : sx;
+    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${sy}" x2="${sx - T}" y2="${sy}" stroke="${wallStroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${sy + T}" x2="${sx - T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="2.2" stroke-linecap="round"/>`;
     const shift = stepH;
     svg += `<line x1="${sx - shift}" y1="${sy + (T - firstStepLen) / 2}" x2="${sx - shift}" y2="${sy + (T + firstStepLen) / 2}" stroke="${stroke}" stroke-width="2"/>`;
     for (let i = 1; i <= numSteps; i++) {
@@ -1084,6 +1140,11 @@ function buildStairsSvg(room, doorway) {
   if (doorway.side === 'right') {
     const sx = ox + width * T;
     const sy = oy + doorway.position * T;
+    const tA = arcX(sy), bA = arcX(sy + T);
+    const tx = tA ? tA.right : sx;
+    const bx = bA ? bA.right : sx;
+    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${sy}" x2="${sx + T}" y2="${sy}" stroke="${wallStroke}" stroke-width="2.2" stroke-linecap="round"/>`;
+    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${sy + T}" x2="${sx + T}" y2="${sy + T}" stroke="${wallStroke}" stroke-width="2.2" stroke-linecap="round"/>`;
     const shift = stepH;
     svg += `<line x1="${sx + shift}" y1="${sy + (T - firstStepLen) / 2}" x2="${sx + shift}" y2="${sy + (T + firstStepLen) / 2}" stroke="${stroke}" stroke-width="2"/>`;
     for (let i = 1; i <= numSteps; i++) {
