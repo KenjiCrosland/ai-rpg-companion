@@ -209,7 +209,7 @@ const viewBox = computed(() => {
   };
 });
 
-// When a room is focused, pan the viewBox left to keep it visible alongside sidebar
+// When a room is focused, pan the viewBox to keep it visible alongside sidebar
 const displayViewBox = computed(() => {
   const base = viewBox.value;
   if (!props.focusedRoomId) return base;
@@ -218,22 +218,24 @@ const displayViewBox = computed(() => {
   if (!room) return base;
 
   const T = props.tileSize;
-  let roomCx;
+  let roomCx, roomCy;
 
   if (room.type === 'merged') {
     const minRx = Math.min(...room.sections.map(s => s.x));
     const maxRx = Math.max(...room.sections.map(s => s.x + s.width));
+    const minRy = Math.min(...room.sections.map(s => s.y));
+    const maxRy = Math.max(...room.sections.map(s => s.y + s.height));
     roomCx = ((minRx + maxRx) / 2) * T;
+    roomCy = ((minRy + maxRy) / 2) * T;
   } else {
     roomCx = (room.x + room.width / 2) * T;
+    roomCy = (room.y + room.height / 2) * T;
   }
 
-  // Shift so the room sits at ~40% from the left (leaving right side for sidebar)
-  const targetX = roomCx - base.w * 0.35;
-
+  // Center room at ~25% from left (sidebar covers the right), vertically centered
   return {
-    x: targetX,
-    y: base.y,
+    x: roomCx - base.w * 0.25,
+    y: roomCy - base.h * 0.5,
     w: base.w,
     h: base.h,
   };
@@ -369,9 +371,20 @@ const entranceGap = computed(() => {
     if (bestSide) break;
   }
 
-  if (!bestSide) return null;
+  if (!bestSide) {
+    // All outward positions blocked — draw inward instead
+    for (const side of candidates) {
+      if (usedSides.has(side)) continue;
+      const dim = (side === 'top' || side === 'bottom') ? room.width : room.height;
+      bestSide = side;
+      bestPosition = Math.floor(dim / 2);
+      break;
+    }
+    if (!bestSide) return null;
+    return { roomId: room.id, side: bestSide, position: bestPosition, inward: true };
+  }
 
-  return { roomId: room.id, side: bestSide, position: bestPosition };
+  return { roomId: room.id, side: bestSide, position: bestPosition, inward: false };
 });
 
 // Build entrance arrow SVG — short corridor + triangle pointing into the room
@@ -387,6 +400,7 @@ function buildEntranceArrowSvg() {
   const stroke = '#6b6b6b';
   const sw = '2.2';
   const p = eg.position;
+  const inward = eg.inward;
   let svg = '';
 
   // Arc intersection helpers for circular rooms
@@ -410,43 +424,71 @@ function buildEntranceArrowSvg() {
   if (eg.side === 'bottom') {
     const lx = ox + p * T, rx = ox + (p + 1) * T;
     const sy = oy + h;
-    const lA = arcY(lx), rA = arcY(rx);
-    const ly = lA ? lA.bottom : sy;
-    const ry = rA ? rA.bottom : sy;
-    svg += `<line x1="${lx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${lx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${rx}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${rx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    const cx = (lx + rx) / 2, ty = sy + corridorLen + arrowH + 2;
-    svg += `<polygon points="${cx},${ty - arrowH} ${cx - arrowW},${ty} ${cx + arrowW},${ty}" fill="#4a4a4a"/>`;
+    if (inward) {
+      svg += `<line x1="${lx}" y1="${sy}" x2="${lx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      svg += `<line x1="${rx}" y1="${sy}" x2="${rx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      const cx = (lx + rx) / 2, ty = sy - corridorLen - 2;
+      svg += `<polygon points="${cx},${ty} ${cx - arrowW},${ty + arrowH} ${cx + arrowW},${ty + arrowH}" fill="#4a4a4a"/>`;
+    } else {
+      const lA = arcY(lx), rA = arcY(rx);
+      const ly = lA ? lA.bottom : sy;
+      const ry = rA ? rA.bottom : sy;
+      svg += `<line x1="${lx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${lx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      svg += `<line x1="${rx}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${rx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      const cx = (lx + rx) / 2, ty = sy + corridorLen + arrowH + 2;
+      svg += `<polygon points="${cx},${ty - arrowH} ${cx - arrowW},${ty} ${cx + arrowW},${ty}" fill="#4a4a4a"/>`;
+    }
   } else if (eg.side === 'top') {
     const lx = ox + p * T, rx = ox + (p + 1) * T;
     const sy = oy;
-    const lA = arcY(lx), rA = arcY(rx);
-    const ly = lA ? lA.top : sy;
-    const ry = rA ? rA.top : sy;
-    svg += `<line x1="${lx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${lx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${rx}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${rx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    const cx = (lx + rx) / 2, ty = sy - corridorLen - arrowH - 2;
-    svg += `<polygon points="${cx},${ty + arrowH} ${cx - arrowW},${ty} ${cx + arrowW},${ty}" fill="#4a4a4a"/>`;
+    if (inward) {
+      svg += `<line x1="${lx}" y1="${sy}" x2="${lx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      svg += `<line x1="${rx}" y1="${sy}" x2="${rx}" y2="${sy + corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      const cx = (lx + rx) / 2, ty = sy + corridorLen + 2;
+      svg += `<polygon points="${cx},${ty} ${cx - arrowW},${ty - arrowH} ${cx + arrowW},${ty - arrowH}" fill="#4a4a4a"/>`;
+    } else {
+      const lA = arcY(lx), rA = arcY(rx);
+      const ly = lA ? lA.top : sy;
+      const ry = rA ? rA.top : sy;
+      svg += `<line x1="${lx}" y1="${typeof ly === 'number' ? ly.toFixed(1) : ly}" x2="${lx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      svg += `<line x1="${rx}" y1="${typeof ry === 'number' ? ry.toFixed(1) : ry}" x2="${rx}" y2="${sy - corridorLen}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      const cx = (lx + rx) / 2, ty = sy - corridorLen - arrowH - 2;
+      svg += `<polygon points="${cx},${ty + arrowH} ${cx - arrowW},${ty} ${cx + arrowW},${ty}" fill="#4a4a4a"/>`;
+    }
   } else if (eg.side === 'left') {
     const ty = oy + p * T, by = oy + (p + 1) * T;
     const sx = ox;
-    const tA = arcX(ty), bA = arcX(by);
-    const tx = tA ? tA.left : sx;
-    const bx = bA ? bA.left : sx;
-    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${ty}" x2="${sx - corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${by}" x2="${sx - corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    const cy = (ty + by) / 2, ttx = sx - corridorLen - arrowH - 2;
-    svg += `<polygon points="${ttx + arrowH},${cy} ${ttx},${cy - arrowW} ${ttx},${cy + arrowW}" fill="#4a4a4a"/>`;
+    if (inward) {
+      svg += `<line x1="${sx}" y1="${ty}" x2="${sx + corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      svg += `<line x1="${sx}" y1="${by}" x2="${sx + corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      const cy = (ty + by) / 2, ttx = sx + corridorLen + 2;
+      svg += `<polygon points="${ttx},${cy} ${ttx - arrowH},${cy - arrowW} ${ttx - arrowH},${cy + arrowW}" fill="#4a4a4a"/>`;
+    } else {
+      const tA = arcX(ty), bA = arcX(by);
+      const tx = tA ? tA.left : sx;
+      const bx = bA ? bA.left : sx;
+      svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${ty}" x2="${sx - corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${by}" x2="${sx - corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      const cy = (ty + by) / 2, ttx = sx - corridorLen - arrowH - 2;
+      svg += `<polygon points="${ttx + arrowH},${cy} ${ttx},${cy - arrowW} ${ttx},${cy + arrowW}" fill="#4a4a4a"/>`;
+    }
   } else {
     const ty = oy + p * T, by = oy + (p + 1) * T;
     const sx = ox + w;
-    const tA = arcX(ty), bA = arcX(by);
-    const tx = tA ? tA.right : sx;
-    const bx = bA ? bA.right : sx;
-    svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${ty}" x2="${sx + corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${by}" x2="${sx + corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
-    const cy = (ty + by) / 2, ttx = sx + corridorLen + arrowH + 2;
-    svg += `<polygon points="${ttx - arrowH},${cy} ${ttx},${cy - arrowW} ${ttx},${cy + arrowW}" fill="#4a4a4a"/>`;
+    if (inward) {
+      svg += `<line x1="${sx}" y1="${ty}" x2="${sx - corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      svg += `<line x1="${sx}" y1="${by}" x2="${sx - corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      const cy = (ty + by) / 2, ttx = sx - corridorLen - 2;
+      svg += `<polygon points="${ttx},${cy} ${ttx + arrowH},${cy - arrowW} ${ttx + arrowH},${cy + arrowW}" fill="#4a4a4a"/>`;
+    } else {
+      const tA = arcX(ty), bA = arcX(by);
+      const tx = tA ? tA.right : sx;
+      const bx = bA ? bA.right : sx;
+      svg += `<line x1="${typeof tx === 'number' ? tx.toFixed(1) : tx}" y1="${ty}" x2="${sx + corridorLen}" y2="${ty}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      svg += `<line x1="${typeof bx === 'number' ? bx.toFixed(1) : bx}" y1="${by}" x2="${sx + corridorLen}" y2="${by}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+      const cy = (ty + by) / 2, ttx = sx + corridorLen + arrowH + 2;
+      svg += `<polygon points="${ttx - arrowH},${cy} ${ttx},${cy - arrowW} ${ttx},${cy + arrowW}" fill="#4a4a4a"/>`;
+    }
   }
 
   return svg;
