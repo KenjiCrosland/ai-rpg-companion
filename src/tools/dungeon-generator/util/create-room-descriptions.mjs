@@ -24,6 +24,9 @@ function calculateMergedRoomArea(sections) {
 
 // Helper function to determine room shape
 function determineRoomShape(room) {
+  // Preserve shapes already assigned by assignRoomShapes (circular, domed, capsule)
+  if (room.shape) return;
+
   let width, height;
 
   if (room.type === 'merged') {
@@ -226,18 +229,18 @@ function describeRoom(room) {
       let description = '';
 
       if (doorway.type === 'locked-door') {
-        description = 'a locked door to the ' + direction;
+        description = 'a heavy, locked door to the ' + direction;
       } else if (doorway.type === 'door') {
-        description = 'a door to the ' + direction;
+        description = 'a wooden door to the ' + direction;
       } else if (doorway.type === 'corridor') {
-        description = 'a corridor leading to the ' + direction;
+        description = 'an open corridor to the ' + direction;
       } else if (doorway.type === 'stairs') {
         // Determine if stairs are leading up or down
         let stairsDirection = '';
         if (doorway.connectedRoomId !== undefined) {
           stairsDirection = doorway.connectedRoomId > room.id ? 'down' : 'up';
         }
-        description = `stairs leading ${stairsDirection} to the ${direction}`;
+        description = `a narrow staircase leading ${stairsDirection} to the ${direction}`;
       } else {
         description = 'an exit to the ' + direction;
       }
@@ -265,9 +268,20 @@ function describeRoom(room) {
   // Start with the default description
   let description = `This is a ${sizeDescription}`;
 
+  // Map shape names to natural language
+  const shapeDescriptions = {
+    circular: 'round room',
+    domed: 'room with a vaulted wall',
+    capsule: 'elongated room with rounded ends',
+    'L-shaped': 'L-shaped room',
+    square: 'square room',
+    long: 'long room',
+    rectangular: 'rectangular room',
+  };
+
   // Include shape description
-  if (room.shape) {
-    description += `, ${room.shape} room`;
+  if (room.shape && shapeDescriptions[room.shape]) {
+    description += `, ${shapeDescriptions[room.shape]}`;
   } else {
     description += ' room';
   }
@@ -297,7 +311,7 @@ function describeRoom(room) {
   if (onlyAccessIsLockedDoor) {
     const firstLockedDoor = connectionsFromLowerIdRooms[0];
     const direction = sideToDirection[firstLockedDoor.side];
-    description += ` The only access is through a locked door to the ${direction}.`;
+    description += ` The only access is through a heavy, locked door to the ${direction}.`;
 
     // Mark this doorway as mentioned
     mentionedDoorways.add(firstLockedDoor);

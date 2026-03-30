@@ -1,3 +1,14 @@
+// Helper — duplicated from generateDungeon since this file needs it independently
+function getOppositeSide(side) {
+  const opposites = {
+    top: 'bottom',
+    bottom: 'top',
+    left: 'right',
+    right: 'left',
+  };
+  return opposites[side];
+}
+
 export function addDungeonDetails(dungeonData) {
   // Extract the rooms array
   const roomsArray = dungeonData.rooms || dungeonData;
@@ -371,6 +382,35 @@ export function addDungeonDetails(dungeonData) {
     return furthestLeafRoomId;
   }
 
+  /**
+   * Assigns special room shapes (circular, domed, capsule) to notable rooms.
+   * Only boss, purpose, and entrance rooms are eligible, and only ~25% of the time.
+   * Merged rooms are excluded since they have their own perimeter tracing.
+   */
+  function assignRoomShapes(roomsArray) {
+    roomsArray.forEach((room) => {
+      if (room.type === 'merged') return;
+      if (!['boss', 'purpose', 'entrance'].includes(room.roomType)) return;
+      if (Math.random() > 0.4) return;
+
+      const ratio = room.width / room.height;
+      const isSquarish = ratio >= 0.75 && ratio <= 1.35;
+
+      if (isSquarish && Math.random() < 0.5) {
+        room.shape = 'circular';
+      } else if (ratio > 1.6 || ratio < 0.6) {
+        room.shape = 'capsule';
+      } else {
+        room.shape = 'domed';
+        // Dome faces away from the entrance doorway
+        const parentDoor = room.doorways?.find((d) => d.fromParent);
+        if (parentDoor) {
+          room.domedSide = getOppositeSide(parentDoor.side);
+        }
+      }
+    });
+  }
+
   // Start of main function
   let rooms = buildRoomMap(roomsArray);
   let graph = buildGraph(roomsArray);
@@ -498,6 +538,9 @@ export function addDungeonDetails(dungeonData) {
 
   // Assign room types
   assignRoomTypes(roomsArray, entranceRoomId, graph, rooms);
+
+  // Assign special shapes to notable rooms (circular, domed, capsule)
+  assignRoomShapes(roomsArray);
 
   // Return the modified dungeon data
   if (dungeonData.rooms) {
