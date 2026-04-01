@@ -12,7 +12,7 @@
 import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import StatblockGenerator from './StatblockGenerator.vue';
-import * as openAi from '@/util/open-ai.mjs';
+import * as openAi from "@/util/ai-client.mjs";
 import * as monsterPrompts from '@/prompts/monster-prompts.mjs';
 
 // Mock the open-ai module

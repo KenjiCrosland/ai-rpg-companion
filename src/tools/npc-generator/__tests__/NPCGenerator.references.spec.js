@@ -33,7 +33,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import NPCGenerator from '../NPCGenerator.vue';
 import * as referenceStorage from '@/util/reference-storage.mjs';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 
 describe('NPCGenerator - Reference Creation', () => {
   let wrapper;

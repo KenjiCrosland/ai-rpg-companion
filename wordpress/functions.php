@@ -295,25 +295,68 @@ add_action('rest_api_init', function () {
     ]);
 });
 
+// AI Provider configurations
+function get_ai_provider_config($provider) {
+    $configs = array(
+        'deepseek-v3' => array(
+            'url' => 'https://api.deepseek.com/v1/chat/completions',
+            'api_key' => defined('DEEPSEEK_API_KEY') ? DEEPSEEK_API_KEY : '',
+            'type' => 'openai-compatible',
+        ),
+        'claude-3.5-haiku' => array(
+            'url' => 'https://api.anthropic.com/v1/messages',
+            'api_key' => defined('CLAUDE_API_KEY') ? CLAUDE_API_KEY : '',
+            'type' => 'claude',
+        ),
+        'gpt-4o-mini' => array(
+            'url' => 'https://api.openai.com/v1/chat/completions',
+            'api_key' => defined('OPENAI_API_KEY') ? OPENAI_API_KEY : '',
+            'type' => 'openai',
+        ),
+    );
+
+    return isset($configs[$provider]) ? $configs[$provider] : $configs['deepseek-v3'];
+}
+
 // The callback function for the custom REST route
 function whisper_api_proxy( WP_REST_Request $request ) {
-    $url = 'https://api.openai.com/v1/chat/completions';
+    // Get provider from custom header (default to DeepSeek)
+    $provider = $request->get_header('X-AI-Provider');
+    if (!$provider) {
+        $provider = 'deepseek-v3';
+    }
+
+    $config = get_ai_provider_config($provider);
+
+    if (empty($config['api_key'])) {
+        return new WP_Error('api_key_missing', 'API key not configured for provider: ' . $provider, ['status' => 500]);
+    }
 
     $request_data = $request->get_json_params();
 
-    $headers = array(
-        'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . OPENAI_API_KEY,
-    );
+    // Set headers based on provider type
+    if ($config['type'] === 'claude') {
+        $headers = array(
+            'Content-Type' => 'application/json',
+            'x-api-key' => $config['api_key'],
+            'anthropic-version' => '2023-06-01',
+        );
+    } else {
+        // OpenAI and OpenAI-compatible providers (DeepSeek)
+        $headers = array(
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . $config['api_key'],
+        );
+    }
 
-    $response = wp_remote_post_with_retry($url, [
+    $response = wp_remote_post_with_retry($config['url'], [
         'headers' => $headers,
         'body' => json_encode($request_data),
         'timeout' => 180, // Timeout in seconds
     ]);
 
     if (is_wp_error($response)) {
-        return new WP_Error('openai_error', 'Error connecting to the OpenAI API', ['status' => 500]);
+        return new WP_Error('api_error', 'Error connecting to ' . $provider . ' API: ' . $response->get_error_message(), ['status' => 500]);
     }
 
     $response_code = wp_remote_retrieve_response_code($response);

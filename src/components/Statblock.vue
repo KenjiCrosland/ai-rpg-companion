@@ -293,7 +293,7 @@ import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'v
 import { CdrButton } from '@rei/cedar';
 import CardFooterAction from './CardFooterAction.vue';
 import CRtoXP from '../data/cr-to-xp.json';
-import { generateGptResponse } from "../util/open-ai.mjs";
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt, singleAbilityPrompt, singleActionPrompt, singleLegendaryActionPrompt } from "../prompts/statblock-edit-prompts.mjs";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';

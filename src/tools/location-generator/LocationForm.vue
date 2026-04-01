@@ -12,11 +12,12 @@
 
 <script>
 import { startCase } from 'lodash';
-import { generateGptResponse } from "@/util/open-ai.mjs";
+import { generateGptResponse } from "@/util/ai-client.mjs";
+import { PROVIDERS } from "@/util/ai-config.mjs";
 import { CdrInput, CdrButton } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-button.css";
-import { createLocationPrompt, getLocationJSON } from "./location-prompts.mjs";
+import { createLocationPrompt } from "./location-prompts.mjs";
 
 export default {
     data() {
@@ -61,12 +62,16 @@ export default {
         validateLocationDescription(jsonString) {
             try {
                 const jsonObj = JSON.parse(jsonString);
-                const keys = [
+                const requiredKeys = [
                     'locationName',
+                    'sentence1_dimensions',
+                    'sentence2_atmosphere',
+                    'sentence3_unique_feature',
+                    'sentence4_interaction',
                     'locationNPCs',
                     'subLocations'
                 ];
-                return keys.every((key) => key in jsonObj);
+                return requiredKeys.every((key) => key in jsonObj);
             } catch (error) {
                 return false;
             }
@@ -81,32 +86,42 @@ export default {
             let previousContext;
             let prompt;
             if (this.parentLocation) {
-                const contextLocationObj = {
-                    locationName: this.parentLocation.name,
-                    locationDescription: this.parentLocation.description,
-                    locationNPCs: this.parentLocation.npcNames,
-                    subLocations: this.parentLocation.subLocations,
-                };
+                const parentDescription = this.parentLocation.description ||
+                    `${this.parentLocation.sentence1_dimensions || ''} ${this.parentLocation.sentence2_atmosphere || ''} ${this.parentLocation.sentence3_unique_feature || ''} ${this.parentLocation.sentence4_interaction || ''}`.trim();
+
                 previousContext = [
                     { role: 'user', content: `${createLocationPrompt()}` },
-                    { role: 'system', content: `${this.parentLocation.description}` }
+                    { role: 'system', content: `${JSON.stringify({
+                        locationName: this.parentLocation.name,
+                        locationDescription: parentDescription,
+                        locationNPCs: this.parentLocation.npcNames || this.parentLocation.locationNPCs,
+                        subLocations: this.parentLocation.subLocations,
+                    })}` }
                 ];
-                prompt = `Please describe ${this.typeOfPlace} which is a sublocation of the place described in the previous message. Return the exact same format.`
+                prompt = `Please describe ${this.typeOfPlace} which is a sublocation of the parent location. Return the same JSON structure as specified.`
             } else {
                 prompt = createLocationPrompt(this.typeOfPlace);
             }
 
             try {
-                const response = await generateGptResponse(prompt, null, 3, previousContext);
-                previousContext = [
-                    { role: 'user', content: `Please create a description of a location in a tabletop RPG` },
-                    { role: 'system', content: `${response}` }
-                ];
-                prompt = getLocationJSON();
-                const JSONResponse = await generateGptResponse(prompt, this.validateLocationDescription, 3, previousContext);
+                // Single API call now returns complete JSON structure
+                // Use OpenAI specifically for location generation
+                const JSONResponse = await generateGptResponse(
+                    prompt,
+                    this.validateLocationDescription,
+                    3,
+                    previousContext,
+                    null, // model (use default)
+                    PROVIDERS.OPENAI // force OpenAI provider
+                );
+                const parsedResponse = JSON.parse(JSONResponse);
+
+                // Build location description from structured sentences
+                const locationDescription = `${parsedResponse.sentence1_dimensions} ${parsedResponse.sentence2_atmosphere} ${parsedResponse.sentence3_unique_feature} ${parsedResponse.sentence4_interaction}`;
+
                 const returnObj = {
-                    locationDescription: response,
-                    ...JSON.parse(JSONResponse)
+                    locationDescription,
+                    ...parsedResponse
                 };
                 this.$emit("location-description-generated", returnObj);
             } catch (error) {

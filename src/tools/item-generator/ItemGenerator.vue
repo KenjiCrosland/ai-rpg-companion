@@ -107,13 +107,13 @@
               <p class="rarity">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}</p>
 
               <h3>Features</h3>
-              <p v-if="magicItemDescription.modifier_sentence">{{ magicItemDescription.modifier_sentence }}</p>
+              <p v-if="magicItemDescription.modifier_sentence" v-html="formatMarkdown(magicItemDescription.modifier_sentence)"></p>
               <p class="body-text" v-for="(description, feature) in magicItemDescription.features" :key="feature">
-                <strong>{{ feature }}</strong>: {{ description }}
+                <strong>{{ feature }}</strong>: <span v-html="formatMarkdown(description)"></span>
               </p>
               <div class="read-aloud">
-                <p class="body-text">{{ magicItemDescription.physical_description }}</p>
-                <p class="body-text">{{ magicItemDescription.lore }}</p>
+                <p class="body-text" v-html="formatMarkdown(magicItemDescription.physical_description)"></p>
+                <p class="body-text" v-html="formatMarkdown(magicItemDescription.lore)"></p>
               </div>
 
               <div class="button-group">
@@ -270,7 +270,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { CdrInput, CdrButton, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
-import { generateGptResponse } from "@/util/open-ai.mjs";
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { convertItemToMarkdown } from '@/util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '@/util/determine-features-and-bonuses.mjs';
 import ItemSkeleton from '@/components/skeletons/ItemSkeleton.vue';
@@ -604,7 +604,15 @@ const generateMagicItem = async () => {
       : `\nITEM ORIGIN: ${resolvedOrigin}\nThe item's theme, aesthetics, and lore MUST reflect its ${resolvedOrigin} origin. Let the origin deeply influence the item's appearance, magical properties, cultural context, and the world it comes from.\n`
     : '';
 
-  const prompt = `Generate a detailed Dungeons & Dragons 5e magic item description adhering to the provided rarity guidelines and incomplete information.
+  const prompt = `You are a D&D 5e item designer. Be concise and table-ready.
+
+CONCISENESS RULES:
+- Features: State the base spell/mechanic, then ONLY what's different. No restating standard D&D rules. 2-4 sentences each.
+- Physical description: 2-3 sentences total. One vivid sensory detail, not exhaustive cataloging.
+- Lore: One short paragraph, 3-4 sentences. One origin detail, one consequence or current hook.
+- Total item: Under 250 words.
+
+Generate a detailed Dungeons & Dragons 5e magic item description adhering to the provided rarity guidelines and incomplete information.
 
 IMPORTANT D&D 5e DESIGN RULES:
 - Only Armor and Weapons receive numerical bonuses (+1, +2, etc.) consistently
@@ -801,6 +809,28 @@ const constructModifierSentence = (bonus, itemType) => {
 const parseRarity = (rarity) => {
   if (!rarity) return '';
   return rarity.split(' // ')[0];
+}
+
+const formatMarkdown = (text) => {
+  if (!text) return text;
+
+  // Escape HTML to prevent XSS
+  const escapeHtml = (str) => {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
+  // Escape any existing HTML first
+  text = escapeHtml(text);
+
+  // Then apply markdown formatting (now safe because we escaped first)
+  // Bold first (double asterisks)
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Then italic (single asterisks)
+  text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  return text;
 }
 
 const copyAsMarkdown = () => {
@@ -1039,7 +1069,15 @@ const generateFeature = async (index) => {
 
   const effectLevel = rarityToEffectLevel[editForm.value.rarity] || 'useful_magical_effect';
 
-  const featurePrompt = `Generate a single D&D 5e magic item feature for the following item:
+  const featurePrompt = `You are a D&D 5e item designer. Be concise and table-ready.
+
+FEATURE WRITING RULES:
+- State the base spell or mechanic, then ONLY what's different from standard rules
+- 2-4 sentences maximum
+- Include specific mechanics: damage dice, DCs, ranges, durations, recharge
+- No restating rules the DM already knows
+
+Generate a single D&D 5e magic item feature for the following item:
 
 Item Name: ${editForm.value.name || magicItemDescription.value.name}
 Item Type: ${editForm.value.item_type}

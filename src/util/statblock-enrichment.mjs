@@ -5,7 +5,7 @@
  * Runs once per statblock and caches results in localStorage.
  */
 
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 
 /**
  * Build the enrichment prompt for a custom statblock.

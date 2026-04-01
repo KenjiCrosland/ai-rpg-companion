@@ -1,4 +1,4 @@
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
 

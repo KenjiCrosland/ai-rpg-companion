@@ -207,7 +207,7 @@ import {
   CdrSkeletonBone,
   IconXSm,
 } from '@rei/cedar';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createQuestHookPrompt } from '../../prompts/index.mjs';
 
 const props = defineProps({

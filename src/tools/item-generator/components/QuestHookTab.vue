@@ -73,25 +73,25 @@
 
           <div v-else>
             <h3>{{ hook.title }}</h3>
-            <p><strong>Quest Giver:</strong> {{ hook.questGiver }}</p>
-            <p>{{ hook.setup }}</p>
+            <p><strong>Quest Giver:</strong> <span v-html="formatMarkdown(hook.questGiver)"></span></p>
+            <p v-html="formatMarkdown(hook.setup)"></p>
 
             <h4>Objectives</h4>
             <cdr-list modifier="unordered">
-              <li v-for="(objective, i) in hook.objectives" :key="i">{{ objective }}</li>
+              <li v-for="(objective, i) in hook.objectives" :key="i" v-html="formatMarkdown(objective)"></li>
             </cdr-list>
 
             <h4>Challenges</h4>
             <cdr-list modifier="unordered">
-              <li v-for="(challenge, i) in hook.challenges" :key="i">{{ challenge }}</li>
+              <li v-for="(challenge, i) in hook.challenges" :key="i" v-html="formatMarkdown(challenge)"></li>
             </cdr-list>
 
             <h4>Rewards</h4>
-            <p>{{ hook.reward }}</p>
+            <p v-html="formatMarkdown(hook.reward)"></p>
 
             <div v-if="hook.twist" class="quest-twist">
               <h4>Potential Twist</h4>
-              <p>{{ hook.twist }}</p>
+              <p v-html="formatMarkdown(hook.twist)"></p>
             </div>
 
             <div class="button-group">
@@ -173,7 +173,7 @@ import {
   CdrSkeletonBone
 } from '@rei/cedar';
 import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
 import { useToast } from '@/composables/useToast';
 
@@ -527,6 +527,28 @@ const removeChallenge = (index) => {
   editForm.value.challenges.splice(index, 1);
 };
 
+const formatMarkdown = (text) => {
+  if (!text) return text;
+
+  // Escape HTML to prevent XSS
+  const escapeHtml = (str) => {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
+  // Escape any existing HTML first
+  text = escapeHtml(text);
+
+  // Then apply markdown formatting (now safe because we escaped first)
+  // Bold first (double asterisks)
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Then italic (single asterisks)
+  text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  return text;
+};
+
 const generateQuestHook = async () => {
   if (!questType.value) {
     toast.warning('Please select a quest type.');
@@ -538,7 +560,16 @@ const generateQuestHook = async () => {
   const canGenerate = await canGenerateQuestHook();
   if (!canGenerate) return;
 
-  const questPrompt = `Generate a D&D 5e quest hook for the following magic item:
+  const questPrompt = `You are a D&D 5e quest designer. Create quest hooks that are detailed enough to run with minimal prep. Follow these rules:
+
+Quest giver: 2-3 sentences. One visual detail, one motivation.
+Setup: 3-4 sentences. What happened, why the party, what's at stake.
+Objectives: 3-4 bullet points, one sentence each.
+Challenges: 3-4 bullet points, 2 sentences each. Include specific creature types, DCs, or environmental details.
+Reward: 2-3 sentences. Named items and concrete benefits.
+Twist: 2-3 sentences. A specific complication, not just a concept.
+
+Generate a D&D 5e quest hook for the following magic item:
     Item Name: ${props.item.name}
     Type: ${props.item.item_type}
     Rarity: ${props.item.rarity}

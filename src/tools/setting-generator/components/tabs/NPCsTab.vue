@@ -83,7 +83,7 @@ import {
 } from '@rei/cedar';
 import NPCSkeleton from '@/components/skeletons/NPCSkeleton.vue';
 import NPCCard from '@/components/NPCCard.vue';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import {
   createNPCPrompt,
   createRelationshipAndTipsPrompt,

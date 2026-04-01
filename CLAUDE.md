@@ -2,9 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Security Notes
+
+**IMPORTANT - API Key Protection**:
+- **NEVER** read `.env.local` or `wp-config.php` files unless explicitly requested by the user
+- These files contain sensitive API keys and credentials
+- If you need to reference environment variable names or structure, use placeholder values like `your-api-key-here`
+- When providing code examples with API keys, always use placeholders, never actual keys from the codebase
+
 ## Project Overview
 
-AI RPG Companion is a Vue 3 + Vite application that provides AI-powered tabletop RPG content generation tools. The application generates D&D 5e monsters, NPCs, locations, dungeons, encounters, items, and campaign settings using OpenAI's GPT models.
+AI RPG Companion is a Vue 3 + Vite application that provides AI-powered tabletop RPG content generation tools. The application generates D&D 5e monsters, NPCs, locations, dungeons, encounters, items, and campaign settings using multiple AI providers (DeepSeek V3 by default, with support for OpenAI GPT-4o-mini).
 
 ## Commands
 
@@ -43,7 +51,7 @@ npm test -- calculateCR.spec.js            # Run a single test file
 - [Encounter Generator](/src/tools/encounter-generator/CLAUDE.md) - Combat encounter generation with monster selection and difficulty balancing
 - [Setting Generator](/src/tools/setting-generator/CLAUDE.md) - Campaign setting creation with locations, factions, and hooks
 
-**WordPress Integration**: The `wordpress/` directory contains PHP files that act as shortcodes to embed the Vue app in WordPress pages. The `functions.php` file includes an OpenAI proxy endpoint (`/wp-json/open-ai-proxy/api/v1/proxy`) used in production to avoid exposing API keys.
+**WordPress Integration**: The `wordpress/` directory contains PHP files that act as shortcodes to embed the Vue app in WordPress pages. The `functions.php` file includes an AI proxy endpoint (`/wp-json/open-ai-proxy/api/v1/proxy`) used in production to avoid exposing API keys. Note: The proxy currently only supports OpenAI and needs updating for multi-provider support.
 
 ### Key Directories
 
@@ -96,11 +104,37 @@ import { bar } from '@/util/bar.mjs';
 
 ### AI Integration
 
-**API Layer**: `src/util/open-ai.mjs` contains `generateGptResponse()` which:
-- Uses GPT-4o-mini model with "assistant Game Master" system prompt
-- Includes retry logic (up to 3 attempts) for malformed JSON responses
-- Uses direct OpenAI API in dev (via VITE_OPENAI_API_KEY), WordPress proxy in production
-- Validates and extracts JSON from AI responses
+The application supports multiple AI providers with automatic provider selection and model normalization.
+
+**Supported Providers:**
+- **DeepSeek V3** (default) - Cost-effective, high-quality content generation (~$13/month for typical usage)
+- **OpenAI GPT-4o-mini** - Legacy fallback (~$7/month)
+
+**Architecture:**
+
+1. **Configuration Layer** (`src/util/ai-config.mjs`):
+   - Provider configurations (endpoints, models, API keys)
+   - Model normalization (maps model names across providers, e.g., `gpt-4.1-mini` → `deepseek-chat`)
+   - Provider selection priority: localStorage override > environment variable > default (DeepSeek)
+   - Functions: `getAIProvider()`, `getProviderConfig()`, `normalizeModel()`
+
+2. **Adapter Layer** (`src/util/ai-adapters.mjs`):
+   - Normalizes request/response formats between different provider APIs
+   - `OpenAIAdapter`: Standard OpenAI-compatible format
+   - `DeepSeekAdapter`: Uses OpenAI-compatible format (alias for OpenAI adapter)
+
+3. **Client Layer** (`src/util/ai-client.mjs`):
+   - Main `generateGptResponse()` function with provider routing
+   - Retry logic (up to 3 attempts) for malformed JSON responses
+   - Automatic model normalization when switching providers
+   - Environment-specific routing:
+     - **Development**: Vite proxy to avoid CORS (configured in `vite.config.js`)
+     - **Production**: WordPress proxy at `/wp-json/open-ai-proxy/api/v1/proxy`
+
+4. **Dev Controls** (`src/util/dev-ai-controls.mjs`):
+   - Browser console controls for easy provider switching during development
+   - Usage: `window.aiControls.useDeepSeek()`, `aiControls.useOpenAI()`, etc.
+   - Initialized in `src/main.js`
 
 **Prompt Templates**: Prompt files in `src/prompts/` (e.g., `monster-prompts.mjs`, `loreBuilderPrompts.mjs`) define structured prompts that guide the AI to generate game content with specific JSON schemas.
 
@@ -135,11 +169,40 @@ See tool-specific CLAUDE.md files for details on which exports each tool support
 ## Environment Variables
 
 Create a `.env.local` file with:
-```
-VITE_OPENAI_API_KEY=your-api-key-here
+
+```bash
+# AI Provider Configuration
+# Default provider: deepseek-v3 | gpt-4o-mini
+VITE_AI_DEFAULT_PROVIDER=deepseek-v3
+
+# API Keys (add keys for providers you want to use)
+VITE_DEEPSEEK_API_KEY=your-deepseek-key-here
+VITE_OPENAI_API_KEY=your-openai-key-here
 ```
 
-**Security Note**: The `.env.local` file in this repository contains a placeholder/invalid key. Never commit actual API keys.
+**Development Provider Switching:**
+
+In the browser console during development, use:
+```javascript
+aiControls.useDeepSeek()    // Switch to DeepSeek
+aiControls.useOpenAI()       // Switch to OpenAI
+aiControls.clearOverride()   // Clear override, use default
+aiControls.listProviders()   // List all available providers
+aiControls.help()            // Show help
+```
+
+**Production Configuration:**
+
+For WordPress production deployments, add API keys to `wp-config.php`:
+```php
+// AI Provider API Keys
+define('DEEPSEEK_API_KEY', 'your-deepseek-key-here');
+define('OPENAI_API_KEY', 'your-openai-key-here');
+```
+
+**Note**: The WordPress proxy (`wordpress/functions.php`) currently only supports OpenAI in production and needs updating for multi-provider support.
+
+**Security Note**: Never commit API keys. The `.env.local` and `wp-config.php` files should be excluded from version control.
 
 ## Testing
 
