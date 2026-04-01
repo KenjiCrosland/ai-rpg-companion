@@ -12,7 +12,7 @@
 import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import EncounterGenerator from './EncounterGenerator.vue';
-import * as openAi from '@/util/open-ai.mjs';
+import * as openAi from "@/util/ai-client.mjs";
 
 // Mock the open-ai module
 jest.mock('@/util/open-ai.mjs', () => ({

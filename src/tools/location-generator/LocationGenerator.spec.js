@@ -3,7 +3,7 @@
  *
  * These tests verify:
  * 1. Prompt generation with correct location type parameters
- * 2. Two-part API generation (description then JSON extraction)
+ * 2. Single JSON API generation with structured sentences
  * 3. API calls to generateGptResponse are made with proper arguments
  * 4. Response parsing and validation work correctly
  * 5. Sublocation generation includes parent context
@@ -11,11 +11,23 @@
 
 import { mount, flushPromises } from '@vue/test-utils';
 import LocationForm from './LocationForm.vue';
-import * as openAi from '@/util/open-ai.mjs';
+import * as openAi from "@/util/ai-client.mjs";
 import * as locationPrompts from './location-prompts.mjs';
 
-// Mock the open-ai module
-jest.mock('@/util/open-ai.mjs', () => ({
+// Mock the ai-config module
+jest.mock('@/util/ai-config.mjs', () => ({
+  PROVIDERS: {
+    OPENAI: 'gpt-4o-mini',
+    DEEPSEEK: 'deepseek-v3',
+  },
+  getProviderConfig: jest.fn(),
+  getAPIKey: jest.fn(),
+  getAIProvider: jest.fn(),
+  normalizeModel: jest.fn(),
+}));
+
+// Mock the ai-client module
+jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
 }));
 
@@ -50,10 +62,9 @@ describe('LocationForm', () => {
     it('should call createLocationPrompt with the user-provided location type', async () => {
       const createLocationPromptSpy = jest.spyOn(locationPrompts, 'createLocationPrompt');
 
-      // Mock API responses
+      // Mock API response with structured JSON
       openAi.generateGptResponse
-        .mockResolvedValueOnce('A beautiful tavern description...')
-        .mockResolvedValueOnce('{"locationName":"The Golden Dragon","locationNPCs":["John Smith (Innkeeper)"],"subLocations":["Kitchen","Cellar"]}');
+        .mockResolvedValueOnce('{"locationName":"The Golden Dragon","sentence1_dimensions":"A two-story tavern with oak beams.","sentence2_atmosphere":"The smell of roasted meat fills the air.","sentence3_unique_feature":"A golden dragon statue dominates the bar.","sentence4_interaction":"The innkeeper polishes mugs while humming.","locationNPCs":["John Smith (Innkeeper)"],"subLocations":["Kitchen","Cellar"]}');
 
       wrapper = mount(LocationForm);
 
@@ -79,10 +90,9 @@ describe('LocationForm', () => {
         subLocations: ['Kitchen', 'Cellar', 'Guest Rooms']
       };
 
-      // Mock API responses
+      // Mock API response with structured JSON
       openAi.generateGptResponse
-        .mockResolvedValueOnce('A rustic kitchen with copper pots...')
-        .mockResolvedValueOnce('{"locationName":"The Kitchen","locationNPCs":["Mary Cook (Chef)"],"subLocations":[]}');
+        .mockResolvedValueOnce('{"locationName":"The Kitchen","sentence1_dimensions":"A rustic kitchen with copper pots.","sentence2_atmosphere":"Steam rises from bubbling cauldrons.","sentence3_unique_feature":"A massive fireplace dominates one wall.","sentence4_interaction":"The chef chops vegetables rhythmically.","locationNPCs":["Mary Cook (Chef)"],"subLocations":[]}');
 
       wrapper = mount(LocationForm, {
         props: {
@@ -97,24 +107,27 @@ describe('LocationForm', () => {
 
       await flushPromises();
 
-      // Verify first API call includes parent context
+      // Verify API call includes parent context
       const firstCallArgs = openAi.generateGptResponse.mock.calls[0];
       const previousContext = firstCallArgs[3]; // 4th argument is previousContext
 
       expect(previousContext).toBeDefined();
       expect(previousContext).toHaveLength(2);
-      expect(previousContext[1].content).toBe(parentLocation.description);
+
+      // The context should be a JSON stringified object with parent location data
+      const contextData = JSON.parse(previousContext[1].content);
+      expect(contextData.locationName).toBe(parentLocation.name);
+      expect(contextData.locationDescription).toBe(parentLocation.description);
+      expect(contextData.locationNPCs).toEqual(parentLocation.npcNames);
+      expect(contextData.subLocations).toEqual(parentLocation.subLocations);
     });
   });
 
-  describe('Two-Part API Generation', () => {
-    it('should make two sequential API calls (description then JSON)', async () => {
-      const mockDescription = 'The Rusty Anchor is a weathered tavern near the docks...';
-      const mockJSON = '{"locationName":"The Rusty Anchor","locationNPCs":["Captain Reed (Sailor)","Martha Vale (Bartender)"],"subLocations":["Bar","Storage Room","Upstairs Rooms"]}';
+  describe('Single JSON API Generation', () => {
+    it('should make a single API call that returns structured JSON', async () => {
+      const mockJSON = '{"locationName":"The Rusty Anchor","sentence1_dimensions":"A weathered two-story tavern with salt-stained walls.","sentence2_atmosphere":"The smell of fish and rum permeates the air.","sentence3_unique_feature":"A ship\'s wheel serves as a chandelier.","sentence4_interaction":"The bartender polishes mugs while eyeing newcomers.","locationNPCs":["Captain Reed (Sailor)","Martha Vale (Bartender)"],"subLocations":["Bar","Storage Room","Upstairs Rooms"]}';
 
-      openAi.generateGptResponse
-        .mockResolvedValueOnce(mockDescription)
-        .mockResolvedValueOnce(mockJSON);
+      openAi.generateGptResponse.mockResolvedValueOnce(mockJSON);
 
       wrapper = mount(LocationForm);
 
@@ -126,17 +139,14 @@ describe('LocationForm', () => {
 
       await flushPromises();
 
-      // Verify two API calls were made
-      expect(openAi.generateGptResponse).toHaveBeenCalledTimes(2);
+      // Verify only one API call was made
+      expect(openAi.generateGptResponse).toHaveBeenCalledTimes(1);
     });
 
-    it('should pass the description response as context to the JSON extraction call', async () => {
-      const mockDescription = 'The Midnight Market is a shadowy bazaar...';
-      const mockJSON = '{"locationName":"The Midnight Market","locationNPCs":["Shadows (Merchant)"],"subLocations":["Weapon Stall","Potion Shop"]}';
+    it('should include all sentence fields in the JSON response', async () => {
+      const mockJSON = '{"locationName":"The Midnight Market","sentence1_dimensions":"A sprawling open-air bazaar with colorful tents.","sentence2_atmosphere":"Incense smoke drifts through the narrow aisles.","sentence3_unique_feature":"Floating lanterns illuminate the paths between stalls.","sentence4_interaction":"A merchant beckons with exotic wares.","locationNPCs":["Shadows (Merchant)"],"subLocations":["Weapon Stall","Potion Shop"]}';
 
-      openAi.generateGptResponse
-        .mockResolvedValueOnce(mockDescription)
-        .mockResolvedValueOnce(mockJSON);
+      openAi.generateGptResponse.mockResolvedValueOnce(mockJSON);
 
       wrapper = mount(LocationForm);
 
@@ -148,21 +158,20 @@ describe('LocationForm', () => {
 
       await flushPromises();
 
-      // Verify second API call includes description as context
-      const secondCallArgs = openAi.generateGptResponse.mock.calls[1];
-      const previousContext = secondCallArgs[3];
+      // Verify emitted event contains all sentence fields
+      const emitted = wrapper.emitted('location-description-generated');
+      const emittedData = emitted[0][0];
 
-      expect(previousContext).toBeDefined();
-      expect(previousContext).toHaveLength(2);
-      expect(previousContext[1].content).toBe(mockDescription);
+      expect(emittedData.sentence1_dimensions).toBeDefined();
+      expect(emittedData.sentence2_atmosphere).toBeDefined();
+      expect(emittedData.sentence3_unique_feature).toBeDefined();
+      expect(emittedData.sentence4_interaction).toBeDefined();
     });
 
-    it('should use getLocationJSON prompt for the second API call', async () => {
-      const getLocationJSONSpy = jest.spyOn(locationPrompts, 'getLocationJSON');
+    it('should build locationDescription from individual sentences', async () => {
+      const mockJSON = '{"locationName":"Test Temple","sentence1_dimensions":"A small stone shrine.","sentence2_atmosphere":"Candlelight flickers.","sentence3_unique_feature":"Ancient runes glow.","sentence4_interaction":"A priest meditates.","locationNPCs":[],"subLocations":[]}';
 
-      openAi.generateGptResponse
-        .mockResolvedValueOnce('A description...')
-        .mockResolvedValueOnce('{"locationName":"Test","locationNPCs":[],"subLocations":[]}');
+      openAi.generateGptResponse.mockResolvedValueOnce(mockJSON);
 
       wrapper = mount(LocationForm);
 
@@ -174,19 +183,19 @@ describe('LocationForm', () => {
 
       await flushPromises();
 
-      // Verify getLocationJSON was called
-      expect(getLocationJSONSpy).toHaveBeenCalled();
+      // Verify locationDescription is built from sentences
+      const emitted = wrapper.emitted('location-description-generated');
+      const emittedData = emitted[0][0];
+
+      expect(emittedData.locationDescription).toBe('A small stone shrine. Candlelight flickers. Ancient runes glow. A priest meditates.');
     });
   });
 
   describe('Response Validation and Parsing', () => {
-    it('should validate JSON response has required keys (locationName, locationNPCs, subLocations)', async () => {
-      const mockDescription = 'A description...';
-      const mockJSON = '{"locationName":"Test Location","locationNPCs":["NPC One"],"subLocations":["Room 1"]}';
+    it('should validate JSON response has all required keys', async () => {
+      const mockJSON = '{"locationName":"Test Location","sentence1_dimensions":"A test.","sentence2_atmosphere":"More test.","sentence3_unique_feature":"Unique test.","sentence4_interaction":"Interactive test.","locationNPCs":["NPC One"],"subLocations":["Room 1"]}';
 
-      openAi.generateGptResponse
-        .mockResolvedValueOnce(mockDescription)
-        .mockResolvedValueOnce(mockJSON);
+      openAi.generateGptResponse.mockResolvedValueOnce(mockJSON);
 
       wrapper = mount(LocationForm);
 
@@ -198,14 +207,14 @@ describe('LocationForm', () => {
 
       await flushPromises();
 
-      // Verify validation function was passed to second API call
-      const secondCallArgs = openAi.generateGptResponse.mock.calls[1];
-      const validationFn = secondCallArgs[1]; // 2nd argument is validation function
+      // Verify validation function was passed to API call
+      const firstCallArgs = openAi.generateGptResponse.mock.calls[0];
+      const validationFn = firstCallArgs[1]; // 2nd argument is validation function
 
       expect(validationFn).toBeDefined();
       expect(typeof validationFn).toBe('function');
 
-      // Test validation function accepts valid JSON
+      // Test validation function accepts valid JSON with all fields
       expect(validationFn(mockJSON)).toBe(true);
     });
 
@@ -214,26 +223,26 @@ describe('LocationForm', () => {
 
       const validationFn = wrapper.vm.validateLocationDescription;
 
+      // Missing sentence fields
+      expect(validationFn('{"locationName":"Test","locationNPCs":[],"subLocations":[]}')).toBe(false);
+
       // Missing locationNPCs
-      expect(validationFn('{"locationName":"Test","subLocations":[]}')).toBe(false);
+      expect(validationFn('{"locationName":"Test","sentence1_dimensions":"A","sentence2_atmosphere":"B","sentence3_unique_feature":"C","sentence4_interaction":"D","subLocations":[]}')).toBe(false);
 
       // Missing subLocations
-      expect(validationFn('{"locationName":"Test","locationNPCs":[]}')).toBe(false);
+      expect(validationFn('{"locationName":"Test","sentence1_dimensions":"A","sentence2_atmosphere":"B","sentence3_unique_feature":"C","sentence4_interaction":"D","locationNPCs":[]}')).toBe(false);
 
       // Missing locationName
-      expect(validationFn('{"locationNPCs":[],"subLocations":[]}')).toBe(false);
+      expect(validationFn('{"sentence1_dimensions":"A","sentence2_atmosphere":"B","sentence3_unique_feature":"C","sentence4_interaction":"D","locationNPCs":[],"subLocations":[]}')).toBe(false);
 
       // Invalid JSON
       expect(validationFn('not valid json')).toBe(false);
     });
 
     it('should emit location-description-generated with merged response data', async () => {
-      const mockDescription = 'The Shadow Guild headquarters is hidden beneath...';
-      const mockJSON = '{"locationName":"The Shadow Guild","locationNPCs":["Nightshade (Assassin)","Whisper (Informant)"],"subLocations":["Training Room","Armory","Secret Vault"]}';
+      const mockJSON = '{"locationName":"The Shadow Guild","sentence1_dimensions":"A hidden headquarters beneath the city.","sentence2_atmosphere":"Shadows dance in the torchlight.","sentence3_unique_feature":"A wall of daggers gleams.","sentence4_interaction":"An assassin sharpens blades.","locationNPCs":["Nightshade (Assassin)","Whisper (Informant)"],"subLocations":["Training Room","Armory","Secret Vault"]}';
 
-      openAi.generateGptResponse
-        .mockResolvedValueOnce(mockDescription)
-        .mockResolvedValueOnce(mockJSON);
+      openAi.generateGptResponse.mockResolvedValueOnce(mockJSON);
 
       wrapper = mount(LocationForm);
 
@@ -252,8 +261,12 @@ describe('LocationForm', () => {
 
       const emittedData = emitted[0][0];
       expect(emittedData).toEqual({
-        locationDescription: mockDescription,
+        locationDescription: 'A hidden headquarters beneath the city. Shadows dance in the torchlight. A wall of daggers gleams. An assassin sharpens blades.',
         locationName: 'The Shadow Guild',
+        sentence1_dimensions: 'A hidden headquarters beneath the city.',
+        sentence2_atmosphere: 'Shadows dance in the torchlight.',
+        sentence3_unique_feature: 'A wall of daggers gleams.',
+        sentence4_interaction: 'An assassin sharpens blades.',
         locationNPCs: ['Nightshade (Assassin)', 'Whisper (Informant)'],
         subLocations: ['Training Room', 'Armory', 'Secret Vault']
       });
@@ -301,9 +314,9 @@ describe('LocationForm', () => {
 
   describe('Input Handling', () => {
     it('should apply startCase transformation to location type', async () => {
-      openAi.generateGptResponse
-        .mockResolvedValueOnce('Description...')
-        .mockResolvedValueOnce('{"locationName":"Test","locationNPCs":[],"subLocations":[]}');
+      const mockJSON = '{"locationName":"Test","sentence1_dimensions":"A","sentence2_atmosphere":"B","sentence3_unique_feature":"C","sentence4_interaction":"D","locationNPCs":[],"subLocations":[]}';
+
+      openAi.generateGptResponse.mockResolvedValueOnce(mockJSON);
 
       wrapper = mount(LocationForm);
 
@@ -321,9 +334,9 @@ describe('LocationForm', () => {
     });
 
     it('should use formContent prop when provided', async () => {
-      openAi.generateGptResponse
-        .mockResolvedValueOnce('Description...')
-        .mockResolvedValueOnce('{"locationName":"Test","locationNPCs":[],"subLocations":[]}');
+      const mockJSON = '{"locationName":"Test","sentence1_dimensions":"A","sentence2_atmosphere":"B","sentence3_unique_feature":"C","sentence4_interaction":"D","locationNPCs":[],"subLocations":[]}';
+
+      openAi.generateGptResponse.mockResolvedValueOnce(mockJSON);
 
       wrapper = mount(LocationForm, {
         props: {

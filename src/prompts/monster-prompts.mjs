@@ -117,7 +117,7 @@ export function createStatblockPrompts(options) {
     template.actions.push({
       name: 'Another Action',
       description:
-        'An action that thematically matches the creature. The more unique the better. If this technique does more damage than normal, add a recharge mechanic',
+        'A single, simple action that thematically matches the creature. One effect only — no nested options, no "choose one of the following," and no sub-abilities within this action. If this technique does more damage than normal, add a recharge mechanic.',
     });
   }
   let tohit = '';
@@ -221,10 +221,17 @@ export function createStatblockPrompts(options) {
       template.armor_class
     } (depending on abilities) and hit_points should be ${template.hit_points}.
     ${savingThrowsPrompt}. ${resistanceAndImmunitiesPrompt} ${legendaryResistancePrompt}. Remember that the only possible damage types are from this list: Acid, Bludgeoning, Cold, Fire, Force, Lightning, Necrotic, Piercing, Poison, Psychic, Radiant, Slashing, Thunder as well as "Bludgeoning, Slashing and Piercing from non-magical weapons". Finally condition_immunities can only be selected from this list: Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious
+    Do not use markdown formatting (no **, no *, no \`\`\`) in any values. Return plain text only.
     ${monsterDescriptionPromptPart1}`,
 
     part2: `Please give me the second part of a D&D statblock in the following format. Use the same number of actions and abilities (except the example action) and use all the info provided in the description. Use the exact average damage, number/type of dice and damage modifiers provided below for each action template. Anything in this format: 30 (4d12 + 4) should not be changed. If special instructions were used in the previous prompt, please use it to inform the actions of this creature.
     
+    CRITICAL RULES:
+    - Each action must be ONE single ability. Do not nest "choose one of the following" or multiple sub-options within a single action.
+    - Do not add more actions than there are template examples. Reskin the existing actions with new flavor — do not invent additional mechanics beyond what the template provides.
+    - Retain the exact damage dice, DCs, and modifiers from the template. Change only the name, damage type, and flavor text.
+    - Do not use markdown formatting (no **, no *, no \`\`\`) in any values. Return plain text only.
+
     ${JSON.stringify(part2Obj, null, '\t')}
     
     With the above format in mind, please generate the second part of a statblock for ${monsterName}. The attack_bonus for each attack should be ${

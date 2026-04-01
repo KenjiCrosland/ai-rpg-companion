@@ -1,5 +1,5 @@
 import { createNPCPrompt, createRelationshipAndTipsPrompt } from '../npc-prompts.mjs';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 
 export function validateNPCDescription(jsonString) {
   try {

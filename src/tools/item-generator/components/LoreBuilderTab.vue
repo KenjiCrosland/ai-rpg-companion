@@ -88,7 +88,7 @@
                     <h4>{{ pendingEvent?.title }}</h4>
                     <p class="result-year">{{ pendingEvent?.eventYear }}</p>
                   </div>
-                  <p class="result-text">{{ pendingEvent?.description }}</p>
+                  <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                   <div class="button-row compact-buttons">
                     <cdr-button @click="confirmFirstEvent" size="small">
@@ -161,7 +161,7 @@
                     <h4>{{ pendingEvent?.title }}</h4>
                     <p class="result-year">{{ pendingEvent?.eventYear }}</p>
                   </div>
-                  <p class="result-text">{{ pendingEvent?.description }}</p>
+                  <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                   <div class="button-row compact-buttons">
                     <cdr-button @click="confirmAddEvent" size="small">
@@ -186,7 +186,7 @@
                 <div v-if="editingEventIndex !== index">
                   <h4>{{ event.title }}</h4>
                   <p class="time-period">{{ event.eventYear }}</p>
-                  <p class="event-text">{{ event.description }}</p>
+                  <p class="event-text" v-html="formatMarkdown(event.description)"></p>
                   <div class="button-row-bottom">
                     <cdr-button modifier="secondary" size="small" @click="startEditingEvent(index)">
                       Edit
@@ -277,7 +277,7 @@
                       <h4>{{ pendingEvent?.title }}</h4>
                       <p class="result-year">{{ pendingEvent?.eventYear }}</p>
                     </div>
-                    <p class="result-text">{{ pendingEvent?.description }}</p>
+                    <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                     <div class="button-row compact-buttons">
                       <cdr-button @click="confirmAddEvent" size="small">
@@ -318,9 +318,9 @@
       </div>
 
       <div v-else-if="historicalSummary">
-        <p class="summary-text">{{ historicalSummary }}</p>
+        <p class="summary-text" v-html="formatMarkdown(historicalSummary)"></p>
         <p class="legacy-text" v-if="itemLegacy">
-          <strong>Legacy & Significance:</strong> {{ itemLegacy }}
+          <strong>Legacy & Significance:</strong> <span v-html="formatMarkdown(itemLegacy)"></span>
         </p>
       </div>
 
@@ -382,7 +382,7 @@ import {
   CdrInput,
   CdrLink
 } from '@rei/cedar';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
 import {
   generateEventPrompt,
@@ -461,6 +461,29 @@ const eventTypeOptions = [
 const sortedTimelineEvents = computed(() => {
   return [...timelineEvents.value].sort((a, b) => b.yearsAgo - a.yearsAgo);
 });
+
+// Format markdown in text
+const formatMarkdown = (text) => {
+  if (!text) return text;
+
+  // Escape HTML to prevent XSS
+  const escapeHtml = (str) => {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
+  // Escape any existing HTML first
+  text = escapeHtml(text);
+
+  // Then apply markdown formatting (now safe because we escaped first)
+  // Bold first (double asterisks)
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Then italic (single asterisks)
+  text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  return text;
+};
 
 // Get available periods for a specific position
 const getAvailablePeriodsForPosition = (position) => {

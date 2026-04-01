@@ -188,7 +188,7 @@ import TabPanel from '@/components/tabs/TabPanel.vue';
 import { formatSettingAsPlainText } from "@/util/formatSettingAsPlainText.mjs";
 import { formatSettingAsMarkdown } from "@/util/formatSettingAsMarkdown.mjs";
 import { formatSettingAsHtml } from "@/util/formatSettingAsHTML.mjs";
-import { generateGptResponse } from "@/util/open-ai.mjs";
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import placeAdjectives from '@/data/place-adjectives.json';

@@ -198,8 +198,16 @@ export const generateEventPrompt = ({
     .map(([name, desc]) => `${name}: ${desc}`)
     .join('; ');
 
-  return `
-    Generate ONE historical event for the magic item "${itemName}" (${itemType}, ${rarity}).
+  return `You are a D&D 5e lore designer. Be concise and table-ready.
+
+HISTORICAL EVENT RULES:
+- Title: 3-6 words. Clearly indicates event type.
+- Description: 2-3 sentences maximum (50-70 words total)
+- Include: Specific names, places, and consequences
+- Show: Concrete action and immediate result
+- Avoid: Flowery language, vague descriptions, purple prose
+
+Generate ONE historical event for the magic item "${itemName}" (${itemType}, ${rarity}).
     
     ITEM DETAILS:
     Physical Description: ${physicalDescription}
@@ -269,8 +277,15 @@ export const generateSummaryPrompt = ({
     })
     .join('\n\n');
 
-  return `
-    Create a historical summary for the magic item "${itemName}".
+  return `You are a D&D 5e lore designer. Be concise and table-ready.
+
+SUMMARY RULES:
+- Historical summary: 3-4 sentences. Flowing narrative with years, cause and effect.
+- Item legacy: 1-2 sentences. Current status and why people seek it.
+- Use concrete language. No clichés or purple prose.
+- Total: Under 150 words.
+
+Create a historical summary for the magic item "${itemName}".
     
     Item: ${itemName} (${itemType}, ${rarity})
     Original Lore: ${itemLore}

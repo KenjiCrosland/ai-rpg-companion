@@ -314,7 +314,7 @@ import NPCCard from '@/components/NPCCard.vue';
 import Statblock from '@/components/Statblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
-import { generateGptResponse } from "@/util/open-ai.mjs";
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { requestNPCDescription } from "./utils/request-npc-description.mjs";
 import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMarkdown.mjs';

@@ -12,7 +12,7 @@
 
 import { mount, flushPromises } from '@vue/test-utils';
 import NPCGenerator from './NPCGenerator.vue';
-import * as openAi from '@/util/open-ai.mjs';
+import * as openAi from "@/util/ai-client.mjs";
 import * as npcGenerator from './utils/npc-generator.mjs';
 import * as npcPrompts from './npc-prompts.mjs';
 

@@ -192,7 +192,7 @@ import "@rei/cedar/dist/style/cdr-select.css";
 import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 import "@rei/cedar/dist/style/cdr-text.css";
-import { generateGptResponse } from "../util/open-ai.mjs";
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import DataManagerModal from './DataManagerModal.vue';
 
 export default {

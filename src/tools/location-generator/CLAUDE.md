@@ -4,7 +4,9 @@ Tool-specific documentation for the RPG Location Description Generator.
 
 ## Overview
 
-The Location Generator creates evocative 4-sentence location descriptions for tabletop RPGs. It uses a two-part AI generation process to create atmospheric locations and then extract structured data (location name, NPCs, and sublocations) for further use. Unlike other tools in the suite, this is a simple generator that does not persist data to localStorage.
+The Location Generator creates evocative 4-sentence location descriptions for tabletop RPGs. It uses a single-part AI generation process to create atmospheric locations with structured JSON output (location name, sentences, NPCs, and sublocations). Unlike other tools in the suite, this is a simple generator that does not persist data to localStorage.
+
+**AI Provider**: This tool uses **OpenAI (GPT-4o-mini)** exclusively, regardless of the global default provider setting. This ensures consistent quality for location generation.
 
 ## Architecture
 
@@ -18,38 +20,39 @@ src/tools/location-generator/
 └── location-prompts.mjs           # AI prompt templates
 ```
 
-### Two-Part Generation Process
+### Single JSON Generation Process
 
-The generator uses a two-part generation approach to create locations:
+The generator uses a single API call to create locations with structured JSON output:
 
-**Part 1**: Location description
-- 4-sentence evocative description following strict format guidelines
-- Each sentence serves a specific purpose (dimension, atmosphere, unique feature, interaction)
+**Single API Call**: Complete JSON structure
+- Returns all data in one response: locationName, 4 structured sentences, NPCs, and sublocations
+- Each sentence field serves a specific purpose:
+  - `sentence1_dimensions`: General description of dimensions/scale
+  - `sentence2_atmosphere`: Atmospheric details (smells, lighting, sounds)
+  - `sentence3_unique_feature`: Interesting or unusual feature
+  - `sentence4_interaction`: Something/someone players can interact with
+- `locationNPCs`: Array of NPCs in format "FIRST_NAME LAST_NAME (PROFESSION)"
+- `subLocations`: Array of sublocation names
 - Temperature set to 0.9 for creative variety
+- AI explicitly instructed not to use markdown code blocks
 
-**Part 2**: Structured data extraction (uses Part 1 as context)
-- Location name
-- List of NPCs (with professions)
-- List of sublocations (rooms, areas, etc.)
-
-This approach ensures the extracted structured data matches the generated description.
+The sentences are concatenated client-side to build the `locationDescription` field for display.
 
 ### Generation Flow
 
 1. User enters location type (e.g., "tavern", "wizard tower", "market")
 2. Apply `startCase()` transformation (e.g., "wizard tower" → "Wizard Tower")
-3. First API call with location description prompt → 4-sentence description
-4. Parse and display description
-5. Second API call with JSON extraction prompt + previousContext → structured data JSON
-6. Validate JSON has required keys (locationName, locationNPCs, subLocations)
-7. Merge description and structured data
-8. Display result (location name and description)
+3. Single API call (OpenAI GPT-4o-mini) with structured JSON prompt
+4. Validate JSON has all 7 required keys (locationName, sentence1_dimensions, sentence2_atmosphere, sentence3_unique_feature, sentence4_interaction, locationNPCs, subLocations)
+5. Build `locationDescription` by concatenating the 4 sentence fields
+6. Merge all data into return object
+7. Display result (location name and concatenated description)
 
 ### Prompt Structure
 
-#### Description Prompt (`createLocationPrompt`)
+#### Location Prompt (`createLocationPrompt`)
 
-Generates a 4-sentence location description with strict sentence-by-sentence guidelines:
+Generates a complete location in structured JSON format with strict sentence-by-sentence guidelines:
 
 **Sentence 1**: General description of dimensions/scale
 - Examples: "The Red Rooster appears to have been converted from an old barn."
@@ -68,19 +71,24 @@ Generates a 4-sentence location description with strict sentence-by-sentence gui
 - Provide unusual and evocative details
 - Only describe what's visible to players (no hidden details)
 - Temperature: 0.9 for creative variety
+- Returns raw JSON only (no markdown code blocks)
 
-#### JSON Extraction Prompt (`getLocationJSON`)
-
-Extracts structured data from the description:
-
-**Required Keys:**
-- `locationName`: The unique name of the location
-- `locationNPCs`: Array of NPCs in format "FIRST_NAME LAST_NAME (PROFESSION)"
-- `subLocations`: Array of sublocation names (e.g., "Kitchen", "Cellar", "Scriptorium")
+**JSON Structure:**
+```json
+{
+  "locationName": "Unique, evocative name",
+  "sentence1_dimensions": "General description of dimensions",
+  "sentence2_atmosphere": "Atmospheric details",
+  "sentence3_unique_feature": "Interesting feature",
+  "sentence4_interaction": "Interactive element",
+  "locationNPCs": ["FIRST_NAME LAST_NAME (PROFESSION)", ...],
+  "subLocations": ["Room/Area Name", ...]
+}
+```
 
 **Sublocation Guidelines:**
-- At least 3 for large locations (towns, large buildings)
-- Room names for buildings
+- 3-6 sublocations for large locations (towns, large buildings)
+- Room names for buildings (e.g., "Kitchen", "Cellar", "Scriptorium")
 - Area names for outdoor locations
 
 ## Key Features

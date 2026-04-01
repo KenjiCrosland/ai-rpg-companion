@@ -148,7 +148,7 @@ import {
 } from '@rei/cedar';
 import OverviewSkeleton from '@/components/skeletons/OverviewSkeleton.vue';
 import BlockSkeleton from '@/components/skeletons/BlockSkeleton.vue';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { subLocationsPrompt } from '../../prompts/index.mjs';
 
 const props = defineProps({

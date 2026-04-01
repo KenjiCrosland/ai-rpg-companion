@@ -95,7 +95,7 @@ import '@rei/cedar/dist/style/cdr-accordion.css';
 import '@rei/cedar/dist/style/cdr-accordion-group.css';
 import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
-import { generateGptResponse } from "../util/open-ai.mjs";
+import { generateGptResponse } from "@/util/ai-client.mjs";
 
 export default {
   components: {

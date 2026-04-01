@@ -184,7 +184,7 @@
 import { ref, onMounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
-import { generateGptResponse } from "@/util/open-ai.mjs";
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";

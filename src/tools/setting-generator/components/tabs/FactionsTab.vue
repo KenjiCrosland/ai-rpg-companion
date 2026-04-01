@@ -176,7 +176,7 @@ import {
 import FactionSkeleton from '@/components/skeletons/FactionSkeleton.vue';
 import OverviewSkeleton from '@/components/skeletons/OverviewSkeleton.vue';
 import BlockSkeleton from '@/components/skeletons/BlockSkeleton.vue';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import {
   factionListPrompt,
   detailedFactionPrompt,

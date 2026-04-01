@@ -338,7 +338,7 @@ import Statblock from '@/components/Statblock.vue';
 import MonsterPicker from './components/MonsterPicker.vue';
 import EncounterMonsterList from './components/EncounterMonsterList.vue';
 import encounterDifficulty from '@/data/encounter-difficulty.json';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import {
   buildCall1StructurePrompt,
   buildCall2ScenePrompt,

@@ -42,7 +42,7 @@ import "@rei/cedar/dist/cdr-fonts.css";
 import "@rei/cedar/dist/reset.css";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-button.css";
-import { generateGptResponse } from '../util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { generateStatblockPart1, completeStatblock } from '../util/statblock-generator.mjs';
 
 export default {

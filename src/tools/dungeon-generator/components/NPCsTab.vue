@@ -167,7 +167,7 @@ import NPCCard from '@/components/NPCCard.vue';
 import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC } from '@/util/npc-storage.mjs';
 import { getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
-import { generateGptResponse } from '@/util/open-ai.mjs';
+import { generateGptResponse } from "@/util/ai-client.mjs";
 import { generateSingleRelationshipPrompt, validateSingleRelationshipResponse } from '../prompts/dungeon-npcs.mjs';
 import {
   CdrFormGroup,
