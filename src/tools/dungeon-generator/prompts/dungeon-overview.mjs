@@ -79,7 +79,14 @@ export function dungeonOverviewPrompt(
   }
 
   return `
-  ${initialSentence}. When describing events and individuals be specific about names and locations. Try to use creative and unique names and titles which borrow from more than one literary tradition and ethnicity. Each key should be a sentence or two, should be detailed and specific, and should flow together to create a cohesive description. Avoid common fantasy tropes and clichés. Temperature: 0.9
+  You are a D&D 5e dungeon designer. Be vivid but concise — every sentence should be load-bearing. Follow these rules:
+
+Each field should be 2-4 sentences maximum unless it contains sub-elements
+Avoid these overused words: gilded, ethereal, shimmer, ornate, intricate, ozone
+Do not use markdown formatting (no **, no *, no \`\`\`) in any values
+Return ONLY valid JSON with no additional text, no markdown code blocks
+
+  ${initialSentence}. When describing events and individuals be specific about names and locations. Try to use creative and unique names and titles which borrow from more than one literary tradition and ethnicity. Each key should be a sentence or two, should be detailed and specific, and should flow together to create a cohesive description. Avoid common fantasy tropes and clichés.
 
   ${place_lore ? `Additional details about the setting: ${place_lore}.` : ''}
 
@@ -106,7 +113,9 @@ export function dungeonOverviewPrompt(
   {
     name: '${place_name}',
     overview: 'A brief overview of the dungeon, with a brief description of its current state',
+    location_name: 'The specific named region, city, or geographic area where the dungeon is located (just the name, 1-5 words)',
     relation_to_larger_setting: 'How does the dungeon relate to the larger setting? What role does it play? How is it situated geographically in relation to the larger world? Provide a name for the larger region if possible',
+    entry_method_short: 'A 2-5 word summary of how the dungeon is accessed (e.g., "Portal via blood ritual", "Underwater cave entrance", "Mnemosyne Shard meditation")',
     finding_the_dungeon: 'How is the dungeon accessed or reached? What are the unique or dangerous geographical features or magical means? What obstacles must be overcome?',
     history: 'A very brief history of the dungeon, including its founding/creation and any most significant recent events',
     title: 'A descriptive title like: The Haunted Ruins of Blackwood. MUST include the setting name',
@@ -119,7 +128,15 @@ export function dungeonOverviewPrompt(
     secondary_power: 'Another faction or individual who also wields influence here. Could they be allies, rivals, or neutral? Potential friends or enemies for the PCs?',
     secondary_power_event: 'A recent or ancient event involving the secondary power that changed the dungeon's dynamics',
     main_problem: 'Paint a short scene illustrating the main conflict ${place_name} faces. What happens if it's not resolved?',
-    potential_solutions: '1-2 sentences on possible resolutions to the main problem. Who's championing them, and what obstacles stand in their way?',
+    solution_1_name: 'A short name for the first solution (2-4 words)',
+    solution_1_champion: 'Who champions this solution',
+    solution_1_description: 'What this solution involves and its risks (1-2 sentences)',
+    solution_2_name: 'A short name for the second solution (2-4 words)',
+    solution_2_champion: 'Who champions this solution',
+    solution_2_description: 'What this solution involves and its risks (1-2 sentences)',
+    solution_3_name: 'A short name for the third solution (2-4 words)',
+    solution_3_champion: 'Who champions this solution',
+    solution_3_description: 'What this solution involves and its risks (1-2 sentences)',
     conclusion: 'Wrap up how things stand in ${place_name} now, and hint at the future. Tie it back to the main problem and solutions',
     difficulty_level: 'This is a ${
       difficulty ? difficulty : 'Tier 1/Tier 2/Tier 3/Tier 4/Tier 5 difficulty'
@@ -156,7 +173,9 @@ export function dungeonOverviewPrompt(
 export function validateDungeonOverview(jsonString) {
   try {
     const data = JSON.parse(jsonString);
-    const requiredKeys = [
+
+    // Core required keys (exist in both old and new formats)
+    const coreRequiredKeys = [
       'name',
       'overview',
       'relation_to_larger_setting',
@@ -172,17 +191,36 @@ export function validateDungeonOverview(jsonString) {
       'secondary_power',
       'secondary_power_event',
       'main_problem',
-      'potential_solutions',
       'conclusion',
       'difficulty_level',
       'npc_list',
       'monsters',
     ];
-    for (const key of requiredKeys) {
+
+    // Check core required keys
+    for (const key of coreRequiredKeys) {
       if (!(key in data)) {
         return false;
       }
     }
+
+    // Check for either old format (potential_solutions) or new format (solution_1_name, etc.)
+    const hasOldFormat = 'potential_solutions' in data;
+    const hasNewFormat = 'solution_1_name' in data &&
+                         'solution_1_champion' in data &&
+                         'solution_1_description' in data &&
+                         'solution_2_name' in data &&
+                         'solution_2_champion' in data &&
+                         'solution_2_description' in data &&
+                         'solution_3_name' in data &&
+                         'solution_3_champion' in data &&
+                         'solution_3_description' in data;
+
+    // Accept either format
+    if (!hasOldFormat && !hasNewFormat) {
+      return false;
+    }
+
     return true;
   } catch (e) {
     return false;
