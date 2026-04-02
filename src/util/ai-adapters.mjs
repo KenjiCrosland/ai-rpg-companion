@@ -1,6 +1,9 @@
 /**
  * AI Provider Adapters
  *
+ * SECURITY: Adapters must NEVER set Authorization headers with API keys.
+ * Keys are injected server-side by Vite proxy (dev) or WordPress proxy (production).
+ *
  * Normalizes request/response format differences between AI providers
  */
 
@@ -10,6 +13,9 @@
 export class OpenAIAdapter {
   /**
    * Format request for OpenAI API
+   * @param {Array} messages - Chat messages
+   * @param {string} model - Model name
+   * @param {string|null} apiKey - DEPRECATED - API keys are injected server-side
    */
   static formatRequest(messages, model, apiKey) {
     const body = {
@@ -17,9 +23,10 @@ export class OpenAIAdapter {
       messages,
     };
 
+    // SECURITY: Do NOT set Authorization header
+    // API key is injected server-side by proxy
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
     };
 
     return { body, headers };

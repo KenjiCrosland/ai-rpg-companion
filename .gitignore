@@ -14,7 +14,10 @@ data-training
 *.local
 npc-generator.txt
 .env
+.env.*
 .env.local
+.env.development
+.env.production
 launch.json
 PREMIUM-MIGRATION.md
 

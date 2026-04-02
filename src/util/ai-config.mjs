@@ -1,6 +1,9 @@
 /**
  * AI Provider Configuration
  *
+ * SECURITY: This file must NEVER contain or reference API keys.
+ * Keys are injected server-side by Vite proxy (dev) or WordPress proxy (production).
+ *
  * Manages configuration for multiple AI providers (DeepSeek, OpenAI)
  * Supports localStorage override for development testing
  */
@@ -14,17 +17,15 @@ const PROVIDER_CONFIGS = {
   [PROVIDERS.DEEPSEEK]: {
     name: 'DeepSeek V3',
     endpoint: 'https://api.deepseek.com/v1/chat/completions',
-    devEndpoint: '/api/deepseek/v1/chat/completions', // Proxied in dev to avoid CORS
+    devEndpoint: '/api/ai/deepseek', // Proxied in dev - API key injected server-side
     model: 'deepseek-chat',
-    apiKeyEnvVar: 'VITE_DEEPSEEK_API_KEY',
     type: 'openai-compatible', // Uses OpenAI API format
   },
   [PROVIDERS.OPENAI]: {
     name: 'GPT-4o-mini (Legacy)',
     endpoint: 'https://api.openai.com/v1/chat/completions',
-    devEndpoint: '/api/openai/v1/chat/completions', // Proxied in dev to avoid CORS
+    devEndpoint: '/api/ai/openai', // Proxied in dev - API key injected server-side
     model: 'gpt-4o-mini',
-    apiKeyEnvVar: 'VITE_OPENAI_API_KEY',
     type: 'openai',
   },
 };
@@ -60,14 +61,6 @@ export function getAIProvider() {
 export function getProviderConfig() {
   const provider = getAIProvider();
   return PROVIDER_CONFIGS[provider];
-}
-
-/**
- * Get API key for the current provider
- */
-export function getAPIKey() {
-  const config = getProviderConfig();
-  return import.meta.env[config.apiKeyEnvVar];
 }
 
 /**
