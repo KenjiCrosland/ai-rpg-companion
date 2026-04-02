@@ -1,4 +1,8 @@
-import { getProviderConfig, getAPIKey, getAIProvider, normalizeModel, PROVIDERS } from './ai-config.mjs';
+// SECURITY: This file must NEVER contain or reference API keys.
+// Keys are injected server-side by Vite proxy (dev) or WordPress proxy (production).
+// If you see any key references here, it is a security vulnerability.
+
+import { getProviderConfig, getAIProvider, normalizeModel, PROVIDERS } from './ai-config.mjs';
 import { getAdapter } from './ai-adapters.mjs';
 
 /**
@@ -98,7 +102,6 @@ export async function generateGptResponse(
   const isCircuitOpen = !providerOverride && checkCircuitBreaker();
   let usingFallback = false;
   let providerConfig;
-  let apiKey;
 
   if (providerOverride) {
     // Use specified provider directly (skip circuit breaker)
@@ -106,22 +109,18 @@ export async function generateGptResponse(
       providerConfig = {
         name: 'GPT-4o-mini',
         endpoint: 'https://api.openai.com/v1/chat/completions',
-        devEndpoint: '/api/openai/v1/chat/completions',
+        devEndpoint: '/api/ai/openai',
         model: 'gpt-4o-mini',
-        apiKeyEnvVar: 'VITE_OPENAI_API_KEY',
         type: 'openai',
       };
-      apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     } else if (providerOverride === PROVIDERS.DEEPSEEK) {
       providerConfig = {
         name: 'DeepSeek V3',
         endpoint: 'https://api.deepseek.com/v1/chat/completions',
-        devEndpoint: '/api/deepseek/v1/chat/completions',
+        devEndpoint: '/api/ai/deepseek',
         model: 'deepseek-chat',
-        apiKeyEnvVar: 'VITE_DEEPSEEK_API_KEY',
         type: 'openai',
       };
-      apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
     }
   } else if (isCircuitOpen) {
     const fallbackProvider = getFallbackProvider(primaryProvider);
@@ -130,23 +129,19 @@ export async function generateGptResponse(
       providerConfig = {
         name: 'GPT-4o-mini (Fallback)',
         endpoint: 'https://api.openai.com/v1/chat/completions',
-        devEndpoint: '/api/openai/v1/chat/completions',
+        devEndpoint: '/api/ai/openai',
         model: 'gpt-4o-mini',
-        apiKeyEnvVar: 'VITE_OPENAI_API_KEY',
         type: 'openai',
       };
-      apiKey = import.meta.env.VITE_OPENAI_API_KEY;
       usingFallback = true;
       console.warn(`⚠️ Using fallback provider: ${providerConfig.name}`);
     } else {
       // No fallback available, use primary
       providerConfig = getProviderConfig();
-      apiKey = getAPIKey();
     }
   } else {
     // Use primary provider
     providerConfig = getProviderConfig();
-    apiKey = getAPIKey();
   }
 
   const adapter = getAdapter(providerConfig.type);
@@ -159,10 +154,6 @@ export async function generateGptResponse(
     if (usingFallback) {
       console.log(`   ⚠️ Using fallback due to circuit breaker`);
     }
-  }
-
-  if (!apiKey) {
-    throw new Error(`API key not found for provider: ${providerConfig.name}. Set ${providerConfig.apiKeyEnvVar} in .env.local`);
   }
 
   let attempts = 0;
@@ -192,7 +183,8 @@ export async function generateGptResponse(
       }
 
       // Format request using adapter
-      const { body, headers } = adapter.formatRequest(messages, modelToUse, apiKey);
+      // SECURITY: Do NOT pass API key - it's injected server-side by proxy
+      const { body, headers } = adapter.formatRequest(messages, modelToUse, null);
 
       const requestOptions = {
         method: 'POST',
@@ -202,11 +194,11 @@ export async function generateGptResponse(
 
       let response;
       if (import.meta.env.DEV) {
-        // Development: Use Vite proxy to avoid CORS
-        const endpoint = providerConfig.devEndpoint || providerConfig.endpoint;
+        // Development: Use Vite proxy - API key injected server-side
+        const endpoint = providerConfig.devEndpoint;
         response = await fetch(endpoint, requestOptions);
       } else {
-        // Production: WordPress proxy
+        // Production: WordPress proxy - API key injected server-side
         // Add provider hint header for WordPress proxy routing
         const wpRequestOptions = {
           ...requestOptions,

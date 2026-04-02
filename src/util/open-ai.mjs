@@ -1,3 +1,6 @@
+// SECURITY: This file must NEVER contain or reference API keys.
+// Keys are injected server-side by Vite proxy (dev) or WordPress proxy (production).
+
 export async function generateGptResponse(
   prompt,
   validateJSONKeys = null,
@@ -41,14 +44,13 @@ export async function generateGptResponse(
       };
       let response;
       if (import.meta.env.DEV) {
-        requestOptions.headers.Authorization = `Bearer ${
-          import.meta.env.VITE_OPENAI_API_KEY
-        }`;
+        // Development: Use Vite proxy - API key injected server-side
         response = await fetch(
-          'https://api.openai.com/v1/chat/completions',
+          '/api/ai/openai',
           requestOptions,
         );
       } else {
+        // Production: WordPress proxy - API key injected server-side
         response = await fetch(
           '/wp-json/open-ai-proxy/api/v1/proxy',
           requestOptions,
