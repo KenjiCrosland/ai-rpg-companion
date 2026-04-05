@@ -943,15 +943,18 @@ async function generateStatblock(index) {
 
   try {
     const monster = encounterMonsters.value[index];
-    const part1 = await generateStatblockPart1({
-      name: monster.name,
-      cr: monster.cr,
-      type: monster.type || 'Balanced',
-      description: monster.description || '',
-      isSpellcaster: monster.isSpellcaster || false,
-    }, '');
+    const { monsterPart1, monsterPrompts } = await generateStatblockPart1({
+      monsterName: monster.name,
+      challengeRating: monster.cr,
+      monsterType: monster.type || 'Balanced',
+      monsterDescription: monster.description || '',
+      caster: monster.isSpellcaster || false,
+    });
 
-    const fullStatblock = await completeStatblock(part1, '');
+    const monsterStatsPart1 = JSON.stringify(monsterPart1);
+    const { monsterPart2 } = await completeStatblock(monsterStatsPart1, monsterPrompts);
+
+    const fullStatblock = { ...monsterPart1, ...monsterPart2 };
 
     // Replace object again with statblock data
     encounterMonsters.value[index] = {

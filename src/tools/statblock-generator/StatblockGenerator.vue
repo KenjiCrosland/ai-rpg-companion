@@ -596,7 +596,7 @@ async function generateStatblock() {
 
   let monsterStatsPart1;
   try {
-    monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
+    monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3, null, null, null, props.premium);
     if (!monsterStatsPart1) throw new Error('Empty statblock response part 1');
   } catch (e) {
     errorMessage.value = e.message;
@@ -614,7 +614,7 @@ async function generateStatblock() {
 
   let monsterStatsPart2;
   try {
-    monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
+    monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext, null, null, props.premium);
   } catch (e) {
     errorMessage.value = e.message;
     toast.error('Failed to generate statblock. Please try again.');

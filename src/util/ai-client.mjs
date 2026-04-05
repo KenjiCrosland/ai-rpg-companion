@@ -4,6 +4,7 @@
 
 import { getProviderConfig, getAIProvider, normalizeModel, PROVIDERS } from './ai-config.mjs';
 import { getAdapter } from './ai-adapters.mjs';
+import { writeRateLimitData } from './secure-storage.mjs';
 
 /**
  * Circuit Breaker State
@@ -241,6 +242,27 @@ export async function generateGptResponse(
       // Success! Record it for circuit breaker
       if (!usingFallback) {
         recordSuccess();
+      }
+
+      // Reset generation count for premium users after successful API call
+      // Use server-validated premium status to prevent client-side manipulation
+      // Server disguises premium status as usage metadata (_t field)
+      const serverValidatedPremium = responseData?.usage?._t === 1;
+
+      // In dev mode, check localStorage override for testing
+      // Default to premium, but can be set to free via window.paywallControls.testAsFree()
+      // In production, trust only the server's obfuscated tier field
+      const isPremiumUser = import.meta.env.DEV
+        ? (localStorage.getItem('dev-premium-mode') !== 'false') // default true, can override
+        : serverValidatedPremium;
+
+      if (isPremiumUser) {
+        try {
+          // Reset rate limit data for premium users
+          writeRateLimitData(0, null);
+        } catch (e) {
+          console.error('Failed to reset premium user generation count:', e);
+        }
       }
 
       if (!validateJSONKeys) {

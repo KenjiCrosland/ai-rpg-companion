@@ -27,6 +27,7 @@ jest.mock('../composables/useToast', () => ({
 
 import { canGenerateStatblock } from './can-generate-statblock.mjs';
 import { detectIncognito } from 'detectincognitojs';
+import { readRateLimitData, writeRateLimitData } from './secure-storage.mjs';
 
 // Store original localStorage
 const originalLocalStorage = global.localStorage;
@@ -80,6 +81,7 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
 
   describe('Premium Users', () => {
     it('should always allow generation for premium users', async () => {
+      localStorage.clear();
       const result = await canGenerateStatblock(true);
 
       expect(result).toBe(true);
@@ -87,17 +89,32 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       expect(detectIncognito).not.toHaveBeenCalled();
     });
 
+    it('should increment count for premium users', async () => {
+      localStorage.clear();
+
+      await canGenerateStatblock(true);
+
+      const data = readRateLimitData();
+      expect(data.count).toBe(1);
+    });
+
     it('should bypass rate limits for premium users', async () => {
       // Set localStorage to show user is at limit
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: Date.now().toString(),
-      }));
+      writeRateLimitData(5, Date.now());
 
       const result = await canGenerateStatblock(true);
 
       expect(result).toBe(true);
       expect(mockToast.warning).not.toHaveBeenCalled();
+    });
+
+    it('should continue incrementing past 5 for premium users', async () => {
+      writeRateLimitData(5, Date.now());
+
+      await canGenerateStatblock(true);
+
+      const data = readRateLimitData();
+      expect(data.count).toBe(6);
     });
   });
 
@@ -145,20 +162,17 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       await canGenerateStatblock(false);
 
       const afterTime = Date.now();
-      const stored = JSON.parse(localStorage.getItem('monsters'));
+      const data = readRateLimitData();
 
-      expect(stored.generationCount).toBe('1');
-      expect(parseInt(stored.firstGenerationTime)).toBeGreaterThanOrEqual(beforeTime);
-      expect(parseInt(stored.firstGenerationTime)).toBeLessThanOrEqual(afterTime);
+      expect(data.count).toBe(1);
+      expect(data.firstTime).toBeGreaterThanOrEqual(beforeTime);
+      expect(data.firstTime).toBeLessThanOrEqual(afterTime);
     });
   });
 
   describe('Rate Limiting - Under Limit', () => {
     it('should allow generation when count is 1', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '1',
-        firstGenerationTime: Date.now().toString(),
-      }));
+      writeRateLimitData(1, Date.now());
 
       const result = await canGenerateStatblock(false);
 
@@ -166,22 +180,16 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
     });
 
     it('should increment count from 1 to 2', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '1',
-        firstGenerationTime: Date.now().toString(),
-      }));
+      writeRateLimitData(1, Date.now());
 
       await canGenerateStatblock(false);
 
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('2');
+      const data = readRateLimitData();
+      expect(data.count).toBe(2);
     });
 
     it('should allow generation when count is 4', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '4',
-        firstGenerationTime: Date.now().toString(),
-      }));
+      writeRateLimitData(4, Date.now());
 
       const result = await canGenerateStatblock(false);
 
@@ -189,38 +197,29 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
     });
 
     it('should increment count from 4 to 5', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '4',
-        firstGenerationTime: Date.now().toString(),
-      }));
+      writeRateLimitData(4, Date.now());
 
       await canGenerateStatblock(false);
 
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('5');
+      const data = readRateLimitData();
+      expect(data.count).toBe(5);
     });
 
     it('should preserve firstGenerationTime when incrementing', async () => {
-      const originalTime = '1234567890000';
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '2',
-        firstGenerationTime: originalTime,
-      }));
+      const originalTime = 1234567890000;
+      writeRateLimitData(2, originalTime);
 
       await canGenerateStatblock(false);
 
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.firstGenerationTime).toBe(originalTime);
+      const data = readRateLimitData();
+      expect(data.firstTime).toBe(originalTime);
     });
   });
 
   describe('Rate Limiting - At Limit (Not Expired)', () => {
     it('should block generation when count is 5 and time not expired', async () => {
       const recentTime = Date.now() - 3600000; // 1 hour ago
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: recentTime.toString(),
-      }));
+      writeRateLimitData(5, recentTime);
 
       const result = await canGenerateStatblock(false);
 
@@ -234,10 +233,7 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
 
     it('should show reset time in warning message', async () => {
       const recentTime = Date.now() - 3600000; // 1 hour ago
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: recentTime.toString(),
-      }));
+      writeRateLimitData(5, recentTime);
 
       await canGenerateStatblock(false);
 
@@ -247,23 +243,17 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
 
     it('should not increment count when at limit', async () => {
       const recentTime = Date.now() - 3600000;
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: recentTime.toString(),
-      }));
+      writeRateLimitData(5, recentTime);
 
       await canGenerateStatblock(false);
 
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('5');
+      const data = readRateLimitData();
+      expect(data.count).toBe(5);
     });
 
     it('should block when count is over 5', async () => {
       const recentTime = Date.now() - 3600000;
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '10',
-        firstGenerationTime: recentTime.toString(),
-      }));
+      writeRateLimitData(10, recentTime);
 
       const result = await canGenerateStatblock(false);
 
@@ -274,10 +264,7 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
   describe('Rate Limiting - Reset After 24 Hours', () => {
     it('should reset when exactly 24 hours have passed', async () => {
       const exactlyOneDayAgo = Date.now() - 86400000; // 24 hours in ms
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: exactlyOneDayAgo.toString(),
-      }));
+      writeRateLimitData(5, exactlyOneDayAgo);
 
       const result = await canGenerateStatblock(false);
 
@@ -287,10 +274,7 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
 
     it('should reset when more than 24 hours have passed', async () => {
       const twoDaysAgo = Date.now() - (86400000 * 2);
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: twoDaysAgo.toString(),
-      }));
+      writeRateLimitData(5, twoDaysAgo);
 
       const result = await canGenerateStatblock(false);
 
@@ -299,30 +283,24 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
 
     it('should set count to 1 after reset', async () => {
       const oneDayAgo = Date.now() - 86400000;
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: oneDayAgo.toString(),
-      }));
+      writeRateLimitData(5, oneDayAgo);
 
       await canGenerateStatblock(false);
 
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      const data = readRateLimitData();
+      expect(data.count).toBe(1);
     });
 
     it('should update firstGenerationTime to current time after reset', async () => {
       const oneDayAgo = Date.now() - 86400000;
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: oneDayAgo.toString(),
-      }));
+      writeRateLimitData(5, oneDayAgo);
 
       const beforeTime = Date.now();
       await canGenerateStatblock(false);
       const afterTime = Date.now();
 
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      const newTime = parseInt(stored.firstGenerationTime);
+      const data = readRateLimitData();
+      const newTime = data.firstTime;
       expect(newTime).toBeGreaterThanOrEqual(beforeTime);
       expect(newTime).toBeLessThanOrEqual(afterTime);
     });
@@ -337,8 +315,8 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       const result = await canGenerateStatblock(false);
 
       expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      const data = readRateLimitData();
+      expect(data.count).toBe(1);
     });
 
     it('should handle null generationCount', async () => {
@@ -361,8 +339,8 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       const result = await canGenerateStatblock(false);
 
       expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      const data = readRateLimitData();
+      expect(data.count).toBe(1);
     });
 
     it('should handle missing firstGenerationTime when at limit', async () => {
@@ -375,8 +353,8 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       const result = await canGenerateStatblock(false);
 
       expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      const data = readRateLimitData();
+      expect(data.count).toBe(1);
     });
 
     it('should handle completely corrupted JSON', async () => {
@@ -386,8 +364,8 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       const result = await canGenerateStatblock(false);
 
       expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      const data = readRateLimitData();
+      expect(data.count).toBe(1);
     });
 
     it('should handle empty string in localStorage', async () => {
@@ -397,8 +375,8 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       const result = await canGenerateStatblock(false);
 
       expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      const data = readRateLimitData();
+      expect(data.count).toBe(1);
     });
 
     it('should handle non-object data', async () => {
@@ -408,8 +386,8 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
 
       // Should reset to fresh state and allow generation
       expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      const data = readRateLimitData();
+      expect(data.count).toBe(1);
     });
   });
 
@@ -453,8 +431,8 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       expect(successCount).toBeLessThanOrEqual(3);
 
       // Final count should reflect at least some increments
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(parseInt(stored.generationCount)).toBeGreaterThanOrEqual(2);
+      const data = readRateLimitData();
+      expect(data.count).toBeGreaterThanOrEqual(2);
     });
   });
 });

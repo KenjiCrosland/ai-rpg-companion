@@ -46,7 +46,7 @@ jest.mock('@/components/DataManagerModal.vue', () => ({
 }));
 
 // Mock API calls
-jest.mock('@/util/open-ai.mjs', () => ({
+jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn()
 }));
 

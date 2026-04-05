@@ -18,7 +18,7 @@ import SettingGenerator from '../SettingGenerator.vue';
 import * as openAi from "@/util/ai-client.mjs";
 
 // Mock the open-ai module
-jest.mock('@/util/open-ai.mjs', () => ({
+jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
 }));
 

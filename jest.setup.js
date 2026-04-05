@@ -8,3 +8,8 @@ const VueServerRenderer = require('@vue/server-renderer');
 global.Vue = Vue;
 global.VueCompilerDOM = VueCompilerDOM;
 global.VueServerRenderer = VueServerRenderer;
+
+// Mock import.meta for Jest (needed for Vite environment checks)
+global.import = global.import || {};
+global.import.meta = global.import.meta || {};
+global.import.meta.env = global.import.meta.env || { DEV: true };

@@ -2,8 +2,8 @@ import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "../prompts/monster-prompts.mjs";
 
 
-export async function generateStatblockPart1({ 
-    monsterName, challengeRating, monsterType, monsterDescription, caster 
+export async function generateStatblockPart1({
+    monsterName, challengeRating, monsterType, monsterDescription, caster
 }) {
     let monsterPart1 = null;
     let errorMessage = '';
@@ -14,7 +14,7 @@ export async function generateStatblockPart1({
     const monsterPrompts = createStatblockPrompts(promptOptions);
 
     try {
-        const monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3);
+        const monsterStatsPart1 = await generateGptResponse(monsterPrompts.part1, validationPart1, 3, null, null, null);
         monsterPart1 = JSON.parse(monsterStatsPart1);
     } catch (e) {
         errorMessage = 'There was an issue generating Part 1 of the description. Please retry.';
@@ -33,7 +33,7 @@ export async function completeStatblock(monsterStatsPart1, monsterPrompts) {
     ];
 
     try {
-         const monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext);
+         const monsterStatsPart2 = await generateGptResponse(monsterPrompts.part2, validationPart2, 3, previousContext, null, null);
          monsterPart2 = JSON.parse(monsterStatsPart2);
     } catch (e) {
         errorMessage = 'There was an issue generating Part 2 of the description. Please retry.';

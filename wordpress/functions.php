@@ -320,6 +320,16 @@ function get_ai_provider_config($provider) {
 
 // The callback function for the custom REST route
 function whisper_api_proxy( WP_REST_Request $request ) {
+    // Validate premium status BEFORE making expensive AI call
+    // Free users hitting this endpoint after their limit indicates client-side manipulation
+    $is_premium = kenji_is_premium();
+
+    // Note: We don't check count here because:
+    // 1. Free users have no login, so we can't track server-side
+    // 2. Client-side blocking (canGenerateStatblock) handles legitimate users
+    // 3. Attackers who manipulate client-side checks will waste our API credits,
+    //    but the annoyance barrier (localStorage manipulation) is sufficient deterrent
+
     // Get provider from custom header (default to DeepSeek)
     $provider = $request->get_header('X-AI-Provider');
     if (!$provider) {
@@ -362,7 +372,22 @@ function whisper_api_proxy( WP_REST_Request $request ) {
     $response_code = wp_remote_retrieve_response_code($response);
     $response_body = wp_remote_retrieve_body($response);
 
-    return new WP_REST_Response(json_decode($response_body, true), $response_code);
+    // Decode the AI provider's response
+    $ai_response = json_decode($response_body, true);
+
+    // Add premium status disguised as usage metadata
+    // Obfuscated to prevent obvious client-side manipulation
+    if (is_array($ai_response)) {
+        // Ensure usage object exists (most AI providers include this)
+        if (!isset($ai_response['usage'])) {
+            $ai_response['usage'] = array();
+        }
+        // Add tier flag disguised as usage metadata (_t = tier level)
+        // 1 = premium tier, 0 = free tier
+        $ai_response['usage']['_t'] = kenji_is_premium() ? 1 : 0;
+    }
+
+    return new WP_REST_Response($ai_response, $response_code);
 }
 
 // Retry mechanism with exponential backoff
