@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
           dashboard: 'src/entries/dashboard.js',
           'dashboard-plus': 'src/entries/dashboard-plus.js',
           landing: 'src/entries/landing.js',
+          'price-calculator': 'src/entries/price-calculator.js',
         },
       },
     },
