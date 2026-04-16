@@ -353,14 +353,7 @@ export default {
       const markdownContent = convertLocationsToMarkdown(locations);
 
       if (markdownContent) {
-        const textarea = document.createElement('textarea');
-        textarea.textContent = markdownContent;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-
-        // Optionally, display a message that the content has been copied.
+        navigator.clipboard.writeText(markdownContent);
         alert('Content copied as markdown!');
       } else {
         // If there is no content to copy, display a message to the user.
