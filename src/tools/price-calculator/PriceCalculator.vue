@@ -2,188 +2,144 @@
   <div class="price-calc">
     <div class="price-calc-container">
       <div class="hero-section">
-        <h1 class="hero-title">Magic Item Price Calculator</h1>
+        <h1 class="hero-title">Kenji's Magic Item Price Calculator</h1>
         <p class="hero-subtitle">
-          Calculate fair prices for D&amp;D 5e magic items based on rarity, item
-          type, game disruption potential, market conditions, and haggle results.
+          A tool for pricing any D&amp;D 5e magic item, especially homebrew,
+          by game impact, item type, market conditions, and haggling.
         </p>
       </div>
 
-      <div class="calculator-form">
+      <div class="calculator-layout">
+        <div class="calculator-form">
 
-    <!-- Rarity -->
-    <div class="price-calc__section">
-      <label class="price-calc__label">Rarity</label>
-      <div class="price-calc__btn-group">
-        <button
-          v-for="r in rarities"
-          :key="r.key"
-          :class="['price-calc__btn', { active: rarity === r.key }]"
-          @click="rarity = r.key"
-        >
-          {{ r.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Item Category -->
-    <div class="price-calc__section">
-      <label class="price-calc__label">Item category</label>
-      <p class="price-calc__sublabel">
-        Based on how the item primarily functions, not its physical form
-      </p>
-      <div class="price-calc__btn-group">
-        <button
-          v-for="t in itemTypes"
-          :key="t.key"
-          :class="['price-calc__btn', { active: itemType === t.key }]"
-          @click="itemType = t.key"
-        >
-          {{ t.label }}
-        </button>
-      </div>
-      <p class="price-calc__hint">{{ currentTypeHint }}</p>
-    </div>
-
-    <!-- Disruption Potential -->
-    <div class="price-calc__section">
-      <label class="price-calc__label">Disruption potential</label>
-      <p class="price-calc__sublabel">
-        How much does this item disrupt the challenges you can put in front of
-        the party?
-      </p>
-      <div class="price-calc__slider-row">
-        <span class="price-calc__slider-label">Cosmetic</span>
-        <input
-          type="range"
-          min="0"
-          max="8"
-          step="1"
-          v-model.number="disruption"
-          class="price-calc__slider"
-        />
-        <span class="price-calc__slider-label right">Priceless</span>
-      </div>
-      <div class="price-calc__disruption-card">
-        <p class="price-calc__disruption-title">
-          {{ currentDisruption.name }}
-        </p>
-        <p class="price-calc__disruption-desc">
-          {{ currentDisruption.desc }}
-        </p>
-        <p
-          v-if="currentDisruption.mult !== -1"
-          class="price-calc__disruption-mult"
-        >
-          Multiplier: {{ currentDisruption.mult }}x
-        </p>
-      </div>
-    </div>
-
-    <hr class="price-calc__divider" />
-
-    <!-- Market -->
-    <div class="price-calc__section">
-      <label class="price-calc__label">Market</label>
-      <div class="price-calc__btn-group">
-        <button
-          v-for="m in markets"
-          :key="m.key"
-          :class="['price-calc__btn', { active: market === m.key }]"
-          @click="selectMarket(m.key)"
-        >
-          {{ m.label }}
-        </button>
-      </div>
-      <p v-if="market === 'auction'" class="price-calc__hint">
-        Competitive bidding drives price up unpredictably. Current result:
-        <strong>{{ auctionMult.toFixed(1) }}x</strong> base price.
-        <button class="price-calc__reroll" @click="rerollAuction">
-          Re-roll auction
-        </button>
-      </p>
-      <p v-else-if="currentMarketHint" class="price-calc__hint">
-        {{ currentMarketHint }}
-      </p>
-    </div>
-
-    <!-- Modifiers -->
-    <div class="price-calc__section">
-      <label class="price-calc__label">Modifiers</label>
-      <div
-        v-for="mod in modifiers"
-        :key="mod.key"
-        class="price-calc__checkbox-row"
-      >
-        <input
-          type="checkbox"
-          :id="'mod-' + mod.key"
-          v-model="mod.checked"
-        />
-        <label :for="'mod-' + mod.key">{{ mod.label }}</label>
-      </div>
-    </div>
-
-    <!-- Haggle -->
-    <div class="price-calc__section">
-      <label class="price-calc__label">Haggle result</label>
-      <div class="price-calc__btn-group">
-        <button
-          v-for="h in haggles"
-          :key="h.key"
-          :class="['price-calc__btn', { active: haggle === h.key }]"
-          @click="haggle = h.key"
-        >
-          {{ h.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Price Output -->
-    <div class="price-calc__output">
-      <template v-if="isPriceless">
-        <div class="price-calc__priceless">
-          <p class="price-calc__priceless-title">Priceless</p>
-          <p class="price-calc__priceless-desc">
-            This item cannot be bought or sold for gold. It exists outside the
-            economy. Its acquisition should be a quest, a bargain with a power
-            beyond mortal understanding, or a twist of fate.
-          </p>
-        </div>
-      </template>
-      <template v-else>
-        <p class="price-calc__price">{{ formattedPrice }} gp</p>
-        <p class="price-calc__range">
-          <template v-if="market === 'auction'">
-            Auction result — re-roll to simulate different bidding outcomes
-          </template>
-          <template v-else>
-            Fair range: {{ formattedLow }} – {{ formattedHigh }} gp
-          </template>
-        </p>
-        <div class="price-calc__breakdown">
-          <div
-            v-for="(line, i) in breakdown"
-            :key="i"
-            class="price-calc__breakdown-line"
-          >
-            <span>{{ line.label }}</span>
-            <span
-              :class="[
-                'price-calc__breakdown-value',
-                line.cls === 'pos' ? 'increase' : '',
-                line.cls === 'neg' ? 'decrease' : '',
-              ]"
-            >
-              {{ line.value }}
-            </span>
+          <!-- Item Category -->
+          <div class="price-calc__section">
+            <label class="price-calc__label">Item category</label>
+            <p class="price-calc__sublabel">
+              Based on how the item primarily functions, not its physical form
+            </p>
+            <div class="price-calc__btn-group">
+              <button v-for="t in itemTypes" :key="t.key" :class="['price-calc__btn', { active: itemType === t.key }]"
+                @click="itemType = t.key">
+                {{ t.label }}
+              </button>
+            </div>
+            <p class="price-calc__hint">{{ currentTypeHint }}</p>
           </div>
+
+          <!-- Modifiers -->
+          <div class="price-calc__section">
+            <label class="price-calc__label">Modifiers</label>
+            <p class="price-calc__sublabel">
+              Special properties that adjust the price. Modifiers stack multiplicatively.
+            </p>
+            <div v-for="mod in modifiers" :key="mod.key" class="price-calc__checkbox-row">
+              <input type="checkbox" :id="'mod-' + mod.key" v-model="mod.checked" />
+              <label :for="'mod-' + mod.key">{{ mod.label }}</label>
+            </div>
+          </div>
+
+          <!-- Disruption Potential -->
+          <div class="price-calc__section">
+            <label class="price-calc__label">Disruption potential</label>
+            <p class="price-calc__sublabel">
+              How much does this item disrupt the challenges you can put in front of
+              the party?
+            </p>
+            <div class="price-calc__slider-row">
+              <span class="price-calc__slider-label">Low</span>
+              <input type="range" min="0" max="8" step="1" v-model.number="disruption" class="price-calc__slider" />
+              <span class="price-calc__slider-label right">High</span>
+            </div>
+            <div class="price-calc__disruption-card">
+              <p class="price-calc__disruption-title">
+                {{ currentDisruption.name }}
+              </p>
+              <p class="price-calc__disruption-desc">
+                {{ currentDisruption.desc }}
+              </p>
+              <p v-if="!isPriceless" class="price-calc__disruption-mult">
+                Base price: {{ currentDisruption.basePrice.toLocaleString() }} gp
+              </p>
+            </div>
+          </div>
+
+          <hr class="price-calc__divider" />
+
+          <!-- Market -->
+          <div class="price-calc__section">
+            <label class="price-calc__label">Market</label>
+            <div class="price-calc__btn-group">
+              <button v-for="m in markets" :key="m.key" :class="['price-calc__btn', { active: market === m.key }]"
+                @click="selectMarket(m.key)">
+                {{ m.label }}
+              </button>
+            </div>
+            <p v-if="market === 'auction'" class="price-calc__hint">
+              Competitive bidding drives price up unpredictably. Current result:
+              <strong>{{ auctionMult.toFixed(1) }}x</strong> base price.
+            </p>
+            <button v-if="market === 'auction'" class="price-calc__reroll" @click="rerollAuction">
+              Re-roll auction
+            </button>
+            <p v-else-if="currentMarketHint" class="price-calc__hint">
+              {{ currentMarketHint }}
+            </p>
+          </div>
+
+          <!-- Haggle -->
+          <div class="price-calc__section">
+            <label class="price-calc__label">Haggle result</label>
+            <div class="price-calc__btn-group">
+              <button v-for="h in haggles" :key="h.key" :class="['price-calc__btn', { active: haggle === h.key }]"
+                @click="haggle = h.key">
+                {{ h.label }}
+              </button>
+            </div>
+          </div>
+
         </div>
-        <p v-if="currentMarketNote" class="price-calc__market-note">
-          {{ currentMarketNote }}
-        </p>
-      </template>
-    </div>
+
+        <aside class="price-calc__output-column">
+          <div class="price-calc__output">
+            <template v-if="isPriceless">
+              <div class="price-calc__priceless">
+                <p class="price-calc__priceless-title">Priceless</p>
+                <p class="price-calc__priceless-desc">
+                  This item cannot be bought or sold for gold. It exists outside the
+                  economy. Its acquisition should be a quest, a bargain with a power
+                  beyond mortal understanding, or a twist of fate.
+                </p>
+              </div>
+            </template>
+            <template v-else>
+              <p class="price-calc__price">{{ formattedPrice }} gp</p>
+              <p class="price-calc__range">
+                <template v-if="market === 'auction'">
+                  Auction result. Re-roll to simulate different bidding outcomes.
+                </template>
+                <template v-else>
+                  Fair range: {{ formattedLow }} – {{ formattedHigh }} gp
+                </template>
+              </p>
+              <div class="price-calc__breakdown">
+                <div v-for="(line, i) in breakdown" :key="i" class="price-calc__breakdown-line">
+                  <span>{{ line.label }}</span>
+                  <span :class="[
+                    'price-calc__breakdown-value',
+                    line.cls === 'pos' ? 'increase' : '',
+                    line.cls === 'neg' ? 'decrease' : '',
+                  ]">
+                    {{ line.value }}
+                  </span>
+                </div>
+              </div>
+              <p v-if="currentMarketNote" class="price-calc__market-note">
+                {{ currentMarketNote }}
+              </p>
+            </template>
+          </div>
+        </aside>
 
       </div>
 
@@ -195,6 +151,19 @@
             Try the Magic Item Generator →
           </a>
         </p>
+      </div>
+
+      <!-- Mobile Sticky Price Bar -->
+      <div class="price-calc__mobile-sticky" v-show="showMobileSticky" @click="scrollToOutput">
+        <div class="price-calc__mobile-sticky-content">
+          <span v-if="isPriceless" class="price-calc__mobile-sticky-price">
+            Priceless
+          </span>
+          <span v-else class="price-calc__mobile-sticky-price">
+            {{ formattedPrice }} gp
+          </span>
+          <span class="price-calc__mobile-sticky-hint">Tap to see details</span>
+        </div>
       </div>
     </div>
   </div>
@@ -212,28 +181,12 @@ export default {
 
   data() {
     return {
-      rarity: 'common',
       itemType: 'weapon',
-      disruption: 0,
+      disruption: 2,
       market: 'standard',
       haggle: 'none',
       auctionMult: this.rollAuction(),
-
-      rarities: [
-        { key: 'common', label: 'Common' },
-        { key: 'uncommon', label: 'Uncommon' },
-        { key: 'rare', label: 'Rare' },
-        { key: 'very_rare', label: 'Very rare' },
-        { key: 'legendary', label: 'Legendary' },
-      ],
-
-      basePrices: {
-        common: 50,
-        uncommon: 1000,
-        rare: 4000,
-        very_rare: 16000,
-        legendary: 25000,
-      },
+      showMobileSticky: false,
 
       itemTypes: [
         { key: 'weapon', label: 'Weapon', mult: 1.0 },
@@ -244,60 +197,60 @@ export default {
 
       typeHints: {
         weapon:
-          'Swords, bows, daggers — primary value is dealing damage.',
+          'Swords, bows, daggers. Primary value is dealing damage.',
         armor:
-          'Armor, shields — primary value is preventing damage. Consistently priced ~1.5x weapons.',
+          'Armor and shields. Priced 1.5x because defensive bonuses apply to every attack against you, every round, making them more consistently valuable than offensive items of equivalent power.',
         permanent:
-          'Rings, cloaks, boots, wands, rods, staves, wondrous items — any reusable non-weapon, non-armor item.',
+          'Rings, cloaks, boots, wands, rods, staves, wondrous items. Any reusable non-weapon, non-armor item.',
         consumable:
-          'Potions, scrolls, ammunition, single-use items. Roughly 1/10th of an equivalent permanent item.',
+          'Potions, scrolls, ammunition. Single use, roughly 1/10th of an equivalent permanent item.',
       },
 
       disruptionLevels: [
         {
-          name: 'Cosmetic',
-          mult: 1.0,
-          desc: 'Flavor only. A glowing blade, a cloak that billows dramatically, a ring that changes color. No mechanical benefit beyond what the rarity already provides.',
+          name: 'Baseline',
+          basePrice: 100,
+          desc: 'Minor flavor or very small effects. Most Common items land here. Weapons: a blade that glows faintly. Armor: a cloak that repels dust. Other: a self-stirring cup, a feather that writes on its own, a ring that changes color with mood.',
         },
         {
           name: 'Minor convenience',
-          mult: 1.5,
-          desc: "Saves minor time or effort. A cantrip-equivalent ability, a small storage solution, a language aid. Nice to have, never necessary.",
+          basePrice: 300,
+          desc: 'Small, reliable benefit in a narrow situation. Some Common items and the weaker end of Uncommon land here. Weapons: silvered or adamantine for specific monster types. Armor: sheds rain and cold. Other: cantrip-equivalent items, small storage, language aids, a trinket that finds lost keys.',
         },
         {
           name: 'Meaningful advantage',
-          mult: 2.5,
-          desc: "Provides a reliable edge without invalidating challenges. A damage bonus, enhanced senses, a social advantage, a useful resistance. Helpful across situations but the DM doesn't need to redesign anything around it.",
+          basePrice: 1000,
+          desc: 'Reliable edge without invalidating challenges. Most Uncommon items land here. Weapons: +1 weapons. Armor: +1 armor or shield. Other: darkvision, consistent social advantages, useful resistances, bonus skill proficiency, minor utility spells at will.',
         },
         {
-          name: 'Challenge bypass',
-          mult: 5,
-          desc: 'Skips or trivializes a specific category of problem — locked doors, language barriers, environmental hazards, deception. The DM may need to stop relying on certain obstacle types.',
+          name: 'Significant power',
+          basePrice: 3000,
+          desc: 'Substantial reliable power, or skips a specific category of problem. Most Rare items land here. Weapons: +2 weapons, Flame Tongue, Dagger of Venom. Armor: Mithral armor, armor of resistance. Other: reliable lie detection, locked door bypass, language barriers, specific hazard immunity. Also where a Bag of Holding sits despite being Uncommon, because its utility outstrips its tier.',
         },
         {
           name: 'Encounter reshaping',
-          mult: 10,
-          desc: "Forces the DM to account for it when designing challenges. Reliable flight, at-will invisibility, undetectable lying, perfect tracking. Changes the baseline of what the party can handle in combat, exploration, or social situations.",
+          basePrice: 10000,
+          desc: 'Forces the DM to redesign challenges around the item. Most Very Rare items land here. Weapons: Sunblade, Frost Brand, Dwarven Thrower. Armor: Glamoured Studded Leather, high-bonus Elven Chain. Other: reliable flight, at-will invisibility, undetectable lying, perfect tracking, guaranteed social manipulation.',
         },
         {
           name: 'Pillar breaking',
-          mult: 25,
-          desc: "Trivializes an entire dimension of play — combat survival, overland travel, social manipulation, information gathering. The campaign must accommodate the item's existence or become trivial in that area.",
+          basePrice: 30000,
+          desc: 'Trivializes an entire dimension of play. Most Legendary items land here. Weapons: Holy Avenger, Vorpal Sword, Defender, +3 weapons. Armor: +3 armor, Armor of Invulnerability. Other: items that break combat survival, overland travel, social manipulation, or resource management.',
         },
         {
           name: 'Economy breaking',
-          mult: 60,
-          desc: "Generates unlimited resources, replicates costly services for free, or renders entire professions obsolete. Disrupts the world's economic and social assumptions, not just the party's capabilities.",
+          basePrice: 80000,
+          desc: 'Generates unlimited resources or renders entire professions obsolete. Rarity varies widely here. The Decanter of Endless Water (Uncommon in the book) and Alchemy Jug (Uncommon) sit here despite their rarity tag because their effects break world assumptions. Infinite food, water, healing, light, transport, or labor.',
         },
         {
           name: 'Campaign altering',
-          mult: 150,
-          desc: "Fundamentally changes the premise of the campaign. Distance, barriers, secrets, and scarcity stop functioning as narrative constraints. Most items here should be quest rewards, not purchases.",
+          basePrice: 200000,
+          desc: 'Fundamentally changes the premise of the campaign. Rarity varies. Items like Cubic Gate, Sphere of Annihilation, and Talisman of the Sphere dissolve distance, barriers, secrets, identity, or scarcity as narrative constraints.',
         },
         {
           name: 'Priceless',
-          mult: -1,
-          desc: 'Cannot be bought or sold for any amount of gold. This item is a plot device, a divine gift, or a cosmic anomaly. If the party has it, the DM intended them to have it.',
+          basePrice: -1,
+          desc: 'Cannot be bought or sold for any amount of gold. A plot device, a divine gift, a cosmic anomaly, or an artifact tied to the fate of worlds.',
         },
       ],
 
@@ -377,7 +330,7 @@ export default {
     },
 
     isPriceless() {
-      return this.currentDisruption.mult === -1;
+      return this.currentDisruption.basePrice === -1;
     },
 
     currentTypeMult() {
@@ -404,11 +357,10 @@ export default {
 
     calculatedPrice() {
       if (this.isPriceless) return 0;
-      const base = this.basePrices[this.rarity];
+      const base = this.currentDisruption.basePrice;
       const total =
         base *
         this.currentTypeMult *
-        this.currentDisruption.mult *
         this.modifierMult *
         this.currentMarketMult *
         this.currentHaggleMult;
@@ -431,12 +383,11 @@ export default {
       if (this.isPriceless) return [];
 
       const lines = [];
-      const base = this.basePrices[this.rarity];
-      const rarityLabel = this.rarity.replace('_', ' ');
+      const dd = this.currentDisruption;
 
       lines.push({
-        label: `Base (${rarityLabel})`,
-        value: `${base.toLocaleString()} gp`,
+        label: `Base (${dd.name})`,
+        value: `${dd.basePrice.toLocaleString()} gp`,
         cls: '',
       });
 
@@ -455,17 +406,6 @@ export default {
             cls: 'pos',
           });
         }
-      }
-
-      // Disruption
-      const dd = this.currentDisruption;
-      if (dd.mult !== 1.0 && dd.mult !== -1) {
-        const pct = Math.round((dd.mult - 1) * 100);
-        lines.push({
-          label: `${dd.name} (${this.disruption}/7)`,
-          value: `+${pct}%`,
-          cls: 'pos',
-        });
       }
 
       // Modifiers
@@ -517,7 +457,11 @@ export default {
 
   methods: {
     rollAuction() {
-      return Math.round((1.5 + Math.random() * 1.5) * 10) / 10;
+      const d = this.disruption;
+      const minMult = 1.2 + (d * 0.15);
+      const maxMult = Math.min(3.0, 1.4 + (d * 0.2));
+      const range = maxMult - minMult;
+      return Math.round((minMult + Math.random() * range) * 10) / 10;
     },
 
     selectMarket(key) {
@@ -530,6 +474,34 @@ export default {
     rerollAuction() {
       this.auctionMult = this.rollAuction();
     },
+
+    handleScroll() {
+      const output = document.querySelector('.price-calc__output-column');
+      if (!output) {
+        this.showMobileSticky = false;
+        return;
+      }
+      const rect = output.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      // Show sticky bar when output is below the viewport or top of it is out of view
+      this.showMobileSticky = rect.top > viewportHeight - 100;
+    },
+
+    scrollToOutput() {
+      const output = document.querySelector('.price-calc__output-column');
+      if (output) {
+        output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    },
+  },
+
+  mounted() {
+    window.addEventListener('scroll', this.handleScroll, { passive: true });
+    this.handleScroll();
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('scroll', this.handleScroll);
   },
 };
 </script>
@@ -544,7 +516,7 @@ export default {
 }
 
 .price-calc-container {
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
@@ -568,6 +540,32 @@ export default {
   margin: 0 auto;
   line-height: 1.6;
   max-width: 650px;
+}
+
+/* Calculator Layout */
+.calculator-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .calculator-layout {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 3rem;
+  }
+}
+
+.price-calc__output-column {
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .price-calc__output-column {
+    position: sticky;
+    top: 2rem;
+  }
 }
 
 /* Calculator Form */
@@ -761,7 +759,7 @@ export default {
   cursor: pointer;
   background: rgba(244, 242, 237, 0.15);
   color: #20201d;
-  margin-left: 1rem;
+  margin-top: 0.8rem;
   font-family: inherit;
   transition: all 0.15s;
 
@@ -776,7 +774,7 @@ export default {
   background: #f9f9f9;
   border: 1px solid #e5e5e5;
   border-radius: 8px;
-  margin-top: 3rem;
+  margin-top: 0;
 }
 
 .price-calc__price {
@@ -881,10 +879,52 @@ export default {
   }
 }
 
+/* Mobile Sticky Price Bar */
+.price-calc__mobile-sticky {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-top: 1px solid #e5e5e5;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+  padding: 1.2rem 2rem;
+  z-index: 100;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .price-calc__mobile-sticky {
+    display: block;
+  }
+}
+
+.price-calc__mobile-sticky-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.price-calc__mobile-sticky-price {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #007a5a;
+}
+
+.price-calc__mobile-sticky-hint {
+  font-size: 1.2rem;
+  color: #687076;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .price-calc {
     padding: 2rem 1rem;
+    padding-bottom: 8rem;
   }
 
   .hero-title {
@@ -910,6 +950,7 @@ export default {
 
   .price-calc__output {
     padding: 2rem 1.5rem;
+    margin-top: 2rem;
   }
 
   .price-calc__price {
