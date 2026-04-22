@@ -56,6 +56,9 @@
           <option value="gm-dashboard-plus">GM Dashboard Plus</option>
           <option value="category-landing">Landing Page</option>
         </optgroup>
+        <optgroup label="Tools">
+          <option value="price-calculator">Magic Item Price Calculator</option>
+        </optgroup>
         <optgroup label="Examples">
           <option value="tabs-example">Tabs Example</option>
         </optgroup>
@@ -85,6 +88,7 @@
     <EncounterGenerator :premium="true" v-if="currentPage === 'encounter-generator-premium'" />
     <SettingGenerator v-if="currentPage === 'setting-generator'" />
     <SettingGenerator :premium="true" v-if="currentPage === 'setting-generator-premium'" />
+    <PriceCalculator v-if="currentPage === 'price-calculator'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
     <LandingPage v-if="currentPage === 'category-landing'" />
 
@@ -106,6 +110,7 @@ import ItemGenerator from '@/tools/item-generator/ItemGenerator.vue';
 import EncounterGenerator from '@/tools/encounter-generator/EncounterGenerator.vue';
 import SettingGenerator from '@/tools/setting-generator/SettingGenerator.vue';
 import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGenerator.vue';
+import PriceCalculator from '@/tools/price-calculator/PriceCalculator.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
 import LandingPage from '@/components/LandingPage.vue';
 import AppToast from '@/components/AppToast.vue';
@@ -131,6 +136,7 @@ export default {
     ItemGenerator,
     EncounterGenerator,
     SettingGenerator,
+    PriceCalculator,
     TabsExample,
     LandingPage,
     AppToast
