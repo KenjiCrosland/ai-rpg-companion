@@ -16,30 +16,17 @@
         :width="svgSize.w"
         :height="svgSize.h"
       >
-        <defs>
-          <marker
-            id="chase-arrow"
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="5"
-            markerHeight="5"
-            orient="auto-start-reverse"
-          >
-            <path d="M 0 0 L 10 5 L 0 10 z" class="connection-arrow" />
-          </marker>
-        </defs>
-        <line
-          v-for="(line, i) in connectionLines"
-          :key="i"
-          :x1="line.x1"
-          :y1="line.y1"
-          :x2="line.x2"
-          :y2="line.y2"
-          class="connection-line"
-          :marker-start="isMobile ? null : 'url(#chase-arrow)'"
-          :marker-end="isMobile ? null : 'url(#chase-arrow)'"
-        />
+        <g v-for="(seg, i) in connectionLines" :key="i">
+          <line
+            :x1="seg.x1"
+            :y1="seg.y1"
+            :x2="seg.x2"
+            :y2="seg.y2"
+            class="connection-line"
+          />
+          <polygon v-if="!isMobile" :points="seg.arrowA" class="connection-arrow" />
+          <polygon v-if="!isMobile" :points="seg.arrowB" class="connection-arrow" />
+        </g>
       </svg>
 
       <Zone
@@ -87,6 +74,20 @@ function rectEdgeTowards(rect, tx, ty, inset = 12) {
   const sy = dy === 0 ? Infinity : hh / Math.abs(dy);
   const s = Math.min(sx, sy);
   return { x: rect.cx + dx * s, y: rect.cy + dy * s };
+}
+
+// Arrow polygon: tip at (tx, ty) pointing in unit direction (dx, dy).
+// Length + half-width are in pixels.
+function arrowPolygon(tx, ty, dx, dy, length = 10, halfWidth = 5) {
+  const baseX = tx - dx * length;
+  const baseY = ty - dy * length;
+  const perpX = -dy;
+  const perpY = dx;
+  const c1x = baseX + perpX * halfWidth;
+  const c1y = baseY + perpY * halfWidth;
+  const c2x = baseX - perpX * halfWidth;
+  const c2y = baseY - perpY * halfWidth;
+  return `${tx},${ty} ${c1x},${c1y} ${c2x},${c2y}`;
 }
 
 export default {
@@ -181,14 +182,43 @@ export default {
         };
       });
 
+      // Line ends a few pixels inside each arrow so the stroke never pokes
+      // past the triangle's tapering tip.
+      const ARROW_LENGTH = 10;
+      const ARROW_HALF_W = 5;
+      const LINE_BACKOFF = 4;
+
       this.connectionLines = this.connections
         .map(([a, b]) => {
           const ra = rects[a];
           const rb = rects[b];
           if (!ra || !rb) return null;
-          const start = rectEdgeTowards(ra, rb.cx, rb.cy);
-          const end = rectEdgeTowards(rb, ra.cx, ra.cy);
-          return { x1: start.x, y1: start.y, x2: end.x, y2: end.y };
+          const tipA = rectEdgeTowards(ra, rb.cx, rb.cy);
+          const tipB = rectEdgeTowards(rb, ra.cx, ra.cy);
+          const vx = tipB.x - tipA.x;
+          const vy = tipB.y - tipA.y;
+          const dist = Math.hypot(vx, vy);
+          if (dist < 0.001) return null;
+          const nx = vx / dist;
+          const ny = vy / dist;
+
+          const lineStart = {
+            x: tipA.x + nx * (ARROW_LENGTH - LINE_BACKOFF),
+            y: tipA.y + ny * (ARROW_LENGTH - LINE_BACKOFF),
+          };
+          const lineEnd = {
+            x: tipB.x - nx * (ARROW_LENGTH - LINE_BACKOFF),
+            y: tipB.y - ny * (ARROW_LENGTH - LINE_BACKOFF),
+          };
+
+          return {
+            x1: lineStart.x,
+            y1: lineStart.y,
+            x2: lineEnd.x,
+            y2: lineEnd.y,
+            arrowA: arrowPolygon(tipA.x, tipA.y, -nx, -ny, ARROW_LENGTH, ARROW_HALF_W),
+            arrowB: arrowPolygon(tipB.x, tipB.y, nx, ny, ARROW_LENGTH, ARROW_HALF_W),
+          };
         })
         .filter(Boolean);
     },
@@ -219,7 +249,10 @@ export default {
   stroke: var(--ink-secondary);
   stroke-width: 2.75;
   opacity: 0.72;
-  stroke-linecap: round;
+  /* butt cap (not round) so the stroke ends flush with the arrow tip —
+     a rounded cap extends stroke-width/2 past the endpoint and pokes
+     through the triangle. */
+  stroke-linecap: butt;
 }
 
 .connection-arrow {

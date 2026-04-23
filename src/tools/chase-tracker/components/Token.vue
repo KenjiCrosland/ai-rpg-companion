@@ -183,15 +183,15 @@ export default {
 
 .token-label {
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   letter-spacing: 0.03em;
   color: var(--ink-primary);
   text-align: center;
-  max-width: 100px;
+  max-width: 108px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
 .token-rename {

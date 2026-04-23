@@ -87,8 +87,8 @@ export default {
 
 .hint-text {
   margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 1rem;
+  line-height: 1.45;
   color: var(--ink-primary);
   flex: 1;
 }

@@ -52,12 +52,12 @@ export default {
 }
 
 .picker-title {
-  font-size: 2.25rem;
+  font-size: 2.5rem;
   margin-bottom: 0.5rem;
 }
 
 .picker-subtitle {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   max-width: 38rem;
   margin: 0.75rem auto 0;
   line-height: 1.55;
@@ -76,13 +76,13 @@ export default {
 }
 
 .picker-card-name {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   margin-bottom: 0.75rem;
 }
 
 .picker-card-description {
   flex: 1;
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1.5;
   margin-bottom: 1.25rem;
 }

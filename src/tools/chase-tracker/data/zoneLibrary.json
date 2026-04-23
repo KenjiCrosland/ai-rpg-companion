@@ -2,7 +2,7 @@
   "zones": [
     {
       "id": "lib_urb_001",
-      "name": "The Bell Tower",
+      "name": "Bell Tower",
       "description": "A narrow stone spire, winding stairs leading up to a swinging bronze bell.",
       "environments": ["urban"],
       "shape": "tall",
@@ -10,7 +10,7 @@
     },
     {
       "id": "lib_urb_002",
-      "name": "The Fish Market",
+      "name": "Fish Market",
       "description": "Stalls, slippery cobbles, shouting vendors, and the always-watching cats.",
       "environments": ["urban"],
       "shape": "wide",
@@ -21,7 +21,7 @@
     },
     {
       "id": "lib_urb_003",
-      "name": "The Counting House",
+      "name": "Counting House",
       "description": "Iron-banded doors, watchful guards, and the quiet of money being counted.",
       "environments": ["urban"],
       "shape": "small",
@@ -29,7 +29,7 @@
     },
     {
       "id": "lib_urb_004",
-      "name": "The Public Baths",
+      "name": "Public Baths",
       "description": "Steam, nudity, slick tile underfoot. A place where everyone is distracted.",
       "environments": ["urban"],
       "shape": "wide",
@@ -39,7 +39,7 @@
     },
     {
       "id": "lib_urb_005",
-      "name": "The Refuse Alley",
+      "name": "Refuse Alley",
       "description": "Broken crates, rats, and the smell of yesterday. A place to vanish.",
       "environments": ["urban"],
       "shape": "tall",
@@ -47,7 +47,7 @@
     },
     {
       "id": "lib_urb_006",
-      "name": "The Temple Steps",
+      "name": "Temple Steps",
       "description": "Wide, exposed, witnessed by gods and priests. Bad place to draw a weapon.",
       "environments": ["urban"],
       "shape": "wide",
@@ -55,7 +55,7 @@
     },
     {
       "id": "lib_urb_007",
-      "name": "The Ferryman's Dock",
+      "name": "Ferryman's Dock",
       "description": "Waiting boats, a way across, a way out. The ferryman takes coin, not questions.",
       "environments": ["urban"],
       "shape": "small",
@@ -63,7 +63,7 @@
     },
     {
       "id": "lib_urb_008",
-      "name": "The Printer's Shop",
+      "name": "Printer's Shop",
       "description": "Inks, paper, a press that can crush a hand. The owner is paid to remember faces.",
       "environments": ["urban"],
       "shape": "small",
@@ -73,7 +73,7 @@
     },
     {
       "id": "lib_urb_009",
-      "name": "The Gallows Square",
+      "name": "Gallows Square",
       "description": "Empty scaffold, a crowd that remembers the last hanging and is hungry for more.",
       "environments": ["urban"],
       "shape": "large",
@@ -83,7 +83,7 @@
     },
     {
       "id": "lib_urb_010",
-      "name": "The Palace Gate",
+      "name": "Palace Gate",
       "description": "High walls, polished halberds, and the patience of men paid to watch.",
       "environments": ["urban"],
       "shape": "small",
@@ -94,7 +94,7 @@
 
     {
       "id": "lib_wild_001",
-      "name": "The Wolf's Crossing",
+      "name": "Wolf's Crossing",
       "description": "A narrow game trail threading between pines. Fresh tracks in the dust.",
       "environments": ["wilderness"],
       "shape": "small",
@@ -102,7 +102,7 @@
     },
     {
       "id": "lib_wild_002",
-      "name": "The Ancient Oak",
+      "name": "Ancient Oak",
       "description": "A lone oak ringed with standing stones, older than any map of this country.",
       "environments": ["wilderness"],
       "shape": "small",
@@ -112,7 +112,7 @@
     },
     {
       "id": "lib_wild_003",
-      "name": "The Salt Flats",
+      "name": "Salt Flats",
       "description": "No cover, heat shimmer, tracks that last for days. Every move is visible.",
       "environments": ["wilderness"],
       "shape": "wide",
@@ -120,7 +120,7 @@
     },
     {
       "id": "lib_wild_004",
-      "name": "The Muddy Bog",
+      "name": "Muddy Bog",
       "description": "The suck of mud, the stink of stagnant water, deeper pools hidden beneath.",
       "environments": ["wilderness"],
       "shape": "wide",
@@ -130,7 +130,7 @@
     },
     {
       "id": "lib_wild_005",
-      "name": "The Cairn",
+      "name": "Cairn",
       "description": "Old stones piled over old bones. The silence here is too deliberate.",
       "environments": ["wilderness"],
       "shape": "small",
@@ -140,7 +140,7 @@
     },
     {
       "id": "lib_wild_006",
-      "name": "The Stag's Meadow",
+      "name": "Stag's Meadow",
       "description": "Open ground under open sky. A herd of deer stand quiet, watching.",
       "environments": ["wilderness"],
       "shape": "large",
@@ -148,7 +148,7 @@
     },
     {
       "id": "lib_wild_007",
-      "name": "The Poisoned Spring",
+      "name": "Poisoned Spring",
       "description": "Clear water, wrong taste, wrong color. The birds do not drink here.",
       "environments": ["wilderness"],
       "shape": "small",
@@ -158,7 +158,7 @@
     },
     {
       "id": "lib_wild_008",
-      "name": "The Burned Grove",
+      "name": "Burned Grove",
       "description": "Charred trunks, no leaves, no birds. Ash rises at every footfall.",
       "environments": ["wilderness"],
       "shape": "wide",
@@ -166,7 +166,7 @@
     },
     {
       "id": "lib_wild_009",
-      "name": "The Hunter's Blind",
+      "name": "Hunter's Blind",
       "description": "Abandoned platform in a tall pine. Good sightlines, easier said than reached.",
       "environments": ["wilderness"],
       "shape": "tall",
@@ -174,7 +174,7 @@
     },
     {
       "id": "lib_wild_010",
-      "name": "The Riverbend",
+      "name": "Riverbend",
       "description": "Slow brown water and a row of skiffs pulled up on the bank. Someone owns them.",
       "environments": ["wilderness"],
       "shape": "wide",
@@ -183,7 +183,7 @@
 
     {
       "id": "lib_bldg_001",
-      "name": "The Dumbwaiter",
+      "name": "Dumbwaiter",
       "description": "A narrow shaft and slow ropes. The servants' way between floors.",
       "environments": ["building_interior"],
       "shape": "tall",
@@ -193,7 +193,7 @@
     },
     {
       "id": "lib_bldg_002",
-      "name": "The Wine Cellar",
+      "name": "Wine Cellar",
       "description": "Arched vaults, cobwebbed bottles, a back tunnel no one will admit knowing about.",
       "environments": ["building_interior"],
       "shape": "wide",
@@ -203,7 +203,7 @@
     },
     {
       "id": "lib_bldg_003",
-      "name": "The Chapel",
+      "name": "Chapel",
       "description": "Wooden pews, stained glass, a back door for things said in confession.",
       "environments": ["building_interior"],
       "shape": "small",
@@ -211,7 +211,7 @@
     },
     {
       "id": "lib_bldg_004",
-      "name": "The Conservatory",
+      "name": "Conservatory",
       "description": "Glass walls and potted wonders. Fragile under any sudden violence.",
       "environments": ["building_interior"],
       "shape": "small",
@@ -221,7 +221,7 @@
     },
     {
       "id": "lib_bldg_005",
-      "name": "The Armory",
+      "name": "Armory",
       "description": "Racks of polished steel, maintained, accounted for. Missing pieces get noticed.",
       "environments": ["building_interior"],
       "shape": "small",
@@ -229,7 +229,7 @@
     },
     {
       "id": "lib_bldg_006",
-      "name": "The Solar",
+      "name": "Solar",
       "description": "Private rooms, personal effects, things not meant to be seen by strangers.",
       "environments": ["building_interior"],
       "shape": "small",
@@ -237,7 +237,7 @@
     },
     {
       "id": "lib_bldg_007",
-      "name": "The Guard Room",
+      "name": "Guard Room",
       "description": "Off-duty soldiers, dice on a table, a fire that never quite goes out.",
       "environments": ["building_interior"],
       "shape": "small",
@@ -247,7 +247,7 @@
     },
     {
       "id": "lib_bldg_008",
-      "name": "The Kennels",
+      "name": "Kennels",
       "description": "Dogs. Their masters. The dogs' memory of every stranger they've ever smelled.",
       "environments": ["building_interior"],
       "shape": "small",
@@ -257,7 +257,7 @@
     },
     {
       "id": "lib_bldg_009",
-      "name": "The Nursery",
+      "name": "Nursery",
       "description": "Small beds, a watching governess, toys scattered across the floor.",
       "environments": ["building_interior"],
       "shape": "small",
@@ -265,7 +265,7 @@
     },
     {
       "id": "lib_bldg_010",
-      "name": "The Secret Passage",
+      "name": "Secret Passage",
       "description": "A wall that opens if you know where to push. The mouse-hole the house forgot.",
       "environments": ["building_interior"],
       "shape": "tall",

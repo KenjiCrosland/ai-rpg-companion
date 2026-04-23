@@ -95,7 +95,7 @@ export default {
 }
 
 .map-name {
-  font-size: 1.85rem;
+  font-size: 2.1rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   cursor: pointer;
@@ -107,7 +107,7 @@ export default {
 
 .map-name-input {
   font-family: var(--font-display);
-  font-size: 1.85rem;
+  font-size: 2.1rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: var(--parchment-warm);

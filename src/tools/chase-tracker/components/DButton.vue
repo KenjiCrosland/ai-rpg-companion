@@ -30,9 +30,9 @@ export default {
   font-family: var(--font-display);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  padding: 0.55rem 1.1rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 2px;
   transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
   color: var(--ink-primary);

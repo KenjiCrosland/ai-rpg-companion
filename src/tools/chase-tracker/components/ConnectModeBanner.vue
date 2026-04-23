@@ -36,7 +36,7 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  padding: 0.9rem 1.25rem;
+  padding: 1rem 1.25rem;
   margin-bottom: 1rem;
   background: var(--parchment-warm);
   color: var(--ink-primary);
@@ -44,7 +44,7 @@ export default {
   border-bottom: 3px double var(--accent-gold);
   text-align: center;
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   letter-spacing: 0.04em;
   cursor: pointer;
   animation: banner-glow 1.8s ease-in-out infinite;

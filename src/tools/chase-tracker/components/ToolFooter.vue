@@ -31,7 +31,7 @@ export default {
   padding: 2rem 1rem 3rem;
   text-align: center;
   color: var(--ink-muted);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
 }
 
 .footer-credits,

@@ -48,10 +48,10 @@ export default {
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.7rem;
+  padding: 0.25rem 0.8rem;
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   letter-spacing: 0.05em;
   line-height: 1.4;
   border: 1px solid;

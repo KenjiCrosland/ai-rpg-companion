@@ -48,17 +48,17 @@ export default {
 
 .shift-heading {
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
 }
 
 .shift-text {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   line-height: 1.5;
   margin: 0.5rem 0 1rem;
 }
 
 .shift-hint {
-  font-size: 0.9rem;
+  font-size: 1rem;
   text-align: center;
   margin-bottom: 1rem;
 }

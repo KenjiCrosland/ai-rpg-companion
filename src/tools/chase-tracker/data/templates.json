@@ -9,13 +9,13 @@
       "gridCols": 3,
       "gridRows": 3,
       "zones": [
-        { "id": "rooftops", "name": "The Rooftops", "description": "Sloped tiles and narrow gaps between buildings. A fall from here would hurt.", "col": 1, "row": 1, "colSpan": 3, "pills": [] },
-        { "id": "main_street", "name": "The Main Street", "description": "Wide and crowded. A procession of festival-goers clogs the thoroughfare.", "col": 1, "row": 2, "colSpan": 2, "pills": [
+        { "id": "rooftops", "name": "Rooftops", "description": "Sloped tiles and narrow gaps between buildings. A fall from here would hurt.", "col": 1, "row": 1, "colSpan": 3, "pills": [] },
+        { "id": "main_street", "name": "Main Street", "description": "Wide and crowded. A procession of festival-goers clogs the thoroughfare.", "col": 1, "row": 2, "colSpan": 2, "pills": [
           { "id": "p_main_crowded", "label": "Crowded", "tone": "warm", "detail": "A festival procession clogs the street." }
         ] },
-        { "id": "canal_bridge", "name": "The Canal Bridge", "description": "A narrow stone bridge over brown water. Beggars line the sides.", "col": 3, "row": 2, "pills": [] },
-        { "id": "back_alley", "name": "The Back Alley", "description": "Refuse, washing lines, and a stray dog. Narrow enough to choke a rider.", "col": 1, "row": 3, "pills": [] },
-        { "id": "inn_kitchen", "name": "The Inn Kitchen", "description": "Hot ovens, low-hanging pots, shouting cooks. A back door leads out.", "col": 2, "row": 3, "pills": [
+        { "id": "canal_bridge", "name": "Canal Bridge", "description": "A narrow stone bridge over brown water. Beggars line the sides.", "col": 3, "row": 2, "pills": [] },
+        { "id": "back_alley", "name": "Back Alley", "description": "Refuse, washing lines, and a stray dog. Narrow enough to choke a rider.", "col": 1, "row": 3, "pills": [] },
+        { "id": "inn_kitchen", "name": "Inn Kitchen", "description": "Hot ovens, low-hanging pots, shouting cooks. A back door leads out.", "col": 2, "row": 3, "pills": [
           { "id": "p_inn_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Low pots and hot surfaces. Acrobatics to cross without burns." }
         ] },
         { "id": "warehouse_row", "name": "Warehouse Row", "description": "Tall shuttered buildings. Dockhands moving cargo. A good place to disappear.", "col": 3, "row": 3, "pills": [] }
@@ -46,16 +46,16 @@
       "gridCols": 3,
       "gridRows": 3,
       "zones": [
-        { "id": "ridge", "name": "The Ridge", "description": "Higher ground. A clear view in all directions — and easy to be seen.", "col": 1, "row": 1, "colSpan": 3, "pills": [] },
-        { "id": "pine_slope", "name": "The Pine Slope", "description": "Steep, slick with needles. Hard going, but good cover among the trunks.", "col": 1, "row": 2, "pills": [] },
-        { "id": "deer_trail", "name": "The Deer Trail", "description": "A narrow game path, overgrown with brambles but straight and fast.", "col": 2, "row": 2, "pills": [] },
-        { "id": "rocky_cut", "name": "The Rocky Cut", "description": "Loose scree between boulders. Footing is bad, but it's a shortcut.", "col": 3, "row": 2, "pills": [
+        { "id": "ridge", "name": "Ridge", "description": "Higher ground. A clear view in all directions — and easy to be seen.", "col": 1, "row": 1, "colSpan": 3, "pills": [] },
+        { "id": "pine_slope", "name": "Pine Slope", "description": "Steep, slick with needles. Hard going, but good cover among the trunks.", "col": 1, "row": 2, "pills": [] },
+        { "id": "deer_trail", "name": "Deer Trail", "description": "A narrow game path, overgrown with brambles but straight and fast.", "col": 2, "row": 2, "pills": [] },
+        { "id": "rocky_cut", "name": "Rocky Cut", "description": "Loose scree between boulders. Footing is bad, but it's a shortcut.", "col": 3, "row": 2, "pills": [
           { "id": "p_rocky_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Loose scree. Dex save DC 12 or fall prone while dashing." }
         ] },
-        { "id": "stream", "name": "The Stream", "description": "Cold water to the shins. Slippery stones. Breaks scent, slows movement.", "col": 1, "row": 3, "pills": [
+        { "id": "stream", "name": "Stream", "description": "Cold water to the shins. Slippery stones. Breaks scent, slows movement.", "col": 1, "row": 3, "pills": [
           { "id": "p_stream_slippery", "label": "Slippery", "tone": "warm", "detail": "Mossy stones under water. Dashing risks a Dex save." }
         ] },
-        { "id": "hermit_path", "name": "The Hermit's Path", "description": "Barely visible under fallen leaves. An old route, known only to a few.", "col": 2, "row": 3, "colSpan": 2, "pills": [] }
+        { "id": "hermit_path", "name": "Hermit's Path", "description": "Barely visible under fallen leaves. An old route, known only to a few.", "col": 2, "row": 3, "colSpan": 2, "pills": [] }
       ],
       "connections": [
         ["ridge", "pine_slope"],
@@ -84,18 +84,18 @@
       "gridCols": 3,
       "gridRows": 3,
       "zones": [
-        { "id": "grand_hall", "name": "The Grand Hall", "description": "High ceilings, marble floors, echoing footsteps. Tables and guests in the way.", "col": 1, "row": 1, "colSpan": 2, "pills": [
+        { "id": "grand_hall", "name": "Grand Hall", "description": "High ceilings, marble floors, echoing footsteps. Tables and guests in the way.", "col": 1, "row": 1, "colSpan": 2, "pills": [
           { "id": "p_grand_crowded", "label": "Crowded", "tone": "warm", "detail": "Guests and servants everywhere. Stealth is nearly impossible." }
         ] },
-        { "id": "stairwell", "name": "The Stairwell", "description": "A spiral staircase leading up and down. A choke point, and an opportunity.", "col": 3, "row": 1, "rowSpan": 2, "pills": [] },
-        { "id": "servant_corridor", "name": "The Servant Corridor", "description": "Narrow, poorly lit, smelling of ash and laundry soap. Fewer witnesses.", "col": 1, "row": 2, "pills": [] },
-        { "id": "library", "name": "The Library", "description": "Towering shelves, ladders, a maze of reading nooks. Quiet, but tight quarters.", "col": 2, "row": 2, "pills": [
+        { "id": "stairwell", "name": "Stairwell", "description": "A spiral staircase leading up and down. A choke point, and an opportunity.", "col": 3, "row": 1, "rowSpan": 2, "pills": [] },
+        { "id": "servant_corridor", "name": "Servant Corridor", "description": "Narrow, poorly lit, smelling of ash and laundry soap. Fewer witnesses.", "col": 1, "row": 2, "pills": [] },
+        { "id": "library", "name": "Library", "description": "Towering shelves, ladders, a maze of reading nooks. Quiet, but tight quarters.", "col": 2, "row": 2, "pills": [
           { "id": "p_library_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Ladders, stacks, tight passages. Athletics to move through at speed." }
         ] },
-        { "id": "kitchen", "name": "The Kitchen", "description": "Fires, knives, running servants. A back door opens onto the yard.", "col": 1, "row": 3, "pills": [
+        { "id": "kitchen", "name": "Kitchen", "description": "Fires, knives, running servants. A back door opens onto the yard.", "col": 1, "row": 3, "pills": [
           { "id": "p_kitchen_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Fire, steam, hot steel. Passing costs a Dex save or minor fire damage." }
         ] },
-        { "id": "courtyard", "name": "The Courtyard", "description": "Open cobblestones under the sky. No cover, but many exits.", "col": 2, "row": 3, "colSpan": 2, "pills": [] }
+        { "id": "courtyard", "name": "Courtyard", "description": "Open cobblestones under the sky. No cover, but many exits.", "col": 2, "row": 3, "colSpan": 2, "pills": [] }
       ],
       "connections": [
         ["grand_hall", "stairwell"],

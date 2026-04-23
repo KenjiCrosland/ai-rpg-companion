@@ -217,7 +217,7 @@ export default {
 }
 
 .zone-name {
-  font-size: 1.5rem;
+  font-size: 1.65rem;
   font-weight: 600;
   text-align: center;
   margin: 0.25rem 0 0;
@@ -227,12 +227,18 @@ export default {
 }
 
 .zone-description {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   line-height: 1.5;
   margin: 0.5rem 0 0.75rem;
   text-align: center;
   color: var(--ink-secondary);
   pointer-events: none;
+  /* Cap at two lines so the tokens+affordance row below always have a
+     predictable amount of space to work with. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .zone-pills {
@@ -251,7 +257,9 @@ export default {
   align-items: flex-start;
   margin-top: auto;
   padding-top: 0.25rem;
-  padding-bottom: 2.5rem; /* reserve space for the affordance anchor below */
+  /* Reserve: affordance row (~32px) + label height (~18px) + gap. Keeps
+     even long-name tokens clear of the bottom-right icon strip. */
+  padding-bottom: 4rem;
   min-height: 70px;
 }
 

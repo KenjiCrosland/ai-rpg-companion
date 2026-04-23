@@ -136,7 +136,7 @@ export default {
 }
 
 .drawer-title {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
 
 .drawer-close {
@@ -163,15 +163,16 @@ export default {
 }
 
 .drawer-body h3 {
-  font-size: 0.95rem;
-  margin-bottom: 0.3rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
   color: var(--accent-red);
 }
 
 .drawer-body p {
-  font-size: 0.95rem;
-  line-height: 1.5;
-  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  margin: 0 0 0.6rem;
 }
 
 .drawer-body strong {

@@ -273,13 +273,13 @@ export default {
 }
 
 .sheet-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   margin: 0 0 0.25rem;
   line-height: 1.2;
 }
 
 .sheet-description {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   line-height: 1.5;
   margin: 0;
   color: var(--ink-secondary);
@@ -291,11 +291,11 @@ export default {
 
 .section-label {
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-muted);
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.5rem;
 }
 
 .condition-row {
@@ -312,9 +312,9 @@ export default {
 
 .sheet-pill {
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   letter-spacing: 0.05em;
-  padding: 0.25rem 0.7rem;
+  padding: 0.3rem 0.85rem;
   border-radius: 999px;
   border: 1px solid;
   cursor: pointer;
@@ -395,7 +395,7 @@ export default {
 .token-label {
   flex: 1;
   font-family: var(--font-display);
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   color: var(--ink-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -408,10 +408,10 @@ export default {
 
 .token-move-btn {
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 0.3rem 0.65rem;
+  padding: 0.35rem 0.75rem;
   background: transparent;
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
@@ -444,11 +444,11 @@ export default {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 0.45rem 0.75rem;
+  padding: 0.5rem 0.85rem;
   background: transparent;
   border: none;
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--ink-primary);
   cursor: pointer;
 }
@@ -481,12 +481,12 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-  padding: 0.65rem 0.25rem;
+  gap: 0.3rem;
+  padding: 0.75rem 0.3rem;
   background: var(--parchment-warm);
   border: 1px solid var(--parchment-edge);
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-primary);

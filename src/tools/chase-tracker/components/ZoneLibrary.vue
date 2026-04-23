@@ -201,7 +201,7 @@ export default {
 }
 
 .drawer-title {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
 
 .drawer-close {
@@ -353,7 +353,7 @@ export default {
 }
 
 .row-name {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-primary);
@@ -361,10 +361,10 @@ export default {
 }
 
 .row-description {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--ink-secondary);
-  margin: 0.1rem 0 0;
-  line-height: 1.35;
+  margin: 0.15rem 0 0;
+  line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
