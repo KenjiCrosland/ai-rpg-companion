@@ -14,10 +14,11 @@
     </div>
     <div class="map-actions">
       <DButton variant="primary" @click="$emit('roll-shift')">✦ What Changes?</DButton>
-      <DButton variant="secondary" @click="$emit('add-token')">+ Token</DButton>
-      <DButton variant="secondary" @click="$emit('open-library')">+ Zone</DButton>
-      <DButton variant="tertiary" @click="$emit('toggle-rules')">📖 Rules</DButton>
-      <DButton variant="tertiary" @click="confirmReset">↺ New Chase</DButton>
+      <DButton class="action-desktop" variant="secondary" @click="$emit('add-token')">+ Token</DButton>
+      <DButton class="action-desktop" variant="secondary" @click="$emit('open-library')">+ Zone</DButton>
+      <DButton class="action-desktop" variant="tertiary" @click="$emit('toggle-rules')">📖 Rules</DButton>
+      <DButton class="action-desktop" variant="tertiary" @click="confirmReset">↺ New Chase</DButton>
+      <OverflowMenu class="action-mobile" :items="overflowItems" @pick="onOverflowPick" />
     </div>
   </div>
 </template>
@@ -25,18 +26,32 @@
 <script>
 import { nextTick } from 'vue';
 import DButton from './DButton.vue';
+import OverflowMenu from './OverflowMenu.vue';
 
 export default {
   name: 'MapControls',
-  components: { DButton },
+  components: { DButton, OverflowMenu },
   props: {
     mapName: { type: String, required: true },
   },
   emits: ['roll-shift', 'add-token', 'open-library', 'reset', 'rename-map', 'toggle-rules'],
   data() {
-    return { editingName: false, draft: '' };
+    return {
+      editingName: false,
+      draft: '',
+      overflowItems: [
+        { key: 'add-token',    label: '+ Add Token' },
+        { key: 'open-library', label: '+ Add Zone' },
+        { key: 'toggle-rules', label: '📖 Rules' },
+        { key: 'reset',        label: '↺ New Chase' },
+      ],
+    };
   },
   methods: {
+    onOverflowPick(key) {
+      if (key === 'reset') return this.confirmReset();
+      this.$emit(key);
+    },
     async beginEdit() {
       this.draft = this.mapName;
       this.editingName = true;
@@ -107,5 +122,23 @@ export default {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.action-mobile { display: none; }
+
+@media (max-width: 640px) {
+  .map-controls {
+    padding: 0.35rem 0 0.6rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .map-name { font-size: 1.25rem; }
+  .map-name-input { font-size: 1.25rem; }
+
+  .action-desktop { display: none; }
+  .action-mobile { display: block; }
 }
 </style>

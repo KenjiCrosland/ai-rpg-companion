@@ -235,4 +235,43 @@ export default {
   color: var(--accent-red);
   border-color: var(--accent-red);
 }
+
+@media (max-width: 640px) {
+  .token {
+    gap: 0;
+    cursor: pointer;
+  }
+
+  .token-checker {
+    width: 44px;
+    height: 44px;
+    border-width: 2px;
+    box-shadow: 0 2px 3px rgba(46, 33, 20, 0.35);
+  }
+
+  .token:hover .token-checker,
+  .token:active .token-checker {
+    transform: none;
+  }
+
+  .token-checker svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .token-label,
+  .token-remove {
+    display: none;
+  }
+
+  /* Clearer selected treatment on mobile — slightly thicker ring,
+     no pulsing animation (feels less frantic at thumb distance). */
+  .token--selected .token-checker {
+    box-shadow:
+      0 0 0 3px var(--accent-gold),
+      0 0 8px rgba(168, 133, 54, 0.6),
+      0 2px 3px rgba(46, 33, 20, 0.35);
+    animation: none;
+  }
+}
 </style>

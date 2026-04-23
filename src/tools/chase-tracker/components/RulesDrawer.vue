@@ -116,6 +116,7 @@ export default {
 .rules-drawer {
   width: min(420px, 100%);
   height: 100vh;
+  max-width: 100%;
   background-color: var(--parchment-base);
   background-image:
     radial-gradient(ellipse at top left, rgba(164, 134, 86, 0.08), transparent 50%),
@@ -193,5 +194,16 @@ export default {
 .rules-slide-enter-from .rules-drawer,
 .rules-slide-leave-to .rules-drawer {
   transform: translateX(100%);
+}
+
+@media (max-width: 640px) {
+  .rules-drawer {
+    width: 100%;
+    padding: 1rem 1rem 2rem;
+  }
+
+  .drawer-title { font-size: 1.15rem; }
+
+  .drawer-body p { font-size: 0.9rem; }
 }
 </style>

@@ -86,6 +86,19 @@
 
       <RulesDrawer :open="rulesOpen" @close="rulesOpen = false" />
 
+      <ZoneDetailSheet
+        :zone="detailSheetZone"
+        :tokens="map.state.tokens"
+        :connections="map.state.connections"
+        :all-zones="map.state.zones"
+        @close="detailSheetZoneId = null"
+        @open-conditions="openPillManager"
+        @edit="onSheetEdit"
+        @connect="onSheetConnect"
+        @delete="onSheetDelete"
+        @move-token="onSheetMoveToken"
+      />
+
       <OnboardingHint :visible="hintVisible" @dismiss="dismissHint" />
 
       <ToolFooter />
@@ -109,6 +122,8 @@ import ZoneLibrary from './components/ZoneLibrary.vue';
 import RulesDrawer from './components/RulesDrawer.vue';
 import OnboardingHint from './components/OnboardingHint.vue';
 import ToolFooter from './components/ToolFooter.vue';
+import ZoneDetailSheet from './components/ZoneDetailSheet.vue';
+import { useIsMobile } from './composables/useBreakpoint.js';
 
 const HINT_SEEN_KEY = 'cros-chase-tracker-has-seen-hint';
 
@@ -126,6 +141,7 @@ export default {
     RulesDrawer,
     OnboardingHint,
     ToolFooter,
+    ZoneDetailSheet,
   },
   props: {
     premium: { type: Boolean, default: false },
@@ -146,10 +162,18 @@ export default {
     const libraryOpen = ref(false);
     const hintVisible = ref(false);
     const pillManagerZoneId = ref(null);
+    const detailSheetZoneId = ref(null);
+    const isMobile = useIsMobile();
 
     const pillManagerZone = computed(() =>
       pillManagerZoneId.value
         ? map.state.zones.find((z) => z.id === pillManagerZoneId.value) || null
+        : null
+    );
+
+    const detailSheetZone = computed(() =>
+      detailSheetZoneId.value
+        ? map.state.zones.find((z) => z.id === detailSheetZoneId.value) || null
         : null
     );
 
@@ -165,6 +189,9 @@ export default {
       hintVisible,
       pillManagerZoneId,
       pillManagerZone,
+      detailSheetZoneId,
+      detailSheetZone,
+      isMobile,
     };
   },
   mounted() {
@@ -198,9 +225,41 @@ export default {
         this.map.completeConnection(zoneId);
         return;
       }
+      // A selected token means the user is mid-move — try that first on
+      // both platforms. On mobile, the tap-to-select/tap-to-move flow is
+      // the primary way to move tokens in the main view since HTML5 drag
+      // doesn't fire on touch.
       if (this.map.state.selectedTokenId) {
         this.map.moveSelectedTokenTo(zoneId);
+        return;
       }
+      // Mobile with no pending move → open the zone detail sheet.
+      if (this.isMobile) {
+        this.detailSheetZoneId = zoneId;
+      }
+    },
+    onSheetEdit(zoneId) {
+      this.detailSheetZoneId = null;
+      const name = window.prompt('Zone name', this.map.state.zones.find((z) => z.id === zoneId)?.name || '');
+      if (!name) return;
+      const zone = this.map.state.zones.find((z) => z.id === zoneId);
+      const description = window.prompt('Description', zone?.description || '');
+      this.map.updateZone(zoneId, { name, description: description ?? zone?.description ?? '' });
+    },
+    onSheetConnect(zoneId) {
+      this.detailSheetZoneId = null;
+      this.onStartConnect(zoneId);
+    },
+    onSheetDelete(zoneId) {
+      const zone = this.map.state.zones.find((z) => z.id === zoneId);
+      if (!zone) return;
+      if (window.confirm(`Delete zone "${zone.name}"?`)) {
+        this.map.removeZone(zoneId);
+        this.detailSheetZoneId = null;
+      }
+    },
+    onSheetMoveToken(tokenId, targetZoneId) {
+      this.map.moveTokenTo(tokenId, targetZoneId);
     },
     onStartConnect(zoneId) {
       // Clicking the Connect button on the source zone while already in
@@ -266,6 +325,7 @@ export default {
       this.pillManagerZoneId = null;
       this.libraryOpen = false;
       this.rulesOpen = false;
+      this.detailSheetZoneId = null;
     },
   },
 };

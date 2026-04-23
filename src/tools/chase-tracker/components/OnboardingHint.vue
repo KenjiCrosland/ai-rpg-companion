@@ -2,9 +2,13 @@
   <transition name="hint-fade">
     <div v-if="visible" class="hint-overlay" @click="dismiss">
       <div class="hint-card parchment-panel" @click.stop>
-        <p class="hint-text">
+        <p v-if="!isMobile" class="hint-text">
           <strong>Tip:</strong> Drag tokens between zones to move them.
           Double-click any token to rename it.
+        </p>
+        <p v-else class="hint-text">
+          <strong>Tip:</strong> Tap a token, then tap an adjacent zone to move
+          it. Tap an empty zone to see its details.
         </p>
         <button class="hint-dismiss" @click="dismiss">Got it</button>
       </div>
@@ -13,6 +17,8 @@
 </template>
 
 <script>
+import { useIsMobile } from '../composables/useBreakpoint.js';
+
 export default {
   name: 'OnboardingHint',
   props: {
@@ -20,6 +26,10 @@ export default {
     autoDismissMs: { type: Number, default: 8000 },
   },
   emits: ['dismiss'],
+  setup() {
+    const isMobile = useIsMobile();
+    return { isMobile };
+  },
   data() {
     return { timer: null };
   },

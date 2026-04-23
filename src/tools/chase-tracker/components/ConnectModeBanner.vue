@@ -92,4 +92,17 @@ export default {
   opacity: 0;
   transform: translateY(-100%);
 }
+
+@media (max-width: 640px) {
+  .connect-banner {
+    padding: 0.7rem 0.85rem;
+    font-size: 0.85rem;
+    gap: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .banner-glyph { font-size: 1rem; }
+
+  .banner-text { line-height: 1.35; }
+}
 </style>

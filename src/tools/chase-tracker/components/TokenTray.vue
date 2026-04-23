@@ -158,4 +158,29 @@ export default {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+@media (max-width: 640px) {
+  .token-tray {
+    margin-top: 0.75rem;
+    padding: 0.55rem 0.7rem 0.7rem;
+  }
+
+  .tray-body {
+    gap: 0.6rem;
+    min-height: 32px;
+    align-items: center;
+  }
+
+  .tray-title { font-size: 0.7rem; }
+
+  .tray-add {
+    width: 32px;
+    height: 32px;
+  }
+
+  .tray-add-label { display: none; }
+  .tray-add-plus { font-size: 1rem; }
+
+  .tray-empty { font-size: 0.78rem; }
+}
 </style>

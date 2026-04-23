@@ -261,4 +261,46 @@ export default {
   right: 12px;
   z-index: 5;
 }
+
+@media (max-width: 640px) {
+  .zone {
+    padding: 0.65rem 0.7rem 0.75rem;
+    min-height: 120px;
+    border-width: 1px;
+    box-shadow:
+      inset 0 0 0 1px var(--parchment-warm),
+      inset 0 0 0 2px var(--parchment-edge),
+      0 1px 2px rgba(46, 33, 20, 0.1);
+  }
+
+  .zone-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Compressed cards hide description + affordance; content lives in the
+     detail sheet opened on tap. */
+  .zone-description,
+  .zone-affordance-anchor {
+    display: none;
+  }
+
+  .zone-pills {
+    gap: 4px;
+    margin-bottom: 0.4rem;
+    margin-top: 0.35rem;
+  }
+
+  .zone-tokens {
+    gap: 8px;
+    padding-top: 0.2rem;
+    padding-bottom: 0;
+    min-height: 44px;
+  }
+}
 </style>

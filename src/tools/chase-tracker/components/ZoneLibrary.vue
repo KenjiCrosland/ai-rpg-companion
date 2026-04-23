@@ -181,6 +181,7 @@ export default {
 .library-drawer {
   width: min(500px, 100%);
   height: 100vh;
+  max-width: 100%;
   background-color: var(--parchment-base);
   background-image:
     radial-gradient(ellipse at top left, rgba(164, 134, 86, 0.08), transparent 50%),
@@ -454,5 +455,25 @@ export default {
 .library-slide-enter-from .library-drawer,
 .library-slide-leave-to .library-drawer {
   transform: translateX(100%);
+}
+
+@media (max-width: 640px) {
+  .library-drawer {
+    width: 100%;
+    padding: 1rem 1rem 2rem;
+  }
+
+  .drawer-title { font-size: 1.1rem; }
+
+  .filter-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filter-row::-webkit-scrollbar { display: none; }
+
+  .env-btn { flex-shrink: 0; }
 }
 </style>

@@ -108,4 +108,20 @@ export default {
 .pill-fade-leave-to {
   opacity: 0;
 }
+
+@media (max-width: 640px) {
+  /* Mobile compressed pills keep their labels — just smaller padding
+     and font. Full detail still lives in the zone sheet. */
+  .zone-pill {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.5rem;
+    line-height: 1.35;
+    border-width: 1px;
+  }
+
+  .zone-pill-tooltip {
+    /* No hover on mobile — detail appears in the zone sheet instead. */
+    display: none;
+  }
+}
 </style>

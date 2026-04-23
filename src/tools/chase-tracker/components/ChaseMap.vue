@@ -37,8 +37,8 @@
           :x2="line.x2"
           :y2="line.y2"
           class="connection-line"
-          marker-start="url(#chase-arrow)"
-          marker-end="url(#chase-arrow)"
+          :marker-start="isMobile ? null : 'url(#chase-arrow)'"
+          :marker-end="isMobile ? null : 'url(#chase-arrow)'"
         />
       </svg>
 
@@ -73,6 +73,7 @@
 <script>
 import Zone from './Zone.vue';
 import ConnectModeBanner from './ConnectModeBanner.vue';
+import { useIsMobile } from '../composables/useBreakpoint.js';
 
 // Clip a line from the center of `rect` toward (tx, ty) so it lands on the
 // rectangle's perimeter instead of passing through the card body.
@@ -117,6 +118,10 @@ export default {
     'drag-end',
     'drop-token',
   ],
+  setup() {
+    const isMobile = useIsMobile();
+    return { isMobile };
+  },
   data() {
     return {
       connectionLines: [],
@@ -220,5 +225,16 @@ export default {
 .connection-arrow {
   fill: var(--ink-primary);
   opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .chase-map {
+    gap: 1rem;
+  }
+
+  .chase-map :deep(.connection-line) {
+    stroke-width: 1;
+    opacity: 0.4;
+  }
 }
 </style>
