@@ -20,11 +20,13 @@
           <OrnamentalDivider />
           <PanelContent
             :participants-by-role="participantsByRole"
+            :zones="zones"
             @rename="(id, label) => $emit('rename', id, label)"
             @remove="(id) => $emit('remove', id)"
             @dash="(id) => $emit('dash', id)"
             @undo-dash="(id) => $emit('undo-dash', id)"
             @add="(role) => $emit('add', role)"
+            @move="(id, zoneId) => $emit('move', id, zoneId)"
           />
         </div>
       </div>
@@ -51,11 +53,13 @@
       <OrnamentalDivider />
       <PanelContent
         :participants-by-role="participantsByRole"
+        :zones="zones"
         @rename="(id, label) => $emit('rename', id, label)"
         @remove="(id) => $emit('remove', id)"
         @dash="(id) => $emit('dash', id)"
         @undo-dash="(id) => $emit('undo-dash', id)"
         @add="(role) => $emit('add', role)"
+        @move="(id, zoneId) => $emit('move', id, zoneId)"
       />
     </div>
   </section>
@@ -72,8 +76,9 @@ export default {
   props: {
     collapsed: { type: Boolean, default: false },
     participantsByRole: { type: Object, required: true },
+    zones: { type: Array, default: () => [] },
   },
-  emits: ['toggle', 'close', 'rename', 'remove', 'dash', 'undo-dash', 'add'],
+  emits: ['toggle', 'close', 'rename', 'remove', 'dash', 'undo-dash', 'add', 'move'],
   setup() {
     const isMobile = useIsMobile();
     return { isMobile };
@@ -107,13 +112,13 @@ export default {
   align-items: center;
   background: var(--parchment-warm);
   border: 1px solid var(--parchment-edge);
-  padding: 0.5rem 1rem;
+  padding: 0.7rem 1.1rem;
   font-family: var(--font-display);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-secondary);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 1rem;
   border-radius: 2px;
 }
 
@@ -123,7 +128,7 @@ export default {
 }
 
 .strip-chevron {
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: var(--accent-gold-dark);
 }
@@ -146,7 +151,7 @@ export default {
 }
 
 .panel-title {
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   letter-spacing: 0.1em;
 }
 
@@ -154,9 +159,9 @@ export default {
   background: transparent;
   border: none;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   line-height: 1;
-  padding: 0.1rem 0.5rem;
+  padding: 0.2rem 0.7rem;
   color: var(--ink-muted);
   cursor: pointer;
 }
@@ -219,7 +224,7 @@ export default {
 .panel-close:hover { color: var(--ink-primary); }
 
 .panel-inner .panel-title {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
 }
 
 .panel-fade-enter-active,

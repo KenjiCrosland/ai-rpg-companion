@@ -20,6 +20,7 @@
         <ChaseParticipantsPanel
           :collapsed="map.state.participantsPanelCollapsed"
           :participants-by-role="map.participantsByRole.value"
+          :zones="map.state.zones"
           @toggle="map.toggleParticipantsPanel"
           @close="map.setParticipantsPanelCollapsed(true)"
           @rename="map.renameToken"
@@ -27,6 +28,7 @@
           @dash="map.incrementDash"
           @undo-dash="map.decrementDash"
           @add="map.addParticipant"
+          @move="map.setTokenZone"
         />
         <ChaseMap
           :zones="map.state.zones"

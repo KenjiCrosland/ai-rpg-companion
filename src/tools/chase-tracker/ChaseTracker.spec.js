@@ -409,18 +409,72 @@ describe('useChaseMap — last-used participants', () => {
   });
 });
 
-describe('useChaseMap — addParticipant', () => {
+describe('useChaseMap — addParticipant (smart default)', () => {
   beforeEach(() => localStorage.clear());
 
-  test('addParticipant places the new token at the same zone as the last of that role', () => {
+  test('picks the zone with the most on-board tokens of that role', () => {
     const map = useChaseMap();
     map.startFromTemplate('urban_alleys');
-    const existingPCs = map.state.tokens.filter((t) => t.role === 'pc');
-    const anchor = existingPCs.at(-1).zoneId;
+    // Urban template: PCs default to back_alley (2 tokens). That's the
+    // densest PC zone, so addParticipant('pc') should anchor there.
+    const densestZoneId = 'back_alley';
     const id = map.addParticipant('pc');
-    const added = map.state.tokens.find((t) => t.id === id);
-    expect(added.zoneId).toBe(anchor);
-    expect(added.dashCount).toBe(0);
+    expect(map.state.tokens.find((t) => t.id === id).zoneId).toBe(densestZoneId);
+  });
+
+  test('falls back to the first zone in grid order when no on-board tokens of role', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Remove all PCs from the board
+    const pcs = map.state.tokens.filter((t) => t.role === 'pc');
+    pcs.forEach((p) => map.removeToken(p.id));
+
+    const id = map.addParticipant('pc');
+    // First zone in grid order for urban_alleys is "rooftops" (row 1, col 1)
+    expect(map.state.tokens.find((t) => t.id === id).zoneId).toBe('rooftops');
+  });
+
+  test('all-off-board tokens are treated as absent for anchoring', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.state.tokens.filter((t) => t.role === 'pc').forEach((p) => {
+      map.setTokenZone(p.id, null);
+    });
+    const id = map.addParticipant('pc');
+    expect(map.state.tokens.find((t) => t.id === id).zoneId).toBe('rooftops');
+  });
+});
+
+describe('useChaseMap — setTokenZone', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('sets zoneId directly without any adjacency check', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const nonAdjacent = map.state.zones.find(
+      (z) => z.id !== token.zoneId && !map.isAdjacent(token.zoneId, z.id)
+    );
+    if (!nonAdjacent) return;
+    expect(map.setTokenZone(token.id, nonAdjacent.id)).toBe(true);
+    expect(token.zoneId).toBe(nonAdjacent.id);
+  });
+
+  test('accepts null (sends to the tray)', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    expect(map.setTokenZone(token.id, null)).toBe(true);
+    expect(token.zoneId).toBeNull();
+  });
+
+  test('rejects unknown zoneIds without mutating', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const original = token.zoneId;
+    expect(map.setTokenZone(token.id, 'made-up-zone')).toBe(false);
+    expect(token.zoneId).toBe(original);
   });
 });
 

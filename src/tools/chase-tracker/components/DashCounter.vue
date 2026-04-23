@@ -1,21 +1,25 @@
 <template>
   <div class="dash-counter">
-    <span class="dash-label">Dash:</span>
-    <span :class="['dash-value', `dash-value--${tier}`]">{{ count }}</span>
+    <span class="dash-label">Dashes:</span>
     <button
       type="button"
-      class="dash-primary"
-      :aria-label="`Mark one Dash for ${name || 'token'}`"
-      @click.stop="$emit('dash')"
-    >Dash</button>
-    <button
-      type="button"
-      class="dash-undo"
+      class="dash-step dash-step--minus"
       :disabled="count === 0"
-      :aria-label="`Undo Dash for ${name || 'token'}`"
-      title="Undo"
+      :aria-label="`Remove one Dash from ${name || 'token'}`"
+      title="Remove one Dash"
       @click.stop="$emit('undo')"
     >−</button>
+    <span
+      :class="['dash-value', `dash-value--${tier}`]"
+      :aria-label="`Dash count: ${count}`"
+    >{{ count }}</span>
+    <button
+      type="button"
+      class="dash-step dash-step--plus"
+      :aria-label="`Mark one Dash for ${name || 'token'}`"
+      title="Add one Dash"
+      @click.stop="$emit('dash')"
+    >+</button>
   </div>
 </template>
 
@@ -42,70 +46,84 @@ export default {
 .dash-counter {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 1rem;
   letter-spacing: 0.04em;
   color: var(--ink-secondary);
 }
 
 .dash-label {
+  margin-right: 0.3rem;
   text-transform: uppercase;
-  color: var(--ink-muted);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+/* Quiet supporting controls — the badge is the focal point, these are
+   small thin rectangles that read as "adjusters" rather than CTAs. */
+.dash-step {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  background: rgba(217, 195, 149, 0.4); /* muted parchment tint */
+  border: 1px solid var(--parchment-edge);
+  color: var(--ink-muted);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.dash-step:hover:not(:disabled) {
+  background: var(--parchment-warm);
+  color: var(--ink-primary);
+  border-color: var(--button-border);
+}
+
+.dash-step:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .dash-value {
-  min-width: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.3rem;
+  height: 2.3rem;
+  padding: 0 0.5rem;
   text-align: center;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: var(--ink-primary);
-}
-
-.dash-value--normal { color: var(--accent-gold-dark); }
-.dash-value--warn   { color: #a94c2c; }
-.dash-value--danger { color: var(--accent-red-dark); }
-
-.dash-primary {
-  font-family: var(--font-display);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.3rem 0.7rem;
-  background: var(--button-bg);
-  border: 1px solid var(--accent-gold);
-  color: var(--ink-primary);
-  cursor: pointer;
-  border-radius: 2px;
-  transition: background-color 120ms ease;
-}
-
-.dash-primary:hover {
-  background: var(--button-bg-hover);
-}
-
-.dash-undo {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  background: transparent;
-  border: 1px solid var(--button-border);
-  color: var(--ink-secondary);
-  cursor: pointer;
-  font-size: 0.95rem;
-  line-height: 1;
-  border-radius: 2px;
-}
-
-.dash-undo:hover:not(:disabled) {
   background: var(--parchment-base);
-  color: var(--ink-primary);
+  border: 1px solid var(--parchment-edge);
+  border-radius: 999px;
+  user-select: none;
 }
 
-.dash-undo:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+.dash-value--zero   { color: var(--ink-muted); }
+.dash-value--normal {
+  color: #2e2114;
+  background: var(--accent-gold);
+  border-color: var(--accent-gold-dark);
+}
+.dash-value--warn {
+  color: #f5ede0;
+  background: #a94c2c;
+  border-color: #6d2d19;
+}
+.dash-value--danger {
+  color: #f5ede0;
+  background: var(--accent-red-dark);
+  border-color: #300a0a;
 }
 </style>

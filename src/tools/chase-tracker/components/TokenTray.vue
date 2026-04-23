@@ -99,11 +99,11 @@ export default {
 }
 
 .tray-header {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
 }
 
 .tray-title {
-  font-size: 0.78rem;
+  font-size: 1rem;
   color: var(--ink-muted);
   letter-spacing: 0.14em;
 }
@@ -117,7 +117,7 @@ export default {
 }
 
 .tray-empty {
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: var(--ink-muted);
   flex: 1;
   margin: 0;
@@ -149,12 +149,12 @@ export default {
 }
 
 .tray-add-plus {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
 
 .tray-add-label {
-  font-size: 0.55rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

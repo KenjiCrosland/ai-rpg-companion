@@ -68,7 +68,8 @@ export default {
   border: none;
   color: var(--ink-muted);
   text-decoration: underline;
-  padding: 0.4rem 0.5rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 1rem;
 }
 
 .d-button--tertiary:hover:not(:disabled) {

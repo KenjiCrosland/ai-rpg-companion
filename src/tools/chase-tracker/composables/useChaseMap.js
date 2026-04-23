@@ -301,14 +301,47 @@ export function useChaseMap() {
     return token.id;
   }
 
-  // Adds a participant of the given role at the same zone as the last
-  // existing token of that role (or the first zone, or the tray as a last
-  // resort). Used by the Participants panel's "+ Add" buttons.
+  // Adds a participant of the given role and picks a smart default zone:
+  // 1) the zone with the most on-board tokens of that role, or
+  // 2) the first zone in grid order (row, col) if none are on the board, or
+  // 3) the tray (null) if there are no zones at all.
   function addParticipant(role) {
     if (!['quarry', 'pc', 'pursuer'].includes(role)) role = 'pc';
-    const existing = state.tokens.filter((t) => t.role === role);
-    const anchorZoneId = existing.at(-1)?.zoneId ?? state.zones[0]?.id ?? null;
+    const onBoard = state.tokens.filter((t) => t.role === role && t.zoneId !== null);
+
+    let anchorZoneId = null;
+    if (onBoard.length > 0) {
+      const counts = new Map();
+      for (const t of onBoard) {
+        counts.set(t.zoneId, (counts.get(t.zoneId) || 0) + 1);
+      }
+      let bestCount = 0;
+      for (const [zid, count] of counts) {
+        if (count > bestCount) {
+          bestCount = count;
+          anchorZoneId = zid;
+        }
+      }
+    } else if (state.zones.length > 0) {
+      const sorted = [...state.zones].sort(
+        (a, b) => a.row - b.row || a.col - b.col
+      );
+      anchorZoneId = sorted[0].id;
+    }
+
     return addToken({ role, zoneId: anchorZoneId });
+  }
+
+  // Direct zone assignment — bypasses adjacency. Used by the Participants
+  // panel's location dropdown, where the GM is setting up or correcting
+  // positions rather than making a play-movement call.
+  function setTokenZone(tokenId, zoneId) {
+    const token = state.tokens.find((t) => t.id === tokenId);
+    if (!token) return false;
+    if (zoneId !== null && !state.zones.some((z) => z.id === zoneId)) return false;
+    token.zoneId = zoneId;
+    if (state.selectedTokenId === tokenId) state.selectedTokenId = null;
+    return true;
   }
 
   function removeToken(tokenId) {
@@ -563,6 +596,7 @@ export function useChaseMap() {
     clearSelection,
     moveTokenTo,
     moveSelectedTokenTo,
+    setTokenZone,
     addToken,
     addParticipant,
     removeToken,

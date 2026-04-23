@@ -154,25 +154,26 @@ export default {
 }
 
 .drawer-preamble {
-  font-size: 0.95rem;
-  margin: 0.25rem 0 1rem;
+  font-size: 1.1rem;
+  line-height: 1.55;
+  margin: 0.5rem 0 1.25rem;
 }
 
 .drawer-body section {
-  margin: 0.75rem 0;
+  margin: 1rem 0;
 }
 
 .drawer-body h3 {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   letter-spacing: 0.05em;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.55rem;
   color: var(--accent-red);
 }
 
 .drawer-body p {
-  font-size: 1.05rem;
-  line-height: 1.55;
-  margin: 0 0 0.6rem;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  margin: 0 0 0.7rem;
 }
 
 .drawer-body strong {
@@ -203,8 +204,10 @@ export default {
     padding: 1rem 1rem 2rem;
   }
 
-  .drawer-title { font-size: 1.15rem; }
+  .drawer-title { font-size: 1.3rem; }
 
-  .drawer-body p { font-size: 0.9rem; }
+  .drawer-body p { font-size: 1.05rem; }
+  .drawer-body h3 { font-size: 1.2rem; }
+  .drawer-preamble { font-size: 1rem; }
 }
 </style>
