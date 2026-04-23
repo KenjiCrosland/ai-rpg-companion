@@ -1,0 +1,277 @@
+{
+  "zones": [
+    {
+      "id": "lib_urb_001",
+      "name": "The Bell Tower",
+      "description": "A narrow stone spire, winding stairs leading up to a swinging bronze bell.",
+      "environments": ["urban"],
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_002",
+      "name": "The Fish Market",
+      "description": "Stalls, slippery cobbles, shouting vendors, and the always-watching cats.",
+      "environments": ["urban"],
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Fishwives and customers packed shoulder to shoulder." },
+        { "label": "Slippery", "tone": "warm", "detail": "Wet fish guts on stone. Dex save at speed." }
+      ]
+    },
+    {
+      "id": "lib_urb_003",
+      "name": "The Counting House",
+      "description": "Iron-banded doors, watchful guards, and the quiet of money being counted.",
+      "environments": ["urban"],
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_004",
+      "name": "The Public Baths",
+      "description": "Steam, nudity, slick tile underfoot. A place where everyone is distracted.",
+      "environments": ["urban"],
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Slippery", "tone": "warm", "detail": "Tile and soap. Athletic moves risk a fall." }
+      ]
+    },
+    {
+      "id": "lib_urb_005",
+      "name": "The Refuse Alley",
+      "description": "Broken crates, rats, and the smell of yesterday. A place to vanish.",
+      "environments": ["urban"],
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_006",
+      "name": "The Temple Steps",
+      "description": "Wide, exposed, witnessed by gods and priests. Bad place to draw a weapon.",
+      "environments": ["urban"],
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_007",
+      "name": "The Ferryman's Dock",
+      "description": "Waiting boats, a way across, a way out. The ferryman takes coin, not questions.",
+      "environments": ["urban"],
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_008",
+      "name": "The Printer's Shop",
+      "description": "Inks, paper, a press that can crush a hand. The owner is paid to remember faces.",
+      "environments": ["urban"],
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Tight aisles of heavy machinery. Athletics or Dex to cross fast." }
+      ]
+    },
+    {
+      "id": "lib_urb_009",
+      "name": "The Gallows Square",
+      "description": "Empty scaffold, a crowd that remembers the last hanging and is hungry for more.",
+      "environments": ["urban"],
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Onlookers and hawkers; cover is easy, speed is not." }
+      ]
+    },
+    {
+      "id": "lib_urb_010",
+      "name": "The Palace Gate",
+      "description": "High walls, polished halberds, and the patience of men paid to watch.",
+      "environments": ["urban"],
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Closed", "tone": "muted", "detail": "Barred to anyone without papers or a fight in them." }
+      ]
+    },
+
+    {
+      "id": "lib_wild_001",
+      "name": "The Wolf's Crossing",
+      "description": "A narrow game trail threading between pines. Fresh tracks in the dust.",
+      "environments": ["wilderness"],
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_002",
+      "name": "The Ancient Oak",
+      "description": "A lone oak ringed with standing stones, older than any map of this country.",
+      "environments": ["wilderness"],
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Whispers in the leaves that aren't the wind." }
+      ]
+    },
+    {
+      "id": "lib_wild_003",
+      "name": "The Salt Flats",
+      "description": "No cover, heat shimmer, tracks that last for days. Every move is visible.",
+      "environments": ["wilderness"],
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_004",
+      "name": "The Muddy Bog",
+      "description": "The suck of mud, the stink of stagnant water, deeper pools hidden beneath.",
+      "environments": ["wilderness"],
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Every step risks sinking to the knee. Strength to push on." }
+      ]
+    },
+    {
+      "id": "lib_wild_005",
+      "name": "The Cairn",
+      "description": "Old stones piled over old bones. The silence here is too deliberate.",
+      "environments": ["wilderness"],
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Something is watching from under the stones." }
+      ]
+    },
+    {
+      "id": "lib_wild_006",
+      "name": "The Stag's Meadow",
+      "description": "Open ground under open sky. A herd of deer stand quiet, watching.",
+      "environments": ["wilderness"],
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_007",
+      "name": "The Poisoned Spring",
+      "description": "Clear water, wrong taste, wrong color. The birds do not drink here.",
+      "environments": ["wilderness"],
+      "shape": "small",
+      "defaultPills": [
+        { "label": "On Fire", "tone": "danger", "detail": "Some poisons burn. Passing close, make a Con save." }
+      ]
+    },
+    {
+      "id": "lib_wild_008",
+      "name": "The Burned Grove",
+      "description": "Charred trunks, no leaves, no birds. Ash rises at every footfall.",
+      "environments": ["wilderness"],
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_009",
+      "name": "The Hunter's Blind",
+      "description": "Abandoned platform in a tall pine. Good sightlines, easier said than reached.",
+      "environments": ["wilderness"],
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_010",
+      "name": "The Riverbend",
+      "description": "Slow brown water and a row of skiffs pulled up on the bank. Someone owns them.",
+      "environments": ["wilderness"],
+      "shape": "wide",
+      "defaultPills": []
+    },
+
+    {
+      "id": "lib_bldg_001",
+      "name": "The Dumbwaiter",
+      "description": "A narrow shaft and slow ropes. The servants' way between floors.",
+      "environments": ["building_interior"],
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Tight squeeze. Acrobatics to pass through without dropping." }
+      ]
+    },
+    {
+      "id": "lib_bldg_002",
+      "name": "The Wine Cellar",
+      "description": "Arched vaults, cobwebbed bottles, a back tunnel no one will admit knowing about.",
+      "environments": ["building_interior"],
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Dark", "tone": "muted", "detail": "No torches lit. Sight checks disadvantaged." }
+      ]
+    },
+    {
+      "id": "lib_bldg_003",
+      "name": "The Chapel",
+      "description": "Wooden pews, stained glass, a back door for things said in confession.",
+      "environments": ["building_interior"],
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_bldg_004",
+      "name": "The Conservatory",
+      "description": "Glass walls and potted wonders. Fragile under any sudden violence.",
+      "environments": ["building_interior"],
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Glass everywhere. Any dashed move risks breaking it and drawing guards." }
+      ]
+    },
+    {
+      "id": "lib_bldg_005",
+      "name": "The Armory",
+      "description": "Racks of polished steel, maintained, accounted for. Missing pieces get noticed.",
+      "environments": ["building_interior"],
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_bldg_006",
+      "name": "The Solar",
+      "description": "Private rooms, personal effects, things not meant to be seen by strangers.",
+      "environments": ["building_interior"],
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_bldg_007",
+      "name": "The Guard Room",
+      "description": "Off-duty soldiers, dice on a table, a fire that never quite goes out.",
+      "environments": ["building_interior"],
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Armed men with nothing to do but notice newcomers." }
+      ]
+    },
+    {
+      "id": "lib_bldg_008",
+      "name": "The Kennels",
+      "description": "Dogs. Their masters. The dogs' memory of every stranger they've ever smelled.",
+      "environments": ["building_interior"],
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Loud", "tone": "warm", "detail": "Dogs bark at anything. Stealth is over the moment you step in." }
+      ]
+    },
+    {
+      "id": "lib_bldg_009",
+      "name": "The Nursery",
+      "description": "Small beds, a watching governess, toys scattered across the floor.",
+      "environments": ["building_interior"],
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_bldg_010",
+      "name": "The Secret Passage",
+      "description": "A wall that opens if you know where to push. The mouse-hole the house forgot.",
+      "environments": ["building_interior"],
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Only those who know it exists can find the catch." }
+      ]
+    }
+  ]
+}

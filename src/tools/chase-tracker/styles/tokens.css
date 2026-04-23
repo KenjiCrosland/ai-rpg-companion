@@ -1,0 +1,43 @@
+.chase-tracker-root {
+  --parchment-base: #f1e4c8;
+  --parchment-warm: #ebd9b4;
+  --parchment-shadow: #d9c395;
+  --parchment-edge: #a48656;
+
+  --ink-primary: #2e2114;
+  --ink-secondary: #4e3a22;
+  --ink-muted: #7a6340;
+
+  --accent-red: #7a1f1f;
+  --accent-red-dark: #4a1010;
+  --accent-gold: #a88536;
+  --accent-gold-dark: #7a5e20;
+  --accent-forest: #3e5033;
+
+  --button-bg: #e3cfa1;
+  --button-bg-hover: #d4bc87;
+  --button-border: #7a5e20;
+
+  --font-display: 'Cinzel', 'Cormorant SC', serif;
+  --font-body: 'EB Garamond', 'Crimson Text', Georgia, serif;
+  --font-italic: 'EB Garamond', Georgia, serif;
+
+  color: var(--ink-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.chase-tracker-root * {
+  box-sizing: border-box;
+}
+
+.chase-tracker-root h1,
+.chase-tracker-root h2,
+.chase-tracker-root h3,
+.chase-tracker-root h4 {
+  font-family: var(--font-display);
+  color: var(--ink-primary);
+  letter-spacing: 0.02em;
+  margin: 0;
+}

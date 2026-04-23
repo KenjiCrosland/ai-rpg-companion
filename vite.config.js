@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => {
           'dashboard-plus': 'src/entries/dashboard-plus.js',
           landing: 'src/entries/landing.js',
           'price-calculator': 'src/entries/price-calculator.js',
+          'chase-tracker': 'src/entries/chase-tracker.js',
         },
       },
     },

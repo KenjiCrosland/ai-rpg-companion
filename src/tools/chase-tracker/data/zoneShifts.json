@@ -1,0 +1,14 @@
+{
+  "shifts": [
+    { "id": "s01", "text": "Reinforcements arrive in one zone — the GM picks which. It becomes crowded or closed.", "suggestedState": "crowded" },
+    { "id": "s02", "text": "A path between two zones is blocked — debris, a locked door, an angry crowd.", "suggestedState": "obstacle" },
+    { "id": "s03", "text": "A zone changes from obstacle to open — something clears, a door swings wide, the crowd thins.", "suggestedState": "open" },
+    { "id": "s04", "text": "A new witness or bystander appears in one zone and will raise the alarm if not dealt with." },
+    { "id": "s05", "text": "An environmental hazard flares — fire, flood, collapse — making one zone dangerous to pass through.", "suggestedState": "obstacle" },
+    { "id": "s06", "text": "A noise or signal draws pursuers toward a specific zone. They converge there next round." },
+    { "id": "s07", "text": "The weather or light changes — rain, fog, gathering dark. Sightlines shorten across the whole map." },
+    { "id": "s08", "text": "A creature or person reveals themselves in one zone, friendly, hostile, or ambiguous." },
+    { "id": "s09", "text": "Something valuable is spotted in a zone — it would be a real loss to leave it behind." },
+    { "id": "s10", "text": "A shortcut opens between two zones that weren't previously connected. Only briefly." }
+  ]
+}
