@@ -19,6 +19,7 @@
         :style="{ color: palette.text }"
         aria-hidden="true"
       />
+      <TokenDashBadge v-if="token.dashCount > 0" :count="token.dashCount" />
       <button
         class="token-remove"
         title="Remove token"
@@ -44,6 +45,7 @@
 <script>
 import { nextTick } from 'vue';
 import { Icon } from '@iconify/vue';
+import TokenDashBadge from './TokenDashBadge.vue';
 import { TOKEN_ICON_MAP } from '../config/tokenIcons.js';
 import { TOKEN_COLORS } from '../config/tokenColors.js';
 
@@ -53,7 +55,7 @@ const isTouch =
 
 export default {
   name: 'Token',
-  components: { Icon },
+  components: { Icon, TokenDashBadge },
   props: {
     token: { type: Object, required: true },
     selected: { type: Boolean, default: false },

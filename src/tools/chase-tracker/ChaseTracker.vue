@@ -13,8 +13,20 @@
           @add-token="openCreator"
           @open-library="libraryOpen = true"
           @toggle-rules="rulesOpen = !rulesOpen"
+          @toggle-participants="map.toggleParticipantsPanel"
           @reset="onReset"
           @rename-map="renameMap"
+        />
+        <ChaseParticipantsPanel
+          :collapsed="map.state.participantsPanelCollapsed"
+          :participants-by-role="map.participantsByRole.value"
+          @toggle="map.toggleParticipantsPanel"
+          @close="map.setParticipantsPanelCollapsed(true)"
+          @rename="map.renameToken"
+          @remove="map.removeToken"
+          @dash="map.incrementDash"
+          @undo-dash="map.decrementDash"
+          @add="map.addParticipant"
         />
         <ChaseMap
           :zones="map.state.zones"
@@ -123,6 +135,7 @@ import RulesDrawer from './components/RulesDrawer.vue';
 import OnboardingHint from './components/OnboardingHint.vue';
 import ToolFooter from './components/ToolFooter.vue';
 import ZoneDetailSheet from './components/ZoneDetailSheet.vue';
+import ChaseParticipantsPanel from './components/ChaseParticipantsPanel.vue';
 import { useIsMobile } from './composables/useBreakpoint.js';
 
 const HINT_SEEN_KEY = 'cros-chase-tracker-has-seen-hint';
@@ -142,6 +155,7 @@ export default {
     OnboardingHint,
     ToolFooter,
     ZoneDetailSheet,
+    ChaseParticipantsPanel,
   },
   props: {
     premium: { type: Boolean, default: false },

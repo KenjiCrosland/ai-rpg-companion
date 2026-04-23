@@ -12,8 +12,9 @@ import { TOKEN_COLORS } from '../config/tokenColors.js';
 import { PILL_TONES } from '../config/pills.js';
 
 const STORAGE_KEY = 'cros-chase-tracker';
-// v4: removed `state` from zones, added `pills: []` and `environment` on root.
-const SCHEMA_VERSION = 4;
+const LAST_PARTICIPANTS_KEY = 'cros-chase-tracker-last-participants';
+// v5: tokens gain dashCount; root gains participantsPanelCollapsed.
+const SCHEMA_VERSION = 5;
 
 export const SHAPE_DIMENSIONS = {
   small:   { colSpan: 1, rowSpan: 1 },
@@ -37,6 +38,7 @@ function emptyState() {
     selectedTokenId: null,
     pendingShift: null,
     connectingFromZoneId: null,
+    participantsPanelCollapsed: false,
   };
 }
 
@@ -58,6 +60,9 @@ function normalizeToken(raw) {
     icon,
     color,
     zoneId: raw.zoneId === undefined ? null : raw.zoneId,
+    dashCount: typeof raw.dashCount === 'number' && raw.dashCount > 0
+      ? Math.floor(raw.dashCount)
+      : 0,
   };
 }
 
@@ -91,8 +96,10 @@ function loadFromStorage() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || parsed.schemaVersion !== SCHEMA_VERSION) return null;
-    // Defensive: runtime-invalidated fields from hand-edits fall back cleanly.
     parsed.connectingFromZoneId = null;
+    if (typeof parsed.participantsPanelCollapsed !== 'boolean') {
+      parsed.participantsPanelCollapsed = true;
+    }
     return parsed;
   } catch {
     return null;
@@ -102,11 +109,36 @@ function loadFromStorage() {
 function saveToStorage(state) {
   if (typeof window === 'undefined' || !window.localStorage) return;
   try {
-    // Don't persist ephemeral connect-mode state.
     const { connectingFromZoneId, ...persisted } = state;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
   } catch {
     // storage full or disabled — silent
+  }
+}
+
+function loadLastParticipants() {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  try {
+    const raw = window.localStorage.getItem(LAST_PARTICIPANTS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return {
+      quarry: Array.isArray(parsed.quarry) ? parsed.quarry : [],
+      pc: Array.isArray(parsed.pc) ? parsed.pc : [],
+      pursuer: Array.isArray(parsed.pursuer) ? parsed.pursuer : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveLastParticipantsToStorage(payload) {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    window.localStorage.setItem(LAST_PARTICIPANTS_KEY, JSON.stringify(payload));
+  } catch {
+    // silent
   }
 }
 
@@ -127,6 +159,15 @@ function firstEmptyCell(zones, cols, rows) {
   return null;
 }
 
+function fitsAt(zones, col, row, colSpan, rowSpan) {
+  for (const z of zones) {
+    const overlapX = col < z.col + (z.colSpan || 1) && col + colSpan > z.col;
+    const overlapY = row < z.row + (z.rowSpan || 1) && row + rowSpan > z.row;
+    if (overlapX && overlapY) return false;
+  }
+  return true;
+}
+
 export function useChaseMap() {
   const state = reactive(loadFromStorage() || emptyState());
 
@@ -134,6 +175,28 @@ export function useChaseMap() {
     () => state,
     (val) => saveToStorage(val),
     { deep: true }
+  );
+
+  // Throttled cross-chase party memory. Every token-list change schedules
+  // a save; the payload is a role-keyed list of labels from the current
+  // chase, so the next chase can pre-fill it.
+  let lastPartTimer = null;
+  watch(
+    () => state.tokens.map((t) => `${t.role}:${t.label}`),
+    () => {
+      if (!state.hasActiveChase) return;
+      if (!state.tokens.length) return;
+      if (lastPartTimer) clearTimeout(lastPartTimer);
+      lastPartTimer = setTimeout(() => {
+        const payload = { quarry: [], pc: [], pursuer: [] };
+        for (const token of state.tokens) {
+          if (payload[token.role]) payload[token.role].push(token.label);
+        }
+        saveLastParticipantsToStorage(payload);
+        lastPartTimer = null;
+      }, 250);
+    },
+    { deep: false }
   );
 
   function startFromTemplate(templateId) {
@@ -152,6 +215,42 @@ export function useChaseMap() {
     state.selectedTokenId = null;
     state.pendingShift = null;
     state.connectingFromZoneId = null;
+    state.participantsPanelCollapsed = false;
+
+    applyLastParticipants();
+  }
+
+  function applyLastParticipants() {
+    const saved = loadLastParticipants();
+    if (!saved) return;
+
+    for (const role of ['quarry', 'pc', 'pursuer']) {
+      const names = (saved[role] || []).filter((n) => typeof n === 'string' && n.trim());
+      if (!names.length) continue;
+
+      const existing = state.tokens.filter((t) => t.role === role);
+      const sharedCount = Math.min(existing.length, names.length);
+
+      for (let i = 0; i < sharedCount; i++) {
+        existing[i].label = names[i];
+      }
+
+      if (names.length > existing.length) {
+        const defaults = ROLE_DEFAULTS[role];
+        const anchorZoneId = existing.at(-1)?.zoneId ?? state.zones[0]?.id ?? null;
+        for (let i = existing.length; i < names.length; i++) {
+          state.tokens.push({
+            id: uid('tok'),
+            label: names[i],
+            role,
+            icon: defaults.icon,
+            color: defaults.color,
+            zoneId: anchorZoneId,
+            dashCount: 0,
+          });
+        }
+      }
+    }
   }
 
   function selectToken(tokenId) {
@@ -196,9 +295,20 @@ export function useChaseMap() {
       icon: icon || defaults.icon,
       color: color || defaults.color,
       zoneId: zoneId === undefined ? null : zoneId,
+      dashCount: 0,
     };
     state.tokens.push(token);
     return token.id;
+  }
+
+  // Adds a participant of the given role at the same zone as the last
+  // existing token of that role (or the first zone, or the tray as a last
+  // resort). Used by the Participants panel's "+ Add" buttons.
+  function addParticipant(role) {
+    if (!['quarry', 'pc', 'pursuer'].includes(role)) role = 'pc';
+    const existing = state.tokens.filter((t) => t.role === role);
+    const anchorZoneId = existing.at(-1)?.zoneId ?? state.zones[0]?.id ?? null;
+    return addToken({ role, zoneId: anchorZoneId });
   }
 
   function removeToken(tokenId) {
@@ -219,11 +329,36 @@ export function useChaseMap() {
     Object.assign(token, fields);
   }
 
+  function incrementDash(tokenId) {
+    const token = state.tokens.find((t) => t.id === tokenId);
+    if (!token) return;
+    token.dashCount = (token.dashCount || 0) + 1;
+  }
+
+  function decrementDash(tokenId) {
+    const token = state.tokens.find((t) => t.id === tokenId);
+    if (!token) return;
+    token.dashCount = Math.max(0, (token.dashCount || 0) - 1);
+  }
+
+  function setDashCount(tokenId, n) {
+    const token = state.tokens.find((t) => t.id === tokenId);
+    if (!token) return;
+    const next = Number(n);
+    token.dashCount = Number.isFinite(next) ? Math.max(0, Math.floor(next)) : 0;
+  }
+
+  function toggleParticipantsPanel() {
+    state.participantsPanelCollapsed = !state.participantsPanelCollapsed;
+  }
+
+  function setParticipantsPanelCollapsed(val) {
+    state.participantsPanelCollapsed = !!val;
+  }
+
   function updateZone(zoneId, fields) {
     const zone = state.zones.find((z) => z.id === zoneId);
     if (!zone) return;
-    // Guard: never allow callers to write a `state` field or clobber pills
-    // with non-arrays. Pills are managed by their dedicated methods.
     const { state: _drop, pills: _drop2, ...safe } = fields;
     Object.assign(zone, safe);
   }
@@ -255,7 +390,6 @@ export function useChaseMap() {
     const cols = Math.max(state.gridCols, 1);
     const rows = state.gridRows;
 
-    // Find the first empty cell that can fit this shape without clashing.
     let placement = null;
     for (let r = 1; r <= rows && !placement; r++) {
       for (let c = 1; c <= cols - shape.colSpan + 1 && !placement; c++) {
@@ -264,15 +398,9 @@ export function useChaseMap() {
         }
       }
     }
-    // No room in the current grid — drop it in a brand-new row below, at 1×1 if need be.
     if (!placement) {
       const colSpan = Math.min(shape.colSpan, cols);
-      placement = {
-        col: 1,
-        row: rows + 1,
-        colSpan,
-        rowSpan: shape.rowSpan,
-      };
+      placement = { col: 1, row: rows + 1, colSpan, rowSpan: shape.rowSpan };
     }
 
     const zone = {
@@ -322,8 +450,6 @@ export function useChaseMap() {
     return 'connected';
   }
 
-  // --- connect mode ---------------------------------------------------------
-
   function startConnectMode(zoneId) {
     if (!state.zones.some((z) => z.id === zoneId)) return;
     state.connectingFromZoneId = zoneId;
@@ -344,8 +470,6 @@ export function useChaseMap() {
     state.connectingFromZoneId = null;
     return result;
   }
-
-  // --- pills ---------------------------------------------------------------
 
   function addPillToZone(zoneId, pill) {
     const zone = state.zones.find((z) => z.id === zoneId);
@@ -370,8 +494,6 @@ export function useChaseMap() {
     if (fields.tone && PILL_TONES[fields.tone]) pill.tone = fields.tone;
     if (typeof fields.detail === 'string') pill.detail = fields.detail;
   }
-
-  // --- shifts + misc --------------------------------------------------------
 
   function rollShift() {
     const shift = pickRandom(shiftsData.shifts);
@@ -400,6 +522,14 @@ export function useChaseMap() {
   const trayTokens = computed(() =>
     state.tokens.filter((t) => t.zoneId === null)
   );
+
+  const participantsByRole = computed(() => {
+    const out = { quarry: [], pc: [], pursuer: [] };
+    for (const token of state.tokens) {
+      if (out[token.role]) out[token.role].push(token);
+    }
+    return out;
+  });
 
   const adjacentZoneIds = computed(() => {
     if (!state.selectedTokenId) return new Set();
@@ -434,9 +564,15 @@ export function useChaseMap() {
     moveTokenTo,
     moveSelectedTokenTo,
     addToken,
+    addParticipant,
     removeToken,
     renameToken,
     updateToken,
+    incrementDash,
+    decrementDash,
+    setDashCount,
+    toggleParticipantsPanel,
+    setParticipantsPanelCollapsed,
     updateZone,
     addZone,
     addZoneFromLibrary,
@@ -456,18 +592,10 @@ export function useChaseMap() {
     isAdjacent,
     tokensByZone,
     trayTokens,
+    participantsByRole,
     adjacentZoneIds,
     validDropZoneIdsFor,
   };
 }
 
-function fitsAt(zones, col, row, colSpan, rowSpan) {
-  for (const z of zones) {
-    const overlapX = col < z.col + (z.colSpan || 1) && col + colSpan > z.col;
-    const overlapY = row < z.row + (z.rowSpan || 1) && row + rowSpan > z.row;
-    if (overlapX && overlapY) return false;
-  }
-  return true;
-}
-
-export { STORAGE_KEY, SCHEMA_VERSION };
+export { STORAGE_KEY, LAST_PARTICIPANTS_KEY, SCHEMA_VERSION };

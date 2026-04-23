@@ -7,6 +7,7 @@ import { nextTick } from 'vue';
 import {
   useChaseMap,
   STORAGE_KEY,
+  LAST_PARTICIPANTS_KEY,
   SCHEMA_VERSION,
   SHAPE_DIMENSIONS,
 } from './composables/useChaseMap.js';
@@ -268,6 +269,158 @@ describe('useChaseMap — zone library', () => {
     const zone = map.state.zones.find((z) => z.id === id);
     expect(zone.colSpan).toBe(1);
     expect(zone.rowSpan).toBe(1);
+  });
+});
+
+describe('useChaseMap — dash tracking', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('new tokens start with dashCount 0', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    for (const token of map.state.tokens) {
+      expect(token.dashCount).toBe(0);
+    }
+  });
+
+  test('incrementDash bumps by one; decrementDash floors at 0', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const id = map.state.tokens[0].id;
+    map.incrementDash(id);
+    map.incrementDash(id);
+    expect(map.state.tokens[0].dashCount).toBe(2);
+    map.decrementDash(id);
+    expect(map.state.tokens[0].dashCount).toBe(1);
+    map.decrementDash(id);
+    map.decrementDash(id); // already 0
+    expect(map.state.tokens[0].dashCount).toBe(0);
+  });
+
+  test('setDashCount clamps negatives to 0 and floors fractions', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const id = map.state.tokens[0].id;
+    map.setDashCount(id, -3);
+    expect(map.state.tokens[0].dashCount).toBe(0);
+    map.setDashCount(id, 4.8);
+    expect(map.state.tokens[0].dashCount).toBe(4);
+  });
+
+  test('startFromTemplate resets dashCount for all tokens', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.state.tokens.forEach((t) => map.incrementDash(t.id));
+    map.startFromTemplate('wilderness_trails');
+    for (const token of map.state.tokens) {
+      expect(token.dashCount).toBe(0);
+    }
+  });
+});
+
+describe('useChaseMap — participants panel state', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('startFromTemplate expands the panel on fresh chase', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    expect(map.state.participantsPanelCollapsed).toBe(false);
+  });
+
+  test('toggleParticipantsPanel flips the flag', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.toggleParticipantsPanel();
+    expect(map.state.participantsPanelCollapsed).toBe(true);
+    map.toggleParticipantsPanel();
+    expect(map.state.participantsPanelCollapsed).toBe(false);
+  });
+
+  test('rehydrated chase preserves collapsed state', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    map1.toggleParticipantsPanel();
+    await nextTick();
+    await nextTick();
+    const map2 = useChaseMap();
+    expect(map2.state.participantsPanelCollapsed).toBe(true);
+  });
+});
+
+describe('useChaseMap — last-used participants', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('renaming tokens writes the payload to LAST_PARTICIPANTS_KEY', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const pcToken = map.state.tokens.find((t) => t.role === 'pc');
+    map.renameToken(pcToken.id, 'Gorum');
+    // Debounce is 250ms — wait past that with real timers
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    const saved = JSON.parse(localStorage.getItem(LAST_PARTICIPANTS_KEY));
+    expect(saved).toBeTruthy();
+    expect(saved.pc).toContain('Gorum');
+  });
+
+  test('applyLastParticipants renames existing tokens up to the saved count', () => {
+    localStorage.setItem(
+      LAST_PARTICIPANTS_KEY,
+      JSON.stringify({
+        quarry: ['Shadow'],
+        pc: ['Gorum', 'Talis'],
+        pursuer: ['Watchguard'],
+      })
+    );
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const quarry = map.state.tokens.filter((t) => t.role === 'quarry');
+    const pcs = map.state.tokens.filter((t) => t.role === 'pc');
+    const pursuers = map.state.tokens.filter((t) => t.role === 'pursuer');
+    expect(quarry[0].label).toBe('Shadow');
+    expect(pcs[0].label).toBe('Gorum');
+    expect(pcs[1].label).toBe('Talis');
+    expect(pursuers[0].label).toBe('Watchguard');
+  });
+
+  test('applyLastParticipants adds extra tokens when saved party > template defaults', () => {
+    localStorage.setItem(
+      LAST_PARTICIPANTS_KEY,
+      JSON.stringify({
+        quarry: ['Shadow'],
+        pc: ['Gorum', 'Talis', 'Fenn', 'Morr'],
+        pursuer: ['Watchguard'],
+      })
+    );
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const pcs = map.state.tokens.filter((t) => t.role === 'pc');
+    expect(pcs).toHaveLength(4);
+    expect(pcs.map((p) => p.label)).toEqual(['Gorum', 'Talis', 'Fenn', 'Morr']);
+    // Extras inherit the role-default icon + color so they look coherent
+    expect(pcs[3].icon).toBeDefined();
+    expect(pcs[3].zoneId).toBeDefined();
+  });
+
+  test('missing last-participants key leaves template labels intact', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    expect(map.state.tokens.find((t) => t.role === 'quarry').label).toBe('Quarry');
+    expect(map.state.tokens.filter((t) => t.role === 'pc')[0].label).toBe('PC');
+  });
+});
+
+describe('useChaseMap — addParticipant', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('addParticipant places the new token at the same zone as the last of that role', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const existingPCs = map.state.tokens.filter((t) => t.role === 'pc');
+    const anchor = existingPCs.at(-1).zoneId;
+    const id = map.addParticipant('pc');
+    const added = map.state.tokens.find((t) => t.id === id);
+    expect(added.zoneId).toBe(anchor);
+    expect(added.dashCount).toBe(0);
   });
 });
 
