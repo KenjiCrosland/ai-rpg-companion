@@ -34,11 +34,15 @@ export default {
   emits: ['update:modelValue'],
   data() {
     return {
+      // Widths/heights are pixel sizes for the preview SVG; bumped
+      // ~1.35× from the original 42/56/30/48 scale so the shape glyphs
+      // read at a glance. The viewBox stays 60×60 — only the rendered
+      // dimensions change.
       shapes: [
-        { key: 'small', label: 'Small',      w: 42, h: 42, x: 18, y: 18, rw: 24, rh: 24 },
-        { key: 'wide',  label: 'Wide',       w: 56, h: 30, x: 6,  y: 18, rw: 48, rh: 24 },
-        { key: 'tall',  label: 'Tall',       w: 30, h: 56, x: 18, y: 6,  rw: 24, rh: 48 },
-        { key: 'large', label: 'Large',      w: 48, h: 48, x: 6,  y: 6,  rw: 48, rh: 48 },
+        { key: 'small', label: 'Small', w: 56, h: 56, x: 18, y: 18, rw: 24, rh: 24 },
+        { key: 'wide',  label: 'Wide',  w: 76, h: 40, x: 6,  y: 18, rw: 48, rh: 24 },
+        { key: 'tall',  label: 'Tall',  w: 40, h: 76, x: 18, y: 6,  rw: 24, rh: 48 },
+        { key: 'large', label: 'Large', w: 64, h: 64, x: 6,  y: 6,  rw: 48, rh: 48 },
       ],
     };
   },
@@ -48,7 +52,7 @@ export default {
 <style scoped>
 .shape-picker {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.65rem;
   flex-wrap: wrap;
 }
 
@@ -56,14 +60,14 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.45rem 0.6rem 0.35rem;
+  gap: 0.35rem;
+  padding: 0.6rem 0.8rem 0.5rem;
   background: var(--parchment-base);
   border: 1.5px solid var(--parchment-edge);
   cursor: pointer;
   color: var(--ink-primary);
   border-radius: 2px;
-  min-width: 4.5rem;
+  min-width: 6rem;
 }
 
 .shape-btn:hover {
@@ -88,7 +92,7 @@ export default {
 
 .shape-label {
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.95rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-muted);

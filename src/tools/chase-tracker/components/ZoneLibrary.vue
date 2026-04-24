@@ -96,8 +96,6 @@
           </p>
         </div>
 
-        <OrnamentalDivider glyph="✦" />
-
         <section class="custom-section">
           <div class="display-heading custom-title">Custom Zone</div>
           <p class="ink-italic custom-hint">Not in the library? Build your own.</p>
@@ -215,11 +213,18 @@ export default {
         const categoryDefs = categoriesData[env] || [];
         const validSlugs = new Set(categoryDefs.map((c) => c.slug));
 
+        // Category labels already carry the semantic grouping, so zones
+        // within a category are sorted alphabetically by name for
+        // predictable lookup. Locale-aware so accented / non-ASCII
+        // names slot in naturally.
+        const sortByName = (a, b) =>
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+
         const categories = [];
         for (const cat of categoryDefs) {
-          const catZones = zonesForEnv.filter(
-            (z) => primaryEnvFor(z) === env && z.category === cat.slug
-          );
+          const catZones = zonesForEnv
+            .filter((z) => primaryEnvFor(z) === env && z.category === cat.slug)
+            .sort(sortByName);
           if (catZones.length) {
             categories.push({ slug: cat.slug, name: cat.name, zones: catZones });
           }
@@ -228,11 +233,13 @@ export default {
         // Uncategorized bucket: zones in this env that have no category,
         // have an unrecognized category, or are transitional from
         // another env (so their primary-env category doesn't apply here).
-        const uncategorized = zonesForEnv.filter((z) => {
-          if (primaryEnvFor(z) !== env) return true;
-          if (!z.category) return true;
-          return !validSlugs.has(z.category);
-        });
+        const uncategorized = zonesForEnv
+          .filter((z) => {
+            if (primaryEnvFor(z) !== env) return true;
+            if (!z.category) return true;
+            return !validSlugs.has(z.category);
+          })
+          .sort(sortByName);
         if (uncategorized.length) {
           categories.push({
             slug: UNCATEGORIZED_SLUG,
@@ -415,7 +422,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin: 1rem 0 1rem;
+  margin: 1.25rem 0 1.25rem;
 }
 
 .env-btn {
@@ -445,14 +452,14 @@ export default {
   background: var(--parchment-warm);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
-  margin-bottom: 0.65rem;
+  margin-bottom: 1rem;
 }
 
 .category-controls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.15rem 0.2rem 0.65rem;
+  padding: 0.25rem 0.25rem 1.15rem;
   color: var(--ink-muted);
   font-size: 1.05rem;
 }
@@ -508,24 +515,29 @@ export default {
 .category-header {
   display: flex;
   align-items: baseline;
-  gap: 0.7rem;
+  gap: 0.8rem;
   width: 100%;
-  padding: 0.75rem 0.5rem;
+  padding: 0.9rem 0.55rem;
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--parchment-edge);
-  color: var(--ink-primary);
+  /* Softer than the zone row names (ink-primary) so the bigger type
+     doesn't overpower the content it groups. */
+  color: var(--ink-secondary);
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  /* Larger than zone-row .row-name (1.6rem) so the category clearly
+     parents the content it contains. */
+  font-size: 1.8rem;
   letter-spacing: 0.04em;
   cursor: pointer;
   text-align: left;
   font-weight: 600;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .category-header:hover {
   background: rgba(164, 134, 86, 0.08);
+  color: var(--ink-primary);
 }
 
 .category-header--open {
@@ -534,8 +546,8 @@ export default {
 
 .category-chevron {
   display: inline-block;
-  width: 1.1rem;
-  font-size: 1rem;
+  width: 1.35rem;
+  font-size: 1.15rem;
   color: var(--ink-secondary);
   text-align: center;
 }
@@ -546,7 +558,7 @@ export default {
 
 .category-count {
   font-family: var(--font-body);
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   color: var(--ink-muted);
   font-weight: 400;
   letter-spacing: 0;
@@ -556,8 +568,10 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding: 0.55rem 0 0.7rem 0.45rem;
-  border-bottom: 1px solid var(--parchment-edge);
+  padding: 0.55rem 0 0.9rem 0.45rem;
+  /* Next category's header carries its own border-bottom, so the
+     zones list doesn't need one — a second edge-line right above it
+     was visually doubling up. */
 }
 
 .library-row {
@@ -694,7 +708,10 @@ export default {
 }
 
 .custom-section {
-  margin-top: 0.65rem;
+  /* The last category header's border-bottom is now the only line
+     separating the list from this section, so give the heading a
+     clear stretch of parchment before it. */
+  margin-top: 2.25rem;
 }
 
 .custom-title {
@@ -762,21 +779,21 @@ export default {
     padding: 1.1rem 1.1rem 2.25rem;
   }
 
+  /* Wrap chips onto multiple rows on narrow screens — horizontal
+     scroll was cutting off the last chip ("Underground") against the
+     drawer edge, and the scroll affordance wasn't discoverable. */
   .filter-row {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    flex-wrap: wrap;
+    row-gap: 0.4rem;
   }
-
-  .filter-row::-webkit-scrollbar { display: none; }
 
   .env-btn { flex-shrink: 0; }
 
   /* Row internals are unique to the library and not in the shared
      scale — keep the mobile tuning here. */
-  .category-header { font-size: 1.2rem; padding: 0.65rem 0.4rem; }
-  .category-count { font-size: 1rem; }
+  .category-header { font-size: 1.55rem; padding: 0.8rem 0.45rem; }
+  .category-count { font-size: 1.15rem; }
+  .category-chevron { width: 1.2rem; font-size: 1rem; }
   .row-name { font-size: 1.35rem; }
   .row-description { font-size: 1.1rem; }
   .row-shape { font-size: 0.85rem; }

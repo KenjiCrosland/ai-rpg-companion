@@ -7,6 +7,11 @@
         @pick="onPickTemplate"
       />
       <template v-else>
+        <ZoneTapHint
+          :visible="zoneTapHintVisible"
+          @dismiss="dismissZoneTapHint"
+        />
+
         <MapControls
           :map-name="map.state.mapName"
           @add-token="openCreator"
@@ -76,6 +81,7 @@
           @delete-zone="map.removeZone"
           @start-connect="onStartConnect"
           @open-conditions="openPillManager"
+          @add-token="onZoneAddToken"
           @cancel-connect="map.cancelConnectMode"
           @drag-start="onDragStart"
           @drag-end="onDragEnd"
@@ -133,10 +139,17 @@
         @remove-pill="map.removePillFromZone"
         @add-token="onSheetAddTokenInline"
         @move-token="onSheetMoveToken"
+        @dash="map.incrementDash"
+        @undo-dash="map.decrementDash"
         @delete="onSheetDelete"
       />
 
       <OnboardingHint :visible="hintVisible" @dismiss="dismissHint" />
+
+      <DashHint
+        :visible="map.dashHintVisible.value"
+        @dismiss="map.dismissDashHint"
+      />
 
       <ToolFooter />
     </div>
@@ -157,12 +170,15 @@ import PillManager from './components/PillManager.vue';
 import ZoneLibrary from './components/ZoneLibrary.vue';
 import RulesDrawer from './components/RulesDrawer.vue';
 import OnboardingHint from './components/OnboardingHint.vue';
+import DashHint from './components/DashHint.vue';
+import ZoneTapHint from './components/ZoneTapHint.vue';
 import ToolFooter from './components/ToolFooter.vue';
 import ZoneDetailSheet from './components/ZoneDetailSheet.vue';
 import ChaseParticipantsPanel from './components/ChaseParticipantsPanel.vue';
 import { useIsMobile } from './composables/useBreakpoint.js';
 
 const HINT_SEEN_KEY = 'cros-chase-tracker-has-seen-hint';
+const ZONE_TAP_HINT_KEY = 'cros-chase-tracker-zone-tap-hint-seen';
 
 export default {
   name: 'ChaseTracker',
@@ -176,6 +192,8 @@ export default {
     ZoneLibrary,
     RulesDrawer,
     OnboardingHint,
+    DashHint,
+    ZoneTapHint,
     ToolFooter,
     ZoneDetailSheet,
     ChaseParticipantsPanel,
@@ -195,9 +213,15 @@ export default {
     const dragValidZones = ref(new Set());
 
     const creatorOpen = ref(false);
+    // When the desktop affordance row opens the creator from a zone,
+    // the newly-created token should land in that zone rather than
+    // the tray. Null means "drop in tray" (the MapControls + Token
+    // flow and the TokenTray's + Add button).
+    const creatorTargetZoneId = ref(null);
     const rulesOpen = ref(false);
     const libraryOpen = ref(false);
     const hintVisible = ref(false);
+    const zoneTapHintVisible = ref(false);
     const pillManagerZoneId = ref(null);
     const detailSheetZoneId = ref(null);
     const isMobile = useIsMobile();
@@ -232,9 +256,11 @@ export default {
       draggedTokenFromZoneId,
       dragValidZones,
       creatorOpen,
+      creatorTargetZoneId,
       rulesOpen,
       libraryOpen,
       hintVisible,
+      zoneTapHintVisible,
       pillManagerZoneId,
       pillManagerZone,
       detailSheetZoneId,
@@ -248,6 +274,11 @@ export default {
   },
   mounted() {
     window.addEventListener('keydown', this.handleKeydown);
+    // Rehydrated mobile chase: show the zone-tap onboarding if the
+    // user hasn't seen it yet. Handled here (rather than in
+    // onPickTemplate) so users who come back to a saved chase still
+    // see the hint on first mobile load.
+    this.maybeShowZoneTapHint();
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.handleKeydown);
@@ -264,11 +295,35 @@ export default {
         const seen = window.localStorage.getItem(HINT_SEEN_KEY) === 'true';
         if (!seen) this.hintVisible = true;
       }
+      // Picking a template mid-session also counts as "loading a
+      // mobile chase," so surface the zone-tap hint here too.
+      this.$nextTick(() => this.maybeShowZoneTapHint());
     },
     dismissHint() {
       this.hintVisible = false;
       if (typeof window !== 'undefined' && window.localStorage) {
         window.localStorage.setItem(HINT_SEEN_KEY, 'true');
+      }
+    },
+    maybeShowZoneTapHint() {
+      if (!this.isMobile) return;
+      if (!this.map.state.hasActiveChase) return;
+      if (typeof window === 'undefined' || !window.localStorage) return;
+      try {
+        if (window.localStorage.getItem(ZONE_TAP_HINT_KEY) === 'true') return;
+      } catch {
+        return;
+      }
+      this.zoneTapHintVisible = true;
+    },
+    dismissZoneTapHint() {
+      this.zoneTapHintVisible = false;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem(ZONE_TAP_HINT_KEY, 'true');
+        } catch {
+          // silent
+        }
       }
     },
     onZoneClicked(zoneId) {
@@ -329,14 +384,25 @@ export default {
       this.onDragEnd();
     },
     openCreator() {
+      // Called from MapControls + Token and TokenTray + Add — those
+      // entry points always place the new token in the tray.
+      this.creatorTargetZoneId = null;
+      this.creatorOpen = true;
+    },
+    onZoneAddToken(zoneId) {
+      // Called from a zone's affordance row on desktop. Target the
+      // zone so the new token drops straight in.
+      this.creatorTargetZoneId = zoneId;
       this.creatorOpen = true;
     },
     onCreateToken(fields) {
-      this.map.addToken({ ...fields, zoneId: null });
+      this.map.addToken({ ...fields, zoneId: this.creatorTargetZoneId ?? null });
       this.creatorOpen = false;
+      this.creatorTargetZoneId = null;
     },
     onCancelCreator() {
       this.creatorOpen = false;
+      this.creatorTargetZoneId = null;
     },
     openPillManager(zoneId) {
       this.pillManagerZoneId = zoneId;

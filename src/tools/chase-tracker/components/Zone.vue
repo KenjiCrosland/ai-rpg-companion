@@ -18,6 +18,14 @@
     @dragover="onDragOver"
     @drop="onDrop"
   >
+    <button
+      type="button"
+      class="zone-delete-btn"
+      :aria-label="`Delete ${zone.name}`"
+      title="Delete zone"
+      @click.stop="onDeleteClick"
+    >×</button>
+
     <h3 class="zone-name">{{ zone.name }}</h3>
 
     <p class="zone-description ink-italic">{{ zone.description }}</p>
@@ -25,8 +33,6 @@
     <div v-if="zone.pills.length" class="zone-pills">
       <ZonePill v-for="pill in zone.pills" :key="pill.id" :pill="pill" />
     </div>
-
-    <p class="zone-tap-hint ink-italic" aria-hidden="true">Tap card to edit</p>
 
     <div class="zone-tokens">
       <Token
@@ -87,6 +93,7 @@ export default {
     'delete-zone',
     'start-connect',
     'open-conditions',
+    'add-token',
     'drag-start',
     'drag-end',
     'drop-token',
@@ -130,10 +137,13 @@ export default {
         this.$emit('start-connect', this.zone.id);
       } else if (key === 'conditions') {
         this.$emit('open-conditions', this.zone.id);
-      } else if (key === 'delete') {
-        if (window.confirm(`Delete zone "${this.zone.name}"?`)) {
-          this.$emit('delete-zone', this.zone.id);
-        }
+      } else if (key === 'addToken') {
+        this.$emit('add-token', this.zone.id);
+      }
+    },
+    onDeleteClick() {
+      if (window.confirm(`Delete zone "${this.zone.name}"?`)) {
+        this.$emit('delete-zone', this.zone.id);
       }
     },
     saveEdit(fields) {
@@ -226,6 +236,44 @@ export default {
   line-height: 1.2;
   pointer-events: none;
   word-break: break-word;
+  /* Padding so the title text can't crash into the top-right × on
+     narrow columns, no matter how long the name is. */
+  padding: 0 1.75rem;
+}
+
+/* Small destructive affordance in the top-right corner of every
+   zone card. Quiet at rest — muted ink, no border/background —
+   bright red on hover so intent reads instantly. Hidden on mobile:
+   the detail sheet's Delete Zone button covers deletion there. */
+.zone-delete-btn {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.45rem;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  transition: color 120ms ease, opacity 120ms ease;
+  z-index: 4;
+}
+
+.zone:hover .zone-delete-btn,
+.zone:focus-within .zone-delete-btn {
+  opacity: 1;
+}
+
+.zone-delete-btn:hover {
+  color: var(--accent-red);
 }
 
 .zone-description {
@@ -273,20 +321,14 @@ export default {
   z-index: 5;
 }
 
-/* Mobile-only signpost: lets touch users know the card body itself is
-   tappable (opens the detail sheet) — since on desktop the affordance
-   icons already advertise edit/conditions/delete on hover. Hidden at
-   desktop widths. */
-.zone-tap-hint {
-  display: none;
-  margin: 0;
-  text-align: center;
-  font-size: 0.82rem;
-  color: var(--ink-muted);
-  letter-spacing: 0.02em;
-}
-
 @media (max-width: 640px) {
+  /* Mobile: delete lives in the zone detail sheet's Edit tab. The
+     top-right × on the card would compete for the tap target with
+     the "tap card to open sheet" gesture. */
+  .zone-delete-btn {
+    display: none;
+  }
+
   .zone {
     /* Top + bottom padding buffer the title and Connect button away
        from the card edges, so the connection-arrow tips (which sit
@@ -302,20 +344,30 @@ export default {
   }
 
   .zone-name {
-    font-size: 1.2rem;
+    /* Smaller + wrappable on mobile — long names like "Collapsed
+       Section" get two tight lines rather than a truncated ellipsis. */
+    font-size: 1rem;
     font-weight: 600;
     line-height: 1.2;
     margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
   }
 
-  /* Description still hides on mobile — it's visible in the detail
-     sheet. The affordance row stays so Edit / Conditions / Delete /
-     Connect are one tap away. */
+  /* Mobile description: 2–3 visible lines, truncated beyond that.
+     CSS grid auto-sizes the row to the tallest card, so every zone
+     in the same row matches height when some have longer text. */
   .zone-description {
-    display: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    margin: 0.25rem 0 0;
   }
 
   .zone-affordance-anchor {
@@ -324,13 +376,6 @@ export default {
     bottom: 22px;
     left: 8px;
     right: 8px;
-  }
-
-  .zone-tap-hint {
-    display: block;
-    /* Flows right after the pills, introducing the card as tappable
-       before the eye reaches the tokens. */
-    margin: 0.2rem 0 0.4rem;
   }
 
   .zone-pills {

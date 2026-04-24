@@ -46,8 +46,8 @@ export default {
     iconActions() {
       return [
         { key: 'edit',       icon: 'game-icons:quill-ink', label: 'Edit' },
+        { key: 'addToken',   icon: 'game-icons:meeple',    label: 'Add Token' },
         { key: 'conditions', icon: 'game-icons:price-tag', label: 'Conditions' },
-        { key: 'delete',     icon: 'game-icons:trash-can', label: 'Delete' },
       ];
     },
   },

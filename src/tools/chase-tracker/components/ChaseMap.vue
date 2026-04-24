@@ -64,6 +64,7 @@
           @delete-zone="(id) => $emit('delete-zone', id)"
           @start-connect="(id) => $emit('start-connect', id)"
           @open-conditions="(id) => $emit('open-conditions', id)"
+          @add-token="(id) => $emit('add-token', id)"
           @drag-start="(id) => $emit('drag-start', id)"
           @drag-end="(id) => $emit('drag-end', id)"
           @drop-token="(id, zoneId) => $emit('drop-token', id, zoneId)"
@@ -136,6 +137,7 @@ export default {
     'start-connect',
     'cancel-connect',
     'open-conditions',
+    'add-token',
     'drag-start',
     'drag-end',
     'drop-token',

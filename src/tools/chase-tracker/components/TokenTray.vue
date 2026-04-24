@@ -99,11 +99,11 @@ export default {
 }
 
 .tray-header {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.75rem;
 }
 
 .tray-title {
-  font-size: 1rem;
+  font-size: 1.35rem;
   color: var(--ink-muted);
   letter-spacing: 0.14em;
 }
@@ -117,7 +117,7 @@ export default {
 }
 
 .tray-empty {
-  font-size: 1rem;
+  font-size: 1.15rem;
   color: var(--ink-muted);
   flex: 1;
   margin: 0;
@@ -162,16 +162,16 @@ export default {
 @media (max-width: 640px) {
   .token-tray {
     margin-top: 0.75rem;
-    padding: 0.55rem 0.7rem 0.7rem;
+    padding: 0.65rem 0.8rem 0.8rem;
   }
 
   .tray-body {
     gap: 0.6rem;
-    min-height: 32px;
+    min-height: 38px;
     align-items: center;
   }
 
-  .tray-title { font-size: 0.7rem; }
+  .tray-title { font-size: 1rem; }
 
   .tray-add {
     width: 32px;
@@ -181,6 +181,6 @@ export default {
   .tray-add-label { display: none; }
   .tray-add-plus { font-size: 1rem; }
 
-  .tray-empty { font-size: 0.78rem; }
+  .tray-empty { font-size: 0.95rem; }
 }
 </style>

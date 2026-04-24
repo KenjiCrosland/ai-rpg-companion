@@ -174,7 +174,10 @@ export default {
 .panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(46, 33, 20, 0.45);
+  /* Light backdrop: the sheet itself is visually dominant, but the
+     rest of the UI (scene description, MapControls) stays readable
+     underneath so the GM doesn't feel locked out. */
+  background: rgba(46, 33, 20, 0.22);
   z-index: 128;
   display: flex;
   align-items: flex-end;

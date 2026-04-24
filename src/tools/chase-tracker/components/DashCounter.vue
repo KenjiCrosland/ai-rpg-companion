@@ -1,25 +1,27 @@
 <template>
   <div class="dash-counter">
-    <span class="dash-label">Dashes:</span>
-    <button
-      type="button"
-      class="dash-step dash-step--minus"
-      :disabled="count === 0"
-      :aria-label="`Remove one Dash from ${name || 'token'}`"
-      title="Remove one Dash"
-      @click.stop="$emit('undo')"
-    >−</button>
-    <span
-      :class="['dash-value', `dash-value--${tier}`]"
-      :aria-label="`Dash count: ${count}`"
-    >{{ count }}</span>
-    <button
-      type="button"
-      class="dash-step dash-step--plus"
-      :aria-label="`Mark one Dash for ${name || 'token'}`"
-      title="Add one Dash"
-      @click.stop="$emit('dash')"
-    >+</button>
+    <span class="dash-label">Dashes</span>
+    <div class="dash-controls">
+      <button
+        type="button"
+        class="dash-step dash-step--minus"
+        :disabled="count === 0"
+        :aria-label="`Remove one Dash from ${name || 'token'}`"
+        title="Remove one Dash"
+        @click.stop="$emit('undo')"
+      >−</button>
+      <span
+        :class="['dash-value', `dash-value--${tier}`]"
+        :aria-label="`Dash count: ${count}`"
+      >{{ count }}</span>
+      <button
+        type="button"
+        class="dash-step dash-step--plus"
+        :aria-label="`Mark one Dash for ${name || 'token'}`"
+        title="Add one Dash"
+        @click.stop="$emit('dash')"
+      >+</button>
+    </div>
   </div>
 </template>
 
@@ -51,6 +53,12 @@ export default {
   font-size: 1.35rem;
   letter-spacing: 0.04em;
   color: var(--ink-secondary);
+}
+
+.dash-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .dash-label {
@@ -111,14 +119,32 @@ export default {
 }
 
 @media (max-width: 640px) {
-  .dash-counter { font-size: 1.15rem; gap: 0.4rem; }
-  .dash-label { font-size: 1rem; margin-right: 0.3rem; }
-  .dash-step { width: 34px; height: 30px; font-size: 1.2rem; }
+  /* Mobile: DASHES label sits centered directly above the
+     [−] N [+] group, with a slim gap. Reads as a titled control
+     block rather than inline prose. */
+  .dash-counter {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 1.15rem;
+  }
+
+  .dash-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    margin-right: 0;
+  }
+
+  .dash-controls {
+    gap: 0.4rem;
+  }
+
+  .dash-step { width: 30px; height: 28px; font-size: 1.1rem; }
   .dash-value {
-    min-width: 2.7rem;
-    height: 2.7rem;
-    font-size: 1.3rem;
-    padding: 0 0.55rem;
+    min-width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.2rem;
+    padding: 0 0.5rem;
   }
 }
 

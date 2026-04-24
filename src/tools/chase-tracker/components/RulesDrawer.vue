@@ -11,15 +11,15 @@
         <div class="drawer-body">
           <p class="ink-italic drawer-preamble">
             Below is a paraphrased reference for the standard 5e chase rules.
-            This tool doesn't enforce them — it gives you a map to run the chase
-            on. Use or ignore as you see fit.
+            The tool gives you a map to run the chase on. Use or ignore
+            these rules as you see fit.
           </p>
 
           <section>
             <h3 class="display-heading">Starting the Chase</h3>
             <p>
               When a chase kicks off, roll initiative for everyone involved.
-              Decide who is fleeing and who is pursuing — the tool calls them
+              Decide who is fleeing and who is pursuing. The tool calls them
               the Quarry and the Pursuers. You can also set a starting distance
               in zones: same zone for a hand-on-collar start, one or two zones
               apart for a head start, three or more for a cold trail.
@@ -37,8 +37,8 @@
             </p>
             <p>
               Past that, each additional Dash forces a Constitution save, DC 10,
-              or gain a level of exhaustion. Quarry and pursuers alike — this
-              cost applies to anyone pushing themselves.
+              or gain a level of exhaustion. This cost applies to anyone
+              pushing themselves, quarry and pursuers alike.
             </p>
           </section>
 
@@ -61,9 +61,46 @@
             <h3 class="display-heading">Complications</h3>
             <p>
               The DMG suggests rolling on a table of chase complications each
-              round — things that knock pursuers off the trail, drop obstacles,
+              round: things that knock pursuers off the trail, drop obstacles,
               or change the terrain. Use zone pills to mark the result:
               Crowded, Obstacle, Closed, and so on.
+            </p>
+          </section>
+
+          <OrnamentalDivider glyph="✦" />
+
+          <section>
+            <h3 class="display-heading">Editing Zones</h3>
+            <p>
+              On mobile, tap any zone card to open an editor for that zone.
+              From there you can rename it, edit its description, adjust
+              its size, manage conditions, add tokens, or delete it. On
+              desktop the same actions live in the icon row at the bottom
+              of each card.
+            </p>
+          </section>
+
+          <OrnamentalDivider glyph="✦" />
+
+          <section>
+            <h3 class="display-heading">Tokens &amp; Dashes</h3>
+            <p>
+              Each token on the map represents a creature in the chase: a PC,
+              pursuer, or quarry. The number on a token's badge shows how many
+              Dashes that character has taken.
+            </p>
+            <p>
+              Dashes increment automatically whenever a token moves between
+              zones on the map. To correct a count (for example, if a
+              character used Misty Step instead of Dashing), tap the
+              <strong>−</strong> button in the Participants panel or the zone
+              detail sheet.
+            </p>
+            <p>
+              In 5e, a creature can Dash a number of times equal to
+              <strong>3 + their Constitution modifier</strong> before risking
+              exhaustion. Apply this limit yourself based on your characters'
+              stats.
             </p>
           </section>
 
@@ -73,14 +110,14 @@
             <h3 class="display-heading">Ending the Chase</h3>
             <p>
               A chase ends when one side catches the other, one side gives up,
-              or the quarry breaks line of sight and successfully hides — a
+              or the quarry breaks line of sight and successfully hides with a
               Stealth check opposed by the pursuers' passive Perception (or an
               active Perception check if they're actively searching).
             </p>
             <p>
               You can also call it when the fiction says so. A chase that spills
               into open combat, crosses a locked border, or reaches a narrative
-              stopping point doesn't need to be resolved by the rules.
+              stopping point can end by GM call without rolling it out.
             </p>
           </section>
         </div>
@@ -113,7 +150,7 @@ export default {
 }
 
 .rules-drawer {
-  width: min(420px, 100%);
+  width: min(570px, 100%);
   height: 100vh;
   max-width: 100%;
   background-color: var(--parchment-base);
@@ -122,7 +159,7 @@ export default {
     radial-gradient(ellipse at bottom right, rgba(164, 134, 86, 0.10), transparent 50%);
   border-left: 1px solid var(--parchment-edge);
   box-shadow: -8px 0 24px rgba(46, 33, 20, 0.25);
-  padding: 1.5rem 1.75rem;
+  padding: 2rem 2.3rem;
   overflow-y: auto;
   color: var(--ink-primary);
   font-family: var(--font-body);
@@ -135,17 +172,17 @@ export default {
 }
 
 .drawer-title {
-  font-size: 1.5rem;
+  font-size: 2rem;
 }
 
 .drawer-close {
   background: transparent;
   border: none;
-  font-size: 1.6rem;
+  font-size: 2.15rem;
   line-height: 1;
   color: var(--ink-muted);
   cursor: pointer;
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.55rem;
 }
 
 .drawer-close:hover {
@@ -153,26 +190,26 @@ export default {
 }
 
 .drawer-preamble {
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   line-height: 1.55;
-  margin: 0.5rem 0 1.25rem;
+  margin: 0.65rem 0 1.65rem;
 }
 
 .drawer-body section {
-  margin: 1rem 0;
+  margin: 1.35rem 0;
 }
 
 .drawer-body h3 {
-  font-size: 1.3rem;
+  font-size: 1.75rem;
   letter-spacing: 0.05em;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.75rem;
   color: var(--accent-red);
 }
 
 .drawer-body p {
-  font-size: 1.15rem;
+  font-size: 1.55rem;
   line-height: 1.6;
-  margin: 0 0 0.7rem;
+  margin: 0 0 0.95rem;
 }
 
 .drawer-body strong {
@@ -200,13 +237,13 @@ export default {
 @media (max-width: 640px) {
   .rules-drawer {
     width: 100%;
-    padding: 1rem 1rem 2rem;
+    padding: 1.35rem 1.35rem 2.25rem;
   }
 
-  .drawer-title { font-size: 1.3rem; }
-
-  .drawer-body p { font-size: 1.05rem; }
-  .drawer-body h3 { font-size: 1.2rem; }
-  .drawer-preamble { font-size: 1rem; }
+  .drawer-title { font-size: 1.75rem; }
+  .drawer-close { font-size: 1.9rem; }
+  .drawer-body p { font-size: 1.4rem; }
+  .drawer-body h3 { font-size: 1.6rem; }
+  .drawer-preamble { font-size: 1.35rem; }
 }
 </style>

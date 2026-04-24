@@ -8,6 +8,7 @@ import {
   useChaseMap,
   STORAGE_KEY,
   LAST_PARTICIPANTS_KEY,
+  DASH_HINT_SEEN_KEY,
   SHAPE_DIMENSIONS,
 } from './composables/useChaseMap.js';
 import ChaseTracker from './ChaseTracker.vue';
@@ -86,6 +87,124 @@ describe('useChaseMap — movement', () => {
     expect(map.moveTokenTo(token.id, null)).toBe(true);
     const farZone = map.state.zones[map.state.zones.length - 1];
     expect(map.moveTokenTo(token.id, farZone.id)).toBe(true);
+  });
+});
+
+describe('useChaseMap — dash auto-increment', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('zone → adjacent zone via moveTokenTo increments dashCount by 1', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const adjacent = map.state.zones.find(
+      (z) => z.id !== token.zoneId && map.isAdjacent(token.zoneId, z.id)
+    );
+    const prev = token.dashCount || 0;
+    expect(map.moveTokenTo(token.id, adjacent.id)).toBe(true);
+    expect(token.dashCount).toBe(prev + 1);
+  });
+
+  test('zone → tray does NOT increment dashCount', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const prev = token.dashCount || 0;
+    expect(map.moveTokenTo(token.id, null)).toBe(true);
+    expect(token.dashCount).toBe(prev);
+  });
+
+  test('tray → zone does NOT increment dashCount', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    map.moveTokenTo(token.id, null);
+    const prev = token.dashCount || 0;
+    const zone = map.state.zones[0];
+    expect(map.moveTokenTo(token.id, zone.id)).toBe(true);
+    expect(token.dashCount).toBe(prev);
+  });
+
+  test('setTokenZone (Participants panel path) never increments dashCount', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const prev = token.dashCount || 0;
+    const other = map.state.zones.find((z) => z.id !== token.zoneId);
+    expect(map.setTokenZone(token.id, other.id)).toBe(true);
+    expect(token.dashCount).toBe(prev);
+    expect(map.setTokenZone(token.id, null)).toBe(true);
+    expect(token.dashCount).toBe(prev);
+  });
+
+  test('countAsDash: false opts out of auto-increment', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const adjacent = map.state.zones.find(
+      (z) => z.id !== token.zoneId && map.isAdjacent(token.zoneId, z.id)
+    );
+    const prev = token.dashCount || 0;
+    expect(map.moveTokenTo(token.id, adjacent.id, { countAsDash: false })).toBe(true);
+    expect(token.dashCount).toBe(prev);
+  });
+});
+
+describe('useChaseMap — dash hint surfacing', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('first 0→1 increment surfaces the hint when the flag is unset', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    expect(map.dashHintVisible.value).toBe(false);
+    map.incrementDash(token.id);
+    expect(map.dashHintVisible.value).toBe(true);
+  });
+
+  test('does not surface on subsequent increments within the same session', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    map.incrementDash(token.id);
+    map.dismissDashHint();
+    expect(map.dashHintVisible.value).toBe(false);
+    // Next increment: 1 → 2. Shouldn't re-surface.
+    map.incrementDash(token.id);
+    expect(map.dashHintVisible.value).toBe(false);
+  });
+
+  test('does not surface if the seen flag is already set (prior session)', () => {
+    localStorage.setItem(DASH_HINT_SEEN_KEY, 'true');
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    map.incrementDash(token.id);
+    expect(map.dashHintVisible.value).toBe(false);
+  });
+
+  test('dismissDashHint persists the seen flag', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.incrementDash(map.state.tokens[0].id);
+    map.dismissDashHint();
+    expect(localStorage.getItem(DASH_HINT_SEEN_KEY)).toBe('true');
+  });
+
+  test('rehydrating with non-zero dashCount does NOT surface the hint', async () => {
+    // Prime a state where tokens already carry dashCount > 0, then
+    // rehydrate. The hint should only fire on a fresh increment event,
+    // not on existing persisted state.
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    map1.incrementDash(map1.state.tokens[0].id);
+    map1.dismissDashHint();
+    // Clear the seen flag so the trigger logic would otherwise fire.
+    localStorage.removeItem(DASH_HINT_SEEN_KEY);
+    await nextTick();
+
+    const map2 = useChaseMap();
+    expect(map2.dashHintVisible.value).toBe(false);
   });
 });
 
@@ -836,6 +955,35 @@ describe('useChaseMap — expandGrid', () => {
     expect(map.state.pendingPlacementCell).not.toBeNull();
     map.clearPendingPlacement();
     expect(map.state.pendingPlacementCell).toBeNull();
+  });
+
+  test('clearPendingPlacement collapses the orphan edge row/column', () => {
+    // Clicking an edge `+` then dismissing the library without picking
+    // used to leave a dangling empty row, so subsequent `+` clicks kept
+    // stacking empty rows. Recomputing on cancel undoes the expansion.
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    const rooftopsRowBefore = map.state.zones.find((z) => z.id === 'rooftops').row;
+
+    map.expandGrid('top');
+    expect(map.state.gridRows).toBe(rowsBefore + 1);
+    expect(map.state.zones.find((z) => z.id === 'rooftops').row).toBe(rooftopsRowBefore + 1);
+
+    map.clearPendingPlacement();
+    expect(map.state.gridRows).toBe(rowsBefore);
+    expect(map.state.zones.find((z) => z.id === 'rooftops').row).toBe(rooftopsRowBefore);
+  });
+
+  test('clearPendingPlacement without a pending cell leaves the grid alone', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    const colsBefore = map.state.gridCols;
+    // Pure no-op when nothing was pending — no spurious tighten.
+    map.clearPendingPlacement();
+    expect(map.state.gridRows).toBe(rowsBefore);
+    expect(map.state.gridCols).toBe(colsBefore);
   });
 
   test('without pending placement, library add falls back to first-empty-cell', () => {

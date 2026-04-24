@@ -43,13 +43,11 @@
             @undo="$emit('undo-dash', token.id)"
           />
           <button
-            v-if="group.role !== 'quarry' || participantsByRole.quarry.length > 1"
             type="button"
             class="participant-remove"
             :aria-label="`Remove ${token.label}`"
             @click="$emit('remove', token.id)"
-          >×</button>
-          <span v-else class="participant-remove-placeholder" aria-hidden="true" />
+          >{{ isMobile ? 'Delete' : '×' }}</button>
         </li>
       </ul>
       <button
@@ -63,6 +61,7 @@
 
 <script>
 import DashCounter from './DashCounter.vue';
+import { useIsMobile } from '../composables/useBreakpoint.js';
 
 export default {
   name: 'ChaseParticipantsPanelContent',
@@ -72,6 +71,10 @@ export default {
     zones: { type: Array, default: () => [] },
   },
   emits: ['rename', 'remove', 'dash', 'undo-dash', 'add', 'move'],
+  setup() {
+    const isMobile = useIsMobile();
+    return { isMobile };
+  },
   data() {
     return {
       groups: [
@@ -224,13 +227,6 @@ export default {
   outline-offset: 2px;
 }
 
-.participant-remove-placeholder {
-  display: inline-block;
-  width: var(--ui-row-control-size);
-  height: var(--ui-row-control-size);
-  margin-left: var(--ui-row-control-gap);
-}
-
 .add-btn {
   align-self: flex-start;
   font-family: var(--font-display);
@@ -273,23 +269,100 @@ export default {
 }
 
 @media (max-width: 640px) {
-  .participant-input {
-    font-size: 1.3rem;
-    padding: 0.65rem 0.85rem;
-    flex: 1 1 100%;
+  /* Two-row participant card:
+     Row 1 — name input (grows) + × remove in the top-right corner.
+     Row 2 — location dropdown (grows) + DASHES counter (right).
+     Wrapped in a subtle parchment-warm panel so each participant
+     reads as one unit during live play. */
+  .role-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
   }
 
-  .participant-location {
-    flex: 1 1 100%;
-  }
-
-  .location-select {
-    font-size: 1.2rem;
-    padding: 0.55rem 2.2rem 0.55rem 0.85rem;
+  .participant-list {
+    gap: 0.65rem;
   }
 
   .participant-row {
-    gap: 0.65rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "name     remove"
+      "location dash";
+    column-gap: 0.75rem;
+    row-gap: 0.55rem;
+    align-items: center;
+    padding: 0.75rem 0.8rem 0.8rem;
+    background: var(--parchment-warm);
+    border: 1px solid var(--parchment-edge);
+    border-radius: 3px;
+  }
+
+  .participant-input {
+    grid-area: name;
+    flex: unset;
+    min-width: 0;
+    width: 100%;
+    font-size: 1.25rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--parchment-base);
+  }
+
+  .participant-location {
+    grid-area: location;
+    flex: unset;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .location-select {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    font-size: 1.15rem;
+    padding: 0.55rem 2.1rem 0.55rem 0.8rem;
+  }
+
+  .participant-dash {
+    grid-area: dash;
+    justify-self: end;
+    flex-shrink: 0;
+  }
+
+  /* × remove: top-right corner, muted, small. Visually separated
+     from the active controls below. ~22px visible target area. */
+  .participant-remove {
+    grid-area: remove;
+    justify-self: end;
+    align-self: start;
+    /* Text link treatment on mobile — "Delete" in small caps,
+       muted ink, underlined, no chip. Sized for text; width auto. */
+    width: auto;
+    height: auto;
+    margin-left: 0;
+    padding: 0.1rem 0.2rem;
+    background: transparent;
+    border: none;
+    color: var(--ink-muted);
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-decoration-color: var(--parchment-edge);
+    text-underline-offset: 2px;
+  }
+
+  .participant-remove:hover {
+    background: transparent;
+    border-color: transparent;
+    color: var(--accent-red);
+    text-decoration-color: var(--accent-red);
+  }
+
+  .add-btn {
+    font-size: 1rem;
+    padding: 0.55rem 1rem;
   }
 }
 </style>

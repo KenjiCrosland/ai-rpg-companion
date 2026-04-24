@@ -1,4 +1,4 @@
-import { reactive, computed, watch } from 'vue';
+import { reactive, computed, ref, watch } from 'vue';
 import templatesData from '../data/templates.json';
 import { uid } from '../utils/random.js';
 import {
@@ -12,6 +12,25 @@ import { PILL_TONES } from '../config/pills.js';
 
 const STORAGE_KEY = 'cros-chase-tracker';
 const LAST_PARTICIPANTS_KEY = 'cros-chase-tracker-last-participants';
+const DASH_HINT_SEEN_KEY = 'cros-chase-tracker-dash-hint-seen';
+
+function hasSeenDashHint() {
+  if (typeof window === 'undefined' || !window.localStorage) return true;
+  try {
+    return window.localStorage.getItem(DASH_HINT_SEEN_KEY) === 'true';
+  } catch {
+    return true;
+  }
+}
+
+function markDashHintSeen() {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    window.localStorage.setItem(DASH_HINT_SEEN_KEY, 'true');
+  } catch {
+    // silent
+  }
+}
 
 export const SHAPE_DIMENSIONS = {
   small:   { colSpan: 1, rowSpan: 1 },
@@ -194,6 +213,11 @@ function findFreeRegion(zones, cols, rows, colSpan, rowSpan) {
 export function useChaseMap() {
   const state = reactive(loadFromStorage() || emptyState());
 
+  // Ephemeral UI refs — not persisted. dashHintVisible drives the
+  // one-time Dash onboarding popover; the localStorage-backed
+  // "seen" flag controls whether it can ever show again.
+  const dashHintVisible = ref(false);
+
   // Rehydrated state may include empty rows/columns left over from an
   // edge-expansion flow that never completed (the user clicked a `+`
   // edge button, then reloaded before picking a zone). pendingPlacementCell
@@ -318,7 +342,7 @@ export function useChaseMap() {
     );
   }
 
-  function moveTokenTo(tokenId, zoneId) {
+  function moveTokenTo(tokenId, zoneId, { countAsDash = true } = {}) {
     const token = state.tokens.find((t) => t.id === tokenId);
     if (!token) return false;
     if (token.zoneId === zoneId) return false;
@@ -327,6 +351,13 @@ export function useChaseMap() {
     if (!fromTray && !toTray && !isAdjacent(token.zoneId, zoneId)) return false;
     token.zoneId = zoneId;
     if (state.selectedTokenId === tokenId) state.selectedTokenId = null;
+    // Auto-increment Dash for pure zone↔zone moves — that's what
+    // movement in a chase represents in the fiction. Tray interactions
+    // (placing / removing) are setup & don't count. Callers like the
+    // Participants panel opt out via countAsDash: false.
+    if (countAsDash && !fromTray && !toTray) {
+      incrementDash(tokenId);
+    }
     return true;
   }
 
@@ -420,7 +451,21 @@ export function useChaseMap() {
   function incrementDash(tokenId) {
     const token = state.tokens.find((t) => t.id === tokenId);
     if (!token) return;
-    token.dashCount = (token.dashCount || 0) + 1;
+    const prev = token.dashCount || 0;
+    token.dashCount = prev + 1;
+    // Surface the teaching hint on the first fresh 0→1 transition
+    // this user has experienced. This method is only reached via
+    // explicit user action (manual + tap OR a move after rehydration),
+    // so persisted counts from a prior session don't accidentally
+    // fire it on load.
+    if (prev === 0 && !hasSeenDashHint()) {
+      dashHintVisible.value = true;
+    }
+  }
+
+  function dismissDashHint() {
+    dashHintVisible.value = false;
+    markDashHintSeen();
   }
 
   function decrementDash(tokenId) {
@@ -650,7 +695,13 @@ export function useChaseMap() {
   }
 
   function clearPendingPlacement() {
+    const hadPending = state.pendingPlacementCell !== null;
     state.pendingPlacementCell = null;
+    // If the user clicked an edge `+` and then dismissed the library
+    // without picking a zone, the grid was already expanded by one
+    // row/column. Trim it back so there's no orphan empty row sitting
+    // between the `+` button and the existing zones.
+    if (hadPending) recomputeGridDimensions();
   }
 
   function removeZone(zoneId) {
@@ -854,6 +905,8 @@ export function useChaseMap() {
     renameToken,
     updateToken,
     incrementDash,
+    dashHintVisible,
+    dismissDashHint,
     decrementDash,
     setDashCount,
     toggleParticipantsPanel,
@@ -885,4 +938,4 @@ export function useChaseMap() {
   };
 }
 
-export { STORAGE_KEY, LAST_PARTICIPANTS_KEY };
+export { STORAGE_KEY, LAST_PARTICIPANTS_KEY, DASH_HINT_SEEN_KEY };

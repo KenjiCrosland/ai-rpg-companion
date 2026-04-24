@@ -83,39 +83,48 @@
                 :key="token.id"
                 class="token-row"
               >
-                <span
-                  class="token-swatch"
-                  :style="{ backgroundColor: paletteFor(token).fill, borderColor: paletteFor(token).border, color: paletteFor(token).text }"
-                >
-                  <Icon v-if="iconNameFor(token)" :icon="iconNameFor(token)" :width="16" :height="16" />
-                </span>
-                <span class="token-label">{{ token.label }}</span>
-                <div class="token-move-wrap">
-                  <button
-                    :class="['token-move-btn', { 'token-move-btn--open': openMoveTokenId === token.id }]"
-                    @click="toggleMove(token.id)"
-                    :aria-expanded="openMoveTokenId === token.id"
-                  >Move ▾</button>
-                  <ul
-                    v-if="openMoveTokenId === token.id"
-                    class="move-menu"
-                    @click.stop
+                <div class="token-row-head">
+                  <span
+                    class="token-swatch"
+                    :style="{ backgroundColor: paletteFor(token).fill, borderColor: paletteFor(token).border, color: paletteFor(token).text }"
                   >
-                    <li v-if="moveTargets.length === 0" class="move-empty ink-italic">
-                      No connected zones. Use Connect first.
-                    </li>
-                    <li v-for="target in moveTargets" :key="target.id">
-                      <button class="move-menu-item" @click="selectMoveTarget(token.id, target.id)">
-                        {{ target.name }}
-                      </button>
-                    </li>
-                    <li>
-                      <button class="move-menu-item move-menu-item--muted" @click="selectMoveTarget(token.id, null)">
-                        Off the Board
-                      </button>
-                    </li>
-                  </ul>
+                    <Icon v-if="iconNameFor(token)" :icon="iconNameFor(token)" :width="16" :height="16" />
+                  </span>
+                  <span class="token-label">{{ token.label }}</span>
+                  <div class="token-move-wrap">
+                    <button
+                      :class="['token-move-btn', { 'token-move-btn--open': openMoveTokenId === token.id }]"
+                      @click="toggleMove(token.id)"
+                      :aria-expanded="openMoveTokenId === token.id"
+                    >Move ▾</button>
+                    <ul
+                      v-if="openMoveTokenId === token.id"
+                      class="move-menu"
+                      @click.stop
+                    >
+                      <li v-if="moveTargets.length === 0" class="move-empty ink-italic">
+                        No connected zones. Use Connect first.
+                      </li>
+                      <li v-for="target in moveTargets" :key="target.id">
+                        <button class="move-menu-item" @click="selectMoveTarget(token.id, target.id)">
+                          {{ target.name }}
+                        </button>
+                      </li>
+                      <li>
+                        <button class="move-menu-item move-menu-item--muted" @click="selectMoveTarget(token.id, null)">
+                          Off the Board
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
+                <DashCounter
+                  :count="token.dashCount || 0"
+                  :name="token.label"
+                  class="token-row-dash"
+                  @dash="$emit('dash', token.id)"
+                  @undo="$emit('undo-dash', token.id)"
+                />
               </li>
             </ul>
 
@@ -282,6 +291,7 @@
 import { Icon } from '@iconify/vue';
 import OrnamentalDivider from './OrnamentalDivider.vue';
 import DButton from './DButton.vue';
+import DashCounter from './DashCounter.vue';
 import { TOKEN_COLORS, TOKEN_COLOR_ORDER } from '../config/tokenColors.js';
 import {
   TOKEN_ICON_MAP,
@@ -322,7 +332,7 @@ function freshNewToken() {
 
 export default {
   name: 'ZoneDetailSheet',
-  components: { Icon, OrnamentalDivider, DButton },
+  components: { Icon, OrnamentalDivider, DButton, DashCounter },
   props: {
     zone: { type: Object, default: null },
     tokens: { type: Array, default: () => [] },
@@ -336,6 +346,8 @@ export default {
     'remove-pill',
     'add-token',
     'move-token',
+    'dash',
+    'undo-dash',
     'delete',
   ],
   data() {
@@ -832,12 +844,22 @@ export default {
 
 .token-row {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.35rem 0.5rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
   background: var(--parchment-warm);
   border: 1px solid var(--parchment-edge);
   border-radius: 3px;
+}
+
+.token-row-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.token-row-dash {
+  align-self: flex-start;
 }
 
 .token-swatch {
