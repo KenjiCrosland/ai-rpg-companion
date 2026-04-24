@@ -62,9 +62,8 @@
             <p>
               The DMG suggests rolling on a table of chase complications each
               round — things that knock pursuers off the trail, drop obstacles,
-              or change the terrain. This tool's <strong>What Changes?</strong>
-              button serves the same purpose: a nudge to shift the scene when
-              it starts to settle.
+              or change the terrain. Use zone pills to mark the result:
+              Crowded, Obstacle, Closed, and so on.
             </p>
           </section>
 

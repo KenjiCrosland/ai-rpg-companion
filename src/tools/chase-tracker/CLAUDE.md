@@ -27,8 +27,7 @@ The full state lives in a single reactive object from `composables/useChaseMap.j
   tokens: [
     { id, label, role: 'quarry' | 'pc' | 'pursuer', zoneId }
   ],
-  selectedTokenId: string | null,
-  pendingShift: { text, suggestedState? } | null
+  selectedTokenId: string | null
 }
 ```
 
@@ -50,7 +49,7 @@ In v1 all three templates have `premium: false`, so free and premium see identic
 
 ## No AI integration
 
-This tool does **not** call `generateGptResponse()`. There are no files in `src/prompts/` for it. All runtime content — templates, shift prompts, generic zone descriptions — is in `data/*.json`. Tests do not need to mock the AI layer.
+This tool does **not** call `generateGptResponse()`. There are no files in `src/prompts/` for it. All runtime content — templates, library zones, generic zone descriptions — is in `data/*.json`. Tests do not need to mock the AI layer.
 
 ## Styling
 
@@ -63,14 +62,13 @@ Don't add unscoped selectors to the tool's CSS files. If a style is bleeding out
 
 ## Components
 
-- `ChaseTracker.vue` — root. Adds the `.chase-tracker-root` wrapper, chooses between `TemplatePicker` and `ChaseMap`, renders `ShiftPrompt` when a shift is pending.
+- `ChaseTracker.vue` — root. Adds the `.chase-tracker-root` wrapper, chooses between `TemplatePicker` and `ChaseMap`.
 - `TemplatePicker.vue` — starting screen with the three map cards.
-- `MapControls.vue` — top bar (map name edit, "What Changes?", +Token, +Zone, New Chase).
+- `MapControls.vue` — top bar (map name edit, Participants, +Token, +Zone, Rules, New Chase).
 - `ChaseMap.vue` — the grid + SVG connection overlay. Recomputes line coords on resize and on state changes.
-- `Zone.vue` — one grid cell. Click = move selected token here (if adjacent). Menu for edit / cycle state / connect / delete.
-- `ZoneEditor.vue` — inline popover for name/description/state/span.
+- `Zone.vue` — one grid cell. Click = move selected token here (if adjacent). Affordance row for edit / conditions / delete / connect.
+- `ZoneEditor.vue` — inline popover for name/description/span.
 - `Token.vue` — chip inside a zone. Click = select/deselect. Double-click = rename. × on hover = remove.
-- `ShiftPrompt.vue` — floating parchment card with the current shift. Advisory only — GM applies manually.
 - `ParchmentPanel.vue`, `OrnamentalDivider.vue`, `DButton.vue` — tool-local UI primitives.
 
 ## Tests
@@ -80,7 +78,6 @@ Don't add unscoped selectors to the tool's CSS files. If a style is bleeding out
 - `startFromTemplate` loads zones, connections, tokens; sets `hasActiveChase`.
 - `moveSelectedTokenTo` rejects non-adjacent moves, accepts adjacent, clears selection.
 - `addZone`, `connectZones`/`disconnectZones`, `addToken`/`removeToken`.
-- `rollShift` picks from the pool (mocked `Math.random`).
 - localStorage round-trip; `schemaVersion` mismatch resets to empty.
 - Premium prop filters templates.
 
@@ -89,6 +86,5 @@ No AI mocks needed.
 ## Extending
 
 - **More templates:** add to `data/templates.json`. Set `premium: true` for gated ones.
-- **More shifts:** add to `data/zoneShifts.json`. Keep them advisory; the tool does not auto-apply state.
-- **New zone states:** update the state list in `Zone.vue` / `ZoneEditor.vue` and add a `.zone--<state>` style in `Zone.vue`'s scoped block.
+- **More library zones:** add to `data/zoneLibrary.json`.
 - **New token roles:** same pattern in `Token.vue`.

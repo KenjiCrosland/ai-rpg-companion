@@ -1,7 +1,6 @@
 import { reactive, computed, watch } from 'vue';
 import templatesData from '../data/templates.json';
-import shiftsData from '../data/zoneShifts.json';
-import { pickRandom, uid } from '../utils/random.js';
+import { uid } from '../utils/random.js';
 import {
   ROLE_DEFAULTS,
   ROLE_LABELS,
@@ -36,7 +35,6 @@ function emptyState() {
     connections: [],
     tokens: [],
     selectedTokenId: null,
-    pendingShift: null,
     connectingFromZoneId: null,
     participantsPanelCollapsed: false,
     pendingPlacementCell: null,
@@ -229,7 +227,6 @@ export function useChaseMap() {
     state.connections = template.connections.map((c) => [...c]);
     state.tokens = template.defaultTokens.map(normalizeToken);
     state.selectedTokenId = null;
-    state.pendingShift = null;
     state.connectingFromZoneId = null;
     state.participantsPanelCollapsed = false;
 
@@ -727,15 +724,6 @@ export function useChaseMap() {
     if (typeof fields.detail === 'string') pill.detail = fields.detail;
   }
 
-  function rollShift() {
-    const shift = pickRandom(shiftsData.shifts);
-    state.pendingShift = shift ? { ...shift } : null;
-  }
-
-  function dismissShift() {
-    state.pendingShift = null;
-  }
-
   function reset() {
     Object.assign(state, emptyState());
   }
@@ -821,8 +809,6 @@ export function useChaseMap() {
     addPillToZone,
     removePillFromZone,
     updatePillOnZone,
-    rollShift,
-    dismissShift,
     reset,
     isAdjacent,
     tokensByZone,

@@ -13,7 +13,6 @@ import {
 } from './composables/useChaseMap.js';
 import ChaseTracker from './ChaseTracker.vue';
 import templatesData from './data/templates.json';
-import shiftsData from './data/zoneShifts.json';
 import libraryData from './data/zoneLibrary.json';
 import { ROLE_DEFAULTS, TOKEN_ICON_MAP } from './config/tokenIcons.js';
 import { TOKEN_COLORS } from './config/tokenColors.js';
@@ -866,16 +865,6 @@ describe('useChaseMap — persistence', () => {
 
 describe('useChaseMap — misc', () => {
   beforeEach(() => localStorage.clear());
-
-  test('rollShift picks from the pool', () => {
-    const map = useChaseMap();
-    const spy = jest.spyOn(Math, 'random').mockReturnValue(0);
-    map.rollShift();
-    expect(map.state.pendingShift).toEqual(
-      expect.objectContaining({ id: shiftsData.shifts[0].id })
-    );
-    spy.mockRestore();
-  });
 
   test('addToken applies role defaults when icon/color omitted', () => {
     const map = useChaseMap();

@@ -13,7 +13,6 @@
       <h2 v-else class="map-name display-heading" @click="beginEdit">{{ mapName }}</h2>
     </div>
     <div class="map-actions">
-      <DButton variant="primary" @click="$emit('roll-shift')">✦ What Changes?</DButton>
       <DButton class="action-desktop" variant="secondary" @click="$emit('toggle-participants')">Participants</DButton>
       <DButton class="action-desktop" variant="secondary" @click="$emit('add-token')">+ Token</DButton>
       <DButton class="action-desktop" variant="secondary" @click="$emit('open-library')">+ Zone</DButton>
@@ -35,7 +34,7 @@ export default {
   props: {
     mapName: { type: String, required: true },
   },
-  emits: ['roll-shift', 'add-token', 'open-library', 'reset', 'rename-map', 'toggle-rules', 'toggle-participants'],
+  emits: ['add-token', 'open-library', 'reset', 'rename-map', 'toggle-rules', 'toggle-participants'],
   data() {
     return {
       editingName: false,

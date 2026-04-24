@@ -9,7 +9,6 @@
       <template v-else>
         <MapControls
           :map-name="map.state.mapName"
-          @roll-shift="map.rollShift"
           @add-token="openCreator"
           @open-library="libraryOpen = true"
           @toggle-rules="rulesOpen = !rulesOpen"
@@ -70,12 +69,6 @@
         />
       </template>
 
-      <ShiftPrompt
-        v-if="map.state.pendingShift"
-        :shift="map.state.pendingShift"
-        @dismiss="map.dismissShift"
-      />
-
       <TokenCreator
         v-if="creatorOpen"
         @create="onCreateToken"
@@ -129,7 +122,6 @@ import { useChaseMap } from './composables/useChaseMap.js';
 import TemplatePicker from './components/TemplatePicker.vue';
 import MapControls from './components/MapControls.vue';
 import ChaseMap from './components/ChaseMap.vue';
-import ShiftPrompt from './components/ShiftPrompt.vue';
 import TokenTray from './components/TokenTray.vue';
 import TokenCreator from './components/TokenCreator.vue';
 import PillManager from './components/PillManager.vue';
@@ -149,7 +141,6 @@ export default {
     TemplatePicker,
     MapControls,
     ChaseMap,
-    ShiftPrompt,
     TokenTray,
     TokenCreator,
     PillManager,
