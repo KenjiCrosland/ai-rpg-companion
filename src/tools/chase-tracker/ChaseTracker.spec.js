@@ -270,6 +270,121 @@ describe('useChaseMap — zone library', () => {
     expect(zone.colSpan).toBe(1);
     expect(zone.rowSpan).toBe(1);
   });
+
+  function zonesOverlap(a, b) {
+    const aColEnd = a.col + (a.colSpan || 1);
+    const aRowEnd = a.row + (a.rowSpan || 1);
+    const bColEnd = b.col + (b.colSpan || 1);
+    const bRowEnd = b.row + (b.rowSpan || 1);
+    return a.col < bColEnd && aColEnd > b.col && a.row < bRowEnd && aRowEnd > b.row;
+  }
+
+  test('library wide zone never overlaps an existing multi-cell zone', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // rooftops is 3×1 at (1,1); main_street is 2×1 at (1,2).
+    const wide = libraryData.zones.find((z) => z.shape === 'wide');
+    const id = map.addZoneFromLibrary(wide);
+    const placed = map.state.zones.find((z) => z.id === id);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('large (2×2) library zone falls through to bottom expansion when no region fits', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Urban template is fully packed 3×3 with spans that leave no 2×2
+    // region free. A large zone must expand the grid, keeping its
+    // preferred shape rather than shrinking to 1×1.
+    const rowsBefore = map.state.gridRows;
+    const id = map.addZoneFromLibrary({
+      name: 'Plaza', description: '', shape: 'large', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    expect(placed.colSpan).toBe(SHAPE_DIMENSIONS.large.colSpan);
+    expect(placed.rowSpan).toBe(SHAPE_DIMENSIONS.large.rowSpan);
+    expect(placed.row).toBeGreaterThan(rowsBefore);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('edge expansion: large shape at top target lands at the top with preferred shape', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // expandGrid('top') opens one empty row above rooftops (3×1). A
+    // large (2×2) zone needs two rows, so the grid must grow further in
+    // the same direction (pushing existing zones down) so the zone lands
+    // at row 1 with its full shape rather than drifting to the bottom.
+    map.expandGrid('top');
+    const id = map.addZoneFromLibrary({
+      name: 'Watchtower', description: '', shape: 'large', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    expect(placed.row).toBe(1);
+    expect(placed.colSpan).toBe(SHAPE_DIMENSIONS.large.colSpan);
+    expect(placed.rowSpan).toBe(SHAPE_DIMENSIONS.large.rowSpan);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('edge expansion: tall shape at top target lands at the top with preferred shape', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('top');
+    const id = map.addZoneFromLibrary({
+      name: 'Belltower', description: '', shape: 'tall', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    expect(placed.row).toBe(1);
+    expect(placed.rowSpan).toBe(SHAPE_DIMENSIONS.tall.rowSpan);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('edge expansion: wide shape at left target lands at the left edge', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // expandGrid('left') opens one empty column; a wide (2×1) zone
+    // needs two columns and must push existing zones further right.
+    map.expandGrid('left');
+    const id = map.addZoneFromLibrary({
+      name: 'Canal Mouth', description: '', shape: 'wide', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    expect(placed.col).toBe(1);
+    expect(placed.colSpan).toBe(SHAPE_DIMENSIONS.wide.colSpan);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('edge expansion: wide shape at top target keeps preferred span', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('top');
+    const id = map.addZoneFromLibrary({
+      name: 'Weathervane', description: '', shape: 'wide', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    // Wide zone at the new top row (row 1) — lots of free columns, so
+    // preferred span should survive.
+    expect(placed.colSpan).toBe(SHAPE_DIMENSIONS.wide.colSpan);
+    expect(placed.rowSpan).toBe(SHAPE_DIMENSIONS.wide.rowSpan);
+    expect(placed.row).toBe(1);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
 });
 
 describe('useChaseMap — dash tracking', () => {
@@ -442,6 +557,248 @@ describe('useChaseMap — addParticipant (smart default)', () => {
     });
     const id = map.addParticipant('pc');
     expect(map.state.tokens.find((t) => t.id === id).zoneId).toBe('rooftops');
+  });
+});
+
+describe('useChaseMap — recomputeGridDimensions on removeZone', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('removing the last zone of the bottom row shrinks gridRows', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    // Urban template's bottom row (row 3) has back_alley, inn_kitchen, warehouse_row
+    map.removeZone('back_alley');
+    map.removeZone('inn_kitchen');
+    // Still one zone left in row 3 (warehouse_row), so grid unchanged
+    expect(map.state.gridRows).toBe(rowsBefore);
+    map.removeZone('warehouse_row');
+    expect(map.state.gridRows).toBe(rowsBefore - 1);
+  });
+
+  test('emptying the top row trims the leading gap; zones below shift up', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const mainStreetBefore = map.state.zones.find((z) => z.id === 'main_street').row;
+    // Remove rooftops — it was the only zone in row 1 (cols 1-3).
+    map.removeZone('rooftops');
+    const mainStreetAfter = map.state.zones.find((z) => z.id === 'main_street').row;
+    // Leading empty rows are reclaimed — zones shift up by the gap.
+    expect(mainStreetAfter).toBe(mainStreetBefore - 1);
+    expect(map.state.gridRows).toBe(2);
+  });
+
+  test('multiple leading empty rows are all reclaimed in one pass', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Push the template down by two rows, then delete only the zone
+    // that used to be at the top.
+    map.expandGrid('top');
+    map.expandGrid('top');
+    map.removeZone('rooftops');
+    // Remaining zones were at rows 4 (main_street/canal_bridge) and 5
+    // (back_alley/inn_kitchen/warehouse_row). Rows 1–3 were leading
+    // empties; they should be trimmed so the topmost zones land at row 1.
+    expect(map.state.zones.find((z) => z.id === 'main_street').row).toBe(1);
+    expect(map.state.zones.find((z) => z.id === 'back_alley').row).toBe(2);
+    expect(map.state.gridRows).toBe(2);
+  });
+
+  test('emptying a middle row collapses it; zones below shift up', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.removeZone('main_street');
+    map.removeZone('canal_bridge');
+    // Row 2 had no zones left — the whole row collapses. Row-3 zones
+    // shift up to take its place.
+    expect(map.state.gridRows).toBe(2);
+    expect(map.state.zones.find((z) => z.id === 'rooftops').row).toBe(1);
+    expect(map.state.zones.find((z) => z.id === 'back_alley').row).toBe(2);
+    expect(map.state.zones.find((z) => z.id === 'inn_kitchen').row).toBe(2);
+    expect(map.state.zones.find((z) => z.id === 'warehouse_row').row).toBe(2);
+  });
+
+  test('after expanding then removing the new zone, grid returns to original size', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    map.expandGrid('bottom');
+    expect(map.state.gridRows).toBe(rowsBefore + 1);
+    const libraryZone = { name: 'Extra', description: '', shape: 'small', defaultPills: [] };
+    const id = map.addZoneFromLibrary(libraryZone);
+    expect(map.state.gridRows).toBe(rowsBefore + 1);
+    map.removeZone(id);
+    expect(map.state.gridRows).toBe(rowsBefore);
+  });
+
+  test('removing the final zone resets the grid to 1×1', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    for (const zone of [...map.state.zones]) map.removeZone(zone.id);
+    expect(map.state.gridRows).toBe(1);
+    expect(map.state.gridCols).toBe(1);
+  });
+
+  test('deleting a zone inside a row keeps the row; other zones do not shift', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Middle zone of row 3 (inn_kitchen). back_alley (col 1) and
+    // warehouse_row (col 3) stay put; col 2 row 3 becomes a placeable gap.
+    map.removeZone('inn_kitchen');
+    expect(map.state.gridRows).toBe(3);
+    expect(map.state.gridCols).toBe(3);
+    expect(map.state.zones.find((z) => z.id === 'back_alley').col).toBe(1);
+    expect(map.state.zones.find((z) => z.id === 'warehouse_row').col).toBe(3);
+  });
+});
+
+describe('useChaseMap — expandGrid', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('bottom increments gridRows without shifting existing zones', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    const snapshot = map.state.zones.map((z) => ({ id: z.id, col: z.col, row: z.row }));
+    const target = map.expandGrid('bottom');
+    expect(map.state.gridRows).toBe(rowsBefore + 1);
+    for (const z of map.state.zones) {
+      const before = snapshot.find((s) => s.id === z.id);
+      expect(z.col).toBe(before.col);
+      expect(z.row).toBe(before.row);
+    }
+    expect(target.row).toBe(map.state.gridRows);
+    expect(target.col).toBe(Math.ceil(map.state.gridCols / 2));
+  });
+
+  test('right increments gridCols without shifting existing zones', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const colsBefore = map.state.gridCols;
+    const snapshot = map.state.zones.map((z) => ({ id: z.id, col: z.col, row: z.row }));
+    const target = map.expandGrid('right');
+    expect(map.state.gridCols).toBe(colsBefore + 1);
+    for (const z of map.state.zones) {
+      const before = snapshot.find((s) => s.id === z.id);
+      expect(z.col).toBe(before.col);
+      expect(z.row).toBe(before.row);
+    }
+    expect(target.col).toBe(map.state.gridCols);
+    expect(target.row).toBe(Math.ceil(map.state.gridRows / 2));
+  });
+
+  test('top shifts all zone rows by +1 and grows the grid', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    const snapshot = map.state.zones.map((z) => ({ id: z.id, row: z.row }));
+    const target = map.expandGrid('top');
+    expect(map.state.gridRows).toBe(rowsBefore + 1);
+    for (const z of map.state.zones) {
+      const before = snapshot.find((s) => s.id === z.id);
+      expect(z.row).toBe(before.row + 1);
+    }
+    expect(target.row).toBe(1);
+  });
+
+  test('left shifts all zone cols by +1 and grows the grid', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const colsBefore = map.state.gridCols;
+    const snapshot = map.state.zones.map((z) => ({ id: z.id, col: z.col }));
+    const target = map.expandGrid('left');
+    expect(map.state.gridCols).toBe(colsBefore + 1);
+    for (const z of map.state.zones) {
+      const before = snapshot.find((s) => s.id === z.id);
+      expect(z.col).toBe(before.col + 1);
+    }
+    expect(target.col).toBe(1);
+  });
+
+  test('connections are preserved across an expansion', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const before = map.state.connections.map((c) => [...c]).sort();
+    map.expandGrid('top');
+    const after = map.state.connections.map((c) => [...c]).sort();
+    expect(after).toEqual(before);
+  });
+
+  test('expandGrid sets pendingPlacementCell with direction; library add uses it then clears', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const target = map.expandGrid('top');
+    expect(map.state.pendingPlacementCell).toEqual(target);
+    expect(target.direction).toBe('top');
+
+    const libraryZone = { name: 'Sky Bridge', description: '', shape: 'small', defaultPills: [] };
+    const id = map.addZoneFromLibrary(libraryZone);
+    const added = map.state.zones.find((z) => z.id === id);
+    expect(added.row).toBe(target.row);
+    expect(added.col).toBe(target.col);
+    expect(map.state.pendingPlacementCell).toBeNull();
+  });
+
+  test('clearPendingPlacement wipes the cell (library dismissed without pick)', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('right');
+    expect(map.state.pendingPlacementCell).not.toBeNull();
+    map.clearPendingPlacement();
+    expect(map.state.pendingPlacementCell).toBeNull();
+  });
+
+  test('without pending placement, library add falls back to first-empty-cell', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const libraryZone = { name: 'Somewhere', description: '', shape: 'small', defaultPills: [] };
+    const id = map.addZoneFromLibrary(libraryZone);
+    const added = map.state.zones.find((z) => z.id === id);
+    // Urban template's 3x3 grid is fully populated in rows 1-3 after
+    // templates.json load; so the first truly empty cell would be row 4
+    // (or wherever the grid appends a new row).
+    expect(added).toBeDefined();
+    expect(added.row).toBeGreaterThanOrEqual(1);
+  });
+
+  test('pendingPlacementCell is not persisted to localStorage', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('top');
+    await nextTick();
+    const persisted = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(persisted).not.toHaveProperty('pendingPlacementCell');
+  });
+
+  test('reload after edge-expand-without-pick collapses the orphan empty row', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    const rowsBefore = map1.state.gridRows;
+    const rooftopsBefore = map1.state.zones.find((z) => z.id === 'rooftops').row;
+    // User clicks top `+`, grid shifts, then reloads before picking
+    // anything from the library.
+    map1.expandGrid('top');
+    expect(map1.state.gridRows).toBe(rowsBefore + 1);
+    expect(map1.state.zones.find((z) => z.id === 'rooftops').row).toBe(rooftopsBefore + 1);
+    await nextTick();
+
+    // Simulate a page reload — rehydrate a fresh composable from storage.
+    const map2 = useChaseMap();
+    // The orphan empty row is trimmed; zone coords shift back to match.
+    expect(map2.state.gridRows).toBe(rowsBefore);
+    expect(map2.state.zones.find((z) => z.id === 'rooftops').row).toBe(rooftopsBefore);
+  });
+
+  test('reload after a bottom expand without pick trims the trailing empty row', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    const rowsBefore = map1.state.gridRows;
+    map1.expandGrid('bottom');
+    expect(map1.state.gridRows).toBe(rowsBefore + 1);
+    await nextTick();
+
+    const map2 = useChaseMap();
+    expect(map2.state.gridRows).toBe(rowsBefore);
   });
 });
 

@@ -53,6 +53,7 @@
           @drag-start="onDragStart"
           @drag-end="onDragEnd"
           @drop-token="onDropToken"
+          @expand-grid="onExpandGrid"
         />
         <TokenTray
           :tokens="map.trayTokens.value"
@@ -93,7 +94,7 @@
       <ZoneLibrary
         :open="libraryOpen"
         :default-environment="map.state.environment || 'any'"
-        @close="libraryOpen = false"
+        @close="onLibraryClose"
         @add-from-library="onAddFromLibrary"
         @add-custom="onAddCustomZone"
       />
@@ -331,6 +332,17 @@ export default {
         defaultPills: [],
       });
       // Keep drawer open; the form resets itself after submit.
+    },
+    onExpandGrid(direction) {
+      this.map.expandGrid(direction);
+      this.libraryOpen = true;
+    },
+    onLibraryClose() {
+      this.libraryOpen = false;
+      // If the GM dismissed without picking, drop the pending edge-cell
+      // placement so a future MapControls "+ Zone" uses the default
+      // first-empty-cell flow instead.
+      this.map.clearPendingPlacement();
     },
     renameMap(name) {
       this.map.state.mapName = name;

@@ -5,54 +5,64 @@
       @cancel="$emit('cancel-connect')"
     />
 
-    <div
-      ref="grid"
-      class="chase-map"
-      :style="gridStyle"
-    >
-      <svg
-        class="connection-layer"
-        :viewBox="`0 0 ${svgSize.w} ${svgSize.h}`"
-        :width="svgSize.w"
-        :height="svgSize.h"
-      >
-        <g v-for="(seg, i) in connectionLines" :key="i">
-          <line
-            :x1="seg.x1"
-            :y1="seg.y1"
-            :x2="seg.x2"
-            :y2="seg.y2"
-            class="connection-line"
-          />
-          <polygon v-if="!isMobile" :points="seg.arrowA" class="connection-arrow" />
-          <polygon v-if="!isMobile" :points="seg.arrowB" class="connection-arrow" />
-        </g>
-      </svg>
+    <div class="edge-expand">
+      <div class="edge-row">
+        <GridEdgeButton direction="top" @click="$emit('expand-grid', 'top')" />
+      </div>
 
-      <Zone
-        v-for="zone in zones"
-        :key="zone.id"
-        :zone="zone"
-        :tokens="tokensByZone[zone.id] || []"
-        :selected-token-id="selectedTokenId"
-        :valid-destination="adjacentZoneIds.has(zone.id)"
-        :dimmed="selectedTokenId && !adjacentZoneIds.has(zone.id)"
-        :dragged-token-id="draggedTokenId"
-        :valid-drop-zone-ids="validDropZoneIds"
-        :connect-source="connectingFromZoneId === zone.id"
-        :connect-target="Boolean(connectingFromZoneId) && connectingFromZoneId !== zone.id"
-        @zone-clicked="(id) => $emit('zone-clicked', id)"
-        @select-token="(id) => $emit('select-token', id)"
-        @rename-token="(id, label) => $emit('rename-token', id, label)"
-        @remove-token="(id) => $emit('remove-token', id)"
-        @update-zone="(id, fields) => $emit('update-zone', id, fields)"
-        @delete-zone="(id) => $emit('delete-zone', id)"
-        @start-connect="(id) => $emit('start-connect', id)"
-        @open-conditions="(id) => $emit('open-conditions', id)"
-        @drag-start="(id) => $emit('drag-start', id)"
-        @drag-end="(id) => $emit('drag-end', id)"
-        @drop-token="(id, zoneId) => $emit('drop-token', id, zoneId)"
-      />
+      <div
+        ref="grid"
+        class="chase-map"
+        :style="gridStyle"
+      >
+        <svg
+          class="connection-layer"
+          :viewBox="`0 0 ${svgSize.w} ${svgSize.h}`"
+          :width="svgSize.w"
+          :height="svgSize.h"
+        >
+          <g v-for="(seg, i) in connectionLines" :key="i">
+            <line
+              :x1="seg.x1"
+              :y1="seg.y1"
+              :x2="seg.x2"
+              :y2="seg.y2"
+              class="connection-line"
+            />
+            <polygon v-if="!isMobile" :points="seg.arrowA" class="connection-arrow" />
+            <polygon v-if="!isMobile" :points="seg.arrowB" class="connection-arrow" />
+          </g>
+        </svg>
+
+        <Zone
+          v-for="zone in zones"
+          :key="zone.id"
+          :zone="zone"
+          :tokens="tokensByZone[zone.id] || []"
+          :selected-token-id="selectedTokenId"
+          :valid-destination="adjacentZoneIds.has(zone.id)"
+          :dimmed="selectedTokenId && !adjacentZoneIds.has(zone.id)"
+          :dragged-token-id="draggedTokenId"
+          :valid-drop-zone-ids="validDropZoneIds"
+          :connect-source="connectingFromZoneId === zone.id"
+          :connect-target="Boolean(connectingFromZoneId) && connectingFromZoneId !== zone.id"
+          @zone-clicked="(id) => $emit('zone-clicked', id)"
+          @select-token="(id) => $emit('select-token', id)"
+          @rename-token="(id, label) => $emit('rename-token', id, label)"
+          @remove-token="(id) => $emit('remove-token', id)"
+          @update-zone="(id, fields) => $emit('update-zone', id, fields)"
+          @delete-zone="(id) => $emit('delete-zone', id)"
+          @start-connect="(id) => $emit('start-connect', id)"
+          @open-conditions="(id) => $emit('open-conditions', id)"
+          @drag-start="(id) => $emit('drag-start', id)"
+          @drag-end="(id) => $emit('drag-end', id)"
+          @drop-token="(id, zoneId) => $emit('drop-token', id, zoneId)"
+        />
+      </div>
+
+      <div class="edge-row">
+        <GridEdgeButton direction="bottom" @click="$emit('expand-grid', 'bottom')" />
+      </div>
     </div>
   </div>
 </template>
@@ -60,6 +70,7 @@
 <script>
 import Zone from './Zone.vue';
 import ConnectModeBanner from './ConnectModeBanner.vue';
+import GridEdgeButton from './GridEdgeButton.vue';
 import { useIsMobile } from '../composables/useBreakpoint.js';
 
 // Clip a line from the center of `rect` toward (tx, ty) so it lands on the
@@ -92,7 +103,7 @@ function arrowPolygon(tx, ty, dx, dy, length = 10, halfWidth = 5) {
 
 export default {
   name: 'ChaseMap',
-  components: { Zone, ConnectModeBanner },
+  components: { Zone, ConnectModeBanner, GridEdgeButton },
   props: {
     zones: { type: Array, required: true },
     connections: { type: Array, required: true },
@@ -118,6 +129,7 @@ export default {
     'drag-start',
     'drag-end',
     'drop-token',
+    'expand-grid',
   ],
   setup() {
     const isMobile = useIsMobile();
@@ -231,6 +243,18 @@ export default {
   position: relative;
 }
 
+.edge-expand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
+.edge-row {
+  display: flex;
+  justify-content: center;
+}
+
 .chase-map {
   position: relative;
   display: grid;
@@ -268,6 +292,10 @@ export default {
   .chase-map :deep(.connection-line) {
     stroke-width: 1;
     opacity: 0.4;
+  }
+
+  .edge-expand {
+    gap: 0.4rem;
   }
 }
 </style>

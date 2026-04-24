@@ -266,6 +266,7 @@ export default {
 .zone-affordance-anchor {
   position: absolute;
   bottom: 12px;
+  left: 12px;
   right: 12px;
   z-index: 5;
 }
