@@ -18,6 +18,7 @@
         />
 
         <div class="scenario-row">
+          <div class="scenario-label display-heading">Scene Description</div>
           <textarea
             v-if="editingScenario"
             ref="scenarioInput"
@@ -25,6 +26,7 @@
             class="scenario-input"
             :class="{ 'scenario-input--example': scenarioDraftIsExample }"
             rows="1"
+            aria-label="Scene description"
             @blur="commitScenario"
             @input="autoResizeScenario"
             @keydown.esc.prevent="cancelScenario"
@@ -32,7 +34,7 @@
           <p
             v-else
             :class="['scenario-text', { 'scenario-text--example': scenarioIsExample }]"
-            :aria-label="scenarioIsExample ? 'Edit scenario (placeholder)' : 'Edit scenario'"
+            :aria-label="scenarioIsExample ? 'Edit scene description (placeholder)' : 'Edit scene description'"
             tabindex="0"
             role="button"
             @click="beginEditScenario"
@@ -428,6 +430,14 @@ export default {
   padding: 0 0.25rem 0.5rem;
   margin-top: -0.5rem;
   margin-bottom: 0.75rem;
+}
+
+.scenario-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 0.25rem;
 }
 
 .scenario-text,

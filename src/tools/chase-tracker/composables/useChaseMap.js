@@ -60,6 +60,12 @@ function normalizeToken(raw) {
     dashCount: typeof raw.dashCount === 'number' && raw.dashCount > 0
       ? Math.floor(raw.dashCount)
       : 0,
+    // Marks a token as GM-authored rather than a pristine template
+    // default. Only userEdited tokens are written to the cross-chase
+    // "last participants" memory — that way seeing a template's
+    // example tokens for the first time doesn't hijack every other
+    // template's defaults.
+    userEdited: raw.userEdited === true,
   };
 }
 
@@ -207,10 +213,13 @@ export function useChaseMap() {
 
   // Throttled cross-chase party memory. Every token-list change schedules
   // a save; the payload is a role-keyed list of labels from the current
-  // chase, so the next chase can pre-fill it.
+  // chase, so the next chase can pre-fill it. Only userEdited tokens go
+  // into the payload — pristine template defaults (e.g. Boblin, Fenn the
+  // Cutpurse) must never overwrite another template's example tokens just
+  // because the GM loaded the first template.
   let lastPartTimer = null;
   watch(
-    () => state.tokens.map((t) => `${t.role}:${t.label}`),
+    () => state.tokens.map((t) => `${t.role}:${t.label}:${t.userEdited ? 1 : 0}`),
     () => {
       if (!state.hasActiveChase) return;
       if (!state.tokens.length) return;
@@ -218,9 +227,14 @@ export function useChaseMap() {
       lastPartTimer = setTimeout(() => {
         const payload = { quarry: [], pc: [], pursuer: [] };
         for (const token of state.tokens) {
+          if (!token.userEdited) continue;
           if (payload[token.role]) payload[token.role].push(token.label);
         }
-        saveLastParticipantsToStorage(payload);
+        // If nothing in this chase is GM-authored yet, leave the stored
+        // payload alone so it still reflects the last real party.
+        const hasAny =
+          payload.quarry.length || payload.pc.length || payload.pursuer.length;
+        if (hasAny) saveLastParticipantsToStorage(payload);
         lastPartTimer = null;
       }, 250);
     },
@@ -255,6 +269,8 @@ export function useChaseMap() {
 
     for (const role of ['quarry', 'pc', 'pursuer']) {
       const names = (saved[role] || []).filter((n) => typeof n === 'string' && n.trim());
+      // Nothing saved for this role → leave the template defaults alone
+      // so GMs can still see each template's example characters.
       if (!names.length) continue;
 
       const existing = state.tokens.filter((t) => t.role === role);
@@ -262,6 +278,9 @@ export function useChaseMap() {
 
       for (let i = 0; i < sharedCount; i++) {
         existing[i].label = names[i];
+        // Applied saved labels are carried forward as user-authored —
+        // if the GM keeps them, they should persist across templates.
+        existing[i].userEdited = true;
       }
 
       if (names.length > existing.length) {
@@ -276,6 +295,7 @@ export function useChaseMap() {
             color: defaults.color,
             zoneId: anchorZoneId,
             dashCount: 0,
+            userEdited: true,
           });
         }
       }
@@ -325,6 +345,10 @@ export function useChaseMap() {
       color: color || defaults.color,
       zoneId: zoneId === undefined ? null : zoneId,
       dashCount: 0,
+      // Anything the GM adds by hand (via the TokenCreator or the +Add
+      // buttons on the Participants panel) counts as user-authored,
+      // so it flows into cross-chase memory.
+      userEdited: true,
     };
     state.tokens.push(token);
     return token.id;
@@ -382,7 +406,9 @@ export function useChaseMap() {
 
   function renameToken(tokenId, label) {
     const token = state.tokens.find((t) => t.id === tokenId);
-    if (token) token.label = label;
+    if (!token) return;
+    token.label = label;
+    token.userEdited = true;
   }
 
   function updateToken(tokenId, fields) {
@@ -748,6 +774,24 @@ export function useChaseMap() {
     Object.assign(state, emptyState());
   }
 
+  // Wipe the cross-chase party memory AND reload the current map's
+  // template defaults so the GM can see the example tokens again. Used
+  // for the "Restore example party" action. Safe to call mid-chase;
+  // existing zones, connections, and pills are preserved.
+  function resetParticipantsToTemplate() {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.removeItem(LAST_PARTICIPANTS_KEY);
+      } catch {
+        // silent
+      }
+    }
+    const template = templatesData.templates.find((t) => t.name === state.mapName);
+    if (!template) return;
+    state.tokens = template.defaultTokens.map(normalizeToken);
+    state.selectedTokenId = null;
+  }
+
   const tokensByZone = computed(() => {
     const map = {};
     for (const zone of state.zones) map[zone.id] = [];
@@ -831,6 +875,7 @@ export function useChaseMap() {
     removePillFromZone,
     updatePillOnZone,
     reset,
+    resetParticipantsToTemplate,
     isAdjacent,
     tokensByZone,
     trayTokens,

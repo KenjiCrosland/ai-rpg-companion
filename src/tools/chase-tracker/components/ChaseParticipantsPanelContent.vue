@@ -187,39 +187,47 @@ export default {
 
 .participant-remove {
   flex-shrink: 0;
-  /* Bumped from 44px to 54px for the larger panel; still a quiet
-     character in muted ink, no border or background. Extra left margin
-     separates it from the dash controls as a different action class. */
-  width: 54px;
-  height: 54px;
+  /* Sized to match the dash-step buttons next to it, with the same
+     muted parchment treatment so it reads as a peer of the row's
+     other controls. Destructive intent is carried by the accent-red
+     hover rather than a bold resting state. */
+  width: 36px;
+  height: 36px;
   padding: 0;
   margin-left: 0.8rem;
-  background: transparent;
-  border: none;
+  background: rgba(217, 195, 149, 0.4);
+  border: 1px solid var(--parchment-edge);
+  border-radius: 2px;
   color: var(--ink-muted);
   cursor: pointer;
-  font-size: 1.6rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 120ms ease;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, transform 80ms ease;
 }
 
 .participant-remove:hover {
+  background: var(--parchment-warm);
+  border-color: var(--accent-red);
   color: var(--accent-red);
+}
+
+.participant-remove:active {
+  transform: scale(0.96);
 }
 
 .participant-remove:focus-visible {
   outline: 2px solid var(--accent-gold);
-  outline-offset: -6px;
-  border-radius: 4px;
+  outline-offset: 2px;
 }
 
 .participant-remove-placeholder {
   display: inline-block;
-  width: 54px;
-  height: 54px;
+  width: 36px;
+  height: 36px;
   margin-left: 0.8rem;
 }
 
@@ -287,9 +295,13 @@ export default {
 
   .participant-remove,
   .participant-remove-placeholder {
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     margin-left: 0.6rem;
+  }
+
+  .participant-remove {
+    font-size: 1.05rem;
   }
 
   .add-btn {

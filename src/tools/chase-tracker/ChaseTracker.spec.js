@@ -475,6 +475,61 @@ describe('useChaseMap — last-used participants', () => {
     expect(saved.pc).toContain('Gorum');
   });
 
+  test('loading a template without edits does NOT write template defaults to cross-chase memory', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Let any debounce settle.
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    const saved = localStorage.getItem(LAST_PARTICIPANTS_KEY);
+    // Template examples like "Fenn the Cutpurse" must not become the
+    // global last-party or they'd clobber every other template's
+    // example tokens on next load.
+    expect(saved).toBeNull();
+  });
+
+  test('editing one token saves only that role; other template examples stay untouched on the next template', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    const pcToken = map1.state.tokens.find((t) => t.role === 'pc');
+    map1.renameToken(pcToken.id, 'Gorum');
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    const saved = JSON.parse(localStorage.getItem(LAST_PARTICIPANTS_KEY));
+    expect(saved.pc).toEqual(['Gorum']);
+    // quarry/pursuer are empty because the GM didn't rename those.
+    expect(saved.quarry).toEqual([]);
+    expect(saved.pursuer).toEqual([]);
+
+    const map2 = useChaseMap();
+    map2.startFromTemplate('wilderness_trails');
+    // The first PC slot picks up Gorum, but quarry and pursuer keep
+    // the Wilderness template's example tokens because the saved
+    // payload had nothing to say about them.
+    const quarry = map2.state.tokens.find((t) => t.role === 'quarry');
+    const pursuer = map2.state.tokens.find((t) => t.role === 'pursuer');
+    const pcs = map2.state.tokens.filter((t) => t.role === 'pc');
+    expect(quarry.label).toBe('Rook the Deserter');
+    expect(pursuer.label).toBe("King's Trackers");
+    expect(pcs[0].label).toBe('Gorum');
+    // PC slots beyond the saved count keep the template examples too.
+    expect(pcs[1].label).toBe('Ansel');
+    expect(pcs[2].label).toBe('Bree');
+  });
+
+  test('resetParticipantsToTemplate clears saved memory and reloads the current template defaults', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const pcToken = map.state.tokens.find((t) => t.role === 'pc');
+    map.renameToken(pcToken.id, 'Gorum');
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    expect(localStorage.getItem(LAST_PARTICIPANTS_KEY)).not.toBeNull();
+
+    map.resetParticipantsToTemplate();
+    expect(localStorage.getItem(LAST_PARTICIPANTS_KEY)).toBeNull();
+    const pcs = map.state.tokens.filter((t) => t.role === 'pc');
+    expect(pcs[0].label).toBe('Boblin');
+    expect(pcs.every((p) => p.userEdited === false)).toBe(true);
+  });
+
   test('applyLastParticipants renames existing tokens up to the saved count', () => {
     localStorage.setItem(
       LAST_PARTICIPANTS_KEY,
