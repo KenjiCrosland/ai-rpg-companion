@@ -10,15 +10,19 @@
 
     <div class="picker-grid">
       <ParchmentPanel
-        v-for="template in templates"
+        v-for="template in orderedTemplates"
         :key="template.id"
-        class="picker-card"
+        :class="['picker-card', { 'picker-card--blank': template.blank }]"
         padded
       >
+        <div v-if="template.blank" class="picker-card-glyph" aria-hidden="true">✎</div>
         <h2 class="display-heading picker-card-name">{{ template.name }}</h2>
         <p class="ink-italic picker-card-description">{{ template.description }}</p>
         <div class="picker-card-actions">
-          <DButton variant="primary" @click="$emit('pick', template.id)">Begin Here</DButton>
+          <DButton
+            :variant="template.blank ? 'secondary' : 'primary'"
+            @click="$emit('pick', template.id)"
+          >{{ template.blank ? 'Start from Scratch' : 'Begin Here' }}</DButton>
         </div>
       </ParchmentPanel>
     </div>
@@ -37,6 +41,18 @@ export default {
     templates: { type: Array, required: true },
   },
   emits: ['pick'],
+  computed: {
+    // Push the Blank/"build your own" card to the end so scenario
+    // templates — which do the pedagogical work of showing what a
+    // map looks like — come first.
+    orderedTemplates() {
+      return [...this.templates].sort((a, b) => {
+        const ab = a.blank ? 1 : 0;
+        const bb = b.blank ? 1 : 0;
+        return ab - bb;
+      });
+    },
+  },
 };
 </script>
 
@@ -73,6 +89,26 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 14rem;
+}
+
+.picker-card--blank {
+  align-items: center;
+  text-align: center;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(164, 134, 86, 0.06) 0 8px,
+      transparent 8px 16px
+    ),
+    var(--parchment-base);
+}
+
+.picker-card-glyph {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--ink-muted);
+  margin-bottom: 0.25rem;
 }
 
 .picker-card-name {

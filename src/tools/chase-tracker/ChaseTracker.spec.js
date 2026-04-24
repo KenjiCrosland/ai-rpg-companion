@@ -1,5 +1,5 @@
 /**
- * Chase Tracker tests — schema v4 (pills, connect-mode, zone library).
+ * Chase Tracker tests.
  */
 
 import { mount } from '@vue/test-utils';
@@ -8,7 +8,6 @@ import {
   useChaseMap,
   STORAGE_KEY,
   LAST_PARTICIPANTS_KEY,
-  SCHEMA_VERSION,
   SHAPE_DIMENSIONS,
 } from './composables/useChaseMap.js';
 import ChaseTracker from './ChaseTracker.vue';
@@ -35,7 +34,7 @@ describe('useChaseMap — core state', () => {
     const template = templatesData.templates.find((t) => t.id === 'urban_alleys');
     expect(map.state.hasActiveChase).toBe(true);
     expect(map.state.mapName).toBe(template.name);
-    expect(map.state.environment).toBe('urban');
+    expect(map.state.environments).toEqual(['urban']);
     expect(map.state.zones).toHaveLength(template.zones.length);
   });
 
@@ -518,8 +517,45 @@ describe('useChaseMap — last-used participants', () => {
   test('missing last-participants key leaves template labels intact', () => {
     const map = useChaseMap();
     map.startFromTemplate('urban_alleys');
+    // Urban template ships with named defaults for v1 content expansion.
+    expect(map.state.tokens.find((t) => t.role === 'quarry').label).toBe('Fenn the Cutpurse');
+    expect(map.state.tokens.filter((t) => t.role === 'pc')[0].label).toBe('Boblin');
+  });
+
+  test('blank template starts with generic placeholder token labels', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('blank');
     expect(map.state.tokens.find((t) => t.role === 'quarry').label).toBe('Quarry');
     expect(map.state.tokens.filter((t) => t.role === 'pc')[0].label).toBe('PC');
+    expect(map.state.tokens.find((t) => t.role === 'pursuer').label).toBe('Pursuer');
+  });
+
+  test('blank template loads no zones and all tokens in the tray', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('blank');
+    expect(map.state.zones).toEqual([]);
+    expect(map.state.tokens.every((t) => t.zoneId === null)).toBe(true);
+  });
+
+  test('startFromTemplate sets the scenario to the template default', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    expect(map.state.scenario).toMatch(/^\[Example\]/);
+  });
+
+  test('setScenario writes the new text and replaces the example default', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.setScenario('The thief was seen near the temple at dusk.');
+    expect(map.state.scenario).toBe('The thief was seen near the temple at dusk.');
+  });
+
+  test('starting a new chase from the same template resets the scenario', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.setScenario('Custom scene.');
+    map.startFromTemplate('urban_alleys');
+    expect(map.state.scenario).toMatch(/^\[Example\]/);
   });
 });
 
@@ -837,23 +873,49 @@ describe('useChaseMap — setTokenZone', () => {
 describe('useChaseMap — persistence', () => {
   beforeEach(() => localStorage.clear());
 
-  test('current-schema state round-trips', async () => {
+  test('active chase state round-trips', async () => {
     const map1 = useChaseMap();
     map1.startFromTemplate('wilderness_trails');
     await nextTick();
     await nextTick();
     const map2 = useChaseMap();
     expect(map2.state.hasActiveChase).toBe(true);
-    expect(map2.state.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(map2.state.mapName).toBe('Wilderness Trails');
   });
 
-  test('older schemaVersion is cleared (no migration for pre-v4)', () => {
+  test('stored state missing core arrays resets to empty', () => {
+    // Shape check guards against structurally-broken payloads (old
+    // pre-release schemas, partial writes). Any payload without zones/
+    // tokens/connections arrays gets discarded.
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ schemaVersion: 2, hasActiveChase: true, zones: [], tokens: [] })
+      JSON.stringify({ hasActiveChase: true, zones: null, tokens: [], connections: [] })
     );
     const map = useChaseMap();
     expect(map.state.hasActiveChase).toBe(false);
+  });
+
+  test('stored state missing new fields fills defaults', async () => {
+    // A payload written before environments/scenario existed should
+    // still load — missing fields fill with defaults rather than
+    // discarding the chase.
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        hasActiveChase: true,
+        mapName: 'Old Chase',
+        gridCols: 3,
+        gridRows: 3,
+        zones: [],
+        tokens: [],
+        connections: [],
+        selectedTokenId: null,
+      })
+    );
+    const map = useChaseMap();
+    expect(map.state.hasActiveChase).toBe(true);
+    expect(Array.isArray(map.state.environments)).toBe(true);
+    expect(map.state.scenario).toBe('');
   });
 
   test('malformed JSON resets to empty', () => {

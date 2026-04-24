@@ -13,8 +13,18 @@
       <div
         ref="grid"
         class="chase-map"
+        :class="{ 'chase-map--empty': !zones.length }"
         :style="gridStyle"
       >
+        <div v-if="!zones.length" class="chase-map-empty-hint">
+          <p>
+            The map is empty. Click the
+            <span class="chase-map-empty-plus" aria-hidden="true">+</span>
+            buttons at the edges of the grid to expand it, or open the
+            <strong>Zone Library</strong> to add your first zone.
+          </p>
+        </div>
+
         <svg
           class="connection-layer"
           :viewBox="`0 0 ${svgSize.w} ${svgSize.h}`"
@@ -259,6 +269,43 @@ export default {
   position: relative;
   display: grid;
   gap: 3.5rem;
+}
+
+.chase-map--empty {
+  min-height: 16rem;
+}
+
+.chase-map-empty-hint {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  pointer-events: none;
+}
+
+.chase-map-empty-hint p {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: var(--ink-muted);
+  max-width: 32rem;
+  margin: 0;
+  font-weight: 400;
+}
+
+.chase-map-empty-hint strong {
+  color: var(--ink-secondary);
+  font-weight: 600;
+}
+
+.chase-map-empty-plus {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  color: var(--ink-secondary);
 }
 
 .connection-layer {

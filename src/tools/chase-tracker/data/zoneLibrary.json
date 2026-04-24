@@ -5,6 +5,7 @@
       "name": "Bell Tower",
       "description": "A narrow stone spire, winding stairs leading up to a swinging bronze bell.",
       "environments": ["urban"],
+      "category": "civic-military",
       "shape": "tall",
       "defaultPills": []
     },
@@ -13,6 +14,7 @@
       "name": "Fish Market",
       "description": "Stalls, slippery cobbles, shouting vendors, and the always-watching cats.",
       "environments": ["urban"],
+      "category": "markets-commerce",
       "shape": "wide",
       "defaultPills": [
         { "label": "Crowded", "tone": "warm", "detail": "Fishwives and customers packed shoulder to shoulder." },
@@ -24,6 +26,7 @@
       "name": "Counting House",
       "description": "Iron-banded doors, watchful guards, and the quiet of money being counted.",
       "environments": ["urban"],
+      "category": "markets-commerce",
       "shape": "small",
       "defaultPills": []
     },
@@ -32,6 +35,7 @@
       "name": "Public Baths",
       "description": "Steam, nudity, slick tile underfoot. A place where everyone is distracted.",
       "environments": ["urban"],
+      "category": "markets-commerce",
       "shape": "wide",
       "defaultPills": [
         { "label": "Slippery", "tone": "warm", "detail": "Tile and soap. Athletic moves risk a fall." }
@@ -42,6 +46,7 @@
       "name": "Refuse Alley",
       "description": "Broken crates, rats, and the smell of yesterday. A place to vanish.",
       "environments": ["urban"],
+      "category": "streets-alleys",
       "shape": "tall",
       "defaultPills": []
     },
@@ -50,6 +55,7 @@
       "name": "Temple Steps",
       "description": "Wide, exposed, witnessed by gods and priests. Bad place to draw a weapon.",
       "environments": ["urban"],
+      "category": "religious-funerary",
       "shape": "wide",
       "defaultPills": []
     },
@@ -58,6 +64,7 @@
       "name": "Ferryman's Dock",
       "description": "Waiting boats, a way across, a way out. The ferryman takes coin, not questions.",
       "environments": ["urban"],
+      "category": "dockside-waterfront",
       "shape": "small",
       "defaultPills": []
     },
@@ -66,6 +73,7 @@
       "name": "Printer's Shop",
       "description": "Inks, paper, a press that can crush a hand. The owner is paid to remember faces.",
       "environments": ["urban"],
+      "category": "markets-commerce",
       "shape": "small",
       "defaultPills": [
         { "label": "Obstacle", "tone": "danger", "detail": "Tight aisles of heavy machinery. Athletics or Dex to cross fast." }
@@ -76,6 +84,7 @@
       "name": "Gallows Square",
       "description": "Empty scaffold, a crowd that remembers the last hanging and is hungry for more.",
       "environments": ["urban"],
+      "category": "civic-military",
       "shape": "large",
       "defaultPills": [
         { "label": "Crowded", "tone": "warm", "detail": "Onlookers and hawkers; cover is easy, speed is not." }
@@ -86,17 +95,408 @@
       "name": "Palace Gate",
       "description": "High walls, polished halberds, and the patience of men paid to watch.",
       "environments": ["urban"],
+      "category": "civic-military",
       "shape": "small",
       "defaultPills": [
         { "label": "Closed", "tone": "muted", "detail": "Barred to anyone without papers or a fight in them." }
       ]
     },
-
+    {
+      "id": "lib_urb_011",
+      "name": "Grain Market",
+      "description": "Sacks piled head-high, chaff in the air, brokers haggling over weights.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Porters and buyers. Every step finds an elbow." }
+      ]
+    },
+    {
+      "id": "lib_urb_012",
+      "name": "Flower Market",
+      "description": "Petals underfoot, perfumed air, girls calling out prices by the bunch.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_013",
+      "name": "Night Market",
+      "description": "Lantern-lit stalls, smoke, voices muffled by the dark. Things sold that won't be seen by day.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Dark", "tone": "muted", "detail": "Shadows between the lanterns. Hiding is easy, seeing is not." }
+      ]
+    },
+    {
+      "id": "lib_urb_014",
+      "name": "Silk Market",
+      "description": "Bolts of cloth hung like curtains, muffling sound and sight. Cover at every turn.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_015",
+      "name": "Cattle Pen",
+      "description": "Lowing beasts, churned mud, a drover's whip cracking over broad backs.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "A press of livestock. Athletics to push through, or get trampled." }
+      ]
+    },
+    {
+      "id": "lib_urb_016",
+      "name": "Lower Wharf",
+      "description": "Creaking pilings, nets hung to dry, longshoremen with arms thick as hawsers.",
+      "environments": ["urban"],
+      "category": "dockside-waterfront",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_017",
+      "name": "Customs Shed",
+      "description": "Crates stacked to the rafters, an inspector with a ledger and a pry bar.",
+      "environments": ["urban"],
+      "category": "dockside-waterfront",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_018",
+      "name": "Smugglers' Stair",
+      "description": "Stone steps into the water, greened with weed. Boats come and go at odd hours.",
+      "environments": ["urban"],
+      "category": "shadows-underside",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_019",
+      "name": "Wayshrine",
+      "description": "A roadside niche, a candle, an offering of bread. Peasants cross themselves passing.",
+      "environments": ["urban"],
+      "category": "religious-funerary",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_020",
+      "name": "High Temple",
+      "description": "Bronze doors, incense smoke, a priest's voice carrying over the kneeling.",
+      "environments": ["urban"],
+      "category": "religious-funerary",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_021",
+      "name": "Beggars' Shrine",
+      "description": "A defaced saint, a tin cup, a dozen hands reaching. No guards come here.",
+      "environments": ["urban"],
+      "category": "religious-funerary",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Hands on your sleeves, voices in your ears." }
+      ]
+    },
+    {
+      "id": "lib_urb_022",
+      "name": "Sailors' Tavern",
+      "description": "Low beams, thicker accents, a fight always one word away.",
+      "environments": ["urban"],
+      "category": "homes-lodging",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Elbow-to-elbow drinkers. Every step jostles a stranger." }
+      ]
+    },
+    {
+      "id": "lib_urb_023",
+      "name": "Respectable Inn",
+      "description": "Clean linen, honest prices, a common room where people pretend not to listen.",
+      "environments": ["urban"],
+      "category": "homes-lodging",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_024",
+      "name": "Tailor's Shop",
+      "description": "Bolts of wool, a dressmaker's dummy, pins in everything if you fall wrong.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_025",
+      "name": "Apothecary",
+      "description": "Glass jars, dried things hanging from the rafters, a proprietor who asks too many questions.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_026",
+      "name": "Cartographer's Stall",
+      "description": "Rolled charts, a brass compass on a chain, a man who knows where the walls are thin.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_027",
+      "name": "Butcher's Block",
+      "description": "Carcasses on hooks, stained sawdust, a cleaver that could part a collarbone.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Slippery", "tone": "warm", "detail": "Blood and fat on the floor. Run and fall." }
+      ]
+    },
+    {
+      "id": "lib_urb_028",
+      "name": "Farrier's Yard",
+      "description": "Sparks, tied horses, the ring of hammer on iron. Hot metal, nervous hooves.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "On Fire", "tone": "danger", "detail": "Forge coals and a glowing shoe in tongs. Brush past, take a burn." }
+      ]
+    },
+    {
+      "id": "lib_urb_029",
+      "name": "Guild Hall",
+      "description": "Carved arms over the door, a table of magistrates, and the quiet of laws being made.",
+      "environments": ["urban"],
+      "category": "civic-military",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_030",
+      "name": "City Jail",
+      "description": "A squat stone block with barred windows, straw and worse on the floors.",
+      "environments": ["urban"],
+      "category": "civic-military",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Closed", "tone": "muted", "detail": "Every door is locked and guards know the faces." }
+      ]
+    },
+    {
+      "id": "lib_urb_031",
+      "name": "Watch Post",
+      "description": "A brazier, a bench, two tired men with polearms leaning on the wall.",
+      "environments": ["urban"],
+      "category": "civic-military",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_032",
+      "name": "Curtain Wall",
+      "description": "Great blocks of mortared stone, arrow slits, a walkway lit by lanterns at dusk.",
+      "environments": ["urban"],
+      "category": "civic-military",
+      "shape": "massive",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_033",
+      "name": "Tile Rooftops",
+      "description": "Sloped clay and narrow gaps between eaves. A fall from here would hurt.",
+      "environments": ["urban"],
+      "category": "streets-alleys",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Loose tiles, bad footing. Acrobatics to move fast." }
+      ]
+    },
+    {
+      "id": "lib_urb_034",
+      "name": "Stone Bridge",
+      "description": "Three arches over brown water, beggars against the parapets, a toll at the far end.",
+      "environments": ["urban"],
+      "category": "streets-alleys",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_035",
+      "name": "Rope Bridge",
+      "description": "Strung between tenements high over an alley. It holds — most days.",
+      "environments": ["urban"],
+      "category": "streets-alleys",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Swaying planks. Balance to cross quickly." }
+      ]
+    },
+    {
+      "id": "lib_urb_036",
+      "name": "Merchant Plaza",
+      "description": "Open flagstones, a central fountain, awnings fluttering with every gust.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_037",
+      "name": "Tanners' Row",
+      "description": "Vats of stinking lime, hides on frames, a smell that gets in clothes and stays.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_038",
+      "name": "Smiths' Lane",
+      "description": "Hammer-song from a dozen forges, the heat palpable at a distance.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Loud", "tone": "warm", "detail": "Every voice is swallowed by the hammers." }
+      ]
+    },
+    {
+      "id": "lib_urb_039",
+      "name": "Dyers' Court",
+      "description": "Steaming tubs of red and indigo, hands stained to the elbow, runoff in the gutters.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_040",
+      "name": "Slum Warren",
+      "description": "Leaning timbers, children underfoot, doorways you wouldn't put your head through.",
+      "environments": ["urban"],
+      "category": "homes-lodging",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Junk in the alleys, washing strung low. Acrobatics to run clean." }
+      ]
+    },
+    {
+      "id": "lib_urb_041",
+      "name": "Noble Terrace",
+      "description": "Manicured hedges, a wrought-iron fence, a footman already reaching for a whistle.",
+      "environments": ["urban"],
+      "category": "homes-lodging",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_042",
+      "name": "Watchtower",
+      "description": "A stone finger above the rooftops, lantern burning all night, eyes behind the shutter.",
+      "environments": ["urban"],
+      "category": "civic-military",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_043",
+      "name": "Cemetery",
+      "description": "Old stones leaning, a gravedigger whistling, fresh earth somewhere upwind.",
+      "environments": ["urban"],
+      "category": "religious-funerary",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_044",
+      "name": "Public Stables",
+      "description": "Straw, warm animal stink, horses that know a stranger's voice when they hear one.",
+      "environments": ["urban"],
+      "category": "markets-commerce",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_045",
+      "name": "Beggars' Hollow",
+      "description": "A ruin under the bridge, rags for roofs, a dozen watching eyes.",
+      "environments": ["urban"],
+      "category": "shadows-underside",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Bodies packed in the dry spots. Any loud move wakes the lot." }
+      ]
+    },
+    {
+      "id": "lib_urb_046",
+      "name": "Festival Ground",
+      "description": "Trestle tables, bunting, a bonfire lit by dusk. The whole quarter is here.",
+      "environments": ["urban"],
+      "category": "civic-military",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Revelers too drunk to move out of the way." }
+      ]
+    },
+    {
+      "id": "lib_urb_047",
+      "name": "Toll Gate",
+      "description": "A chain across the road, a man with a cudgel and a ledger, a price for every passing.",
+      "environments": ["urban"],
+      "category": "civic-military",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_048",
+      "name": "Gambling Den",
+      "description": "Smoke, dice, hard looks at newcomers. Winners are watched out to the street.",
+      "environments": ["urban"],
+      "category": "shadows-underside",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Too many bodies around every table. Weaving through is slow." }
+      ]
+    },
+    {
+      "id": "lib_urb_049",
+      "name": "Brothel Parlour",
+      "description": "Red lanterns, soft cushions, a madam who keeps a pistol beneath the cashbox.",
+      "environments": ["urban"],
+      "category": "shadows-underside",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_urb_050",
+      "name": "Old Quarter",
+      "description": "Sagging timber, streets that don't match any map, locals who don't speak to outsiders.",
+      "environments": ["urban"],
+      "category": "homes-lodging",
+      "shape": "large",
+      "defaultPills": []
+    },
     {
       "id": "lib_wild_001",
       "name": "Wolf's Crossing",
       "description": "A narrow game trail threading between pines. Fresh tracks in the dust.",
       "environments": ["wilderness"],
+      "category": "paths-trails",
       "shape": "small",
       "defaultPills": []
     },
@@ -105,6 +505,7 @@
       "name": "Ancient Oak",
       "description": "A lone oak ringed with standing stones, older than any map of this country.",
       "environments": ["wilderness"],
+      "category": "wild-places",
       "shape": "small",
       "defaultPills": [
         { "label": "Strange", "tone": "mystery", "detail": "Whispers in the leaves that aren't the wind." }
@@ -115,6 +516,7 @@
       "name": "Salt Flats",
       "description": "No cover, heat shimmer, tracks that last for days. Every move is visible.",
       "environments": ["wilderness"],
+      "category": "open-country",
       "shape": "wide",
       "defaultPills": []
     },
@@ -123,6 +525,7 @@
       "name": "Muddy Bog",
       "description": "The suck of mud, the stink of stagnant water, deeper pools hidden beneath.",
       "environments": ["wilderness"],
+      "category": "water-wetlands",
       "shape": "wide",
       "defaultPills": [
         { "label": "Obstacle", "tone": "danger", "detail": "Every step risks sinking to the knee. Strength to push on." }
@@ -133,6 +536,7 @@
       "name": "Cairn",
       "description": "Old stones piled over old bones. The silence here is too deliberate.",
       "environments": ["wilderness"],
+      "category": "wild-places",
       "shape": "small",
       "defaultPills": [
         { "label": "Strange", "tone": "mystery", "detail": "Something is watching from under the stones." }
@@ -143,6 +547,7 @@
       "name": "Stag's Meadow",
       "description": "Open ground under open sky. A herd of deer stand quiet, watching.",
       "environments": ["wilderness"],
+      "category": "open-country",
       "shape": "large",
       "defaultPills": []
     },
@@ -151,6 +556,7 @@
       "name": "Poisoned Spring",
       "description": "Clear water, wrong taste, wrong color. The birds do not drink here.",
       "environments": ["wilderness"],
+      "category": "water-wetlands",
       "shape": "small",
       "defaultPills": [
         { "label": "On Fire", "tone": "danger", "detail": "Some poisons burn. Passing close, make a Con save." }
@@ -161,6 +567,7 @@
       "name": "Burned Grove",
       "description": "Charred trunks, no leaves, no birds. Ash rises at every footfall.",
       "environments": ["wilderness"],
+      "category": "forests-groves",
       "shape": "wide",
       "defaultPills": []
     },
@@ -169,6 +576,7 @@
       "name": "Hunter's Blind",
       "description": "Abandoned platform in a tall pine. Good sightlines, easier said than reached.",
       "environments": ["wilderness"],
+      "category": "forests-groves",
       "shape": "tall",
       "defaultPills": []
     },
@@ -177,101 +585,1608 @@
       "name": "Riverbend",
       "description": "Slow brown water and a row of skiffs pulled up on the bank. Someone owns them.",
       "environments": ["wilderness"],
+      "category": "water-wetlands",
       "shape": "wide",
       "defaultPills": []
     },
-
     {
-      "id": "lib_bldg_001",
+      "id": "lib_wild_011",
+      "name": "Pine Ridge",
+      "description": "Needled slope, brown and hushed. The wind up here carries every sound.",
+      "environments": ["wilderness"],
+      "category": "high-ground",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_012",
+      "name": "Oak Wood",
+      "description": "Thick, broad trunks and leaf-litter that crunches at every step.",
+      "environments": ["wilderness"],
+      "category": "forests-groves",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_013",
+      "name": "Birch Stand",
+      "description": "White trunks close-set and no brush between. Cover and sightlines both.",
+      "environments": ["wilderness"],
+      "category": "forests-groves",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_014",
+      "name": "Black Wood",
+      "description": "A dense thicket the sun never quite enters. Locals go around, not through.",
+      "environments": ["wilderness"],
+      "category": "forests-groves",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Dark", "tone": "muted", "detail": "Twilight under the canopy even at noon." }
+      ]
+    },
+    {
+      "id": "lib_wild_015",
+      "name": "Open Heath",
+      "description": "Knee-high gorse, a single hawk overhead, ground that hides foxholes.",
+      "environments": ["wilderness"],
+      "category": "open-country",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_016",
+      "name": "Summer Meadow",
+      "description": "Long grass, wildflowers, bees thick enough to hear. Cover to the waist.",
+      "environments": ["wilderness"],
+      "category": "open-country",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_017",
+      "name": "Cold Stream",
+      "description": "Shin-deep, fast, stones slick with moss. Breaks scent, slows legs.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Slippery", "tone": "warm", "detail": "Mossy stones. Dashing risks a spill." }
+      ]
+    },
+    {
+      "id": "lib_wild_018",
+      "name": "River Rapids",
+      "description": "White water over black rock, a roar that drowns shouting. Swim or don't.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Athletics to cross, or be carried downstream." }
+      ]
+    },
+    {
+      "id": "lib_wild_019",
+      "name": "Stone Ford",
+      "description": "An old crossing marked by boulders above the waterline. Horses hesitate here.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_020",
+      "name": "Rocky Outcrop",
+      "description": "A shelf of weather-broken stone over the tree line. Cover at the top, a climb to reach it.",
+      "environments": ["wilderness"],
+      "category": "high-ground",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_021",
+      "name": "Reed Marsh",
+      "description": "Tall reeds, shallow water, every step a splash. Good hiding, bad running.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_022",
+      "name": "Peat Bog",
+      "description": "Brown water, tussocks of grass, the suggestion of something buried beneath.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_023",
+      "name": "Dry Wash",
+      "description": "A dead riverbed of sunbaked stones. The sides offer no cover, but the going is flat.",
+      "environments": ["wilderness"],
+      "category": "open-country",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_024",
+      "name": "Sand Dunes",
+      "description": "Wind-sculpted ridges that shift underfoot. Every stride loses half its distance.",
+      "environments": ["wilderness"],
+      "category": "open-country",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Loose sand. Dashing burns breath faster than distance." }
+      ]
+    },
+    {
+      "id": "lib_wild_025",
+      "name": "Snowfield",
+      "description": "Unbroken white to the horizon. Every footprint is a signed confession.",
+      "environments": ["wilderness"],
+      "category": "open-country",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_026",
+      "name": "Mountain Pass",
+      "description": "A cut between two shoulders of stone, the wind funneled and mean.",
+      "environments": ["wilderness"],
+      "category": "high-ground",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_027",
+      "name": "Scree Slope",
+      "description": "Loose rock at the angle of repose. Noise carries. Footing betrays.",
+      "environments": ["wilderness"],
+      "category": "high-ground",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Scree. Dex save on a dash or fall prone." }
+      ]
+    },
+    {
+      "id": "lib_wild_028",
+      "name": "Ruined Tower",
+      "description": "A stump of masonry in the heather, half a staircase still standing.",
+      "environments": ["wilderness"],
+      "category": "ruins-remnants",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_029",
+      "name": "Hermit's Hollow",
+      "description": "A scooped bank under a tree, ashes in a ring, the owner gone or hiding.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_030",
+      "name": "Old Battleground",
+      "description": "Rust in the grass, bones under the thistle, crows that won't quite leave.",
+      "environments": ["wilderness"],
+      "category": "ruins-remnants",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Something in the grass still wants blood." }
+      ]
+    },
+    {
+      "id": "lib_wild_031",
+      "name": "Frozen Pond",
+      "description": "Black ice creaking, reeds locked upright, no way to tell how thick it holds.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Ice groans underfoot. Weight and speed both test it." }
+      ]
+    },
+    {
+      "id": "lib_wild_032",
+      "name": "Crow Field",
+      "description": "A fallow meadow dark with wings. They rise when anything approaches, loud enough to wake the dead.",
+      "environments": ["wilderness"],
+      "category": "open-country",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Loud", "tone": "warm", "detail": "A thousand wings. Stealth is done the moment you enter." }
+      ]
+    },
+    {
+      "id": "lib_wild_033",
+      "name": "Standing Stones",
+      "description": "A ring of gray teeth against the sky. The grass inside the ring grows in a different color.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The air presses closer within the ring." }
+      ]
+    },
+    {
+      "id": "lib_wild_034",
+      "name": "Old Cairn",
+      "description": "Stones heaped man-high at a crossroads, bleached and sunken. Travelers leave coppers.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_035",
+      "name": "Forgotten Path",
+      "description": "A trace of trodden moss, barely there, disappearing into the trees.",
+      "environments": ["wilderness"],
+      "category": "paths-trails",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_036",
+      "name": "Old Road",
+      "description": "Flagstones half-swallowed by turf. It went somewhere once. It still does.",
+      "environments": ["wilderness"],
+      "category": "paths-trails",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_037",
+      "name": "Wooden Bridge",
+      "description": "Planks over a cut, a rail half-rotten. It holds a horse. Probably.",
+      "environments": ["wilderness"],
+      "category": "paths-trails",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Rotten planks. Dash and a board might give." }
+      ]
+    },
+    {
+      "id": "lib_wild_038",
+      "name": "Druid Circle",
+      "description": "Nine oaks grown in a perfect ring. Nothing builds its nest here.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The silence under the branches is listening back." }
+      ]
+    },
+    {
+      "id": "lib_wild_039",
+      "name": "Struck Tree",
+      "description": "An oak split by lightning, black to the root. The ground around is still warm.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_040",
+      "name": "Carrion Field",
+      "description": "A deer, or what the wolves left. Flies in a cloud, the smell warning you ahead of sight.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_041",
+      "name": "Falls",
+      "description": "White water plunges into a shaded pool. Spray carries mist to the cliffs.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_042",
+      "name": "Still Lake",
+      "description": "Flat as pressed iron, mirroring sky and pines. A single loon cries at dusk.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_043",
+      "name": "Wild Orchard",
+      "description": "Rows of apple trees gone to rot and thorn. The ground is soft with dropped fruit.",
+      "environments": ["wilderness"],
+      "category": "forests-groves",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_044",
+      "name": "Bee Glade",
+      "description": "Sunlit clearing full of hives on stumps. The keeper is gone and the bees know it.",
+      "environments": ["wilderness"],
+      "category": "forests-groves",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Loud", "tone": "warm", "detail": "The hum swallows quiet voices." }
+      ]
+    },
+    {
+      "id": "lib_wild_045",
+      "name": "Bramble Thicket",
+      "description": "A wall of thorn higher than a man, dense enough to stop a horse.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Thorns snag armor and skin. Slow, or bleed for speed." }
+      ]
+    },
+    {
+      "id": "lib_wild_046",
+      "name": "Wolf Den",
+      "description": "A scored cleft under a boulder, bones scattered outside, a smell like a kennel.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_047",
+      "name": "Crow Tree",
+      "description": "A lightning-stripped elm hung with nests. Every branch holds black eyes.",
+      "environments": ["wilderness"],
+      "category": "wild-places",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_048",
+      "name": "Bandit Tollpost",
+      "description": "A log thrown across the road, a fire, three hard men with fewer questions than demands.",
+      "environments": ["wilderness"],
+      "category": "paths-trails",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_wild_049",
+      "name": "Abandoned Shrine",
+      "description": "A stone saint face-down in moss, offerings long scavenged, silence in a shape.",
+      "environments": ["wilderness"],
+      "category": "ruins-remnants",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Someone still leaves fresh offerings, and no one admits to it." }
+      ]
+    },
+    {
+      "id": "lib_wild_050",
+      "name": "Black Pool",
+      "description": "Still water under overhanging pines, its bottom lost to sight and rumor.",
+      "environments": ["wilderness"],
+      "category": "water-wetlands",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Something in the reflection doesn't match what's above." }
+      ]
+    },
+    {
+      "id": "lib_indr_001",
       "name": "Dumbwaiter",
       "description": "A narrow shaft and slow ropes. The servants' way between floors.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "hidden-ways",
       "shape": "tall",
       "defaultPills": [
         { "label": "Obstacle", "tone": "danger", "detail": "Tight squeeze. Acrobatics to pass through without dropping." }
       ]
     },
     {
-      "id": "lib_bldg_002",
+      "id": "lib_indr_002",
       "name": "Wine Cellar",
       "description": "Arched vaults, cobwebbed bottles, a back tunnel no one will admit knowing about.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "workshops-stores",
       "shape": "wide",
       "defaultPills": [
         { "label": "Dark", "tone": "muted", "detail": "No torches lit. Sight checks disadvantaged." }
       ]
     },
     {
-      "id": "lib_bldg_003",
+      "id": "lib_indr_003",
       "name": "Chapel",
       "description": "Wooden pews, stained glass, a back door for things said in confession.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "sacred-spaces",
       "shape": "small",
       "defaultPills": []
     },
     {
-      "id": "lib_bldg_004",
+      "id": "lib_indr_004",
       "name": "Conservatory",
       "description": "Glass walls and potted wonders. Fragile under any sudden violence.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "grand-rooms",
       "shape": "small",
       "defaultPills": [
         { "label": "Obstacle", "tone": "danger", "detail": "Glass everywhere. Any dashed move risks breaking it and drawing guards." }
       ]
     },
     {
-      "id": "lib_bldg_005",
+      "id": "lib_indr_005",
       "name": "Armory",
       "description": "Racks of polished steel, maintained, accounted for. Missing pieces get noticed.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "workshops-stores",
       "shape": "small",
       "defaultPills": []
     },
     {
-      "id": "lib_bldg_006",
+      "id": "lib_indr_006",
       "name": "Solar",
       "description": "Private rooms, personal effects, things not meant to be seen by strangers.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "private-quarters",
       "shape": "small",
       "defaultPills": []
     },
     {
-      "id": "lib_bldg_007",
+      "id": "lib_indr_007",
       "name": "Guard Room",
       "description": "Off-duty soldiers, dice on a table, a fire that never quite goes out.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "service-areas",
       "shape": "small",
       "defaultPills": [
         { "label": "Crowded", "tone": "warm", "detail": "Armed men with nothing to do but notice newcomers." }
       ]
     },
     {
-      "id": "lib_bldg_008",
+      "id": "lib_indr_008",
       "name": "Kennels",
       "description": "Dogs. Their masters. The dogs' memory of every stranger they've ever smelled.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "service-areas",
       "shape": "small",
       "defaultPills": [
         { "label": "Loud", "tone": "warm", "detail": "Dogs bark at anything. Stealth is over the moment you step in." }
       ]
     },
     {
-      "id": "lib_bldg_009",
+      "id": "lib_indr_009",
       "name": "Nursery",
       "description": "Small beds, a watching governess, toys scattered across the floor.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "private-quarters",
       "shape": "small",
       "defaultPills": []
     },
     {
-      "id": "lib_bldg_010",
+      "id": "lib_indr_010",
       "name": "Secret Passage",
       "description": "A wall that opens if you know where to push. The mouse-hole the house forgot.",
-      "environments": ["building_interior"],
+      "environments": ["indoor"],
+      "category": "hidden-ways",
       "shape": "tall",
       "defaultPills": [
         { "label": "Strange", "tone": "mystery", "detail": "Only those who know it exists can find the catch." }
       ]
+    },
+    {
+      "id": "lib_indr_011",
+      "name": "Grand Hall",
+      "description": "High ceilings, marble floors, echoing footsteps. Tables and guests in the way.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Guests and servants everywhere. Stealth is nearly impossible." }
+      ]
+    },
+    {
+      "id": "lib_indr_012",
+      "name": "Kitchen",
+      "description": "Fires, knives, running servants. A back door opens onto the yard.",
+      "environments": ["indoor"],
+      "category": "service-areas",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "On Fire", "tone": "danger", "detail": "Open hearths and hot steel. Brushing past costs a Dex save." }
+      ]
+    },
+    {
+      "id": "lib_indr_013",
+      "name": "Scullery",
+      "description": "Greasy water, clattering pans, red-armed scullions who don't look up for nobles.",
+      "environments": ["indoor"],
+      "category": "service-areas",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Slippery", "tone": "warm", "detail": "Water and fat on the flags. Running will put you down." }
+      ]
+    },
+    {
+      "id": "lib_indr_014",
+      "name": "Pantry",
+      "description": "Shelves of preserves, hanging game, a padlocked spice chest. Narrow passage down the middle.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_015",
+      "name": "Cold Larder",
+      "description": "Slab floors, hanging hams, breath clouding in the lamplight.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_016",
+      "name": "Library",
+      "description": "Towering shelves, ladders, a maze of reading nooks. Quiet, but tight quarters.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Ladders and stacks. Athletics to move through at speed." }
+      ]
+    },
+    {
+      "id": "lib_indr_017",
+      "name": "Master Bedchamber",
+      "description": "A great curtained bed, a dying fire, secrets in every drawer.",
+      "environments": ["indoor"],
+      "category": "private-quarters",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_018",
+      "name": "Servants' Quarters",
+      "description": "Cot beds in a row, a single candle, the people who know every hidden door.",
+      "environments": ["indoor"],
+      "category": "private-quarters",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_019",
+      "name": "Household Shrine",
+      "description": "A small altar under a gilt triptych, daily offerings of flowers and bread.",
+      "environments": ["indoor"],
+      "category": "sacred-spaces",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_020",
+      "name": "Indoor Stable",
+      "description": "A colonnade of stalls inside the keep, warm animal breath and oiled tack.",
+      "environments": ["indoor"],
+      "category": "service-areas",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_021",
+      "name": "Storeroom",
+      "description": "Crates stacked to the rafters, labels in a fading hand, tools hung on pegs.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Stacked crates and clutter. Acrobatics to cross fast." }
+      ]
+    },
+    {
+      "id": "lib_indr_022",
+      "name": "Workshop",
+      "description": "A bench of tools, shavings underfoot, something half-built clamped in a vise.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_023",
+      "name": "Audience Chamber",
+      "description": "A dais, two flanking guards, a petitioner kneeling on cold marble.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_024",
+      "name": "Spiral Stair",
+      "description": "Tight stone steps curling up and down, one person wide at the pinch.",
+      "environments": ["indoor"],
+      "category": "corridors-stairs",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_025",
+      "name": "Grand Staircase",
+      "description": "Wide, carpeted, railed in polished walnut. Every step seen by the portraits above.",
+      "environments": ["indoor"],
+      "category": "corridors-stairs",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_026",
+      "name": "Servant Corridor",
+      "description": "Narrow, poorly lit, smelling of ash and laundry soap. Fewer witnesses.",
+      "environments": ["indoor"],
+      "category": "corridors-stairs",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_027",
+      "name": "Long Gallery",
+      "description": "A corridor of portraits watching from both walls, a runner deadening footsteps.",
+      "environments": ["indoor"],
+      "category": "corridors-stairs",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_028",
+      "name": "Narrow Passage",
+      "description": "Stone walls an arm's length apart, one candle guttering at the far end.",
+      "environments": ["indoor"],
+      "category": "corridors-stairs",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_029",
+      "name": "Dining Hall",
+      "description": "A long table set for forty, silver polished, a feast half-eaten.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Diners and servants both. Running through costs breakage and attention." }
+      ]
+    },
+    {
+      "id": "lib_indr_030",
+      "name": "Sickroom",
+      "description": "A shuttered window, a smell of camphor, a patient who breathes like paper tearing.",
+      "environments": ["indoor"],
+      "category": "private-quarters",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_031",
+      "name": "Infirmary",
+      "description": "Rows of cots, bloodied linen in a pail, a weary surgeon washing his hands.",
+      "environments": ["indoor"],
+      "category": "service-areas",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_032",
+      "name": "Bathhouse Room",
+      "description": "A sunken tub, scented steam, a brass bell to summon the attendants.",
+      "environments": ["indoor"],
+      "category": "private-quarters",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Slippery", "tone": "warm", "detail": "Wet tile underfoot. Dash and fall." }
+      ]
+    },
+    {
+      "id": "lib_indr_033",
+      "name": "Tower Room",
+      "description": "A circular chamber at the top of the keep, narrow windows, all the approaches visible.",
+      "environments": ["indoor"],
+      "category": "private-quarters",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_034",
+      "name": "Attic",
+      "description": "Beams, dust, forgotten trunks. A gable window frames the courtyard below.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_035",
+      "name": "Cell",
+      "description": "A stone box, a barred slot in the door, a bucket and nothing else.",
+      "environments": ["indoor"],
+      "category": "service-areas",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Closed", "tone": "muted", "detail": "The door is locked. Every entry is a key in someone's pocket." }
+      ]
+    },
+    {
+      "id": "lib_indr_036",
+      "name": "Oubliette",
+      "description": "A grate in the floor opens onto a drop. Straw at the bottom, if you're lucky.",
+      "environments": ["indoor"],
+      "category": "hidden-ways",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "A vertical drop. Athletics to climb back, or don't fall in." }
+      ]
+    },
+    {
+      "id": "lib_indr_037",
+      "name": "Watch Gallery",
+      "description": "An interior balcony overlooking the hall below. Good view, poor cover.",
+      "environments": ["indoor"],
+      "category": "corridors-stairs",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_038",
+      "name": "Enclosed Courtyard",
+      "description": "Open cobbles under the sky, a well at the center, every window watching.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_039",
+      "name": "Trophy Room",
+      "description": "Mounted heads along every wall, a stuffed bear in one corner, dust on the glass eyes.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_040",
+      "name": "Map Room",
+      "description": "A great table inlaid with a chart of the province, pins in it marking troops.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_041",
+      "name": "Wardrobe",
+      "description": "Cedar-lined closet of gowns and cloaks. Good cover, terrible footing if someone pulls the rail down.",
+      "environments": ["indoor"],
+      "category": "private-quarters",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_042",
+      "name": "Treasury",
+      "description": "An iron door, three locks, shelves of coin and plate behind. One guard by the lintel.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Closed", "tone": "muted", "detail": "Locked and watched. No one passes without a key or a corpse." }
+      ]
+    },
+    {
+      "id": "lib_indr_043",
+      "name": "Picture Gallery",
+      "description": "A long room of framed ancestors, their painted eyes tracking the length of it.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_044",
+      "name": "Music Room",
+      "description": "A harpsichord under a tall window, chairs in a circle, sheets of music on the floor.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_045",
+      "name": "Counting Office",
+      "description": "A wall of ledgers, a desk stained with ink, a clerk who recognizes forged seals.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_046",
+      "name": "Ice House",
+      "description": "A deep-shadowed chamber packed with straw and winter-cut ice, cold fogging the breath.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_047",
+      "name": "Smokehouse",
+      "description": "Hams and sides hung over smoldering chips. Every breath tastes of fat and oak.",
+      "environments": ["indoor"],
+      "category": "workshops-stores",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_048",
+      "name": "Ballroom",
+      "description": "A polished floor under a crystal chandelier, violins tuning, attendance expected.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Crowded", "tone": "warm", "detail": "Dancers and spectators in pairs. Cutting through costs eyes." }
+      ]
+    },
+    {
+      "id": "lib_indr_049",
+      "name": "Observatory Dome",
+      "description": "A brass telescope under a slitted dome, charts of the stars across the floor.",
+      "environments": ["indoor"],
+      "category": "grand-rooms",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_indr_050",
+      "name": "Garret",
+      "description": "A low-ceilinged room under the eaves, one narrow window onto the roof.",
+      "environments": ["indoor"],
+      "category": "private-quarters",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_001",
+      "name": "Sewer Tunnel",
+      "description": "Low brick arch, ankle-deep flow, the smell enough to double a man. Rats everywhere.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Dark", "tone": "muted", "detail": "Only the grates overhead admit light." }
+      ]
+    },
+    {
+      "id": "lib_undr_002",
+      "name": "Narrow Sewer",
+      "description": "A half-pipe of brick barely tall enough to stoop through. The water runs black.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Crouched going. Athletics to keep pace without slipping." }
+      ]
+    },
+    {
+      "id": "lib_undr_003",
+      "name": "Great Sewer",
+      "description": "A brick-vaulted river underground, bridges of slick stone over moving filth.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Slippery", "tone": "warm", "detail": "Green slime on every edge. Every dash is a gamble." }
+      ]
+    },
+    {
+      "id": "lib_undr_004",
+      "name": "Cistern",
+      "description": "A pillared vault half-filled with still black water. A drip somewhere marks time.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Dark", "tone": "muted", "detail": "No natural light. The water swallows sound." }
+      ]
+    },
+    {
+      "id": "lib_undr_005",
+      "name": "Flooded Chamber",
+      "description": "Waist-deep water over flagstones, furniture tipped and drifting slowly in circles.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Wading slows speed by half. Strength to push fast." }
+      ]
+    },
+    {
+      "id": "lib_undr_006",
+      "name": "Natural Cavern",
+      "description": "A rough dome in living stone, lit only by whatever you brought with you.",
+      "environments": ["underground"],
+      "category": "chambers-rooms",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Dark", "tone": "muted", "detail": "Unlit stone. Sight checks fail without a torch." }
+      ]
+    },
+    {
+      "id": "lib_undr_007",
+      "name": "Crystal Chamber",
+      "description": "A pocket in the rock glittering with pale shards. Every breath catches a glint.",
+      "environments": ["underground"],
+      "category": "chambers-rooms",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The crystals hum if you touch them. Nothing is supposed to hum." }
+      ]
+    },
+    {
+      "id": "lib_undr_008",
+      "name": "Underground River",
+      "description": "Black water rushing past a narrow ledge. A single misstep and you're gone downstream.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Wet stone, fast current. Dex save on any dash." }
+      ]
+    },
+    {
+      "id": "lib_undr_009",
+      "name": "Subterranean Stream",
+      "description": "A rill threading between boulders, its sound the only sound for some distance.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_010",
+      "name": "Narrow Squeeze",
+      "description": "The walls close to a handspan. Packs off, breath held, scrape through.",
+      "environments": ["underground"],
+      "category": "tunnels-passages",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Tight rock. Acrobatics to pass. Heavy armor takes twice as long." }
+      ]
+    },
+    {
+      "id": "lib_undr_011",
+      "name": "Collapsed Passage",
+      "description": "Beams cracked, rubble to the ceiling, a gap at the top you might crawl through.",
+      "environments": ["underground"],
+      "category": "tunnels-passages",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Rubble and a bad ceiling. Every loud move risks more falling." }
+      ]
+    },
+    {
+      "id": "lib_undr_012",
+      "name": "Crypt",
+      "description": "Niches in the stone holding wrapped bones, names worn off the plaques.",
+      "environments": ["underground"],
+      "category": "ancient-sacred",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_013",
+      "name": "Ossuary",
+      "description": "Walls stacked with skulls in patterns, femurs in rows like cordwood.",
+      "environments": ["underground"],
+      "category": "ancient-sacred",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The skulls are arranged facing the door. Someone did that recently." }
+      ]
+    },
+    {
+      "id": "lib_undr_014",
+      "name": "Catacomb",
+      "description": "A labyrinth of low tunnels lined with tombs, all the turnings looking alike.",
+      "environments": ["underground"],
+      "category": "ancient-sacred",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_015",
+      "name": "Dungeon Corridor",
+      "description": "Dressed stone, rusted sconces, a line of closed doors disappearing into gloom.",
+      "environments": ["underground"],
+      "category": "worked-stone",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_016",
+      "name": "Sprung Trap Room",
+      "description": "A spike-studded floor half-dropped, chains in the walls still humming from the last victim.",
+      "environments": ["underground"],
+      "category": "hazards-falls",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_017",
+      "name": "Unsprung Trap Room",
+      "description": "Flagstones that look wrong, sconces mounted too high, a faint click from somewhere under the floor.",
+      "environments": ["underground"],
+      "category": "hazards-falls",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Pressure plates. Perception to spot, Acrobatics to avoid when moving fast." }
+      ]
+    },
+    {
+      "id": "lib_undr_018",
+      "name": "Forgotten Shrine",
+      "description": "An altar of old stone, a dead candle, a symbol chiseled across the face.",
+      "environments": ["underground"],
+      "category": "ancient-sacred",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Something down here still answers prayers, and it isn't whoever the shrine was built for." }
+      ]
+    },
+    {
+      "id": "lib_undr_019",
+      "name": "Fungal Chamber",
+      "description": "A cavern carpeted in pale mushrooms that light faintly from within. They burst under weight.",
+      "environments": ["underground"],
+      "category": "chambers-rooms",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Spores hang in the air. Loud noise makes the caps burst." }
+      ]
+    },
+    {
+      "id": "lib_undr_020",
+      "name": "Stalactite Forest",
+      "description": "Limestone teeth hanging close, stalagmites rising to meet them. A maze that scrapes.",
+      "environments": ["underground"],
+      "category": "tunnels-passages",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Stone pillars everywhere. Athletics to weave through at speed." }
+      ]
+    },
+    {
+      "id": "lib_undr_021",
+      "name": "Deep Pool",
+      "description": "A black circle of water in the cavern floor. Something surfaces, occasionally.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The pool has no visible bottom. Something below knows you're above." }
+      ]
+    },
+    {
+      "id": "lib_undr_022",
+      "name": "Old Mine Working",
+      "description": "Timbered gallery, pick-marked walls, an abandoned cart slumped across the rails.",
+      "environments": ["underground"],
+      "category": "worked-stone",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_023",
+      "name": "Ore Vein",
+      "description": "A seam of raw metal glinting in the rock face, the dust in the air still warm from the last strike.",
+      "environments": ["underground"],
+      "category": "tunnels-passages",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_024",
+      "name": "Bat Roost",
+      "description": "A high vault pasted with droppings. Disturb it and the dark comes alive.",
+      "environments": ["underground"],
+      "category": "lairs-dens",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Loud", "tone": "warm", "detail": "Any noise rouses the roost. Thousands of wings and no hiding after." }
+      ]
+    },
+    {
+      "id": "lib_undr_025",
+      "name": "Old Carvings",
+      "description": "A wall of deep-cut figures marching around a doorway. No language anyone still speaks.",
+      "environments": ["underground"],
+      "category": "ancient-sacred",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_026",
+      "name": "Pit",
+      "description": "A dark hole in the floor, bottom unseen, the air from it cold and slow.",
+      "environments": ["underground"],
+      "category": "hazards-falls",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "A drop. Any dashed move risks falling in without care." }
+      ]
+    },
+    {
+      "id": "lib_undr_027",
+      "name": "Ledge",
+      "description": "A narrow shelf over a drop, bad rock underfoot, a drift of wind from below.",
+      "environments": ["underground"],
+      "category": "hazards-falls",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Crumbling edge. Dex save on speed or fall." }
+      ]
+    },
+    {
+      "id": "lib_undr_028",
+      "name": "Echo Chamber",
+      "description": "A round hollow of polished stone. Every whisper comes back threefold.",
+      "environments": ["underground"],
+      "category": "chambers-rooms",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Loud", "tone": "warm", "detail": "Whispers carry. Stealth is wasted here." }
+      ]
+    },
+    {
+      "id": "lib_undr_029",
+      "name": "Air Shaft",
+      "description": "A ventilation pipe a body can barely fit, climbing up toward a distant square of daylight.",
+      "environments": ["underground"],
+      "category": "tunnels-passages",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "A vertical squeeze. Athletics to climb fast without getting stuck." }
+      ]
+    },
+    {
+      "id": "lib_undr_030",
+      "name": "Root Chamber",
+      "description": "A cavern strung with pale tree roots like cables. They move, a little, when you aren't watching.",
+      "environments": ["underground"],
+      "category": "chambers-rooms",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Something is alive in the roots that isn't the tree." }
+      ]
+    },
+    {
+      "id": "lib_undr_031",
+      "name": "Worm Tunnel",
+      "description": "A bore through the stone too round to be natural, lined with dried slime.",
+      "environments": ["underground"],
+      "category": "lairs-dens",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_032",
+      "name": "Smugglers' Cache",
+      "description": "Crates stacked in a side passage, a cold fire ring, a ledger in a tin.",
+      "environments": ["underground"],
+      "category": "chambers-rooms",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_033",
+      "name": "Drowned Stairs",
+      "description": "Stone steps descending into standing water. The bottom step is not the bottom.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Slippery", "tone": "warm", "detail": "Algae on submerged stone. Running goes wrong fast." }
+      ]
+    },
+    {
+      "id": "lib_undr_034",
+      "name": "Nightsoil Pit",
+      "description": "A brick-lined shaft from the street above, thick with the city's refuse.",
+      "environments": ["underground"],
+      "category": "worked-stone",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_035",
+      "name": "Brick Vault",
+      "description": "A round-roofed room lined in old red brick, a storeroom for whatever shouldn't be found.",
+      "environments": ["underground"],
+      "category": "worked-stone",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_036",
+      "name": "Arched Vault",
+      "description": "Gothic ribs overhead, a cold floor, acoustics that carry a dropped pin.",
+      "environments": ["underground"],
+      "category": "worked-stone",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_037",
+      "name": "Ancient Foundation",
+      "description": "Walls of cyclopean stone under the newer city, courses older than anyone admits.",
+      "environments": ["underground"],
+      "category": "ancient-sacred",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The stones weren't cut by any tool still in use." }
+      ]
+    },
+    {
+      "id": "lib_undr_038",
+      "name": "Chasm",
+      "description": "A crack across the floor of the world, wind rising from it warm, then cold.",
+      "environments": ["underground"],
+      "category": "hazards-falls",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "A leap or a ledge. Athletics or go around the long way." }
+      ]
+    },
+    {
+      "id": "lib_undr_039",
+      "name": "Rope Bridge",
+      "description": "Frayed hemp strung over a deep pool, planks missing here and there.",
+      "environments": ["underground"],
+      "category": "hazards-falls",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Rotten bridge. Dashing risks a plank giving out." }
+      ]
+    },
+    {
+      "id": "lib_undr_040",
+      "name": "Hermit Cave",
+      "description": "A cleft in the rock with a straw pallet, a cold hearth, and walls scored with tally marks.",
+      "environments": ["underground"],
+      "category": "chambers-rooms",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_041",
+      "name": "Root Cellar",
+      "description": "A dug-out room under a house, shelves of jars, potatoes going soft in baskets.",
+      "environments": ["underground"],
+      "category": "chambers-rooms",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_042",
+      "name": "Lich Tomb",
+      "description": "A single sealed sarcophagus under a vaulted ceiling. The air is colder than it should be.",
+      "environments": ["underground"],
+      "category": "ancient-sacred",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "Frost crawls along the stone when you speak." }
+      ]
+    },
+    {
+      "id": "lib_undr_043",
+      "name": "Salt Mine",
+      "description": "White walls glittering in lamplight, crunching salt underfoot, air dry enough to crack lips.",
+      "environments": ["underground"],
+      "category": "worked-stone",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_044",
+      "name": "Glowing Moss Gallery",
+      "description": "A passage washed in pale green light from moss thick as fur on the walls.",
+      "environments": ["underground"],
+      "category": "tunnels-passages",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_045",
+      "name": "Lava Crack",
+      "description": "A fissure in the rock lit from beneath by slow red fire. The air wavers.",
+      "environments": ["underground"],
+      "category": "hazards-falls",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "On Fire", "tone": "danger", "detail": "Heat rising from the crack. Lingering costs Con saves." }
+      ]
+    },
+    {
+      "id": "lib_undr_046",
+      "name": "Subterranean Plaza",
+      "description": "A broad flagged space below the city, pillars of worked stone in ranks, nothing moving.",
+      "environments": ["underground"],
+      "category": "worked-stone",
+      "shape": "massive",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_undr_047",
+      "name": "Kobold Warren",
+      "description": "A nest of crawlspaces, low ceilings, every wall smelling faintly of smoke and lizard.",
+      "environments": ["underground"],
+      "category": "lairs-dens",
+      "shape": "wide",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Hand-dug tunnels scaled small. Humans crawl or stoop." }
+      ]
+    },
+    {
+      "id": "lib_undr_048",
+      "name": "Cavern Lake",
+      "description": "A sheet of black water under the stone sky, not a ripple, not a sound.",
+      "environments": ["underground"],
+      "category": "water-wet-places",
+      "shape": "large",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The surface doesn't reflect the ceiling overhead." }
+      ]
+    },
+    {
+      "id": "lib_undr_049",
+      "name": "Deep Shaft",
+      "description": "A vertical pit with iron rungs corroded to flakes. The bottom swallows lanternlight.",
+      "environments": ["underground"],
+      "category": "hazards-falls",
+      "shape": "tall",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "Bad rungs. Athletics to climb fast. Slips hurt." }
+      ]
+    },
+    {
+      "id": "lib_undr_050",
+      "name": "Cult Chamber",
+      "description": "A circle chalked on the floor, black candles in a ring, something still warm in the brazier.",
+      "environments": ["underground"],
+      "category": "ancient-sacred",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The circle is open, and nothing in the stories says that's good." }
+      ]
+    },
+    {
+      "id": "lib_trans_001",
+      "name": "Street Grate",
+      "description": "Iron bars in the cobbles, the reek rising through them. A lever sets them free.",
+      "environments": ["urban", "underground"],
+      "category": "shadows-underside",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_002",
+      "name": "Cellar Hatch",
+      "description": "A wooden trapdoor set in an alley floor, padlocked but not always. Steps go down into dark.",
+      "environments": ["urban", "underground"],
+      "category": "shadows-underside",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_003",
+      "name": "Open Manhole",
+      "description": "A round shaft in the street with a ladder bolted to one side. Someone left the cover off.",
+      "environments": ["urban", "underground"],
+      "category": "shadows-underside",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Obstacle", "tone": "danger", "detail": "A hole in the road. Dex save on a dash or drop in." }
+      ]
+    },
+    {
+      "id": "lib_trans_004",
+      "name": "Old Well",
+      "description": "A stone cylinder in the square with a rope and bucket. The well is deeper than it serves.",
+      "environments": ["urban", "underground"],
+      "category": "shadows-underside",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_005",
+      "name": "Cave Mouth",
+      "description": "A dark gap at the base of a hillside, cold air coming out. Something scraped the lip smooth.",
+      "environments": ["wilderness", "underground"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_006",
+      "name": "Mine Entrance",
+      "description": "A timbered adit in the rock face, rails leading in, a wheeled cart derailed outside.",
+      "environments": ["wilderness", "underground"],
+      "category": "ruins-remnants",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_007",
+      "name": "Badger Sett",
+      "description": "A hole in a bank, wider than a badger needs. Something bigger has been using it.",
+      "environments": ["wilderness", "underground"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_008",
+      "name": "Marked Pit",
+      "description": "A ring of cairn-stones around an opening in the ground. A warning, or a door.",
+      "environments": ["wilderness", "underground"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": [
+        { "label": "Strange", "tone": "mystery", "detail": "The stones were set to keep something inside. Or outside." }
+      ]
+    },
+    {
+      "id": "lib_trans_009",
+      "name": "Cellar Stairs",
+      "description": "A narrow flight of stone steps behind a warped door, lanternlight fading as you go down.",
+      "environments": ["indoor", "underground"],
+      "category": "corridors-stairs",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_010",
+      "name": "Crypt Entrance",
+      "description": "A flagstone prised up in the chapel floor, a coughed draft, steps cut in the bedrock.",
+      "environments": ["indoor", "underground"],
+      "category": "sacred-spaces",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_011",
+      "name": "Cellar Trapdoor",
+      "description": "A ring pull in the pantry floor, greased hinges, a ladder that goes further than expected.",
+      "environments": ["indoor", "underground"],
+      "category": "hidden-ways",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_012",
+      "name": "Ice-house Shaft",
+      "description": "A stone-lined drop from the yard into a buried chamber, the air cold enough to sting.",
+      "environments": ["indoor", "underground"],
+      "category": "service-areas",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_013",
+      "name": "City Gate",
+      "description": "Great oak leaves bound in iron, a portcullis half-raised, the fields visible beyond.",
+      "environments": ["urban", "wilderness"],
+      "category": "civic-military",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_014",
+      "name": "Riverside Commons",
+      "description": "Trampled grass where the town meets the water, washerwomen and cattle sharing the bank.",
+      "environments": ["urban", "wilderness"],
+      "category": "dockside-waterfront",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_015",
+      "name": "Wall Breach",
+      "description": "A collapse in the old curtain, rubble sloped to the outside, grass coming up through the cracks.",
+      "environments": ["urban", "wilderness"],
+      "category": "civic-military",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_016",
+      "name": "Outer Orchard",
+      "description": "Fruit trees in rows just beyond the walls, town bells audible, brambles encroaching from the wood.",
+      "environments": ["urban", "wilderness"],
+      "category": "markets-commerce",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_017",
+      "name": "Back Door",
+      "description": "A plain plank door from a kitchen out onto the alley, ajar for air.",
+      "environments": ["urban", "indoor"],
+      "category": "shadows-underside",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_018",
+      "name": "Service Entrance",
+      "description": "A covered passage between the street and the household yard, carts rumbling through both ways.",
+      "environments": ["urban", "indoor"],
+      "category": "streets-alleys",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_019",
+      "name": "Inn Back Door",
+      "description": "A stable-yard door from the common room, hinges loud, the cook's eyes sharp.",
+      "environments": ["urban", "indoor"],
+      "category": "homes-lodging",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_020",
+      "name": "Hermit Hut",
+      "description": "A thatched shack in a forest clearing, a herb-rack by the door, smoke from a single chimney.",
+      "environments": ["wilderness", "indoor"],
+      "category": "wild-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_021",
+      "name": "Shepherd's Bothy",
+      "description": "A drystone hut with a turf roof on the high moor, a fire pit, a pallet under the window.",
+      "environments": ["wilderness", "indoor"],
+      "category": "open-country",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_022",
+      "name": "Wayside Shrine",
+      "description": "A small stone chamber at the crossroads, a carved saint inside, a shelf for offerings.",
+      "environments": ["wilderness", "indoor"],
+      "category": "paths-trails",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_023",
+      "name": "Hunting Lodge",
+      "description": "A timber hall in the deep wood, antlers over the door, shutters closed to the wind.",
+      "environments": ["wilderness", "indoor"],
+      "category": "forests-groves",
+      "shape": "small",
+      "defaultPills": []
     }
   ]
 }

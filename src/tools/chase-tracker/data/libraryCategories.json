@@ -1,0 +1,60 @@
+{
+  "urban": [
+    { "slug": "streets-alleys", "name": "Streets & Alleys" },
+    { "slug": "markets-commerce", "name": "Markets & Commerce" },
+    { "slug": "civic-military", "name": "Civic & Military" },
+    { "slug": "religious-funerary", "name": "Religious & Funerary" },
+    { "slug": "homes-lodging", "name": "Homes & Lodging" },
+    { "slug": "dockside-waterfront", "name": "Dockside & Waterfront" },
+    { "slug": "shadows-underside", "name": "Shadows & Underside" }
+  ],
+  "wilderness": [
+    { "slug": "paths-trails", "name": "Paths & Trails" },
+    { "slug": "forests-groves", "name": "Forests & Groves" },
+    { "slug": "water-wetlands", "name": "Water & Wetlands" },
+    { "slug": "high-ground", "name": "High Ground" },
+    { "slug": "open-country", "name": "Open Country" },
+    { "slug": "wild-places", "name": "Wild Places" },
+    { "slug": "ruins-remnants", "name": "Ruins & Remnants" }
+  ],
+  "indoor": [
+    { "slug": "grand-rooms", "name": "Grand Rooms" },
+    { "slug": "service-areas", "name": "Service Areas" },
+    { "slug": "private-quarters", "name": "Private Quarters" },
+    { "slug": "corridors-stairs", "name": "Corridors & Stairs" },
+    { "slug": "workshops-stores", "name": "Workshops & Stores" },
+    { "slug": "sacred-spaces", "name": "Sacred Spaces" },
+    { "slug": "hidden-ways", "name": "Hidden Ways" }
+  ],
+  "underground": [
+    { "slug": "tunnels-passages", "name": "Tunnels & Passages" },
+    { "slug": "chambers-rooms", "name": "Chambers & Rooms" },
+    { "slug": "water-wet-places", "name": "Water & Wet Places" },
+    { "slug": "ancient-sacred", "name": "Ancient & Sacred" },
+    { "slug": "hazards-falls", "name": "Hazards & Falls" },
+    { "slug": "lairs-dens", "name": "Lairs & Dens" },
+    { "slug": "worked-stone", "name": "Worked Stone" }
+  ],
+  "underdark": [
+    { "slug": "vast-caverns", "name": "Vast Caverns" },
+    { "slug": "fungal-growth", "name": "Fungal Growth" },
+    { "slug": "settled-places", "name": "Settled Places" },
+    { "slug": "vertical-chasms", "name": "Vertical Chasms" },
+    { "slug": "ancient-ruins", "name": "Ancient Ruins" },
+    { "slug": "deep-waters", "name": "Deep Waters" }
+  ],
+  "feywild": [
+    { "slug": "groves-glades", "name": "Groves & Glades" },
+    { "slug": "courts-gatherings", "name": "Courts & Gatherings" },
+    { "slug": "waters-crossings", "name": "Waters & Crossings" },
+    { "slug": "strange-places", "name": "Strange Places" },
+    { "slug": "paths-passages", "name": "Paths & Passages" }
+  ],
+  "shadowfell": [
+    { "slug": "fading-lands", "name": "Fading Lands" },
+    { "slug": "ruins-remnants", "name": "Ruins & Remnants" },
+    { "slug": "graves-memorials", "name": "Graves & Memorials" },
+    { "slug": "gloom-mist", "name": "Gloom & Mist" },
+    { "slug": "twilight-places", "name": "Twilight Places" }
+  ]
+}

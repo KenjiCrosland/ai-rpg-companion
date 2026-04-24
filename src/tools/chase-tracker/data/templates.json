@@ -4,7 +4,8 @@
       "id": "urban_alleys",
       "name": "Urban Alleyways",
       "description": "Narrow streets, rooftops, and the back corridors of a crowded city.",
-      "environment": "urban",
+      "scenario": "[Example] A cutpurse flees the festival crowd, the City Watch in pursuit.",
+      "environments": ["urban"],
       "premium": false,
       "gridCols": 3,
       "gridRows": 3,
@@ -31,17 +32,19 @@
         ["inn_kitchen", "warehouse_row"]
       ],
       "defaultTokens": [
-        { "id": "q1", "label": "Quarry",  "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "main_street" },
-        { "id": "p1", "label": "PC",      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "back_alley" },
-        { "id": "p2", "label": "PC",      "role": "pc",      "icon": "hooded", "color": "rust",    "zoneId": "back_alley" },
-        { "id": "pu1","label": "Pursuer", "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "back_alley" }
+        { "id": "q1", "label": "Fenn the Cutpurse", "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "main_street", "dashCount": 0 },
+        { "id": "p1", "label": "Boblin",            "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "back_alley",  "dashCount": 0 },
+        { "id": "p2", "label": "Gary",              "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "back_alley",  "dashCount": 0 },
+        { "id": "p3", "label": "Borag",             "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "back_alley",  "dashCount": 0 },
+        { "id": "pu1","label": "City Watch",        "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "back_alley",  "dashCount": 0 }
       ]
     },
     {
       "id": "wilderness_trails",
       "name": "Wilderness Trails",
       "description": "Forest paths, rising ground, hiding places in the undergrowth.",
-      "environment": "wilderness",
+      "scenario": "[Example] A deserter flees into the deep forest, the King's Trackers on the warrant.",
+      "environments": ["wilderness"],
       "premium": false,
       "gridCols": 3,
       "gridRows": 3,
@@ -69,17 +72,19 @@
         ["rocky_cut", "hermit_path"]
       ],
       "defaultTokens": [
-        { "id": "q1", "label": "Quarry",  "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "deer_trail" },
-        { "id": "p1", "label": "PC",      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "ridge" },
-        { "id": "p2", "label": "PC",      "role": "pc",      "icon": "hooded", "color": "rust",    "zoneId": "ridge" },
-        { "id": "pu1","label": "Pursuer", "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "ridge" }
+        { "id": "q1", "label": "Rook the Deserter", "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "deer_trail", "dashCount": 0 },
+        { "id": "p1", "label": "Thorn",             "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "ridge",      "dashCount": 0 },
+        { "id": "p2", "label": "Ansel",             "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "ridge",      "dashCount": 0 },
+        { "id": "p3", "label": "Bree",              "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "ridge",      "dashCount": 0 },
+        { "id": "pu1","label": "King's Trackers",   "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "ridge",      "dashCount": 0 }
       ]
     },
     {
       "id": "building_interior",
       "name": "Building Interior",
       "description": "Rooms and corridors inside a large structure — mansion, keep, or temple.",
-      "environment": "building_interior",
+      "scenario": "[Example] The steward stole from his master and runs through the manor halls.",
+      "environments": ["indoor"],
       "premium": false,
       "gridCols": 3,
       "gridRows": 3,
@@ -109,10 +114,64 @@
         ["kitchen", "courtyard"]
       ],
       "defaultTokens": [
-        { "id": "q1", "label": "Quarry",  "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "grand_hall" },
-        { "id": "p1", "label": "PC",      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grand_hall" },
-        { "id": "p2", "label": "PC",      "role": "pc",      "icon": "hooded", "color": "rust",    "zoneId": "grand_hall" },
-        { "id": "pu1","label": "Pursuer", "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "stairwell" }
+        { "id": "q1", "label": "Hollis the Steward",      "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "grand_hall", "dashCount": 0 },
+        { "id": "p1", "label": "Vesper",                  "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grand_hall", "dashCount": 0 },
+        { "id": "p2", "label": "Corwin",                  "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grand_hall", "dashCount": 0 },
+        { "id": "p3", "label": "Lys",                     "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grand_hall", "dashCount": 0 },
+        { "id": "pu1","label": "House Guards of Sir Aubrey","role": "pursuer","icon": "swords","color": "slate",   "zoneId": "stairwell",  "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "undercity",
+      "name": "Undercity",
+      "description": "Sewer tunnels, forgotten passages, and the things that live in the dark.",
+      "scenario": "[Example] An informant flees into the sewers, enforcers hunting him down.",
+      "environments": ["underground"],
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "grate", "name": "Grate", "description": "Iron bars above. Daylight, air, and noise from the street.", "col": 2, "row": 1, "pills": [] },
+        { "id": "main_tunnel", "name": "Main Tunnel", "description": "Waist-deep brown water. Echoes carry far down here.", "col": 1, "row": 2, "colSpan": 3, "pills": [] },
+        { "id": "side_passage", "name": "Side Passage", "description": "Too narrow for two abreast. The walls are wet.", "col": 1, "row": 3, "pills": [] },
+        { "id": "cistern", "name": "Cistern", "description": "A round chamber, water to the knees. Old brickwork, ancient.", "col": 2, "row": 3, "pills": [] },
+        { "id": "collapsed", "name": "Collapsed Section", "description": "Rubble and standing water. A climb, if you're brave.", "col": 3, "row": 3, "pills": [
+          { "id": "p_collapsed_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Unstable rubble over hidden pits. Athletics to cross without slipping." }
+        ] }
+      ],
+      "connections": [
+        ["grate", "main_tunnel"],
+        ["main_tunnel", "side_passage"],
+        ["main_tunnel", "cistern"],
+        ["main_tunnel", "collapsed"],
+        ["side_passage", "cistern"],
+        ["cistern", "collapsed"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Smudge the Informant",     "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "main_tunnel", "dashCount": 0 },
+        { "id": "p1", "label": "Scab",                     "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grate",       "dashCount": 0 },
+        { "id": "p2", "label": "Mud",                      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grate",       "dashCount": 0 },
+        { "id": "p3", "label": "Kes",                      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grate",       "dashCount": 0 },
+        { "id": "pu1","label": "Grave-Hand Enforcers",     "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "main_tunnel", "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "blank",
+      "name": "Blank",
+      "description": "An empty map. Build your own chase from the ground up.",
+      "scenario": "[Example] Set the scene in a sentence.",
+      "environments": [],
+      "premium": false,
+      "blank": true,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [],
+      "connections": [],
+      "defaultTokens": [
+        { "id": "q1", "label": "Quarry",  "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": null, "dashCount": 0 },
+        { "id": "p1", "label": "PC",      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": null, "dashCount": 0 },
+        { "id": "p2", "label": "PC",      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": null, "dashCount": 0 },
+        { "id": "pu1","label": "Pursuer", "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": null, "dashCount": 0 }
       ]
     }
   ]

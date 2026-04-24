@@ -12,8 +12,6 @@ import { PILL_TONES } from '../config/pills.js';
 
 const STORAGE_KEY = 'cros-chase-tracker';
 const LAST_PARTICIPANTS_KEY = 'cros-chase-tracker-last-participants';
-// v5: tokens gain dashCount; root gains participantsPanelCollapsed.
-const SCHEMA_VERSION = 5;
 
 export const SHAPE_DIMENSIONS = {
   small:   { colSpan: 1, rowSpan: 1 },
@@ -25,10 +23,10 @@ export const SHAPE_DIMENSIONS = {
 
 function emptyState() {
   return {
-    schemaVersion: SCHEMA_VERSION,
     hasActiveChase: false,
     mapName: '',
-    environment: null,
+    environments: [],
+    scenario: '',
     gridCols: 0,
     gridRows: 0,
     zones: [],
@@ -94,12 +92,28 @@ function loadFromStorage() {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed || parsed.schemaVersion !== SCHEMA_VERSION) return null;
-    parsed.connectingFromZoneId = null;
-    parsed.pendingPlacementCell = null;
+    // Light shape check — if the core collections are missing or the
+    // wrong type, discard and start clean. Cheaper than a schema
+    // version, and pre-release so we don't owe migrations.
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      !Array.isArray(parsed.zones) ||
+      !Array.isArray(parsed.tokens) ||
+      !Array.isArray(parsed.connections)
+    ) {
+      return null;
+    }
+    // Fill any fields added after the stored payload was written.
+    if (!Array.isArray(parsed.environments)) parsed.environments = [];
+    if (typeof parsed.scenario !== 'string') parsed.scenario = '';
     if (typeof parsed.participantsPanelCollapsed !== 'boolean') {
       parsed.participantsPanelCollapsed = true;
     }
+    // Drop ephemeral UI state.
+    parsed.connectingFromZoneId = null;
+    parsed.pendingPlacementCell = null;
+    delete parsed.schemaVersion;
     return parsed;
   } catch {
     return null;
@@ -217,10 +231,12 @@ export function useChaseMap() {
     const template = templatesData.templates.find((t) => t.id === templateId);
     if (!template) return;
 
-    state.schemaVersion = SCHEMA_VERSION;
     state.hasActiveChase = true;
     state.mapName = template.name;
-    state.environment = template.environment || null;
+    state.environments = Array.isArray(template.environments)
+      ? [...template.environments]
+      : [];
+    state.scenario = typeof template.scenario === 'string' ? template.scenario : '';
     state.gridCols = template.gridCols;
     state.gridRows = template.gridRows;
     state.zones = template.zones.map(normalizeZone);
@@ -400,6 +416,10 @@ export function useChaseMap() {
 
   function setParticipantsPanelCollapsed(val) {
     state.participantsPanelCollapsed = !!val;
+  }
+
+  function setScenario(text) {
+    state.scenario = typeof text === 'string' ? text : '';
   }
 
   function updateZone(zoneId, fields) {
@@ -794,6 +814,7 @@ export function useChaseMap() {
     setDashCount,
     toggleParticipantsPanel,
     setParticipantsPanelCollapsed,
+    setScenario,
     updateZone,
     addZone,
     addZoneFromLibrary,
@@ -819,4 +840,4 @@ export function useChaseMap() {
   };
 }
 
-export { STORAGE_KEY, LAST_PARTICIPANTS_KEY, SCHEMA_VERSION };
+export { STORAGE_KEY, LAST_PARTICIPANTS_KEY };

@@ -16,6 +16,31 @@
           @reset="onReset"
           @rename-map="renameMap"
         />
+
+        <div class="scenario-row">
+          <textarea
+            v-if="editingScenario"
+            ref="scenarioInput"
+            v-model="scenarioDraft"
+            class="scenario-input"
+            :class="{ 'scenario-input--example': scenarioDraftIsExample }"
+            rows="1"
+            @blur="commitScenario"
+            @input="autoResizeScenario"
+            @keydown.esc.prevent="cancelScenario"
+          />
+          <p
+            v-else
+            :class="['scenario-text', { 'scenario-text--example': scenarioIsExample }]"
+            :aria-label="scenarioIsExample ? 'Edit scenario (placeholder)' : 'Edit scenario'"
+            tabindex="0"
+            role="button"
+            @click="beginEditScenario"
+            @keydown.enter.prevent="beginEditScenario"
+            @keydown.space.prevent="beginEditScenario"
+          >{{ map.state.scenario || '[Example] Set the scene in a sentence.' }}</p>
+        </div>
+
         <ChaseParticipantsPanel
           :collapsed="map.state.participantsPanelCollapsed"
           :participants-by-role="map.participantsByRole.value"
@@ -86,7 +111,7 @@
 
       <ZoneLibrary
         :open="libraryOpen"
-        :default-environment="map.state.environment || 'any'"
+        :default-environments="map.state.environments"
         @close="onLibraryClose"
         @add-from-library="onAddFromLibrary"
         @add-custom="onAddCustomZone"
@@ -116,7 +141,7 @@
 
 <script>
 import './styles/index.css';
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import templatesData from './data/templates.json';
 import { useChaseMap } from './composables/useChaseMap.js';
 import TemplatePicker from './components/TemplatePicker.vue';
@@ -172,6 +197,17 @@ export default {
     const pillManagerZoneId = ref(null);
     const detailSheetZoneId = ref(null);
     const isMobile = useIsMobile();
+    const editingScenario = ref(false);
+    const scenarioDraft = ref('');
+
+    const scenarioIsExample = computed(() => {
+      const text = (map.state.scenario || '').trim();
+      return !text || text.startsWith('[Example]');
+    });
+
+    const scenarioDraftIsExample = computed(() =>
+      (scenarioDraft.value || '').trim().startsWith('[Example]')
+    );
 
     const pillManagerZone = computed(() =>
       pillManagerZoneId.value
@@ -200,6 +236,10 @@ export default {
       detailSheetZoneId,
       detailSheetZone,
       isMobile,
+      editingScenario,
+      scenarioDraft,
+      scenarioIsExample,
+      scenarioDraftIsExample,
     };
   },
   mounted() {
@@ -338,6 +378,34 @@ export default {
     renameMap(name) {
       this.map.state.mapName = name;
     },
+    async beginEditScenario() {
+      this.scenarioDraft = this.map.state.scenario || '';
+      this.editingScenario = true;
+      await nextTick();
+      const input = this.$refs.scenarioInput;
+      if (!input) return;
+      input.focus();
+      this.autoResizeScenario();
+      // On first edit, pre-select the entire [Example] text so a
+      // single keystroke replaces it.
+      if ((this.scenarioDraft || '').startsWith('[Example]')) {
+        input.select();
+      }
+    },
+    commitScenario() {
+      if (!this.editingScenario) return;
+      this.map.setScenario(this.scenarioDraft);
+      this.editingScenario = false;
+    },
+    cancelScenario() {
+      this.editingScenario = false;
+    },
+    autoResizeScenario() {
+      const el = this.$refs.scenarioInput;
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+    },
     onReset() {
       this.map.reset();
       this.onDragEnd();
@@ -354,5 +422,67 @@ export default {
 .chase-tracker-shell {
   max-width: 72rem;
   margin: 0 auto;
+}
+
+.scenario-row {
+  padding: 0 0.25rem 0.5rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.scenario-text,
+.scenario-input {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink-primary);
+  margin: 0;
+  width: 100%;
+  display: block;
+}
+
+.scenario-text {
+  cursor: text;
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed transparent;
+  transition: border-color 120ms ease;
+  outline: none;
+}
+
+.scenario-text:hover,
+.scenario-text:focus-visible {
+  border-bottom-color: var(--parchment-edge);
+}
+
+.scenario-text--example {
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
+.scenario-input {
+  font-family: var(--font-body);
+  background: var(--parchment-warm);
+  border: 1px solid var(--button-border);
+  border-radius: 2px;
+  padding: 0.35rem 0.55rem;
+  resize: none;
+  overflow: hidden;
+  min-height: 2rem;
+}
+
+.scenario-input--example {
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 640px) {
+  .scenario-row {
+    margin-top: -0.25rem;
+    margin-bottom: 0.5rem;
+  }
+  .scenario-text,
+  .scenario-input {
+    font-size: 0.95rem;
+  }
 }
 </style>
