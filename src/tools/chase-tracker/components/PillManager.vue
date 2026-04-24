@@ -129,7 +129,7 @@ export default {
 }
 
 .pill-manager-panel {
-  width: min(30rem, 100%);
+  width: min(var(--ui-modal-width-md), 100%);
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -141,22 +141,22 @@ export default {
 }
 
 .manager-title {
-  font-size: 1.2rem;
+  font-size: var(--ui-modal-title-font);
 }
 
 .manager-close {
   background: transparent;
   border: none;
-  font-size: 1.6rem;
+  font-size: var(--ui-modal-close-font);
   color: var(--ink-muted);
   cursor: pointer;
-  padding: 0 0.4rem;
+  padding: 0 0.55rem;
   line-height: 1;
 }
 
 .manager-subtitle {
-  font-size: 0.9rem;
-  margin: 0.35rem 0 0;
+  font-size: var(--ui-helper-font);
+  margin: 0.5rem 0 0;
 }
 
 .manager-subtitle strong {
@@ -164,39 +164,41 @@ export default {
 }
 
 .field {
-  margin: 0.9rem 0;
+  margin: var(--ui-field-gap) 0;
 }
 
 .field-label {
   display: block;
   font-family: var(--font-display);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: var(--ui-label-font);
+  letter-spacing: var(--ui-label-tracking);
   text-transform: uppercase;
   color: var(--ink-muted);
-  margin-bottom: 0.35rem;
+  margin-bottom: var(--ui-label-gap);
 }
 
 .active-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.55rem;
 }
 
 .active-row {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
 }
 
 .remove-btn {
   background: transparent;
   border: none;
   color: var(--ink-muted);
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
   line-height: 1;
-  padding: 0 0.3rem;
+  padding: 0.2rem 0.35rem;
   cursor: pointer;
+  transition: color 120ms ease;
 }
 
 .remove-btn:hover {
@@ -205,14 +207,14 @@ export default {
 
 .empty-hint {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--ui-helper-font);
   color: var(--ink-muted);
 }
 
 .preset-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.55rem;
 }
 
 .preset-btn {
@@ -222,12 +224,15 @@ export default {
   cursor: pointer;
 }
 
+/* Matches the real in-zone ZonePill size (see ZonePill.vue) so the
+   Quick Add row previews exactly what the pill will look like once
+   it's applied — these aren't primary CTAs. */
 .preset-chip {
   display: inline-flex;
-  padding: 0.15rem 0.6rem;
+  padding: 0.25rem 0.8rem;
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: 0.95rem;
   letter-spacing: 0.05em;
   line-height: 1.4;
   border: 1px solid;
@@ -247,17 +252,17 @@ export default {
 
 .custom-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.65rem;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .custom-input {
-  flex: 1 1 8rem;
-  min-width: 7rem;
+  flex: 1 1 11rem;
+  min-width: 9rem;
   font-family: var(--font-body);
-  font-size: 0.9rem;
-  padding: 0.4rem 0.5rem;
+  font-size: var(--ui-input-font);
+  padding: var(--ui-input-padding);
   background: var(--parchment-base);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
@@ -266,12 +271,14 @@ export default {
 
 .tone-swatches {
   display: flex;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .tone-swatch {
-  width: 22px;
-  height: 22px;
+  flex: 0 0 auto;
+  width: var(--ui-swatch-size);
+  height: var(--ui-swatch-size);
   border-radius: 50%;
   border: 2px solid rgba(0, 0, 0, 0.2);
   cursor: pointer;
@@ -290,14 +297,18 @@ export default {
 
 .custom-detail {
   width: 100%;
-  margin-top: 0.5rem;
+  margin-top: 0.65rem;
   font-family: var(--font-body);
-  font-size: 0.85rem;
-  padding: 0.4rem 0.5rem;
+  font-size: var(--ui-input-font);
+  padding: var(--ui-input-padding);
   background: var(--parchment-base);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
   border-radius: 2px;
   resize: vertical;
+}
+
+@media (max-width: 640px) {
+  .pill-manager-overlay { padding: 1rem; }
 }
 </style>

@@ -110,7 +110,7 @@ export default {
 
 .role-label {
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: var(--ui-label-font);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-muted);
@@ -191,17 +191,17 @@ export default {
      muted parchment treatment so it reads as a peer of the row's
      other controls. Destructive intent is carried by the accent-red
      hover rather than a bold resting state. */
-  width: 36px;
-  height: 36px;
+  width: var(--ui-row-control-size);
+  height: var(--ui-row-control-size);
   padding: 0;
-  margin-left: 0.8rem;
+  margin-left: var(--ui-row-control-gap);
   background: rgba(217, 195, 149, 0.4);
   border: 1px solid var(--parchment-edge);
   border-radius: 2px;
   color: var(--ink-muted);
   cursor: pointer;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: var(--ui-row-control-font);
   line-height: 1;
   display: inline-flex;
   align-items: center;
@@ -226,18 +226,18 @@ export default {
 
 .participant-remove-placeholder {
   display: inline-block;
-  width: 36px;
-  height: 36px;
-  margin-left: 0.8rem;
+  width: var(--ui-row-control-size);
+  height: var(--ui-row-control-size);
+  margin-left: var(--ui-row-control-gap);
 }
 
 .add-btn {
   align-self: flex-start;
   font-family: var(--font-display);
-  font-size: 1.3rem;
-  letter-spacing: 0.08em;
+  font-size: var(--ui-button-font);
+  letter-spacing: var(--ui-button-tracking);
   text-transform: uppercase;
-  padding: 0.7rem 1.35rem;
+  padding: var(--ui-button-padding);
   background: transparent;
   border: 1px dashed var(--button-border);
   color: var(--ink-secondary);
@@ -273,7 +273,6 @@ export default {
 }
 
 @media (max-width: 640px) {
-  .role-label { font-size: 1.1rem; }
   .participant-input {
     font-size: 1.3rem;
     padding: 0.65rem 0.85rem;
@@ -291,22 +290,6 @@ export default {
 
   .participant-row {
     gap: 0.65rem;
-  }
-
-  .participant-remove,
-  .participant-remove-placeholder {
-    width: 32px;
-    height: 32px;
-    margin-left: 0.6rem;
-  }
-
-  .participant-remove {
-    font-size: 1.05rem;
-  }
-
-  .add-btn {
-    font-size: 1.15rem;
-    padding: 0.6rem 1.15rem;
   }
 }
 </style>

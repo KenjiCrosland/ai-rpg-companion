@@ -39,8 +39,8 @@
               :y2="seg.y2"
               class="connection-line"
             />
-            <polygon v-if="!isMobile" :points="seg.arrowA" class="connection-arrow" />
-            <polygon v-if="!isMobile" :points="seg.arrowB" class="connection-arrow" />
+            <polygon :points="seg.arrowA" class="connection-arrow" />
+            <polygon :points="seg.arrowB" class="connection-arrow" />
           </g>
         </svg>
 
@@ -205,10 +205,12 @@ export default {
       });
 
       // Line ends a few pixels inside each arrow so the stroke never pokes
-      // past the triangle's tapering tip.
-      const ARROW_LENGTH = 10;
-      const ARROW_HALF_W = 5;
-      const LINE_BACKOFF = 4;
+      // past the triangle's tapering tip. Mobile uses a smaller arrow
+      // proportional to the thinner stroke so direction is legible
+      // without dominating the tight cards.
+      const ARROW_LENGTH = this.isMobile ? 7 : 10;
+      const ARROW_HALF_W = this.isMobile ? 3.5 : 5;
+      const LINE_BACKOFF = this.isMobile ? 2 : 4;
 
       this.connectionLines = this.connections
         .map(([a, b]) => {
@@ -336,9 +338,21 @@ export default {
     gap: 1rem;
   }
 
+  /* Thinner stroke at mobile widths, but stay dark and legible —
+     earlier we faded these to 0.4 so they read as hints; that left
+     them nearly invisible. Ink-primary at full opacity keeps them
+     clearly readable, and the 1.6 stroke-width still reads as
+     subordinate to the zone cards. */
   .chase-map :deep(.connection-line) {
-    stroke-width: 1;
-    opacity: 0.4;
+    stroke: var(--ink-primary);
+    stroke-width: 1.6;
+    opacity: 0.9;
+  }
+
+  .chase-map :deep(.connection-arrow) {
+    /* Arrow stays dark and fully opaque so direction reads at a
+       glance despite the thinner stroke. */
+    opacity: 1;
   }
 
   .edge-expand {

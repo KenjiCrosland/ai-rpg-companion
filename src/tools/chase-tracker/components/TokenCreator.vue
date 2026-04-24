@@ -157,42 +157,42 @@ export default {
     inset 0 0 0 3px var(--parchment-warm),
     inset 0 0 0 4px var(--parchment-edge),
     0 10px 30px rgba(46, 33, 20, 0.35);
-  padding: 1.5rem 1.75rem;
-  width: min(28rem, 100%);
+  padding: var(--ui-modal-padding);
+  width: min(var(--ui-modal-width-sm), 100%);
   border-radius: 2px;
 }
 
 .creator-title {
   text-align: center;
-  font-size: 1.2rem;
+  font-size: var(--ui-modal-title-font);
 }
 
 .field {
-  margin-bottom: 0.9rem;
+  margin-bottom: var(--ui-field-gap);
 }
 
 .field-label {
   display: block;
   font-family: var(--font-display);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: var(--ui-label-font);
+  letter-spacing: var(--ui-label-tracking);
   text-transform: uppercase;
   color: var(--ink-muted);
-  margin-bottom: 0.35rem;
+  margin-bottom: var(--ui-label-gap);
 }
 
 .role-group {
   display: flex;
-  gap: 0.3rem;
+  gap: 0.4rem;
 }
 
 .role-btn {
   flex: 1;
   font-family: var(--font-display);
-  font-size: 0.75rem;
+  font-size: var(--ui-chip-font);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.4rem 0.6rem;
+  padding: var(--ui-chip-padding);
   background: transparent;
   border: 1px solid var(--button-border);
   color: var(--ink-secondary);
@@ -235,7 +235,7 @@ export default {
 }
 
 .icon-attribution {
-  font-size: 0.72rem;
+  font-size: var(--ui-label-font);
   color: var(--ink-muted);
   margin: 0.55rem 0 0;
   line-height: 1.4;
@@ -255,12 +255,16 @@ export default {
 
 .color-row {
   display: flex;
-  gap: 0.4rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .color-swatch {
-  width: 28px;
-  height: 28px;
+  /* flex-shrink: 0 forces the swatch to respect its width; without it
+     the row can squeeze circles into ovals when the modal gets tight. */
+  flex: 0 0 auto;
+  width: var(--ui-swatch-size);
+  height: var(--ui-swatch-size);
   border-radius: 50%;
   border: 2px solid;
   cursor: pointer;
@@ -273,9 +277,9 @@ export default {
 
 .field-input {
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: var(--ui-input-font);
   width: 100%;
-  padding: 0.45rem 0.55rem;
+  padding: var(--ui-input-padding);
   background: var(--parchment-base);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);

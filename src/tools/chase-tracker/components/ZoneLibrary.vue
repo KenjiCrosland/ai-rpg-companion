@@ -394,13 +394,13 @@ export default {
 }
 
 .drawer-title {
-  font-size: 2rem;
+  font-size: var(--ui-modal-title-font);
 }
 
 .drawer-close {
   background: transparent;
   border: none;
-  font-size: 2.1rem;
+  font-size: var(--ui-modal-close-font);
   line-height: 1;
   color: var(--ink-muted);
   cursor: pointer;
@@ -420,10 +420,10 @@ export default {
 
 .env-btn {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: var(--ui-chip-font);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 0.45rem 0.9rem;
+  padding: var(--ui-chip-padding);
   background: transparent;
   border: 1px solid var(--button-border);
   color: var(--ink-secondary);
@@ -440,8 +440,8 @@ export default {
 .search-input {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 1.2rem;
-  padding: 0.6rem 0.85rem;
+  font-size: var(--ui-input-font);
+  padding: var(--ui-input-padding);
   background: var(--parchment-warm);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
@@ -689,7 +689,7 @@ export default {
 .empty-hint {
   text-align: center;
   color: var(--ink-muted);
-  font-size: 1.15rem;
+  font-size: var(--ui-helper-font);
   margin: 1.35rem 0;
 }
 
@@ -702,31 +702,31 @@ export default {
 }
 
 .custom-hint {
-  font-size: 1.15rem;
+  font-size: var(--ui-helper-font);
   margin: 0.35rem 0 1rem;
   color: var(--ink-muted);
 }
 
 .field {
   display: block;
-  margin-bottom: 0.9rem;
+  margin-bottom: var(--ui-field-gap);
 }
 
 .field-label {
   display: block;
   font-family: var(--font-display);
-  font-size: 0.95rem;
-  letter-spacing: 0.08em;
+  font-size: var(--ui-label-font);
+  letter-spacing: var(--ui-label-tracking);
   text-transform: uppercase;
   color: var(--ink-muted);
-  margin-bottom: 0.3rem;
+  margin-bottom: var(--ui-label-gap);
 }
 
 .field-input {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 1.2rem;
-  padding: 0.55rem 0.75rem;
+  font-size: var(--ui-input-font);
+  padding: var(--ui-input-padding);
   background: var(--parchment-warm);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
@@ -762,9 +762,6 @@ export default {
     padding: 1.1rem 1.1rem 2.25rem;
   }
 
-  .drawer-title { font-size: 1.45rem; }
-  .drawer-close { font-size: 1.9rem; }
-
   .filter-row {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -774,9 +771,10 @@ export default {
 
   .filter-row::-webkit-scrollbar { display: none; }
 
-  .env-btn { flex-shrink: 0; font-size: 0.85rem; padding: 0.4rem 0.75rem; }
+  .env-btn { flex-shrink: 0; }
 
-  .search-input { font-size: 1.05rem; }
+  /* Row internals are unique to the library and not in the shared
+     scale — keep the mobile tuning here. */
   .category-header { font-size: 1.2rem; padding: 0.65rem 0.4rem; }
   .category-count { font-size: 1rem; }
   .row-name { font-size: 1.35rem; }
@@ -785,8 +783,5 @@ export default {
   .row-add { width: 34px; height: 34px; font-size: 1.25rem; }
   .library-row { min-height: 58px; gap: 0.75rem; }
   .custom-title { font-size: 1.2rem; }
-  .custom-hint { font-size: 1rem; }
-  .field-input { font-size: 1.05rem; }
-  .field-label { font-size: 0.85rem; }
 }
 </style>

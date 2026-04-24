@@ -18,19 +18,20 @@
         />
 
         <div class="scenario-row">
-          <div class="scenario-label display-heading">Scene Description</div>
-          <textarea
-            v-if="editingScenario"
-            ref="scenarioInput"
-            v-model="scenarioDraft"
-            class="scenario-input"
-            :class="{ 'scenario-input--example': scenarioDraftIsExample }"
-            rows="1"
-            aria-label="Scene description"
-            @blur="commitScenario"
-            @input="autoResizeScenario"
-            @keydown.esc.prevent="cancelScenario"
-          />
+          <template v-if="editingScenario">
+            <span class="scenario-label">Scene Description:</span>
+            <textarea
+              ref="scenarioInput"
+              v-model="scenarioDraft"
+              class="scenario-input"
+              :class="{ 'scenario-input--example': scenarioDraftIsExample }"
+              rows="1"
+              aria-label="Scene description"
+              @blur="commitScenario"
+              @input="autoResizeScenario"
+              @keydown.esc.prevent="cancelScenario"
+            />
+          </template>
           <p
             v-else
             :class="['scenario-text', { 'scenario-text--example': scenarioIsExample }]"
@@ -40,7 +41,7 @@
             @click="beginEditScenario"
             @keydown.enter.prevent="beginEditScenario"
             @keydown.space.prevent="beginEditScenario"
-          >{{ map.state.scenario || '[Example] Set the scene in a sentence.' }}</p>
+          ><span class="scenario-label">Scene Description:</span>{{ map.state.scenario || '[Example] Set the scene in a sentence.' }}</p>
         </div>
 
         <ChaseParticipantsPanel
@@ -99,7 +100,7 @@
       <TokenCreator
         v-if="creatorOpen"
         @create="onCreateToken"
-        @cancel="creatorOpen = false"
+        @cancel="onCancelCreator"
       />
 
       <PillManager
@@ -127,11 +128,12 @@
         :connections="map.state.connections"
         :all-zones="map.state.zones"
         @close="detailSheetZoneId = null"
-        @open-conditions="openPillManager"
-        @edit="onSheetEdit"
-        @connect="onSheetConnect"
-        @delete="onSheetDelete"
+        @update-zone="map.updateZone"
+        @add-pill="map.addPillToZone"
+        @remove-pill="map.removePillFromZone"
+        @add-token="onSheetAddTokenInline"
         @move-token="onSheetMoveToken"
+        @delete="onSheetDelete"
       />
 
       <OnboardingHint :visible="hintVisible" @dismiss="dismissHint" />
@@ -288,25 +290,16 @@ export default {
         this.detailSheetZoneId = zoneId;
       }
     },
-    onSheetEdit(zoneId) {
-      this.detailSheetZoneId = null;
-      const name = window.prompt('Zone name', this.map.state.zones.find((z) => z.id === zoneId)?.name || '');
-      if (!name) return;
-      const zone = this.map.state.zones.find((z) => z.id === zoneId);
-      const description = window.prompt('Description', zone?.description || '');
-      this.map.updateZone(zoneId, { name, description: description ?? zone?.description ?? '' });
-    },
-    onSheetConnect(zoneId) {
-      this.detailSheetZoneId = null;
-      this.onStartConnect(zoneId);
-    },
     onSheetDelete(zoneId) {
-      const zone = this.map.state.zones.find((z) => z.id === zoneId);
-      if (!zone) return;
-      if (window.confirm(`Delete zone "${zone.name}"?`)) {
-        this.map.removeZone(zoneId);
-        this.detailSheetZoneId = null;
-      }
+      // The sheet already ran its own confirm() before emitting, so
+      // we just remove and dismiss.
+      this.map.removeZone(zoneId);
+      this.detailSheetZoneId = null;
+    },
+    onSheetAddTokenInline(zoneId, fields) {
+      // Inline add-token form passes role + label; the composable
+      // applies role defaults for icon + color.
+      this.map.addToken({ ...fields, zoneId });
     },
     onSheetMoveToken(tokenId, targetZoneId) {
       this.map.moveTokenTo(tokenId, targetZoneId);
@@ -340,6 +333,9 @@ export default {
     },
     onCreateToken(fields) {
       this.map.addToken({ ...fields, zoneId: null });
+      this.creatorOpen = false;
+    },
+    onCancelCreator() {
       this.creatorOpen = false;
     },
     openPillManager(zoneId) {
@@ -428,32 +424,31 @@ export default {
 
 .scenario-row {
   padding: 0 0.25rem 0.5rem;
-  margin-top: -0.5rem;
-  margin-bottom: 0.75rem;
+  margin-top: -0.25rem;
+  margin-bottom: 0.85rem;
 }
 
 .scenario-label {
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-  margin-bottom: 0.25rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--ink-primary);
+  margin-right: 0.5rem;
 }
 
 .scenario-text,
 .scenario-input {
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: 1.35rem;
   line-height: 1.5;
   color: var(--ink-primary);
   margin: 0;
   width: 100%;
-  display: block;
 }
 
 .scenario-text {
+  display: block;
   cursor: text;
-  padding: 0.3rem 0;
+  padding: 0.35rem 0;
   border-bottom: 1px dashed transparent;
   transition: border-color 120ms ease;
   outline: none;
@@ -465,24 +460,33 @@ export default {
 }
 
 .scenario-text--example {
+  color: var(--ink-secondary);
   font-style: italic;
-  color: var(--ink-muted);
+}
+
+/* Keep the "Scene Description:" label anchored — dark and upright —
+   even while the scenario content is rendered as a muted italic
+   placeholder. */
+.scenario-text--example .scenario-label {
+  color: var(--ink-primary);
+  font-style: normal;
 }
 
 .scenario-input {
-  font-family: var(--font-body);
+  display: block;
   background: var(--parchment-warm);
   border: 1px solid var(--button-border);
   border-radius: 2px;
-  padding: 0.35rem 0.55rem;
+  padding: 0.45rem 0.65rem;
   resize: none;
   overflow: hidden;
-  min-height: 2rem;
+  min-height: 2.2rem;
+  margin-top: 0.15rem;
 }
 
 .scenario-input--example {
   font-style: italic;
-  color: var(--ink-muted);
+  color: var(--ink-secondary);
 }
 
 @media (max-width: 640px) {
@@ -492,7 +496,7 @@ export default {
   }
   .scenario-text,
   .scenario-input {
-    font-size: 0.95rem;
+    font-size: 1.2rem;
   }
 }
 </style>

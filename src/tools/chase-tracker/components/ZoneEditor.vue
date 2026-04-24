@@ -63,36 +63,36 @@ export default {
   background: var(--parchment-warm);
   border: 1px solid var(--parchment-edge);
   box-shadow: 0 6px 18px rgba(46, 33, 20, 0.25);
-  padding: 0.9rem;
-  margin-top: 0.4rem;
+  padding: var(--ui-modal-padding);
+  margin-top: 0.5rem;
   border-radius: 2px;
 }
 
 .field {
   display: block;
-  margin-bottom: 0.6rem;
+  margin-bottom: var(--ui-field-gap);
 }
 
 .field--inline {
   display: inline-block;
-  margin-right: 0.75rem;
+  margin-right: 1rem;
 }
 
 .field-label {
   display: block;
   font-family: var(--font-display);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-size: var(--ui-label-font);
+  letter-spacing: var(--ui-label-tracking);
   text-transform: uppercase;
   color: var(--ink-muted);
-  margin-bottom: 0.2rem;
+  margin-bottom: var(--ui-label-gap);
 }
 
 .field-input {
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: var(--ui-input-font);
   width: 100%;
-  padding: 0.4rem 0.5rem;
+  padding: var(--ui-input-padding);
   background: var(--parchment-base);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
@@ -100,16 +100,16 @@ export default {
 }
 
 .field-input--small {
-  width: 4rem;
+  width: 5.5rem;
 }
 
 .span-fields {
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--ui-field-gap);
 }
 
 .actions {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.55rem;
   justify-content: flex-end;
   align-items: center;
 }

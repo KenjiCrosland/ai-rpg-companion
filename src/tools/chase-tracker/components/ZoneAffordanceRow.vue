@@ -1,5 +1,8 @@
 <template>
   <div class="affordance-row">
+    <!-- Desktop: three icon buttons inline. On mobile the whole icon
+         cluster hides — tapping the zone body opens the detail sheet,
+         which surfaces Edit / Conditions / Delete in full. -->
     <div class="affordance-icons">
       <button
         v-for="action in iconActions"
@@ -14,6 +17,9 @@
       </button>
     </div>
 
+    <!-- Connect stays on the card at every breakpoint — it's the
+         primary mid-chase action. On mobile it centers and claims
+         the full width of the affordance row. -->
     <button
       type="button"
       :class="['affordance-connect', { 'affordance-connect--active': connectActive }]"
@@ -130,5 +136,30 @@ export default {
 
 .affordance-connect--active:hover {
   background: var(--accent-gold-dark);
+}
+
+@media (max-width: 640px) {
+  /* Edit / Conditions / Delete live in the detail sheet that the zone
+     body opens on tap. On the compact card we surface only the Connect
+     button, centered with room to breathe. */
+  .affordance-row {
+    justify-content: center;
+  }
+
+  .affordance-icons {
+    display: none;
+  }
+
+  .affordance-connect {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    border-color: var(--accent-gold-dark);
+    background: var(--button-bg);
+  }
+
+  .affordance-connect__arrow {
+    font-size: 1.05rem;
+  }
 }
 </style>

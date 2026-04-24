@@ -22,6 +22,55 @@
   --font-body: 'EB Garamond', 'Crimson Text', Georgia, serif;
   --font-italic: 'EB Garamond', Georgia, serif;
 
+  /* ---------- UI scale tokens ----------
+   Consumed by every modal / form / drawer so sizing decisions live
+   in one place. Mobile overrides at the bottom of this file. */
+
+  /* Field labels (uppercase small-caps that sit above inputs).
+     Matched to the Participants-panel role labels ("QUARRY",
+     "PARTY", "PURSUERS") so form labels and section labels share a
+     scale. */
+  --ui-label-font: 1.3rem;
+  --ui-label-tracking: 0.08em;
+  --ui-label-gap: 0.45rem;
+
+  /* Text inputs and textareas — matched to the Participants panel
+     input size so all form fields across the tool feel like peers. */
+  --ui-input-font: 1.55rem;
+  --ui-input-padding: 0.75rem 1rem;
+
+  /* Action buttons (DButton, "+ Add …" row buttons). Matches the
+     Participants-panel "+ Add Character" button. */
+  --ui-button-font: 1.3rem;
+  --ui-button-padding: 0.7rem 1.35rem;
+  --ui-button-tracking: 0.08em;
+
+  /* Helper / hint / subtitle prose inside modals */
+  --ui-helper-font: 1.2rem;
+
+  /* Vertical spacing between fields in a form */
+  --ui-field-gap: 1rem;
+
+  /* Modal chrome */
+  --ui-modal-title-font: 1.9rem;
+  --ui-modal-close-font: 2.1rem;
+  --ui-modal-padding: 1.5rem 1.75rem;
+  --ui-modal-width-sm: 28rem;
+  --ui-modal-width-md: 40rem;
+
+  /* Small uppercase chips (pill presets, filter chips, tag-style
+     buttons). Scaled to sit alongside Participants-panel controls. */
+  --ui-chip-font: 1.2rem;
+  --ui-chip-padding: 0.5rem 1.1rem;
+
+  /* In-row controls (× remove buttons, dash-step-style adjusters) */
+  --ui-row-control-size: 36px;
+  --ui-row-control-font: 1.2rem;
+  --ui-row-control-gap: 0.8rem;
+
+  /* Color / tone picker swatches */
+  --ui-swatch-size: 30px;
+
   color: var(--ink-primary);
   font-family: var(--font-body);
   font-size: 18px;
@@ -29,7 +78,30 @@
 }
 
 @media (max-width: 640px) {
-  .chase-tracker-root { font-size: 17px; }
+  .chase-tracker-root {
+    font-size: 17px;
+
+    --ui-label-font: 1.1rem;
+    --ui-input-font: 1.3rem;
+    --ui-input-padding: 0.65rem 0.85rem;
+    --ui-helper-font: 1.05rem;
+    --ui-field-gap: 0.85rem;
+    --ui-button-font: 1.15rem;
+    --ui-button-padding: 0.6rem 1.15rem;
+
+    --ui-modal-title-font: 1.45rem;
+    --ui-modal-close-font: 1.85rem;
+    --ui-modal-padding: 1.1rem 1.25rem;
+
+    --ui-chip-font: 1.05rem;
+    --ui-chip-padding: 0.4rem 0.9rem;
+
+    --ui-row-control-size: 32px;
+    --ui-row-control-font: 1.05rem;
+    --ui-row-control-gap: 0.6rem;
+
+    --ui-swatch-size: 26px;
+  }
 }
 
 .chase-tracker-root * {

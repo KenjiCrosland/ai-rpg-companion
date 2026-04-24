@@ -28,11 +28,11 @@ export default {
 <style scoped>
 .d-button {
   font-family: var(--font-display);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ui-button-tracking);
   text-transform: uppercase;
-  font-size: 0.95rem;
+  font-size: var(--ui-button-font);
   cursor: pointer;
-  padding: 0.6rem 1.2rem;
+  padding: var(--ui-button-padding);
   border-radius: 2px;
   transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
   color: var(--ink-primary);
@@ -68,8 +68,6 @@ export default {
   border: none;
   color: var(--ink-muted);
   text-decoration: underline;
-  padding: 0.55rem 0.85rem;
-  font-size: 1rem;
 }
 
 .d-button--tertiary:hover:not(:disabled) {

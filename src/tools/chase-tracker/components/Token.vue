@@ -240,8 +240,9 @@ export default {
 
 @media (max-width: 640px) {
   .token {
-    gap: 0;
+    gap: 0.15rem;
     cursor: pointer;
+    max-width: 88px;
   }
 
   .token-checker {
@@ -261,7 +262,15 @@ export default {
     height: 26px;
   }
 
-  .token-label,
+  .token-label {
+    font-size: 0.78rem;
+    max-width: 80px;
+    line-height: 1.1;
+    margin-top: 0.2rem;
+  }
+
+  /* × hover-to-remove is desktop-only; on mobile the X is hidden and
+     removal happens via the detail sheet / Participants panel. */
   .token-remove {
     display: none;
   }

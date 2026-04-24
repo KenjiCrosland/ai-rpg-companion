@@ -26,6 +26,8 @@
       <ZonePill v-for="pill in zone.pills" :key="pill.id" :pill="pill" />
     </div>
 
+    <p class="zone-tap-hint ink-italic" aria-hidden="true">Tap card to edit</p>
+
     <div class="zone-tokens">
       <Token
         v-for="token in tokens"
@@ -271,10 +273,27 @@ export default {
   z-index: 5;
 }
 
+/* Mobile-only signpost: lets touch users know the card body itself is
+   tappable (opens the detail sheet) — since on desktop the affordance
+   icons already advertise edit/conditions/delete on hover. Hidden at
+   desktop widths. */
+.zone-tap-hint {
+  display: none;
+  margin: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  letter-spacing: 0.02em;
+}
+
 @media (max-width: 640px) {
   .zone {
-    padding: 0.65rem 0.7rem 0.75rem;
-    min-height: 120px;
+    /* Top + bottom padding buffer the title and Connect button away
+       from the card edges, so the connection-arrow tips (which sit
+       ~12px inside the card perimeter) land in blank gutter rather
+       than overlapping text or the Connect pill. */
+    padding: 1.3rem 0.7rem 4.5rem;
+    min-height: 160px;
     border-width: 1px;
     box-shadow:
       inset 0 0 0 1px var(--parchment-warm),
@@ -292,11 +311,26 @@ export default {
     text-overflow: ellipsis;
   }
 
-  /* Compressed cards hide description + affordance; content lives in the
-     detail sheet opened on tap. */
-  .zone-description,
-  .zone-affordance-anchor {
+  /* Description still hides on mobile — it's visible in the detail
+     sheet. The affordance row stays so Edit / Conditions / Delete /
+     Connect are one tap away. */
+  .zone-description {
     display: none;
+  }
+
+  .zone-affordance-anchor {
+    /* Lifted up from the card bottom so the incoming arrow tip has
+       clear gutter below the Connect pill. */
+    bottom: 22px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .zone-tap-hint {
+    display: block;
+    /* Flows right after the pills, introducing the card as tappable
+       before the eye reaches the tokens. */
+    margin: 0.2rem 0 0.4rem;
   }
 
   .zone-pills {
