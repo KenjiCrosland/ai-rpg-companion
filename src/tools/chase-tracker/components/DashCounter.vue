@@ -46,17 +46,17 @@ export default {
 .dash-counter {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.35rem;
   letter-spacing: 0.04em;
   color: var(--ink-secondary);
 }
 
 .dash-label {
-  margin-right: 0.3rem;
+  margin-right: 0.4rem;
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: 1.15rem;
   letter-spacing: 0.08em;
   color: var(--ink-muted);
 }
@@ -64,15 +64,15 @@ export default {
 /* Quiet supporting controls — the badge is the focal point, these are
    small thin rectangles that read as "adjusters" rather than CTAs. */
 .dash-step {
-  width: 28px;
-  height: 24px;
+  width: 38px;
+  height: 32px;
   padding: 0;
   background: rgba(217, 195, 149, 0.4); /* muted parchment tint */
   border: 1px solid var(--parchment-edge);
   color: var(--ink-muted);
   cursor: pointer;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.35rem;
   font-weight: 400;
   line-height: 1;
   border-radius: 2px;
@@ -97,17 +97,29 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.3rem;
-  height: 2.3rem;
-  padding: 0 0.5rem;
+  min-width: 3.1rem;
+  height: 3.1rem;
+  padding: 0 0.7rem;
   text-align: center;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   color: var(--ink-primary);
   background: var(--parchment-base);
   border: 1px solid var(--parchment-edge);
   border-radius: 999px;
   user-select: none;
+}
+
+@media (max-width: 640px) {
+  .dash-counter { font-size: 1.15rem; gap: 0.4rem; }
+  .dash-label { font-size: 1rem; margin-right: 0.3rem; }
+  .dash-step { width: 34px; height: 30px; font-size: 1.2rem; }
+  .dash-value {
+    min-width: 2.7rem;
+    height: 2.7rem;
+    font-size: 1.3rem;
+    padding: 0 0.55rem;
+  }
 }
 
 .dash-value--zero   { color: var(--ink-muted); }

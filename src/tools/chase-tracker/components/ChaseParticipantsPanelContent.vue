@@ -99,18 +99,18 @@ export default {
 .panel-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.35rem;
 }
 
 .role-group {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.6rem;
 }
 
 .role-label {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 1.3rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-muted);
@@ -122,23 +122,23 @@ export default {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.55rem;
 }
 
 .participant-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
 }
 
 .participant-input {
-  flex: 1 1 12rem;
-  min-width: 10rem;
+  flex: 1 1 16rem;
+  min-width: 13rem;
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.55rem;
   letter-spacing: 0.03em;
-  padding: 0.55rem 0.75rem;
+  padding: 0.75rem 1rem;
   background: var(--parchment-base);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
@@ -161,22 +161,22 @@ export default {
 
 .location-select {
   font-family: var(--font-body);
-  font-size: 1rem;
-  padding: 0.45rem 2rem 0.45rem 0.7rem;
+  font-size: 1.35rem;
+  padding: 0.6rem 2.5rem 0.6rem 0.95rem;
   background-color: var(--parchment-warm);
   color: var(--ink-primary);
   border: 1px solid var(--button-border);
   border-radius: 2px;
-  min-width: 10rem;
-  max-width: 14rem;
+  min-width: 13rem;
+  max-width: 18rem;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   /* Parchment-tinted chevron */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%234e3a22' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%234e3a22' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 0.75rem center;
+  background-position: right 0.95rem center;
 }
 
 .location-select:focus {
@@ -187,18 +187,18 @@ export default {
 
 .participant-remove {
   flex-shrink: 0;
-  /* 44px tap target via invisible padding; visually just a quiet
+  /* Bumped from 44px to 54px for the larger panel; still a quiet
      character in muted ink, no border or background. Extra left margin
      separates it from the dash controls as a different action class. */
-  width: 44px;
-  height: 44px;
+  width: 54px;
+  height: 54px;
   padding: 0;
-  margin-left: 0.6rem;
+  margin-left: 0.8rem;
   background: transparent;
   border: none;
   color: var(--ink-muted);
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   line-height: 1;
   display: inline-flex;
   align-items: center;
@@ -218,18 +218,18 @@ export default {
 
 .participant-remove-placeholder {
   display: inline-block;
-  width: 44px;
-  height: 44px;
-  margin-left: 0.6rem;
+  width: 54px;
+  height: 54px;
+  margin-left: 0.8rem;
 }
 
 .add-btn {
   align-self: flex-start;
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 1.3rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.5rem 1rem;
+  padding: 0.7rem 1.35rem;
   background: transparent;
   border: 1px dashed var(--button-border);
   color: var(--ink-secondary);
@@ -248,12 +248,12 @@ export default {
    fill row 1 together; dash controls + × wrap to row 2. */
 @media (max-width: 900px) {
   .participant-input {
-    flex: 1 1 calc(60% - 0.3rem);
+    flex: 1 1 calc(60% - 0.4rem);
     min-width: 0;
   }
 
   .participant-location {
-    flex: 1 1 calc(40% - 0.3rem);
+    flex: 1 1 calc(40% - 0.4rem);
     min-width: 0;
   }
 
@@ -265,8 +265,10 @@ export default {
 }
 
 @media (max-width: 640px) {
+  .role-label { font-size: 1.1rem; }
   .participant-input {
-    font-size: 1rem;
+    font-size: 1.3rem;
+    padding: 0.65rem 0.85rem;
     flex: 1 1 100%;
   }
 
@@ -274,8 +276,25 @@ export default {
     flex: 1 1 100%;
   }
 
+  .location-select {
+    font-size: 1.2rem;
+    padding: 0.55rem 2.2rem 0.55rem 0.85rem;
+  }
+
   .participant-row {
-    gap: 0.5rem;
+    gap: 0.65rem;
+  }
+
+  .participant-remove,
+  .participant-remove-placeholder {
+    width: 48px;
+    height: 48px;
+    margin-left: 0.6rem;
+  }
+
+  .add-btn {
+    font-size: 1.15rem;
+    padding: 0.6rem 1.15rem;
   }
 }
 </style>

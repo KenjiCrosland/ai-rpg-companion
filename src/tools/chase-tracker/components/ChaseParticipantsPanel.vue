@@ -102,7 +102,7 @@ export default {
 <style scoped>
 /* ---------------- Desktop inline panel ---------------- */
 .panel-desktop {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.65rem;
 }
 
 .panel-strip {
@@ -112,13 +112,13 @@ export default {
   align-items: center;
   background: var(--parchment-warm);
   border: 1px solid var(--parchment-edge);
-  padding: 0.7rem 1.1rem;
+  padding: 0.95rem 1.5rem;
   font-family: var(--font-display);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-secondary);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.35rem;
   border-radius: 2px;
 }
 
@@ -128,7 +128,7 @@ export default {
 }
 
 .strip-chevron {
-  font-size: 1.35rem;
+  font-size: 1.8rem;
   font-weight: 600;
   color: var(--accent-gold-dark);
 }
@@ -140,7 +140,7 @@ export default {
     inset 0 0 0 3px var(--parchment-warm),
     inset 0 0 0 4px var(--parchment-edge),
     0 2px 6px rgba(46, 33, 20, 0.12);
-  padding: 1rem 1.25rem 1.25rem;
+  padding: 1.35rem 1.65rem 1.65rem;
   border-radius: 2px;
 }
 
@@ -151,7 +151,7 @@ export default {
 }
 
 .panel-title {
-  font-size: 1.4rem;
+  font-size: 1.9rem;
   letter-spacing: 0.1em;
 }
 
@@ -159,9 +159,9 @@ export default {
   background: transparent;
   border: none;
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 2rem;
   line-height: 1;
-  padding: 0.2rem 0.7rem;
+  padding: 0.3rem 0.9rem;
   color: var(--ink-muted);
   cursor: pointer;
 }
@@ -194,27 +194,27 @@ export default {
   border-top-right-radius: 14px;
   box-shadow: 0 -8px 30px rgba(46, 33, 20, 0.35);
   overflow-y: auto;
-  padding: 0.9rem 1rem 2rem;
+  padding: 1.2rem 1.35rem 2.4rem;
 }
 
 .panel-handle {
-  width: 42px;
-  height: 5px;
+  width: 48px;
+  height: 6px;
   background: var(--parchment-edge);
   border-radius: 3px;
-  margin: 0 auto 0.9rem;
+  margin: 0 auto 1.1rem;
   opacity: 0.7;
 }
 
 .panel-close {
   position: absolute;
-  top: 0.45rem;
-  right: 0.6rem;
-  width: 32px;
-  height: 32px;
+  top: 0.55rem;
+  right: 0.7rem;
+  width: 44px;
+  height: 44px;
   background: transparent;
   border: none;
-  font-size: 1.6rem;
+  font-size: 2.1rem;
   line-height: 1;
   color: var(--ink-muted);
   cursor: pointer;
@@ -224,7 +224,7 @@ export default {
 .panel-close:hover { color: var(--ink-primary); }
 
 .panel-inner .panel-title {
-  font-size: 1.4rem;
+  font-size: 1.7rem;
 }
 
 .panel-fade-enter-active,

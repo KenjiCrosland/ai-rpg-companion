@@ -372,7 +372,7 @@ export default {
 }
 
 .library-drawer {
-  width: min(500px, 100%);
+  width: min(680px, 100%);
   height: 100vh;
   max-width: 100%;
   background-color: var(--parchment-base);
@@ -381,7 +381,7 @@ export default {
     radial-gradient(ellipse at bottom right, rgba(164, 134, 86, 0.10), transparent 50%);
   border-left: 1px solid var(--parchment-edge);
   box-shadow: -8px 0 24px rgba(46, 33, 20, 0.25);
-  padding: 1.25rem 1.5rem 2rem;
+  padding: 1.65rem 2rem 2.5rem;
   overflow-y: auto;
   font-family: var(--font-body);
   color: var(--ink-primary);
@@ -394,17 +394,17 @@ export default {
 }
 
 .drawer-title {
-  font-size: 1.5rem;
+  font-size: 2rem;
 }
 
 .drawer-close {
   background: transparent;
   border: none;
-  font-size: 1.6rem;
+  font-size: 2.1rem;
   line-height: 1;
   color: var(--ink-muted);
   cursor: pointer;
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.55rem;
 }
 
 .drawer-close:hover {
@@ -414,16 +414,16 @@ export default {
 .filter-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  margin: 0.75rem 0 0.75rem;
+  gap: 0.4rem;
+  margin: 1rem 0 1rem;
 }
 
 .env-btn {
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: 0.95rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 0.3rem 0.6rem;
+  padding: 0.45rem 0.9rem;
   background: transparent;
   border: 1px solid var(--button-border);
   color: var(--ink-secondary);
@@ -440,21 +440,21 @@ export default {
 .search-input {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 0.9rem;
-  padding: 0.45rem 0.6rem;
+  font-size: 1.2rem;
+  padding: 0.6rem 0.85rem;
   background: var(--parchment-warm);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
 }
 
 .category-controls {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.1rem 0.15rem 0.5rem;
+  gap: 0.5rem;
+  padding: 0.15rem 0.2rem 0.65rem;
   color: var(--ink-muted);
-  font-size: 0.8rem;
+  font-size: 1.05rem;
 }
 
 .category-control-btn {
@@ -462,9 +462,9 @@ export default {
   border: none;
   color: var(--ink-muted);
   font-family: var(--font-body);
-  font-size: 0.8rem;
+  font-size: 1.05rem;
   cursor: pointer;
-  padding: 0.1rem 0.2rem;
+  padding: 0.15rem 0.3rem;
   text-decoration: underline;
   text-decoration-color: var(--parchment-edge);
   text-underline-offset: 2px;
@@ -482,22 +482,22 @@ export default {
 .library-list {
   display: flex;
   flex-direction: column;
-  margin-bottom: 1rem;
+  margin-bottom: 1.35rem;
 }
 
 .env-section-header {
-  font-size: 0.8rem;
+  font-size: 1.05rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-muted);
   text-align: center;
-  padding: 0.5rem 0 0.45rem;
+  padding: 0.7rem 0 0.6rem;
 }
 
 .env-section-rule {
   height: 0;
   border-top: 1px dotted var(--parchment-edge);
-  margin: 0.6rem 0.5rem 0.35rem;
+  margin: 0.8rem 0.5rem 0.45rem;
 }
 
 .category {
@@ -508,15 +508,15 @@ export default {
 .category-header {
   display: flex;
   align-items: baseline;
-  gap: 0.55rem;
+  gap: 0.7rem;
   width: 100%;
-  padding: 0.55rem 0.35rem;
+  padding: 0.75rem 0.5rem;
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--parchment-edge);
   color: var(--ink-primary);
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.4rem;
   letter-spacing: 0.04em;
   cursor: pointer;
   text-align: left;
@@ -534,8 +534,8 @@ export default {
 
 .category-chevron {
   display: inline-block;
-  width: 0.8rem;
-  font-size: 0.75rem;
+  width: 1.1rem;
+  font-size: 1rem;
   color: var(--ink-secondary);
   text-align: center;
 }
@@ -546,7 +546,7 @@ export default {
 
 .category-count {
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: 1.15rem;
   color: var(--ink-muted);
   font-weight: 400;
   letter-spacing: 0;
@@ -555,17 +555,17 @@ export default {
 .category-zones {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.4rem 0 0.5rem 0.35rem;
+  gap: 0.35rem;
+  padding: 0.55rem 0 0.7rem 0.45rem;
   border-bottom: 1px solid var(--parchment-edge);
 }
 
 .library-row {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  min-height: 48px;
-  padding: 0.3rem 0.55rem;
+  gap: 0.95rem;
+  min-height: 64px;
+  padding: 0.45rem 0.75rem;
   background-color: var(--parchment-warm);
   border: 1px solid transparent;
   border-radius: 2px;
@@ -610,14 +610,14 @@ export default {
 
 .row-add {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--parchment-base);
   border: 1.5px solid var(--parchment-edge);
   color: var(--ink-primary);
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.4rem;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -637,12 +637,12 @@ export default {
 .row-added-flash {
   flex-shrink: 0;
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: 1.05rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent-gold-dark);
   align-self: flex-start;
-  padding-top: 0.35rem;
+  padding-top: 0.5rem;
 }
 
 .row-body {
@@ -651,7 +651,7 @@ export default {
 }
 
 .row-name {
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-primary);
@@ -659,9 +659,9 @@ export default {
 }
 
 .row-description {
-  font-size: 0.95rem;
+  font-size: 1.25rem;
   color: var(--ink-secondary);
-  margin: 0.15rem 0 0;
+  margin: 0.25rem 0 0;
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
@@ -678,54 +678,55 @@ export default {
 .row-shape {
   flex-shrink: 0;
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.95rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent-gold-dark);
   align-self: flex-start;
-  padding-top: 0.35rem;
+  padding-top: 0.5rem;
 }
 
 .empty-hint {
   text-align: center;
   color: var(--ink-muted);
-  margin: 1rem 0;
+  font-size: 1.15rem;
+  margin: 1.35rem 0;
 }
 
 .custom-section {
-  margin-top: 0.5rem;
+  margin-top: 0.65rem;
 }
 
 .custom-title {
-  font-size: 1rem;
+  font-size: 1.35rem;
 }
 
 .custom-hint {
-  font-size: 0.85rem;
-  margin: 0.25rem 0 0.75rem;
+  font-size: 1.15rem;
+  margin: 0.35rem 0 1rem;
   color: var(--ink-muted);
 }
 
 .field {
   display: block;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.9rem;
 }
 
 .field-label {
   display: block;
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.95rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-muted);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
 }
 
 .field-input {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 0.9rem;
-  padding: 0.4rem 0.55rem;
+  font-size: 1.2rem;
+  padding: 0.55rem 0.75rem;
   background: var(--parchment-warm);
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
@@ -735,7 +736,7 @@ export default {
 .custom-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 0.5rem;
+  margin-top: 0.65rem;
 }
 
 .library-slide-enter-active,
@@ -758,10 +759,11 @@ export default {
 @media (max-width: 640px) {
   .library-drawer {
     width: 100%;
-    padding: 1rem 1rem 2rem;
+    padding: 1.1rem 1.1rem 2.25rem;
   }
 
-  .drawer-title { font-size: 1.1rem; }
+  .drawer-title { font-size: 1.45rem; }
+  .drawer-close { font-size: 1.9rem; }
 
   .filter-row {
     flex-wrap: nowrap;
@@ -772,6 +774,19 @@ export default {
 
   .filter-row::-webkit-scrollbar { display: none; }
 
-  .env-btn { flex-shrink: 0; }
+  .env-btn { flex-shrink: 0; font-size: 0.85rem; padding: 0.4rem 0.75rem; }
+
+  .search-input { font-size: 1.05rem; }
+  .category-header { font-size: 1.2rem; padding: 0.65rem 0.4rem; }
+  .category-count { font-size: 1rem; }
+  .row-name { font-size: 1.35rem; }
+  .row-description { font-size: 1.1rem; }
+  .row-shape { font-size: 0.85rem; }
+  .row-add { width: 34px; height: 34px; font-size: 1.25rem; }
+  .library-row { min-height: 58px; gap: 0.75rem; }
+  .custom-title { font-size: 1.2rem; }
+  .custom-hint { font-size: 1rem; }
+  .field-input { font-size: 1.05rem; }
+  .field-label { font-size: 0.85rem; }
 }
 </style>
