@@ -30,20 +30,14 @@
 
     <p
       v-if="zone.description"
-      ref="description"
-      :class="['zone-description', 'ink-italic', {
-        'zone-description--expanded': descriptionExpanded,
-        'zone-description--clickable': descriptionOverflows,
-      }]"
-      :role="descriptionOverflows ? 'button' : null"
-      :tabindex="descriptionOverflows ? 0 : null"
-      :aria-expanded="descriptionOverflows ? descriptionExpanded : null"
-      :aria-label="descriptionOverflows
-        ? (descriptionExpanded ? 'Collapse description' : 'Expand description')
-        : null"
-      @click="onDescriptionClick"
-      @keydown.enter="onDescriptionKey"
-      @keydown.space="onDescriptionKey"
+      :class="['zone-description', 'ink-italic', { 'zone-description--expanded': descriptionExpanded }]"
+      role="button"
+      tabindex="0"
+      :aria-expanded="descriptionExpanded"
+      :aria-label="descriptionExpanded ? 'Collapse description' : 'Expand description'"
+      @click.stop="toggleDescription"
+      @keydown.enter.prevent.stop="toggleDescription"
+      @keydown.space.prevent.stop="toggleDescription"
     >{{ zone.description }}</p>
 
     <div v-if="zone.pills.length" class="zone-pills">
@@ -115,43 +109,7 @@ export default {
     'drop-token',
   ],
   data() {
-    return {
-      editorOpen: false,
-      descriptionExpanded: false,
-      descriptionOverflows: false,
-    };
-  },
-  created() {
-    // Hold the ResizeObserver instance off the reactive `data()` so Vue
-    // doesn't proxy-wrap it. Plain instance property is enough here.
-    this.descriptionObserver = null;
-  },
-  mounted() {
-    this.attachDescriptionObserver();
-  },
-  beforeUnmount() {
-    this.detachDescriptionObserver();
-  },
-  watch: {
-    'zone.description'(val) {
-      // Description text changed (edit save). Re-measure once layout
-      // settles. If the new text is empty, drop the observer entirely.
-      if (val) {
-        this.$nextTick(() => {
-          if (!this.descriptionObserver) this.attachDescriptionObserver();
-          else this.measureDescription();
-        });
-      } else {
-        this.descriptionOverflows = false;
-        this.descriptionExpanded = false;
-        this.detachDescriptionObserver();
-      }
-    },
-    descriptionExpanded() {
-      // Toggling between clamped and full changes scrollHeight; the
-      // next measurement should run after the layout reflows.
-      this.$nextTick(() => this.measureDescription());
-    },
+    return { editorOpen: false, descriptionExpanded: false };
   },
   computed: {
     gridStyle() {
@@ -202,42 +160,8 @@ export default {
       this.$emit('update-zone', this.zone.id, fields);
       this.editorOpen = false;
     },
-    onDescriptionClick(event) {
-      // Non-truncated descriptions act as plain text — let the click
-      // bubble to the zone so token-move still works on the body.
-      if (!this.descriptionOverflows) return;
-      event.stopPropagation();
+    toggleDescription() {
       this.descriptionExpanded = !this.descriptionExpanded;
-    },
-    onDescriptionKey(event) {
-      if (!this.descriptionOverflows) return;
-      event.preventDefault();
-      event.stopPropagation();
-      this.descriptionExpanded = !this.descriptionExpanded;
-    },
-    attachDescriptionObserver() {
-      const el = this.$refs.description;
-      if (!el) return;
-      this.measureDescription();
-      if (typeof ResizeObserver !== 'function') return;
-      this.descriptionObserver = new ResizeObserver(() => this.measureDescription());
-      this.descriptionObserver.observe(el);
-    },
-    detachDescriptionObserver() {
-      if (!this.descriptionObserver) return;
-      this.descriptionObserver.disconnect();
-      this.descriptionObserver = null;
-    },
-    measureDescription() {
-      const el = this.$refs.description;
-      if (!el) return;
-      // While expanded the element shows full text, so scrollHeight
-      // ≈ clientHeight and the naive overflow check would flip the
-      // toggle off. Preserve the previously detected overflow state
-      // until the user collapses it again.
-      if (this.descriptionExpanded) return;
-      // +1 tolerance for sub-pixel rounding on some browsers.
-      this.descriptionOverflows = el.scrollHeight > el.clientHeight + 1;
     },
   },
 };
@@ -371,31 +295,25 @@ export default {
   margin: 0.5rem 0 0.75rem;
   text-align: center;
   color: var(--ink-secondary);
+  cursor: pointer;
   border-radius: 2px;
   transition: color 120ms ease;
   /* Cap at two lines so the tokens+affordance row below always have a
-     predictable amount of space to work with. The clickable modifier
-     adds the tap-to-expand affordance only when the text actually
-     overflows the clamp — short descriptions stay plain text. */
+     predictable amount of space to work with. Tap the text to expand
+     the full description inline; tap again to collapse. */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  pointer-events: none;
 }
 
-.zone-description--clickable {
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.zone-description--clickable:hover,
-.zone-description--clickable:focus-visible {
+.zone-description:hover,
+.zone-description:focus-visible {
   color: var(--ink-primary);
   outline: none;
 }
 
-.zone-description--clickable:focus-visible {
+.zone-description:focus-visible {
   box-shadow: 0 0 0 2px var(--accent-gold);
 }
 
