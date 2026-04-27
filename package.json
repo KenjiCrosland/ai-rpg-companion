@@ -11,6 +11,7 @@
     "generate-srd-index": "node scripts/generate-srd-index.mjs"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.0",
     "@rei/cedar": "^13.3.1",
     "axios": "^1.3.4",
     "detectincognitojs": "^1.3.5",

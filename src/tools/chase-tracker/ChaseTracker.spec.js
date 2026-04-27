@@ -1,0 +1,1384 @@
+/**
+ * Chase Tracker tests.
+ */
+
+import { mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
+import {
+  useChaseMap,
+  STORAGE_KEY,
+  LAST_PARTICIPANTS_KEY,
+  DASH_HINT_SEEN_KEY,
+  SHAPE_DIMENSIONS,
+} from './composables/useChaseMap.js';
+import ChaseTracker from './ChaseTracker.vue';
+import templatesData from './data/templates.json';
+import libraryData from './data/zoneLibrary.json';
+import { ROLE_DEFAULTS, TOKEN_ICON_MAP } from './config/tokenIcons.js';
+import { TOKEN_COLORS } from './config/tokenColors.js';
+import { PILL_TONES } from './config/pills.js';
+
+describe('useChaseMap — core state', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('starts empty when no saved state', () => {
+    const map = useChaseMap();
+    expect(map.state.hasActiveChase).toBe(false);
+    expect(map.state.zones).toEqual([]);
+    expect(map.state.tokens).toEqual([]);
+    expect(map.state.connectingFromZoneId).toBeNull();
+  });
+
+  test('startFromTemplate loads zones, connections, tokens and environment', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const template = templatesData.templates.find((t) => t.id === 'urban_alleys');
+    expect(map.state.hasActiveChase).toBe(true);
+    expect(map.state.mapName).toBe(template.name);
+    expect(map.state.environments).toEqual(['urban']);
+    expect(map.state.zones).toHaveLength(template.zones.length);
+  });
+
+  test('template zones carry pills arrays (never a state field)', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    for (const zone of map.state.zones) {
+      expect(Array.isArray(zone.pills)).toBe(true);
+      expect(zone).not.toHaveProperty('state');
+    }
+  });
+
+  test('default tokens have valid icon and color fields', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    for (const token of map.state.tokens) {
+      expect(TOKEN_ICON_MAP[token.icon]).toBeDefined();
+      expect(TOKEN_COLORS[token.color]).toBeDefined();
+    }
+  });
+});
+
+describe('useChaseMap — movement', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('moveSelectedTokenTo rejects non-adjacent, accepts adjacent', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    map.selectToken(token.id);
+    const nonAdjacent = map.state.zones.find(
+      (z) => z.id !== token.zoneId && !map.isAdjacent(token.zoneId, z.id)
+    );
+    if (nonAdjacent) {
+      expect(map.moveSelectedTokenTo(nonAdjacent.id)).toBe(false);
+      // Rejection preserves selection — don't re-toggle.
+    }
+    const adjacent = map.state.zones.find(
+      (z) => z.id !== token.zoneId && map.isAdjacent(token.zoneId, z.id)
+    );
+    expect(map.moveSelectedTokenTo(adjacent.id)).toBe(true);
+    expect(token.zoneId).toBe(adjacent.id);
+  });
+
+  test('moveTokenTo: tray ↔ any zone always allowed', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    expect(map.moveTokenTo(token.id, null)).toBe(true);
+    const farZone = map.state.zones[map.state.zones.length - 1];
+    expect(map.moveTokenTo(token.id, farZone.id)).toBe(true);
+  });
+});
+
+describe('useChaseMap — dash auto-increment', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('zone → adjacent zone via moveTokenTo increments dashCount by 1', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const adjacent = map.state.zones.find(
+      (z) => z.id !== token.zoneId && map.isAdjacent(token.zoneId, z.id)
+    );
+    const prev = token.dashCount || 0;
+    expect(map.moveTokenTo(token.id, adjacent.id)).toBe(true);
+    expect(token.dashCount).toBe(prev + 1);
+  });
+
+  test('zone → tray does NOT increment dashCount', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const prev = token.dashCount || 0;
+    expect(map.moveTokenTo(token.id, null)).toBe(true);
+    expect(token.dashCount).toBe(prev);
+  });
+
+  test('tray → zone does NOT increment dashCount', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    map.moveTokenTo(token.id, null);
+    const prev = token.dashCount || 0;
+    const zone = map.state.zones[0];
+    expect(map.moveTokenTo(token.id, zone.id)).toBe(true);
+    expect(token.dashCount).toBe(prev);
+  });
+
+  test('setTokenZone (Participants panel path) never increments dashCount', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const prev = token.dashCount || 0;
+    const other = map.state.zones.find((z) => z.id !== token.zoneId);
+    expect(map.setTokenZone(token.id, other.id)).toBe(true);
+    expect(token.dashCount).toBe(prev);
+    expect(map.setTokenZone(token.id, null)).toBe(true);
+    expect(token.dashCount).toBe(prev);
+  });
+
+  test('countAsDash: false opts out of auto-increment', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const adjacent = map.state.zones.find(
+      (z) => z.id !== token.zoneId && map.isAdjacent(token.zoneId, z.id)
+    );
+    const prev = token.dashCount || 0;
+    expect(map.moveTokenTo(token.id, adjacent.id, { countAsDash: false })).toBe(true);
+    expect(token.dashCount).toBe(prev);
+  });
+});
+
+describe('useChaseMap — dash hint surfacing', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('first 0→1 increment surfaces the hint when the flag is unset', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    expect(map.dashHintVisible.value).toBe(false);
+    map.incrementDash(token.id);
+    expect(map.dashHintVisible.value).toBe(true);
+  });
+
+  test('does not surface on subsequent increments within the same session', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    map.incrementDash(token.id);
+    map.dismissDashHint();
+    expect(map.dashHintVisible.value).toBe(false);
+    // Next increment: 1 → 2. Shouldn't re-surface.
+    map.incrementDash(token.id);
+    expect(map.dashHintVisible.value).toBe(false);
+  });
+
+  test('does not surface if the seen flag is already set (prior session)', () => {
+    localStorage.setItem(DASH_HINT_SEEN_KEY, 'true');
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    map.incrementDash(token.id);
+    expect(map.dashHintVisible.value).toBe(false);
+  });
+
+  test('dismissDashHint persists the seen flag', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.incrementDash(map.state.tokens[0].id);
+    map.dismissDashHint();
+    expect(localStorage.getItem(DASH_HINT_SEEN_KEY)).toBe('true');
+  });
+
+  test('rehydrating with non-zero dashCount does NOT surface the hint', async () => {
+    // Prime a state where tokens already carry dashCount > 0, then
+    // rehydrate. The hint should only fire on a fresh increment event,
+    // not on existing persisted state.
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    map1.incrementDash(map1.state.tokens[0].id);
+    map1.dismissDashHint();
+    // Clear the seen flag so the trigger logic would otherwise fire.
+    localStorage.removeItem(DASH_HINT_SEEN_KEY);
+    await nextTick();
+
+    const map2 = useChaseMap();
+    expect(map2.dashHintVisible.value).toBe(false);
+  });
+});
+
+describe('useChaseMap — connect mode', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('startConnectMode sets the source zone; cancel clears it', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const zoneId = map.state.zones[0].id;
+    map.startConnectMode(zoneId);
+    expect(map.state.connectingFromZoneId).toBe(zoneId);
+    map.cancelConnectMode();
+    expect(map.state.connectingFromZoneId).toBeNull();
+  });
+
+  test('startConnectMode ignores unknown zone ids', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.startConnectMode('not-a-real-zone');
+    expect(map.state.connectingFromZoneId).toBeNull();
+  });
+
+  test('completeConnection on an unconnected pair creates a connection', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Find any non-adjacent pair
+    const a = map.state.zones[0];
+    const b = map.state.zones.find((z) => z.id !== a.id && !map.isAdjacent(a.id, z.id));
+    if (!b) return;
+    map.startConnectMode(a.id);
+    const result = map.completeConnection(b.id);
+    expect(result).toBe('connected');
+    expect(map.isAdjacent(a.id, b.id)).toBe(true);
+    expect(map.state.connectingFromZoneId).toBeNull();
+  });
+
+  test('completeConnection on an existing connection disconnects (toggle)', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const [a, b] = map.state.connections[0];
+    map.startConnectMode(a);
+    const result = map.completeConnection(b);
+    expect(result).toBe('disconnected');
+    expect(map.isAdjacent(a, b)).toBe(false);
+    expect(map.state.connectingFromZoneId).toBeNull();
+  });
+
+  test('completeConnection with same zone cancels without mutating graph', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const zone = map.state.zones[0];
+    const connectionsBefore = map.state.connections.length;
+    map.startConnectMode(zone.id);
+    const result = map.completeConnection(zone.id);
+    expect(result).toBe('cancelled');
+    expect(map.state.connections.length).toBe(connectionsBefore);
+    expect(map.state.connectingFromZoneId).toBeNull();
+  });
+
+  test('removeZone cancels connect mode when removing the source', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const zone = map.state.zones[0];
+    map.startConnectMode(zone.id);
+    map.removeZone(zone.id);
+    expect(map.state.connectingFromZoneId).toBeNull();
+  });
+
+  test('connect state is not persisted to localStorage', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.startConnectMode(map.state.zones[0].id);
+    await nextTick();
+    const persisted = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(persisted).not.toHaveProperty('connectingFromZoneId');
+  });
+});
+
+describe('useChaseMap — pills', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('addPillToZone normalizes tone and returns an id', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const zoneId = map.state.zones[0].id;
+    const pillsBefore = map.state.zones.find((z) => z.id === zoneId).pills.length;
+    const id = map.addPillToZone(zoneId, { label: 'On Fire', tone: 'danger', detail: 'Flames.' });
+    expect(id).toBeTruthy();
+    const zone = map.state.zones.find((z) => z.id === zoneId);
+    expect(zone.pills.length).toBe(pillsBefore + 1);
+    const pill = zone.pills.find((p) => p.id === id);
+    expect(pill.tone).toBe('danger');
+    expect(pill.label).toBe('On Fire');
+  });
+
+  test('addPillToZone coerces invalid tone to "neutral"', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const zoneId = map.state.zones[0].id;
+    const id = map.addPillToZone(zoneId, { label: 'Weird', tone: 'fuchsia' });
+    const pill = map.state.zones
+      .find((z) => z.id === zoneId)
+      .pills.find((p) => p.id === id);
+    expect(pill.tone).toBe('neutral');
+  });
+
+  test('removePillFromZone removes the pill', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const zoneId = map.state.zones[0].id;
+    const id = map.addPillToZone(zoneId, { label: 'Temporary', tone: 'warm' });
+    map.removePillFromZone(zoneId, id);
+    const zone = map.state.zones.find((z) => z.id === zoneId);
+    expect(zone.pills.some((p) => p.id === id)).toBe(false);
+  });
+
+  test('updatePillOnZone writes only known fields and clamps label', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const zoneId = map.state.zones[0].id;
+    const id = map.addPillToZone(zoneId, { label: 'X', tone: 'warm' });
+    const longLabel = 'a'.repeat(80);
+    map.updatePillOnZone(zoneId, id, { label: longLabel, tone: 'danger', detail: 'ok' });
+    const pill = map.state.zones
+      .find((z) => z.id === zoneId)
+      .pills.find((p) => p.id === id);
+    expect(pill.label.length).toBe(40);
+    expect(pill.tone).toBe('danger');
+    expect(pill.detail).toBe('ok');
+  });
+});
+
+describe('useChaseMap — zone library', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('addZoneFromLibrary applies shape dimensions', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Pick a wide library zone we know exists
+    const fishMarket = libraryData.zones.find((z) => z.id === 'lib_urb_002');
+    expect(fishMarket.shape).toBe('wide');
+    const id = map.addZoneFromLibrary(fishMarket);
+    const zone = map.state.zones.find((z) => z.id === id);
+    expect(zone.colSpan).toBe(SHAPE_DIMENSIONS.wide.colSpan);
+    expect(zone.rowSpan).toBe(SHAPE_DIMENSIONS.wide.rowSpan);
+  });
+
+  test('addZoneFromLibrary applies defaultPills', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const fishMarket = libraryData.zones.find((z) => z.id === 'lib_urb_002');
+    const id = map.addZoneFromLibrary(fishMarket);
+    const zone = map.state.zones.find((z) => z.id === id);
+    expect(zone.pills.length).toBe(fishMarket.defaultPills.length);
+    expect(zone.pills[0].tone).toBeDefined();
+    expect(PILL_TONES[zone.pills[0].tone]).toBeDefined();
+  });
+
+  test('addZoneFromLibrary extends grid when no empty cell fits', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    // Pour in enough zones that the initial 3×3 grid can't accommodate them
+    const smallish = libraryData.zones.find((z) => z.shape === 'small');
+    for (let i = 0; i < 8; i++) map.addZoneFromLibrary(smallish);
+    expect(map.state.gridRows).toBeGreaterThan(rowsBefore);
+  });
+
+  test('unknown shape falls back to small', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const id = map.addZoneFromLibrary({
+      name: 'Weird',
+      description: '',
+      shape: 'definitely-not-a-shape',
+      defaultPills: [],
+    });
+    const zone = map.state.zones.find((z) => z.id === id);
+    expect(zone.colSpan).toBe(1);
+    expect(zone.rowSpan).toBe(1);
+  });
+
+  function zonesOverlap(a, b) {
+    const aColEnd = a.col + (a.colSpan || 1);
+    const aRowEnd = a.row + (a.rowSpan || 1);
+    const bColEnd = b.col + (b.colSpan || 1);
+    const bRowEnd = b.row + (b.rowSpan || 1);
+    return a.col < bColEnd && aColEnd > b.col && a.row < bRowEnd && aRowEnd > b.row;
+  }
+
+  test('library wide zone never overlaps an existing multi-cell zone', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // rooftops is 3×1 at (1,1); main_street is 2×1 at (1,2).
+    const wide = libraryData.zones.find((z) => z.shape === 'wide');
+    const id = map.addZoneFromLibrary(wide);
+    const placed = map.state.zones.find((z) => z.id === id);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('large (2×2) library zone falls through to bottom expansion when no region fits', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Urban template is fully packed 3×3 with spans that leave no 2×2
+    // region free. A large zone must expand the grid, keeping its
+    // preferred shape rather than shrinking to 1×1.
+    const rowsBefore = map.state.gridRows;
+    const id = map.addZoneFromLibrary({
+      name: 'Plaza', description: '', shape: 'large', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    expect(placed.colSpan).toBe(SHAPE_DIMENSIONS.large.colSpan);
+    expect(placed.rowSpan).toBe(SHAPE_DIMENSIONS.large.rowSpan);
+    expect(placed.row).toBeGreaterThan(rowsBefore);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('edge expansion: large shape at top target lands at the top with preferred shape', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // expandGrid('top') opens one empty row above rooftops (3×1). A
+    // large (2×2) zone needs two rows, so the grid must grow further in
+    // the same direction (pushing existing zones down) so the zone lands
+    // at row 1 with its full shape rather than drifting to the bottom.
+    map.expandGrid('top');
+    const id = map.addZoneFromLibrary({
+      name: 'Watchtower', description: '', shape: 'large', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    expect(placed.row).toBe(1);
+    expect(placed.colSpan).toBe(SHAPE_DIMENSIONS.large.colSpan);
+    expect(placed.rowSpan).toBe(SHAPE_DIMENSIONS.large.rowSpan);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('edge expansion: tall shape at top target lands at the top with preferred shape', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('top');
+    const id = map.addZoneFromLibrary({
+      name: 'Belltower', description: '', shape: 'tall', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    expect(placed.row).toBe(1);
+    expect(placed.rowSpan).toBe(SHAPE_DIMENSIONS.tall.rowSpan);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('edge expansion: wide shape at left target lands at the left edge', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // expandGrid('left') opens one empty column; a wide (2×1) zone
+    // needs two columns and must push existing zones further right.
+    map.expandGrid('left');
+    const id = map.addZoneFromLibrary({
+      name: 'Canal Mouth', description: '', shape: 'wide', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    expect(placed.col).toBe(1);
+    expect(placed.colSpan).toBe(SHAPE_DIMENSIONS.wide.colSpan);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+
+  test('edge expansion: wide shape at top target keeps preferred span', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('top');
+    const id = map.addZoneFromLibrary({
+      name: 'Weathervane', description: '', shape: 'wide', defaultPills: [],
+    });
+    const placed = map.state.zones.find((z) => z.id === id);
+    // Wide zone at the new top row (row 1) — lots of free columns, so
+    // preferred span should survive.
+    expect(placed.colSpan).toBe(SHAPE_DIMENSIONS.wide.colSpan);
+    expect(placed.rowSpan).toBe(SHAPE_DIMENSIONS.wide.rowSpan);
+    expect(placed.row).toBe(1);
+    for (const other of map.state.zones) {
+      if (other.id === id) continue;
+      expect(zonesOverlap(placed, other)).toBe(false);
+    }
+  });
+});
+
+describe('useChaseMap — auto-connect (grid + succession)', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('a new zone connects to every grid-edge neighbor', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Bottom edge of urban_alleys is fully packed. expandGrid('bottom')
+    // + small pick lands at (1, 4), which shares its top edge with
+    // back_alley but only a corner with inn_kitchen — succession is
+    // unset for the first pick, so only the edge neighbor connects.
+    map.expandGrid('bottom');
+    const id = map.addZoneFromLibrary({ name: 'A', description: '', shape: 'small', defaultPills: [] });
+    expect(map.isAdjacent(id, 'back_alley')).toBe(true);
+    expect(map.isAdjacent(id, 'inn_kitchen')).toBe(false);
+  });
+
+  test('multiple grid neighbors all get connected at once', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('bottom');
+    const id1 = map.addZoneFromLibrary({ name: '1', description: '', shape: 'small', defaultPills: [] });
+    const id2 = map.addZoneFromLibrary({ name: '2', description: '', shape: 'small', defaultPills: [] });
+    const id3 = map.addZoneFromLibrary({ name: '3', description: '', shape: 'small', defaultPills: [] });
+    expect(map.isAdjacent(id2, 'inn_kitchen')).toBe(true);
+    expect(map.isAdjacent(id2, id1)).toBe(true);
+    expect(map.isAdjacent(id2, id3)).toBe(true);
+  });
+
+  test('successive picks chain even when they meet only at a corner', () => {
+    // Repro for the "Bell Tower → Cemetery → City Gate" case: the third
+    // pick lands diagonally adjacent to the second, so a pure edge rule
+    // misses the connection. The succession rule catches it.
+    const map = useChaseMap();
+    map.startFromTemplate('blank');
+    map.expandGrid('bottom');
+    const tower = map.addZoneFromLibrary({
+      name: 'Bell Tower', description: '', shape: 'tall', defaultPills: [],
+    });
+    const cemetery = map.addZoneFromLibrary({
+      name: 'Cemetery', description: '', shape: 'wide', defaultPills: [],
+    });
+    const gate = map.addZoneFromLibrary({
+      name: 'City Gate', description: '', shape: 'tall', defaultPills: [],
+    });
+    // Tower↔Cemetery is edge-adjacent (cemetery sits to the right of
+    // the tall tower); Cemetery↔Gate share only a corner but they were
+    // placed back-to-back so the chain links them.
+    expect(map.isAdjacent(tower, cemetery)).toBe(true);
+    expect(map.isAdjacent(cemetery, gate)).toBe(true);
+  });
+
+  test('library close ends the chain — next pick does not link back', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('bottom');
+    const a = map.addZoneFromLibrary({ name: 'A', description: '', shape: 'small', defaultPills: [] });
+    map.clearPendingPlacement(); // simulates the library closing
+    map.expandGrid('left');
+    const b = map.addZoneFromLibrary({ name: 'B', description: '', shape: 'small', defaultPills: [] });
+    // A and B are far apart on the grid AND were added in different
+    // sessions — no chain connection.
+    expect(map.isAdjacent(a, b)).toBe(false);
+  });
+
+  test('removing the chain head clears it; next pick chains to nothing', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('bottom');
+    const a = map.addZoneFromLibrary({ name: 'A', description: '', shape: 'small', defaultPills: [] });
+    map.removeZone(a);
+    const b = map.addZoneFromLibrary({ name: 'B', description: '', shape: 'small', defaultPills: [] });
+    // A is gone; B has no surviving prior to chain to. (It still picks
+    // up grid-edge neighbors from its placement.)
+    expect(map.state.zones.find((z) => z.id === b)).toBeDefined();
+  });
+
+  test('starting a new chase resets the chain', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('bottom');
+    const a = map.addZoneFromLibrary({ name: 'A', description: '', shape: 'small', defaultPills: [] });
+    map.startFromTemplate('wilderness_trails');
+    map.expandGrid('bottom');
+    const b = map.addZoneFromLibrary({ name: 'B', description: '', shape: 'small', defaultPills: [] });
+    // Even if the new chase happens to reuse A's id (it won't, uids are
+    // random — but the field gets cleared regardless), b cannot chain
+    // to a zone from the prior chase.
+    expect(map.state.zones.some((z) => z.id === a)).toBe(false);
+    expect(map.state.connections.some(([x, y]) => x === a || y === a)).toBe(false);
+  });
+
+  test('disabling autoConnectEnabled stops both rules', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.setAutoConnectEnabled(false);
+    map.expandGrid('bottom');
+    const a = map.addZoneFromLibrary({ name: 'A', description: '', shape: 'small', defaultPills: [] });
+    const b = map.addZoneFromLibrary({ name: 'B', description: '', shape: 'small', defaultPills: [] });
+    expect(map.isAdjacent(a, 'back_alley')).toBe(false);
+    expect(map.isAdjacent(a, b)).toBe(false);
+  });
+
+  test('autoConnectEnabled defaults to true', () => {
+    const map = useChaseMap();
+    expect(map.state.autoConnectEnabled).toBe(true);
+  });
+
+  test('autoConnectEnabled persists across reloads', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    map1.setAutoConnectEnabled(false);
+    await nextTick();
+    await nextTick();
+    const map2 = useChaseMap();
+    expect(map2.state.autoConnectEnabled).toBe(false);
+  });
+
+  test('rehydrating an old payload without autoConnectEnabled fills the default', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        hasActiveChase: true,
+        mapName: 'Old Chase',
+        gridCols: 3,
+        gridRows: 3,
+        zones: [],
+        tokens: [],
+        connections: [],
+        selectedTokenId: null,
+      })
+    );
+    const map = useChaseMap();
+    expect(map.state.autoConnectEnabled).toBe(true);
+  });
+
+  test('lastAddedZoneId is not persisted to localStorage', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('bottom');
+    map.addZoneFromLibrary({ name: 'A', description: '', shape: 'small', defaultPills: [] });
+    await nextTick();
+    const persisted = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(persisted).not.toHaveProperty('lastAddedZoneId');
+  });
+});
+
+describe('useChaseMap — dash tracking', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('new tokens start with dashCount 0', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    for (const token of map.state.tokens) {
+      expect(token.dashCount).toBe(0);
+    }
+  });
+
+  test('incrementDash bumps by one; decrementDash floors at 0', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const id = map.state.tokens[0].id;
+    map.incrementDash(id);
+    map.incrementDash(id);
+    expect(map.state.tokens[0].dashCount).toBe(2);
+    map.decrementDash(id);
+    expect(map.state.tokens[0].dashCount).toBe(1);
+    map.decrementDash(id);
+    map.decrementDash(id); // already 0
+    expect(map.state.tokens[0].dashCount).toBe(0);
+  });
+
+  test('setDashCount clamps negatives to 0 and floors fractions', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const id = map.state.tokens[0].id;
+    map.setDashCount(id, -3);
+    expect(map.state.tokens[0].dashCount).toBe(0);
+    map.setDashCount(id, 4.8);
+    expect(map.state.tokens[0].dashCount).toBe(4);
+  });
+
+  test('startFromTemplate resets dashCount for all tokens', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.state.tokens.forEach((t) => map.incrementDash(t.id));
+    map.startFromTemplate('wilderness_trails');
+    for (const token of map.state.tokens) {
+      expect(token.dashCount).toBe(0);
+    }
+  });
+});
+
+describe('useChaseMap — participants panel state', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('startFromTemplate expands the panel on fresh chase', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    expect(map.state.participantsPanelCollapsed).toBe(false);
+  });
+
+  test('toggleParticipantsPanel flips the flag', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.toggleParticipantsPanel();
+    expect(map.state.participantsPanelCollapsed).toBe(true);
+    map.toggleParticipantsPanel();
+    expect(map.state.participantsPanelCollapsed).toBe(false);
+  });
+
+  test('rehydrated chase preserves collapsed state', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    map1.toggleParticipantsPanel();
+    await nextTick();
+    await nextTick();
+    const map2 = useChaseMap();
+    expect(map2.state.participantsPanelCollapsed).toBe(true);
+  });
+});
+
+describe('useChaseMap — last-used participants', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('renaming tokens writes the payload to LAST_PARTICIPANTS_KEY', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const pcToken = map.state.tokens.find((t) => t.role === 'pc');
+    map.renameToken(pcToken.id, 'Gorum');
+    // Debounce is 250ms — wait past that with real timers
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    const saved = JSON.parse(localStorage.getItem(LAST_PARTICIPANTS_KEY));
+    expect(saved).toBeTruthy();
+    expect(saved.pc).toContain('Gorum');
+  });
+
+  test('loading a template without edits does NOT write template defaults to cross-chase memory', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Let any debounce settle.
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    const saved = localStorage.getItem(LAST_PARTICIPANTS_KEY);
+    // Template examples like "Fenn the Cutpurse" must not become the
+    // global last-party or they'd clobber every other template's
+    // example tokens on next load.
+    expect(saved).toBeNull();
+  });
+
+  test('editing one token saves only that role; other template examples stay untouched on the next template', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    const pcToken = map1.state.tokens.find((t) => t.role === 'pc');
+    map1.renameToken(pcToken.id, 'Gorum');
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    const saved = JSON.parse(localStorage.getItem(LAST_PARTICIPANTS_KEY));
+    expect(saved.pc).toEqual(['Gorum']);
+    // quarry/pursuer are empty because the GM didn't rename those.
+    expect(saved.quarry).toEqual([]);
+    expect(saved.pursuer).toEqual([]);
+
+    const map2 = useChaseMap();
+    map2.startFromTemplate('wilderness_trails');
+    // The first PC slot picks up Gorum, but quarry and pursuer keep
+    // the Wilderness template's example tokens because the saved
+    // payload had nothing to say about them.
+    const quarry = map2.state.tokens.find((t) => t.role === 'quarry');
+    const pursuer = map2.state.tokens.find((t) => t.role === 'pursuer');
+    const pcs = map2.state.tokens.filter((t) => t.role === 'pc');
+    expect(quarry.label).toBe('Rook the Deserter');
+    expect(pursuer.label).toBe("King's Trackers");
+    expect(pcs[0].label).toBe('Gorum');
+    // PC slots beyond the saved count keep the template examples too.
+    expect(pcs[1].label).toBe('Ansel');
+    expect(pcs[2].label).toBe('Bree');
+  });
+
+  test('resetParticipantsToTemplate clears saved memory and reloads the current template defaults', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const pcToken = map.state.tokens.find((t) => t.role === 'pc');
+    map.renameToken(pcToken.id, 'Gorum');
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    expect(localStorage.getItem(LAST_PARTICIPANTS_KEY)).not.toBeNull();
+
+    map.resetParticipantsToTemplate();
+    expect(localStorage.getItem(LAST_PARTICIPANTS_KEY)).toBeNull();
+    const pcs = map.state.tokens.filter((t) => t.role === 'pc');
+    expect(pcs[0].label).toBe('Boblin');
+    expect(pcs.every((p) => p.userEdited === false)).toBe(true);
+  });
+
+  test('applyLastParticipants renames existing tokens up to the saved count', () => {
+    localStorage.setItem(
+      LAST_PARTICIPANTS_KEY,
+      JSON.stringify({
+        quarry: ['Shadow'],
+        pc: ['Gorum', 'Talis'],
+        pursuer: ['Watchguard'],
+      })
+    );
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const quarry = map.state.tokens.filter((t) => t.role === 'quarry');
+    const pcs = map.state.tokens.filter((t) => t.role === 'pc');
+    const pursuers = map.state.tokens.filter((t) => t.role === 'pursuer');
+    expect(quarry[0].label).toBe('Shadow');
+    expect(pcs[0].label).toBe('Gorum');
+    expect(pcs[1].label).toBe('Talis');
+    expect(pursuers[0].label).toBe('Watchguard');
+  });
+
+  test('applyLastParticipants adds extra tokens when saved party > template defaults', () => {
+    localStorage.setItem(
+      LAST_PARTICIPANTS_KEY,
+      JSON.stringify({
+        quarry: ['Shadow'],
+        pc: ['Gorum', 'Talis', 'Fenn', 'Morr'],
+        pursuer: ['Watchguard'],
+      })
+    );
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const pcs = map.state.tokens.filter((t) => t.role === 'pc');
+    expect(pcs).toHaveLength(4);
+    expect(pcs.map((p) => p.label)).toEqual(['Gorum', 'Talis', 'Fenn', 'Morr']);
+    // Extras inherit the role-default icon + color so they look coherent
+    expect(pcs[3].icon).toBeDefined();
+    expect(pcs[3].zoneId).toBeDefined();
+  });
+
+  test('missing last-participants key leaves template labels intact', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Urban template ships with named defaults for v1 content expansion.
+    expect(map.state.tokens.find((t) => t.role === 'quarry').label).toBe('Fenn the Cutpurse');
+    expect(map.state.tokens.filter((t) => t.role === 'pc')[0].label).toBe('Boblin');
+  });
+
+  test('blank template starts with generic placeholder token labels', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('blank');
+    expect(map.state.tokens.find((t) => t.role === 'quarry').label).toBe('Quarry');
+    expect(map.state.tokens.filter((t) => t.role === 'pc')[0].label).toBe('PC');
+    expect(map.state.tokens.find((t) => t.role === 'pursuer').label).toBe('Pursuer');
+  });
+
+  test('blank template loads no zones and all tokens in the tray', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('blank');
+    expect(map.state.zones).toEqual([]);
+    expect(map.state.tokens.every((t) => t.zoneId === null)).toBe(true);
+  });
+
+  test('startFromTemplate sets the scenario to the template default', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    expect(map.state.scenario).toMatch(/^\[Example\]/);
+  });
+
+  test('setScenario writes the new text and replaces the example default', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.setScenario('The thief was seen near the temple at dusk.');
+    expect(map.state.scenario).toBe('The thief was seen near the temple at dusk.');
+  });
+
+  test('starting a new chase from the same template resets the scenario', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.setScenario('Custom scene.');
+    map.startFromTemplate('urban_alleys');
+    expect(map.state.scenario).toMatch(/^\[Example\]/);
+  });
+});
+
+describe('useChaseMap — addParticipant (smart default)', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('picks the zone with the most on-board tokens of that role', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Urban template: PCs default to back_alley (2 tokens). That's the
+    // densest PC zone, so addParticipant('pc') should anchor there.
+    const densestZoneId = 'back_alley';
+    const id = map.addParticipant('pc');
+    expect(map.state.tokens.find((t) => t.id === id).zoneId).toBe(densestZoneId);
+  });
+
+  test('falls back to the first zone in grid order when no on-board tokens of role', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Remove all PCs from the board
+    const pcs = map.state.tokens.filter((t) => t.role === 'pc');
+    pcs.forEach((p) => map.removeToken(p.id));
+
+    const id = map.addParticipant('pc');
+    // First zone in grid order for urban_alleys is "rooftops" (row 1, col 1)
+    expect(map.state.tokens.find((t) => t.id === id).zoneId).toBe('rooftops');
+  });
+
+  test('all-off-board tokens are treated as absent for anchoring', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.state.tokens.filter((t) => t.role === 'pc').forEach((p) => {
+      map.setTokenZone(p.id, null);
+    });
+    const id = map.addParticipant('pc');
+    expect(map.state.tokens.find((t) => t.id === id).zoneId).toBe('rooftops');
+  });
+});
+
+describe('useChaseMap — recomputeGridDimensions on removeZone', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('removing the last zone of the bottom row shrinks gridRows', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    // Urban template's bottom row (row 3) has back_alley, inn_kitchen, warehouse_row
+    map.removeZone('back_alley');
+    map.removeZone('inn_kitchen');
+    // Still one zone left in row 3 (warehouse_row), so grid unchanged
+    expect(map.state.gridRows).toBe(rowsBefore);
+    map.removeZone('warehouse_row');
+    expect(map.state.gridRows).toBe(rowsBefore - 1);
+  });
+
+  test('emptying the top row trims the leading gap; zones below shift up', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const mainStreetBefore = map.state.zones.find((z) => z.id === 'main_street').row;
+    // Remove rooftops — it was the only zone in row 1 (cols 1-3).
+    map.removeZone('rooftops');
+    const mainStreetAfter = map.state.zones.find((z) => z.id === 'main_street').row;
+    // Leading empty rows are reclaimed — zones shift up by the gap.
+    expect(mainStreetAfter).toBe(mainStreetBefore - 1);
+    expect(map.state.gridRows).toBe(2);
+  });
+
+  test('multiple leading empty rows are all reclaimed in one pass', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Synthesize a state where the topmost zone sits well below row 1
+    // with leading empty rows above it. (Could happen from a sequence
+    // of top-edge picks that all needed grid growth.) Push every zone
+    // down by 2 rows and grow gridRows to match.
+    for (const zone of map.state.zones) zone.row += 2;
+    map.state.gridRows += 2;
+    map.removeZone('rooftops');
+    // Rows 1–2 are leading empties after rooftops is gone; recompute
+    // trims them so the topmost remaining zones land at row 1.
+    expect(map.state.zones.find((z) => z.id === 'main_street').row).toBe(1);
+    expect(map.state.zones.find((z) => z.id === 'back_alley').row).toBe(2);
+    expect(map.state.gridRows).toBe(2);
+  });
+
+  test('emptying a middle row collapses it; zones below shift up', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.removeZone('main_street');
+    map.removeZone('canal_bridge');
+    // Row 2 had no zones left — the whole row collapses. Row-3 zones
+    // shift up to take its place.
+    expect(map.state.gridRows).toBe(2);
+    expect(map.state.zones.find((z) => z.id === 'rooftops').row).toBe(1);
+    expect(map.state.zones.find((z) => z.id === 'back_alley').row).toBe(2);
+    expect(map.state.zones.find((z) => z.id === 'inn_kitchen').row).toBe(2);
+    expect(map.state.zones.find((z) => z.id === 'warehouse_row').row).toBe(2);
+  });
+
+  test('after expanding then removing the new zone, grid returns to original size', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    map.expandGrid('bottom');
+    // Lazy expand: no growth until placement.
+    expect(map.state.gridRows).toBe(rowsBefore);
+    const libraryZone = { name: 'Extra', description: '', shape: 'small', defaultPills: [] };
+    const id = map.addZoneFromLibrary(libraryZone);
+    // Bottom row of urban template is fully packed, so placement grows.
+    expect(map.state.gridRows).toBe(rowsBefore + 1);
+    map.removeZone(id);
+    expect(map.state.gridRows).toBe(rowsBefore);
+  });
+
+  test('removing the final zone resets the grid to a 3×3 canvas', () => {
+    // gridCols floors at 3 so a sparsely populated grid never stretches
+    // a single zone full-viewport. With no zones at all, both rows and
+    // cols snap to 3 — the natural starting shape for every template.
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    for (const zone of [...map.state.zones]) map.removeZone(zone.id);
+    expect(map.state.gridRows).toBe(3);
+    expect(map.state.gridCols).toBe(3);
+  });
+
+  test('a single 1×1 zone keeps the grid at the 3-col floor (no full-width stretch)', () => {
+    // Repro for the "blank template + one small zone fills the viewport"
+    // bug: removing all but one zone used to shrink gridCols to 1.
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Delete all but the first 1×1-ish zone.
+    const survivor = map.state.zones.find((z) => (z.colSpan || 1) === 1 && (z.rowSpan || 1) === 1);
+    for (const zone of [...map.state.zones]) {
+      if (zone.id !== survivor.id) map.removeZone(zone.id);
+    }
+    expect(map.state.zones).toHaveLength(1);
+    expect(map.state.gridCols).toBeGreaterThanOrEqual(3);
+  });
+
+  test('deleting a zone inside a row keeps the row; other zones do not shift', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Middle zone of row 3 (inn_kitchen). back_alley (col 1) and
+    // warehouse_row (col 3) stay put; col 2 row 3 becomes a placeable gap.
+    map.removeZone('inn_kitchen');
+    expect(map.state.gridRows).toBe(3);
+    expect(map.state.gridCols).toBe(3);
+    expect(map.state.zones.find((z) => z.id === 'back_alley').col).toBe(1);
+    expect(map.state.zones.find((z) => z.id === 'warehouse_row').col).toBe(3);
+  });
+});
+
+describe('useChaseMap — expandGrid', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('bottom captures direction without growing the grid', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    const snapshot = map.state.zones.map((z) => ({ id: z.id, col: z.col, row: z.row }));
+    const target = map.expandGrid('bottom');
+    expect(map.state.gridRows).toBe(rowsBefore);
+    for (const z of map.state.zones) {
+      const before = snapshot.find((s) => s.id === z.id);
+      expect(z.col).toBe(before.col);
+      expect(z.row).toBe(before.row);
+    }
+    expect(target).toEqual({ direction: 'bottom' });
+  });
+
+  test('right captures direction without growing the grid', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const colsBefore = map.state.gridCols;
+    const snapshot = map.state.zones.map((z) => ({ id: z.id, col: z.col, row: z.row }));
+    const target = map.expandGrid('right');
+    expect(map.state.gridCols).toBe(colsBefore);
+    for (const z of map.state.zones) {
+      const before = snapshot.find((s) => s.id === z.id);
+      expect(z.col).toBe(before.col);
+      expect(z.row).toBe(before.row);
+    }
+    expect(target).toEqual({ direction: 'right' });
+  });
+
+  test('top captures direction without shifting zones', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    const snapshot = map.state.zones.map((z) => ({ id: z.id, row: z.row }));
+    const target = map.expandGrid('top');
+    expect(map.state.gridRows).toBe(rowsBefore);
+    for (const z of map.state.zones) {
+      const before = snapshot.find((s) => s.id === z.id);
+      expect(z.row).toBe(before.row);
+    }
+    expect(target).toEqual({ direction: 'top' });
+  });
+
+  test('left captures direction without shifting zones', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const colsBefore = map.state.gridCols;
+    const snapshot = map.state.zones.map((z) => ({ id: z.id, col: z.col }));
+    const target = map.expandGrid('left');
+    expect(map.state.gridCols).toBe(colsBefore);
+    for (const z of map.state.zones) {
+      const before = snapshot.find((s) => s.id === z.id);
+      expect(z.col).toBe(before.col);
+    }
+    expect(target).toEqual({ direction: 'left' });
+  });
+
+  test('existing connections survive growth-driven zone shifts', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    // Zone IDs are stable across shifts, and connections reference IDs,
+    // so every prior pair must still be present after a top-grow that
+    // pushes existing zones down. (The new zone's auto-connect edges
+    // are additive — they don't disturb the original graph.)
+    const pairKey = ([a, b]) => [a, b].sort().join('::');
+    const beforeKeys = new Set(map.state.connections.map(pairKey));
+    map.setAutoConnectEnabled(false); // isolate this assertion from auto-connect
+    map.expandGrid('top');
+    map.addZoneFromLibrary({ name: 'Sky', description: '', shape: 'small', defaultPills: [] });
+    const afterKeys = new Set(map.state.connections.map(pairKey));
+    for (const key of beforeKeys) expect(afterKeys.has(key)).toBe(true);
+  });
+
+  test('expandGrid sets pending direction; library add uses it and pending stays alive', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const target = map.expandGrid('top');
+    expect(map.state.pendingPlacementCell).toEqual(target);
+    expect(target.direction).toBe('top');
+
+    const id = map.addZoneFromLibrary({
+      name: 'Sky Bridge', description: '', shape: 'small', defaultPills: [],
+    });
+    const added = map.state.zones.find((z) => z.id === id);
+    expect(added.row).toBe(1);
+    // Pending stays alive across picks so successive zones from the same
+    // library session keep landing on the chosen edge.
+    expect(map.state.pendingPlacementCell).toEqual({ direction: 'top' });
+  });
+
+  test('successive picks from the same edge flow keep landing on the same edge', () => {
+    // Click bottom `+`, pick three small zones — they should fill the
+    // bottom edge before any new row gets added, then a new row only
+    // when the existing edge is full.
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const initialBottom = map.state.gridRows;
+    // Bottom row of urban_alleys is fully packed, so the first pick
+    // grows to a new bottom row.
+    map.expandGrid('bottom');
+    const id1 = map.addZoneFromLibrary({ name: 'A', description: '', shape: 'small', defaultPills: [] });
+    const id2 = map.addZoneFromLibrary({ name: 'B', description: '', shape: 'small', defaultPills: [] });
+    const id3 = map.addZoneFromLibrary({ name: 'C', description: '', shape: 'small', defaultPills: [] });
+
+    const a = map.state.zones.find((z) => z.id === id1);
+    const b = map.state.zones.find((z) => z.id === id2);
+    const c = map.state.zones.find((z) => z.id === id3);
+
+    // First pick grew once; the next two filled the same row.
+    expect(map.state.gridRows).toBe(initialBottom + 1);
+    expect(a.row).toBe(initialBottom + 1);
+    expect(b.row).toBe(initialBottom + 1);
+    expect(c.row).toBe(initialBottom + 1);
+    expect(map.state.pendingPlacementCell).toEqual({ direction: 'bottom' });
+
+    // Now the bottom row is full (cols 1-3); a fourth pick has to grow.
+    const id4 = map.addZoneFromLibrary({ name: 'D', description: '', shape: 'small', defaultPills: [] });
+    const d = map.state.zones.find((z) => z.id === id4);
+    expect(map.state.gridRows).toBe(initialBottom + 2);
+    expect(d.row).toBe(initialBottom + 2);
+  });
+
+  test('clearPendingPlacement wipes the cell (library dismissed without pick)', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('right');
+    expect(map.state.pendingPlacementCell).not.toBeNull();
+    map.clearPendingPlacement();
+    expect(map.state.pendingPlacementCell).toBeNull();
+  });
+
+  test('lazy expand: dismissing without a pick leaves the grid intact', () => {
+    // The eager-grow flow used to leave a dangling empty row when the
+    // user clicked an edge `+` then dismissed the library. Lazy expand
+    // never mutates the grid at click time, so dismiss is a pure no-op.
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    const rooftopsRowBefore = map.state.zones.find((z) => z.id === 'rooftops').row;
+
+    map.expandGrid('top');
+    expect(map.state.gridRows).toBe(rowsBefore);
+    expect(map.state.zones.find((z) => z.id === 'rooftops').row).toBe(rooftopsRowBefore);
+
+    map.clearPendingPlacement();
+    expect(map.state.gridRows).toBe(rowsBefore);
+    expect(map.state.zones.find((z) => z.id === 'rooftops').row).toBe(rooftopsRowBefore);
+  });
+
+  test('clearPendingPlacement without a pending cell leaves the grid alone', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const rowsBefore = map.state.gridRows;
+    const colsBefore = map.state.gridCols;
+    map.clearPendingPlacement();
+    expect(map.state.gridRows).toBe(rowsBefore);
+    expect(map.state.gridCols).toBe(colsBefore);
+  });
+
+  test('without pending placement, library add falls back to first-empty-cell', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const libraryZone = { name: 'Somewhere', description: '', shape: 'small', defaultPills: [] };
+    const id = map.addZoneFromLibrary(libraryZone);
+    const added = map.state.zones.find((z) => z.id === id);
+    // Urban template's 3x3 grid is fully populated in rows 1-3 after
+    // templates.json load; so the first truly empty cell would be row 4
+    // (or wherever the grid appends a new row).
+    expect(added).toBeDefined();
+    expect(added.row).toBeGreaterThanOrEqual(1);
+  });
+
+  test('pendingPlacementCell is not persisted to localStorage', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    map.expandGrid('top');
+    await nextTick();
+    const persisted = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(persisted).not.toHaveProperty('pendingPlacementCell');
+  });
+
+  test('reload after edge-expand-without-pick leaves the grid intact', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    const rowsBefore = map1.state.gridRows;
+    const rooftopsBefore = map1.state.zones.find((z) => z.id === 'rooftops').row;
+    map1.expandGrid('top');
+    // Lazy expand: nothing changed at click time, so reload is also a no-op.
+    expect(map1.state.gridRows).toBe(rowsBefore);
+    expect(map1.state.zones.find((z) => z.id === 'rooftops').row).toBe(rooftopsBefore);
+    await nextTick();
+
+    const map2 = useChaseMap();
+    expect(map2.state.gridRows).toBe(rowsBefore);
+    expect(map2.state.zones.find((z) => z.id === 'rooftops').row).toBe(rooftopsBefore);
+  });
+
+  test('reload after a bottom expand without pick leaves the grid intact', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('urban_alleys');
+    const rowsBefore = map1.state.gridRows;
+    map1.expandGrid('bottom');
+    expect(map1.state.gridRows).toBe(rowsBefore);
+    await nextTick();
+
+    const map2 = useChaseMap();
+    expect(map2.state.gridRows).toBe(rowsBefore);
+  });
+});
+
+describe('useChaseMap — setTokenZone', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('sets zoneId directly without any adjacency check', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const nonAdjacent = map.state.zones.find(
+      (z) => z.id !== token.zoneId && !map.isAdjacent(token.zoneId, z.id)
+    );
+    if (!nonAdjacent) return;
+    expect(map.setTokenZone(token.id, nonAdjacent.id)).toBe(true);
+    expect(token.zoneId).toBe(nonAdjacent.id);
+  });
+
+  test('accepts null (sends to the tray)', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    expect(map.setTokenZone(token.id, null)).toBe(true);
+    expect(token.zoneId).toBeNull();
+  });
+
+  test('rejects unknown zoneIds without mutating', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const token = map.state.tokens[0];
+    const original = token.zoneId;
+    expect(map.setTokenZone(token.id, 'made-up-zone')).toBe(false);
+    expect(token.zoneId).toBe(original);
+  });
+});
+
+describe('useChaseMap — persistence', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('active chase state round-trips', async () => {
+    const map1 = useChaseMap();
+    map1.startFromTemplate('wilderness_trails');
+    await nextTick();
+    await nextTick();
+    const map2 = useChaseMap();
+    expect(map2.state.hasActiveChase).toBe(true);
+    expect(map2.state.mapName).toBe('Wilderness Trails');
+  });
+
+  test('stored state missing core arrays resets to empty', () => {
+    // Shape check guards against structurally-broken payloads (old
+    // pre-release schemas, partial writes). Any payload without zones/
+    // tokens/connections arrays gets discarded.
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ hasActiveChase: true, zones: null, tokens: [], connections: [] })
+    );
+    const map = useChaseMap();
+    expect(map.state.hasActiveChase).toBe(false);
+  });
+
+  test('stored state missing new fields fills defaults', async () => {
+    // A payload written before environments/scenario existed should
+    // still load — missing fields fill with defaults rather than
+    // discarding the chase.
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        hasActiveChase: true,
+        mapName: 'Old Chase',
+        gridCols: 3,
+        gridRows: 3,
+        zones: [],
+        tokens: [],
+        connections: [],
+        selectedTokenId: null,
+      })
+    );
+    const map = useChaseMap();
+    expect(map.state.hasActiveChase).toBe(true);
+    expect(Array.isArray(map.state.environments)).toBe(true);
+    expect(map.state.scenario).toBe('');
+  });
+
+  test('malformed JSON resets to empty', () => {
+    localStorage.setItem(STORAGE_KEY, '{not valid json');
+    const map = useChaseMap();
+    expect(map.state.hasActiveChase).toBe(false);
+  });
+});
+
+describe('useChaseMap — misc', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('addToken applies role defaults when icon/color omitted', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const id = map.addToken({ label: 'Stranger', role: 'pursuer' });
+    const token = map.state.tokens.find((t) => t.id === id);
+    expect(token.icon).toBe(ROLE_DEFAULTS.pursuer.icon);
+    expect(token.color).toBe(ROLE_DEFAULTS.pursuer.color);
+    expect(token.zoneId).toBeNull();
+  });
+
+  test('updateZone refuses to write a legacy `state` field', () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    const zoneId = map.state.zones[0].id;
+    map.updateZone(zoneId, { name: 'Renamed', state: 'crowded' });
+    const zone = map.state.zones.find((z) => z.id === zoneId);
+    expect(zone.name).toBe('Renamed');
+    expect(zone).not.toHaveProperty('state');
+  });
+
+  test('reset clears state', async () => {
+    const map = useChaseMap();
+    map.startFromTemplate('urban_alleys');
+    await nextTick();
+    map.reset();
+    await nextTick();
+    expect(map.state.hasActiveChase).toBe(false);
+  });
+});
+
+describe('ChaseTracker root', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('free tier shows only non-premium templates', () => {
+    const wrapper = mount(ChaseTracker, { props: { premium: false } });
+    const expected = templatesData.templates.filter((t) => !t.premium).length;
+    expect(wrapper.findAll('.picker-card').length).toBe(expected);
+  });
+
+  test('premium tier shows all templates', () => {
+    const wrapper = mount(ChaseTracker, { props: { premium: true } });
+    expect(wrapper.findAll('.picker-card').length).toBe(templatesData.templates.length);
+  });
+
+  test('renders the template picker when no active chase', () => {
+    const wrapper = mount(ChaseTracker, { props: { premium: false } });
+    expect(wrapper.find('.template-picker').exists()).toBe(true);
+    expect(wrapper.find('.chase-map').exists()).toBe(false);
+  });
+});

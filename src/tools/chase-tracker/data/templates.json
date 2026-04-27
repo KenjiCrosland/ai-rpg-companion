@@ -1,0 +1,295 @@
+{
+  "templates": [
+    {
+      "id": "urban_alleys",
+      "name": "Urban Alleyways",
+      "description": "Narrow streets, rooftops, and the back corridors of a crowded city.",
+      "scenario": "[Example] A cutpurse flees the festival crowd, the City Watch in pursuit.",
+      "environments": ["urban"],
+      "group": "material",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "rooftops", "name": "Rooftops", "description": "Sloped tiles and narrow gaps between buildings. A fall from here would hurt.", "col": 1, "row": 1, "colSpan": 3, "pills": [] },
+        { "id": "main_street", "name": "Main Street", "description": "Wide and crowded. A procession of festival-goers clogs the thoroughfare.", "col": 1, "row": 2, "colSpan": 2, "pills": [
+          { "id": "p_main_crowded", "label": "Crowded", "tone": "warm", "detail": "A festival procession clogs the street." }
+        ] },
+        { "id": "canal_bridge", "name": "Canal Bridge", "description": "A narrow stone bridge over brown water. Beggars line the sides.", "col": 3, "row": 2, "pills": [] },
+        { "id": "back_alley", "name": "Back Alley", "description": "Refuse, washing lines, and a stray dog. Narrow enough to choke a rider.", "col": 1, "row": 3, "pills": [] },
+        { "id": "inn_kitchen", "name": "Inn Kitchen", "description": "Hot ovens, low-hanging pots, shouting cooks. A back door leads out.", "col": 2, "row": 3, "pills": [
+          { "id": "p_inn_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Low pots and hot surfaces. Acrobatics to cross without burns." }
+        ] },
+        { "id": "warehouse_row", "name": "Warehouse Row", "description": "Tall shuttered buildings. Dockhands moving cargo. A good place to disappear.", "col": 3, "row": 3, "pills": [] }
+      ],
+      "connections": [
+        ["rooftops", "main_street"],
+        ["rooftops", "canal_bridge"],
+        ["main_street", "canal_bridge"],
+        ["main_street", "back_alley"],
+        ["main_street", "inn_kitchen"],
+        ["canal_bridge", "warehouse_row"],
+        ["back_alley", "inn_kitchen"],
+        ["inn_kitchen", "warehouse_row"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Fenn the Cutpurse", "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "main_street", "dashCount": 0 },
+        { "id": "p1", "label": "Boblin",            "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "back_alley",  "dashCount": 0 },
+        { "id": "p2", "label": "Gary",              "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "back_alley",  "dashCount": 0 },
+        { "id": "p3", "label": "Borag",             "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "back_alley",  "dashCount": 0 },
+        { "id": "pu1","label": "City Watch",        "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "back_alley",  "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "wilderness_trails",
+      "name": "Wilderness Trails",
+      "description": "Forest paths, rising ground, hiding places in the undergrowth.",
+      "scenario": "[Example] A deserter flees into the deep forest, the King's Trackers on the warrant.",
+      "environments": ["wilderness"],
+      "group": "material",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "ridge", "name": "Ridge", "description": "Higher ground. A clear view in all directions — and easy to be seen.", "col": 1, "row": 1, "colSpan": 3, "pills": [] },
+        { "id": "pine_slope", "name": "Pine Slope", "description": "Steep, slick with needles. Hard going, but good cover among the trunks.", "col": 1, "row": 2, "pills": [] },
+        { "id": "deer_trail", "name": "Deer Trail", "description": "A narrow game path, overgrown with brambles but straight and fast.", "col": 2, "row": 2, "pills": [] },
+        { "id": "rocky_cut", "name": "Rocky Cut", "description": "Loose scree between boulders. Footing is bad, but it's a shortcut.", "col": 3, "row": 2, "pills": [
+          { "id": "p_rocky_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Loose scree. Dex save DC 12 or fall prone while dashing." }
+        ] },
+        { "id": "stream", "name": "Stream", "description": "Cold water to the shins. Slippery stones. Breaks scent, slows movement.", "col": 1, "row": 3, "pills": [
+          { "id": "p_stream_slippery", "label": "Slippery", "tone": "warm", "detail": "Mossy stones under water. Dashing risks a Dex save." }
+        ] },
+        { "id": "hermit_path", "name": "Hermit's Path", "description": "Barely visible under fallen leaves. An old route, known only to a few.", "col": 2, "row": 3, "colSpan": 2, "pills": [] }
+      ],
+      "connections": [
+        ["ridge", "pine_slope"],
+        ["ridge", "deer_trail"],
+        ["ridge", "rocky_cut"],
+        ["pine_slope", "deer_trail"],
+        ["pine_slope", "stream"],
+        ["deer_trail", "rocky_cut"],
+        ["deer_trail", "hermit_path"],
+        ["stream", "hermit_path"],
+        ["rocky_cut", "hermit_path"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Rook the Deserter", "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "deer_trail", "dashCount": 0 },
+        { "id": "p1", "label": "Thorn",             "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "ridge",      "dashCount": 0 },
+        { "id": "p2", "label": "Ansel",             "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "ridge",      "dashCount": 0 },
+        { "id": "p3", "label": "Bree",              "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "ridge",      "dashCount": 0 },
+        { "id": "pu1","label": "King's Trackers",   "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "ridge",      "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "building_interior",
+      "name": "Building Interior",
+      "description": "Rooms and corridors inside a large structure — mansion, keep, or temple.",
+      "scenario": "[Example] The steward stole from his master and runs through the manor halls.",
+      "environments": ["indoor"],
+      "group": "material",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "grand_hall", "name": "Grand Hall", "description": "High ceilings, marble floors, echoing footsteps. Tables and guests in the way.", "col": 1, "row": 1, "colSpan": 2, "pills": [
+          { "id": "p_grand_crowded", "label": "Crowded", "tone": "warm", "detail": "Guests and servants everywhere. Stealth is nearly impossible." }
+        ] },
+        { "id": "stairwell", "name": "Stairwell", "description": "A spiral staircase leading up and down. A choke point, and an opportunity.", "col": 3, "row": 1, "rowSpan": 2, "pills": [] },
+        { "id": "servant_corridor", "name": "Servant Corridor", "description": "Narrow, poorly lit, smelling of ash and laundry soap. Fewer witnesses.", "col": 1, "row": 2, "pills": [] },
+        { "id": "library", "name": "Library", "description": "Towering shelves, ladders, a maze of reading nooks. Quiet, but tight quarters.", "col": 2, "row": 2, "pills": [
+          { "id": "p_library_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Ladders, stacks, tight passages. Athletics to move through at speed." }
+        ] },
+        { "id": "kitchen", "name": "Kitchen", "description": "Fires, knives, running servants. A back door opens onto the yard.", "col": 1, "row": 3, "pills": [
+          { "id": "p_kitchen_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Fire, steam, hot steel. Passing costs a Dex save or minor fire damage." }
+        ] },
+        { "id": "courtyard", "name": "Courtyard", "description": "Open cobblestones under the sky. No cover, but many exits.", "col": 2, "row": 3, "colSpan": 2, "pills": [] }
+      ],
+      "connections": [
+        ["grand_hall", "stairwell"],
+        ["grand_hall", "servant_corridor"],
+        ["grand_hall", "library"],
+        ["stairwell", "library"],
+        ["stairwell", "courtyard"],
+        ["servant_corridor", "library"],
+        ["servant_corridor", "kitchen"],
+        ["library", "kitchen"],
+        ["kitchen", "courtyard"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Hollis the Steward",      "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "grand_hall", "dashCount": 0 },
+        { "id": "p1", "label": "Vesper",                  "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grand_hall", "dashCount": 0 },
+        { "id": "p2", "label": "Corwin",                  "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grand_hall", "dashCount": 0 },
+        { "id": "p3", "label": "Lys",                     "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grand_hall", "dashCount": 0 },
+        { "id": "pu1","label": "House Guards of Sir Aubrey","role": "pursuer","icon": "swords","color": "slate",   "zoneId": "stairwell",  "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "undercity",
+      "name": "Undercity",
+      "description": "Sewer tunnels, forgotten passages, and the things that live in the dark.",
+      "scenario": "[Example] An informant flees into the sewers, enforcers hunting him down.",
+      "environments": ["underground"],
+      "group": "material",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "grate", "name": "Grate", "description": "Iron bars above. Daylight, air, and noise from the street.", "col": 2, "row": 1, "pills": [] },
+        { "id": "main_tunnel", "name": "Main Tunnel", "description": "Waist-deep brown water. Echoes carry far down here.", "col": 1, "row": 2, "colSpan": 3, "pills": [] },
+        { "id": "side_passage", "name": "Side Passage", "description": "Too narrow for two abreast. The walls are wet.", "col": 1, "row": 3, "pills": [] },
+        { "id": "cistern", "name": "Cistern", "description": "A round chamber, water to the knees. Old brickwork, ancient.", "col": 2, "row": 3, "pills": [] },
+        { "id": "collapsed", "name": "Collapsed Section", "description": "Rubble and standing water. A climb, if you're brave.", "col": 3, "row": 3, "pills": [
+          { "id": "p_collapsed_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Unstable rubble over hidden pits. Athletics to cross without slipping." }
+        ] }
+      ],
+      "connections": [
+        ["grate", "main_tunnel"],
+        ["main_tunnel", "side_passage"],
+        ["main_tunnel", "cistern"],
+        ["main_tunnel", "collapsed"],
+        ["side_passage", "cistern"],
+        ["cistern", "collapsed"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Smudge the Informant",     "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "main_tunnel", "dashCount": 0 },
+        { "id": "p1", "label": "Scab",                     "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grate",       "dashCount": 0 },
+        { "id": "p2", "label": "Mud",                      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grate",       "dashCount": 0 },
+        { "id": "p3", "label": "Kes",                      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "grate",       "dashCount": 0 },
+        { "id": "pu1","label": "Grave-Hand Enforcers",     "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "main_tunnel", "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "feywild",
+      "name": "Feywild",
+      "description": "Twilight woods where bargains have weight and time slips like water.",
+      "scenario": "[Example] A fey trickster flees through the twilight wood, the court's hounds baying behind.",
+      "environments": ["feywild"],
+      "group": "planar",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "twilight_glade", "name": "Twilight Glade", "description": "Saturated dusk colors. Fireflies, or something pretending to be.", "col": 2, "row": 1, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "mushroom_ring", "name": "Mushroom Ring", "description": "A perfect circle of red-capped fungi. Step inside at your peril.", "col": 1, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "singing_brook", "name": "Singing Brook", "description": "The water hums in a tongue almost remembered.", "col": 2, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "hollow_oak", "name": "Hollow Oak", "description": "A door inside the trunk. It does not always open the same way.", "col": 3, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "bramble_path", "name": "Bramble Path", "description": "Thorns that part for the right kind of guest. Or close on the wrong.", "col": 1, "row": 3, "colSpan": 3, "rowSpan": 1, "pills": [
+          { "id": "p_bramble_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Thorns that judge the passer. Athletics or Nature to cross without cuts." }
+        ] }
+      ],
+      "connections": [
+        ["twilight_glade", "mushroom_ring"],
+        ["twilight_glade", "singing_brook"],
+        ["twilight_glade", "hollow_oak"],
+        ["mushroom_ring", "singing_brook"],
+        ["singing_brook", "hollow_oak"],
+        ["mushroom_ring", "bramble_path"],
+        ["singing_brook", "bramble_path"],
+        ["hollow_oak", "bramble_path"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Piper the Bargain-Breaker", "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "twilight_glade", "dashCount": 0 },
+        { "id": "p1", "label": "Sable",                    "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "bramble_path",   "dashCount": 0 },
+        { "id": "p2", "label": "Wren",                     "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "bramble_path",   "dashCount": 0 },
+        { "id": "p3", "label": "Aster",                    "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "bramble_path",   "dashCount": 0 },
+        { "id": "pu1","label": "Bramble Hounds",           "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "bramble_path",   "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "shadowfell",
+      "name": "Shadowfell",
+      "description": "Gray lands where memory frays and color forgets itself.",
+      "scenario": "[Example] A fading soul flees the gray lands, gloomhands pursuing to drag them back.",
+      "environments": ["shadowfell"],
+      "group": "planar",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "ashen_road", "name": "Ashen Road", "description": "A path of gray dust. No footprints linger here.", "col": 1, "row": 1, "colSpan": 3, "rowSpan": 1, "pills": [] },
+        { "id": "withered_grove", "name": "Withered Grove", "description": "Trees with no leaves, no birds, no sound except wind through bone.", "col": 1, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "broken_bridge", "name": "Broken Bridge", "description": "Half a span over a ravine of fog. The other half is gone, or never was.", "col": 2, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [
+          { "id": "p_bridge_obstacle", "label": "Obstacle", "tone": "danger", "detail": "A leap of faith over fog. Athletics to cross without falling." }
+        ] },
+        { "id": "old_battlefield", "name": "Old Battlefield", "description": "Rusted weapons, faded banners, the dead who don't remember dying.", "col": 3, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "forgotten_cairn", "name": "Forgotten Cairn", "description": "Stones piled by someone, for someone. Both forgotten now.", "col": 2, "row": 3, "colSpan": 1, "rowSpan": 1, "pills": [] }
+      ],
+      "connections": [
+        ["ashen_road", "withered_grove"],
+        ["ashen_road", "broken_bridge"],
+        ["ashen_road", "old_battlefield"],
+        ["withered_grove", "broken_bridge"],
+        ["broken_bridge", "old_battlefield"],
+        ["withered_grove", "forgotten_cairn"],
+        ["broken_bridge", "forgotten_cairn"],
+        ["old_battlefield", "forgotten_cairn"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Silas the Remembered", "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "ashen_road",     "dashCount": 0 },
+        { "id": "p1", "label": "Fern",                 "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "withered_grove", "dashCount": 0 },
+        { "id": "p2", "label": "Ash",                  "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "withered_grove", "dashCount": 0 },
+        { "id": "p3", "label": "Mira",                 "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "withered_grove", "dashCount": 0 },
+        { "id": "pu1","label": "Gloomhands",           "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "ashen_road",     "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "underdark",
+      "name": "Underdark",
+      "description": "Vast caverns, narrow chasms, and things older than the surface knows.",
+      "scenario": "[Example] A drow informant flees deep into the Underdark, his masters' enforcers close behind.",
+      "environments": ["underdark"],
+      "group": "planar",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "vast_cavern", "name": "Vast Cavern", "description": "A space too large to see across. The ceiling is rumor, not fact.", "col": 1, "row": 1, "colSpan": 3, "rowSpan": 1, "pills": [] },
+        { "id": "fungal_thicket", "name": "Fungal Thicket", "description": "Glowing caps as tall as a man. Spores drift like slow snow.", "col": 1, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "narrow_chasm", "name": "Narrow Chasm", "description": "A crack in the world. Wide enough to leap, deep enough to wonder.", "col": 2, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [
+          { "id": "p_chasm_obstacle", "label": "Obstacle", "tone": "danger", "detail": "A leap over a deep crack. Athletics to clear without falling." }
+        ] },
+        { "id": "crystal_chamber", "name": "Crystal Chamber", "description": "Faceted growth on every surface. Light bends and lies here.", "col": 3, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "deep_pool", "name": "Deep Pool", "description": "Black water with no bottom anyone has confirmed. Something stirs.", "col": 1, "row": 3, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "drow_outpost", "name": "Drow Outpost", "description": "Stone carved with cruel grace. Watchers who do not blink.", "col": 3, "row": 3, "colSpan": 1, "rowSpan": 1, "pills": [] }
+      ],
+      "connections": [
+        ["vast_cavern", "fungal_thicket"],
+        ["vast_cavern", "narrow_chasm"],
+        ["vast_cavern", "crystal_chamber"],
+        ["fungal_thicket", "narrow_chasm"],
+        ["narrow_chasm", "crystal_chamber"],
+        ["fungal_thicket", "deep_pool"],
+        ["crystal_chamber", "drow_outpost"],
+        ["deep_pool", "drow_outpost"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Virik the Spy",       "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "vast_cavern",    "dashCount": 0 },
+        { "id": "p1", "label": "Korr",                "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "fungal_thicket", "dashCount": 0 },
+        { "id": "p2", "label": "Vex",                 "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "fungal_thicket", "dashCount": 0 },
+        { "id": "p3", "label": "Daven",               "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "fungal_thicket", "dashCount": 0 },
+        { "id": "pu1","label": "Dark Disciples",      "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "vast_cavern",    "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "blank",
+      "name": "Blank",
+      "description": "An empty map. Build your own chase from the ground up.",
+      "scenario": "[Example] Set the scene in a sentence.",
+      "environments": [],
+      "group": "blank",
+      "premium": false,
+      "blank": true,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [],
+      "connections": [],
+      "defaultTokens": [
+        { "id": "q1", "label": "Quarry",  "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": null, "dashCount": 0 },
+        { "id": "p1", "label": "PC",      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": null, "dashCount": 0 },
+        { "id": "p2", "label": "PC",      "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": null, "dashCount": 0 },
+        { "id": "pu1","label": "Pursuer", "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": null, "dashCount": 0 }
+      ]
+    }
+  ]
+}
