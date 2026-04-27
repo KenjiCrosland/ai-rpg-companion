@@ -121,9 +121,11 @@
       <ZoneLibrary
         :open="libraryOpen"
         :default-environments="map.state.environments"
+        :auto-connect="map.state.autoConnectEnabled"
         @close="onLibraryClose"
         @add-from-library="onAddFromLibrary"
         @add-custom="onAddCustomZone"
+        @update:auto-connect="map.setAutoConnectEnabled"
       />
 
       <RulesDrawer :open="rulesOpen" @close="rulesOpen = false" />
@@ -151,7 +153,10 @@
         @dismiss="map.dismissDashHint"
       />
 
-      <ToolFooter />
+      <!-- Footer lives outside the Vue app on the WordPress page (see
+           rpg-companion-chase-tracker.php's `rpg_chase_tracker_footer`).
+           Avoid double-footers by skipping ToolFooter here. -->
+      <!-- <ToolFooter /> -->
     </div>
   </div>
 </template>
@@ -172,7 +177,9 @@ import RulesDrawer from './components/RulesDrawer.vue';
 import OnboardingHint from './components/OnboardingHint.vue';
 import DashHint from './components/DashHint.vue';
 import ZoneTapHint from './components/ZoneTapHint.vue';
-import ToolFooter from './components/ToolFooter.vue';
+// ToolFooter intentionally not imported — the WordPress template
+// renders its own attribution footer below the Vue app (see
+// rpg-companion-chase-tracker.php).
 import ZoneDetailSheet from './components/ZoneDetailSheet.vue';
 import ChaseParticipantsPanel from './components/ChaseParticipantsPanel.vue';
 import { useIsMobile } from './composables/useBreakpoint.js';
@@ -194,7 +201,6 @@ export default {
     OnboardingHint,
     DashHint,
     ZoneTapHint,
-    ToolFooter,
     ZoneDetailSheet,
     ChaseParticipantsPanel,
   },

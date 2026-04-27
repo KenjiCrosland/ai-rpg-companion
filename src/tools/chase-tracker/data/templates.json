@@ -6,6 +6,7 @@
       "description": "Narrow streets, rooftops, and the back corridors of a crowded city.",
       "scenario": "[Example] A cutpurse flees the festival crowd, the City Watch in pursuit.",
       "environments": ["urban"],
+      "group": "material",
       "premium": false,
       "gridCols": 3,
       "gridRows": 3,
@@ -45,6 +46,7 @@
       "description": "Forest paths, rising ground, hiding places in the undergrowth.",
       "scenario": "[Example] A deserter flees into the deep forest, the King's Trackers on the warrant.",
       "environments": ["wilderness"],
+      "group": "material",
       "premium": false,
       "gridCols": 3,
       "gridRows": 3,
@@ -85,6 +87,7 @@
       "description": "Rooms and corridors inside a large structure — mansion, keep, or temple.",
       "scenario": "[Example] The steward stole from his master and runs through the manor halls.",
       "environments": ["indoor"],
+      "group": "material",
       "premium": false,
       "gridCols": 3,
       "gridRows": 3,
@@ -127,6 +130,7 @@
       "description": "Sewer tunnels, forgotten passages, and the things that live in the dark.",
       "scenario": "[Example] An informant flees into the sewers, enforcers hunting him down.",
       "environments": ["underground"],
+      "group": "material",
       "premium": false,
       "gridCols": 3,
       "gridRows": 3,
@@ -156,11 +160,124 @@
       ]
     },
     {
+      "id": "feywild",
+      "name": "Feywild",
+      "description": "Twilight woods where bargains have weight and time slips like water.",
+      "scenario": "[Example] A fey trickster flees through the twilight wood, the court's hounds baying behind.",
+      "environments": ["feywild"],
+      "group": "planar",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "twilight_glade", "name": "Twilight Glade", "description": "Saturated dusk colors. Fireflies, or something pretending to be.", "col": 2, "row": 1, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "mushroom_ring", "name": "Mushroom Ring", "description": "A perfect circle of red-capped fungi. Step inside at your peril.", "col": 1, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "singing_brook", "name": "Singing Brook", "description": "The water hums in a tongue almost remembered.", "col": 2, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "hollow_oak", "name": "Hollow Oak", "description": "A door inside the trunk. It does not always open the same way.", "col": 3, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "bramble_path", "name": "Bramble Path", "description": "Thorns that part for the right kind of guest. Or close on the wrong.", "col": 1, "row": 3, "colSpan": 3, "rowSpan": 1, "pills": [
+          { "id": "p_bramble_obstacle", "label": "Obstacle", "tone": "danger", "detail": "Thorns that judge the passer. Athletics or Nature to cross without cuts." }
+        ] }
+      ],
+      "connections": [
+        ["twilight_glade", "mushroom_ring"],
+        ["twilight_glade", "singing_brook"],
+        ["twilight_glade", "hollow_oak"],
+        ["mushroom_ring", "singing_brook"],
+        ["singing_brook", "hollow_oak"],
+        ["mushroom_ring", "bramble_path"],
+        ["singing_brook", "bramble_path"],
+        ["hollow_oak", "bramble_path"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Piper the Bargain-Breaker", "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "twilight_glade", "dashCount": 0 },
+        { "id": "p1", "label": "Sable",                    "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "bramble_path",   "dashCount": 0 },
+        { "id": "p2", "label": "Wren",                     "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "bramble_path",   "dashCount": 0 },
+        { "id": "p3", "label": "Aster",                    "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "bramble_path",   "dashCount": 0 },
+        { "id": "pu1","label": "Bramble Hounds",           "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "bramble_path",   "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "shadowfell",
+      "name": "Shadowfell",
+      "description": "Gray lands where memory frays and color forgets itself.",
+      "scenario": "[Example] A fading soul flees the gray lands, gloomhands pursuing to drag them back.",
+      "environments": ["shadowfell"],
+      "group": "planar",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "ashen_road", "name": "Ashen Road", "description": "A path of gray dust. No footprints linger here.", "col": 1, "row": 1, "colSpan": 3, "rowSpan": 1, "pills": [] },
+        { "id": "withered_grove", "name": "Withered Grove", "description": "Trees with no leaves, no birds, no sound except wind through bone.", "col": 1, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "broken_bridge", "name": "Broken Bridge", "description": "Half a span over a ravine of fog. The other half is gone, or never was.", "col": 2, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [
+          { "id": "p_bridge_obstacle", "label": "Obstacle", "tone": "danger", "detail": "A leap of faith over fog. Athletics to cross without falling." }
+        ] },
+        { "id": "old_battlefield", "name": "Old Battlefield", "description": "Rusted weapons, faded banners, the dead who don't remember dying.", "col": 3, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "forgotten_cairn", "name": "Forgotten Cairn", "description": "Stones piled by someone, for someone. Both forgotten now.", "col": 2, "row": 3, "colSpan": 1, "rowSpan": 1, "pills": [] }
+      ],
+      "connections": [
+        ["ashen_road", "withered_grove"],
+        ["ashen_road", "broken_bridge"],
+        ["ashen_road", "old_battlefield"],
+        ["withered_grove", "broken_bridge"],
+        ["broken_bridge", "old_battlefield"],
+        ["withered_grove", "forgotten_cairn"],
+        ["broken_bridge", "forgotten_cairn"],
+        ["old_battlefield", "forgotten_cairn"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Silas the Remembered", "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "ashen_road",     "dashCount": 0 },
+        { "id": "p1", "label": "Fern",                 "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "withered_grove", "dashCount": 0 },
+        { "id": "p2", "label": "Ash",                  "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "withered_grove", "dashCount": 0 },
+        { "id": "p3", "label": "Mira",                 "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "withered_grove", "dashCount": 0 },
+        { "id": "pu1","label": "Gloomhands",           "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "ashen_road",     "dashCount": 0 }
+      ]
+    },
+    {
+      "id": "underdark",
+      "name": "Underdark",
+      "description": "Vast caverns, narrow chasms, and things older than the surface knows.",
+      "scenario": "[Example] A drow informant flees deep into the Underdark, his masters' enforcers close behind.",
+      "environments": ["underdark"],
+      "group": "planar",
+      "premium": false,
+      "gridCols": 3,
+      "gridRows": 3,
+      "zones": [
+        { "id": "vast_cavern", "name": "Vast Cavern", "description": "A space too large to see across. The ceiling is rumor, not fact.", "col": 1, "row": 1, "colSpan": 3, "rowSpan": 1, "pills": [] },
+        { "id": "fungal_thicket", "name": "Fungal Thicket", "description": "Glowing caps as tall as a man. Spores drift like slow snow.", "col": 1, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "narrow_chasm", "name": "Narrow Chasm", "description": "A crack in the world. Wide enough to leap, deep enough to wonder.", "col": 2, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [
+          { "id": "p_chasm_obstacle", "label": "Obstacle", "tone": "danger", "detail": "A leap over a deep crack. Athletics to clear without falling." }
+        ] },
+        { "id": "crystal_chamber", "name": "Crystal Chamber", "description": "Faceted growth on every surface. Light bends and lies here.", "col": 3, "row": 2, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "deep_pool", "name": "Deep Pool", "description": "Black water with no bottom anyone has confirmed. Something stirs.", "col": 1, "row": 3, "colSpan": 1, "rowSpan": 1, "pills": [] },
+        { "id": "drow_outpost", "name": "Drow Outpost", "description": "Stone carved with cruel grace. Watchers who do not blink.", "col": 3, "row": 3, "colSpan": 1, "rowSpan": 1, "pills": [] }
+      ],
+      "connections": [
+        ["vast_cavern", "fungal_thicket"],
+        ["vast_cavern", "narrow_chasm"],
+        ["vast_cavern", "crystal_chamber"],
+        ["fungal_thicket", "narrow_chasm"],
+        ["narrow_chasm", "crystal_chamber"],
+        ["fungal_thicket", "deep_pool"],
+        ["crystal_chamber", "drow_outpost"],
+        ["deep_pool", "drow_outpost"]
+      ],
+      "defaultTokens": [
+        { "id": "q1", "label": "Virik the Spy",       "role": "quarry",  "icon": "run",    "color": "crimson", "zoneId": "vast_cavern",    "dashCount": 0 },
+        { "id": "p1", "label": "Korr",                "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "fungal_thicket", "dashCount": 0 },
+        { "id": "p2", "label": "Vex",                 "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "fungal_thicket", "dashCount": 0 },
+        { "id": "p3", "label": "Daven",               "role": "pc",      "icon": "person", "color": "ochre",   "zoneId": "fungal_thicket", "dashCount": 0 },
+        { "id": "pu1","label": "Dark Disciples",      "role": "pursuer", "icon": "swords", "color": "slate",   "zoneId": "vast_cavern",    "dashCount": 0 }
+      ]
+    },
+    {
       "id": "blank",
       "name": "Blank",
       "description": "An empty map. Build your own chase from the ground up.",
       "scenario": "[Example] Set the scene in a sentence.",
       "environments": [],
+      "group": "blank",
       "premium": false,
       "blank": true,
       "gridCols": 3,

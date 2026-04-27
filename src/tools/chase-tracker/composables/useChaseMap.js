@@ -32,6 +32,14 @@ function markDashHintSeen() {
   }
 }
 
+// Floor for gridCols so a small surviving zone (e.g. one 1×1 zone
+// left after deletions) doesn't stretch full-viewport when the CSS
+// grid recomputes to `repeat(${gridCols}, 1fr)`. Three matches the
+// natural width of every shipped template, so the grid feels like
+// a 3-wide canvas at minimum even when sparsely populated.
+const MIN_GRID_COLS = 3;
+const EMPTY_GRID_DIMS = { rows: 3, cols: 3 };
+
 export const SHAPE_DIMENSIONS = {
   small:   { colSpan: 1, rowSpan: 1 },
   wide:    { colSpan: 2, rowSpan: 1 },
@@ -55,6 +63,19 @@ function emptyState() {
     connectingFromZoneId: null,
     participantsPanelCollapsed: false,
     pendingPlacementCell: null,
+    // ID of the zone added most recently in the current library session.
+    // Used to chain successive picks together so a sequence of adds
+    // forms a connected path even when consecutive zones don't share a
+    // grid edge (e.g. they meet only at a corner, or a forced grow
+    // bumps the new zone to a fresh row). Cleared when the library
+    // closes, a new chase starts, or the referenced zone is removed.
+    lastAddedZoneId: null,
+    // GM preference: auto-connect a newly placed zone to every existing
+    // grid-edge neighbor and to the previously added zone from the
+    // same library session. On by default because that's how GMs
+    // usually want a sequence of adds to read; toggle off for full
+    // manual control.
+    autoConnectEnabled: true,
   };
 }
 
@@ -135,9 +156,13 @@ function loadFromStorage() {
     if (typeof parsed.participantsPanelCollapsed !== 'boolean') {
       parsed.participantsPanelCollapsed = true;
     }
+    if (typeof parsed.autoConnectEnabled !== 'boolean') {
+      parsed.autoConnectEnabled = true;
+    }
     // Drop ephemeral UI state.
     parsed.connectingFromZoneId = null;
     parsed.pendingPlacementCell = null;
+    parsed.lastAddedZoneId = null;
     delete parsed.schemaVersion;
     return parsed;
   } catch {
@@ -148,9 +173,15 @@ function loadFromStorage() {
 function saveToStorage(state) {
   if (typeof window === 'undefined' || !window.localStorage) return;
   try {
-    // Don't persist ephemeral UI state — both are tied to a live flow
-    // (connect mode / edge-expansion → library).
-    const { connectingFromZoneId, pendingPlacementCell, ...persisted } = state;
+    // Don't persist ephemeral UI state — these are all tied to a live
+    // flow (connect mode / edge-expansion → library / current library
+    // add session).
+    const {
+      connectingFromZoneId,
+      pendingPlacementCell,
+      lastAddedZoneId,
+      ...persisted
+    } = state;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
   } catch {
     // storage full or disabled — silent
@@ -181,6 +212,23 @@ function saveLastParticipantsToStorage(payload) {
   } catch {
     // silent
   }
+}
+
+// Two zones share a grid edge (not just a corner) when their bounding
+// rectangles touch along a row or column boundary AND overlap on the
+// perpendicular axis. Used to auto-connect newly placed zones to their
+// visual neighbors so the GM doesn't have to redraw connections by hand.
+function sharesGridEdge(a, b) {
+  const aColEnd = a.col + (a.colSpan || 1) - 1;
+  const aRowEnd = a.row + (a.rowSpan || 1) - 1;
+  const bColEnd = b.col + (b.colSpan || 1) - 1;
+  const bRowEnd = b.row + (b.rowSpan || 1) - 1;
+  const colsTouch = aColEnd + 1 === b.col || bColEnd + 1 === a.col;
+  const rowsOverlap = Math.max(a.row, b.row) <= Math.min(aRowEnd, bRowEnd);
+  if (colsTouch && rowsOverlap) return true;
+  const rowsTouch = aRowEnd + 1 === b.row || bRowEnd + 1 === a.row;
+  const colsOverlap = Math.max(a.col, b.col) <= Math.min(aColEnd, bColEnd);
+  return rowsTouch && colsOverlap;
 }
 
 // AABB overlap check: is the candidate colSpan×rowSpan region anchored at
@@ -218,13 +266,10 @@ export function useChaseMap() {
   // "seen" flag controls whether it can ever show again.
   const dashHintVisible = ref(false);
 
-  // Rehydrated state may include empty rows/columns left over from an
-  // edge-expansion flow that never completed (the user clicked a `+`
-  // edge button, then reloaded before picking a zone). pendingPlacementCell
-  // is ephemeral and already cleared, but the expanded grid bounds were
-  // persisted. Collapse any completely-empty rows/cols so the layout on
-  // reload matches what the user would have seen after dismissing the
-  // library without picking.
+  // Defensive sweep on rehydrate: collapse any completely-empty rows/cols
+  // left over from older saved states or unexpected edits. The lazy
+  // expandGrid flow won't create orphans, but compacting on load keeps the
+  // grid honest if a future path ever does.
   if (state.hasActiveChase && state.zones.length) {
     recomputeGridDimensions();
   }
@@ -282,6 +327,7 @@ export function useChaseMap() {
     state.tokens = template.defaultTokens.map(normalizeToken);
     state.selectedTokenId = null;
     state.connectingFromZoneId = null;
+    state.lastAddedZoneId = null;
     state.participantsPanelCollapsed = false;
 
     applyLastParticipants();
@@ -521,7 +567,33 @@ export function useChaseMap() {
     state.zones.push(zone);
     if (col + colSpan - 1 > state.gridCols) state.gridCols = col + colSpan - 1;
     if (row + rowSpan - 1 > state.gridRows) state.gridRows = row + rowSpan - 1;
+    autoConnectNewZone(zone);
+    state.lastAddedZoneId = zone.id;
     return zone.id;
+  }
+
+  // After a zone is pushed, auto-connect it on two axes:
+  //   1. Spatial — every existing zone that shares a grid edge.
+  //   2. Temporal — the zone added immediately before this one in the
+  //      same library session, so a sequence of adds forms a connected
+  //      path even when consecutive zones meet only at a corner or sit
+  //      a row apart after a forced grow.
+  // connectZones is a no-op for self-connections and pairs that already
+  // share an edge, so the two passes can overlap safely.
+  function autoConnectNewZone(zone) {
+    if (!state.autoConnectEnabled) return;
+    for (const other of state.zones) {
+      if (other.id === zone.id) continue;
+      if (sharesGridEdge(zone, other)) connectZones(zone.id, other.id);
+    }
+    if (state.lastAddedZoneId && state.lastAddedZoneId !== zone.id) {
+      const prior = state.zones.find((z) => z.id === state.lastAddedZoneId);
+      if (prior) connectZones(prior.id, zone.id);
+    }
+  }
+
+  function setAutoConnectEnabled(val) {
+    state.autoConnectEnabled = !!val;
   }
 
   function addZoneFromLibrary(libraryZone) {
@@ -529,14 +601,14 @@ export function useChaseMap() {
 
     let placement = null;
 
-    // Priority path: an edge expansion set a target cell. Try the preferred
-    // shape at the target first; if the region is occupied by a multi-cell
-    // zone that bleeds into the new row/column, slide along the new axis
-    // for a free region; as a last local resort, clamp the shape to the
-    // remaining grid extent from the target.
+    // Priority path: the user opened the library by clicking an edge `+`.
+    // pendingPlacementCell holds the direction; placeAtEdgeTarget scans
+    // the matching edge row/column for a fit and only grows the grid when
+    // the shape can't land at the existing edge. Pending is intentionally
+    // *not* cleared here so successive picks from the same flow keep
+    // landing on the same edge (clearPendingPlacement runs on dismiss).
     if (state.pendingPlacementCell) {
       placement = placeAtEdgeTarget(state.pendingPlacementCell, shape);
-      state.pendingPlacementCell = null;
     }
 
     // Default path: scan the current grid for the first free region that
@@ -574,134 +646,123 @@ export function useChaseMap() {
     state.zones.push(zone);
     if (zone.col + zone.colSpan - 1 > state.gridCols) state.gridCols = zone.col + zone.colSpan - 1;
     if (zone.row + zone.rowSpan - 1 > state.gridRows) state.gridRows = zone.row + zone.rowSpan - 1;
+    autoConnectNewZone(zone);
+    state.lastAddedZoneId = zone.id;
     return zone.id;
   }
 
-  // Resolve a placement for an edge-expansion target. Tries the preferred
-  // shape at the target first, then scans along the newly-created row (for
-  // top/bottom) or column (for left/right) for a free region. If neither
-  // works — which happens when the preferred shape bleeds out of the
-  // single new row/column into existing zones — grow the grid further in
-  // the same direction so the zone still lands at the expanded edge with
-  // its preferred shape. For `top` and `left`, existing zones shift
-  // further away to make room.
+  // Resolve a placement for an edge-direction pick. Scan the existing
+  // edge row (top/bottom) or column (left/right) for a free region the
+  // preferred shape can occupy; if nothing fits, grow the grid in the
+  // pending direction and place the zone at the new edge. Successive
+  // picks from the same flow keep landing on the same edge — only one
+  // new row/column is added per pick that actually needs the room, so
+  // the grid never gains empty space the user didn't ask for.
   function placeAtEdgeTarget(target, shape) {
-    const { col, row, direction } = target;
+    const { direction } = target;
     const cols = Math.max(state.gridCols, 1);
     const rows = Math.max(state.gridRows, 1);
 
-    // Preferred shape at the target.
-    if (
-      col + shape.colSpan - 1 <= cols &&
-      row + shape.rowSpan - 1 <= rows &&
-      isRegionFree(col, row, shape.colSpan, shape.rowSpan, state.zones)
-    ) {
-      return { col, row, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
-    }
-
-    // Scan the new axis for preferred shape.
-    if (direction === 'top' || direction === 'bottom') {
-      for (let c = 1; c + shape.colSpan - 1 <= cols; c++) {
-        if (
-          row + shape.rowSpan - 1 <= rows &&
-          isRegionFree(c, row, shape.colSpan, shape.rowSpan, state.zones)
-        ) {
-          return { col: c, row, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
-        }
-      }
-    } else if (direction === 'left' || direction === 'right') {
-      for (let r = 1; r + shape.rowSpan - 1 <= rows; r++) {
-        if (
-          col + shape.colSpan - 1 <= cols &&
-          isRegionFree(col, r, shape.colSpan, shape.rowSpan, state.zones)
-        ) {
-          return { col, row: r, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
-        }
-      }
-    }
-
-    // Preferred shape won't fit along the edge alone — grow the grid in
-    // the expansion direction so the zone lands at the edge with its
-    // full preferred span. Existing zones shift out of the way for top
-    // and left; for bottom and right we simply extend the far bound.
-    if (direction === 'top') {
-      const extra = shape.rowSpan - 1;
-      if (extra > 0) {
-        for (const zone of state.zones) zone.row += extra;
-        state.gridRows += extra;
-      }
-      if (shape.colSpan > state.gridCols) state.gridCols = shape.colSpan;
-      const placeCol = Math.max(1, Math.min(col, state.gridCols - shape.colSpan + 1));
-      return { col: placeCol, row: 1, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
-    }
     if (direction === 'bottom') {
-      const needRows = row + shape.rowSpan - 1;
-      if (needRows > state.gridRows) state.gridRows = needRows;
-      if (shape.colSpan > state.gridCols) state.gridCols = shape.colSpan;
-      const placeCol = Math.max(1, Math.min(col, state.gridCols - shape.colSpan + 1));
-      return { col: placeCol, row, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
-    }
-    if (direction === 'left') {
-      const extra = shape.colSpan - 1;
-      if (extra > 0) {
-        for (const zone of state.zones) zone.col += extra;
-        state.gridCols += extra;
+      const anchorRow = rows - shape.rowSpan + 1;
+      if (anchorRow >= 1) {
+        for (let c = 1; c + shape.colSpan - 1 <= cols; c++) {
+          if (isRegionFree(c, anchorRow, shape.colSpan, shape.rowSpan, state.zones)) {
+            return { col: c, row: anchorRow, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+          }
+        }
       }
-      if (shape.rowSpan > state.gridRows) state.gridRows = shape.rowSpan;
-      const placeRow = Math.max(1, Math.min(row, state.gridRows - shape.rowSpan + 1));
-      return { col: 1, row: placeRow, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+      return growAndPlace(direction, shape);
     }
+
+    if (direction === 'top') {
+      if (shape.rowSpan <= rows) {
+        for (let c = 1; c + shape.colSpan - 1 <= cols; c++) {
+          if (isRegionFree(c, 1, shape.colSpan, shape.rowSpan, state.zones)) {
+            return { col: c, row: 1, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+          }
+        }
+      }
+      return growAndPlace(direction, shape);
+    }
+
     if (direction === 'right') {
-      const needCols = col + shape.colSpan - 1;
-      if (needCols > state.gridCols) state.gridCols = needCols;
-      if (shape.rowSpan > state.gridRows) state.gridRows = shape.rowSpan;
-      const placeRow = Math.max(1, Math.min(row, state.gridRows - shape.rowSpan + 1));
-      return { col, row: placeRow, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+      const anchorCol = cols - shape.colSpan + 1;
+      if (anchorCol >= 1) {
+        for (let r = 1; r + shape.rowSpan - 1 <= rows; r++) {
+          if (isRegionFree(anchorCol, r, shape.colSpan, shape.rowSpan, state.zones)) {
+            return { col: anchorCol, row: r, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+          }
+        }
+      }
+      return growAndPlace(direction, shape);
+    }
+
+    if (direction === 'left') {
+      if (shape.colSpan <= cols) {
+        for (let r = 1; r + shape.rowSpan - 1 <= rows; r++) {
+          if (isRegionFree(1, r, shape.colSpan, shape.rowSpan, state.zones)) {
+            return { col: 1, row: r, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+          }
+        }
+      }
+      return growAndPlace(direction, shape);
     }
 
     return null;
   }
 
-  // Expand the grid by one row or column in the given direction. For `top`
-  // and `left`, all existing zone coordinates shift to preserve visual
-  // position; connections and tokens reference zone IDs so they're
-  // untouched. Sets pendingPlacementCell so a subsequent library pick
-  // drops into the newly-opened edge cell.
-  function expandGrid(direction) {
-    let target = null;
+  // Grow the grid in the requested direction by exactly the shape's span
+  // along that axis, then return a placement at the new edge. For `top`
+  // and `left`, existing zones shift away to make room (zone IDs are
+  // unchanged so connections and tokens are unaffected).
+  function growAndPlace(direction, shape) {
     if (direction === 'bottom') {
-      state.gridRows += 1;
-      const col = Math.max(1, Math.ceil(state.gridCols / 2));
-      target = { col, row: state.gridRows, direction };
-    } else if (direction === 'right') {
-      state.gridCols += 1;
-      const row = Math.max(1, Math.ceil(state.gridRows / 2));
-      target = { col: state.gridCols, row, direction };
-    } else if (direction === 'top') {
-      for (const zone of state.zones) zone.row += 1;
-      state.gridRows += 1;
-      const col = Math.max(1, Math.ceil(state.gridCols / 2));
-      target = { col, row: 1, direction };
-    } else if (direction === 'left') {
-      for (const zone of state.zones) zone.col += 1;
-      state.gridCols += 1;
-      const row = Math.max(1, Math.ceil(state.gridRows / 2));
-      target = { col: 1, row, direction };
-    } else {
-      return null;
+      const newRow = state.gridRows + 1;
+      state.gridRows += shape.rowSpan;
+      if (shape.colSpan > state.gridCols) state.gridCols = shape.colSpan;
+      return { col: 1, row: newRow, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
     }
+    if (direction === 'top') {
+      for (const zone of state.zones) zone.row += shape.rowSpan;
+      state.gridRows += shape.rowSpan;
+      if (shape.colSpan > state.gridCols) state.gridCols = shape.colSpan;
+      return { col: 1, row: 1, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+    }
+    if (direction === 'right') {
+      const newCol = state.gridCols + 1;
+      state.gridCols += shape.colSpan;
+      if (shape.rowSpan > state.gridRows) state.gridRows = shape.rowSpan;
+      return { col: newCol, row: 1, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+    }
+    if (direction === 'left') {
+      for (const zone of state.zones) zone.col += shape.colSpan;
+      state.gridCols += shape.colSpan;
+      if (shape.rowSpan > state.gridRows) state.gridRows = shape.rowSpan;
+      return { col: 1, row: 1, colSpan: shape.colSpan, rowSpan: shape.rowSpan };
+    }
+    return null;
+  }
+
+  // Capture the user's directional intent without mutating the grid.
+  // Growth (and any zone shift) happens lazily in placeAtEdgeTarget when
+  // a library pick actually needs the room. This keeps clicking an edge
+  // `+` from creating an orphan empty row when the same edge can still
+  // host the next zone, and lets repeated picks from the same flow
+  // continue to land on the same edge.
+  function expandGrid(direction) {
+    if (!['top', 'bottom', 'left', 'right'].includes(direction)) return null;
+    const target = { direction };
     state.pendingPlacementCell = target;
     return target;
   }
 
   function clearPendingPlacement() {
-    const hadPending = state.pendingPlacementCell !== null;
     state.pendingPlacementCell = null;
-    // If the user clicked an edge `+` and then dismissed the library
-    // without picking a zone, the grid was already expanded by one
-    // row/column. Trim it back so there's no orphan empty row sitting
-    // between the `+` button and the existing zones.
-    if (hadPending) recomputeGridDimensions();
+    // Library close ends the current add session, so the next pick
+    // starts a fresh chain instead of connecting back to whatever the
+    // GM placed before they dismissed the drawer.
+    state.lastAddedZoneId = null;
   }
 
   function removeZone(zoneId) {
@@ -711,6 +772,7 @@ export function useChaseMap() {
       if (t.zoneId === zoneId) t.zoneId = null;
     });
     if (state.connectingFromZoneId === zoneId) state.connectingFromZoneId = null;
+    if (state.lastAddedZoneId === zoneId) state.lastAddedZoneId = null;
     recomputeGridDimensions();
   }
 
@@ -720,10 +782,16 @@ export function useChaseMap() {
   // zone leaves a placeable gap in its row rather than the whole row
   // collapsing. Zone coords are compacted so the first occupied row/col
   // lands at 1.
+  //
+  // gridCols is floored at MIN_GRID_COLS so a small surviving zone
+  // (e.g. one 1×1 zone left after deletes) doesn't stretch to fill the
+  // viewport — the grid keeps its template-natural width even when
+  // sparsely populated. Rows are allowed to shrink freely because the
+  // CSS grid auto-sizes row heights to content.
   function recomputeGridDimensions() {
     if (!state.zones.length) {
-      state.gridRows = 1;
-      state.gridCols = 1;
+      state.gridRows = EMPTY_GRID_DIMS.rows;
+      state.gridCols = EMPTY_GRID_DIMS.cols;
       return;
     }
 
@@ -750,7 +818,7 @@ export function useChaseMap() {
     }
 
     state.gridRows = Math.max(1, occupiedRows.size);
-    state.gridCols = Math.max(1, occupiedCols.size);
+    state.gridCols = Math.max(MIN_GRID_COLS, occupiedCols.size);
   }
 
   function connectZones(zoneIdA, zoneIdB) {
@@ -915,6 +983,7 @@ export function useChaseMap() {
     updateZone,
     addZone,
     addZoneFromLibrary,
+    setAutoConnectEnabled,
     expandGrid,
     clearPendingPlacement,
     removeZone,

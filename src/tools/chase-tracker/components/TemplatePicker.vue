@@ -8,24 +8,32 @@
       </p>
     </header>
 
-    <div class="picker-grid">
-      <ParchmentPanel
-        v-for="template in orderedTemplates"
-        :key="template.id"
-        :class="['picker-card', { 'picker-card--blank': template.blank }]"
-        padded
-      >
-        <div v-if="template.blank" class="picker-card-glyph" aria-hidden="true">✎</div>
-        <h2 class="display-heading picker-card-name">{{ template.name }}</h2>
-        <p class="ink-italic picker-card-description">{{ template.description }}</p>
-        <div class="picker-card-actions">
-          <DButton
-            :variant="template.blank ? 'secondary' : 'primary'"
-            @click="$emit('pick', template.id)"
-          >{{ template.blank ? 'Start from Scratch' : 'Begin Here' }}</DButton>
-        </div>
-      </ParchmentPanel>
-    </div>
+    <template v-for="(section, sIdx) in sections" :key="section.key">
+      <OrnamentalDivider v-if="sIdx > 0" glyph="✦" class="picker-section-divider" />
+
+      <div v-if="section.label" class="picker-section-label display-heading">
+        {{ section.label }}
+      </div>
+
+      <div class="picker-grid">
+        <ParchmentPanel
+          v-for="template in section.templates"
+          :key="template.id"
+          :class="['picker-card', { 'picker-card--blank': template.blank }]"
+          padded
+        >
+          <div v-if="template.blank" class="picker-card-glyph" aria-hidden="true">✎</div>
+          <h2 class="display-heading picker-card-name">{{ template.name }}</h2>
+          <p class="ink-italic picker-card-description">{{ template.description }}</p>
+          <div class="picker-card-actions">
+            <DButton
+              :variant="template.blank ? 'secondary' : 'primary'"
+              @click="$emit('pick', template.id)"
+            >{{ template.blank ? 'Start from Scratch' : 'Begin Here' }}</DButton>
+          </div>
+        </ParchmentPanel>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -42,15 +50,31 @@ export default {
   },
   emits: ['pick'],
   computed: {
-    // Push the Blank/"build your own" card to the end so scenario
-    // templates — which do the pedagogical work of showing what a
-    // map looks like — come first.
-    orderedTemplates() {
-      return [...this.templates].sort((a, b) => {
-        const ab = a.blank ? 1 : 0;
-        const bb = b.blank ? 1 : 0;
-        return ab - bb;
-      });
+    sections() {
+      // Partition templates into three visual groups: scenario templates
+      // on the Material plane, scenario templates on other planes, and
+      // the Blank canvas on its own below. Templates without a `group`
+      // field fall in with Material for backwards-compat.
+      const groups = { material: [], planar: [], blank: [] };
+      for (const t of this.templates) {
+        const key = t.blank ? 'blank' : (t.group === 'planar' ? 'planar' : 'material');
+        groups[key].push(t);
+      }
+
+      const out = [];
+      if (groups.material.length) {
+        out.push({ key: 'material', label: 'Prime Material', templates: groups.material });
+      }
+      if (groups.planar.length) {
+        out.push({ key: 'planar', label: 'Planar', templates: groups.planar });
+      }
+      if (groups.blank.length) {
+        // Blank has no label — the pencil-glyph card signals itself;
+        // adding a section header ("Other", "Blank") would be louder
+        // than the card it contains.
+        out.push({ key: 'blank', label: '', templates: groups.blank });
+      }
+      return out;
     },
   },
 };
@@ -64,7 +88,7 @@ export default {
 
 .picker-header {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .picker-title {
@@ -79,10 +103,27 @@ export default {
   line-height: 1.55;
 }
 
+.picker-section-divider {
+  margin: 2.25rem 0 0.5rem;
+}
+
+.picker-section-label {
+  font-size: 0.9rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  text-align: center;
+  margin: 0.25rem 0 1.25rem;
+}
+
 .picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   gap: 1.5rem;
+}
+
+.picker-grid + .picker-section-divider {
+  margin-top: 2.25rem;
 }
 
 .picker-card {

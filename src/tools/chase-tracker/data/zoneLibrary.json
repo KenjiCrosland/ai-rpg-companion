@@ -2187,6 +2187,624 @@
       "category": "forests-groves",
       "shape": "small",
       "defaultPills": []
+    },
+    {
+      "id": "lib_fey_001",
+      "name": "Mushroom Ring",
+      "description": "A perfect circle of pale caps in the moss. The grass inside grows in a slightly different green.",
+      "environments": ["feywild"],
+      "category": "groves-glades",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "Step inside and the wood outside the ring goes quiet."
+        }
+      ]
+    },
+    {
+      "id": "lib_fey_002",
+      "name": "Singing Glade",
+      "description": "Wildflowers in colors that have no name, and a song that seems to come from the petals themselves.",
+      "environments": ["feywild"],
+      "category": "groves-glades",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_003",
+      "name": "Glasswing Meadow",
+      "description": "Butterflies the size of hands, wings like stained windows, drifting in slow lazy circles.",
+      "environments": ["feywild"],
+      "category": "groves-glades",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_004",
+      "name": "Hollow Oak",
+      "description": "An ancient tree with a door-shaped split in its trunk. The hollow is bigger inside than out.",
+      "environments": ["feywild"],
+      "category": "groves-glades",
+      "shape": "tall",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "Distance bends inside the trunk. A few steps may be many."
+        }
+      ]
+    },
+    {
+      "id": "lib_fey_005",
+      "name": "Twilight Revel",
+      "description": "Lanterns hung in the air without strings, dancers turning to music no instrument is playing. They notice newcomers.",
+      "environments": ["feywild"],
+      "category": "courts-gatherings",
+      "shape": "large",
+      "defaultPills": [
+        {
+          "label": "Crowded",
+          "tone": "warm",
+          "detail": "Whirling dancers; refusing a partner gives offense."
+        }
+      ]
+    },
+    {
+      "id": "lib_fey_006",
+      "name": "Throne of Briar",
+      "description": "A seat woven from living thorn, vines moving when no one looks. Empty, for now.",
+      "environments": ["feywild"],
+      "category": "courts-gatherings",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_007",
+      "name": "Bargain Stone",
+      "description": "A flat slab worn smooth by handshakes. A name spoken here is harder to take back.",
+      "environments": ["feywild"],
+      "category": "courts-gatherings",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "Promises made on the stone hum behind the teeth."
+        }
+      ]
+    },
+    {
+      "id": "lib_fey_008",
+      "name": "Mirror Pool",
+      "description": "Still water that shows the wrong reflection: older, younger, or someone else entirely.",
+      "environments": ["feywild"],
+      "category": "waters-crossings",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_009",
+      "name": "Bridge of Song",
+      "description": "Slats of pale wood strung over a chasm of mist. The bridge plays a low note for every step.",
+      "environments": ["feywild"],
+      "category": "waters-crossings",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_010",
+      "name": "Silver Brook",
+      "description": "Water that runs uphill in places, clear enough to count the stones, cold enough to bruise the wrist.",
+      "environments": ["feywild"],
+      "category": "waters-crossings",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_011",
+      "name": "Hour Garden",
+      "description": "Beds of flowers that bloom and wither while you watch. A path of crushed petals winds through.",
+      "environments": ["feywild"],
+      "category": "strange-places",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "Time runs strangely; a moment here may be an hour outside."
+        }
+      ]
+    },
+    {
+      "id": "lib_fey_012",
+      "name": "Honeycomb Hollow",
+      "description": "Walls of golden wax taller than a house, hum of unseen wings, the air thick and sweet.",
+      "environments": ["feywild"],
+      "category": "strange-places",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_013",
+      "name": "Lantern Field",
+      "description": "Pale flames floating just above the grass, drifting at the pace of a slow walk. They follow if asked.",
+      "environments": ["feywild"],
+      "category": "strange-places",
+      "shape": "large",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "The lights answer a polite request, sometimes literally."
+        }
+      ]
+    },
+    {
+      "id": "lib_fey_014",
+      "name": "Antler Arch",
+      "description": "Two trees grown together, a crown of shed antlers caught in the boughs, sun spilling through.",
+      "environments": ["feywild"],
+      "category": "paths-passages",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_015",
+      "name": "Vine Stair",
+      "description": "Living vines woven into steps, climbing up into the canopy. They tighten when stepped on.",
+      "environments": ["feywild"],
+      "category": "paths-passages",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_fey_016",
+      "name": "Petal Road",
+      "description": "A path strewn with fallen blossoms, knee-deep in places. The petals never seem to brown.",
+      "environments": ["feywild"],
+      "category": "paths-passages",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_001",
+      "name": "Ashen Road",
+      "description": "A track of pale dust between dead fields, every footprint slow to fill in. No wind to take them.",
+      "environments": ["shadowfell"],
+      "category": "fading-lands",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_002",
+      "name": "Bone Field",
+      "description": "Long grass gone gray, scattered with old white shapes. Nothing buried, nothing claimed.",
+      "environments": ["shadowfell"],
+      "category": "fading-lands",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_003",
+      "name": "Withered Orchard",
+      "description": "Rows of bare black trees, fruit shriveled on the branch. The smell of cider gone to vinegar.",
+      "environments": ["shadowfell"],
+      "category": "fading-lands",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_004",
+      "name": "Hollow Town",
+      "description": "Houses still standing, doors half-open, no smoke from any chimney. The streets remember footsteps.",
+      "environments": ["shadowfell"],
+      "category": "ruins-remnants",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_005",
+      "name": "Broken Bell",
+      "description": "A cracked bronze bell on the ground beside its toppled tower. It has not rung in a long time.",
+      "environments": ["shadowfell"],
+      "category": "ruins-remnants",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_006",
+      "name": "Burnt Library",
+      "description": "Shelves collapsed in long black drifts, a few pages still legible if read quickly.",
+      "environments": ["shadowfell"],
+      "category": "ruins-remnants",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Obstacle",
+          "tone": "danger",
+          "detail": "Charred timbers and ash. Footing is uncertain at speed."
+        }
+      ]
+    },
+    {
+      "id": "lib_shad_007",
+      "name": "Memorial Stones",
+      "description": "Tall slate markers in uneven rows, names worn smooth by no rain in particular.",
+      "environments": ["shadowfell"],
+      "category": "graves-memorials",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_008",
+      "name": "Pauper's Field",
+      "description": "Soft ground, no markers, only the slight rise where the trenches were filled in.",
+      "environments": ["shadowfell"],
+      "category": "graves-memorials",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_009",
+      "name": "Mourner's Walk",
+      "description": "A colonnade of weeping statues, hooded faces lowered. The path between them is narrow.",
+      "environments": ["shadowfell"],
+      "category": "graves-memorials",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_010",
+      "name": "Drifting Mist",
+      "description": "Pale fog at chest-height, things half-seen in it that may not be there at all.",
+      "environments": ["shadowfell"],
+      "category": "gloom-mist",
+      "shape": "wide",
+      "defaultPills": [
+        {
+          "label": "Dark",
+          "tone": "muted",
+          "detail": "Vision cuts to a few paces. Sound carries strangely."
+        }
+      ]
+    },
+    {
+      "id": "lib_shad_011",
+      "name": "Soundless Hollow",
+      "description": "A low place where every noise dies a step in. Even breath seems to be borrowed.",
+      "environments": ["shadowfell"],
+      "category": "gloom-mist",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "Speech and shouts fall flat. Signaling at distance fails."
+        }
+      ]
+    },
+    {
+      "id": "lib_shad_012",
+      "name": "Smothered Lantern",
+      "description": "An iron post with a cold flame inside, casting no light, only a vague gray suggestion.",
+      "environments": ["shadowfell"],
+      "category": "gloom-mist",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Dark",
+          "tone": "muted",
+          "detail": "The lantern eats light rather than gives it."
+        }
+      ]
+    },
+    {
+      "id": "lib_shad_013",
+      "name": "Forgotten Crossroads",
+      "description": "Four roads meeting in a barren place, signposts blank, no traveler in any direction.",
+      "environments": ["shadowfell"],
+      "category": "twilight-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_014",
+      "name": "Abandoned Inn",
+      "description": "A roadside building, sign creaking on one chain, tables set for guests who never arrived.",
+      "environments": ["shadowfell"],
+      "category": "twilight-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_015",
+      "name": "Ferryman's Pier",
+      "description": "Black water, a worn dock, a single pole-boat with no one to crew it.",
+      "environments": ["shadowfell"],
+      "category": "twilight-places",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_shad_016",
+      "name": "Gray Cathedral",
+      "description": "Vaulted ruin half-roofed, windows empty of glass, the altar swept clean by no one.",
+      "environments": ["shadowfell"],
+      "category": "ruins-remnants",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_udark_001",
+      "name": "Glow-Cap Grove",
+      "description": "Pale mushrooms taller than a man, casting a soft blue light. The spores drift like slow snow.",
+      "environments": ["underdark"],
+      "category": "fungal-growth",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_udark_002",
+      "name": "Spore Field",
+      "description": "Low mats of yellow fungus that puff at every footstep, throwing up a thick sweet dust.",
+      "environments": ["underdark"],
+      "category": "fungal-growth",
+      "shape": "wide",
+      "defaultPills": [
+        {
+          "label": "Obstacle",
+          "tone": "danger",
+          "detail": "Spores choke the air. Constitution save when crossing at speed."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_003",
+      "name": "Shrieker Patch",
+      "description": "Stout violet caps that scream when anything passes near. The sound carries far in the dark.",
+      "environments": ["underdark"],
+      "category": "fungal-growth",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Loud",
+          "tone": "danger",
+          "detail": "Shriekers wail at any movement, alerting things deeper in."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_004",
+      "name": "Cathedral Cavern",
+      "description": "A cave so vast the ceiling is lost in gloom, stalagmites the size of towers rising from the floor.",
+      "environments": ["underdark"],
+      "category": "vast-caverns",
+      "shape": "large",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_udark_005",
+      "name": "Crystal Vault",
+      "description": "Walls studded with great violet shards, each one humming faintly when touched.",
+      "environments": ["underdark"],
+      "category": "vast-caverns",
+      "shape": "wide",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "The crystals catch light and throw it sideways into the rock."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_006",
+      "name": "Echo Hall",
+      "description": "A cavern that returns every whisper threefold, sometimes adding a word that wasn't said.",
+      "environments": ["underdark"],
+      "category": "vast-caverns",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_udark_007",
+      "name": "Drow Outpost",
+      "description": "Carved spider-arches, lanterns of cold blue flame, watchful figures in dark mail.",
+      "environments": ["underdark"],
+      "category": "settled-places",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_udark_008",
+      "name": "Duergar Forge",
+      "description": "Anvils ringing, dwarves grim and gray, the heat of the bellows pushing back the dark.",
+      "environments": ["underdark"],
+      "category": "settled-places",
+      "shape": "wide",
+      "defaultPills": [
+        {
+          "label": "On Fire",
+          "tone": "danger",
+          "detail": "Open forges and slag pits. Flame everywhere."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_009",
+      "name": "Fungal Market",
+      "description": "Booths of bone and chitin, deep gnomes haggling in low voices over jars of glowing things.",
+      "environments": ["underdark"],
+      "category": "settled-places",
+      "shape": "wide",
+      "defaultPills": [
+        {
+          "label": "Crowded",
+          "tone": "warm",
+          "detail": "Tight aisles, sharp eyes, and many hands near pockets."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_010",
+      "name": "Bottomless Drop",
+      "description": "A black slit in the cavern floor. Tossed stones never report back.",
+      "environments": ["underdark"],
+      "category": "vertical-chasms",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Obstacle",
+          "tone": "danger",
+          "detail": "A fall ends the chase. Dex save on a dash."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_011",
+      "name": "Spider-Bridge",
+      "description": "A rope of dense webbing strung across a chasm, sticky underfoot, the strands creaking.",
+      "environments": ["underdark"],
+      "category": "vertical-chasms",
+      "shape": "wide",
+      "defaultPills": [
+        {
+          "label": "Slippery",
+          "tone": "warm",
+          "detail": "Web strands catch the boot. Every step is a small fight."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_012",
+      "name": "Shaft Climb",
+      "description": "A vertical chimney of damp stone, footholds carved by something with the wrong number of fingers.",
+      "environments": ["underdark"],
+      "category": "vertical-chasms",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_udark_013",
+      "name": "Mind Flayer Sanctum",
+      "description": "A round chamber of fitted basalt, a chair of bone in the center, the air thick with something thinking.",
+      "environments": ["underdark"],
+      "category": "ancient-ruins",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "Thoughts feel watched. Concentration tests at disadvantage."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_014",
+      "name": "Beholder Eyrie",
+      "description": "A high domed cavern, the walls scoured smooth by old disintegration. Many small holes look out.",
+      "environments": ["underdark"],
+      "category": "ancient-ruins",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_udark_015",
+      "name": "Sunken Glyphs",
+      "description": "A floor of carved stone half-flooded, symbols still faintly aglow under the black water.",
+      "environments": ["underdark"],
+      "category": "deep-waters",
+      "shape": "wide",
+      "defaultPills": [
+        {
+          "label": "Slippery",
+          "tone": "warm",
+          "detail": "Wet carved stone. Athletics to charge across."
+        }
+      ]
+    },
+    {
+      "id": "lib_udark_016",
+      "name": "Black Lake",
+      "description": "Still water that drinks the lantern light. Something larger than a boat moves in it sometimes.",
+      "environments": ["underdark"],
+      "category": "deep-waters",
+      "shape": "large",
+      "defaultPills": [
+        {
+          "label": "Dark",
+          "tone": "muted",
+          "detail": "The lake swallows light; what swims under it is rarely friendly."
+        }
+      ]
+    },
+    {
+      "id": "lib_trans_024",
+      "name": "Veiled Path",
+      "description": "A forest trail that grows brighter step by step, leaves greener than they should be, the air thickening with bell-tones.",
+      "environments": ["feywild", "wilderness"],
+      "category": "paths-passages",
+      "shape": "wide",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_025",
+      "name": "Faerie Hill",
+      "description": "A green mound under an old tree, a doorway in its side that wasn't there yesterday. Music spills from inside.",
+      "environments": ["feywild", "wilderness"],
+      "category": "strange-places",
+      "shape": "small",
+      "defaultPills": [
+        {
+          "label": "Strange",
+          "tone": "mystery",
+          "detail": "Going in is easy. Coming out the same year is not."
+        }
+      ]
+    },
+    {
+      "id": "lib_trans_026",
+      "name": "Sunken Catacomb",
+      "description": "A crypt corridor where the torches dim halfway down, the stone goes grayer, and the dust forgets to settle.",
+      "environments": ["shadowfell", "underground"],
+      "category": "twilight-places",
+      "shape": "tall",
+      "defaultPills": [
+        {
+          "label": "Dark",
+          "tone": "muted",
+          "detail": "Lights weaken without reason. Shadows move late."
+        }
+      ]
+    },
+    {
+      "id": "lib_trans_027",
+      "name": "Threshold Tomb",
+      "description": "A mausoleum with two doors: the one you came in by, and another that opens onto a colder, grayer world.",
+      "environments": ["shadowfell", "underground"],
+      "category": "graves-memorials",
+      "shape": "small",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_028",
+      "name": "Deep Stair",
+      "description": "A spiral of worn steps cut into the rock, descending past natural cave into something older and far less natural.",
+      "environments": ["underdark", "underground"],
+      "category": "vertical-chasms",
+      "shape": "tall",
+      "defaultPills": []
+    },
+    {
+      "id": "lib_trans_029",
+      "name": "Slaver's Tunnel",
+      "description": "A long worked passage, spider-glyphs scratched into the walls, the air going colder and dryer the further in you go.",
+      "environments": ["underdark", "underground"],
+      "category": "settled-places",
+      "shape": "wide",
+      "defaultPills": []
     }
   ]
 }

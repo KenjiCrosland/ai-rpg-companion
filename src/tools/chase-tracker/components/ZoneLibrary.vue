@@ -32,6 +32,16 @@
           class="search-input"
         />
 
+        <label class="autoconnect-row">
+          <input
+            type="checkbox"
+            class="autoconnect-checkbox"
+            :checked="autoConnect"
+            @change="$emit('update:auto-connect', $event.target.checked)"
+          />
+          <span class="autoconnect-label">Auto-connect adjacent zones</span>
+        </label>
+
         <div v-if="hasAnyVisible" class="category-controls">
           <button type="button" class="category-control-btn" @click="expandAllVisible">
             Expand all
@@ -132,6 +142,9 @@ const ENVIRONMENT_CHIPS = [
   { key: 'wilderness',  label: 'Wilderness' },
   { key: 'indoor',      label: 'Indoor' },
   { key: 'underground', label: 'Underground' },
+  { key: 'underdark',   label: 'Underdark' },
+  { key: 'feywild',     label: 'Feywild' },
+  { key: 'shadowfell',  label: 'Shadowfell' },
 ];
 
 const ALL_ENV_KEYS = ENVIRONMENT_CHIPS.map((e) => e.key);
@@ -154,8 +167,12 @@ export default {
     // opens. Empty array = all environments on ("Any"). Unknown keys
     // are ignored.
     defaultEnvironments: { type: Array, default: () => [] },
+    // Whether new zones auto-connect to grid-adjacent neighbors on add.
+    // Bound two-way via `update:auto-connect` so the parent can persist
+    // the preference.
+    autoConnect: { type: Boolean, default: true },
   },
-  emits: ['close', 'add-from-library', 'add-custom'],
+  emits: ['close', 'add-from-library', 'add-custom', 'update:auto-connect'],
   data() {
     return {
       selectedEnvs: this.seedSelection(this.defaultEnvironments),
@@ -453,6 +470,31 @@ export default {
   border: 1px solid var(--button-border);
   color: var(--ink-primary);
   margin-bottom: 1rem;
+}
+
+.autoconnect-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.15rem 0.25rem 0.95rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.autoconnect-checkbox {
+  width: 1.35rem;
+  height: 1.35rem;
+  margin: 0;
+  accent-color: var(--accent-gold-dark);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.autoconnect-label {
+  font-family: var(--font-body);
+  font-size: 1.35rem;
+  color: var(--ink-secondary);
+  letter-spacing: 0.02em;
 }
 
 .category-controls {
