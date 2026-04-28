@@ -1,20 +1,33 @@
 /**
- * CRITICAL: Rate Limiting & Premium Gating Tests
+ * Rate-limit + premium-gate tests.
  *
- * These tests ensure that:
- * 1. Free users are properly rate-limited (5 per 24 hours)
- * 2. Premium users bypass rate limits
- * 3. Incognito mode is detected and blocked
- * 4. localStorage state is correctly managed
- * 5. Time-based resets work properly
+ * Verifies free users get the per-window quota and premium users
+ * bypass it. The quota state lives behind the quota-storage wrapper,
+ * so fixtures seed via writeQuota and assertions read via readQuota
+ * — direct `localStorage.getItem('monsters')` is no longer the gate's
+ * source of truth.
  */
 
-// Mock detectIncognito before importing canGenerateStatblock
+// jsdom in some Jest configs lacks SubtleCrypto and TextEncoder;
+// install both before the wrapper imports.
+{
+  // eslint-disable-next-line global-require
+  const { webcrypto } = require('node:crypto');
+  // eslint-disable-next-line global-require
+  const { TextEncoder, TextDecoder } = require('node:util');
+  Object.defineProperty(globalThis, 'crypto', {
+    value: webcrypto,
+    configurable: true,
+    writable: true,
+  });
+  if (typeof globalThis.TextEncoder === 'undefined') globalThis.TextEncoder = TextEncoder;
+  if (typeof globalThis.TextDecoder === 'undefined') globalThis.TextDecoder = TextDecoder;
+}
+
 jest.mock('detectincognitojs', () => ({
   detectIncognito: jest.fn(),
 }));
 
-// Mock useToast
 const mockToast = {
   warning: jest.fn(),
   success: jest.fn(),
@@ -27,87 +40,75 @@ jest.mock('../composables/useToast', () => ({
 
 import { canGenerateStatblock } from './can-generate-statblock.mjs';
 import { detectIncognito } from 'detectincognitojs';
+import { readQuota, writeQuota, __TEST_ONLY__ } from './quota-storage.mjs';
 
-// Store original localStorage
-const originalLocalStorage = global.localStorage;
+const { DOMAINS } = __TEST_ONLY__;
+const STATBLOCK_HOST = DOMAINS.statblock.host;
+const STATBLOCK_FIELD = DOMAINS.statblock.field;
 
-describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () => {
-  let localStorageMock;
+function freshLocalStorage() {
+  // jsdom's window.localStorage is the real Storage instance from
+  // jsdom; calling `localStorage.clear()` resets it cleanly between
+  // tests without needing to install a hand-rolled mock. This is also
+  // what jsdom-using projects normally do.
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.clear();
+  }
+}
 
-  beforeAll(() => {
-    // Ensure clean start
-    if (originalLocalStorage && originalLocalStorage.clear) {
-      originalLocalStorage.clear();
-    }
-  });
-
+describe('canGenerateStatblock — rate limit & premium gate', () => {
   beforeEach(() => {
-    // Create fresh localStorage mock with isolated storage
-    const freshStore = {};
-    localStorageMock = {
-      getItem(key) {
-        return freshStore[key] || null;
-      },
-      setItem(key, value) {
-        freshStore[key] = String(value);
-      },
-      removeItem(key) {
-        delete freshStore[key];
-      },
-      clear() {
-        Object.keys(freshStore).forEach(key => delete freshStore[key]);
-      },
-      get store() {
-        return freshStore;
-      }
-    };
-
-    global.localStorage = localStorageMock;
-    global.window = { localStorage: localStorageMock };
-
-    // Default: not incognito
-    detectIncognito.mockResolvedValue({ isPrivate: false });
-
-    // Clear all mocks
+    // clearAllMocks first, then set defaults: ensures the default
+    // mockResolvedValue isn't wiped by the clear call. (clearAllMocks
+    // does not reset implementations per Jest docs, but ordering it
+    // first removes any ambiguity.)
     jest.clearAllMocks();
+    freshLocalStorage();
+    detectIncognito.mockResolvedValue({ isPrivate: false });
   });
 
-  afterEach(() => {
-    if (localStorageMock && localStorageMock.clear) {
-      localStorageMock.clear();
-    }
-  });
-
-  describe('Premium Users', () => {
-    it('should always allow generation for premium users', async () => {
+  describe('Premium users', () => {
+    it('always allows generation', async () => {
       const result = await canGenerateStatblock(true);
-
       expect(result).toBe(true);
-      // Should not check incognito for premium users
       expect(detectIncognito).not.toHaveBeenCalled();
     });
 
-    it('should bypass rate limits for premium users', async () => {
-      // Set localStorage to show user is at limit
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: Date.now().toString(),
-      }));
-
+    it('bypasses the rate limit even when the count is at the cap', async () => {
+      await writeQuota('statblock', { count: 5, firstGenTime: Date.now() });
       const result = await canGenerateStatblock(true);
-
       expect(result).toBe(true);
       expect(mockToast.warning).not.toHaveBeenCalled();
     });
+
+    it('seeds a fresh `_q` if missing so a future drop to free tier does not soft-recover', async () => {
+      // Premium user with saved monsters but no `_q` (gate never
+      // wrote one because they were always premium). The seed must
+      // run so a later free-tier read doesn't trip the field-deletion
+      // recovery path.
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify({
+        Uncategorized: [{ name: 'Goblin' }],
+      }));
+      await canGenerateStatblock(true);
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      expect(stored[STATBLOCK_FIELD]).toBeTruthy();
+      expect(stored[STATBLOCK_FIELD].c).toBe(0);
+      expect(stored.Uncategorized).toEqual([{ name: 'Goblin' }]);
+    });
+
+    it('does not overwrite an existing `_q` when seeding', async () => {
+      await writeQuota('statblock', { count: 3, firstGenTime: 1700000000000 });
+      await canGenerateStatblock(true);
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      expect(stored[STATBLOCK_FIELD].c).toBe(3);
+      expect(stored[STATBLOCK_FIELD].t).toBe(1700000000000);
+    });
   });
 
-  describe('Incognito Detection', () => {
-    it('should block generation in incognito mode', async () => {
-      localStorage.clear();
+  describe('Incognito detection', () => {
+    it('blocks generation in private browsing mode', async () => {
       detectIncognito.mockResolvedValue({ isPrivate: true });
-
       const result = await canGenerateStatblock(false);
-
       expect(result).toBe(false);
       expect(mockToast.warning).toHaveBeenCalledWith(
         expect.stringContaining('private browsing'),
@@ -116,114 +117,66 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       );
     });
 
-    it('should allow generation in normal browsing mode', async () => {
-      localStorage.clear();
-      detectIncognito.mockResolvedValue({ isPrivate: false });
-
+    it('allows generation in normal browsing mode', async () => {
       const result = await canGenerateStatblock(false);
-
       expect(result).toBe(true);
     });
   });
 
-  describe('First Time User', () => {
-    it('should allow generation when no localStorage data exists', async () => {
-      // Explicitly clear before test
-      localStorage.clear();
-
+  describe('First time user', () => {
+    it('allows generation when no quota state exists', async () => {
       const result = await canGenerateStatblock(false);
-
       expect(result).toBe(true);
     });
 
-    it('should initialize localStorage with count 1 and timestamp', async () => {
-      // Explicitly clear before test
-      localStorage.clear();
-
-      const beforeTime = Date.now();
-
+    it('initializes quota with count 1 and the current timestamp', async () => {
+      const before = Date.now();
       await canGenerateStatblock(false);
-
-      const afterTime = Date.now();
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-
-      expect(stored.generationCount).toBe('1');
-      expect(parseInt(stored.firstGenerationTime)).toBeGreaterThanOrEqual(beforeTime);
-      expect(parseInt(stored.firstGenerationTime)).toBeLessThanOrEqual(afterTime);
+      const after = Date.now();
+      const q = await readQuota('statblock');
+      expect(q.valid).toBe(true);
+      expect(q.count).toBe(1);
+      expect(q.firstGenTime).toBeGreaterThanOrEqual(before);
+      expect(q.firstGenTime).toBeLessThanOrEqual(after);
     });
   });
 
-  describe('Rate Limiting - Under Limit', () => {
-    it('should allow generation when count is 1', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '1',
-        firstGenerationTime: Date.now().toString(),
-      }));
-
-      const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
+  describe('Under the limit', () => {
+    it('allows generation when count is 1', async () => {
+      await writeQuota('statblock', { count: 1, firstGenTime: Date.now() });
+      expect(await canGenerateStatblock(false)).toBe(true);
     });
 
-    it('should increment count from 1 to 2', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '1',
-        firstGenerationTime: Date.now().toString(),
-      }));
-
+    it('increments count from 1 to 2', async () => {
+      await writeQuota('statblock', { count: 1, firstGenTime: Date.now() });
       await canGenerateStatblock(false);
-
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('2');
+      expect((await readQuota('statblock')).count).toBe(2);
     });
 
-    it('should allow generation when count is 4', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '4',
-        firstGenerationTime: Date.now().toString(),
-      }));
-
-      const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
+    it('allows generation when count is 4', async () => {
+      await writeQuota('statblock', { count: 4, firstGenTime: Date.now() });
+      expect(await canGenerateStatblock(false)).toBe(true);
     });
 
-    it('should increment count from 4 to 5', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '4',
-        firstGenerationTime: Date.now().toString(),
-      }));
-
+    it('increments count from 4 to 5', async () => {
+      await writeQuota('statblock', { count: 4, firstGenTime: Date.now() });
       await canGenerateStatblock(false);
-
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('5');
+      expect((await readQuota('statblock')).count).toBe(5);
     });
 
-    it('should preserve firstGenerationTime when incrementing', async () => {
-      const originalTime = '1234567890000';
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '2',
-        firstGenerationTime: originalTime,
-      }));
-
+    it('preserves firstGenTime when incrementing', async () => {
+      const original = 1234567890000;
+      await writeQuota('statblock', { count: 2, firstGenTime: original });
       await canGenerateStatblock(false);
-
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.firstGenerationTime).toBe(originalTime);
+      expect((await readQuota('statblock')).firstGenTime).toBe(original);
     });
   });
 
-  describe('Rate Limiting - At Limit (Not Expired)', () => {
-    it('should block generation when count is 5 and time not expired', async () => {
-      const recentTime = Date.now() - 3600000; // 1 hour ago
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: recentTime.toString(),
-      }));
-
+  describe('At the limit (window not expired)', () => {
+    it('blocks generation when count is 5 and the window is still open', async () => {
+      const recent = Date.now() - 3600000;
+      await writeQuota('statblock', { count: 5, firstGenTime: recent });
       const result = await canGenerateStatblock(false);
-
       expect(result).toBe(false);
       expect(mockToast.warning).toHaveBeenCalledWith(
         expect.stringContaining('daily limit'),
@@ -232,229 +185,251 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
       );
     });
 
-    it('should show reset time in warning message', async () => {
-      const recentTime = Date.now() - 3600000; // 1 hour ago
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: recentTime.toString(),
-      }));
-
+    it('shows reset time in the warning message', async () => {
+      const recent = Date.now() - 3600000;
+      await writeQuota('statblock', { count: 5, firstGenTime: recent });
       await canGenerateStatblock(false);
-
-      const warningCall = mockToast.warning.mock.calls[0][0];
-      expect(warningCall).toContain('Resets at');
+      expect(mockToast.warning.mock.calls[0][0]).toContain('Resets at');
     });
 
-    it('should not increment count when at limit', async () => {
-      const recentTime = Date.now() - 3600000;
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: recentTime.toString(),
-      }));
-
+    it('does not increment count when blocked', async () => {
+      const recent = Date.now() - 3600000;
+      await writeQuota('statblock', { count: 5, firstGenTime: recent });
       await canGenerateStatblock(false);
-
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('5');
+      expect((await readQuota('statblock')).count).toBe(5);
     });
 
-    it('should block when count is over 5', async () => {
-      const recentTime = Date.now() - 3600000;
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '10',
-        firstGenerationTime: recentTime.toString(),
-      }));
-
-      const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(false);
+    it('blocks when count is over the cap', async () => {
+      const recent = Date.now() - 3600000;
+      await writeQuota('statblock', { count: 10, firstGenTime: recent });
+      expect(await canGenerateStatblock(false)).toBe(false);
     });
   });
 
-  describe('Rate Limiting - Reset After 24 Hours', () => {
-    it('should reset when exactly 24 hours have passed', async () => {
-      const exactlyOneDayAgo = Date.now() - 86400000; // 24 hours in ms
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: exactlyOneDayAgo.toString(),
-      }));
-
+  describe('Reset after 24 hours', () => {
+    it('resets when exactly 24 hours have passed', async () => {
+      const oneDayAgo = Date.now() - 86400000;
+      await writeQuota('statblock', { count: 5, firstGenTime: oneDayAgo });
       const result = await canGenerateStatblock(false);
-
       expect(result).toBe(true);
       expect(mockToast.warning).not.toHaveBeenCalled();
     });
 
-    it('should reset when more than 24 hours have passed', async () => {
+    it('resets when more than 24 hours have passed', async () => {
       const twoDaysAgo = Date.now() - (86400000 * 2);
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: twoDaysAgo.toString(),
-      }));
-
-      const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
+      await writeQuota('statblock', { count: 5, firstGenTime: twoDaysAgo });
+      expect(await canGenerateStatblock(false)).toBe(true);
     });
 
-    it('should set count to 1 after reset', async () => {
+    it('sets count to 1 after reset', async () => {
       const oneDayAgo = Date.now() - 86400000;
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: oneDayAgo.toString(),
-      }));
-
+      await writeQuota('statblock', { count: 5, firstGenTime: oneDayAgo });
       await canGenerateStatblock(false);
-
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      expect((await readQuota('statblock')).count).toBe(1);
     });
 
-    it('should update firstGenerationTime to current time after reset', async () => {
+    it('updates firstGenTime to the current time after reset', async () => {
       const oneDayAgo = Date.now() - 86400000;
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: oneDayAgo.toString(),
-      }));
-
-      const beforeTime = Date.now();
+      await writeQuota('statblock', { count: 5, firstGenTime: oneDayAgo });
+      const before = Date.now();
       await canGenerateStatblock(false);
-      const afterTime = Date.now();
-
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      const newTime = parseInt(stored.firstGenerationTime);
-      expect(newTime).toBeGreaterThanOrEqual(beforeTime);
-      expect(newTime).toBeLessThanOrEqual(afterTime);
+      const after = Date.now();
+      const q = await readQuota('statblock');
+      expect(q.firstGenTime).toBeGreaterThanOrEqual(before);
+      expect(q.firstGenTime).toBeLessThanOrEqual(after);
     });
   });
 
-  describe('Edge Cases - Corrupted/Invalid Data', () => {
-    it('should handle missing generationCount', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        firstGenerationTime: Date.now().toString(),
-      }));
-
+  describe('Invalid quota state', () => {
+    it('refuses to generate and surfaces a toast when the host blob is unparseable', async () => {
+      localStorage.setItem(STATBLOCK_HOST, '{not json');
       const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      expect(result).toBe(false);
+      expect(mockToast.warning).toHaveBeenCalledWith(
+        expect.stringContaining("couldn't be read"),
+        0,
+        'quota-invalid-warning',
+      );
     });
 
-    it('should handle null generationCount', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: null,
-        firstGenerationTime: Date.now().toString(),
-      }));
-
-      const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
+    it('does not rewrite stored state when the host is malformed', async () => {
+      const before = '{not json';
+      localStorage.setItem(STATBLOCK_HOST, before);
+      await canGenerateStatblock(false);
+      expect(localStorage.getItem(STATBLOCK_HOST)).toBe(before);
     });
 
-    it('should handle invalid generationCount string', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: 'invalid',
-        firstGenerationTime: Date.now().toString(),
-      }));
-
+    it('refuses when the signature does not match the payload', async () => {
+      await writeQuota('statblock', { count: 5, firstGenTime: Date.now() });
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      stored[STATBLOCK_FIELD].c = 0;
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify(stored));
       const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
-    });
-
-    it('should handle missing firstGenerationTime when at limit', async () => {
-      localStorage.setItem('monsters', JSON.stringify({
-        generationCount: '5',
-        firstGenerationTime: null,
-      }));
-
-      // Should reset because no valid timestamp
-      const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
-    });
-
-    it('should handle completely corrupted JSON', async () => {
-      localStorage.setItem('monsters', '{invalid json');
-
-      // Should reset to fresh state and allow generation
-      const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
-    });
-
-    it('should handle empty string in localStorage', async () => {
-      localStorage.setItem('monsters', '');
-
-      // Should reset to fresh state and allow generation
-      const result = await canGenerateStatblock(false);
-
-      expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
-    });
-
-    it('should handle non-object data', async () => {
-      localStorage.setItem('monsters', JSON.stringify('just a string'));
-
-      const result = await canGenerateStatblock(false);
-
-      // Should reset to fresh state and allow generation
-      expect(result).toBe(true);
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(stored.generationCount).toBe('1');
+      expect(result).toBe(false);
+      expect(mockToast.warning).toHaveBeenCalledWith(
+        expect.stringContaining("couldn't be read"),
+        0,
+        'quota-invalid-warning',
+      );
     });
   });
 
-  describe('localStorage Key Management', () => {
-    it('should use "monsters" as the localStorage key', async () => {
+  describe('Storage key management', () => {
+    it('writes the quota into the host key under the domain field', async () => {
       await canGenerateStatblock(false);
-
-      expect(localStorage.getItem('monsters')).toBeTruthy();
-      expect(localStorage.getItem('statblocks')).toBeNull();
-      expect(localStorage.getItem('generations')).toBeNull();
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      expect(stored[STATBLOCK_FIELD]).toBeTruthy();
+      expect(stored[STATBLOCK_FIELD].c).toBe(1);
     });
 
-    it('should preserve other localStorage keys', async () => {
+    it('does not touch unrelated localStorage keys', async () => {
       localStorage.setItem('user_settings', 'some_value');
       localStorage.setItem('other_data', 'other_value');
-
       await canGenerateStatblock(false);
-
       expect(localStorage.getItem('user_settings')).toBe('some_value');
       expect(localStorage.getItem('other_data')).toBe('other_value');
     });
+
+    it('preserves existing user data on the host when writing the quota', async () => {
+      // Seed a properly signed `_q` first, then add folder data —
+      // simulates a user who has generated and saved before, then the
+      // gate runs again.
+      await writeQuota('statblock', { count: 0, firstGenTime: null });
+      const seeded = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      seeded.Uncategorized = [{ name: 'Goblin' }];
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify(seeded));
+
+      await canGenerateStatblock(false);
+
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      expect(stored.Uncategorized).toEqual([{ name: 'Goblin' }]);
+      expect(stored[STATBLOCK_FIELD].c).toBe(1);
+    });
   });
 
-  describe('Concurrent Calls', () => {
-    it('should handle multiple rapid calls correctly', async () => {
-      localStorage.clear();
+  describe('Existing-user migration (pre-Pillar-B legacy state)', () => {
+    it('treats legacy top-level fields as a fresh window (one-time bonus)', async () => {
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify({
+        generationCount: '5',
+        firstGenerationTime: Date.now().toString(),
+        Uncategorized: [{ name: 'Goblin' }],
+      }));
+      const result = await canGenerateStatblock(false);
+      expect(result).toBe(true);
+      expect((await readQuota('statblock')).count).toBe(1);
+    });
 
-      // Simulate rapid clicking
+    it('strips legacy fields after migration so they cannot be reused as a bypass', async () => {
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify({
+        generationCount: '5',
+        firstGenerationTime: Date.now().toString(),
+        Uncategorized: [{ name: 'Goblin' }],
+      }));
+      await canGenerateStatblock(false);
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      expect(stored.generationCount).toBeUndefined();
+      expect(stored.firstGenerationTime).toBeUndefined();
+      expect(stored.Uncategorized).toEqual([{ name: 'Goblin' }]);
+    });
+
+    it('seeds quota fields for all three domains during migration', async () => {
+      // Otherwise a partial migration would leave quest-hook / lore on
+      // their first read tripping the recovery branch (since folders
+      // exist and legacy is now gone) and getting the at-limit toast.
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify({
+        generationCount: '5',
+        firstGenerationTime: Date.now().toString(),
+        Uncategorized: [{ name: 'Goblin' }],
+      }));
+      await canGenerateStatblock(false);
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      expect(stored._q).toBeTruthy();
+      expect(stored._qh).toBeTruthy();
+      expect(stored._lr).toBeTruthy();
+    });
+  });
+
+  describe('Field-deletion soft-recovery', () => {
+    it('users who delete `_q` while keeping monsters land at the daily limit (24h cooldown)', async () => {
+      // Seed a normal in-progress state.
+      await writeQuota('statblock', { count: 2, firstGenTime: Date.now() });
+      const seeded = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      seeded.Uncategorized = [{ name: 'Goblin' }];
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify(seeded));
+
+      // Simulate the curious-user attack: delete `_q`, leave the rest.
+      const tampered = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      delete tampered[STATBLOCK_FIELD];
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify(tampered));
+
+      const result = await canGenerateStatblock(false);
+      expect(result).toBe(false);
+      expect(mockToast.warning).toHaveBeenCalledWith(
+        expect.stringContaining('daily limit'),
+        0,
+        'rate-limit-warning',
+      );
+
+      // The recovery wrote `_q` back at the cap so subsequent reads
+      // continue to honor the cooldown.
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      expect(stored[STATBLOCK_FIELD]).toBeTruthy();
+      expect(stored[STATBLOCK_FIELD].c).toBe(5);
+    });
+
+    it('does not punish brand-new users with no monsters yet', async () => {
+      // No host key at all — user has never used any of these tools.
+      const result = await canGenerateStatblock(false);
+      expect(result).toBe(true);
+      expect((await readQuota('statblock')).count).toBe(1);
+    });
+
+    it('cannot be bypassed by re-pasting legacy fields after a `_q` deletion', async () => {
+      // Post-migration user fills the cap, then tries to bypass by
+      // deleting `_q` and re-adding `generationCount` at the top
+      // level. The legacy branch must refuse because other quota
+      // fields (_qh / _lr) prove we're past the migration point —
+      // the recovery branch fires instead, landing the user at limit.
+      await writeQuota('statblock', { count: 5, firstGenTime: Date.now() - 3600000 });
+      await writeQuota('quest-hook', { count: 0, firstGenTime: null });
+      const stored = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      stored.Uncategorized = [{ name: 'Goblin' }];
+      delete stored[STATBLOCK_FIELD];
+      stored.generationCount = '0';
+      stored.firstGenerationTime = null;
+      localStorage.setItem(STATBLOCK_HOST, JSON.stringify(stored));
+
+      const result = await canGenerateStatblock(false);
+      expect(result).toBe(false);
+      expect(mockToast.warning).toHaveBeenCalledWith(
+        expect.stringContaining('daily limit'),
+        0,
+        'rate-limit-warning',
+      );
+      const after = JSON.parse(localStorage.getItem(STATBLOCK_HOST));
+      expect(after[STATBLOCK_FIELD].c).toBe(5);
+    });
+  });
+
+  describe('Concurrent calls', () => {
+    it('handles multiple rapid calls without crashing', async () => {
+      // Reads/writes aren't transactional. Concurrent calls can each
+      // read the same starting count and last-write-wins on the way
+      // out, so the persisted count may lag the number of granted
+      // generations. Acceptable — most clients call sequentially via
+      // await; the real concern is no crash and an in-range count.
       const results = await Promise.all([
         canGenerateStatblock(false),
         canGenerateStatblock(false),
         canGenerateStatblock(false),
       ]);
-
-      // RACE CONDITION: Due to async nature and shared localStorage,
-      // not all 3 calls may succeed. Some may read the same count
-      // and increment simultaneously, or one may hit the limit.
-      // This is expected behavior and documents the race condition.
-      const successCount = results.filter(r => r === true).length;
-      expect(successCount).toBeGreaterThanOrEqual(2);
-      expect(successCount).toBeLessThanOrEqual(3);
-
-      // Final count should reflect at least some increments
-      const stored = JSON.parse(localStorage.getItem('monsters'));
-      expect(parseInt(stored.generationCount)).toBeGreaterThanOrEqual(2);
+      const successes = results.filter((r) => r === true).length;
+      expect(successes).toBeGreaterThanOrEqual(1);
+      expect(successes).toBeLessThanOrEqual(3);
+      const q = await readQuota('statblock');
+      expect(q.valid).toBe(true);
+      expect(q.count).toBeGreaterThanOrEqual(1);
+      expect(q.count).toBeLessThanOrEqual(3);
     });
   });
 });

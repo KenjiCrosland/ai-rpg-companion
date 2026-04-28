@@ -199,6 +199,7 @@ import challengeRatingData from '@/data/challengeRatings.json';
 import creatureTemplates from '@/data/creatureTemplates.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
+import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
 import { renameStatblockReferences } from '@/util/statblock-storage.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { useToast } from '@/composables/useToast';
@@ -235,13 +236,15 @@ const openedFolders = reactive({ 'Uncategorized': true });
 const userColumnsPreference = ref('two_columns');
 const canSwitchColumns = ref(true);
 const shouldDisplayInterface = computed(() => windowWidth.value > 855);
-const folderNames = computed(() => {
-  return Object.keys(monsters.value).filter(key => key !== 'firstGenerationTime' && key !== 'generationCount');
-});
+// Filter out wrapper-owned fields (current quota fields plus legacy
+// pre-Pillar-B quota fields that may still be on the host until
+// migration runs) so they never surface as folders in the sidebar.
+const folderNames = computed(() =>
+  Object.keys(monsters.value).filter((k) => !RESERVED_HOST_FIELDS.includes(k))
+);
 const filteredMonsters = computed(() => {
   const filtered = { ...monsters.value };
-  delete filtered.firstGenerationTime;
-  delete filtered.generationCount;
+  for (const k of RESERVED_HOST_FIELDS) delete filtered[k];
   return filtered;
 });
 const showDataManagerModal = ref(false);
@@ -405,8 +408,17 @@ function updateMonster(updatedMonster) {
   // Update the monster
   monster.value = updatedMonster;
   monsters.value[activeFolder.value][activeMonsterIndex.value] = updatedMonster;
-  const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
-  const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+  // Build the save payload from in-memory user data only — drop any
+  // wrapper-owned fields (current quota or legacy) that may have been
+  // loaded into `monsters.value`. Then copy the latest quota fields
+  // forward from localStorage so generate gates and saves don't
+  // clobber each other's writes on this key.
+  const stored = JSON.parse(localStorage.getItem('monsters')) || {};
+  const dataToStore = { ...monsters.value };
+  for (const key of RESERVED_HOST_FIELDS) delete dataToStore[key];
+  for (const key of QUOTA_FIELDS) {
+    if (stored[key] !== undefined) dataToStore[key] = stored[key];
+  }
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
 
   // If the name changed, update all references across other tools
@@ -500,8 +512,17 @@ function handleFolderMove() {
 
   // Sort and re-select
   monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
-  const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
-  const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+  // Build the save payload from in-memory user data only — drop any
+  // wrapper-owned fields (current quota or legacy) that may have been
+  // loaded into `monsters.value`. Then copy the latest quota fields
+  // forward from localStorage so generate gates and saves don't
+  // clobber each other's writes on this key.
+  const stored = JSON.parse(localStorage.getItem('monsters')) || {};
+  const dataToStore = { ...monsters.value };
+  for (const key of RESERVED_HOST_FIELDS) delete dataToStore[key];
+  for (const key of QUOTA_FIELDS) {
+    if (stored[key] !== undefined) dataToStore[key] = stored[key];
+  }
   const newIndex = monsters.value[activeFolder.value].findIndex(m => m.name === currentMonsterName);
   selectMonster(activeFolder.value, newIndex);
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
@@ -559,8 +580,17 @@ async function deleteStatblock() {
       openedFolders['Uncategorized'] = true;
     }
   }
-  const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
-  const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+  // Build the save payload from in-memory user data only — drop any
+  // wrapper-owned fields (current quota or legacy) that may have been
+  // loaded into `monsters.value`. Then copy the latest quota fields
+  // forward from localStorage so generate gates and saves don't
+  // clobber each other's writes on this key.
+  const stored = JSON.parse(localStorage.getItem('monsters')) || {};
+  const dataToStore = { ...monsters.value };
+  for (const key of RESERVED_HOST_FIELDS) delete dataToStore[key];
+  for (const key of QUOTA_FIELDS) {
+    if (stored[key] !== undefined) dataToStore[key] = stored[key];
+  }
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
 
   // Delete associated intelligence data
@@ -650,8 +680,17 @@ async function generateStatblock() {
     const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
     selectMonster(folderName, newIndex);
   }
-  const storedData = JSON.parse(localStorage.getItem('monsters')) || { generationCount: '0', firstGenerationTime: null };
-  const dataToStore = { ...monsters.value, generationCount: storedData.generationCount, firstGenerationTime: storedData.firstGenerationTime };
+  // Build the save payload from in-memory user data only — drop any
+  // wrapper-owned fields (current quota or legacy) that may have been
+  // loaded into `monsters.value`. Then copy the latest quota fields
+  // forward from localStorage so generate gates and saves don't
+  // clobber each other's writes on this key.
+  const stored = JSON.parse(localStorage.getItem('monsters')) || {};
+  const dataToStore = { ...monsters.value };
+  for (const key of RESERVED_HOST_FIELDS) delete dataToStore[key];
+  for (const key of QUOTA_FIELDS) {
+    if (stored[key] !== undefined) dataToStore[key] = stored[key];
+  }
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
   loadingPart2.value = false;
   toast.success('Statblock generated and saved.');

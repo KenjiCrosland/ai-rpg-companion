@@ -68,6 +68,7 @@ import {
   CdrButton,
   CdrLink
 } from '@rei/cedar';
+import { writeQuota, QUOTA_FIELDS } from '@/util/quota-storage.mjs';
 
 // Cedar CSS
 import '@rei/cedar/dist/style/cdr-modal.css';
@@ -211,10 +212,13 @@ function downloadData() {
     if (!stored) return;
     const parsed = JSON.parse(stored);
 
-    // For 'monsters', remove generationCount & firstGenerationTime
+    // For 'monsters', strip both legacy quota fields and the
+    // current quota fields — exports should be portable user-data
+    // only, not carry a tracking state from one device to another.
     if (key === 'monsters') {
       delete parsed.generationCount;
       delete parsed.firstGenerationTime;
+      for (const f of QUOTA_FIELDS) delete parsed[f];
     }
     dataToSave[key] = parsed;
   });
@@ -261,7 +265,7 @@ function handleFileChange(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const dataObj = JSON.parse(e.target.result);
       const keysInFile = Object.keys(dataObj);
@@ -291,9 +295,25 @@ function handleFileChange(event) {
         if (app.key === 'monsters') {
           delete dataObj[app.key].generationCount;
           delete dataObj[app.key].firstGenerationTime;
+          // Strip any quota fields that came along in the export so
+          // imports don't carry tracking state across devices.
+          for (const f of QUOTA_FIELDS) delete dataObj[app.key][f];
         }
         localStorage.setItem(app.key, JSON.stringify(dataObj[app.key]));
       });
+
+      // After importing `monsters`, seed fresh quota fields so the
+      // user lands in the standard "fresh window" state on next read
+      // instead of being soft-recovered to the daily limit (which
+      // would otherwise fire because the imported blob has folder
+      // data but no `_q`).
+      if (recognizedApps.some((a) => a.key === 'monsters')) {
+        await Promise.all([
+          writeQuota('statblock', { count: 0, firstGenTime: null }),
+          writeQuota('quest-hook', { count: 0, firstGenTime: null }),
+          writeQuota('lore', { count: 0, firstGenTime: null }),
+        ]);
+      }
 
       alert('Data uploaded successfully.');
       //reload the page to show the new data
