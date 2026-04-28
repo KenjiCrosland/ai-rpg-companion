@@ -23,7 +23,21 @@ Please generate the following:
 - Three rewards that the players can earn.
 - A twist in the quest that adds an unexpected element.
 
-Please format the quest hook as a JSON object with the following keys:
+RESPONSE FORMAT — STRICT REQUIREMENTS (deviations will be rejected):
+- Return ONLY valid JSON. No prose before or after. No markdown fences.
+- Use these EXACT field names, lowercase snake_case, case-sensitive:
+  quest_title, quest_giver_name, quest_giver_background,
+  quest_giver_encounter, quest_details, objectives, challenges,
+  rewards, twist
+- DO NOT use Title Case, camelCase, or spaces in keys.
+  Wrong: "QuestTitle", "Quest Title", "questTitle".
+  Correct: "quest_title".
+- quest_title, quest_giver_name, quest_giver_background,
+  quest_giver_encounter, quest_details, and twist are STRINGS, not
+  objects. Do NOT split quest_giver_name into {Name, Description}.
+- objectives, challenges, and rewards are ARRAYS of strings.
+
+Schema example (use these exact key names — fill in your own values):
 
 {
   "quest_title": "Generated Quest Title. Avoid cliches. Don't use the word Shadow, Darkness or Whisper.",

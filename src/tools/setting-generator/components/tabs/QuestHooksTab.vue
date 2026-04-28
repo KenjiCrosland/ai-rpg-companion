@@ -298,15 +298,64 @@ const questGiverOptions = computed(() => {
 // -------------------------
 // Helper functions
 // -------------------------
+
+// Map any common variant the AI drifts to → canonical snake_case key.
+// Covers Title Case, camelCase, and spaced/hyphenated variants. Unknown
+// keys pass through; the required-keys check still catches genuinely
+// bad responses.
+const QUEST_HOOK_KEY_ALIASES = {
+  quest_title: 'quest_title', QuestTitle: 'quest_title',
+  questTitle: 'quest_title', 'Quest Title': 'quest_title',
+  quest_giver_name: 'quest_giver_name', QuestGiverName: 'quest_giver_name',
+  questGiverName: 'quest_giver_name', 'Quest Giver Name': 'quest_giver_name',
+  quest_giver_background: 'quest_giver_background',
+  QuestGiverBackground: 'quest_giver_background',
+  questGiverBackground: 'quest_giver_background',
+  'Quest Giver Background': 'quest_giver_background',
+  quest_giver_encounter: 'quest_giver_encounter',
+  QuestGiverEncounter: 'quest_giver_encounter',
+  questGiverEncounter: 'quest_giver_encounter',
+  'Quest Giver Encounter': 'quest_giver_encounter',
+  quest_details: 'quest_details', QuestDetails: 'quest_details',
+  questDetails: 'quest_details', 'Quest Details': 'quest_details',
+  objectives: 'objectives', Objectives: 'objectives',
+  challenges: 'challenges', Challenges: 'challenges',
+  rewards: 'rewards', Rewards: 'rewards',
+  twist: 'twist', Twist: 'twist',
+};
+
+function normalizeQuestHook(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    out[QUEST_HOOK_KEY_ALIASES[k] || k] = v;
+  }
+  // Some models nest a {Name, Description, Background} object under
+  // quest_giver_name. Flatten into the three flat string fields the
+  // template expects.
+  const giver = out.quest_giver_name;
+  if (giver && typeof giver === 'object' && !Array.isArray(giver)) {
+    out.quest_giver_name =
+      giver.Name || giver.name || '';
+    out.quest_giver_background = out.quest_giver_background ||
+      giver.Description || giver.description ||
+      giver.Background || giver.background || '';
+    out.quest_giver_encounter = out.quest_giver_encounter ||
+      giver.Encounter || giver.encounter || '';
+  }
+  return out;
+}
+
 function questHookValidation(jsonString) {
   try {
-    const jsonObj = JSON.parse(jsonString);
-    const keys = [
+    const normalized = normalizeQuestHook(JSON.parse(jsonString));
+    if (!normalized) return false;
+    const required = [
       'quest_title', 'quest_giver_name', 'quest_giver_background',
       'quest_giver_encounter', 'quest_details', 'objectives',
       'challenges', 'rewards', 'twist',
     ];
-    return keys.every(key => key in jsonObj);
+    return required.every((k) => k in normalized);
   } catch {
     return false;
   }
@@ -447,7 +496,7 @@ const generateQuestHookFromTab = async () => {
   try {
     loadingQuestHooks.value = true;
     const response = await generateGptResponse(prompt, questHookValidation);
-    const questHook = JSON.parse(response);
+    const questHook = normalizeQuestHook(JSON.parse(response));
     questHook.combined_giver_and_quest = combineQuestGiverAndDetails(questHook);
 
     const updated = [...(props.setting.questHooks || []), questHook];
