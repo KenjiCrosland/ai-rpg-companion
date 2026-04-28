@@ -175,6 +175,7 @@ import {
 import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
+import { readQuota, writeQuota, remainingFromQuota, ensureQuotaSeeded } from '@/util/quota-storage.mjs';
 import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
@@ -219,38 +220,23 @@ const initializeHooks = () => {
   }
 };
 
+const MAX_GENERATIONS = 5;
+const RESET_WINDOW_MS = 86400000;
+
 // Update remaining generations counter
-const updateRemainingGenerations = () => {
+const updateRemainingGenerations = async () => {
   if (props.premium) {
     remainingGenerations.value = Infinity;
     return;
   }
-
-  const MAX_GENERATIONS = 5;
-  const storage = window.localStorage;
-  const questHookData = JSON.parse(storage.getItem('questHookTracking')) || {
-    generationCount: '0',
-    firstGenerationTime: null,
-  };
-
-  let generationCount = parseInt(questHookData.generationCount) || 0;
-  let firstGenerationTime = parseInt(questHookData.firstGenerationTime);
-  const currentTime = new Date().getTime();
-
-  // Reset if 24 hours have passed
-  if (firstGenerationTime && currentTime - firstGenerationTime >= 86400000) {
-    generationCount = 0;
-    questHookData.generationCount = '0';
-    questHookData.firstGenerationTime = null;
-    storage.setItem('questHookTracking', JSON.stringify(questHookData));
-  }
-
-  remainingGenerations.value = Math.max(0, MAX_GENERATIONS - generationCount);
+  const quota = await readQuota('quest-hook');
+  remainingGenerations.value = remainingFromQuota(quota, MAX_GENERATIONS, RESET_WINDOW_MS);
 };
 
 // Check if user can generate quest hook
 const canGenerateQuestHook = async () => {
   if (props.premium) {
+    await ensureQuotaSeeded('quest-hook');
     return true;
   }
 
@@ -264,38 +250,35 @@ const canGenerateQuestHook = async () => {
     return false;
   }
 
-  const MAX_GENERATIONS = 5;
-  const storage = window.localStorage;
-  const questHookData = JSON.parse(storage.getItem('questHookTracking')) || {
-    generationCount: '0',
-    firstGenerationTime: null,
-  };
+  const quota = await readQuota('quest-hook');
 
-  let generationCount = parseInt(questHookData.generationCount) || 0;
-  let firstGenerationTime = parseInt(questHookData.firstGenerationTime);
-  const currentTime = new Date().getTime();
+  if (!quota.valid) {
+    toast.warning(
+      "Quest hook tracking data couldn't be read. Clear this site's browser storage to reset, or become a $5 patron for unlimited access.",
+      8000
+    );
+    return false;
+  }
 
-  if (generationCount >= MAX_GENERATIONS) {
-    if (!firstGenerationTime || currentTime - firstGenerationTime >= 86400000) {
-      // 24 hours in milliseconds
-      // Reset the count and set the new day's first generation time
-      questHookData.generationCount = '1';
-      questHookData.firstGenerationTime = currentTime.toString();
+  const { count, firstGenTime } = quota;
+  const now = Date.now();
+
+  if (count >= MAX_GENERATIONS) {
+    if (!firstGenTime || now - firstGenTime >= RESET_WINDOW_MS) {
+      await writeQuota('quest-hook', { count: 1, firstGenTime: now });
     } else {
-      const resetTime = new Date(firstGenerationTime + 86400000);
+      const resetTime = new Date(firstGenTime + RESET_WINDOW_MS);
       toast.warning(`You've reached the 5 quest hook generation limit. Come back at ${resetTime.toLocaleString()} or become a $5 patron for unlimited access.`, 8000);
       return false;
     }
   } else {
-    // Increment the count
-    questHookData.generationCount = (generationCount + 1).toString();
-    if (generationCount === 0) {
-      questHookData.firstGenerationTime = currentTime.toString(); // Set the first generation time if this is the first count
-    }
+    await writeQuota('quest-hook', {
+      count: count + 1,
+      firstGenTime: count === 0 ? now : firstGenTime,
+    });
   }
 
-  storage.setItem('questHookTracking', JSON.stringify(questHookData)); // Save the updated object to local storage
-  updateRemainingGenerations();
+  await updateRemainingGenerations();
   return true;
 };
 

@@ -384,6 +384,7 @@ import {
 } from '@rei/cedar';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
+import { readQuota, writeQuota, remainingFromQuota, ensureQuotaSeeded } from '@/util/quota-storage.mjs';
 import {
   generateEventPrompt,
   generateSummaryPrompt,
@@ -598,9 +599,13 @@ const calculateEventYear = (yearsAgo) => {
   return currentYear.value.replace(/\d+/, eventYearNum.toString());
 };
 
+const MAX_GENERATIONS = 5;
+const RESET_WINDOW_MS = 86400000;
+
 // Check if user can generate events (premium or under limit)
 const canGenerateEvent = async () => {
   if (props.premium) {
+    await ensureQuotaSeeded('lore');
     return true;
   }
 
@@ -614,69 +619,46 @@ const canGenerateEvent = async () => {
     return false;
   }
 
-  const MAX_GENERATIONS = 5;
-  const storage = window.localStorage;
-  const loreData = JSON.parse(storage.getItem('loreBuilderTracking')) || {
-    generationCount: '0',
-    firstGenerationTime: null,
-  };
+  const quota = await readQuota('lore');
 
-  let generationCount = parseInt(loreData.generationCount) || 0;
-  let firstGenerationTime = parseInt(loreData.firstGenerationTime);
-  const currentTime = new Date().getTime();
+  if (!quota.valid) {
+    toast.warning(
+      "Lore tracking data couldn't be read. Clear this site's browser storage to reset, or become a $5 patron for unlimited access.",
+      8000
+    );
+    return false;
+  }
 
-  if (generationCount >= MAX_GENERATIONS) {
-    if (!firstGenerationTime || currentTime - firstGenerationTime >= 86400000) {
-      // 24 hours in milliseconds
-      // Reset the count and set the new day's first generation time
-      loreData.generationCount = '1';
-      loreData.firstGenerationTime = currentTime.toString();
-      storage.setItem('loreBuilderTracking', JSON.stringify(loreData));
+  const { count, firstGenTime } = quota;
+  const now = Date.now();
+
+  if (count >= MAX_GENERATIONS) {
+    if (!firstGenTime || now - firstGenTime >= RESET_WINDOW_MS) {
+      await writeQuota('lore', { count: 1, firstGenTime: now });
     } else {
-      const resetTime = new Date(firstGenerationTime + 86400000);
+      const resetTime = new Date(firstGenTime + RESET_WINDOW_MS);
       toast.warning(`You've reached the 5 event generation limit. Come back at ${resetTime.toLocaleString()} or become a $5 patron for unlimited access.`, 8000);
       return false;
     }
   } else {
-    // Increment the count
-    loreData.generationCount = (generationCount + 1).toString();
-    if (generationCount === 0) {
-      loreData.firstGenerationTime = currentTime.toString(); // Set the first generation time if this is the first count
-    }
-    storage.setItem('loreBuilderTracking', JSON.stringify(loreData));
+    await writeQuota('lore', {
+      count: count + 1,
+      firstGenTime: count === 0 ? now : firstGenTime,
+    });
   }
 
-  updateRemainingGenerations();
+  await updateRemainingGenerations();
   return true;
 };
 
 // Update remaining generations display
-const updateRemainingGenerations = () => {
+const updateRemainingGenerations = async () => {
   if (props.premium) {
     remainingGenerations.value = Infinity;
     return;
   }
-
-  const MAX_GENERATIONS = 5;
-  const storage = window.localStorage;
-  const loreData = JSON.parse(storage.getItem('loreBuilderTracking')) || {
-    generationCount: '0',
-    firstGenerationTime: null,
-  };
-
-  let generationCount = parseInt(loreData.generationCount) || 0;
-  let firstGenerationTime = parseInt(loreData.firstGenerationTime);
-  const currentTime = new Date().getTime();
-
-  // Reset if 24 hours have passed
-  if (firstGenerationTime && currentTime - firstGenerationTime >= 86400000) {
-    generationCount = 0;
-    loreData.generationCount = '0';
-    loreData.firstGenerationTime = null;
-    storage.setItem('loreBuilderTracking', JSON.stringify(loreData));
-  }
-
-  remainingGenerations.value = Math.max(0, MAX_GENERATIONS - generationCount);
+  const quota = await readQuota('lore');
+  remainingGenerations.value = remainingFromQuota(quota, MAX_GENERATIONS, RESET_WINDOW_MS);
 };
 
 // Start the timeline

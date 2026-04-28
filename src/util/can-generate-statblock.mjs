@@ -1,8 +1,15 @@
 import { detectIncognito } from 'detectincognitojs';
 import { useToast } from '../composables/useToast';
+import { readQuota, writeQuota, ensureQuotaSeeded } from './quota-storage.mjs';
+
+const MAX_GENERATIONS = 5;
+const RESET_WINDOW_MS = 86400000; // 24h
 
 export async function canGenerateStatblock(isPremium) {
   if (isPremium) {
+    // Seed a fresh `_q` if missing so a future drop to free tier
+    // lands in the standard fresh-window path instead of soft-recovery.
+    await ensureQuotaSeeded('statblock');
     return true;
   }
 
@@ -18,54 +25,42 @@ export async function canGenerateStatblock(isPremium) {
     return false;
   }
 
-  const MAX_GENERATIONS = 5;
-  const storage = window.localStorage;
-  let monsters;
+  // recoverAtCount opts into the soft-recovery path: if the user
+  // deleted `_q` from `monsters` while keeping their saves, the wrapper
+  // writes an at-cap state back so the gate surfaces the standard
+  // rate-limit toast (24h cooldown) instead of a stuck error.
+  const quota = await readQuota('statblock', { recoverAtCount: MAX_GENERATIONS });
 
-  try {
-    const stored = JSON.parse(storage.getItem('monsters'));
-    // Ensure it's an object with the expected structure
-    if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
-      monsters = stored;
-    } else {
-      monsters = {
-        generationCount: '0',
-        firstGenerationTime: null,
-      };
-    }
-  } catch (e) {
-    // If JSON parse fails, start fresh
-    monsters = {
-      generationCount: '0',
-      firstGenerationTime: null,
-    };
+  if (!quota.valid) {
+    toast.warning(
+      "Your generation tracking data couldn't be read. Clear this site's browser storage to reset, or go Premium for unlimited access.",
+      0,
+      'quota-invalid-warning',
+    );
+    return false;
   }
 
-  let generationCount = parseInt(monsters.generationCount) || 0;
-  let firstGenerationTime = parseInt(monsters.firstGenerationTime);
-  const currentTime = new Date().getTime();
+  const { count, firstGenTime } = quota;
+  const now = Date.now();
 
-  if (generationCount >= MAX_GENERATIONS) {
-    if (!firstGenerationTime || currentTime - firstGenerationTime >= 86400000) {
-      // 24 hours have passed — reset
-      monsters.generationCount = '1';
-      monsters.firstGenerationTime = currentTime.toString();
-    } else {
-      const resetTime = new Date(firstGenerationTime + 86400000);
-      toast.warning(
-        `You've hit the daily limit (5 statblocks per 24 hours). Resets at ${resetTime.toLocaleString()}.`,
-        0,
-        'rate-limit-warning',
-      );
-      return false;
+  if (count >= MAX_GENERATIONS) {
+    if (!firstGenTime || now - firstGenTime >= RESET_WINDOW_MS) {
+      // Window elapsed — start a fresh count for this generation.
+      await writeQuota('statblock', { count: 1, firstGenTime: now });
+      return true;
     }
-  } else {
-    monsters.generationCount = (generationCount + 1).toString();
-    if (generationCount === 0) {
-      monsters.firstGenerationTime = currentTime.toString();
-    }
+    const resetTime = new Date(firstGenTime + RESET_WINDOW_MS);
+    toast.warning(
+      `You've hit the daily limit (5 statblocks per 24 hours). Resets at ${resetTime.toLocaleString()}.`,
+      0,
+      'rate-limit-warning',
+    );
+    return false;
   }
 
-  storage.setItem('monsters', JSON.stringify(monsters));
+  await writeQuota('statblock', {
+    count: count + 1,
+    firstGenTime: count === 0 ? now : firstGenTime,
+  });
   return true;
 }
