@@ -418,13 +418,60 @@ const questTypes = [
   'Creation: Gather components to create or restore the item'
 ];
 
+// Maps any common variant the AI drifts to → canonical camelCase key.
+// Covers Title Case, "Spaced Title Case", and PascalCase. Unknown keys
+// pass through so we don't silently lose anything; the required-keys
+// check still catches genuinely bad responses.
+const QUEST_HOOK_KEY_ALIASES = {
+  title: 'title', Title: 'title',
+  questGiver: 'questGiver', QuestGiver: 'questGiver',
+  'Quest Giver': 'questGiver', 'quest giver': 'questGiver', 'quest_giver': 'questGiver',
+  setup: 'setup', Setup: 'setup',
+  objectives: 'objectives', Objectives: 'objectives',
+  challenges: 'challenges', Challenges: 'challenges',
+  reward: 'reward', Reward: 'reward',
+  twist: 'twist', Twist: 'twist',
+};
+
+// Coerce a possibly-nested questGiver object ({Name, Description}) or
+// reward object ({Items, Other}) into the single string the template
+// expects. The model occasionally splits them despite the prompt.
+function flattenQuestGiver(value) {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object') return '';
+  const name = value.Name || value.name || '';
+  const desc = value.Description || value.description || '';
+  return [name, desc].filter(Boolean).join('. ').trim();
+}
+
+function flattenReward(value) {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object') return '';
+  const itemsRaw = value.Items || value.items;
+  const items = Array.isArray(itemsRaw) ? itemsRaw.join(', ') : (itemsRaw || '');
+  const other = value.Other || value.other || '';
+  return [items, other].filter(Boolean).join(' ').trim();
+}
+
+function normalizeQuestHook(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    out[QUEST_HOOK_KEY_ALIASES[k] || k] = v;
+  }
+  if (out.questGiver !== undefined) out.questGiver = flattenQuestGiver(out.questGiver);
+  if (out.reward !== undefined) out.reward = flattenReward(out.reward);
+  return out;
+}
+
 const questHookValidation = (jsonString) => {
   try {
-    const jsonObj = JSON.parse(jsonString);
-    const keys = ['title', 'questGiver', 'setup', 'objectives', 'challenges', 'reward'];
-    return keys.every((k) => k in jsonObj) &&
-      Array.isArray(jsonObj.objectives) &&
-      Array.isArray(jsonObj.challenges);
+    const normalized = normalizeQuestHook(JSON.parse(jsonString));
+    if (!normalized) return false;
+    const required = ['title', 'questGiver', 'setup', 'objectives', 'challenges', 'reward'];
+    return required.every((k) => k in normalized) &&
+      Array.isArray(normalized.objectives) &&
+      Array.isArray(normalized.challenges);
   } catch {
     return false;
   }
@@ -543,14 +590,27 @@ const generateQuestHook = async () => {
   const canGenerate = await canGenerateQuestHook();
   if (!canGenerate) return;
 
-  const questPrompt = `You are a D&D 5e quest designer. Create quest hooks that are detailed enough to run with minimal prep. Follow these rules:
+  const questPrompt = `You are a D&D 5e quest designer. Create quest hooks that are detailed enough to run with minimal prep.
 
-Quest giver: 2-3 sentences. One visual detail, one motivation.
-Setup: 3-4 sentences. What happened, why the party, what's at stake.
-Objectives: 3-4 bullet points, one sentence each.
-Challenges: 3-4 bullet points, 2 sentences each. Include specific creature types, DCs, or environmental details.
-Reward: 2-3 sentences. Named items and concrete benefits.
-Twist: 2-3 sentences. A specific complication, not just a concept.
+RESPONSE FORMAT — STRICT REQUIREMENTS (deviations will be rejected):
+- Return ONLY valid JSON. No prose before or after. No markdown fences.
+- Use these EXACT field names, lowercase camelCase, case-sensitive:
+  title, questGiver, setup, objectives, challenges, reward, twist
+- DO NOT use Title Case or spaces in keys. Wrong: "Title", "Quest Giver",
+  "QuestGiver". Correct: "title", "questGiver".
+- title, questGiver, setup, reward, and twist are STRINGS, not objects.
+  Do NOT split questGiver into {Name, Description}. Do NOT split reward
+  into {Items, Other}. Combine the information into a single string.
+- objectives and challenges are ARRAYS of strings (3-4 items each).
+
+Content rules:
+- questGiver: 2-3 sentences. One visual detail, one motivation.
+- setup: 3-4 sentences. What happened, why the party, what's at stake.
+- objectives: 3-4 entries, one sentence each.
+- challenges: 3-4 entries, 2 sentences each. Include specific creature
+  types, DCs, or environmental details.
+- reward: 2-3 sentences. Named items and concrete benefits.
+- twist: 2-3 sentences. A specific complication, not just a concept.
 
 Generate a D&D 5e quest hook for the following magic item:
     Item Name: ${props.item.name}
@@ -561,7 +621,7 @@ Generate a D&D 5e quest hook for the following magic item:
 
     Quest Type: ${questType.value}
 
-    Create a quest hook with the following structure:
+    Schema example (use these exact key names — fill in your own values):
     {
       "title": "A compelling quest title",
       "questGiver": "Name and brief description of the quest giver",
@@ -577,7 +637,7 @@ Generate a D&D 5e quest hook for the following magic item:
   try {
     loadingQuest.value = true;
     const response = await generateGptResponse(questPrompt, questHookValidation, 3);
-    const questHook = JSON.parse(response);
+    const questHook = normalizeQuestHook(JSON.parse(response));
     hooks.value.push({ ...questHook, open: true });
     emitUpdatedItem();
   } catch (err) {
