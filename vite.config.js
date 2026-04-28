@@ -19,6 +19,12 @@ export default defineConfig(({ mode }) => {
       __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
       __VUE_OPTIONS_API__: 'true',
       __VUE_PROD_DEVTOOLS__: 'false',
+      // Inject the env-driven default provider override at build time
+      // so `ai-config.mjs` can read it without `import.meta.env` (which
+      // can't be parsed by babel-jest's CommonJS transform). In Jest
+      // this constant is undeclared, and the typeof guard in the
+      // consumer falls through to the hard-coded default.
+      __VITE_AI_DEFAULT_PROVIDER__: JSON.stringify(env.VITE_AI_DEFAULT_PROVIDER || ''),
     },
     build: {
       manifest: true,

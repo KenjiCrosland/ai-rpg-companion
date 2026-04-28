@@ -45,8 +45,16 @@ export function getAIProvider() {
     }
   }
 
-  // Check environment variable
-  const envProvider = import.meta.env.VITE_AI_DEFAULT_PROVIDER;
+  // Check environment variable. `__VITE_AI_DEFAULT_PROVIDER__` is
+  // injected by Vite's `define` at build time (see vite.config.js).
+  // The typeof guard handles Jest's environment, where the constant is
+  // undeclared — typeof on an undeclared identifier returns 'undefined'
+  // without throwing, so this safely falls through to the default in
+  // tests. (Previously read via `import.meta.env`, which can't be
+  // parsed by babel-jest's CommonJS transform.)
+  const envProvider = typeof __VITE_AI_DEFAULT_PROVIDER__ !== 'undefined'
+    ? __VITE_AI_DEFAULT_PROVIDER__
+    : '';
   if (envProvider && PROVIDER_CONFIGS[envProvider]) {
     return envProvider;
   }
