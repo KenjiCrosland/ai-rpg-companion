@@ -1,8 +1,13 @@
 import { detectIncognito } from 'detectincognitojs';
 import { useToast } from '../composables/useToast';
+import { getPremiumStatus } from './auth-status.mjs';
 
 export async function canGenerateStatblock(isPremium) {
-  if (isPremium) {
+  // Server is the source of truth — DOM-tampered `data-premium="true"`
+  // does not bypass the rate limit. The DOM hint becomes the fallback
+  // for offline/5xx so legit users on shaky networks still work.
+  const verifiedPremium = await getPremiumStatus({ fallback: !!isPremium });
+  if (verifiedPremium) {
     return true;
   }
 

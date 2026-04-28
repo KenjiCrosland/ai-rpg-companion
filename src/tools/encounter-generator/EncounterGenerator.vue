@@ -930,8 +930,12 @@ function deleteEncounter() {
 
 // ─── Statblock generation ────────────────────────────────────────────────────
 async function generateStatblock(index) {
-  if (!props.premium && !canGenerateStatblock()) {
-    toast.warning('Daily limit reached. Upgrade to premium for unlimited generation.');
+  // canGenerateStatblock is async (returns Promise<boolean>) and itself
+  // verifies premium server-side, so the bare `!canGenerateStatblock()`
+  // check that lived here was always falsy — Promises are truthy.
+  // Awaiting + delegating premium-vs-rate-limit to the helper closes
+  // the gap.
+  if (!(await canGenerateStatblock(props.premium))) {
     return;
   }
 

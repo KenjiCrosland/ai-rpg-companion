@@ -384,6 +384,7 @@ import {
 } from '@rei/cedar';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
+import { getPremiumStatus } from '@/util/auth-status.mjs';
 import {
   generateEventPrompt,
   generateSummaryPrompt,
@@ -600,7 +601,9 @@ const calculateEventYear = (yearsAgo) => {
 
 // Check if user can generate events (premium or under limit)
 const canGenerateEvent = async () => {
-  if (props.premium) {
+  // Server is the source of truth — DOM-tampered `data-premium="true"`
+  // does not bypass the rate limit. DOM hint becomes the offline fallback.
+  if (await getPremiumStatus({ fallback: !!props.premium })) {
     return true;
   }
 

@@ -175,6 +175,7 @@ import {
 import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
+import { getPremiumStatus } from '@/util/auth-status.mjs';
 import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
@@ -250,7 +251,9 @@ const updateRemainingGenerations = () => {
 
 // Check if user can generate quest hook
 const canGenerateQuestHook = async () => {
-  if (props.premium) {
+  // Server is the source of truth — DOM-tampered `data-premium="true"`
+  // does not bypass the rate limit. DOM hint becomes the offline fallback.
+  if (await getPremiumStatus({ fallback: !!props.premium })) {
     return true;
   }
 

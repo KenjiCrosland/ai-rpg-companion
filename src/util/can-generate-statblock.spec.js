@@ -25,8 +25,18 @@ jest.mock('../composables/useToast', () => ({
   useToast: () => mockToast,
 }));
 
+// Mock auth-status: by default echo the `fallback` arg so existing tests
+// (which pass `true`/`false` for isPremium and expect the matching
+// short-circuit) keep working. Individual tests can override
+// getPremiumStatus.mockResolvedValueOnce(...) to simulate the
+// server-says-false-when-DOM-says-true scenario.
+jest.mock('./auth-status.mjs', () => ({
+  getPremiumStatus: jest.fn(({ fallback = false } = {}) => Promise.resolve(!!fallback)),
+}));
+
 import { canGenerateStatblock } from './can-generate-statblock.mjs';
 import { detectIncognito } from 'detectincognitojs';
+import { getPremiumStatus } from './auth-status.mjs';
 
 // Store original localStorage
 const originalLocalStorage = global.localStorage;
@@ -430,6 +440,54 @@ describe('canGenerateStatblock - Rate Limiting & Premium Gating (CRITICAL)', () 
 
       expect(localStorage.getItem('user_settings')).toBe('some_value');
       expect(localStorage.getItem('other_data')).toBe('other_value');
+    });
+  });
+
+  describe('Server-side premium verification (anti-DOM-tamper)', () => {
+    it('should ignore DOM-claimed premium when server says non-premium', async () => {
+      // Simulates a free user who edited data-premium="false" -> "true"
+      // in DevTools. The DOM hint flows in as `isPremium=true`, but
+      // getPremiumStatus returns false (server is authoritative). The
+      // rate limit must still apply.
+      getPremiumStatus.mockResolvedValueOnce(false);
+
+      const recentTime = Date.now() - 3600000;
+      localStorage.setItem('monsters', JSON.stringify({
+        generationCount: '5',
+        firstGenerationTime: recentTime.toString(),
+      }));
+
+      const result = await canGenerateStatblock(true); // DOM lies
+
+      expect(result).toBe(false);
+      expect(getPremiumStatus).toHaveBeenCalledWith({ fallback: true });
+      expect(mockToast.warning).toHaveBeenCalledWith(
+        expect.stringContaining('daily limit'),
+        0,
+        'rate-limit-warning',
+      );
+    });
+
+    it('should grant premium when server confirms it (regardless of DOM hint)', async () => {
+      getPremiumStatus.mockResolvedValueOnce(true);
+
+      // Even if DOM hint was false, server confirmation grants premium.
+      const result = await canGenerateStatblock(false);
+
+      expect(result).toBe(true);
+      expect(detectIncognito).not.toHaveBeenCalled();
+    });
+
+    it('should pass DOM hint as fallback so offline users keep working', async () => {
+      // The wrapper itself handles network failures by returning
+      // fallback. We just verify the hint is passed through.
+      await canGenerateStatblock(false);
+      expect(getPremiumStatus).toHaveBeenCalledWith({ fallback: false });
+
+      jest.clearAllMocks();
+
+      await canGenerateStatblock(true);
+      expect(getPremiumStatus).toHaveBeenCalledWith({ fallback: true });
     });
   });
 
