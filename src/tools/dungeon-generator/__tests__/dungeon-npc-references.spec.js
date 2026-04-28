@@ -18,7 +18,7 @@ import { loadDungeons, saveDungeons } from '../stores/dungeon-utils.mjs';
 import { dungeons, currentDungeon, currentDungeonId } from '../stores/dungeon-state.mjs';
 
 // Mock dependencies
-jest.mock('@/util/open-ai.mjs', () => ({
+jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn()
 }));
 
@@ -68,7 +68,7 @@ describe('Dungeon Generator - NPC Reference Creation', () => {
 
   describe('Reference Creation on NPC Statblock Generation', () => {
     it('should create reference when generating statblock for dungeon NPC', async () => {
-      const { generateGptResponse } = require('@/util/open-ai.mjs');
+      const { generateGptResponse } = require('@/util/ai-client.mjs');
 
       // Mock statblock generation
       generateGptResponse
@@ -128,7 +128,7 @@ describe('Dungeon Generator - NPC Reference Creation', () => {
     });
 
     it('should not create reference if NPC has no read_aloud_description', async () => {
-      const { generateGptResponse } = require('@/util/open-ai.mjs');
+      const { generateGptResponse } = require('@/util/ai-client.mjs');
 
       generateGptResponse
         .mockResolvedValueOnce(JSON.stringify({
@@ -174,7 +174,7 @@ describe('Dungeon Generator - NPC Reference Creation', () => {
     });
 
     it('should auto-generate npc_id and create reference for legacy NPCs', async () => {
-      const { generateGptResponse } = require('@/util/open-ai.mjs');
+      const { generateGptResponse } = require('@/util/ai-client.mjs');
 
       generateGptResponse
         .mockResolvedValueOnce(JSON.stringify({
@@ -231,7 +231,7 @@ describe('Dungeon Generator - NPC Reference Creation', () => {
     });
 
     it('should use dungeon name as statblock folder', async () => {
-      const { generateGptResponse } = require('@/util/open-ai.mjs');
+      const { generateGptResponse } = require('@/util/ai-client.mjs');
 
       generateGptResponse
         .mockResolvedValueOnce(JSON.stringify({

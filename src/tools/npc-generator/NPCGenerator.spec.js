@@ -17,7 +17,7 @@ import * as npcGenerator from './utils/npc-generator.mjs';
 import * as npcPrompts from './npc-prompts.mjs';
 
 // Mock the open-ai module
-jest.mock('@/util/open-ai.mjs', () => ({
+jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
 }));
 
