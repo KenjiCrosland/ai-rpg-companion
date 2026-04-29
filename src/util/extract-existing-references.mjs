@@ -318,6 +318,53 @@ function extractEncounterStatblockReferences() {
 }
 
 /**
+ * Extract `mentioned_in_item` references from items whose `related_npcs` stubs
+ * already point to canonical NPCs (via `npc_id`).
+ *
+ * Items are stored as a flat array in `savedItems` and the reference graph
+ * identity for an item is its `name` (item names are unique per user).
+ *
+ * @returns {number}
+ */
+function extractItemNPCReferences() {
+  let count = 0;
+
+  try {
+    const itemsRaw = localStorage.getItem('savedItems');
+    if (!itemsRaw) return 0;
+
+    const items = JSON.parse(itemsRaw);
+    if (!Array.isArray(items)) return 0;
+
+    for (const item of items) {
+      if (!item?.name || !Array.isArray(item.related_npcs)) continue;
+
+      for (const stub of item.related_npcs) {
+        if (!stub?.npc_id || !stub?.name) continue;
+
+        if (referenceExists('npc', stub.npc_id, 'item', item.name, 'mentioned_in_item')) continue;
+
+        addReference({
+          source_type: 'npc',
+          source_id: stub.npc_id,
+          source_name: stub.name,
+          target_type: 'item',
+          target_id: item.name,
+          target_name: item.name,
+          relationship: 'mentioned_in_item',
+          context: stub.role_brief || ''
+        });
+        count++;
+      }
+    }
+  } catch (error) {
+    console.error('Error extracting item NPC references:', error);
+  }
+
+  return count;
+}
+
+/**
  * Main migration function that runs all extraction steps.
  */
 export function extractExistingReferences() {
@@ -344,6 +391,10 @@ export function extractExistingReferences() {
   const encounterStatblocks = extractEncounterStatblockReferences();
   totalCount += encounterStatblocks;
   console.log(`- Extracted ${encounterStatblocks} statblock → encounter references`);
+
+  const itemNPCs = extractItemNPCReferences();
+  totalCount += itemNPCs;
+  console.log(`- Extracted ${itemNPCs} NPC → item references`);
 
   console.log(`✓ Reference extraction complete: ${totalCount} references created`);
 }

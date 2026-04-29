@@ -116,6 +116,12 @@
                 <p class="body-text" v-html="formatMarkdown(magicItemDescription.lore)"></p>
               </div>
 
+              <RelatedNPCsSection
+                :item="magicItemDescription"
+                @update:item="handleUpdatedItem"
+                @switch-to-lore-builder="activeTabIndex = 1"
+              />
+
               <div class="button-group">
                 <cdr-button @click="startEditing" modifier="secondary">Edit Item</cdr-button>
                 <cdr-button @click="deleteItem" modifier="dark">Delete Item</cdr-button>
@@ -267,7 +273,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CdrInput, CdrButton, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
@@ -276,10 +282,13 @@ import determineFeaturesAndBonuses from '@/util/determine-features-and-bonuses.m
 import ItemSkeleton from '@/components/skeletons/ItemSkeleton.vue';
 import QuestHookTab from './components/QuestHookTab.vue';
 import LoreBuilderTab from './components/LoreBuilderTab.vue';
+import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
 import { useToast } from '@/composables/useToast';
+import { renameItemReferences, removeReferencesForItem } from '@/util/item-storage.mjs';
+import { getNavigationParams } from '@/util/navigation.mjs';
 
 const toast = useToast();
 
@@ -668,6 +677,46 @@ ${itemLore.value.trim() ? `USER-PROVIDED LORE — PRESERVE INTENT:
 The user provided this lore: "${itemLore.value}"
 Expand on it and enrich it, but keep the core narrative, characters, and events the user described. Do not replace their story with a different one.` : `LORE STYLE:\n${selectedLoreFraming}`}
 
+LORE MUST INCLUDE A NAMED INDIVIDUAL:
+The lore must feature at least one named individual person/being connected to the item — not just a group, faction, or anonymous archetype. Pick an archetype that fits the mood, era, and origin above. Suggestions (mix and match for variety — pick what fits, don't default to the same ones):
+
+Origin-side:
+- Creator / Forger / Maker (the smith, sage, witch, god, or artificer who made it)
+- Patron / Commissioner (who paid for it, demanded it, or sponsored its making)
+- Apprentice (who watched the creator at work and inherited the secret)
+- Sacrifice (whose life, blood, or soul was given to power or seal it)
+- Source / Subject (the being whose body provided a material — a dragon, titan, beast, ancestor)
+
+Wielders:
+- First Wielder (who carried it first — hero, soldier, queen, villain, child)
+- Champion (who used it for good, possibly martyred)
+- Heretic (who used it against their own order, faith, or oath)
+- Penitent (who wields or guards it as atonement for a past wrong)
+- Inheritor (who received it through bloodline, will, or oath)
+
+Adversaries:
+- Corrupter (who twisted its purpose or laid a curse on it)
+- Thief (who stole it and what came of that theft)
+- Rival / Hunter (who has been pursuing it across years, miles, or generations)
+- Destroyer (who tried to unmake it and either failed, half-succeeded, or vanished)
+- Deceiver (who used it under a false identity or stolen mantle)
+
+Stewards:
+- Sealer / Binder (who locked away its power and how the lock holds)
+- Guardian / Keeper (who currently protects it, willingly or not)
+- Restorer / Repairer (who put it back together after it broke)
+- Last Known Owner (who lost it, where it ended up, who saw it last)
+- Exile (who took it into banishment when forced to leave)
+
+Witnesses:
+- Scholar / Oracle / Seer (who studied, recorded, or foresaw it)
+- Translator / Decipherer (who read inscriptions, glyphs, or hidden marks on it)
+- Cartographer (who mapped where it was made, lost, or rediscovered)
+- Witness / Chronicler (who recorded its existence in an account, ballad, or letter)
+- Prophet / Heralded (who foretold the wielder it would choose)
+
+Use a proper name in the same linguistic palette as the item name. Weave the character into the prose naturally — one or two named individuals is plenty; do NOT list them like a roster, and do NOT label them with the archetype tag in the lore text. If the user provided lore, only add a named individual when their text does not already feature one.
+
 COHERENCE:
 All of the creative seeds above describe ONE item and must work together as a unified concept.${itemName.value.trim() || itemLore.value.trim() ? ' USER INPUT TAKES PRIORITY — if the user provided a name or lore, the creative seeds (origin, mood, material) should adapt to fit the user\'s vision, not the other way around. The user\'s name and lore are the anchor; the seeds are supporting flavor.' : ' If the naming style is Japanese-inspired and the origin is Fey, then the result should feel like a fey item from a Japanese-inspired culture — not a generic fantasy item with a Japanese name bolted on.'}
 
@@ -729,7 +778,42 @@ ITEM STRUCTURE TO COMPLETE:
   "features": ${JSON.stringify(featuresAndBonuses.features)},
   "reason_for_rarity_level": "[Explain why this item fits its rarity based on the guidelines above]",
   "physical_description": "[2-3 sentences describing the item's appearance incorporating the magical material, mood, and any quirk. ${resolvedItemType === 'Potion' ? 'For potions: describe the liquid color, consistency, swirls, particles, smell, and taste.' : ''}]",
-  "lore": "${itemLore.value || '[Create compelling backstory using the lore style and historical context above. All character names, faction names, and location names must use the same linguistic palette as the item name.]'}"
+  "lore": "${itemLore.value || '[Create compelling backstory using the lore style and historical context above. All character names, faction names, and location names must use the same linguistic palette as the item name.]'}",
+  "related_npcs": [
+    /*
+      Add one stub for every NAMED INDIVIDUAL person/being relevant to this item — oracles, smiths,
+      wielders, gods, owners, witnesses, etc.
+
+      INDIVIDUALS vs GROUPS — important distinction:
+        - A specific individual with a proper name (e.g., "Yelena of the Duskwood", "Master Smith Gorvak"):
+          extract directly using that name.
+        - A GROUP / faction / cult / tribe / order / lineage with no specific member named in the lore
+          (e.g., "the Vorn-Taak earth-priests", "the Kha'Zur smith-cults"): INVENT a single plausible
+          individual member's name in the same linguistic style as the rest of the lore. Use the invented
+          name as this stub's "name". Do NOT use the group's name as the stub's name. In context, identify
+          them as a member of that group.
+        - If a group AND a specific member are both named in the lore (e.g., "Skragbit, shaman of the
+          Mukgash tribe"): only extract the specific member; do NOT invent an additional member for the
+          same group.
+        - Anonymous archetypes with no proper name ("a wandering knight", "the king"): skip.
+
+      Each stub:
+        - name: the individual's name (real if named, invented if only the group was named).
+        - role_brief: ≤10 words describing their relationship to this item AND containing the EXACT item
+          name verbatim. Examples: "Creator of ${itemName.value || '[item name]'}",
+          "Wielder of ${itemName.value || '[item name]'}",
+          "Oracle who received the vision of ${itemName.value || '[item name]'}",
+          "Smith who forged ${itemName.value || '[item name]'}".
+          The item name MUST appear character-for-character — no paraphrasing, no "the staff", no shortened forms.
+        - context: one sentence describing what they did or how they relate to this specific item.
+          For invented members of a named group, mention the group affiliation here.
+        - source_quote: the verbatim sentence(s) in the lore field where this NPC appears, copied
+          character-for-character. Used downstream as context for NPC generation. Empty string if the NPC
+          was invented from a group passage with no individual reference.
+
+      If the lore mentions no named individuals or groups, return an empty array [].
+    */
+  ]
 }
 
 INSTRUCTIONS:
@@ -754,6 +838,7 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
     magicItemDescription.value = JSON.parse(response);
     magicItemDescription.value.rarity = parseRarity(magicItemDescription.value.rarity);
     magicItemDescription.value.questHooks = [];
+    magicItemDescription.value.related_npcs = normalizeRelatedNPCs(magicItemDescription.value.related_npcs);
     loadingItem.value = false;
     saveItem(magicItemDescription.value);
     const index = savedItems.value.findIndex((item) => item.name === magicItemDescription.value.name);
@@ -780,10 +865,44 @@ const itemValidation = (jsonString) => {
       'physical_description',
       'lore'
     ];
-    return keys.every((key) => key in jsonObj);
+    if (!keys.every((key) => key in jsonObj)) return false;
+    // related_npcs is optional, but if present must be an array of {name, role_brief, context}
+    if ('related_npcs' in jsonObj) {
+      if (!Array.isArray(jsonObj.related_npcs)) return false;
+      const ok = jsonObj.related_npcs.every(stub =>
+        stub && typeof stub === 'object'
+        && typeof stub.name === 'string'
+      );
+      if (!ok) return false;
+    }
+    return true;
   } catch (error) {
     return false;
   }
+}
+
+// Normalize a related_npcs array (from a fresh generation or imported data)
+// to the canonical stub shape with npc_id/npc_folder placeholders.
+const normalizeRelatedNPCs = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const stubs = [];
+  for (const entry of raw) {
+    const name = (entry?.name || '').toString().trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    stubs.push({
+      name,
+      role_brief: (entry.role_brief || '').toString().trim(),
+      context: (entry.context || '').toString().trim(),
+      source_quote: (entry.source_quote || '').toString().trim(),
+      npc_id: entry.npc_id || null,
+      npc_folder: entry.npc_folder || null
+    });
+  }
+  return stubs;
 }
 
 const constructModifierSentence = (bonus, itemType) => {
@@ -953,8 +1072,12 @@ const selectItem = (index) => {
 const deleteItem = () => {
   if (confirm('Are you sure you want to delete this item?')) {
     if (activeItemIndex.value !== null) {
+      const deletedName = savedItems.value[activeItemIndex.value]?.name;
       savedItems.value.splice(activeItemIndex.value, 1);
       localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
+      if (deletedName) {
+        removeReferencesForItem(deletedName);
+      }
       activeItemIndex.value = null;
       magicItemDescription.value = null;
       itemName.value = '';
@@ -1007,9 +1130,12 @@ const saveEdit = () => {
     features[featureName] = featureDesc;
   });
 
+  const oldName = magicItemDescription.value?.name;
+  const newName = editForm.value.name;
+
   magicItemDescription.value = {
     ...magicItemDescription.value,
-    name: editForm.value.name,
+    name: newName,
     item_type: editForm.value.item_type,
     rarity: editForm.value.rarity,
     modifier_sentence: editForm.value.modifier_sentence,
@@ -1022,6 +1148,13 @@ const saveEdit = () => {
   if (activeItemIndex.value !== null) {
     savedItems.value[activeItemIndex.value] = magicItemDescription.value;
     localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
+  }
+
+  if (oldName && newName && oldName !== newName) {
+    const result = renameItemReferences(oldName, newName);
+    if (result.totalUpdated > 0) {
+      toast.success(`Renamed and updated ${result.totalUpdated} reference${result.totalUpdated === 1 ? '' : 's'}.`);
+    }
   }
 
   isEditing.value = false;
@@ -1124,8 +1257,41 @@ const validateFeature = (jsonString) => {
   }
 };
 
+// Reload when the NPC Generator (in another tab, or via the same-tab bridge)
+// updates a stub on an item. This keeps the active view consistent without
+// requiring a manual refresh.
+const handleSavedItemsStorageChange = (e) => {
+  if (e?.key && e.key !== 'savedItems') return;
+  const previousName = magicItemDescription.value?.name || null;
+  loadSavedItems();
+  if (previousName) {
+    const idx = savedItems.value.findIndex(i => i?.name === previousName);
+    if (idx !== -1) {
+      activeItemIndex.value = idx;
+      magicItemDescription.value = savedItems.value[idx];
+    }
+  }
+};
+
 onMounted(() => {
   loadSavedItems();
+  window.addEventListener('storage', handleSavedItemsStorageChange);
+  window.addEventListener('saved-items-updated', handleSavedItemsStorageChange);
+
+  // Deep link from another tool (e.g., the NPC Generator's "From [item]" link
+  // on item-sourced NPCs). Selects the matching saved item by name.
+  const params = getNavigationParams();
+  if (params.item) {
+    const idx = savedItems.value.findIndex(i => i?.name === params.item);
+    if (idx !== -1) {
+      selectItem(idx);
+    }
+  }
+});
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleSavedItemsStorageChange);
+  window.removeEventListener('saved-items-updated', handleSavedItemsStorageChange);
 });
 </script>
 

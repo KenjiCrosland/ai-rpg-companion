@@ -157,31 +157,90 @@ Creates chronological timelines of item history:
 
 ### localStorage Structure
 
-Items organized by folders:
+Items are stored as a flat array under `savedItems`, deduplicated by name and sorted by rarity:
 
 ```javascript
-{
-  "Magic Weapons": [
-    {
-      name: "Flaming Longsword",
-      rarity: "Rare",
-      type: "Weapon",
-      // ... full item data
-    }
-  ],
-  "Wondrous Items": [
-    { /* item data */ }
-  ],
-  "Uncategorized": [
-    { /* item data */ }
-  ]
-}
+[
+  {
+    name: "Flaming Longsword",
+    item_type: "Weapon",
+    rarity: "Rare",
+    bonus: "+1",
+    feature_count: 2,
+    features: { /* ... */ },
+    physical_description: "...",
+    lore: "...",
+    related_npcs: [ /* see Related NPCs Integration below */ ]
+  },
+  // ...
+]
 ```
+
+Item identity in the cross-tool reference graph is the item's `name` (names are unique per user because the save path deduplicates by name).
 
 Additional storage keys per item:
 - `{itemName}-quest-hooks`: Array of quest hook objects
 - `{itemName}-lore-events`: Object of events by period
 - `{itemName}-lore-summary`: Summary object
+
+## Related NPCs Integration
+
+The Item Generator participates in the cross-tool NPC graph via the `related_npcs` field on each item and the `mentioned_in_item` reference type.
+
+### Data shape
+
+```javascript
+{
+  // ... item fields
+  related_npcs: [
+    {
+      name: "Yelena of the Duskwood",
+      role_brief: "oracle who received the vision",
+      context: "Granted a prophetic vision describing the staff",
+      npc_id: null,         // populated by the bridge after NPC generation
+      npc_folder: null
+    }
+  ]
+}
+```
+
+### Two paths into `related_npcs`
+
+**New items (Path A):** the main item-generation prompt is extended to also emit `related_npcs: [{name, role_brief, context}]` in the same JSON response. No second API call. The validator allows but does not require the field; `normalizeRelatedNPCs` cleans up shape and seeds `npc_id`/`npc_folder` placeholders.
+
+**Old items (Path B, backwards-compat):** items saved before this change have no `related_npcs`. The `RelatedNPCsSection` component shows a "Find Related NPCs in Lore" button that runs `extractRelatedNPCs(item)` from `utils/extract-related-npcs.mjs` — a separate AI call against the saved `lore` (and `timelineEvents` if present) that returns the same stub shape. `mergeStubs` merges results by case-insensitive name and never overwrites stubs that already have `npc_id`.
+
+### Stub → Full NPC (navigate-and-prefill)
+
+Each stub is rendered as a compact card under the item's lore on the Item Details tab. Clicking "Create NPC" calls `navigateToTool('npc-generator', { fromItem, stub })` (see `@/util/navigation.mjs`). This is the project's dev/prod-aware navigation — sessionStorage in dev, query string in prod.
+
+The NPC Generator's mount handler (in `NPCGenerator.vue`) reads the params, looks up the item via `getItemFromStorage`, finds the matching stub, and populates `typeOfPlace` with `buildPrefilledTypeOfPlace({stub, item})` from `@/prompts/item-npc-prompts.mjs`. The user reviews/edits and clicks Generate. After Part 2 completes, `finalizePendingItemLink()` calls:
+
+1. `addNPCMentionedInItemReference(...)` — creates a `mentioned_in_item` reference in `tool-references`.
+2. `linkNPCToItemStub(...)` — writes `npc_id` and `npc_folder` back onto the stub on the source item in `savedItems`.
+
+The Item Generator picks up the back-link via a `storage` event listener (cross-tab) or a `saved-items-updated` custom event (same tab).
+
+For stubs that already have `npc_id`, the card switches to a "View in NPC Generator" button which calls `navigateToTool('npc-generator', { npc: stub.npc_id })`; the NPC Generator's mount handler selects that NPC.
+
+### Why this design
+
+The Item Generator does **not** display the full NPC inline (unlike Dungeon and Setting Generators). Items are focused on a single primary entity — embedding a full NPC card would compete with the item for visual attention. We use a compact stub + reference link instead, funneling users to the NPC Generator for editing.
+
+We also do **not** maintain a parallel item-context NPC prompt. The NPC Generator's existing pipeline runs unchanged; the only difference is that the prefilled `typeOfPlace` text contains the item's name, type, rarity, physical description, and lore. The user can review and edit the prefill before clicking Generate, which addresses any "NPC must not contradict the item's lore" accuracy concern.
+
+### Rename / delete handling
+
+- On rename (in `saveEdit`): `renameItemReferences(oldName, newName)` updates `target_id`/`source_id` on any references where the item is involved.
+- On delete (in `deleteItem`): `removeReferencesForItem(name)` (a thin wrapper over `removeReferencesForEntity('item', name)`) drops every `mentioned_in_item` reference for that item. The canonical NPC in `npcGeneratorNPCs` is preserved — item deletion does not cascade.
+
+### Files involved
+
+- `src/util/item-storage.mjs` — `saveItemToStorage`, `getItemFromStorage`, `linkNPCToItemStub`, `renameItemReferences`, `addNPCMentionedInItemReference`, `removeReferencesForItem`.
+- `src/prompts/item-npc-prompts.mjs` — `createItemNPCExtractionPrompt`, `validateItemNPCExtraction`, `buildPrefilledTypeOfPlace`.
+- `src/tools/item-generator/utils/extract-related-npcs.mjs` — `extractRelatedNPCs` (orchestrator), `mergeStubs` (pure merge helper).
+- `src/tools/item-generator/components/RelatedNPCsSection.vue` — the compact stub UI.
+- `src/util/extract-existing-references.mjs` — `extractItemNPCReferences` runs as part of the migration to backfill `mentioned_in_item` references for items whose stubs already have `npc_id`.
 
 ## Test Coverage
 

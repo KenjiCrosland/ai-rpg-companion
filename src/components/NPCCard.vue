@@ -5,12 +5,22 @@
       <div>
         <h2 v-if="!loadingDescription" class="npc-card-name">{{ npc.name }}</h2>
         <p v-if="!loadingDescription && (origin || npc.type_info)" class="npc-card-subtitle">
-          <span v-if="origin">
-            From <a v-if="shouldShowSourceLink" @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ origin }}</a>
-            <template v-else>{{ origin }}</template>
-          </span>
-          <span v-if="origin && npc.type_info && npc.type_info !== origin"> · </span>
-          <span v-if="npc.type_info && npc.type_info !== origin">{{ npc.type_info }}</span>
+          <template v-if="itemSubtitleSegments && itemSubtitleSegments.mode === 'inline'">
+            <span>{{ itemSubtitleSegments.prefix }}</span><a @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ itemSubtitleSegments.name }}</a><span>{{ itemSubtitleSegments.suffix }}</span>
+          </template>
+          <template v-else-if="itemSubtitleSegments && itemSubtitleSegments.mode === 'append'">
+            <span>{{ itemSubtitleSegments.origin }}</span>
+            <span> · From </span>
+            <a @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ itemSubtitleSegments.itemName }}</a>
+          </template>
+          <template v-else>
+            <span v-if="origin">
+              From <a v-if="shouldShowSourceLink" @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ origin }}</a>
+              <template v-else>{{ origin }}</template>
+            </span>
+            <span v-if="origin && npc.type_info && npc.type_info !== origin"> · </span>
+            <span v-if="npc.type_info && npc.type_info !== origin">{{ npc.type_info }}</span>
+          </template>
         </p>
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -211,8 +221,17 @@ const props = defineProps({
     default: null,
   },
 
-  // Source type ('dungeon' or 'setting')
+  // Source type ('dungeon', 'setting', or 'item')
   sourceType: {
+    type: String,
+    default: null,
+  },
+
+  // For sourceType === 'item': the literal item name to linkify inside `origin`.
+  // The card splits `origin` at the first occurrence of this string and renders
+  // it as a deep link back to the Item Generator. When `itemName` is absent
+  // from `origin`, the link is appended after a divider as a fallback.
+  itemName: {
     type: String,
     default: null,
   },
@@ -320,6 +339,27 @@ const shouldShowSourceLink = computed(() => {
   return true;
 });
 
+// Computed: subtitle layout for item-sourced NPCs.
+// - 'inline': itemName appears inside origin (role_brief). Split into [prefix, link, suffix].
+// - 'append': itemName not in origin. Show origin + " · From [linked itemName]".
+// Returns null for non-item NPCs so the existing dungeon/setting subtitle
+// rendering applies.
+const itemSubtitleSegments = computed(() => {
+  if (props.sourceType !== 'item' || !props.itemName) return null;
+  const origin = props.origin || '';
+  const itemName = props.itemName;
+  const idx = origin.indexOf(itemName);
+  if (idx === -1) {
+    return { mode: 'append', origin, itemName };
+  }
+  return {
+    mode: 'inline',
+    prefix: origin.substring(0, idx),
+    name: itemName,
+    suffix: origin.substring(idx + itemName.length),
+  };
+});
+
 // Computed: Should show link to NPC Generator?
 const shouldShowNpcGeneratorLink = computed(() => {
   if (!props.showNpcGeneratorLink) return false;
@@ -420,6 +460,14 @@ function generateRelationship() {
 }
 
 function navigateToSource() {
+  // Item link: route to the Item Generator and select the matching item.
+  if (props.sourceType === 'item') {
+    if (props.itemName) {
+      navigateToTool('item-generator', { item: props.itemName });
+    }
+    return;
+  }
+
   if (!shouldShowSourceLink.value) return;
 
   const toolMap = {

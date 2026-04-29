@@ -74,6 +74,19 @@ jest.mock('./components/LoreBuilderTab.vue', () => ({
   props: ['item', 'premium']
 }));
 
+jest.mock('./components/RelatedNPCsSection.vue', () => ({
+  name: 'RelatedNPCsSection',
+  template: '<div>Related NPCs Section</div>',
+  props: ['item']
+}));
+
+// Mock the item-storage helpers (item rename/delete trigger reference cleanup
+// via these functions; the spec tests behavior, not their implementations).
+jest.mock('@/util/item-storage.mjs', () => ({
+  renameItemReferences: jest.fn(() => ({ totalUpdated: 0 })),
+  removeReferencesForItem: jest.fn(() => 0),
+}));
+
 // Mock Cedar components with proper v-model support
 jest.mock('@rei/cedar', () => ({
   CdrButton: {
@@ -120,7 +133,9 @@ jest.mock('@/components/tabs/TabPanel.vue', () => ({
 jest.mock('@/composables/useToast', () => ({
   useToast: () => ({
     success: jest.fn(),
-    error: jest.fn()
+    error: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn()
   })
 }));
 
@@ -528,5 +543,174 @@ describe('ItemGenerator - localStorage Operations', () => {
         props: { premium: true }
       });
     }).not.toThrow();
+  });
+});
+
+describe('ItemGenerator - Related NPCs Integration', () => {
+  let wrapper;
+  let localStorageMock;
+  const itemStorage = require('@/util/item-storage.mjs');
+
+  beforeEach(() => {
+    // Clear any localStorage state left by prior `describe` blocks. We use
+    // whichever localStorage is currently in scope — could be jsdom's real
+    // storage or a mock from an earlier suite.
+    try { localStorage.clear(); } catch {}
+    localStorageMock = new LocalStorageMock();
+    global.localStorage = localStorageMock;
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    if (wrapper) wrapper.unmount();
+    localStorageMock.clear();
+    try { localStorage.clear(); } catch {}
+  });
+
+  it('asks the prompt to populate related_npcs', async () => {
+    openAi.generateGptResponse.mockResolvedValue(JSON.stringify({
+      name: 'Test', item_type: 'Weapon', rarity: 'Rare', bonus: '+1', modifier_sentence: '',
+      feature_count: 1, features: { F: 'x' }, physical_description: 'pd', lore: 'l',
+      related_npcs: []
+    }));
+    wrapper = mount(ItemGenerator, { props: { premium: true } });
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+
+    const prompt = openAi.generateGptResponse.mock.calls[0][0];
+    expect(prompt).toContain('"related_npcs"');
+    expect(prompt).toMatch(/every NAMED INDIVIDUAL/);
+    expect(prompt).toMatch(/role_brief[\s\S]*≤10 words/);
+    // role_brief must contain the item name verbatim so the NPC subtitle can
+    // be linkified back to the item with a literal-string match.
+    expect(prompt).toMatch(/role_brief[\s\S]*item[\s\S]*name[\s\S]*verbatim/);
+  });
+
+  it('requires the lore to include at least one named individual with archetype suggestions', async () => {
+    openAi.generateGptResponse.mockResolvedValue(JSON.stringify({
+      name: 'X', item_type: 'Weapon', rarity: 'Rare', bonus: '+1', modifier_sentence: '',
+      feature_count: 1, features: { F: 'x' }, physical_description: 'pd', lore: 'l',
+    }));
+    wrapper = mount(ItemGenerator, { props: { premium: true } });
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+
+    const prompt = openAi.generateGptResponse.mock.calls[0][0];
+    // Upstream guarantee: lore always has someone to extract, so "scan lore"
+    // is honest about what the related-NPCs feature does.
+    expect(prompt).toContain('LORE MUST INCLUDE A NAMED INDIVIDUAL');
+    // Spot-check the archetype suggestions so the model has variety to choose from.
+    expect(prompt).toMatch(/Creator/);
+    expect(prompt).toMatch(/First Wielder/);
+    expect(prompt).toMatch(/Corrupter/);
+    expect(prompt).toMatch(/Champion/);
+    expect(prompt).toMatch(/Thief/);
+    expect(prompt).toMatch(/Scholar/);
+  });
+
+  it('accepts a generated item that includes related_npcs and persists it', async () => {
+    openAi.generateGptResponse.mockResolvedValue(JSON.stringify({
+      name: 'Hearthstaff', item_type: 'Staff', rarity: 'Common', bonus: '+0', modifier_sentence: '',
+      feature_count: 1, features: { F: 'x' }, physical_description: 'pd', lore: 'l',
+      related_npcs: [
+        { name: 'Yelena of the Duskwood', role_brief: 'oracle', context: 'received a vision' },
+        { name: 'Morghul, the Watcher', role_brief: 'divine watcher', context: 'guards the embers' },
+      ]
+    }));
+    wrapper = mount(ItemGenerator, { props: { premium: true } });
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+    await nextTick();
+
+    const saved = JSON.parse(localStorage.getItem('savedItems'));
+    expect(saved).toHaveLength(1);
+    expect(saved[0].related_npcs).toHaveLength(2);
+    expect(saved[0].related_npcs[0]).toMatchObject({
+      name: 'Yelena of the Duskwood',
+      role_brief: 'oracle',
+      context: 'received a vision',
+      npc_id: null,
+      npc_folder: null,
+    });
+  });
+
+  it('accepts a generated item without related_npcs (backwards compat)', async () => {
+    openAi.generateGptResponse.mockResolvedValue(JSON.stringify({
+      name: 'Old Item', item_type: 'Weapon', rarity: 'Rare', bonus: '+1', modifier_sentence: '',
+      feature_count: 1, features: { F: 'x' }, physical_description: 'pd', lore: 'l',
+    }));
+    wrapper = mount(ItemGenerator, { props: { premium: true } });
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+    await nextTick();
+
+    const saved = JSON.parse(localStorage.getItem('savedItems'));
+    expect(saved[0].related_npcs).toEqual([]);
+  });
+
+  it('deduplicates related_npcs by case-insensitive name on save', async () => {
+    openAi.generateGptResponse.mockResolvedValue(JSON.stringify({
+      name: 'Dup Item', item_type: 'Weapon', rarity: 'Rare', bonus: '+1', modifier_sentence: '',
+      feature_count: 1, features: { F: 'x' }, physical_description: 'pd', lore: 'l',
+      related_npcs: [
+        { name: 'Yelena', role_brief: 'oracle', context: 'a' },
+        { name: 'YELENA', role_brief: 'duplicate', context: 'b' },
+        { name: '   ', role_brief: 'no name', context: 'c' },
+      ]
+    }));
+    wrapper = mount(ItemGenerator, { props: { premium: true } });
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+    await nextTick();
+
+    const saved = JSON.parse(localStorage.getItem('savedItems'));
+    expect(saved[0].related_npcs).toHaveLength(1);
+    expect(saved[0].related_npcs[0].name).toBe('Yelena');
+  });
+
+  it('rejects responses where related_npcs is not an array', async () => {
+    // Make every retry fail validation by returning malformed shape
+    openAi.generateGptResponse.mockImplementation(async (prompt, validate) => {
+      const candidate = JSON.stringify({
+        name: 'Bad Item', item_type: 'Weapon', rarity: 'Rare', bonus: '+1', modifier_sentence: '',
+        feature_count: 1, features: { F: 'x' }, physical_description: 'pd', lore: 'l',
+        related_npcs: { not: 'an array' },
+      });
+      // The SUT calls validate(jsonString); this asserts our validator catches it.
+      expect(validate(candidate)).toBe(false);
+      // Return a legal response so the test doesn't throw (validator would normally retry).
+      return JSON.stringify({
+        name: 'Bad Item', item_type: 'Weapon', rarity: 'Rare', bonus: '+1', modifier_sentence: '',
+        feature_count: 1, features: { F: 'x' }, physical_description: 'pd', lore: 'l',
+      });
+    });
+    wrapper = mount(ItemGenerator, { props: { premium: true } });
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+  });
+
+  it('removes references for the item on delete', async () => {
+    openAi.generateGptResponse.mockResolvedValue(JSON.stringify({
+      name: 'Doomed Item', item_type: 'Weapon', rarity: 'Rare', bonus: '+1', modifier_sentence: '',
+      feature_count: 1, features: { F: 'x' }, physical_description: 'pd', lore: 'l',
+    }));
+    wrapper = mount(ItemGenerator, { props: { premium: true } });
+    await wrapper.find('form').trigger('submit');
+    await flushPromises();
+    await nextTick();
+
+    const originalConfirm = global.confirm;
+    global.confirm = jest.fn(() => true);
+    try {
+      // Find the Delete Item button by its text content.
+      const buttons = wrapper.findAll('button');
+      const deleteBtn = buttons.find(b => b.text() === 'Delete Item');
+      expect(deleteBtn).toBeTruthy();
+      await deleteBtn.trigger('click');
+      await nextTick();
+      expect(itemStorage.removeReferencesForItem).toHaveBeenCalledWith('Doomed Item');
+    } finally {
+      global.confirm = originalConfirm;
+    }
   });
 });

@@ -1,0 +1,171 @@
+/**
+ * item-npc-prompts.mjs
+ *
+ * Prompts and helpers for the Item Generator ↔ NPC Generator integration.
+ *
+ * Two responsibilities:
+ *
+ * 1. Backwards-compat extraction: createItemNPCExtractionPrompt + validator.
+ *    For items already saved before the related_npcs field existed, this prompt
+ *    extracts named NPCs from the item's lore and timeline events.
+ *
+ * 2. Cross-tool prefill: buildPrefilledTypeOfPlace.
+ *    Pure helper called by the NPC Generator's mount handler when the user
+ *    arrived from the Item Generator. Produces the text to drop into the NPC
+ *    Generator's `typeOfPlace` input — the user can review/edit before clicking
+ *    Generate. The item's full data (name, type, rarity, physical description,
+ *    lore) is included so the NPC Generator's existing pipeline has everything
+ *    it needs without us writing a parallel item-context NPC prompt.
+ */
+
+/**
+ * Build the extraction prompt that, given an item, returns a JSON array of
+ * NPC stubs found in its lore (and optionally timeline events).
+ *
+ * @param {Object} item - An item from savedItems
+ * @returns {string}
+ */
+export function createItemNPCExtractionPrompt(item) {
+  const safe = (s) => (s || '').toString().trim();
+  const lore = safe(item?.lore);
+  const physical = safe(item?.physical_description);
+
+  const timelineLines = Array.isArray(item?.timelineEvents)
+    ? item.timelineEvents
+        .map(ev => {
+          const title = safe(ev?.title);
+          const desc = safe(ev?.description);
+          if (!title && !desc) return '';
+          return `- ${title}${title && desc ? ': ' : ''}${desc}`;
+        })
+        .filter(Boolean)
+        .join('\n')
+    : '';
+
+  const summary = safe(item?.historicalSummary);
+
+  const itemNameForExamples = safe(item?.name) || '[item name]';
+
+  return `You are extracting named NPCs from the lore of a D&D 5e magic item.
+
+ITEM:
+Name: ${safe(item?.name) || '(unnamed)'}
+Type: ${safe(item?.item_type) || '(unspecified)'}
+Rarity: ${safe(item?.rarity) || '(unspecified)'}
+
+PHYSICAL DESCRIPTION:
+${physical || '(none)'}
+
+LORE:
+${lore || '(none)'}
+${timelineLines ? `\nTIMELINE EVENTS:\n${timelineLines}\n` : ''}${summary ? `\nHISTORICAL SUMMARY:\n${summary}\n` : ''}
+TASK:
+Identify every NAMED INDIVIDUAL relevant to this item — people, oracles, gods, smiths, captains, owners, witnesses, etc.
+
+INDIVIDUALS vs GROUPS — important distinction:
+- A specific individual with a proper name (e.g., "Yelena of the Duskwood", "Master Smith Gorvak"): extract directly using that name.
+- A GROUP / faction / cult / tribe / order / lineage with no specific member named in the source (e.g., "the Vorn-Taak earth-priests", "the Kha'Zur smith-cults"): INVENT a single plausible individual member's name in the same linguistic style as the rest of the source. Use the invented name as this stub's "name". Do NOT use the group's name as the stub's name. In context, identify them as a member of that group.
+- If a group AND a specific member are both named in the source (e.g., "Skragbit, shaman of the Mukgash tribe"): only extract the specific member; do NOT invent an additional member for the same group.
+- Anonymous archetypes with no proper name ("a wandering knight", "the king"): skip them.
+
+For each NPC, output an object with:
+- "name": the individual's name (real if named in the source, invented if only the group was named).
+- "role_brief": ≤10 words describing their relationship to this item AND containing the EXACT item name verbatim. Examples: "Creator of ${itemNameForExamples}", "Wielder of ${itemNameForExamples}", "Oracle who received the vision of ${itemNameForExamples}", "Smith who forged ${itemNameForExamples}". The item name MUST appear character-for-character — no paraphrasing, no shortened forms like "the staff".
+- "context": one sentence describing what they did or how they relate to this specific item. For invented members of a named group, mention the group affiliation here.
+- "source_quote": the verbatim passage from the source text where this NPC appears — copied character-for-character so it can be piped into a downstream NPC-generation prompt. If they appear in a TIMELINE EVENT, copy the entire event description (it's full of useful context: year, location, action). If they appear only in the main lore, copy the relevant sentence(s). For invented members of a group, copy the sentence about the group plus a leading note: "(invented from group passage) <verbatim sentence>". Empty string only if the NPC has truly no textual basis in the source.
+
+Output STRICTLY a JSON array (no prose, no commentary, no code fences):
+[
+  {"name": "...", "role_brief": "...", "context": "...", "source_quote": "..."}
+]
+
+If there are no named NPCs in the source text, return an empty array: []`;
+}
+
+/**
+ * Validate the extraction response: must parse to an array of stubs, each
+ * with the three required string fields.
+ *
+ * @param {string} jsonString
+ * @returns {boolean}
+ */
+export function validateItemNPCExtraction(jsonString) {
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!Array.isArray(parsed)) return false;
+    return parsed.every(stub =>
+      stub
+      && typeof stub === 'object'
+      && typeof stub.name === 'string'
+      && stub.name.trim().length > 0
+      && typeof stub.role_brief === 'string'
+      && typeof stub.context === 'string'
+      // source_quote is optional for backwards-compat with older responses,
+      // but if present must be a string.
+      && (stub.source_quote === undefined || typeof stub.source_quote === 'string')
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Build the prefilled `typeOfPlace` text the NPC Generator drops into its input
+ * when the user arrives from the Item Generator. The user can edit before
+ * generating; the item's full data is here so the NPC Generator's existing
+ * generic NPC prompt produces an NPC consistent with the item.
+ *
+ * Pure function — no side effects, no localStorage access. Tested in isolation.
+ *
+ * @param {Object} params
+ * @param {Object} params.stub  - { name, role_brief, context }
+ * @param {Object} params.item  - An item from savedItems
+ * @returns {string}
+ */
+export function buildPrefilledTypeOfPlace({ stub, item }) {
+  if (!stub || !item) return '';
+
+  const stubName = (stub.name || '').trim();
+  const roleBrief = (stub.role_brief || '').trim();
+  const stubContext = (stub.context || '').trim();
+  const sourceQuote = (stub.source_quote || '').trim();
+
+  const itemName = (item.name || '').trim();
+  const itemType = (item.item_type || '').trim();
+  const itemRarity = (item.rarity || '').trim();
+  const physical = (item.physical_description || '').trim();
+  const lore = (item.lore || '').trim();
+
+  const headline = roleBrief
+    ? `${stubName} — ${roleBrief}.`
+    : `${stubName}.`;
+
+  const itemHeader = [itemRarity, itemType].filter(Boolean).join(' ');
+  const itemLine = itemName
+    ? `Mentioned in connection with the magic item "${itemName}"${itemHeader ? ` (${itemHeader})` : ''}:`
+    : 'Mentioned in connection with a magic item:';
+
+  const sections = [headline, '', itemLine];
+
+  if (physical) {
+    sections.push(physical);
+  }
+
+  if (lore) {
+    sections.push('', 'Lore:', lore);
+  }
+
+  // The source_quote is the richest context we have — typically the verbatim
+  // timeline event the NPC appears in, full of year/location/action detail.
+  // Surface it prominently so the NPC Generator's prompt picks up year-and-
+  // place specifics, not just role_brief.
+  if (sourceQuote && sourceQuote !== lore && !lore.includes(sourceQuote)) {
+    sections.push('', `Where this NPC appears in the source text:`, sourceQuote);
+  }
+
+  if (stubContext) {
+    sections.push('', `Specific role: ${stubContext}`);
+  }
+
+  return sections.join('\n').trim();
+}

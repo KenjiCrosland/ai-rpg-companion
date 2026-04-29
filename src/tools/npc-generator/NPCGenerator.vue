@@ -129,6 +129,7 @@
                     :npc="normalizeGeneratorNPC(currentNPC)"
                     :origin="computedOrigin"
                     :source-type="computedSourceType"
+                    :item-name="computedItemName"
                     :npc-id="currentNPC?.npc_id || currentNPC?.id"
                     :is-editing="isEditingNPC"
                     :show-relationship-generator="true"
@@ -326,6 +327,8 @@ import { getNavigationParams } from '@/util/navigation.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import { buildStatblockContext } from './utils/statblock-context.mjs';
 import { addReference, getReferencesForEntity } from '@/util/reference-storage.mjs';
+import { getItemFromStorage, linkNPCToItemStub, addNPCMentionedInItemReference, findItemStubsForNPC, resetItemStubsForDeletedNPC } from '@/util/item-storage.mjs';
+import { buildPrefilledTypeOfPlace } from '@/prompts/item-npc-prompts.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
@@ -363,6 +366,11 @@ const selectedStatblock = ref(null);
 const isDeepLink = ref(false);
 const showAttachStatblockModal = ref(false);
 const attachStatblockSelection = ref(null);
+
+// When the user navigated here from the Item Generator's "Create NPC" button,
+// this holds the item context so the post-generation hook can write the
+// `mentioned_in_item` reference and back-link the stub on the item.
+const pendingItemLink = ref(null);
 
 const props = defineProps({
     premium: {
@@ -404,14 +412,15 @@ const currentNPC = computed(() => {
     return npcs.value[folderName][index];
 });
 
-// Computed origin: dungeon or setting name from NPC sourceType or reference store
+// Computed origin: dungeon/setting name OR (for item NPCs) the role_brief
+// description that contains the item name. The NPC card linkifies the item
+// name inside this string when sourceType==='item' and itemName is set.
 const computedOrigin = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    // First, check if NPC was created by dungeon/setting generator (has sourceType field)
+    // First, check if NPC was created by dungeon/setting/item generator (has sourceType field)
     if (npc.sourceType) {
-        // Return the typeOfPlace which should be the dungeon/setting name
         if (npc.typeOfPlace && npc.typeOfPlace !== 'Uncategorized') {
             return npc.typeOfPlace;
         }
@@ -421,45 +430,55 @@ const computedOrigin = computed(() => {
     if (npc.npc_id) {
         const refs = getReferencesForEntity('npc', npc.npc_id);
 
-        // Look for appears_in_dungeon relationship
         const dungeonRef = refs.find(ref => ref.relationship === 'appears_in_dungeon');
-        if (dungeonRef) {
-            return dungeonRef.target_name;
-        }
+        if (dungeonRef) return dungeonRef.target_name;
 
-        // Look for appears_in_setting relationship
         const settingRef = refs.find(ref => ref.relationship === 'appears_in_setting');
-        if (settingRef) {
-            return settingRef.target_name;
+        if (settingRef) return settingRef.target_name;
+
+        const itemRef = refs.find(ref => ref.relationship === 'mentioned_in_item');
+        if (itemRef) {
+            // No role_brief stored on this NPC; fall back to item name as
+            // origin so the subtitle renders "From <item>" with a link.
+            return itemRef.target_name;
         }
     }
 
     return null;
 });
 
-// Computed source type: 'dungeon' or 'setting' from NPC sourceType or reference store
+// Computed source type: drives the link target for the subtitle.
 const computedSourceType = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    // First, check if NPC was created by dungeon/setting generator (has sourceType field)
-    if (npc.sourceType === 'dungeon' || npc.sourceType === 'setting') {
+    if (npc.sourceType === 'dungeon' || npc.sourceType === 'setting' || npc.sourceType === 'item') {
         return npc.sourceType;
     }
 
-    // Fallback: check reference store for explicit relationships
     if (npc.npc_id) {
         const refs = getReferencesForEntity('npc', npc.npc_id);
+        if (refs.some(ref => ref.relationship === 'appears_in_dungeon')) return 'dungeon';
+        if (refs.some(ref => ref.relationship === 'appears_in_setting')) return 'setting';
+        if (refs.some(ref => ref.relationship === 'mentioned_in_item')) return 'item';
+    }
 
-        // Look for appears_in_dungeon relationship
-        if (refs.some(ref => ref.relationship === 'appears_in_dungeon')) {
-            return 'dungeon';
-        }
+    return null;
+});
 
-        // Look for appears_in_setting relationship
-        if (refs.some(ref => ref.relationship === 'appears_in_setting')) {
-            return 'setting';
-        }
+// Computed item name for item-sourced NPCs: the literal item name to linkify
+// inside the subtitle. For NPCs without an explicit itemName field, falls
+// back to the mentioned_in_item reference target.
+const computedItemName = computed(() => {
+    const npc = currentNPC.value;
+    if (!npc) return null;
+
+    if (npc.sourceType === 'item' && npc.itemName) return npc.itemName;
+
+    if (npc.npc_id) {
+        const refs = getReferencesForEntity('npc', npc.npc_id);
+        const itemRef = refs.find(ref => ref.relationship === 'mentioned_in_item');
+        if (itemRef) return itemRef.target_name;
     }
 
     return null;
@@ -535,6 +554,45 @@ onMounted(async () => {
 
                 // Select the NPC
                 selectNPC(params.folder, npcIndex);
+            }
+        }
+    }
+
+    // Item Generator → NPC Generator: "Create NPC" from a stub.
+    // Prefill typeOfPlace from the item's data and remember the link context
+    // (item name + role_brief) so we can persist those onto the saved NPC and
+    // collapse the long subtitle once part 1 returns.
+    if (params.fromItem && params.stub) {
+        const item = getItemFromStorage(params.fromItem);
+        const stubName = params.stub;
+        if (item && Array.isArray(item.related_npcs)) {
+            const target = stubName.trim().toLowerCase();
+            const stub = item.related_npcs.find(s =>
+                (s?.name || '').trim().toLowerCase() === target
+            );
+            if (stub) {
+                typeOfPlace.value = buildPrefilledTypeOfPlace({ stub, item });
+                pendingItemLink.value = {
+                    itemName: item.name,
+                    stubName: stub.name,
+                    roleBrief: (stub.role_brief || '').trim()
+                };
+            }
+        }
+    }
+
+    // Item Generator → NPC Generator: "View in NPC Generator" for a stub
+    // already promoted (npc_id known). Locate and select that NPC.
+    if (params.npc) {
+        for (const folderName of Object.keys(npcs.value)) {
+            const folder = npcs.value[folderName];
+            if (!Array.isArray(folder)) continue;
+            const npcIndex = folder.findIndex(n => n?.npc_id === params.npc || n?.id === params.npc);
+            if (npcIndex !== -1) {
+                openedFolders.value[folderName] = true;
+                selectNPC(folderName, npcIndex);
+                isDeepLink.value = true;
+                break;
             }
         }
     }
@@ -666,8 +724,12 @@ function loadNPCsFromLocalStorage() {
                 console.log(`Created ${referencesMigratedCount} references for existing NPC statblocks`);
             }
 
+            // Cleanup: shorten typeOfPlace for NPCs saved with the long
+            // item-prefilled context blob (early Item Generator integration bug).
+            const itemTypeOfPlaceCleaned = cleanupItemPrefilledTypeOfPlace();
+
             // Reload NPCs after migration (if any migration ran)
-            if (migratedCount > 0 || dungeonMigratedCount > 0 || settingMigratedCount > 0 || sourceTypeMigratedCount > 0 || referencesMigratedCount > 0) {
+            if (migratedCount > 0 || dungeonMigratedCount > 0 || settingMigratedCount > 0 || sourceTypeMigratedCount > 0 || referencesMigratedCount > 0 || itemTypeOfPlaceCleaned > 0) {
                 const updatedStored = localStorage.getItem('npcGeneratorNPCs');
                 if (updatedStored) {
                     npcs.value = JSON.parse(updatedStored);
@@ -793,6 +855,36 @@ function migrateSourceTypeFromTypeOfPlace() {
     return migratedCount;
 }
 
+// One-time cleanup: NPCs created via the Item Generator → NPC Generator flow
+// before the typeOfPlace shortening fix have a multi-paragraph subtitle (the
+// prefilled prompt context). Detect the marker phrase and replace typeOfPlace
+// with just the item name, matching the dungeon/setting convention.
+function cleanupItemPrefilledTypeOfPlace() {
+    let cleaned = 0;
+    const marker = /Mentioned in connection with the magic item "([^"]+)"/;
+
+    for (const folderName in npcs.value) {
+        const folder = npcs.value[folderName];
+        if (!Array.isArray(folder)) continue;
+        for (const npc of folder) {
+            const t = npc?.typeOfPlace;
+            if (typeof t !== 'string' || t.length < 80) continue;
+            const match = t.match(marker);
+            if (match) {
+                npc.typeOfPlace = match[1];
+                cleaned++;
+            }
+        }
+    }
+
+    if (cleaned > 0) {
+        saveNPCsToLocalStorage();
+        console.log(`Cleaned up ${cleaned} NPC subtitle${cleaned === 1 ? '' : 's'} from item-prefilled context.`);
+    }
+
+    return cleaned;
+}
+
 function migrateNPCStatblockReferences() {
     let referencesCreated = 0;
 
@@ -859,6 +951,23 @@ function saveCurrentNPCToList() {
         selectedChallengeRating: selectedChallengeRating.value,
         isSpellcaster: isSpellcaster.value
     };
+
+    // When this NPC was created via the Item Generator → NPC Generator flow,
+    // tag it as item-sourced so the subtitle UI can render the role_brief
+    // with the item name linkified back to the Item Generator.
+    if (pendingItemLink.value) {
+        npcData.sourceType = 'item';
+        npcData.itemName = pendingItemLink.value.itemName;
+    } else {
+        // Preserve sourceType='item' across re-saves of an existing item-sourced NPC.
+        const existing = (currentNPCIndex.value !== null && Array.isArray(npcs.value[folderName]))
+            ? npcs.value[folderName][currentNPCIndex.value]
+            : null;
+        if (existing?.sourceType === 'item') {
+            npcData.sourceType = 'item';
+            npcData.itemName = existing.itemName || null;
+        }
+    }
 
     // CRITICAL: Preserve npc_id to maintain reference integrity with dungeon/setting generators
     if (existingNpcId) {
@@ -995,6 +1104,7 @@ function deleteCurrentNPC() {
 
     // Find all locations where this NPC exists
     const locations = findNPCLocations(npcId);
+    const itemStubMatches = findItemStubsForNPC(npcId);
 
     // Build confirmation message
     let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
@@ -1020,7 +1130,21 @@ function deleteCurrentNPC() {
         }
     }
 
+    if (itemStubMatches.length > 0) {
+        const itemNames = [...new Set(itemStubMatches.map(m => m.itemName))];
+        if (itemNames.length === 1) {
+            confirmMessage += `\nThe related-NPC stub on item "${itemNames[0]}" will be reset so you can create a new NPC for it.\n`;
+        } else {
+            confirmMessage += `\nRelated-NPC stubs on ${itemNames.length} items will be reset so you can create new NPCs for them.\n`;
+        }
+    }
+
     if (confirm(confirmMessage)) {
+        // Reset any item stubs pointing to this NPC back to the unpromoted
+        // state. Do this BEFORE removing references so the source-of-truth
+        // links survive long enough to be inspected if needed.
+        const stubsReset = resetItemStubsForDeletedNPC(npcId);
+
         // Remove references for this NPC
         import('@/util/reference-storage.mjs').then(({ removeReferencesForEntity }) => {
             removeReferencesForEntity('npc', npcId);
@@ -1036,9 +1160,10 @@ function deleteCurrentNPC() {
         const deletedFrom = [];
         if (results.npcGenerator > 0) deletedFrom.push('NPC Generator');
         if (results.dungeons > 0) deletedFrom.push('Dungeon Generator');
+        if (stubsReset > 0) deletedFrom.push(`${stubsReset} item stub${stubsReset === 1 ? '' : 's'} reset`);
 
         if (deletedFrom.length > 0) {
-            toast.success(`"${npcName}" deleted from ${deletedFrom.join(' and ')}.`);
+            toast.success(`"${npcName}" deleted from ${deletedFrom.join(', ')}.`);
         } else {
             toast.success('NPC deleted.');
         }
@@ -1296,12 +1421,54 @@ function displayNPCDescription({ part, npcDescription }) {
 
         npcDescriptionPart1.value = npcDescription;
         loadingPart1.value = false;
+
+        // Item Generator → NPC Generator: the prefilled typeOfPlace is a long
+        // context block we used to seed the AI prompt. Now that part 1 has
+        // returned (the AI has the full context), collapse typeOfPlace down
+        // to the role_brief (e.g. "Creator of Krik-tak's Root") so the saved
+        // NPC's subtitle describes the relationship with the item name
+        // appearing verbatim (the UI linkifies that occurrence). Falls back
+        // to the item name if no role_brief was captured.
+        if (pendingItemLink.value) {
+            typeOfPlace.value = pendingItemLink.value.roleBrief || pendingItemLink.value.itemName;
+        }
+
         saveCurrentNPCToList();
     } else if (part === 2) {
         npcDescriptionPart2.value = npcDescription;
         loadingPart2.value = false;
         saveCurrentNPCToList();
+        finalizePendingItemLink();
     }
+}
+
+// If the user arrived here from the Item Generator's "Create NPC" button,
+// write the `mentioned_in_item` reference and back-link the stub on the
+// source item so the Item Generator's UI updates next time it loads. Runs
+// only after both NPC parts have completed (called from displayNPCDescription
+// after part 2 is saved).
+function finalizePendingItemLink() {
+    const link = pendingItemLink.value;
+    if (!link) return;
+
+    const folderName = activeFolder.value || 'Uncategorized';
+    const folder = npcs.value[folderName];
+    if (!Array.isArray(folder) || currentNPCIndex.value === null) return;
+    const npc = folder[currentNPCIndex.value];
+    if (!npc?.npc_id) return;
+
+    const npcName = npc.npcDescriptionPart1?.character_name || link.stubName;
+
+    addNPCMentionedInItemReference({
+        npcId: npc.npc_id,
+        npcName,
+        itemName: link.itemName,
+        context: link.stubName
+    });
+
+    linkNPCToItemStub(link.itemName, link.stubName, npc.npc_id, folderName);
+
+    pendingItemLink.value = null;
 }
 
 function handleError(message) {
