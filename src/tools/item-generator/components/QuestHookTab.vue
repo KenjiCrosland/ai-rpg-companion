@@ -130,31 +130,22 @@
       </cdr-accordion>
     </cdr-accordion-group>
 
-    <!-- Export All Section -->
-    <div v-if="hooks.length > 0" class="export-all-section">
-      <h3>Export All Quest Hooks</h3>
-      <p class="export-description">
+    <!-- Export All Section (shared format) -->
+    <ItemExportsSection v-if="hooks.length > 0" heading="Export All Quest Hooks">
+      <template #description>
         Export all quest hooks for this item together. Perfect for creating a campaign handout with multiple adventure
-        options.
-      </p>
-
-      <div class="export-options">
-        <div class="export-option">
-          <cdr-button @click="exportAllQuestsAsMarkdown" modifier="secondary" :full-width="true">
-            Copy All as Markdown
-          </cdr-button>
-          <p class="option-description">For use with <a href="https://homebrewery.naturalcrit.com/new"
-              target="_blank">Homebrewery</a> or other markdown tools</p>
-        </div>
-
-        <div class="export-option">
-          <cdr-button @click="exportAllQuestsAsPlainText" modifier="secondary" :full-width="true">
-            Copy All as Plain Text
-          </cdr-button>
-          <p class="option-description">Simple format for notes or sharing in chat</p>
-        </div>
-      </div>
-    </div>
+        options. The markdown format works perfectly with
+        <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>.
+      </template>
+      <template #buttons>
+        <cdr-button @click="exportAllQuestsAsMarkdown" modifier="secondary">
+          Copy All as Markdown
+        </cdr-button>
+        <cdr-button @click="exportAllQuestsAsPlainText" modifier="secondary">
+          Copy All as Plain Text
+        </cdr-button>
+      </template>
+    </ItemExportsSection>
   </div>
 </template>
 
@@ -173,6 +164,7 @@ import {
   CdrSkeletonBone
 } from '@rei/cedar';
 import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
+import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
 import { readQuota, writeQuota, remainingFromQuota, ensureQuotaSeeded } from '@/util/quota-storage.mjs';
@@ -749,40 +741,6 @@ Generate a D&D 5e quest hook for the following magic item:
   }
 }
 
-// Export all section at the bottom
-.export-all-section {
-  margin-top: 3rem;
-  padding: 1.5rem;
-  background-color: $cdr-color-background-secondary;
-  border-radius: 8px;
-
-  h3 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-  }
-
-  .export-description {
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
-    color: $cdr-color-text-secondary;
-  }
-
-  .export-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .export-option {
-    .option-description {
-      margin-top: 0.5rem;
-      font-size: 0.875rem;
-      color: $cdr-color-text-secondary;
-      font-style: italic;
-    }
-  }
-}
-
 // Responsive adjustments
 @media (max-width: 768px) {
   .quest-content {
@@ -802,12 +760,6 @@ Generate a D&D 5e quest hook for the following magic item:
           width: 100%;
         }
       }
-    }
-  }
-
-  .export-all-section {
-    .export-options {
-      grid-template-columns: 1fr;
     }
   }
 }

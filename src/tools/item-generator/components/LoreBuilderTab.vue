@@ -337,37 +337,27 @@
       </div>
     </div>
 
-    <!-- Export Section -->
-    <div class="export-section" v-if="timelineEvents.length > 0">
-      <h3>Export Item History</h3>
-      <p class="export-description">
+    <!-- Export Section (shared format) -->
+    <ItemExportsSection v-if="timelineEvents.length > 0" heading="Export Item History">
+      <template #description>
         Export your item's historical timeline in different formats. The markdown format works perfectly with
         <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
         for creating beautifully formatted D&D handouts.
-      </p>
-
-      <div class="export-options">
-        <div class="export-option">
-          <cdr-button @click="exportToMarkdown" modifier="secondary" :full-width="true">
-            Copy History as Markdown
-          </cdr-button>
-          <p class="option-description">For use with Homebrewery or other markdown tools</p>
-        </div>
-
-        <div class="export-option">
-          <cdr-button @click="exportToPlainText" modifier="secondary" :full-width="true">
-            Copy History as Plain Text
-          </cdr-button>
-          <p class="option-description">Simple format for notes or sharing in chat</p>
-        </div>
-      </div>
-
-      <div class="export-tip">
+      </template>
+      <template #buttons>
+        <cdr-button @click="exportToMarkdown" modifier="secondary">
+          Copy History as Markdown
+        </cdr-button>
+        <cdr-button @click="exportToPlainText" modifier="secondary">
+          Copy History as Plain Text
+        </cdr-button>
+      </template>
+      <template #tip>
         <strong>Quick tip:</strong> After copying as markdown, visit
         <cdr-link href="https://homebrewery.naturalcrit.com/new" target="_blank">homebrewery.naturalcrit.com</cdr-link>,
         paste your content on the left side, and watch it transform into a beautiful D&D-styled document!
-      </div>
-    </div>
+      </template>
+    </ItemExportsSection>
   </div>
 </template>
 
@@ -382,6 +372,7 @@ import {
   CdrInput,
   CdrLink
 } from '@rei/cedar';
+import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
 import { readQuota, writeQuota, remainingFromQuota, ensureQuotaSeeded } from '@/util/quota-storage.mjs';
@@ -1650,48 +1641,6 @@ watch(() => timelineEvents.value.length, async () => {
   }
 }
 
-.export-section {
-  padding: 1.5rem;
-  background-color: $cdr-color-background-secondary;
-  border-radius: 8px;
-
-  h3 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-  }
-
-  .export-description {
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
-    color: $cdr-color-text-secondary;
-  }
-
-  .export-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .export-option {
-    .option-description {
-      margin-top: 0.5rem;
-      font-size: 0.875rem;
-      color: $cdr-color-text-secondary;
-      font-style: italic;
-    }
-  }
-
-  .export-tip {
-    padding: 1rem;
-    background-color: rgba($cdr-color-text-brand, 0.05);
-    border-left: 3px solid $cdr-color-text-brand;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-}
-
 .loading-container {
   padding: 2rem;
 }
@@ -1705,12 +1654,6 @@ watch(() => timelineEvents.value.length, async () => {
 
   .timeline-card {
     flex: 0 0 280px;
-  }
-
-  .export-section {
-    .export-options {
-      grid-template-columns: 1fr;
-    }
   }
 }
 </style>

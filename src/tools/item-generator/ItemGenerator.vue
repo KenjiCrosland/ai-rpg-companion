@@ -148,31 +148,31 @@
             </div>
 
             <!-- Export panel: sits BELOW the card as its own section
-                 (matches the statblock generator's export pattern). -->
-            <div v-if="showExport && !isEditing" class="item-exports-section">
-              <h3 class="item-exports-heading">Export Magic Item</h3>
-              <p class="item-exports-description">
+                 (uses the shared ItemExportsSection format used across tabs). -->
+            <ItemExportsSection
+              v-if="showExport && !isEditing"
+              heading="Export Magic Item"
+            >
+              <template #description>
                 Copy your item details in different formats. The markdown format works perfectly with
                 <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
                 for creating beautifully formatted D&D handouts.
-              </p>
-
-              <div class="item-exports-buttons">
+              </template>
+              <template #buttons>
                 <cdr-button @click="copyAsMarkdown" modifier="secondary">
                   Copy as Markdown
                 </cdr-button>
                 <cdr-button @click="copyAsPlainText" modifier="secondary">
                   Copy as Plain Text
                 </cdr-button>
-              </div>
-
-              <div class="item-exports-tip">
+              </template>
+              <template #tip>
                 <strong>Quick tip:</strong> After copying as markdown, visit
                 <cdr-link href="https://homebrewery.naturalcrit.com/new"
                   target="_blank">homebrewery.naturalcrit.com</cdr-link>,
                 paste your content on the left side, and watch it transform into a beautiful D&D-styled document!
-              </div>
-            </div>
+              </template>
+            </ItemExportsSection>
 
             <!-- Related NPCs (its own section, sibling to the card) -->
             <RelatedNPCsSection
@@ -304,6 +304,7 @@ import ItemSkeleton from '@/components/skeletons/ItemSkeleton.vue';
 import QuestHookTab from './components/QuestHookTab.vue';
 import LoreBuilderTab from './components/LoreBuilderTab.vue';
 import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
+import ItemExportsSection from './components/ItemExportsSection.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
@@ -1908,43 +1909,6 @@ onUnmounted(() => {
   line-height: 1;
 }
 
-/* Export panel: external, mirrors the statblock generator's export pattern.
-   Sits below the item card as its own section — not styled as a card panel. */
-.item-exports-section {
-  max-width: 850px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: #f4f0e8;
-  border-radius: 8px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-.item-exports-heading {
-  margin: 0 0 1rem;
-  font-size: 1.7rem;
-  color: #58180d;
-}
-
-.item-exports-description {
-  margin: 0 0 1.5rem;
-  font-size: 1.4rem;
-  color: #4a4236;
-  line-height: 1.5;
-}
-
-.item-exports-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.item-exports-tip {
-  font-size: 1.3rem;
-  color: #4a4236;
-  line-height: 1.5;
-}
-
 @media (max-width: 600px) {
   .item-card {
     padding: 1.5rem;
@@ -1952,18 +1916,6 @@ onUnmounted(() => {
 
   .item-card-footer {
     flex-wrap: wrap;
-  }
-
-  .item-exports-section {
-    padding: 1.5rem;
-  }
-
-  .item-exports-buttons {
-    flex-direction: column;
-
-    button {
-      width: 100%;
-    }
   }
 }
 </style>
