@@ -102,64 +102,85 @@
         <Tabs :activeIndex="activeTabIndex" @tabChange="activeTabIndex = $event">
           <TabPanel label="Item Details">
             <!-- View Mode -->
-            <div v-if="!isEditing">
-              <h2>{{ magicItemDescription.name }}</h2>
-              <p class="rarity">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}</p>
+            <div v-if="!isEditing" class="item-card">
+              <header class="item-card-header">
+                <div class="item-card-header-text">
+                  <h2 class="item-card-name">{{ magicItemDescription.name }}</h2>
+                  <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}</p>
+                </div>
+                <button type="button" class="item-card-action" @click="startEditing">Edit Item</button>
+              </header>
 
-              <h3>Features</h3>
-              <p v-if="magicItemDescription.modifier_sentence" v-html="formatMarkdown(magicItemDescription.modifier_sentence)"></p>
-              <p class="body-text" v-for="(description, feature) in magicItemDescription.features" :key="feature">
-                <strong>{{ feature }}</strong>: <span v-html="formatMarkdown(description)"></span>
+              <!-- Description: italic, no box, sits in the flow. -->
+              <p v-if="magicItemDescription.physical_description"
+                class="item-card-description"
+                v-html="formatMarkdown(magicItemDescription.physical_description)"></p>
+
+              <!-- Mechanics: highest contrast block on the card. -->
+              <div class="item-card-mechanics">
+                <p v-if="magicItemDescription.modifier_sentence"
+                  class="item-card-modifier"
+                  v-html="formatMarkdown(magicItemDescription.modifier_sentence)"></p>
+                <div v-for="(description, feature) in magicItemDescription.features" :key="feature" class="item-feature">
+                  <p class="item-feature-name">{{ feature }}</p>
+                  <p class="item-feature-description" v-html="formatMarkdown(description)"></p>
+                </div>
+              </div>
+
+              <!-- Lore: visually demoted, always visible. Hidden entirely when item has no lore.
+                   Divider above signals the transition; no label. -->
+              <section v-if="magicItemDescription.lore" class="item-card-lore">
+                <div class="item-card-lore-body">
+                  <p v-html="formatMarkdown(magicItemDescription.lore)"></p>
+                </div>
+              </section>
+
+              <!-- Footer: Export (left) + Delete (right). Edit lives in the header. -->
+              <footer class="item-card-footer">
+                <button type="button" class="item-card-action" @click="showExport = !showExport">
+                  <span class="item-card-action-icon" aria-hidden="true">✉</span>
+                  {{ showExport ? 'Hide Export' : 'Export' }}
+                </button>
+                <button type="button" class="item-card-action item-card-action--danger" @click="deleteItem">
+                  Delete Item
+                </button>
+              </footer>
+            </div>
+
+            <!-- Export panel: sits BELOW the card as its own section
+                 (matches the statblock generator's export pattern). -->
+            <div v-if="showExport && !isEditing" class="item-exports-section">
+              <h3 class="item-exports-heading">Export Magic Item</h3>
+              <p class="item-exports-description">
+                Copy your item details in different formats. The markdown format works perfectly with
+                <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
+                for creating beautifully formatted D&D handouts.
               </p>
-              <div class="read-aloud">
-                <p class="body-text" v-html="formatMarkdown(magicItemDescription.physical_description)"></p>
-                <p class="body-text" v-html="formatMarkdown(magicItemDescription.lore)"></p>
+
+              <div class="item-exports-buttons">
+                <cdr-button @click="copyAsMarkdown" modifier="secondary">
+                  Copy as Markdown
+                </cdr-button>
+                <cdr-button @click="copyAsPlainText" modifier="secondary">
+                  Copy as Plain Text
+                </cdr-button>
               </div>
 
-              <RelatedNPCsSection
-                :item="magicItemDescription"
-                @update:item="handleUpdatedItem"
-                @switch-to-lore-builder="activeTabIndex = 1"
-              />
-
-              <div class="button-group">
-                <cdr-button @click="startEditing" modifier="secondary">Edit Item</cdr-button>
-                <cdr-button @click="deleteItem" modifier="dark">Delete Item</cdr-button>
-              </div>
-
-              <!-- Export Section -->
-              <div class="export-section">
-                <h3>Export Magic Item</h3>
-                <p class="export-description">
-                  Copy your item details in different formats. The markdown format works perfectly with
-                  <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
-                  for creating beautifully formatted D&D handouts.
-                </p>
-
-                <div class="export-options">
-                  <div class="export-option">
-                    <cdr-button @click="copyAsMarkdown" modifier="secondary" :full-width="true">
-                      Copy as Markdown
-                    </cdr-button>
-                    <p class="option-description">For use with Homebrewery or other markdown tools</p>
-                  </div>
-
-                  <div class="export-option">
-                    <cdr-button @click="copyAsPlainText" modifier="secondary" :full-width="true">
-                      Copy as Plain Text
-                    </cdr-button>
-                    <p class="option-description">Simple format for notes or sharing in chat</p>
-                  </div>
-                </div>
-
-                <div class="export-tip">
-                  <strong>Quick tip:</strong> After copying as markdown, visit
-                  <cdr-link href="https://homebrewery.naturalcrit.com/new"
-                    target="_blank">homebrewery.naturalcrit.com</cdr-link>,
-                  paste your content on the left side, and watch it transform into a beautiful D&D-styled document!
-                </div>
+              <div class="item-exports-tip">
+                <strong>Quick tip:</strong> After copying as markdown, visit
+                <cdr-link href="https://homebrewery.naturalcrit.com/new"
+                  target="_blank">homebrewery.naturalcrit.com</cdr-link>,
+                paste your content on the left side, and watch it transform into a beautiful D&D-styled document!
               </div>
             </div>
+
+            <!-- Related NPCs (its own section, sibling to the card) -->
+            <RelatedNPCsSection
+              v-if="!isEditing"
+              :item="magicItemDescription"
+              @update:item="handleUpdatedItem"
+              @switch-to-lore-builder="activeTabIndex = 1"
+            />
 
             <!-- Edit Mode -->
             <div v-else class="edit-form">
@@ -316,6 +337,7 @@ const activeItemIndex = ref(null);
 const showDataManagerModal = ref(false);
 const activeTabIndex = ref(0);
 const isEditing = ref(false);
+const showExport = ref(false);
 const editForm = ref({
   name: '',
   item_type: '',
@@ -964,22 +986,26 @@ const copyAsMarkdown = () => {
 };
 
 const copyAsPlainText = () => {
-  let plainText = `${magicItemDescription.value.name}\n`;
-  plainText += `${magicItemDescription.value.item_type}, ${magicItemDescription.value.rarity}\n\n`;
+  const item = magicItemDescription.value;
+  const parts = [`${item.name}`, `${item.item_type}, ${item.rarity}`];
 
-  if (magicItemDescription.value.modifier_sentence) {
-    plainText += `${magicItemDescription.value.modifier_sentence}\n\n`;
+  if (item.physical_description) {
+    parts.push('', item.physical_description);
   }
 
-  plainText += `Features:\n`;
-  Object.entries(magicItemDescription.value.features).forEach(([feature, description]) => {
-    plainText += `• ${feature}: ${description}\n`;
+  if (item.modifier_sentence) {
+    parts.push('', item.modifier_sentence);
+  }
+
+  Object.entries(item.features || {}).forEach(([feature, description]) => {
+    parts.push('', `${feature}: ${description}`);
   });
 
-  plainText += `\nDescription:\n${magicItemDescription.value.physical_description}\n`;
-  plainText += `\nLore:\n${magicItemDescription.value.lore}\n`;
+  if (item.lore) {
+    parts.push('', `Lore: ${item.lore}`);
+  }
 
-  navigator.clipboard.writeText(plainText);
+  navigator.clipboard.writeText(parts.join('\n'));
   toast.success('Copied as plain text!');
 };
 
@@ -1067,6 +1093,7 @@ const selectItem = (index) => {
   itemType.value = magicItemDescription.value.item_type;
   itemLore.value = magicItemDescription.value.lore || '';
   activeTabIndex.value = 0;
+  showExport.value = false;
 };
 
 const deleteItem = () => {
@@ -1693,6 +1720,249 @@ onUnmounted(() => {
   .export-section {
     .export-options {
       grid-template-columns: 1fr;
+    }
+  }
+}
+
+/* ============================================
+   Item Card v3 — restrained, mechanics-first.
+   Description and lore sit in the flow with no
+   chrome; lore is collapsible and demoted.
+   ============================================ */
+
+.item-card {
+  --card-bg: #fdfbf6;
+  --card-border: #e8e2d4;
+  --card-top-rule: #7a1f1f;
+  --title-color: #7a1f1f;
+  --feature-heading: #7a1f1f;
+  --body-text: #222;
+  --secondary-text: #555;
+  --muted-text: #6b6b6b;
+  --divider: #e2dccd;
+
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-top: 2px solid var(--card-top-rule);
+  border-radius: 2px;
+  margin-bottom: 1.5rem;
+  padding: 2rem 2.5rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.5rem;
+  line-height: 1.7;
+  color: var(--body-text);
+}
+
+/* Header: title + type/rarity on the left, Edit Item button top-right. */
+.item-card-header {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.item-card-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-card-name {
+  margin: 0 0 0.15rem;
+  font-size: 2.9rem;
+  font-weight: 400;
+  color: var(--title-color);
+  letter-spacing: 0.01em;
+}
+
+.item-card-subtitle {
+  margin: 0;
+  font-size: 1.55rem;
+  color: var(--muted-text);
+  font-style: italic;
+}
+
+/* Description: italic body text, no box, no background. Sits in the flow. */
+.item-card-description {
+  margin: 1.75rem 0 1.25rem;
+  font-style: italic;
+  color: var(--secondary-text);
+  font-size: 1.75rem;
+  line-height: 3rem;
+}
+
+/* Mechanics: highest contrast block on the card. */
+.item-card-mechanics {
+  margin-bottom: 1.25rem;
+}
+
+/* Passive mechanical properties (e.g. "+1 to AC", "advantage on Stealth").
+   Same body size, slightly heavier weight, full body color, non-italic.
+   Sits between the italic description above and the bold feature headings
+   below — three escalating tiers of "present-ness". */
+.item-card-modifier {
+  margin: 2.5rem 0 1.4rem;
+  color: var(--body-text);
+  font-size: 1.75rem;
+  line-height: 3rem;
+}
+
+.item-feature {
+  margin-bottom: 1.8rem;
+}
+
+.item-feature:last-child {
+  margin-bottom: 0;
+}
+
+.item-feature-name {
+  margin: 0 0 0.15rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--feature-heading);
+  line-height: 2.7rem;
+}
+
+.item-feature-description {
+  margin: 0;
+  font-size: 1.75rem;
+  color: var(--body-text);
+  line-height: 3rem;
+}
+
+/* Lore: visually demoted, always visible. Small-caps label flags it as
+   supplementary; smaller, lighter body distinguishes it from mechanics. The
+   divider is lighter than the footer rule so it doesn't compete with it. */
+.item-card-lore {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ece6d4;
+}
+
+.item-card-lore-body p {
+  margin: 0 0 0.75rem;
+  font-size: 1.65rem;
+  color: #6a6a6a;
+  line-height: 2.85rem;
+}
+
+.item-card-lore-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Footer: three matched buttons. */
+.item-card-footer {
+  margin-top: 1.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--divider);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.item-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 3px;
+  color: var(--title-color);
+  font: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba(122, 31, 31, 0.06);
+    border-color: var(--title-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--title-color);
+    outline-offset: 2px;
+  }
+}
+
+/* Header Edit button stays at the smaller, header-scale size — the header
+   itself wasn't part of the typography bump. */
+.item-card-header .item-card-action {
+  font-size: 1.3rem;
+  padding: 0.5rem 1rem;
+}
+
+.item-card-action--danger {
+  color: var(--muted-text);
+  margin-left: auto;
+
+  &:hover {
+    color: var(--title-color);
+    border-color: var(--title-color);
+    background: rgba(122, 31, 31, 0.06);
+  }
+}
+
+.item-card-action-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* Export panel: external, mirrors the statblock generator's export pattern.
+   Sits below the item card as its own section — not styled as a card panel. */
+.item-exports-section {
+  max-width: 850px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #f4f0e8;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.item-exports-heading {
+  margin: 0 0 1rem;
+  font-size: 1.7rem;
+  color: #58180d;
+}
+
+.item-exports-description {
+  margin: 0 0 1.5rem;
+  font-size: 1.4rem;
+  color: #4a4236;
+  line-height: 1.5;
+}
+
+.item-exports-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.item-exports-tip {
+  font-size: 1.3rem;
+  color: #4a4236;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .item-card {
+    padding: 1.5rem;
+  }
+
+  .item-card-footer {
+    flex-wrap: wrap;
+  }
+
+  .item-exports-section {
+    padding: 1.5rem;
+  }
+
+  .item-exports-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
     }
   }
 }

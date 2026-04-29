@@ -60,15 +60,15 @@
           >
             View in NPC Generator
           </cdr-button>
-          <cdr-button
-            size="small"
-            modifier="dark"
+          <button
+            type="button"
             class="related-npc-remove"
             @click="onRemove(idx)"
             :title="`Remove ${stub.name}`"
+            :aria-label="`Remove ${stub.name}`"
           >
             ✕
-          </cdr-button>
+          </button>
         </div>
       </li>
     </ul>
@@ -246,9 +246,25 @@ function onRemove(idx) {
 }
 
 .related-npc-remove {
-  min-width: 2.4rem;
-  padding-left: 0.6rem;
-  padding-right: 0.6rem;
+  background: none;
+  border: none;
+  padding: 0.4rem 0.7rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #999;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    color: #7a1f1f;
+    background: rgba(122, 31, 31, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7a1f1f;
+    outline-offset: 2px;
+  }
 }
 
 .related-npcs-toggle {

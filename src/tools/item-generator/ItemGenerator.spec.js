@@ -702,9 +702,10 @@ describe('ItemGenerator - Related NPCs Integration', () => {
     const originalConfirm = global.confirm;
     global.confirm = jest.fn(() => true);
     try {
-      // Find the Delete Item button by its text content.
+      // The Delete action is a CardFooterAction button whose text contains
+      // an emoji icon plus the label.
       const buttons = wrapper.findAll('button');
-      const deleteBtn = buttons.find(b => b.text() === 'Delete Item');
+      const deleteBtn = buttons.find(b => b.text().includes('Delete Item'));
       expect(deleteBtn).toBeTruthy();
       await deleteBtn.trigger('click');
       await nextTick();
