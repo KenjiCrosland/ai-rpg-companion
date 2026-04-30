@@ -212,16 +212,21 @@ The Item Generator participates in the cross-tool NPC graph via the `related_npc
 
 ### Stub → Full NPC (navigate-and-prefill)
 
-Each stub is rendered as a compact card under the item's lore on the Item Details tab. Clicking "Create NPC" calls `navigateToTool('npc-generator', { fromItem, stub })` (see `@/util/navigation.mjs`). This is the project's dev/prod-aware navigation — sessionStorage in dev, query string in prod.
+Each stub is rendered as a compact card under the item's lore on the Item Details tab. Clicking "Create NPC" calls `navigateToTool('npc-generator', { fromType: 'item', fromId: item.name, entityName: stub.name })` (see `@/util/navigation.mjs`). This is the project's dev/prod-aware navigation — sessionStorage in dev, query string in prod.
 
-The NPC Generator's mount handler (in `NPCGenerator.vue`) reads the params, looks up the item via `getItemFromStorage`, finds the matching stub, and populates `typeOfPlace` with `buildPrefilledTypeOfPlace({stub, item})` from `@/prompts/item-npc-prompts.mjs`. The user reviews/edits and clicks Generate. After Part 2 completes, `finalizePendingItemLink()` calls:
+The flow runs through the cross-tool substrate at `src/util/seeded-input.mjs` (see the root `CLAUDE.md` "Cross-Tool Reference Substrate" section):
 
-1. `addNPCMentionedInItemReference(...)` — creates a `mentioned_in_item` reference in `tool-references`.
-2. `linkNPCToItemStub(...)` — writes `npc_id` and `npc_folder` back onto the stub on the source item in `savedItems`.
+1. The NPC Generator's mount handler calls `loadSeededInput({fromType, fromId, entityName})` → dispatches to `buildSeededInputFromItem` → returns a `SeededInput` describing the item + stub.
+2. `pendingSeed` holds the seed. `buildPrefillForSeed(seed)` produces the prefilled `typeOfPlace` text (item name, type, rarity, physical description, lore). User reviews/edits and clicks Generate.
+3. After Part 2 completes, `finalizePendingSeed()` calls:
+   - `addReferenceForSeed(seed, { type: 'npc', id, name })` — writes the `mentioned_in_item` reference (relationship looked up from `PROMOTION_RELATIONSHIPS[item][npc]`).
+   - `writeBackPromotedNPC(seed, { npc_id, name, folderName })` — dispatches to the item writeBack, which calls `linkNPCToItemStub` to set `stub.npc_id` and `stub.npc_folder`. Also runs the Direction-B sweep: walks settings/dungeons for stubs whose `seeded_from` points back at this item-stub and updates them too.
 
 The Item Generator picks up the back-link via a `storage` event listener (cross-tab) or a `saved-items-updated` custom event (same tab).
 
 For stubs that already have `npc_id`, the card switches to a "View in NPC Generator" button which calls `navigateToTool('npc-generator', { npc: stub.npc_id })`; the NPC Generator's mount handler selects that NPC.
+
+**Whole-item seeding mode:** `buildSeededInputFromItem({ fromId })` (no `entityName`) returns a SeededInput whose `entities` contains every `related_npcs` stub. This is the path the future Item → Setting / Item → Dungeon flows will use (substrate-ready; flows not shipped yet).
 
 ### Why this design
 
@@ -231,12 +236,17 @@ We also do **not** maintain a parallel item-context NPC prompt. The NPC Generato
 
 ### Rename / delete handling
 
-- On rename (in `saveEdit`): `renameItemReferences(oldName, newName)` updates `target_id`/`source_id` on any references where the item is involved.
+- On rename (in `saveEdit`): `renameItemReferences(oldName, newName)` propagates the rename across **four** stores — items use `name` as their cross-tool id, so a rename changes the entity's identity and every pointer at the old name has to follow:
+  1. `tool-references` source/target ids and names
+  2. NPC denormalized `sourceId` / `sourceName` fields (so the NPCCard's render-time existence check doesn't mistakenly flag the source as deleted)
+  3. Setting NPC stub `seeded_from.source_id` / `source_name`
+  4. Dungeon NPC stub `seeded_from.source_id` / `source_name`
 - On delete (in `deleteItem`): `removeReferencesForItem(name)` (a thin wrapper over `removeReferencesForEntity('item', name)`) drops every `mentioned_in_item` reference for that item. The canonical NPC in `npcGeneratorNPCs` is preserved — item deletion does not cascade.
 
 ### Files involved
 
-- `src/util/item-storage.mjs` — `saveItemToStorage`, `getItemFromStorage`, `linkNPCToItemStub`, `renameItemReferences`, `addNPCMentionedInItemReference`, `removeReferencesForItem`.
+- `src/util/item-storage.mjs` — `saveItemToStorage`, `getItemFromStorage`, `buildSeededInputFromItem`, `linkNPCToItemStub`, `renameItemReferences`, `addNPCMentionedInItemReference`, `removeReferencesForItem`, `findItemStubsForNPC`, `resetItemStubsForDeletedNPC`.
+- `src/util/seeded-input.mjs` — cross-tool substrate (dispatchers, `PROMOTION_RELATIONSHIPS`, `sourceExists`). Item-side dispatcher entries live in `seeded-input.mjs` and call into `item-storage.mjs`.
 - `src/prompts/item-npc-prompts.mjs` — `createItemNPCExtractionPrompt`, `validateItemNPCExtraction`, `buildPrefilledTypeOfPlace`.
 - `src/tools/item-generator/utils/extract-related-npcs.mjs` — `extractRelatedNPCs` (orchestrator), `mergeStubs` (pure merge helper).
 - `src/tools/item-generator/components/RelatedNPCsSection.vue` — the compact stub UI.

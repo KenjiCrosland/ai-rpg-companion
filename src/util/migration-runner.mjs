@@ -14,15 +14,36 @@
  */
 
 import { extractExistingReferences } from './extract-existing-references.mjs';
+import { renameNPCItemFields } from './rename-npc-item-fields.mjs';
+import { assignDungeonIds } from './assign-dungeon-ids.mjs';
+import { assignSettingIds } from './assign-setting-ids.mjs';
+import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
 
 /**
  * List of all migrations to run.
  * Each migration is { name: string, run: () => void }
  *
+ * Order matters when migrations touch the same data:
+ *   1. extract-existing-references — populates initial reference graph
+ *      from legacy data shapes.
+ *   2. rename-npc-item-fields — promotes legacy `itemName` on item-sourced
+ *      NPCs to the generic `sourceId`/`sourceName` pair. Runs before any
+ *      id migration that might touch the same records.
+ *   3. assign-dungeon-ids / assign-setting-ids — convert entities to
+ *      stable string ids and rewrite refs that targeted them by name or
+ *      numeric value.
+ *   4. sweep-orphan-references — drops any refs whose source/target no
+ *      longer resolves; runs after the id migrations so their post-
+ *      rewrite refs aren't seen as orphans.
+ *
  * Add new migrations to the end of this array.
  */
 const migrations = [
-  { name: 'extract-existing-references', run: extractExistingReferences }
+  { name: 'extract-existing-references', run: extractExistingReferences },
+  { name: 'rename-npc-item-fields', run: renameNPCItemFields },
+  { name: 'assign-dungeon-ids', run: assignDungeonIds },
+  { name: 'assign-setting-ids', run: assignSettingIds },
+  { name: 'sweep-orphan-references', run: sweepOrphanReferences },
 ];
 
 /**

@@ -209,6 +209,12 @@ describe('NPCGenerator - Reference Creation', () => {
           }
         ]
       }));
+      // Statblock must exist in storage — migration now skips orphan
+      // pointers (mirrors extract-existing-references.mjs's check) so
+      // sweep-orphan-references doesn't have to clean up after it.
+      localStorage.setItem('monsters', JSON.stringify({
+        'NPC Statblocks': [{ name: 'Existing NPC' }]
+      }));
 
       jest.spyOn(referenceStorage, 'getReferencesForEntity').mockReturnValue([]);
 
@@ -320,6 +326,10 @@ describe('NPCGenerator - Reference Creation', () => {
             }
           }
         ]
+      }));
+      // Statblocks must exist in storage (migration now skips orphan pointers).
+      localStorage.setItem('monsters', JSON.stringify({
+        'Statblocks': [{ name: 'NPC A' }, { name: 'NPC B' }]
       }));
 
       jest.spyOn(referenceStorage, 'getReferencesForEntity').mockReturnValue([]);

@@ -698,3 +698,129 @@ export function migrateSettingNPCsToSharedStorage() {
     return 0;
   }
 }
+
+/**
+ * Propagate an NPC rename across every place the NPC's display name is
+ * cached. NPCs use a stable `npc_id` so the link itself never breaks on
+ * rename — but several stores cache the NPC's display name alongside
+ * the id (for human-readable rendering), and those caches need to
+ * follow the rename.
+ *
+ * Updates:
+ *   1. `tool-references` entries where this NPC is source or target —
+ *      `source_name` / `target_name` get the new name.
+ *   2. Item stubs: `savedItems[*].related_npcs[*]` matched by `npc_id`,
+ *      updates `stub.name`.
+ *   3. Setting NPC stubs: `gameSettings[*].npcs[*]` matched by `npc_id`.
+ *   4. Dungeon NPC stubs: `dungeons[*].npcs[*]` matched by `npc_id`.
+ *
+ * Does NOT touch prose fields (e.g., another NPC's `combined_details`
+ * mentioning this NPC by name) — those are free-form text that may use
+ * the name in many forms and aren't safe to substring-replace.
+ *
+ * Idempotent: no-op when nothing matches or already at the new name.
+ *
+ * @param {string} npcId
+ * @param {string} newName
+ * @returns {{ totalUpdated: number }}
+ */
+export function renameNPCReferences(npcId, newName) {
+  if (!npcId || !newName) return { totalUpdated: 0 };
+  let totalUpdated = 0;
+
+  // 1. Reference graph.
+  const referencesRaw = localStorage.getItem('tool-references');
+  if (referencesRaw) {
+    let references;
+    try { references = JSON.parse(referencesRaw); } catch { references = null; }
+    if (references && typeof references === 'object') {
+      let changed = false;
+      for (const ref of Object.values(references)) {
+        if (ref.source_type === 'npc' && ref.source_id === npcId && ref.source_name !== newName) {
+          ref.source_name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+        if (ref.target_type === 'npc' && ref.target_id === npcId && ref.target_name !== newName) {
+          ref.target_name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+      }
+      if (changed) {
+        localStorage.setItem('tool-references', JSON.stringify(references));
+      }
+    }
+  }
+
+  // 2. Item stubs.
+  const itemsRaw = localStorage.getItem('savedItems');
+  if (itemsRaw) {
+    let items;
+    try { items = JSON.parse(itemsRaw); } catch { items = null; }
+    if (Array.isArray(items)) {
+      let changed = false;
+      for (const item of items) {
+        if (!Array.isArray(item?.related_npcs)) continue;
+        for (const stub of item.related_npcs) {
+          if (stub?.npc_id === npcId && stub.name !== newName) {
+            stub.name = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        localStorage.setItem('savedItems', JSON.stringify(items));
+      }
+    }
+  }
+
+  // 3. Setting NPC stubs.
+  const settingsRaw = localStorage.getItem('gameSettings');
+  if (settingsRaw) {
+    let settings;
+    try { settings = JSON.parse(settingsRaw); } catch { settings = null; }
+    if (Array.isArray(settings)) {
+      let changed = false;
+      for (const setting of settings) {
+        if (!Array.isArray(setting?.npcs)) continue;
+        for (const stub of setting.npcs) {
+          if (stub?.npc_id === npcId && stub.name !== newName) {
+            stub.name = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        localStorage.setItem('gameSettings', JSON.stringify(settings));
+      }
+    }
+  }
+
+  // 4. Dungeon NPC stubs.
+  const dungeonsRaw = localStorage.getItem('dungeons');
+  if (dungeonsRaw) {
+    let dungeons;
+    try { dungeons = JSON.parse(dungeonsRaw); } catch { dungeons = null; }
+    if (Array.isArray(dungeons)) {
+      let changed = false;
+      for (const dungeon of dungeons) {
+        if (!Array.isArray(dungeon?.npcs)) continue;
+        for (const stub of dungeon.npcs) {
+          if (stub?.npc_id === npcId && stub.name !== newName) {
+            stub.name = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        localStorage.setItem('dungeons', JSON.stringify(dungeons));
+      }
+    }
+  }
+
+  return { totalUpdated };
+}

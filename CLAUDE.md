@@ -272,31 +272,94 @@ Tools have been migrated to a modular structure in `src/tools/`:
 - ⏳ Lore Generator
 - ⏳ Book Generator
 
-### Data Architecture Migrations
+### Data Architecture
 
-The project has migrated from nested objects to a **reference-based architecture** for cross-tool data sharing:
+The project uses a **reference-based architecture** for cross-tool data sharing — entities live in their own localStorage keys, with `tool-references` providing a graph of relationships between them. Statblocks are referenced by `name__folder`, NPCs by `npc_id`, dungeons by stable string ids (`dng_*`), settings by stable string ids (`set_*`).
 
-**Completed:**
-- ✅ **Statblock References** - Dungeons/NPCs store `statblock_name` + `statblock_folder` instead of full statblock objects
-- ✅ **NPC References** - NPCs can be referenced from dungeons and settings via reference store
-- ✅ **Reference Store** (`tool-references` in localStorage) - Tracks relationships like `appears_in_dungeon`, `has_statblock`
-- ✅ **Global Migration Runner** (`src/util/migration-runner.mjs`) - Ensures one-time migrations run exactly once
-- ✅ **Cross-tab Sync** - Changes in one browser tab trigger reloads in other tabs
+**Storage layers:**
+- `monsters` — statblocks, organized by folder
+- `savedItems` — items, flat array, identity = `name`
+- `npcGeneratorNPCs` — NPCs, organized by folder, identity = `npc_id`
+- `gameSettings` — settings, flat array, identity = `id`
+- `dungeons` — dungeons, flat array, identity = `id`
+- `encounters` — encounters, organized by folder, identity = `${folder}__${index}`
+- `tool-references` — the cross-tool reference graph (see Cross-Tool Substrate below)
 
 **Migration Utilities:**
-- `src/util/statblock-storage.mjs` - Shared statblock storage utilities
-- `src/util/npc-storage.mjs` - Shared NPC storage utilities
-- `src/util/extract-existing-references.mjs` - Extracts references from existing data
-- `src/util/migration-runner.mjs` - Global migration orchestration
-- `MIGRATION-GUIDE.md` - Complete guide for implementing reference-based migrations
+- `src/util/migration-runner.mjs` — global orchestration, runs each migration exactly once per browser
+- `src/util/extract-existing-references.mjs` — backfills `tool-references` from legacy data shapes
+- `src/util/rename-npc-item-fields.mjs` — promotes `itemName` → `sourceId/sourceName` on NPCs
+- `src/util/assign-dungeon-ids.mjs` — converts legacy numeric dungeon ids to `dng_${oldId}` deterministic
+- `src/util/assign-setting-ids.mjs` — assigns `set_*` ids to settings lacking one, backfills missing `appears_in_setting` refs
+- `src/util/sweep-orphan-references.mjs` — drops refs whose source/target no longer resolves
+- `src/util/statblock-storage.mjs`, `src/util/npc-storage.mjs`, `src/util/item-storage.mjs`, `src/util/setting-storage.mjs`, `src/util/dungeon-storage.mjs` — per-entity-type helpers (read/write, find-by-id, rename propagation)
 
-**Key Benefits:**
-- Single source of truth for shared data
-- Cross-tool updates (rename in one tool updates all references)
-- Reduced localStorage size (no data duplication)
-- Better data integrity
+Migration order is enforced in `migration-runner.mjs:migrations`. Adding a new migration = appending to that array.
 
-See `MIGRATION-GUIDE.md` for detailed patterns and best practices.
+`MIGRATION-GUIDE.md` has the original reference-based-migration patterns; the substrate work below extends them.
+
+### Cross-Tool Reference Substrate
+
+`src/util/seeded-input.mjs` is the substrate for cross-tool seeded entity flows. When the user clicks an action in one tool that opens another tool with seeded context (e.g., "Create NPC" on an item's stub → opens NPC Generator with the item's data prefilled), the substrate handles:
+
+- Loading the seed from the source tool's storage (`loadSeededInput`)
+- Building the prefill text the destination tool drops into its form (`buildPrefillForSeed`)
+- Writing the canonical reference edge after generation (`addReferenceForSeed`)
+- Back-linking the source tool's stub with the new entity's id (`writeBackPromotedNPC`)
+- Render-time existence checks for "(deleted)" marker rendering (`sourceExists`)
+- Cross-source stub finders/resetters for cleanup on entity deletion (`findStubsReferencingNPC`, `resetStubsForDeletedNPC`)
+
+**Relationship lookup:** `PROMOTION_RELATIONSHIPS` is a 2D map keyed on `(source_tool, destination_entity_type)`:
+
+```js
+const PROMOTION_RELATIONSHIPS = {
+  item:    { npc: 'mentioned_in_item',  setting: 'inspired_by_item', dungeon: 'inspired_by_item' },
+  setting: { npc: 'appears_in_setting' },
+  dungeon: { npc: 'appears_in_dungeon' },
+};
+```
+
+Edge direction is `destination_entity → relationship → source_tool_entity`. `npc → mentioned_in_item → item` is read "the NPC was mentioned in the item." `setting → inspired_by_item → item` is read "the setting was inspired by the item." Adding a new flow is adding a row to this map plus the corresponding dispatcher entries.
+
+**Dispatcher pattern:** the substrate has five maps keyed on `source.type`:
+- `builders` — load a SeededInput from a navigation params payload
+- `writeBacks` — update the source-side stub with the new entity's id post-promotion
+- `stubFinders` — enumerate stubs across source tools that point at a given entity (used during deletion confirmation)
+- `stubResetters` — clear stub→entity links across source tools when an entity is deleted
+- `prefills` — produce the destination tool's prefill text from a SeededInput
+
+Adding a new source tool = registering an entry in each of these maps. See `setting-storage.mjs` and `dungeon-storage.mjs` for the parallel implementations to `item-storage.mjs`.
+
+**SeededInput shape:**
+```ts
+{
+  source: { type, id, name, description?, quote?, ...source-specific extras },
+  destination?: { type },                       // set by caller after loadSeededInput
+  entities: Array<{
+    type, id?, name, role_or_description,
+    seeded_from?: { source_type, source_id, source_name, stub_name },  // cross-container provenance
+    ...source-specific extras
+  }>
+}
+```
+
+The optional `entities[].seeded_from` is for stubs that originated in one tool and were copied into another's stub container (e.g., an item-stub seeded into a setting's NPC tab). On promotion of such a stub, `addReferenceForSeed` writes both the primary edge (e.g., `appears_in_setting`) and a secondary edge (e.g., `mentioned_in_item`) by following the `seeded_from` chain.
+
+**Bidirectional writeBack symmetry:** `writeBackPromotedNPC` runs cross-container updates in both directions. When a setting-tab promotion writes the setting's stub, the dispatcher also calls the seeded_from source's writeBack (e.g., the item's). When an item-card promotion writes the item's stub, the item writeBack also sweeps settings/dungeons for stubs whose `seeded_from` points back. Either entry point yields the same final state.
+
+**Render-time deletion detection:** NPCCard's subtitle calls `sourceExists(sourceType, sourceId)` and renders an inline `(deleted)` marker if the source is gone. The pattern generalizes the existing "Statblock not found" warning. Stale source pointers auto-clean on the next NPC save (`saveCurrentNPCToList` drops `sourceId/sourceName` if the source no longer resolves).
+
+**Rename propagation:** entity renames fan out across stores via dedicated helpers:
+- `renameItemReferences(oldName, newName)` in `item-storage.mjs` — items use `name` as id, so rename = id change. Updates `tool-references`, NPC `sourceId/sourceName` fields, and setting/dungeon stub `seeded_from` provenance.
+- `renameNPCReferences(npcId, newName)` in `npc-storage.mjs` — NPCs have stable `npc_id`, so rename only updates display names. Walks `tool-references` source/target names, item stubs, setting/dungeon stub names. Match by `npc_id`.
+- Statblocks: `renameStatblockFolder` in `statblock-storage.mjs`.
+- Dungeons/settings: identity is the id, not the name, so rename doesn't propagate (display names read live from the entity).
+
+**Where to add a new cross-tool flow:**
+1. Add a row to `PROMOTION_RELATIONSHIPS`.
+2. Add a builder (and writeBack/stubFinder/stubResetter/prefill if applicable) in the relevant `*-storage.mjs`.
+3. Wire the entries into the dispatcher maps in `seeded-input.mjs`.
+4. The destination tool's mount handler calls `loadSeededInput`, stamps `seed.destination`, calls `buildPrefillForSeed` for the form, and calls `addReferenceForSeed` + `writeBackPromotedNPC` after generation.
 
 ## Build & Deployment
 

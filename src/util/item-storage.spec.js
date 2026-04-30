@@ -206,6 +206,67 @@ describe('item-storage', () => {
       expect(getNPCReferencesForItem('OldName')).toHaveLength(0);
     });
 
+    it('updates NPCs whose denormalized sourceId points at the old item name', () => {
+      // Critical regression: without this propagation, the NPCCard's
+      // render-time check incorrectly shows "(deleted)" after a rename.
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify({
+        Uncategorized: [
+          { npc_id: 'npc_a', sourceType: 'item', sourceId: 'OldName', sourceName: 'OldName' },
+          { npc_id: 'npc_b', sourceType: 'item', sourceId: 'OldName', sourceName: 'OldName' },
+          { npc_id: 'npc_c', sourceType: 'item', sourceId: 'OtherItem', sourceName: 'OtherItem' },
+          { npc_id: 'npc_d', sourceType: 'dungeon', sourceId: 'OldName', sourceName: 'OldName' }, // wrong type, must not touch
+        ],
+      }));
+
+      const result = renameItemReferences('OldName', 'NewName');
+
+      const after = JSON.parse(localStorage.getItem('npcGeneratorNPCs')).Uncategorized;
+      expect(after[0].sourceId).toBe('NewName');
+      expect(after[0].sourceName).toBe('NewName');
+      expect(after[1].sourceId).toBe('NewName');
+      expect(after[2].sourceId).toBe('OtherItem'); // untouched
+      expect(after[3].sourceId).toBe('OldName');   // dungeon-typed, untouched
+      expect(result.totalUpdated).toBeGreaterThanOrEqual(2);
+    });
+
+    it('updates seeded_from provenance on setting NPC stubs', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        {
+          id: 'set_x',
+          place_name: 'X',
+          npcs: [
+            { name: 'Yelena', seeded_from: { source_type: 'item', source_id: 'OldName', source_name: 'OldName', stub_name: 'Yelena' } },
+            { name: 'Other', seeded_from: { source_type: 'item', source_id: 'OtherItem', source_name: 'OtherItem', stub_name: 'Other' } },
+          ],
+        },
+      ]));
+
+      renameItemReferences('OldName', 'NewName');
+
+      const after = JSON.parse(localStorage.getItem('gameSettings'))[0].npcs;
+      expect(after[0].seeded_from.source_id).toBe('NewName');
+      expect(after[0].seeded_from.source_name).toBe('NewName');
+      expect(after[1].seeded_from.source_id).toBe('OtherItem'); // untouched
+    });
+
+    it('updates seeded_from provenance on dungeon NPC stubs', () => {
+      localStorage.setItem('dungeons', JSON.stringify([
+        {
+          id: 'dng_x',
+          dungeonOverview: { name: 'X' },
+          npcs: [
+            { name: 'Yelena', seeded_from: { source_type: 'item', source_id: 'OldName', source_name: 'OldName', stub_name: 'Yelena' } },
+          ],
+        },
+      ]));
+
+      renameItemReferences('OldName', 'NewName');
+
+      const after = JSON.parse(localStorage.getItem('dungeons'))[0].npcs;
+      expect(after[0].seeded_from.source_id).toBe('NewName');
+      expect(after[0].seeded_from.source_name).toBe('NewName');
+    });
+
     it('is a no-op when oldName === newName', () => {
       addNPCMentionedInItemReference({ npcId: 'npc_1', npcName: 'A', itemName: 'Same' });
       const result = renameItemReferences('Same', 'Same');
@@ -215,6 +276,33 @@ describe('item-storage', () => {
     it('is a no-op when there are no references', () => {
       const result = renameItemReferences('A', 'B');
       expect(result.totalUpdated).toBe(0);
+    });
+
+    it('does NOT clobber promoted stub.npc_id on the renamed item', () => {
+      // Regression: simulates the full saveEdit flow — rename writes
+      // savedItems with the new name, then renameItemReferences fans out
+      // to other stores. The item's own related_npcs (including promoted
+      // npc_id pointers back to canonical NPCs) MUST survive intact, or
+      // the item card flips from "View NPC" back to "Create NPC".
+      localStorage.setItem('savedItems', JSON.stringify([{
+        name: 'NewName', // post-rename: caller already wrote the new name
+        related_npcs: [
+          { name: 'Yelena', role_brief: 'oracle', npc_id: 'npc_yelena_001', npc_folder: 'Uncategorized' },
+          { name: 'Skragbit', role_brief: 'smith', npc_id: null, npc_folder: null },
+        ],
+      }]));
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify({
+        Uncategorized: [
+          { npc_id: 'npc_yelena_001', sourceType: 'item', sourceId: 'OldName', sourceName: 'OldName' },
+        ],
+      }));
+
+      renameItemReferences('OldName', 'NewName');
+
+      const items = JSON.parse(localStorage.getItem('savedItems'));
+      expect(items[0].related_npcs[0].npc_id).toBe('npc_yelena_001');
+      expect(items[0].related_npcs[0].npc_folder).toBe('Uncategorized');
+      expect(items[0].related_npcs[1].npc_id).toBeNull();
     });
   });
 });

@@ -5,18 +5,21 @@
       <div>
         <h2 v-if="!loadingDescription" class="npc-card-name">{{ npc.name }}</h2>
         <p v-if="!loadingDescription && (origin || npc.type_info)" class="npc-card-subtitle">
-          <template v-if="itemSubtitleSegments && itemSubtitleSegments.mode === 'inline'">
-            <span>{{ itemSubtitleSegments.prefix }}</span><a @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ itemSubtitleSegments.name }}</a><span>{{ itemSubtitleSegments.suffix }}</span>
+          <template v-if="sourceSubtitleSegments && sourceSubtitleSegments.mode === 'inline'">
+            <span>{{ sourceSubtitleSegments.prefix }}</span><a v-if="!sourceMissing" @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ sourceSubtitleSegments.name }}</a><span v-else>{{ sourceSubtitleSegments.name }}</span><span>{{ sourceSubtitleSegments.suffix }}</span><span v-if="sourceMissing" class="npc-source-deleted"> (deleted)</span>
           </template>
-          <template v-else-if="itemSubtitleSegments && itemSubtitleSegments.mode === 'append'">
-            <span>{{ itemSubtitleSegments.origin }}</span>
+          <template v-else-if="sourceSubtitleSegments && sourceSubtitleSegments.mode === 'append'">
+            <span>{{ sourceSubtitleSegments.origin }}</span>
             <span> · From </span>
-            <a @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ itemSubtitleSegments.itemName }}</a>
+            <a v-if="!sourceMissing" @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ sourceSubtitleSegments.sourceName }}</a>
+            <span v-else>{{ sourceSubtitleSegments.sourceName }}</span>
+            <span v-if="sourceMissing" class="npc-source-deleted"> (deleted)</span>
           </template>
           <template v-else>
             <span v-if="origin">
               From <a v-if="shouldShowSourceLink" @click.prevent="navigateToSource" href="#" class="npc-source-link">{{ origin }}</a>
               <template v-else>{{ origin }}</template>
+              <span v-if="sourceMissing" class="npc-source-deleted"> (deleted)</span>
             </span>
             <span v-if="origin && npc.type_info && npc.type_info !== origin"> · </span>
             <span v-if="npc.type_info && npc.type_info !== origin">{{ npc.type_info }}</span>
@@ -207,6 +210,7 @@ import { ref, computed, watch } from 'vue';
 import { CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import CardFooterAction from './CardFooterAction.vue';
 import { navigateToTool } from '@/util/navigation.mjs';
+import { sourceExists } from '@/util/seeded-input.mjs';
 
 const props = defineProps({
   // NPC data in normalized format
@@ -227,11 +231,24 @@ const props = defineProps({
     default: null,
   },
 
-  // For sourceType === 'item': the literal item name to linkify inside `origin`.
-  // The card splits `origin` at the first occurrence of this string and renders
-  // it as a deep link back to the Item Generator. When `itemName` is absent
-  // from `origin`, the link is appended after a divider as a fallback.
-  itemName: {
+  // The literal source-entity name to linkify inside `origin` (e.g., the
+  // item / dungeon / setting name that appears inside a role-brief style
+  // origin string). The card splits `origin` at the first occurrence of
+  // this string and renders it as a deep link back to the source tool.
+  // When `sourceName` is absent from `origin`, the link is appended after
+  // a divider as a fallback. Pass null to fall back to the generic "From
+  // {origin}" subtitle layout.
+  sourceName: {
+    type: String,
+    default: null,
+  },
+
+  // The source-entity id (e.g., item.name, setting.id, dungeon.id). Used
+  // to detect at render time whether the source still exists; if it's
+  // gone, the back-link is suppressed and a "(deleted)" marker appears
+  // in its place. Pass null to skip the existence check (falls back to
+  // assuming the source exists, current behavior).
+  sourceId: {
     type: String,
     default: null,
   },
@@ -331,32 +348,44 @@ const hasRelationships = computed(() => {
   return props.npc.relationships && Object.keys(props.npc.relationships).length > 0;
 });
 
+// Computed: Has the back-link target been deleted? Render-time check
+// against the source-tool's storage. False when no sourceId is passed
+// (callers that don't care about deletion semantics get the original
+// always-show-link behavior).
+const sourceMissing = computed(() => {
+  if (!props.sourceType || !props.sourceId) return false;
+  return !sourceExists(props.sourceType, props.sourceId);
+});
+
 // Computed: Should show link to source generator?
 const shouldShowSourceLink = computed(() => {
   if (!props.sourceType || !props.origin) return false;
   // Don't show link if viewing NPC in its source context
   if (props.displayType === props.sourceType) return false;
+  // Don't show link if the source has been deleted — the link target
+  // would 404. The (deleted) marker carries the user-facing signal.
+  if (sourceMissing.value) return false;
   return true;
 });
 
-// Computed: subtitle layout for item-sourced NPCs.
-// - 'inline': itemName appears inside origin (role_brief). Split into [prefix, link, suffix].
-// - 'append': itemName not in origin. Show origin + " · From [linked itemName]".
-// Returns null for non-item NPCs so the existing dungeon/setting subtitle
-// rendering applies.
-const itemSubtitleSegments = computed(() => {
-  if (props.sourceType !== 'item' || !props.itemName) return null;
+// Computed: subtitle layout when an explicit source name is passed in.
+// - 'inline': sourceName appears inside origin (role_brief). Split into [prefix, link, suffix].
+// - 'append': sourceName not in origin. Show origin + " · From [linked sourceName]".
+// Returns null when no sourceName is provided so the generic "From {origin}"
+// subtitle layout applies.
+const sourceSubtitleSegments = computed(() => {
+  if (!props.sourceName) return null;
   const origin = props.origin || '';
-  const itemName = props.itemName;
-  const idx = origin.indexOf(itemName);
+  const sourceName = props.sourceName;
+  const idx = origin.indexOf(sourceName);
   if (idx === -1) {
-    return { mode: 'append', origin, itemName };
+    return { mode: 'append', origin, sourceName };
   }
   return {
     mode: 'inline',
     prefix: origin.substring(0, idx),
-    name: itemName,
-    suffix: origin.substring(idx + itemName.length),
+    name: sourceName,
+    suffix: origin.substring(idx + sourceName.length),
   };
 });
 
@@ -459,29 +488,23 @@ function generateRelationship() {
   relationshipForm.value.description = '';
 }
 
+// Per-source nav: which tool id to route to and which params to pass.
+// Items deep-link to the matching item by name; dungeons and settings
+// open the source tool's NPCs tab filtered by the origin string.
+const SOURCE_TYPE_NAV = {
+  item:    (sourceName, origin) => ['item-generator',    { item: sourceName }],
+  dungeon: (sourceName, origin) => ['dungeon-generator', { source: origin, tab: 'npcs' }],
+  setting: (sourceName, origin) => ['setting-generator', { source: origin, tab: 'npcs' }],
+};
+
 function navigateToSource() {
-  // Item link: route to the Item Generator and select the matching item.
-  if (props.sourceType === 'item') {
-    if (props.itemName) {
-      navigateToTool('item-generator', { item: props.itemName });
-    }
-    return;
-  }
-
-  if (!shouldShowSourceLink.value) return;
-
-  const toolMap = {
-    dungeon: 'dungeon-generator',
-    setting: 'setting-generator'
-  };
-
-  const toolName = toolMap[props.sourceType];
-  if (!toolName) return;
-
-  navigateToTool(toolName, {
-    source: props.origin,
-    tab: 'npcs'
-  });
+  const builder = SOURCE_TYPE_NAV[props.sourceType];
+  if (!builder) return;
+  // For dungeons/settings the link only makes sense when not viewing the
+  // NPC in its own source context.
+  if (props.sourceType !== 'item' && !shouldShowSourceLink.value) return;
+  const [toolName, params] = builder(props.sourceName, props.origin);
+  navigateToTool(toolName, params);
 }
 
 function navigateToNPCGenerator() {
@@ -563,6 +586,12 @@ function navigateToNPCGenerator() {
 .npc-source-link:hover {
   color: #5a1f1a;
   text-decoration: none;
+}
+
+.npc-source-deleted {
+  color: #8a7e6b;
+  font-style: italic;
+  font-size: 0.95em;
 }
 
 .npc-edit-button {

@@ -234,7 +234,7 @@
             <h4>{{ monster.name }} <span class="monster-qty">×{{ monster.quantity }}</span></h4>
 
             <Statblock v-if="monster.statblock" :monster="monster.statblock" :premium="premium"
-              :columns="'two_columns'" />
+              :columns="'two_columns'" :readonly="true" />
 
             <div v-else class="generate-statblock-section">
               <p>Statblock not available for this monster.</p>
@@ -354,6 +354,7 @@ import {
   getCreatureIntelligence
 } from './prompts/encounter-prompt.mjs';
 import { buildEnrichedMonsterBrief, getEncounterProfile } from '@/util/encounter-enrichment.mjs';
+import { removeReferencesForEntity, getAllReferences } from '@/util/reference-storage.mjs';
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
 import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
@@ -908,11 +909,21 @@ function deleteEncounter() {
   if (!confirm(`Delete "${encounterName}"? This cannot be undone.`)) return;
 
   const folderName = activeFolder.value || 'Uncategorized';
-  savedEncounters.value[folderName].splice(activeEncounterIndex.value, 1);
+  const deletedIndex = activeEncounterIndex.value;
+  const deletedEncounterId = `${folderName}__${deletedIndex}`;
+
+  savedEncounters.value[folderName].splice(deletedIndex, 1);
 
   // Reset state
   generatedEncounter.value = null;
   activeEncounterIndex.value = null;
+
+  // Encounters are keyed in `tool-references` as `${folder}__${index}`,
+  // so the splice above silently corrupts every ref pointing at an index
+  // greater than the deleted one (their slot now holds a different
+  // encounter). Drop the deleted encounter's refs and shift the rest.
+  removeReferencesForEntity('encounter', deletedEncounterId);
+  shiftEncounterReferencesAfterDelete(folderName, deletedIndex);
 
   // Clean up empty folder
   if (savedEncounters.value[folderName].length === 0 && folderName !== 'Uncategorized') {
@@ -926,6 +937,47 @@ function deleteEncounter() {
   localStorage.setItem('encounters', JSON.stringify(savedEncounters.value));
 
   toast.success('Encounter deleted');
+}
+
+// Decrement encounter target/source ids in the given folder that pointed at
+// an index greater than `deletedIndex`, so surviving refs continue to
+// resolve after the splice. Refs at exactly `deletedIndex` should already
+// have been removed via `removeReferencesForEntity` before this runs.
+function shiftEncounterReferencesAfterDelete(folderName, deletedIndex) {
+  const references = getAllReferences();
+  let shifted = false;
+
+  for (const ref of Object.values(references)) {
+    if (ref.target_type === 'encounter') {
+      const next = shiftEncounterId(ref.target_id, folderName, deletedIndex);
+      if (next !== null) {
+        ref.target_id = next;
+        shifted = true;
+      }
+    }
+    if (ref.source_type === 'encounter') {
+      const next = shiftEncounterId(ref.source_id, folderName, deletedIndex);
+      if (next !== null) {
+        ref.source_id = next;
+        shifted = true;
+      }
+    }
+  }
+
+  if (shifted) {
+    localStorage.setItem('tool-references', JSON.stringify(references));
+  }
+}
+
+function shiftEncounterId(encounterId, folderName, deletedIndex) {
+  if (typeof encounterId !== 'string') return null;
+  const sep = encounterId.lastIndexOf('__');
+  if (sep === -1) return null;
+  const refFolder = encounterId.slice(0, sep);
+  if (refFolder !== folderName) return null;
+  const idx = Number(encounterId.slice(sep + 2));
+  if (!Number.isInteger(idx) || idx <= deletedIndex) return null;
+  return `${refFolder}__${idx - 1}`;
 }
 
 // ─── Statblock generation ────────────────────────────────────────────────────

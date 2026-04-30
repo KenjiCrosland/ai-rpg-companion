@@ -7,64 +7,58 @@
       </cdr-text>
     </template>
 
-    <!-- If NOT premium, show an upsell UI instead of the checkboxes -->
+    <!-- Free tier upsell -->
     <div v-if="!premium">
       <cdr-text id="dataManagerModalDescription" tag="p" style="margin-bottom: 1rem;">
         Downloading and uploading app data is reserved for the premium version of this app.
         Please access the premium version here:
       </cdr-text>
 
-      <!-- Show the link for the currentApp, if it exists -->
       <cdr-link v-if="matchedApp?.premiumLink" :href="matchedApp.premiumLink" target="_blank">
         {{ matchedApp?.appName }} - Premium Version
       </cdr-link>
     </div>
 
-    <!-- If premium, show the normal checkboxes + download/upload UI -->
+    <!-- Premium: single bundled download/upload -->
     <div v-else>
       <cdr-text id="dataManagerModalDescription" tag="p" style="margin-bottom: 1rem;">
-        Select which data you want to download. Only apps for which there is currently saved info will appear below. To
-        upload, pick a file.
+        Save your data to a file you can back up, share, or move to another device. Upload a saved file to restore your
+        work.
       </cdr-text>
 
-      <!-- "Select All" checkbox (only appears if more than one recognized key) -->
-      <cdr-checkbox v-if="localStorageApps.length > 1" v-model="selectAllChecked" @change="toggleSelectAll">
-        Select All
-      </cdr-checkbox>
-
-      <!-- One checkbox per recognized localStorage key -->
-      <div class="checkboxes-container" v-if="localStorageApps.length">
-        <cdr-checkbox v-for="app in localStorageApps" :key="app.key" v-model="checkedApps[app.key]">
-          {{ app.appName }}
-        </cdr-checkbox>
+      <div v-if="hasAnyData" class="summary">
+        <p class="summary-heading">Currently in your browser:</p>
+        <ul class="summary-list">
+          <li v-for="row in summaryRows" :key="row.label">
+            <strong>{{ row.count }}</strong> {{ row.label }}
+          </li>
+        </ul>
+        <p class="summary-footer">Connections between your items, NPCs, and other tools are preserved automatically.</p>
       </div>
-      <p v-else>
-        No recognized data found in localStorage.
+      <p v-else style="margin: 0.75rem 0;">
+        No saved data found in this browser. Upload a previous export to restore your work.
       </p>
 
       <div class="buttons-container">
-        <!-- Download data -->
-        <cdr-button modifier="secondary" @click="downloadData">
-          Download JSON
-        </cdr-button>
-
-        <!-- Upload data (file input hidden) -->
-        <cdr-button @click="triggerFileSelect">
+        <cdr-button modifier="secondary" @click="triggerFileSelect">
           Upload JSON
         </cdr-button>
         <input ref="fileInput" type="file" accept="application/json" style="display: none;"
           @change="handleFileChange" />
+
+        <cdr-button @click="downloadData" :disabled="!hasAnyData">
+          Download JSON
+        </cdr-button>
       </div>
     </div>
   </cdr-modal>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import {
   CdrModal,
   CdrText,
-  CdrCheckbox,
   CdrButton,
   CdrLink
 } from '@rei/cedar';
@@ -73,7 +67,6 @@ import { writeQuota, QUOTA_FIELDS } from '@/util/quota-storage.mjs';
 // Cedar CSS
 import '@rei/cedar/dist/style/cdr-modal.css';
 import '@rei/cedar/dist/style/cdr-text.css';
-import '@rei/cedar/dist/style/cdr-checkbox.css';
 import '@rei/cedar/dist/style/cdr-button.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 
@@ -95,140 +88,134 @@ const props = defineProps({
 const emit = defineEmits(['update:opened']);
 
 /**
- * We have a known list of localStorage keys => friendly names => optional premium link.
+ * Every localStorage key that's part of the user's game-master data
+ * bundle. Listed in one place so download and upload stay consistent.
+ *
+ * `tool-references` MUST be included — it's the cross-tool relationship
+ * graph (mentioned_in_item, appears_in_setting, has_statblock, etc.).
+ * Without it, an exported NPC arriving on a fresh device would have its
+ * back-link to its source item, dungeon, or setting disappear.
+ *
+ * `migrations-completed` is intentionally NOT included — that's run-state
+ * tracking, not user data. On import, omitting it means the migrations
+ * re-run against the imported blob (which is exactly what we want for old
+ * exports that predate the current id format).
  */
-const knownApps = [
-  {
-    key: 'monsters',
-    appName: 'Statblock Generator',
-    premiumLink: 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/'
-  },
-  {
-    key: 'savedItems',
-    appName: 'Magic Item Generator',
-    premiumLink: 'https://cros.land/dnd-5e-magic-item-generator-premium-version/'
-  },
-  {
-    key: 'npcGeneratorNPCs',
-    appName: 'NPC Generator',
-    premiumLink: 'https://cros.land/npc-generator-premium-version/'
-  },
-  {
-    key: 'rpgTimelineState',
-    appName: 'Timeline Generator',
-    premiumLink: null
-  },
-  {
-    key: 'gameSettings',
-    appName: 'Worldbuilding Dashboard',
-    premiumLink: 'https://cros.land/rpg-setting-generator-and-world-building-tool-premium-version/'
-  },
-  {
-    key: 'dungeons',
-    appName: 'Dungeon Generator',
-    premiumLink: 'https://cros.land/dungeon-generator-2-0-premium-version/'
-  },
-  {
-    key: 'encounters',
-    appName: 'Encounter Generator',
-    premiumLink: 'https://cros.land/dnd-5e-encounter-generator/'
-  }
+const EXPORT_KEYS = [
+  'monsters',
+  'savedItems',
+  'npcGeneratorNPCs',
+  'gameSettings',
+  'dungeons',
+  'encounters',
+  'tool-references',
+  'rpgTimelineState',
 ];
 
 /**
- * Find the app entry for the currentApp prop, if any
+ * Per-tool display info. Used only for the free-tier upsell link
+ * (matched against `currentApp`) — single-bundle exports don't need
+ * the per-tool checkbox UI anymore.
  */
-const matchedApp = computed(() => {
-  return knownApps.find(a => a.key === props.currentApp);
-});
+const APP_INFO = {
+  monsters:         { appName: 'Statblock Generator',     premiumLink: 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/' },
+  savedItems:       { appName: 'Magic Item Generator',    premiumLink: 'https://cros.land/dnd-5e-magic-item-generator-premium-version/' },
+  npcGeneratorNPCs: { appName: 'NPC Generator',           premiumLink: 'https://cros.land/npc-generator-premium-version/' },
+  rpgTimelineState: { appName: 'Timeline Generator',      premiumLink: null },
+  gameSettings:     { appName: 'Worldbuilding Dashboard', premiumLink: 'https://cros.land/rpg-setting-generator-and-world-building-tool-premium-version/' },
+  dungeons:         { appName: 'Dungeon Generator',       premiumLink: 'https://cros.land/dungeon-generator-2-0-premium-version/' },
+  encounters:       { appName: 'Encounter Generator',     premiumLink: 'https://cros.land/dnd-5e-encounter-generator/' },
+};
 
-/**
- * We'll only show the checkboxes for recognized keys that actually exist in localStorage.
- */
-const localStorageApps = computed(() =>
-  knownApps.filter(app => localStorage.getItem(app.key) !== null)
-);
+const matchedApp = computed(() => APP_INFO[props.currentApp] || null);
 
-/**
- * A dictionary of booleans: which apps are checked for download
- */
-const checkedApps = reactive({});
-
-/**
- * "Select All" boolean
- */
-const selectAllChecked = ref(false);
-
-// Whenever localStorageApps changes, add default false for new keys
-watch(localStorageApps, (apps) => {
-  apps.forEach(app => {
-    if (checkedApps[app.key] === undefined) {
-      checkedApps[app.key] = false;
-    }
-  });
-}, { immediate: true });
-
-/**
- * Toggling "Select All" sets all recognized keys to that boolean
- */
-function toggleSelectAll() {
-  localStorageApps.value.forEach(app => {
-    checkedApps[app.key] = selectAllChecked.value;
-  });
+function safeParse(raw) {
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
 }
 
 /**
- * Which keys are selected for download?
+ * Read everything we'd export, parsed. Returns null for keys not in
+ * localStorage. Used for both the summary panel and the download flow.
  */
-const chosenKeys = computed(() =>
-  localStorageApps.value
-    .filter(app => checkedApps[app.key])
-    .map(app => app.key)
-);
+function readBundleFromLocalStorage() {
+  const out = {};
+  for (const key of EXPORT_KEYS) {
+    const parsed = safeParse(localStorage.getItem(key));
+    if (parsed !== null) out[key] = parsed;
+  }
+  return out;
+}
+
+const bundle = computed(() => readBundleFromLocalStorage());
+const hasAnyData = computed(() => Object.keys(bundle.value).length > 0);
 
 /**
- * Close the modal
+ * Friendly counts for the summary panel. Hides rows whose count is zero
+ * so the panel stays compact for users who only use a few tools.
  */
+const summaryRows = computed(() => {
+  const b = bundle.value;
+  const rows = [];
+  const itemsLen = Array.isArray(b.savedItems) ? b.savedItems.length : 0;
+  if (itemsLen) rows.push({ label: pluralize(itemsLen, 'item', 'items'), count: itemsLen });
+
+  if (b.monsters && typeof b.monsters === 'object') {
+    let count = 0;
+    for (const folder of Object.values(b.monsters)) if (Array.isArray(folder)) count += folder.length;
+    if (count) rows.push({ label: pluralize(count, 'statblock', 'statblocks'), count });
+  }
+
+  if (b.npcGeneratorNPCs && typeof b.npcGeneratorNPCs === 'object') {
+    let count = 0;
+    for (const folder of Object.values(b.npcGeneratorNPCs)) if (Array.isArray(folder)) count += folder.length;
+    if (count) rows.push({ label: pluralize(count, 'NPC', 'NPCs'), count });
+  }
+
+  const settingsLen = Array.isArray(b.gameSettings) ? b.gameSettings.length : 0;
+  if (settingsLen) rows.push({ label: pluralize(settingsLen, 'setting', 'settings'), count: settingsLen });
+
+  const dungeonsLen = Array.isArray(b.dungeons) ? b.dungeons.length : 0;
+  if (dungeonsLen) rows.push({ label: pluralize(dungeonsLen, 'dungeon', 'dungeons'), count: dungeonsLen });
+
+  if (b.encounters && typeof b.encounters === 'object') {
+    let count = 0;
+    for (const folder of Object.values(b.encounters)) if (Array.isArray(folder)) count += folder.length;
+    if (count) rows.push({ label: pluralize(count, 'encounter', 'encounters'), count });
+  }
+
+  // Cross-tool references are deliberately NOT shown as a counted row —
+  // the connection layer is part of the export bundle but it's mechanism,
+  // not user content. The summary footer reassures the user that links
+  // survive without making them think about ref counts.
+
+  return rows;
+});
+
+function pluralize(n, singular, plural) {
+  return n === 1 ? singular : plural;
+}
+
 function closeModal() {
-  //uncheck all checkboxes
-  localStorageApps.value.forEach(app => {
-    checkedApps[app.key] = false;
-  });
   emit('update:opened', false);
 }
 
-/**
- * Download the chosen localStorage keys
- */
 function downloadData() {
-  if (!chosenKeys.value.length) {
-    alert('Please select at least one app to download.');
-    return;
+  const dataToSave = readBundleFromLocalStorage();
+
+  // Strip ephemeral / device-local quota tracking from the monsters
+  // blob — exports are portable user data, not per-device state.
+  if (dataToSave.monsters) {
+    delete dataToSave.monsters.generationCount;
+    delete dataToSave.monsters.firstGenerationTime;
+    for (const f of QUOTA_FIELDS) delete dataToSave.monsters[f];
   }
-
-  const dataToSave = {};
-  chosenKeys.value.forEach(key => {
-    const stored = localStorage.getItem(key);
-    if (!stored) return;
-    const parsed = JSON.parse(stored);
-
-    // For 'monsters', strip both legacy quota fields and the
-    // current quota fields — exports should be portable user-data
-    // only, not carry a tracking state from one device to another.
-    if (key === 'monsters') {
-      delete parsed.generationCount;
-      delete parsed.firstGenerationTime;
-      for (const f of QUOTA_FIELDS) delete parsed[f];
-    }
-    dataToSave[key] = parsed;
-  });
 
   if (!Object.keys(dataToSave).length) {
     alert('No data found to download.');
     return;
   }
 
-  // Build the filename: game-master-data-nov-11-25.json
   const date = new Date();
   const monthName = date.toLocaleString('default', { month: 'short' }).toLowerCase();
   const day = date.getDate();
@@ -243,22 +230,53 @@ function downloadData() {
   link.href = url;
   link.download = fileName;
   link.click();
-
   URL.revokeObjectURL(url);
 
   closeModal();
 }
 
-/**
- * Trigger the hidden file input to upload JSON
- */
 const fileInput = ref(null);
 function triggerFileSelect() {
   fileInput.value?.click();
 }
 
+function describeImport(dataObj) {
+  // Build a "what's in this file" summary for the confirmation dialog.
+  // Mirrors the summary panel so users see the same numbers they saw
+  // before exporting.
+  const lines = [];
+  const itemsLen = Array.isArray(dataObj.savedItems) ? dataObj.savedItems.length : 0;
+  if (itemsLen) lines.push(`• ${itemsLen} ${pluralize(itemsLen, 'item', 'items')}`);
+  if (dataObj.monsters && typeof dataObj.monsters === 'object') {
+    let n = 0;
+    for (const f of Object.values(dataObj.monsters)) if (Array.isArray(f)) n += f.length;
+    if (n) lines.push(`• ${n} ${pluralize(n, 'statblock', 'statblocks')}`);
+  }
+  if (dataObj.npcGeneratorNPCs && typeof dataObj.npcGeneratorNPCs === 'object') {
+    let n = 0;
+    for (const f of Object.values(dataObj.npcGeneratorNPCs)) if (Array.isArray(f)) n += f.length;
+    if (n) lines.push(`• ${n} ${pluralize(n, 'NPC', 'NPCs')}`);
+  }
+  const settingsLen = Array.isArray(dataObj.gameSettings) ? dataObj.gameSettings.length : 0;
+  if (settingsLen) lines.push(`• ${settingsLen} ${pluralize(settingsLen, 'setting', 'settings')}`);
+  const dungeonsLen = Array.isArray(dataObj.dungeons) ? dataObj.dungeons.length : 0;
+  if (dungeonsLen) lines.push(`• ${dungeonsLen} ${pluralize(dungeonsLen, 'dungeon', 'dungeons')}`);
+  if (dataObj.encounters && typeof dataObj.encounters === 'object') {
+    let n = 0;
+    for (const f of Object.values(dataObj.encounters)) if (Array.isArray(f)) n += f.length;
+    if (n) lines.push(`• ${n} ${pluralize(n, 'encounter', 'encounters')}`);
+  }
+  // tool-references intentionally omitted from the user-facing summary
+  // — see summaryRows comment in the template script.
+  return lines;
+}
+
 /**
- * Handle file upload, parse known apps, confirm, then overwrite localStorage
+ * Handle file upload. The file is expected to be a single bundle (the
+ * format produced by the new download), but we also accept older
+ * partial exports — any recognized key in the file gets imported, any
+ * key NOT in the file is left alone in localStorage. That preserves
+ * backwards compat with files exported before this consolidation.
  */
 function handleFileChange(event) {
   const file = event.target.files[0];
@@ -268,46 +286,47 @@ function handleFileChange(event) {
   reader.onload = async (e) => {
     try {
       const dataObj = JSON.parse(e.target.result);
-      const keysInFile = Object.keys(dataObj);
+      const recognizedKeys = EXPORT_KEYS.filter(k => k in dataObj);
 
-      if (!keysInFile.length) {
-        alert('No top-level keys found in JSON file.');
+      if (!recognizedKeys.length) {
+        alert('No recognized app data found in the uploaded file.');
         return;
       }
 
-      // Among known apps, which appear in the uploaded file?
-      const recognizedApps = knownApps.filter(a => keysInFile.includes(a.key));
-      if (!recognizedApps.length) {
-        alert('No recognized apps found in the uploaded file.');
-        return;
-      }
-
-      const appNames = recognizedApps.map(a => a.appName).join(', ');
+      const lines = describeImport(dataObj);
+      const summary = lines.length ? lines.join('\n') : '(empty bundle)';
       const confirmationMessage =
-        `File contains data for:\n\n${appNames}\n\n` +
-        'This will overwrite any current data for those apps. Continue?';
+        `Import this bundle?\n\n${summary}\n\n` +
+        'This will overwrite the matching data currently in your browser. ' +
+        'Anything not in the file will be left alone. Continue?';
 
       if (!confirm(confirmationMessage)) {
         return;
       }
 
-      recognizedApps.forEach(app => {
-        if (app.key === 'monsters') {
-          delete dataObj[app.key].generationCount;
-          delete dataObj[app.key].firstGenerationTime;
-          // Strip any quota fields that came along in the export so
-          // imports don't carry tracking state across devices.
-          for (const f of QUOTA_FIELDS) delete dataObj[app.key][f];
+      for (const key of recognizedKeys) {
+        let value = dataObj[key];
+        if (key === 'monsters' && value && typeof value === 'object') {
+          // Strip device-local quota tracking on import so the user
+          // doesn't inherit another device's "near-limit" state.
+          delete value.generationCount;
+          delete value.firstGenerationTime;
+          for (const f of QUOTA_FIELDS) delete value[f];
         }
-        localStorage.setItem(app.key, JSON.stringify(dataObj[app.key]));
-      });
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      // Reset migrations-completed so the imported blob flows through
+      // assign-dungeon-ids / assign-setting-ids / sweep-orphan-references
+      // / rename-npc-item-fields on next boot. Old exports may carry
+      // legacy id forms; new exports are already migrated but re-running
+      // the migrations is idempotent.
+      localStorage.removeItem('migrations-completed');
 
       // After importing `monsters`, seed fresh quota fields so the
       // user lands in the standard "fresh window" state on next read
-      // instead of being soft-recovered to the daily limit (which
-      // would otherwise fire because the imported blob has folder
-      // data but no `_q`).
-      if (recognizedApps.some((a) => a.key === 'monsters')) {
+      // instead of being soft-recovered to the daily limit.
+      if (recognizedKeys.includes('monsters')) {
         await Promise.all([
           writeQuota('statblock', { count: 0, firstGenTime: null }),
           writeQuota('quest-hook', { count: 0, firstGenTime: null }),
@@ -316,7 +335,6 @@ function handleFileChange(event) {
       }
 
       alert('Data uploaded successfully.');
-      //reload the page to show the new data
       location.reload();
       closeModal();
     } catch (err) {
@@ -330,11 +348,34 @@ function handleFileChange(event) {
 </script>
 
 <style scoped>
-.checkboxes-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+.summary {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 1rem;
+  background: #f4f0e8;
+  border: 1px solid #c9b99a;
+  border-radius: 4px;
+}
+
+.summary-heading {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.summary-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.summary-list li {
+  margin-bottom: 0.15rem;
+}
+
+.summary-footer {
+  margin: 0.6rem 0 0;
+  font-size: 0.85em;
+  font-style: italic;
+  color: #6b6356;
 }
 
 .buttons-container {

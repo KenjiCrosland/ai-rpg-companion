@@ -8,6 +8,35 @@ import {
   buildPrefilledTypeOfPlace,
 } from './item-npc-prompts.mjs';
 
+// Adapter: build a SeededInput in the shape produced by
+// `buildSeededInputFromItem` so the test fixtures stay readable.
+function seed({ stub, item }) {
+  if (!stub || !item) {
+    return {
+      source: item ? { type: 'item', id: item.name, name: item.name } : null,
+      entities: stub ? [{ type: 'npc', name: stub.name }] : [],
+    };
+  }
+  return {
+    source: {
+      type: 'item',
+      id: item.name,
+      name: item.name,
+      item_type: item.item_type || '',
+      rarity: item.rarity || '',
+      physical_description: item.physical_description || '',
+      lore: item.lore || '',
+      quote: stub.source_quote || undefined,
+    },
+    entities: [{
+      type: 'npc',
+      name: stub.name,
+      role_or_description: stub.role_brief || '',
+      context: stub.context || '',
+    }],
+  };
+}
+
 describe('item-npc-prompts', () => {
   describe('buildPrefilledTypeOfPlace', () => {
     const item = {
@@ -24,40 +53,40 @@ describe('item-npc-prompts', () => {
     };
 
     it('includes the stub name and role brief in the headline', () => {
-      const text = buildPrefilledTypeOfPlace({ stub, item });
+      const text = buildPrefilledTypeOfPlace(seed({ stub, item }));
       expect(text).toContain('Yelena of the Duskwood — oracle who received the vision.');
     });
 
     it('includes the item name with rarity and type in the connection line', () => {
-      const text = buildPrefilledTypeOfPlace({ stub, item });
+      const text = buildPrefilledTypeOfPlace(seed({ stub, item }));
       expect(text).toContain('Mentioned in connection with the magic item "Krovnik\'s Hearthstaff" (Common Staff):');
     });
 
     it('includes the item physical description and lore', () => {
-      const text = buildPrefilledTypeOfPlace({ stub, item });
+      const text = buildPrefilledTypeOfPlace(seed({ stub, item }));
       expect(text).toContain(item.physical_description);
       expect(text).toContain('Lore:');
       expect(text).toContain(item.lore);
     });
 
     it('includes the stub-specific role at the end', () => {
-      const text = buildPrefilledTypeOfPlace({ stub, item });
+      const text = buildPrefilledTypeOfPlace(seed({ stub, item }));
       expect(text).toContain('Specific role: Granted a prophetic vision describing the staff.');
     });
 
     it('omits an empty role_brief gracefully', () => {
-      const text = buildPrefilledTypeOfPlace({
+      const text = buildPrefilledTypeOfPlace(seed({
         stub: { name: 'Anonymous', role_brief: '', context: '' },
         item,
-      });
+      }));
       expect(text).toContain('Anonymous.');
       expect(text).not.toContain('— .');
       expect(text).not.toContain('Specific role:');
     });
 
     it('returns empty string when stub or item is missing', () => {
-      expect(buildPrefilledTypeOfPlace({ stub: null, item })).toBe('');
-      expect(buildPrefilledTypeOfPlace({ stub, item: null })).toBe('');
+      expect(buildPrefilledTypeOfPlace(seed({ stub: null, item }))).toBe('');
+      expect(buildPrefilledTypeOfPlace(seed({ stub, item: null }))).toBe('');
     });
 
     it('includes source_quote when present and not redundant with lore', () => {
@@ -74,17 +103,17 @@ describe('item-npc-prompts', () => {
         physical_description: 'A small dwarven earring.',
         lore: 'Forged in some forgotten age.',
       };
-      const text = buildPrefilledTypeOfPlace({ stub: richStub, item: richItem });
+      const text = buildPrefilledTypeOfPlace(seed({ stub: richStub, item: richItem }));
       expect(text).toContain('Where this NPC appears in the source text:');
       expect(text).toContain('In 1100 DR, goblin scavenger Grishak Nailtooth found the Sturmzund Earring');
     });
 
     it('omits source_quote when it is already contained in the main lore (no duplication)', () => {
       const lore = 'Grishak Nailtooth found this earring in 1100 DR.';
-      const text = buildPrefilledTypeOfPlace({
+      const text = buildPrefilledTypeOfPlace(seed({
         stub: { name: 'Grishak', role_brief: 'finder', context: '', source_quote: lore },
         item: { name: 'Earring', item_type: 'Wondrous Item', rarity: 'Rare', physical_description: '', lore },
-      });
+      }));
       expect(text).not.toContain('Where this NPC appears in the source text:');
     });
   });

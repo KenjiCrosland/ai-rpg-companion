@@ -126,7 +126,7 @@ export async function generateDungeonOverview() {
     const overview = JSON.parse(response);
 
     const newDungeon = {
-      id: Date.now(),
+      id: `dng_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       dungeonOverview: overview,
       rooms: null,
       roomDescriptions: null,

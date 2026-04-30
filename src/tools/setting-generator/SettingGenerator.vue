@@ -190,6 +190,7 @@ import { formatSettingAsMarkdown } from "@/util/formatSettingAsMarkdown.mjs";
 import { formatSettingAsHtml } from "@/util/formatSettingAsHTML.mjs";
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
+import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import placeAdjectives from '@/data/place-adjectives.json';
 import place_names from '@/data/place-names.json';
@@ -286,7 +287,7 @@ function copySettingsAsHtml() {
 
 function deleteAllSettings() {
   if (confirm("Are you sure you want to delete all settings?")) {
-    settings.value = [reactive({ ...defaultSetting })];
+    settings.value = [reactive(freshDefaultSetting())];
     currentSettingIndex.value = 0;
     saveSettingsToLocalStorage();
   }
@@ -299,7 +300,12 @@ const currentlyLoading = ref(false);
 const currentSettingIndex = ref(0);
 const activeTabIndex = ref(0);
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
+function makeSettingId() {
+  return `set_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 const defaultSetting = reactive({
+  id: '',
   adjective: '',
   setting_type: '',
   place_name: '',
@@ -314,7 +320,12 @@ const defaultSetting = reactive({
   loadingSubLocations: false,
   loadingsettingOverview: false,
 });
-const settings = ref([reactive({ ...defaultSetting })]);
+
+function freshDefaultSetting() {
+  return { ...defaultSetting, id: makeSettingId() };
+}
+
+const settings = ref([reactive(freshDefaultSetting())]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
 
 onMounted(async () => {
@@ -392,6 +403,9 @@ const deleteSetting = (indexToDelete) => {
 
   // Capture the parentIndex of the setting to be deleted for reassigning children
   const parentOfDeleted = settings.value[indexToDelete].parentIndex;
+  // Capture the deleted setting's id so we can drop its references after removal.
+  // (Children are re-parented, not cascading-deleted — only one id needs cleanup.)
+  const deletedId = settings.value[indexToDelete].id;
 
   // Update children of the deleted setting to the parent of the deleted setting
   settings.value.forEach((setting, index) => {
@@ -419,6 +433,10 @@ const deleteSetting = (indexToDelete) => {
       setting.parentIndex--;  // Adjust parentIndex down by one to account for the shift
     }
   });
+
+  if (deletedId) {
+    removeReferencesForEntity('setting', deletedId);
+  }
 
   saveSettingsToLocalStorage();
   selectSetting(0);  // Select the first setting after deletion
@@ -448,6 +466,7 @@ watch(currentSettingIndex, (newValue, oldValue) => {
 
 const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', title = '', parentIndex = null) => {
   const newSetting = reactive({
+    id: makeSettingId(),
     adjective: adjective,
     setting_type: setting_type,
     place_name: place_name,

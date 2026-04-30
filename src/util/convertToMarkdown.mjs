@@ -65,7 +65,14 @@ const parseRarity = (rarity) => {
 
 export function convertItemToMarkdown(item) {
   let markdown = `#### ${item.name}\n\n`;
-  markdown += `*${item.item_type}, ${parseRarity(item.rarity)}*\n\n`;
+  let attunement = '';
+  if (item.requires_attunement) {
+    const restriction = (item.attunement_restriction || '').trim();
+    attunement = restriction
+      ? ` (requires attunement ${restriction})`
+      : ' (requires attunement)';
+  }
+  markdown += `*${item.item_type}, ${parseRarity(item.rarity)}${attunement}*\n\n`;
   markdown += `:\n\n`;
   if (item.physical_description) {
     markdown += `${item.physical_description}\n\n`;

@@ -129,7 +129,8 @@
                     :npc="normalizeGeneratorNPC(currentNPC)"
                     :origin="computedOrigin"
                     :source-type="computedSourceType"
-                    :item-name="computedItemName"
+                    :source-name="computedSourceName"
+                    :source-id="computedSourceId"
                     :npc-id="currentNPC?.npc_id || currentNPC?.id"
                     :is-editing="isEditingNPC"
                     :show-relationship-generator="true"
@@ -322,13 +323,22 @@ import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMar
 import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
-import { normalizeGeneratorNPC, migrateNPCIds, migrateDungeonNPCsToSharedStorage, migrateSettingNPCsToSharedStorage, findNPCLocations, deleteNPCFromAllLocations } from '@/util/npc-storage.mjs';
+import { normalizeGeneratorNPC, migrateNPCIds, migrateDungeonNPCsToSharedStorage, migrateSettingNPCsToSharedStorage, findNPCLocations, deleteNPCFromAllLocations, renameNPCReferences } from '@/util/npc-storage.mjs';
+import { migrateSourceTypeFromTypeOfPlace } from '@/util/migrate-source-type-from-type-of-place.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import { buildStatblockContext } from './utils/statblock-context.mjs';
-import { addReference, getReferencesForEntity } from '@/util/reference-storage.mjs';
-import { getItemFromStorage, linkNPCToItemStub, addNPCMentionedInItemReference, findItemStubsForNPC, resetItemStubsForDeletedNPC } from '@/util/item-storage.mjs';
-import { buildPrefilledTypeOfPlace } from '@/prompts/item-npc-prompts.mjs';
+import { addReference, getReferencesForEntity, removeReferencesForEntity } from '@/util/reference-storage.mjs';
+import {
+  loadSeededInput,
+  buildPrefillForSeed,
+  writeBackPromotedNPC,
+  addReferenceForSeed,
+  findStubsReferencingNPC,
+  resetStubsForDeletedNPC,
+  getToolForSourceType,
+  sourceExists,
+} from '@/util/seeded-input.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
@@ -367,10 +377,11 @@ const isDeepLink = ref(false);
 const showAttachStatblockModal = ref(false);
 const attachStatblockSelection = ref(null);
 
-// When the user navigated here from the Item Generator's "Create NPC" button,
-// this holds the item context so the post-generation hook can write the
-// `mentioned_in_item` reference and back-link the stub on the item.
-const pendingItemLink = ref(null);
+// When the user arrived from a source tool's "Create NPC" stub action,
+// this holds the SeededInput so the post-generation hook can write the
+// canonical reference (mentioned_in_item / appears_in_dungeon /
+// appears_in_setting / …) and back-link the stub on the source entity.
+const pendingSeed = ref(null);
 
 const props = defineProps({
     premium: {
@@ -412,9 +423,10 @@ const currentNPC = computed(() => {
     return npcs.value[folderName][index];
 });
 
-// Computed origin: dungeon/setting name OR (for item NPCs) the role_brief
-// description that contains the item name. The NPC card linkifies the item
-// name inside this string when sourceType==='item' and itemName is set.
+// Computed origin: dungeon/setting name OR (for source-tool-sourced NPCs)
+// the role_brief description that contains the source entity name. The
+// NPC card linkifies the source name inside this string when sourceType
+// and sourceName are both set.
 const computedOrigin = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
@@ -466,14 +478,17 @@ const computedSourceType = computed(() => {
     return null;
 });
 
-// Computed item name for item-sourced NPCs: the literal item name to linkify
-// inside the subtitle. For NPCs without an explicit itemName field, falls
-// back to the mentioned_in_item reference target.
-const computedItemName = computed(() => {
+// Computed source name for source-tool-sourced NPCs: the literal source
+// entity name to linkify inside the subtitle. Reads `sourceName` from
+// the persisted NPC; for older records that haven't been touched since
+// the migration, falls back to the reference store. Returns null for
+// NPCs with no source tagging so the generic "From {origin}" subtitle
+// applies.
+const computedSourceName = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    if (npc.sourceType === 'item' && npc.itemName) return npc.itemName;
+    if (npc.sourceType && npc.sourceName) return npc.sourceName;
 
     if (npc.npc_id) {
         const refs = getReferencesForEntity('npc', npc.npc_id);
@@ -481,6 +496,19 @@ const computedItemName = computed(() => {
         if (itemRef) return itemRef.target_name;
     }
 
+    return null;
+});
+
+// Source id for NPCCard's render-time existence check. Used to suppress
+// the "back to source" link and append a "(deleted)" marker when the
+// source entity has been removed.
+const computedSourceId = computed(() => {
+    const npc = currentNPC.value;
+    if (!npc) return null;
+    if (npc.sourceType && npc.sourceId) return npc.sourceId;
+    // Fall back to sourceName (which is the id form for items today —
+    // items use name as identity).
+    if (npc.sourceType && npc.sourceName) return npc.sourceName;
     return null;
 });
 
@@ -558,26 +586,19 @@ onMounted(async () => {
         }
     }
 
-    // Item Generator → NPC Generator: "Create NPC" from a stub.
-    // Prefill typeOfPlace from the item's data and remember the link context
-    // (item name + role_brief) so we can persist those onto the saved NPC and
+    // Source tool → NPC Generator: "Create NPC" from a stub. Prefill
+    // typeOfPlace from the source's data and remember the seed so the
+    // post-generation hook can write back the source-side stub link and
     // collapse the long subtitle once part 1 returns.
-    if (params.fromItem && params.stub) {
-        const item = getItemFromStorage(params.fromItem);
-        const stubName = params.stub;
-        if (item && Array.isArray(item.related_npcs)) {
-            const target = stubName.trim().toLowerCase();
-            const stub = item.related_npcs.find(s =>
-                (s?.name || '').trim().toLowerCase() === target
-            );
-            if (stub) {
-                typeOfPlace.value = buildPrefilledTypeOfPlace({ stub, item });
-                pendingItemLink.value = {
-                    itemName: item.name,
-                    stubName: stub.name,
-                    roleBrief: (stub.role_brief || '').trim()
-                };
-            }
+    if (params.fromType && params.fromId) {
+        const seed = loadSeededInput({
+            fromType: params.fromType,
+            fromId: params.fromId,
+            entityName: params.entityName,
+        });
+        if (seed) {
+            typeOfPlace.value = buildPrefillForSeed(seed);
+            pendingSeed.value = seed;
         }
     }
 
@@ -811,50 +832,6 @@ function migrateStatblockReferences() {
     }
 }
 
-function migrateSourceTypeFromTypeOfPlace() {
-    let migratedCount = 0;
-
-    // Get list of actual dungeons and settings
-    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-    const dungeonNames = new Set(
-        dungeons.map(d => d.dungeonOverview?.name || d.overview?.name).filter(Boolean)
-    );
-
-    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
-    const settingNames = new Set(
-        settings.map(s => s.place_name || s.setting_overview?.name).filter(Boolean)
-    );
-
-    // Iterate through all folders
-    for (const [folderName, npcList] of Object.entries(npcs.value)) {
-        if (!Array.isArray(npcList)) continue;
-
-        // Iterate through NPCs in this folder
-        for (const npc of npcList) {
-            // Skip if NPC already has sourceType
-            if (npc.sourceType) continue;
-
-            // Check if typeOfPlace matches a real dungeon or setting
-            if (npc.typeOfPlace) {
-                if (dungeonNames.has(npc.typeOfPlace)) {
-                    npc.sourceType = 'dungeon';
-                    migratedCount++;
-                } else if (settingNames.has(npc.typeOfPlace)) {
-                    npc.sourceType = 'setting';
-                    migratedCount++;
-                }
-            }
-        }
-    }
-
-    // Save if any migrations occurred
-    if (migratedCount > 0) {
-        saveNPCsToLocalStorage();
-    }
-
-    return migratedCount;
-}
-
 // One-time cleanup: NPCs created via the Item Generator → NPC Generator flow
 // before the typeOfPlace shortening fix have a multi-paragraph subtitle (the
 // prefilled prompt context). Detect the marker phrase and replace typeOfPlace
@@ -896,7 +873,15 @@ function migrateNPCStatblockReferences() {
         for (const npc of npcList) {
             // Check if NPC has a statblock reference but no reference in reference-storage
             if (npc.npc_id && npc.npcDescriptionPart1?.statblock_name && npc.npcDescriptionPart1?.statblock_folder) {
-                const statblockId = `${npc.npcDescriptionPart1.statblock_name}__${npc.npcDescriptionPart1.statblock_folder}`;
+                const statblockName = npc.npcDescriptionPart1.statblock_name;
+                const statblockFolder = npc.npcDescriptionPart1.statblock_folder;
+                const statblockId = `${statblockName}__${statblockFolder}`;
+
+                // Skip if the statblock the NPC points at no longer exists.
+                // Without this guard we'd write a ref that sweep-orphan-references
+                // would immediately delete — self-correcting but wasteful and
+                // noisy. Mirrors the existence check in extract-existing-references.mjs.
+                if (!getStatblockFromStorage(statblockName, statblockFolder)) continue;
 
                 // Check if reference already exists
                 const existingRefs = getReferencesForEntity('npc', npc.npc_id);
@@ -952,20 +937,29 @@ function saveCurrentNPCToList() {
         isSpellcaster: isSpellcaster.value
     };
 
-    // When this NPC was created via the Item Generator → NPC Generator flow,
-    // tag it as item-sourced so the subtitle UI can render the role_brief
-    // with the item name linkified back to the Item Generator.
-    if (pendingItemLink.value) {
-        npcData.sourceType = 'item';
-        npcData.itemName = pendingItemLink.value.itemName;
+    // When this NPC was created via a source-tool → NPC Generator flow,
+    // tag it with the source so the subtitle UI can render a back-link.
+    if (pendingSeed.value?.source) {
+        npcData.sourceType = pendingSeed.value.source.type;
+        npcData.sourceId = pendingSeed.value.source.id;
+        npcData.sourceName = pendingSeed.value.source.name;
     } else {
-        // Preserve sourceType='item' across re-saves of an existing item-sourced NPC.
+        // Preserve source tagging across re-saves of an existing
+        // source-tool-sourced NPC — but only if the source still
+        // exists. If the source has been deleted, drop the stale
+        // pointer here so the next save naturally cleans it up. The
+        // NPC retains its existence, just loses the dangling back-link.
         const existing = (currentNPCIndex.value !== null && Array.isArray(npcs.value[folderName]))
             ? npcs.value[folderName][currentNPCIndex.value]
             : null;
-        if (existing?.sourceType === 'item') {
-            npcData.sourceType = 'item';
-            npcData.itemName = existing.itemName || null;
+        if (existing?.sourceType && (existing.sourceId || existing.sourceName)) {
+            const id = existing.sourceId || existing.sourceName;
+            if (sourceExists(existing.sourceType, id)) {
+                npcData.sourceType = existing.sourceType;
+                npcData.sourceId = id;
+                npcData.sourceName = existing.sourceName || existing.sourceId;
+            }
+            // else: source has been deleted — auto-clear by omitting the fields.
         }
     }
 
@@ -1104,7 +1098,7 @@ function deleteCurrentNPC() {
 
     // Find all locations where this NPC exists
     const locations = findNPCLocations(npcId);
-    const itemStubMatches = findItemStubsForNPC(npcId);
+    const sourceStubMatches = findStubsReferencingNPC(npcId);
 
     // Build confirmation message
     let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
@@ -1130,25 +1124,25 @@ function deleteCurrentNPC() {
         }
     }
 
-    if (itemStubMatches.length > 0) {
-        const itemNames = [...new Set(itemStubMatches.map(m => m.itemName))];
-        if (itemNames.length === 1) {
-            confirmMessage += `\nThe related-NPC stub on item "${itemNames[0]}" will be reset so you can create a new NPC for it.\n`;
+    if (sourceStubMatches.length > 0) {
+        const uniqueSources = [...new Set(sourceStubMatches.map(m => `${m.sourceType}:${m.sourceName}`))];
+        if (uniqueSources.length === 1) {
+            const m = sourceStubMatches[0];
+            confirmMessage += `\nThe related-NPC stub on ${m.sourceType} "${m.sourceName}" will be reset so you can create a new NPC for it.\n`;
         } else {
-            confirmMessage += `\nRelated-NPC stubs on ${itemNames.length} items will be reset so you can create new NPCs for them.\n`;
+            confirmMessage += `\nRelated-NPC stubs on ${uniqueSources.length} source entities will be reset so you can create new NPCs for them.\n`;
         }
     }
 
     if (confirm(confirmMessage)) {
-        // Reset any item stubs pointing to this NPC back to the unpromoted
-        // state. Do this BEFORE removing references so the source-of-truth
-        // links survive long enough to be inspected if needed.
-        const stubsReset = resetItemStubsForDeletedNPC(npcId);
+        // Reset any source-tool stubs pointing to this NPC back to the
+        // unpromoted state. Do this BEFORE removing references so the
+        // source-of-truth links survive long enough to be inspected if
+        // needed.
+        const stubsReset = resetStubsForDeletedNPC(npcId);
 
         // Remove references for this NPC
-        import('@/util/reference-storage.mjs').then(({ removeReferencesForEntity }) => {
-            removeReferencesForEntity('npc', npcId);
-        });
+        removeReferencesForEntity('npc', npcId);
 
         // Delete from all locations
         const results = deleteNPCFromAllLocations(npcId);
@@ -1160,7 +1154,7 @@ function deleteCurrentNPC() {
         const deletedFrom = [];
         if (results.npcGenerator > 0) deletedFrom.push('NPC Generator');
         if (results.dungeons > 0) deletedFrom.push('Dungeon Generator');
-        if (stubsReset > 0) deletedFrom.push(`${stubsReset} item stub${stubsReset === 1 ? '' : 's'} reset`);
+        if (stubsReset > 0) deletedFrom.push(`${stubsReset} source stub${stubsReset === 1 ? '' : 's'} reset`);
 
         if (deletedFrom.length > 0) {
             toast.success(`"${npcName}" deleted from ${deletedFrom.join(', ')}.`);
@@ -1261,6 +1255,7 @@ function cancelEditNPC() {
 }
 
 function handleSaveEdit(editedData) {
+    const previousName = npcDescriptionPart1.value.character_name;
     npcDescriptionPart1.value.character_name = editedData.name;
     npcDescriptionPart1.value.read_aloud_description = editedData.read_aloud_description;
     npcDescriptionPart1.value.combined_details = editedData.combined_details;
@@ -1272,15 +1267,32 @@ function handleSaveEdit(editedData) {
 
     saveCurrentNPCToList();
 
+    // Propagate the rename to display-name caches in other stores so
+    // item stubs, setting/dungeon NPC stubs, and the reference graph
+    // show the new name. Linkage isn't broken either way (npc_id is
+    // stable), but the displayed names go stale without this.
+    if (
+      currentNPC.value?.npc_id &&
+      editedData.name &&
+      editedData.name !== previousName
+    ) {
+      renameNPCReferences(currentNPC.value.npc_id, editedData.name);
+    }
+
     // Show toast indicating where the NPC was updated
     const npcName = editedData.name || 'NPC';
     const origin = computedOrigin.value;
     const sourceType = computedSourceType.value;
 
     if (origin && sourceType) {
-        // NPC is synced to a dungeon or setting
-        const toolName = sourceType === 'dungeon' ? 'Dungeon Generator' : 'Setting Generator';
-        toast.success(`${npcName} updated in NPC Generator and ${toolName} (${origin})`);
+        // NPC is synced to a source tool — look up the display name from
+        // the central source-type → tool map so we don't branch here.
+        const tool = getToolForSourceType(sourceType);
+        if (tool) {
+            toast.success(`${npcName} updated in NPC Generator and ${tool.name} (${origin})`);
+        } else {
+            toast.success(`${npcName} updated`);
+        }
     } else {
         // NPC is only in NPC Generator
         toast.success(`${npcName} updated`);
@@ -1422,15 +1434,17 @@ function displayNPCDescription({ part, npcDescription }) {
         npcDescriptionPart1.value = npcDescription;
         loadingPart1.value = false;
 
-        // Item Generator → NPC Generator: the prefilled typeOfPlace is a long
+        // Source tool → NPC Generator: the prefilled typeOfPlace is a long
         // context block we used to seed the AI prompt. Now that part 1 has
         // returned (the AI has the full context), collapse typeOfPlace down
         // to the role_brief (e.g. "Creator of Krik-tak's Root") so the saved
-        // NPC's subtitle describes the relationship with the item name
+        // NPC's subtitle describes the relationship with the source name
         // appearing verbatim (the UI linkifies that occurrence). Falls back
-        // to the item name if no role_brief was captured.
-        if (pendingItemLink.value) {
-            typeOfPlace.value = pendingItemLink.value.roleBrief || pendingItemLink.value.itemName;
+        // to the source name if no role_brief was captured.
+        if (pendingSeed.value) {
+            const stub = pendingSeed.value.entities?.[0];
+            const roleBrief = (stub?.role_or_description || '').trim();
+            typeOfPlace.value = roleBrief || pendingSeed.value.source?.name || '';
         }
 
         saveCurrentNPCToList();
@@ -1438,18 +1452,18 @@ function displayNPCDescription({ part, npcDescription }) {
         npcDescriptionPart2.value = npcDescription;
         loadingPart2.value = false;
         saveCurrentNPCToList();
-        finalizePendingItemLink();
+        finalizePendingSeed();
     }
 }
 
-// If the user arrived here from the Item Generator's "Create NPC" button,
-// write the `mentioned_in_item` reference and back-link the stub on the
-// source item so the Item Generator's UI updates next time it loads. Runs
-// only after both NPC parts have completed (called from displayNPCDescription
-// after part 2 is saved).
-function finalizePendingItemLink() {
-    const link = pendingItemLink.value;
-    if (!link) return;
+// If the user arrived here from a source tool's "Create NPC" stub action,
+// write the source-tool reference and back-link the stub on the source
+// entity so the source tool's UI updates next time it loads. Runs only
+// after both NPC parts have completed (called from
+// displayNPCDescription after part 2 is saved).
+function finalizePendingSeed() {
+    const seed = pendingSeed.value;
+    if (!seed) return;
 
     const folderName = activeFolder.value || 'Uncategorized';
     const folder = npcs.value[folderName];
@@ -1457,18 +1471,14 @@ function finalizePendingItemLink() {
     const npc = folder[currentNPCIndex.value];
     if (!npc?.npc_id) return;
 
-    const npcName = npc.npcDescriptionPart1?.character_name || link.stubName;
+    const npcName = npc.npcDescriptionPart1?.character_name
+        || seed.entities?.[0]?.name
+        || 'Unknown NPC';
 
-    addNPCMentionedInItemReference({
-        npcId: npc.npc_id,
-        npcName,
-        itemName: link.itemName,
-        context: link.stubName
-    });
+    addReferenceForSeed(seed, { type: 'npc', id: npc.npc_id, name: npcName });
+    writeBackPromotedNPC(seed, { npc_id: npc.npc_id, name: npcName, folderName });
 
-    linkNPCToItemStub(link.itemName, link.stubName, npc.npc_id, folderName);
-
-    pendingItemLink.value = null;
+    pendingSeed.value = null;
 }
 
 function handleError(message) {

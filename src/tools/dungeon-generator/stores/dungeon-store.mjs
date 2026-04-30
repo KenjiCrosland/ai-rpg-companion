@@ -15,6 +15,7 @@ import {
 } from './dungeon-state.mjs';
 
 import { saveDungeons, loadDungeons } from './dungeon-utils.mjs';
+import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import {
   generateDungeonOverview,
   currentDungeonOverviewString,
@@ -63,6 +64,7 @@ export const useDungeonStore = defineStore('dungeon', () => {
           ? dungeons.value[0].id
           : null;
       }
+      removeReferencesForEntity('dungeon', dungeonId);
       saveDungeons();
     }
   }

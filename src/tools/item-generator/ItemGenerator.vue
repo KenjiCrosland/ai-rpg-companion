@@ -106,7 +106,7 @@
               <header class="item-card-header">
                 <div class="item-card-header-text">
                   <h2 class="item-card-name">{{ magicItemDescription.name }}</h2>
-                  <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}</p>
+                  <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}<span v-if="magicItemDescription.requires_attunement"> (requires attunement{{ magicItemDescription.attunement_restriction ? ' ' + magicItemDescription.attunement_restriction : '' }})</span></p>
                 </div>
                 <button type="button" class="item-card-action" @click="startEditing">Edit Item</button>
               </header>
@@ -654,6 +654,31 @@ IMPORTANT D&D 5e DESIGN RULES:
 - Balance bonuses with features: high bonus = fewer features
 - Use the effect definitions below to understand the appropriate power level for each feature type
 
+ATTUNEMENT (D&D 5e rule — set "requires_attunement" and optionally "attunement_restriction"):
+Attunement gates the strongest effects so a single character can't stack too many potent items. Decide based on rarity AND the item's actual power:
+- Common: NEVER requires attunement.
+- Uncommon: USUALLY does not require attunement; flip to true only if the item grants a meaningful active ability beyond a flat bonus (e.g., spellcasting, sustained passive effects, scaling abilities).
+- Rare: OFTEN requires attunement — especially anything granting spellcasting, ongoing buffs, recharge abilities, or substantial defensive bonuses.
+- Very Rare: USUALLY requires attunement.
+- Legendary: ALMOST ALWAYS requires attunement.
+- Artifact: ALWAYS requires attunement.
+${resolvedItemType === 'Potion' ? '- Consumable potions NEVER require attunement.' : ''}
+If any feature uses "while attuned", "while wearing", or "while wielding" phrasing with significant ongoing magical effects, set requires_attunement to true. Plain +1/+2 weapons and armor without other features do NOT require attunement.
+
+ATTUNEMENT RESTRICTION (optional, narratively significant only):
+Most attuned items can be used by anyone. Sometimes the item is gated to a class, alignment, race, or trait — paladin-only blades, wands restricted to spellcasters, cursed items that bind to creatures of evil alignment. Use the "attunement_restriction" field for this:
+- Default: null (item can be attuned by any character).
+- When restricted: a short "by X" phrase that composes after "requires attunement". Examples:
+  * "by a paladin"
+  * "by a sorcerer, warlock, or wizard"
+  * "by a creature of evil alignment"
+  * "by a non-evil creature"
+  * "by a dwarf"
+  * "by a creature with a Strength score of 18 or higher"
+The phrase MUST start with "by " and be lowercase. It will be rendered as "(requires attunement by a paladin)" verbatim.
+
+Only set a restriction when it makes narrative sense — the item's lore or effects should justify the gate. Restrictions are uncommon; null is the default for most items even when attunement is required. Common cases for restrictions: paladin-themed weapons, wizard wands tied to a school, items forged by a specific race for their kin, cursed items that bind to a particular alignment.
+
 CRITICAL — ITEM TYPE ENFORCEMENT:
 - The item_type is "${resolvedItemType}". The generated item MUST be a ${resolvedItemType}.
 - A Weapon must be a weapon (sword, axe, bow, dagger, mace, halberd, etc.) — NEVER a wand, staff, or rod.
@@ -798,6 +823,8 @@ ITEM STRUCTURE TO COMPLETE:
   "modifier_sentence": "${constructModifierSentence(featuresAndBonuses.bonus, resolvedItemType)}",
   "feature_guidelines": "${rarityGuidelines[rarity.value]}",
   "feature_count": ${featuresAndBonuses.feature_count},
+  "requires_attunement": [true or false — apply the ATTUNEMENT rule above based on rarity and item power],
+  "attunement_restriction": [null OR a "by X" phrase per the ATTUNEMENT RESTRICTION rule — null is the default],
   "features": ${JSON.stringify(featuresAndBonuses.features)},
   "reason_for_rarity_level": "[Explain why this item fits its rarity based on the guidelines above]",
   "physical_description": "[2-3 sentences describing the item's appearance incorporating the magical material, mood, and any quirk. ${resolvedItemType === 'Potion' ? 'For potions: describe the liquid color, consistency, swirls, particles, smell, and taste.' : ''}]",

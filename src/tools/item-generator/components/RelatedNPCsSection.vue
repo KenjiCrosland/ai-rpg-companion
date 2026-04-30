@@ -146,8 +146,9 @@ async function rescan() {
 
 function onCreate(stub) {
   navigateToTool('npc-generator', {
-    fromItem: props.item.name,
-    stub: stub.name
+    fromType: 'item',
+    fromId: props.item.name,
+    entityName: stub.name,
   });
 }
 

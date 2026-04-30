@@ -115,26 +115,29 @@ export function validateItemNPCExtraction(jsonString) {
  * generating; the item's full data is here so the NPC Generator's existing
  * generic NPC prompt produces an NPC consistent with the item.
  *
- * Pure function — no side effects, no localStorage access. Tested in isolation.
+ * Pure function — no side effects, no localStorage access. Tested in
+ * isolation. Consumes a SeededInput as produced by
+ * `buildSeededInputFromItem` in `item-storage.mjs`.
  *
- * @param {Object} params
- * @param {Object} params.stub  - { name, role_brief, context }
- * @param {Object} params.item  - An item from savedItems
+ * @param {Object} seededInput
  * @returns {string}
  */
-export function buildPrefilledTypeOfPlace({ stub, item }) {
-  if (!stub || !item) return '';
+export function buildPrefilledTypeOfPlace(seededInput) {
+  if (!seededInput?.source || !Array.isArray(seededInput.entities)) return '';
+  const stub = seededInput.entities[0];
+  const source = seededInput.source;
+  if (!stub || !source) return '';
 
   const stubName = (stub.name || '').trim();
-  const roleBrief = (stub.role_brief || '').trim();
+  const roleBrief = (stub.role_or_description || '').trim();
   const stubContext = (stub.context || '').trim();
-  const sourceQuote = (stub.source_quote || '').trim();
+  const sourceQuote = (source.quote || '').trim();
 
-  const itemName = (item.name || '').trim();
-  const itemType = (item.item_type || '').trim();
-  const itemRarity = (item.rarity || '').trim();
-  const physical = (item.physical_description || '').trim();
-  const lore = (item.lore || '').trim();
+  const itemName = (source.name || '').trim();
+  const itemType = (source.item_type || '').trim();
+  const itemRarity = (source.rarity || '').trim();
+  const physical = (source.physical_description || '').trim();
+  const lore = (source.lore || '').trim();
 
   const headline = roleBrief
     ? `${stubName} — ${roleBrief}.`
