@@ -1,0 +1,42 @@
+/**
+ * Parchment design tokens.
+ *
+ * Parchment is the project's content-UI design system, distinct from
+ * Cedar (which we use for form controls, modals, accordions, etc.).
+ * Parchment styles are warm, paper-toned, and sit alongside content
+ * — cards, item/NPC actions, source-book flavor.
+ *
+ * Extend by adding a token here and consuming it in a `Par*` component.
+ * Component CSS should NOT hardcode the hex values below — always go
+ * through the `--par-*` custom properties so re-theming stays trivial.
+ */
+
+:root {
+  /* Color: warm reds inherited from the Item Card palette */
+  --par-color-title:           #7a1f1f;
+  --par-color-title-deep:      #58180d;
+
+  /* Color: text */
+  --par-color-text:            #222;
+  --par-color-text-secondary:  #555;
+  --par-color-text-muted:      #6b6b6b;
+  --par-color-text-disabled:   #ccc;
+
+  /* Color: surfaces */
+  --par-color-surface:         #fdfbf6;
+  --par-color-border:          #e8e2d4;
+  --par-color-border-strong:   #c9b99a;
+  --par-color-divider:         #e2dccd;
+
+  /* Color: action interactions */
+  --par-color-action-hover:    rgba(122, 31, 31, 0.06);
+  --par-color-action-active:   rgba(122, 31, 31, 0.12);
+
+  /* Typography */
+  --par-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --par-font-serif: Georgia, 'Times New Roman', serif;
+
+  /* Sizing */
+  --par-radius-sm: 3px;
+  --par-radius-md: 4px;
+}

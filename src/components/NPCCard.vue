@@ -27,9 +27,13 @@
         </p>
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <button v-if="editable && !isEditing && !loadingDescription" class="npc-edit-button"
-          @click="$emit('start-edit')">Edit
-          NPC</button>
+        <ParButton
+          v-if="editable && !isEditing && !loadingDescription"
+          size="small"
+          @click="$emit('start-edit')"
+        >
+          Edit NPC
+        </ParButton>
       </div>
     </div>
 
@@ -189,18 +193,18 @@
     <!-- Footer Bar -->
     <div v-if="!loadingDescription && !loadingRelationships && !isEditing" class="card-footer-bar">
       <div class="card-footer-bar__actions">
-        <CardFooterAction v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
+        <ParButton v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
           <template #icon>📝</template>
           View in NPC Generator
-        </CardFooterAction>
+        </ParButton>
 
         <!-- Add other NPC-specific actions here as needed -->
       </div>
 
-      <CardFooterAction v-if="showDelete" @click="$emit('delete')" variant="danger">
+      <ParButton v-if="showDelete" variant="danger" @click="$emit('delete')">
         <template #icon>🗑️</template>
         Delete
-      </CardFooterAction>
+      </ParButton>
     </div>
   </div>
 </template>
@@ -208,7 +212,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
-import CardFooterAction from './CardFooterAction.vue';
+import { ParButton } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { sourceExists } from '@/util/seeded-input.mjs';
 
@@ -592,22 +596,6 @@ function navigateToNPCGenerator() {
   color: #8a7e6b;
   font-style: italic;
   font-size: 0.95em;
-}
-
-.npc-edit-button {
-  font-size: 1.2rem;
-  color: #7b2d26;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  padding: 3px 10px;
-  border: 1px solid #c9b99a;
-  border-radius: 3px;
-  background: #f4f0e8;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.npc-edit-button:hover {
-  background: #ece6d8;
 }
 
 /* Origin note */

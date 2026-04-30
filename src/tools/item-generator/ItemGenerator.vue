@@ -108,7 +108,7 @@
                   <h2 class="item-card-name">{{ magicItemDescription.name }}</h2>
                   <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}<span v-if="magicItemDescription.requires_attunement"> (requires attunement{{ magicItemDescription.attunement_restriction ? ' ' + magicItemDescription.attunement_restriction : '' }})</span></p>
                 </div>
-                <button type="button" class="item-card-action" @click="startEditing">Edit Item</button>
+                <ParButton size="small" @click="startEditing">Edit Item</ParButton>
               </header>
 
               <!-- Description: italic, no box, sits in the flow. -->
@@ -137,13 +137,13 @@
 
               <!-- Footer: Export (left) + Delete (right). Edit lives in the header. -->
               <footer class="item-card-footer">
-                <button type="button" class="item-card-action" @click="showExport = !showExport">
-                  <span class="item-card-action-icon" aria-hidden="true">✉</span>
+                <ParButton @click="showExport = !showExport">
+                  <template #icon>✉</template>
                   {{ showExport ? 'Hide Export' : 'Export' }}
-                </button>
-                <button type="button" class="item-card-action item-card-action--danger" @click="deleteItem">
+                </ParButton>
+                <ParButton variant="danger" class="item-card-footer__trail" @click="deleteItem">
                   Delete Item
-                </button>
+                </ParButton>
               </footer>
             </div>
 
@@ -183,63 +183,71 @@
             />
 
             <!-- Edit Mode -->
-            <div v-else class="edit-form">
-              <h2>Edit Magic Item</h2>
+            <div v-else class="item-edit">
+              <header class="item-edit__header">
+                <h2 class="item-edit__title">Edit Magic Item</h2>
+              </header>
 
-              <cdr-input v-model="editForm.name" label="Item Name" background="secondary" class="edit-field" />
+              <ParInput v-model="editForm.name" label="Name" class="item-edit__field" />
 
-              <cdr-select v-model="editForm.item_type" label="Item Type" :options="concreteItemTypeOptions"
-                class="edit-field" />
+              <div class="item-edit__row">
+                <ParSelect v-model="editForm.item_type" label="Type" :options="concreteItemTypeOptions"
+                  class="item-edit__field item-edit__field--inline" />
+                <ParSelect v-model="editForm.rarity" label="Rarity" :options="rarityOptions"
+                  class="item-edit__field item-edit__field--inline" />
+              </div>
 
-              <cdr-select v-model="editForm.rarity" label="Rarity" :options="rarityOptions" class="edit-field" />
+              <fieldset class="item-edit__attunement">
+                <ParCheckbox v-model="editForm.requires_attunement" class="item-edit__attunement-toggle">
+                  Requires attunement
+                </ParCheckbox>
+                <ParInput v-if="editForm.requires_attunement" v-model="editForm.attunement_restriction"
+                  label="Restriction (optional)"
+                  hint="Leave blank for any character. Example: &quot;by a paladin&quot; or &quot;by a creature of evil alignment&quot;."
+                  placeholder="by a paladin"
+                  class="item-edit__field item-edit__attunement-restriction" />
+              </fieldset>
 
-              <cdr-input v-model="editForm.modifier_sentence" label="Modifier Sentence (optional)"
-                background="secondary" class="edit-field">
-                <template #helper-text-bottom>
-                  Example: "While wearing this armor, you gain a +1 bonus to AC."
-                </template>
-              </cdr-input>
+              <ParInput v-model="editForm.modifier_sentence" label="Modifier sentence (optional)"
+                hint='Example: "You have a +1 bonus to attack and damage rolls made with this weapon."'
+                class="item-edit__field" />
 
-              <div class="features-edit">
-                <label class="feature-label">Features</label>
-                <div v-for="(feature, index) in editForm.featuresArray" :key="index" class="feature-edit-row">
-                  <cdr-input v-model="feature.name" label="Feature Name" background="secondary"
-                    class="feature-name-input">
-                    <template #helper-text-bottom>
-                      Leave blank to auto-generate a name
-                    </template>
-                  </cdr-input>
-                  <cdr-input v-model="feature.description" label="Description" background="secondary" :rows="3"
-                    tag="textarea" class="feature-desc-input" />
-                  <div class="feature-actions">
-                    <cdr-button v-if="premium" @click="generateFeature(index)" modifier="secondary" size="small"
+              <ParTextarea v-model="editForm.physical_description" label="Physical description"
+                :rows="4" class="item-edit__field" />
+
+              <section class="item-edit__features">
+                <h3 class="item-edit__section-title">Features</h3>
+                <div v-for="(feature, index) in editForm.featuresArray" :key="index" class="item-edit__feature-row">
+                  <ParInput v-model="feature.name" label="Feature name"
+                    hint="Leave blank to auto-generate a name."
+                    class="item-edit__feature-name" />
+                  <ParTextarea v-model="feature.description" label="Description" :rows="3"
+                    class="item-edit__feature-desc" />
+                  <div class="item-edit__feature-actions">
+                    <ParButton v-if="premium" size="small" @click="generateFeature(index)"
                       :disabled="feature.generating">
-                      {{ feature.generating ? 'Generating...' : 'Generate Feature' }}
-                    </cdr-button>
-                    <span v-else class="premium-feature-label">
+                      {{ feature.generating ? 'Generating…' : 'Generate Feature' }}
+                    </ParButton>
+                    <span v-else class="item-edit__premium-note">
                       <cdr-link href="https://cros.land/dnd-5e-magic-item-generator-premium-version/">Generate Feature
                         (Premium)</cdr-link>
                     </span>
-                    <cdr-button @click="removeFeature(index)" modifier="dark" size="small">
+                    <ParButton variant="danger" size="small" @click="removeFeature(index)">
                       Remove
-                    </cdr-button>
+                    </ParButton>
                   </div>
                 </div>
-                <cdr-button @click="addFeature" modifier="secondary" size="small">
+                <ParButton size="small" @click="addFeature" class="item-edit__add-feature">
                   + Add Feature
-                </cdr-button>
-              </div>
+                </ParButton>
+              </section>
 
-              <cdr-input v-model="editForm.physical_description" label="Physical Description" background="secondary"
-                :rows="4" tag="textarea" class="edit-field" />
+              <ParTextarea v-model="editForm.lore" label="Lore" :rows="5" class="item-edit__field" />
 
-              <cdr-input v-model="editForm.lore" label="Lore" background="secondary" :rows="5" tag="textarea"
-                class="edit-field" />
-
-              <div class="button-group">
-                <cdr-button @click="saveEdit">Save Changes</cdr-button>
-                <cdr-button @click="cancelEdit" modifier="secondary">Cancel</cdr-button>
-              </div>
+              <footer class="item-edit__footer">
+                <ParButton variant="danger" @click="cancelEdit">Cancel</ParButton>
+                <ParButton @click="saveEdit">Save Changes</ParButton>
+              </footer>
             </div>
           </TabPanel>
 
@@ -305,6 +313,7 @@ import QuestHookTab from './components/QuestHookTab.vue';
 import LoreBuilderTab from './components/LoreBuilderTab.vue';
 import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
+import { ParButton, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
@@ -343,6 +352,8 @@ const editForm = ref({
   name: '',
   item_type: '',
   rarity: '',
+  requires_attunement: false,
+  attunement_restriction: '',
   modifier_sentence: '',
   featuresArray: [],
   physical_description: '',
@@ -1083,6 +1094,8 @@ const detectEditChanges = () => {
   if (editForm.value.name !== original.name) return true;
   if (editForm.value.item_type !== original.item_type) return true;
   if (editForm.value.rarity !== original.rarity) return true;
+  if (editForm.value.requires_attunement !== !!original.requires_attunement) return true;
+  if ((editForm.value.attunement_restriction || '').trim() !== (original.attunement_restriction || '').trim()) return true;
   if (editForm.value.modifier_sentence !== (original.modifier_sentence || '')) return true;
   if (editForm.value.physical_description !== (original.physical_description || '')) return true;
   if (editForm.value.lore !== (original.lore || '')) return true;
@@ -1165,6 +1178,8 @@ const startEditing = () => {
     name: magicItemDescription.value.name || '',
     item_type: magicItemDescription.value.item_type || '',
     rarity: magicItemDescription.value.rarity || '',
+    requires_attunement: !!magicItemDescription.value.requires_attunement,
+    attunement_restriction: magicItemDescription.value.attunement_restriction || '',
     modifier_sentence: magicItemDescription.value.modifier_sentence || '',
     featuresArray: featuresArray,
     physical_description: magicItemDescription.value.physical_description || '',
@@ -1188,11 +1203,21 @@ const saveEdit = () => {
   const oldName = magicItemDescription.value?.name;
   const newName = editForm.value.name;
 
+  // Normalize attunement_restriction: only meaningful when attunement
+  // is required, and the rendered output expects either a "by …" phrase
+  // or null (never an empty string).
+  const requiresAttunement = !!editForm.value.requires_attunement;
+  const restriction = requiresAttunement
+    ? (editForm.value.attunement_restriction || '').trim() || null
+    : null;
+
   magicItemDescription.value = {
     ...magicItemDescription.value,
     name: newName,
     item_type: editForm.value.item_type,
     rarity: editForm.value.rarity,
+    requires_attunement: requiresAttunement,
+    attunement_restriction: restriction,
     modifier_sentence: editForm.value.modifier_sentence,
     features: features,
     physical_description: editForm.value.physical_description,
@@ -1614,46 +1639,124 @@ onUnmounted(() => {
   }
 }
 
-.edit-form {
-  .edit-field {
-    margin-bottom: 1.5rem;
+/* ============================================
+   Item edit panel — parchment-styled, mirrors
+   the visual rhythm of the read-only item card
+   so editing feels like an in-place mode flip
+   rather than a separate form.
+   ============================================ */
+.item-edit {
+  background: var(--par-color-surface, #fdfbf6);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-top: 2px solid var(--par-color-title, #7a1f1f);
+  border-radius: 2px;
+  padding: 2rem 2.5rem;
+  margin-bottom: 1.5rem;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.item-edit__header {
+  margin-bottom: 0.25rem;
+}
+
+.item-edit__title {
+  margin: 0;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.02em;
+}
+
+.item-edit__row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.item-edit__field--inline {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-edit__attunement {
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+  padding: 0.9rem 1.1rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.item-edit__attunement-restriction {
+  /* Indent the conditional restriction so it reads as nested under the toggle. */
+  padding-left: 0.25rem;
+}
+
+.item-edit__features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.item-edit__section-title {
+  margin: 0;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.02em;
+}
+
+.item-edit__feature-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+  background: rgba(232, 226, 212, 0.35);
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+}
+
+.item-edit__feature-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.item-edit__premium-note {
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  margin-right: auto;
+}
+
+.item-edit__add-feature {
+  align-self: flex-start;
+}
+
+.item-edit__footer {
+  margin-top: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--par-color-divider, #e2dccd);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+  .item-edit {
+    padding: 1.5rem;
   }
 
-  .features-edit {
-    margin-bottom: 2rem;
-
-    .feature-label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 1rem;
-      color: $cdr-color-text-primary;
-    }
-
-    .feature-edit-row {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      padding: 1rem;
-      background-color: $cdr-color-background-secondary;
-      border-radius: 4px;
-      margin-bottom: 1rem;
-      position: relative;
-
-      .feature-actions {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: flex-end;
-        margin-top: 0.5rem;
-      }
-    }
-
-    .feature-name-input {
-      flex: 1;
-    }
-
-    .feature-desc-input {
-      flex: 2;
-    }
+  .item-edit__row {
+    flex-direction: column;
   }
 }
 
@@ -1887,53 +1990,9 @@ onUnmounted(() => {
   gap: 0.5rem;
 }
 
-.item-card-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1.2rem;
-  background: transparent;
-  border: 1px solid var(--card-border);
-  border-radius: 3px;
-  color: var(--title-color);
-  font: inherit;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-
-  &:hover {
-    background: rgba(122, 31, 31, 0.06);
-    border-color: var(--title-color);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--title-color);
-    outline-offset: 2px;
-  }
-}
-
-/* Header Edit button stays at the smaller, header-scale size — the header
-   itself wasn't part of the typography bump. */
-.item-card-header .item-card-action {
-  font-size: 1.3rem;
-  padding: 0.5rem 1rem;
-}
-
-.item-card-action--danger {
-  color: var(--muted-text);
+/* Footer trailing-action helper — pushes the Delete button to the right edge. */
+.item-card-footer__trail {
   margin-left: auto;
-
-  &:hover {
-    color: var(--title-color);
-    border-color: var(--title-color);
-    background: rgba(122, 31, 31, 0.06);
-  }
-}
-
-.item-card-action-icon {
-  font-size: 1.4rem;
-  line-height: 1;
 }
 
 @media (max-width: 600px) {

@@ -2,6 +2,10 @@ import { createApp, h, ref, onMounted } from 'vue';
 import AppToast from '../components/AppToast.vue';
 import { registerToast } from '../composables/useToast';
 
+// Parchment design tokens — loaded once, shared by all tools.
+// See src/parchment/CLAUDE.md.
+import '@/parchment/tokens.css';
+
 // Cedar design system CSS — loaded once, shared by all tools
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
