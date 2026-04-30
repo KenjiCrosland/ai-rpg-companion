@@ -1,42 +1,41 @@
 <template>
   <div class="related-npcs-section">
+    <!-- Header is the same in both states: heading on the left, ghost
+         Re-scan button on the right. Ghost styling makes the button
+         quieter than the per-stub action buttons (Create NPC / View),
+         which is right because Re-scan is a convenience, not a CTA. -->
     <div class="related-npcs-header">
-      <h3>Related NPCs</h3>
-      <cdr-button
-        v-if="hasStubs"
+      <h3 class="related-npcs-title">Related NPCs</h3>
+      <ParButton
+        variant="ghost"
         size="small"
-        modifier="secondary"
         :disabled="loading"
         @click="rescan"
       >
         {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
-      </cdr-button>
+      </ParButton>
     </div>
 
-    <p v-if="!hasStubs && !loading" class="related-npcs-empty">
-      No related NPCs identified in this item's lore yet.
+    <!-- Empty state: helper text is the section's content. Guides the
+         user toward populating the list; the Re-scan button in the
+         header above is the action. -->
+    <p v-if="!hasStubs" class="related-npcs-empty">
+      No related NPCs found in this item's lore yet.
+      <a
+        href="#"
+        class="related-npcs-empty-link"
+        @click.prevent="$emit('switch-to-lore-builder')"
+      >Use the Lore Builder</a>
+      to add more NPCs, then click Re-scan Lore above.
     </p>
 
-    <cdr-button
-      v-if="!hasStubs"
-      size="small"
-      modifier="secondary"
-      :disabled="loading"
-      @click="rescan"
-    >
-      {{ loading ? 'Searching…' : 'Find Related NPCs in Lore' }}
-    </cdr-button>
-
-    <p v-if="showLoreBuilderNudge" class="related-npcs-nudge">
-      <a href="#" @click.prevent="$emit('switch-to-lore-builder')">Use the Lore Builder</a>
-      for more NPC ideas, then click Re-scan Lore to see them here.
-    </p>
-
+    <!-- Populated state: list only. No helper text — once stubs exist,
+         the user doesn't need an explanation of how to get more. -->
     <ul v-if="hasStubs" class="related-npcs-list">
       <li
         v-for="(stub, idx) in visibleStubs"
         :key="`${stub.name}-${idx}`"
-        class="related-npc-card"
+        class="related-npc-row"
       >
         <div class="related-npc-info">
           <strong class="related-npc-name">{{ stub.name }}</strong>
@@ -44,28 +43,24 @@
         </div>
 
         <div class="related-npc-actions">
-          <cdr-button
+          <ParButton
             v-if="!stub.npc_id"
-            size="small"
-            modifier="secondary"
             @click="onCreate(stub)"
           >
             Create NPC
-          </cdr-button>
-          <cdr-button
+          </ParButton>
+          <ParButton
             v-else
-            size="small"
-            modifier="secondary"
             @click="onView(stub)"
           >
             View in NPC Generator
-          </cdr-button>
+          </ParButton>
           <button
             type="button"
             class="related-npc-remove"
-            @click="onRemove(idx)"
             :title="`Remove ${stub.name}`"
             :aria-label="`Remove ${stub.name}`"
+            @click="onRemove(idx)"
           >
             ✕
           </button>
@@ -86,7 +81,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { CdrButton } from '@rei/cedar';
+import { ParButton } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { extractRelatedNPCs, mergeStubs } from '@/tools/item-generator/utils/extract-related-npcs.mjs';
 import { useToast } from '@/composables/useToast';
@@ -113,16 +108,6 @@ const visibleStubs = computed(() =>
     ? stubs.value.slice(0, COLLAPSE_THRESHOLD)
     : stubs.value
 );
-
-// Nudge to the Lore Builder when the user has few NPCs AND hasn't engaged
-// with the timeline yet. Self-correcting: building any timeline events
-// silences the nudge; clearing them brings it back.
-const NUDGE_STUB_THRESHOLD = 2;
-const showLoreBuilderNudge = computed(() => {
-  if (stubs.value.length > NUDGE_STUB_THRESHOLD) return false;
-  const events = props.item?.timelineEvents;
-  return !Array.isArray(events) || events.length === 0;
-});
 
 async function rescan() {
   if (loading.value) return;
@@ -167,123 +152,179 @@ function onRemove(idx) {
 </script>
 
 <style scoped lang="scss">
+/* ============================================
+   Related NPCs — content-side, sits on the
+   same parchment surface as the item card. The
+   section is part of the same visual document
+   (sourcebook list under the item entry), not
+   a chrome region grafted below.
+   ============================================ */
 .related-npcs-section {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e0e0e0;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--par-color-divider, #e2dccd);
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
 }
 
 .related-npcs-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
-
-  h3 {
-    margin: 0;
-  }
+  gap: 1rem;
+  margin-bottom: 0.75rem;
 }
 
+/* Heading: matches `.item-feature-name` so it reads as a continuation
+   of the item card's heading hierarchy, not a new UI region. */
+.related-npcs-title {
+  margin: 0;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+/* Empty state: the section's content when there are no stubs. Combines
+   "we found nothing" with guidance toward the Lore Builder + Re-scan
+   button. The italic muted treatment matches the lore body's "this is
+   supplementary text" register. */
 .related-npcs-empty {
-  color: #666;
-  margin: 0.5rem 0 1rem;
+  margin: 0.75rem 0 0;
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  line-height: 1.6;
 }
 
-.related-npcs-nudge {
-  color: #666;
-  font-size: 1.05rem;
-  margin: 0.75rem 0 0;
+.related-npcs-empty-link {
+  color: var(--par-color-title, #7a1f1f);
+  text-decoration: underline;
+  cursor: pointer;
+  font-style: normal;
 
-  a {
-    color: #5a3e8a;
-    text-decoration: underline;
-    cursor: pointer;
+  &:hover {
+    color: var(--par-color-title-deep, #58180d);
+  }
 
-    &:hover {
-      color: #3a2a5a;
-    }
+  &:focus-visible {
+    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline-offset: 2px;
   }
 }
 
+/* List: each stub gets a subtle warm fill that gives it visual mass on
+   the parchment surface. The fill is what separates rows — no
+   dividers, no hard borders. A small flex gap keeps adjacent fills
+   from merging into one continuous block.
+
+   The point: the stub feels like a discrete object the user can act on,
+   without grafting a card-within-a-card onto the document. Mass and
+   rhythm, not chrome. */
 .related-npcs-list {
   list-style: none;
   padding: 0;
   margin: 0.75rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.related-npc-card {
+.related-npc-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
-  padding: 1.1rem 1.5rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  margin-bottom: 0.75rem;
-  background: #fafafa;
+  padding: 1.35rem 1.25rem;
+  background: rgba(0, 0, 0, 0.025);
+  border-radius: var(--par-radius-sm, 3px);
 }
 
 .related-npc-info {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
   min-width: 0;
   flex: 1;
 }
 
+/* Body color, not burgundy. Burgundy is reserved for the section heading
+   and the action buttons — those are the moments of emphasis. NPC names
+   are content, read as standard body. */
 .related-npc-name {
-  font-size: 1.65rem;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--par-color-text, #222);
+  line-height: 1.3;
 }
 
 .related-npc-role {
-  color: #555;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   font-size: 1.4rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.4;
 }
 
 .related-npc-actions {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
   flex-shrink: 0;
 }
 
+/* Remove (✕): muted palette so it recedes; primary action button (Create
+   NPC / View in NPC Generator) carries the visual weight. Click target
+   stays generous for accessibility. */
 .related-npc-remove {
+  appearance: none;
+  -webkit-appearance: none;
   background: none;
   border: none;
-  padding: 0.4rem 0.7rem;
-  font-size: 1.5rem;
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  font-family: inherit;
+  font-size: 1.4rem;
   line-height: 1;
-  color: #999;
-  border-radius: 3px;
+  color: var(--par-color-text-muted, #6b6b6b);
+  border-radius: var(--par-radius-sm, 3px);
   cursor: pointer;
   transition: color 0.15s ease, background-color 0.15s ease;
 
   &:hover {
-    color: #7a1f1f;
-    background: rgba(122, 31, 31, 0.08);
+    color: var(--par-color-title, #7a1f1f);
+    background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
   }
 
   &:focus-visible {
-    outline: 2px solid #7a1f1f;
+    outline: 2px solid var(--par-color-title, #7a1f1f);
     outline-offset: 2px;
   }
 }
 
+/* Show all / Show fewer: text link in the parchment palette, not the
+   browser default purple/blue. */
 .related-npcs-toggle {
+  appearance: none;
+  -webkit-appearance: none;
   background: none;
   border: none;
-  padding: 0.75rem 0;
-  margin-top: 0.25rem;
-  color: #5a3e8a;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0;
+  font-family: inherit;
   font-size: 1.4rem;
+  color: var(--par-color-title, #7a1f1f);
   cursor: pointer;
   text-decoration: underline;
 
   &:hover {
-    color: #3a2a5a;
+    color: var(--par-color-title-deep, #58180d);
   }
 
   &:focus-visible {
-    outline: 2px solid #5a3e8a;
+    outline: 2px solid var(--par-color-title, #7a1f1f);
     outline-offset: 2px;
   }
 }

@@ -38,7 +38,12 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'default',
-    validator: v => ['default', 'danger'].includes(v),
+    // 'default' — outlined primary action (Edit Item, Save Changes, etc.)
+    // 'ghost'   — quiet section affordance, no border, hover-tinted only
+    //             (refresh / re-scan / "do this again" actions). Visually
+    //             lighter than the action buttons that sit alongside it.
+    // 'danger'  — destructive (Delete Item).
+    validator: v => ['default', 'ghost', 'danger'].includes(v),
   },
   size: {
     type: String,
@@ -59,6 +64,7 @@ defineEmits(['click']);
 
 const classes = computed(() => ({
   'par-button--danger': props.variant === 'danger',
+  'par-button--ghost': props.variant === 'ghost',
   'par-button--small': props.size === 'small',
 }));
 </script>
@@ -130,6 +136,21 @@ const classes = computed(() => ({
 .par-button--small {
   font-size: 1.3rem;
   padding: 0.5rem 1rem;
+}
+
+/* Ghost variant: quiet section affordance. No visible border so it doesn't
+   compete with outlined action buttons sitting alongside it; burgundy
+   text + soft warm hover wash carry the affordance signal. Use for
+   refresh / re-scan / "do this again" actions where the button is a
+   convenience, not the primary CTA. */
+.par-button--ghost {
+  border-color: transparent;
+}
+
+.par-button--ghost:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
+  color: var(--par-color-title, #7a1f1f);
 }
 
 /* Danger variant: muted by default, warms up on hover. */

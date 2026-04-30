@@ -118,50 +118,55 @@
     </div>
 
     <!-- Edit form (replaces body when editing) -->
-    <div v-if="isEditing" class="npc-card-edit-form">
-      <cdr-input v-model="editForm.name" label="NPC Name" background="secondary" class="edit-field" />
+    <div v-if="isEditing" class="npc-edit">
+      <header class="npc-edit__header">
+        <h2 class="npc-edit__title">Edit NPC</h2>
+      </header>
 
-      <cdr-input v-model="editForm.read_aloud_description" label="Read-Aloud Description" background="secondary"
-        :rows="4" tag="textarea" class="edit-field">
-        <template #helper-text-bottom>
-          The initial description when the NPC is first encountered
-        </template>
-      </cdr-input>
+      <ParInput v-model="editForm.name" label="Name" class="npc-edit__field" />
 
-      <cdr-input v-model="editForm.combined_details" label="NPC Details" background="secondary" :rows="10"
-        tag="textarea" class="edit-field">
-        <template #helper-text-bottom>
-          Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for paragraphs.
-        </template>
-      </cdr-input>
+      <ParTextarea v-model="editForm.read_aloud_description"
+        label="Read-aloud description"
+        :rows="4"
+        hint="The initial description when the NPC is first encountered."
+        class="npc-edit__field" />
 
-      <h3 class="relationships-edit-title">Relationships</h3>
-      <div v-if="editForm.relationshipsArray.length > 0">
-        <div v-for="(relationship, relIndex) in editForm.relationshipsArray" :key="relIndex"
-          class="edit-relationship-card">
-          <cdr-input v-model="relationship.name" label="Name" background="secondary" style="margin-bottom: 1rem;" />
-          <cdr-input v-model="relationship.description" label="Relationship Description" background="secondary"
-            :rows="2" tag="textarea" style="margin-bottom: 1rem;" />
-          <cdr-button size="small" @click="deleteRelationshipFromForm(relIndex)" modifier="secondary">
-            Remove Relationship
-          </cdr-button>
-        </div>
-      </div>
-      <div v-else>
-        <p style="font-style: italic; color: #666; margin-bottom: 1rem;">
+      <ParTextarea v-model="editForm.combined_details"
+        label="Details"
+        :rows="10"
+        hint="Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for paragraphs."
+        class="npc-edit__field" />
+
+      <section class="npc-edit__relationships">
+        <h3 class="npc-edit__section-title">Relationships</h3>
+
+        <p v-if="editForm.relationshipsArray.length === 0" class="npc-edit__empty">
           No relationships yet. Add one below or generate one.
         </p>
-      </div>
 
-      <cdr-button size="small" @click="addRelationshipToForm" modifier="secondary" style="margin-bottom: 1.5rem;">
-        Add Relationship
-      </cdr-button>
+        <div v-for="(relationship, relIndex) in editForm.relationshipsArray" :key="relIndex"
+          class="npc-edit__relationship-row">
+          <ParInput v-model="relationship.name" label="Name" />
+          <ParTextarea v-model="relationship.description"
+            label="Description"
+            :rows="2" />
+          <div class="npc-edit__relationship-actions">
+            <ParButton variant="danger" size="small" @click="deleteRelationshipFromForm(relIndex)">
+              Remove
+            </ParButton>
+          </div>
+        </div>
+
+        <ParButton size="small" @click="addRelationshipToForm" class="npc-edit__add">
+          + Add Relationship
+        </ParButton>
+      </section>
 
       <!-- Generate Relationship in Edit Mode -->
-      <div v-if="showRelationshipGenerator">
-        <h4 class="relationship-gen-title">Generate New Relationship</h4>
+      <section v-if="showRelationshipGenerator" class="npc-edit__generate">
+        <h3 class="npc-edit__section-title">Generate new relationship</h3>
 
-        <div v-if="isGeneratingRelationship" class="relationship-loading">
+        <div v-if="isGeneratingRelationship" class="npc-edit__generate-loading">
           <CdrSkeleton>
             <cdr-skeleton-bone type="line" style="margin-bottom: 0.5rem;" />
             <cdr-skeleton-bone type="line" />
@@ -169,40 +174,45 @@
           </CdrSkeleton>
         </div>
 
-        <cdr-input v-model="relationshipForm.name" label="Name" background="secondary" style="margin-bottom: 1rem;">
-          <template #helper-text-bottom>
-            The name of the related NPC
-          </template>
-        </cdr-input>
-        <cdr-input v-model="relationshipForm.description" label="Short Description" background="secondary" :rows="2"
-          tag="textarea" style="margin-bottom: 1.5rem;">
-          <template #helper-text-bottom>
-            Brief description of their relationship (e.g., "the wizard's familiar", "his estranged sister")
-          </template>
-        </cdr-input>
-        <cdr-button @click="generateRelationship" :full-width="true" :disabled="isGeneratingRelationship"
-          style="margin-bottom: 1.5rem;">Generate Relationship</cdr-button>
-      </div>
+        <ParInput v-model="relationshipForm.name"
+          label="Name"
+          hint="The name of the related NPC." />
 
-      <div class="button-group">
-        <cdr-button @click="saveEdit">Save Changes</cdr-button>
-        <cdr-button @click="$emit('cancel-edit')" modifier="secondary">Cancel</cdr-button>
-      </div>
+        <ParTextarea v-model="relationshipForm.description"
+          label="Short description"
+          :rows="2"
+          hint='Brief description of their relationship (e.g., "the wizard&apos;s familiar", "his estranged sister").' />
+
+        <div class="npc-edit__generate-actions">
+          <ParButton @click="generateRelationship" :disabled="isGeneratingRelationship">
+            Generate Relationship
+          </ParButton>
+        </div>
+      </section>
+
+      <footer class="npc-edit__footer">
+        <ParButton variant="danger" @click="$emit('cancel-edit')">Cancel</ParButton>
+        <ParButton @click="saveEdit">Save Changes</ParButton>
+      </footer>
     </div>
 
     <!-- Footer Bar -->
     <div v-if="!loadingDescription && !loadingRelationships && !isEditing" class="card-footer-bar">
       <div class="card-footer-bar__actions">
         <ParButton v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
-          <template #icon>📝</template>
           View in NPC Generator
         </ParButton>
 
-        <!-- Add other NPC-specific actions here as needed -->
+        <ParButton v-if="showMoveToFolder" @click="$emit('move-to-folder')">
+          Move to Folder
+        </ParButton>
+
+        <ParButton v-if="showExport" @click="$emit('toggle-export')">
+          {{ exportOpen ? 'Hide Export' : 'Export' }}
+        </ParButton>
       </div>
 
       <ParButton v-if="showDelete" variant="danger" @click="$emit('delete')">
-        <template #icon>🗑️</template>
         Delete
       </ParButton>
     </div>
@@ -211,8 +221,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { CdrInput, CdrButton, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
-import { ParButton } from '@/parchment';
+import { CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import { ParButton, ParInput, ParTextarea } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { sourceExists } from '@/util/seeded-input.mjs';
 
@@ -313,6 +323,26 @@ const props = defineProps({
     default: false,
   },
 
+  // Show "Move to Folder" footer action. Parent handles the actual
+  // move flow; the card just emits 'move-to-folder' on click.
+  showMoveToFolder: {
+    type: Boolean,
+    default: false,
+  },
+
+  // Show the Export toggle in the footer. Emits 'toggle-export'.
+  showExport: {
+    type: Boolean,
+    default: false,
+  },
+
+  // Whether the parent's export panel is currently open. Drives the
+  // toggle button label between "Export" and "Hide Export".
+  exportOpen: {
+    type: Boolean,
+    default: false,
+  },
+
   // Show "View in NPC Generator" link in footer
   showNpcGeneratorLink: {
     type: Boolean,
@@ -339,6 +369,8 @@ const emit = defineEmits([
   'generate-relationship',
   'add-relationship',
   'delete-relationship',
+  'move-to-folder',
+  'toggle-export',
 ]);
 
 // Computed: body paragraphs
@@ -680,35 +712,103 @@ function navigateToNPCGenerator() {
   font-size: 1.6rem;
 }
 
-/* Edit form */
-.npc-card-edit-form {
-  /* Priority 5: Increase horizontal padding */
-  padding: 0.75rem 2rem 1.5rem;
-  background: #faf8f3;
-}
-
-.edit-field {
-  margin-bottom: 1.25rem;
-}
-
-.relationships-edit-title {
-  margin: 1.5rem 0 0.75rem;
-  font-size: 1.6rem;
-  font-weight: 500;
-  color: #7b2d26;
-}
-
-.edit-relationship-card {
-  background: #f4f0e8;
-  border-radius: 3px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.button-group {
+/* ============================================
+   NPC edit panel — parchment-styled fields
+   that sit inline inside the surrounding
+   .npc-card chrome. No outer border / surface
+   here: the parent card already provides the
+   warm-red top rule and tan paper background,
+   so an extra frame would visually double-up.
+   ============================================ */
+.npc-edit {
+  padding: 0 3rem 2rem;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.npc-edit__header {
+  /* No extra spacing — the parent card-header already has margin-bottom. */
+}
+
+.npc-edit__title {
+  margin: 0;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.02em;
+}
+
+.npc-edit__section-title {
+  margin: 0;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.02em;
+}
+
+.npc-edit__relationships,
+.npc-edit__generate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.npc-edit__empty {
+  margin: 0;
+  font-style: italic;
+  font-size: 1.4rem;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+.npc-edit__relationship-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+  background: rgba(232, 226, 212, 0.35);
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+}
+
+.npc-edit__relationship-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.npc-edit__add {
+  align-self: flex-start;
+}
+
+.npc-edit__generate-loading {
+  padding: 0.625rem 0.75rem;
+  background: rgba(232, 226, 212, 0.35);
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+}
+
+.npc-edit__generate-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.npc-edit__footer {
+  margin-top: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--par-color-divider, #e2dccd);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+  .npc-edit {
+    padding: 0 1.5rem 1.5rem;
+  }
 }
 
 /* Relationships */
@@ -757,26 +857,13 @@ function navigateToNPCGenerator() {
   line-height: 3rem;
 }
 
-/* Relationship generator */
+/* Relationship generator wrapper (used outside of edit mode if/when this
+   renders standalone — kept for parity; the inline edit-mode generator
+   uses .npc-edit__generate styles instead). */
 .npc-card-relationship-generator {
   border-top: 1px solid #c9b99a;
-  /* Priority 5: Increase horizontal padding */
   padding: 1rem 2rem 1.25rem;
   background: #f9f6f0;
-}
-
-.relationship-gen-title {
-  margin: 0 0 1rem;
-  font-size: 1.6rem;
-  font-weight: 500;
-  color: #7b2d26;
-}
-
-.relationship-loading {
-  margin-bottom: 1rem;
-  padding: 0.625rem 0.75rem;
-  background: #f4f0e8;
-  border-radius: 3px;
 }
 
 /* Footer bar for card actions */

@@ -822,5 +822,16 @@ export function renameNPCReferences(npcId, newName) {
     }
   }
 
+  // Notify same-tab listeners (Statblock Generator's "linked NPCs" panel,
+  // setting/dungeon NPC tabs, etc.) so caches that depend on the NPC's
+  // display name re-evaluate without waiting for a page reload. Cross-tab
+  // listeners are already covered by the native `storage` event each
+  // localStorage write fires.
+  if (totalUpdated > 0 && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('npc-storage-updated', {
+      detail: { npcId, action: 'rename', newName }
+    }));
+  }
+
   return { totalUpdated };
 }

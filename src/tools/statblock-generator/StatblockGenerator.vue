@@ -181,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue';
+import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
@@ -267,7 +267,19 @@ const canMove = computed(() => {
   return true;
 });
 
+// Reactive trigger that bumps when NPC storage / tool-references change
+// in this tab or another. Read inside `linkedNPCs` so the computed re-
+// evaluates when the underlying localStorage caches change (e.g., user
+// renamed an NPC in the NPC Generator and the linked-NPC display here
+// needs to follow). Without this, `getReferencesForEntity` and the
+// localStorage scan are non-reactive and only refresh on page reload.
+const storageVersion = ref(0);
+
 const linkedNPCs = computed(() => {
+  // Track the storageVersion so this computed re-runs on storage events.
+  // eslint-disable-next-line no-unused-expressions
+  storageVersion.value;
+
   if (!monster.value || !activeFolder.value) return [];
 
   const statblockId = `${monster.value.name}__${activeFolder.value}`;
@@ -359,6 +371,35 @@ onMounted(() => {
 
   updateWindowWidth();
   window.addEventListener('resize', updateWindowWidth);
+
+  // Storage event wiring: bump `storageVersion` whenever NPC data or the
+  // reference graph changes so the linked-NPCs panel reflects renames /
+  // new attachments / detachments without requiring a page reload.
+  // - `storage`: fires for changes from OTHER tabs.
+  // - `npc-storage-updated`: same-tab custom event dispatched by the
+  //   shared NPC-rename and save helpers.
+  window.addEventListener('storage', handleStorageChange);
+  window.addEventListener('npc-storage-updated', handleNPCStorageUpdate);
+});
+
+function handleStorageChange(event) {
+  if (
+    event.key === 'tool-references'
+    || event.key === 'npcGeneratorNPCs'
+    || event.key === null
+  ) {
+    storageVersion.value++;
+  }
+}
+
+function handleNPCStorageUpdate() {
+  storageVersion.value++;
+}
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWindowWidth);
+  window.removeEventListener('storage', handleStorageChange);
+  window.removeEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 
 const activeMonsterIndex = ref(null);

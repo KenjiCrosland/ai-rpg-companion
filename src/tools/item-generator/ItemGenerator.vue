@@ -138,7 +138,6 @@
               <!-- Footer: Export (left) + Delete (right). Edit lives in the header. -->
               <footer class="item-card-footer">
                 <ParButton @click="showExport = !showExport">
-                  <template #icon>✉</template>
                   {{ showExport ? 'Hide Export' : 'Export' }}
                 </ParButton>
                 <ParButton variant="danger" class="item-card-footer__trail" @click="deleteItem">
@@ -898,6 +897,44 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
     const response = await generateGptResponse(prompt, itemValidation, 3);
     magicItemDescription.value = JSON.parse(response);
     magicItemDescription.value.rarity = parseRarity(magicItemDescription.value.rarity);
+
+    // Normalize fields the LLM occasionally drops. The validator now
+    // treats these as optional; we backfill from sensible sources so the
+    // saved item has a stable shape regardless of the model's mood.
+    if (typeof magicItemDescription.value.feature_count !== 'number') {
+      const featureKeys = magicItemDescription.value.features
+        ? Object.keys(magicItemDescription.value.features)
+        : [];
+      magicItemDescription.value.feature_count = featureKeys.length;
+    }
+    if (typeof magicItemDescription.value.bonus !== 'string') {
+      magicItemDescription.value.bonus = featuresAndBonuses.bonus || '';
+    }
+    if (typeof magicItemDescription.value.modifier_sentence !== 'string') {
+      magicItemDescription.value.modifier_sentence = constructModifierSentence(
+        featuresAndBonuses.bonus,
+        resolvedItemType
+      );
+    }
+
+    // Name fallback: when the model drops the `name` field but otherwise
+    // produces a usable item, recover with a focused single-purpose API
+    // call rather than failing the whole generation. This is faster and
+    // less wasteful than re-running the full prompt — we have a complete
+    // item, we just need to fill in the one missing creative slot.
+    const generatedName = (magicItemDescription.value.name || '').toString().trim();
+    if (!generatedName) {
+      console.warn('Item generation: name missing from primary response — running focused fallback call');
+      const fallbackName = await generateNameFallback(magicItemDescription.value);
+      if (!fallbackName) {
+        throw new Error('Failed to generate item name — both primary and fallback calls dropped the name field');
+      }
+      magicItemDescription.value.name = fallbackName;
+    } else {
+      // Strip any wrapping quotes the model occasionally adds.
+      magicItemDescription.value.name = generatedName.replace(/^["'`]+|["'`]+$/g, '').trim();
+    }
+
     magicItemDescription.value.questHooks = [];
     magicItemDescription.value.related_npcs = normalizeRelatedNPCs(magicItemDescription.value.related_npcs);
     loadingItem.value = false;
@@ -913,15 +950,67 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
   }
 };
 
+/**
+ * Recover a missing item name with a focused single-purpose API call.
+ *
+ * Used when the primary item-generation call produced a usable response
+ * but dropped the `name` field. Cheaper and faster than re-running the
+ * full prompt: we have the lore, physical description, type, and rarity,
+ * and just need a short name that fits.
+ *
+ * Returns the cleaned name string, or null if the fallback also fails.
+ * Caller decides whether to throw on null.
+ */
+const generateNameFallback = async (item) => {
+  const physical = (item?.physical_description || '').toString().trim();
+  const lore = (item?.lore || '').toString().trim();
+  // Cap lore at ~600 chars to keep the focused prompt small. The
+  // linguistic palette of names appears across the lore, so the head
+  // is enough for the model to match style.
+  const loreExcerpt = lore.length > 600 ? `${lore.slice(0, 600)}…` : lore;
+
+  const prompt = `You are a D&D 5e item designer. Generate a single short, evocative name for this magic item.
+
+ITEM TYPE: ${item?.item_type || 'Wondrous Item'}
+RARITY: ${item?.rarity || 'Uncommon'}
+${physical ? `PHYSICAL DESCRIPTION: ${physical}\n` : ''}${loreExcerpt ? `LORE: ${loreExcerpt}\n` : ''}
+Output ONLY the name (3-6 words). No quotes, no explanation, no JSON, no markdown. Match the linguistic style of any character or place names already in the lore. Avoid generic fantasy clichés.`;
+
+  try {
+    // No JSON validator — this call returns raw text. Two attempts is
+    // plenty for a single-string output; falling back further would just
+    // waste tokens.
+    const raw = await generateGptResponse(prompt, null, 2);
+    const cleaned = (raw || '')
+      .toString()
+      .trim()
+      .split('\n')[0]                  // first line only — defends against accidental commentary
+      .replace(/^["'`]+|["'`]+$/g, '') // strip wrapping quotes
+      .trim();
+    return cleaned || null;
+  } catch (error) {
+    console.error('Name fallback generation failed:', error);
+    return null;
+  }
+};
+
 const itemValidation = (jsonString) => {
   try {
     const jsonObj = JSON.parse(jsonString);
+    // Required fields are limited to the irreplaceable creative outputs
+    // the model MUST produce. Optional fields the model occasionally
+    // drops are normalized post-parse:
+    //   - feature_count: derivable from Object.keys(features).length
+    //   - bonus / modifier_sentence: usually "" for Potions and Wondrous
+    //     Items; the deterministic featuresAndBonuses values fill in
+    //   - name: recovered via a focused single-purpose API call when
+    //     missing, rather than failing the whole generation
+    // The retry loop would otherwise spin through 3 identical mis-shaped
+    // responses and fail when the model drops one of these fields, even
+    // though the rest of the response is fine.
     const keys = [
-      'name',
       'item_type',
       'rarity',
-      'bonus',
-      'feature_count',
       'features',
       'physical_description',
       'lore'
@@ -1913,68 +2002,124 @@ onUnmounted(() => {
   font-style: italic;
 }
 
-/* Description: italic body text, no box, no background. Sits in the flow. */
+/* Description: italic body text, no box, no background. Sits in the flow.
+   Acts as the transitional prose between header and mechanics — prose
+   but mechanically-adjacent — so its line-height (1.65) bridges
+   between the tight mechanics (1.6) and the relaxed lore (1.7). */
 .item-card-description {
   margin: 1.75rem 0 1.25rem;
+  max-width: 65ch;
   font-style: italic;
   color: var(--secondary-text);
   font-size: 1.75rem;
-  line-height: 3rem;
+  line-height: 1.65;
 }
 
-/* Mechanics: highest contrast block on the card. */
+/* Mechanics: highest contrast block on the card. Reference text — read
+   for specific values (DC, damage, condition) rather than narratively —
+   so line-height tightens to 1.6 for faster vertical scanning. The
+   1.8rem inter-feature margin handles feature-to-feature rhythm; lines
+   within a feature can pack tighter without losing distinctness.
+
+   `max-width: 65ch` caps line length around 60-70 actual characters of
+   Georgia (its "0" is on the wide side of the alphabet) — the readable
+   range without cramping the card; matches the convention used by
+   `.npc-card-content`. */
 .item-card-mechanics {
   margin-bottom: 1.25rem;
+  max-width: 65ch;
 }
 
 /* Passive mechanical properties (e.g. "+1 to AC", "advantage on Stealth").
-   Same body size, slightly heavier weight, full body color, non-italic.
-   Sits between the italic description above and the bold feature headings
-   below — three escalating tiers of "present-ness". */
+   Sourcebook-dense reference text — sized smaller than lore (1.55rem vs
+   1.65rem) so the size itself signals "this is reference, not prose."
+   Tight 1.5 line-height matches the scanning-density pattern used in
+   the DMG/PHB body. */
 .item-card-modifier {
-  margin: 2.5rem 0 1.4rem;
+  margin: 2.5rem 0 2rem;
   color: var(--body-text);
-  font-size: 1.75rem;
-  line-height: 3rem;
+  font-size: 1.55rem;
+  line-height: 1.5;
 }
 
+/* Feature-to-feature gap. Tight (~33% less than the previous 1.8rem)
+   because each feature already has a strong identity from its bold
+   burgundy heading; the eye doesn't need a deep gap to find the next
+   one. The mechanics-to-lore zone change uses a much larger gap (set
+   on `.item-card-lore`) so the rhythm escalates: paragraphs within a
+   feature → siblings → zone change. */
 .item-feature {
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.2rem;
 }
 
 .item-feature:last-child {
   margin-bottom: 0;
 }
 
+/* Feature heading. Sized just barely above body (16px vs 15.5px) so the
+   ratio matches the pre-compaction card and the heading doesn't feel
+   over-weighted relative to the now-tighter mechanical text. Hierarchy
+   reads through bold weight + burgundy color, not size — the sourcebook
+   pattern. */
 .item-feature-name {
   margin: 0 0 0.15rem;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 600;
   color: var(--feature-heading);
-  line-height: 2.7rem;
+  line-height: 1.3;
 }
 
 .item-feature-description {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.55rem;
   color: var(--body-text);
-  line-height: 3rem;
+  line-height: 1.5;
+}
+
+/* Multi-paragraph mechanical text reads as a tight reference block: the
+   gap between paragraphs sits at 0.4em rather than the natural prose
+   ~1em, so multi-sentence features stay visually packed. v-html through
+   formatMarkdown only emits inline markup today, but if/when feature
+   content carries `\n\n` or other markdown produces sibling <p>s, this
+   rule keeps them dense. Empty for the current single-paragraph case. */
+.item-feature-description p {
+  margin: 0 0 0.4em;
+}
+
+.item-feature-description p:last-child {
+  margin-bottom: 0;
 }
 
 /* Lore: visually demoted, always visible. Small-caps label flags it as
    supplementary; smaller, lighter body distinguishes it from mechanics. The
-   divider is lighter than the footer rule so it doesn't compete with it. */
+   divider is lighter than the footer rule so it doesn't compete with it.
+
+   Narrative reading mode — linear and immersive rather than scanned for
+   values — so line-height is intentionally looser (1.7) than mechanics
+   (1.6). The pair reads as: "tight when looking up a number, relaxed
+   when reading the story."
+
+   The generous `margin-top` makes the lore zone OWN the mechanics→lore
+   gap (the last feature drops its bottom margin via :last-child). This
+   completes the escalating rhythm: paragraphs within a feature ≈0.6rem,
+   sibling features 1.2rem, mechanics→lore 3.5rem total (margin + the
+   1rem padding-top above the divider). Each step is roughly 2-3× the
+   previous, which makes the zone change unambiguous. */
 .item-card-lore {
-  margin-top: 1.5rem;
+  margin-top: 2.5rem;
   padding-top: 1rem;
   border-top: 1px solid #ece6d4;
+}
+
+.item-card-lore-body {
+  max-width: 65ch;
 }
 
 .item-card-lore-body p {
   margin: 0 0 0.75rem;
   font-size: 1.65rem;
   color: #6a6a6a;
-  line-height: 2.85rem;
+  line-height: 1.7;
 }
 
 .item-card-lore-body p:last-child {

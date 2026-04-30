@@ -140,6 +140,9 @@
                     :editable="true"
                     :show-delete="true"
                     :show-npc-generator-link="false"
+                    :show-move-to-folder="!!(npcDescriptionPart2 && !loadingPart2)"
+                    :show-export="!!(npcDescriptionPart2 && !loadingPart2)"
+                    :export-open="showExport"
                     :show-origin-note="!!(currentNPC?.typeOfPlace && currentNPC.typeOfPlace !== 'Uncategorized')"
                     :loading-description="loadingPart1"
                     :loading-relationships="loadingPart2 || loadingPart1"
@@ -148,30 +151,12 @@
                     @cancel-edit="cancelEditNPC"
                     @delete="deleteCurrentNPC"
                     @generate-relationship="handleGenerateRelationship($event)"
+                    @move-to-folder="showFolderMover = !showFolderMover"
+                    @toggle-export="showExport = !showExport"
                 />
 
-                <!-- Actions and Management (after NPC Card) -->
+                <!-- Below-card panels (folder mover, export, homebrewery link) -->
                 <div v-if="npcDescriptionPart2 && !loadingPart2 && !isEditingNPC">
-
-                    <!-- Actions Row -->
-                    <div class="actions-row" style="margin-top: 2rem;">
-                        <!-- Management Actions (Left) -->
-                        <div class="management-actions">
-                            <cdr-button @click="showFolderMover = !showFolderMover" modifier="secondary" size="small">
-                                Move to Folder
-                            </cdr-button>
-                        </div>
-
-                        <!-- Export Actions (Right) -->
-                        <div class="export-actions">
-                            <cdr-button @click="copyNPCAsPlainText" modifier="secondary">
-                                Copy as Plain Text
-                            </cdr-button>
-                            <cdr-button @click="copyNPCAsMarkdown">
-                                Copy as Homebrewery Markdown
-                            </cdr-button>
-                        </div>
-                    </div>
 
                     <!-- Folder Mover Interface -->
                     <div v-if="showFolderMover" class="folder-mover" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
@@ -193,6 +178,24 @@
                             </cdr-button>
                         </div>
                     </div>
+
+                    <!-- Export Panel — toggled from the NPC Card footer's Export button.
+                         Mirrors the Item Generator's export-section pattern. -->
+                    <ItemExportsSection v-if="showExport" heading="Export NPC">
+                        <template #description>
+                            Copy your NPC details. Markdown works with
+                            <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
+                            for handouts.
+                        </template>
+                        <template #buttons>
+                            <cdr-button @click="copyNPCAsPlainText" modifier="secondary">
+                                Copy as Plain Text
+                            </cdr-button>
+                            <cdr-button @click="copyNPCAsMarkdown">
+                                Copy as Homebrewery Markdown
+                            </cdr-button>
+                        </template>
+                    </ItemExportsSection>
 
                     <!-- Homebrewery Link Message -->
                     <div v-if="showHomebreweryLink" class="homebrewery-link-message">
@@ -316,6 +319,7 @@ import NPCCard from '@/components/NPCCard.vue';
 import Statblock from '@/components/Statblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
+import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { requestNPCDescription } from "./utils/request-npc-description.mjs";
@@ -515,6 +519,9 @@ const computedSourceId = computed(() => {
 // Sidebar responsive
 const showDataManagerModal = ref(false);
 const showHomebreweryLink = ref(false);
+// Toggles the inline export panel below the NPC card. Driven by the
+// "Export" button in the NPC Card footer (parallels the Item Card).
+const showExport = ref(false);
 
 // Inline editing
 const isEditingNPC = ref(false);
@@ -945,21 +952,37 @@ function saveCurrentNPCToList() {
         npcData.sourceName = pendingSeed.value.source.name;
     } else {
         // Preserve source tagging across re-saves of an existing
-        // source-tool-sourced NPC — but only if the source still
-        // exists. If the source has been deleted, drop the stale
-        // pointer here so the next save naturally cleans it up. The
-        // NPC retains its existence, just loses the dangling back-link.
+        // source-tool-sourced NPC. Three cases:
+        //   1. sourceType + sourceId present, source resolves →
+        //      preserve everything.
+        //   2. sourceType + sourceId present, source DELETED →
+        //      drop everything (auto-cleanup of the stale pointer
+        //      so the (deleted) marker doesn't keep firing).
+        //   3. sourceType only, no sourceId — legacy setting/dungeon
+        //      NPCs created before stable ids existed (settingNPCToCanonical
+        //      and migrateSourceTypeFromTypeOfPlace both set sourceType
+        //      without sourceId). Preserve sourceType so the ref-store
+        //      fallback in computedSourceType / computedOrigin still
+        //      drives the back-link. There's no id to validate, so we
+        //      can't auto-clean these here — that's what the orphan-
+        //      sweep migration is for.
         const existing = (currentNPCIndex.value !== null && Array.isArray(npcs.value[folderName]))
             ? npcs.value[folderName][currentNPCIndex.value]
             : null;
-        if (existing?.sourceType && (existing.sourceId || existing.sourceName)) {
+        if (existing?.sourceType) {
             const id = existing.sourceId || existing.sourceName;
-            if (sourceExists(existing.sourceType, id)) {
+            if (id) {
+                if (sourceExists(existing.sourceType, id)) {
+                    // Case 1: live source.
+                    npcData.sourceType = existing.sourceType;
+                    npcData.sourceId = id;
+                    npcData.sourceName = existing.sourceName || existing.sourceId;
+                }
+                // Case 2: source deleted — drop everything for auto-cleanup.
+            } else {
+                // Case 3: legacy sourceType-only record. Preserve it.
                 npcData.sourceType = existing.sourceType;
-                npcData.sourceId = id;
-                npcData.sourceName = existing.sourceName || existing.sourceId;
             }
-            // else: source has been deleted — auto-clear by omitting the fields.
         }
     }
 
