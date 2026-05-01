@@ -1138,15 +1138,6 @@ function deleteCurrentNPC() {
         }
     }
 
-    if (locations.dungeons.length > 0) {
-        deleteLocations.push('Dungeon Generator');
-        if (locations.dungeons.length === 1) {
-            confirmMessage += `- Dungeon Generator (${locations.dungeons[0]})\n`;
-        } else {
-            confirmMessage += `- Dungeon Generator (${locations.dungeons.length} dungeons)\n`;
-        }
-    }
-
     if (sourceStubMatches.length > 0) {
         const uniqueSources = [...new Set(sourceStubMatches.map(m => `${m.sourceType}:${m.sourceName}`))];
         if (uniqueSources.length === 1) {
@@ -1176,7 +1167,6 @@ function deleteCurrentNPC() {
         // Show success message
         const deletedFrom = [];
         if (results.npcGenerator > 0) deletedFrom.push('NPC Generator');
-        if (results.dungeons > 0) deletedFrom.push('Dungeon Generator');
         if (stubsReset > 0) deletedFrom.push(`${stubsReset} source stub${stubsReset === 1 ? '' : 's'} reset`);
 
         if (deletedFrom.length > 0) {

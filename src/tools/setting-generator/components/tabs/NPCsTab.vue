@@ -395,7 +395,12 @@ const deleteNPC = async (index) => {
     const { removeReferencesForEntity } = await import('@/util/reference-storage.mjs');
     removeReferencesForEntity('npc', npcId);
 
-    // Delete from all locations
+    // Reset cross-tool stubs (other settings, dungeons, items) so they
+    // unpromote rather than retain a stale npc_id. The current setting's
+    // entry is removed explicitly below.
+    const { resetStubsForDeletedNPC } = await import('@/util/seeded-input.mjs');
+    resetStubsForDeletedNPC(npcId);
+
     deleteNPCFromAllLocations(npcId);
 
     // Update local state

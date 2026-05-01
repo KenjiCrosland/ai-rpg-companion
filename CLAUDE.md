@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Check `plans/` before starting feature work
+
+Before implementing anything substantive, **scan `plans/README.md`** and read any plan whose trigger matches the work you're about to do. Plans in that folder document deferred fixes, latent issues, and design decisions whose context would otherwise be lost between sessions. They're written assuming you have no prior conversation history. If a relevant plan exists, follow it instead of re-deriving the approach from scratch.
+
+When you finish work that resolved a plan's trigger, delete the plan file and remove its entry from `plans/README.md` — don't leave stale ones around.
+
 ## Security Notes
 
 **IMPORTANT - API Key Protection**:

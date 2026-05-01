@@ -429,21 +429,24 @@ export function findNPCLocations(npcId) {
 }
 
 /**
- * Delete an NPC from all storage locations (by npc_id).
+ * Delete the canonical NPC from `npcGeneratorNPCs` storage (by npc_id).
+ *
+ * Cross-tool stubs (settings, dungeons, items) are NOT touched here — call
+ * `resetStubsForDeletedNPC` from `seeded-input.mjs` for that. The split lets
+ * callers introspect stub matches before deletion (e.g., to build a
+ * confirm-dialog summary).
  *
  * @param {string} npcId - The NPC's unique ID
- * @returns {Object} Object with deletion results: { npcGenerator: number, dungeons: number }
+ * @returns {Object} { npcGenerator: number } — number of folders where NPC was deleted
  */
 export function deleteNPCFromAllLocations(npcId) {
   const results = {
-    npcGenerator: 0, // Number of folders where NPC was deleted
-    dungeons: 0      // Number of dungeons where NPC was deleted
+    npcGenerator: 0
   };
 
   if (!npcId) return results;
 
   try {
-    // Delete from NPC Generator storage
     const npcGeneratorStorage = JSON.parse(
       localStorage.getItem('npcGeneratorNPCs') || '{}'
     );
@@ -456,7 +459,6 @@ export function deleteNPCFromAllLocations(npcId) {
           npcs.splice(index, 1);
           results.npcGenerator++;
 
-          // Clean up empty folders (except Uncategorized)
           if (npcs.length === 0 && folderName !== 'Uncategorized') {
             delete npcGeneratorStorage[folderName];
           }
@@ -466,27 +468,11 @@ export function deleteNPCFromAllLocations(npcId) {
 
     localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcGeneratorStorage));
 
-    // Delete from Dungeon Generator storage
-    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-    for (const dungeon of dungeons) {
-      if (dungeon.npcs && Array.isArray(dungeon.npcs)) {
-        const index = dungeon.npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
-        if (index !== -1) {
-          dungeon.npcs.splice(index, 1);
-          results.dungeons++;
-        }
-      }
-    }
-
-    localStorage.setItem('dungeons', JSON.stringify(dungeons));
-
-    // Dispatch custom event for same-tab updates
-    // (storage event only fires for other tabs)
     window.dispatchEvent(new CustomEvent('npc-storage-updated', {
       detail: { npcId, action: 'delete', results }
     }));
   } catch (error) {
-    console.error('Error deleting NPC from all locations:', error);
+    console.error('Error deleting NPC from canonical storage:', error);
   }
 
   return results;

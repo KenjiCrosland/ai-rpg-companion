@@ -342,7 +342,13 @@ export function deleteNPC(npcIndex) {
         removeReferencesForEntity('npc', npcId);
       });
 
-      // Delete from all locations (this handles localStorage for NPC Generator)
+      // Reset cross-tool stubs (other dungeons, settings, items) so they
+      // unpromote rather than retain a stale npc_id. Then remove from the
+      // current dungeon explicitly and delete the canonical NPC.
+      import('@/util/seeded-input.mjs').then(({ resetStubsForDeletedNPC }) => {
+        resetStubsForDeletedNPC(npcId);
+      });
+
       deleteNPCFromAllLocations(npcId);
 
       // Update reactive state - remove from current dungeon's NPC array
