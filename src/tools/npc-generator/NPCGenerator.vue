@@ -50,13 +50,28 @@
                 <div class="hero-header">
                     <div class="brand-line">
                         <span class="brand-name">Kenji's NPC Generator</span>
-                        <span v-if="!premium" class="version-pill">Free</span>
-                        <span v-else class="version-pill premium">Premium</span>
+                        <!-- Version pill is fresh-visit framing — suppressed
+                             during seeded flows where the user is mid-task. -->
+                        <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
+                        <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
                     </div>
-                    <h1>Bring Your World to Life with Detailed NPCs</h1>
-                    <p class="value-prop">Generate memorable characters with backstories, relationships, and combat
-                        statblocks —
-                        ready for any session.</p>
+                    <template v-if="isSeededFlow">
+                        <h1>Create NPC: {{ seedStubName }}</h1>
+                        <p class="value-prop">
+                            From your {{ seedSourceType }}
+                            <a
+                                href="#"
+                                class="seed-source-link"
+                                @click.prevent="navigateBackToSeedSource"
+                            >{{ seedSourceName }}</a>
+                        </p>
+                    </template>
+                    <template v-else>
+                        <h1>Bring Your World to Life with Detailed NPCs</h1>
+                        <p class="value-prop">Generate memorable characters with backstories, relationships, and combat
+                            statblocks —
+                            ready for any session.</p>
+                    </template>
                 </div>
 
                 <!-- ZONE 2: Form card -->
@@ -64,7 +79,10 @@
                     <form @submit.prevent="handleGenerateNPC">
                         <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
                             label="Give me an NPC Description For:" :optional="true">
-                            <template #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix
+                            <!-- Examples are orientation for fresh visitors; in a
+                                 seeded flow the field is already pre-filled with
+                                 the right content, and alternatives are noise. -->
+                            <template v-if="!isSeededFlow" #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix
                                 clan,
                                 a sentient gazebo named Gary, an edgerunner suffering from bouts of cyberpsychosis, a
                                 goblin named Boblin</template>
@@ -84,10 +102,16 @@
                 </div>
 
                 <!-- ZONE 3: Footer meta -->
+                <!-- Orientation paragraphs ("NPC generation is unlimited…",
+                     "All features unlimited…") describe the tool to first-
+                     time visitors. In a seeded flow the user is mid-task and
+                     doesn't need that framing. The persistent affordances
+                     (Patreon CTA for free users, Save/Load for premium) stay
+                     available regardless. -->
                 <div class="footer-meta">
                     <!-- Free users: Show message + unlock button -->
                     <div v-if="!premium">
-                        <p>
+                        <p v-if="!isSeededFlow">
                             NPC generation is unlimited. Combat statblocks are limited to 5 per 24 hours. NPC data is
                             saved on this browser. To save/load NPC data for use in another computer or browser requires
                             a premium Patreon subscription.
@@ -107,7 +131,7 @@
 
                     <!-- Premium users: Show save/load button -->
                     <div v-else>
-                        <p>
+                        <p v-if="!isSeededFlow">
                             All features unlimited. NPC data is saved on this browser. Export to a file to use on
                             another
                             device.
@@ -329,7 +353,7 @@ import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { normalizeGeneratorNPC, migrateNPCIds, migrateDungeonNPCsToSharedStorage, migrateSettingNPCsToSharedStorage, findNPCLocations, deleteNPCFromAllLocations, renameNPCReferences } from '@/util/npc-storage.mjs';
 import { migrateSourceTypeFromTypeOfPlace } from '@/util/migrate-source-type-from-type-of-place.mjs';
-import { getNavigationParams } from '@/util/navigation.mjs';
+import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import { buildStatblockContext } from './utils/statblock-context.mjs';
 import { addReference, getReferencesForEntity, removeReferencesForEntity } from '@/util/reference-storage.mjs';
@@ -386,6 +410,25 @@ const attachStatblockSelection = ref(null);
 // canonical reference (mentioned_in_item / appears_in_dungeon /
 // appears_in_setting / …) and back-link the stub on the source entity.
 const pendingSeed = ref(null);
+
+// Seeded landing-page heading. When a SeededInput exists pre-generation,
+// the hero title swaps from the generic value-prop to the specific stub
+// being created, with a link back to the source entity. The landing
+// wrapper itself is hidden once `npcDescriptionPart1` is set, so the
+// heading naturally yields to the generated NPC display.
+const isSeededFlow = computed(() => !!pendingSeed.value?.source && !!pendingSeed.value?.entities?.[0]?.name);
+const seedStubName = computed(() => pendingSeed.value?.entities?.[0]?.name || '');
+const seedSourceName = computed(() => pendingSeed.value?.source?.name || '');
+const seedSourceType = computed(() => pendingSeed.value?.source?.type || '');
+
+function navigateBackToSeedSource() {
+    const source = pendingSeed.value?.source;
+    if (!source) return;
+    if (source.type === 'item') {
+        navigateToTool('item-generator', { item: source.id });
+    }
+    // Setting/dungeon back-navigation can be added when those flows ship.
+}
 
 const props = defineProps({
     premium: {
@@ -1080,6 +1123,7 @@ function createNewNPC(folderName = 'Uncategorized') {
     showHomebreweryLink.value = false;
     activeFolder.value = folderName;
     currentNPCIndex.value = null;
+    pendingSeed.value = null;
 }
 
 function selectNPC(folderName, index) {
@@ -1892,6 +1936,31 @@ $active-border-color: #007BFF;
         font-weight: 400;
         color: $cdr-color-text-secondary;
         margin: 0;
+    }
+
+    /* Seeded-flow back-link to the source entity (item, etc.). Burgundy
+       parchment accent — deliberate cross-language signal that this NPC
+       page is being driven from item-side context.
+
+       Quiet by default: no underline, weight inherited from .value-prop
+       (400) so the link reads as part of the tagline rather than competing
+       with the heading. Underline emerges on hover/focus to confirm the
+       affordance when the user reaches for it. */
+    .seed-source-link {
+        color: var(--par-color-title, #7a1f1f);
+        font-weight: inherit;
+        text-decoration: none;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--par-color-title-deep, #58180d);
+            text-decoration: underline;
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--par-color-title, #7a1f1f);
+            outline-offset: 2px;
+        }
     }
 }
 

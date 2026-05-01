@@ -17,13 +17,20 @@ import {
 /**
  * Extract NPC stubs from an item's lore/timeline.
  *
+ * Passes the item's existing `related_npcs` to the prompt so the model
+ * uses established names verbatim instead of inventing variant forms on
+ * each rescan. The merge layer in `mergeStubs` handles any variants that
+ * still slip through.
+ *
  * @param {Object} item - An item from savedItems
  * @returns {Promise<Array<{name: string, role_brief: string, context: string}>>}
  */
 export async function extractRelatedNPCs(item) {
   if (!item) return [];
 
-  const prompt = createItemNPCExtractionPrompt(item);
+  const prompt = createItemNPCExtractionPrompt(item, {
+    existingStubs: Array.isArray(item.related_npcs) ? item.related_npcs : [],
+  });
   const response = await generateGptResponse(prompt, validateItemNPCExtraction, 3);
 
   let parsed;
@@ -56,15 +63,22 @@ export async function extractRelatedNPCs(item) {
 }
 
 /**
- * Merge freshly-extracted stubs into an item's existing `related_npcs` array.
+ * Reconcile freshly-extracted stubs against an item's existing
+ * `related_npcs` array, treating each scan's output as the canonical set
+ * for the unpromoted slice.
  *
  * Rules:
- * - Match by case-insensitive name.
- * - If an existing stub has `npc_id` set, do NOT overwrite it (the user has
- *   already promoted it to a real NPC; don't clobber that link).
- * - If an existing stub has no `npc_id`, refresh `role_brief` and `context`
- *   with the newer extraction values.
- * - Append any new stubs that don't match an existing entry.
+ * - Promoted stubs (those with a truthy `npc_id`) survive every rescan,
+ *   untouched. They've been linked to a real NPC; that link is sacred.
+ * - Unpromoted stubs are dropped. The fresh extraction is authoritative
+ *   for the unpromoted set, so name variants from prior scans
+ *   ("Dragana" → "Lady Dragana of Whiterun") evaporate instead of
+ *   accumulating.
+ * - Fresh stubs whose case-insensitive name matches a promoted stub are
+ *   dropped — avoids resurrecting the same person as an unpromoted twin
+ *   alongside the promoted one.
+ * - Fresh stubs are deduped by case-insensitive name (defensive;
+ *   `extractRelatedNPCs` already dedupes within a scan).
  *
  * Returns a new array; does not mutate the input.
  *
@@ -73,41 +87,35 @@ export async function extractRelatedNPCs(item) {
  * @returns {Array}
  */
 export function mergeStubs(existing, fresh) {
-  const result = Array.isArray(existing) ? existing.map(s => ({ ...s })) : [];
-  if (!Array.isArray(fresh)) return result;
+  const existingArr = Array.isArray(existing) ? existing : [];
+  const freshArr = Array.isArray(fresh) ? fresh : [];
 
-  const indexByName = new Map();
-  result.forEach((stub, idx) => {
-    const key = (stub?.name || '').trim().toLowerCase();
-    if (key) indexByName.set(key, idx);
-  });
+  const promoted = existingArr
+    .filter(s => s && s.npc_id)
+    .map(s => ({ ...s }));
 
-  for (const stub of fresh) {
+  const seen = new Set(
+    promoted
+      .map(s => (s.name || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  const reconciled = [...promoted];
+  for (const stub of freshArr) {
     const name = (stub?.name || '').trim();
     if (!name) continue;
     const key = name.toLowerCase();
-
-    if (indexByName.has(key)) {
-      const idx = indexByName.get(key);
-      const target = result[idx];
-      // Never overwrite a stub that has been promoted to a real NPC.
-      if (!target.npc_id) {
-        target.role_brief = stub.role_brief || target.role_brief || '';
-        target.context = stub.context || target.context || '';
-        target.source_quote = stub.source_quote || target.source_quote || '';
-      }
-    } else {
-      result.push({
-        name,
-        role_brief: stub.role_brief || '',
-        context: stub.context || '',
-        source_quote: stub.source_quote || '',
-        npc_id: null,
-        npc_folder: null
-      });
-      indexByName.set(key, result.length - 1);
-    }
+    if (seen.has(key)) continue;
+    seen.add(key);
+    reconciled.push({
+      name,
+      role_brief: (stub.role_brief || '').trim(),
+      context: (stub.context || '').trim(),
+      source_quote: (stub.source_quote || '').trim(),
+      npc_id: null,
+      npc_folder: null,
+    });
   }
 
-  return result;
+  return reconciled;
 }

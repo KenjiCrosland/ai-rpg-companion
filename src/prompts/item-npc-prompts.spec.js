@@ -52,14 +52,9 @@ describe('item-npc-prompts', () => {
       context: 'Granted a prophetic vision describing the staff.',
     };
 
-    it('includes the stub name and role brief in the headline', () => {
+    it('includes the stub name, role brief, and item name in a single headline', () => {
       const text = buildPrefilledTypeOfPlace(seed({ stub, item }));
-      expect(text).toContain('Yelena of the Duskwood — oracle who received the vision.');
-    });
-
-    it('includes the item name with rarity and type in the connection line', () => {
-      const text = buildPrefilledTypeOfPlace(seed({ stub, item }));
-      expect(text).toContain('Mentioned in connection with the magic item "Krovnik\'s Hearthstaff" (Common Staff):');
+      expect(text).toContain('Yelena of the Duskwood — oracle who received the vision. Mentioned in lore of Krovnik\'s Hearthstaff.');
     });
 
     it('includes the item physical description and lore', () => {
@@ -79,7 +74,7 @@ describe('item-npc-prompts', () => {
         stub: { name: 'Anonymous', role_brief: '', context: '' },
         item,
       }));
-      expect(text).toContain('Anonymous.');
+      expect(text).toContain('Anonymous. Mentioned in lore of Krovnik\'s Hearthstaff.');
       expect(text).not.toContain('— .');
       expect(text).not.toContain('Specific role:');
     });
@@ -203,6 +198,24 @@ describe('item-npc-prompts', () => {
       expect(prompt).toContain('Do NOT use the group');
     });
 
+    it('instructs the model to invent a name for individuals identified only by relationship to a named person', () => {
+      const prompt = createItemNPCExtractionPrompt({
+        name: 'Hearthstaff', item_type: 'Staff', rarity: 'Common',
+        physical_description: '', lore: '',
+      });
+      // "Jara's daughter", "King Aldric's son" — real specific characters
+      // who lack their own proper name. Must invent in the linguistic style
+      // of the named relative, and surface both invented name and the
+      // relationship in role_brief/context.
+      expect(prompt).toMatch(/relationship to a named person/i);
+      expect(prompt).toContain("Jara's daughter");
+      expect(prompt).toMatch(/INVENT a plausible given name/i);
+      expect(prompt).toMatch(/linguistic style as the named relative/i);
+      // The skip rule for true archetypes must explicitly carve out
+      // relationship-named individuals so the model doesn't lump them in.
+      expect(prompt).toMatch(/no naming relationship to a named person/i);
+    });
+
     it('asks for source_quote with timeline-event preference', () => {
       const prompt = createItemNPCExtractionPrompt({
         name: 'Hearthstaff', item_type: 'Staff', rarity: 'Common',
@@ -237,6 +250,99 @@ describe('item-npc-prompts', () => {
         name: '', item_type: '', rarity: '', physical_description: '', lore: '',
       });
       expect(prompt).toContain('LORE:\n(none)');
+    });
+
+    it('includes ITEM LEGACY when present and not already in the lore', () => {
+      const prompt = createItemNPCExtractionPrompt({
+        name: 'X', item_type: 'Staff', rarity: 'Rare',
+        physical_description: '', lore: 'Some unrelated lore.',
+        itemLegacy: 'Captain Veylin recovered the staff at the siege of Marrowdeep.',
+      });
+      expect(prompt).toContain('ITEM LEGACY:');
+      expect(prompt).toContain('Captain Veylin recovered the staff at the siege of Marrowdeep.');
+    });
+
+    it('omits HISTORICAL SUMMARY when its text is already contained in the lore', () => {
+      const summary = 'A vision granted to the oracle Yelena of the Duskwood.';
+      const prompt = createItemNPCExtractionPrompt({
+        name: 'X', item_type: 'Staff', rarity: 'Rare',
+        physical_description: '',
+        lore: `${summary}\n\nMore lore body.`,
+        historicalSummary: summary,
+      });
+      expect(prompt).not.toContain('HISTORICAL SUMMARY:');
+    });
+
+    it('omits ITEM LEGACY when its text is already contained in the lore', () => {
+      const legacy = 'Captain Veylin recovered the staff at the siege of Marrowdeep.';
+      const prompt = createItemNPCExtractionPrompt({
+        name: 'X', item_type: 'Staff', rarity: 'Rare',
+        physical_description: '',
+        lore: `Some lore.\n\n${legacy}`,
+        itemLegacy: legacy,
+      });
+      expect(prompt).not.toContain('ITEM LEGACY:');
+    });
+
+    it('renders summary and legacy independently — duplicate guard is per-block', () => {
+      const summary = 'A vision granted to Yelena.';
+      const legacy = 'Veylin recovered the staff.';
+      const prompt = createItemNPCExtractionPrompt({
+        name: 'X', item_type: 'Staff', rarity: 'Rare',
+        physical_description: '',
+        // Lore contains the summary but not the legacy; only the legacy
+        // block should render.
+        lore: `${summary}\n\nUnrelated body.`,
+        historicalSummary: summary,
+        itemLegacy: legacy,
+      });
+      expect(prompt).not.toContain('HISTORICAL SUMMARY:');
+      expect(prompt).toContain('ITEM LEGACY:');
+      expect(prompt).toContain(legacy);
+    });
+
+    it('omits the EXISTING NPC STUBS block when no existing stubs are passed', () => {
+      const prompt = createItemNPCExtractionPrompt({
+        name: 'X', item_type: 'Wondrous Item', rarity: 'Rare',
+        physical_description: '', lore: '',
+      });
+      expect(prompt).not.toContain('EXISTING NPC STUBS');
+    });
+
+    it('includes the EXISTING NPC STUBS block with the stub names listed', () => {
+      const prompt = createItemNPCExtractionPrompt(
+        { name: 'X', item_type: 'Staff', rarity: 'Rare', physical_description: '', lore: '' },
+        { existingStubs: [
+          { name: 'Dragana' },
+          { name: 'Master Smith Gorvak' },
+        ] },
+      );
+      expect(prompt).toContain('EXISTING NPC STUBS');
+      expect(prompt).toContain('- Dragana');
+      expect(prompt).toContain('- Master Smith Gorvak');
+    });
+
+    it('instructs the model to use existing names verbatim and forbid variant forms', () => {
+      const prompt = createItemNPCExtractionPrompt(
+        { name: 'X', item_type: 'Staff', rarity: 'Rare', physical_description: '', lore: '' },
+        { existingStubs: [{ name: 'Dragana' }] },
+      );
+      // The consistency rule should be present and explicit about variant forms.
+      expect(prompt).toMatch(/use the existing name VERBATIM/i);
+      expect(prompt).toMatch(/no added titles/i);
+      expect(prompt).toMatch(/no expanded full names/i);
+      expect(prompt).toMatch(/no epithets/i);
+    });
+
+    it('ignores existing stubs with empty names', () => {
+      const prompt = createItemNPCExtractionPrompt(
+        { name: 'X', item_type: 'Staff', rarity: 'Rare', physical_description: '', lore: '' },
+        { existingStubs: [{ name: '' }, { name: '   ' }, { name: 'Dragana' }] },
+      );
+      expect(prompt).toContain('EXISTING NPC STUBS');
+      expect(prompt).toContain('- Dragana');
+      // No empty bullet lines.
+      expect(prompt).not.toMatch(/^- $/m);
     });
   });
 });

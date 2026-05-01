@@ -223,14 +223,10 @@
                   <ParTextarea v-model="feature.description" label="Description" :rows="3"
                     class="item-edit__feature-desc" />
                   <div class="item-edit__feature-actions">
-                    <ParButton v-if="premium" size="small" @click="generateFeature(index)"
+                    <ParButton size="small" @click="generateFeature(index)"
                       :disabled="feature.generating">
                       {{ feature.generating ? 'Generating…' : 'Generate Feature' }}
                     </ParButton>
-                    <span v-else class="item-edit__premium-note">
-                      <cdr-link href="https://cros.land/dnd-5e-magic-item-generator-premium-version/">Generate Feature
-                        (Premium)</cdr-link>
-                    </span>
                     <ParButton variant="danger" size="small" @click="removeFeature(index)">
                       Remove
                     </ParButton>
@@ -1342,12 +1338,6 @@ const removeFeature = (index) => {
 };
 
 const generateFeature = async (index) => {
-  // Premium-only: free users see a link instead of this button,
-  // but keep this guard as a safety net
-  if (!props.premium) {
-    return;
-  }
-
   const feature = editForm.value.featuresArray[index];
 
   if (feature.description && feature.description.trim()) {
@@ -1817,13 +1807,6 @@ onUnmounted(() => {
   justify-content: flex-end;
   align-items: center;
   margin-top: 0.25rem;
-}
-
-.item-edit__premium-note {
-  font-size: 1.2rem;
-  font-style: italic;
-  color: var(--par-color-text-muted, #6b6b6b);
-  margin-right: auto;
 }
 
 .item-edit__add-feature {

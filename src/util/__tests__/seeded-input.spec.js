@@ -132,8 +132,7 @@ describe('seeded-input', () => {
       });
       const prefill = buildPrefillForSeed(seed);
 
-      expect(prefill).toContain('Yelena — oracle who saw the vision.');
-      expect(prefill).toContain('Mentioned in connection with the magic item "Krovnik\'s Hearthstaff" (Common Staff):');
+      expect(prefill).toContain('Yelena — oracle who saw the vision. Mentioned in lore of Krovnik\'s Hearthstaff.');
       expect(prefill).toContain('Aged blackwood.');
       expect(prefill).toContain('Lore:');
       expect(prefill).toContain('Specific role: prophet');

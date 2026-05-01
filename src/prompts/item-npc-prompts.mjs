@@ -23,9 +23,16 @@
  * NPC stubs found in its lore (and optionally timeline events).
  *
  * @param {Object} item - An item from savedItems
+ * @param {Object} [options]
+ * @param {Array<{name: string}>} [options.existingStubs] - NPCs already
+ *   extracted from this item in a previous scan. The prompt instructs the
+ *   model to use these names verbatim when the lore references them, to
+ *   prevent variant-name accumulation across rescans (e.g., "Dragana" in
+ *   scan 1, "Lady Dragana of Whiterun" in scan 2 → without this, the merge
+ *   layer treats them as two separate people).
  * @returns {string}
  */
-export function createItemNPCExtractionPrompt(item) {
+export function createItemNPCExtractionPrompt(item, { existingStubs = [] } = {}) {
   const safe = (s) => (s || '').toString().trim();
   const lore = safe(item?.lore);
   const physical = safe(item?.physical_description);
@@ -43,8 +50,28 @@ export function createItemNPCExtractionPrompt(item) {
     : '';
 
   const summary = safe(item?.historicalSummary);
+  const legacy = safe(item?.itemLegacy);
+
+  // The Lore Builder's "Update Item Lore" action concatenates summary +
+  // legacy into the item's `lore` field. When that's happened, rendering
+  // the same text again under HISTORICAL SUMMARY / ITEM LEGACY is just
+  // duplicate context for the model. Skip the duplicate block in that case.
+  const summaryAlreadyInLore = summary && lore.includes(summary);
+  const legacyAlreadyInLore = legacy && lore.includes(legacy);
 
   const itemNameForExamples = safe(item?.name) || '[item name]';
+
+  const existingNames = Array.isArray(existingStubs)
+    ? existingStubs.map(s => safe(s?.name)).filter(Boolean)
+    : [];
+  const existingBlock = existingNames.length
+    ? `EXISTING NPC STUBS (already extracted in a previous scan):
+${existingNames.map(n => `- ${n}`).join('\n')}
+
+When the lore references any of these characters, use the existing name VERBATIM. Do not introduce variant forms — no added titles, no expanded full names, no epithets, no honorifics, no shortened forms — for any character in the list above. Only introduce new names for characters NOT in this list.
+
+`
+    : '';
 
   return `You are extracting named NPCs from the lore of a D&D 5e magic item.
 
@@ -58,15 +85,16 @@ ${physical || '(none)'}
 
 LORE:
 ${lore || '(none)'}
-${timelineLines ? `\nTIMELINE EVENTS:\n${timelineLines}\n` : ''}${summary ? `\nHISTORICAL SUMMARY:\n${summary}\n` : ''}
-TASK:
+${timelineLines ? `\nTIMELINE EVENTS:\n${timelineLines}\n` : ''}${summary && !summaryAlreadyInLore ? `\nHISTORICAL SUMMARY:\n${summary}\n` : ''}${legacy && !legacyAlreadyInLore ? `\nITEM LEGACY:\n${legacy}\n` : ''}
+${existingBlock}TASK:
 Identify every NAMED INDIVIDUAL relevant to this item — people, oracles, gods, smiths, captains, owners, witnesses, etc.
 
-INDIVIDUALS vs GROUPS — important distinction:
+INDIVIDUALS vs GROUPS vs UNNAMED-BUT-SPECIFIC — important distinctions:
 - A specific individual with a proper name (e.g., "Yelena of the Duskwood", "Master Smith Gorvak"): extract directly using that name.
 - A GROUP / faction / cult / tribe / order / lineage with no specific member named in the source (e.g., "the Vorn-Taak earth-priests", "the Kha'Zur smith-cults"): INVENT a single plausible individual member's name in the same linguistic style as the rest of the source. Use the invented name as this stub's "name". Do NOT use the group's name as the stub's name. In context, identify them as a member of that group.
 - If a group AND a specific member are both named in the source (e.g., "Skragbit, shaman of the Mukgash tribe"): only extract the specific member; do NOT invent an additional member for the same group.
-- Anonymous archetypes with no proper name ("a wandering knight", "the king"): skip them.
+- A specific individual referenced ONLY by their relationship to a named person (e.g., "Jara's daughter", "King Aldric's son", "the smith's apprentice", "Veylin's bastard"): they are a real, specific character — NOT an archetype, NOT a group. INVENT a plausible given name in the same linguistic style as the named relative (Slavic relative → Slavic invention; Norse relative → Norse invention; etc.). Use the invented name as this stub's "name". In "role_brief" and "context", identify them by both the invented name AND their relationship to the named person (e.g., "Daughter of Jara who guards [item]").
+- Anonymous archetypes with no proper name AND no naming relationship to a named person (e.g., "a wandering knight", "the king", "a passing merchant"): skip them.
 
 For each NPC, output an object with:
 - "name": the individual's name (real if named in the source, invented if only the group was named).
@@ -139,19 +167,22 @@ export function buildPrefilledTypeOfPlace(seededInput) {
   const physical = (source.physical_description || '').trim();
   const lore = (source.lore || '').trim();
 
-  const headline = roleBrief
+  // Headline collapses stub identity + provenance into a single sentence so
+  // the NPC prompt opens with a concrete subject ("Yelena — oracle who…")
+  // followed by where the model can find them ("Mentioned in lore of …").
+  // Item rarity/type are omitted here — the lore section below conveys that
+  // context, and the headline reads cleaner without the parenthetical.
+  const stubSentence = roleBrief
     ? `${stubName} — ${roleBrief}.`
     : `${stubName}.`;
+  const headline = itemName
+    ? `${stubSentence} Mentioned in lore of ${itemName}.`
+    : stubSentence;
 
-  const itemHeader = [itemRarity, itemType].filter(Boolean).join(' ');
-  const itemLine = itemName
-    ? `Mentioned in connection with the magic item "${itemName}"${itemHeader ? ` (${itemHeader})` : ''}:`
-    : 'Mentioned in connection with a magic item:';
-
-  const sections = [headline, '', itemLine];
+  const sections = [headline];
 
   if (physical) {
-    sections.push(physical);
+    sections.push('', physical);
   }
 
   if (lore) {

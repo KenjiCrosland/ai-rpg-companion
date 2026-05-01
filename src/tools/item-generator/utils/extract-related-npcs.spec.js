@@ -6,39 +6,45 @@
 
 import { mergeStubs } from './extract-related-npcs.mjs';
 
-describe('mergeStubs', () => {
-  it('returns a copy of existing stubs when fresh is empty', () => {
-    const existing = [{ name: 'A', role_brief: 'r', context: 'c', npc_id: null, npc_folder: null }];
+describe('mergeStubs (rescan reconciliation)', () => {
+  it('preserves all promoted stubs even when fresh extraction is empty', () => {
+    const existing = [
+      { name: 'Yelena', role_brief: 'oracle', context: 'old', source_quote: '',
+        npc_id: 'npc_yel', npc_folder: 'Uncategorized' },
+      { name: 'Morghul', role_brief: 'watcher', context: '', source_quote: '',
+        npc_id: 'npc_mor', npc_folder: 'Cult' },
+    ];
     const out = mergeStubs(existing, []);
-    expect(out).toEqual(existing);
-    expect(out).not.toBe(existing); // should be a copy
-  });
-
-  it('appends new stubs that do not match by case-insensitive name', () => {
-    const existing = [{ name: 'Yelena', role_brief: 'oracle', context: '', npc_id: null, npc_folder: null }];
-    const out = mergeStubs(existing, [
-      { name: 'MORGHUL', role_brief: 'watcher', context: 'tends embers', source_quote: 'Morghul tends...' },
-    ]);
     expect(out).toHaveLength(2);
-    expect(out[1].name).toBe('MORGHUL');
-    expect(out[1].source_quote).toBe('Morghul tends...');
-    expect(out[1].npc_id).toBeNull();
+    expect(out.map(s => s.npc_id)).toEqual(['npc_yel', 'npc_mor']);
   });
 
-  it('refreshes role_brief, context, and source_quote on existing stub when not promoted', () => {
+  it('drops unpromoted existing stubs that are absent from the fresh extraction', () => {
+    const existing = [
+      { name: 'Stale Variant', role_brief: 'old', context: '', npc_id: null, npc_folder: null },
+    ];
+    const out = mergeStubs(existing, [
+      { name: 'Different Name', role_brief: 'fresh', context: 'fresh', source_quote: 'q' },
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0].name).toBe('Different Name');
+  });
+
+  it('replaces unpromoted existing stub fields with the fresh values when names match', () => {
     const existing = [{
-      name: 'Yelena', role_brief: 'old', context: 'old', source_quote: '',
+      name: 'Yelena', role_brief: 'old', context: 'old', source_quote: 'old quote',
       npc_id: null, npc_folder: null,
     }];
     const out = mergeStubs(existing, [
-      { name: 'yelena', role_brief: 'new role', context: 'new ctx', source_quote: 'verbatim text' },
+      { name: 'yelena', role_brief: 'new role', context: 'new ctx', source_quote: 'new quote' },
     ]);
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({
-      name: 'Yelena',
+      name: 'yelena',
       role_brief: 'new role',
       context: 'new ctx',
-      source_quote: 'verbatim text',
+      source_quote: 'new quote',
+      npc_id: null,
     });
   });
 
@@ -59,11 +65,59 @@ describe('mergeStubs', () => {
     });
   });
 
+  it('drops fresh stubs whose name matches a promoted stub (no unpromoted twin)', () => {
+    const existing = [{
+      name: 'Yelena', role_brief: 'oracle', context: '', source_quote: '',
+      npc_id: 'npc_yel', npc_folder: 'Uncategorized',
+    }];
+    const out = mergeStubs(existing, [
+      { name: 'YELENA', role_brief: 'twin would resurrect', context: '', source_quote: '' },
+      { name: 'New Person', role_brief: 'newcomer', context: '', source_quote: '' },
+    ]);
+    expect(out).toHaveLength(2);
+    // Promoted survives intact; fresh "YELENA" was dropped.
+    expect(out[0]).toMatchObject({ name: 'Yelena', npc_id: 'npc_yel' });
+    expect(out[1].name).toBe('New Person');
+  });
+
+  it('appends fresh stubs that do not collide with any promoted stub', () => {
+    const existing = [];
+    const out = mergeStubs(existing, [
+      { name: 'MORGHUL', role_brief: 'watcher', context: 'tends embers', source_quote: 'Morghul tends...' },
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({
+      name: 'MORGHUL',
+      role_brief: 'watcher',
+      source_quote: 'Morghul tends...',
+      npc_id: null,
+    });
+  });
+
+  it('dedups within the fresh array by case-insensitive name', () => {
+    const out = mergeStubs([], [
+      { name: 'Dragana', role_brief: 'first', context: '', source_quote: '' },
+      { name: 'DRAGANA', role_brief: 'duplicate-defensive', context: '', source_quote: '' },
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0].name).toBe('Dragana');
+  });
+
   it('handles undefined existing array', () => {
     const out = mergeStubs(undefined, [
       { name: 'A', role_brief: 'r', context: 'c', source_quote: 's' },
     ]);
     expect(out).toHaveLength(1);
     expect(out[0].source_quote).toBe('s');
+  });
+
+  it('returns a new array (does not mutate the existing input)', () => {
+    const existing = [
+      { name: 'Yelena', role_brief: 'oracle', context: '', source_quote: '',
+        npc_id: 'npc_yel', npc_folder: 'Uncategorized' },
+    ];
+    const out = mergeStubs(existing, []);
+    expect(out).not.toBe(existing);
+    expect(out[0]).not.toBe(existing[0]);
   });
 });
