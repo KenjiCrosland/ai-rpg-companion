@@ -89,7 +89,7 @@ import {
   createRelationshipAndTipsPrompt,
   generateSingleRelationshipPrompt,
 } from '../../prompts/index.mjs';
-import { saveNPCToStorage, settingNPCToCanonical, normalizeSettingNPC } from '@/util/npc-storage.mjs';
+import { saveNPCToStorage, settingNPCToCanonical, normalizeSettingNPC, findNPCByIdAcrossFolders } from '@/util/npc-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
 
 const props = defineProps({
@@ -120,18 +120,14 @@ const enrichedNPCs = computed(() => {
 
   if (!props.setting?.npcs) return [];
 
-  const settingName = props.setting.setting_overview?.name
-    || props.setting.place_name
-    || 'Setting NPCs';
   const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-  const sharedNPCs = stored[settingName] || [];
 
   return props.setting.npcs.map(settingNPC => {
-    // If NPC has an ID, try to fetch from shared storage
+    // If NPC has an ID, try to fetch from shared storage. Walk every
+    // folder rather than guessing the setting-name folder — the user may
+    // have moved the canonical NPC to a folder of their own choosing.
     if (settingNPC.npc_id) {
-      const sharedNPC = sharedNPCs.find(n =>
-        (n.npc_id === settingNPC.npc_id || n.id === settingNPC.npc_id)
-      );
+      const sharedNPC = findNPCByIdAcrossFolders(stored, settingNPC.npc_id);
 
       if (sharedNPC) {
         // Use shared storage data, but preserve setting-specific fields
@@ -300,12 +296,16 @@ const handleSaveEdit = (index, editedData) => {
     const stored = JSON.parse(
       localStorage.getItem('npcGeneratorNPCs') || '{}'
     );
-    if (stored[settingName]) {
-      const existingNPC = stored[settingName].find(n =>
+    // Legacy id-recovery for renamed NPCs without a stable npc_id. Walk
+    // every folder; folder organization is the user's, not ours.
+    for (const folder of Object.values(stored)) {
+      if (!Array.isArray(folder)) continue;
+      const existingNPC = folder.find(n =>
         n.npcDescriptionPart1?.character_name === originalNPC.name
       );
       if (existingNPC) {
         existingId = existingNPC.npc_id || existingNPC.id;
+        break;
       }
     }
   }

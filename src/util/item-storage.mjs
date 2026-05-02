@@ -67,18 +67,19 @@ export function saveItemToStorage(item) {
 }
 
 /**
- * Update the matching related-NPC stub on an item with the canonical NPC's id and folder.
- * Called by the NPC Generator after a successful generation triggered from the Item Generator.
+ * Update the matching related-NPC stub on an item with the canonical NPC's id.
+ * Called by the NPC Generator after a successful generation triggered from
+ * the Item Generator.
  *
- * Matches the stub by stubName (case-insensitive). If the item or stub is not found, this is a no-op.
+ * Matches the stub by stubName (case-insensitive). If the item or stub is
+ * not found, this is a no-op.
  *
  * @param {string} itemName
  * @param {string} stubName
  * @param {string} npcId
- * @param {string} npcFolder
  * @returns {boolean} true if a stub was updated, false otherwise
  */
-export function linkNPCToItemStub(itemName, stubName, npcId, npcFolder) {
+export function linkNPCToItemStub(itemName, stubName, npcId) {
   if (!itemName || !stubName || !npcId) return false;
 
   const items = getAllItems();
@@ -92,7 +93,9 @@ export function linkNPCToItemStub(itemName, stubName, npcId, npcFolder) {
   if (!stub) return false;
 
   stub.npc_id = npcId;
-  stub.npc_folder = npcFolder || 'Uncategorized';
+  // Defensive: legacy stubs may still carry npc_folder until the
+  // drop-npc-folder migration runs for this user.
+  delete stub.npc_folder;
 
   persistItems(items);
   return true;
@@ -398,9 +401,9 @@ export function buildSeededInputFromItem({ fromId, entityName }) {
 
 /**
  * Reset any item stubs pointing to the given NPC id back to the unpromoted
- * state (`npc_id: null`, `npc_folder: null`). Call this when an NPC is
- * deleted in the NPC Generator so the source item's UI returns to "Create
- * NPC" instead of dangling on a now-deleted reference.
+ * state (`npc_id: null`). Call this when an NPC is deleted in the NPC
+ * Generator so the source item's UI returns to "Create NPC" instead of
+ * dangling on a now-deleted reference.
  *
  * The stub itself is preserved (so the user still sees "this NPC was
  * mentioned in the lore") — only the promotion link is cleared.
@@ -417,7 +420,8 @@ export function resetItemStubsForDeletedNPC(npcId) {
     for (const stub of item.related_npcs) {
       if (stub?.npc_id === npcId) {
         stub.npc_id = null;
-        stub.npc_folder = null;
+        // Defensive cleanup for users whose drop-npc-folder migration hasn't run yet.
+        delete stub.npc_folder;
         resetCount++;
       }
     }

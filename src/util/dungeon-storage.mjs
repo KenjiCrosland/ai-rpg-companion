@@ -88,10 +88,9 @@ export function buildSeededInputFromDungeon({ fromId, entityName }) {
  * @param {string} dungeonId
  * @param {string} stubName
  * @param {string} npcId
- * @param {string} npcFolder
  * @returns {boolean}
  */
-export function linkNPCToDungeonStub(dungeonId, stubName, npcId, npcFolder) {
+export function linkNPCToDungeonStub(dungeonId, stubName, npcId) {
   if (!dungeonId || !stubName || !npcId) return false;
 
   const dungeons = readDungeons();
@@ -103,7 +102,9 @@ export function linkNPCToDungeonStub(dungeonId, stubName, npcId, npcFolder) {
   if (!stub) return false;
 
   stub.npc_id = npcId;
-  stub.npc_folder = npcFolder || 'Uncategorized';
+  // Defensive: legacy stubs may still carry npc_folder until the
+  // drop-npc-folder migration runs for this user.
+  delete stub.npc_folder;
 
   persistDungeons(dungeons);
   return true;
@@ -118,10 +119,9 @@ export function linkNPCToDungeonStub(dungeonId, stubName, npcId, npcFolder) {
  * @param {string} originSourceId
  * @param {string} originStubName
  * @param {string} npcId
- * @param {string} npcFolder
  * @returns {number}
  */
-export function linkNPCToDungeonStubsBySeed(originSourceType, originSourceId, originStubName, npcId, npcFolder) {
+export function linkNPCToDungeonStubsBySeed(originSourceType, originSourceId, originStubName, npcId) {
   if (!originSourceType || !originSourceId || !originStubName || !npcId) return 0;
 
   const dungeons = readDungeons();
@@ -137,9 +137,9 @@ export function linkNPCToDungeonStubsBySeed(originSourceType, originSourceId, or
       if (from.source_id !== originSourceId) continue;
       const fromStub = (from.stub_name || '').trim().toLowerCase();
       if (fromStub !== targetStubName) continue;
-      if (stub.npc_id === npcId && stub.npc_folder === (npcFolder || 'Uncategorized')) continue;
+      if (stub.npc_id === npcId) continue;
       stub.npc_id = npcId;
-      stub.npc_folder = npcFolder || 'Uncategorized';
+      delete stub.npc_folder;
       updated++;
     }
   }
@@ -177,8 +177,47 @@ export function findDungeonStubsForNPC(npcId) {
 }
 
 /**
- * Reset every dungeon stub pointing to the given NPC id back to the
- * unpromoted state. Stub is preserved; only the promotion link clears.
+ * Fields produced by the full NPC generation pipeline. Stripped on
+ * stub-reset so the entry reverts to its pre-promotion shape and
+ * `migrateDungeonNPCsToSharedStorage` can't recreate the canonical the
+ * user just deleted. The two skip-rule fields the migration keys on
+ * (`read_aloud_description`, `description_of_position`) MUST be in this list.
+ */
+const NPC_GENERATED_FIELDS = [
+  'read_aloud_description',
+  'description_of_position',
+  'reason_for_being_there',
+  'distinctive_feature_or_mannerism',
+  'character_secret',
+  'character_name',
+  'roleplaying_tips',
+  'combined_details',
+  'npcDescriptionPart1',
+  'npcDescriptionPart2',
+  'relationships',
+  'statblock_name',
+  'statblock_folder',
+  'statblock_source',
+  'statblock_id',
+  'detailedDescription',
+];
+
+/**
+ * Reset every dungeon stub pointing to the given NPC id back to its
+ * pre-promotion shape. Counterpart to `findDungeonStubsForNPC`, called
+ * when the canonical NPC is deleted.
+ *
+ * Behavior: drop fields produced by full NPC generation
+ * (read_aloud_description, description_of_position, npcDescriptionPart1,
+ * statblock pointers, etc.) while preserving whatever stub-shape fields
+ * the entry started with — `name`, `short_description` (dungeon-native),
+ * `role_or_description` (cross-tool stubs), `seeded_from` (cross-container
+ * provenance), and any other non-generated fields. Also clears
+ * `npc_id`/`npc_folder`.
+ *
+ * Why drop the generated fields: `migrateDungeonNPCsToSharedStorage`
+ * re-syncs entries with rich content into the canonical store. Without
+ * stripping, the next NPCGenerator load recreates the deleted NPC.
  *
  * @param {string} npcId
  * @returns {number}
@@ -190,11 +229,13 @@ export function resetDungeonStubsForDeletedNPC(npcId) {
   for (const dungeon of dungeons) {
     if (!Array.isArray(dungeon?.npcs)) continue;
     for (const stub of dungeon.npcs) {
-      if (stub?.npc_id === npcId) {
-        stub.npc_id = null;
-        stub.npc_folder = null;
-        resetCount++;
+      if (stub?.npc_id !== npcId) continue;
+      stub.npc_id = null;
+      delete stub.npc_folder;
+      for (const field of NPC_GENERATED_FIELDS) {
+        delete stub[field];
       }
+      resetCount++;
     }
   }
   if (resetCount > 0) {

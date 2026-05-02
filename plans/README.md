@@ -19,3 +19,4 @@ Don't use this folder for general roadmap items, ideas, or task lists. Plans her
 ## Index
 
 - [`multi-promote.md`](./multi-promote.md) — Cross-tool NPC promotion across multiple containers of the same store. Required before shipping any "link existing NPC to setting/dungeon" or systematic recurring-NPC flow. Describes a localStorage clobber gap in delete paths.
+- [`statblock-stable-id.md`](./statblock-stable-id.md) — Replace the composite `${name}__${folder}` cross-tool id for statblocks with a stable `stb_*` id, mirroring the substrate's other entity id patterns. Triggered by new tools that link statblocks, new operations that mutate statblock identity, or any bug surfaced by the composite-id form.

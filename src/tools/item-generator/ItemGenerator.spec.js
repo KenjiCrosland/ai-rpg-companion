@@ -630,8 +630,8 @@ describe('ItemGenerator - Related NPCs Integration', () => {
       role_brief: 'oracle',
       context: 'received a vision',
       npc_id: null,
-      npc_folder: null,
     });
+    expect(saved[0].related_npcs[0]).not.toHaveProperty('npc_folder');
   });
 
   it('accepts a generated item without related_npcs (backwards compat)', async () => {

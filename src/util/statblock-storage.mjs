@@ -89,7 +89,7 @@ function autoFixStatblockReference(statblockName, oldFolder, newFolder, context)
 
   // Update reference store
   try {
-    const references = JSON.parse(localStorage.getItem('entity-references') || '[]');
+    const references = JSON.parse(localStorage.getItem('tool-references') || '[]');
     let updated = false;
 
     for (const ref of references) {
@@ -101,7 +101,7 @@ function autoFixStatblockReference(statblockName, oldFolder, newFolder, context)
     }
 
     if (updated) {
-      localStorage.setItem('entity-references', JSON.stringify(references));
+      localStorage.setItem('tool-references', JSON.stringify(references));
     }
   } catch (error) {
     console.warn('Failed to update reference store:', error);
@@ -109,71 +109,165 @@ function autoFixStatblockReference(statblockName, oldFolder, newFolder, context)
 }
 
 /**
- * Update all references to a renamed statblock across all tools
+ * Update all references to a renamed statblock across every store that
+ * names this statblock by name.
+ *
+ * Walks five stores:
+ *   - `npcGeneratorNPCs`: NPCs whose `statblock_name` matches oldName
+ *   - `dungeons`: dungeon monsters and dungeon NPCs (legacy flat shape AND
+ *     the part1-nested shape, since both exist in the wild)
+ *   - `gameSettings`: setting NPCs whose `statblock_name` matches
+ *   - `tool-references`: any ref whose target_id (or source_id) is
+ *     `${oldName}__${anyFolder}` — rewrites the name segment, preserves folder
+ *
+ * Without the `tool-references` walk, the StatblockGenerator's linked-NPCs
+ * panel goes empty after a rename and only repopulates once NPCGenerator
+ * mounts and `migrateNPCStatblockReferences` heals via reload. The walk
+ * here keeps the panel correct in real time.
+ *
+ * Dispatches `npc-storage-updated` so same-tab listeners
+ * (StatblockGenerator's linkedNPCs computed) refresh without a reload.
+ *
  * @param {string} oldName - The old statblock name
  * @param {string} newName - The new statblock name
- * @returns {Object} - Object with counts of updated references
+ * @returns {Object} per-store update counts
  */
 export function renameStatblockReferences(oldName, newName) {
-  let npcReferencesUpdated = 0;
-  let dungeonReferencesUpdated = 0;
-
-  // Update NPC Generator NPCs
-  const npcGeneratorNPCs = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-  let npcUpdated = false;
-
-  for (const folder of Object.values(npcGeneratorNPCs)) {
-    if (!Array.isArray(folder)) continue;
-    for (const npc of folder) {
-      if (npc.npcDescriptionPart1?.statblock_name === oldName) {
-        npc.npcDescriptionPart1.statblock_name = newName;
-        npcUpdated = true;
-        npcReferencesUpdated++;
-      }
-    }
-  }
-
-  if (npcUpdated) {
-    localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcGeneratorNPCs));
-  }
-
-  // Update Dungeon Generator dungeons
-  const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-  let dungeonsUpdated = false;
-
-  for (const dungeon of dungeons) {
-    // Update monster references
-    if (dungeon.monsters) {
-      for (const monster of dungeon.monsters) {
-        if (monster.statblock_name === oldName) {
-          monster.statblock_name = newName;
-          dungeonsUpdated = true;
-          dungeonReferencesUpdated++;
-        }
-      }
-    }
-
-    // Update NPC references
-    if (dungeon.npcs) {
-      for (const npc of dungeon.npcs) {
-        if (npc.statblock_name === oldName) {
-          npc.statblock_name = newName;
-          dungeonsUpdated = true;
-          dungeonReferencesUpdated++;
-        }
-      }
-    }
-  }
-
-  if (dungeonsUpdated) {
-    localStorage.setItem('dungeons', JSON.stringify(dungeons));
-  }
-
-  return {
-    npcReferencesUpdated,
-    dungeonReferencesUpdated,
-    totalUpdated: npcReferencesUpdated + dungeonReferencesUpdated
+  const results = {
+    npcReferencesUpdated: 0,
+    dungeonReferencesUpdated: 0,
+    settingReferencesUpdated: 0,
+    toolReferencesUpdated: 0,
+    totalUpdated: 0,
   };
+
+  if (!oldName || !newName || oldName === newName) {
+    return results;
+  }
+
+  // NPC Generator NPCs
+  try {
+    const npcGeneratorNPCs = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+    let updated = false;
+    for (const folder of Object.values(npcGeneratorNPCs)) {
+      if (!Array.isArray(folder)) continue;
+      for (const npc of folder) {
+        if (npc?.npcDescriptionPart1?.statblock_name === oldName) {
+          npc.npcDescriptionPart1.statblock_name = newName;
+          results.npcReferencesUpdated++;
+          updated = true;
+        }
+      }
+    }
+    if (updated) {
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcGeneratorNPCs));
+    }
+  } catch (error) {
+    console.warn('Failed to update NPC statblock references during rename:', error);
+  }
+
+  // Dungeons (monsters + NPCs, both flat and part1-nested shapes)
+  try {
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+    let updated = false;
+    for (const dungeon of dungeons) {
+      if (Array.isArray(dungeon?.monsters)) {
+        for (const monster of dungeon.monsters) {
+          if (monster?.statblock_name === oldName) {
+            monster.statblock_name = newName;
+            results.dungeonReferencesUpdated++;
+            updated = true;
+          }
+        }
+      }
+      if (Array.isArray(dungeon?.npcs)) {
+        for (const npc of dungeon.npcs) {
+          if (npc?.statblock_name === oldName) {
+            npc.statblock_name = newName;
+            results.dungeonReferencesUpdated++;
+            updated = true;
+          }
+          if (npc?.npcDescriptionPart1?.statblock_name === oldName) {
+            npc.npcDescriptionPart1.statblock_name = newName;
+            results.dungeonReferencesUpdated++;
+            updated = true;
+          }
+        }
+      }
+    }
+    if (updated) {
+      localStorage.setItem('dungeons', JSON.stringify(dungeons));
+    }
+  } catch (error) {
+    console.warn('Failed to update dungeon statblock references during rename:', error);
+  }
+
+  // Settings
+  try {
+    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+    let updated = false;
+    for (const setting of settings) {
+      if (!Array.isArray(setting?.npcs)) continue;
+      for (const npc of setting.npcs) {
+        if (npc?.npcDescriptionPart1?.statblock_name === oldName) {
+          npc.npcDescriptionPart1.statblock_name = newName;
+          results.settingReferencesUpdated++;
+          updated = true;
+        }
+      }
+    }
+    if (updated) {
+      localStorage.setItem('gameSettings', JSON.stringify(settings));
+    }
+  } catch (error) {
+    console.warn('Failed to update setting statblock references during rename:', error);
+  }
+
+  // tool-references graph: rewrite the name segment of every statblock id.
+  // The id format is `${name}__${folder}`; we preserve folder and swap name.
+  try {
+    const refs = JSON.parse(localStorage.getItem('tool-references') || '[]');
+    if (Array.isArray(refs)) {
+      const oldPrefix = `${oldName}__`;
+      let updated = false;
+      const rewriteId = (id) => `${newName}__${id.slice(oldPrefix.length)}`;
+      for (const ref of refs) {
+        if (ref?.target_type === 'statblock' && typeof ref?.target_id === 'string'
+            && ref.target_id.startsWith(oldPrefix)) {
+          ref.target_id = rewriteId(ref.target_id);
+          if (ref.target_name === oldName) ref.target_name = newName;
+          results.toolReferencesUpdated++;
+          updated = true;
+        }
+        if (ref?.source_type === 'statblock' && typeof ref?.source_id === 'string'
+            && ref.source_id.startsWith(oldPrefix)) {
+          ref.source_id = rewriteId(ref.source_id);
+          if (ref.source_name === oldName) ref.source_name = newName;
+          results.toolReferencesUpdated++;
+          updated = true;
+        }
+      }
+      if (updated) {
+        localStorage.setItem('tool-references', JSON.stringify(refs));
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to update tool-references during statblock rename:', error);
+  }
+
+  results.totalUpdated =
+    results.npcReferencesUpdated +
+    results.dungeonReferencesUpdated +
+    results.settingReferencesUpdated +
+    results.toolReferencesUpdated;
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('npc-storage-updated', {
+      detail: { action: 'statblock-rename', oldName, newName },
+    }));
+  }
+
+  return results;
 }
 
 /**
@@ -260,7 +354,7 @@ export function renameStatblockFolder(oldFolder, newFolder) {
   }
 
   // Update reference store IDs
-  const references = JSON.parse(localStorage.getItem('entity-references') || '[]');
+  const references = JSON.parse(localStorage.getItem('tool-references') || '[]');
   let referencesUpdated = false;
 
   for (const ref of references) {
@@ -272,7 +366,7 @@ export function renameStatblockFolder(oldFolder, newFolder) {
   }
 
   if (referencesUpdated) {
-    localStorage.setItem('entity-references', JSON.stringify(references));
+    localStorage.setItem('tool-references', JSON.stringify(references));
   }
 
   return {
@@ -281,4 +375,168 @@ export function renameStatblockFolder(oldFolder, newFolder) {
     settingReferencesUpdated,
     totalUpdated: npcReferencesUpdated + dungeonReferencesUpdated + settingReferencesUpdated
   };
+}
+
+/**
+ * Move a single statblock between folders. Updates every cross-tool
+ * pointer that names this specific (statblockName, oldFolder) pair so
+ * existing NPC links survive the move.
+ *
+ * The canonical statblock object's location in the `monsters` store is
+ * the caller's responsibility — this function only fixes the cross-tool
+ * pointers that would otherwise dangle. It mirrors `renameStatblockFolder`
+ * but matches by name+folder instead of folder alone, so other statblocks
+ * in the same source folder aren't affected.
+ *
+ * Updates four stores:
+ *   - `npcGeneratorNPCs`: NPCs whose statblock_name matches and statblock_folder === oldFolder
+ *   - `dungeons`: dungeon monsters and dungeon NPCs (both legacy flat shape and part1-nested shape)
+ *   - `gameSettings`: setting NPCs
+ *   - `tool-references`: refs whose target/source id is `${statblockName}__${oldFolder}`
+ *
+ * Dispatches `npc-storage-updated` so same-tab listeners (e.g., the
+ * StatblockGenerator's linked-NPCs panel) refresh without a reload.
+ *
+ * @param {string} statblockName
+ * @param {string} oldFolder
+ * @param {string} newFolder
+ * @returns {Object} per-store update counts
+ */
+export function moveStatblockToNewFolder(statblockName, oldFolder, newFolder) {
+  const results = {
+    npcReferencesUpdated: 0,
+    dungeonReferencesUpdated: 0,
+    settingReferencesUpdated: 0,
+    toolReferencesUpdated: 0,
+    totalUpdated: 0,
+  };
+
+  if (!statblockName || !oldFolder || !newFolder || oldFolder === newFolder) {
+    return results;
+  }
+
+  // NPC Generator NPCs
+  try {
+    const npcGeneratorNPCs = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
+    let updated = false;
+    for (const folder of Object.values(npcGeneratorNPCs)) {
+      if (!Array.isArray(folder)) continue;
+      for (const npc of folder) {
+        const part1 = npc?.npcDescriptionPart1;
+        if (part1?.statblock_name === statblockName && part1?.statblock_folder === oldFolder) {
+          part1.statblock_folder = newFolder;
+          results.npcReferencesUpdated++;
+          updated = true;
+        }
+      }
+    }
+    if (updated) {
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcGeneratorNPCs));
+    }
+  } catch (error) {
+    console.warn('Failed to update NPC statblock references during folder move:', error);
+  }
+
+  // Dungeons
+  try {
+    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
+    let updated = false;
+    for (const dungeon of dungeons) {
+      if (Array.isArray(dungeon?.monsters)) {
+        for (const monster of dungeon.monsters) {
+          if (monster?.statblock_name === statblockName && monster?.statblock_folder === oldFolder) {
+            monster.statblock_folder = newFolder;
+            results.dungeonReferencesUpdated++;
+            updated = true;
+          }
+        }
+      }
+      if (Array.isArray(dungeon?.npcs)) {
+        for (const npc of dungeon.npcs) {
+          const part1 = npc?.npcDescriptionPart1;
+          if (part1?.statblock_name === statblockName && part1?.statblock_folder === oldFolder) {
+            part1.statblock_folder = newFolder;
+            results.dungeonReferencesUpdated++;
+            updated = true;
+          }
+          // Some legacy dungeon NPCs store statblock_* directly on the entry.
+          if (npc?.statblock_name === statblockName && npc?.statblock_folder === oldFolder) {
+            npc.statblock_folder = newFolder;
+            results.dungeonReferencesUpdated++;
+            updated = true;
+          }
+        }
+      }
+    }
+    if (updated) {
+      localStorage.setItem('dungeons', JSON.stringify(dungeons));
+    }
+  } catch (error) {
+    console.warn('Failed to update dungeon statblock references during folder move:', error);
+  }
+
+  // Settings
+  try {
+    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+    let updated = false;
+    for (const setting of settings) {
+      if (!Array.isArray(setting?.npcs)) continue;
+      for (const npc of setting.npcs) {
+        const part1 = npc?.npcDescriptionPart1;
+        if (part1?.statblock_name === statblockName && part1?.statblock_folder === oldFolder) {
+          part1.statblock_folder = newFolder;
+          results.settingReferencesUpdated++;
+          updated = true;
+        }
+      }
+    }
+    if (updated) {
+      localStorage.setItem('gameSettings', JSON.stringify(settings));
+    }
+  } catch (error) {
+    console.warn('Failed to update setting statblock references during folder move:', error);
+  }
+
+  // tool-references graph (target side and source side, defensive)
+  try {
+    const refs = JSON.parse(localStorage.getItem('tool-references') || '[]');
+    if (Array.isArray(refs)) {
+      const oldId = `${statblockName}__${oldFolder}`;
+      const newId = `${statblockName}__${newFolder}`;
+      let updated = false;
+      for (const ref of refs) {
+        if (ref?.target_type === 'statblock' && ref?.target_id === oldId) {
+          ref.target_id = newId;
+          results.toolReferencesUpdated++;
+          updated = true;
+        }
+        if (ref?.source_type === 'statblock' && ref?.source_id === oldId) {
+          ref.source_id = newId;
+          results.toolReferencesUpdated++;
+          updated = true;
+        }
+      }
+      if (updated) {
+        localStorage.setItem('tool-references', JSON.stringify(refs));
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to update tool-references during statblock folder move:', error);
+  }
+
+  results.totalUpdated =
+    results.npcReferencesUpdated +
+    results.dungeonReferencesUpdated +
+    results.settingReferencesUpdated +
+    results.toolReferencesUpdated;
+
+  // Same-tab listeners (StatblockGenerator's linked-NPCs panel, etc.)
+  // pick this up alongside the existing `npc-storage-updated` event.
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('npc-storage-updated', {
+      detail: { action: 'statblock-folder-move', statblockName, oldFolder, newFolder },
+    }));
+  }
+
+  return results;
 }

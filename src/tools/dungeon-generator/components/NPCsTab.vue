@@ -164,7 +164,7 @@ import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
 import Statblock from '@/components/Statblock.vue';
 import NPCCard from '@/components/NPCCard.vue';
-import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC } from '@/util/npc-storage.mjs';
+import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC, findNPCByIdAcrossFolders } from '@/util/npc-storage.mjs';
 import { getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
 import { generateGptResponse } from "@/util/ai-client.mjs";
@@ -195,16 +195,14 @@ const enrichedNPCs = computed(() => {
 
   if (!dungeonStore.currentDungeon?.npcs) return [];
 
-  const dungeonTitle = dungeonStore.currentDungeon.dungeonOverview?.name || 'Dungeon NPCs';
   const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-  const sharedNPCs = stored[dungeonTitle] || [];
 
   return dungeonStore.currentDungeon.npcs.map(dungeonNPC => {
-    // If NPC has an ID, try to fetch from shared storage
+    // If NPC has an ID, try to fetch from shared storage. Walk every
+    // folder rather than guessing the dungeon-name folder — the user may
+    // have moved the canonical NPC to a folder of their own choosing.
     if (dungeonNPC.npc_id) {
-      const sharedNPC = sharedNPCs.find(n =>
-        (n.npc_id === dungeonNPC.npc_id || n.id === dungeonNPC.npc_id)
-      );
+      const sharedNPC = findNPCByIdAcrossFolders(stored, dungeonNPC.npc_id);
 
       if (sharedNPC) {
         // Use shared storage data, but preserve dungeon-specific fields
@@ -410,17 +408,20 @@ function handleSaveEdit(index, editedData) {
   const originalName = npc.name;
   const dungeonTitle = dungeonStore.currentDungeon.dungeonOverview?.name || 'Dungeon NPCs';
 
-  // If renaming and no ID, look up existing NPC by original name to get its ID
+  // If renaming and no ID, look up existing NPC by original name to get its ID.
+  // Walk every folder; folder organization is the user's, not ours.
   if (!npc.npc_id && originalName !== editedData.name && npc.read_aloud_description) {
     const stored = JSON.parse(
       localStorage.getItem('npcGeneratorNPCs') || '{}'
     );
-    if (stored[dungeonTitle]) {
-      const existingNPC = stored[dungeonTitle].find(n =>
+    for (const folder of Object.values(stored)) {
+      if (!Array.isArray(folder)) continue;
+      const existingNPC = folder.find(n =>
         n.npcDescriptionPart1?.character_name === originalName
       );
       if (existingNPC) {
         npc.npc_id = existingNPC.npc_id || existingNPC.id;
+        break;
       }
     }
   }

@@ -11,6 +11,29 @@
  */
 
 /**
+ * Find an NPC in `npcGeneratorNPCs` by `npc_id`, walking every folder.
+ *
+ * Setting and dungeon tabs used to look up canonical NPCs in
+ * `stored[settingName]` / `stored[dungeonTitle]`, which broke as soon as
+ * the user moved the NPC into a folder of their choosing. Folder
+ * organization belongs to the user; cross-tool linkage is by id. Use this
+ * helper for any NPC lookup keyed on identity rather than location.
+ *
+ * @param {Object} stored - Parsed `npcGeneratorNPCs` localStorage object
+ * @param {string} npcId
+ * @returns {Object|null} the matching NPC, or null
+ */
+export function findNPCByIdAcrossFolders(stored, npcId) {
+  if (!stored || !npcId) return null;
+  for (const folder of Object.values(stored)) {
+    if (!Array.isArray(folder)) continue;
+    const found = folder.find(n => n?.npc_id === npcId || n?.id === npcId);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
  * Save an NPC to shared NPC storage (npcGeneratorNPCs localStorage).
  * Deduplicates by unique ID first, then by character name within the folder.
  *
@@ -606,12 +629,18 @@ export function migrateDungeonNPCsToSharedStorage() {
         // Convert to canonical format
         const canonicalNPC = dungeonNPCToCanonical(dungeonNPC, dungeonTitle);
 
-        // Check if NPC already exists in shared storage
+        // Check existence ACROSS ALL FOLDERS by id. The migration's job is
+        // to ensure the NPC has a canonical record — not to pin it to the
+        // dungeon's folder. If the user moved the NPC to "Heroes", this
+        // check used to look only in `stored[dungeonTitle]`, miss it, and
+        // call saveNPCToStorage with the dungeon folder; saveNPCToStorage
+        // would then yank the NPC out of "Heroes" and back into the
+        // dungeon folder on every load.
         const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-        const folderNPCs = stored[dungeonTitle] || [];
-
-        const exists = canonicalNPC.npc_id && folderNPCs.some(n =>
-          n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+        const exists = canonicalNPC.npc_id && Object.values(stored).some(folder =>
+          Array.isArray(folder) && folder.some(n =>
+            n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+          )
         );
 
         if (!exists) {
@@ -658,12 +687,16 @@ export function migrateSettingNPCsToSharedStorage() {
         // Convert to canonical format
         const canonicalNPC = settingNPCToCanonical(settingNPC, settingName);
 
-        // Check if NPC already exists in shared storage
+        // Check existence ACROSS ALL FOLDERS by id. See the dungeon-side
+        // counterpart for the full rationale: this preserves the user's
+        // folder organization. If the NPC has been moved out of the
+        // setting-named folder into one of their own choosing, the
+        // migration must not drag it back.
         const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-        const folderNPCs = stored[settingName] || [];
-
-        const exists = canonicalNPC.npc_id && folderNPCs.some(n =>
-          n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+        const exists = canonicalNPC.npc_id && Object.values(stored).some(folder =>
+          Array.isArray(folder) && folder.some(n =>
+            n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+          )
         );
 
         if (!exists) {

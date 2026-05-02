@@ -5,7 +5,8 @@
 import {
   getStatblockFromStorage,
   renameStatblockFolder,
-  renameStatblockReferences
+  renameStatblockReferences,
+  moveStatblockToNewFolder,
 } from '../statblock-storage.mjs';
 
 describe('statblock-storage', () => {
@@ -161,7 +162,7 @@ describe('statblock-storage', () => {
     });
 
     it('should update reference store target IDs', () => {
-      localStorage.setItem('entity-references', JSON.stringify([
+      localStorage.setItem('tool-references', JSON.stringify([
         {
           id: 'ref_1',
           source_type: 'npc',
@@ -190,7 +191,7 @@ describe('statblock-storage', () => {
 
       renameStatblockFolder('OldFolder', 'NewFolder');
 
-      const refs = JSON.parse(localStorage.getItem('entity-references'));
+      const refs = JSON.parse(localStorage.getItem('tool-references'));
       expect(refs[0].target_id).toBe('Goblin__NewFolder');
       expect(refs[1].target_id).toBe('Orc__NewFolder');
       expect(refs[2].target_id).toBe('Dragon__DifferentFolder');
@@ -223,7 +224,7 @@ describe('statblock-storage', () => {
         }
       ]));
 
-      localStorage.setItem('entity-references', JSON.stringify([
+      localStorage.setItem('tool-references', JSON.stringify([
         { target_type: 'statblock', target_id: 'Monster__OldFolder' }
       ]));
 
@@ -368,7 +369,7 @@ describe('statblock-storage', () => {
         ]
       }));
 
-      localStorage.setItem('entity-references', JSON.stringify([
+      localStorage.setItem('tool-references', JSON.stringify([
         {
           id: 'ref_1',
           source_type: 'npc',
@@ -385,7 +386,7 @@ describe('statblock-storage', () => {
       });
 
       // Verify reference store was updated
-      const refs = JSON.parse(localStorage.getItem('entity-references'));
+      const refs = JSON.parse(localStorage.getItem('tool-references'));
       expect(refs[0].target_id).toBe('Goblin__NewFolder');
     });
 
@@ -476,7 +477,7 @@ describe('statblock-storage', () => {
         ]
       }));
 
-      localStorage.setItem('entity-references', 'invalid json');
+      localStorage.setItem('tool-references', 'invalid json');
 
       // Should not throw even with corrupted reference store
       expect(() => {
@@ -634,6 +635,215 @@ describe('statblock-storage', () => {
 
       const npcs = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
       expect(npcs.Uncategorized[0].npcDescriptionPart1.statblock_name).toBe('DifferentName');
+    });
+
+    it('rewrites tool-references target_id by replacing the name segment, preserving folder', () => {
+      localStorage.setItem('tool-references', JSON.stringify([
+        { source_type: 'npc', source_id: 'npc_1', target_type: 'statblock', target_id: 'OldName__Monsters', target_name: 'OldName', relationship: 'has_statblock' },
+        { source_type: 'npc', source_id: 'npc_2', target_type: 'statblock', target_id: 'OldName__Bosses', target_name: 'OldName', relationship: 'has_statblock' },
+        { source_type: 'npc', source_id: 'npc_3', target_type: 'statblock', target_id: 'DifferentName__Monsters', target_name: 'DifferentName', relationship: 'has_statblock' },
+      ]));
+
+      const result = renameStatblockReferences('OldName', 'NewName');
+
+      const refs = JSON.parse(localStorage.getItem('tool-references'));
+      expect(refs[0].target_id).toBe('NewName__Monsters');
+      expect(refs[0].target_name).toBe('NewName');
+      expect(refs[1].target_id).toBe('NewName__Bosses');
+      expect(refs[1].target_name).toBe('NewName');
+      expect(refs[2].target_id).toBe('DifferentName__Monsters');
+      expect(refs[2].target_name).toBe('DifferentName');
+      expect(result.toolReferencesUpdated).toBe(2);
+    });
+
+    it('updates setting NPC statblock_name fields', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        {
+          npcs: [
+            { npcDescriptionPart1: { statblock_name: 'OldName' } },
+            { npcDescriptionPart1: { statblock_name: 'OtherName' } }, // unrelated
+          ],
+        },
+      ]));
+
+      const result = renameStatblockReferences('OldName', 'NewName');
+
+      const settings = JSON.parse(localStorage.getItem('gameSettings'));
+      expect(settings[0].npcs[0].npcDescriptionPart1.statblock_name).toBe('NewName');
+      expect(settings[0].npcs[1].npcDescriptionPart1.statblock_name).toBe('OtherName');
+      expect(result.settingReferencesUpdated).toBe(1);
+    });
+
+    it('returns zero counts and is a no-op when oldName === newName or args are missing', () => {
+      expect(renameStatblockReferences('Same', 'Same').totalUpdated).toBe(0);
+      expect(renameStatblockReferences('', 'New').totalUpdated).toBe(0);
+      expect(renameStatblockReferences('Old', '').totalUpdated).toBe(0);
+    });
+
+    it('dispatches npc-storage-updated so same-tab linked-NPC panels refresh without reload', () => {
+      const handler = jest.fn();
+      window.addEventListener('npc-storage-updated', handler);
+
+      renameStatblockReferences('OldName', 'NewName');
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      const event = handler.mock.calls[0][0];
+      expect(event.detail).toMatchObject({
+        action: 'statblock-rename',
+        oldName: 'OldName',
+        newName: 'NewName',
+      });
+
+      window.removeEventListener('npc-storage-updated', handler);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // moveStatblockToNewFolder Tests — single-statblock cross-store sweep
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('moveStatblockToNewFolder', () => {
+    it('updates NPC statblock_folder only when both name and old folder match', () => {
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify({
+        'Uncategorized': [
+          // matches: should update
+          { npc_id: 'npc_1', npcDescriptionPart1: { statblock_name: 'Goblin', statblock_folder: 'OldFolder' } },
+          // same folder, different statblock: should NOT update
+          { npc_id: 'npc_2', npcDescriptionPart1: { statblock_name: 'Orc', statblock_folder: 'OldFolder' } },
+          // same name, different folder: should NOT update
+          { npc_id: 'npc_3', npcDescriptionPart1: { statblock_name: 'Goblin', statblock_folder: 'OtherFolder' } },
+        ],
+      }));
+
+      const result = moveStatblockToNewFolder('Goblin', 'OldFolder', 'NewFolder');
+
+      const npcs = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(npcs.Uncategorized[0].npcDescriptionPart1.statblock_folder).toBe('NewFolder');
+      expect(npcs.Uncategorized[1].npcDescriptionPart1.statblock_folder).toBe('OldFolder');
+      expect(npcs.Uncategorized[2].npcDescriptionPart1.statblock_folder).toBe('OtherFolder');
+      expect(result.npcReferencesUpdated).toBe(1);
+    });
+
+    it('updates tool-references entries with the matching target_id', () => {
+      localStorage.setItem('tool-references', JSON.stringify([
+        { source_type: 'npc', source_id: 'npc_1', target_type: 'statblock', target_id: 'Goblin__OldFolder', relationship: 'has_statblock' },
+        { source_type: 'npc', source_id: 'npc_2', target_type: 'statblock', target_id: 'Orc__OldFolder', relationship: 'has_statblock' },
+        { source_type: 'npc', source_id: 'npc_3', target_type: 'statblock', target_id: 'Goblin__OtherFolder', relationship: 'has_statblock' },
+      ]));
+
+      const result = moveStatblockToNewFolder('Goblin', 'OldFolder', 'NewFolder');
+
+      const refs = JSON.parse(localStorage.getItem('tool-references'));
+      expect(refs[0].target_id).toBe('Goblin__NewFolder');
+      expect(refs[1].target_id).toBe('Orc__OldFolder');
+      expect(refs[2].target_id).toBe('Goblin__OtherFolder');
+      expect(result.toolReferencesUpdated).toBe(1);
+    });
+
+    it('updates dungeon monster and dungeon NPC statblock_folder fields', () => {
+      localStorage.setItem('dungeons', JSON.stringify([
+        {
+          monsters: [
+            { statblock_name: 'Goblin', statblock_folder: 'OldFolder' },
+            { statblock_name: 'Goblin', statblock_folder: 'OtherFolder' }, // no match
+          ],
+          npcs: [
+            { npcDescriptionPart1: { statblock_name: 'Goblin', statblock_folder: 'OldFolder' } },
+            // legacy flat shape
+            { statblock_name: 'Goblin', statblock_folder: 'OldFolder' },
+          ],
+        },
+      ]));
+
+      const result = moveStatblockToNewFolder('Goblin', 'OldFolder', 'NewFolder');
+
+      const dungeons = JSON.parse(localStorage.getItem('dungeons'));
+      expect(dungeons[0].monsters[0].statblock_folder).toBe('NewFolder');
+      expect(dungeons[0].monsters[1].statblock_folder).toBe('OtherFolder');
+      expect(dungeons[0].npcs[0].npcDescriptionPart1.statblock_folder).toBe('NewFolder');
+      expect(dungeons[0].npcs[1].statblock_folder).toBe('NewFolder');
+      expect(result.dungeonReferencesUpdated).toBe(3);
+    });
+
+    it('updates setting NPC statblock_folder fields', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        {
+          npcs: [
+            { npcDescriptionPart1: { statblock_name: 'Goblin', statblock_folder: 'OldFolder' } },
+            { npcDescriptionPart1: { statblock_name: 'Orc', statblock_folder: 'OldFolder' } }, // no match (different name)
+          ],
+        },
+      ]));
+
+      const result = moveStatblockToNewFolder('Goblin', 'OldFolder', 'NewFolder');
+
+      const settings = JSON.parse(localStorage.getItem('gameSettings'));
+      expect(settings[0].npcs[0].npcDescriptionPart1.statblock_folder).toBe('NewFolder');
+      expect(settings[0].npcs[1].npcDescriptionPart1.statblock_folder).toBe('OldFolder');
+      expect(result.settingReferencesUpdated).toBe(1);
+    });
+
+    it('returns zero counts and is a no-op when oldFolder === newFolder', () => {
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify({
+        'Uncategorized': [
+          { npc_id: 'npc_1', npcDescriptionPart1: { statblock_name: 'Goblin', statblock_folder: 'A' } },
+        ],
+      }));
+
+      const result = moveStatblockToNewFolder('Goblin', 'A', 'A');
+
+      expect(result.totalUpdated).toBe(0);
+      const npcs = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(npcs.Uncategorized[0].npcDescriptionPart1.statblock_folder).toBe('A');
+    });
+
+    it('returns zero counts when any required arg is missing', () => {
+      expect(moveStatblockToNewFolder('', 'A', 'B').totalUpdated).toBe(0);
+      expect(moveStatblockToNewFolder('Goblin', '', 'B').totalUpdated).toBe(0);
+      expect(moveStatblockToNewFolder('Goblin', 'A', '').totalUpdated).toBe(0);
+    });
+
+    it('dispatches npc-storage-updated so same-tab linked-NPC panels refresh', () => {
+      const handler = jest.fn();
+      window.addEventListener('npc-storage-updated', handler);
+
+      moveStatblockToNewFolder('Goblin', 'OldFolder', 'NewFolder');
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      const event = handler.mock.calls[0][0];
+      expect(event.detail).toMatchObject({
+        action: 'statblock-folder-move',
+        statblockName: 'Goblin',
+        oldFolder: 'OldFolder',
+        newFolder: 'NewFolder',
+      });
+
+      window.removeEventListener('npc-storage-updated', handler);
+    });
+
+    it('aggregates totalUpdated across all four stores', () => {
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify({
+        'A': [{ npc_id: 'n1', npcDescriptionPart1: { statblock_name: 'X', statblock_folder: 'Old' } }],
+      }));
+      localStorage.setItem('dungeons', JSON.stringify([
+        { monsters: [{ statblock_name: 'X', statblock_folder: 'Old' }], npcs: [] },
+      ]));
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { npcs: [{ npcDescriptionPart1: { statblock_name: 'X', statblock_folder: 'Old' } }] },
+      ]));
+      localStorage.setItem('tool-references', JSON.stringify([
+        { source_type: 'npc', source_id: 'n1', target_type: 'statblock', target_id: 'X__Old', relationship: 'has_statblock' },
+      ]));
+
+      const result = moveStatblockToNewFolder('X', 'Old', 'New');
+
+      expect(result).toMatchObject({
+        npcReferencesUpdated: 1,
+        dungeonReferencesUpdated: 1,
+        settingReferencesUpdated: 1,
+        toolReferencesUpdated: 1,
+        totalUpdated: 4,
+      });
     });
   });
 });

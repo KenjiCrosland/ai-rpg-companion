@@ -17,6 +17,7 @@ import { extractExistingReferences } from './extract-existing-references.mjs';
 import { renameNPCItemFields } from './rename-npc-item-fields.mjs';
 import { assignDungeonIds } from './assign-dungeon-ids.mjs';
 import { assignSettingIds } from './assign-setting-ids.mjs';
+import { dropNPCFolder } from './drop-npc-folder.mjs';
 import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
 
 /**
@@ -32,7 +33,10 @@ import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
  *   3. assign-dungeon-ids / assign-setting-ids — convert entities to
  *      stable string ids and rewrite refs that targeted them by name or
  *      numeric value.
- *   4. sweep-orphan-references — drops any refs whose source/target no
+ *   4. drop-npc-folder — remove the `npc_folder` denormalization from
+ *      every cross-tool stub. Substrate lookups walk by id now; the
+ *      cached folder hint is dead weight and a stale-cache hazard.
+ *   5. sweep-orphan-references — drops any refs whose source/target no
  *      longer resolves; runs after the id migrations so their post-
  *      rewrite refs aren't seen as orphans.
  *
@@ -43,6 +47,7 @@ const migrations = [
   { name: 'rename-npc-item-fields', run: renameNPCItemFields },
   { name: 'assign-dungeon-ids', run: assignDungeonIds },
   { name: 'assign-setting-ids', run: assignSettingIds },
+  { name: 'drop-npc-folder', run: dropNPCFolder },
   { name: 'sweep-orphan-references', run: sweepOrphanReferences },
 ];
 

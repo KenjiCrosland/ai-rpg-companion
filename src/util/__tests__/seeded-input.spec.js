@@ -132,7 +132,9 @@ describe('seeded-input', () => {
       });
       const prefill = buildPrefillForSeed(seed);
 
-      expect(prefill).toContain('Yelena — oracle who saw the vision. Mentioned in lore of Krovnik\'s Hearthstaff.');
+      expect(prefill).toContain('Name: Yelena');
+      expect(prefill).toContain('Role: oracle who saw the vision.');
+      expect(prefill).toContain('Mentioned in lore of Krovnik\'s Hearthstaff.');
       expect(prefill).toContain('Aged blackwood.');
       expect(prefill).toContain('Lore:');
       expect(prefill).toContain('Specific role: prophet');
@@ -493,11 +495,11 @@ describe('seeded-input', () => {
   });
 
   describe('writeBackPromotedNPC', () => {
-    it('updates the matching item stub with the new npc_id and folder', () => {
+    it('updates the matching item stub with the new npc_id', () => {
       localStorage.setItem('savedItems', JSON.stringify([{
         name: 'Hearthstaff',
         related_npcs: [
-          { name: 'Yelena', role_brief: '', context: '', npc_id: null, npc_folder: null },
+          { name: 'Yelena', role_brief: '', context: '', npc_id: null },
         ],
       }]));
       const seed = {
@@ -509,7 +511,7 @@ describe('seeded-input', () => {
 
       const items = JSON.parse(localStorage.getItem('savedItems'));
       expect(items[0].related_npcs[0].npc_id).toBe('npc_abc');
-      expect(items[0].related_npcs[0].npc_folder).toBe('Heroes');
+      expect(items[0].related_npcs[0]).not.toHaveProperty('npc_folder');
     });
   });
 
@@ -531,7 +533,7 @@ describe('seeded-input', () => {
   });
 
   describe('resetStubsForDeletedNPC', () => {
-    it('clears npc_id and npc_folder on every stub pointing at the npc', () => {
+    it('clears npc_id and removes npc_folder on every stub pointing at the npc', () => {
       localStorage.setItem('savedItems', JSON.stringify([{
         name: 'Hearthstaff',
         related_npcs: [
@@ -544,7 +546,7 @@ describe('seeded-input', () => {
 
       const items = JSON.parse(localStorage.getItem('savedItems'));
       expect(items[0].related_npcs[0].npc_id).toBeNull();
-      expect(items[0].related_npcs[0].npc_folder).toBeNull();
+      expect(items[0].related_npcs[0]).not.toHaveProperty('npc_folder');
     });
   });
 

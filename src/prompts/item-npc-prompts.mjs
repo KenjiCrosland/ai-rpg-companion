@@ -167,17 +167,15 @@ export function buildPrefilledTypeOfPlace(seededInput) {
   const physical = (source.physical_description || '').trim();
   const lore = (source.lore || '').trim();
 
-  // Headline collapses stub identity + provenance into a single sentence so
-  // the NPC prompt opens with a concrete subject ("Yelena — oracle who…")
-  // followed by where the model can find them ("Mentioned in lore of …").
-  // Item rarity/type are omitted here — the lore section below conveys that
-  // context, and the headline reads cleaner without the parenthetical.
-  const stubSentence = roleBrief
-    ? `${stubName} — ${roleBrief}.`
-    : `${stubName}.`;
-  const headline = itemName
-    ? `${stubSentence} Mentioned in lore of ${itemName}.`
-    : stubSentence;
+  // Headline uses structured Name: / Role: lines rather than a dash form
+  // ("Korrish — Salt-sacrificed oracle bound into …") because the dash
+  // form is ambiguous to LLMs — the model sometimes copies the full
+  // dash-joined string into character_name. Field labels make the name
+  // unambiguous; the prompt's character_name instruction does the rest.
+  const lines = [`Name: ${stubName}`];
+  if (roleBrief) lines.push(`Role: ${roleBrief}.`);
+  if (itemName) lines.push(`Mentioned in lore of ${itemName}.`);
+  const headline = lines.join('\n');
 
   const sections = [headline];
 

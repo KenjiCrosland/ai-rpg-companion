@@ -200,8 +200,8 @@ import creatureTemplates from '@/data/creatureTemplates.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
-import { renameStatblockReferences } from '@/util/statblock-storage.mjs';
-import { navigateToTool } from '@/util/navigation.mjs';
+import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
+import { navigateToTool, getNavigationParams } from '@/util/navigation.mjs';
 import { useToast } from '@/composables/useToast';
 import { getReferencesForEntity } from '@/util/reference-storage.mjs';
 
@@ -336,10 +336,12 @@ onMounted(() => {
     monsters.value = { 'Uncategorized': [] };
   }
 
-  // Check for URL parameters to open a specific statblock
-  const urlParams = new URLSearchParams(window.location.search);
-  const monsterName = urlParams.get('monster');
-  const folderName = urlParams.get('folder');
+  // Check navigation parameters to open a specific statblock. Reads from
+  // sessionStorage in dev and URL search params in prod via the navigation
+  // substrate, so cross-tool deep links work in both environments.
+  const navParams = getNavigationParams();
+  const monsterName = navParams.monster;
+  const folderName = navParams.folder;
 
   if (monsterName) {
     // Check specified folder first
@@ -567,6 +569,13 @@ function handleFolderMove() {
   const newIndex = monsters.value[activeFolder.value].findIndex(m => m.name === currentMonsterName);
   selectMonster(activeFolder.value, newIndex);
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
+
+  // Propagate the folder change across cross-tool stores so NPC links and
+  // the reference graph follow the move. Without this, NPCs that pointed
+  // at `${name}__${previousActiveFolder}` keep stale `statblock_folder`
+  // values, "Edit in Statblock Generator" navigation 404s, and the
+  // linked-NPCs panel here loses its rows.
+  moveStatblockToNewFolder(currentMonsterName, previousActiveFolder, targetFolder);
 
   // Reset and close
   showFolderMover.value = false;

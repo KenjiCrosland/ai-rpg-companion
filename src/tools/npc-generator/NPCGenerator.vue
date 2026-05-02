@@ -289,7 +289,7 @@
                         <div v-if="statblock && npcDescriptionPart1?.statblock_name && npcDescriptionPart1?.statblock_source !== 'srd'" class="statblock-saved-message">
                             <p>
                                 Edit this statblock in the
-                                <a :href="statblockGeneratorUrl" target="_blank">Statblock Generator</a>
+                                <a href="#" @click.prevent="openInStatblockGenerator">Statblock Generator</a>
                             </p>
                         </div>
                     </div>
@@ -442,20 +442,18 @@ const patreonLoginUrl = computed(() => {
     return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
 
-const statblockGeneratorUrl = computed(() => {
-    const base = 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/';
-
-    const params = new URLSearchParams();
-    if (npcDescriptionPart1.value?.statblock_name) {
-        params.set('monster', npcDescriptionPart1.value.statblock_name);
-    }
-    if (npcDescriptionPart1.value?.statblock_folder) {
-        params.set('folder', npcDescriptionPart1.value.statblock_folder);
-    }
-
-    const qs = params.toString();
-    return qs ? `${base}?${qs}` : base;
-});
+// Same-tab navigation to the Statblock Generator with the linked statblock
+// pre-selected. Goes through `navigateToTool` rather than a hardcoded
+// cros.land URL so the dev path works (dev uses sessionStorage; prod uses
+// query strings — both handled by the navigation substrate).
+function openInStatblockGenerator() {
+    const params = {};
+    const name = npcDescriptionPart1.value?.statblock_name;
+    const folder = npcDescriptionPart1.value?.statblock_folder;
+    if (name) params.monster = name;
+    if (folder) params.folder = folder;
+    navigateToTool('statblock-generator', params);
+}
 
 // Folder options for moving NPCs (exclude current folder)
 const folderOptions = computed(() => {

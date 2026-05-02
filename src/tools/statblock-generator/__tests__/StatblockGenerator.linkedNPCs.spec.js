@@ -52,7 +52,8 @@ jest.mock('@/util/ai-client.mjs', () => ({
 
 // Mock navigation
 jest.mock('@/util/navigation.mjs', () => ({
-  navigateToTool: jest.fn()
+  navigateToTool: jest.fn(),
+  getNavigationParams: jest.fn(() => ({})),
 }));
 
 describe('StatblockGenerator - Linked NPCs', () => {

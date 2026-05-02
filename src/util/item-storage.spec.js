@@ -74,12 +74,12 @@ describe('item-storage', () => {
       });
     });
 
-    it('writes npc_id and npc_folder onto the matching stub', () => {
-      const ok = linkNPCToItemStub('Krovnik\'s Hearthstaff', 'Yelena of the Duskwood', 'npc_abc', 'Uncategorized');
+    it('writes npc_id onto the matching stub', () => {
+      const ok = linkNPCToItemStub('Krovnik\'s Hearthstaff', 'Yelena of the Duskwood', 'npc_abc');
       expect(ok).toBe(true);
       const stub = getItemFromStorage('Krovnik\'s Hearthstaff').related_npcs[0];
       expect(stub.npc_id).toBe('npc_abc');
-      expect(stub.npc_folder).toBe('Uncategorized');
+      expect(stub).not.toHaveProperty('npc_folder');
     });
 
     it('matches stub names case-insensitively', () => {
@@ -88,10 +88,17 @@ describe('item-storage', () => {
       expect(getItemFromStorage('Krovnik\'s Hearthstaff').related_npcs[0].npc_id).toBe('npc_abc');
     });
 
-    it('defaults npc_folder to "Uncategorized" when omitted', () => {
+    it('strips any legacy npc_folder field even when fixture seeded it', () => {
+      // Defensive cleanup for users whose drop-npc-folder migration
+      // hasn't yet run when a writeBack fires.
+      const stored = JSON.parse(localStorage.getItem('savedItems'));
+      stored[0].related_npcs[1].npc_folder = 'StaleFolder';
+      localStorage.setItem('savedItems', JSON.stringify(stored));
+
       linkNPCToItemStub('Krovnik\'s Hearthstaff', 'Morghul, the Watcher', 'npc_xyz');
       const stub = getItemFromStorage('Krovnik\'s Hearthstaff').related_npcs[1];
-      expect(stub.npc_folder).toBe('Uncategorized');
+      expect(stub.npc_id).toBe('npc_xyz');
+      expect(stub).not.toHaveProperty('npc_folder');
     });
 
     it('returns false when the item is missing', () => {
@@ -175,17 +182,19 @@ describe('item-storage', () => {
       expect(findItemStubsForNPC('')).toEqual([]);
     });
 
-    it('resetItemStubsForDeletedNPC clears npc_id/npc_folder on every matching stub', () => {
+    it('resetItemStubsForDeletedNPC clears npc_id and removes npc_folder on every matching stub', () => {
       const reset = resetItemStubsForDeletedNPC('npc_1');
       expect(reset).toBe(2);
 
       const hearthstaff = getItemFromStorage('Hearthstaff');
-      expect(hearthstaff.related_npcs[0]).toMatchObject({ name: 'Yelena', npc_id: null, npc_folder: null });
+      expect(hearthstaff.related_npcs[0]).toMatchObject({ name: 'Yelena', npc_id: null });
+      expect(hearthstaff.related_npcs[0]).not.toHaveProperty('npc_folder');
       // Stub itself is preserved (still exists in the array, just unpromoted).
       expect(hearthstaff.related_npcs).toHaveLength(2);
 
       const other = getItemFromStorage('Other Item');
-      expect(other.related_npcs[0]).toMatchObject({ name: 'Yelena', npc_id: null, npc_folder: null });
+      expect(other.related_npcs[0]).toMatchObject({ name: 'Yelena', npc_id: null });
+      expect(other.related_npcs[0]).not.toHaveProperty('npc_folder');
       // Sibling stub for a different NPC is untouched.
       expect(other.related_npcs[1]).toMatchObject({ name: 'Aldric', npc_id: 'npc_2' });
     });
@@ -301,7 +310,6 @@ describe('item-storage', () => {
 
       const items = JSON.parse(localStorage.getItem('savedItems'));
       expect(items[0].related_npcs[0].npc_id).toBe('npc_yelena_001');
-      expect(items[0].related_npcs[0].npc_folder).toBe('Uncategorized');
       expect(items[0].related_npcs[1].npc_id).toBeNull();
     });
   });

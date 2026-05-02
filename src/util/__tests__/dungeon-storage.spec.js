@@ -85,17 +85,17 @@ describe('dungeon-storage', () => {
   });
 
   describe('linkNPCToDungeonStub', () => {
-    it('updates the matching stub with npc_id and folder', () => {
+    it('updates the matching stub with npc_id', () => {
       localStorage.setItem('dungeons', JSON.stringify([
         { id: 'dng_xyz', dungeonOverview: { name: 'X' }, npcs: [{ name: 'Aldric' }] },
       ]));
 
-      const updated = linkNPCToDungeonStub('dng_xyz', 'Aldric', 'npc_abc', 'Heroes');
+      const updated = linkNPCToDungeonStub('dng_xyz', 'Aldric', 'npc_abc');
       expect(updated).toBe(true);
 
       const dungeons = JSON.parse(localStorage.getItem('dungeons'));
       expect(dungeons[0].npcs[0].npc_id).toBe('npc_abc');
-      expect(dungeons[0].npcs[0].npc_folder).toBe('Heroes');
+      expect(dungeons[0].npcs[0]).not.toHaveProperty('npc_folder');
     });
   });
 
@@ -112,7 +112,7 @@ describe('dungeon-storage', () => {
         },
       ]));
 
-      const count = linkNPCToDungeonStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc', 'Heroes');
+      const count = linkNPCToDungeonStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc');
       expect(count).toBe(1);
 
       const dungeons = JSON.parse(localStorage.getItem('dungeons'));
@@ -131,8 +131,8 @@ describe('dungeon-storage', () => {
         },
       ]));
 
-      linkNPCToDungeonStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc', 'Heroes');
-      const second = linkNPCToDungeonStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc', 'Heroes');
+      linkNPCToDungeonStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc');
+      const second = linkNPCToDungeonStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc');
       expect(second).toBe(0);
     });
   });
@@ -153,7 +153,7 @@ describe('dungeon-storage', () => {
   });
 
   describe('resetDungeonStubsForDeletedNPC', () => {
-    it('clears npc_id and npc_folder on every matching stub', () => {
+    it('clears npc_id and removes npc_folder on every matching stub', () => {
       localStorage.setItem('dungeons', JSON.stringify([
         { id: 'dng_a', dungeonOverview: { name: 'A' }, npcs: [{ name: 'Yelena', npc_id: 'npc_abc', npc_folder: 'Heroes' }] },
       ]));
@@ -163,7 +163,57 @@ describe('dungeon-storage', () => {
 
       const dungeons = JSON.parse(localStorage.getItem('dungeons'));
       expect(dungeons[0].npcs[0].npc_id).toBeNull();
-      expect(dungeons[0].npcs[0].npc_folder).toBeNull();
+      expect(dungeons[0].npcs[0]).not.toHaveProperty('npc_folder');
+    });
+
+    it('strips generated fields but preserves the pre-promotion stub shape', () => {
+      // Mirrors resetSettingStubsForDeletedNPC: drop generated content
+      // (read_aloud_description, npcDescriptionPart1, statblock pointers,
+      // etc.) so the migration's content-presence check skips the entry.
+      // Stub-shape fields (name, short_description, role_or_description,
+      // seeded_from) survive — they describe what the entry was before
+      // promotion to a full NPC.
+      localStorage.setItem('dungeons', JSON.stringify([
+        {
+          id: 'dng_a',
+          dungeonOverview: { name: 'A' },
+          npcs: [
+            {
+              name: 'Skragbit',
+              short_description: 'goblin shaman with bone fetishes',
+              role_or_description: 'shaman',
+              npc_id: 'npc_abc',
+              npc_folder: 'Heroes',
+              seeded_from: { source_type: 'item', source_id: 'Bone Idol', source_name: 'Bone Idol', stub_name: 'Skragbit' },
+              read_aloud_description: 'A wiry goblin with bone fetishes.',
+              description_of_position: 'Tribal shaman of the Mukgash.',
+              character_name: 'Skragbit',
+              combined_details: 'Tribal shaman...',
+              npcDescriptionPart1: { character_name: 'Skragbit' },
+              statblock_name: 'Goblin Shaman',
+              statblock_folder: 'NPCs',
+            },
+          ],
+        },
+      ]));
+
+      resetDungeonStubsForDeletedNPC('npc_abc');
+
+      const stub = JSON.parse(localStorage.getItem('dungeons'))[0].npcs[0];
+      expect(stub.name).toBe('Skragbit');
+      expect(stub.short_description).toBe('goblin shaman with bone fetishes');
+      expect(stub.role_or_description).toBe('shaman');
+      expect(stub.seeded_from).toBeDefined();
+      expect(stub.npc_id).toBeNull();
+      expect(stub).not.toHaveProperty('npc_folder');
+
+      expect(stub.read_aloud_description).toBeUndefined();
+      expect(stub.description_of_position).toBeUndefined();
+      expect(stub.character_name).toBeUndefined();
+      expect(stub.combined_details).toBeUndefined();
+      expect(stub.npcDescriptionPart1).toBeUndefined();
+      expect(stub.statblock_name).toBeUndefined();
+      expect(stub.statblock_folder).toBeUndefined();
     });
   });
 });

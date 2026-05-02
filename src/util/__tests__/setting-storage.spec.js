@@ -86,28 +86,28 @@ describe('setting-storage', () => {
   });
 
   describe('linkNPCToSettingStub', () => {
-    it('updates the matching stub with npc_id and folder', () => {
+    it('updates the matching stub with npc_id', () => {
       localStorage.setItem('gameSettings', JSON.stringify([
         { id: 'set_xyz', place_name: 'X', npcs: [{ name: 'Yelena' }] },
       ]));
 
-      const updated = linkNPCToSettingStub('set_xyz', 'Yelena', 'npc_abc', 'Heroes');
+      const updated = linkNPCToSettingStub('set_xyz', 'Yelena', 'npc_abc');
       expect(updated).toBe(true);
 
       const settings = JSON.parse(localStorage.getItem('gameSettings'));
       expect(settings[0].npcs[0].npc_id).toBe('npc_abc');
-      expect(settings[0].npcs[0].npc_folder).toBe('Heroes');
+      expect(settings[0].npcs[0]).not.toHaveProperty('npc_folder');
     });
 
     it('returns false when the setting is not found', () => {
-      expect(linkNPCToSettingStub('nope', 'Y', 'npc_x', 'F')).toBe(false);
+      expect(linkNPCToSettingStub('nope', 'Y', 'npc_x')).toBe(false);
     });
 
     it('returns false when the stub is not found', () => {
       localStorage.setItem('gameSettings', JSON.stringify([
         { id: 'set_xyz', place_name: 'X', npcs: [{ name: 'Other' }] },
       ]));
-      expect(linkNPCToSettingStub('set_xyz', 'NotPresent', 'npc_x', 'F')).toBe(false);
+      expect(linkNPCToSettingStub('set_xyz', 'NotPresent', 'npc_x')).toBe(false);
     });
   });
 
@@ -132,7 +132,7 @@ describe('setting-storage', () => {
         },
       ]));
 
-      const count = linkNPCToSettingStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc', 'Heroes');
+      const count = linkNPCToSettingStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc');
 
       expect(count).toBe(2);
       const settings = JSON.parse(localStorage.getItem('gameSettings'));
@@ -152,7 +152,7 @@ describe('setting-storage', () => {
         },
       ]));
 
-      const count = linkNPCToSettingStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc', 'Heroes');
+      const count = linkNPCToSettingStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc');
       expect(count).toBe(0);
 
       const settings = JSON.parse(localStorage.getItem('gameSettings'));
@@ -171,8 +171,8 @@ describe('setting-storage', () => {
         },
       ]));
 
-      const first = linkNPCToSettingStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc', 'Heroes');
-      const second = linkNPCToSettingStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc', 'Heroes');
+      const first = linkNPCToSettingStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc');
+      const second = linkNPCToSettingStubsBySeed('item', 'Hearthstaff', 'Yelena', 'npc_abc');
 
       expect(first).toBe(1);
       expect(second).toBe(0);
@@ -201,7 +201,7 @@ describe('setting-storage', () => {
   });
 
   describe('resetSettingStubsForDeletedNPC', () => {
-    it('clears npc_id and npc_folder on every matching stub', () => {
+    it('clears npc_id and removes npc_folder on every matching stub', () => {
       localStorage.setItem('gameSettings', JSON.stringify([
         { id: 'set_a', place_name: 'A', npcs: [{ name: 'Yelena', npc_id: 'npc_abc', npc_folder: 'Heroes' }] },
         { id: 'set_b', place_name: 'B', npcs: [{ name: 'Yelena', npc_id: 'npc_abc', npc_folder: 'Heroes' }] },
@@ -212,13 +212,111 @@ describe('setting-storage', () => {
 
       const settings = JSON.parse(localStorage.getItem('gameSettings'));
       expect(settings[0].npcs[0].npc_id).toBeNull();
-      expect(settings[0].npcs[0].npc_folder).toBeNull();
+      expect(settings[0].npcs[0]).not.toHaveProperty('npc_folder');
       expect(settings[1].npcs[0].npc_id).toBeNull();
     });
 
     it('returns 0 when no matching stubs exist', () => {
       localStorage.setItem('gameSettings', JSON.stringify([]));
       expect(resetSettingStubsForDeletedNPC('npc_abc')).toBe(0);
+    });
+
+    it('strips generated fields so the migration does not re-sync the deleted NPC', () => {
+      // Setting NPC entries can carry full generated content
+      // (read_aloud_description, description_of_position, etc.) when the
+      // NPC was generated from the setting tab. After canonical deletion,
+      // leaving that content causes migrateSettingNPCsToSharedStorage to
+      // recreate the canonical on the next NPCGenerator load. Strip
+      // generated fields so the migration's content-presence check skips
+      // the entry. Stub-shape fields (name, description, role_or_description,
+      // faction, seeded_from) survive — they describe the pre-promotion
+      // stub the user can re-promote later.
+      localStorage.setItem('gameSettings', JSON.stringify([
+        {
+          id: 'set_a',
+          place_name: 'A',
+          npcs: [
+            {
+              name: 'Yelena',
+              description: 'A reclusive oracle who reads the salt-runes.', // pre-promotion short description
+              role_or_description: 'oracle',
+              faction: 'The Salt Cult',
+              npc_id: 'npc_abc',
+              npc_folder: 'Heroes',
+              seeded_from: { source_type: 'item', source_id: 'Whisper Crown', source_name: 'Whisper Crown', stub_name: 'Yelena' },
+              // Generated content from a prior promotion:
+              read_aloud_description: 'A tall woman with piercing eyes.',
+              description_of_position: 'Town oracle who reads the salt-runes.',
+              character_name: 'Yelena',
+              roleplaying_tips: 'Speak slowly, in riddles.',
+              combined_details: 'Town oracle...',
+              npcDescriptionPart1: { character_name: 'Yelena' },
+              npcDescriptionPart2: { relationships: { 'Old Greta': 'rival' } },
+              statblock_name: 'Oracle',
+              statblock_folder: 'NPCs',
+            },
+          ],
+        },
+      ]));
+
+      resetSettingStubsForDeletedNPC('npc_abc');
+
+      const stub = JSON.parse(localStorage.getItem('gameSettings'))[0].npcs[0];
+
+      // Pre-promotion stub identity preserved (including the short description).
+      expect(stub.name).toBe('Yelena');
+      expect(stub.description).toBe('A reclusive oracle who reads the salt-runes.');
+      expect(stub.role_or_description).toBe('oracle');
+      expect(stub.faction).toBe('The Salt Cult');
+      expect(stub.seeded_from).toEqual({
+        source_type: 'item',
+        source_id: 'Whisper Crown',
+        source_name: 'Whisper Crown',
+        stub_name: 'Yelena',
+      });
+      expect(stub.npc_id).toBeNull();
+      expect(stub).not.toHaveProperty('npc_folder');
+
+      // Generated content stripped — migration's skip-rule will catch this.
+      expect(stub.read_aloud_description).toBeUndefined();
+      expect(stub.description_of_position).toBeUndefined();
+      expect(stub.character_name).toBeUndefined();
+      expect(stub.roleplaying_tips).toBeUndefined();
+      expect(stub.combined_details).toBeUndefined();
+      expect(stub.npcDescriptionPart1).toBeUndefined();
+      expect(stub.npcDescriptionPart2).toBeUndefined();
+      expect(stub.statblock_name).toBeUndefined();
+      expect(stub.statblock_folder).toBeUndefined();
+    });
+
+    it('preserves a setting-native stub with just name + description after reset', () => {
+      // Setting tab creates new NPCs with `{ npc_id, name, description }`.
+      // After full generation + reset, we should be back to that shape.
+      localStorage.setItem('gameSettings', JSON.stringify([
+        {
+          id: 'set_a',
+          place_name: 'A',
+          npcs: [
+            {
+              npc_id: 'npc_v',
+              npc_folder: 'F',
+              name: 'Veylin',
+              description: 'gruff harbor master',
+              read_aloud_description: 'generated',
+              description_of_position: 'generated',
+            },
+          ],
+        },
+      ]));
+
+      resetSettingStubsForDeletedNPC('npc_v');
+
+      const stub = JSON.parse(localStorage.getItem('gameSettings'))[0].npcs[0];
+      expect(stub.name).toBe('Veylin');
+      expect(stub.description).toBe('gruff harbor master');
+      expect(stub.npc_id).toBeNull();
+      expect(stub.read_aloud_description).toBeUndefined();
+      expect(stub.description_of_position).toBeUndefined();
     });
   });
 });

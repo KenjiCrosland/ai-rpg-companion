@@ -83,10 +83,9 @@ export function buildSeededInputFromSetting({ fromId, entityName }) {
  * @param {string} settingId
  * @param {string} stubName
  * @param {string} npcId
- * @param {string} npcFolder
  * @returns {boolean} true if a stub was updated, false otherwise
  */
-export function linkNPCToSettingStub(settingId, stubName, npcId, npcFolder) {
+export function linkNPCToSettingStub(settingId, stubName, npcId) {
   if (!settingId || !stubName || !npcId) return false;
 
   const settings = readSettings();
@@ -98,7 +97,9 @@ export function linkNPCToSettingStub(settingId, stubName, npcId, npcFolder) {
   if (!stub) return false;
 
   stub.npc_id = npcId;
-  stub.npc_folder = npcFolder || 'Uncategorized';
+  // Defensive: legacy stubs may still carry npc_folder until the
+  // drop-npc-folder migration runs for this user.
+  delete stub.npc_folder;
 
   persistSettings(settings);
   return true;
@@ -117,10 +118,9 @@ export function linkNPCToSettingStub(settingId, stubName, npcId, npcFolder) {
  * @param {string} originSourceId
  * @param {string} originStubName
  * @param {string} npcId
- * @param {string} npcFolder
  * @returns {number} count of setting stubs updated
  */
-export function linkNPCToSettingStubsBySeed(originSourceType, originSourceId, originStubName, npcId, npcFolder) {
+export function linkNPCToSettingStubsBySeed(originSourceType, originSourceId, originStubName, npcId) {
   if (!originSourceType || !originSourceId || !originStubName || !npcId) return 0;
 
   const settings = readSettings();
@@ -137,9 +137,9 @@ export function linkNPCToSettingStubsBySeed(originSourceType, originSourceId, or
       const fromStub = (from.stub_name || '').trim().toLowerCase();
       if (fromStub !== targetStubName) continue;
       // Skip if already pointing at this npc — keeps the operation idempotent.
-      if (stub.npc_id === npcId && stub.npc_folder === (npcFolder || 'Uncategorized')) continue;
+      if (stub.npc_id === npcId) continue;
       stub.npc_id = npcId;
-      stub.npc_folder = npcFolder || 'Uncategorized';
+      delete stub.npc_folder;
       updated++;
     }
   }
@@ -179,12 +179,53 @@ export function findSettingStubsForNPC(npcId) {
 }
 
 /**
- * Reset every setting stub pointing to the given NPC id back to the
- * unpromoted state (`npc_id: null`, `npc_folder: null`). Counterpart to
- * `findSettingStubsForNPC`, called when the canonical NPC is deleted.
+ * Fields produced by the full NPC generation pipeline. These get stripped
+ * on stub-reset so the entry reverts to its pre-promotion shape and the
+ * `migrateSettingNPCsToSharedStorage` re-sync path can't recreate the
+ * canonical NPC the user just deleted.
  *
- * The stub itself is preserved (its `seeded_from` provenance and name
- * stay intact); only the promotion link is cleared.
+ * The two skip-rule fields the migration keys on (`read_aloud_description`
+ * and `description_of_position`) MUST be in this list. Everything else is
+ * generated metadata the stub doesn't need to retain.
+ */
+const NPC_GENERATED_FIELDS = [
+  'read_aloud_description',
+  'description_of_position',
+  'reason_for_being_there',
+  'distinctive_feature_or_mannerism',
+  'character_secret',
+  'character_name',
+  'roleplaying_tips',
+  'combined_details',
+  'npcDescriptionPart1',
+  'npcDescriptionPart2',
+  'relationships',
+  'statblock_name',
+  'statblock_folder',
+  'statblock_source',
+  'statblock_id',
+  'detailedDescription',
+];
+
+/**
+ * Reset every setting stub pointing to the given NPC id back to its
+ * pre-promotion shape. Counterpart to `findSettingStubsForNPC`, called
+ * when the canonical NPC is deleted.
+ *
+ * Behavior: drop fields produced by full NPC generation (read_aloud_description,
+ * description_of_position, npcDescriptionPart1, statblock pointers, etc.)
+ * while preserving whatever stub-shape fields the entry started with —
+ * `name`, `description` (setting-native short description), `role_or_description`
+ * (cross-tool stubs), `seeded_from` (cross-container provenance), `faction`,
+ * and any other non-generated fields. Also clears `npc_id`/`npc_folder`.
+ *
+ * Why drop the generated fields: `migrateSettingNPCsToSharedStorage` runs
+ * on every NPCGenerator load and re-syncs entries with `read_aloud_description`
+ * or `description_of_position` into the canonical store. Without stripping,
+ * the next load recreates the deleted NPC.
+ *
+ * The user can re-promote the stub later, getting a fresh generation
+ * that starts from the preserved short description.
  *
  * @param {string} npcId
  * @returns {number} count of stubs reset
@@ -196,11 +237,13 @@ export function resetSettingStubsForDeletedNPC(npcId) {
   for (const setting of settings) {
     if (!Array.isArray(setting?.npcs)) continue;
     for (const stub of setting.npcs) {
-      if (stub?.npc_id === npcId) {
-        stub.npc_id = null;
-        stub.npc_folder = null;
-        resetCount++;
+      if (stub?.npc_id !== npcId) continue;
+      stub.npc_id = null;
+      delete stub.npc_folder;
+      for (const field of NPC_GENERATED_FIELDS) {
+        delete stub[field];
       }
+      resetCount++;
     }
   }
   if (resetCount > 0) {

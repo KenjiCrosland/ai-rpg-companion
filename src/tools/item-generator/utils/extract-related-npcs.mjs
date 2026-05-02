@@ -56,7 +56,6 @@ export async function extractRelatedNPCs(item) {
       context: (raw.context || '').trim(),
       source_quote: (raw.source_quote || '').trim(),
       npc_id: null,
-      npc_folder: null
     });
   }
   return stubs;
@@ -113,7 +112,6 @@ export function mergeStubs(existing, fresh) {
       context: (stub.context || '').trim(),
       source_quote: (stub.source_quote || '').trim(),
       npc_id: null,
-      npc_folder: null,
     });
   }
 

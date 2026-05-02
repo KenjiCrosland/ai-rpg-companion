@@ -1028,7 +1028,9 @@ const itemValidation = (jsonString) => {
 }
 
 // Normalize a related_npcs array (from a fresh generation or imported data)
-// to the canonical stub shape with npc_id/npc_folder placeholders.
+// to the canonical stub shape. `npc_id` is the only promotion-link field;
+// `npc_folder` was a denormalized hint that the substrate has stopped
+// writing — `drop-npc-folder` strips it from existing data.
 const normalizeRelatedNPCs = (raw) => {
   if (!Array.isArray(raw)) return [];
   const seen = new Set();
@@ -1045,7 +1047,6 @@ const normalizeRelatedNPCs = (raw) => {
       context: (entry.context || '').toString().trim(),
       source_quote: (entry.source_quote || '').toString().trim(),
       npc_id: entry.npc_id || null,
-      npc_folder: entry.npc_folder || null
     });
   }
   return stubs;

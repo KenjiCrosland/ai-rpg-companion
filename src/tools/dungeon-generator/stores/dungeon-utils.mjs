@@ -195,9 +195,13 @@ function migrateDungeonNPCs(dungeon) {
   let migrated = false;
 
   if (dungeon.npcs) {
-    // Load shared storage once
+    // Load shared storage once. Flatten across all folders so the legacy
+    // id-recovery / dedup logic doesn't refuse to find canonical NPCs the
+    // user has moved out of the dungeon-named folder.
     const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-    const sharedNPCs = stored[dungeonTitle] || [];
+    const sharedNPCs = Object.values(stored)
+      .filter(Array.isArray)
+      .flat();
 
     dungeon.npcs.forEach((npc) => {
       // Skip if already migrated AND has an ID (fully processed)

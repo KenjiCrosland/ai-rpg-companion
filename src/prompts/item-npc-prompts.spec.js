@@ -52,9 +52,14 @@ describe('item-npc-prompts', () => {
       context: 'Granted a prophetic vision describing the staff.',
     };
 
-    it('includes the stub name, role brief, and item name in a single headline', () => {
+    it('puts the stub name on a labeled Name line so the LLM can\'t fuse it with the role description', () => {
       const text = buildPrefilledTypeOfPlace(seed({ stub, item }));
-      expect(text).toContain('Yelena of the Duskwood — oracle who received the vision. Mentioned in lore of Krovnik\'s Hearthstaff.');
+      expect(text).toContain('Name: Yelena of the Duskwood');
+      expect(text).toContain('Role: oracle who received the vision.');
+      expect(text).toContain('Mentioned in lore of Krovnik\'s Hearthstaff.');
+      // The dash-joined form is what tripped up character_name extraction;
+      // explicitly assert it's gone so it doesn't sneak back in.
+      expect(text).not.toContain('— oracle who received the vision');
     });
 
     it('includes the item physical description and lore', () => {
@@ -69,13 +74,14 @@ describe('item-npc-prompts', () => {
       expect(text).toContain('Specific role: Granted a prophetic vision describing the staff.');
     });
 
-    it('omits an empty role_brief gracefully', () => {
+    it('omits the Role line gracefully when role_brief is empty', () => {
       const text = buildPrefilledTypeOfPlace(seed({
         stub: { name: 'Anonymous', role_brief: '', context: '' },
         item,
       }));
-      expect(text).toContain('Anonymous. Mentioned in lore of Krovnik\'s Hearthstaff.');
-      expect(text).not.toContain('— .');
+      expect(text).toContain('Name: Anonymous');
+      expect(text).toContain('Mentioned in lore of Krovnik\'s Hearthstaff.');
+      expect(text).not.toContain('Role:');
       expect(text).not.toContain('Specific role:');
     });
 

@@ -136,10 +136,9 @@ const writeBacks = Object.freeze({
   item: (seededInput, npc) => {
     const stubName = seededInput?.entities?.[0]?.name;
     if (!stubName || !npc?.npc_id) return false;
-    const folder = npc.folderName || 'Uncategorized';
-    const linked = linkNPCToItemStub(seededInput.source.id, stubName, npc.npc_id, folder);
-    linkNPCToSettingStubsBySeed('item', seededInput.source.id, stubName, npc.npc_id, folder);
-    linkNPCToDungeonStubsBySeed('item', seededInput.source.id, stubName, npc.npc_id, folder);
+    const linked = linkNPCToItemStub(seededInput.source.id, stubName, npc.npc_id);
+    linkNPCToSettingStubsBySeed('item', seededInput.source.id, stubName, npc.npc_id);
+    linkNPCToDungeonStubsBySeed('item', seededInput.source.id, stubName, npc.npc_id);
     return linked;
   },
   // Setting/dungeon writeBacks update only their own stub; the dispatcher's
@@ -149,22 +148,12 @@ const writeBacks = Object.freeze({
   setting: (seededInput, npc) => {
     const stubName = seededInput?.entities?.[0]?.name;
     if (!stubName || !npc?.npc_id) return false;
-    return linkNPCToSettingStub(
-      seededInput.source.id,
-      stubName,
-      npc.npc_id,
-      npc.folderName || 'Uncategorized'
-    );
+    return linkNPCToSettingStub(seededInput.source.id, stubName, npc.npc_id);
   },
   dungeon: (seededInput, npc) => {
     const stubName = seededInput?.entities?.[0]?.name;
     if (!stubName || !npc?.npc_id) return false;
-    return linkNPCToDungeonStub(
-      seededInput.source.id,
-      stubName,
-      npc.npc_id,
-      npc.folderName || 'Uncategorized'
-    );
+    return linkNPCToDungeonStub(seededInput.source.id, stubName, npc.npc_id);
   },
 });
 

@@ -549,9 +549,14 @@ function migrateSettingNPCs(setting) {
   let migrated = false;
 
   if (setting.npcs) {
-    // Load shared storage once
+    // Load shared storage once. Flatten across all folders — the user
+    // may have moved canonical NPCs out of the setting-named folder, and
+    // the legacy id-recovery / dedup logic below shouldn't refuse to
+    // find them just because they're now in a different folder.
     const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-    const sharedNPCs = stored[settingName] || [];
+    const sharedNPCs = Object.values(stored)
+      .filter(Array.isArray)
+      .flat();
 
     setting.npcs.forEach(npc => {
       // Skip if already migrated AND has an ID (fully processed)
