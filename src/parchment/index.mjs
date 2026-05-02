@@ -17,3 +17,4 @@ export { default as ParInput } from './ParInput.vue';
 export { default as ParTextarea } from './ParTextarea.vue';
 export { default as ParSelect } from './ParSelect.vue';
 export { default as ParCheckbox } from './ParCheckbox.vue';
+export { default as ParTooltip } from './ParTooltip.vue';

@@ -656,6 +656,24 @@ describe('statblock-storage', () => {
       expect(result.toolReferencesUpdated).toBe(2);
     });
 
+    it('rewrites tool-references when stored in its real object shape (keyed by ref id)', () => {
+      // Regression for the same shape mismatch as moveStatblockToNewFolder.
+      // Production storage uses { ref_xyz: {...} } keyed by ref id, not an
+      // array — the rewrite logic must walk via Object.values either way.
+      localStorage.setItem('tool-references', JSON.stringify({
+        ref_a: { id: 'ref_a', source_type: 'npc', source_id: 'npc_1', target_type: 'statblock', target_id: 'OldName__Monsters', target_name: 'OldName', relationship: 'has_statblock' },
+        ref_b: { id: 'ref_b', source_type: 'npc', source_id: 'npc_2', target_type: 'statblock', target_id: 'DifferentName__Monsters', target_name: 'DifferentName', relationship: 'has_statblock' },
+      }));
+
+      const result = renameStatblockReferences('OldName', 'NewName');
+
+      const refs = JSON.parse(localStorage.getItem('tool-references'));
+      expect(refs.ref_a.target_id).toBe('NewName__Monsters');
+      expect(refs.ref_a.target_name).toBe('NewName');
+      expect(refs.ref_b.target_id).toBe('DifferentName__Monsters');
+      expect(result.toolReferencesUpdated).toBe(1);
+    });
+
     it('updates setting NPC statblock_name fields', () => {
       localStorage.setItem('gameSettings', JSON.stringify([
         {
@@ -737,6 +755,26 @@ describe('statblock-storage', () => {
       expect(refs[0].target_id).toBe('Goblin__NewFolder');
       expect(refs[1].target_id).toBe('Orc__OldFolder');
       expect(refs[2].target_id).toBe('Goblin__OtherFolder');
+      expect(result.toolReferencesUpdated).toBe(1);
+    });
+
+    it('updates tool-references when stored in its real object shape (keyed by ref id)', () => {
+      // Regression: the production write path (reference-storage.mjs) stores
+      // refs as { ref_xyz: {...}, ref_abc: {...} }, NOT as an array. Earlier
+      // versions of moveStatblockToNewFolder defaulted to '[]' and gated on
+      // Array.isArray, silently skipping the rewrite for real users — the
+      // mount migration would later self-repair by creating a fresh ref at
+      // the new id while the stale one accumulated as an orphan.
+      localStorage.setItem('tool-references', JSON.stringify({
+        ref_a: { id: 'ref_a', source_type: 'npc', source_id: 'npc_1', target_type: 'statblock', target_id: 'Goblin__OldFolder', relationship: 'has_statblock' },
+        ref_b: { id: 'ref_b', source_type: 'npc', source_id: 'npc_2', target_type: 'statblock', target_id: 'Orc__OldFolder', relationship: 'has_statblock' },
+      }));
+
+      const result = moveStatblockToNewFolder('Goblin', 'OldFolder', 'NewFolder');
+
+      const refs = JSON.parse(localStorage.getItem('tool-references'));
+      expect(refs.ref_a.target_id).toBe('Goblin__NewFolder');
+      expect(refs.ref_b.target_id).toBe('Orc__OldFolder');
       expect(result.toolReferencesUpdated).toBe(1);
     });
 

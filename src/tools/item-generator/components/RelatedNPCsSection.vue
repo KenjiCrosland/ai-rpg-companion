@@ -3,17 +3,23 @@
     <!-- Header is the same in both states: heading on the left, ghost
          Re-scan button on the right. Ghost styling makes the button
          quieter than the per-stub action buttons (Create NPC / View),
-         which is right because Re-scan is a convenience, not a CTA. -->
+         which is right because Re-scan is a convenience, not a CTA.
+         Tooltip explains *when* to use it — the affordance label answers
+         "what" but not "why I'd come back to this." -->
     <div class="related-npcs-header">
       <h3 class="related-npcs-title">Related NPCs</h3>
-      <ParButton
-        variant="ghost"
-        size="small"
-        :disabled="loading"
-        @click="rescan"
+      <ParTooltip
+        text="Scans this item's lore and timeline events for named characters and adds them here. Re-run after editing the lore or adding events."
       >
-        {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
-      </ParButton>
+        <ParButton
+          variant="ghost"
+          size="small"
+          :disabled="loading"
+          @click="rescan"
+        >
+          {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
+        </ParButton>
+      </ParTooltip>
     </div>
 
     <!-- Empty state: helper text is the section's content. Guides the
@@ -81,7 +87,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ParButton } from '@/parchment';
+import { ParButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { extractRelatedNPCs, mergeStubs } from '@/tools/item-generator/utils/extract-related-npcs.mjs';
 import { useToast } from '@/composables/useToast';

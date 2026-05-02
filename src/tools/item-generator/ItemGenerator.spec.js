@@ -705,7 +705,7 @@ describe('ItemGenerator - Related NPCs Integration', () => {
       // The Delete action is a CardFooterAction button whose text contains
       // an emoji icon plus the label.
       const buttons = wrapper.findAll('button');
-      const deleteBtn = buttons.find(b => b.text().includes('Delete Item'));
+      const deleteBtn = buttons.find(b => b.text().includes('Delete item'));
       expect(deleteBtn).toBeTruthy();
       await deleteBtn.trigger('click');
       await nextTick();

@@ -87,21 +87,24 @@ function autoFixStatblockReference(statblockName, oldFolder, newFolder, context)
     }
   }
 
-  // Update reference store
+  // Update reference store. `tool-references` is stored as an OBJECT
+  // keyed by ref id, not an array — see reference-storage.mjs's
+  // `getReferences()`. Walk via Object.values, otherwise the rewrite
+  // silently no-ops.
   try {
-    const references = JSON.parse(localStorage.getItem('tool-references') || '[]');
-    let updated = false;
-
-    for (const ref of references) {
-      if (ref.target_type === 'statblock' &&
-          ref.target_id === `${statblockName}__${oldFolder}`) {
-        ref.target_id = `${statblockName}__${newFolder}`;
-        updated = true;
+    const references = JSON.parse(localStorage.getItem('tool-references') || '{}');
+    if (references && typeof references === 'object') {
+      let updated = false;
+      for (const ref of Object.values(references)) {
+        if (ref?.target_type === 'statblock' &&
+            ref?.target_id === `${statblockName}__${oldFolder}`) {
+          ref.target_id = `${statblockName}__${newFolder}`;
+          updated = true;
+        }
       }
-    }
-
-    if (updated) {
-      localStorage.setItem('tool-references', JSON.stringify(references));
+      if (updated) {
+        localStorage.setItem('tool-references', JSON.stringify(references));
+      }
     }
   } catch (error) {
     console.warn('Failed to update reference store:', error);
@@ -225,13 +228,15 @@ export function renameStatblockReferences(oldName, newName) {
 
   // tool-references graph: rewrite the name segment of every statblock id.
   // The id format is `${name}__${folder}`; we preserve folder and swap name.
+  // Stored as an OBJECT keyed by ref id (see reference-storage.mjs);
+  // walk via Object.values rather than treating as an array.
   try {
-    const refs = JSON.parse(localStorage.getItem('tool-references') || '[]');
-    if (Array.isArray(refs)) {
+    const refs = JSON.parse(localStorage.getItem('tool-references') || '{}');
+    if (refs && typeof refs === 'object') {
       const oldPrefix = `${oldName}__`;
       let updated = false;
       const rewriteId = (id) => `${newName}__${id.slice(oldPrefix.length)}`;
-      for (const ref of refs) {
+      for (const ref of Object.values(refs)) {
         if (ref?.target_type === 'statblock' && typeof ref?.target_id === 'string'
             && ref.target_id.startsWith(oldPrefix)) {
           ref.target_id = rewriteId(ref.target_id);
@@ -353,20 +358,24 @@ export function renameStatblockFolder(oldFolder, newFolder) {
     localStorage.setItem('gameSettings', JSON.stringify(settings));
   }
 
-  // Update reference store IDs
-  const references = JSON.parse(localStorage.getItem('tool-references') || '[]');
-  let referencesUpdated = false;
-
-  for (const ref of references) {
-    if (ref.target_type === 'statblock' && ref.target_id.endsWith(`__${oldFolder}`)) {
-      const statblockName = ref.target_id.substring(0, ref.target_id.lastIndexOf('__'));
-      ref.target_id = `${statblockName}__${newFolder}`;
-      referencesUpdated = true;
+  // Update reference store IDs. `tool-references` is stored as an
+  // OBJECT keyed by ref id (see reference-storage.mjs); walk via
+  // Object.values rather than treating as an array.
+  const references = JSON.parse(localStorage.getItem('tool-references') || '{}');
+  if (references && typeof references === 'object') {
+    let referencesUpdated = false;
+    for (const ref of Object.values(references)) {
+      if (ref?.target_type === 'statblock'
+          && typeof ref?.target_id === 'string'
+          && ref.target_id.endsWith(`__${oldFolder}`)) {
+        const statblockName = ref.target_id.substring(0, ref.target_id.lastIndexOf('__'));
+        ref.target_id = `${statblockName}__${newFolder}`;
+        referencesUpdated = true;
+      }
     }
-  }
-
-  if (referencesUpdated) {
-    localStorage.setItem('tool-references', JSON.stringify(references));
+    if (referencesUpdated) {
+      localStorage.setItem('tool-references', JSON.stringify(references));
+    }
   }
 
   return {
@@ -497,14 +506,16 @@ export function moveStatblockToNewFolder(statblockName, oldFolder, newFolder) {
     console.warn('Failed to update setting statblock references during folder move:', error);
   }
 
-  // tool-references graph (target side and source side, defensive)
+  // tool-references graph (target side and source side, defensive).
+  // Stored as an OBJECT keyed by ref id (see reference-storage.mjs);
+  // walk via Object.values rather than treating as an array.
   try {
-    const refs = JSON.parse(localStorage.getItem('tool-references') || '[]');
-    if (Array.isArray(refs)) {
+    const refs = JSON.parse(localStorage.getItem('tool-references') || '{}');
+    if (refs && typeof refs === 'object') {
       const oldId = `${statblockName}__${oldFolder}`;
       const newId = `${statblockName}__${newFolder}`;
       let updated = false;
-      for (const ref of refs) {
+      for (const ref of Object.values(refs)) {
         if (ref?.target_type === 'statblock' && ref?.target_id === oldId) {
           ref.target_id = newId;
           results.toolReferencesUpdated++;

@@ -28,13 +28,35 @@
   --par-color-border-strong:   #c9b99a;
   --par-color-divider:         #e2dccd;
 
+  /* Color: callout — slightly warmer/darker than the card surface so a
+     tinted block reads as supplementary content (lore, history, etc.)
+     without needing a divider rule. Body text matches the body weight
+     used in feature descriptions so the callout reads as primary
+     content (just sitting in a different surface), not de-emphasized. */
+  --par-color-callout-bg:      #f3ebda;
+  --par-color-callout-text:    #2c2c2a;
+
+  /* Color: tooltip — slightly LIGHTER than the card surface to read as
+     elevated paper (a sticky note above the card), with a warm tan
+     border that matches the card's own border. The dark-charcoal text
+     gives more contrast than body color since tooltips need to be read
+     in well under a second. */
+  --par-color-tooltip-bg:      #fefcf7;
+  --par-color-tooltip-text:    #2c2c2a;
+  --par-color-tooltip-shadow:  rgba(60, 40, 20, 0.08);
+
   /* Color: action interactions */
   --par-color-action-hover:    rgba(122, 31, 31, 0.06);
   --par-color-action-active:   rgba(122, 31, 31, 0.12);
 
-  /* Typography */
+  /* Typography. Source Serif 4 (Adobe, OFL-licensed) is the parchment
+     serif: designed for screen reading, full real-weight files at
+     400/500/600 so font-weight differences render with actual font
+     data rather than browser-synthesized faux-bolds. Loaded via
+     <link> in App.vue. Georgia is the system fallback so cards still
+     render correctly if the web font fails to load. */
   --par-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --par-font-serif: Georgia, 'Times New Roman', serif;
+  --par-font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 
   /* Sizing */
   --par-radius-sm: 3px;

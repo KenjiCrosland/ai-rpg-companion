@@ -5,6 +5,13 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
     rel="stylesheet">
+  <!-- Source Serif 4: parchment design system serif. Loaded with the
+       weights we use on cards (400/500/600 in roman + italic) so font-
+       weight differences render with real font files rather than
+       browser-synthesized faux-bolds. Drives `--par-font-serif`. -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap"
+    rel="stylesheet">
   <!-- legacy material icons (optional if you fully switch to Symbols) -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <!-- material symbols (REQUIRED for many of your ligatures like fort, diamond, workspace_premium) -->
@@ -352,8 +359,21 @@ textarea {
   font-family: inherit;
 }
 
-/* ===== Global font override, with EXCEPTIONS for icon fonts ===== */
-:where(html, body, #root) :where(*):not(.material-icons):not(.material-symbols-outlined) {
+/* ===== Global font override, with EXCEPTIONS =====
+ *
+ * Forces every descendant of body to use --font-sans so WordPress theme
+ * font-family declarations don't bleed into the app in production.
+ *
+ * Carve-outs:
+ *   - `.material-icons` / `.material-symbols-outlined` — icon fonts.
+ *   - `.parchment` and any descendant of `.parchment` — opt-out marker
+ *     for the parchment design system (item cards, NPC cards, future
+ *     content-side surfaces). Anything inside an element with class
+ *     `parchment` is free to use whatever font-family it declares,
+ *     without needing `!important` on every rule.
+ */
+:where(html, body, #root)
+  :where(*):not(.material-icons):not(.material-symbols-outlined):not(.parchment):not(.parchment *) {
   font-family: var(--font-sans) !important;
 }
 

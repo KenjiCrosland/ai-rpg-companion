@@ -38,12 +38,15 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'default',
-    // 'default' — outlined primary action (Edit Item, Save Changes, etc.)
+    // 'default' — outlined primary action (Save Changes, etc.)
     // 'ghost'   — quiet section affordance, no border, hover-tinted only
     //             (refresh / re-scan / "do this again" actions). Visually
     //             lighter than the action buttons that sit alongside it.
-    // 'danger'  — destructive (Delete Item).
-    validator: v => ['default', 'ghost', 'danger'].includes(v),
+    // 'link'    — text-only treatment, no border, no background. For
+    //             demoted secondary actions that shouldn't compete with
+    //             the card's primary content (Edit item, etc.).
+    // 'danger'  — destructive (Delete item).
+    validator: v => ['default', 'ghost', 'link', 'danger'].includes(v),
   },
   size: {
     type: String,
@@ -65,6 +68,7 @@ defineEmits(['click']);
 const classes = computed(() => ({
   'par-button--danger': props.variant === 'danger',
   'par-button--ghost': props.variant === 'ghost',
+  'par-button--link': props.variant === 'link',
   'par-button--small': props.size === 'small',
 }));
 </script>
@@ -151,6 +155,24 @@ const classes = computed(() => ({
   border-color: transparent;
   background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
   color: var(--par-color-title, #7a1f1f);
+}
+
+/* Link variant: demoted text-only treatment. No border, no background,
+   no hover wash — just burgundy text that underlines on hover. Sized
+   smaller than default so it reads as a quiet secondary affordance
+   that doesn't compete with the card's primary content. */
+.par-button--link {
+  border-color: transparent;
+  background: transparent;
+  padding: 0.4rem 0.8rem;
+  font-size: 1.3rem;
+}
+
+.par-button--link:hover:not(:disabled) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--par-color-title-deep, #58180d);
+  text-decoration: underline;
 }
 
 /* Danger variant: muted by default, warms up on hover. */

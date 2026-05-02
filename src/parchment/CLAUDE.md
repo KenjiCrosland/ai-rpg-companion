@@ -25,6 +25,7 @@ we iterate on the styling.
 - `ParTextarea.vue` — multi-line input. Body text uses serif to match card prose.
 - `ParSelect.vue` — native `<select>` with parchment styling. Custom dropdown caret via inline SVG.
 - `ParCheckbox.vue` — native checkbox with parchment styling and label-on-right.
+- `ParTooltip.vue` — wrapper-style tooltip. CSS-only show/hide via `:hover` and `:focus-within`. Use for ghost-styled affordances whose label answers "what" but not "when" (e.g. Re-scan Lore). Dark burgundy surface + cream text for fast read; not blended with the parchment palette by design.
 - `index.mjs` — re-export entry. Consumers do `import { ParInput, ParButton } from '@/parchment';`.
 
 ## Conventions

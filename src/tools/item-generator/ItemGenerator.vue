@@ -102,13 +102,13 @@
         <Tabs :activeIndex="activeTabIndex" @tabChange="activeTabIndex = $event">
           <TabPanel label="Item Details">
             <!-- View Mode -->
-            <div v-if="!isEditing" class="item-card">
+            <div v-if="!isEditing" class="item-card parchment">
               <header class="item-card-header">
                 <div class="item-card-header-text">
                   <h2 class="item-card-name">{{ magicItemDescription.name }}</h2>
                   <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}<span v-if="magicItemDescription.requires_attunement"> (requires attunement{{ magicItemDescription.attunement_restriction ? ' ' + magicItemDescription.attunement_restriction : '' }})</span></p>
                 </div>
-                <ParButton size="small" @click="startEditing">Edit Item</ParButton>
+                <ParButton variant="link" @click="startEditing">Edit item</ParButton>
               </header>
 
               <!-- Description: italic, no box, sits in the flow. -->
@@ -127,9 +127,12 @@
                 </div>
               </div>
 
-              <!-- Lore: visually demoted, always visible. Hidden entirely when item has no lore.
-                   Divider above signals the transition; no label. -->
+              <!-- Lore: tinted callout block with a small-caps label. Replaces
+                   the prior divider-and-italic-paragraph treatment. The
+                   tinted background owns the zone change; the label calls
+                   out the supplementary nature of the content. -->
               <section v-if="magicItemDescription.lore" class="item-card-lore">
+                <p class="item-card-lore-label">Lore</p>
                 <div class="item-card-lore-body">
                   <p v-html="formatMarkdown(magicItemDescription.lore)"></p>
                 </div>
@@ -138,10 +141,10 @@
               <!-- Footer: Export (left) + Delete (right). Edit lives in the header. -->
               <footer class="item-card-footer">
                 <ParButton @click="showExport = !showExport">
-                  {{ showExport ? 'Hide Export' : 'Export' }}
+                  {{ showExport ? 'Hide export' : 'Export' }}
                 </ParButton>
                 <ParButton variant="danger" class="item-card-footer__trail" @click="deleteItem">
-                  Delete Item
+                  Delete item
                 </ParButton>
               </footer>
             </div>
@@ -650,6 +653,15 @@ CONCISENESS RULES:
 - Lore: One short paragraph, 3-4 sentences. One origin detail, one consequence or current hook.
 - Total item: Under 250 words.
 
+MECHANICAL EMPHASIS — wrap key reference values in **markdown bold** within feature descriptions:
+- Charge counts: **3 charges**, **1 charge**, **1d3 charges**
+- Distances and ranges: **60 feet**, **30-foot cone**, **120-foot range**
+- Damage and dice: **2d6 fire damage**, **1d8 + 2 piercing**
+- Save DCs: **DC 15 Wisdom save**
+- Durations: **1 hour**, **10 minutes**, **until the next dawn**
+- Recharge timing: **dawn**, **short or long rest**
+Bold the value plus its immediate unit ("3 charges", not just "3"). Do NOT bold prose, mechanic names, or rules references — only the specific scannable values a DM looks up at the table. Apply this to feature descriptions ONLY, not to physical_description or lore.
+
 Generate a detailed Dungeons & Dragons 5e magic item description adhering to the provided rarity guidelines and incomplete information.
 
 IMPORTANT D&D 5e DESIGN RULES:
@@ -1055,18 +1067,25 @@ const normalizeRelatedNPCs = (raw) => {
 const constructModifierSentence = (bonus, itemType) => {
   if (!bonus || bonus === '0') return '';
 
+  // Wrap the bonus pair in markdown bold so formatMarkdown emits <strong>
+  // around it. Mirrors the mechanical-emphasis rule applied to feature
+  // descriptions — a DM scanning the card should be able to find "+1 bonus"
+  // at the same visual weight regardless of whether it sits in the
+  // unlabeled passive paragraph or under a feature label.
+  const b = `**${bonus} bonus**`;
+
   switch (itemType) {
     case 'Armor':
-      return `While wearing this armor, you gain a ${bonus} bonus to AC.`;
+      return `While wearing this armor, you gain a ${b} to AC.`;
     case 'Weapon':
-      return `You have a ${bonus} bonus to attack and damage rolls made with this weapon.`;
+      return `You have a ${b} to attack and damage rolls made with this weapon.`;
     case 'Rod':
     case 'Staff':
-      return `While holding this ${itemType.toLowerCase()}, you gain a ${bonus} bonus to spell attack rolls and to the saving throw DCs of your spells.`;
+      return `While holding this ${itemType.toLowerCase()}, you gain a ${b} to spell attack rolls and to the saving throw DCs of your spells.`;
     case 'Ring':
-      return `While wearing this ring, you gain a ${bonus} bonus to AC and saving throws.`;
+      return `While wearing this ring, you gain a ${b} to AC and saving throws.`;
     case 'Wand':
-      return `While holding this wand, you gain a ${bonus} bonus to spell attack rolls.`;
+      return `While holding this wand, you gain a ${b} to spell attack rolls.`;
     default:
       return '';
   }
@@ -1369,6 +1388,15 @@ FEATURE WRITING RULES:
 - 2-4 sentences maximum
 - Include specific mechanics: damage dice, DCs, ranges, durations, recharge
 - No restating rules the DM already knows
+
+MECHANICAL EMPHASIS — wrap key reference values in **markdown bold**:
+- Charge counts: **3 charges**, **1 charge**, **1d3 charges**
+- Distances and ranges: **60 feet**, **30-foot cone**, **120-foot range**
+- Damage and dice: **2d6 fire damage**, **1d8 + 2 piercing**
+- Save DCs: **DC 15 Wisdom save**
+- Durations: **1 hour**, **10 minutes**, **until the next dawn**
+- Recharge timing: **dawn**, **short or long rest**
+Bold the value plus its immediate unit ("3 charges", not just "3"). Do NOT bold prose, mechanic names, or rules references — only the specific scannable values a DM looks up at the table.
 
 Generate a single D&D 5e magic item feature for the following item:
 
@@ -1951,7 +1979,10 @@ onUnmounted(() => {
   border-radius: 2px;
   margin-bottom: 1.5rem;
   padding: 2rem 2.5rem;
-  font-family: Georgia, 'Times New Roman', serif;
+  /* Card root carries the `parchment` marker class (see App.vue) which
+     opts the card and its descendants out of the project-wide sans-serif
+     override, so this declaration applies normally and inherits down. */
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   font-size: 1.5rem;
   line-height: 1.7;
   color: var(--body-text);
@@ -1986,12 +2017,19 @@ onUnmounted(() => {
   font-style: italic;
 }
 
-/* Description: italic body text, no box, no background. Sits in the flow.
-   Acts as the transitional prose between header and mechanics — prose
-   but mechanically-adjacent — so its line-height (1.65) bridges
-   between the tight mechanics (1.6) and the relaxed lore (1.7). */
+/* Body rhythm: every section in the card body — flavor description,
+   modifier paragraph, each feature, lore callout — is separated by
+   ~2rem of vertical space. The card's content blocks are dense enough
+   (paragraphs, not full sections) that a single consistent gap reads
+   cleaner than escalating rhythm. The lore callout's tinted background
+   handles the zone-change signal that escalating gaps used to carry.
+
+   Description: italic body text, transitional prose between header
+   and mechanics. Line-height 1.65 sits between mechanics' 1.5 and
+   lore's 1.6 — italic prose at a slightly looser rhythm than the
+   reference blocks below it. */
 .item-card-description {
-  margin: 1.75rem 0 1.25rem;
+  margin: 1.75rem 0 0;
   max-width: 65ch;
   font-style: italic;
   color: var(--secondary-text);
@@ -2001,39 +2039,32 @@ onUnmounted(() => {
 
 /* Mechanics: highest contrast block on the card. Reference text — read
    for specific values (DC, damage, condition) rather than narratively —
-   so line-height tightens to 1.6 for faster vertical scanning. The
-   1.8rem inter-feature margin handles feature-to-feature rhythm; lines
-   within a feature can pack tighter without losing distinctness.
+   so line-height tightens to 1.6 for faster vertical scanning.
 
    `max-width: 65ch` caps line length around 60-70 actual characters of
    Georgia (its "0" is on the wide side of the alphabet) — the readable
-   range without cramping the card; matches the convention used by
-   `.npc-card-content`. */
+   range without cramping the card. */
 .item-card-mechanics {
-  margin-bottom: 1.25rem;
+  margin-top: 2rem;
   max-width: 65ch;
 }
 
-/* Passive mechanical properties (e.g. "+1 to AC", "advantage on Stealth").
-   Sourcebook-dense reference text — sized smaller than lore (1.55rem vs
-   1.65rem) so the size itself signals "this is reference, not prose."
-   Tight 1.5 line-height matches the scanning-density pattern used in
-   the DMG/PHB body. */
+/* Passive modifier paragraph (e.g. "You have a +1 bonus to attack..." or
+   "While wearing this armor, you gain a +1 bonus to AC."). Sits at the
+   top of mechanics with no extra top margin — the mechanics block's
+   own margin-top (2rem) owns the gap from the description above. */
 .item-card-modifier {
-  margin: 2.5rem 0 2rem;
+  margin: 0 0 2rem;
   color: var(--body-text);
   font-size: 1.55rem;
   line-height: 1.5;
 }
 
-/* Feature-to-feature gap. Tight (~33% less than the previous 1.8rem)
-   because each feature already has a strong identity from its bold
-   burgundy heading; the eye doesn't need a deep gap to find the next
-   one. The mechanics-to-lore zone change uses a much larger gap (set
-   on `.item-card-lore`) so the rhythm escalates: paragraphs within a
-   feature → siblings → zone change. */
+/* Feature-to-feature gap. 2rem matches the rest of the body rhythm —
+   features read as discrete reference blocks rather than tightly-packed
+   sub-paragraphs of a single section. */
 .item-feature {
-  margin-bottom: 1.2rem;
+  margin-bottom: 2rem;
 }
 
 .item-feature:last-child {
@@ -2074,25 +2105,37 @@ onUnmounted(() => {
   margin-bottom: 0;
 }
 
-/* Lore: visually demoted, always visible. Small-caps label flags it as
-   supplementary; smaller, lighter body distinguishes it from mechanics. The
-   divider is lighter than the footer rule so it doesn't compete with it.
+/* Lore: tinted callout block. The warmer cream background (slightly
+   darker than the card surface) owns the zone change — no divider rule
+   needed. The label calls out supplementary content; the body sits
+   roman (not italic) so it reads as prose, not flavor text.
 
-   Narrative reading mode — linear and immersive rather than scanned for
-   values — so line-height is intentionally looser (1.7) than mechanics
-   (1.6). The pair reads as: "tight when looking up a number, relaxed
-   when reading the story."
-
-   The generous `margin-top` makes the lore zone OWN the mechanics→lore
-   gap (the last feature drops its bottom margin via :last-child). This
-   completes the escalating rhythm: paragraphs within a feature ≈0.6rem,
-   sibling features 1.2rem, mechanics→lore 3.5rem total (margin + the
-   1rem padding-top above the divider). Each step is roughly 2-3× the
-   previous, which makes the zone change unambiguous. */
+   Narrative reading mode — linear and immersive rather than scanned —
+   so line-height stays at 1.6 (looser than mechanics' 1.5 but not the
+   prior 1.7). The size step (1.4rem vs feature body's 1.55rem) signals
+   "this is secondary content" without requiring color-only contrast. */
 .item-card-lore {
-  margin-top: 2.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #ece6d4;
+  margin-top: 2rem;
+  /* Horizontal padding tightened to 1.5rem so the line length inside
+     the callout sits a touch shorter than the surrounding mechanics
+     block — gives the lore paragraph its own reading rhythm without
+     looking cramped against the callout edges. */
+  padding: 1rem 1.5rem;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-radius: var(--par-radius-md, 4px);
+}
+
+/* Small-caps label. Mirrors the feature-name's burgundy palette so the
+   eye recognizes it as a section affordance, but the all-caps + tight
+   tracking + smaller size mark it as supplementary. */
+.item-card-lore-label {
+  margin: 0 0 0.5rem;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--par-color-title, #7a1f1f);
 }
 
 .item-card-lore-body {
@@ -2101,9 +2144,19 @@ onUnmounted(() => {
 
 .item-card-lore-body p {
   margin: 0 0 0.75rem;
-  font-size: 1.65rem;
-  color: #6a6a6a;
-  line-height: 1.7;
+  /* Size + color match the feature body (.item-feature-description)
+     for primary-content reading weight. Font-weight bumps to 500 —
+     heavier than the feature body's 400 — matching the sourcebook
+     "aside" convention where boxed/tinted narrative passages run a
+     hair heavier than surrounding text. The tinted callout surface
+     plus the heavier weight together signal "set apart" without
+     needing italic or lightened color. Line-height 1.65 gives longer
+     narrative paragraphs slightly more breathing room than the scan-
+     density 1.5 that mechanics use. */
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--par-color-callout-text, #2c2c2a);
+  line-height: 1.65;
 }
 
 .item-card-lore-body p:last-child {

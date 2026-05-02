@@ -1,5 +1,5 @@
 <template>
-  <div class="npc-card">
+  <div class="npc-card parchment">
     <!-- Header: name + buttons -->
     <div class="npc-card-header">
       <div>
@@ -572,7 +572,10 @@ function navigateToNPCGenerator() {
   border: 1.5px solid #c9b99a;
   border-top: 3px solid #7b2d26;
   border-radius: 2px;
-  font-family: Georgia, 'Times New Roman', serif;
+  /* Card root carries the `parchment` marker class (see App.vue) which
+     opts the card and its descendants out of the project-wide sans-serif
+     override, so this declaration applies normally and inherits down. */
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   overflow: hidden;
   margin-bottom: 1.5rem;
   /* Priority 2: Hardcode font sizing to prevent WordPress theme overrides */
