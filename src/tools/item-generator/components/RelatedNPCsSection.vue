@@ -22,17 +22,24 @@
       </ParTooltip>
     </div>
 
-    <!-- Empty state: helper text is the section's content. Guides the
-         user toward populating the list; the Re-scan button in the
-         header above is the action. -->
+    <!-- Empty state copy serves two audiences:
+         - Existing users (bulk after this release): items pre-date the
+           related_npcs field, so the array is empty even though their
+           lore likely already names characters. The primary action is
+           "Re-scan Lore" — points up at the button in the section header.
+         - New users: the scan ran during item generation. If the array
+           is empty, the lore genuinely had no named characters, and the
+           Lore Builder is the path to richer lore that names someone.
+         Lead with re-scan (helps the bulk case immediately); offer the
+         Lore Builder as the conditional fallback for the new-user case. -->
     <p v-if="!hasStubs" class="related-npcs-empty">
-      No related NPCs found in this item's lore yet.
+      No related NPCs yet. Click Re-scan Lore above to find named characters in this item's lore. If the lore doesn't mention any,
       <a
         href="#"
         class="related-npcs-empty-link"
         @click.prevent="$emit('switch-to-lore-builder')"
-      >Use the Lore Builder</a>
-      to add more NPCs, then click Re-scan Lore above.
+      >use the Lore Builder</a>
+      to add more lore content.
     </p>
 
     <!-- Populated state: list only. No helper text — once stubs exist,

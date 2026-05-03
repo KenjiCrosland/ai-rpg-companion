@@ -1962,20 +1962,16 @@ onUnmounted(() => {
    chrome; lore is collapsible and demoted.
    ============================================ */
 
+/* Card surface uses parchment tokens directly. The previous block of
+   local --card-* / --title-color / --body-text aliases mapped 1:1 to
+   parchment values (the item card was the de-facto reference palette);
+   inlining the tokens removes the indirection and stops any drift from
+   the parchment system over time. NPCCard.vue went through the same
+   sweep — both cards now render against the same paper tone. */
 .item-card {
-  --card-bg: #fdfbf6;
-  --card-border: #e8e2d4;
-  --card-top-rule: #7a1f1f;
-  --title-color: #7a1f1f;
-  --feature-heading: #7a1f1f;
-  --body-text: #222;
-  --secondary-text: #555;
-  --muted-text: #6b6b6b;
-  --divider: #e2dccd;
-
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-top: 2px solid var(--card-top-rule);
+  background: var(--par-color-surface, #fdfbf6);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-top: 2px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
   margin-bottom: 1.5rem;
   padding: 2rem 2.5rem;
@@ -1985,7 +1981,7 @@ onUnmounted(() => {
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   font-size: 1.5rem;
   line-height: 1.7;
-  color: var(--body-text);
+  color: var(--par-color-text, #222);
 }
 
 /* Header: title + type/rarity on the left, Edit Item button top-right. */
@@ -2006,14 +2002,14 @@ onUnmounted(() => {
   margin: 0 0 0.15rem;
   font-size: 2.9rem;
   font-weight: 400;
-  color: var(--title-color);
+  color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.01em;
 }
 
 .item-card-subtitle {
   margin: 0;
   font-size: 1.55rem;
-  color: var(--muted-text);
+  color: var(--par-color-text-muted, #6b6b6b);
   font-style: italic;
 }
 
@@ -2032,7 +2028,7 @@ onUnmounted(() => {
   margin: 1.75rem 0 0;
   max-width: 65ch;
   font-style: italic;
-  color: var(--secondary-text);
+  color: var(--par-color-text-secondary, #555);
   font-size: 1.75rem;
   line-height: 1.65;
 }
@@ -2055,7 +2051,7 @@ onUnmounted(() => {
    own margin-top (2rem) owns the gap from the description above. */
 .item-card-modifier {
   margin: 0 0 2rem;
-  color: var(--body-text);
+  color: var(--par-color-text, #222);
   font-size: 1.55rem;
   line-height: 1.5;
 }
@@ -2080,14 +2076,14 @@ onUnmounted(() => {
   margin: 0 0 0.15rem;
   font-size: 1.6rem;
   font-weight: 600;
-  color: var(--feature-heading);
+  color: var(--par-color-title, #7a1f1f);
   line-height: 1.3;
 }
 
 .item-feature-description {
   margin: 0;
   font-size: 1.55rem;
-  color: var(--body-text);
+  color: var(--par-color-text, #222);
   line-height: 1.5;
 }
 
@@ -2167,7 +2163,7 @@ onUnmounted(() => {
 .item-card-footer {
   margin-top: 1.75rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--divider);
+  border-top: 1px solid var(--par-color-divider, #e2dccd);
   display: flex;
   gap: 0.5rem;
 }

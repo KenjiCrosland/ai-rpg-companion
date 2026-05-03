@@ -72,9 +72,9 @@
       <!-- Flourish divider -->
       <svg v-if="(hasRelationships || loadingRelationships) && (npc.combined_details || loadingDescription)"
         viewBox="0 0 400 12" xmlns="http://www.w3.org/2000/svg" class="npc-flourish">
-        <line x1="0" y1="6" x2="188" y2="6" stroke="#c9b99a" stroke-width="0.75" />
-        <line x1="212" y1="6" x2="400" y2="6" stroke="#c9b99a" stroke-width="0.75" />
-        <polygon points="200,1 206,6 200,11 194,6" fill="#7b2d26" />
+        <line x1="0" y1="6" x2="188" y2="6" stroke="var(--par-color-border-strong, #c9b99a)" stroke-width="0.75" />
+        <line x1="212" y1="6" x2="400" y2="6" stroke="var(--par-color-border-strong, #c9b99a)" stroke-width="0.75" />
+        <polygon points="200,1 206,6 200,11 194,6" fill="var(--par-color-title, #7a1f1f)" />
       </svg>
 
       <!-- Relationships - skeleton or content -->
@@ -560,23 +560,19 @@ function navigateToNPCGenerator() {
 </script>
 
 <style scoped>
-/* Color palette */
-:root {
-  --npc-bg: #faf8f3;
-  --npc-border: #c9b99a;
-  --npc-accent: #7b2d26;
-  --npc-text: #4a4236;
-  --npc-muted: #8a7e6b;
-  --npc-card-bg: #f4f0e8;
-  --npc-badge-bg: #e8e0d0;
-  --npc-badge-text: #6b5f4f;
-}
+/* Card surface uses the parchment palette directly — no local --npc-*
+   vars. The previous local palette ran slightly warmer than the rest of
+   the parchment system (var(--par-color-surface, #fdfbf6) surface, var(--par-color-text, #222) body); converged to the
+   parchment tokens so the NPC card renders in the same paper tone as the
+   item card and any future card surface. If the NPC card needs to
+   diverge visually for a real reason, swap specific tokens at the
+   .npc-card scope rather than reintroducing a parallel palette. */
 
 /* Card container */
 .npc-card {
-  background: #faf8f3;
-  border: 1.5px solid #c9b99a;
-  border-top: 3px solid #7b2d26;
+  background: var(--par-color-surface, #fdfbf6);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border-top: 3px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
   /* Card root carries the `parchment` marker class (see App.vue) which
      opts the card and its descendants out of the project-wide sans-serif
@@ -611,30 +607,30 @@ function navigateToNPCGenerator() {
   margin: 0 0 0.125rem;
   font-size: 2.8rem;
   font-weight: 500;
-  color: #7b2d26;
+  color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.02em;
 }
 
 .npc-card-subtitle {
   margin: 0 0 1rem 0;
   font-size: 1.2rem;
-  color: #8a7e6b;
+  color: var(--par-color-text-muted, #6b6b6b);
   font-style: italic;
 }
 
 .npc-source-link {
-  color: #7b2d26;
+  color: var(--par-color-title, #7a1f1f);
   text-decoration: underline;
   font-style: normal;
 }
 
 .npc-source-link:hover {
-  color: #5a1f1a;
+  color: var(--par-color-title-deep, #58180d);
   text-decoration: none;
 }
 
 .npc-source-deleted {
-  color: #8a7e6b;
+  color: var(--par-color-text-muted, #6b6b6b);
   font-style: italic;
   font-size: 0.95em;
 }
@@ -643,25 +639,25 @@ function navigateToNPCGenerator() {
 .npc-card-origin-note {
   /* Priority 5: Increase horizontal padding */
   padding: 0.5rem 2rem;
-  background: #f4f0e8;
-  border-top: 1px solid #c9b99a;
-  border-bottom: 1px solid #c9b99a;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
+  border-bottom: 1px solid var(--par-color-border-strong, #c9b99a);
   margin: 0 0 0.75rem;
 }
 
 .npc-card-origin-note p {
   margin: 0;
   font-size: 1.1rem;
-  color: #8a7e6b;
+  color: var(--par-color-text-muted, #6b6b6b);
   font-style: italic;
 }
 
 /* Read-aloud */
 .npc-card-read-aloud {
-  border-top: 1px solid #c9b99a;
-  border-bottom: 1px solid #c9b99a;
+  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
+  border-bottom: 1px solid var(--par-color-border-strong, #c9b99a);
   /* Priority 6: Add left border accent for quick scanning */
-  border-left: 3px solid #7b2d26;
+  border-left: 3px solid var(--par-color-title, #7a1f1f);
   /* Priority 5: Increase horizontal padding */
   margin: 2rem 1.5rem 2rem;
   padding: 1rem 0 1rem 1.25rem;
@@ -671,7 +667,7 @@ function navigateToNPCGenerator() {
   margin: 0;
   font-size: 1.6rem;
   font-style: italic;
-  color: #4a4236;
+  color: var(--par-color-text, #222);
   line-height: 3rem;
 }
 
@@ -692,7 +688,7 @@ function navigateToNPCGenerator() {
 .npc-card-body p {
   margin: 0 0 0.75rem;
   font-size: 1.6rem;
-  color: #4a4236;
+  color: var(--par-color-text, #222);
   line-height: 3rem;
 }
 
@@ -711,12 +707,12 @@ function navigateToNPCGenerator() {
   float: left;
   line-height: 1;
   margin: 2px 2px 0 0;
-  color: #7b2d26;
+  color: var(--par-color-title, #7a1f1f);
   font-weight: 500;
 }
 
 .npc-card-label {
-  color: #7b2d26;
+  color: var(--par-color-title, #7a1f1f);
   font-weight: 500;
   font-size: 1.6rem;
 }
@@ -779,7 +775,7 @@ function navigateToNPCGenerator() {
   gap: 0.6rem;
   padding: 0.9rem 1.1rem;
   background: rgba(232, 226, 212, 0.35);
-  border: 1px solid var(--par-color-divider, #e2dccd);
+  border: 1px solid var(--par-color-divider, var(--par-color-divider, #e2dccd));
   border-radius: var(--par-radius-sm, 3px);
 }
 
@@ -796,7 +792,7 @@ function navigateToNPCGenerator() {
 .npc-edit__generate-loading {
   padding: 0.625rem 0.75rem;
   background: rgba(232, 226, 212, 0.35);
-  border: 1px solid var(--par-color-divider, #e2dccd);
+  border: 1px solid var(--par-color-divider, var(--par-color-divider, #e2dccd));
   border-radius: var(--par-radius-sm, 3px);
 }
 
@@ -808,7 +804,7 @@ function navigateToNPCGenerator() {
 .npc-edit__footer {
   margin-top: 0.75rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--par-color-divider, #e2dccd);
+  border-top: 1px solid var(--par-color-divider, var(--par-color-divider, #e2dccd));
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
@@ -830,13 +826,13 @@ function navigateToNPCGenerator() {
   margin: 0 0 0.625rem;
   font-size: 1.4rem;
   font-weight: 500;
-  color: #7b2d26;
+  color: var(--par-color-title, #7a1f1f);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .npc-relationship-card {
-  background: #f4f0e8;
+  background: var(--par-color-callout-bg, #f3ebda);
   border-radius: 3px;
   padding: 0.625rem 0.75rem;
   margin-bottom: 0.75rem;
@@ -856,13 +852,13 @@ function navigateToNPCGenerator() {
   font-size: 1.6rem;
   /* Priority 4: Bolder and red accent for visual hierarchy */
   font-weight: 700;
-  color: #7b2d26;
+  color: var(--par-color-title, #7a1f1f);
 }
 
 .npc-relationship-description {
   margin: 0;
   font-size: 1.6rem;
-  color: #6b5f4f;
+  color: var(--par-color-text, #222);
   line-height: 3rem;
 }
 
@@ -870,9 +866,9 @@ function navigateToNPCGenerator() {
    renders standalone — kept for parity; the inline edit-mode generator
    uses .npc-edit__generate styles instead). */
 .npc-card-relationship-generator {
-  border-top: 1px solid #c9b99a;
+  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
   padding: 1rem 2rem 1.25rem;
-  background: #f9f6f0;
+  background: var(--par-color-surface, #fdfbf6);
 }
 
 /* Footer bar for card actions */
@@ -881,7 +877,7 @@ function navigateToNPCGenerator() {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e0d6c2;
+  border-top: 1px solid var(--par-color-divider, var(--par-color-divider, #e2dccd));
   background: rgba(0, 0, 0, 0.02);
 }
 

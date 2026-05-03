@@ -369,8 +369,18 @@ const deleteNPC = async (index) => {
 
   const settingName = props.setting.setting_overview?.name || props.setting.place_name;
 
-  // Always show current setting
+  // Always show the current setting; supplement with any other settings
+  // the same NPC also appears in (locations.settings includes ALL of them).
+  // De-dupe by name so the current setting isn't double-listed.
   confirmMessage += `- Setting Generator (${settingName})\n`;
+  const otherSettings = locations.settings.filter(s => s !== settingName);
+  if (otherSettings.length > 0) {
+    if (otherSettings.length === 1) {
+      confirmMessage += `- Setting Generator (${otherSettings[0]})\n`;
+    } else {
+      confirmMessage += `- Setting Generator (${otherSettings.length} other settings)\n`;
+    }
+  }
 
   // Show all NPC Generator folders (don't filter out current setting name)
   if (locations.npcGenerator.length > 0) {

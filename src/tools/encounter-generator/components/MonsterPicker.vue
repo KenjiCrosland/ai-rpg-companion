@@ -20,7 +20,7 @@
         <p v-else>No monsters match your filters.</p>
       </div>
 
-      <div v-for="monster in paginatedMonsters" :key="monster.name + monster.source" class="monster-row"
+      <div v-for="(monster, idx) in paginatedMonsters" :key="`${monster.name}_${monster.source}_${idx}`" class="monster-row"
         @click="$emit('add-monster', monster)">
         <div class="monster-primary">
           <span class="monster-name">{{ monster.name }}</span>

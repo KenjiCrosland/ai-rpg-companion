@@ -328,6 +328,14 @@ export function deleteNPC(npcIndex) {
       }
     }
 
+    if (locations.settings.length > 0) {
+      if (locations.settings.length === 1) {
+        confirmMessage += `- Setting Generator (${locations.settings[0]})\n`;
+      } else {
+        confirmMessage += `- Setting Generator (${locations.settings.length} settings)\n`;
+      }
+    }
+
     if (locations.npcGenerator.length > 0) {
       if (locations.npcGenerator.length === 1) {
         confirmMessage += `- NPC Generator (${locations.npcGenerator[0]})\n`;

@@ -29,6 +29,19 @@ export function saveStatblockToStorage(statblock, folderName = 'Uncategorized') 
   }
 
   localStorage.setItem('monsters', JSON.stringify(stored));
+
+  // Same-tab cross-component sync. Reuses the existing
+  // `npc-storage-updated` event channel that `moveStatblockToNewFolder`
+  // and `renameStatblockReferences` already dispatch on (the event name
+  // is a misnomer for statblock writes but consistent with the channel
+  // those listeners — e.g. StatblockGenerator's linkedNPCs panel —
+  // already subscribe to). The `action` discriminator lets future
+  // consumers filter if needed.
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('npc-storage-updated', {
+      detail: { action: 'statblock-save', statblockName: statblock?.name, folderName },
+    }));
+  }
 }
 
 /**

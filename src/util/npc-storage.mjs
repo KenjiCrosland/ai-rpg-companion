@@ -411,15 +411,19 @@ export function saveNPCToDungeon(canonicalNPC, dungeonName) {
 
 /**
  * Find all locations where an NPC exists (by npc_id).
- * Returns an object describing where the NPC is found.
+ * Returns an object describing where the NPC is found across the three
+ * stores that hold NPC entries: the canonical NPC Generator folders,
+ * dungeon NPC arrays, and setting NPC arrays.
  *
  * @param {string} npcId - The NPC's unique ID
- * @returns {Object} Object with locations: { npcGenerator: [], dungeons: [] }
+ * @returns {Object} { npcGenerator: string[], dungeons: string[], settings: string[] }
+ *   — folder/dungeon/setting display names that contain the NPC.
  */
 export function findNPCLocations(npcId) {
   const locations = {
-    npcGenerator: [], // Array of folder names in npcGeneratorNPCs
-    dungeons: []      // Array of dungeon names
+    npcGenerator: [], // Folder names in npcGeneratorNPCs
+    dungeons: [],     // Dungeon display names
+    settings: [],     // Setting display names
   };
 
   if (!npcId) return locations;
@@ -447,6 +451,18 @@ export function findNPCLocations(npcId) {
         const found = dungeon.npcs.find(n => n.npc_id === npcId);
         if (found && dungeon.dungeonOverview?.name) {
           locations.dungeons.push(dungeon.dungeonOverview.name);
+        }
+      }
+    }
+
+    // Check Setting Generator storage
+    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+    for (const setting of settings) {
+      if (Array.isArray(setting?.npcs)) {
+        const found = setting.npcs.find(n => n?.npc_id === npcId);
+        if (found) {
+          const settingName = setting.setting_overview?.name || setting.place_name;
+          if (settingName) locations.settings.push(settingName);
         }
       }
     }
@@ -538,68 +554,6 @@ export function migrateNPCIds() {
         npc.npc_id = `npc_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
         migratedCount++;
         needsSave = true;
-      }
-    }
-  }
-
-  // Save back to localStorage if any NPCs were migrated
-  if (needsSave) {
-    localStorage.setItem('npcGeneratorNPCs', JSON.stringify(stored));
-  }
-
-  return migratedCount;
-}
-
-/**
- * One-time migration: Add sourceType to all NPCs in localStorage that don't have one.
- * Infers sourceType by checking if folder name matches a dungeon or setting.
- * Should be called when NPC Generator loads.
- *
- * @returns {number} Number of NPCs migrated
- */
-export function migrateSourceTypes() {
-  const stored = JSON.parse(
-    localStorage.getItem('npcGeneratorNPCs') || '{}'
-  );
-
-  // Get list of dungeon names
-  const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-  const dungeonNames = new Set(
-    dungeons.map(d => d.dungeonOverview?.name).filter(Boolean)
-  );
-
-  // Get list of setting names
-  const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
-  const settingNames = new Set(
-    settings.map(s => s.place_name).filter(Boolean)
-  );
-
-  let migratedCount = 0;
-  let needsSave = false;
-
-  // Loop through all folders
-  for (const folderName in stored) {
-    const npcs = stored[folderName];
-    if (!Array.isArray(npcs)) continue;
-
-    // Loop through all NPCs in this folder
-    for (let i = 0; i < npcs.length; i++) {
-      const npc = npcs[i];
-
-      // Check if NPC already has sourceType
-      if (!npc.sourceType) {
-        // Infer sourceType from folder name
-        if (dungeonNames.has(folderName)) {
-          npc.sourceType = 'dungeon';
-          migratedCount++;
-          needsSave = true;
-        } else if (settingNames.has(folderName)) {
-          npc.sourceType = 'setting';
-          migratedCount++;
-          needsSave = true;
-        }
-        // If folder name doesn't match anything, don't add sourceType
-        // (these are NPCs created directly in NPC Generator)
       }
     }
   }
