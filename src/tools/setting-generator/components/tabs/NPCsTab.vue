@@ -304,7 +304,7 @@ const handleSaveEdit = (index, editedData) => {
         n.npcDescriptionPart1?.character_name === originalNPC.name
       );
       if (existingNPC) {
-        existingId = existingNPC.npc_id || existingNPC.id;
+        existingId = existingNPC.npc_id;
         break;
       }
     }
@@ -347,7 +347,7 @@ const handleSaveEdit = (index, editedData) => {
 // -------------------------
 const deleteNPC = async (index) => {
   const npc = props.setting.npcs[index];
-  const npcId = npc?.npc_id || npc?.id;
+  const npcId = npc?.npc_id;
   const npcName = npc?.name || 'this NPC';
 
   if (!npcId) {

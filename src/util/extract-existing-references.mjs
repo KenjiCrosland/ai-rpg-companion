@@ -32,7 +32,7 @@ function extractNPCStatblockReferences() {
       if (!Array.isArray(npcs)) continue;
 
       for (const npc of npcs) {
-        const npcId = npc.npc_id || npc.id;
+        const npcId = npc.npc_id;
         const statblockName = npc.npcDescriptionPart1?.statblock_name;
         const statblockFolder = npc.npcDescriptionPart1?.statblock_folder;
 
@@ -101,7 +101,7 @@ function extractDungeonNPCReferences() {
         // Only process NPCs with dungeon sourceType
         if (npc.sourceType !== 'dungeon') continue;
 
-        const npcId = npc.npc_id || npc.id;
+        const npcId = npc.npc_id;
         const dungeonId = dungeonMap.get(folderName);
 
         if (!npcId || !dungeonId) continue;
@@ -212,7 +212,7 @@ function extractSettingNPCReferences() {
         // Only process NPCs with setting sourceType
         if (npc.sourceType !== 'setting') continue;
 
-        const npcId = npc.npc_id || npc.id;
+        const npcId = npc.npc_id;
         const settingId = settingMap.get(folderName);
 
         if (!npcId || !settingId) continue;

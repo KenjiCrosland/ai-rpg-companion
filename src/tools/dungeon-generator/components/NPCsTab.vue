@@ -420,7 +420,7 @@ function handleSaveEdit(index, editedData) {
         n.npcDescriptionPart1?.character_name === originalName
       );
       if (existingNPC) {
-        npc.npc_id = existingNPC.npc_id || existingNPC.id;
+        npc.npc_id = existingNPC.npc_id;
         break;
       }
     }

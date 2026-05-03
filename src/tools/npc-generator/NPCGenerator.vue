@@ -155,7 +155,7 @@
                     :source-type="computedSourceType"
                     :source-name="computedSourceName"
                     :source-id="computedSourceId"
-                    :npc-id="currentNPC?.npc_id || currentNPC?.id"
+                    :npc-id="currentNPC?.npc_id"
                     :is-editing="isEditingNPC"
                     :show-relationship-generator="true"
                     :is-generating-relationship="loadingNewRelationship"
@@ -615,22 +615,36 @@ onMounted(async () => {
         }
     }
 
-    // Handle NPC deep link (keep existing NPC-specific deep linking)
+    // Handle NPC deep link via folder + name (legacy path; new callers
+    // pass `params.npc` with the stable id and skip this branch). Walk
+    // every folder by name — the `params.folder` is now treated as a
+    // hint about where the NPC USED to live, not where it MUST be.
+    // Folder organization is the user's; cross-tool navigation must
+    // survive folder moves.
     if (params.folder && params.npc_name) {
-        // Find the NPC in the specified folder
-        const folderNPCs = npcs.value[params.folder];
-        if (folderNPCs) {
+        let found = false;
+        // Try the hint folder first so the original behavior is preserved
+        // when nothing has been reorganized.
+        const folderOrder = [
+            params.folder,
+            ...Object.keys(npcs.value).filter(f => f !== params.folder),
+        ];
+        for (const folderName of folderOrder) {
+            const folderNPCs = npcs.value[folderName];
+            if (!Array.isArray(folderNPCs)) continue;
             const npcIndex = folderNPCs.findIndex(npc =>
                 npc.npcDescriptionPart1?.character_name === params.npc_name
             );
             if (npcIndex !== -1) {
-                // Open the folder accordion
-                openedFolders.value[params.folder] = true;
-
-                // Select the NPC
-                selectNPC(params.folder, npcIndex);
+                openedFolders.value[folderName] = true;
+                selectNPC(folderName, npcIndex);
+                found = true;
+                break;
             }
         }
+        // No-op if no folder contains the NPC; the user lands on the
+        // landing page rather than a confusing wrong-NPC selection.
+        void found;
     }
 
     // Source tool → NPC Generator: "Create NPC" from a stub. Prefill
@@ -655,7 +669,7 @@ onMounted(async () => {
         for (const folderName of Object.keys(npcs.value)) {
             const folder = npcs.value[folderName];
             if (!Array.isArray(folder)) continue;
-            const npcIndex = folder.findIndex(n => n?.npc_id === params.npc || n?.id === params.npc);
+            const npcIndex = folder.findIndex(n => n?.npc_id === params.npc);
             if (npcIndex !== -1) {
                 openedFolders.value[folderName] = true;
                 selectNPC(folderName, npcIndex);
@@ -1139,7 +1153,7 @@ function deleteCurrentNPC() {
     const folderName = activeFolder.value || 'Uncategorized';
     const npcToDelete = npcs.value[folderName]?.[currentNPCIndex.value];
     const npcName = npcToDelete?.npcDescriptionPart1?.character_name || 'this NPC';
-    const npcId = npcToDelete?.npc_id || npcToDelete?.id;
+    const npcId = npcToDelete?.npc_id;
 
     if (!npcId) {
         // Fallback for NPCs without IDs (shouldn't happen after migration, but just in case)

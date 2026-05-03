@@ -300,7 +300,7 @@ export function deleteNPC(npcIndex) {
   if (!currentDungeon.value) return;
 
   const npc = currentDungeon.value.npcs[npcIndex];
-  const npcId = npc?.npc_id || npc?.id;
+  const npcId = npc?.npc_id;
   const npcName = npc?.name || 'this NPC';
 
   if (!npcId) {
@@ -354,7 +354,7 @@ export function deleteNPC(npcIndex) {
       // Update reactive state - remove from current dungeon's NPC array
       if (currentDungeon.value && currentDungeon.value.npcs) {
         const npcIndex = currentDungeon.value.npcs.findIndex(n =>
-          (n.npc_id === npcId || n.id === npcId)
+          (n.npc_id === npcId)
         );
         if (npcIndex !== -1) {
           currentDungeon.value.npcs.splice(npcIndex, 1);

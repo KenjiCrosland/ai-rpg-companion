@@ -46,8 +46,10 @@
 
       <!-- Results list container with scroll -->
       <div class="results-list" v-if="!srdLoading">
-        <!-- Results -->
-        <button v-for="item in filteredStatblocks" :key="`${item.folder}_${item.name}`" type="button"
+        <!-- Results. Key includes the array index defensively: even after
+             dedup at load time, an unexpected duplicate elsewhere in the
+             pipeline shouldn't crash the render with a key collision. -->
+        <button v-for="(item, idx) in filteredStatblocks" :key="`${item.folder}_${item.name}_${idx}`" type="button"
           class="search-result-item" @mousedown.prevent="selectStatblock(item)">
           <span class="result-name">{{ item.name }}</span>
           <span class="result-meta"> · CR {{ item.cr }} · {{ item.folder }}</span>
@@ -182,12 +184,22 @@ async function loadStatblocks() {
     const monsters = JSON.parse(localStorage.getItem('monsters') || '{}');
     const statblockList = [];
 
-    // Load custom statblocks from localStorage
+    // Load custom statblocks from localStorage. Dedup by `${folder}_${name}`
+    // — `monsters` storage occasionally accumulates duplicates (e.g., when
+    // two save paths race on the same key, or import/export overlaps with
+    // existing data). Showing one entry in the dropdown is unambiguous;
+    // showing two identical entries asks the user to pick between them
+    // and crashes Vue's render with a duplicate-key warning.
+    const seenKeys = new Set();
     for (const folderName in monsters) {
       const folder = monsters[folderName];
       if (!Array.isArray(folder)) continue;
 
       for (const statblock of folder) {
+        const dedupKey = `${folderName}_${statblock?.name}`;
+        if (seenKeys.has(dedupKey)) continue;
+        seenKeys.add(dedupKey);
+
         statblockList.push({
           name: statblock.name,
           folder: folderName,

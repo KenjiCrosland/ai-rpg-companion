@@ -546,10 +546,16 @@ function navigateToSource() {
 function navigateToNPCGenerator() {
   if (!shouldShowNpcGeneratorLink.value) return;
 
-  navigateToTool('npc-generator', {
-    folder: props.origin,
-    npc_name: props.npc.name
-  });
+  // Prefer the stable npc_id when available — the receiving handler walks
+  // every folder by id, so moving the NPC between folders doesn't break
+  // the link. Fall back to folder + npc_name only for legacy data that
+  // pre-dates id assignment (the receiving handler also walks by name
+  // across folders for that case, so either path survives reorganization).
+  const params = props.npc?.npc_id
+    ? { npc: props.npc.npc_id }
+    : { folder: props.origin, npc_name: props.npc.name };
+
+  navigateToTool('npc-generator', params);
 }
 </script>
 

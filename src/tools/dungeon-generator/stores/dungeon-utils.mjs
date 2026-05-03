@@ -216,7 +216,7 @@ function migrateDungeonNPCs(dungeon) {
         );
         if (existingNPC) {
           // Check both npc_id and id fields
-          const existingId = existingNPC.npc_id || existingNPC.id;
+          const existingId = existingNPC.npc_id;
           if (existingId) {
             npc.npc_id = existingId;
             migrated = true;
@@ -233,14 +233,14 @@ function migrateDungeonNPCs(dungeon) {
       if (npc.read_aloud_description) {
         // Check if NPC already exists in shared storage
         const existingNPC = sharedNPCs.find(n =>
-          (n.npc_id && (n.npc_id === npc.npc_id || n.id === npc.npc_id)) ||
+          (n.npc_id && n.npc_id === npc.npc_id) ||
           (n.npcDescriptionPart1?.character_name === npc.name)
         );
 
         if (existingNPC) {
           // NPC already in shared storage - just sync ID back, don't overwrite
           // Check both npc_id and id fields (shared storage might use either)
-          const existingId = existingNPC.npc_id || existingNPC.id;
+          const existingId = existingNPC.npc_id;
           if (existingId && !npc.npc_id) {
             npc.npc_id = existingId;
             migrated = true;

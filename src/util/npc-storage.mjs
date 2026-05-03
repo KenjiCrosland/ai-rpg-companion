@@ -27,7 +27,7 @@ export function findNPCByIdAcrossFolders(stored, npcId) {
   if (!stored || !npcId) return null;
   for (const folder of Object.values(stored)) {
     if (!Array.isArray(folder)) continue;
-    const found = folder.find(n => n?.npc_id === npcId || n?.id === npcId);
+    const found = folder.find(n => n?.npc_id === npcId);
     if (found) return found;
   }
   return null;
@@ -58,14 +58,14 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
   }
 
   const name = getNPCName(npc);
-  let id = npc.npc_id || npc.id;
+  let id = npc.npc_id;
 
   // AUTO-MIGRATION: If NPC has an ID, remove it from other folders (handles dungeon/setting renames)
   if (id) {
     for (const otherFolder in stored) {
       if (otherFolder !== folderName) {
         const duplicateIndex = stored[otherFolder].findIndex(n =>
-          (n.npc_id === id || n.id === id)
+          n.npc_id === id
         );
         if (duplicateIndex !== -1) {
           // Remove NPC from old folder
@@ -85,9 +85,7 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
 
   if (id) {
     // Try to find by ID first
-    existingIndex = stored[folderName].findIndex(n =>
-      (n.npc_id === id || n.id === id)
-    );
+    existingIndex = stored[folderName].findIndex(n => n.npc_id === id);
   }
 
   if (existingIndex === -1) {
@@ -99,8 +97,7 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
 
   if (existingIndex !== -1) {
     // Update existing NPC (preserve/assign ID if needed)
-    const existingId = stored[folderName][existingIndex].npc_id
-      || stored[folderName][existingIndex].id;
+    const existingId = stored[folderName][existingIndex].npc_id;
 
     if (existingId) {
       // Use existing ID
@@ -155,7 +152,7 @@ export function getNPCName(npc) {
  */
 export function dungeonNPCToCanonical(npc, dungeonTitle) {
   return {
-    npc_id: npc.npc_id || npc.id || null,
+    npc_id: npc.npc_id || null,
     npcDescriptionPart1: {
       character_name: npc.name,
       description_of_position: npc.description_of_position || '',
@@ -189,7 +186,7 @@ export function dungeonNPCToCanonical(npc, dungeonTitle) {
  */
 export function settingNPCToCanonical(npc, settingName) {
   return {
-    npc_id: npc.npc_id || npc.id || null,
+    npc_id: npc.npc_id || null,
     npcDescriptionPart1: {
       character_name: npc.name,
       description_of_position: npc.description_of_position || '',
@@ -225,7 +222,7 @@ export function canonicalToDungeonNPC(canonicalNPC) {
   const part2 = canonicalNPC.npcDescriptionPart2 || {};
 
   return {
-    npc_id: canonicalNPC.npc_id || canonicalNPC.id || null,
+    npc_id: canonicalNPC.npc_id || null,
     name: part1.character_name || '',
     description_of_position: part1.description_of_position || '',
     why_in_dungeon: part1.reason_for_being_there || '',
@@ -260,6 +257,10 @@ export function normalizeDungeonNPC(npc) {
   }
 
   return {
+    // Preserve the canonical id so NPCCard's "View in NPC Generator" link
+    // can navigate by stable id rather than guessing a folder + name pair
+    // — the folder name path breaks the moment the user reorganizes.
+    npc_id: npc.npc_id || null,
     name: npc.name,
     read_aloud_description: npc.read_aloud_description || '',
     combined_details: combinedDetails,
@@ -290,6 +291,10 @@ export function normalizeSettingNPC(npc) {
   }
 
   return {
+    // Preserve the canonical id so NPCCard's "View in NPC Generator" link
+    // can navigate by stable id rather than folder + name (which breaks
+    // the moment the user moves the NPC out of the setting-named folder).
+    npc_id: npc.npc_id || null,
     name: npc.name,
     read_aloud_description: npc.read_aloud_description || '',
     combined_details: combinedDetails,
@@ -333,6 +338,7 @@ export function normalizeGeneratorNPC(npc) {
   }
 
   return {
+    npc_id: npc.npc_id || null,
     name: part1.character_name || '',
     read_aloud_description: part1.read_aloud_description || '',
     combined_details: combinedDetails,
@@ -378,7 +384,7 @@ export function saveNPCToDungeon(canonicalNPC, dungeonName) {
     const npcId = dungeonNPC.npc_id;
 
     if (npcId) {
-      existingIndex = dungeon.npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
+      existingIndex = dungeon.npcs.findIndex(n => n.npc_id === npcId);
     }
 
     if (existingIndex === -1) {
@@ -427,7 +433,7 @@ export function findNPCLocations(npcId) {
     for (const folderName in npcGeneratorStorage) {
       const npcs = npcGeneratorStorage[folderName];
       if (Array.isArray(npcs)) {
-        const found = npcs.find(n => n.npc_id === npcId || n.id === npcId);
+        const found = npcs.find(n => n.npc_id === npcId);
         if (found) {
           locations.npcGenerator.push(folderName);
         }
@@ -438,7 +444,7 @@ export function findNPCLocations(npcId) {
     const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
     for (const dungeon of dungeons) {
       if (dungeon.npcs && Array.isArray(dungeon.npcs)) {
-        const found = dungeon.npcs.find(n => n.npc_id === npcId || n.id === npcId);
+        const found = dungeon.npcs.find(n => n.npc_id === npcId);
         if (found && dungeon.dungeonOverview?.name) {
           locations.dungeons.push(dungeon.dungeonOverview.name);
         }
@@ -477,7 +483,7 @@ export function deleteNPCFromAllLocations(npcId) {
     for (const folderName in npcGeneratorStorage) {
       const npcs = npcGeneratorStorage[folderName];
       if (Array.isArray(npcs)) {
-        const index = npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
+        const index = npcs.findIndex(n => n.npc_id === npcId);
         if (index !== -1) {
           npcs.splice(index, 1);
           results.npcGenerator++;
@@ -502,10 +508,13 @@ export function deleteNPCFromAllLocations(npcId) {
 }
 
 /**
- * One-time migration: Add npc_id to all NPCs in localStorage that don't have one.
- * Should be called when NPC Generator loads.
+ * Gap-fill: ensure every NPC has an `npc_id`. Called on every NPCGenerator
+ * mount so any record that slipped through (manual import, hand-edited
+ * localStorage, etc.) gets one. The `promote-npc-id` migration runs once
+ * per browser to lift legacy `id` → `npc_id` and drop the legacy field;
+ * this gap-fill catches the residual case where neither field was set.
  *
- * @returns {number} Number of NPCs migrated
+ * @returns {number} Number of NPCs assigned a fresh id
  */
 export function migrateNPCIds() {
   const stored = JSON.parse(
@@ -524,9 +533,8 @@ export function migrateNPCIds() {
     for (let i = 0; i < npcs.length; i++) {
       const npc = npcs[i];
 
-      // Check if NPC has an ID
-      if (!npc.npc_id && !npc.id) {
-        // Generate a unique ID
+      // npc_id is the canonical id field. Generate one if missing.
+      if (!npc.npc_id) {
         npc.npc_id = `npc_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
         migratedCount++;
         needsSave = true;
@@ -639,7 +647,7 @@ export function migrateDungeonNPCsToSharedStorage() {
         const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
         const exists = canonicalNPC.npc_id && Object.values(stored).some(folder =>
           Array.isArray(folder) && folder.some(n =>
-            n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+            n.npc_id === canonicalNPC.npc_id
           )
         );
 
@@ -695,7 +703,7 @@ export function migrateSettingNPCsToSharedStorage() {
         const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
         const exists = canonicalNPC.npc_id && Object.values(stored).some(folder =>
           Array.isArray(folder) && folder.some(n =>
-            n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+            n.npc_id === canonicalNPC.npc_id
           )
         );
 

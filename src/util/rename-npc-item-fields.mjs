@@ -59,7 +59,7 @@ export function renameNPCItemFields() {
       // Item-sourced NPC missing its itemName field — log and skip rather
       // than guess.
       if (!npc.itemName) {
-        const id = npc.npc_id || npc.id || '(no id)';
+        const id = npc.npc_id || '(no id)';
         const name = npc.npcDescriptionPart1?.character_name || '(unknown)';
         console.warn(
           `rename-npc-item-fields: skipping item-sourced NPC ${id} "${name}" — no itemName to migrate`

@@ -308,7 +308,7 @@ const linkedNPCs = computed(() => {
     for (const [folderName, npcsInFolder] of Object.entries(npcGeneratorNPCs)) {
       if (Array.isArray(npcsInFolder)) {
         const foundNPC = npcsInFolder.find(npc =>
-          npc.npc_id === ref.source_id || npc.id === ref.source_id
+          npc.npc_id === ref.source_id
         );
         if (foundNPC) {
           npcFolder = folderName;

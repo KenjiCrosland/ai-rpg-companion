@@ -15,6 +15,7 @@
 
 import { extractExistingReferences } from './extract-existing-references.mjs';
 import { renameNPCItemFields } from './rename-npc-item-fields.mjs';
+import { promoteNPCIds } from './promote-npc-id.mjs';
 import { assignDungeonIds } from './assign-dungeon-ids.mjs';
 import { assignSettingIds } from './assign-setting-ids.mjs';
 import { dropNPCFolder } from './drop-npc-folder.mjs';
@@ -30,13 +31,17 @@ import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
  *   2. rename-npc-item-fields — promotes legacy `itemName` on item-sourced
  *      NPCs to the generic `sourceId`/`sourceName` pair. Runs before any
  *      id migration that might touch the same records.
- *   3. assign-dungeon-ids / assign-setting-ids — convert entities to
+ *   3. promote-npc-id — promote legacy `id` field on NPC records up to
+ *      `npc_id` and drop the legacy field. Runs after rename-npc-item-fields
+ *      (which may touch the same records' source-tagging fields) but
+ *      before any consumer that reads `npc_id` as the canonical id.
+ *   4. assign-dungeon-ids / assign-setting-ids — convert entities to
  *      stable string ids and rewrite refs that targeted them by name or
  *      numeric value.
- *   4. drop-npc-folder — remove the `npc_folder` denormalization from
+ *   5. drop-npc-folder — remove the `npc_folder` denormalization from
  *      every cross-tool stub. Substrate lookups walk by id now; the
  *      cached folder hint is dead weight and a stale-cache hazard.
- *   5. sweep-orphan-references — drops any refs whose source/target no
+ *   6. sweep-orphan-references — drops any refs whose source/target no
  *      longer resolves; runs after the id migrations so their post-
  *      rewrite refs aren't seen as orphans.
  *
@@ -45,6 +50,7 @@ import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
 const migrations = [
   { name: 'extract-existing-references', run: extractExistingReferences },
   { name: 'rename-npc-item-fields', run: renameNPCItemFields },
+  { name: 'promote-npc-id', run: promoteNPCIds },
   { name: 'assign-dungeon-ids', run: assignDungeonIds },
   { name: 'assign-setting-ids', run: assignSettingIds },
   { name: 'drop-npc-folder', run: dropNPCFolder },

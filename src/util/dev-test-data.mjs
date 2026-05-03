@@ -140,7 +140,12 @@ export const TEST_SEED = {
       feature_count: 1,
       requires_attunement: false,
       attunement_restriction: null,
-      features: { 'Cobweb Light': 'Sheds dim light in a 5-foot radius when grasped firmly.' },
+      // Bold markdown demonstrates the mechanical-emphasis rendering
+      // (formatMarkdown converts **...** to <strong>). New items get
+      // these bolds from the LLM via the prompt's emphasis instructions;
+      // seeded items show them so a smoke-tester can verify the render
+      // path without having to regenerate.
+      features: { 'Cobweb Light': 'Sheds dim light in a **5-foot radius** when grasped firmly.' },
       physical_description: 'A small lantern wrapped in pale cobwebs.',
       lore: 'A trinket of no great consequence — a perfect baseline.',
       related_npcs: [],
@@ -150,11 +155,11 @@ export const TEST_SEED = {
       item_type: 'Weapon',
       rarity: 'Uncommon',
       bonus: '+1',
-      modifier_sentence: 'You have a +1 bonus to attack and damage rolls made with this weapon.',
+      modifier_sentence: 'You have a **+1 bonus** to attack and damage rolls made with this weapon.',
       feature_count: 1,
       requires_attunement: true,
       attunement_restriction: null,
-      features: { 'Bone Whisper': 'Once per day, the wielder can ask a single yes/no question of the dead.' },
+      features: { 'Bone Whisper': '**Once per day**, the wielder can ask a single yes/no question of the dead.' },
       physical_description: 'A dagger with a hilt of yellowed bone.',
       lore: 'Carried by a long line of hedge-witches in the borderlands.',
       related_npcs: [],
@@ -164,12 +169,12 @@ export const TEST_SEED = {
       item_type: 'Weapon',
       rarity: 'Rare',
       bonus: '+2',
-      modifier_sentence: 'You have a +2 bonus to attack and damage rolls made with this weapon.',
+      modifier_sentence: 'You have a **+2 bonus** to attack and damage rolls made with this weapon.',
       feature_count: 2,
       requires_attunement: true,
       attunement_restriction: 'by a paladin',
       features: {
-        'Sunfire': 'Once per dawn, you may speak the blade\'s name and unleash a 30-foot cone of radiant fire (DC 15, 6d6 radiant on fail, half on success).',
+        'Sunfire': '**Once per dawn**, you may speak the blade\'s name and unleash a **30-foot cone** of radiant fire. Each creature in the area must succeed on a **DC 15 Dexterity save** or take **6d6 radiant damage**, half on success.',
         'Pure of Heart': 'You have advantage on saving throws against being charmed or frightened while wielding this weapon.',
       },
       physical_description: 'A greatsword whose blade glows faintly at dawn.',
@@ -186,13 +191,15 @@ export const TEST_SEED = {
       requires_attunement: true,
       attunement_restriction: 'by a creature of evil alignment',
       features: {
-        'Whispers of the Crowned': 'You can read the surface thoughts of any creature within 30 feet that you can see.',
-        'Crown of Dread': 'Creatures within 10 feet have disadvantage on saving throws against being frightened.',
-        'Persistent Hunger': 'At the end of each long rest while attuned, you must succeed on a DC 15 Wisdom save or take one level of exhaustion that can only be removed by feeding the crown a fresh memory.',
+        'Whispers of the Crowned': 'You can read the surface thoughts of any creature within **30 feet** that you can see.',
+        'Crown of Dread': 'Creatures within **10 feet** have disadvantage on saving throws against being frightened.',
+        'Persistent Hunger': 'At the end of each long rest while attuned, you must succeed on a **DC 15 Wisdom save** or take **one level of exhaustion** that can only be removed by feeding the crown a fresh memory.',
       },
       physical_description: 'A circlet of blackened iron set with a single weeping pearl.',
       lore: 'Yelena of the Duskwood received a vision of this crown in her seventh year. It was forged by a smith named Skragbit, of the Mukgash tribe — who has since been silenced. Today its keeper is one Xith\'vaar.',
       // Mixed promotion state: Yelena is a real NPC; Skragbit isn't (stub only).
+      // No `npc_folder` on stubs — the field was dropped from the substrate; the
+      // drop-npc-folder migration cleans it from any legacy data on first load.
       related_npcs: [
         {
           name: 'Yelena of the Duskwood',
@@ -200,7 +207,6 @@ export const TEST_SEED = {
           context: 'Saw the crown in a vision before its forging.',
           source_quote: 'Yelena of the Duskwood received a vision of this crown in her seventh year.',
           npc_id: NPC_YELENA,
-          npc_folder: 'Uncategorized',
         },
         {
           name: 'Skragbit',
@@ -208,7 +214,6 @@ export const TEST_SEED = {
           context: 'Mukgash tribe smith who was silenced after the forging.',
           source_quote: 'It was forged by a smith named Skragbit, of the Mukgash tribe — who has since been silenced.',
           npc_id: null,
-          npc_folder: null,
         },
       ],
     },
@@ -442,18 +447,36 @@ export const TEST_SEED = {
  * checklist). Keep this sync'd with the seed contents.
  */
 export const TEST_SEED_CHECKLIST = [
+  // ─── Item card visual / typography ─────────────────────────────────────
+  'Item Generator → any item — body type renders in Source Serif 4 (the web font; falls back to Georgia if it failed to load). Should look distinctly modern-warm, not the older Georgia weight.',
+  'Item Generator → "Sunfire Greatsword" — modifier sentence shows "**+2 bonus**" in bold; "Sunfire" feature shows bolded values: "Once per dawn", "30-foot cone", "DC 15 Dexterity save", "6d6 radiant damage". The "Pure of Heart" feature has no bolds (no scannable values to emphasize).',
+  'Item Generator → "Whisper Crown" — feature descriptions show bolded ranges/DCs ("30 feet", "10 feet", "DC 15 Wisdom save", "one level of exhaustion").',
+  'Item Generator → any item with lore — lore renders in a tinted callout block (warmer cream than card surface) with a small-caps "LORE" label in burgundy. Body text is darker gray, weight 500 (visibly heavier than feature body, but not aggressive).',
+  'Item Generator → any item — "Edit item" button reads as a burgundy text link (no border, no background); "Delete item" and "Hide export" use sentence case.',
+  'Item Generator → any item — body rhythm is ~2rem between flavor / modifier / each feature / lore (consistent gaps, no escalating-rhythm jumps).',
+  // ─── Item card attunement variants ─────────────────────────────────────
   'Item Generator → "Whisper Crown" — shows "(requires attunement by a creature of evil alignment)" subtitle, two related-NPC stubs (Yelena = View NPC, Skragbit = Create NPC).',
   'Item Generator → "Sunfire Greatsword" — shows "(requires attunement by a paladin)".',
   'Item Generator → "Bone-Hilt Dagger" — shows "(requires attunement)" with no restriction.',
   'Item Generator → "Cobweb Lantern" — Common, no attunement suffix.',
+  // ─── Re-scan Lore tooltip ──────────────────────────────────────────────
+  'Item Generator → any item → Re-scan Lore button — hover or focus, tooltip appears immediately (no native ~1s delay), parchment-styled with warm cream surface, dark text, subtle warm shadow, and a bordered arrow pointing at the button.',
+  // ─── NPC subtitle source-link cases ────────────────────────────────────
   'NPC Generator → "Yelena" — subtitle links to Whisper Crown (works).',
   'NPC Generator → "Ghost of the Phantom Hammer" — subtitle shows Phantom Hammer as plain text + " (deleted)" muted italic.',
   'NPC Generator → "Forgotten Witness" — subtitle shows dungeon as plain text + " (deleted)".',
   'NPC Generator → "Captain Voll" — Statblock section shows "Statblock not found" warning with Regenerate / Clear Reference buttons.',
   'NPC Generator → "Throk Iron-Tooth" — statblock loads inline (Goblin Boss).',
   'NPC Generator → "Old Mara" — no subtitle source row (manual NPC).',
+  // ─── Cross-tool linkage survives folder operations ─────────────────────
+  'Statblock Generator → select "Goblin Boss" — the Linked NPCs panel shows "Throk Iron-Tooth". Move "Goblin Boss" to a new folder (e.g. "Heroes"). The Linked NPCs panel should stay populated through the move; no flicker, no need to reload.',
+  'Statblock Generator → after the move above, "Edit this statblock" link from "Throk Iron-Tooth"\'s NPC card should still navigate to Goblin Boss in the new folder.',
+  'Statblock Generator → rename "Goblin Boss" to "Goblin Warlord". Linked NPCs panel still shows Throk; NPC card\'s statblock link still works. (This is the bug where the panel briefly went empty until reload — should now stay correct.)',
+  'NPC Generator → move any NPC to a new folder. Anything that linked to that NPC (item stub on Whisper Crown, setting stub on Imperial Core, dungeon stub on Crypt of Ash) should still resolve. Folder organization is the user\'s; substrate links work by id.',
+  // ─── Migrations exercised on first load ────────────────────────────────
   'Dungeon Generator → on first load, "Old Mine" should have an id starting with "dng_" (migration ran). Console should log "assign-dungeon-ids: converted 1 legacy ids".',
   'Setting Generator → on first load, "Legacy Hamlet" should have an id starting with "set_" (migration ran). Console should log "assign-setting-ids: assigned 1 new IDs".',
+  'After first load, run devTestData.export() and verify no setting/dungeon/item NPC stub still has an `npc_folder` field — drop-npc-folder migration ran and stripped them.',
   'After editing + saving "Ghost of the Phantom Hammer" once, reload and verify the source row is now gone entirely (auto-clear-on-save dropped the stale fields).',
-  'Setting Generator → "Imperial Core" → NPCs tab — "Yelena" stub appears with seeded_from metadata (will visibly carry the seed once the Phase 2 flow ships; substrate-level it should round-trip).',
+  'Setting Generator → "Imperial Core" → NPCs tab — "Yelena" stub appears with seeded_from metadata (substrate-level round-trip; full UX ships with Phase 2).',
 ];

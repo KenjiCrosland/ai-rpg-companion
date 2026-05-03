@@ -103,7 +103,7 @@ export function assignSettingIds() {
 
       for (const npc of folder) {
         if (npc?.sourceType !== 'setting') continue;
-        const npcId = npc.npc_id || npc.id;
+        const npcId = npc.npc_id;
         if (!npcId) continue;
         if (referenceExists('npc', npcId, 'setting', settingId, 'appears_in_setting')) continue;
 
