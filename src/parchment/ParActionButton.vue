@@ -23,8 +23,8 @@
  * Item, Save Changes, Delete Quest Hook), where the parchment editorial
  * burgundy doesn't fit because the surface isn't a card.
  *
- * Sibling to ParButton:
- *   - ParButton          — editorial card-context button, burgundy palette.
+ * Sibling to ParCardButton:
+ *   - ParCardButton          — editorial card-context button, burgundy palette.
  *   - ParActionButton    — chrome form-page CTA, lapis palette.
  *
  * Don't merge them. They differ in palette, weight, role, and the surfaces

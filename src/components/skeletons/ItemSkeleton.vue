@@ -71,7 +71,7 @@
       </div>
 
       <!-- Footer: Export (left) + Delete (right). Bones match the default
-           ParButton dimensions used on the live card. -->
+           ParCardButton dimensions used on the live card. -->
       <div class="item-skeleton-footer">
         <cdr-skeleton-bone type="line" style="width: 7rem; height: 3rem; flex-shrink: 0" />
         <cdr-skeleton-bone type="line" style="width: 8rem; height: 3rem; margin-left: auto; flex-shrink: 0" />

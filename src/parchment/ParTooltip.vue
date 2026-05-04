@@ -13,7 +13,7 @@
 <script setup>
 /**
  * ParTooltip — wrapper-style tooltip primitive for the Parchment design
- * system. Wraps a target element (typically a `ParButton` with a
+ * system. Wraps a target element (typically a `ParCardButton` with a
  * non-obvious affordance) and shows explanatory text on hover or focus.
  *
  * Why custom rather than `title` attribute: native browser tooltips have
@@ -27,7 +27,7 @@
  *
  * Usage:
  *   <ParTooltip text="Re-runs lore extraction. Useful after editing...">
- *     <ParButton variant="ghost" size="small">Re-scan Lore</ParButton>
+ *     <ParCardButton variant="ghost" size="small">Re-scan Lore</ParCardButton>
  *   </ParTooltip>
  *
  * Props:

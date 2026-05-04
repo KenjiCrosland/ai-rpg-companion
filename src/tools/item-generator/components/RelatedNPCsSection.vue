@@ -11,14 +11,14 @@
       <ParTooltip
         text="Scans this item's lore and timeline events for named characters and adds them here. Re-run after editing the lore or adding events."
       >
-        <ParButton
+        <ParCardButton
           variant="ghost"
           size="small"
           :disabled="loading"
           @click="rescan"
         >
           {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
-        </ParButton>
+        </ParCardButton>
       </ParTooltip>
     </div>
 
@@ -56,18 +56,18 @@
         </div>
 
         <div class="related-npc-actions">
-          <ParButton
+          <ParCardButton
             v-if="!stub.npc_id"
             @click="onCreate(stub)"
           >
             Create NPC
-          </ParButton>
-          <ParButton
+          </ParCardButton>
+          <ParCardButton
             v-else
             @click="onView(stub)"
           >
             View in NPC Generator
-          </ParButton>
+          </ParCardButton>
           <button
             type="button"
             class="related-npc-remove"
@@ -94,7 +94,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ParButton, ParTooltip } from '@/parchment';
+import { ParCardButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { extractRelatedNPCs, mergeStubs } from '@/tools/item-generator/utils/extract-related-npcs.mjs';
 import { useToast } from '@/composables/useToast';

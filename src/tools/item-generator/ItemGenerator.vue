@@ -108,7 +108,7 @@
                   <h2 class="item-card-name">{{ magicItemDescription.name }}</h2>
                   <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}<span v-if="magicItemDescription.requires_attunement"> (requires attunement{{ magicItemDescription.attunement_restriction ? ' ' + magicItemDescription.attunement_restriction : '' }})</span></p>
                 </div>
-                <ParButton variant="link" @click="startEditing">Edit item</ParButton>
+                <ParCardButton variant="link" @click="startEditing">Edit item</ParCardButton>
               </header>
 
               <!-- Description: italic, no box, sits in the flow. -->
@@ -140,12 +140,12 @@
 
               <!-- Footer: Export (left) + Delete (right). Edit lives in the header. -->
               <footer class="item-card-footer">
-                <ParButton @click="showExport = !showExport">
+                <ParCardButton @click="showExport = !showExport">
                   {{ showExport ? 'Hide export' : 'Export' }}
-                </ParButton>
-                <ParButton variant="danger" class="item-card-footer__trail" @click="deleteItem">
+                </ParCardButton>
+                <ParCardButton variant="danger" class="item-card-footer__trail" @click="deleteItem">
                   Delete item
-                </ParButton>
+                </ParCardButton>
               </footer>
             </div>
 
@@ -226,25 +226,25 @@
                   <ParTextarea v-model="feature.description" label="Description" :rows="3"
                     class="item-edit__feature-desc" />
                   <div class="item-edit__feature-actions">
-                    <ParButton size="small" @click="generateFeature(index)"
+                    <ParCardButton size="small" @click="generateFeature(index)"
                       :disabled="feature.generating">
                       {{ feature.generating ? 'Generating…' : 'Generate Feature' }}
-                    </ParButton>
-                    <ParButton variant="danger" size="small" @click="removeFeature(index)">
+                    </ParCardButton>
+                    <ParCardButton variant="danger" size="small" @click="removeFeature(index)">
                       Remove
-                    </ParButton>
+                    </ParCardButton>
                   </div>
                 </div>
-                <ParButton size="small" @click="addFeature" class="item-edit__add-feature">
+                <ParCardButton size="small" @click="addFeature" class="item-edit__add-feature">
                   + Add Feature
-                </ParButton>
+                </ParCardButton>
               </section>
 
               <ParTextarea v-model="editForm.lore" label="Lore" :rows="5" class="item-edit__field" />
 
               <footer class="item-edit__footer">
-                <ParButton variant="danger" @click="cancelEdit">Cancel</ParButton>
-                <ParButton @click="saveEdit">Save Changes</ParButton>
+                <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
+                <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
               </footer>
             </div>
           </TabPanel>
@@ -311,7 +311,7 @@ import QuestHookTab from './components/QuestHookTab.vue';
 import LoreBuilderTab from './components/LoreBuilderTab.vue';
 import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParButton, ParActionButton, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
+import { ParCardButton, ParActionButton, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';

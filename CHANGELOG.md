@@ -34,7 +34,7 @@ All notable changes to AI RPG Companion are tracked here.
 
 ### Design system
 
-- New parchment design system (`src/parchment/`) with `ParButton` (incl. `link` variant), `ParInput`, `ParTextarea`, `ParSelect`, `ParCheckbox`, and a `ParTooltip` with two-triangle bordered arrow.
+- New parchment design system (`src/parchment/`) with `ParCardButton` (incl. `link` variant), `ParInput`, `ParTextarea`, `ParSelect`, `ParCheckbox`, and a `ParTooltip` with two-triangle bordered arrow.
 - Source Serif 4 wired through `--par-font-serif`.
 - Global sans-serif override in `App.vue` carves out `.parchment` so content cards keep the serif treatment without per-component opt-in.
 - Item card and NPC card surfaces consolidated onto parchment color tokens (no more local `--card-*` aliases).

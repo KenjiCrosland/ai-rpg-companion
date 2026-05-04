@@ -1,12 +1,12 @@
 <template>
   <button
     :type="type"
-    class="par-button"
+    class="par-card-button"
     :class="classes"
     :disabled="disabled"
     @click="$emit('click', $event)"
   >
-    <span v-if="$slots.icon" class="par-button__icon" aria-hidden="true">
+    <span v-if="$slots.icon" class="par-card-button__icon" aria-hidden="true">
       <slot name="icon" />
     </span>
     <slot />
@@ -15,7 +15,7 @@
 
 <script setup>
 /**
- * ParButton — the primitive content-action button shared across cards
+ * ParCardButton — the primitive content-action button shared across cards
  * (item card, NPC card, future: dungeon/setting cards). Single source
  * of truth for the parchment-styled action button so the cards stay
  * in visual sync as we evolve them.
@@ -66,10 +66,10 @@ const props = defineProps({
 defineEmits(['click']);
 
 const classes = computed(() => ({
-  'par-button--danger': props.variant === 'danger',
-  'par-button--ghost': props.variant === 'ghost',
-  'par-button--link': props.variant === 'link',
-  'par-button--small': props.size === 'small',
+  'par-card-button--danger': props.variant === 'danger',
+  'par-card-button--ghost': props.variant === 'ghost',
+  'par-card-button--link': props.variant === 'link',
+  'par-card-button--small': props.size === 'small',
 }));
 </script>
 
@@ -85,7 +85,7 @@ const classes = computed(() => ({
  * button still renders correctly if `tokens.css` hasn't been imported
  * (e.g., a tool that bypasses `entries/base.js`).
  */
-.par-button {
+.par-card-button {
   /* Native reset */
   appearance: none;
   -webkit-appearance: none;
@@ -117,27 +117,27 @@ const classes = computed(() => ({
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.par-button:hover:not(:disabled) {
+.par-card-button:hover:not(:disabled) {
   background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
   border-color: var(--par-color-title, #7a1f1f);
 }
 
-.par-button:active:not(:disabled) {
+.par-card-button:active:not(:disabled) {
   background: var(--par-color-action-active, rgba(122, 31, 31, 0.12));
 }
 
-.par-button:focus-visible {
+.par-card-button:focus-visible {
   outline: 2px solid var(--par-color-title, #7a1f1f);
   outline-offset: 2px;
 }
 
-.par-button:disabled {
+.par-card-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Smaller variant for header/inline use. */
-.par-button--small {
+.par-card-button--small {
   font-size: 1.3rem;
   padding: 0.5rem 1rem;
 }
@@ -147,11 +147,11 @@ const classes = computed(() => ({
    text + soft warm hover wash carry the affordance signal. Use for
    refresh / re-scan / "do this again" actions where the button is a
    convenience, not the primary CTA. */
-.par-button--ghost {
+.par-card-button--ghost {
   border-color: transparent;
 }
 
-.par-button--ghost:hover:not(:disabled) {
+.par-card-button--ghost:hover:not(:disabled) {
   border-color: transparent;
   background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
   color: var(--par-color-title, #7a1f1f);
@@ -161,14 +161,14 @@ const classes = computed(() => ({
    no hover wash — just burgundy text that underlines on hover. Sized
    smaller than default so it reads as a quiet secondary affordance
    that doesn't compete with the card's primary content. */
-.par-button--link {
+.par-card-button--link {
   border-color: transparent;
   background: transparent;
   padding: 0.4rem 0.8rem;
   font-size: 1.3rem;
 }
 
-.par-button--link:hover:not(:disabled) {
+.par-card-button--link:hover:not(:disabled) {
   border-color: transparent;
   background: transparent;
   color: var(--par-color-title-deep, #58180d);
@@ -176,17 +176,17 @@ const classes = computed(() => ({
 }
 
 /* Danger variant: muted by default, warms up on hover. */
-.par-button--danger {
+.par-card-button--danger {
   color: var(--par-color-text-muted, #6b6b6b);
 }
 
-.par-button--danger:hover:not(:disabled) {
+.par-card-button--danger:hover:not(:disabled) {
   color: var(--par-color-title, #7a1f1f);
   border-color: var(--par-color-title, #7a1f1f);
   background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
 }
 
-.par-button__icon {
+.par-card-button__icon {
   display: inline-flex;
   align-items: center;
   font-size: 1.4rem;

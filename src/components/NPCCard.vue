@@ -27,13 +27,13 @@
         </p>
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <ParButton
+        <ParCardButton
           v-if="editable && !isEditing && !loadingDescription"
           size="small"
           @click="$emit('start-edit')"
         >
           Edit NPC
-        </ParButton>
+        </ParCardButton>
       </div>
     </div>
 
@@ -151,15 +151,15 @@
             label="Description"
             :rows="2" />
           <div class="npc-edit__relationship-actions">
-            <ParButton variant="danger" size="small" @click="deleteRelationshipFromForm(relIndex)">
+            <ParCardButton variant="danger" size="small" @click="deleteRelationshipFromForm(relIndex)">
               Remove
-            </ParButton>
+            </ParCardButton>
           </div>
         </div>
 
-        <ParButton size="small" @click="addRelationshipToForm" class="npc-edit__add">
+        <ParCardButton size="small" @click="addRelationshipToForm" class="npc-edit__add">
           + Add Relationship
-        </ParButton>
+        </ParCardButton>
       </section>
 
       <!-- Generate Relationship in Edit Mode -->
@@ -184,37 +184,37 @@
           hint='Brief description of their relationship (e.g., "the wizard&apos;s familiar", "his estranged sister").' />
 
         <div class="npc-edit__generate-actions">
-          <ParButton @click="generateRelationship" :disabled="isGeneratingRelationship">
+          <ParCardButton @click="generateRelationship" :disabled="isGeneratingRelationship">
             Generate Relationship
-          </ParButton>
+          </ParCardButton>
         </div>
       </section>
 
       <footer class="npc-edit__footer">
-        <ParButton variant="danger" @click="$emit('cancel-edit')">Cancel</ParButton>
-        <ParButton @click="saveEdit">Save Changes</ParButton>
+        <ParCardButton variant="danger" @click="$emit('cancel-edit')">Cancel</ParCardButton>
+        <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
       </footer>
     </div>
 
     <!-- Footer Bar -->
     <div v-if="!loadingDescription && !loadingRelationships && !isEditing" class="card-footer-bar">
       <div class="card-footer-bar__actions">
-        <ParButton v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
+        <ParCardButton v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
           View in NPC Generator
-        </ParButton>
+        </ParCardButton>
 
-        <ParButton v-if="showMoveToFolder" @click="$emit('move-to-folder')">
+        <ParCardButton v-if="showMoveToFolder" @click="$emit('move-to-folder')">
           Move to Folder
-        </ParButton>
+        </ParCardButton>
 
-        <ParButton v-if="showExport" @click="$emit('toggle-export')">
+        <ParCardButton v-if="showExport" @click="$emit('toggle-export')">
           {{ exportOpen ? 'Hide Export' : 'Export' }}
-        </ParButton>
+        </ParCardButton>
       </div>
 
-      <ParButton v-if="showDelete" variant="danger" @click="$emit('delete')">
+      <ParCardButton v-if="showDelete" variant="danger" @click="$emit('delete')">
         Delete
-      </ParButton>
+      </ParCardButton>
     </div>
   </div>
 </template>
@@ -222,7 +222,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
-import { ParButton, ParInput, ParTextarea } from '@/parchment';
+import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { sourceExists } from '@/util/seeded-input.mjs';
 

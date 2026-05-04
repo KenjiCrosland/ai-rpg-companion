@@ -66,7 +66,7 @@
      Lapis action palette — chrome-level primary action color.
 
      Conceptually distinct from the parchment burgundy above: parchment
-     is the *editorial* layer (cards, source-book content, ParButton),
+     is the *editorial* layer (cards, source-book content, ParCardButton),
      lapis is the *chrome* layer (form CTAs, ParActionButton). The two
      palettes are deliberately different so the user reads "this is a
      card surface" vs "this is a tool form" without having to think
