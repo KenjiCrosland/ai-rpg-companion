@@ -7,6 +7,11 @@
       <div class="hero-content">
         <div class="hero-top-spacer"></div>
 
+        <a class="hero-announce" href="https://cros.land/kenjis-game-master-tool-updates/" target="_blank" rel="noopener">
+          <span class="material-symbols-outlined">campaign</span>
+          What's new
+          <span class="material-symbols-outlined hero-announce-arrow">arrow_forward</span>
+        </a>
 
         <h1 class="hero-title">Kenji’s Game Master Tools</h1>
 
@@ -168,6 +173,9 @@
 
     <!-- Footer -->
     <footer class="ogl-footer">
+      <div class="ogl-footer-links">
+        <a href="https://cros.land/kenjis-game-master-tool-updates/" target="_blank" rel="noopener">What's new</a>
+      </div>
       This content uses the D&D 5e SRD under the <a href="https://cros.land/ogl" target="_blank" rel="noopener">Open Gaming License</a>
     </footer>
   </div>
@@ -342,6 +350,37 @@ function toolImageStyle(tool) {
 
 .hero-top-spacer {
   height: 14px;
+}
+
+.hero-announce {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: white;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.hero-announce:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.hero-announce .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.hero-announce-arrow {
+  font-size: 14px !important;
+  opacity: 0.85;
 }
 
 .hero-title {
@@ -719,6 +758,11 @@ function toolImageStyle(tool) {
   margin-top: 3rem;
   color: rgba(15, 23, 42, 0.6);
   font-size: 0.875rem;
+}
+
+.ogl-footer-links {
+  margin-bottom: 0.75rem;
+  font-weight: 700;
 }
 
 .ogl-footer a {

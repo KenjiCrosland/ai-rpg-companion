@@ -463,6 +463,8 @@ function rpg_item_footer() {
     <div class="rpg-footer-inner">
       <div class="rpg-footer-title">Kenji's Game Master Tools</div>
       <div class="rpg-footer-links">
+        <a href="https://cros.land/kenjis-game-master-tool-updates/" target="_blank">What's new</a>
+        <span>•</span>
         <a href="https://cros.land" target="_blank">Blog</a>
         <span>•</span>
         <a href="https://discord.gg/DJVTbkH4VG" target="_blank">Discord</a>
