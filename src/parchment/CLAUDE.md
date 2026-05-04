@@ -20,7 +20,8 @@ we iterate on the styling.
 
 - `tokens.css` — `:root` design tokens. Loaded once in `src/entries/base.js`
   so every tool inherits them.
-- `ParButton.vue` — content-action button (header / footer card actions).
+- `ParButton.vue` — editorial card-context button, burgundy palette (header / footer card actions).
+- `ParActionButton.vue` — chrome-level primary action button, lapis palette (form CTAs, page-level actions). First component in the migration off Cedar primary buttons. Sibling to `ParButton`, not a variant — different palette, different role, different surface context.
 - `ParInput.vue` — single-line text input (also handles `type="number"`).
 - `ParTextarea.vue` — multi-line input. Body text uses serif to match card prose.
 - `ParSelect.vue` — native `<select>` with parchment styling. Custom dropdown caret via inline SVG.

@@ -13,6 +13,7 @@
  */
 
 export { default as ParButton } from './ParButton.vue';
+export { default as ParActionButton } from './ParActionButton.vue';
 export { default as ParInput } from './ParInput.vue';
 export { default as ParTextarea } from './ParTextarea.vue';
 export { default as ParSelect } from './ParSelect.vue';

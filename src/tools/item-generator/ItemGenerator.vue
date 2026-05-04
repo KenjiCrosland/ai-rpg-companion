@@ -59,7 +59,7 @@
             <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore (optional)"
               placeholder="Enter any details about the item lore" class="item-lore-details">
             </cdr-input>
-            <cdr-button class="generate-button" type="submit" :full-width="true">Generate Magic Item</cdr-button>
+            <ParActionButton class="generate-button" type="submit" :full-width="true">Generate Magic Item</ParActionButton>
           </form>
         </div>
 
@@ -90,9 +90,9 @@
             <p>
               All features unlimited. Item data is saved on this browser. Export to a file to use on another device.
             </p>
-            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </cdr-button>
+            </ParActionButton>
           </div>
         </div>
       </div>
@@ -161,12 +161,12 @@
                 for creating beautifully formatted D&D handouts.
               </template>
               <template #buttons>
-                <cdr-button @click="copyAsMarkdown" modifier="secondary">
+                <ParActionButton @click="copyAsMarkdown" variant="secondary">
                   Copy as Markdown
-                </cdr-button>
-                <cdr-button @click="copyAsPlainText" modifier="secondary">
+                </ParActionButton>
+                <ParActionButton @click="copyAsPlainText" variant="secondary">
                   Copy as Plain Text
-                </cdr-button>
+                </ParActionButton>
               </template>
               <template #tip>
                 <strong>Quick tip:</strong> After copying as markdown, visit
@@ -286,9 +286,9 @@
           <p>
             All features unlimited. Item data is saved on this browser. Export to a file to use on another device.
           </p>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
 
@@ -301,7 +301,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { CdrInput, CdrButton, CdrSelect, CdrLink } from "@rei/cedar";
+import { CdrInput, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { convertItemToMarkdown } from '@/util/convertToMarkdown.mjs';
@@ -311,7 +311,7 @@ import QuestHookTab from './components/QuestHookTab.vue';
 import LoreBuilderTab from './components/LoreBuilderTab.vue';
 import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParButton, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
+import { ParButton, ParActionButton, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';

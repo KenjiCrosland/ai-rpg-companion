@@ -61,4 +61,39 @@
   /* Sizing */
   --par-radius-sm: 3px;
   --par-radius-md: 4px;
+
+  /* ------------------------------------------------------------------
+     Lapis action palette — chrome-level primary action color.
+
+     Conceptually distinct from the parchment burgundy above: parchment
+     is the *editorial* layer (cards, source-book content, ParButton),
+     lapis is the *chrome* layer (form CTAs, ParActionButton). The two
+     palettes are deliberately different so the user reads "this is a
+     card surface" vs "this is a tool form" without having to think
+     about it.
+
+     Token names are intentionally unprefixed (--color-action-* rather
+     than --par-color-action-*) — they're conceptually shared cros.land
+     chrome action tokens that the parchment system happens to consume,
+     not parchment-internal colors. Future ParAction-family components
+     read from these.
+     ------------------------------------------------------------------ */
+  --color-action-rest:     #2A4D70;   /* mid lapis */
+  --color-action-hover:    #1F3A5C;   /* deeper lapis */
+  --color-action-active:   #142640;   /* deepest lapis, pressed */
+  --color-action-disabled: #9DAFC1;   /* desaturated lighter */
+  --color-action-text:     #FBF7F0;   /* cream */
+  --action-transition:     background-color 0.18s ease, box-shadow 0.18s ease;
+
+  /* Secondary action — faded slate ghost. Sits in the same lapis family
+     as primary but operates at a lower visual volume: outlined rather
+     than filled, desaturated rather than saturated. The pairing is the
+     illuminated-manuscript ultramarine/azurite relationship — same
+     family, different importance. Used for "supporting alternative"
+     actions next to a primary CTA (Cancel beside Generate, etc.). */
+  --color-action-secondary-rest:       #5A7A9A;                    /* faded slate */
+  --color-action-secondary-hover-bg:   rgba(90, 122, 154, 0.08);   /* tint */
+  --color-action-secondary-active-bg:  rgba(90, 122, 154, 0.16);   /* deeper tint */
+  --color-action-secondary-disabled:   rgba(90, 122, 154, 0.35);   /* lower opacity */
+  --color-action-secondary-focus-glow: rgba(90, 122, 154, 0.3);    /* focus halo */
 }

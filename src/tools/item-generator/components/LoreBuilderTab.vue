@@ -19,26 +19,26 @@
 
       <!-- Add Timeline Button -->
       <div v-if="!showTimelineCards && timelineEvents.length === 0" class="add-timeline-prompt">
-        <cdr-button @click="startTimeline" modifier="secondary" size="large">
+        <ParActionButton @click="startTimeline" variant="secondary" size="large">
           + Create Historical Timeline
-        </cdr-button>
+        </ParActionButton>
       </div>
 
       <!-- Timeline Controls -->
       <div v-if="showTimelineCards || timelineEvents.length > 0" class="timeline-controls">
-        <cdr-button @click="showAddButtons = !showAddButtons" modifier="secondary" size="small">
+        <ParActionButton @click="showAddButtons = !showAddButtons" variant="secondary" size="small">
           {{ showAddButtons ? 'Hide Add Buttons' : 'Add Events to Timeline' }}
-        </cdr-button>
+        </ParActionButton>
         <p v-if="!premium" class="generation-info">
           {{ remainingGenerations }} lore generation{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
         </p>
       </div>
 
       <div v-if="showTimelineCards || timelineEvents.length > 0" class="filmstrip-container">
-        <cdr-button v-if="showLeftArrow" @click="scrollFilmstrip('left')" modifier="secondary" size="small"
+        <ParActionButton v-if="showLeftArrow" @click="scrollFilmstrip('left')" variant="secondary" size="small"
           class="filmstrip-arrow filmstrip-arrow-left">
           ←
-        </cdr-button>
+        </ParActionButton>
 
         <div class="filmstrip" ref="filmstrip" @scroll="checkScroll">
           <!-- If no events and showing cards, show the first event form directly -->
@@ -68,16 +68,16 @@
                   background="secondary" size="small" />
 
                 <div v-if="!pendingEvent" class="button-row">
-                  <cdr-button @click="generateFirstEvent"
+                  <ParActionButton @click="generateFirstEvent"
                     :disabled="!firstEventType || !firstTimePeriod || loadingEvents" size="small" :full-width="true">
                     {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                  </cdr-button>
+                  </ParActionButton>
                 </div>
 
                 <div v-else class="button-row">
-                  <cdr-button @click="regenerateFirstEvent" modifier="secondary" size="small" :full-width="true">
+                  <ParActionButton @click="regenerateFirstEvent" variant="secondary" size="small" :full-width="true">
                     Regenerate
-                  </cdr-button>
+                  </ParActionButton>
                 </div>
               </div>
 
@@ -91,12 +91,12 @@
                   <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                   <div class="button-row compact-buttons">
-                    <cdr-button @click="confirmFirstEvent" size="small">
+                    <ParActionButton @click="confirmFirstEvent" size="small">
                       Add
-                    </cdr-button>
-                    <cdr-button @click="regenerateFirstEvent" modifier="secondary" size="small">
+                    </ParActionButton>
+                    <ParActionButton @click="regenerateFirstEvent" variant="secondary" size="small">
                       Regen
-                    </cdr-button>
+                    </ParActionButton>
                   </div>
                 </div>
               </div>
@@ -106,9 +106,9 @@
           <!-- Regular add button for subsequent events -->
           <div v-else-if="showAddButtons && generatingPosition !== 0 && timelineEvents.length > 0"
             class="timeline-card add-card compact">
-            <cdr-button @click="startGeneratingEvent(0)" modifier="secondary" size="small" class="add-event-button">
+            <ParActionButton @click="startGeneratingEvent(0)" variant="secondary" size="small" class="add-event-button">
               <span class="button-text">+ Add</span>
-            </cdr-button>
+            </ParActionButton>
           </div>
 
           <!-- Generating card at position 0 -->
@@ -138,19 +138,19 @@
                   background="secondary" size="small" />
 
                 <div v-if="!pendingEvent" class="button-row">
-                  <cdr-button @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents" size="small"
+                  <ParActionButton @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents" size="small"
                     :full-width="true">
                     {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                  </cdr-button>
-                  <cdr-button @click="cancelGeneration" modifier="secondary" size="small" :full-width="true">
+                  </ParActionButton>
+                  <ParActionButton @click="cancelGeneration" variant="secondary" size="small" :full-width="true">
                     Cancel
-                  </cdr-button>
+                  </ParActionButton>
                 </div>
 
                 <div v-else class="button-row">
-                  <cdr-button @click="regenerateEvent" modifier="secondary" size="small" :full-width="true">
+                  <ParActionButton @click="regenerateEvent" variant="secondary" size="small" :full-width="true">
                     Regenerate
-                  </cdr-button>
+                  </ParActionButton>
                 </div>
               </div>
 
@@ -164,15 +164,15 @@
                   <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                   <div class="button-row compact-buttons">
-                    <cdr-button @click="confirmAddEvent" size="small">
+                    <ParActionButton @click="confirmAddEvent" size="small">
                       Add
-                    </cdr-button>
-                    <cdr-button @click="regenerateEvent" modifier="secondary" size="small">
+                    </ParActionButton>
+                    <ParActionButton @click="regenerateEvent" variant="secondary" size="small">
                       Regen
-                    </cdr-button>
-                    <cdr-button @click="cancelGeneration" modifier="dark" size="small">
+                    </ParActionButton>
+                    <ParActionButton @click="cancelGeneration" size="small">
                       Cancel
-                    </cdr-button>
+                    </ParActionButton>
                   </div>
                 </div>
               </div>
@@ -188,12 +188,12 @@
                   <p class="time-period">{{ event.eventYear }}</p>
                   <p class="event-text" v-html="formatMarkdown(event.description)"></p>
                   <div class="button-row-bottom">
-                    <cdr-button modifier="secondary" size="small" @click="startEditingEvent(index)">
+                    <ParActionButton variant="secondary" size="small" @click="startEditingEvent(index)">
                       Edit
-                    </cdr-button>
-                    <cdr-button modifier="dark" size="small" @click="removeFromTimeline(index)">
+                    </ParActionButton>
+                    <ParActionButton size="small" @click="removeFromTimeline(index)">
                       Remove
-                    </cdr-button>
+                    </ParActionButton>
                   </div>
                 </div>
 
@@ -208,12 +208,12 @@
                     background="secondary" size="small" />
 
                   <div class="button-row-bottom">
-                    <cdr-button size="small" @click="saveEventEdit(index)">
+                    <ParActionButton size="small" @click="saveEventEdit(index)">
                       Save
-                    </cdr-button>
-                    <cdr-button modifier="secondary" size="small" @click="cancelEventEdit">
+                    </ParActionButton>
+                    <ParActionButton variant="secondary" size="small" @click="cancelEventEdit">
                       Cancel
-                    </cdr-button>
+                    </ParActionButton>
                   </div>
                 </div>
               </div>
@@ -221,10 +221,10 @@
 
             <!-- Add event after card (only show when showAddButtons is true) -->
             <div v-if="showAddButtons && generatingPosition !== index + 1" class="timeline-card add-card compact">
-              <cdr-button @click="startGeneratingEvent(index + 1)" modifier="secondary" size="small"
+              <ParActionButton @click="startGeneratingEvent(index + 1)" variant="secondary" size="small"
                 class="add-event-button">
                 <span class="button-text">+ Add</span>
-              </cdr-button>
+              </ParActionButton>
             </div>
 
             <!-- Generating card at this position -->
@@ -254,19 +254,19 @@
                     background="secondary" size="small" />
 
                   <div v-if="!pendingEvent" class="button-row">
-                    <cdr-button @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents"
+                    <ParActionButton @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents"
                       size="small" :full-width="true">
                       {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                    </cdr-button>
-                    <cdr-button @click="cancelGeneration" modifier="secondary" size="small" :full-width="true">
+                    </ParActionButton>
+                    <ParActionButton @click="cancelGeneration" variant="secondary" size="small" :full-width="true">
                       Cancel
-                    </cdr-button>
+                    </ParActionButton>
                   </div>
 
                   <div v-else class="button-row">
-                    <cdr-button @click="regenerateEvent" modifier="secondary" size="small" :full-width="true">
+                    <ParActionButton @click="regenerateEvent" variant="secondary" size="small" :full-width="true">
                       Regenerate
-                    </cdr-button>
+                    </ParActionButton>
                   </div>
                 </div>
 
@@ -280,15 +280,15 @@
                     <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                     <div class="button-row compact-buttons">
-                      <cdr-button @click="confirmAddEvent" size="small">
+                      <ParActionButton @click="confirmAddEvent" size="small">
                         Add
-                      </cdr-button>
-                      <cdr-button @click="regenerateEvent" modifier="secondary" size="small">
+                      </ParActionButton>
+                      <ParActionButton @click="regenerateEvent" variant="secondary" size="small">
                         Regen
-                      </cdr-button>
-                      <cdr-button @click="cancelGeneration" modifier="dark" size="small">
+                      </ParActionButton>
+                      <ParActionButton @click="cancelGeneration" size="small">
                         Cancel
-                      </cdr-button>
+                      </ParActionButton>
                     </div>
                   </div>
                 </div>
@@ -297,10 +297,10 @@
           </template>
         </div>
 
-        <cdr-button v-if="showRightArrow" @click="scrollFilmstrip('right')" modifier="secondary" size="small"
+        <ParActionButton v-if="showRightArrow" @click="scrollFilmstrip('right')" variant="secondary" size="small"
           class="filmstrip-arrow filmstrip-arrow-right">
           →
-        </cdr-button>
+        </ParActionButton>
       </div>
     </div>
 
@@ -325,15 +325,15 @@
       </div>
 
       <div class="summary-buttons">
-        <cdr-button v-if="timelineEvents.length >= 2" @click="generateSummary" :disabled="loadingSummary"
-          modifier="secondary">
+        <ParActionButton v-if="timelineEvents.length >= 2" @click="generateSummary" :disabled="loadingSummary"
+          variant="secondary">
           {{ historicalSummary ? 'Regenerate' : 'Generate' }} Historical Summary
-        </cdr-button>
+        </ParActionButton>
 
-        <cdr-button v-if="historicalSummary && itemLegacy" @click="updateItemLore" modifier="primary"
+        <ParActionButton v-if="historicalSummary && itemLegacy" @click="updateItemLore"
           title="Replace the item's current lore with the generated historical summary">
           Update Item Lore
-        </cdr-button>
+        </ParActionButton>
       </div>
     </div>
 
@@ -345,12 +345,12 @@
         for creating beautifully formatted D&D handouts.
       </template>
       <template #buttons>
-        <cdr-button @click="exportToMarkdown" modifier="secondary">
+        <ParActionButton @click="exportToMarkdown" variant="secondary">
           Copy History as Markdown
-        </cdr-button>
-        <cdr-button @click="exportToPlainText" modifier="secondary">
+        </ParActionButton>
+        <ParActionButton @click="exportToPlainText" variant="secondary">
           Copy History as Plain Text
-        </cdr-button>
+        </ParActionButton>
       </template>
       <template #tip>
         <strong>Quick tip:</strong> After copying as markdown, visit
@@ -364,7 +364,6 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import {
-  CdrButton,
   CdrCard,
   CdrSkeleton,
   CdrSkeletonBone,
@@ -372,6 +371,7 @@ import {
   CdrInput,
   CdrLink
 } from '@rei/cedar';
+import { ParActionButton } from '@/parchment';
 import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
