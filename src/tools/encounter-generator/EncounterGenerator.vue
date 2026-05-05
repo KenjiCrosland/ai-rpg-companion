@@ -310,20 +310,21 @@
           </template>
         </PatreonCallout>
 
-        <!-- Premium users: Show save/load button -->
-        <div v-else>
+        <!-- Premium users: parchment surface so the active status reads
+             as a coherent block, matching the upsell callout above. -->
+        <ParCallout v-else>
           <p>Encounter data is saved on this browser. Export to a file to use on another device.</p>
           <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
           </ParActionButton>
-        </div>
+        </ParCallout>
       </div>
     </div>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, computed, onMounted, watch } from 'vue';
 import { CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';

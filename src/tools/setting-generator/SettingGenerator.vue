@@ -88,12 +88,12 @@
               </li>
             </template>
           </PatreonCallout>
-          <div v-else>
+          <ParCallout v-else>
             <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
             <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
             </ParActionButton>
-          </div>
+          </ParCallout>
         </div>
       </div>
       <Tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%"
@@ -133,12 +133,12 @@
             </li>
           </template>
         </PatreonCallout>
-        <div v-else>
+        <ParCallout v-else>
           <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
           <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
           </ParActionButton>
-        </div>
+        </ParCallout>
       </div>
 
       <div class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
@@ -168,7 +168,7 @@
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrLink, CdrSkeleton } from "@rei/cedar";
 import { settingOverviewPrompt, sublocationOverviewPrompt } from "./prompts/index.mjs";

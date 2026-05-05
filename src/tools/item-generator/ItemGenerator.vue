@@ -82,15 +82,15 @@
             </template>
           </PatreonCallout>
 
-          <!-- Premium users: Show save/load button -->
-          <div v-else>
-            <p>
-              All features unlimited. Item data is saved on this browser. Export to a file to use on another device.
-            </p>
+          <!-- Premium users: Show save/load button on a parchment surface
+               so the active premium status reads as a coherent block,
+               matching the upsell callout's surface above. -->
+          <ParCallout v-else>
+            <p>All features unlimited. Item data is saved on this browser. Export to a file to use on another device.</p>
             <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
             </ParActionButton>
-          </div>
+          </ParCallout>
         </div>
       </div>
 
@@ -264,15 +264,15 @@
           </template>
         </PatreonCallout>
 
-        <!-- Premium users: Show save/load button -->
-        <div v-else>
-          <p>
-            All features unlimited. Item data is saved on this browser. Export to a file to use on another device.
-          </p>
+        <!-- Premium users: parchment surface so the active premium
+             status reads as a coherent block, matching the upsell
+             callout's surface above. -->
+        <ParCallout v-else>
+          <p>All features unlimited. Item data is saved on this browser. Export to a file to use on another device.</p>
           <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
           </ParActionButton>
-        </div>
+        </ParCallout>
       </div>
 
       <div v-if="loadingItem" class="form-container">
@@ -294,7 +294,7 @@ import QuestHookTab from './components/QuestHookTab.vue';
 import LoreBuilderTab from './components/LoreBuilderTab.vue';
 import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParCardButton, ParActionButton, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
+import { ParCardButton, ParActionButton, ParCallout, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';

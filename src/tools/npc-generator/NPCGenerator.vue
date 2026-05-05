@@ -123,17 +123,15 @@
                         </template>
                     </PatreonCallout>
 
-                    <!-- Premium users: Show save/load button -->
-                    <div v-else>
-                        <p v-if="!isSeededFlow">
-                            All features unlimited. NPC data is saved on this browser. Export to a file to use on
-                            another
-                            device.
-                        </p>
+                    <!-- Premium users: parchment surface so the active
+                         status reads as a coherent block, matching the
+                         upsell callout above. -->
+                    <ParCallout v-else>
+                        <p v-if="!isSeededFlow">All features unlimited. NPC data is saved on this browser. Export to a file to use on another device.</p>
                         <ParActionButton @click="showDataManagerModal = true">
                             Save/Load Data from a File
                         </ParActionButton>
-                    </div>
+                    </ParCallout>
                 </div>
             </div>
 
@@ -306,23 +304,22 @@
                     </template>
                 </PatreonCallout>
 
-                <!-- Premium users: Show save/load button -->
-                <div v-else>
-                    <p>
-                        All features unlimited. NPC data is saved on this browser. Export to a file to use on another
-                        device.
-                    </p>
+                <!-- Premium users: parchment surface so the active
+                     status reads as a coherent block, matching the
+                     upsell callout above. -->
+                <ParCallout v-else>
+                    <p>All features unlimited. NPC data is saved on this browser. Export to a file to use on another device.</p>
                     <ParActionButton @click="showDataManagerModal = true">
                         Save/Load Data from a File
                     </ParActionButton>
-                </div>
+                </ParCallout>
             </div>
         </div>
     </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';

@@ -85,15 +85,15 @@
             </template>
           </PatreonCallout>
 
-          <!-- Premium users: Show message -->
-          <div v-else>
-            <p>
-              Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.
-            </p>
+          <!-- Premium users: parchment surface so the active status
+               reads as a coherent block, matching the upsell callout
+               above. -->
+          <ParCallout v-else>
+            <p>Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.</p>
             <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
             </ParActionButton>
-          </div>
+          </ParCallout>
         </div>
       </div>
 
@@ -150,15 +150,14 @@
           </template>
         </PatreonCallout>
 
-        <!-- Premium users: Show message -->
-        <div v-else>
-          <p>
-            Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.
-          </p>
+        <!-- Premium users: parchment surface so the active status reads
+             as a coherent block, matching the upsell callout above. -->
+        <ParCallout v-else>
+          <p>Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.</p>
           <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
           </ParActionButton>
-        </div>
+        </ParCallout>
       </div>
     </div>
 
@@ -168,7 +167,7 @@
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';

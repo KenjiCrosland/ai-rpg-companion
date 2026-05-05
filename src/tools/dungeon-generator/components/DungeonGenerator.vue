@@ -89,12 +89,12 @@
               </li>
             </template>
           </PatreonCallout>
-          <div v-else>
+          <ParCallout v-else>
             <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
             <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
             </ParActionButton>
-          </div>
+          </ParCallout>
         </div>
       </div>
       <div v-if="dungeonStore.currentDungeon || isGenerating" class="content-container">
@@ -134,19 +134,19 @@
             </li>
           </template>
         </PatreonCallout>
-        <div v-else>
+        <ParCallout v-else>
           <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
           <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
           </ParActionButton>
-        </div>
+        </ParCallout>
       </div>
     </div>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';

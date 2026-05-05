@@ -22,6 +22,7 @@ we iterate on the styling.
   so every tool inherits them.
 - `ParCardButton.vue` — editorial card-context button, burgundy palette (header / footer card actions).
 - `ParActionButton.vue` — chrome-level primary action button, lapis palette (form CTAs, page-level actions). First component in the migration off Cedar primary buttons. Sibling to `ParCardButton`, not a variant — different palette, different role, different surface context.
+- `ParCallout.vue` — tinted parchment surface primitive. Wraps slot content in a warm-tan rounded card with serif typography. Extracted when premium-status blocks needed the same surface treatment as PatreonCallout — second use case justified extraction. PatreonCallout still owns its surface inline (tighter coupling to its internal structure); both stay visually identical via shared `--par-color-callout-*` tokens.
 - `ParInput.vue` — single-line text input (also handles `type="number"`).
 - `ParTextarea.vue` — multi-line input. Body text uses serif to match card prose.
 - `ParSelect.vue` — native `<select>` with parchment styling. Custom dropdown caret via inline SVG.
