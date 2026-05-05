@@ -26,6 +26,10 @@
   --par-color-surface:         #fdfbf6;
   --par-color-border:          #e8e2d4;
   --par-color-border-strong:   #c9b99a;
+  /* Border: deep tan — emphasized/hover state for callouts, focused
+     form fields, and any tinted surface that needs a heavier outline
+     on interaction. */
+  --par-color-border-deep:     #b8a685;
   --par-color-divider:         #e2dccd;
 
   /* Color: callout — slightly warmer/darker than the card surface so a
@@ -34,6 +38,11 @@
      used in feature descriptions so the callout reads as primary
      content (just sitting in a different surface), not de-emphasized. */
   --par-color-callout-bg:      #f3ebda;
+  /* Color: surface tinted — deeper variant of --par-color-callout-bg.
+     Used for hover/active states on tinted callout blocks, or as an
+     emphasized callout when a block needs more weight than the standard
+     callout. Pair with --par-color-border-deep for a heavier surface. */
+  --par-color-callout-bg-deep: #ede2cb;
   --par-color-callout-text:    #2c2c2a;
 
   /* Color: tooltip — slightly LIGHTER than the card surface to read as
@@ -61,6 +70,9 @@
   /* Sizing */
   --par-radius-sm: 3px;
   --par-radius-md: 4px;
+  --par-radius-lg: 12px;   /* callout / soft-block radius — a meaningfully
+                              different visual register from sm/md tight
+                              inline rounding. */
 
   /* ------------------------------------------------------------------
      Lapis action palette — chrome-level primary action color.
@@ -78,9 +90,9 @@
      not parchment-internal colors. Future ParAction-family components
      read from these.
      ------------------------------------------------------------------ */
-  --color-action-rest:     #2A4D70;   /* mid lapis */
-  --color-action-hover:    #1F3A5C;   /* deeper lapis */
-  --color-action-active:   #142640;   /* deepest lapis, pressed */
+  --color-action-rest:     #365A85;   /* mid lapis (lifted from #2A4D70) */
+  --color-action-hover:    #2A4D70;   /* deeper lapis (was rest) */
+  --color-action-active:   #1F3A5C;   /* deepest lapis, pressed (was hover) */
   --color-action-disabled: #9DAFC1;   /* desaturated lighter */
   --color-action-text:     #FBF7F0;   /* cream */
   --action-transition:     background-color 0.18s ease, box-shadow 0.18s ease;
@@ -96,4 +108,19 @@
   --color-action-secondary-active-bg:  rgba(90, 122, 154, 0.16);   /* deeper tint */
   --color-action-secondary-disabled:   rgba(90, 122, 154, 0.35);   /* lower opacity */
   --color-action-secondary-focus-glow: rgba(90, 122, 154, 0.3);    /* focus halo */
+
+  /* Luminous lapis gradient — cabochon treatment for rare,
+     special-importance moments (premium upsell, future high-significance
+     CTAs). Three rest stops + one extra stop for the hover gradient.
+     The four stops are independent values (not derivations of secondary
+     slate); reserved for ParActionButton's variant="luminous". Don't
+     proliferate — the variant earns its complexity through scarcity.
+
+     Gradient direction is consumer-defined (typically 165deg top-left
+     to bottom-right) so the stops describe *light values* rather than
+     absolute positions. */
+  --color-action-luminous-light:    #A0B8D0;   /* highlight stop */
+  --color-action-luminous-mid:      #3D6BA0;   /* mid stop */
+  --color-action-luminous-deep:     #1F3A5C;   /* shadow stop (rest) */
+  --color-action-luminous-deepest:  #142640;   /* shadow stop (hover) */
 }

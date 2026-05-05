@@ -153,13 +153,31 @@ describe('ParActionButton', () => {
       expect(wrapper.classes()).toContain('par-action--variant-secondary');
     });
 
-    it('rejects invalid variant values via prop validator', () => {
+    it('accepts primary, secondary, and luminous via prop validator', () => {
       const validator = ParActionButton.props.variant.validator;
       expect(validator('primary')).toBe(true);
       expect(validator('secondary')).toBe(true);
+      expect(validator('luminous')).toBe(true);
       expect(validator('tertiary')).toBe(false);
-      expect(validator('luminous')).toBe(false);
+      expect(validator('destructive')).toBe(false);
       expect(validator('')).toBe(false);
+    });
+
+    it('applies par-action--variant-luminous class when variant="luminous"', () => {
+      const wrapper = mount(ParActionButton, { props: { variant: 'luminous' } });
+      expect(wrapper.classes()).toContain('par-action--variant-luminous');
+      // luminous and secondary are mutually exclusive — only one variant
+      // class at a time.
+      expect(wrapper.classes()).not.toContain('par-action--variant-secondary');
+    });
+
+    it('luminous variant composes with structural props the same as primary', () => {
+      const wrapper = mount(ParActionButton, {
+        props: { variant: 'luminous', size: 'large', fullWidth: true },
+      });
+      expect(wrapper.classes()).toContain('par-action--variant-luminous');
+      expect(wrapper.classes()).toContain('par-action--large');
+      expect(wrapper.classes()).toContain('par-action--full-width');
     });
 
     it('preserves all structural props across variants', () => {

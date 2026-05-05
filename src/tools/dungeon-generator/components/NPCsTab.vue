@@ -98,17 +98,7 @@
                 class="statblock-limit-message">
                 <p><strong>Statblock generation limit reached</strong></p>
                 <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
-                <div class="patreon-universal-button">
-                  <a :href="patreonLoginUrl">
-                    <div class="patreon-responsive-button-wrapper">
-                      <div class="patreon-responsive-button">
-                        <img class="patreon_logo"
-                          src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                          alt="Unlock with Patreon"> Unlock with Patreon
-                      </div>
-                    </div>
-                  </a>
-                </div>
+                <PatreonCallout :patreon-url="patreonLoginUrl" />
               </div>
 
               <!-- Simple form to generate a new statblock for the NPC -->
@@ -168,6 +158,7 @@ import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC, findNPCBy
 import { getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
 import { generateGptResponse } from "@/util/ai-client.mjs";
+import PatreonCallout from '@/components/PatreonCallout.vue';
 import { generateSingleRelationshipPrompt, validateSingleRelationshipResponse } from '../prompts/dungeon-npcs.mjs';
 import {
   CdrFormGroup,
@@ -581,10 +572,11 @@ function clearNpcStatblockReference(index) {
 }
 
 .statblock-limit-message {
+  /* text-align: center removed during PatreonCallout migration — the
+     callout's actions row needs to flow inline, not stack centered. */
   margin-top: 1rem;
   margin-bottom: 1rem;
-  padding: 1.5rem;
-  text-align: center;
+  padding: 1.5rem 0;
 }
 
 .statblock-limit-message p {

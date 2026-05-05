@@ -109,25 +109,8 @@
                      (Patreon CTA for free users, Save/Load for premium) stay
                      available regardless. -->
                 <div class="footer-meta">
-                    <!-- Free users: Show message + unlock button -->
-                    <div v-if="!premium">
-                        <p v-if="!isSeededFlow">
-                            NPC generation is unlimited. Combat statblocks are limited to 5 per 24 hours. NPC data is
-                            saved on this browser. To save/load NPC data for use in another computer or browser requires
-                            a premium Patreon subscription.
-                        </p>
-                        <div class="patreon-universal-button">
-                            <a :href="patreonLoginUrl">
-                                <div class="patreon-responsive-button-wrapper">
-                                    <div class="patreon-responsive-button">
-                                        <img class="patreon_logo"
-                                            src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                                            alt="Unlock with Patreon"> Unlock with Patreon
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
+                    <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
+                    <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
 
                     <!-- Premium users: Show save/load button -->
                     <div v-else>
@@ -298,25 +281,8 @@
 
             <!-- Footer below NPC content (separate card) -->
             <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1">
-                <!-- Free users: Show message + unlock button -->
-                <div v-if="!premium">
-                    <p>
-                        NPC generation is unlimited. Combat statblocks are limited to 5 per 24 hours. NPC data is
-                        saved on this browser. To save/load NPC data for use in another computer or browser requires
-                        a premium Patreon subscription.
-                    </p>
-                    <div class="patreon-universal-button">
-                        <a :href="patreonLoginUrl">
-                            <div class="patreon-responsive-button-wrapper">
-                                <div class="patreon-responsive-button">
-                                    <img class="patreon_logo"
-                                        src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                                        alt="Unlock with Patreon"> Unlock with Patreon
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+                <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
+                <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
 
                 <!-- Premium users: Show save/load button -->
                 <div v-else>
@@ -339,6 +305,7 @@ import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBon
 import { useToast } from '@/composables/useToast';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import NPCCard from '@/components/NPCCard.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
 import Statblock from '@/components/Statblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
@@ -2000,12 +1967,11 @@ $active-border-color: #007BFF;
 
 /* ZONE 3: Footer meta */
 .footer-meta {
-    text-align: center;
+    /* Visual chrome (text-align, background, border, radius) removed during
+       PatreonCallout migration — the callout owns its own surface treatment.
+       Layout properties (margin, max-width) preserved. */
     margin-top: 1.5rem;
-    padding: 1rem 1.5rem;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    padding: 0;
     max-width: 940px;
     width: 100%;
     margin-left: auto;

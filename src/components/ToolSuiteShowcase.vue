@@ -43,25 +43,7 @@
           </div>
 
           <!-- Patreon CTA (only when NOT a supporter) -->
-          <div v-if="!isSupporter" class="patreon-cta">
-            <div class="cta-content">
-              <span class="material-symbols-outlined cta-icon">favorite</span>
-              <div>
-                <strong>Support Development</strong>
-                <p>Unlock patron-exclusive tools and features for $5/month</p>
-              </div>
-              <div class="patreon-universal-button">
-                <a href="https://patreon.com/ai_rpg_tookit" target="_blank" rel="noopener">
-                  <div class="patreon-responsive-button">
-                    <img class="patreon_logo"
-                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                      alt="Join on Patreon">
-                    Join on Patreon
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
+          <PatreonCallout v-if="!isSupporter" patreon-url="https://patreon.com/ai_rpg_tookit" />
         </div>
       </transition>
     </div>
@@ -101,6 +83,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import PatreonCallout from './PatreonCallout.vue';
 
 const props = defineProps({
   displayMode: { type: String, default: 'banner' }, // 'banner' or 'widget'

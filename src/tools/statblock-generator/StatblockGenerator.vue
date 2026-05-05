@@ -72,25 +72,7 @@
 
         <!-- ZONE 3: Secondary info (below the card, low-key) -->
         <div class="footer-meta">
-          <!-- Free users: Show message + unlock button -->
-          <div v-if="!premium">
-            <p>
-              Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load
-              data
-              across browsers with a premium Patreon subscription.
-            </p>
-            <div class="patreon-universal-button">
-              <a :href="patreonLoginUrl">
-                <div class="patreon-responsive-button-wrapper">
-                  <div class="patreon-responsive-button">
-                    <img class="patreon_logo"
-                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                      alt="Unlock with Patreon"> Unlock with Patreon
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
 
           <!-- Premium users: Show message -->
           <div v-else>
@@ -144,24 +126,7 @@
 
       <!-- Footer below monster content -->
       <div class="footer-meta" v-if="monster && !loadingPart2">
-        <!-- Free users: Show message + unlock button -->
-        <div v-if="!premium">
-          <p>
-            Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load data
-            across browsers with a premium Patreon subscription.
-          </p>
-          <div class="patreon-universal-button">
-            <a :href="patreonLoginUrl">
-              <div class="patreon-responsive-button-wrapper">
-                <div class="patreon-responsive-button">
-                  <img class="patreon_logo"
-                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                    alt="Unlock with Patreon"> Unlock with Patreon
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
 
         <!-- Premium users: Show message -->
         <div v-else>
@@ -184,6 +149,7 @@
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
@@ -907,12 +873,11 @@ async function generateStatblock() {
 
 /* ZONE 3: Footer meta — limit info, upsell */
 .footer-meta {
-  text-align: center;
+  /* Visual chrome (text-align, background, border, radius) removed during
+     PatreonCallout migration — the callout owns its own surface treatment.
+     Layout properties (margin, max-width) preserved. */
   margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 0;
   max-width: 940px;
   width: 100%;
   margin-left: auto;

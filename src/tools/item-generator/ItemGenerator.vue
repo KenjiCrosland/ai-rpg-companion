@@ -20,8 +20,8 @@
 
     <div class="main-container">
       <!-- DataManagerModal component -->
-      <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
-        :premium="premium" currentApp="savedItems" />
+      <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
+        currentApp="savedItems" />
       <!-- LANDING STATE: Three-zone layout -->
       <div class="landing-wrapper" v-if="!magicItemDescription && !loadingItem">
 
@@ -59,31 +59,28 @@
             <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore (optional)"
               placeholder="Enter any details about the item lore" class="item-lore-details">
             </cdr-input>
-            <ParActionButton class="generate-button" type="submit" :full-width="true">Generate Magic Item</ParActionButton>
+            <ParActionButton class="generate-button" type="submit" :full-width="true">Generate Magic Item
+            </ParActionButton>
           </form>
         </div>
 
         <!-- ZONE 3: Footer meta -->
         <div class="footer-meta">
-          <!-- Free users: Show message + unlock button -->
-          <div v-if="!premium">
-            <p>
-              Item generation is unlimited. Lore Builder and Quest Hook features are limited to 5 per 24 hours. Item
-              data is saved on this browser. To save/load item data for use in another computer or browser requires a
-              premium Patreon subscription.
-            </p>
-            <div class="patreon-universal-button">
-              <a :href="patreonLoginUrl">
-                <div class="patreon-responsive-button-wrapper">
-                  <div class="patreon-responsive-button">
-                    <img class="patreon_logo"
-                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                      alt="Unlock with Patreon"> Unlock with Patreon
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
+          <!-- Free users: PatreonCallout owns the upsell messaging end-to-end.
+               Bullets are passed via slot so the item-generator-specific
+               benefits (Lore Builder, Quest Hook) are stated explicitly at
+               the call site rather than relied on as PatreonCallout's
+               default. Other tools' migrations follow the same shape. -->
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #features>
+              <li>Cross-device save and load — your campaigns sync between browsers and devices.</li>
+              <li>Unlimited Lore Builder generations — no daily cap.</li>
+              <li>Unlimited Quest Hook generations — no daily cap.</li>
+              <li>
+                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+              </li>
+            </template>
+          </PatreonCallout>
 
           <!-- Premium users: Show save/load button -->
           <div v-else>
@@ -106,22 +103,25 @@
               <header class="item-card-header">
                 <div class="item-card-header-text">
                   <h2 class="item-card-name">{{ magicItemDescription.name }}</h2>
-                  <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity }}<span v-if="magicItemDescription.requires_attunement"> (requires attunement{{ magicItemDescription.attunement_restriction ? ' ' + magicItemDescription.attunement_restriction : '' }})</span></p>
+                  <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity
+                    }}<span v-if="magicItemDescription.requires_attunement"> (requires attunement{{
+                      magicItemDescription.attunement_restriction ? ' ' + magicItemDescription.attunement_restriction :
+                      ''
+                      }})</span></p>
                 </div>
                 <ParCardButton variant="link" @click="startEditing">Edit item</ParCardButton>
               </header>
 
               <!-- Description: italic, no box, sits in the flow. -->
-              <p v-if="magicItemDescription.physical_description"
-                class="item-card-description"
+              <p v-if="magicItemDescription.physical_description" class="item-card-description"
                 v-html="formatMarkdown(magicItemDescription.physical_description)"></p>
 
               <!-- Mechanics: highest contrast block on the card. -->
               <div class="item-card-mechanics">
-                <p v-if="magicItemDescription.modifier_sentence"
-                  class="item-card-modifier"
+                <p v-if="magicItemDescription.modifier_sentence" class="item-card-modifier"
                   v-html="formatMarkdown(magicItemDescription.modifier_sentence)"></p>
-                <div v-for="(description, feature) in magicItemDescription.features" :key="feature" class="item-feature">
+                <div v-for="(description, feature) in magicItemDescription.features" :key="feature"
+                  class="item-feature">
                   <p class="item-feature-name">{{ feature }}</p>
                   <p class="item-feature-description" v-html="formatMarkdown(description)"></p>
                 </div>
@@ -151,10 +151,7 @@
 
             <!-- Export panel: sits BELOW the card as its own section
                  (uses the shared ItemExportsSection format used across tabs). -->
-            <ItemExportsSection
-              v-if="showExport && !isEditing"
-              heading="Export Magic Item"
-            >
+            <ItemExportsSection v-if="showExport && !isEditing" heading="Export Magic Item">
               <template #description>
                 Copy your item details in different formats. The markdown format works perfectly with
                 <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
@@ -177,12 +174,8 @@
             </ItemExportsSection>
 
             <!-- Related NPCs (its own section, sibling to the card) -->
-            <RelatedNPCsSection
-              v-if="!isEditing"
-              :item="magicItemDescription"
-              @update:item="handleUpdatedItem"
-              @switch-to-lore-builder="activeTabIndex = 1"
-            />
+            <RelatedNPCsSection v-if="!isEditing" :item="magicItemDescription" @update:item="handleUpdatedItem"
+              @switch-to-lore-builder="activeTabIndex = 1" />
 
             <!-- Edit Mode -->
             <div v-else class="item-edit">
@@ -206,28 +199,25 @@
                 <ParInput v-if="editForm.requires_attunement" v-model="editForm.attunement_restriction"
                   label="Restriction (optional)"
                   hint="Leave blank for any character. Example: &quot;by a paladin&quot; or &quot;by a creature of evil alignment&quot;."
-                  placeholder="by a paladin"
-                  class="item-edit__field item-edit__attunement-restriction" />
+                  placeholder="by a paladin" class="item-edit__field item-edit__attunement-restriction" />
               </fieldset>
 
               <ParInput v-model="editForm.modifier_sentence" label="Modifier sentence (optional)"
                 hint='Example: "You have a +1 bonus to attack and damage rolls made with this weapon."'
                 class="item-edit__field" />
 
-              <ParTextarea v-model="editForm.physical_description" label="Physical description"
-                :rows="4" class="item-edit__field" />
+              <ParTextarea v-model="editForm.physical_description" label="Physical description" :rows="4"
+                class="item-edit__field" />
 
               <section class="item-edit__features">
                 <h3 class="item-edit__section-title">Features</h3>
                 <div v-for="(feature, index) in editForm.featuresArray" :key="index" class="item-edit__feature-row">
-                  <ParInput v-model="feature.name" label="Feature name"
-                    hint="Leave blank to auto-generate a name."
+                  <ParInput v-model="feature.name" label="Feature name" hint="Leave blank to auto-generate a name."
                     class="item-edit__feature-name" />
                   <ParTextarea v-model="feature.description" label="Description" :rows="3"
                     class="item-edit__feature-desc" />
                   <div class="item-edit__feature-actions">
-                    <ParCardButton size="small" @click="generateFeature(index)"
-                      :disabled="feature.generating">
+                    <ParCardButton size="small" @click="generateFeature(index)" :disabled="feature.generating">
                       {{ feature.generating ? 'Generating…' : 'Generate Feature' }}
                     </ParCardButton>
                     <ParCardButton variant="danger" size="small" @click="removeFeature(index)">
@@ -261,25 +251,18 @@
 
       <!-- Footer below item content (separate card) -->
       <div class="footer-meta" v-if="magicItemDescription && !loadingItem">
-        <!-- Free users: Show message + unlock button -->
-        <div v-if="!premium">
-          <p>
-            Item generation is unlimited. Lore Builder and Quest Hook features are limited to 5 per 24 hours. Item
-            data is saved on this browser. To save/load item data for use in another computer or browser requires a
-            premium Patreon subscription.
-          </p>
-          <div class="patreon-universal-button">
-            <a :href="patreonLoginUrl">
-              <div class="patreon-responsive-button-wrapper">
-                <div class="patreon-responsive-button">
-                  <img class="patreon_logo"
-                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                    alt="Unlock with Patreon"> Unlock with Patreon
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        <!-- Free users: PatreonCallout owns the upsell messaging end-to-end.
+             Same slot content as the form-sidebar instance above. -->
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #features>
+            <li>Cross-device save and load — your campaigns sync between browsers and devices.</li>
+            <li>Unlimited Lore Builder generations — no daily cap.</li>
+            <li>Unlimited Quest Hook generations — no daily cap.</li>
+            <li>
+              <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+            </li>
+          </template>
+        </PatreonCallout>
 
         <!-- Premium users: Show save/load button -->
         <div v-else>
@@ -312,6 +295,7 @@ import LoreBuilderTab from './components/LoreBuilderTab.vue';
 import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
 import { ParCardButton, ParActionButton, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
+import PatreonCallout from '@/components/PatreonCallout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
@@ -332,6 +316,12 @@ const patreonLoginUrl = computed(() => {
   const returnUrl = encodeURIComponent(window.location.href);
   return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
+
+// Direct membership-tiers URL — distinct from patreonLoginUrl above which
+// goes through the Patreon Connect login flow. Used for the inline "see
+// all premium tiers" link in the upsell, where the user wants to read tier
+// breakdowns rather than authenticate.
+const patreonTiersUrl = 'https://www.patreon.com/c/ai_rpg_tookit/membership';
 
 const itemName = ref('');
 const rarity = ref('');
@@ -1564,12 +1554,11 @@ onUnmounted(() => {
 
 /* ZONE 3: Footer meta */
 .footer-meta {
-  text-align: center;
+  /* Visual chrome (text-align, background, border, radius) removed during
+     PatreonCallout migration — the callout owns its own surface treatment.
+     Layout properties (margin, max-width) preserved. */
   margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 0;
   max-width: 940px;
   width: 100%;
   margin-left: auto;

@@ -78,7 +78,11 @@ const props = defineProps({
     // 'secondary' — faded slate outline, the supporting alternative
     //               (Cancel beside Generate, etc.). Same component
     //               family, lower visual volume.
-    validator: v => ['primary', 'secondary'].includes(v),
+    // 'luminous'  — cabochon gradient. Reserved for rare special-
+    //               importance moments (premium upsell, etc.).
+    //               Don't proliferate — the variant earns its
+    //               complexity through scarcity.
+    validator: v => ['primary', 'secondary', 'luminous'].includes(v),
   },
   size: {
     type: String,
@@ -115,9 +119,10 @@ const classes = computed(() => [
   'par-action',
   `par-action--${props.size}`,
   {
-    // Variant: only secondary needs its own class. The base .par-action
-    // styles already are the primary treatment.
+    // Variant: only secondary and luminous need their own class. The
+    // base .par-action styles already are the primary treatment.
     'par-action--variant-secondary': props.variant === 'secondary',
+    'par-action--variant-luminous': props.variant === 'luminous',
     'par-action--full-width': props.fullWidth && !props.iconOnly,
     'par-action--icon-only': props.iconOnly,
     // Padding adjustments only apply when an icon coexists with label text.
@@ -162,7 +167,7 @@ function handleClick(event) {
   gap: 0.5rem;
 
   /* Surface — lapis with cream text */
-  background-color: var(--color-action-rest, #2A4D70);
+  background-color: var(--color-action-rest, #365A85);
   color: var(--color-action-text, #FBF7F0);
   fill: var(--color-action-text, #FBF7F0);
   border: none;
@@ -192,11 +197,11 @@ function handleClick(event) {
    disabled and the anchor aria-disabled equivalent so disabled buttons
    never show interaction feedback (which would mislead users). */
 .par-action:hover:not(:disabled):not([aria-disabled="true"]) {
-  background-color: var(--color-action-hover, #1F3A5C);
+  background-color: var(--color-action-hover, #2A4D70);
 }
 
 .par-action:active:not(:disabled):not([aria-disabled="true"]) {
-  background-color: var(--color-action-active, #142640);
+  background-color: var(--color-action-active, #1F3A5C);
 }
 
 /* Keyboard-only focus ring. :focus-visible fires only on keyboard
@@ -312,5 +317,72 @@ function handleClick(event) {
   fill: var(--color-action-secondary-disabled, rgba(90, 122, 154, 0.35));
   border-color: var(--color-action-secondary-disabled, rgba(90, 122, 154, 0.35));
   cursor: not-allowed;
+}
+
+/* -----------------------------------------------------------------------
+   Luminous variant — cabochon gradient. Reserved for rare special-
+   importance moments (premium upsell). The gradient mimics light
+   catching polished lapis stone — semantic depth, not decoration. The
+   inset highlight on top + inset shadow on bottom give the surface a
+   physical "carved" quality.
+
+   Justified because the variant only appears in rare, high-importance
+   moments. Don't propagate to common buttons.
+   ----------------------------------------------------------------------- */
+.par-action--variant-luminous {
+  background-color: transparent;
+  background-image: linear-gradient(
+    165deg,
+    var(--color-action-luminous-light, #A0B8D0) 0%,
+    var(--color-action-luminous-mid, #3D6BA0) 50%,
+    var(--color-action-luminous-deep, #1F3A5C) 100%
+  );
+  color: var(--color-action-text, #FBF7F0);
+  fill: var(--color-action-text, #FBF7F0);
+  border: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.par-action--variant-luminous:hover:not(:disabled):not([aria-disabled="true"]) {
+  background-image: linear-gradient(
+    165deg,
+    var(--color-action-luminous-mid, #3D6BA0) 0%,
+    var(--color-action-luminous-deep, #1F3A5C) 50%,
+    var(--color-action-luminous-deepest, #142640) 100%
+  );
+}
+
+.par-action--variant-luminous:active:not(:disabled):not([aria-disabled="true"]) {
+  /* Active reuses the hover gradient — gives a stable visual through
+     the press without an additional state shift that would feel busy
+     at this level of visual elaboration. */
+  background-image: linear-gradient(
+    165deg,
+    var(--color-action-luminous-mid, #3D6BA0) 0%,
+    var(--color-action-luminous-deep, #1F3A5C) 50%,
+    var(--color-action-luminous-deepest, #142640) 100%
+  );
+}
+
+.par-action--variant-luminous:focus-visible {
+  outline: 2px solid var(--color-action-text, #FBF7F0);
+  outline-offset: 2px;
+  /* Stack the focus halo with the inset highlights so the cabochon
+     surface remains visually intact under keyboard focus. */
+  box-shadow:
+    0 0 0 4px rgba(90, 122, 154, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.par-action--variant-luminous:disabled,
+.par-action--variant-luminous[aria-disabled="true"] {
+  background-image: linear-gradient(165deg, #B5BFC9 0%, #98A4B0 100%);
+  color: rgba(251, 247, 240, 0.7);
+  fill: rgba(251, 247, 240, 0.7);
+  cursor: not-allowed;
+  box-shadow: none;
 }
 </style>

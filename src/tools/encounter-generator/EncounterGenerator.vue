@@ -297,25 +297,8 @@
 
       <!-- Footer with save/load or upgrade prompt -->
       <div class="encounter-footer">
-        <!-- Free users: Show message + unlock button -->
-        <div v-if="!premium">
-          <p>
-            All encounter generations are currently free. Encounter data is saved on this browser. To save/load
-            encounter
-            data for use in another computer or browser requires a premium Patreon subscription.
-          </p>
-          <div class="patreon-universal-button">
-            <a :href="patreonLoginUrl">
-              <div class="patreon-responsive-button-wrapper">
-                <div class="patreon-responsive-button">
-                  <img class="patreon_logo"
-                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                    alt="Unlock with Patreon"> Unlock with Patreon
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
 
         <!-- Premium users: Show save/load button -->
         <div v-else>
@@ -334,6 +317,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { CdrButton, CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
 import Statblock from '@/components/Statblock.vue';
 import MonsterPicker from './components/MonsterPicker.vue';
 import EncounterMonsterList from './components/EncounterMonsterList.vue';
@@ -1928,12 +1912,11 @@ onMounted(async () => {
 
 /* ─── Encounter Footer ──────────────────────────────────────────────────── */
 .encounter-footer {
+  /* Visual chrome (text-align, background, border, radius) removed during
+     PatreonCallout migration — the callout owns its own surface treatment.
+     Layout properties (margin, padding) preserved. */
   margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  text-align: center;
+  padding: 0;
 
   p {
     margin: 0 0 1rem 0;

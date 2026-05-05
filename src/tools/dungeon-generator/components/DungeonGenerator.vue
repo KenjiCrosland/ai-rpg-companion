@@ -77,22 +77,7 @@
 
         <!-- ZONE 3: Footer with save/load or upgrade prompt -->
         <div class="dungeon-footer">
-          <div v-if="!premium">
-            <p>
-              All dungeon generations are currently free. Dungeon data is saved on this browser. 5 statblock generations per 24 hours. To save/load dungeon data for use in another computer or browser, or unlock unlimited statblocks, requires a premium Patreon subscription.
-            </p>
-            <div class="patreon-universal-button">
-              <a :href="patreonLoginUrl">
-                <div class="patreon-responsive-button-wrapper">
-                  <div class="patreon-responsive-button">
-                    <img class="patreon_logo"
-                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                      alt="Unlock with Patreon"> Unlock with Patreon
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
           <div v-else>
             <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
             <cdr-button modifier="dark" @click="showDataManagerModal = true">
@@ -126,22 +111,7 @@
 
       <!-- Footer below content -->
       <div v-if="dungeonStore.currentDungeon || isGenerating" class="dungeon-footer">
-        <div v-if="!premium">
-          <p>
-            All dungeon generations are currently free. Dungeon data is saved on this browser. 5 statblock generations per 24 hours. To save/load dungeon data for use in another computer or browser, or unlock unlimited statblocks, requires a premium Patreon subscription.
-          </p>
-          <div class="patreon-universal-button">
-            <a :href="patreonLoginUrl">
-              <div class="patreon-responsive-button-wrapper">
-                <div class="patreon-responsive-button">
-                  <img class="patreon_logo"
-                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                    alt="Unlock with Patreon"> Unlock with Patreon
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
         <div v-else>
           <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
           <cdr-button modifier="dark" @click="showDataManagerModal = true">
@@ -164,6 +134,7 @@ import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
 
 // The tabs as separate components
 import OverviewTab from './OverviewTab.vue';
@@ -415,12 +386,11 @@ onMounted(() => {
 
 /* ZONE 3: Dungeon Footer (below form and content) */
 .dungeon-footer {
+  /* Visual chrome (text-align, background, border, radius) removed during
+     PatreonCallout migration — the callout owns its own surface treatment.
+     Layout properties (margin, padding) preserved. */
   margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  text-align: center;
+  padding: 0;
 
   p {
     margin: 0 0 1rem 0;

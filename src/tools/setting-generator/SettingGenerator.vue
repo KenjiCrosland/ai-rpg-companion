@@ -77,22 +77,7 @@
 
         <!-- ZONE 3: Footer meta -->
         <div class="footer-meta">
-          <div v-if="!premium">
-            <p>
-              All setting generation is currently free. Setting data is saved on this browser. To save/load setting data for use in another computer or browser requires a premium Patreon subscription.
-            </p>
-            <div class="patreon-universal-button">
-              <a :href="patreonLoginUrl">
-                <div class="patreon-responsive-button-wrapper">
-                  <div class="patreon-responsive-button">
-                    <img class="patreon_logo"
-                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                      alt="Unlock with Patreon"> Unlock with Patreon
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
           <div v-else>
             <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
             <cdr-button modifier="dark" @click="showDataManagerModal = true">
@@ -127,22 +112,7 @@
 
       <!-- Footer below content -->
       <div class="footer-meta" v-if="settingOverviewExists">
-        <div v-if="!premium">
-          <p>
-            All setting generation is currently free. Setting data is saved on this browser. To save/load setting data for use in another computer or browser requires a premium Patreon subscription.
-          </p>
-          <div class="patreon-universal-button">
-            <a :href="patreonLoginUrl">
-              <div class="patreon-responsive-button-wrapper">
-                <div class="patreon-responsive-button">
-                  <img class="patreon_logo"
-                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                    alt="Unlock with Patreon"> Unlock with Patreon
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
         <div v-else>
           <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
           <cdr-button modifier="dark" @click="showDataManagerModal = true">
@@ -183,6 +153,7 @@ import { CdrInput, CdrButton, CdrLink, CdrSkeleton } from "@rei/cedar";
 import { settingOverviewPrompt, sublocationOverviewPrompt } from "./prompts/index.mjs";
 import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
 import { formatSettingAsPlainText } from "@/util/formatSettingAsPlainText.mjs";
@@ -980,12 +951,11 @@ $transition-speed: 0.3s;
 
 /* ZONE 3: Footer meta */
 .footer-meta {
+  /* Visual chrome (text-align, background, border, radius) removed during
+     PatreonCallout migration — the callout owns its own surface treatment.
+     Layout properties (margin, padding) preserved. */
   margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  text-align: center;
+  padding: 0;
 
   p {
     margin: 0 0 1rem 0;
