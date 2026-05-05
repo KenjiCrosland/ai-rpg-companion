@@ -42,8 +42,20 @@
             </a>
           </div>
 
-          <!-- Patreon CTA (only when NOT a supporter) -->
-          <PatreonCallout v-if="!isSupporter" patreon-url="https://patreon.com/ai_rpg_tookit" />
+          <!-- Patreon CTA (only when NOT a supporter). This callout is
+               cross-tool (lives in the suite-wide showcase, not a single
+               generator), so the bullets pitch the whole-suite benefits
+               rather than tool-specific quota lifts. -->
+          <PatreonCallout v-if="!isSupporter" patreon-url="https://patreon.com/ai_rpg_tookit">
+            <template #features>
+              <li>Cross-device save and load — your campaigns sync between browsers and devices.</li>
+              <li>Patron-exclusive tools: Lore &amp; Timeline Generator and Bookshelf Generator.</li>
+              <li>Unlimited generation across the whole suite — no daily caps.</li>
+              <li>
+                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+              </li>
+            </template>
+          </PatreonCallout>
         </div>
       </transition>
     </div>
@@ -84,6 +96,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import PatreonCallout from './PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 const props = defineProps({
   displayMode: { type: String, default: 'banner' }, // 'banner' or 'widget'

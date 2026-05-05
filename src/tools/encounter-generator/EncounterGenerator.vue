@@ -298,7 +298,14 @@
       <!-- Footer with save/load or upgrade prompt -->
       <div class="encounter-footer">
         <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #features>
+            <li>Cross-device save and load — your encounters sync between browsers and devices.</li>
+            <li>
+              <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+            </li>
+          </template>
+        </PatreonCallout>
 
         <!-- Premium users: Show save/load button -->
         <div v-else>
@@ -318,6 +325,7 @@ import { CdrButton, CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrToo
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Statblock from '@/components/Statblock.vue';
 import MonsterPicker from './components/MonsterPicker.vue';
 import EncounterMonsterList from './components/EncounterMonsterList.vue';

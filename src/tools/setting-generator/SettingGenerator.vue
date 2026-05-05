@@ -77,7 +77,14 @@
 
         <!-- ZONE 3: Footer meta -->
         <div class="footer-meta">
-          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #features>
+              <li>Cross-device save and load — your settings sync between browsers and devices.</li>
+              <li>
+                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+              </li>
+            </template>
+          </PatreonCallout>
           <div v-else>
             <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
             <cdr-button modifier="dark" @click="showDataManagerModal = true">
@@ -112,7 +119,14 @@
 
       <!-- Footer below content -->
       <div class="footer-meta" v-if="settingOverviewExists">
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #features>
+            <li>Cross-device save and load — your settings sync between browsers and devices.</li>
+            <li>
+              <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+            </li>
+          </template>
+        </PatreonCallout>
         <div v-else>
           <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
           <cdr-button modifier="dark" @click="showDataManagerModal = true">
@@ -154,6 +168,7 @@ import { settingOverviewPrompt, sublocationOverviewPrompt } from "./prompts/inde
 import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
 import { formatSettingAsPlainText } from "@/util/formatSettingAsPlainText.mjs";

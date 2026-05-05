@@ -98,7 +98,15 @@
                 class="statblock-limit-message">
                 <p><strong>Statblock generation limit reached</strong></p>
                 <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
-                <PatreonCallout :patreon-url="patreonLoginUrl" />
+                <PatreonCallout :patreon-url="patreonLoginUrl">
+                  <template #features>
+                    <li>Unlimited statblock generation — no daily cap.</li>
+                    <li>Cross-device save and load — your dungeons sync between browsers and devices.</li>
+                    <li>
+                      <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+                    </li>
+                  </template>
+                </PatreonCallout>
               </div>
 
               <!-- Simple form to generate a new statblock for the NPC -->
@@ -159,6 +167,7 @@ import { getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import PatreonCallout from '@/components/PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { generateSingleRelationshipPrompt, validateSingleRelationshipResponse } from '../prompts/dungeon-npcs.mjs';
 import {
   CdrFormGroup,

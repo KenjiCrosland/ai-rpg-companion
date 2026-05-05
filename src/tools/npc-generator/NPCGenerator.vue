@@ -110,7 +110,15 @@
                      available regardless. -->
                 <div class="footer-meta">
                     <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
-                    <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+                    <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+                        <template #features>
+                            <li>Cross-device save and load — your NPCs sync between browsers and devices.</li>
+                            <li>Unlimited combat statblock generation — no daily cap.</li>
+                            <li>
+                                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+                            </li>
+                        </template>
+                    </PatreonCallout>
 
                     <!-- Premium users: Show save/load button -->
                     <div v-else>
@@ -282,7 +290,15 @@
             <!-- Footer below NPC content (separate card) -->
             <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1">
                 <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
-                <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+                <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+                    <template #features>
+                        <li>Cross-device save and load — your NPCs sync between browsers and devices.</li>
+                        <li>Unlimited combat statblock generation — no daily cap.</li>
+                        <li>
+                            <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+                        </li>
+                    </template>
+                </PatreonCallout>
 
                 <!-- Premium users: Show save/load button -->
                 <div v-else>
@@ -314,6 +330,7 @@ import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { requestNPCDescription } from "./utils/request-npc-description.mjs";
 import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMarkdown.mjs';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';

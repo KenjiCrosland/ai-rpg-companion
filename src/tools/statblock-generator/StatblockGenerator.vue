@@ -72,7 +72,15 @@
 
         <!-- ZONE 3: Secondary info (below the card, low-key) -->
         <div class="footer-meta">
-          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #features>
+              <li>Cross-device save and load — your statblocks sync between browsers and devices.</li>
+              <li>Unlimited statblock generation — no daily cap.</li>
+              <li>
+                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+              </li>
+            </template>
+          </PatreonCallout>
 
           <!-- Premium users: Show message -->
           <div v-else>
@@ -126,7 +134,15 @@
 
       <!-- Footer below monster content -->
       <div class="footer-meta" v-if="monster && !loadingPart2">
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #features>
+            <li>Cross-device save and load — your statblocks sync between browsers and devices.</li>
+            <li>Unlimited statblock generation — no daily cap.</li>
+            <li>
+              <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+            </li>
+          </template>
+        </PatreonCallout>
 
         <!-- Premium users: Show message -->
         <div v-else>
@@ -150,6 +166,7 @@ import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";

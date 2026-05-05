@@ -302,6 +302,7 @@ import TabPanel from '@/components/tabs/TabPanel.vue';
 import { useToast } from '@/composables/useToast';
 import { renameItemReferences, removeReferencesForItem } from '@/util/item-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 const toast = useToast();
 
@@ -317,11 +318,6 @@ const patreonLoginUrl = computed(() => {
   return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
 
-// Direct membership-tiers URL — distinct from patreonLoginUrl above which
-// goes through the Patreon Connect login flow. Used for the inline "see
-// all premium tiers" link in the upsell, where the user wants to read tier
-// breakdowns rather than authenticate.
-const patreonTiersUrl = 'https://www.patreon.com/c/ai_rpg_tookit/membership';
 
 const itemName = ref('');
 const rarity = ref('');

@@ -77,7 +77,15 @@
 
         <!-- ZONE 3: Footer with save/load or upgrade prompt -->
         <div class="dungeon-footer">
-          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #features>
+              <li>Cross-device save and load — your dungeons sync between browsers and devices.</li>
+              <li>Unlimited monster statblock generation within dungeons — no daily cap.</li>
+              <li>
+                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+              </li>
+            </template>
+          </PatreonCallout>
           <div v-else>
             <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
             <cdr-button modifier="dark" @click="showDataManagerModal = true">
@@ -111,7 +119,15 @@
 
       <!-- Footer below content -->
       <div v-if="dungeonStore.currentDungeon || isGenerating" class="dungeon-footer">
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" />
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #features>
+            <li>Cross-device save and load — your dungeons sync between browsers and devices.</li>
+            <li>Unlimited monster statblock generation within dungeons — no daily cap.</li>
+            <li>
+              <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+            </li>
+          </template>
+        </PatreonCallout>
         <div v-else>
           <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
           <cdr-button modifier="dark" @click="showDataManagerModal = true">
@@ -128,6 +144,7 @@ import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
 import { getNavigationParams } from '@/util/navigation.mjs';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 import { CdrButton, CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';

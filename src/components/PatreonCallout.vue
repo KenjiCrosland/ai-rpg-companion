@@ -63,7 +63,7 @@
             <li>Unlimited Quest Hook generations — no daily cap.</li>
             <li>
               <a
-                href="https://www.patreon.com/c/ai_rpg_tookit/membership"
+                :href="patreonTiersUrl"
                 target="_blank"
                 rel="noopener"
               >See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
@@ -114,6 +114,7 @@
 
 import { ref } from 'vue';
 import { ParActionButton } from '@/parchment';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 defineProps({
   patreonUrl: {
@@ -242,7 +243,14 @@ function toggleExpandable() {
   margin: 0;
 }
 
-.patreon-callout__list li {
+/* Each rule duplicated for `li` and `:slotted(li)`. The bare selector
+   covers PatreonCallout's own default-fallback bullets when no slot is
+   provided; `:slotted(li)` covers parent-provided bullets (which carry
+   the parent's [data-v-] scope and would otherwise miss). Same pattern
+   as the link rules above — see that comment block for the full
+   rationale on Vue scoped CSS + slot content. */
+.patreon-callout__list li,
+.patreon-callout__list :slotted(li) {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   font-size: 14px;
   color: var(--par-color-text, #222);
@@ -250,11 +258,13 @@ function toggleExpandable() {
   margin-bottom: 0.4rem;
 }
 
-.patreon-callout__list li:last-child {
+.patreon-callout__list li:last-child,
+.patreon-callout__list :slotted(li:last-child) {
   margin-bottom: 0;
 }
 
-.patreon-callout__list li::marker {
+.patreon-callout__list li::marker,
+.patreon-callout__list :slotted(li::marker) {
   color: var(--par-color-title, #7a1f1f);
 }
 
