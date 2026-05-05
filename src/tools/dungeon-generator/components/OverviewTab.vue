@@ -42,8 +42,8 @@
         </div>
 
         <div class="button-group">
-          <cdr-button @click="startEditing" modifier="secondary">Edit Overview</cdr-button>
-          <cdr-button @click="confirmDelete" modifier="dark">Delete Current Dungeon</cdr-button>
+          <ParActionButton @click="startEditing" variant="secondary">Edit Overview</ParActionButton>
+          <ParActionButton @click="confirmDelete">Delete Current Dungeon</ParActionButton>
         </div>
       </div>
 
@@ -65,8 +65,8 @@
         </cdr-input>
 
         <div class="button-group">
-          <cdr-button @click="saveEdit">Save Changes</cdr-button>
-          <cdr-button @click="cancelEdit" modifier="secondary">Cancel</cdr-button>
+          <ParActionButton @click="saveEdit">Save Changes</ParActionButton>
+          <ParActionButton @click="cancelEdit" variant="secondary">Cancel</ParActionButton>
         </div>
       </div>
     </div>
@@ -74,11 +74,11 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import OverviewSkeleton from './skeletons/OverviewSkeleton.vue';
-import { CdrButton, CdrInput } from '@rei/cedar';
-import '@rei/cedar/dist/style/cdr-button.css';
+import { CdrInput } from '@rei/cedar';
 import '@rei/cedar/dist/style/cdr-input.css';
 
 const props = defineProps({

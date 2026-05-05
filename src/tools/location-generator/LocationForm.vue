@@ -2,11 +2,11 @@
     <div>
         <form v-if="!formContent" @submit.prevent="generateLocationDescription">
             <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" :label="formLabel" required />
-            <cdr-button class="location-form-button" type="submit" :disabled="disabledButton">{{ buttonText }}</cdr-button>
+            <ParActionButton class="location-form-button" type="submit" :disabled="disabledButton">{{ buttonText }}</ParActionButton>
         </form>
-        <cdr-button :size="buttonSize" v-else @click="generateLocationDescription" :disabled="disabledButton">
+        <ParActionButton :size="buttonSize" v-else @click="generateLocationDescription" :disabled="disabledButton">
             {{ buttonText }}
-        </cdr-button>
+        </ParActionButton>
     </div>
 </template>
 
@@ -14,9 +14,9 @@
 import { startCase } from 'lodash';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { PROVIDERS } from "@/util/ai-config.mjs";
-import { CdrInput, CdrButton } from "@rei/cedar";
+import { CdrInput } from "@rei/cedar";
+import { ParActionButton } from "@/parchment";
 import "@rei/cedar/dist/style/cdr-input.css";
-import "@rei/cedar/dist/style/cdr-button.css";
 import { createLocationPrompt } from "./location-prompts.mjs";
 
 export default {
@@ -26,8 +26,8 @@ export default {
         };
     },
     components: {
-        CdrButton,
         CdrInput,
+        ParActionButton,
     },
     props: {
         buttonSize: {

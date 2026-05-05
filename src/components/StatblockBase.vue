@@ -114,25 +114,25 @@
     </div>
     <div class="copy-statblock-buttons" v-if="copyButtons && !loadingPart1 && !loadingPart2 && monster">
         <strong>Export:</strong>
-        <cdr-button modifier="secondary" size="small" @click="copyAsMarkdown">Homebrewery Markdown</cdr-button>
-        <cdr-button modifier="secondary" size="small" @click="copyAsVTT">Foundry VTT</cdr-button>
-        <cdr-button modifier="secondary" size="small" @click="copyAsImprovedInitiative">Improved Initiative</cdr-button>
+        <ParActionButton variant="secondary" size="small" @click="copyAsMarkdown">Homebrewery Markdown</ParActionButton>
+        <ParActionButton variant="secondary" size="small" @click="copyAsVTT">Foundry VTT</ParActionButton>
+        <ParActionButton variant="secondary" size="small" @click="copyAsImprovedInitiative">Improved Initiative</ParActionButton>
     </div>
 </div>
 </template>
   
 <script setup>
+import { ParActionButton } from "@/parchment";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
 import { ref, computed, defineProps, onMounted, onBeforeUnmount } from 'vue';
 import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
 import { convertToImprovedInitiative } from '../util/convertToImprovedInitiative.mjs';
 import { convertToFoundryVTT } from '../util/convertToFoundryVTT.mjs';
-import { CdrToggleButton, CdrToggleGroup, CdrButton, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
+import { CdrToggleButton, CdrToggleGroup, CdrList, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
 import "@rei/cedar/dist/style/cdr-toggle-button.css";
 import "@rei/cedar/dist/style/cdr-list.css";
-import "@rei/cedar/dist/style/cdr-button.css";
 import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 // Props

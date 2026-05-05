@@ -1,12 +1,29 @@
 <template>
   <div class="patreon-callout parchment">
     <div class="patreon-callout__label">Premium</div>
-    <p class="patreon-callout__body">
+    <!-- Body and aside use `v-if="$slots.body"` rather than relying on
+         slot fallback content, because Vue 3 fires fallback content when
+         a slot binding is empty (e.g. `<template #body></template>`),
+         which would defeat the suppression case used by inline
+         limit-reached contexts (dungeon NPCsTab/MonstersTab).
+         `$slots.body` is set whenever the consumer passes the slot at
+         all — even with no children — so we can tell "no slot binding"
+         (render default) from "slot binding present" (render whatever
+         the consumer passed, which may be nothing).
+
+         Three usage shapes:
+           - No slot passed → default fallback paragraph renders.
+           - <template #body><p>…</p></template> → consumer's content.
+           - <template #body></template> → nothing renders. -->
+    <slot v-if="$slots.body" name="body" />
+    <p v-else class="patreon-callout__body">
       Your work is saved to this browser only. Premium syncs your campaign
       across devices and unlocks unlimited Lore Builder and Quest Hook
       generation.
     </p>
-    <p class="patreon-callout__aside">
+
+    <slot v-if="$slots.aside" name="aside" />
+    <p v-else class="patreon-callout__aside">
       cros.land is built and maintained by one developer. Premium support
       keeps the tools improving and the LLM costs covered.
     </p>
@@ -157,7 +174,13 @@ function toggleExpandable() {
   margin-bottom: 0.6rem;
 }
 
-.patreon-callout__body {
+/* Body and aside paragraphs. Each rule duplicated for the bare class
+   selector (covers PatreonCallout's default-fallback content) and
+   `:slotted()` (covers parent-provided slot overrides — they carry the
+   parent's [data-v-] scope and would otherwise miss). Same Vue
+   scoped-CSS-vs-slot-content pattern as the bullets and link rules. */
+.patreon-callout__body,
+.patreon-callout :slotted(.patreon-callout__body) {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   font-size: 16px;
   color: var(--par-color-text, #222);
@@ -166,7 +189,8 @@ function toggleExpandable() {
   font-weight: 400;
 }
 
-.patreon-callout__aside {
+.patreon-callout__aside,
+.patreon-callout :slotted(.patreon-callout__aside) {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   font-size: 14px;
   color: var(--par-color-text-secondary, #555);

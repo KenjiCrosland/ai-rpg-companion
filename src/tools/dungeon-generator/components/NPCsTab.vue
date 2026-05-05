@@ -49,13 +49,13 @@
               <h2>{{ npc.name }}</h2>
               <p>{{ npc.short_description }}</p>
               <div style="display: flex; gap: 0.5rem;">
-                <cdr-button @click="dungeonStore.generateDungeonNPC(index)"
+                <ParActionButton @click="dungeonStore.generateDungeonNPC(index)"
                   :disabled="dungeonStore.currentlyLoadingNPCs[index]">
                   Generate Full Description
-                </cdr-button>
-                <cdr-button @click="dungeonStore.deleteNPC(index)" modifier="secondary" size="small">
+                </ParActionButton>
+                <ParActionButton @click="dungeonStore.deleteNPC(index)" variant="secondary" size="small">
                   Delete
-                </cdr-button>
+                </ParActionButton>
               </div>
             </div>
 
@@ -88,8 +88,8 @@
                 <p><strong>Statblock not found</strong></p>
                 <p>The statblock "{{ npc.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
                 <div class="button-group">
-                  <cdr-button @click="generateNpcStatblock(index, premium)" size="small">Regenerate Statblock</cdr-button>
-                  <cdr-button @click="clearNpcStatblockReference(index)" modifier="secondary" size="small">Clear Reference</cdr-button>
+                  <ParActionButton @click="generateNpcStatblock(index, premium)" size="small">Regenerate Statblock</ParActionButton>
+                  <ParActionButton @click="clearNpcStatblockReference(index)" variant="secondary" size="small">Clear Reference</ParActionButton>
                 </div>
               </div>
 
@@ -98,7 +98,14 @@
                 class="statblock-limit-message">
                 <p><strong>Statblock generation limit reached</strong></p>
                 <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
+                <!-- Inline limit-reached: pass empty body and aside slots
+                     to suppress those paragraphs entirely. The surrounding
+                     "Statblock generation limit reached" heading already
+                     does the framing; the callout strips down to PREMIUM
+                     label → expandable → button. -->
                 <PatreonCallout :patreon-url="patreonLoginUrl">
+                  <template #body></template>
+                  <template #aside></template>
                   <template #features>
                     <li>Unlimited statblock generation — no daily cap.</li>
                     <li>Cross-device save and load — your dungeons sync between browsers and devices.</li>
@@ -123,7 +130,7 @@
                   Creature is a spellcaster
                 </cdr-checkbox>
                 <!-- Submit button -->
-                <cdr-button class="monster-form-button" type="submit" style="margin-top: 1rem;"
+                <ParActionButton class="monster-form-button" type="submit" style="margin-top: 1rem;"
                   :disabled="dungeonStore.npcStatblockLoadingStates[index]?.generating">
                   {{
                     dungeonStore.npcStatblockLoadingStates[index]?.generating
@@ -132,7 +139,7 @@
                         ? 'Re-generate Statblock'
                         : 'Generate Statblock')
                   }}
-                </cdr-button>
+                </ParActionButton>
               </form>
             </div>
           </div>
@@ -149,14 +156,15 @@
           Examples: "A trapped explorer seeking help", "A ghost haunting the corridors", "A lost child"
         </template>
       </cdr-input>
-      <cdr-button style="margin-top: 2rem" @click="createNPC" :disabled="dungeonStore.currentlyLoadingNPC">
+      <ParActionButton style="margin-top: 2rem" @click="createNPC" :disabled="dungeonStore.currentlyLoadingNPC">
         Add NPC
-      </cdr-button>
+      </ParActionButton>
     </cdr-form-group>
   </div>
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, reactive, computed, onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
@@ -172,7 +180,6 @@ import { generateSingleRelationshipPrompt, validateSingleRelationshipResponse } 
 import {
   CdrFormGroup,
   CdrInput,
-  CdrButton,
   CdrAccordionGroup,
   CdrAccordion,
   CdrSelect,

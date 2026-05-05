@@ -3,15 +3,15 @@
     <h3 class="exports-heading">Export Your Dungeon</h3>
 
     <div class="export-buttons">
-      <cdr-button @click="copyAsPlainText" modifier="secondary">
+      <ParActionButton @click="copyAsPlainText" variant="secondary">
         Copy as Plain Text
-      </cdr-button>
-      <cdr-button @click="copyAsHTML" modifier="secondary">
+      </ParActionButton>
+      <ParActionButton @click="copyAsHTML" variant="secondary">
         Copy as HTML
-      </cdr-button>
-      <cdr-button @click="copyAsMarkdown" modifier="secondary">
+      </ParActionButton>
+      <ParActionButton @click="copyAsMarkdown" variant="secondary">
         Copy as Homebrewery Markdown
-      </cdr-button>
+      </ParActionButton>
     </div>
 
     <cdr-accordion-group class="export-help">
@@ -50,8 +50,9 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref } from 'vue';
-import { CdrButton, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
+import { CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { dungeonToMarkdown } from '../util/dungeon-to-markdown.mjs';
 import { dungeonToHTML } from '../util/dungeon-to-html.mjs';
 import { dungeonToPlainText } from '../util/dungeon-to-plain-text.mjs';

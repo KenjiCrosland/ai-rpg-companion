@@ -48,3 +48,49 @@ we iterate on the styling.
    when an existing token doesn't fit.
 3. Re-export from `index.mjs`.
 4. Update this file's "Files" list.
+
+## What's deferred — Cedar carve-outs
+
+ParActionButton's three variants (`primary`, `secondary`, `luminous`)
+cover the **action button** family — primary CTAs, supporting alternatives,
+and rare special-importance moments. They don't yet cover two patterns
+that intentionally live at different visual registers, and those sites
+**stay on Cedar** until parchment has primitives that fit:
+
+### Inline icon controls (delete / info icons in lists)
+
+Cedar's `<cdr-button :icon-only="true" :with-background="true">` pattern
+— a small **round** button with a subtle background, used inline next to
+list items for ✕ delete or ⓘ info actions. ParActionButton's `iconOnly` +
+`variant="secondary"` produces a **square** slate-outlined button, which
+reads as too heavy for inline placement against a list row. The square
+treatment competes with the row content; the round-with-background
+treatment recedes the way it should.
+
+**Sites currently held on Cedar** (8 instances, will migrate when a ghost
+icon-button primitive exists — provisional name `ParIconButton`):
+- `src/tools/dungeon-generator/components/MonstersTab.vue` — delete monster
+- `src/tools/setting-generator/components/tabs/LocationsTab.vue` — delete sublocation (×2)
+- `src/tools/setting-generator/components/tabs/QuestHooksTab.vue` — delete quest hook
+- `src/tools/setting-generator/components/tabs/FactionsTab.vue` — delete faction, info icon (×2)
+- `src/components/DashboardPlus.vue` — delete location, delete NPC (×2)
+
+### Inline link-style navigation
+
+Cedar's `<cdr-button modifier="link">` — text-only, underlined, no
+background. Used inline within prose for "go to X" navigation cues.
+ParActionButton's `variant="secondary"` is outlined-and-padded, which
+treats inline text-flow navigation as a heavy interactive element.
+Different role, different visual register.
+
+**Sites currently held on Cedar** (1 instance, will migrate when a link
+primitive exists — provisional name `ParLink`):
+- `src/tools/dungeon-generator/components/RoomDescription.vue:102` — "go to connected room" inline navigation
+
+### When to build these primitives
+
+When a second use case for either pattern appears, build the primitive
+then. Same principle as the rest of this document: extractions earn
+their existence through real duplicated need, not speculative scaffolding.
+For now, the 9 Cedar sites listed above are the carve-out, and they're
+intentional, not technical debt.

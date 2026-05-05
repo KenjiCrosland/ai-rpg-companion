@@ -40,26 +40,26 @@
       </p>
 
       <div class="buttons-container">
-        <cdr-button modifier="secondary" @click="triggerFileSelect">
+        <ParActionButton variant="secondary" @click="triggerFileSelect">
           Upload JSON
-        </cdr-button>
+        </ParActionButton>
         <input ref="fileInput" type="file" accept="application/json" style="display: none;"
           @change="handleFileChange" />
 
-        <cdr-button @click="downloadData" :disabled="!hasAnyData">
+        <ParActionButton @click="downloadData" :disabled="!hasAnyData">
           Download JSON
-        </cdr-button>
+        </ParActionButton>
       </div>
     </div>
   </cdr-modal>
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, computed } from 'vue';
 import {
   CdrModal,
   CdrText,
-  CdrButton,
   CdrLink
 } from '@rei/cedar';
 import { writeQuota, QUOTA_FIELDS } from '@/util/quota-storage.mjs';
@@ -67,7 +67,6 @@ import { writeQuota, QUOTA_FIELDS } from '@/util/quota-storage.mjs';
 // Cedar CSS
 import '@rei/cedar/dist/style/cdr-modal.css';
 import '@rei/cedar/dist/style/cdr-text.css';
-import '@rei/cedar/dist/style/cdr-button.css';
 import '@rei/cedar/dist/style/cdr-link.css';
 
 const props = defineProps({

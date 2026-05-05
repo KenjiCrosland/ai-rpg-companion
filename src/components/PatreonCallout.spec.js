@@ -113,6 +113,77 @@ describe('PatreonCallout', () => {
     });
   });
 
+  describe('body and aside slots', () => {
+    it('renders custom body content when #body slot is provided', () => {
+      const wrapper = mount(PatreonCallout, {
+        props: { patreonUrl: PATREON_URL },
+        slots: {
+          body: '<p class="patreon-callout__body">Custom dungeon-specific body copy.</p>',
+        },
+      });
+      expect(wrapper.text()).toContain('Custom dungeon-specific body copy');
+      // Default body must NOT leak through.
+      expect(wrapper.text()).not.toContain('unlocks unlimited Lore Builder and Quest Hook');
+    });
+
+    it('renders custom aside content when #aside slot is provided', () => {
+      const wrapper = mount(PatreonCallout, {
+        props: { patreonUrl: PATREON_URL },
+        slots: {
+          aside: '<p class="patreon-callout__aside">Custom aside copy.</p>',
+        },
+      });
+      expect(wrapper.text()).toContain('Custom aside copy');
+      // Default aside must NOT leak through.
+      expect(wrapper.text()).not.toContain('built and maintained by one developer');
+    });
+
+    it('suppresses body paragraph entirely when #body slot is empty', () => {
+      // Used by inline limit-reached contexts (dungeon NPCsTab/MonstersTab)
+      // where the surrounding heading already does the framing and the
+      // callout should strip down to PREMIUM → expandable → button.
+      //
+      // Mounting via a wrapper template so the test mirrors the real
+      // production pattern (<template #body></template>). Vue Test Utils'
+      // `slots: { body: '' }` shorthand treats empty string as "no slot
+      // provided" and triggers the fallback — wrong shape for this case.
+      const wrapper = mount({
+        components: { PatreonCallout },
+        template: `
+          <PatreonCallout patreon-url="${PATREON_URL}">
+            <template #body></template>
+          </PatreonCallout>
+        `,
+      });
+      expect(wrapper.find('.patreon-callout__body').exists()).toBe(false);
+      expect(wrapper.text()).not.toContain('unlocks unlimited Lore Builder and Quest Hook');
+    });
+
+    it('suppresses aside paragraph entirely when #aside slot is empty', () => {
+      const wrapper = mount({
+        components: { PatreonCallout },
+        template: `
+          <PatreonCallout patreon-url="${PATREON_URL}">
+            <template #aside></template>
+          </PatreonCallout>
+        `,
+      });
+      expect(wrapper.find('.patreon-callout__aside').exists()).toBe(false);
+      expect(wrapper.text()).not.toContain('built and maintained by one developer');
+    });
+
+    it('default fallback body and aside still render when no slots provided', () => {
+      // Unchanged behaviour — covered already by the rendering describe
+      // block, but explicit here so a future refactor can't silently
+      // break the item-generator default path.
+      const wrapper = makeWrapper();
+      expect(wrapper.find('.patreon-callout__body').exists()).toBe(true);
+      expect(wrapper.find('.patreon-callout__aside').exists()).toBe(true);
+      expect(wrapper.text()).toContain('unlocks unlimited Lore Builder and Quest Hook');
+      expect(wrapper.text()).toContain('built and maintained by one developer');
+    });
+  });
+
   describe('features slot', () => {
     it('renders custom slot content instead of the default bullets when #features is provided', async () => {
       const wrapper = mount(PatreonCallout, {

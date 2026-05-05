@@ -13,8 +13,8 @@
         Examples: "A smuggler secretly working for the Queen", "The emperor's eccentric advisor", "The village drunk"
       </template>
     </cdr-input>
-    <cdr-button @click="generateDetailedNPCDescription(null)" style="margin: 2rem 0;" modifier="dark"
-      :full-width="true">Create NPC</cdr-button>
+    <ParActionButton @click="generateDetailedNPCDescription(null)" style="margin: 2rem 0;"
+      :full-width="true">Create NPC</ParActionButton>
 
     <div v-if="loadingNewNPC">
       <NPCSkeleton />
@@ -39,8 +39,8 @@
             <h2>{{ npc.name }}</h2>
             <p>{{ npc.description }}</p>
             <div style="display: flex; gap: 0.5rem;">
-              <cdr-button @click="generateDetailedNPCDescription(index)">Generate Detailed Description</cdr-button>
-              <cdr-button @click="deleteNPC(index)" modifier="secondary" size="small">Delete</cdr-button>
+              <ParActionButton @click="generateDetailedNPCDescription(index)">Generate Detailed Description</ParActionButton>
+              <ParActionButton @click="deleteNPC(index)" variant="secondary" size="small">Delete</ParActionButton>
             </div>
           </div>
 
@@ -74,9 +74,9 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, reactive, watch, nextTick, computed, onMounted, onUnmounted } from 'vue';
 import {
-  CdrButton,
   CdrInput,
   CdrAccordionGroup,
   CdrAccordion,

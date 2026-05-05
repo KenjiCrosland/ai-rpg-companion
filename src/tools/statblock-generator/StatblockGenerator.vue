@@ -64,15 +64,18 @@
               <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
             </div>
 
-            <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
+            <ParActionButton :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
               {{ activeMonsterIndex !== null ? 'Regenerate Monster' : 'Generate Monster' }}
-            </cdr-button>
+            </ParActionButton>
           </form>
         </div>
 
         <!-- ZONE 3: Secondary info (below the card, low-key) -->
         <div class="footer-meta">
           <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #body>
+              <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
+            </template>
             <template #features>
               <li>Cross-device save and load — your statblocks sync between browsers and devices.</li>
               <li>Unlimited statblock generation — no daily cap.</li>
@@ -87,9 +90,9 @@
             <p>
               Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.
             </p>
-            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </cdr-button>
+            </ParActionButton>
           </div>
         </div>
       </div>
@@ -122,9 +125,9 @@
             :options="folderMoveOptions" />
           <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolder" label="New folder name"
             background="secondary" />
-          <cdr-button @click="handleFolderMove" :disabled="!canMove">
+          <ParActionButton @click="handleFolderMove" :disabled="!canMove">
             Move
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
 
@@ -135,6 +138,9 @@
       <!-- Footer below monster content -->
       <div class="footer-meta" v-if="monster && !loadingPart2">
         <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #body>
+            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
+          </template>
           <template #features>
             <li>Cross-device save and load — your statblocks sync between browsers and devices.</li>
             <li>Unlimited statblock generation — no daily cap.</li>
@@ -149,9 +155,9 @@
           <p>
             Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.
           </p>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
     </div>
@@ -162,16 +168,16 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
-import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
+import { CdrInput, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
-import "@rei/cedar/dist/style/cdr-button.css";
 import "@rei/cedar/dist/style/cdr-checkbox.css";
 import "@rei/cedar/dist/style/cdr-select.css";
 import "@rei/cedar/dist/style/cdr-toggle-group.css";

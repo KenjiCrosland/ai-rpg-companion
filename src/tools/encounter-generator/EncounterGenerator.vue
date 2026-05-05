@@ -106,16 +106,16 @@
                     <input class="party-number-input" type="number" min="1" max="20" :value="group.level || ''"
                       placeholder="5" @input="updateGroupLevel(index, $event.target.value)" />
                   </div>
-                  <cdr-button v-if="partyGroups.length > 1" size="small" icon-only @click="removePartyGroup(index)">
+                  <ParActionButton v-if="partyGroups.length > 1" size="small" icon-only @click="removePartyGroup(index)">
                     <template #icon>
                       <icon-x-sm />
                     </template>
-                  </cdr-button>
+                  </ParActionButton>
                 </div>
 
-                <cdr-button size="small" modifier="secondary" @click="addPartyGroup">
+                <ParActionButton size="small" variant="secondary" @click="addPartyGroup">
                   + Add Group
-                </cdr-button>
+                </ParActionButton>
               </div>
 
               <EncounterMonsterList :monsters="encounterMonsters" :party-size="totalPartySize"
@@ -129,17 +129,17 @@
           </section>
 
           <!-- Generate Button -->
-          <cdr-button class="generate-button" :full-width="true" @click="generateEncounter" :disabled="loading">
+          <ParActionButton class="generate-button" :full-width="true" @click="generateEncounter" :disabled="loading">
             {{ loading ? 'Generating...' : 'Generate Encounter' }}
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
 
       <!-- ZONE 3: Navigation button (outside card) -->
       <div v-if="generatedEncounter && !loading" class="output-navigation">
-        <cdr-button @click="resetEncounter" modifier="secondary">
+        <ParActionButton @click="resetEncounter" variant="secondary">
           ← Create New Encounter
-        </cdr-button>
+        </ParActionButton>
       </div>
 
       <!-- Output card (separate from form) -->
@@ -152,10 +152,10 @@
         </div>
         <div v-else-if="generatedEncounter && generatedEncounter.place_name" class="encounter-header">
           <h3>{{ generatedEncounter.place_name }}</h3>
-          <cdr-button v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" modifier="secondary"
+          <ParActionButton v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" variant="secondary"
             size="small" @click="startEditingEncounter">
             Edit
-          </cdr-button>
+          </ParActionButton>
         </div>
 
         <!-- Skeleton for read-aloud while Call 1 loads -->
@@ -210,8 +210,8 @@
           </cdr-input>
 
           <div class="button-group">
-            <cdr-button size="small" @click="saveEditEncounter">Save Changes</cdr-button>
-            <cdr-button size="small" @click="cancelEditEncounter" modifier="secondary">Cancel</cdr-button>
+            <ParActionButton size="small" @click="saveEditEncounter">Save Changes</ParActionButton>
+            <ParActionButton size="small" @click="cancelEditEncounter" variant="secondary">Cancel</ParActionButton>
           </div>
         </div>
 
@@ -238,9 +238,9 @@
 
             <div v-else class="generate-statblock-section">
               <p>Statblock not available for this monster.</p>
-              <cdr-button v-if="!monster.loadingStatblock" @click="generateStatblock(index)" modifier="secondary">
+              <ParActionButton v-if="!monster.loadingStatblock" @click="generateStatblock(index)" variant="secondary">
                 Generate Statblock
-              </cdr-button>
+              </ParActionButton>
               <div v-else class="loading-statblock">
                 Generating statblock...
               </div>
@@ -255,30 +255,30 @@
               :options="folderMoveOptions" />
             <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name"
               background="secondary" />
-            <cdr-button @click="handleFolderMove" :disabled="!canMoveEncounter">
+            <ParActionButton @click="handleFolderMove" :disabled="!canMoveEncounter">
               Move
-            </cdr-button>
+            </ParActionButton>
           </div>
         </div>
 
         <!-- Actions inside card -->
         <div class="output-actions" v-if="!loading && !generatedEncounter.loading_details">
           <div class="management-actions">
-            <cdr-button modifier="secondary" size="small" @click="showFolderMover = !showFolderMover">
+            <ParActionButton variant="secondary" size="small" @click="showFolderMover = !showFolderMover">
               {{ showFolderMover ? 'Cancel' : 'Move to Folder' }}
-            </cdr-button>
-            <cdr-button modifier="secondary" size="small" @click="deleteEncounter">
+            </ParActionButton>
+            <ParActionButton variant="secondary" size="small" @click="deleteEncounter">
               Delete
-            </cdr-button>
+            </ParActionButton>
           </div>
           <div class="export-actions-wrapper">
             <div class="export-actions">
-              <cdr-button @click="exportAsPlainText" modifier="secondary">
+              <ParActionButton @click="exportAsPlainText" variant="secondary">
                 Copy as Plain Text
-              </cdr-button>
-              <cdr-button @click="exportToMarkdown">
+              </ParActionButton>
+              <ParActionButton @click="exportToMarkdown">
                 Copy as Homebrewery Markdown
-              </cdr-button>
+              </ParActionButton>
             </div>
 
             <!-- Homebrewery link shown after copying markdown -->
@@ -299,6 +299,9 @@
       <div class="encounter-footer">
         <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
         <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #body>
+            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your encounters across devices.</p>
+          </template>
           <template #features>
             <li>Cross-device save and load — your encounters sync between browsers and devices.</li>
             <li>
@@ -310,9 +313,9 @@
         <!-- Premium users: Show save/load button -->
         <div v-else>
           <p>Encounter data is saved on this browser. Export to a file to use on another device.</p>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
     </div>
@@ -320,8 +323,9 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, computed, onMounted, watch } from 'vue';
-import { CdrButton, CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import { CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';

@@ -56,9 +56,9 @@
               <!-- Edit Button -->
               <div v-if="monster.detailedDescription || monster.combined_description" class="button-group"
                 style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
-                <cdr-button @click="startEditingMonster(monster)" modifier="secondary" size="small">
+                <ParActionButton @click="startEditingMonster(monster)" variant="secondary" size="small">
                   Edit Description
-                </cdr-button>
+                </ParActionButton>
               </div>
             </div>
 
@@ -77,8 +77,8 @@
               </cdr-input>
 
               <div class="button-group">
-                <cdr-button @click="saveEditMonster" size="small">Save Changes</cdr-button>
-                <cdr-button @click="cancelEditMonster" modifier="secondary" size="small">Cancel</cdr-button>
+                <ParActionButton @click="saveEditMonster" size="small">Save Changes</ParActionButton>
+                <ParActionButton @click="cancelEditMonster" variant="secondary" size="small">Cancel</ParActionButton>
               </div>
             </div>
 
@@ -87,8 +87,8 @@
               <p><strong>Statblock not found</strong></p>
               <p>The statblock "{{ monster.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
               <div class="button-group">
-                <cdr-button @click="dungeonStore.generateMonsterStatblock(monster.id, premium)" size="small">Regenerate Statblock</cdr-button>
-                <cdr-button @click="clearMonsterStatblockReference(monster)" modifier="secondary" size="small">Clear Reference</cdr-button>
+                <ParActionButton @click="dungeonStore.generateMonsterStatblock(monster.id, premium)" size="small">Regenerate Statblock</ParActionButton>
+                <ParActionButton @click="clearMonsterStatblockReference(monster)" variant="secondary" size="small">Clear Reference</ParActionButton>
               </div>
             </div>
 
@@ -117,7 +117,14 @@
               class="statblock-limit-message">
               <p><strong>Statblock generation limit reached</strong></p>
               <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
+              <!-- Inline limit-reached: pass empty body and aside slots
+                   to suppress those paragraphs entirely. The surrounding
+                   "Statblock generation limit reached" heading already
+                   does the framing; the callout strips down to PREMIUM
+                   label → expandable → button. -->
               <PatreonCallout :patreon-url="patreonLoginUrl">
+                <template #body></template>
+                <template #aside></template>
                 <template #features>
                   <li>Unlimited statblock generation — no daily cap.</li>
                   <li>Cross-device save and load — your dungeons sync between browsers and devices.</li>
@@ -143,7 +150,7 @@
             </div>
 
             <div class="monster-buttons">
-              <cdr-button
+              <ParActionButton
                 size="small"
                 @click="dungeonStore.generateDescriptionAndStatblock(monster.id, premium)"
                 :disabled="dungeonStore.monsterLoadingStates[monster.id]?.generating">
@@ -154,22 +161,22 @@
                       ? 'Re-generate Description & Statblock'
                       : 'Generate Description & Statblock')
                 }}
-              </cdr-button>
-              <cdr-button
+              </ParActionButton>
+              <ParActionButton
                 v-if="monster.detailedDescription"
                 size="small"
                 @click="generateMonsterDescription(monster)"
                 :disabled="dungeonStore.monsterLoadingStates[monster.id]?.description">
                 Regenerate Description
-              </cdr-button>
-              <cdr-button
+              </ParActionButton>
+              <ParActionButton
                 v-if="monster.statblock"
                 @click="dungeonStore.generateMonsterStatblock(monster.id, premium)"
                 size="small"
                 variant="secondary"
                 :disabled="dungeonStore.monsterLoadingStates[monster.id]?.generating">
                 Regenerate Statblock
-              </cdr-button>
+              </ParActionButton>
             </div>
           </div>
         </cdr-accordion>
@@ -214,24 +221,25 @@
         </div>
 
         <!-- Submit button -->
-        <cdr-button class="monster-form-button" type="submit" :disabled="generatingStatblock">
+        <ParActionButton class="monster-form-button" type="submit" :disabled="generatingStatblock">
           {{ generatingStatblock ? 'Generating...' : 'Create Monster' }}
-        </cdr-button>
+        </ParActionButton>
       </cdr-form-group>
     </form>
   </div>
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, computed, onMounted } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import Statblock from '@/components/Statblock.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import {
+  CdrButton,
   CdrSelect,
   CdrCheckbox,
-  CdrButton,
   CdrFormGroup,
   CdrInput,
   CdrAccordion,

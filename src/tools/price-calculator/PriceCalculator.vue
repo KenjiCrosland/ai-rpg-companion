@@ -170,13 +170,10 @@
 </template>
 
 <script>
-import { CdrButton } from '@rei/cedar';
-import '@rei/cedar/dist/style/cdr-button.css';
 
 export default {
   name: 'MagicItemPriceCalculator',
   components: {
-    CdrButton,
   },
 
   data() {

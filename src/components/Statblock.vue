@@ -126,10 +126,10 @@
                     </li>
                 </div>
                 <div v-if="isEditing && !loadingAbilities" class="ability-forms">
-                    <cdr-button class="regenerate-button" size="small" :full-width="true" modifier="secondary"
+                    <ParActionButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
                         @click="generateAbilities(editedMonster, userSuggestion)">{{
                             monster.abilities.length > 0 ? 'Re-Generate Abilities' :
-                                'Generate Abilities' }}</cdr-button>
+                                'Generate Abilities' }}</ParActionButton>
                     <li v-for="(ability, index) in editedAbilities" :key="index">
                         <input v-model="ability.name" />
                         <textarea v-model="ability.description"></textarea>
@@ -152,12 +152,12 @@
             </ul>
 
             <div class="edit-save-buttons" v-if="!readonly">
-                <cdr-button size="small" modifier="secondary" v-if="showEditButton && !isEditing"
-                    @click="enterEditMode">Edit</cdr-button>
-                <cdr-button style="margin-right: 1rem" size="small" modifier="secondary" v-if="isEditing"
-                    @click="saveChanges">Save</cdr-button>
-                <cdr-button style="margin-right: 1.5rem" size="small" modifier="secondary" v-if="isEditing"
-                    @click="cancelChanges">Cancel</cdr-button>
+                <ParActionButton size="small" variant="secondary" v-if="showEditButton && !isEditing"
+                    @click="enterEditMode">Edit</ParActionButton>
+                <ParActionButton style="margin-right: 1rem" size="small" variant="secondary" v-if="isEditing"
+                    @click="saveChanges">Save</ParActionButton>
+                <ParActionButton style="margin-right: 1.5rem" size="small" variant="secondary" v-if="isEditing"
+                    @click="cancelChanges">Cancel</ParActionButton>
             </div>
         </div>
 
@@ -175,10 +175,10 @@
                     </li>
                 </div>
                 <div v-if="isEditing && !loadingActions" class="ability-forms">
-                    <cdr-button class="regenerate-button" size="small" :full-width="true" modifier="secondary"
+                    <ParActionButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
                         v-if="isEditing" @click="generateActions(editedMonster, userSuggestion)">{{ editedActions.length
                             > 0 ?
-                            'Re-Generate Actions' : 'Generate Actions' }}</cdr-button>
+                            'Re-Generate Actions' : 'Generate Actions' }}</ParActionButton>
                     <li v-for="(action, index) in editedActions" :key="'action-' + index">
                         <input v-model="action.name" />
                         <textarea v-model="action.description"></textarea>
@@ -210,11 +210,11 @@
                     You can either add them one at at time manually or click "Generate Legendary Actions" to
                     generate actions for you. Please note that that adding legendary actions will make this creature
                     stronger than the CR provided.</p>
-                <cdr-button class="regenerate-button" v-if="isEditing && !loadingLegendaryActions" size="small"
+                <ParActionButton class="regenerate-button" v-if="isEditing && !loadingLegendaryActions" size="small"
                     :full-width="true" modifier="secondary"
                     @click="generateLegendaryActions(editedMonster, userSuggestion)">{{
                         editedLegendaryActions.length > 0 ? 'Re-Generate Legendary Actions' :
-                            'Generate Legendary Actions' }}</cdr-button>
+                            'Generate Legendary Actions' }}</ParActionButton>
                 <ul class="abilities" v-if="editedLegendaryActions.length > 0 || isEditing">
                     <template v-if="!isEditing">
                         <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
@@ -240,9 +240,9 @@
                                 @click="addLegendaryAction">Add
                                 Legendary Action</button>
                         </div>
-                        <cdr-button style="margin-top: .5rem" size="small" :full-width="true" modifier="secondary"
+                        <ParActionButton style="margin-top: .5rem" size="small" :full-width="true" variant="secondary"
                             v-if="editedLegendaryActions.length > 0" @click="clearLegendaryActions">Remove
-                            All Legendary Actions</cdr-button>
+                            All Legendary Actions</ParActionButton>
 
                     </template>
                     <div v-if="loadingLegendaryActions">
@@ -289,8 +289,8 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
-import { CdrButton } from '@rei/cedar';
 import CardFooterAction from './CardFooterAction.vue';
 import CRtoXP from '../data/cr-to-xp.json';
 import { generateGptResponse } from "@/util/ai-client.mjs";

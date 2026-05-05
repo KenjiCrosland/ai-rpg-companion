@@ -34,12 +34,12 @@
               <div v-for="(objective, i) in editForm.objectives" :key="'obj-' + i" class="array-item-row">
                 <cdr-input v-model="editForm.objectives[i]" background="secondary" class="array-item-input" :rows="2"
                   :label="`Objective ${i + 1}`" />
-                <ParActionButton size="small" @click="removeObjective(i)"
+                <ParActionButton size="small" variant="secondary" @click="removeObjective(i)"
                   v-if="editForm.objectives.length > 1" class="remove-button">
                   Remove
                 </ParActionButton>
               </div>
-              <ParActionButton size="small" variant="secondary" @click="addObjective">
+              <ParActionButton size="small" @click="addObjective">
                 + Add Objective
               </ParActionButton>
             </div>
@@ -49,12 +49,12 @@
               <div v-for="(challenge, i) in editForm.challenges" :key="'chal-' + i" class="array-item-row">
                 <cdr-input v-model="editForm.challenges[i]" background="secondary" class="array-item-input" :rows="2"
                   :label="`Challenge ${i + 1}`" />
-                <ParActionButton size="small" @click="removeChallenge(i)"
+                <ParActionButton size="small" variant="secondary" @click="removeChallenge(i)"
                   v-if="editForm.challenges.length > 1" class="remove-button">
                   Remove
                 </ParActionButton>
               </div>
-              <ParActionButton size="small" variant="secondary" @click="addChallenge">
+              <ParActionButton size="small" @click="addChallenge">
                 + Add Challenge
               </ParActionButton>
             </div>

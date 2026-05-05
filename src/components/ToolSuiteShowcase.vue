@@ -47,6 +47,9 @@
                generator), so the bullets pitch the whole-suite benefits
                rather than tool-specific quota lifts. -->
           <PatreonCallout v-if="!isSupporter" patreon-url="https://patreon.com/ai_rpg_tookit">
+            <template #body>
+              <p class="patreon-callout__body">Your work across cros.land's tools is saved to this browser only. Premium syncs across devices, lifts daily generation caps, and unlocks patron-exclusive tools.</p>
+            </template>
             <template #features>
               <li>Cross-device save and load — your campaigns sync between browsers and devices.</li>
               <li>Patron-exclusive tools: Lore &amp; Timeline Generator and Bookshelf Generator.</li>

@@ -30,10 +30,10 @@
                 </div>
 
                 <div class="sidebar-buttons">
-                    <cdr-button @click="deleteAllNPCs" v-if="Object.keys(npcs).length > 0 && !loadingPart1"
+                    <ParActionButton @click="deleteAllNPCs" v-if="Object.keys(npcs).length > 0 && !loadingPart1"
                         modifier="secondary" style="width: 100%;">
                         Delete All NPCs
-                    </cdr-button>
+                    </ParActionButton>
                 </div>
             </div>
         </template>
@@ -96,8 +96,8 @@
                             :highlight-on-mount="isDeepLink"
                         />
 
-                        <cdr-button type="submit" :disabled="loadingPart1" class="generate-button">Generate
-                            NPC</cdr-button>
+                        <ParActionButton type="submit" :disabled="loadingPart1" class="generate-button">Generate
+                            NPC</ParActionButton>
                     </form>
                 </div>
 
@@ -111,6 +111,9 @@
                 <div class="footer-meta">
                     <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
                     <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+                        <template #body>
+                            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
+                        </template>
                         <template #features>
                             <li>Cross-device save and load — your NPCs sync between browsers and devices.</li>
                             <li>Unlimited combat statblock generation — no daily cap.</li>
@@ -127,9 +130,9 @@
                             another
                             device.
                         </p>
-                        <cdr-button modifier="dark" @click="showDataManagerModal = true">
+                        <ParActionButton @click="showDataManagerModal = true">
                             Save/Load Data from a File
-                        </cdr-button>
+                        </ParActionButton>
                     </div>
                 </div>
             </div>
@@ -184,12 +187,12 @@
                         <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name" background="secondary" style="margin-bottom: 1rem;" />
 
                         <div class="button-group" style="margin-top: 1rem;">
-                            <cdr-button @click="handleFolderMove" :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
+                            <ParActionButton @click="handleFolderMove" :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
                                 Move NPC
-                            </cdr-button>
-                            <cdr-button @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';" modifier="secondary">
+                            </ParActionButton>
+                            <ParActionButton @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';" variant="secondary">
                                 Cancel
-                            </cdr-button>
+                            </ParActionButton>
                         </div>
                     </div>
 
@@ -202,12 +205,12 @@
                             for handouts.
                         </template>
                         <template #buttons>
-                            <cdr-button @click="copyNPCAsPlainText" modifier="secondary">
+                            <ParActionButton @click="copyNPCAsPlainText" variant="secondary">
                                 Copy as Plain Text
-                            </cdr-button>
-                            <cdr-button @click="copyNPCAsMarkdown">
+                            </ParActionButton>
+                            <ParActionButton @click="copyNPCAsMarkdown">
                                 Copy as Homebrewery Markdown
-                            </cdr-button>
+                            </ParActionButton>
                         </template>
                     </ItemExportsSection>
 
@@ -234,8 +237,8 @@
                             </div>
 
                             <div style="display: flex; gap: 0.5rem;">
-                                <cdr-button @click="generateStatblock()">Generate Statblock</cdr-button>
-                                <cdr-button modifier="secondary" @click="showAttachStatblockModal = true">Attach Statblock</cdr-button>
+                                <ParActionButton @click="generateStatblock()">Generate Statblock</ParActionButton>
+                                <ParActionButton variant="secondary" @click="showAttachStatblockModal = true">Attach Statblock</ParActionButton>
                             </div>
                         </div>
 
@@ -248,8 +251,8 @@
                                 :optional="false"
                             />
                             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                <cdr-button @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">Attach</cdr-button>
-                                <cdr-button modifier="secondary" @click="cancelAttachStatblock">Cancel</cdr-button>
+                                <ParActionButton @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">Attach</ParActionButton>
+                                <ParActionButton variant="secondary" @click="cancelAttachStatblock">Cancel</ParActionButton>
                             </div>
                         </div>
 
@@ -258,8 +261,8 @@
                             <p><strong>Statblock not found</strong></p>
                             <p>The statblock "{{ npcDescriptionPart1.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
                             <div class="button-group">
-                                <cdr-button @click="generateStatblock()" size="small">Regenerate Statblock</cdr-button>
-                                <cdr-button @click="clearStatblockReference()" modifier="secondary" size="small">Clear Reference</cdr-button>
+                                <ParActionButton @click="generateStatblock()" size="small">Regenerate Statblock</ParActionButton>
+                                <ParActionButton @click="clearStatblockReference()" variant="secondary" size="small">Clear Reference</ParActionButton>
                             </div>
                         </div>
 
@@ -291,6 +294,9 @@
             <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1">
                 <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
                 <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+                    <template #body>
+                        <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
+                    </template>
                     <template #features>
                         <li>Cross-device save and load — your NPCs sync between browsers and devices.</li>
                         <li>Unlimited combat statblock generation — no daily cap.</li>
@@ -306,9 +312,9 @@
                         All features unlimited. NPC data is saved on this browser. Export to a file to use on another
                         device.
                     </p>
-                    <cdr-button modifier="dark" @click="showDataManagerModal = true">
+                    <ParActionButton @click="showDataManagerModal = true">
                         Save/Load Data from a File
-                    </cdr-button>
+                    </ParActionButton>
                 </div>
             </div>
         </div>
@@ -316,8 +322,9 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
+import { CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import NPCCard from '@/components/NPCCard.vue';

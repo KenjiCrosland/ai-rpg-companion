@@ -20,8 +20,8 @@
         </div>
 
         <div class="sidebar-footer">
-          <cdr-button @click="deleteAllDungeons" modifier="secondary" :full-width="true">Delete All
-            Dungeons</cdr-button>
+          <ParActionButton @click="deleteAllDungeons" variant="secondary" :full-width="true">Delete All
+            Dungeons</ParActionButton>
         </div>
 
         <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
@@ -71,13 +71,16 @@
                 </template>
               </cdr-input>
             </div>
-            <cdr-button style="margin-top: 2rem" type="submit" :full-width="true">Generate Dungeon</cdr-button>
+            <ParActionButton style="margin-top: 2rem" type="submit" :full-width="true">Generate Dungeon</ParActionButton>
           </form>
         </div>
 
         <!-- ZONE 3: Footer with save/load or upgrade prompt -->
         <div class="dungeon-footer">
           <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #body>
+              <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited monster statblock generation within your dungeons.</p>
+            </template>
             <template #features>
               <li>Cross-device save and load — your dungeons sync between browsers and devices.</li>
               <li>Unlimited monster statblock generation within dungeons — no daily cap.</li>
@@ -88,9 +91,9 @@
           </PatreonCallout>
           <div v-else>
             <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
-            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </cdr-button>
+            </ParActionButton>
           </div>
         </div>
       </div>
@@ -120,6 +123,9 @@
       <!-- Footer below content -->
       <div v-if="dungeonStore.currentDungeon || isGenerating" class="dungeon-footer">
         <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #body>
+            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited monster statblock generation within your dungeons.</p>
+          </template>
           <template #features>
             <li>Cross-device save and load — your dungeons sync between browsers and devices.</li>
             <li>Unlimited monster statblock generation within dungeons — no daily cap.</li>
@@ -130,9 +136,9 @@
         </PatreonCallout>
         <div v-else>
           <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
     </div>
@@ -140,13 +146,14 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
-import { CdrButton, CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
+import { CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';

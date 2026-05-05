@@ -18,14 +18,14 @@
         </ul>
         <div class="copy-buttons">
 
-          <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
-          <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
-          <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
+          <ParActionButton @click="copySettingsAsPlainText" variant="secondary">Copy As Plain Text</ParActionButton>
+          <ParActionButton @click="copySettingsAsHtml" variant="secondary">Copy As HTML</ParActionButton>
+          <ParActionButton @click="copySettingsAsMarkdown" variant="secondary">Copy As Homebrewery Markdown</ParActionButton>
           <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
             <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
             there. You will need to add your own pagebreaks.
           </p>
-          <cdr-button @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</cdr-button>
+          <ParActionButton @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</ParActionButton>
         </div>
       </div>
 
@@ -69,15 +69,18 @@
                 </template>
               </cdr-input>
             </div>
-            <cdr-button type="submit" :full-width="true">
+            <ParActionButton type="submit" :full-width="true">
               Generate Setting
-            </cdr-button>
+            </ParActionButton>
           </form>
         </div>
 
         <!-- ZONE 3: Footer meta -->
         <div class="footer-meta">
           <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #body>
+              <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
+            </template>
             <template #features>
               <li>Cross-device save and load — your settings sync between browsers and devices.</li>
               <li>
@@ -87,9 +90,9 @@
           </PatreonCallout>
           <div v-else>
             <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
-            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </cdr-button>
+            </ParActionButton>
           </div>
         </div>
       </div>
@@ -113,13 +116,16 @@
           <QuestHooksTab :setting="currentSetting" :premium="premium" @updated-setting="onQuestHooksUpdated" />
         </TabPanel>
       </Tabs>
-      <cdr-button class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
+      <ParActionButton class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
         @click="deleteSetting(currentSettingIndex)">Delete
-        Setting</cdr-button>
+        Setting</ParActionButton>
 
       <!-- Footer below content -->
       <div class="footer-meta" v-if="settingOverviewExists">
         <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #body>
+            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
+          </template>
           <template #features>
             <li>Cross-device save and load — your settings sync between browsers and devices.</li>
             <li>
@@ -129,9 +135,9 @@
         </PatreonCallout>
         <div v-else>
           <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
 
@@ -162,8 +168,9 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
-import { CdrInput, CdrButton, CdrLink, CdrSkeleton } from "@rei/cedar";
+import { CdrInput, CdrLink, CdrSkeleton } from "@rei/cedar";
 import { settingOverviewPrompt, sublocationOverviewPrompt } from "./prompts/index.mjs";
 import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
