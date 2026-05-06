@@ -43,8 +43,9 @@ defineEmits(['click']);
   gap: 0.5rem;
   padding: 0.8rem 1.25rem;
 
-  /* Typography — match the sourcebook's serif font */
-  font-family: Georgia, 'Times New Roman', serif;
+  /* Typography — match the sourcebook's serif font (parchment token,
+     falls back to Georgia when the web font hasn't loaded). */
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   font-size: 1.3rem;
   font-weight: 600;
   font-variant: small-caps;

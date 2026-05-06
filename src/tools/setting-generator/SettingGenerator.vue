@@ -18,14 +18,14 @@
         </ul>
         <div class="copy-buttons">
 
-          <cdr-button @click="copySettingsAsPlainText" modifier="secondary">Copy As Plain Text</cdr-button>
-          <cdr-button @click="copySettingsAsHtml" modifier="secondary">Copy As HTML</cdr-button>
-          <cdr-button @click="copySettingsAsMarkdown" modifier="secondary">Copy As Homebrewery Markdown</cdr-button>
+          <ParActionButton @click="copySettingsAsPlainText" variant="secondary">Copy As Plain Text</ParActionButton>
+          <ParActionButton @click="copySettingsAsHtml" variant="secondary">Copy As HTML</ParActionButton>
+          <ParActionButton @click="copySettingsAsMarkdown" variant="secondary">Copy As Homebrewery Markdown</ParActionButton>
           <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
             <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
             there. You will need to add your own pagebreaks.
           </p>
-          <cdr-button @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</cdr-button>
+          <ParActionButton @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</ParActionButton>
         </div>
       </div>
 
@@ -69,36 +69,31 @@
                 </template>
               </cdr-input>
             </div>
-            <cdr-button type="submit" :full-width="true">
+            <ParActionButton type="submit" :full-width="true">
               Generate Setting
-            </cdr-button>
+            </ParActionButton>
           </form>
         </div>
 
         <!-- ZONE 3: Footer meta -->
         <div class="footer-meta">
-          <div v-if="!premium">
-            <p>
-              All setting generation is currently free. Setting data is saved on this browser. To save/load setting data for use in another computer or browser requires a premium Patreon subscription.
-            </p>
-            <div class="patreon-universal-button">
-              <a :href="patreonLoginUrl">
-                <div class="patreon-responsive-button-wrapper">
-                  <div class="patreon-responsive-button">
-                    <img class="patreon_logo"
-                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                      alt="Unlock with Patreon"> Unlock with Patreon
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
-          <div v-else>
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #body>
+              <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
+            </template>
+            <template #features>
+              <li>Cross-device save and load — your settings sync between browsers and devices.</li>
+              <li>
+                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+              </li>
+            </template>
+          </PatreonCallout>
+          <ParCallout v-else>
             <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
-            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+            <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </cdr-button>
-          </div>
+            </ParActionButton>
+          </ParCallout>
         </div>
       </div>
       <Tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%"
@@ -121,34 +116,29 @@
           <QuestHooksTab :setting="currentSetting" :premium="premium" @updated-setting="onQuestHooksUpdated" />
         </TabPanel>
       </Tabs>
-      <cdr-button class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
+      <ParActionButton class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
         @click="deleteSetting(currentSettingIndex)">Delete
-        Setting</cdr-button>
+        Setting</ParActionButton>
 
       <!-- Footer below content -->
       <div class="footer-meta" v-if="settingOverviewExists">
-        <div v-if="!premium">
-          <p>
-            All setting generation is currently free. Setting data is saved on this browser. To save/load setting data for use in another computer or browser requires a premium Patreon subscription.
-          </p>
-          <div class="patreon-universal-button">
-            <a :href="patreonLoginUrl">
-              <div class="patreon-responsive-button-wrapper">
-                <div class="patreon-responsive-button">
-                  <img class="patreon_logo"
-                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                    alt="Unlock with Patreon"> Unlock with Patreon
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-        <div v-else>
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #body>
+            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
+          </template>
+          <template #features>
+            <li>Cross-device save and load — your settings sync between browsers and devices.</li>
+            <li>
+              <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+            </li>
+          </template>
+        </PatreonCallout>
+        <ParCallout v-else>
           <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </cdr-button>
-        </div>
+          </ParActionButton>
+        </ParCallout>
       </div>
 
       <div class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
@@ -178,11 +168,14 @@
 </template>
 
 <script setup>
+import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
-import { CdrInput, CdrButton, CdrLink, CdrSkeleton } from "@rei/cedar";
+import { CdrInput, CdrLink, CdrSkeleton } from "@rei/cedar";
 import { settingOverviewPrompt, sublocationOverviewPrompt } from "./prompts/index.mjs";
 import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
 import { formatSettingAsPlainText } from "@/util/formatSettingAsPlainText.mjs";
@@ -190,6 +183,7 @@ import { formatSettingAsMarkdown } from "@/util/formatSettingAsMarkdown.mjs";
 import { formatSettingAsHtml } from "@/util/formatSettingAsHTML.mjs";
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
+import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import placeAdjectives from '@/data/place-adjectives.json';
 import place_names from '@/data/place-names.json';
@@ -286,7 +280,7 @@ function copySettingsAsHtml() {
 
 function deleteAllSettings() {
   if (confirm("Are you sure you want to delete all settings?")) {
-    settings.value = [reactive({ ...defaultSetting })];
+    settings.value = [reactive(freshDefaultSetting())];
     currentSettingIndex.value = 0;
     saveSettingsToLocalStorage();
   }
@@ -299,7 +293,12 @@ const currentlyLoading = ref(false);
 const currentSettingIndex = ref(0);
 const activeTabIndex = ref(0);
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
+function makeSettingId() {
+  return `set_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 const defaultSetting = reactive({
+  id: '',
   adjective: '',
   setting_type: '',
   place_name: '',
@@ -314,7 +313,12 @@ const defaultSetting = reactive({
   loadingSubLocations: false,
   loadingsettingOverview: false,
 });
-const settings = ref([reactive({ ...defaultSetting })]);
+
+function freshDefaultSetting() {
+  return { ...defaultSetting, id: makeSettingId() };
+}
+
+const settings = ref([reactive(freshDefaultSetting())]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
 
 onMounted(async () => {
@@ -392,6 +396,9 @@ const deleteSetting = (indexToDelete) => {
 
   // Capture the parentIndex of the setting to be deleted for reassigning children
   const parentOfDeleted = settings.value[indexToDelete].parentIndex;
+  // Capture the deleted setting's id so we can drop its references after removal.
+  // (Children are re-parented, not cascading-deleted — only one id needs cleanup.)
+  const deletedId = settings.value[indexToDelete].id;
 
   // Update children of the deleted setting to the parent of the deleted setting
   settings.value.forEach((setting, index) => {
@@ -419,6 +426,10 @@ const deleteSetting = (indexToDelete) => {
       setting.parentIndex--;  // Adjust parentIndex down by one to account for the shift
     }
   });
+
+  if (deletedId) {
+    removeReferencesForEntity('setting', deletedId);
+  }
 
   saveSettingsToLocalStorage();
   selectSetting(0);  // Select the first setting after deletion
@@ -448,6 +459,7 @@ watch(currentSettingIndex, (newValue, oldValue) => {
 
 const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', title = '', parentIndex = null) => {
   const newSetting = reactive({
+    id: makeSettingId(),
     adjective: adjective,
     setting_type: setting_type,
     place_name: place_name,
@@ -530,9 +542,14 @@ function migrateSettingNPCs(setting) {
   let migrated = false;
 
   if (setting.npcs) {
-    // Load shared storage once
+    // Load shared storage once. Flatten across all folders — the user
+    // may have moved canonical NPCs out of the setting-named folder, and
+    // the legacy id-recovery / dedup logic below shouldn't refuse to
+    // find them just because they're now in a different folder.
     const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-    const sharedNPCs = stored[settingName] || [];
+    const sharedNPCs = Object.values(stored)
+      .filter(Array.isArray)
+      .flat();
 
     setting.npcs.forEach(npc => {
       // Skip if already migrated AND has an ID (fully processed)
@@ -547,7 +564,7 @@ function migrateSettingNPCs(setting) {
         );
         if (existingNPC) {
           // Check both npc_id and id fields
-          const existingId = existingNPC.npc_id || existingNPC.id;
+          const existingId = existingNPC.npc_id;
           if (existingId) {
             npc.npc_id = existingId;
             migrated = true;
@@ -564,14 +581,14 @@ function migrateSettingNPCs(setting) {
       if (npc.read_aloud_description) {
         // Check if NPC already exists in shared storage
         const existingNPC = sharedNPCs.find(n =>
-          (n.npc_id && (n.npc_id === npc.npc_id || n.id === npc.npc_id)) ||
+          (n.npc_id && n.npc_id === npc.npc_id) ||
           (n.npcDescriptionPart1?.character_name === npc.name)
         );
 
         if (existingNPC) {
           // NPC already in shared storage - just sync ID back, don't overwrite
           // Check both npc_id and id fields (shared storage might use either)
-          const existingId = existingNPC.npc_id || existingNPC.id;
+          const existingId = existingNPC.npc_id;
           if (existingId && !npc.npc_id) {
             npc.npc_id = existingId;
             migrated = true;
@@ -956,12 +973,11 @@ $transition-speed: 0.3s;
 
 /* ZONE 3: Footer meta */
 .footer-meta {
+  /* Visual chrome (text-align, background, border, radius) removed during
+     PatreonCallout migration — the callout owns its own surface treatment.
+     Layout properties (margin, padding) preserved. */
   margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  text-align: center;
+  padding: 0;
 
   p {
     margin: 0 0 1rem 0;

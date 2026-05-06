@@ -30,10 +30,10 @@
                 </div>
 
                 <div class="sidebar-buttons">
-                    <cdr-button @click="deleteAllNPCs" v-if="Object.keys(npcs).length > 0 && !loadingPart1"
+                    <ParActionButton @click="deleteAllNPCs" v-if="Object.keys(npcs).length > 0 && !loadingPart1"
                         modifier="secondary" style="width: 100%;">
                         Delete All NPCs
-                    </cdr-button>
+                    </ParActionButton>
                 </div>
             </div>
         </template>
@@ -50,13 +50,28 @@
                 <div class="hero-header">
                     <div class="brand-line">
                         <span class="brand-name">Kenji's NPC Generator</span>
-                        <span v-if="!premium" class="version-pill">Free</span>
-                        <span v-else class="version-pill premium">Premium</span>
+                        <!-- Version pill is fresh-visit framing — suppressed
+                             during seeded flows where the user is mid-task. -->
+                        <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
+                        <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
                     </div>
-                    <h1>Bring Your World to Life with Detailed NPCs</h1>
-                    <p class="value-prop">Generate memorable characters with backstories, relationships, and combat
-                        statblocks —
-                        ready for any session.</p>
+                    <template v-if="isSeededFlow">
+                        <h1>Create NPC: {{ seedStubName }}</h1>
+                        <p class="value-prop">
+                            From your {{ seedSourceType }}
+                            <a
+                                href="#"
+                                class="seed-source-link"
+                                @click.prevent="navigateBackToSeedSource"
+                            >{{ seedSourceName }}</a>
+                        </p>
+                    </template>
+                    <template v-else>
+                        <h1>Bring Your World to Life with Detailed NPCs</h1>
+                        <p class="value-prop">Generate memorable characters with backstories, relationships, and combat
+                            statblocks —
+                            ready for any session.</p>
+                    </template>
                 </div>
 
                 <!-- ZONE 2: Form card -->
@@ -64,7 +79,10 @@
                     <form @submit.prevent="handleGenerateNPC">
                         <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
                             label="Give me an NPC Description For:" :optional="true">
-                            <template #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix
+                            <!-- Examples are orientation for fresh visitors; in a
+                                 seeded flow the field is already pre-filled with
+                                 the right content, and alternatives are noise. -->
+                            <template v-if="!isSeededFlow" #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix
                                 clan,
                                 a sentient gazebo named Gary, an edgerunner suffering from bouts of cyberpsychosis, a
                                 goblin named Boblin</template>
@@ -78,44 +96,42 @@
                             :highlight-on-mount="isDeepLink"
                         />
 
-                        <cdr-button type="submit" :disabled="loadingPart1" class="generate-button">Generate
-                            NPC</cdr-button>
+                        <ParActionButton type="submit" :disabled="loadingPart1" class="generate-button">Generate
+                            NPC</ParActionButton>
                     </form>
                 </div>
 
                 <!-- ZONE 3: Footer meta -->
+                <!-- Orientation paragraphs ("NPC generation is unlimited…",
+                     "All features unlimited…") describe the tool to first-
+                     time visitors. In a seeded flow the user is mid-task and
+                     doesn't need that framing. The persistent affordances
+                     (Patreon CTA for free users, Save/Load for premium) stay
+                     available regardless. -->
                 <div class="footer-meta">
-                    <!-- Free users: Show message + unlock button -->
-                    <div v-if="!premium">
-                        <p>
-                            NPC generation is unlimited. Combat statblocks are limited to 5 per 24 hours. NPC data is
-                            saved on this browser. To save/load NPC data for use in another computer or browser requires
-                            a premium Patreon subscription.
-                        </p>
-                        <div class="patreon-universal-button">
-                            <a :href="patreonLoginUrl">
-                                <div class="patreon-responsive-button-wrapper">
-                                    <div class="patreon-responsive-button">
-                                        <img class="patreon_logo"
-                                            src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                                            alt="Unlock with Patreon"> Unlock with Patreon
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
+                    <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
+                    <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+                        <template #body>
+                            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
+                        </template>
+                        <template #features>
+                            <li>Cross-device save and load — your NPCs sync between browsers and devices.</li>
+                            <li>Unlimited combat statblock generation — no daily cap.</li>
+                            <li>
+                                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+                            </li>
+                        </template>
+                    </PatreonCallout>
 
-                    <!-- Premium users: Show save/load button -->
-                    <div v-else>
-                        <p>
-                            All features unlimited. NPC data is saved on this browser. Export to a file to use on
-                            another
-                            device.
-                        </p>
-                        <cdr-button modifier="dark" @click="showDataManagerModal = true">
+                    <!-- Premium users: parchment surface so the active
+                         status reads as a coherent block, matching the
+                         upsell callout above. -->
+                    <ParCallout v-else>
+                        <p v-if="!isSeededFlow">All features unlimited. NPC data is saved on this browser. Export to a file to use on another device.</p>
+                        <ParActionButton @click="showDataManagerModal = true">
                             Save/Load Data from a File
-                        </cdr-button>
-                    </div>
+                        </ParActionButton>
+                    </ParCallout>
                 </div>
             </div>
 
@@ -129,15 +145,19 @@
                     :npc="normalizeGeneratorNPC(currentNPC)"
                     :origin="computedOrigin"
                     :source-type="computedSourceType"
-                    :npc-id="currentNPC?.npc_id || currentNPC?.id"
+                    :source-name="computedSourceName"
+                    :source-id="computedSourceId"
+                    :npc-id="currentNPC?.npc_id"
                     :is-editing="isEditingNPC"
                     :show-relationship-generator="true"
                     :is-generating-relationship="loadingNewRelationship"
                     :has-statblock="!!(npcDescriptionPart1?.statblock_name)"
-                    :statblock-url="statblockGeneratorUrl"
                     :editable="true"
                     :show-delete="true"
                     :show-npc-generator-link="false"
+                    :show-move-to-folder="!!(npcDescriptionPart2 && !loadingPart2)"
+                    :show-export="!!(npcDescriptionPart2 && !loadingPart2)"
+                    :export-open="showExport"
                     :show-origin-note="!!(currentNPC?.typeOfPlace && currentNPC.typeOfPlace !== 'Uncategorized')"
                     :loading-description="loadingPart1"
                     :loading-relationships="loadingPart2 || loadingPart1"
@@ -146,30 +166,12 @@
                     @cancel-edit="cancelEditNPC"
                     @delete="deleteCurrentNPC"
                     @generate-relationship="handleGenerateRelationship($event)"
+                    @move-to-folder="showFolderMover = !showFolderMover"
+                    @toggle-export="showExport = !showExport"
                 />
 
-                <!-- Actions and Management (after NPC Card) -->
+                <!-- Below-card panels (folder mover, export, homebrewery link) -->
                 <div v-if="npcDescriptionPart2 && !loadingPart2 && !isEditingNPC">
-
-                    <!-- Actions Row -->
-                    <div class="actions-row" style="margin-top: 2rem;">
-                        <!-- Management Actions (Left) -->
-                        <div class="management-actions">
-                            <cdr-button @click="showFolderMover = !showFolderMover" modifier="secondary" size="small">
-                                Move to Folder
-                            </cdr-button>
-                        </div>
-
-                        <!-- Export Actions (Right) -->
-                        <div class="export-actions">
-                            <cdr-button @click="copyNPCAsPlainText" modifier="secondary">
-                                Copy as Plain Text
-                            </cdr-button>
-                            <cdr-button @click="copyNPCAsMarkdown">
-                                Copy as Homebrewery Markdown
-                            </cdr-button>
-                        </div>
-                    </div>
 
                     <!-- Folder Mover Interface -->
                     <div v-if="showFolderMover" class="folder-mover" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
@@ -183,14 +185,32 @@
                         <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name" background="secondary" style="margin-bottom: 1rem;" />
 
                         <div class="button-group" style="margin-top: 1rem;">
-                            <cdr-button @click="handleFolderMove" :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
+                            <ParActionButton @click="handleFolderMove" :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
                                 Move NPC
-                            </cdr-button>
-                            <cdr-button @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';" modifier="secondary">
+                            </ParActionButton>
+                            <ParActionButton @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';" variant="secondary">
                                 Cancel
-                            </cdr-button>
+                            </ParActionButton>
                         </div>
                     </div>
+
+                    <!-- Export Panel — toggled from the NPC Card footer's Export button.
+                         Mirrors the Item Generator's export-section pattern. -->
+                    <ItemExportsSection v-if="showExport" heading="Export NPC">
+                        <template #description>
+                            Copy your NPC details. Markdown works with
+                            <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
+                            for handouts.
+                        </template>
+                        <template #buttons>
+                            <ParActionButton @click="copyNPCAsPlainText" variant="secondary">
+                                Copy as Plain Text
+                            </ParActionButton>
+                            <ParActionButton @click="copyNPCAsMarkdown">
+                                Copy as Homebrewery Markdown
+                            </ParActionButton>
+                        </template>
+                    </ItemExportsSection>
 
                     <!-- Homebrewery Link Message -->
                     <div v-if="showHomebreweryLink" class="homebrewery-link-message">
@@ -215,8 +235,8 @@
                             </div>
 
                             <div style="display: flex; gap: 0.5rem;">
-                                <cdr-button @click="generateStatblock()">Generate Statblock</cdr-button>
-                                <cdr-button modifier="secondary" @click="showAttachStatblockModal = true">Attach Statblock</cdr-button>
+                                <ParActionButton @click="generateStatblock()">Generate Statblock</ParActionButton>
+                                <ParActionButton variant="secondary" @click="showAttachStatblockModal = true">Attach Statblock</ParActionButton>
                             </div>
                         </div>
 
@@ -229,8 +249,8 @@
                                 :optional="false"
                             />
                             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                <cdr-button @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">Attach</cdr-button>
-                                <cdr-button modifier="secondary" @click="cancelAttachStatblock">Cancel</cdr-button>
+                                <ParActionButton @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">Attach</ParActionButton>
+                                <ParActionButton variant="secondary" @click="cancelAttachStatblock">Cancel</ParActionButton>
                             </div>
                         </div>
 
@@ -239,8 +259,8 @@
                             <p><strong>Statblock not found</strong></p>
                             <p>The statblock "{{ npcDescriptionPart1.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
                             <div class="button-group">
-                                <cdr-button @click="generateStatblock()" size="small">Regenerate Statblock</cdr-button>
-                                <cdr-button @click="clearStatblockReference()" modifier="secondary" size="small">Clear Reference</cdr-button>
+                                <ParActionButton @click="generateStatblock()" size="small">Regenerate Statblock</ParActionButton>
+                                <ParActionButton @click="clearStatblockReference()" variant="secondary" size="small">Clear Reference</ParActionButton>
                             </div>
                         </div>
 
@@ -260,7 +280,7 @@
                         <div v-if="statblock && npcDescriptionPart1?.statblock_name && npcDescriptionPart1?.statblock_source !== 'srd'" class="statblock-saved-message">
                             <p>
                                 Edit this statblock in the
-                                <a :href="statblockGeneratorUrl" target="_blank">Statblock Generator</a>
+                                <a href="#" @click.prevent="openInStatblockGenerator">Statblock Generator</a>
                             </p>
                         </div>
                     </div>
@@ -270,62 +290,70 @@
 
             <!-- Footer below NPC content (separate card) -->
             <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1">
-                <!-- Free users: Show message + unlock button -->
-                <div v-if="!premium">
-                    <p>
-                        NPC generation is unlimited. Combat statblocks are limited to 5 per 24 hours. NPC data is
-                        saved on this browser. To save/load NPC data for use in another computer or browser requires
-                        a premium Patreon subscription.
-                    </p>
-                    <div class="patreon-universal-button">
-                        <a :href="patreonLoginUrl">
-                            <div class="patreon-responsive-button-wrapper">
-                                <div class="patreon-responsive-button">
-                                    <img class="patreon_logo"
-                                        src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                                        alt="Unlock with Patreon"> Unlock with Patreon
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+                <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
+                <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+                    <template #body>
+                        <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
+                    </template>
+                    <template #features>
+                        <li>Cross-device save and load — your NPCs sync between browsers and devices.</li>
+                        <li>Unlimited combat statblock generation — no daily cap.</li>
+                        <li>
+                            <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+                        </li>
+                    </template>
+                </PatreonCallout>
 
-                <!-- Premium users: Show save/load button -->
-                <div v-else>
-                    <p>
-                        All features unlimited. NPC data is saved on this browser. Export to a file to use on another
-                        device.
-                    </p>
-                    <cdr-button modifier="dark" @click="showDataManagerModal = true">
+                <!-- Premium users: parchment surface so the active
+                     status reads as a coherent block, matching the
+                     upsell callout above. -->
+                <ParCallout v-else>
+                    <p>All features unlimited. NPC data is saved on this browser. Export to a file to use on another device.</p>
+                    <ParActionButton @click="showDataManagerModal = true">
                         Save/Load Data from a File
-                    </cdr-button>
-                </div>
+                    </ParActionButton>
+                </ParCallout>
             </div>
         </div>
     </GeneratorLayout>
 </template>
 
 <script setup>
+import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
+import { CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import NPCCard from '@/components/NPCCard.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
 import Statblock from '@/components/Statblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
+import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { requestNPCDescription } from "./utils/request-npc-description.mjs";
 import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMarkdown.mjs';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import challengeRatingData from '@/data/challengeRatings.json';
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
-import { normalizeGeneratorNPC, migrateNPCIds, migrateDungeonNPCsToSharedStorage, migrateSettingNPCsToSharedStorage, findNPCLocations, deleteNPCFromAllLocations } from '@/util/npc-storage.mjs';
-import { getNavigationParams } from '@/util/navigation.mjs';
+import { normalizeGeneratorNPC, migrateNPCIds, migrateDungeonNPCsToSharedStorage, migrateSettingNPCsToSharedStorage, findNPCLocations, deleteNPCFromAllLocations, renameNPCReferences } from '@/util/npc-storage.mjs';
+import { migrateSourceTypeFromTypeOfPlace } from '@/util/migrate-source-type-from-type-of-place.mjs';
+import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
 import { buildStatblockContext } from './utils/statblock-context.mjs';
-import { addReference, getReferencesForEntity } from '@/util/reference-storage.mjs';
+import { addReference, getReferencesForEntity, removeReferencesForEntity } from '@/util/reference-storage.mjs';
+import {
+  loadSeededInput,
+  buildPrefillForSeed,
+  writeBackPromotedNPC,
+  addReferenceForSeed,
+  findStubsReferencingNPC,
+  resetStubsForDeletedNPC,
+  getToolForSourceType,
+  sourceExists,
+} from '@/util/seeded-input.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
 import '@rei/cedar/dist/style/cdr-text.css';
@@ -364,6 +392,31 @@ const isDeepLink = ref(false);
 const showAttachStatblockModal = ref(false);
 const attachStatblockSelection = ref(null);
 
+// When the user arrived from a source tool's "Create NPC" stub action,
+// this holds the SeededInput so the post-generation hook can write the
+// canonical reference (mentioned_in_item / appears_in_dungeon /
+// appears_in_setting / …) and back-link the stub on the source entity.
+const pendingSeed = ref(null);
+
+// Seeded landing-page heading. When a SeededInput exists pre-generation,
+// the hero title swaps from the generic value-prop to the specific stub
+// being created, with a link back to the source entity. The landing
+// wrapper itself is hidden once `npcDescriptionPart1` is set, so the
+// heading naturally yields to the generated NPC display.
+const isSeededFlow = computed(() => !!pendingSeed.value?.source && !!pendingSeed.value?.entities?.[0]?.name);
+const seedStubName = computed(() => pendingSeed.value?.entities?.[0]?.name || '');
+const seedSourceName = computed(() => pendingSeed.value?.source?.name || '');
+const seedSourceType = computed(() => pendingSeed.value?.source?.type || '');
+
+function navigateBackToSeedSource() {
+    const source = pendingSeed.value?.source;
+    if (!source) return;
+    if (source.type === 'item') {
+        navigateToTool('item-generator', { item: source.id });
+    }
+    // Setting/dungeon back-navigation can be added when those flows ship.
+}
+
 const props = defineProps({
     premium: {
         type: Boolean,
@@ -376,20 +429,18 @@ const patreonLoginUrl = computed(() => {
     return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
 
-const statblockGeneratorUrl = computed(() => {
-    const base = 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/';
-
-    const params = new URLSearchParams();
-    if (npcDescriptionPart1.value?.statblock_name) {
-        params.set('monster', npcDescriptionPart1.value.statblock_name);
-    }
-    if (npcDescriptionPart1.value?.statblock_folder) {
-        params.set('folder', npcDescriptionPart1.value.statblock_folder);
-    }
-
-    const qs = params.toString();
-    return qs ? `${base}?${qs}` : base;
-});
+// Same-tab navigation to the Statblock Generator with the linked statblock
+// pre-selected. Goes through `navigateToTool` rather than a hardcoded
+// cros.land URL so the dev path works (dev uses sessionStorage; prod uses
+// query strings — both handled by the navigation substrate).
+function openInStatblockGenerator() {
+    const params = {};
+    const name = npcDescriptionPart1.value?.statblock_name;
+    const folder = npcDescriptionPart1.value?.statblock_folder;
+    if (name) params.monster = name;
+    if (folder) params.folder = folder;
+    navigateToTool('statblock-generator', params);
+}
 
 // Folder options for moving NPCs (exclude current folder)
 const folderOptions = computed(() => {
@@ -404,14 +455,16 @@ const currentNPC = computed(() => {
     return npcs.value[folderName][index];
 });
 
-// Computed origin: dungeon or setting name from NPC sourceType or reference store
+// Computed origin: dungeon/setting name OR (for source-tool-sourced NPCs)
+// the role_brief description that contains the source entity name. The
+// NPC card linkifies the source name inside this string when sourceType
+// and sourceName are both set.
 const computedOrigin = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    // First, check if NPC was created by dungeon/setting generator (has sourceType field)
+    // First, check if NPC was created by dungeon/setting/item generator (has sourceType field)
     if (npc.sourceType) {
-        // Return the typeOfPlace which should be the dungeon/setting name
         if (npc.typeOfPlace && npc.typeOfPlace !== 'Uncategorized') {
             return npc.typeOfPlace;
         }
@@ -421,53 +474,82 @@ const computedOrigin = computed(() => {
     if (npc.npc_id) {
         const refs = getReferencesForEntity('npc', npc.npc_id);
 
-        // Look for appears_in_dungeon relationship
         const dungeonRef = refs.find(ref => ref.relationship === 'appears_in_dungeon');
-        if (dungeonRef) {
-            return dungeonRef.target_name;
-        }
+        if (dungeonRef) return dungeonRef.target_name;
 
-        // Look for appears_in_setting relationship
         const settingRef = refs.find(ref => ref.relationship === 'appears_in_setting');
-        if (settingRef) {
-            return settingRef.target_name;
+        if (settingRef) return settingRef.target_name;
+
+        const itemRef = refs.find(ref => ref.relationship === 'mentioned_in_item');
+        if (itemRef) {
+            // No role_brief stored on this NPC; fall back to item name as
+            // origin so the subtitle renders "From <item>" with a link.
+            return itemRef.target_name;
         }
     }
 
     return null;
 });
 
-// Computed source type: 'dungeon' or 'setting' from NPC sourceType or reference store
+// Computed source type: drives the link target for the subtitle.
 const computedSourceType = computed(() => {
     const npc = currentNPC.value;
     if (!npc) return null;
 
-    // First, check if NPC was created by dungeon/setting generator (has sourceType field)
-    if (npc.sourceType === 'dungeon' || npc.sourceType === 'setting') {
+    if (npc.sourceType === 'dungeon' || npc.sourceType === 'setting' || npc.sourceType === 'item') {
         return npc.sourceType;
     }
 
-    // Fallback: check reference store for explicit relationships
     if (npc.npc_id) {
         const refs = getReferencesForEntity('npc', npc.npc_id);
-
-        // Look for appears_in_dungeon relationship
-        if (refs.some(ref => ref.relationship === 'appears_in_dungeon')) {
-            return 'dungeon';
-        }
-
-        // Look for appears_in_setting relationship
-        if (refs.some(ref => ref.relationship === 'appears_in_setting')) {
-            return 'setting';
-        }
+        if (refs.some(ref => ref.relationship === 'appears_in_dungeon')) return 'dungeon';
+        if (refs.some(ref => ref.relationship === 'appears_in_setting')) return 'setting';
+        if (refs.some(ref => ref.relationship === 'mentioned_in_item')) return 'item';
     }
 
+    return null;
+});
+
+// Computed source name for source-tool-sourced NPCs: the literal source
+// entity name to linkify inside the subtitle. Reads `sourceName` from
+// the persisted NPC; for older records that haven't been touched since
+// the migration, falls back to the reference store. Returns null for
+// NPCs with no source tagging so the generic "From {origin}" subtitle
+// applies.
+const computedSourceName = computed(() => {
+    const npc = currentNPC.value;
+    if (!npc) return null;
+
+    if (npc.sourceType && npc.sourceName) return npc.sourceName;
+
+    if (npc.npc_id) {
+        const refs = getReferencesForEntity('npc', npc.npc_id);
+        const itemRef = refs.find(ref => ref.relationship === 'mentioned_in_item');
+        if (itemRef) return itemRef.target_name;
+    }
+
+    return null;
+});
+
+// Source id for NPCCard's render-time existence check. Used to suppress
+// the "back to source" link and append a "(deleted)" marker when the
+// source entity has been removed.
+const computedSourceId = computed(() => {
+    const npc = currentNPC.value;
+    if (!npc) return null;
+    if (npc.sourceType && npc.sourceId) return npc.sourceId;
+    // Fall back to sourceName (which is the id form for items today —
+    // items use name as identity).
+    if (npc.sourceType && npc.sourceName) return npc.sourceName;
     return null;
 });
 
 // Sidebar responsive
 const showDataManagerModal = ref(false);
 const showHomebreweryLink = ref(false);
+// Toggles the inline export panel below the NPC card. Driven by the
+// "Export" button in the NPC Card footer (parallels the Item Card).
+const showExport = ref(false);
 
 // Inline editing
 const isEditingNPC = ref(false);
@@ -521,20 +603,66 @@ onMounted(async () => {
         }
     }
 
-    // Handle NPC deep link (keep existing NPC-specific deep linking)
+    // Handle NPC deep link via folder + name (legacy path; new callers
+    // pass `params.npc` with the stable id and skip this branch). Walk
+    // every folder by name — the `params.folder` is now treated as a
+    // hint about where the NPC USED to live, not where it MUST be.
+    // Folder organization is the user's; cross-tool navigation must
+    // survive folder moves.
     if (params.folder && params.npc_name) {
-        // Find the NPC in the specified folder
-        const folderNPCs = npcs.value[params.folder];
-        if (folderNPCs) {
+        let found = false;
+        // Try the hint folder first so the original behavior is preserved
+        // when nothing has been reorganized.
+        const folderOrder = [
+            params.folder,
+            ...Object.keys(npcs.value).filter(f => f !== params.folder),
+        ];
+        for (const folderName of folderOrder) {
+            const folderNPCs = npcs.value[folderName];
+            if (!Array.isArray(folderNPCs)) continue;
             const npcIndex = folderNPCs.findIndex(npc =>
                 npc.npcDescriptionPart1?.character_name === params.npc_name
             );
             if (npcIndex !== -1) {
-                // Open the folder accordion
-                openedFolders.value[params.folder] = true;
+                openedFolders.value[folderName] = true;
+                selectNPC(folderName, npcIndex);
+                found = true;
+                break;
+            }
+        }
+        // No-op if no folder contains the NPC; the user lands on the
+        // landing page rather than a confusing wrong-NPC selection.
+        void found;
+    }
 
-                // Select the NPC
-                selectNPC(params.folder, npcIndex);
+    // Source tool → NPC Generator: "Create NPC" from a stub. Prefill
+    // typeOfPlace from the source's data and remember the seed so the
+    // post-generation hook can write back the source-side stub link and
+    // collapse the long subtitle once part 1 returns.
+    if (params.fromType && params.fromId) {
+        const seed = loadSeededInput({
+            fromType: params.fromType,
+            fromId: params.fromId,
+            entityName: params.entityName,
+        });
+        if (seed) {
+            typeOfPlace.value = buildPrefillForSeed(seed);
+            pendingSeed.value = seed;
+        }
+    }
+
+    // Item Generator → NPC Generator: "View in NPC Generator" for a stub
+    // already promoted (npc_id known). Locate and select that NPC.
+    if (params.npc) {
+        for (const folderName of Object.keys(npcs.value)) {
+            const folder = npcs.value[folderName];
+            if (!Array.isArray(folder)) continue;
+            const npcIndex = folder.findIndex(n => n?.npc_id === params.npc);
+            if (npcIndex !== -1) {
+                openedFolders.value[folderName] = true;
+                selectNPC(folderName, npcIndex);
+                isDeepLink.value = true;
+                break;
             }
         }
     }
@@ -666,8 +794,12 @@ function loadNPCsFromLocalStorage() {
                 console.log(`Created ${referencesMigratedCount} references for existing NPC statblocks`);
             }
 
+            // Cleanup: shorten typeOfPlace for NPCs saved with the long
+            // item-prefilled context blob (early Item Generator integration bug).
+            const itemTypeOfPlaceCleaned = cleanupItemPrefilledTypeOfPlace();
+
             // Reload NPCs after migration (if any migration ran)
-            if (migratedCount > 0 || dungeonMigratedCount > 0 || settingMigratedCount > 0 || sourceTypeMigratedCount > 0 || referencesMigratedCount > 0) {
+            if (migratedCount > 0 || dungeonMigratedCount > 0 || settingMigratedCount > 0 || sourceTypeMigratedCount > 0 || referencesMigratedCount > 0 || itemTypeOfPlaceCleaned > 0) {
                 const updatedStored = localStorage.getItem('npcGeneratorNPCs');
                 if (updatedStored) {
                     npcs.value = JSON.parse(updatedStored);
@@ -749,48 +881,34 @@ function migrateStatblockReferences() {
     }
 }
 
-function migrateSourceTypeFromTypeOfPlace() {
-    let migratedCount = 0;
+// One-time cleanup: NPCs created via the Item Generator → NPC Generator flow
+// before the typeOfPlace shortening fix have a multi-paragraph subtitle (the
+// prefilled prompt context). Detect the marker phrase and replace typeOfPlace
+// with just the item name, matching the dungeon/setting convention.
+function cleanupItemPrefilledTypeOfPlace() {
+    let cleaned = 0;
+    const marker = /Mentioned in connection with the magic item "([^"]+)"/;
 
-    // Get list of actual dungeons and settings
-    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-    const dungeonNames = new Set(
-        dungeons.map(d => d.dungeonOverview?.name || d.overview?.name).filter(Boolean)
-    );
-
-    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
-    const settingNames = new Set(
-        settings.map(s => s.place_name || s.setting_overview?.name).filter(Boolean)
-    );
-
-    // Iterate through all folders
-    for (const [folderName, npcList] of Object.entries(npcs.value)) {
-        if (!Array.isArray(npcList)) continue;
-
-        // Iterate through NPCs in this folder
-        for (const npc of npcList) {
-            // Skip if NPC already has sourceType
-            if (npc.sourceType) continue;
-
-            // Check if typeOfPlace matches a real dungeon or setting
-            if (npc.typeOfPlace) {
-                if (dungeonNames.has(npc.typeOfPlace)) {
-                    npc.sourceType = 'dungeon';
-                    migratedCount++;
-                } else if (settingNames.has(npc.typeOfPlace)) {
-                    npc.sourceType = 'setting';
-                    migratedCount++;
-                }
+    for (const folderName in npcs.value) {
+        const folder = npcs.value[folderName];
+        if (!Array.isArray(folder)) continue;
+        for (const npc of folder) {
+            const t = npc?.typeOfPlace;
+            if (typeof t !== 'string' || t.length < 80) continue;
+            const match = t.match(marker);
+            if (match) {
+                npc.typeOfPlace = match[1];
+                cleaned++;
             }
         }
     }
 
-    // Save if any migrations occurred
-    if (migratedCount > 0) {
+    if (cleaned > 0) {
         saveNPCsToLocalStorage();
+        console.log(`Cleaned up ${cleaned} NPC subtitle${cleaned === 1 ? '' : 's'} from item-prefilled context.`);
     }
 
-    return migratedCount;
+    return cleaned;
 }
 
 function migrateNPCStatblockReferences() {
@@ -804,7 +922,15 @@ function migrateNPCStatblockReferences() {
         for (const npc of npcList) {
             // Check if NPC has a statblock reference but no reference in reference-storage
             if (npc.npc_id && npc.npcDescriptionPart1?.statblock_name && npc.npcDescriptionPart1?.statblock_folder) {
-                const statblockId = `${npc.npcDescriptionPart1.statblock_name}__${npc.npcDescriptionPart1.statblock_folder}`;
+                const statblockName = npc.npcDescriptionPart1.statblock_name;
+                const statblockFolder = npc.npcDescriptionPart1.statblock_folder;
+                const statblockId = `${statblockName}__${statblockFolder}`;
+
+                // Skip if the statblock the NPC points at no longer exists.
+                // Without this guard we'd write a ref that sweep-orphan-references
+                // would immediately delete — self-correcting but wasteful and
+                // noisy. Mirrors the existence check in extract-existing-references.mjs.
+                if (!getStatblockFromStorage(statblockName, statblockFolder)) continue;
 
                 // Check if reference already exists
                 const existingRefs = getReferencesForEntity('npc', npc.npc_id);
@@ -859,6 +985,48 @@ function saveCurrentNPCToList() {
         selectedChallengeRating: selectedChallengeRating.value,
         isSpellcaster: isSpellcaster.value
     };
+
+    // When this NPC was created via a source-tool → NPC Generator flow,
+    // tag it with the source so the subtitle UI can render a back-link.
+    if (pendingSeed.value?.source) {
+        npcData.sourceType = pendingSeed.value.source.type;
+        npcData.sourceId = pendingSeed.value.source.id;
+        npcData.sourceName = pendingSeed.value.source.name;
+    } else {
+        // Preserve source tagging across re-saves of an existing
+        // source-tool-sourced NPC. Three cases:
+        //   1. sourceType + sourceId present, source resolves →
+        //      preserve everything.
+        //   2. sourceType + sourceId present, source DELETED →
+        //      drop everything (auto-cleanup of the stale pointer
+        //      so the (deleted) marker doesn't keep firing).
+        //   3. sourceType only, no sourceId — legacy setting/dungeon
+        //      NPCs created before stable ids existed (settingNPCToCanonical
+        //      and migrateSourceTypeFromTypeOfPlace both set sourceType
+        //      without sourceId). Preserve sourceType so the ref-store
+        //      fallback in computedSourceType / computedOrigin still
+        //      drives the back-link. There's no id to validate, so we
+        //      can't auto-clean these here — that's what the orphan-
+        //      sweep migration is for.
+        const existing = (currentNPCIndex.value !== null && Array.isArray(npcs.value[folderName]))
+            ? npcs.value[folderName][currentNPCIndex.value]
+            : null;
+        if (existing?.sourceType) {
+            const id = existing.sourceId || existing.sourceName;
+            if (id) {
+                if (sourceExists(existing.sourceType, id)) {
+                    // Case 1: live source.
+                    npcData.sourceType = existing.sourceType;
+                    npcData.sourceId = id;
+                    npcData.sourceName = existing.sourceName || existing.sourceId;
+                }
+                // Case 2: source deleted — drop everything for auto-cleanup.
+            } else {
+                // Case 3: legacy sourceType-only record. Preserve it.
+                npcData.sourceType = existing.sourceType;
+            }
+        }
+    }
 
     // CRITICAL: Preserve npc_id to maintain reference integrity with dungeon/setting generators
     if (existingNpcId) {
@@ -954,6 +1122,7 @@ function createNewNPC(folderName = 'Uncategorized') {
     showHomebreweryLink.value = false;
     activeFolder.value = folderName;
     currentNPCIndex.value = null;
+    pendingSeed.value = null;
 }
 
 function selectNPC(folderName, index) {
@@ -972,7 +1141,7 @@ function deleteCurrentNPC() {
     const folderName = activeFolder.value || 'Uncategorized';
     const npcToDelete = npcs.value[folderName]?.[currentNPCIndex.value];
     const npcName = npcToDelete?.npcDescriptionPart1?.character_name || 'this NPC';
-    const npcId = npcToDelete?.npc_id || npcToDelete?.id;
+    const npcId = npcToDelete?.npc_id;
 
     if (!npcId) {
         // Fallback for NPCs without IDs (shouldn't happen after migration, but just in case)
@@ -995,6 +1164,7 @@ function deleteCurrentNPC() {
 
     // Find all locations where this NPC exists
     const locations = findNPCLocations(npcId);
+    const sourceStubMatches = findStubsReferencingNPC(npcId);
 
     // Build confirmation message
     let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
@@ -1011,20 +1181,25 @@ function deleteCurrentNPC() {
         }
     }
 
-    if (locations.dungeons.length > 0) {
-        deleteLocations.push('Dungeon Generator');
-        if (locations.dungeons.length === 1) {
-            confirmMessage += `- Dungeon Generator (${locations.dungeons[0]})\n`;
+    if (sourceStubMatches.length > 0) {
+        const uniqueSources = [...new Set(sourceStubMatches.map(m => `${m.sourceType}:${m.sourceName}`))];
+        if (uniqueSources.length === 1) {
+            const m = sourceStubMatches[0];
+            confirmMessage += `\nThe related-NPC stub on ${m.sourceType} "${m.sourceName}" will be reset so you can create a new NPC for it.\n`;
         } else {
-            confirmMessage += `- Dungeon Generator (${locations.dungeons.length} dungeons)\n`;
+            confirmMessage += `\nRelated-NPC stubs on ${uniqueSources.length} source entities will be reset so you can create new NPCs for them.\n`;
         }
     }
 
     if (confirm(confirmMessage)) {
+        // Reset any source-tool stubs pointing to this NPC back to the
+        // unpromoted state. Do this BEFORE removing references so the
+        // source-of-truth links survive long enough to be inspected if
+        // needed.
+        const stubsReset = resetStubsForDeletedNPC(npcId);
+
         // Remove references for this NPC
-        import('@/util/reference-storage.mjs').then(({ removeReferencesForEntity }) => {
-            removeReferencesForEntity('npc', npcId);
-        });
+        removeReferencesForEntity('npc', npcId);
 
         // Delete from all locations
         const results = deleteNPCFromAllLocations(npcId);
@@ -1035,10 +1210,10 @@ function deleteCurrentNPC() {
         // Show success message
         const deletedFrom = [];
         if (results.npcGenerator > 0) deletedFrom.push('NPC Generator');
-        if (results.dungeons > 0) deletedFrom.push('Dungeon Generator');
+        if (stubsReset > 0) deletedFrom.push(`${stubsReset} source stub${stubsReset === 1 ? '' : 's'} reset`);
 
         if (deletedFrom.length > 0) {
-            toast.success(`"${npcName}" deleted from ${deletedFrom.join(' and ')}.`);
+            toast.success(`"${npcName}" deleted from ${deletedFrom.join(', ')}.`);
         } else {
             toast.success('NPC deleted.');
         }
@@ -1136,6 +1311,7 @@ function cancelEditNPC() {
 }
 
 function handleSaveEdit(editedData) {
+    const previousName = npcDescriptionPart1.value.character_name;
     npcDescriptionPart1.value.character_name = editedData.name;
     npcDescriptionPart1.value.read_aloud_description = editedData.read_aloud_description;
     npcDescriptionPart1.value.combined_details = editedData.combined_details;
@@ -1147,15 +1323,32 @@ function handleSaveEdit(editedData) {
 
     saveCurrentNPCToList();
 
+    // Propagate the rename to display-name caches in other stores so
+    // item stubs, setting/dungeon NPC stubs, and the reference graph
+    // show the new name. Linkage isn't broken either way (npc_id is
+    // stable), but the displayed names go stale without this.
+    if (
+      currentNPC.value?.npc_id &&
+      editedData.name &&
+      editedData.name !== previousName
+    ) {
+      renameNPCReferences(currentNPC.value.npc_id, editedData.name);
+    }
+
     // Show toast indicating where the NPC was updated
     const npcName = editedData.name || 'NPC';
     const origin = computedOrigin.value;
     const sourceType = computedSourceType.value;
 
     if (origin && sourceType) {
-        // NPC is synced to a dungeon or setting
-        const toolName = sourceType === 'dungeon' ? 'Dungeon Generator' : 'Setting Generator';
-        toast.success(`${npcName} updated in NPC Generator and ${toolName} (${origin})`);
+        // NPC is synced to a source tool — look up the display name from
+        // the central source-type → tool map so we don't branch here.
+        const tool = getToolForSourceType(sourceType);
+        if (tool) {
+            toast.success(`${npcName} updated in NPC Generator and ${tool.name} (${origin})`);
+        } else {
+            toast.success(`${npcName} updated`);
+        }
     } else {
         // NPC is only in NPC Generator
         toast.success(`${npcName} updated`);
@@ -1296,12 +1489,65 @@ function displayNPCDescription({ part, npcDescription }) {
 
         npcDescriptionPart1.value = npcDescription;
         loadingPart1.value = false;
+
+        // Source tool → NPC Generator: the prefilled typeOfPlace is a long
+        // context block we used to seed the AI prompt. Now that part 1 has
+        // returned (the AI has the full context), collapse typeOfPlace down
+        // to the role_brief (e.g. "Creator of Krik-tak's Root") so the saved
+        // NPC's subtitle describes the relationship with the source name
+        // appearing verbatim (the UI linkifies that occurrence). Falls back
+        // to the source name if no role_brief was captured.
+        if (pendingSeed.value) {
+            const stub = pendingSeed.value.entities?.[0];
+            const roleBrief = (stub?.role_or_description || '').trim();
+            typeOfPlace.value = roleBrief || pendingSeed.value.source?.name || '';
+        }
+
         saveCurrentNPCToList();
+        // Fire the cross-tool writeback as soon as Part 1 saves. The NPC
+        // has an npc_id by this point (saveCurrentNPCToList assigns one
+        // for new records), and that id is what the source-tool stub
+        // links to. Earlier this fired only after Part 2; if Part 2
+        // failed or the user navigated away first, the writeback never
+        // ran — leaving the stub.npc_id null and no tool-reference.
+        // Part 2 carries supplementary relationships, not the NPC's
+        // cross-tool identity, so the link is correct to fire here.
+        finalizePendingSeed();
     } else if (part === 2) {
         npcDescriptionPart2.value = npcDescription;
         loadingPart2.value = false;
         saveCurrentNPCToList();
+        // finalizePendingSeed already ran on Part 1 and nulled
+        // pendingSeed; calling it here would be a no-op via the
+        // early-return guard.
     }
+}
+
+// If the user arrived here from a source tool's "Create NPC" stub action,
+// write the source-tool reference and back-link the stub on the source
+// entity so the source tool's UI updates next time it loads. Runs after
+// Part 1 saves the NPC (which is when npc_id is assigned). Part 2's
+// relationships are supplementary; the cross-tool link is identity-
+// based, not content-based, so it should fire as soon as the NPC is
+// real even if Part 2 fails or hasn't completed yet.
+function finalizePendingSeed() {
+    const seed = pendingSeed.value;
+    if (!seed) return;
+
+    const folderName = activeFolder.value || 'Uncategorized';
+    const folder = npcs.value[folderName];
+    if (!Array.isArray(folder) || currentNPCIndex.value === null) return;
+    const npc = folder[currentNPCIndex.value];
+    if (!npc?.npc_id) return;
+
+    const npcName = npc.npcDescriptionPart1?.character_name
+        || seed.entities?.[0]?.name
+        || 'Unknown NPC';
+
+    addReferenceForSeed(seed, { type: 'npc', id: npc.npc_id, name: npcName });
+    writeBackPromotedNPC(seed, { npc_id: npc.npc_id, name: npcName, folderName });
+
+    pendingSeed.value = null;
 }
 
 function handleError(message) {
@@ -1703,6 +1949,31 @@ $active-border-color: #007BFF;
         color: $cdr-color-text-secondary;
         margin: 0;
     }
+
+    /* Seeded-flow back-link to the source entity (item, etc.). Burgundy
+       parchment accent — deliberate cross-language signal that this NPC
+       page is being driven from item-side context.
+
+       Quiet by default: no underline, weight inherited from .value-prop
+       (400) so the link reads as part of the tagline rather than competing
+       with the heading. Underline emerges on hover/focus to confirm the
+       affordance when the user reaches for it. */
+    .seed-source-link {
+        color: var(--par-color-title, #7a1f1f);
+        font-weight: inherit;
+        text-decoration: none;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--par-color-title-deep, #58180d);
+            text-decoration: underline;
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--par-color-title, #7a1f1f);
+            outline-offset: 2px;
+        }
+    }
 }
 
 /* ZONE 2: Form card */
@@ -1730,12 +2001,11 @@ $active-border-color: #007BFF;
 
 /* ZONE 3: Footer meta */
 .footer-meta {
-    text-align: center;
+    /* Visual chrome (text-align, background, border, radius) removed during
+       PatreonCallout migration — the callout owns its own surface treatment.
+       Layout properties (margin, max-width) preserved. */
     margin-top: 1.5rem;
-    padding: 1rem 1.5rem;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    padding: 0;
     max-width: 940px;
     width: 100%;
     margin-left: auto;
@@ -2014,7 +2284,7 @@ div[class^="cdr-skeleton-bone"] {
     border: 1.5px solid #c9b99a;
     border-top: 3px solid #7b2d26;
     border-radius: 2px;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
     overflow: hidden;
     margin-bottom: 1.5rem;
 }

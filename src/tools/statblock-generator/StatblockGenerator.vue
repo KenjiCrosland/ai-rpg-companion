@@ -64,43 +64,36 @@
               <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
             </div>
 
-            <cdr-button :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
+            <ParActionButton :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
               {{ activeMonsterIndex !== null ? 'Regenerate Monster' : 'Generate Monster' }}
-            </cdr-button>
+            </ParActionButton>
           </form>
         </div>
 
         <!-- ZONE 3: Secondary info (below the card, low-key) -->
         <div class="footer-meta">
-          <!-- Free users: Show message + unlock button -->
-          <div v-if="!premium">
-            <p>
-              Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load
-              data
-              across browsers with a premium Patreon subscription.
-            </p>
-            <div class="patreon-universal-button">
-              <a :href="patreonLoginUrl">
-                <div class="patreon-responsive-button-wrapper">
-                  <div class="patreon-responsive-button">
-                    <img class="patreon_logo"
-                      src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                      alt="Unlock with Patreon"> Unlock with Patreon
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <template #body>
+              <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
+            </template>
+            <template #features>
+              <li>Cross-device save and load — your statblocks sync between browsers and devices.</li>
+              <li>Unlimited statblock generation — no daily cap.</li>
+              <li>
+                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+              </li>
+            </template>
+          </PatreonCallout>
 
-          <!-- Premium users: Show message -->
-          <div v-else>
-            <p>
-              Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.
-            </p>
-            <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          <!-- Premium users: parchment surface so the active status
+               reads as a coherent block, matching the upsell callout
+               above. -->
+          <ParCallout v-else>
+            <p>Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.</p>
+            <ParActionButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </cdr-button>
-          </div>
+            </ParActionButton>
+          </ParCallout>
         </div>
       </div>
 
@@ -132,9 +125,9 @@
             :options="folderMoveOptions" />
           <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolder" label="New folder name"
             background="secondary" />
-          <cdr-button @click="handleFolderMove" :disabled="!canMove">
+          <ParActionButton @click="handleFolderMove" :disabled="!canMove">
             Move
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
 
@@ -144,34 +137,27 @@
 
       <!-- Footer below monster content -->
       <div class="footer-meta" v-if="monster && !loadingPart2">
-        <!-- Free users: Show message + unlock button -->
-        <div v-if="!premium">
-          <p>
-            Free: 5 generations per 24 hours (includes re-generations). Unlock unlimited generations and save/load data
-            across browsers with a premium Patreon subscription.
-          </p>
-          <div class="patreon-universal-button">
-            <a :href="patreonLoginUrl">
-              <div class="patreon-responsive-button-wrapper">
-                <div class="patreon-responsive-button">
-                  <img class="patreon_logo"
-                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                    alt="Unlock with Patreon"> Unlock with Patreon
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #body>
+            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
+          </template>
+          <template #features>
+            <li>Cross-device save and load — your statblocks sync between browsers and devices.</li>
+            <li>Unlimited statblock generation — no daily cap.</li>
+            <li>
+              <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+            </li>
+          </template>
+        </PatreonCallout>
 
-        <!-- Premium users: Show message -->
-        <div v-else>
-          <p>
-            Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.
-          </p>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+        <!-- Premium users: parchment surface so the active status reads
+             as a coherent block, matching the upsell callout above. -->
+        <ParCallout v-else>
+          <p>Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.</p>
+          <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </cdr-button>
-        </div>
+          </ParActionButton>
+        </ParCallout>
       </div>
     </div>
 
@@ -181,14 +167,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue';
+import { ParActionButton, ParCallout } from "@/parchment";
+import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
-import { CdrInput, CdrButton, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
+import { CdrInput, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-input.css";
 import "@rei/cedar/dist/style/cdr-list.css";
-import "@rei/cedar/dist/style/cdr-button.css";
 import "@rei/cedar/dist/style/cdr-checkbox.css";
 import "@rei/cedar/dist/style/cdr-select.css";
 import "@rei/cedar/dist/style/cdr-toggle-group.css";
@@ -200,8 +188,8 @@ import creatureTemplates from '@/data/creatureTemplates.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
-import { renameStatblockReferences } from '@/util/statblock-storage.mjs';
-import { navigateToTool } from '@/util/navigation.mjs';
+import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
+import { navigateToTool, getNavigationParams } from '@/util/navigation.mjs';
 import { useToast } from '@/composables/useToast';
 import { getReferencesForEntity } from '@/util/reference-storage.mjs';
 
@@ -267,7 +255,19 @@ const canMove = computed(() => {
   return true;
 });
 
+// Reactive trigger that bumps when NPC storage / tool-references change
+// in this tab or another. Read inside `linkedNPCs` so the computed re-
+// evaluates when the underlying localStorage caches change (e.g., user
+// renamed an NPC in the NPC Generator and the linked-NPC display here
+// needs to follow). Without this, `getReferencesForEntity` and the
+// localStorage scan are non-reactive and only refresh on page reload.
+const storageVersion = ref(0);
+
 const linkedNPCs = computed(() => {
+  // Track the storageVersion so this computed re-runs on storage events.
+  // eslint-disable-next-line no-unused-expressions
+  storageVersion.value;
+
   if (!monster.value || !activeFolder.value) return [];
 
   const statblockId = `${monster.value.name}__${activeFolder.value}`;
@@ -296,7 +296,7 @@ const linkedNPCs = computed(() => {
     for (const [folderName, npcsInFolder] of Object.entries(npcGeneratorNPCs)) {
       if (Array.isArray(npcsInFolder)) {
         const foundNPC = npcsInFolder.find(npc =>
-          npc.npc_id === ref.source_id || npc.id === ref.source_id
+          npc.npc_id === ref.source_id
         );
         if (foundNPC) {
           npcFolder = folderName;
@@ -324,10 +324,12 @@ onMounted(() => {
     monsters.value = { 'Uncategorized': [] };
   }
 
-  // Check for URL parameters to open a specific statblock
-  const urlParams = new URLSearchParams(window.location.search);
-  const monsterName = urlParams.get('monster');
-  const folderName = urlParams.get('folder');
+  // Check navigation parameters to open a specific statblock. Reads from
+  // sessionStorage in dev and URL search params in prod via the navigation
+  // substrate, so cross-tool deep links work in both environments.
+  const navParams = getNavigationParams();
+  const monsterName = navParams.monster;
+  const folderName = navParams.folder;
 
   if (monsterName) {
     // Check specified folder first
@@ -359,6 +361,35 @@ onMounted(() => {
 
   updateWindowWidth();
   window.addEventListener('resize', updateWindowWidth);
+
+  // Storage event wiring: bump `storageVersion` whenever NPC data or the
+  // reference graph changes so the linked-NPCs panel reflects renames /
+  // new attachments / detachments without requiring a page reload.
+  // - `storage`: fires for changes from OTHER tabs.
+  // - `npc-storage-updated`: same-tab custom event dispatched by the
+  //   shared NPC-rename and save helpers.
+  window.addEventListener('storage', handleStorageChange);
+  window.addEventListener('npc-storage-updated', handleNPCStorageUpdate);
+});
+
+function handleStorageChange(event) {
+  if (
+    event.key === 'tool-references'
+    || event.key === 'npcGeneratorNPCs'
+    || event.key === null
+  ) {
+    storageVersion.value++;
+  }
+}
+
+function handleNPCStorageUpdate() {
+  storageVersion.value++;
+}
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWindowWidth);
+  window.removeEventListener('storage', handleStorageChange);
+  window.removeEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 
 const activeMonsterIndex = ref(null);
@@ -526,6 +557,13 @@ function handleFolderMove() {
   const newIndex = monsters.value[activeFolder.value].findIndex(m => m.name === currentMonsterName);
   selectMonster(activeFolder.value, newIndex);
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
+
+  // Propagate the folder change across cross-tool stores so NPC links and
+  // the reference graph follow the move. Without this, NPCs that pointed
+  // at `${name}__${previousActiveFolder}` keep stale `statblock_folder`
+  // values, "Edit in Statblock Generator" navigation 404s, and the
+  // linked-NPCs panel here loses its rows.
+  moveStatblockToNewFolder(currentMonsterName, previousActiveFolder, targetFolder);
 
   // Reset and close
   showFolderMover.value = false;
@@ -857,12 +895,11 @@ async function generateStatblock() {
 
 /* ZONE 3: Footer meta — limit info, upsell */
 .footer-meta {
-  text-align: center;
+  /* Visual chrome (text-align, background, border, radius) removed during
+     PatreonCallout migration — the callout owns its own surface treatment.
+     Layout properties (margin, max-width) preserved. */
   margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 0;
   max-width: 940px;
   width: 100%;
   margin-left: auto;

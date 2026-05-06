@@ -18,7 +18,7 @@ import {
  * Initialize dev controls (only in development)
  */
 export function initDevControls() {
-  if (!import.meta.env.DEV) {
+  if (process.env.NODE_ENV === 'production') {
     return; // Only expose in development
   }
 

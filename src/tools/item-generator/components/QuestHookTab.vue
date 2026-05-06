@@ -5,9 +5,9 @@
 
     <div class="quest-generator">
       <cdr-select v-model="questType" label="Quest Type" prompt="Choose a quest type" :options="questTypes" />
-      <cdr-button @click="generateQuestHook" :full-width="true" modifier="dark" style="margin-top: 2rem;">
+      <ParActionButton @click="generateQuestHook" :full-width="true" style="margin-top: 2rem;">
         Generate Quest Hook
-      </cdr-button>
+      </ParActionButton>
       <p v-if="!premium" class="generation-info">
         {{ remainingGenerations }} quest hook{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
       </p>
@@ -34,14 +34,14 @@
               <div v-for="(objective, i) in editForm.objectives" :key="'obj-' + i" class="array-item-row">
                 <cdr-input v-model="editForm.objectives[i]" background="secondary" class="array-item-input" :rows="2"
                   :label="`Objective ${i + 1}`" />
-                <cdr-button size="small" modifier="dark" @click="removeObjective(i)"
+                <ParActionButton size="small" variant="secondary" @click="removeObjective(i)"
                   v-if="editForm.objectives.length > 1" class="remove-button">
                   Remove
-                </cdr-button>
+                </ParActionButton>
               </div>
-              <cdr-button size="small" modifier="secondary" @click="addObjective">
+              <ParActionButton size="small" @click="addObjective">
                 + Add Objective
-              </cdr-button>
+              </ParActionButton>
             </div>
 
             <div class="challenges-edit edit-field">
@@ -49,14 +49,14 @@
               <div v-for="(challenge, i) in editForm.challenges" :key="'chal-' + i" class="array-item-row">
                 <cdr-input v-model="editForm.challenges[i]" background="secondary" class="array-item-input" :rows="2"
                   :label="`Challenge ${i + 1}`" />
-                <cdr-button size="small" modifier="dark" @click="removeChallenge(i)"
+                <ParActionButton size="small" variant="secondary" @click="removeChallenge(i)"
                   v-if="editForm.challenges.length > 1" class="remove-button">
                   Remove
-                </cdr-button>
+                </ParActionButton>
               </div>
-              <cdr-button size="small" modifier="secondary" @click="addChallenge">
+              <ParActionButton size="small" @click="addChallenge">
                 + Add Challenge
-              </cdr-button>
+              </ParActionButton>
             </div>
 
             <cdr-input v-model="editForm.reward" label="Reward" background="secondary" :rows="3" tag="textarea"
@@ -66,8 +66,8 @@
               tag="textarea" class="edit-field" />
 
             <div class="button-group">
-              <cdr-button @click="saveEdit">Save Changes</cdr-button>
-              <cdr-button @click="cancelEdit" modifier="secondary">Cancel</cdr-button>
+              <ParActionButton @click="saveEdit">Save Changes</ParActionButton>
+              <ParActionButton @click="cancelEdit" variant="secondary">Cancel</ParActionButton>
             </div>
           </div>
 
@@ -95,20 +95,20 @@
             </div>
 
             <div class="button-group">
-              <cdr-button @click="startEdit(index)" modifier="secondary">Edit Quest Hook</cdr-button>
-              <cdr-button @click="deleteHook(index)" modifier="dark">Delete Quest Hook</cdr-button>
+              <ParActionButton @click="startEdit(index)" variant="secondary">Edit Quest Hook</ParActionButton>
+              <ParActionButton @click="deleteHook(index)">Delete Quest Hook</ParActionButton>
             </div>
 
             <!-- Export Section for this quest hook -->
             <div class="quest-export-section">
               <h4>Export This Quest</h4>
               <div class="export-options">
-                <cdr-button @click="exportQuestAsMarkdown(hook)" modifier="secondary" size="small">
+                <ParActionButton @click="exportQuestAsMarkdown(hook)" variant="secondary" size="small">
                   Copy as Markdown
-                </cdr-button>
-                <cdr-button @click="exportQuestAsPlainText(hook)" modifier="secondary" size="small">
+                </ParActionButton>
+                <ParActionButton @click="exportQuestAsPlainText(hook)" variant="secondary" size="small">
                   Copy as Plain Text
-                </cdr-button>
+                </ParActionButton>
               </div>
               <p class="export-tip">
                 Use markdown with <cdr-link href="https://homebrewery.naturalcrit.com/new"
@@ -130,31 +130,22 @@
       </cdr-accordion>
     </cdr-accordion-group>
 
-    <!-- Export All Section -->
-    <div v-if="hooks.length > 0" class="export-all-section">
-      <h3>Export All Quest Hooks</h3>
-      <p class="export-description">
+    <!-- Export All Section (shared format) -->
+    <ItemExportsSection v-if="hooks.length > 0" heading="Export All Quest Hooks">
+      <template #description>
         Export all quest hooks for this item together. Perfect for creating a campaign handout with multiple adventure
-        options.
-      </p>
-
-      <div class="export-options">
-        <div class="export-option">
-          <cdr-button @click="exportAllQuestsAsMarkdown" modifier="secondary" :full-width="true">
-            Copy All as Markdown
-          </cdr-button>
-          <p class="option-description">For use with <a href="https://homebrewery.naturalcrit.com/new"
-              target="_blank">Homebrewery</a> or other markdown tools</p>
-        </div>
-
-        <div class="export-option">
-          <cdr-button @click="exportAllQuestsAsPlainText" modifier="secondary" :full-width="true">
-            Copy All as Plain Text
-          </cdr-button>
-          <p class="option-description">Simple format for notes or sharing in chat</p>
-        </div>
-      </div>
-    </div>
+        options. The markdown format works perfectly with
+        <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>.
+      </template>
+      <template #buttons>
+        <ParActionButton @click="exportAllQuestsAsMarkdown" variant="secondary">
+          Copy All as Markdown
+        </ParActionButton>
+        <ParActionButton @click="exportAllQuestsAsPlainText" variant="secondary">
+          Copy All as Plain Text
+        </ParActionButton>
+      </template>
+    </ItemExportsSection>
   </div>
 </template>
 
@@ -162,7 +153,6 @@
 import { ref, watch, computed, onMounted } from 'vue';
 import {
   CdrSelect,
-  CdrButton,
   CdrList,
   CdrAccordionGroup,
   CdrAccordion,
@@ -172,7 +162,9 @@ import {
   CdrSkeleton,
   CdrSkeletonBone
 } from '@rei/cedar';
+import { ParActionButton } from '@/parchment';
 import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
+import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
 import { readQuota, writeQuota, remainingFromQuota, ensureQuotaSeeded } from '@/util/quota-storage.mjs';
@@ -749,40 +741,6 @@ Generate a D&D 5e quest hook for the following magic item:
   }
 }
 
-// Export all section at the bottom
-.export-all-section {
-  margin-top: 3rem;
-  padding: 1.5rem;
-  background-color: $cdr-color-background-secondary;
-  border-radius: 8px;
-
-  h3 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-  }
-
-  .export-description {
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
-    color: $cdr-color-text-secondary;
-  }
-
-  .export-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .export-option {
-    .option-description {
-      margin-top: 0.5rem;
-      font-size: 0.875rem;
-      color: $cdr-color-text-secondary;
-      font-style: italic;
-    }
-  }
-}
-
 // Responsive adjustments
 @media (max-width: 768px) {
   .quest-content {
@@ -802,12 +760,6 @@ Generate a D&D 5e quest hook for the following magic item:
           width: 100%;
         }
       }
-    }
-  }
-
-  .export-all-section {
-    .export-options {
-      grid-template-columns: 1fr;
     }
   }
 }

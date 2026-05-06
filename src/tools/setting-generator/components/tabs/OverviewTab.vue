@@ -25,7 +25,7 @@
       </div>
 
       <div class="button-group">
-        <cdr-button @click="startEditing" modifier="secondary">Edit Overview</cdr-button>
+        <ParActionButton @click="startEditing" variant="secondary">Edit Overview</ParActionButton>
       </div>
     </div>
 
@@ -47,16 +47,17 @@
       </cdr-input>
 
       <div class="button-group">
-        <cdr-button @click="saveEdit">Save Changes</cdr-button>
-        <cdr-button @click="cancelEdit" modifier="secondary">Cancel</cdr-button>
+        <ParActionButton @click="saveEdit">Save Changes</ParActionButton>
+        <ParActionButton @click="cancelEdit" variant="secondary">Cancel</ParActionButton>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, watch } from 'vue';
-import { CdrButton, CdrInput } from '@rei/cedar';
+import { CdrInput } from '@rei/cedar';
 
 const props = defineProps({
   setting: {

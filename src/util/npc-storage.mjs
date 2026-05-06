@@ -11,6 +11,29 @@
  */
 
 /**
+ * Find an NPC in `npcGeneratorNPCs` by `npc_id`, walking every folder.
+ *
+ * Setting and dungeon tabs used to look up canonical NPCs in
+ * `stored[settingName]` / `stored[dungeonTitle]`, which broke as soon as
+ * the user moved the NPC into a folder of their choosing. Folder
+ * organization belongs to the user; cross-tool linkage is by id. Use this
+ * helper for any NPC lookup keyed on identity rather than location.
+ *
+ * @param {Object} stored - Parsed `npcGeneratorNPCs` localStorage object
+ * @param {string} npcId
+ * @returns {Object|null} the matching NPC, or null
+ */
+export function findNPCByIdAcrossFolders(stored, npcId) {
+  if (!stored || !npcId) return null;
+  for (const folder of Object.values(stored)) {
+    if (!Array.isArray(folder)) continue;
+    const found = folder.find(n => n?.npc_id === npcId);
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
  * Save an NPC to shared NPC storage (npcGeneratorNPCs localStorage).
  * Deduplicates by unique ID first, then by character name within the folder.
  *
@@ -35,14 +58,14 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
   }
 
   const name = getNPCName(npc);
-  let id = npc.npc_id || npc.id;
+  let id = npc.npc_id;
 
   // AUTO-MIGRATION: If NPC has an ID, remove it from other folders (handles dungeon/setting renames)
   if (id) {
     for (const otherFolder in stored) {
       if (otherFolder !== folderName) {
         const duplicateIndex = stored[otherFolder].findIndex(n =>
-          (n.npc_id === id || n.id === id)
+          n.npc_id === id
         );
         if (duplicateIndex !== -1) {
           // Remove NPC from old folder
@@ -62,9 +85,7 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
 
   if (id) {
     // Try to find by ID first
-    existingIndex = stored[folderName].findIndex(n =>
-      (n.npc_id === id || n.id === id)
-    );
+    existingIndex = stored[folderName].findIndex(n => n.npc_id === id);
   }
 
   if (existingIndex === -1) {
@@ -76,8 +97,7 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
 
   if (existingIndex !== -1) {
     // Update existing NPC (preserve/assign ID if needed)
-    const existingId = stored[folderName][existingIndex].npc_id
-      || stored[folderName][existingIndex].id;
+    const existingId = stored[folderName][existingIndex].npc_id;
 
     if (existingId) {
       // Use existing ID
@@ -120,6 +140,49 @@ export function getNPCName(npc) {
 }
 
 /**
+ * Resolve the statblock reference for an NPC across the two stores
+ * involved in cross-tool NPC display:
+ *
+ *   1. CANONICAL (npcGeneratorNPCs storage). The reference lives at
+ *      `npc.npcDescriptionPart1.statblock_name` and `.statblock_folder`
+ *      — the location every active writer in the codebase uses
+ *      (NPCGenerator's auto-save, dungeonNPCToCanonical /
+ *      settingNPCToCanonical conversions, statblock-rename propagation).
+ *      An earlier era wrote the fields top-level on canonical records;
+ *      the `promote-npc-statblock-ref-to-nested` migration consolidated
+ *      them under part1, so this function no longer reads the legacy
+ *      top-level location on canonical NPCs.
+ *   2. LOCAL fallback. Dungeons and settings each carry a denormalized
+ *      copy of NPC data on their own records (dungeon NPCs are
+ *      dungeon-shape with top-level `statblock_name`, per
+ *      `canonicalToDungeonNPC`). For NPCs not (yet) promoted to shared
+ *      storage, that local copy is the only source — the function
+ *      reads the top-level field there because that IS the correct
+ *      shape for that store.
+ *
+ * Centralizing the resolution here means the dungeon and setting NPC
+ * tabs don't each have to know which field to read.
+ *
+ * @param {Object} canonicalNPC - The canonical-shape NPC (from
+ *                                npcGeneratorNPCs storage), or null.
+ * @param {Object} [fallbackNPC] - The dungeon/setting-local NPC, used
+ *                                 when canonicalNPC is null/missing
+ *                                 the field.
+ * @returns {{ statblock_name: string|null, statblock_folder: string|null }}
+ */
+export function getNPCStatblockRef(canonicalNPC, fallbackNPC) {
+  const part1 = canonicalNPC?.npcDescriptionPart1;
+  return {
+    statblock_name: part1?.statblock_name
+      || fallbackNPC?.statblock_name
+      || null,
+    statblock_folder: part1?.statblock_folder
+      || fallbackNPC?.statblock_folder
+      || null,
+  };
+}
+
+/**
  * Convert a dungeon NPC to the NPC generator canonical format.
  *
  * Maps dungeon-specific field names to canonical field names:
@@ -132,7 +195,7 @@ export function getNPCName(npc) {
  */
 export function dungeonNPCToCanonical(npc, dungeonTitle) {
   return {
-    npc_id: npc.npc_id || npc.id || null,
+    npc_id: npc.npc_id || null,
     npcDescriptionPart1: {
       character_name: npc.name,
       description_of_position: npc.description_of_position || '',
@@ -166,7 +229,7 @@ export function dungeonNPCToCanonical(npc, dungeonTitle) {
  */
 export function settingNPCToCanonical(npc, settingName) {
   return {
-    npc_id: npc.npc_id || npc.id || null,
+    npc_id: npc.npc_id || null,
     npcDescriptionPart1: {
       character_name: npc.name,
       description_of_position: npc.description_of_position || '',
@@ -202,7 +265,7 @@ export function canonicalToDungeonNPC(canonicalNPC) {
   const part2 = canonicalNPC.npcDescriptionPart2 || {};
 
   return {
-    npc_id: canonicalNPC.npc_id || canonicalNPC.id || null,
+    npc_id: canonicalNPC.npc_id || null,
     name: part1.character_name || '',
     description_of_position: part1.description_of_position || '',
     why_in_dungeon: part1.reason_for_being_there || '',
@@ -237,6 +300,10 @@ export function normalizeDungeonNPC(npc) {
   }
 
   return {
+    // Preserve the canonical id so NPCCard's "View in NPC Generator" link
+    // can navigate by stable id rather than guessing a folder + name pair
+    // — the folder name path breaks the moment the user reorganizes.
+    npc_id: npc.npc_id || null,
     name: npc.name,
     read_aloud_description: npc.read_aloud_description || '',
     combined_details: combinedDetails,
@@ -267,6 +334,10 @@ export function normalizeSettingNPC(npc) {
   }
 
   return {
+    // Preserve the canonical id so NPCCard's "View in NPC Generator" link
+    // can navigate by stable id rather than folder + name (which breaks
+    // the moment the user moves the NPC out of the setting-named folder).
+    npc_id: npc.npc_id || null,
     name: npc.name,
     read_aloud_description: npc.read_aloud_description || '',
     combined_details: combinedDetails,
@@ -310,6 +381,7 @@ export function normalizeGeneratorNPC(npc) {
   }
 
   return {
+    npc_id: npc.npc_id || null,
     name: part1.character_name || '',
     read_aloud_description: part1.read_aloud_description || '',
     combined_details: combinedDetails,
@@ -355,7 +427,7 @@ export function saveNPCToDungeon(canonicalNPC, dungeonName) {
     const npcId = dungeonNPC.npc_id;
 
     if (npcId) {
-      existingIndex = dungeon.npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
+      existingIndex = dungeon.npcs.findIndex(n => n.npc_id === npcId);
     }
 
     if (existingIndex === -1) {
@@ -382,15 +454,19 @@ export function saveNPCToDungeon(canonicalNPC, dungeonName) {
 
 /**
  * Find all locations where an NPC exists (by npc_id).
- * Returns an object describing where the NPC is found.
+ * Returns an object describing where the NPC is found across the three
+ * stores that hold NPC entries: the canonical NPC Generator folders,
+ * dungeon NPC arrays, and setting NPC arrays.
  *
  * @param {string} npcId - The NPC's unique ID
- * @returns {Object} Object with locations: { npcGenerator: [], dungeons: [] }
+ * @returns {Object} { npcGenerator: string[], dungeons: string[], settings: string[] }
+ *   — folder/dungeon/setting display names that contain the NPC.
  */
 export function findNPCLocations(npcId) {
   const locations = {
-    npcGenerator: [], // Array of folder names in npcGeneratorNPCs
-    dungeons: []      // Array of dungeon names
+    npcGenerator: [], // Folder names in npcGeneratorNPCs
+    dungeons: [],     // Dungeon display names
+    settings: [],     // Setting display names
   };
 
   if (!npcId) return locations;
@@ -404,7 +480,7 @@ export function findNPCLocations(npcId) {
     for (const folderName in npcGeneratorStorage) {
       const npcs = npcGeneratorStorage[folderName];
       if (Array.isArray(npcs)) {
-        const found = npcs.find(n => n.npc_id === npcId || n.id === npcId);
+        const found = npcs.find(n => n.npc_id === npcId);
         if (found) {
           locations.npcGenerator.push(folderName);
         }
@@ -415,9 +491,21 @@ export function findNPCLocations(npcId) {
     const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
     for (const dungeon of dungeons) {
       if (dungeon.npcs && Array.isArray(dungeon.npcs)) {
-        const found = dungeon.npcs.find(n => n.npc_id === npcId || n.id === npcId);
+        const found = dungeon.npcs.find(n => n.npc_id === npcId);
         if (found && dungeon.dungeonOverview?.name) {
           locations.dungeons.push(dungeon.dungeonOverview.name);
+        }
+      }
+    }
+
+    // Check Setting Generator storage
+    const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
+    for (const setting of settings) {
+      if (Array.isArray(setting?.npcs)) {
+        const found = setting.npcs.find(n => n?.npc_id === npcId);
+        if (found) {
+          const settingName = setting.setting_overview?.name || setting.place_name;
+          if (settingName) locations.settings.push(settingName);
         }
       }
     }
@@ -429,21 +517,24 @@ export function findNPCLocations(npcId) {
 }
 
 /**
- * Delete an NPC from all storage locations (by npc_id).
+ * Delete the canonical NPC from `npcGeneratorNPCs` storage (by npc_id).
+ *
+ * Cross-tool stubs (settings, dungeons, items) are NOT touched here — call
+ * `resetStubsForDeletedNPC` from `seeded-input.mjs` for that. The split lets
+ * callers introspect stub matches before deletion (e.g., to build a
+ * confirm-dialog summary).
  *
  * @param {string} npcId - The NPC's unique ID
- * @returns {Object} Object with deletion results: { npcGenerator: number, dungeons: number }
+ * @returns {Object} { npcGenerator: number } — number of folders where NPC was deleted
  */
 export function deleteNPCFromAllLocations(npcId) {
   const results = {
-    npcGenerator: 0, // Number of folders where NPC was deleted
-    dungeons: 0      // Number of dungeons where NPC was deleted
+    npcGenerator: 0
   };
 
   if (!npcId) return results;
 
   try {
-    // Delete from NPC Generator storage
     const npcGeneratorStorage = JSON.parse(
       localStorage.getItem('npcGeneratorNPCs') || '{}'
     );
@@ -451,12 +542,11 @@ export function deleteNPCFromAllLocations(npcId) {
     for (const folderName in npcGeneratorStorage) {
       const npcs = npcGeneratorStorage[folderName];
       if (Array.isArray(npcs)) {
-        const index = npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
+        const index = npcs.findIndex(n => n.npc_id === npcId);
         if (index !== -1) {
           npcs.splice(index, 1);
           results.npcGenerator++;
 
-          // Clean up empty folders (except Uncategorized)
           if (npcs.length === 0 && folderName !== 'Uncategorized') {
             delete npcGeneratorStorage[folderName];
           }
@@ -466,37 +556,24 @@ export function deleteNPCFromAllLocations(npcId) {
 
     localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcGeneratorStorage));
 
-    // Delete from Dungeon Generator storage
-    const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-    for (const dungeon of dungeons) {
-      if (dungeon.npcs && Array.isArray(dungeon.npcs)) {
-        const index = dungeon.npcs.findIndex(n => n.npc_id === npcId || n.id === npcId);
-        if (index !== -1) {
-          dungeon.npcs.splice(index, 1);
-          results.dungeons++;
-        }
-      }
-    }
-
-    localStorage.setItem('dungeons', JSON.stringify(dungeons));
-
-    // Dispatch custom event for same-tab updates
-    // (storage event only fires for other tabs)
     window.dispatchEvent(new CustomEvent('npc-storage-updated', {
       detail: { npcId, action: 'delete', results }
     }));
   } catch (error) {
-    console.error('Error deleting NPC from all locations:', error);
+    console.error('Error deleting NPC from canonical storage:', error);
   }
 
   return results;
 }
 
 /**
- * One-time migration: Add npc_id to all NPCs in localStorage that don't have one.
- * Should be called when NPC Generator loads.
+ * Gap-fill: ensure every NPC has an `npc_id`. Called on every NPCGenerator
+ * mount so any record that slipped through (manual import, hand-edited
+ * localStorage, etc.) gets one. The `promote-npc-id` migration runs once
+ * per browser to lift legacy `id` → `npc_id` and drop the legacy field;
+ * this gap-fill catches the residual case where neither field was set.
  *
- * @returns {number} Number of NPCs migrated
+ * @returns {number} Number of NPCs assigned a fresh id
  */
 export function migrateNPCIds() {
   const stored = JSON.parse(
@@ -515,74 +592,11 @@ export function migrateNPCIds() {
     for (let i = 0; i < npcs.length; i++) {
       const npc = npcs[i];
 
-      // Check if NPC has an ID
-      if (!npc.npc_id && !npc.id) {
-        // Generate a unique ID
+      // npc_id is the canonical id field. Generate one if missing.
+      if (!npc.npc_id) {
         npc.npc_id = `npc_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
         migratedCount++;
         needsSave = true;
-      }
-    }
-  }
-
-  // Save back to localStorage if any NPCs were migrated
-  if (needsSave) {
-    localStorage.setItem('npcGeneratorNPCs', JSON.stringify(stored));
-  }
-
-  return migratedCount;
-}
-
-/**
- * One-time migration: Add sourceType to all NPCs in localStorage that don't have one.
- * Infers sourceType by checking if folder name matches a dungeon or setting.
- * Should be called when NPC Generator loads.
- *
- * @returns {number} Number of NPCs migrated
- */
-export function migrateSourceTypes() {
-  const stored = JSON.parse(
-    localStorage.getItem('npcGeneratorNPCs') || '{}'
-  );
-
-  // Get list of dungeon names
-  const dungeons = JSON.parse(localStorage.getItem('dungeons') || '[]');
-  const dungeonNames = new Set(
-    dungeons.map(d => d.dungeonOverview?.name).filter(Boolean)
-  );
-
-  // Get list of setting names
-  const settings = JSON.parse(localStorage.getItem('gameSettings') || '[]');
-  const settingNames = new Set(
-    settings.map(s => s.place_name).filter(Boolean)
-  );
-
-  let migratedCount = 0;
-  let needsSave = false;
-
-  // Loop through all folders
-  for (const folderName in stored) {
-    const npcs = stored[folderName];
-    if (!Array.isArray(npcs)) continue;
-
-    // Loop through all NPCs in this folder
-    for (let i = 0; i < npcs.length; i++) {
-      const npc = npcs[i];
-
-      // Check if NPC already has sourceType
-      if (!npc.sourceType) {
-        // Infer sourceType from folder name
-        if (dungeonNames.has(folderName)) {
-          npc.sourceType = 'dungeon';
-          migratedCount++;
-          needsSave = true;
-        } else if (settingNames.has(folderName)) {
-          npc.sourceType = 'setting';
-          migratedCount++;
-          needsSave = true;
-        }
-        // If folder name doesn't match anything, don't add sourceType
-        // (these are NPCs created directly in NPC Generator)
       }
     }
   }
@@ -620,12 +634,18 @@ export function migrateDungeonNPCsToSharedStorage() {
         // Convert to canonical format
         const canonicalNPC = dungeonNPCToCanonical(dungeonNPC, dungeonTitle);
 
-        // Check if NPC already exists in shared storage
+        // Check existence ACROSS ALL FOLDERS by id. The migration's job is
+        // to ensure the NPC has a canonical record — not to pin it to the
+        // dungeon's folder. If the user moved the NPC to "Heroes", this
+        // check used to look only in `stored[dungeonTitle]`, miss it, and
+        // call saveNPCToStorage with the dungeon folder; saveNPCToStorage
+        // would then yank the NPC out of "Heroes" and back into the
+        // dungeon folder on every load.
         const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-        const folderNPCs = stored[dungeonTitle] || [];
-
-        const exists = canonicalNPC.npc_id && folderNPCs.some(n =>
-          n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+        const exists = canonicalNPC.npc_id && Object.values(stored).some(folder =>
+          Array.isArray(folder) && folder.some(n =>
+            n.npc_id === canonicalNPC.npc_id
+          )
         );
 
         if (!exists) {
@@ -672,12 +692,16 @@ export function migrateSettingNPCsToSharedStorage() {
         // Convert to canonical format
         const canonicalNPC = settingNPCToCanonical(settingNPC, settingName);
 
-        // Check if NPC already exists in shared storage
+        // Check existence ACROSS ALL FOLDERS by id. See the dungeon-side
+        // counterpart for the full rationale: this preserves the user's
+        // folder organization. If the NPC has been moved out of the
+        // setting-named folder into one of their own choosing, the
+        // migration must not drag it back.
         const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-        const folderNPCs = stored[settingName] || [];
-
-        const exists = canonicalNPC.npc_id && folderNPCs.some(n =>
-          n.npc_id === canonicalNPC.npc_id || n.id === canonicalNPC.npc_id
+        const exists = canonicalNPC.npc_id && Object.values(stored).some(folder =>
+          Array.isArray(folder) && folder.some(n =>
+            n.npc_id === canonicalNPC.npc_id
+          )
         );
 
         if (!exists) {
@@ -697,4 +721,141 @@ export function migrateSettingNPCsToSharedStorage() {
     console.error('Error migrating setting NPCs:', error);
     return 0;
   }
+}
+
+/**
+ * Propagate an NPC rename across every place the NPC's display name is
+ * cached. NPCs use a stable `npc_id` so the link itself never breaks on
+ * rename — but several stores cache the NPC's display name alongside
+ * the id (for human-readable rendering), and those caches need to
+ * follow the rename.
+ *
+ * Updates:
+ *   1. `tool-references` entries where this NPC is source or target —
+ *      `source_name` / `target_name` get the new name.
+ *   2. Item stubs: `savedItems[*].related_npcs[*]` matched by `npc_id`,
+ *      updates `stub.name`.
+ *   3. Setting NPC stubs: `gameSettings[*].npcs[*]` matched by `npc_id`.
+ *   4. Dungeon NPC stubs: `dungeons[*].npcs[*]` matched by `npc_id`.
+ *
+ * Does NOT touch prose fields (e.g., another NPC's `combined_details`
+ * mentioning this NPC by name) — those are free-form text that may use
+ * the name in many forms and aren't safe to substring-replace.
+ *
+ * Idempotent: no-op when nothing matches or already at the new name.
+ *
+ * @param {string} npcId
+ * @param {string} newName
+ * @returns {{ totalUpdated: number }}
+ */
+export function renameNPCReferences(npcId, newName) {
+  if (!npcId || !newName) return { totalUpdated: 0 };
+  let totalUpdated = 0;
+
+  // 1. Reference graph.
+  const referencesRaw = localStorage.getItem('tool-references');
+  if (referencesRaw) {
+    let references;
+    try { references = JSON.parse(referencesRaw); } catch { references = null; }
+    if (references && typeof references === 'object') {
+      let changed = false;
+      for (const ref of Object.values(references)) {
+        if (ref.source_type === 'npc' && ref.source_id === npcId && ref.source_name !== newName) {
+          ref.source_name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+        if (ref.target_type === 'npc' && ref.target_id === npcId && ref.target_name !== newName) {
+          ref.target_name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+      }
+      if (changed) {
+        localStorage.setItem('tool-references', JSON.stringify(references));
+      }
+    }
+  }
+
+  // 2. Item stubs.
+  const itemsRaw = localStorage.getItem('savedItems');
+  if (itemsRaw) {
+    let items;
+    try { items = JSON.parse(itemsRaw); } catch { items = null; }
+    if (Array.isArray(items)) {
+      let changed = false;
+      for (const item of items) {
+        if (!Array.isArray(item?.related_npcs)) continue;
+        for (const stub of item.related_npcs) {
+          if (stub?.npc_id === npcId && stub.name !== newName) {
+            stub.name = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        localStorage.setItem('savedItems', JSON.stringify(items));
+      }
+    }
+  }
+
+  // 3. Setting NPC stubs.
+  const settingsRaw = localStorage.getItem('gameSettings');
+  if (settingsRaw) {
+    let settings;
+    try { settings = JSON.parse(settingsRaw); } catch { settings = null; }
+    if (Array.isArray(settings)) {
+      let changed = false;
+      for (const setting of settings) {
+        if (!Array.isArray(setting?.npcs)) continue;
+        for (const stub of setting.npcs) {
+          if (stub?.npc_id === npcId && stub.name !== newName) {
+            stub.name = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        localStorage.setItem('gameSettings', JSON.stringify(settings));
+      }
+    }
+  }
+
+  // 4. Dungeon NPC stubs.
+  const dungeonsRaw = localStorage.getItem('dungeons');
+  if (dungeonsRaw) {
+    let dungeons;
+    try { dungeons = JSON.parse(dungeonsRaw); } catch { dungeons = null; }
+    if (Array.isArray(dungeons)) {
+      let changed = false;
+      for (const dungeon of dungeons) {
+        if (!Array.isArray(dungeon?.npcs)) continue;
+        for (const stub of dungeon.npcs) {
+          if (stub?.npc_id === npcId && stub.name !== newName) {
+            stub.name = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        localStorage.setItem('dungeons', JSON.stringify(dungeons));
+      }
+    }
+  }
+
+  // Notify same-tab listeners (Statblock Generator's "linked NPCs" panel,
+  // setting/dungeon NPC tabs, etc.) so caches that depend on the NPC's
+  // display name re-evaluate without waiting for a page reload. Cross-tab
+  // listeners are already covered by the native `storage` event each
+  // localStorage write fires.
+  if (totalUpdated > 0 && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('npc-storage-updated', {
+      detail: { npcId, action: 'rename', newName }
+    }));
+  }
+
+  return { totalUpdated };
 }

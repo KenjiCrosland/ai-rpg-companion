@@ -15,9 +15,11 @@ import NPCGenerator from './NPCGenerator.vue';
 import * as openAi from "@/util/ai-client.mjs";
 import * as npcGenerator from './utils/npc-generator.mjs';
 import * as npcPrompts from './npc-prompts.mjs';
+import * as seededInput from '@/util/seeded-input.mjs';
+import * as navigation from '@/util/navigation.mjs';
 
 // Mock the open-ai module
-jest.mock('@/util/open-ai.mjs', () => ({
+jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
 }));
 
@@ -26,6 +28,27 @@ jest.mock('./utils/npc-generator.mjs');
 
 // Mock NPC prompts
 jest.mock('./npc-prompts.mjs');
+
+// Mock seeded-input substrate so the cross-tool promotion writebacks
+// (addReferenceForSeed / writeBackPromotedNPC) can be observed without
+// touching localStorage. The other functions are wrapped so the mount
+// handler's seed-loading path keeps working when tests need it.
+jest.mock('@/util/seeded-input.mjs', () => ({
+  loadSeededInput: jest.fn(() => null),
+  buildPrefillForSeed: jest.fn(() => ''),
+  addReferenceForSeed: jest.fn(),
+  writeBackPromotedNPC: jest.fn(),
+  sourceExists: jest.fn(() => true),
+  findStubsReferencingNPC: jest.fn(() => []),
+  resetStubsForDeletedNPC: jest.fn(),
+}));
+
+// Mock navigation so tests can simulate cross-tool params landing on
+// the NPC Generator.
+jest.mock('@/util/navigation.mjs', () => ({
+  getNavigationParams: jest.fn(() => ({})),
+  navigateToTool: jest.fn(),
+}));
 
 // Mock statblock prompts
 jest.mock('@/prompts/monster-prompts.mjs', () => ({
@@ -452,6 +475,139 @@ describe('NPCGenerator', () => {
       );
       expect(savedNPC).toBeDefined();
       expect(savedNPC.npcDescriptionPart1.character_name).toBe('Test NPC Save Verification');
+    });
+  });
+
+  describe('Cross-tool seeded promotion (item → NPC)', () => {
+    // User-reported bug: when an NPC is created from an item stub and
+    // Part 2 (relationships) fails or the user navigates away first,
+    // the writeback never fires — leaving the item's stub.npc_id
+    // unset and no tool-reference written. The fix moves
+    // finalizePendingSeed from after Part 2 to after Part 1, so the
+    // cross-tool link is established as soon as the NPC has an id.
+
+    const mockSeed = {
+      source: {
+        type: 'item',
+        id: 'Scroll of the Forbidden Summons',
+        name: 'Scroll of the Forbidden Summons',
+      },
+      destination: { type: 'npc' },
+      entities: [{
+        type: 'npc',
+        name: 'Vakhsh the Hider',
+        role_or_description: 'Sealer of the scroll',
+      }],
+    };
+
+    beforeEach(() => {
+      navigation.getNavigationParams.mockReturnValue({
+        fromType: 'item',
+        fromId: 'Scroll of the Forbidden Summons',
+        entityName: 'Vakhsh the Hider',
+      });
+      seededInput.loadSeededInput.mockReturnValue(mockSeed);
+      seededInput.buildPrefillForSeed.mockReturnValue('item context prefill');
+    });
+
+    it('writes back to source stub immediately after Part 1, even if Part 2 never completes', async () => {
+      // Drive only Part 1 — Part 2 callback never fires. This
+      // simulates the user-reported scenario (Part 2 failed, network
+      // blip, or user navigated away) that left Vakhsh's stub.npc_id
+      // null with no tool-reference entry.
+      npcGenerator.generateNPCDescription.mockImplementation(async (typeOfNPC, callbacks) => {
+        if (callbacks.part1) {
+          callbacks.part1({
+            character_name: 'Vakhsh the Hider',
+            description_of_position: 'A stooped gnome archivist...',
+            reason_for_being_there: 'Guarding the scroll...',
+            distinctive_feature_or_mannerism: 'Taps temple with stylus...',
+            character_secret: 'Hears the scroll whisper...',
+            read_aloud_description: 'A patchwork-cloaked figure...',
+            roleplaying_tips: 'Speak in hushed, hurried tone...',
+          });
+        }
+        // Intentionally NOT calling callbacks.part2 — simulates the
+        // half-completed generation the user reported.
+      });
+
+      wrapper = mount(NPCGenerator, { props: { premium: false } });
+      await flushPromises();
+      // Mount handler should have set pendingSeed from the navigation
+      // params + loadSeededInput call.
+      expect(seededInput.loadSeededInput).toHaveBeenCalledWith({
+        fromType: 'item',
+        fromId: 'Scroll of the Forbidden Summons',
+        entityName: 'Vakhsh the Hider',
+      });
+
+      const input = wrapper.find('input#typeOfNPC');
+      await input.setValue('Vakhsh the Hider');
+      const form = wrapper.find('form');
+      await form.trigger('submit.prevent');
+      await flushPromises();
+
+      // Both writebacks must have fired even though Part 2 never ran.
+      expect(seededInput.addReferenceForSeed).toHaveBeenCalledTimes(1);
+      expect(seededInput.writeBackPromotedNPC).toHaveBeenCalledTimes(1);
+
+      // Both calls receive the seed and a destination/npc payload with
+      // a stable npc_id. The id is generated dynamically (timestamp +
+      // random suffix), so we just check shape.
+      const refCall = seededInput.addReferenceForSeed.mock.calls[0];
+      expect(refCall[0]).toMatchObject({
+        source: { type: 'item', id: 'Scroll of the Forbidden Summons' },
+        entities: [{ name: 'Vakhsh the Hider' }],
+      });
+      expect(refCall[1]).toMatchObject({
+        type: 'npc',
+        name: 'Vakhsh the Hider',
+      });
+      expect(refCall[1].id).toMatch(/^npc_/);
+
+      const writeCall = seededInput.writeBackPromotedNPC.mock.calls[0];
+      expect(writeCall[0]).toMatchObject({
+        source: { type: 'item', id: 'Scroll of the Forbidden Summons' },
+      });
+      expect(writeCall[1]).toMatchObject({
+        name: 'Vakhsh the Hider',
+        folderName: expect.any(String),
+      });
+      expect(writeCall[1].npc_id).toMatch(/^npc_/);
+    });
+
+    it('does not double-fire the writeback when Part 2 also completes', async () => {
+      // Idempotency check: even when Part 2 fires after Part 1, the
+      // writeback should only run once (Part 1 already nulled
+      // pendingSeed, so any later finalizePendingSeed call returns
+      // immediately via the early-return guard).
+      npcGenerator.generateNPCDescription.mockImplementation(async (typeOfNPC, callbacks) => {
+        if (callbacks.part1) {
+          callbacks.part1({
+            character_name: 'Vakhsh the Hider',
+            description_of_position: 'A stooped gnome archivist...',
+            reason_for_being_there: 'Guarding the scroll...',
+            distinctive_feature_or_mannerism: 'Taps temple...',
+            character_secret: 'Hears whispers...',
+            read_aloud_description: 'A patchwork figure...',
+            roleplaying_tips: 'Hushed tone...',
+          });
+        }
+        if (callbacks.part2) {
+          callbacks.part2({ relationships: { 'Other NPC': 'Some relationship' } });
+        }
+      });
+
+      wrapper = mount(NPCGenerator, { props: { premium: false } });
+      await flushPromises();
+      const input = wrapper.find('input#typeOfNPC');
+      await input.setValue('Vakhsh the Hider');
+      const form = wrapper.find('form');
+      await form.trigger('submit.prevent');
+      await flushPromises();
+
+      expect(seededInput.addReferenceForSeed).toHaveBeenCalledTimes(1);
+      expect(seededInput.writeBackPromotedNPC).toHaveBeenCalledTimes(1);
     });
   });
 

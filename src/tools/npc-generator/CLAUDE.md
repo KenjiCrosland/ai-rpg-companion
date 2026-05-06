@@ -16,8 +16,8 @@ The NPC Generator follows a critical design principle established in 2026:
 
 This means:
 - **Folders**: User's personal organization system. NPCs can be moved between folders freely without affecting their actual relationships to dungeons/settings.
-- **sourceType field**: Set by dungeon/setting generators when they create NPCs. Indicates the NPC was created by that generator (not manually placed in a folder).
-- **Reference Store** (`tool-references` in localStorage): Tracks actual relationships like `appears_in_dungeon`, `appears_in_setting`, `has_statblock`.
+- **sourceType field**: Set when an NPC is created via cross-tool flow (dungeon, setting, or item). Indicates the NPC was created by another tool (not manually). Paired with `sourceId` + `sourceName` (post-Phase-1 shape; older records used `itemName` and were migrated by `rename-npc-item-fields.mjs`).
+- **Reference Store** (`tool-references` in localStorage): Tracks actual relationships like `appears_in_dungeon`, `appears_in_setting`, `has_statblock`, `mentioned_in_item`, `inspired_by_item`. Edge writes for cross-tool promotions go through `addReferenceForSeed` in `src/util/seeded-input.mjs`; the relationship name is looked up from `PROMOTION_RELATIONSHIPS` by `(source_tool, destination_type)`.
 
 **Never infer dungeon/setting membership from folder names alone.** A folder named "The Cursed Tomb" doesn't mean NPCs in it are actually in that dungeon - they might just be organized there.
 
@@ -231,9 +231,10 @@ NPCs are stored in a folder-based structure with additional metadata fields:
 ```
 
 **Key Fields:**
-- `npc_id`: Unique identifier in format `npc_${timestamp}_${random}`
-- `sourceType`: Only set when NPC created by dungeon/setting generator ('dungeon' or 'setting')
-- `typeOfPlace`: Original context - either user input OR dungeon/setting name if created by generator
+- `npc_id`: Unique identifier in format `npc_${timestamp}_${random}` — stable across renames, used for all cross-tool linkage
+- `sourceType`: Set when NPC created via a cross-tool flow ('dungeon', 'setting', or 'item')
+- `sourceId` + `sourceName`: Identifier and display name of the source-tool entity (paired with `sourceType`). For item-sourced NPCs, both equal the item's name (items use `name` as id). For dungeon/setting-sourced NPCs, `sourceId` is the dungeon/setting's stable id.
+- `typeOfPlace`: Free-form prose. For item-sourced NPCs it's the role_brief (e.g., "Oracle who received the vision of Whisper Crown"). For dungeon/setting-sourced NPCs it's the dungeon/setting name. Used in subtitle rendering and as fallback prefill on edit.
 - `statblock_name` + `statblock_folder`: References to statblocks in shared storage
 
 ### Data Migrations
@@ -253,25 +254,33 @@ The NPC Generator runs several migrations on mount to maintain data integrity:
 - **Why this is safe**: `typeOfPlace` is only set by dungeon/setting generators, never by user folder organization
 - **Example**: NPC with `typeOfPlace: "The Cursed Tomb"` gets `sourceType: "dungeon"` if a dungeon named "The Cursed Tomb" exists
 
-**5. `migrateNPCStatblockReferences()`**: Creates references in reference store for NPCs with statblocks
+**5. `migrateNPCStatblockReferences()`**: Creates references in reference store for NPCs with statblocks. Skips NPCs whose `statblock_name` no longer resolves in storage (so the orphan-sweep doesn't have to clean up after it).
+
+**Global migrations** (registered in `src/util/migration-runner.mjs`, run once per browser, also touch this store):
+- `extract-existing-references` — backfills `tool-references` from legacy data shapes
+- `rename-npc-item-fields` — promotes `itemName` → `sourceId/sourceName` on item-sourced NPCs
+- `assign-dungeon-ids` / `assign-setting-ids` — give legacy dungeons/settings stable ids and rewrite affected refs
+- `sweep-orphan-references` — drops refs whose source/target no longer resolves
 
 **Important**: Never infer `sourceType` from folder names. Folders are for user organization only.
 
-### Dungeon/Setting Link Logic
+### Source Link Logic
 
-How the subtitle link "From [Dungeon/Setting Name]" is determined:
+How the subtitle link "From [Source Name]" is determined and how it handles deletion:
 
-**`computedOrigin` (returns dungeon/setting name for display):**
-1. Check NPC's `sourceType` field - if set, return `typeOfPlace`
-2. Fallback: Check reference store for `appears_in_dungeon` or `appears_in_setting` relationship
-3. Return target name from reference if found
+**`computedOrigin` (returns the display string in the subtitle):**
+1. Check NPC's `sourceType` field — if set and `typeOfPlace` is meaningful, return `typeOfPlace`.
+2. Fallback: walk the reference store for `appears_in_dungeon`, `appears_in_setting`, or `mentioned_in_item` and return the target name.
 
-**`computedSourceType` (returns 'dungeon' or 'setting' for link navigation):**
-1. Check NPC's `sourceType` field - if 'dungeon' or 'setting', return it
-2. Fallback: Check reference store for `appears_in_dungeon` or `appears_in_setting` relationship
-3. Return relationship type if found
+**`computedSourceType`** returns `'dungeon'`, `'setting'`, `'item'`, or null. **`computedSourceId`** returns the source entity's id (item name, dungeon id, setting id) for the render-time existence check. **`computedSourceName`** returns the literal name used to linkify within the origin prose.
 
-**Result**: NPCs created by dungeon/setting generators show clickable links. NPCs just organized in folders don't.
+**`(deleted)` marker:** NPCCard calls `sourceExists(sourceType, sourceId)` from `src/util/seeded-input.mjs`. If the source has been deleted, the subtitle drops the link and appends a muted-italic " (deleted)" marker. Auto-cleanup: the next NPC save (`saveCurrentNPCToList`) detects the same condition and drops the stale `sourceId/sourceName` from the persisted record.
+
+**Tool-name lookup:** `getToolForSourceType(sourceType)` returns `{id, name}` for the source tool — used by toast messages and back-link navigation. Adds a row in `SOURCE_TYPE_TO_TOOL` when extending.
+
+**Cross-tool promotion flow (Item → NPC):** when the user clicks "Create NPC" on an item stub, `RelatedNPCsSection.vue` navigates to the NPC Generator with `{fromType: 'item', fromId: itemName, entityName: stubName}`. The NPC Generator's mount handler calls `loadSeededInput` from `seeded-input.mjs`, sets `pendingSeed`, prefills `typeOfPlace` via `buildPrefillForSeed`. After Part 2 completes, `finalizePendingSeed` writes the canonical `mentioned_in_item` reference and back-links the item-stub via `addReferenceForSeed` and `writeBackPromotedNPC`. Setting/dungeon-tab promotion follows the same shape with different `fromType`. See `src/util/seeded-input.mjs` and the root `CLAUDE.md` "Cross-Tool Reference Substrate" section.
+
+**Renames propagate through `renameNPCReferences`** (in `src/util/npc-storage.mjs`) — called from `handleSaveEdit` when the NPC's character_name changes. Walks `tool-references` (source/target name fields), `savedItems[*].related_npcs[*].name`, setting and dungeon stub `name`s — all matched by `npc_id`. Display names stay in sync without breaking links (links use `npc_id`).
 
 ### Data Manager Integration
 

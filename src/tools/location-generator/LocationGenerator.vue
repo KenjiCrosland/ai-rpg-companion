@@ -51,6 +51,8 @@
   <footer class="ogl-footer">
     <div class="footer-title">Kenji's Game Master Tools</div>
     <div class="footer-links">
+      <cdr-link href="https://cros.land/kenjis-game-master-tool-updates/" target="_blank">What's new</cdr-link>
+      <span class="separator">•</span>
       <cdr-link href="https://cros.land" target="_blank">Blog</cdr-link>
       <span class="separator">•</span>
       <cdr-link href="https://discord.gg/DJVTbkH4VG" target="_blank">Discord</cdr-link>

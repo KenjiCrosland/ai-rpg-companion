@@ -14,6 +14,9 @@
       · <a href="/ai-rpg-location-generator/">Location Generator</a>
       · <a href="/ai-powered-dnd-5e-monster-statblock-generator/">Statblock Generator</a>
     </p>
+    <p class="footer-links">
+      <a href="https://cros.land/kenjis-game-master-tool-updates/" target="_blank" rel="noopener">What's new</a>
+    </p>
   </footer>
 </template>
 

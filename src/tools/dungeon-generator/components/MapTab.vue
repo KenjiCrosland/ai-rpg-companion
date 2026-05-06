@@ -54,12 +54,12 @@
           Click a room number to add details
         </p>
         <div class="generate-button-container">
-          <cdr-button @click="handleGenerateMapClick" modifier="dark" size="small">
+          <ParActionButton @click="handleGenerateMapClick" size="small">
             {{ dungeonStore.currentDungeon && dungeonStore.currentDungeon.rooms ? 'Re-generate Map' : 'Generate Map' }}
-          </cdr-button>
-          <cdr-button v-if="mapExists" @click="handleDownloadMapClick" modifier="dark" size="small">
+          </ParActionButton>
+          <ParActionButton v-if="mapExists" @click="handleDownloadMapClick" size="small">
             Download Map
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
     </div>
@@ -70,12 +70,12 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import DungeonMap from './DungeonMap.vue';
 import MapSidebar from './MapSidebar.vue';
 import RoomDescription from './RoomDescription.vue';
-import { CdrButton } from '@rei/cedar';
 
 const dungeonStore = useDungeonStore();
 

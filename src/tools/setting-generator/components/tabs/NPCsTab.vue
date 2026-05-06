@@ -13,8 +13,8 @@
         Examples: "A smuggler secretly working for the Queen", "The emperor's eccentric advisor", "The village drunk"
       </template>
     </cdr-input>
-    <cdr-button @click="generateDetailedNPCDescription(null)" style="margin: 2rem 0;" modifier="dark"
-      :full-width="true">Create NPC</cdr-button>
+    <ParActionButton @click="generateDetailedNPCDescription(null)" style="margin: 2rem 0;"
+      :full-width="true">Create NPC</ParActionButton>
 
     <div v-if="loadingNewNPC">
       <NPCSkeleton />
@@ -39,8 +39,8 @@
             <h2>{{ npc.name }}</h2>
             <p>{{ npc.description }}</p>
             <div style="display: flex; gap: 0.5rem;">
-              <cdr-button @click="generateDetailedNPCDescription(index)">Generate Detailed Description</cdr-button>
-              <cdr-button @click="deleteNPC(index)" modifier="secondary" size="small">Delete</cdr-button>
+              <ParActionButton @click="generateDetailedNPCDescription(index)">Generate Detailed Description</ParActionButton>
+              <ParActionButton @click="deleteNPC(index)" variant="secondary" size="small">Delete</ParActionButton>
             </div>
           </div>
 
@@ -74,9 +74,9 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, reactive, watch, nextTick, computed, onMounted, onUnmounted } from 'vue';
 import {
-  CdrButton,
   CdrInput,
   CdrAccordionGroup,
   CdrAccordion,
@@ -89,7 +89,7 @@ import {
   createRelationshipAndTipsPrompt,
   generateSingleRelationshipPrompt,
 } from '../../prompts/index.mjs';
-import { saveNPCToStorage, settingNPCToCanonical, normalizeSettingNPC } from '@/util/npc-storage.mjs';
+import { saveNPCToStorage, settingNPCToCanonical, normalizeSettingNPC, findNPCByIdAcrossFolders, getNPCStatblockRef } from '@/util/npc-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
 
 const props = defineProps({
@@ -120,18 +120,14 @@ const enrichedNPCs = computed(() => {
 
   if (!props.setting?.npcs) return [];
 
-  const settingName = props.setting.setting_overview?.name
-    || props.setting.place_name
-    || 'Setting NPCs';
   const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-  const sharedNPCs = stored[settingName] || [];
 
   return props.setting.npcs.map(settingNPC => {
-    // If NPC has an ID, try to fetch from shared storage
+    // If NPC has an ID, try to fetch from shared storage. Walk every
+    // folder rather than guessing the setting-name folder — the user may
+    // have moved the canonical NPC to a folder of their own choosing.
     if (settingNPC.npc_id) {
-      const sharedNPC = sharedNPCs.find(n =>
-        (n.npc_id === settingNPC.npc_id || n.id === settingNPC.npc_id)
-      );
+      const sharedNPC = findNPCByIdAcrossFolders(stored, settingNPC.npc_id);
 
       if (sharedNPC) {
         // Use shared storage data, but preserve setting-specific fields
@@ -146,8 +142,11 @@ const enrichedNPCs = computed(() => {
           roleplaying_tips: sharedNPC.npcDescriptionPart1?.roleplaying_tips,
           combined_details: sharedNPC.npcDescriptionPart1?.combined_details,
           relationships: sharedNPC.npcDescriptionPart2?.relationships || {},
-          statblock_name: sharedNPC.statblock_name || settingNPC.statblock_name,
-          statblock_folder: sharedNPC.statblock_folder || settingNPC.statblock_folder,
+          // Resolve statblock ref via the centralized helper — handles
+          // the canonical (nested) write path the NPC Generator uses,
+          // the legacy top-level location, and the setting-local
+          // fallback for NPCs not yet promoted to shared storage.
+          ...getNPCStatblockRef(sharedNPC, settingNPC),
         };
       }
     }
@@ -300,12 +299,16 @@ const handleSaveEdit = (index, editedData) => {
     const stored = JSON.parse(
       localStorage.getItem('npcGeneratorNPCs') || '{}'
     );
-    if (stored[settingName]) {
-      const existingNPC = stored[settingName].find(n =>
+    // Legacy id-recovery for renamed NPCs without a stable npc_id. Walk
+    // every folder; folder organization is the user's, not ours.
+    for (const folder of Object.values(stored)) {
+      if (!Array.isArray(folder)) continue;
+      const existingNPC = folder.find(n =>
         n.npcDescriptionPart1?.character_name === originalNPC.name
       );
       if (existingNPC) {
-        existingId = existingNPC.npc_id || existingNPC.id;
+        existingId = existingNPC.npc_id;
+        break;
       }
     }
   }
@@ -347,7 +350,7 @@ const handleSaveEdit = (index, editedData) => {
 // -------------------------
 const deleteNPC = async (index) => {
   const npc = props.setting.npcs[index];
-  const npcId = npc?.npc_id || npc?.id;
+  const npcId = npc?.npc_id;
   const npcName = npc?.name || 'this NPC';
 
   if (!npcId) {
@@ -369,8 +372,18 @@ const deleteNPC = async (index) => {
 
   const settingName = props.setting.setting_overview?.name || props.setting.place_name;
 
-  // Always show current setting
+  // Always show the current setting; supplement with any other settings
+  // the same NPC also appears in (locations.settings includes ALL of them).
+  // De-dupe by name so the current setting isn't double-listed.
   confirmMessage += `- Setting Generator (${settingName})\n`;
+  const otherSettings = locations.settings.filter(s => s !== settingName);
+  if (otherSettings.length > 0) {
+    if (otherSettings.length === 1) {
+      confirmMessage += `- Setting Generator (${otherSettings[0]})\n`;
+    } else {
+      confirmMessage += `- Setting Generator (${otherSettings.length} other settings)\n`;
+    }
+  }
 
   // Show all NPC Generator folders (don't filter out current setting name)
   if (locations.npcGenerator.length > 0) {
@@ -395,7 +408,12 @@ const deleteNPC = async (index) => {
     const { removeReferencesForEntity } = await import('@/util/reference-storage.mjs');
     removeReferencesForEntity('npc', npcId);
 
-    // Delete from all locations
+    // Reset cross-tool stubs (other settings, dungeons, items) so they
+    // unpromote rather than retain a stale npc_id. The current setting's
+    // entry is removed explicitly below.
+    const { resetStubsForDeletedNPC } = await import('@/util/seeded-input.mjs');
+    resetStubsForDeletedNPC(npcId);
+
     deleteNPCFromAllLocations(npcId);
 
     // Update local state

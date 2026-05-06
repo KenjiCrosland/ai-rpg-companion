@@ -33,8 +33,8 @@
               <p v-if="location.setting_scale">{{ location.setting_scale }}</p>
 
               <div class="button-group">
-                <cdr-button @click="startEditingLocation(index)" modifier="secondary">Edit Location</cdr-button>
-                <cdr-button @click="$emit('generate-sublocation', {
+                <ParActionButton @click="startEditingLocation(index)" variant="secondary">Edit Location</ParActionButton>
+                <ParActionButton @click="$emit('generate-sublocation', {
                   sublocationIndex: index,
                   subLocationName: location.name,
                   subLocationDescription: location.description,
@@ -43,7 +43,7 @@
                   title: location.title
                 })">
                   Generate Full Description
-                </cdr-button>
+                </ParActionButton>
               </div>
             </div>
 
@@ -64,8 +64,8 @@
               </cdr-input>
 
               <div class="button-group">
-                <cdr-button @click="saveEditLocation">Save Changes</cdr-button>
-                <cdr-button @click="cancelEditLocation" modifier="secondary">Cancel</cdr-button>
+                <ParActionButton @click="saveEditLocation">Save Changes</ParActionButton>
+                <ParActionButton @click="cancelEditLocation" variant="secondary">Cancel</ParActionButton>
               </div>
             </div>
           </div>
@@ -112,21 +112,21 @@
         <h3>Create New Important Location</h3>
         <cdr-input id="location-name" v-model="newLocationName" label="Location Name" />
         <cdr-input :rows="4" id="location-description" v-model="newLocationDescription" label="Location Description" />
-        <cdr-button style="margin-top: 2rem;" @click="addNewSubLocation" modifier="secondary">Add Location</cdr-button>
+        <ParActionButton style="margin-top: 2rem;" @click="addNewSubLocation" variant="secondary">Add Location</ParActionButton>
       </div>
       <hr style="margin-top: 2rem">
-      <cdr-button style="margin-top: 3rem" @click="generateSubLocations" modifier="dark">
+      <ParActionButton style="margin-top: 3rem" @click="generateSubLocations">
         Re-Generate Important Locations for {{ setting.place_name }}
-      </cdr-button>
+      </ParActionButton>
     </div>
 
     <div v-if="!(setting.importantLocations.length > 0) && !loadingSubLocations">
       <p>Important locations are key sites within the setting that can serve as focal points for adventures or
         intrigue. They can be anything from a grand castle to a hidden underground lair. Generate a full location
         description to flesh out the setting.</p>
-      <cdr-button modifier="dark" @click="generateSubLocations">
+      <ParActionButton @click="generateSubLocations">
         Generate Important Locations for {{ setting.place_name }}
-      </cdr-button>
+      </ParActionButton>
     </div>
 
     <div v-if="loadingSubLocations">
@@ -136,6 +136,7 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, watch } from 'vue';
 import {
   CdrButton,

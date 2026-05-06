@@ -106,16 +106,16 @@
                     <input class="party-number-input" type="number" min="1" max="20" :value="group.level || ''"
                       placeholder="5" @input="updateGroupLevel(index, $event.target.value)" />
                   </div>
-                  <cdr-button v-if="partyGroups.length > 1" size="small" icon-only @click="removePartyGroup(index)">
+                  <ParActionButton v-if="partyGroups.length > 1" size="small" icon-only @click="removePartyGroup(index)">
                     <template #icon>
                       <icon-x-sm />
                     </template>
-                  </cdr-button>
+                  </ParActionButton>
                 </div>
 
-                <cdr-button size="small" modifier="secondary" @click="addPartyGroup">
+                <ParActionButton size="small" variant="secondary" @click="addPartyGroup">
                   + Add Group
-                </cdr-button>
+                </ParActionButton>
               </div>
 
               <EncounterMonsterList :monsters="encounterMonsters" :party-size="totalPartySize"
@@ -129,17 +129,17 @@
           </section>
 
           <!-- Generate Button -->
-          <cdr-button class="generate-button" :full-width="true" @click="generateEncounter" :disabled="loading">
+          <ParActionButton class="generate-button" :full-width="true" @click="generateEncounter" :disabled="loading">
             {{ loading ? 'Generating...' : 'Generate Encounter' }}
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
 
       <!-- ZONE 3: Navigation button (outside card) -->
       <div v-if="generatedEncounter && !loading" class="output-navigation">
-        <cdr-button @click="resetEncounter" modifier="secondary">
+        <ParActionButton @click="resetEncounter" variant="secondary">
           ← Create New Encounter
-        </cdr-button>
+        </ParActionButton>
       </div>
 
       <!-- Output card (separate from form) -->
@@ -152,10 +152,10 @@
         </div>
         <div v-else-if="generatedEncounter && generatedEncounter.place_name" class="encounter-header">
           <h3>{{ generatedEncounter.place_name }}</h3>
-          <cdr-button v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" modifier="secondary"
+          <ParActionButton v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" variant="secondary"
             size="small" @click="startEditingEncounter">
             Edit
-          </cdr-button>
+          </ParActionButton>
         </div>
 
         <!-- Skeleton for read-aloud while Call 1 loads -->
@@ -210,8 +210,8 @@
           </cdr-input>
 
           <div class="button-group">
-            <cdr-button size="small" @click="saveEditEncounter">Save Changes</cdr-button>
-            <cdr-button size="small" @click="cancelEditEncounter" modifier="secondary">Cancel</cdr-button>
+            <ParActionButton size="small" @click="saveEditEncounter">Save Changes</ParActionButton>
+            <ParActionButton size="small" @click="cancelEditEncounter" variant="secondary">Cancel</ParActionButton>
           </div>
         </div>
 
@@ -234,13 +234,13 @@
             <h4>{{ monster.name }} <span class="monster-qty">×{{ monster.quantity }}</span></h4>
 
             <Statblock v-if="monster.statblock" :monster="monster.statblock" :premium="premium"
-              :columns="'two_columns'" />
+              :columns="'two_columns'" :readonly="true" />
 
             <div v-else class="generate-statblock-section">
               <p>Statblock not available for this monster.</p>
-              <cdr-button v-if="!monster.loadingStatblock" @click="generateStatblock(index)" modifier="secondary">
+              <ParActionButton v-if="!monster.loadingStatblock" @click="generateStatblock(index)" variant="secondary">
                 Generate Statblock
-              </cdr-button>
+              </ParActionButton>
               <div v-else class="loading-statblock">
                 Generating statblock...
               </div>
@@ -255,30 +255,30 @@
               :options="folderMoveOptions" />
             <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name"
               background="secondary" />
-            <cdr-button @click="handleFolderMove" :disabled="!canMoveEncounter">
+            <ParActionButton @click="handleFolderMove" :disabled="!canMoveEncounter">
               Move
-            </cdr-button>
+            </ParActionButton>
           </div>
         </div>
 
         <!-- Actions inside card -->
         <div class="output-actions" v-if="!loading && !generatedEncounter.loading_details">
           <div class="management-actions">
-            <cdr-button modifier="secondary" size="small" @click="showFolderMover = !showFolderMover">
+            <ParActionButton variant="secondary" size="small" @click="showFolderMover = !showFolderMover">
               {{ showFolderMover ? 'Cancel' : 'Move to Folder' }}
-            </cdr-button>
-            <cdr-button modifier="secondary" size="small" @click="deleteEncounter">
+            </ParActionButton>
+            <ParActionButton variant="secondary" size="small" @click="deleteEncounter">
               Delete
-            </cdr-button>
+            </ParActionButton>
           </div>
           <div class="export-actions-wrapper">
             <div class="export-actions">
-              <cdr-button @click="exportAsPlainText" modifier="secondary">
+              <ParActionButton @click="exportAsPlainText" variant="secondary">
                 Copy as Plain Text
-              </cdr-button>
-              <cdr-button @click="exportToMarkdown">
+              </ParActionButton>
+              <ParActionButton @click="exportToMarkdown">
                 Copy as Homebrewery Markdown
-              </cdr-button>
+              </ParActionButton>
             </div>
 
             <!-- Homebrewery link shown after copying markdown -->
@@ -297,43 +297,40 @@
 
       <!-- Footer with save/load or upgrade prompt -->
       <div class="encounter-footer">
-        <!-- Free users: Show message + unlock button -->
-        <div v-if="!premium">
-          <p>
-            All encounter generations are currently free. Encounter data is saved on this browser. To save/load
-            encounter
-            data for use in another computer or browser requires a premium Patreon subscription.
-          </p>
-          <div class="patreon-universal-button">
-            <a :href="patreonLoginUrl">
-              <div class="patreon-responsive-button-wrapper">
-                <div class="patreon-responsive-button">
-                  <img class="patreon_logo"
-                    src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                    alt="Unlock with Patreon"> Unlock with Patreon
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
+        <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <template #body>
+            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your encounters across devices.</p>
+          </template>
+          <template #features>
+            <li>Cross-device save and load — your encounters sync between browsers and devices.</li>
+            <li>
+              <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+            </li>
+          </template>
+        </PatreonCallout>
 
-        <!-- Premium users: Show save/load button -->
-        <div v-else>
+        <!-- Premium users: parchment surface so the active status reads
+             as a coherent block, matching the upsell callout above. -->
+        <ParCallout v-else>
           <p>Encounter data is saved on this browser. Export to a file to use on another device.</p>
-          <cdr-button modifier="dark" @click="showDataManagerModal = true">
+          <ParActionButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </cdr-button>
-        </div>
+          </ParActionButton>
+        </ParCallout>
       </div>
     </div>
   </GeneratorLayout>
 </template>
 
 <script setup>
+import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, computed, onMounted, watch } from 'vue';
-import { CdrButton, CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import { CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
+import PatreonCallout from '@/components/PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Statblock from '@/components/Statblock.vue';
 import MonsterPicker from './components/MonsterPicker.vue';
 import EncounterMonsterList from './components/EncounterMonsterList.vue';
@@ -354,6 +351,7 @@ import {
   getCreatureIntelligence
 } from './prompts/encounter-prompt.mjs';
 import { buildEnrichedMonsterBrief, getEncounterProfile } from '@/util/encounter-enrichment.mjs';
+import { removeReferencesForEntity, getAllReferences } from '@/util/reference-storage.mjs';
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
 import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
@@ -908,11 +906,21 @@ function deleteEncounter() {
   if (!confirm(`Delete "${encounterName}"? This cannot be undone.`)) return;
 
   const folderName = activeFolder.value || 'Uncategorized';
-  savedEncounters.value[folderName].splice(activeEncounterIndex.value, 1);
+  const deletedIndex = activeEncounterIndex.value;
+  const deletedEncounterId = `${folderName}__${deletedIndex}`;
+
+  savedEncounters.value[folderName].splice(deletedIndex, 1);
 
   // Reset state
   generatedEncounter.value = null;
   activeEncounterIndex.value = null;
+
+  // Encounters are keyed in `tool-references` as `${folder}__${index}`,
+  // so the splice above silently corrupts every ref pointing at an index
+  // greater than the deleted one (their slot now holds a different
+  // encounter). Drop the deleted encounter's refs and shift the rest.
+  removeReferencesForEntity('encounter', deletedEncounterId);
+  shiftEncounterReferencesAfterDelete(folderName, deletedIndex);
 
   // Clean up empty folder
   if (savedEncounters.value[folderName].length === 0 && folderName !== 'Uncategorized') {
@@ -926,6 +934,47 @@ function deleteEncounter() {
   localStorage.setItem('encounters', JSON.stringify(savedEncounters.value));
 
   toast.success('Encounter deleted');
+}
+
+// Decrement encounter target/source ids in the given folder that pointed at
+// an index greater than `deletedIndex`, so surviving refs continue to
+// resolve after the splice. Refs at exactly `deletedIndex` should already
+// have been removed via `removeReferencesForEntity` before this runs.
+function shiftEncounterReferencesAfterDelete(folderName, deletedIndex) {
+  const references = getAllReferences();
+  let shifted = false;
+
+  for (const ref of Object.values(references)) {
+    if (ref.target_type === 'encounter') {
+      const next = shiftEncounterId(ref.target_id, folderName, deletedIndex);
+      if (next !== null) {
+        ref.target_id = next;
+        shifted = true;
+      }
+    }
+    if (ref.source_type === 'encounter') {
+      const next = shiftEncounterId(ref.source_id, folderName, deletedIndex);
+      if (next !== null) {
+        ref.source_id = next;
+        shifted = true;
+      }
+    }
+  }
+
+  if (shifted) {
+    localStorage.setItem('tool-references', JSON.stringify(references));
+  }
+}
+
+function shiftEncounterId(encounterId, folderName, deletedIndex) {
+  if (typeof encounterId !== 'string') return null;
+  const sep = encounterId.lastIndexOf('__');
+  if (sep === -1) return null;
+  const refFolder = encounterId.slice(0, sep);
+  if (refFolder !== folderName) return null;
+  const idx = Number(encounterId.slice(sep + 2));
+  if (!Number.isInteger(idx) || idx <= deletedIndex) return null;
+  return `${refFolder}__${idx - 1}`;
 }
 
 // ─── Statblock generation ────────────────────────────────────────────────────
@@ -1876,12 +1925,11 @@ onMounted(async () => {
 
 /* ─── Encounter Footer ──────────────────────────────────────────────────── */
 .encounter-footer {
+  /* Visual chrome (text-align, background, border, radius) removed during
+     PatreonCallout migration — the callout owns its own surface treatment.
+     Layout properties (margin, padding) preserved. */
   margin-top: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  text-align: center;
+  padding: 0;
 
   p {
     margin: 0 0 1rem 0;

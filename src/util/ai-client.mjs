@@ -5,6 +5,15 @@
 import { getProviderConfig, getAIProvider, normalizeModel, PROVIDERS } from './ai-config.mjs';
 import { getAdapter } from './ai-adapters.mjs';
 
+// Vite statically replaces `process.env.NODE_ENV` at build time, so
+// this resolves to a literal boolean in production bundles. Previously
+// we used `import.meta.env.DEV` here, but babel-jest transpiles `.mjs`
+// files to CommonJS for Jest's runtime and CommonJS doesn't support
+// `import.meta` — every spec that transitively imported this file blew
+// up with "Cannot use 'import.meta' outside a module." This form parses
+// and runs in all three environments (Vite dev, Vite prod, Jest).
+const __DEV__ = process.env.NODE_ENV !== 'production';
+
 /**
  * Circuit Breaker State
  * Tracks provider failures and temporarily switches to fallback provider
@@ -149,7 +158,7 @@ export async function generateGptResponse(
   const modelToUse = providerConfig.model;
 
   // Log provider in dev mode
-  if (import.meta.env.DEV) {
+  if (__DEV__) {
     console.log(`🤖 Using AI provider: ${providerConfig.name} (${modelToUse})`);
     if (usingFallback) {
       console.log(`   ⚠️ Using fallback due to circuit breaker`);
@@ -193,7 +202,7 @@ export async function generateGptResponse(
       };
 
       let response;
-      if (import.meta.env.DEV) {
+      if (__DEV__) {
         // Development: Use Vite proxy - API key injected server-side
         const endpoint = providerConfig.devEndpoint;
         response = await fetch(endpoint, requestOptions);

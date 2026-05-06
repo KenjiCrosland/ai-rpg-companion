@@ -65,19 +65,30 @@ const parseRarity = (rarity) => {
 
 export function convertItemToMarkdown(item) {
   let markdown = `#### ${item.name}\n\n`;
-  markdown += `*${item.item_type}, ${parseRarity(item.rarity)}*\n\n`;
+  let attunement = '';
+  if (item.requires_attunement) {
+    const restriction = (item.attunement_restriction || '').trim();
+    attunement = restriction
+      ? ` (requires attunement ${restriction})`
+      : ' (requires attunement)';
+  }
+  markdown += `*${item.item_type}, ${parseRarity(item.rarity)}${attunement}*\n\n`;
   markdown += `:\n\n`;
-  markdown += `${item.physical_description}\n\n`;
-  markdown += `${item.lore}\n\n`;
-  if (item.modifier) {
-    markdown += `:\n\n`;
-    markdown += `${item.modifier}\n\n`;
+  if (item.physical_description) {
+    markdown += `${item.physical_description}\n\n`;
     markdown += `:\n\n`;
   }
-  Object.entries(item.features).forEach(([featureName, featureDescription]) => {
-    markdown += `**${featureName}**: ${featureDescription}\n\n`;
+  if (item.modifier_sentence) {
+    markdown += `*${item.modifier_sentence}*\n\n`;
+    markdown += `:\n\n`;
+  }
+  Object.entries(item.features || {}).forEach(([featureName, featureDescription]) => {
+    markdown += `**${featureName}.** ${featureDescription}\n\n`;
     markdown += `:\n\n`;
   });
+  if (item.lore) {
+    markdown += `**Lore.** ${item.lore}\n\n`;
+  }
 
   return addPageBreaks(markdown);
 }

@@ -14,15 +14,53 @@
  */
 
 import { extractExistingReferences } from './extract-existing-references.mjs';
+import { renameNPCItemFields } from './rename-npc-item-fields.mjs';
+import { promoteNPCIds } from './promote-npc-id.mjs';
+import { assignDungeonIds } from './assign-dungeon-ids.mjs';
+import { assignSettingIds } from './assign-setting-ids.mjs';
+import { dropNPCFolder } from './drop-npc-folder.mjs';
+import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
+import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-nested.mjs';
 
 /**
  * List of all migrations to run.
  * Each migration is { name: string, run: () => void }
  *
+ * Order matters when migrations touch the same data:
+ *   1. extract-existing-references — populates initial reference graph
+ *      from legacy data shapes.
+ *   2. rename-npc-item-fields — promotes legacy `itemName` on item-sourced
+ *      NPCs to the generic `sourceId`/`sourceName` pair. Runs before any
+ *      id migration that might touch the same records.
+ *   3. promote-npc-id — promote legacy `id` field on NPC records up to
+ *      `npc_id` and drop the legacy field. Runs after rename-npc-item-fields
+ *      (which may touch the same records' source-tagging fields) but
+ *      before any consumer that reads `npc_id` as the canonical id.
+ *   4. assign-dungeon-ids / assign-setting-ids — convert entities to
+ *      stable string ids and rewrite refs that targeted them by name or
+ *      numeric value.
+ *   5. drop-npc-folder — remove the `npc_folder` denormalization from
+ *      every cross-tool stub. Substrate lookups walk by id now; the
+ *      cached folder hint is dead weight and a stale-cache hazard.
+ *   6. sweep-orphan-references — drops any refs whose source/target no
+ *      longer resolves; runs after the id migrations so their post-
+ *      rewrite refs aren't seen as orphans.
+ *   7. promote-npc-statblock-ref-to-nested — moves canonical NPC
+ *      statblock_name/folder from top-level to npcDescriptionPart1.
+ *      Lets `getNPCStatblockRef` drop its legacy-top-level fallback
+ *      branch and removes the dual-read pattern from the codebase.
+ *
  * Add new migrations to the end of this array.
  */
 const migrations = [
-  { name: 'extract-existing-references', run: extractExistingReferences }
+  { name: 'extract-existing-references', run: extractExistingReferences },
+  { name: 'rename-npc-item-fields', run: renameNPCItemFields },
+  { name: 'promote-npc-id', run: promoteNPCIds },
+  { name: 'assign-dungeon-ids', run: assignDungeonIds },
+  { name: 'assign-setting-ids', run: assignSettingIds },
+  { name: 'drop-npc-folder', run: dropNPCFolder },
+  { name: 'sweep-orphan-references', run: sweepOrphanReferences },
+  { name: 'promote-npc-statblock-ref-to-nested', run: promoteNPCStatblockRefToNested },
 ];
 
 /**

@@ -29,9 +29,9 @@
         </cdr-checkbox>
       </cdr-form-group>
       <div class="generation-button">
-        <cdr-button size="small" @click="generateDescription" modifier="dark">
+        <ParActionButton size="small" @click="generateDescription">
           Generate Description
-        </cdr-button>
+        </ParActionButton>
       </div>
     </div>
     <div v-if="activeView === 'loading'">
@@ -57,12 +57,12 @@
           </template>
         </div>
         <div class="generation-button">
-          <cdr-button size="small" @click="generateDescription" modifier="dark">
+          <ParActionButton size="small" @click="generateDescription">
             Re-Generate Description
-          </cdr-button>
-          <cdr-button size="small" @click="startEditingRoom" modifier="secondary">
+          </ParActionButton>
+          <ParActionButton size="small" @click="startEditingRoom" variant="secondary">
             Edit Room
-          </cdr-button>
+          </ParActionButton>
         </div>
       </div>
 
@@ -90,8 +90,8 @@
         </cdr-input>
 
         <div class="button-group">
-          <cdr-button size="small" @click="saveEditRoom">Save Changes</cdr-button>
-          <cdr-button size="small" @click="cancelEditRoom" modifier="secondary">Cancel</cdr-button>
+          <ParActionButton size="small" @click="saveEditRoom">Save Changes</ParActionButton>
+          <ParActionButton size="small" @click="cancelEditRoom" variant="secondary">Cancel</ParActionButton>
         </div>
       </div>
     </div>
@@ -109,6 +109,7 @@
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, watch, onMounted, computed } from 'vue';
 import { CdrButton, CdrList, CdrToggleGroup, CdrToggleButton, CdrInput, CdrSelect, CdrFormGroup, CdrCheckbox, CdrTooltip, IconInformationStroke } from '@rei/cedar';
 import RoomSkeleton from './skeletons/RoomSkeleton.vue';

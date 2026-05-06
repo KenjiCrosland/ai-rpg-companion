@@ -63,7 +63,7 @@ import { CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
   border: 1.5px solid #c9b99a;
   border-top: 3px solid #7b2d26;
   border-radius: 2px;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   overflow: hidden;
   margin-bottom: 1.5rem;
 }

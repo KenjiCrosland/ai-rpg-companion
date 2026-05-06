@@ -25,7 +25,7 @@ export async function generateLocationResponse(
         }),
       };
       let response;
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         // Development: Use Vite proxy - API key injected server-side
         response = await fetch(
           '/api/ai/openai',

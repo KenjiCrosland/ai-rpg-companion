@@ -49,13 +49,13 @@
               <h2>{{ npc.name }}</h2>
               <p>{{ npc.short_description }}</p>
               <div style="display: flex; gap: 0.5rem;">
-                <cdr-button @click="dungeonStore.generateDungeonNPC(index)"
+                <ParActionButton @click="dungeonStore.generateDungeonNPC(index)"
                   :disabled="dungeonStore.currentlyLoadingNPCs[index]">
                   Generate Full Description
-                </cdr-button>
-                <cdr-button @click="dungeonStore.deleteNPC(index)" modifier="secondary" size="small">
+                </ParActionButton>
+                <ParActionButton @click="dungeonStore.deleteNPC(index)" variant="secondary" size="small">
                   Delete
-                </cdr-button>
+                </ParActionButton>
               </div>
             </div>
 
@@ -88,8 +88,8 @@
                 <p><strong>Statblock not found</strong></p>
                 <p>The statblock "{{ npc.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
                 <div class="button-group">
-                  <cdr-button @click="generateNpcStatblock(index, premium)" size="small">Regenerate Statblock</cdr-button>
-                  <cdr-button @click="clearNpcStatblockReference(index)" modifier="secondary" size="small">Clear Reference</cdr-button>
+                  <ParActionButton @click="generateNpcStatblock(index, premium)" size="small">Regenerate Statblock</ParActionButton>
+                  <ParActionButton @click="clearNpcStatblockReference(index)" variant="secondary" size="small">Clear Reference</ParActionButton>
                 </div>
               </div>
 
@@ -98,17 +98,22 @@
                 class="statblock-limit-message">
                 <p><strong>Statblock generation limit reached</strong></p>
                 <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
-                <div class="patreon-universal-button">
-                  <a :href="patreonLoginUrl">
-                    <div class="patreon-responsive-button-wrapper">
-                      <div class="patreon-responsive-button">
-                        <img class="patreon_logo"
-                          src="https://cros.land/wp-content/plugins/patreon-connect/assets/img/patreon-logomark-on-coral.svg"
-                          alt="Unlock with Patreon"> Unlock with Patreon
-                      </div>
-                    </div>
-                  </a>
-                </div>
+                <!-- Inline limit-reached: pass empty body and aside slots
+                     to suppress those paragraphs entirely. The surrounding
+                     "Statblock generation limit reached" heading already
+                     does the framing; the callout strips down to PREMIUM
+                     label → expandable → button. -->
+                <PatreonCallout :patreon-url="patreonLoginUrl">
+                  <template #body></template>
+                  <template #aside></template>
+                  <template #features>
+                    <li>Unlimited statblock generation — no daily cap.</li>
+                    <li>Cross-device save and load — your dungeons sync between browsers and devices.</li>
+                    <li>
+                      <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+                    </li>
+                  </template>
+                </PatreonCallout>
               </div>
 
               <!-- Simple form to generate a new statblock for the NPC -->
@@ -125,7 +130,7 @@
                   Creature is a spellcaster
                 </cdr-checkbox>
                 <!-- Submit button -->
-                <cdr-button class="monster-form-button" type="submit" style="margin-top: 1rem;"
+                <ParActionButton class="monster-form-button" type="submit" style="margin-top: 1rem;"
                   :disabled="dungeonStore.npcStatblockLoadingStates[index]?.generating">
                   {{
                     dungeonStore.npcStatblockLoadingStates[index]?.generating
@@ -134,7 +139,7 @@
                         ? 'Re-generate Statblock'
                         : 'Generate Statblock')
                   }}
-                </cdr-button>
+                </ParActionButton>
               </form>
             </div>
           </div>
@@ -151,28 +156,30 @@
           Examples: "A trapped explorer seeking help", "A ghost haunting the corridors", "A lost child"
         </template>
       </cdr-input>
-      <cdr-button style="margin-top: 2rem" @click="createNPC" :disabled="dungeonStore.currentlyLoadingNPC">
+      <ParActionButton style="margin-top: 2rem" @click="createNPC" :disabled="dungeonStore.currentlyLoadingNPC">
         Add NPC
-      </cdr-button>
+      </ParActionButton>
     </cdr-form-group>
   </div>
 </template>
 
 <script setup>
+import { ParActionButton } from "@/parchment";
 import { ref, reactive, computed, onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
 import Statblock from '@/components/Statblock.vue';
 import NPCCard from '@/components/NPCCard.vue';
-import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC } from '@/util/npc-storage.mjs';
+import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC, findNPCByIdAcrossFolders, getNPCStatblockRef } from '@/util/npc-storage.mjs';
 import { getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
 import { generateGptResponse } from "@/util/ai-client.mjs";
+import PatreonCallout from '@/components/PatreonCallout.vue';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { generateSingleRelationshipPrompt, validateSingleRelationshipResponse } from '../prompts/dungeon-npcs.mjs';
 import {
   CdrFormGroup,
   CdrInput,
-  CdrButton,
   CdrAccordionGroup,
   CdrAccordion,
   CdrSelect,
@@ -195,16 +202,14 @@ const enrichedNPCs = computed(() => {
 
   if (!dungeonStore.currentDungeon?.npcs) return [];
 
-  const dungeonTitle = dungeonStore.currentDungeon.dungeonOverview?.name || 'Dungeon NPCs';
   const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-  const sharedNPCs = stored[dungeonTitle] || [];
 
   return dungeonStore.currentDungeon.npcs.map(dungeonNPC => {
-    // If NPC has an ID, try to fetch from shared storage
+    // If NPC has an ID, try to fetch from shared storage. Walk every
+    // folder rather than guessing the dungeon-name folder — the user may
+    // have moved the canonical NPC to a folder of their own choosing.
     if (dungeonNPC.npc_id) {
-      const sharedNPC = sharedNPCs.find(n =>
-        (n.npc_id === dungeonNPC.npc_id || n.id === dungeonNPC.npc_id)
-      );
+      const sharedNPC = findNPCByIdAcrossFolders(stored, dungeonNPC.npc_id);
 
       if (sharedNPC) {
         // Use shared storage data, but preserve dungeon-specific fields
@@ -219,8 +224,11 @@ const enrichedNPCs = computed(() => {
           roleplaying_tips: sharedNPC.npcDescriptionPart1?.roleplaying_tips,
           combined_details: sharedNPC.npcDescriptionPart1?.combined_details,
           relationships: sharedNPC.npcDescriptionPart2?.relationships || {},
-          statblock_name: sharedNPC.statblock_name || dungeonNPC.statblock_name,
-          statblock_folder: sharedNPC.statblock_folder || dungeonNPC.statblock_folder,
+          // Resolve statblock ref via the centralized helper — handles
+          // the canonical (nested) write path the NPC Generator uses,
+          // the legacy top-level location, and the dungeon-local
+          // fallback for NPCs not yet promoted to shared storage.
+          ...getNPCStatblockRef(sharedNPC, dungeonNPC),
         };
 
         // Resolve statblock from storage if reference exists
@@ -410,17 +418,20 @@ function handleSaveEdit(index, editedData) {
   const originalName = npc.name;
   const dungeonTitle = dungeonStore.currentDungeon.dungeonOverview?.name || 'Dungeon NPCs';
 
-  // If renaming and no ID, look up existing NPC by original name to get its ID
+  // If renaming and no ID, look up existing NPC by original name to get its ID.
+  // Walk every folder; folder organization is the user's, not ours.
   if (!npc.npc_id && originalName !== editedData.name && npc.read_aloud_description) {
     const stored = JSON.parse(
       localStorage.getItem('npcGeneratorNPCs') || '{}'
     );
-    if (stored[dungeonTitle]) {
-      const existingNPC = stored[dungeonTitle].find(n =>
+    for (const folder of Object.values(stored)) {
+      if (!Array.isArray(folder)) continue;
+      const existingNPC = folder.find(n =>
         n.npcDescriptionPart1?.character_name === originalName
       );
       if (existingNPC) {
-        npc.npc_id = existingNPC.npc_id || existingNPC.id;
+        npc.npc_id = existingNPC.npc_id;
+        break;
       }
     }
   }
@@ -580,10 +591,11 @@ function clearNpcStatblockReference(index) {
 }
 
 .statblock-limit-message {
+  /* text-align: center removed during PatreonCallout migration — the
+     callout's actions row needs to flow inline, not stack centered. */
   margin-top: 1rem;
   margin-bottom: 1rem;
-  padding: 1.5rem;
-  text-align: center;
+  padding: 1.5rem 0;
 }
 
 .statblock-limit-message p {

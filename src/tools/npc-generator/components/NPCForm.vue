@@ -2,16 +2,16 @@
   <div :class="hidden ? 'hidden' : ''">
     <form @submit.prevent="handleRequestNPCDescription()">
       <cdr-input id="typeOfNPC" v-model="typeOfNPC" background="secondary" :label="labelText" required />
-      <cdr-button type="submit" :disabled="disabledButton">Generate NPC</cdr-button>
+      <ParActionButton type="submit" :disabled="disabledButton">Generate NPC</ParActionButton>
     </form>
   </div>
 </template>
 
 <script>
-import { CdrInput, CdrButton } from '@rei/cedar';
+import { CdrInput } from '@rei/cedar';
+import { ParActionButton } from '@/parchment';
 import { requestNPCDescription } from "../utils/request-npc-description.mjs";
 import '@rei/cedar/dist/style/cdr-input.css';
-import '@rei/cedar/dist/style/cdr-button.css';
 export default {
   data() {
     return {
@@ -41,8 +41,8 @@ export default {
     },
   },
   components: {
-    CdrButton,
-    CdrInput
+    CdrInput,
+    ParActionButton,
   },
   watch: {
     inputValue(newVal) {

@@ -27,8 +27,8 @@
         <cdr-input class="subject-form-input" id="years-ago" v-model="yearsAgo" background="secondary"
           label="Number of Years Ago:" type="number" required>
         </cdr-input>
-        <cdr-button class="generate-button" type="submit" :disabled="!subject || !yearsAgo || loadingEvents">Generate
-          Timeline Events</cdr-button>
+        <ParActionButton class="generate-button" type="submit" :disabled="!subject || !yearsAgo || loadingEvents">Generate
+          Timeline Events</ParActionButton>
       </form>
       <div class="accordion-container" v-if="potentialEvents.length === 0 && !loadingEvents">
         <h2>Potential Events</h2>
@@ -71,19 +71,19 @@
               {{ event.title }}
             </template>
             <cdr-text class="body-text">{{ event.details }}</cdr-text>
-            <cdr-button class="generate-button" modifier="secondary" @click="addEventToTimeline(index)"
-              :full-width="true" type="button">Add Event to Timeline</cdr-button>
+            <ParActionButton class="generate-button" variant="secondary" @click="addEventToTimeline(index)"
+              :full-width="true" type="button">Add Event to Timeline</ParActionButton>
           </cdr-accordion>
         </cdr-accordion-group>
       </div>
     </div>
 
-    <cdr-button class="clear-button" modifier="secondary" @click="clearLocalStorage" :full-width="true"
+    <ParActionButton class="clear-button" variant="secondary" @click="clearLocalStorage" :full-width="true"
       type="button">Clear
-      All Timeline Data</cdr-button>
-    <cdr-button :full-width="true" modifier="dark" @click="showDataManagerModal = true" style="margin-top: 1rem">
+      All Timeline Data</ParActionButton>
+    <ParActionButton :full-width="true" @click="showDataManagerModal = true" style="margin-top: 1rem">
       Save/Load Data from a File
-    </cdr-button>
+    </ParActionButton>
 
     <!-- Our new DataManagerModal component -->
     <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="true"
@@ -95,8 +95,8 @@
           <h2>{{ event.title }}</h2>
           <h3>{{ event.eventYear }}</h3>
           <cdr-text class="body-text">{{ event.details }}</cdr-text>
-          <cdr-button class="remove-button" modifier="secondary" @click="removeEventFromTimeline(index)"
-            :full-width="true" type="button">Remove From Timeline</cdr-button>
+          <ParActionButton class="remove-button" variant="secondary" @click="removeEventFromTimeline(index)"
+            :full-width="true" type="button">Remove From Timeline</ParActionButton>
         </cdr-card>
       </cdr-grid>
       <div v-if="!loadingSummary">
@@ -123,11 +123,11 @@
           <CdrSkeletonBone type="line" style="width:30%" />
         </CdrSkeleton>
       </div>
-      <cdr-button v-if="timelineSummary" class="generate-button" @click="generateTimelineSummary()" type="button"
-        :disabled="loadingSummary">Re-Generate Summary</cdr-button>
-      <cdr-button v-if="!timelineSummary && timelineEvents.length > 0" class="generate-button"
+      <ParActionButton v-if="timelineSummary" class="generate-button" @click="generateTimelineSummary()" type="button"
+        :disabled="loadingSummary">Re-Generate Summary</ParActionButton>
+      <ParActionButton v-if="!timelineSummary && timelineEvents.length > 0" class="generate-button"
         @click="generateTimelineSummary()" type="button" :disabled="loadingSummary">Generate Summary of
-        Timeline</cdr-button>
+        Timeline</ParActionButton>
 
     </div>
     <div class="exports">
@@ -143,7 +143,7 @@
           <li>Enjoy the beautifully formatted content!</li>
         </cdr-list>
         <div class="markdown-button">
-          <cdr-button @click="copyAsMarkdown">Copy as Markdown</cdr-button>
+          <ParActionButton @click="copyAsMarkdown">Copy as Markdown</ParActionButton>
         </div>
       </div>
       <div class="instructions">
@@ -156,7 +156,7 @@
           <li>Enjoy the beautifully formatted content!</li>
         </cdr-list>
         <div class="markdown-button">
-          <cdr-button @click="copyPlainText">Copy as Plain Text</cdr-button>
+          <ParActionButton @click="copyPlainText">Copy as Plain Text</ParActionButton>
         </div>
       </div>
     </div>
@@ -170,7 +170,6 @@ import {
   CdrAccordion,
   CdrAccordionGroup,
   CdrInput,
-  CdrButton,
   CdrCard,
   CdrSkeleton,
   CdrSkeletonBone,
@@ -179,6 +178,7 @@ import {
   CdrGrid,
   CdrList
 } from "@rei/cedar";
+import { ParActionButton } from "@/parchment";
 import "@rei/cedar/dist/cdr-fonts.css";
 import "@rei/cedar/dist/reset.css";
 import "@rei/cedar/dist/style/cdr-accordion.css";
@@ -200,7 +200,7 @@ export default {
     CdrAccordion,
     CdrAccordionGroup,
     CdrInput,
-    CdrButton,
+    ParActionButton,
     CdrCard,
     CdrGrid,
     CdrSelect,

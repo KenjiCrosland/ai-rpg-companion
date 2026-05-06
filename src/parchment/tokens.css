@@ -1,0 +1,126 @@
+/**
+ * Parchment design tokens.
+ *
+ * Parchment is the project's content-UI design system, distinct from
+ * Cedar (which we use for form controls, modals, accordions, etc.).
+ * Parchment styles are warm, paper-toned, and sit alongside content
+ * — cards, item/NPC actions, source-book flavor.
+ *
+ * Extend by adding a token here and consuming it in a `Par*` component.
+ * Component CSS should NOT hardcode the hex values below — always go
+ * through the `--par-*` custom properties so re-theming stays trivial.
+ */
+
+:root {
+  /* Color: warm reds inherited from the Item Card palette */
+  --par-color-title:           #7a1f1f;
+  --par-color-title-deep:      #58180d;
+
+  /* Color: text */
+  --par-color-text:            #222;
+  --par-color-text-secondary:  #555;
+  --par-color-text-muted:      #6b6b6b;
+  --par-color-text-disabled:   #ccc;
+
+  /* Color: surfaces */
+  --par-color-surface:         #fdfbf6;
+  --par-color-border:          #e8e2d4;
+  --par-color-border-strong:   #c9b99a;
+  /* Border: deep tan — emphasized/hover state for callouts, focused
+     form fields, and any tinted surface that needs a heavier outline
+     on interaction. */
+  --par-color-border-deep:     #b8a685;
+  --par-color-divider:         #e2dccd;
+
+  /* Color: callout — slightly warmer/darker than the card surface so a
+     tinted block reads as supplementary content (lore, history, etc.)
+     without needing a divider rule. Body text matches the body weight
+     used in feature descriptions so the callout reads as primary
+     content (just sitting in a different surface), not de-emphasized. */
+  --par-color-callout-bg:      #f3ebda;
+  /* Color: surface tinted — deeper variant of --par-color-callout-bg.
+     Used for hover/active states on tinted callout blocks, or as an
+     emphasized callout when a block needs more weight than the standard
+     callout. Pair with --par-color-border-deep for a heavier surface. */
+  --par-color-callout-bg-deep: #ede2cb;
+  --par-color-callout-text:    #2c2c2a;
+
+  /* Color: tooltip — slightly LIGHTER than the card surface to read as
+     elevated paper (a sticky note above the card), with a warm tan
+     border that matches the card's own border. The dark-charcoal text
+     gives more contrast than body color since tooltips need to be read
+     in well under a second. */
+  --par-color-tooltip-bg:      #fefcf7;
+  --par-color-tooltip-text:    #2c2c2a;
+  --par-color-tooltip-shadow:  rgba(60, 40, 20, 0.08);
+
+  /* Color: action interactions */
+  --par-color-action-hover:    rgba(122, 31, 31, 0.06);
+  --par-color-action-active:   rgba(122, 31, 31, 0.12);
+
+  /* Typography. Source Serif 4 (Adobe, OFL-licensed) is the parchment
+     serif: designed for screen reading, full real-weight files at
+     400/500/600 so font-weight differences render with actual font
+     data rather than browser-synthesized faux-bolds. Loaded via
+     <link> in App.vue. Georgia is the system fallback so cards still
+     render correctly if the web font fails to load. */
+  --par-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --par-font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+  /* Sizing */
+  --par-radius-sm: 3px;
+  --par-radius-md: 4px;
+  --par-radius-lg: 12px;   /* callout / soft-block radius — a meaningfully
+                              different visual register from sm/md tight
+                              inline rounding. */
+
+  /* ------------------------------------------------------------------
+     Lapis action palette — chrome-level primary action color.
+
+     Conceptually distinct from the parchment burgundy above: parchment
+     is the *editorial* layer (cards, source-book content, ParCardButton),
+     lapis is the *chrome* layer (form CTAs, ParActionButton). The two
+     palettes are deliberately different so the user reads "this is a
+     card surface" vs "this is a tool form" without having to think
+     about it.
+
+     Token names are intentionally unprefixed (--color-action-* rather
+     than --par-color-action-*) — they're conceptually shared cros.land
+     chrome action tokens that the parchment system happens to consume,
+     not parchment-internal colors. Future ParAction-family components
+     read from these.
+     ------------------------------------------------------------------ */
+  --color-action-rest:     #365A85;   /* mid lapis (lifted from #2A4D70) */
+  --color-action-hover:    #2A4D70;   /* deeper lapis (was rest) */
+  --color-action-active:   #1F3A5C;   /* deepest lapis, pressed (was hover) */
+  --color-action-disabled: #9DAFC1;   /* desaturated lighter */
+  --color-action-text:     #FBF7F0;   /* cream */
+  --action-transition:     background-color 0.18s ease, box-shadow 0.18s ease;
+
+  /* Secondary action — faded slate ghost. Sits in the same lapis family
+     as primary but operates at a lower visual volume: outlined rather
+     than filled, desaturated rather than saturated. The pairing is the
+     illuminated-manuscript ultramarine/azurite relationship — same
+     family, different importance. Used for "supporting alternative"
+     actions next to a primary CTA (Cancel beside Generate, etc.). */
+  --color-action-secondary-rest:       #5A7A9A;                    /* faded slate */
+  --color-action-secondary-hover-bg:   rgba(90, 122, 154, 0.08);   /* tint */
+  --color-action-secondary-active-bg:  rgba(90, 122, 154, 0.16);   /* deeper tint */
+  --color-action-secondary-disabled:   rgba(90, 122, 154, 0.35);   /* lower opacity */
+  --color-action-secondary-focus-glow: rgba(90, 122, 154, 0.3);    /* focus halo */
+
+  /* Luminous lapis gradient — cabochon treatment for rare,
+     special-importance moments (premium upsell, future high-significance
+     CTAs). Three rest stops + one extra stop for the hover gradient.
+     The four stops are independent values (not derivations of secondary
+     slate); reserved for ParActionButton's variant="luminous". Don't
+     proliferate — the variant earns its complexity through scarcity.
+
+     Gradient direction is consumer-defined (typically 165deg top-left
+     to bottom-right) so the stops describe *light values* rather than
+     absolute positions. */
+  --color-action-luminous-light:    #A0B8D0;   /* highlight stop */
+  --color-action-luminous-mid:      #3D6BA0;   /* mid stop */
+  --color-action-luminous-deep:     #1F3A5C;   /* shadow stop (rest) */
+  --color-action-luminous-deepest:  #142640;   /* shadow stop (hover) */
+}

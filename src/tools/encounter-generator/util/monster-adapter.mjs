@@ -202,16 +202,20 @@ export function loadCustomMonsters() {
 
     const data = JSON.parse(stored);
     const monsters = [];
+    const seenKeys = new Set();
 
     // Iterate through folders
     Object.entries(data).forEach(([folderName, items]) => {
       // Skip metadata keys
-      if (folderName === 'generationCount' || folderName === 'firstGenerationTime') {
+      if (folderName === 'generationCount' || folderName === 'firstGenerationTime' || folderName === '_q') {
         return;
       }
 
       if (Array.isArray(items)) {
         items.forEach(monster => {
+          const dedupKey = `${monster?.name}__${folderName}`;
+          if (seenKeys.has(dedupKey)) return;
+          seenKeys.add(dedupKey);
           monsters.push(normalizeCustomMonster(monster, folderName));
         });
       }

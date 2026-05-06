@@ -46,13 +46,14 @@ jest.mock('@/components/DataManagerModal.vue', () => ({
 }));
 
 // Mock API calls
-jest.mock('@/util/open-ai.mjs', () => ({
+jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn()
 }));
 
 // Mock navigation
 jest.mock('@/util/navigation.mjs', () => ({
-  navigateToTool: jest.fn()
+  navigateToTool: jest.fn(),
+  getNavigationParams: jest.fn(() => ({})),
 }));
 
 describe('StatblockGenerator - Linked NPCs', () => {

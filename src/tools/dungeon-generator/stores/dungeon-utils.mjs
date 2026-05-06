@@ -195,9 +195,13 @@ function migrateDungeonNPCs(dungeon) {
   let migrated = false;
 
   if (dungeon.npcs) {
-    // Load shared storage once
+    // Load shared storage once. Flatten across all folders so the legacy
+    // id-recovery / dedup logic doesn't refuse to find canonical NPCs the
+    // user has moved out of the dungeon-named folder.
     const stored = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
-    const sharedNPCs = stored[dungeonTitle] || [];
+    const sharedNPCs = Object.values(stored)
+      .filter(Array.isArray)
+      .flat();
 
     dungeon.npcs.forEach((npc) => {
       // Skip if already migrated AND has an ID (fully processed)
@@ -212,7 +216,7 @@ function migrateDungeonNPCs(dungeon) {
         );
         if (existingNPC) {
           // Check both npc_id and id fields
-          const existingId = existingNPC.npc_id || existingNPC.id;
+          const existingId = existingNPC.npc_id;
           if (existingId) {
             npc.npc_id = existingId;
             migrated = true;
@@ -229,14 +233,14 @@ function migrateDungeonNPCs(dungeon) {
       if (npc.read_aloud_description) {
         // Check if NPC already exists in shared storage
         const existingNPC = sharedNPCs.find(n =>
-          (n.npc_id && (n.npc_id === npc.npc_id || n.id === npc.npc_id)) ||
+          (n.npc_id && n.npc_id === npc.npc_id) ||
           (n.npcDescriptionPart1?.character_name === npc.name)
         );
 
         if (existingNPC) {
           // NPC already in shared storage - just sync ID back, don't overwrite
           // Check both npc_id and id fields (shared storage might use either)
-          const existingId = existingNPC.npc_id || existingNPC.id;
+          const existingId = existingNPC.npc_id;
           if (existingId && !npc.npc_id) {
             npc.npc_id = existingId;
             migrated = true;

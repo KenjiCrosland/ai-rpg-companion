@@ -300,7 +300,7 @@ export function deleteNPC(npcIndex) {
   if (!currentDungeon.value) return;
 
   const npc = currentDungeon.value.npcs[npcIndex];
-  const npcId = npc?.npc_id || npc?.id;
+  const npcId = npc?.npc_id;
   const npcName = npc?.name || 'this NPC';
 
   if (!npcId) {
@@ -328,6 +328,14 @@ export function deleteNPC(npcIndex) {
       }
     }
 
+    if (locations.settings.length > 0) {
+      if (locations.settings.length === 1) {
+        confirmMessage += `- Setting Generator (${locations.settings[0]})\n`;
+      } else {
+        confirmMessage += `- Setting Generator (${locations.settings.length} settings)\n`;
+      }
+    }
+
     if (locations.npcGenerator.length > 0) {
       if (locations.npcGenerator.length === 1) {
         confirmMessage += `- NPC Generator (${locations.npcGenerator[0]})\n`;
@@ -342,13 +350,19 @@ export function deleteNPC(npcIndex) {
         removeReferencesForEntity('npc', npcId);
       });
 
-      // Delete from all locations (this handles localStorage for NPC Generator)
+      // Reset cross-tool stubs (other dungeons, settings, items) so they
+      // unpromote rather than retain a stale npc_id. Then remove from the
+      // current dungeon explicitly and delete the canonical NPC.
+      import('@/util/seeded-input.mjs').then(({ resetStubsForDeletedNPC }) => {
+        resetStubsForDeletedNPC(npcId);
+      });
+
       deleteNPCFromAllLocations(npcId);
 
       // Update reactive state - remove from current dungeon's NPC array
       if (currentDungeon.value && currentDungeon.value.npcs) {
         const npcIndex = currentDungeon.value.npcs.findIndex(n =>
-          (n.npc_id === npcId || n.id === npcId)
+          (n.npc_id === npcId)
         );
         if (npcIndex !== -1) {
           currentDungeon.value.npcs.splice(npcIndex, 1);
