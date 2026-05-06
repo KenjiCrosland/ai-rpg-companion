@@ -170,7 +170,7 @@ import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
 import Statblock from '@/components/Statblock.vue';
 import NPCCard from '@/components/NPCCard.vue';
-import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC, findNPCByIdAcrossFolders } from '@/util/npc-storage.mjs';
+import { saveNPCToStorage, dungeonNPCToCanonical, normalizeDungeonNPC, findNPCByIdAcrossFolders, getNPCStatblockRef } from '@/util/npc-storage.mjs';
 import { getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
 import { generateGptResponse } from "@/util/ai-client.mjs";
@@ -224,8 +224,11 @@ const enrichedNPCs = computed(() => {
           roleplaying_tips: sharedNPC.npcDescriptionPart1?.roleplaying_tips,
           combined_details: sharedNPC.npcDescriptionPart1?.combined_details,
           relationships: sharedNPC.npcDescriptionPart2?.relationships || {},
-          statblock_name: sharedNPC.statblock_name || dungeonNPC.statblock_name,
-          statblock_folder: sharedNPC.statblock_folder || dungeonNPC.statblock_folder,
+          // Resolve statblock ref via the centralized helper — handles
+          // the canonical (nested) write path the NPC Generator uses,
+          // the legacy top-level location, and the dungeon-local
+          // fallback for NPCs not yet promoted to shared storage.
+          ...getNPCStatblockRef(sharedNPC, dungeonNPC),
         };
 
         // Resolve statblock from storage if reference exists

@@ -140,6 +140,49 @@ export function getNPCName(npc) {
 }
 
 /**
+ * Resolve the statblock reference for an NPC across the two stores
+ * involved in cross-tool NPC display:
+ *
+ *   1. CANONICAL (npcGeneratorNPCs storage). The reference lives at
+ *      `npc.npcDescriptionPart1.statblock_name` and `.statblock_folder`
+ *      — the location every active writer in the codebase uses
+ *      (NPCGenerator's auto-save, dungeonNPCToCanonical /
+ *      settingNPCToCanonical conversions, statblock-rename propagation).
+ *      An earlier era wrote the fields top-level on canonical records;
+ *      the `promote-npc-statblock-ref-to-nested` migration consolidated
+ *      them under part1, so this function no longer reads the legacy
+ *      top-level location on canonical NPCs.
+ *   2. LOCAL fallback. Dungeons and settings each carry a denormalized
+ *      copy of NPC data on their own records (dungeon NPCs are
+ *      dungeon-shape with top-level `statblock_name`, per
+ *      `canonicalToDungeonNPC`). For NPCs not (yet) promoted to shared
+ *      storage, that local copy is the only source — the function
+ *      reads the top-level field there because that IS the correct
+ *      shape for that store.
+ *
+ * Centralizing the resolution here means the dungeon and setting NPC
+ * tabs don't each have to know which field to read.
+ *
+ * @param {Object} canonicalNPC - The canonical-shape NPC (from
+ *                                npcGeneratorNPCs storage), or null.
+ * @param {Object} [fallbackNPC] - The dungeon/setting-local NPC, used
+ *                                 when canonicalNPC is null/missing
+ *                                 the field.
+ * @returns {{ statblock_name: string|null, statblock_folder: string|null }}
+ */
+export function getNPCStatblockRef(canonicalNPC, fallbackNPC) {
+  const part1 = canonicalNPC?.npcDescriptionPart1;
+  return {
+    statblock_name: part1?.statblock_name
+      || fallbackNPC?.statblock_name
+      || null,
+    statblock_folder: part1?.statblock_folder
+      || fallbackNPC?.statblock_folder
+      || null,
+  };
+}
+
+/**
  * Convert a dungeon NPC to the NPC generator canonical format.
  *
  * Maps dungeon-specific field names to canonical field names:

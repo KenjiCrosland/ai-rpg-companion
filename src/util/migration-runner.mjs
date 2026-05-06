@@ -20,6 +20,7 @@ import { assignDungeonIds } from './assign-dungeon-ids.mjs';
 import { assignSettingIds } from './assign-setting-ids.mjs';
 import { dropNPCFolder } from './drop-npc-folder.mjs';
 import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
+import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-nested.mjs';
 
 /**
  * List of all migrations to run.
@@ -44,6 +45,10 @@ import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
  *   6. sweep-orphan-references — drops any refs whose source/target no
  *      longer resolves; runs after the id migrations so their post-
  *      rewrite refs aren't seen as orphans.
+ *   7. promote-npc-statblock-ref-to-nested — moves canonical NPC
+ *      statblock_name/folder from top-level to npcDescriptionPart1.
+ *      Lets `getNPCStatblockRef` drop its legacy-top-level fallback
+ *      branch and removes the dual-read pattern from the codebase.
  *
  * Add new migrations to the end of this array.
  */
@@ -55,6 +60,7 @@ const migrations = [
   { name: 'assign-setting-ids', run: assignSettingIds },
   { name: 'drop-npc-folder', run: dropNPCFolder },
   { name: 'sweep-orphan-references', run: sweepOrphanReferences },
+  { name: 'promote-npc-statblock-ref-to-nested', run: promoteNPCStatblockRefToNested },
 ];
 
 /**

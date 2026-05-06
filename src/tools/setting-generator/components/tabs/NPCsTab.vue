@@ -89,7 +89,7 @@ import {
   createRelationshipAndTipsPrompt,
   generateSingleRelationshipPrompt,
 } from '../../prompts/index.mjs';
-import { saveNPCToStorage, settingNPCToCanonical, normalizeSettingNPC, findNPCByIdAcrossFolders } from '@/util/npc-storage.mjs';
+import { saveNPCToStorage, settingNPCToCanonical, normalizeSettingNPC, findNPCByIdAcrossFolders, getNPCStatblockRef } from '@/util/npc-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
 
 const props = defineProps({
@@ -142,8 +142,11 @@ const enrichedNPCs = computed(() => {
           roleplaying_tips: sharedNPC.npcDescriptionPart1?.roleplaying_tips,
           combined_details: sharedNPC.npcDescriptionPart1?.combined_details,
           relationships: sharedNPC.npcDescriptionPart2?.relationships || {},
-          statblock_name: sharedNPC.statblock_name || settingNPC.statblock_name,
-          statblock_folder: sharedNPC.statblock_folder || settingNPC.statblock_folder,
+          // Resolve statblock ref via the centralized helper — handles
+          // the canonical (nested) write path the NPC Generator uses,
+          // the legacy top-level location, and the setting-local
+          // fallback for NPCs not yet promoted to shared storage.
+          ...getNPCStatblockRef(sharedNPC, settingNPC),
         };
       }
     }
