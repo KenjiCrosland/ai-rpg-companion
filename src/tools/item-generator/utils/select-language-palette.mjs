@@ -50,12 +50,18 @@
  * single-palette defaults to avoid reproducing Tolkien-as-canon and to
  * spread example-name rotation across multiple registers per generation.
  *
- * Single-palette pools (Orcish, Goblinoid) are intentional. Real-world
- * clan-warrior and trickster traditions that would broaden these pools
- * largely appear on orcGoblinExcludedPalettes (Mongolian, Lakota,
- * Maori, West African, etc.); broadening would reproduce the racist-
- * coding pattern the exclusion exists to prevent. Variety for orc/goblin
- * items comes from the cross-cultural 30% alternative branch instead.
+ * Orcish and Goblinoid pools are ALLOW-LISTS: a curated set of European
+ * registers (fictional fantasy + Germanic + Celtic + Slavic + Latin)
+ * with documented orc/goblin-fantasy precedent that don't carry the
+ * racist-coding history protected-list traditions do. Selection for
+ * these races is pool-only (no 30% alternative branch), and cultural
+ * detection from user input is subordinated to the pool — if a user
+ * signal would resolve to a non-pool palette in an orc/goblin context,
+ * the pool wins. The architecture replaces the earlier filter-based
+ * approach (orcGoblinExcludedPalettes) which had a code-path gap that
+ * let Goblinoid + Navajo/Diné slip through to a production output. An
+ * allow-list makes the bad combinations structurally impossible
+ * rather than relying on the filter to recognize and block them.
  *
  * Race-specific notes:
  *   - Elven: refined-aesthetic / forest / longevity-coded traditions
@@ -79,12 +85,30 @@
  *     as its own thing" reason. Hebrew remains excluded (antisemitic-
  *     coding history with dwarves is too fraught) and Andean stays
  *     out (on the orc/goblin exclusion list).
+ *   - Orcish: allow-list of European registers with orc-fantasy
+ *     precedent — Old Norse (jötnar/troll-adjacent figures, Tolkien-
+ *     tradition support), Anglo-Saxon (Beowulf-era register), Old/
+ *     Middle High German and Gothic (Germanic mythological registers),
+ *     Welsh and Old Irish (Celtic registers without orc-coding stigma),
+ *     Old Slavic (zmey/leshy/bogatyr-warrior traditions), Latin
+ *     (classical "barbarian-vs-civilization" framing). All other real-
+ *     world traditions are deliberately excluded — pool-only selection
+ *     overrides cultural detection from user input.
+ *   - Goblinoid: similar allow-list philosophy, narrower because fewer
+ *     European traditions have unambiguous goblin-fantasy precedent.
  *   - Gnomish: inventor/craftsperson archetype maps onto real-world
  *     traditions less fraught with racial coding than orcs/goblins.
- *   - Giant: primordial/large-being traditions. Hebrew is included
- *     specifically for the Nephilim primordial-giant tradition — that
- *     pairing doesn't carry the antisemitic-coding history the Hebrew/
- *     dwarven combination does.
+ *   - Giant: primordial/large-being traditions in genre-canonical
+ *     European registers (Norse jötnar, Greek titans/cyclopes, Anglo-
+ *     Saxon eotenas). An earlier iteration included Hebrew-inspired
+ *     for the Nephilim primordial-giant tradition; Hebrew was first
+ *     moved to the protected list, then removed from the palette
+ *     system entirely. Real-tradition pairings of Jewish religious-
+ *     cultural specifics with fictional fantasy races carry too much
+ *     risk regardless of the specific tradition cited as justification.
+ *     The Hebrew palette and detection-map entries are both gone;
+ *     Hebrew-coded user input falls through to the LLM's world-
+ *     knowledge override path with strict universal-invent rules.
  */
 export const fantasyRaceConventionalPalettes = {
   'Elven': [
@@ -102,10 +126,24 @@ export const fantasyRaceConventionalPalettes = {
     'Gothic-inspired',
   ],
   'Orcish': [
-    'Orcish',
+    'Orcish',                       // primary fictional register
+    'Old-Norse-inspired',           // Tolkien-tradition; Brioc/Grief-Forged precedent
+    'Anglo-Saxon-inspired',         // Beowulf-era register
+    'Old-High-German-inspired',     // Germanic mythological register
+    'Middle-High-German-inspired',  // Nibelungenlied register
+    'Gothic-inspired',              // ancient Germanic register
+    'Welsh-inspired',               // Celtic register
+    'Old-Irish-inspired',           // Celtic register variant
+    'Old-Slavic-inspired',          // Slavic warrior/spirit traditions
+    'Latin-inspired',               // classical "barbarian-vs-civilization" framing
   ],
   'Goblinoid': [
-    'Goblin-inspired',
+    'Goblin-inspired',              // primary fictional register
+    'Old-Norse-inspired',           // Germanic trickster/small-folk
+    'Anglo-Saxon-inspired',         // Beowulf-era register
+    'Middle-High-German-inspired',  // Germanic mythological register
+    'Gothic-inspired',              // ancient Germanic register
+    'Old-Slavic-inspired',          // Slavic mischief-spirit traditions
   ],
   'Gnomish': [
     'Gnomish',
@@ -117,7 +155,6 @@ export const fantasyRaceConventionalPalettes = {
     'Norse-inspired',
     'Greek-inspired',
     'Anglo-Saxon-inspired',
-    'Hebrew-inspired',
   ],
 };
 
@@ -142,67 +179,6 @@ export const fantasyRaceKeywords = {
  *  The remaining (1 - this) probability picks any other palette uniformly.
  *  See selectLanguagePalette's docblock for the reasoning. */
 const FANTASY_RACE_CONVENTIONAL_PROBABILITY = 0.7;
-
-/**
- * Language palettes whose real-world cultural referents have historically
- * been orc-coded or goblin-coded in fantasy fiction. When the random
- * weighted-selection branch fires for Orcish or Goblinoid origin, these
- * palettes are filtered out of the alternative-palette pool.
- *
- * The list is grounded in documented historical coding patterns:
- * Tolkien's "Mongol-type" orc descriptors, decades of fantasy art that
- * depicted orcs and goblins with features stereotypical of African,
- * East Asian, and Indigenous peoples, and the broader genre history
- * that has used these fictional categories as proxies for racist
- * depiction of real human groups.
- *
- * Palettes NOT on this list (Celtic, Norse, Germanic, Latin, Greek,
- * Slavic, Russian, Romanian, Hungarian, plus all fantasy-fictional
- * palettes like Sindarin, Draconic, Abyssal, etc.) remain available
- * for cross-cultural pairing with orcs and goblins. The architectural
- * point is that "orc + Celtic" or "orc + Sindarin" don't reproduce the
- * historical coding — those traditions weren't the targets of orc-
- * coding in fantasy history. Blocking the specific traditions that
- * WERE targets is more careful than blocking all cross-cultural
- * pairings (which would lose the legitimate creative range like
- * Welsh-coded orcish tricksters or Saruman-bred elf-imitating orcs).
- *
- * Cultural detection from user input (priority 1 in selectLanguagePalette)
- * still wins over this exclusion. If a user explicitly types "Yoruba
- * orc" or "Akiko-Khan the Mongolian Orc Warlord," the system honors
- * their explicit choice. The exclusion only applies to RANDOM selection
- * in the alternative-palette pool — it prevents the system from
- * imposing a problematic pairing the user didn't request.
- *
- * Exported so tests can verify the list shape without re-deriving it.
- */
-export const orcGoblinExcludedPalettes = [
-  'Yoruba-inspired',
-  'Akan-inspired',
-  'Igbo-inspired',
-  'Swahili-inspired',
-  'Arabic/Persian-inspired',
-  // Persian-inspired is a separate palette from Arabic/Persian-inspired
-  // (the former is a refined-classical register added for Elven; the
-  // latter is the existing flowing/melodic register). startsWith treats
-  // them as distinct prefixes, so both are listed independently to keep
-  // orc/goblin generations clear of Persian-coded pairings.
-  'Persian-inspired',
-  'Hebrew-inspired',
-  'Hindi/Sanskrit-inspired',
-  'Chinese-inspired',
-  'Korean-inspired',
-  'Mongolian-inspired',
-  'Tibetan-inspired',
-  'Thai-inspired',
-  'Maori-inspired',
-  'Hawaiian-inspired',
-  'Maya-inspired',
-  'Aztec/Nahuatl-inspired',
-  'Lakota-inspired',
-  'Navajo/Diné-inspired',
-  'Andean-inspired',
-];
 
 /**
  * Determine which fantasy race (if any) this generation should be
@@ -246,34 +222,91 @@ export function resolveFantasyRace(resolvedOrigin, userInput) {
   return null;
 }
 
+/**
+ * Pick a palette from a conventional pool given a list of prefixes and
+ * the caller's available palette list. Returns the resolved palette
+ * string, or null if no prefix in the pool matches an entry in the
+ * palette list.
+ */
+function pickFromPool(conventionalPrefixes, languagePalettes) {
+  const selectedPrefix = conventionalPrefixes[
+    Math.floor(Math.random() * conventionalPrefixes.length)
+  ];
+  return languagePalettes.find(p => p.startsWith(selectedPrefix)) || null;
+}
+
+/**
+ * True if the resolved palette starts with any prefix in the race's
+ * conventional pool.
+ */
+function isInConventionalPool(palette, conventionalPrefixes) {
+  return conventionalPrefixes.some(prefix => palette.startsWith(prefix));
+}
+
 export function selectLanguagePalette(
   resolvedOrigin,
   userInput,
   languagePalettes,
   detectLanguageFn,
 ) {
-  // Priority 1: cultural detection from user input.
   const culturalDetection = detectLanguageFn(userInput, languagePalettes);
+  const fantasyRace = resolveFantasyRace(resolvedOrigin, userInput);
+
+  // Orc/Goblin allow-list architecture: pool-only selection with a
+  // 70/30 weighting. Cultural detection from user input is honored
+  // ONLY when the detected palette is in the race's allow-list pool —
+  // a user signal that would resolve to a protected-list palette
+  // (Yoruba, Lakota, Navajo, etc.) does not override the
+  // architectural protection. This replaced the earlier filter-based
+  // approach (orcGoblinExcludedPalettes) which had a code-path gap
+  // that let Goblinoid + Navajo/Diné slip through to a production
+  // output.
+  //
+  // Within the pool, 70% of generations pick the primary fictional
+  // register (pool[0] — 'Orcish' or 'Goblin-inspired') and 30%
+  // pick uniformly from the remaining European cross-cultural pool
+  // members. Mirrors the Elven/Dwarven/Gnomish/Giant 70/30 conceptually
+  // — primary register is the default expectation; variety comes from
+  // the minority case. Without this weighting, uniform pool selection
+  // would only fire the primary register 1-in-N of the time (10% for
+  // Orcish, 17% for Goblinoid), making cross-cultural variants the
+  // majority experience.
+  if (fantasyRace === 'Orcish' || fantasyRace === 'Goblinoid') {
+    const pool = fantasyRaceConventionalPalettes[fantasyRace];
+    if (culturalDetection && isInConventionalPool(culturalDetection, pool)) {
+      return culturalDetection;
+    }
+
+    const primaryPrefix = pool[0];
+    if (Math.random() < FANTASY_RACE_CONVENTIONAL_PROBABILITY) {
+      const primaryPalette = languagePalettes.find(p => p.startsWith(primaryPrefix));
+      if (primaryPalette) return primaryPalette;
+      // Fall through to alt-branch only if the primary prefix isn't
+      // in the caller's palette pool (defensive — production palette
+      // list always contains it).
+    }
+
+    // 30% case: pick from the European cross-cultural pool members
+    // (everything except the primary register).
+    const altPool = pool.filter(prefix => prefix !== primaryPrefix);
+    return pickFromPool(altPool, languagePalettes)
+      || languagePalettes.find(p => p.startsWith(primaryPrefix))
+      || languagePalettes[0];
+  }
+
+  // Priority 1: cultural detection from user input (non-orc/goblin
+  // contexts; priority 1 wins for these).
   if (culturalDetection) {
     return culturalDetection;
   }
 
-  // Priority 2: fantasy-race weighted selection.
-  const fantasyRace = resolveFantasyRace(resolvedOrigin, userInput);
-
+  // Priority 2: fantasy-race weighted selection (Elven/Dwarven/Gnomish/
+  // Giant). 70% conventional pool, 30% any palette outside the pool.
   if (fantasyRace) {
     const conventionalPrefixes = fantasyRaceConventionalPalettes[fantasyRace];
 
-    // 70% branch: pick a conventional palette at random from the pool.
-    // The earlier single-palette architecture used the same palette
-    // every time, which produced visible reuse pressure and reproduced
-    // a single cultural register as canon. Multi-palette pools spread
-    // the rotation across registers per generation.
     if (Math.random() < FANTASY_RACE_CONVENTIONAL_PROBABILITY) {
-      const selectedPrefix = conventionalPrefixes[
-        Math.floor(Math.random() * conventionalPrefixes.length)
-      ];
-      const conventionalPalette = languagePalettes.find(p => p.startsWith(selectedPrefix));
+      const conventionalPalette = pickFromPool(conventionalPrefixes, languagePalettes);
       if (conventionalPalette) {
         return conventionalPalette;
       }
@@ -285,30 +318,13 @@ export function selectLanguagePalette(
     }
 
     // 30% case: pick any palette outside the race's conventional pool.
-    // Excluding ALL conventional prefixes (not just one) means the alt
-    // branch always produces a genuinely cross-cultural pairing.
-    let otherPalettes = languagePalettes.filter(palette =>
-      !conventionalPrefixes.some(prefix => palette.startsWith(prefix)),
+    // Excluding ALL conventional prefixes means the alt branch always
+    // produces a genuinely cross-cultural pairing.
+    const otherPalettes = languagePalettes.filter(palette =>
+      !isInConventionalPool(palette, conventionalPrefixes),
     );
-
-    // Targeted exclusion for Orcish/Goblinoid: filter out palettes
-    // whose real-world referents have historically been orc-coded
-    // (see orcGoblinExcludedPalettes docblock for the full reasoning).
-    // Only applies to this random branch; cultural detection (priority 1)
-    // already returned earlier for any user-typed cultural signal.
-    if (fantasyRace === 'Orcish' || fantasyRace === 'Goblinoid') {
-      otherPalettes = otherPalettes.filter(palette =>
-        !orcGoblinExcludedPalettes.some(excluded => palette.startsWith(excluded)),
-      );
-      // Defensive guard: if a future palette-list change leaves zero
-      // valid alternatives after filtering, fall back to the first
-      // conventional palette rather than picking from an empty array.
-      if (otherPalettes.length === 0) {
-        const fallbackPalette = languagePalettes.find(p =>
-          conventionalPrefixes.some(prefix => p.startsWith(prefix)),
-        );
-        return fallbackPalette || languagePalettes[0];
-      }
+    if (otherPalettes.length === 0) {
+      return pickFromPool(conventionalPrefixes, languagePalettes) || languagePalettes[0];
     }
     return otherPalettes[Math.floor(Math.random() * otherPalettes.length)];
   }

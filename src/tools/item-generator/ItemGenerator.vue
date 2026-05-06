@@ -308,7 +308,6 @@ import {
   selectLanguagePalette,
   resolveFantasyRace,
   fantasyRaceConventionalPalettes,
-  orcGoblinExcludedPalettes,
 } from './utils/select-language-palette.mjs';
 import { originMaterialPools, allMaterials } from './utils/material-pools.mjs';
 import { rotatePaletteExamples } from './utils/orc-goblin-name-pools.mjs';
@@ -718,13 +717,20 @@ const generateMagicItem = async () => {
   // mixed scenario the user reported (origin=Necromantic + lore="Orcish
   // Battleaxe" → fantasyRace='Orcish' via priority 2b keyword scan).
   //
-  // The code-side palette filter (orcGoblinExcludedPalettes) handles
-  // RANDOM selection, but the prompt's LANGUAGE PALETTE OVERRIDE block
-  // gives the LLM authority to override the pre-selected palette from
-  // world-knowledge cultural inference. That authority can re-introduce
-  // the orc-coded pairings the filter is meant to prevent. In an orc/
-  // goblin context, that authority is revoked — see the conditional
-  // prompt block below.
+  // Two layers of protection:
+  // 1. STRUCTURAL — selectLanguagePalette uses a pool-only branch for
+  //    Orcish/Goblinoid (no 30% alternative, cultural-detection input
+  //    subordinated to the pool). The selected palette can only come
+  //    from the curated European/fictional allow-list.
+  // 2. PROMPT-SIDE — the LANGUAGE PALETTE RESTRICTION block below
+  //    revokes the LLM's LANGUAGE PALETTE OVERRIDE authority for these
+  //    contexts so creative re-association during generation can't
+  //    re-introduce the orc-coded pairings the structural protection
+  //    blocks.
+  // Defense-in-depth: if a future code change regresses the structural
+  // protection, the prompt block catches it; if the LLM ignores the
+  // prompt block, the structural protection has already restricted
+  // the pre-selected palette to the safe pool.
   const fantasyRaceForGen = resolveFantasyRace(
     resolvedOrigin,
     userInputForLangDetection,
@@ -1233,7 +1239,7 @@ DO this:
 The English translation should capture the cultural concept evocatively, not just literally. "Wand of First Bloom" conveys the meaning of "Sulkasipailon Kukka" better than "Feather-Stroke's Flower" would. Translate for poetic effect, not word-for-word.
 
 APPLY translation rule (item name in English, original in description):
-- All real-world non-English-language palettes: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic/Persian, Persian, Hebrew, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Navajo/Diné, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
+- All real-world non-English-language palettes: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic/Persian, Persian, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Navajo/Diné, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
 
 (Norse, Welsh, Anglo-Saxon, etc. are technically European but their original-language names — "Sigrún Stormhammer," "Æthelflæd" — are intimidating to many DMs at the table. Apply the translation rule to these too — better to err on the side of usability.)
 
@@ -1259,15 +1265,36 @@ Good integration patterns:
 
 This rule does NOT override the explicit-origin-naming requirement. The lore must still name the origin culture (elves, dwarves, orcs, etc.) — typically in the same sentence that introduces the original-language name.
 
-LORE — DEITY AND RELIGIOUS-AUTHORITY HANDLING:
+CULTURAL-SPECIFIC NAMES — INVENT BY DEFAULT:
 
-When the lore needs a deity, mythological figure, or religious authority, INVENT a fictional name in the palette's register. Do NOT use real deity names from any cultural tradition.
+When the lore needs any of these culturally-specific named entities, INVENT a fictional name in the palette's register rather than using a real one:
 
-Invented names should sound culturally appropriate to the register and carry meaningful semantic content where possible — a Norse-register storm-deity might be "Vethrnir," a Yoruba-register iron-spirit might be "Olosun." Don't take a common noun from the language and label it as a god (e.g., "Kibarua" — Swahili for "casual laborer" — is not a deity name).
+- Deities, religious figures, sacred beings, mythological figures
+- Clans, kinship groups, family lineages, tribal names
+- Sacred places, ceremonial sites, religious geography
+- Ceremonial roles, religious titles, traditional offices
+- Foundational ancestral figures from creation narratives
+- Real historical figures with cultural-religious significance
 
-If you can't construct a culturally-appropriate invented name confidently, fall back to unnamed authorities (the elder of the clan, the wise woman, the dying king) rather than reaching for a real one.
+Invented names should sound culturally appropriate to the palette and carry meaningful semantic content where possible — a Yoruba-register iron-spirit might be "Olosun," a Diné-register weaver-spirit might be "Hashtłʼish" (using the Navajo word for clay as a constructed name). Don't take a common noun and label it as a sacred figure (e.g., "Kibarua" — Swahili for "casual laborer" — isn't a deity name).
 
-Cultural detection from user input still wins. If the user explicitly invokes a real deity ("an item blessed by Athena"), honor their input.
+LIMITED EXCEPTIONS — real names CAN be used for these palettes only:
+
+- Greek-inspired (Zeus, Athena, Apollo, etc.)
+- Latin-inspired / Roman (Jupiter, Mars, Minerva, etc.)
+- Egyptian-inspired (Ra, Anubis, Isis, etc.)
+- All Norse-related: Norse-inspired, Old-Norse-inspired (Odin, Thor, Loki, etc.)
+- Anglo-Saxon-inspired, Old-High-German-inspired, Middle-High-German-inspired, Gothic-inspired (Germanic mythological figures)
+- Celtic-inspired, Welsh-inspired, Irish-inspired, Old-Irish-inspired (Celtic mythological figures)
+- Sindarin-inspired and all fictional palettes (no real-world referents)
+
+These exceptions reflect Western fantasy genre convention — these traditions have been integrated into fantasy long enough that real names are genre-expected.
+
+For ALL other palettes (including but not limited to Yoruba, Akan, Igbo, Swahili, Atlas-Berber, Arabic, Persian, Hindu/Sanskrit, Chinese, Japanese, Korean, Thai, Mongolian, Tibetan, Maya, Aztec/Nahuatl, Andean, Lakota, Navajo/Diné, Maori, Hawaiian, Slavic, Russian, Romanian, Hungarian, Finnish, Caucasian, Pamir), INVENT fictional named entities. Do not use real religious figures, real clan names, real sacred place names, real political-religious titles, or real culturally-significant historical figures from these traditions in fictional contexts.
+
+Note: Hebrew/Jewish religious-cultural specifics are not in scope at all — the Hebrew palette has been removed from the system. If a user's input invokes Hebrew-language signals (shofar, menorah, golem, sephirot, etc.), apply the universal-invent rule even more strictly: do not generate fictional content that references Jewish religious tradition, sacred figures, or sacred concepts. Choose a different cultural register for the item.
+
+Cultural detection from user input still wins. If the user explicitly invokes a real entity ("an item blessed by Athena," "the temple of Inti"), honor their input. The invention rule applies to system-generated content where the user didn't specifically invoke the entity.
 
 LANGUAGE PALETTE OVERRIDE (LLM AUTHORITY):
 
@@ -1288,7 +1315,7 @@ This item is in an orc or goblin context (origin or user-typed keyword). Orcs an
 The LANGUAGE PALETTE OVERRIDE authority above is REVOKED for this generation. You must NOT generate names — for the item, characters, factions, or locations — in any of the following registers, even if you would otherwise infer them from the user's input or from creative association:
 
 - Yoruba, Akan, Igbo, Swahili, or any other African real-world tradition
-- Arabic, Persian, Hebrew
+- Arabic, Persian
 - Hindi, Sanskrit
 - Chinese, Japanese, Korean, Mongolian, Tibetan, Thai
 - Maori, Hawaiian, or other Pacific Islander traditions

@@ -603,13 +603,15 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('DESCRIPTION INTEGRATION PATTERN');
     });
 
-    it('Orcish dropdown rotates the palette example tail with names from the orc pool', async () => {
-      // Single-palette races (Orcish, Goblinoid) don't get cross-palette
-      // rotation for variety, so they rely on the curated 100-name pool
-      // sampled per generation. The prompt's NAMING STYLE block must
-      // embed names from the orc pool, not the static
-      // "Grokthash, Uzgark, Dra'mok" defaults.
-      randomSpy.mockReturnValue(0.5);
+    it('Orcish dropdown rotates the palette example tail when the rolled palette IS Orcish', async () => {
+      // Under the allow-list architecture, an Orcish dropdown picks
+      // from a 10-palette pool; rotation only fires when the rolled
+      // palette is actually the 'Orcish' palette (rotatePaletteExamples
+      // is keyed on prefix). Mock Math.random=0 so pool[0] is selected,
+      // which is 'Orcish' (the primary fictional register). The prompt's
+      // NAMING STYLE block must embed names from the orc pool, not the
+      // static "Grokthash, Uzgark, Dra'mok" defaults.
+      randomSpy.mockReturnValue(0);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       const originSelect = wrapper.findAll('select')[2];
       await originSelect.setValue('Orcish');
@@ -618,6 +620,10 @@ describe('ItemGenerator - Prompt Generation', () => {
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
       const namingLine = prompt.match(/Use this linguistic palette for ALL names[^\n]*/)[0];
+      // Verify the rolled palette IS Orcish (otherwise the rotation
+      // wouldn't fire and this test would be checking the wrong path).
+      expect(namingLine).toMatch(/location names: Orcish:/);
+
       const exampleTail = namingLine.match(/\(e\.g\., (.+?)\)/);
       expect(exampleTail).not.toBeNull();
       const sampled = exampleTail[1].split(', ');
@@ -629,8 +635,11 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(exampleTail[1]).not.toContain('Grokthash, Uzgark, Dra\'mok');
     });
 
-    it('Goblinoid dropdown rotates the palette example tail with names from the goblinoid pool', async () => {
-      randomSpy.mockReturnValue(0.5);
+    it('Goblinoid dropdown rotates the palette example tail when the rolled palette IS Goblin-inspired', async () => {
+      // Same pool-pick determinism as Orcish: pool[0] = 'Goblin-inspired'
+      // for Goblinoid, so Math.random=0 forces the path that triggers
+      // rotation.
+      randomSpy.mockReturnValue(0);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       const originSelect = wrapper.findAll('select')[2];
       await originSelect.setValue('Goblinoid');
@@ -639,12 +648,41 @@ describe('ItemGenerator - Prompt Generation', () => {
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
       const namingLine = prompt.match(/Use this linguistic palette for ALL names[^\n]*/)[0];
+      expect(namingLine).toMatch(/location names: Goblin-inspired:/);
+
       const exampleTail = namingLine.match(/\(e\.g\., (.+?)\)/);
       expect(exampleTail).not.toBeNull();
       const sampled = exampleTail[1].split(', ');
       for (const name of sampled) {
         expect(goblinoidGivenNames).toContain(name);
       }
+    });
+
+    it('Orcish dropdown can roll a non-Orcish allow-list palette (no rotation in that case)', async () => {
+      // Regression guard for the allow-list architecture: when the pool
+      // pick lands on Old-Norse, Anglo-Saxon, etc., those palettes
+      // keep their static seeds (no orc-pool rotation). Iterate index
+      // rolls and confirm at least one lands on a non-Orcish member of
+      // the pool.
+      const indexRolls = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95];
+      let sawNonOrcishPaletteInPool = false;
+      for (const indexRoll of indexRolls) {
+        if (wrapper) wrapper.unmount();
+        jest.clearAllMocks();
+        randomSpy.mockReturnValue(indexRoll);
+        wrapper = mount(ItemGenerator, { props: { premium: true } });
+        const originSelect = wrapper.findAll('select')[2];
+        await originSelect.setValue('Orcish');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+        const prompt = openAi.generateGptResponse.mock.calls[0][0];
+        const namingLine = prompt.match(/Use this linguistic palette for ALL names[^\n]*/)[0];
+        if (!/location names: Orcish:/.test(namingLine)) {
+          sawNonOrcishPaletteInPool = true;
+          break;
+        }
+      }
+      expect(sawNonOrcishPaletteInPool).toBe(true);
     });
 
     describe('every conventional pool prefix resolves to a languagePalettes entry', () => {
@@ -702,32 +740,63 @@ describe('ItemGenerator - Prompt Generation', () => {
       }
     });
 
-    it('always renders LORE — DEITY AND RELIGIOUS-AUTHORITY HANDLING directive', async () => {
-      // Cultural-accuracy guardrail: invent fictional deity names in
-      // the palette's register; never use real deity names from any
-      // tradition. Fall back to unnamed authorities when a confident
-      // invented name isn't available. User-typed real deity invocations
-      // still honored via cultural detection (priority 1).
+    it('always renders CULTURAL-SPECIFIC NAMES — INVENT BY DEFAULT directive', async () => {
+      // Universal-invent rule replaces calibration with a uniform
+      // commitment: invent fictional named entities for almost every
+      // real-world cultural register, with a short LIMITED EXCEPTIONS
+      // list grounded in fantasy-genre convention (Greek, Roman,
+      // Egyptian, Norse-family, Germanic-family, Celtic-family,
+      // Sindarin + fictional palettes). User-typed real-entity
+      // invocations still honored via cultural detection (priority 1).
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       await wrapper.find('form').trigger('submit');
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LORE — DEITY AND RELIGIOUS-AUTHORITY HANDLING');
-      expect(prompt).toContain('INVENT a fictional name');
-      expect(prompt).toContain('Do NOT use real deity names');
-      // Two register-example anchors so DeepSeek has a worked pattern.
-      expect(prompt).toContain('Vethrnir');
+      expect(prompt).toContain('CULTURAL-SPECIFIC NAMES — INVENT BY DEFAULT');
+
+      // Entity-type list — every category load-bearing because the
+      // brief broadens beyond deities to clans, sacred places,
+      // ceremonial roles, foundational figures, and historical figures.
+      expect(prompt).toContain('Deities, religious figures, sacred beings, mythological figures');
+      expect(prompt).toContain('Clans, kinship groups, family lineages, tribal names');
+      expect(prompt).toContain('Sacred places, ceremonial sites, religious geography');
+      expect(prompt).toContain('Ceremonial roles, religious titles, traditional offices');
+      expect(prompt).toContain('Foundational ancestral figures from creation narratives');
+      expect(prompt).toContain('Real historical figures with cultural-religious significance');
+
+      // Worked-example anchors for the invention rule (constructed
+      // names that aren't real deities) and the common-noun
+      // counter-example.
       expect(prompt).toContain('Olosun');
-      // Common-noun-as-deity counter-example.
+      expect(prompt).toContain('Hashtłʼish');
       expect(prompt).toContain('Kibarua');
-      // Unnamed-authority fallback preserved from the prior version.
-      expect(prompt).toContain('unnamed authorities');
-      expect(prompt).toContain('the elder of the clan');
+
+      // LIMITED EXCEPTIONS section — Western-fantasy-canonical
+      // traditions where real names are genre-expected.
+      expect(prompt).toContain('LIMITED EXCEPTIONS');
+      expect(prompt).toContain('Greek-inspired');
+      expect(prompt).toContain('Latin-inspired / Roman');
+      expect(prompt).toContain('Egyptian-inspired');
+      expect(prompt).toContain('Norse-inspired, Old-Norse-inspired');
+      expect(prompt).toContain('Anglo-Saxon-inspired, Old-High-German-inspired');
+      expect(prompt).toContain('Celtic-inspired, Welsh-inspired, Irish-inspired, Old-Irish-inspired');
+      expect(prompt).toContain('Sindarin-inspired and all fictional palettes');
+
+      // Explicit non-exception list — pins the most acute production-
+      // failure traditions (Maori, Lakota, Navajo, Yoruba) so a future
+      // contributor can't quietly drop them.
+      expect(prompt).toContain('Yoruba');
+      expect(prompt).toContain('Lakota');
+      expect(prompt).toContain('Navajo/Diné');
+      expect(prompt).toContain('Maori');
+      expect(prompt).toContain('Hindu/Sanskrit');
+
       // User-agency carve-out via cultural detection.
       expect(prompt).toContain('Cultural detection from user input still wins');
       expect(prompt).toContain('Athena');
+      expect(prompt).toContain('the temple of Inti');
     });
 
     it('translation directive includes the REQUIREMENT clause that the item itself has an original-language name', async () => {

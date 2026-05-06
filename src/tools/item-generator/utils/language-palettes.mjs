@@ -53,29 +53,119 @@ export const languagePalettes = [
   'Old-Irish-inspired: pre-modern Gaeilge phonetics, Mythological Cycle register, sí-tradition (e.g., Cúchulainn, Étaín, Lugh)',
   'Old-Occitan-inspired: troubadour register, courtly love poetry, refined Mediterranean aesthetic (e.g., Bertran, Azalaïs, Raimon)',
   'Caucasian-inspired: mountain-peoples register drawing on Georgian/Ossetian/Chechen phonetics (e.g., Tamuna, Otar, Nart)',
-  'Atlas-Berber-inspired: Amazigh register, North African mountain-craft tradition (e.g., Tin-Hinan, Massinissa, Yuba)',
+  // Atlas-Berber: example tail removed under the protected-palette
+  // seed audit. Tin-Hinan, Massinissa, and Yuba are real historical
+  // Amazigh/Numidian figures; using them as fictional fantasy seeds
+  // pulls the LLM toward reproducing real cultural specifics. The
+  // descriptor still teaches the linguistic register; specific
+  // example names aren't necessary for that.
+  'Atlas-Berber-inspired: Amazigh register, North African mountain-craft tradition',
   'Pamir-inspired: high-Central-Asian mountain register, Persian-adjacent (e.g., Roshan, Wakhi, Soghd)',
-  'Arabic/Persian-inspired: flowing, melodic (e.g., Qamar al-Sahir, Zafira, Sayyid)',
-  'Persian-inspired: refined classical-aesthetic register (e.g., Anahita, Cyrus, Roxana)',
-  'Hebrew-inspired: ancient, ceremonial (e.g., Mikael, Shoshana, Adamah)',
+  // Arabic/Persian: scope is RESTRICTED to pre-Islamic Arabic
+  // (Jahili-era poetic register; vocabulary that predates Islamic
+  // religious terminology) OR Persian. No Islamic religious figures,
+  // titles, or sacred terms. The seed "Sayyid" was removed because
+  // it's a specifically Islamic religious-honorific title used for
+  // descendants of Muhammad. Qamar al-Sahir ("moon of the magician")
+  // and Zafira are constructed/secular and stay.
+  'Arabic/Persian-inspired: flowing, melodic; pre-Islamic Arabic OR Persian register only — no Islamic religious vocabulary (e.g., Qamar al-Sahir, Zafira)',
+  // Persian: example tail removed under the protected-palette seed
+  // audit. Anahita is a real Zoroastrian goddess; Cyrus and Roxana
+  // are real historical figures (Persian emperor and Alexander's
+  // wife). The older Arabic/Persian-inspired palette above stays
+  // unaudited — its seeds (Qamar al-Sahir, Zafira) are constructed
+  // and don't carry the same real-referent weight.
+  'Persian-inspired: refined classical-aesthetic register',
+  // Hebrew-inspired was removed from the palette list entirely. The
+  // earlier audit removed its seed examples and dropped it from the
+  // Giant conventional pool; this further removal keeps Jewish
+  // religious-cultural specifics off the random-rolling path even
+  // for cultural detection. The detection-map entry was likewise
+  // removed; user-typed Hebrew-language signals (shofar, menorah,
+  // golem, etc.) now fall through to the LLM's world-knowledge path
+  // via the LANGUAGE PALETTE OVERRIDE prompt block, where the
+  // universal-invent rule still applies.
   'Japanese-inspired: clean syllables, natural imagery (e.g., Kagezuki, Shiawase, Tsubasa)',
   'Chinese-inspired: tonal, philosophical (e.g., Jianhao, Mei-Lin, Wangshu)',
   'Korean-inspired: structured, balanced (e.g., Soohyun, Jaewon, Hyejin)',
-  'Mongolian-inspired: bold, sweeping (e.g., Temujin, Khulan, Bataar)',
-  'Tibetan-inspired: aspirated, contemplative (e.g., Tashi, Dorje, Pema)',
-  'Hindi/Sanskrit-inspired: melodic, ceremonial (e.g., Devraj, Kaliyana, Aakash)',
+  // Mongolian: example tail removed under the protected-palette seed
+  // audit. Temujin is Genghis Khan's birth name — a specific,
+  // historically and politically loaded real person, not a generic
+  // naming convention. Khulan was one of his wives. Using these as
+  // fictional fantasy seeds reproduces the same pattern that the
+  // Lakota / Sitting Bull example modeled.
+  'Mongolian-inspired: bold, sweeping',
+  // Tibetan: example tail removed under the protected-palette seed
+  // audit. Dorje refers to the vajra, a sacred Vajrayana Buddhist
+  // ritual implement (and conceptual figure). Tashi and Pema are
+  // common given names with religious meanings ("auspicious," "lotus")
+  // — the conservative call is to drop the tail rather than parse
+  // which seeds carry sacred weight.
+  'Tibetan-inspired: aspirated, contemplative',
+  // Hindi/Sanskrit: example tail removed under the protected-palette
+  // seed audit. "Devraj" is a deity epithet (king-of-Devas, used for
+  // Indra); the other examples were too close to deity-adjacent
+  // semantics to keep without cultural-knowledge consultation.
+  'Hindi/Sanskrit-inspired: melodic, ceremonial',
   'Thai-inspired: tonal, flowing (e.g., Niran, Suchada, Anong)',
-  'Maori-inspired: vowel-rich Te Reo phonetics, nature-grounded (e.g., Aroha, Tane-mahuta, Whakaata)',
-  'Hawaiian-inspired: \'Ōlelo Hawai\'i phonetics with okina and macron, place-coded (e.g., Kaiwiokeoli, Lehuanani, Punahele)',
-  'Yoruba-inspired: rhythmic with diacriticals (e.g., Olorun, Adégoke, Ifelola)',
-  'Akan-inspired: day-name traditions, Ghanaian register (e.g., Kwame, Adwoa, Yaa)',
+  // Maori: example tail removed under the protected-palette seed
+  // audit. Tāne-mahuta is a real Māori atua (god of the forest);
+  // using it as a fictional fantasy seed pulls the LLM toward
+  // reproducing real Māori cosmology directly.
+  'Maori-inspired: vowel-rich Te Reo phonetics, nature-grounded',
+  // Hawaiian: example tail removed under the protected-palette seed
+  // audit. The previous seeds were constructed Hawaiian-language
+  // names ("lehuanani" = "beautiful lehua"), but lehua is a sacred
+  // plant in Hawaiian cultural-religious tradition; the conservative
+  // call is to remove the tail and let the descriptor teach the
+  // register on its own.
+  'Hawaiian-inspired: \'Ōlelo Hawai\'i phonetics with okina and macron, place-coded',
+  // Yoruba: example tail removed under the protected-palette seed
+  // audit. "Olorun" is the Yoruba supreme deity; deity names were the
+  // original failure mode this audit addresses.
+  'Yoruba-inspired: rhythmic with diacriticals',
+  // Akan: example tail removed under the protected-palette seed audit.
+  // Kwame/Adwoa/Yaa are Akan day-names — a real and central naming
+  // convention rather than fictional samples; their iconic association
+  // with real public figures (e.g., Kwame Nkrumah) made them too
+  // anchor-heavy as seeds.
+  'Akan-inspired: day-name traditions, Ghanaian register',
   'Igbo-inspired: tonal Nigerian register (e.g., Chioma, Obinna, Adaeze)',
-  'Swahili-inspired (East African): rolling rhythm (e.g., Asante, Zuberi, Imani)',
-  'Maya-inspired: glottal stops and aspirated consonants, day-name structures (e.g., Balam-Ek, Ix-Chel, Kʼinich)',
-  'Aztec/Nahuatl-inspired: tl-clusters and compound words, deity-and-place naming (e.g., Tezcatlipoca, Xochiyaoyotl, Quetzalpetl)',
-  'Andean-inspired: structured Quechua flavor (e.g., Inti-Wasi, Killa, Sayri)',
-  'Lakota-inspired: descriptive compound names, sacred-natural register (e.g., Wakinyan-Tanka, Tatanka-Iyotaka, Wiyaka-Wakan)',
-  'Navajo/Diné-inspired: clan-rooted naming, sacred geography (e.g., Hashk\'aan-Hadzohí, Tó-Aheedlíinii, Kinłichíi\'nii)',
+  // Swahili: replaced "Asante" (reads as the Akan/Asante kingdom name
+  // and as the common word for "thank you"; either reading is fine,
+  // but the kingdom-name reading was an attractor toward
+  // appropriating-empire framings) with "Subira" (patience). Zuberi
+  // (strong) and Imani (faith) stay — common given names without
+  // specific religious or political reference.
+  'Swahili-inspired (East African): rolling rhythm (e.g., Subira, Zuberi, Imani)',
+  // Maya: example tail removed under the protected-palette seed
+  // audit. Ix-Chel (jaguar moon-goddess of midwifery and weaving) and
+  // Kʼinich (the solar-deity epithet K'inich Ajaw) are real Maya
+  // deities; using them as fictional seeds reproduces sacred-cultural
+  // content directly.
+  'Maya-inspired: glottal stops and aspirated consonants, day-name structures',
+  // Aztec/Nahuatl: example tail removed under the protected-palette
+  // seed audit. Tezcatlipoca (Smoking Mirror, a major Aztec god) is a
+  // real deity; the descriptor still mentions "deity-and-place naming"
+  // to teach the register without seeding a specific deity name.
+  'Aztec/Nahuatl-inspired: tl-clusters and compound words, deity-and-place naming',
+  // Andean: example tail removed under the protected-palette seed
+  // audit. Inti (Inca sun god, root of "Inti-Wasi" = "House of Sun")
+  // and Killa (Inca moon goddess, Mama Killa) are real Inca deities.
+  'Andean-inspired: structured Quechua flavor',
+  // Lakota: example tail removed under the protected-palette seed
+  // audit. Wakinyan-Tanka (the Great Thunder Beings) and Tatanka-
+  // Iyotaka (Sitting Bull) are sacred figures and a real historical
+  // leader respectively; using them as fictional seeds pulls the LLM
+  // toward reproducing sacred-cultural content directly.
+  'Lakota-inspired: descriptive compound names, sacred-natural register',
+  // Navajo/Diné: example tail removed under the protected-palette
+  // seed audit. Hashk'aan-Hadzohí and Kinłichíi'nii are real Navajo
+  // clan names; Tó-Aheedlíinii is a real sacred geographic feature.
+  // The Goblinoid + Navajo/Diné production failure (Staff of the
+  // Broken Hearth) used these directly as fictional empire/character
+  // names — exactly the appropriation pattern the audit prevents.
+  'Navajo/Diné-inspired: clan-rooted naming, sacred geography',
   // Fictional / fantasy linguistic traditions
   'Sindarin-inspired (elvish): elegant, vowel-rich (e.g., Galadhriel, Thindol, Nimrathel)',
   'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax, Vyrmokk, Kaelsithur)',

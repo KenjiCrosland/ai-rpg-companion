@@ -3,7 +3,6 @@ import {
   resolveFantasyRace,
   fantasyRaceConventionalPalettes,
   fantasyRaceKeywords,
-  orcGoblinExcludedPalettes,
 } from './select-language-palette.mjs';
 
 // Realistic palette pool covering at least one prefix from each fantasy
@@ -27,18 +26,25 @@ const palettes = [
   'Latin-inspired: formal (e.g., Aurelium)',
   'Sindarin-inspired (elvish): elegant (e.g., Galadhriel)',
   'Welsh-inspired: soft consonants (e.g., Branwen)',
+  'Old-Irish-inspired: pre-modern Gaeilge (e.g., placeholder)',
+  'Old-Occitan-inspired: troubadour register',
   'Germanic-inspired: guttural (e.g., Grundrak)',
   'Old-Norse-inspired: Eddaic register (e.g., Sigrún)',
   'Anglo-Saxon-inspired: Old English compounds (e.g., Wulfstan)',
+  'Old-High-German-inspired: continental Germanic (e.g., placeholder)',
+  'Middle-High-German-inspired: Nibelungenlied register (e.g., placeholder)',
+  'Gothic-inspired: earliest documented Germanic',
   'Orcish: brutal, guttural (e.g., Grokthash)',
   'Goblin-inspired: sharp (e.g., Skragbit)',
   'Gnomish: clever, playful (e.g., Fizzwocket)',
   'Norse-inspired: harsh consonants (e.g., Stormbreak)',
   'Japanese-inspired: clean syllables (e.g., Kagezuki)',
   'Chinese-inspired: tonal (e.g., Jianhao)',
-  'Yoruba-inspired: rhythmic (e.g., Olorun)',
+  'Yoruba-inspired: rhythmic',
   'Andean-inspired: structured Quechua (e.g., Inti-Wasi)',
   'Slavic-inspired: archaic clusters (e.g., Voronsk)',
+  'Old-Slavic-inspired: archaic Slavic register',
+  'Greek-inspired: mythological weight',
 ];
 
 // Helper: assert that `result` starts with one of the prefixes in the
@@ -206,125 +212,160 @@ describe('selectLanguagePalette', () => {
     );
   });
 
-  describe('Orcish/Goblinoid targeted palette exclusion', () => {
-    // Orcs and goblins as fantasy categories have a documented history
-    // of being racially coded against real human groups. The targeted
-    // exclusion blocks the random alternative branch from landing on
-    // palettes whose real-world referents have historically been
-    // orc-coded — without losing legitimate cross-cultural pairings
-    // (Celtic orcs, Sindarin orcs, Norse orcs, etc.) and without
-    // overriding explicit user choice via cultural detection.
-    //
-    // The test palette pool above contains four entries on the
-    // exclusion list (Japanese, Chinese, Yoruba, Andean), so the
-    // filter has something to filter when invoked for Orcish/Goblinoid.
+  describe('Orcish/Goblinoid allow-list architecture', () => {
+    // Orcs and goblins are restricted to a curated allow-list of
+    // European registers (fictional fantasy + Germanic + Celtic +
+    // Slavic + Latin) with documented orc/goblin-fantasy precedent.
+    // Selection is pool-only — no 30% alternative branch — and
+    // cultural detection from user input is subordinated to the pool.
+    // The architecture replaced an earlier filter approach
+    // (orcGoblinExcludedPalettes) that had a code-path gap allowing
+    // Goblinoid + Navajo/Diné to reach a production output.
 
-    const isExcluded = (palette) =>
-      orcGoblinExcludedPalettes.some(prefix => palette.startsWith(prefix));
-
-    // Spread fractional values across [0, 0.99] so the alt-pool index
-    // pick lands on every position in the post-filter pool. The first
-    // Math.random call (the 70/30 roll) must be ≥ 0.7 to enter the
-    // alternative branch; the second call (the index pick) varies.
+    // Index rolls span the pool's range; pool-only branch makes one
+    // Math.random call per generation (just the index pick).
     const indexRolls = [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99];
 
     it.each(indexRolls)(
-      'Orcish + alternative branch never returns an excluded palette (index roll = %f)',
+      'Orcish always returns a palette in the Orcish allow-list pool (index roll = %f)',
       (indexRoll) => {
-        randomSpy
-          .mockReturnValueOnce(0.85)        // ≥ 0.7 → alternative branch
-          .mockReturnValueOnce(indexRoll);  // index pick
+        randomSpy.mockReturnValue(indexRoll);
         const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
-        expect(isExcluded(result)).toBe(false);
-        // The conventional palette is also excluded from the alt pool
-        // (so the alt branch reliably produces an unconventional pairing).
-        expect(result).not.toMatch(/^Orcish[: ]/);
+        expect(isInConventionalPool(result, 'Orcish')).toBe(true);
       },
     );
 
     it.each(indexRolls)(
-      'Goblinoid + alternative branch never returns an excluded palette (index roll = %f)',
+      'Goblinoid always returns a palette in the Goblinoid allow-list pool (index roll = %f)',
       (indexRoll) => {
-        randomSpy
-          .mockReturnValueOnce(0.85)
-          .mockReturnValueOnce(indexRoll);
+        randomSpy.mockReturnValue(indexRoll);
         const result = selectLanguagePalette('Goblinoid', '', palettes, detectNothing);
-        expect(isExcluded(result)).toBe(false);
-        expect(result).not.toMatch(/^Goblin-inspired/);
+        expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
       },
     );
 
-    it('Elven + alternative branch is NOT subject to the exclusion (filter is race-gated)', () => {
-      // Regression guard against accidentally over-applying the filter:
-      // sweep alt-pool index rolls for an Elven generation and verify
-      // that at least one roll DOES land on an excluded-for-orc palette.
-      // If this fails, the filter is firing for races it shouldn't.
-      let sawExcluded = false;
-      for (const indexRoll of indexRolls) {
-        randomSpy
-          .mockReturnValueOnce(0.85)
-          .mockReturnValueOnce(indexRoll);
-        const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
-        if (isExcluded(result)) {
-          sawExcluded = true;
-          break;
-        }
-      }
-      expect(sawExcluded).toBe(true);
+    describe('70/30 weighting within the allow-list pool', () => {
+      // Within the orc/goblin allow-list, 70% of generations land on
+      // the primary fictional register (Orcish / Goblin-inspired) and
+      // 30% spread across the European cross-cultural pool members.
+      // Without this weighting, the primary register would only fire
+      // 1-in-N — too rarely for orcs/goblins to feel canonically orc/
+      // goblin most of the time.
+
+      it('Orcish: Math.random < 0.7 returns the Orcish primary register', () => {
+        // 70/30 roll: 0.5 < 0.7 → primary branch → 'Orcish'.
+        randomSpy.mockReturnValue(0.5);
+        const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
+        expect(result).toMatch(/^Orcish[: ]/);
+      });
+
+      it('Orcish: Math.random ≥ 0.7 returns a non-primary allow-list palette', () => {
+        // 70/30 roll: 0.85 ≥ 0.7 → alt-pool branch.
+        // alt-pool index pick: 0.0 → first alt-pool entry.
+        randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(0.0);
+        const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
+        expect(result).not.toMatch(/^Orcish[: ]/);
+        expect(isInConventionalPool(result, 'Orcish')).toBe(true);
+      });
+
+      it('Orcish: 70/30 boundary (Math.random === 0.7) takes the alt branch (strict less-than)', () => {
+        randomSpy.mockReturnValueOnce(0.7).mockReturnValueOnce(0.0);
+        const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
+        expect(result).not.toMatch(/^Orcish[: ]/);
+      });
+
+      it('Goblinoid: Math.random < 0.7 returns the Goblin-inspired primary register', () => {
+        randomSpy.mockReturnValue(0.5);
+        const result = selectLanguagePalette('Goblinoid', '', palettes, detectNothing);
+        expect(result).toMatch(/^Goblin-inspired/);
+      });
+
+      it('Goblinoid: Math.random ≥ 0.7 returns a non-primary allow-list palette', () => {
+        randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(0.0);
+        const result = selectLanguagePalette('Goblinoid', '', palettes, detectNothing);
+        expect(result).not.toMatch(/^Goblin-inspired/);
+        expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
+      });
     });
 
-    it('Orcish + cultural detection still returns the detected palette (user agency preserved)', () => {
-      // Even when the detected palette is on the exclusion list (Yoruba
-      // here), priority 1 cultural detection wins. The exclusion is
-      // about RANDOM imposition of a problematic pairing, not about
-      // overriding explicit user choice.
-      const detect = stubDetect('Yoruba-inspired: rhythmic (e.g., Olorun)');
+    it('Orcish + cultural detection of in-pool palette is honored', () => {
+      // Norse-coded user input that resolves to Old-Norse-inspired
+      // (which IS in the Orcish pool) is honored. The pool architecture
+      // doesn't override user signals that align with the allow-list.
+      const detect = stubDetect('Old-Norse-inspired: Eddaic register (e.g., Sigrún)');
+      const result = selectLanguagePalette('Orcish', "Mjolnir's echo", palettes, detect);
+      expect(result).toMatch(/^Old-Norse-inspired/);
+    });
+
+    it('Orcish + cultural detection of out-of-pool palette is OVERRIDDEN by pool selection', () => {
+      // The architectural protection: even when the user signal would
+      // resolve to a protected-list palette (Yoruba here), the pool
+      // wins. This is the bug fix for the Goblinoid + Navajo/Diné
+      // production failure — no cultural-detection escape hatch.
+      randomSpy.mockReturnValue(0); // pool[0] = Orcish
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
       const result = selectLanguagePalette('Orcish', "Olorun's drum", palettes, detect);
+      expect(result).not.toMatch(/^Yoruba-inspired/);
+      expect(isInConventionalPool(result, 'Orcish')).toBe(true);
+    });
+
+    it('Orcish + "Akiko of the lands" (Japanese-coded user input) returns Orcish-pool palette, not Japanese', () => {
+      // Brief verification case verbatim. Japanese cultural detection
+      // would normally fire from "Akiko" (Japanese given name) — the
+      // pool-only branch overrides that signal because orc/goblin
+      // contexts subordinate cultural detection to the European
+      // allow-list. This is the architectural commitment the
+      // production-failure (Stone-Flesh Vest with Yoruba names) was
+      // meant to prevent.
+      randomSpy.mockReturnValue(0); // pool[0] = Orcish
+      const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
+      const result = selectLanguagePalette('Orcish', 'Akiko of the lands', palettes, detect);
+      expect(result).not.toMatch(/^Japanese-inspired/);
+      expect(isInConventionalPool(result, 'Orcish')).toBe(true);
+    });
+
+    it('Goblinoid + cultural detection of out-of-pool palette is OVERRIDDEN by pool selection', () => {
+      // Same protection for Goblinoid. Reproduces the original
+      // production failure scenario at the architecture level.
+      randomSpy.mockReturnValue(0); // pool[0] = Goblin-inspired
+      const detect = stubDetect('Navajo/Diné-inspired: clan-rooted naming');
+      const result = selectLanguagePalette('Goblinoid', 'Hashk\'aan goblin clan', palettes, detect);
+      expect(result).not.toMatch(/^Navajo\/Diné-inspired/);
+      expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
+    });
+
+    it('Elven + cultural detection of any palette is still honored (pool-only is orc/goblin-specific)', () => {
+      // Regression guard: the pool-only architecture is scoped to orcs
+      // and goblins. Other fantasy races still respect priority-1
+      // cultural detection across all palettes.
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette('Elven', "Olorun's gift", palettes, detect);
       expect(result).toMatch(/^Yoruba-inspired/);
     });
 
-    it('Orcish + 70% conventional roll returns Orcish palette (filter does not run on conventional path)', () => {
-      randomSpy.mockReturnValue(0.5); // < 0.7 → conventional path
-      const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
-      expect(result).toMatch(/^Orcish[: ]/);
-    });
-
-    it('Persian-inspired is excluded from orc/goblin alt branch (distinct from Arabic/Persian-inspired)', () => {
-      // Persian-inspired is a separate palette string from Arabic/
-      // Persian-inspired. startsWith would not catch the former from
-      // the latter's exclusion entry, so Persian-inspired needs its
-      // own entry in orcGoblinExcludedPalettes. This test guards
-      // against a future contributor accidentally removing it.
-      const persianInPool = [
-        ...palettes,
-        'Persian-inspired: refined classical-aesthetic register (e.g., Anahita)',
-      ];
-      // Iterate alt-pool index rolls; result must never start with
-      // Persian-inspired for an Orcish generation in the alt branch.
-      const indexRolls = [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99];
+    it('Elven + alt branch can land on protected-list palettes (no orc/goblin filter)', () => {
+      // Regression guard: the orc/goblin protection should not bleed
+      // into other races. Iterate Elven alt-branch picks; at least one
+      // should land on a palette that would have been blocked under
+      // the old filter (Yoruba/Andean/Chinese/Japanese in this pool).
+      let sawProtectedListPalette = false;
       for (const indexRoll of indexRolls) {
         randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(indexRoll);
-        const result = selectLanguagePalette('Orcish', '', persianInPool, detectNothing);
-        expect(result).not.toMatch(/^Persian-inspired/);
+        const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
+        if (/^(Yoruba|Andean|Chinese|Japanese)-inspired/.test(result)) {
+          sawProtectedListPalette = true;
+          break;
+        }
       }
+      expect(sawProtectedListPalette).toBe(true);
     });
 
-    it('orcGoblinExcludedPalettes export contains the expected entries', () => {
-      // Persian-inspired added separately from Arabic/Persian-inspired —
-      // they're distinct palette prefixes (the former is the new
-      // refined-classical register for Elven conventional; the latter
-      // is the existing flowing/melodic register). Both excluded from
-      // orc/goblin alt-branch picks.
-      const expected = [
-        'Yoruba-inspired', 'Akan-inspired', 'Igbo-inspired',
-        'Swahili-inspired', 'Arabic/Persian-inspired', 'Persian-inspired',
-        'Hebrew-inspired', 'Hindi/Sanskrit-inspired', 'Chinese-inspired',
-        'Korean-inspired', 'Mongolian-inspired', 'Tibetan-inspired',
-        'Thai-inspired', 'Maori-inspired', 'Hawaiian-inspired',
-        'Maya-inspired', 'Aztec/Nahuatl-inspired', 'Lakota-inspired',
-        'Navajo/Diné-inspired', 'Andean-inspired',
-      ];
-      expect([...orcGoblinExcludedPalettes].sort()).toEqual(expected.sort());
+    it('orcGoblinExcludedPalettes is no longer exported (replaced by allow-list architecture)', async () => {
+      // Regression guard: the old filter export was removed when the
+      // allow-list shipped. A future contributor reintroducing it would
+      // be a sign the dual-mechanism architecture has snuck back in.
+      const mod = await import('./select-language-palette.mjs');
+      expect(mod).not.toHaveProperty('orcGoblinExcludedPalettes');
     });
   });
 
@@ -335,11 +376,6 @@ describe('selectLanguagePalette', () => {
     });
 
     it('fantasyRaceConventionalPalettes values are non-empty arrays of palette prefixes', () => {
-      // After the multi-palette refactor every value is an array
-      // (size ≥ 1). Single-palette pools (Orcish, Goblinoid) are
-      // intentional; multi-palette pools (Elven, Dwarven, Gnomish,
-      // Giant) honor plural cultural traditions and reduce example-
-      // name reuse via cross-palette rotation.
       for (const [race, prefixes] of Object.entries(fantasyRaceConventionalPalettes)) {
         expect(Array.isArray(prefixes)).toBe(true);
         expect(prefixes.length).toBeGreaterThanOrEqual(1);
@@ -347,21 +383,49 @@ describe('selectLanguagePalette', () => {
       }
     });
 
-    it('Orcish and Goblinoid have single-palette conventional pools (intentional)', () => {
-      // Single-palette pools for orcs/goblins are deliberate. Real-world
-      // clan-warrior and trickster traditions appear on the orc/goblin
-      // exclusion list; broadening the conventional pool would
-      // reproduce the racist-coding pattern the exclusion prevents.
-      // Variety comes from the cross-cultural 30% alt branch instead.
-      expect(fantasyRaceConventionalPalettes['Orcish']).toEqual(['Orcish']);
-      expect(fantasyRaceConventionalPalettes['Goblinoid']).toEqual(['Goblin-inspired']);
+    it('every fantasy race has a multi-palette conventional pool', () => {
+      // After the orc/goblin allow-list architecture, every race has
+      // multiple palettes: Elven/Dwarven/Gnomish/Giant for cross-
+      // palette name-rotation variety; Orcish/Goblinoid for the
+      // European-register allow-list.
+      for (const [race, prefixes] of Object.entries(fantasyRaceConventionalPalettes)) {
+        expect(prefixes.length).toBeGreaterThan(1);
+      }
     });
 
-    it('Elven, Dwarven, Gnomish, Giant have multi-palette conventional pools', () => {
-      expect(fantasyRaceConventionalPalettes['Elven'].length).toBeGreaterThan(1);
-      expect(fantasyRaceConventionalPalettes['Dwarven'].length).toBeGreaterThan(1);
-      expect(fantasyRaceConventionalPalettes['Gnomish'].length).toBeGreaterThan(1);
-      expect(fantasyRaceConventionalPalettes['Giant'].length).toBeGreaterThan(1);
+    it('Orcish allow-list pool contains the expected European registers', () => {
+      // The Orcish pool is European-only (fictional fantasy + Germanic
+      // + Celtic + Slavic + Latin). Drift away from this list — adding
+      // a protected-tradition register, dropping one of the European
+      // registers without explicit reason — should fail this test
+      // and force a deliberate decision rather than a quiet change.
+      const expected = [
+        'Orcish',
+        'Old-Norse-inspired',
+        'Anglo-Saxon-inspired',
+        'Old-High-German-inspired',
+        'Middle-High-German-inspired',
+        'Gothic-inspired',
+        'Welsh-inspired',
+        'Old-Irish-inspired',
+        'Old-Slavic-inspired',
+        'Latin-inspired',
+      ];
+      expect([...fantasyRaceConventionalPalettes['Orcish']].sort())
+        .toEqual([...expected].sort());
+    });
+
+    it('Goblinoid allow-list pool contains the expected European registers', () => {
+      const expected = [
+        'Goblin-inspired',
+        'Old-Norse-inspired',
+        'Anglo-Saxon-inspired',
+        'Middle-High-German-inspired',
+        'Gothic-inspired',
+        'Old-Slavic-inspired',
+      ];
+      expect([...fantasyRaceConventionalPalettes['Goblinoid']].sort())
+        .toEqual([...expected].sort());
     });
 
     it('fantasyRaceKeywords covers exactly the six core races', () => {

@@ -17,7 +17,6 @@ const samplePalettes = [
   'Germanic-inspired: guttural (e.g., Grundrak, Hammerfel)',
   'Celtic-inspired: soft consonants (e.g., Branwen, Caelith)',
   'Arabic/Persian-inspired: flowing (e.g., Qamar al-Sahir, Zafira)',
-  'Hebrew-inspired: ancient (e.g., Mikael, Shoshana)',
   'Japanese-inspired: clean syllables (e.g., Kagezuki, Shiawase)',
   'Chinese-inspired: tonal (e.g., Jianhao, Mei-Lin)',
   'Korean-inspired: structured (e.g., Soohyun, Jaewon)',

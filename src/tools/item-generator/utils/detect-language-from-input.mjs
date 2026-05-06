@@ -90,13 +90,20 @@ export const userInputLanguageDetection = {
   'Swahili-inspired': [
     'rungu', 'fimbo', 'asante', 'imani', 'pendo', 'zuberi',
   ],
+  // Arabic/Persian: detection terms restricted to weapon names
+  // (pre-Islamic and broadly Persianate vocabulary) and folkloric
+  // creatures (jinn, simurgh). Specifically Islamic-religious terms
+  // do NOT appear here — the palette is constrained at the descriptor
+  // level to pre-Islamic Arabic OR Persian; the detection terms
+  // mirror that constraint.
   'Arabic/Persian-inspired': [
     'khanjar', 'jambiya', 'shamshir', 'talwar', 'janbiya', 'simurgh',
     'jinn', 'efrit',
   ],
-  'Hebrew-inspired': [
-    'shofar', 'menorah', 'sefer', 'kabbalah', 'sephirot', 'golem',
-  ],
+  // Hebrew-inspired removed from the detection map alongside its
+  // removal from the palette list. User-typed Hebrew signals (shofar,
+  // menorah, golem, etc.) fall through to the LLM's world-knowledge
+  // override path, where the universal-invent rule still governs.
   'Hindi/Sanskrit-inspired': [
     'urumi', 'katar', 'chakram', 'bagh nakh', 'pata', 'mandala',
     'yantra', 'mudra',
