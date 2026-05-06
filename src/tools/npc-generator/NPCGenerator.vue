@@ -1504,19 +1504,32 @@ function displayNPCDescription({ part, npcDescription }) {
         }
 
         saveCurrentNPCToList();
+        // Fire the cross-tool writeback as soon as Part 1 saves. The NPC
+        // has an npc_id by this point (saveCurrentNPCToList assigns one
+        // for new records), and that id is what the source-tool stub
+        // links to. Earlier this fired only after Part 2; if Part 2
+        // failed or the user navigated away first, the writeback never
+        // ran — leaving the stub.npc_id null and no tool-reference.
+        // Part 2 carries supplementary relationships, not the NPC's
+        // cross-tool identity, so the link is correct to fire here.
+        finalizePendingSeed();
     } else if (part === 2) {
         npcDescriptionPart2.value = npcDescription;
         loadingPart2.value = false;
         saveCurrentNPCToList();
-        finalizePendingSeed();
+        // finalizePendingSeed already ran on Part 1 and nulled
+        // pendingSeed; calling it here would be a no-op via the
+        // early-return guard.
     }
 }
 
 // If the user arrived here from a source tool's "Create NPC" stub action,
 // write the source-tool reference and back-link the stub on the source
-// entity so the source tool's UI updates next time it loads. Runs only
-// after both NPC parts have completed (called from
-// displayNPCDescription after part 2 is saved).
+// entity so the source tool's UI updates next time it loads. Runs after
+// Part 1 saves the NPC (which is when npc_id is assigned). Part 2's
+// relationships are supplementary; the cross-tool link is identity-
+// based, not content-based, so it should fire as soon as the NPC is
+// real even if Part 2 fails or hasn't completed yet.
 function finalizePendingSeed() {
     const seed = pendingSeed.value;
     if (!seed) return;

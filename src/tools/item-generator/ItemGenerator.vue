@@ -306,9 +306,13 @@ import { detectFromUserInput } from './utils/detect-user-input.mjs';
 import { detectLanguageFromUserInput } from './utils/detect-language-from-input.mjs';
 import {
   selectLanguagePalette,
-  fantasyRaceOriginConventionalPalettes,
+  resolveFantasyRace,
+  fantasyRaceConventionalPalettes,
+  orcGoblinExcludedPalettes,
 } from './utils/select-language-palette.mjs';
 import { originMaterialPools, allMaterials } from './utils/material-pools.mjs';
+import { rotatePaletteExamples } from './utils/orc-goblin-name-pools.mjs';
+import { languagePalettes } from './utils/language-palettes.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 const toast = useToast();
@@ -662,51 +666,10 @@ const generateMagicItem = async () => {
     'Wizardry':      'Created through formal arcane study — the item bears academic precision, school-coded magic, and the rigor of arcane theory.',
   };
 
-  // Language palettes — purely linguistic. No thematic implications;
-  // any palette can pair with any origin. Adding entries here is always
-  // allowed; removing requires considering whether any saved item lore
-  // references the palette. The list expands the previous
-  // origin-bundled set with several real-world traditions absent
-  // before (Hebrew, Mongolian, Tibetan, Thai, Swahili, Andean,
-  // Indigenous-North-American). The list is still incomplete by design;
-  // expansion is open-ended.
-  const languagePalettes = [
-    // Real-world cultural traditions
-    'Latin-inspired: formal, structured (e.g., Aurelium, Ferrata, Nexus Imperium)',
-    'Greek-inspired: mythological weight, melodic (e.g., Thyrsion, Aeoliphos, Kymera)',
-    'Slavic-inspired: archaic consonant clusters, dramatic vowels (e.g., Voronsk, Mirjan, Kresnik)',
-    'Norse-inspired: harsh consonants, primal force (e.g., Stormbreak, Ashveil, Grimthorn)',
-    'Germanic-inspired: guttural, industrial (e.g., Grundrak, Hammerfel, Eisenmark)',
-    'Celtic-inspired: soft consonants, nature references (e.g., Branwen, Caelith, Dunmara)',
-    'Eastern European-inspired: aristocratic, archaic (e.g., Draculesti, Volkhara, Nachtfürst)',
-    'Arabic/Persian-inspired: flowing, melodic (e.g., Qamar al-Sahir, Zafira, Sayyid)',
-    'Hebrew-inspired: ancient, ceremonial (e.g., Mikael, Shoshana, Adamah)',
-    'Japanese-inspired: clean syllables, natural imagery (e.g., Kagezuki, Shiawase, Tsubasa)',
-    'Chinese-inspired: tonal, philosophical (e.g., Jianhao, Mei-Lin, Wangshu)',
-    'Korean-inspired: structured, balanced (e.g., Soohyun, Jaewon, Hyejin)',
-    'Mongolian-inspired: bold, sweeping (e.g., Temujin, Khulan, Bataar)',
-    'Tibetan-inspired: aspirated, contemplative (e.g., Tashi, Dorje, Pema)',
-    'Hindi/Sanskrit-inspired: melodic, ceremonial (e.g., Devraj, Kaliyana, Aakash)',
-    'Thai-inspired: tonal, flowing (e.g., Niran, Suchada, Anong)',
-    'Polynesian-inspired: flowing vowels, oceanic (e.g., Moanakai, Tahurei, Levaleva)',
-    'Yoruba-inspired: rhythmic with diacriticals (e.g., Olorun, Adégoke, Ifelola)',
-    'Swahili-inspired: rolling rhythm (e.g., Asante, Zuberi, Imani)',
-    'West African-inspired: rhythmic, strong vowels (e.g., Kofi, Ife-kari, Ababio)',
-    'Mesoamerican-inspired: bold sounds, astronomical themes (e.g., Tezcamil, Ixchara, Coatlwing)',
-    'Andean-inspired: structured Quechua flavor (e.g., Inti-Wasi, Killa, Sayri)',
-    'Indigenous-North-American-inspired: descriptive compounds, natural imagery (e.g., Atohi, Wakinyan, Sehoy)',
-    // Fictional / fantasy linguistic traditions
-    'Sindarin-inspired (elvish): elegant, vowel-rich (e.g., Galadhriel, Thindol, Nimrathel)',
-    'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax, Vyrmokk, Kaelsithur)',
-    'Goblin-inspired: sharp, crude, percussive (e.g., Skragbit, Mukgash, Krik-tak)',
-    'Orcish: brutal, guttural (e.g., Grokthash, Uzgark, Dra\'mok)',
-    'Gnomish: clever, playful, mechanical (e.g., Fizzwocket, Cogsworth, Tinberlin)',
-    'Aberrant: unpronounceable clusters, wrong-sounding (e.g., Xith\'vaar, Qolenth, Uurm)',
-    'Abyssal: guttural, chaotic (e.g., Ghar\'zuul, Rotmaw, Vilesung)',
-    'Infernal: sharp, aggressive (e.g., Vex\'tharion, Morkaal, Sazrith)',
-    'Primordial: pre-language sounds, elemental (e.g., Aath\'kol, Rumblith, Dross)',
-    'Technomagical: clinical with flair (e.g., Arcanaforge Mark IV, Voltspire, Aethercog)',
-  ];
+  // languagePalettes is imported from ./utils/language-palettes.mjs.
+  // Lives in its own module so test specs can verify integrity (every
+  // prefix referenced in fantasyRaceConventionalPalettes resolves to
+  // an entry there) without depending on inline data here.
 
   // Language palette selection runs through the full priority hierarchy:
   //   1. Cultural detection from user input (Akiko → Japanese, etc.)
@@ -737,11 +700,45 @@ const generateMagicItem = async () => {
   // case in selectLanguagePalette's weighted branch. We use it to gate
   // the deeper "translate, don't mash up" prompt section, which is too
   // expensive in tokens to render for every fantasy-race generation.
+  // After the multi-palette pool refactor, each fantasy race's
+  // conventional palette is an array of prefixes. The pairing is
+  // unconventional iff none of the pool prefixes matches the
+  // selected palette.
   const isUnconventionalPairing = !!(
     resolvedOrigin
-    && fantasyRaceOriginConventionalPalettes[resolvedOrigin]
-    && !selectedPalette.startsWith(fantasyRaceOriginConventionalPalettes[resolvedOrigin])
+    && fantasyRaceConventionalPalettes[resolvedOrigin]
+    && !fantasyRaceConventionalPalettes[resolvedOrigin].some(prefix =>
+      selectedPalette.startsWith(prefix),
+    )
   );
+
+  // Orc/Goblin context = fantasy-race resolution (per the same logic
+  // selectLanguagePalette uses) yields 'Orcish' or 'Goblinoid'. Catches
+  // both the dropdown case and the keyword-in-lore case, including the
+  // mixed scenario the user reported (origin=Necromantic + lore="Orcish
+  // Battleaxe" → fantasyRace='Orcish' via priority 2b keyword scan).
+  //
+  // The code-side palette filter (orcGoblinExcludedPalettes) handles
+  // RANDOM selection, but the prompt's LANGUAGE PALETTE OVERRIDE block
+  // gives the LLM authority to override the pre-selected palette from
+  // world-knowledge cultural inference. That authority can re-introduce
+  // the orc-coded pairings the filter is meant to prevent. In an orc/
+  // goblin context, that authority is revoked — see the conditional
+  // prompt block below.
+  const fantasyRaceForGen = resolveFantasyRace(
+    resolvedOrigin,
+    userInputForLangDetection,
+  );
+  const isOrcGoblinContext = fantasyRaceForGen === 'Orcish' || fantasyRaceForGen === 'Goblinoid';
+
+  // Orc and goblin conventional pools are intentionally single-palette
+  // (see fantasyRaceConventionalPalettes docstring on the racism-coding
+  // caveat), so they don't get the cross-palette rotation that gives
+  // Elven/Dwarven/Gnomish/Giant generations name variety. Instead, we
+  // rotate the palette description's "(e.g., …)" example tail by
+  // sampling from a 100-name curated pool per race. Non-orc/goblin
+  // palettes pass through this helper unchanged.
+  const displayedPalette = rotatePaletteExamples(selectedPalette);
 
   // Pre-select a mood/tone. Pool calibrated for tonal variety — roughly
   // 1/4 dark, 1/4 light, 1/4 neutral/utilitarian, 1/4 weird/strange.
@@ -1161,7 +1158,7 @@ Don't just rename — translate.
 ${itemName.value.trim() ? `USER-PROVIDED NAME — DO NOT CHANGE:
 The user has named this item "${itemName.value}". This name is FINAL and MUST appear exactly as written in the "name" field of your output. Do NOT rename, alter, translate, or "improve" it. Build the item's identity AROUND this name — the origin, lore, description, and all features should support and complement the name the user chose.
 ` : `NAMING STYLE:
-Use this linguistic palette for ALL names — the item name, character names, faction names, and location names: ${selectedPalette}
+Use this linguistic palette for ALL names — the item name, character names, faction names, and location names: ${displayedPalette}
 All names should feel like they belong to the same world. Do not blend or mix linguistic origins within a single name — commit fully to one style.
 
 NAMING — AVOID OVERUSED DESCRIPTORS:
@@ -1185,17 +1182,96 @@ Aim for tonal variety across generations. Items can be:
 
 Match the naming register to the mood and origin. Do not default to melancholy, lament, sorrow, or weeping unless the lore specifically calls for it.
 `}
-CRITICAL — EXAMPLE NAMES IN PALETTES ARE PATTERNS, NOT NAMES TO USE:
+NAMING — DO NOT REUSE EXAMPLE NAMES:
 
-Each palette description includes example names in parentheses (the parenthetical "e.g., …" portion). Those examples are PHONETIC TEMPLATES illustrating the linguistic register's sound and structure. They are NOT names to copy verbatim into the lore.
+The example names shown in the palette description (after "e.g.,") illustrate the linguistic register and phonetic style. They are NOT a list to choose from.
 
-Invent new character, faction, and place names that follow the same phonetic patterns as the parenthetical examples. The examples show you the sound; you produce unique names matching that sound.
+Do NOT use the example names directly in your output. Generate ORIGINAL names that match the palette's phonetic patterns and structural style.
 
-Do NOT reuse any of the example names from the selected palette directly in your output — not as character names, not as place names, not as faction names. Generate fresh names in the same register.
+For instance, if the palette description includes "(e.g., Galadhriel, Thindol, Nimrathel)" — those names are samples teaching you the Sindarin register. Generate different names in that same register (e.g., Aelindar, Mithrandel, Lirathiel).
+
+This rule applies to all palettes. The examples teach style; your output should commit to that style with original names.
+
+ITEM NAMING — TRANSLATION FOR NON-ENGLISH PALETTES:
+
+When the linguistic palette is non-English (Tamazight, Maori, Yoruba, Finnish, Japanese, Quechua, Mongolian, Tibetan, Welsh, Irish, Slavic, etc.), the item name should be the ENGLISH TRANSLATION of the cultural concept, not the original-language phrase.
+
+The original-language name appears in the description's first sentence with cultural framing.
+
+REQUIREMENT — THE ITEM ITSELF MUST HAVE AN ORIGINAL-LANGUAGE NAME:
+
+The lore MUST include the original-language version of the item's name. Not just original-language character names or place names — the ITEM must have a name in the cultural-linguistic register. Character names and place names alone don't satisfy this requirement; the item needs its own culturally-rooted name.
+
+Even short names work — "Hjartasteinn" or "Starozub" are enough — but one must appear in the lore. The English title is for usability at the table; the original-language name in the lore is what makes the item culturally rooted rather than a culturally-flavored generic.
+
+Examples:
+
+DON'T do this:
+- Item name: "Sulkasipailon Kukka"
+- Description: "This wand is a slender birch branch..."
+
+DO this:
+- Item name: "Wand of First Bloom"
+- Description: "This wand, called Sulkasipailon Kukka by the elven sages of the Birch Grove, is a slender birch branch..."
+
+DON'T do this:
+- Item name: "Tizi-Uzzu"
+- Description: "A heavy wand of unfinished raw oak..."
+
+DO this:
+- Item name: "Pass-Wand" (or "Wand of the Mountain Pass" — translator's choice based on what reads naturally)
+- Description: "Known as Tizi-Uzzu in the Tamazight tongue of its makers, this heavy wand of unfinished raw oak..."
+
+DON'T do this:
+- Item name: "Pou o te Maunga"
+- Description: "A tall staff of dark, salt-crusted meteoric iron..."
+
+DO this:
+- Item name: "Heart of the Mountain"
+- Description: "Called Pou o te Maunga by the Tapa-Whenua dwarves who first carved it, this tall staff of dark, salt-crusted meteoric iron..."
+
+The English translation should capture the cultural concept evocatively, not just literally. "Wand of First Bloom" conveys the meaning of "Sulkasipailon Kukka" better than "Feather-Stroke's Flower" would. Translate for poetic effect, not word-for-word.
+
+APPLY translation rule (item name in English, original in description):
+- All real-world non-English-language palettes: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic/Persian, Persian, Hebrew, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Navajo/Diné, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
+
+(Norse, Welsh, Anglo-Saxon, etc. are technically European but their original-language names — "Sigrún Stormhammer," "Æthelflæd" — are intimidating to many DMs at the table. Apply the translation rule to these too — better to err on the side of usability.)
+
+DO NOT apply translation rule (original name as item title is fine):
+- Latin (English speakers handle Latin reasonably well)
+- Greek (English speakers manage Greek-derived names)
+- Italian Renaissance (English speakers handle Italian)
+- Sindarin (Tolkien-derived elvish; standard fantasy)
+- Orcish, Goblin-inspired, Gnomish, Draconic, Aberrant, Abyssal, Infernal, Primordial, Technomagical (fictional fantasy registers)
+
+Rule of thumb: if the linguistic register involves diacriticals, unfamiliar phonetics, or non-Roman characters, apply the translation rule. If the register reads as standard fantasy or familiar European, keep original names as titles.
+
+DESCRIPTION INTEGRATION PATTERN — when the translation rule applies:
+The original-language name in the description should:
+1. Appear in the first sentence (or very early in the lore) so the cultural specificity establishes itself immediately.
+2. Connect to the cultural framing (who calls it this, in what tradition, what it means).
+3. Not be repeated throughout the description — once is enough; the DM can reference the cultural name when desired but doesn't need to re-encounter it.
+
+Good integration patterns:
+- "Called [Original Name] by the [cultural group] of [place], this [physical description]..."
+- "Known as [Original Name] in the [language/tongue] of [those who made it], this [physical description]..."
+- "The [cultural group] who first carved this [item type] called it [Original Name]; it is [physical description]..."
+
+This rule does NOT override the explicit-origin-naming requirement. The lore must still name the origin culture (elves, dwarves, orcs, etc.) — typically in the same sentence that introduces the original-language name.
+
+LORE — DEITY AND RELIGIOUS-AUTHORITY HANDLING:
+
+When the lore needs a deity, mythological figure, or religious authority, INVENT a fictional name in the palette's register. Do NOT use real deity names from any cultural tradition.
+
+Invented names should sound culturally appropriate to the register and carry meaningful semantic content where possible — a Norse-register storm-deity might be "Vethrnir," a Yoruba-register iron-spirit might be "Olosun." Don't take a common noun from the language and label it as a god (e.g., "Kibarua" — Swahili for "casual laborer" — is not a deity name).
+
+If you can't construct a culturally-appropriate invented name confidently, fall back to unnamed authorities (the elder of the clan, the wise woman, the dying king) rather than reaching for a real one.
+
+Cultural detection from user input still wins. If the user explicitly invokes a real deity ("an item blessed by Athena"), honor their input.
 
 LANGUAGE PALETTE OVERRIDE (LLM AUTHORITY):
 
-The pre-selected naming palette ("${selectedPalette}") is a fallback, not a constraint. The system pre-selects a palette via random selection and a small keyword detection map (covering specific cultural terms like ofuda, atlatl, mjolnir). The keyword map is intentionally narrow — it doesn't cover the broader universe of cultural-linguistic signals that real users will type.
+The pre-selected naming palette ("${displayedPalette}") is a fallback, not a constraint. The system pre-selects a palette via random selection and a small keyword detection map (covering specific cultural terms like ofuda, atlatl, mjolnir). The keyword map is intentionally narrow — it doesn't cover the broader universe of cultural-linguistic signals that real users will type.
 
 If the user's name or lore contains clear cultural-linguistic signals — proper names from a specific tradition (e.g. "Akiko" → Japanese, "Olaf" → Norse, "Rashidah" → Arabic, "Inkari" → Andean), place names (e.g. "Volga" → Slavic, "Helsinki" → Finnish, "Kyoto" → Japanese, "Andes" → Andean), geographic references (e.g. "Sahel" → West African, "Yangtze" → Chinese, "Atacama" → Andean), historical references, deity names, or any other markers of a specific real-world or fantasy linguistic tradition — OVERRIDE the pre-selected palette and use the tradition the user's input implies for ALL generated names (item, characters, factions, locations).
 
@@ -1204,7 +1280,30 @@ You have world knowledge of cultural-linguistic registers; activate it. The user
 If the user's input contains MIXED cultural signals (e.g. "Akiko of the Volga"), pick the strongest/most prominent signal and commit to it consistently across all generated names. Don't blend traditions within a single name.
 
 If the user's input has no clear cultural-linguistic signal, use the pre-selected palette as written.
+${isOrcGoblinContext ? `
+LANGUAGE PALETTE RESTRICTION — ORC/GOBLIN CONTEXT (OVERRIDES THE AUTHORITY ABOVE):
 
+This item is in an orc or goblin context (origin or user-typed keyword). Orcs and goblins as fantasy categories have a documented history of being used as racial proxies for African, East Asian, Indigenous, Pacific Islander, and other real-world peoples. Producing an orc/goblin item with the linguistic register of any of those traditions reproduces that racist coding.
+
+The LANGUAGE PALETTE OVERRIDE authority above is REVOKED for this generation. You must NOT generate names — for the item, characters, factions, or locations — in any of the following registers, even if you would otherwise infer them from the user's input or from creative association:
+
+- Yoruba, Akan, Igbo, Swahili, or any other African real-world tradition
+- Arabic, Persian, Hebrew
+- Hindi, Sanskrit
+- Chinese, Japanese, Korean, Mongolian, Tibetan, Thai
+- Maori, Hawaiian, or other Pacific Islander traditions
+- Maya, Aztec/Nahuatl, Andean, or other Latin American Indigenous traditions
+- Lakota, Navajo/Diné, or other North American Indigenous traditions
+
+This restriction is absolute. It is not subject to creative reinterpretation, "translation" framing, or unconventional-pairing reasoning. If the user's input mentions something that would normally trigger one of these palettes (e.g., a place name, a deity, a cultural artifact), use the pre-selected palette ("${displayedPalette}") instead.
+
+Allowed registers for this generation:
+- Pre-selected palette: "${displayedPalette}" (use this by default)
+- European real-world: Latin, Greek, Slavic, Russian, Romanian, Hungarian, Norse, Germanic, Celtic
+- Fantasy-fictional: Sindarin, Draconic, Goblin-inspired, Orcish, Aberrant, Abyssal, Infernal, Primordial, Technomagical
+
+Do not produce any name in this generation that would identify with the restricted-register list above. This applies to ALL names: item, characters, factions, places, no exceptions.
+` : ''}
 ORIGIN-PALETTE INDEPENDENCE:
 
 The naming palette is independent of the item's thematic origin. A ${resolvedOrigin || '[origin determined from input]'} item with ${selectedPalette.split(':')[0]} naming is a perfectly valid combination — embrace the creative possibility rather than fighting the pairing. Do not drift the origin's aesthetic toward the palette's culture, or the palette's linguistic register toward the origin's stereotype. They describe different dimensions of the item.

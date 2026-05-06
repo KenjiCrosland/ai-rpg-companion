@@ -10,10 +10,12 @@ const samplePalettes = [
   'Latin-inspired: formal, structured (e.g., Aurelium, Ferrata)',
   'Greek-inspired: mythological weight (e.g., Thyrsion, Aeoliphos)',
   'Slavic-inspired: archaic clusters (e.g., Voronsk, Mirjan)',
+  'Russian-inspired: patronymic structures (e.g., Anastasia Sergeyevna)',
+  'Romanian-inspired: Latin-rooted with Slavic influence (e.g., Mihai)',
+  'Hungarian-inspired: vowel harmony (e.g., Csaba, Kinga)',
   'Norse-inspired: harsh consonants (e.g., Stormbreak, Ashveil)',
   'Germanic-inspired: guttural (e.g., Grundrak, Hammerfel)',
   'Celtic-inspired: soft consonants (e.g., Branwen, Caelith)',
-  'Eastern European-inspired: aristocratic (e.g., Draculesti, Volkhara)',
   'Arabic/Persian-inspired: flowing (e.g., Qamar al-Sahir, Zafira)',
   'Hebrew-inspired: ancient (e.g., Mikael, Shoshana)',
   'Japanese-inspired: clean syllables (e.g., Kagezuki, Shiawase)',
@@ -23,13 +25,17 @@ const samplePalettes = [
   'Tibetan-inspired: aspirated (e.g., Tashi, Dorje)',
   'Hindi/Sanskrit-inspired: melodic (e.g., Devraj, Kaliyana)',
   'Thai-inspired: tonal, flowing (e.g., Niran, Suchada)',
-  'Polynesian-inspired: oceanic (e.g., Moanakai, Tahurei)',
+  'Maori-inspired: vowel-rich Te Reo (e.g., Aroha, Tane-mahuta)',
+  'Hawaiian-inspired: \'Ōlelo Hawai\'i phonetics (e.g., Lehuanani)',
   'Yoruba-inspired: rhythmic (e.g., Olorun, Adégoke)',
-  'Swahili-inspired: rolling rhythm (e.g., Asante, Zuberi)',
-  'West African-inspired: rhythmic (e.g., Kofi, Ife-kari)',
-  'Mesoamerican-inspired: bold sounds (e.g., Tezcamil, Ixchara)',
+  'Akan-inspired: day-name traditions (e.g., Kwame, Adwoa)',
+  'Igbo-inspired: tonal Nigerian (e.g., Chioma, Obinna)',
+  'Swahili-inspired (East African): rolling rhythm (e.g., Asante, Zuberi)',
+  'Maya-inspired: glottal stops, day-names (e.g., Balam-Ek, Ix-Chel)',
+  'Aztec/Nahuatl-inspired: tl-clusters, deity-and-place naming (e.g., Tezcatlipoca)',
   'Andean-inspired: structured Quechua (e.g., Inti-Wasi, Killa)',
-  'Indigenous-North-American-inspired: descriptive compounds (e.g., Atohi, Wakinyan)',
+  'Lakota-inspired: descriptive compounds (e.g., Wakinyan-Tanka)',
+  'Navajo/Diné-inspired: clan-rooted naming (e.g., Tó-Aheedlíinii)',
 ];
 
 describe('detectLanguageFromUserInput', () => {
@@ -40,9 +46,19 @@ describe('detectLanguageFromUserInput', () => {
       expect(result).toMatch(/^Japanese-inspired/);
     });
 
-    it('detects Mesoamerican-specific terms', () => {
+    it('detects Aztec/Nahuatl-specific terms (formerly under Mesoamerican)', () => {
+      // Macuahuitl is a Nahuatl word; under the cultural-specificity
+      // refactor it now resolves to Aztec/Nahuatl rather than the
+      // generic Mesoamerican catch-all.
       const result = detectLanguageFromUserInput('Macuahuitl of the Sun', samplePalettes);
-      expect(result).toMatch(/^Mesoamerican-inspired/);
+      expect(result).toMatch(/^Aztec\/Nahuatl-inspired/);
+    });
+
+    it('detects Maya-specific terms', () => {
+      // kukulkan is a Maya deity name; under the split this routes to
+      // Maya-inspired distinct from Aztec/Nahuatl.
+      const result = detectLanguageFromUserInput('Temple of Kukulkan', samplePalettes);
+      expect(result).toMatch(/^Maya-inspired/);
     });
 
     it('detects Norse-specific terms', () => {
@@ -99,14 +115,17 @@ describe('detectLanguageFromUserInput', () => {
   });
 
   describe('cross-palette tie resolution (atlatl, asante)', () => {
-    it('resolves "atlatl" to Mesoamerican (intentional ordering)', () => {
-      // atlatl is in BOTH Mesoamerican-inspired and previously had been
-      // documented as also-a-Northern-American thing. The detection map
-      // lists it under Mesoamerican only, with a comment explaining the
-      // popular-association decision. Documents the resolution so a
-      // future contributor doesn't quietly flip it.
+    it('resolves "atlatl" to Aztec/Nahuatl (specific tradition under refactor)', () => {
+      // atlatl is a Nahuatl word for spear-thrower. The earlier map
+      // had it ambiguously under "Mesoamerican-inspired" and a comment
+      // noted the technology was shared with Indigenous North American
+      // traditions. The cultural-specificity refactor splits both
+      // generics into specific traditions; atlatl now lives under
+      // Aztec/Nahuatl alone (the originating language) and the
+      // pan-Indigenous fallback path is retired in favor of LLM world
+      // knowledge via the LANGUAGE PALETTE OVERRIDE prompt block.
       expect(detectLanguageFromUserInput('Atlatl of the Hunt', samplePalettes))
-        .toMatch(/^Mesoamerican-inspired/);
+        .toMatch(/^Aztec\/Nahuatl-inspired/);
     });
 
     it('resolves "asante" to Swahili (alphabetical-on-prefix tiebreak)', () => {
@@ -130,9 +149,100 @@ describe('detectLanguageFromUserInput', () => {
         .toMatch(/^Mongolian-inspired/);
     });
 
-    it('detects "medicine bundle" as a multi-word indigenous term', () => {
+    it('"medicine bundle" is intentionally NOT mapped (pan-Indigenous popular term)', () => {
+      // The cultural-specificity refactor split the generic
+      // Indigenous-North-American-inspired palette into specific
+      // traditions (Lakota, Navajo/Diné). Pan-Indigenous popular-fiction
+      // terms like medicine bundle, tomahawk, wampum, dreamcatcher,
+      // and kachina (Hopi-sacred) don't cleanly belong to either
+      // specific tradition, so they're deliberately unmapped. The LLM
+      // can interpret them from world knowledge via the LANGUAGE
+      // PALETTE OVERRIDE prompt block.
       expect(detectLanguageFromUserInput('A medicine bundle from the elders', samplePalettes))
-        .toMatch(/^Indigenous-North-American-inspired/);
+        .toBe(null);
+    });
+  });
+
+  describe('cultural-specificity splits (post-refactor)', () => {
+    // Earlier the detection map used generic regional palettes
+    // ("Polynesian", "Mesoamerican", "West African", "Indigenous-North-
+    // American", "Eastern European"). Those flatten distinct cultures.
+    // The splits below verify that the new specific traditions detect
+    // distinctly — Maori-coded inputs go to Maori, Hawaiian-coded inputs
+    // go to Hawaiian, etc. — rather than collapsing back into a single
+    // catch-all.
+
+    it('Maori terms route to Maori (not Hawaiian)', () => {
+      // mere/taiaha/whakapapa are Maori-specific; the detection should
+      // not fall back to Hawaiian or any generic Polynesian register.
+      expect(detectLanguageFromUserInput('Mere of Whakapapa', samplePalettes))
+        .toMatch(/^Maori-inspired/);
+    });
+
+    it('Hawaiian terms route to Hawaiian (not Maori)', () => {
+      expect(detectLanguageFromUserInput('Lehua of Pele\'s Choosing', samplePalettes))
+        .toMatch(/^Hawaiian-inspired/);
+    });
+
+    it('Akan terms route to Akan (not generic West African)', () => {
+      expect(detectLanguageFromUserInput('Kwame and the Sankofa', samplePalettes))
+        .toMatch(/^Akan-inspired/);
+    });
+
+    it('Igbo terms route to Igbo distinctly', () => {
+      expect(detectLanguageFromUserInput('The Ikenga of the household', samplePalettes))
+        .toMatch(/^Igbo-inspired/);
+    });
+
+    it('Russian-coded terms route to Russian (not generic Slavic)', () => {
+      // shashka, baba yaga, koschei moved out of Slavic-inspired into
+      // Russian-inspired in the refactor. domovoi is the only term that
+      // remains in Slavic-inspired (genuinely pan-Slavic).
+      expect(detectLanguageFromUserInput('The shashka of the steppes', samplePalettes))
+        .toMatch(/^Russian-inspired/);
+      expect(detectLanguageFromUserInput('Baba Yaga\'s mortar', samplePalettes))
+        .toMatch(/^Russian-inspired/);
+    });
+
+    it('domovoi still routes to Slavic-inspired (pan-Slavic concept)', () => {
+      expect(detectLanguageFromUserInput('A small offering for the domovoi', samplePalettes))
+        .toMatch(/^Slavic-inspired/);
+    });
+
+    it('Romanian terms route to Romanian distinctly', () => {
+      expect(detectLanguageFromUserInput('The voievod of Wallachia', samplePalettes))
+        .toMatch(/^Romanian-inspired/);
+    });
+
+    it('Hungarian terms route to Hungarian distinctly', () => {
+      expect(detectLanguageFromUserInput('Across the Magyar puszta', samplePalettes))
+        .toMatch(/^Hungarian-inspired/);
+    });
+
+    it('Lakota terms route to Lakota', () => {
+      expect(detectLanguageFromUserInput('Wakinyan thunder over Paha-Sapa', samplePalettes))
+        .toMatch(/^Lakota-inspired/);
+    });
+
+    it('Navajo/Diné terms route to Navajo/Diné', () => {
+      expect(detectLanguageFromUserInput('A hooghan of the Diné', samplePalettes))
+        .toMatch(/^Navajo\/Diné-inspired/);
+    });
+
+    it('removed generic palette keys are no longer in the detection map', () => {
+      // Regression guard: if a future change accidentally re-introduces
+      // a generic catch-all, this test fails. The whole point of the
+      // refactor is that these keys don't exist anymore.
+      const removedKeys = [
+        'Polynesian-inspired',
+        'Mesoamerican-inspired',
+        'West African-inspired',
+        'Indigenous-North-American-inspired',
+        'Eastern European-inspired',
+      ];
+      for (const key of removedKeys) {
+        expect(userInputLanguageDetection).not.toHaveProperty(key);
+      }
     });
   });
 
