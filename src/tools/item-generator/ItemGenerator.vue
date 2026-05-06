@@ -1226,7 +1226,7 @@ DON'T do this:
 
 DO this:
 - Item name: "Pass-Wand" (or "Wand of the Mountain Pass" — translator's choice based on what reads naturally)
-- Description: "Known as Tizi-Uzzu in the Tamazight tongue of its makers, this heavy wand of unfinished raw oak..."
+- Description: "Known as Tizi-Uzzu in the old tongue of the highland clans who carved it, this heavy wand of unfinished raw oak..."
 
 DON'T do this:
 - Item name: "Pou o te Maunga"
@@ -1262,6 +1262,14 @@ Good integration patterns:
 - "Called [Original Name] by the [cultural group] of [place], this [physical description]..."
 - "Known as [Original Name] in the [language/tongue] of [those who made it], this [physical description]..."
 - "The [cultural group] who first carved this [item type] called it [Original Name]; it is [physical description]..."
+
+LANGUAGE FRAMING — USE IN-WORLD TERMS, NOT REAL-WORLD LINGUISTIC CATEGORIES:
+
+When the lore references the language the original-language name comes from, use the in-world culture's own term for their tongue, never the real-world linguistic category. The character names and item name come from the palette's register, but the framing language is fictional.
+
+- For fantasy-race origins, use the race's own term: "the elven tongue," "the old dwarven tongue," "the orcish war-tongue," "the goblin cant."
+- For cultural-coded items without a fantasy-race origin, invent a brief in-world descriptor that fits the item's setting (e.g., "the old tongue of the highland clans," "the speech of the river-folk," "the temple-tongue of the lost city").
+- NEVER say "the Old Irish register," "the Tamazight tongue," "the Yoruba-inspired tongue," or any phrasing that names the real-world linguistic category.
 
 This rule does NOT override the explicit-origin-naming requirement. The lore must still name the origin culture (elves, dwarves, orcs, etc.) — typically in the same sentence that introduces the original-language name.
 
