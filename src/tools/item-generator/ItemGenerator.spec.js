@@ -12,6 +12,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import ItemGenerator from './ItemGenerator.vue';
 import * as openAi from "@/util/ai-client.mjs";
+import { originMaterialPools, allMaterials } from './utils/material-pools.mjs';
 
 // Mock the open-ai module
 jest.mock('@/util/ai-client.mjs', () => ({
@@ -356,6 +357,208 @@ describe('ItemGenerator - Prompt Generation', () => {
       // Just verify it's a substantial prompt with key elements
       expect(prompt.length).toBeGreaterThan(1000);
       expect(prompt).toContain('IMPORTANT D&D 5e DESIGN RULES');
+    });
+  });
+
+  describe('Origin/Palette Pairing — Conditional Translation Block', () => {
+    // The prompt distinguishes two cases for fantasy-race origins:
+    //   - Conventional pairing (Elven+Sindarin, Dwarven+Germanic, etc.)
+    //     → simple "ORIGIN DRIVES LORE CONTENT:" guidance
+    //   - Unconventional pairing (Elven+Slavic, Gnomish+Mesoamerican, etc.)
+    //     → deeper "UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP"
+    //       block with three worked examples
+    // Math.random is stubbed because selectLanguagePalette uses it to roll
+    // the 70/30 weighted choice. Stubbing to 0.5 forces the conventional
+    // branch; 0.85 forces the "other" (unconventional) branch.
+
+    let randomSpy;
+    beforeEach(() => {
+      randomSpy = jest.spyOn(Math, 'random');
+    });
+    afterEach(() => {
+      randomSpy.mockRestore();
+    });
+
+    it('renders UNCONVENTIONAL PAIRING block when fantasy-race origin pairs with non-conventional palette', async () => {
+      randomSpy.mockReturnValue(0.85); // forces non-Sindarin palette for Elven origin
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Elven');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      expect(prompt).toContain("UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP");
+      expect(prompt).toContain('translate'); // verb at the heart of the directive
+      // Worked examples should be present verbatim (regression guard).
+      expect(prompt).toContain('Yei Tecpatl Tlachiani');
+      expect(prompt).toContain('Adégoke Ojú-Iná');
+      expect(prompt).toContain('Galadhrast i-Gôr');
+      // Simple block must NOT also render — the two are mutually exclusive.
+      expect(prompt).not.toMatch(/ORIGIN DRIVES LORE CONTENT:\s+The thematic origin/);
+    });
+
+    it('renders simple ORIGIN DRIVES LORE CONTENT block (and not UNCONVENTIONAL) when fantasy-race origin pairs with its conventional palette', async () => {
+      randomSpy.mockReturnValue(0.5); // 0.5 < 0.7 → conventional palette (Sindarin for Elven)
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Elven');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      expect(prompt).toContain('ORIGIN DRIVES LORE CONTENT:');
+      expect(prompt).toContain('the lore is about'); // case-insensitive substring guard
+      expect(prompt).not.toContain("UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP");
+      // Worked examples should NOT leak into conventional generations.
+      expect(prompt).not.toContain('Yei Tecpatl Tlachiani');
+    });
+
+    it('renders simple ORIGIN DRIVES LORE CONTENT block when origin is not a fantasy race', async () => {
+      // Non-fantasy-race origin (Draconic) → conditional flag is always
+      // false regardless of which palette gets rolled, so the simple block
+      // is the right one even on a "weird" palette.
+      randomSpy.mockReturnValue(0.85);
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Draconic');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      expect(prompt).toContain('ORIGIN DRIVES LORE CONTENT:');
+      expect(prompt).not.toContain("UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP");
+      expect(prompt).not.toContain('Yei Tecpatl Tlachiani');
+    });
+
+    it('UNCONVENTIONAL block carries the EXPLICIT ORIGIN IDENTIFICATION requirement and worked-example list', async () => {
+      // Without explicit origin naming, prior unconventional outputs were
+      // origin-ambiguous (Chinese-rendered elven items that never said
+      // "elves" or "elven"). The directive forces the noun form and the
+      // worked-example list ensures a cultural subgroup is provided.
+      randomSpy.mockReturnValue(0.85); // forces non-Sindarin palette for Elven
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Elven');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      expect(prompt).toContain('EXPLICIT ORIGIN IDENTIFICATION — REQUIRED');
+      expect(prompt).toContain('elves, dwarves, orcs');
+      expect(prompt).toContain('the Sun Elves of Liang-Tzu');
+      expect(prompt).toContain('Reading test');
+      // The closing translate-not-rename punchline should still terminate
+      // the unconventional block (regression guard for the insertion point).
+      expect(prompt).toContain("Don't just rename — translate");
+    });
+
+    it('simple ORIGIN DRIVES LORE CONTENT block also requires explicit origin naming', async () => {
+      // The conventional pairing branch needs the same naming guarantee —
+      // "Elven items with Sindarin naming should also explicitly name
+      // the elves" per the brief.
+      randomSpy.mockReturnValue(0.5); // conventional palette for Elven
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Elven');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      expect(prompt).toContain('ORIGIN DRIVES LORE CONTENT:');
+      expect(prompt).toContain('lore MUST explicitly name the origin culture');
+      expect(prompt).toContain('A reader should be able to identify the origin from the lore alone');
+      // Make sure the simpler form-factor was kept — the unconventional
+      // worked-examples list MUST NOT leak into the conventional block.
+      expect(prompt).not.toContain('the Sun Elves of Liang-Tzu');
+    });
+
+    it('does not render UNCONVENTIONAL block for each of the six fantasy races on the conventional roll', async () => {
+      // Smoke-test that all six entries in fantasyRaceOriginConventionalPalettes
+      // hit the conventional branch when Math.random < 0.7. Catches future
+      // accidents where a race is added to the keyword/palette map but
+      // selectLanguagePalette doesn't recognize it.
+      randomSpy.mockReturnValue(0.5);
+      const races = ['Elven', 'Dwarven', 'Orcish', 'Goblinoid', 'Gnomish', 'Giant'];
+
+      for (const race of races) {
+        jest.clearAllMocks();
+        if (wrapper) wrapper.unmount();
+        wrapper = mount(ItemGenerator, { props: { premium: true } });
+
+        const originSelect = wrapper.findAll('select')[2];
+        await originSelect.setValue(race);
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+
+        const prompt = openAi.generateGptResponse.mock.calls[0][0];
+        expect(prompt).not.toContain("UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP");
+        expect(prompt).toContain('ORIGIN DRIVES LORE CONTENT:');
+      }
+    });
+  });
+
+  describe('Material selection — origin-curated pools', () => {
+    // The prompt embeds the selected material via "MAGICAL MATERIAL:\nThe
+    // item incorporates: ${selectedMaterial}". When origin is set, the
+    // selection should come from that origin's pool; when origin is
+    // null (user input drives theme), it should come from the
+    // deduplicated union of all pools.
+    //
+    // We force determinism by stubbing Math.random to 0 — that always
+    // picks index 0 from any array. Combined with knowing each pool's
+    // first entry, we can assert exactly which material was chosen.
+
+    let randomSpy;
+    beforeEach(() => {
+      randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+    });
+    afterEach(() => {
+      randomSpy.mockRestore();
+    });
+
+    it('selects material from the origin pool when a fantasy-race origin is chosen (Elven)', async () => {
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Elven');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      const expected = originMaterialPools.Elven[0];
+      expect(prompt).toContain(`The item incorporates: ${expected}`);
+    });
+
+    it('selects material from the origin pool for an aesthetic origin (Necromantic)', async () => {
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Necromantic');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      const expected = originMaterialPools.Necromantic[0];
+      expect(prompt).toContain(`The item incorporates: ${expected}`);
+    });
+
+    it('falls back to allMaterials when origin is unresolved (user-provided name, no dropdown)', async () => {
+      // User provides a name → resolvedOrigin stays null (the LLM
+      // derives theme from input) → material selection should pull
+      // from allMaterials, not any specific origin pool.
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+      const nameInput = wrapper.find('input#item-name');
+      await nameInput.setValue('Curious Lantern');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      const expected = allMaterials[0];
+      expect(prompt).toContain(`The item incorporates: ${expected}`);
     });
   });
 
