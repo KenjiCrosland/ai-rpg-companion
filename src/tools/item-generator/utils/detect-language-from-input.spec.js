@@ -34,7 +34,6 @@ const samplePalettes = [
   'Aztec/Nahuatl-inspired: tl-clusters, deity-and-place naming (e.g., Tezcatlipoca)',
   'Andean-inspired: structured Quechua (e.g., Inti-Wasi, Killa)',
   'Lakota-inspired: descriptive compounds (e.g., Wakinyan-Tanka)',
-  'Navajo/Diné-inspired: clan-rooted naming (e.g., Tó-Aheedlíinii)',
 ];
 
 describe('detectLanguageFromUserInput', () => {
@@ -151,12 +150,13 @@ describe('detectLanguageFromUserInput', () => {
     it('"medicine bundle" is intentionally NOT mapped (pan-Indigenous popular term)', () => {
       // The cultural-specificity refactor split the generic
       // Indigenous-North-American-inspired palette into specific
-      // traditions (Lakota, Navajo/Diné). Pan-Indigenous popular-fiction
-      // terms like medicine bundle, tomahawk, wampum, dreamcatcher,
-      // and kachina (Hopi-sacred) don't cleanly belong to either
-      // specific tradition, so they're deliberately unmapped. The LLM
-      // can interpret them from world knowledge via the LANGUAGE
-      // PALETTE OVERRIDE prompt block.
+      // traditions (Lakota only — Navajo/Diné was removed entirely
+      // under the same appropriation-caution that motivated the split).
+      // Pan-Indigenous popular-fiction terms like medicine bundle,
+      // tomahawk, wampum, dreamcatcher, and kachina (Hopi-sacred)
+      // don't cleanly belong to Lakota, so they're deliberately
+      // unmapped. The LLM can interpret them from world knowledge via
+      // the LANGUAGE PALETTE OVERRIDE prompt block.
       expect(detectLanguageFromUserInput('A medicine bundle from the elders', samplePalettes))
         .toBe(null);
     });
@@ -223,9 +223,16 @@ describe('detectLanguageFromUserInput', () => {
         .toMatch(/^Lakota-inspired/);
     });
 
-    it('Navajo/Diné terms route to Navajo/Diné', () => {
+    it('Navajo/Diné terms (hooghan, diné) route to NOTHING (palette removed)', () => {
+      // The Navajo/Diné palette was removed entirely under appropriation
+      // caution (skinwalker tradition is sacred; clan-name and sacred-
+      // geographic terms carry too high a collision-risk). Diné-coded
+      // user input falls through to the LLM's world-knowledge override
+      // path with strict universal-invent rules — the keyword detection
+      // map should NOT route these terms anywhere, regardless of any
+      // sample palette entry that might still claim Navajo coverage.
       expect(detectLanguageFromUserInput('A hooghan of the Diné', samplePalettes))
-        .toMatch(/^Navajo\/Diné-inspired/);
+        .toBe(null);
     });
 
     it('removed generic palette keys are no longer in the detection map', () => {

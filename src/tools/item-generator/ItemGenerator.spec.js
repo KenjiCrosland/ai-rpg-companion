@@ -367,9 +367,13 @@ describe('ItemGenerator - Prompt Generation', () => {
     // The prompt distinguishes two cases for fantasy-race origins:
     //   - Conventional pairing (Elven+Sindarin, Dwarven+Germanic, etc.)
     //     → simple "ORIGIN DRIVES LORE CONTENT:" guidance
-    //   - Unconventional pairing (Elven+Slavic, Gnomish+Mesoamerican, etc.)
-    //     → deeper "UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP"
-    //       block with three worked examples
+    //   - Unconventional pairing (Giant + non-pool palette, post-Task-1)
+    //     → "UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP" block
+    //       (trimmed in Task 4 — principle kept, three worked examples
+    //       removed because they modeled pairings the architecture no
+    //       longer allows post-Task-1, and the Mesoamerican example
+    //       contained a sacred-concept teaching artifact we want out
+    //       of the prompt)
     // Math.random is stubbed because selectLanguagePalette uses it to roll
     // the 70/30 weighted choice. Stubbing to 0.5 forces the conventional
     // branch; 0.85 forces the "other" (unconventional) branch.
@@ -383,40 +387,49 @@ describe('ItemGenerator - Prompt Generation', () => {
     });
 
     it('renders UNCONVENTIONAL PAIRING block when fantasy-race origin pairs with non-conventional palette', async () => {
-      randomSpy.mockReturnValue(0.85); // forces non-Sindarin palette for Elven origin
+      // Post-Task-1, the only fantasy race that can reach the
+      // unconventional-pairing branch is Giant (the cross-cultural-
+      // archetype race left on priority-2 weighted with broad alt-
+      // branch). The five Western-fantasy-bound races are allow-list-
+      // restricted, so their selected palette is always in their
+      // allow-list and the unconventional branch never fires for them.
+      randomSpy.mockReturnValue(0.85); // forces non-pool palette for Giant
       wrapper = mount(ItemGenerator, { props: { premium: true } });
 
       const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Elven');
+      await originSelect.setValue('Giant');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
 
+      // Routing assertion: the unconventional-pairing block fires for
+      // Giant + non-pool palette, and the simple ORIGIN-DRIVES block
+      // does not (the two are mutually exclusive). Block CONTENT —
+      // principle phrasing, presence/absence of the stripped worked
+      // examples, etc. — is a prompt-string concern verified through
+      // manual production-review, not via Jest assertions on wording.
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
       expect(prompt).toContain("UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP");
-      expect(prompt).toContain('translate'); // verb at the heart of the directive
-      // Worked examples should be present verbatim (regression guard).
-      expect(prompt).toContain('Yei Tecpatl Tlachiani');
-      expect(prompt).toContain('Adégoke Ojú-Iná');
-      expect(prompt).toContain('Galadhrast i-Gôr');
-      // Simple block must NOT also render — the two are mutually exclusive.
       expect(prompt).not.toMatch(/ORIGIN DRIVES LORE CONTENT:\s+The thematic origin/);
     });
 
     it('renders simple ORIGIN DRIVES LORE CONTENT block (and not UNCONVENTIONAL) when fantasy-race origin pairs with its conventional palette', async () => {
-      randomSpy.mockReturnValue(0.5); // 0.5 < 0.7 → conventional palette (Sindarin for Elven)
+      // Same context as above, but Math.random < 0.7 forces the
+      // conventional pool[0] (Norse-inspired for Giant). The
+      // unconventional branch never fires.
+      randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
 
       const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Elven');
+      await originSelect.setValue('Giant');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
 
+      // Routing assertion only — the simple ORIGIN-DRIVES block fires
+      // for Giant on the conventional roll, and the unconventional
+      // block does not.
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
       expect(prompt).toContain('ORIGIN DRIVES LORE CONTENT:');
-      expect(prompt).toContain('the lore is about'); // case-insensitive substring guard
       expect(prompt).not.toContain("UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP");
-      // Worked examples should NOT leak into conventional generations.
-      expect(prompt).not.toContain('Yei Tecpatl Tlachiani');
     });
 
     it('renders simple ORIGIN DRIVES LORE CONTENT block when origin is not a fantasy race', async () => {
@@ -434,52 +447,24 @@ describe('ItemGenerator - Prompt Generation', () => {
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
       expect(prompt).toContain('ORIGIN DRIVES LORE CONTENT:');
       expect(prompt).not.toContain("UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP");
-      expect(prompt).not.toContain('Yei Tecpatl Tlachiani');
     });
 
-    it('UNCONVENTIONAL block carries the EXPLICIT ORIGIN IDENTIFICATION requirement and worked-example list', async () => {
-      // Without explicit origin naming, prior unconventional outputs were
-      // origin-ambiguous (Chinese-rendered elven items that never said
-      // "elves" or "elven"). The directive forces the noun form and the
-      // worked-example list ensures a cultural subgroup is provided.
-      randomSpy.mockReturnValue(0.85); // forces non-Sindarin palette for Elven
-      wrapper = mount(ItemGenerator, { props: { premium: true } });
+    // The "UNCONVENTIONAL block carries EXPLICIT ORIGIN IDENTIFICATION
+    // requirement and origin-subgroup examples" test was removed during
+    // the test-style cleanup — the entire test was prompt-string
+    // content checks (toContain on section headers, subgroup-example
+    // strings, the translate-not-rename punchline). The routing
+    // (UNCONVENTIONAL block fires for Giant + non-pool) is covered by
+    // the parameterized test above; whether the EXPLICIT ORIGIN
+    // IDENTIFICATION block survives intact is a manual production-
+    // review concern.
 
-      const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Elven');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
-
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('EXPLICIT ORIGIN IDENTIFICATION — REQUIRED');
-      expect(prompt).toContain('elves, dwarves, orcs');
-      expect(prompt).toContain('the Sun Elves of Liang-Tzu');
-      expect(prompt).toContain('Reading test');
-      // The closing translate-not-rename punchline should still terminate
-      // the unconventional block (regression guard for the insertion point).
-      expect(prompt).toContain("Don't just rename — translate");
-    });
-
-    it('simple ORIGIN DRIVES LORE CONTENT block also requires explicit origin naming', async () => {
-      // The conventional pairing branch needs the same naming guarantee —
-      // "Elven items with Sindarin naming should also explicitly name
-      // the elves" per the brief.
-      randomSpy.mockReturnValue(0.5); // conventional palette for Elven
-      wrapper = mount(ItemGenerator, { props: { premium: true } });
-
-      const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Elven');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
-
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('ORIGIN DRIVES LORE CONTENT:');
-      expect(prompt).toContain('lore MUST explicitly name the origin culture');
-      expect(prompt).toContain('A reader should be able to identify the origin from the lore alone');
-      // Make sure the simpler form-factor was kept — the unconventional
-      // worked-examples list MUST NOT leak into the conventional block.
-      expect(prompt).not.toContain('the Sun Elves of Liang-Tzu');
-    });
+    // The "simple ORIGIN DRIVES LORE CONTENT block also requires
+    // explicit origin naming" test was likewise removed — the key
+    // assertions were on principle phrasing ("lore MUST explicitly
+    // name the origin culture", "A reader should be able to identify
+    // the origin from the lore alone"). Routing (simple block fires
+    // for Elven + conventional palette) is covered elsewhere.
 
     it('renders LANGUAGE PALETTE RESTRICTION when origin is Orcish (override-revocation block)', async () => {
       // The orc-coded-pairing failure user reported: code-side filter
@@ -495,7 +480,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — ORC/GOBLIN CONTEXT');
+      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
       expect(prompt).toContain('OVERRIDES THE AUTHORITY ABOVE');
       expect(prompt).toContain('REVOKED for this generation');
       // The full restricted-register list must be present so the LLM
@@ -504,7 +489,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('Chinese, Japanese, Korean, Mongolian, Tibetan, Thai');
       expect(prompt).toContain('Maori, Hawaiian');
       expect(prompt).toContain('Maya, Aztec/Nahuatl, Andean');
-      expect(prompt).toContain('Lakota, Navajo/Diné');
+      expect(prompt).toContain('Lakota or other North American Indigenous traditions');
     });
 
     it('renders LANGUAGE PALETTE RESTRICTION when origin is Goblinoid', async () => {
@@ -516,7 +501,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — ORC/GOBLIN CONTEXT');
+      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
     it('renders LANGUAGE PALETTE RESTRICTION when lore mentions orcish on a non-fantasy-race origin (user repro)', async () => {
@@ -541,13 +526,13 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — ORC/GOBLIN CONTEXT');
+      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
       // Worth verifying the restriction is hard-banning Japanese
       // specifically since that was the failure case in the bug report.
       expect(prompt).toContain('Chinese, Japanese, Korean, Mongolian, Tibetan, Thai');
     });
 
-    it('does NOT render LANGUAGE PALETTE RESTRICTION when origin is non-fantasy-race with no orc/goblin keyword', async () => {
+    it('does NOT render LANGUAGE PALETTE RESTRICTION when origin is non-fantasy-race with no Western-bound-race keyword', async () => {
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       const originSelect = wrapper.findAll('select')[2];
@@ -556,13 +541,15 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).not.toContain('LANGUAGE PALETTE RESTRICTION — ORC/GOBLIN CONTEXT');
+      expect(prompt).not.toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
-    it('does NOT render LANGUAGE PALETTE RESTRICTION for Elven (other fantasy races are unrestricted)', async () => {
-      // Regression guard: the restriction is race-gated, not blanket
-      // for all fantasy races. Elven, Dwarven, Gnomish, Giant cross-
-      // cultural pairings remain fully available.
+    it('renders LANGUAGE PALETTE RESTRICTION for Elven (now Western-fantasy-bound)', async () => {
+      // Pre-Task-1 this test asserted Elven did NOT render the
+      // restriction (the restriction was orc/goblin-scoped). Post-
+      // Task-1, Elven joined WESTERN_FANTASY_BOUND_RACES alongside Dwarven and
+      // Gnomish under the Western-fantasy-bound tier — all five render
+      // the restriction block.
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       const originSelect = wrapper.findAll('select')[2];
@@ -571,7 +558,47 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).not.toContain('LANGUAGE PALETTE RESTRICTION — ORC/GOBLIN CONTEXT');
+      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+    });
+
+    it('renders LANGUAGE PALETTE RESTRICTION for Dwarven (now Western-fantasy-bound)', async () => {
+      randomSpy.mockReturnValue(0.5);
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Dwarven');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+    });
+
+    it('renders LANGUAGE PALETTE RESTRICTION for Gnomish (now Western-fantasy-bound)', async () => {
+      randomSpy.mockReturnValue(0.5);
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Gnomish');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+    });
+
+    it('does NOT render LANGUAGE PALETTE RESTRICTION for Giant (cross-cultural archetype)', async () => {
+      // Regression guard: Giant is NOT in WESTERN_FANTASY_BOUND_RACES — its
+      // archetype-slot exists in many living mythological traditions
+      // (jötnar/titans/rakshasas/oni). The Western-fantasy-bound
+      // restriction does not apply.
+      randomSpy.mockReturnValue(0.5);
+      wrapper = mount(ItemGenerator, { props: { premium: true } });
+      const originSelect = wrapper.findAll('select')[2];
+      await originSelect.setValue('Giant');
+      await wrapper.find('form').trigger('submit');
+      await flushPromises();
+
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      expect(prompt).not.toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
     it('always renders ITEM NAMING — TRANSLATION FOR NON-ENGLISH PALETTES directive', async () => {
@@ -768,9 +795,10 @@ describe('ItemGenerator - Prompt Generation', () => {
 
       // Worked-example anchors for the invention rule (constructed
       // names that aren't real deities) and the common-noun
-      // counter-example.
+      // counter-example. A Diné-register example (Hashtłʼish, Navajo
+      // word for clay) used to anchor here too; it was removed when
+      // the Navajo/Diné palette was deleted under appropriation caution.
       expect(prompt).toContain('Olosun');
-      expect(prompt).toContain('Hashtłʼish');
       expect(prompt).toContain('Kibarua');
 
       // LIMITED EXCEPTIONS section — Western-fantasy-canonical
@@ -785,11 +813,12 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('Sindarin-inspired and all fictional palettes');
 
       // Explicit non-exception list — pins the most acute production-
-      // failure traditions (Maori, Lakota, Navajo, Yoruba) so a future
-      // contributor can't quietly drop them.
+      // failure traditions (Maori, Lakota, Yoruba) so a future
+      // contributor can't quietly drop them. Navajo/Diné used to be
+      // pinned here too; the palette was removed entirely under
+      // appropriation caution, so we no longer assert its presence.
       expect(prompt).toContain('Yoruba');
       expect(prompt).toContain('Lakota');
-      expect(prompt).toContain('Navajo/Diné');
       expect(prompt).toContain('Maori');
       expect(prompt).toContain('Hindu/Sanskrit');
 

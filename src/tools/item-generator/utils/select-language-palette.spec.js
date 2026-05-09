@@ -3,6 +3,10 @@ import {
   resolveFantasyRace,
   fantasyRaceConventionalPalettes,
   fantasyRaceKeywords,
+  horrorRestrictedOrigins,
+  horrorOriginPalettePool,
+  fictionalOriginPalettes,
+  WESTERN_FANTASY_BOUND_RACES,
 } from './select-language-palette.mjs';
 
 // Realistic palette pool covering at least one prefix from each fantasy
@@ -45,6 +49,19 @@ const palettes = [
   'Slavic-inspired: archaic clusters (e.g., Voronsk)',
   'Old-Slavic-inspired: archaic Slavic register',
   'Greek-inspired: mythological weight',
+  // Horror-origin pool members not already in the test pool. Needed so
+  // the horror-restricted branch can pool-pick a member, and so cultural-
+  // detection-overridden tests can verify the override resolves into
+  // a real in-pool entry.
+  'Romanian-inspired: Latin-rooted with Slavic influence (e.g., Mihai)',
+  'Abyssal: guttural, chaotic (e.g., Ghar\'zuul)',
+  'Infernal: sharp, aggressive (e.g., Vex\'tharion)',
+  'Aberrant: unpronounceable clusters (e.g., Xith\'vaar)',
+  // Fictional-origin matching palettes — needed so the fictional-
+  // origin routing branch can resolve to a real in-pool entry.
+  'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax)',
+  'Primordial: pre-language sounds, elemental (e.g., Aath\'kol)',
+  'Finnish-inspired: vowel harmony, agglutinative (e.g., Aino)',
 ];
 
 // Helper: assert that `result` starts with one of the prefixes in the
@@ -67,58 +84,78 @@ describe('selectLanguagePalette', () => {
     randomSpy.mockRestore();
   });
 
-  describe('priority 1 — cultural detection wins over everything', () => {
-    it('returns the detected palette when detection fires', () => {
+  describe('priority 1 — cultural detection wins for cross-cultural-archetype races', () => {
+    // Post-Task-1, the five Western-fantasy-bound races (Orcish,
+    // Goblinoid, Dwarven, Gnomish, Elven) are allow-list-restricted —
+    // priority-1 cultural detection only wins for them when the
+    // detected palette is in the race's allow-list. For the cross-
+    // cultural-archetype race (Giant), priority-1 cultural detection
+    // wins unconditionally.
+    it('returns the detected palette when detection fires (Giant + non-pool palette)', () => {
       const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
-      const result = selectLanguagePalette('Elven', "Akiko's Charm", palettes, detect);
-      // Japanese, NOT Sindarin (elven conventional). Cultural detection
-      // is priority 1; it wins even when fantasy-race signals are present.
+      const result = selectLanguagePalette('Giant', "Akiko's giant kin", palettes, detect);
+      // Japanese is NOT in the Giant pool (Norse/Greek/Anglo-Saxon).
+      // Cultural detection is priority 1 for cross-cultural-archetype
+      // races; it wins even when the detected palette is non-conventional.
       expect(result).toMatch(/^Japanese-inspired/);
     });
 
-    it('cultural detection wins regardless of fantasy-race weighting random roll', () => {
+    it('cultural detection wins regardless of fantasy-race weighting random roll (Giant)', () => {
       // Even with the 70% conventional roll loaded, cultural detection
-      // never reaches the weighting branch. randomSpy shouldn't even be
-      // consulted in this path.
+      // never reaches the weighting branch. Tested on Giant because
+      // Giant is the only fantasy race left on the priority-2 weighted
+      // branch after Western-fantasy-bound races were promoted to
+      // allow-list restriction.
       randomSpy.mockReturnValue(0.0);
-      const detect = stubDetect('Norse-inspired: harsh consonants (e.g., Stormbreak)');
-      const result = selectLanguagePalette('Elven', "Mjolnir's Echo", palettes, detect);
-      expect(result).toMatch(/^Norse-inspired/);
+      const detect = stubDetect('Yoruba-inspired: rhythmic with diacriticals');
+      const result = selectLanguagePalette('Giant', "Olorun's hammer", palettes, detect);
+      expect(result).toMatch(/^Yoruba-inspired/);
     });
   });
 
-  describe('priority 2 — fantasy-race weighting (dropdown signal)', () => {
-    it('returns a palette from the race\'s conventional pool when random < 0.7 (Elven)', () => {
+  describe('priority 2 — fantasy-race weighting (dropdown signal, Giant only post-promotion)', () => {
+    // Pre-Task-1, the priority-2 weighted branch (70/30 with broad
+    // alt-branch into the full palette pool) fired for Elven, Dwarven,
+    // Gnomish, AND Giant. Post-Task-1, the first three are allow-list-
+    // restricted and the priority-2 branch is reserved for the single
+    // remaining cross-cultural-archetype fantasy race: Giant.
+
+    it('returns a palette from the race\'s conventional pool when random < 0.7 (Giant)', () => {
       // The 70/30 roll uses Math.random call #1; the within-pool index
       // pick uses Math.random call #2. mockReturnValue(0) hits the
-      // conventional branch and selects pool index 0 (Sindarin for Elven).
+      // conventional branch and selects pool index 0 (Norse-inspired
+      // for Giant).
       randomSpy.mockReturnValue(0);
-      const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
-      expect(isInConventionalPool(result, 'Elven')).toBe(true);
-      // pool[0] is Sindarin-inspired with these mocks — the deterministic
-      // assertion documents the index-pick mechanic.
-      expect(result).toMatch(/^Sindarin-inspired/);
+      const result = selectLanguagePalette('Giant', '', palettes, detectNothing);
+      expect(isInConventionalPool(result, 'Giant')).toBe(true);
+      expect(result).toMatch(/^Norse-inspired/);
     });
 
-    it('returns non-conventional palette when random >= 0.7 (alt branch filters entire conventional pool)', () => {
-      randomSpy.mockReturnValue(0.85); // 0.85 >= 0.7 → "other" path
-      const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
-      // Result must NOT match ANY prefix in Elven's conventional pool —
-      // the alt branch filters out the entire conventional pool, not
-      // just one palette, so cross-cultural pairings are guaranteed.
-      expect(isInConventionalPool(result, 'Elven')).toBe(false);
+    it('returns non-conventional palette when random >= 0.7 (Giant alt branch)', () => {
+      // Post-promotion, only Giant retains the priority-2 alt-branch
+      // semantics — the 30% case can land on any palette outside the
+      // Giant pool (Norse/Greek/Anglo-Saxon). This is the architectural
+      // commitment that cross-cultural-archetype races pair freely.
+      randomSpy.mockReturnValue(0.85);
+      const result = selectLanguagePalette('Giant', '', palettes, detectNothing);
+      expect(isInConventionalPool(result, 'Giant')).toBe(false);
     });
 
-    it('70/30 boundary: random === 0.7 picks "other" (strict less-than)', () => {
-      randomSpy.mockReturnValue(0.7); // 0.7 < 0.7 is false → "other" path
-      const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
-      expect(isInConventionalPool(result, 'Elven')).toBe(false);
+    it('70/30 boundary: random === 0.7 picks "other" (strict less-than, Giant)', () => {
+      randomSpy.mockReturnValue(0.7);
+      const result = selectLanguagePalette('Giant', '', palettes, detectNothing);
+      expect(isInConventionalPool(result, 'Giant')).toBe(false);
     });
 
     it.each([
-      'Dwarven', 'Orcish', 'Goblinoid', 'Gnomish', 'Giant',
+      'Dwarven', 'Orcish', 'Goblinoid', 'Gnomish', 'Giant', 'Elven',
     ])('maps %s dropdown to a palette in its conventional pool on the 70%% roll', (race) => {
-      randomSpy.mockReturnValue(0); // conventional branch + pool index 0
+      // 70% roll is the convergent case — Western-fantasy-bound
+      // (allow-list-restricted) and priority-2 both land on pool[0]
+      // when Math.random === 0. The test asserts the structural
+      // invariant (race-pool match) regardless of which branch the
+      // race is in.
+      randomSpy.mockReturnValue(0);
       const result = selectLanguagePalette(race, '', palettes, detectNothing);
       expect(isInConventionalPool(result, race)).toBe(true);
     });
@@ -197,11 +234,16 @@ describe('selectLanguagePalette', () => {
   });
 
   describe('aesthetic origins do not trigger fantasy-race weighting', () => {
-    // Aesthetic origins (Celestial, Fey, Necromantic, etc.) are intentionally
-    // absent from fantasyRaceOriginConventionalPalettes. They should NOT
-    // bias palette selection — the architectural choice is that aesthetic
+    // Aesthetic origins (Celestial, Fey, Verdant, Wizardry, etc.) are
+    // intentionally absent from fantasyRaceOriginConventionalPalettes
+    // and from fictionalOriginPalettes. They should NOT bias palette
+    // selection — the architectural choice is that these aesthetic
     // origins pair freely with any linguistic register.
-    it.each(['Celestial', 'Fey', 'Necromantic', 'Abyssal', 'Verdant', 'Wizardry'])(
+    //
+    // Note: Necromantic / Abyssal / Aberrant / Infernal go through
+    // protection branches (horror restriction or fictional-origin
+    // routing) and are tested in those describe blocks instead.
+    it.each(['Celestial', 'Fey', 'Verdant', 'Wizardry'])(
       '%s does not trigger fantasy-race weighting',
       (origin) => {
         randomSpy.mockReturnValue(0.0);
@@ -212,18 +254,174 @@ describe('selectLanguagePalette', () => {
     );
   });
 
+  describe('fictional-origin → matching-palette routing (70/30)', () => {
+    // Five fictional origins (Draconic, Aberrant, Abyssal, Infernal,
+    // Primordial) route to their matching fictional palette 70% of
+    // the time and to a per-origin curated alt-pool 30% of the time.
+    // The 70% case fires the matching whitelist; the 30% case
+    // provides cross-cultural tonal variety. Overrides cultural
+    // detection, horror restriction, and fantasy-race restriction.
+    //
+    // Motivating bug: Draconic-origin items were rolling Finnish
+    // (or any other active palette) because Draconic wasn't in any
+    // branch, so the Draconic whitelist almost never fired. Same
+    // gap for Primordial; ~8% match rate for Aberrant/Abyssal/
+    // Infernal in the 12-member horror pool.
+
+    it.each([
+      ['Draconic',   'Draconic'],
+      ['Aberrant',   'Aberrant'],
+      ['Abyssal',    'Abyssal'],
+      ['Infernal',   'Infernal'],
+      ['Primordial', 'Primordial'],
+    ])('%s origin: 70%% roll returns %s primary palette', (origin, expectedPrefix) => {
+      randomSpy.mockReturnValue(0); // < 0.7 → primary branch
+      const result = selectLanguagePalette(origin, '', palettes, detectNothing);
+      expect(result.startsWith(expectedPrefix)).toBe(true);
+    });
+
+    it.each([
+      ['Draconic',   'Draconic'],
+      ['Aberrant',   'Aberrant'],
+      ['Abyssal',    'Abyssal'],
+      ['Infernal',   'Infernal'],
+      ['Primordial', 'Primordial'],
+    ])('%s origin: 30%% roll returns alt-pool member (NOT %s primary)', (origin, primaryPrefix) => {
+      randomSpy.mockReturnValue(0.85); // ≥ 0.7 → alt branch
+      const altPool = fictionalOriginPalettes[origin].altPool;
+      const result = selectLanguagePalette(origin, '', palettes, detectNothing);
+      // Alt-branch result is NOT the primary palette.
+      expect(result.startsWith(primaryPrefix)).toBe(false);
+      // Alt-branch result IS one of the curated alt-pool prefixes.
+      const inAltPool = altPool.some(prefix => result.startsWith(prefix));
+      expect(inAltPool).toBe(true);
+    });
+
+    it('70/30 boundary: random === 0.7 takes the alt branch (strict less-than)', () => {
+      randomSpy.mockReturnValue(0.7);
+      const result = selectLanguagePalette('Draconic', '', palettes, detectNothing);
+      // At exactly 0.7, the strict-less-than primary check fails and
+      // we fall to the alt-pool branch.
+      expect(result.startsWith('Draconic')).toBe(false);
+      const inAltPool = fictionalOriginPalettes['Draconic'].altPool.some(
+        prefix => result.startsWith(prefix),
+      );
+      expect(inAltPool).toBe(true);
+    });
+
+    it('Draconic origin: in-allow-list cultural detection wins (Finnish IS in alt-pool)', () => {
+      // After the user-direction restoration, Finnish is in Draconic's
+      // alt-pool — so Finnish-coded user input ("Aino's hoard-flame")
+      // resolves via in-allow-list cultural detection regardless of
+      // 70/30 roll. Mirrors the fantasy-race in-pool detection path.
+      const detect = stubDetect('Finnish-inspired: vowel harmony, agglutinative (e.g., Aino)');
+      const result = selectLanguagePalette('Draconic', "Aino's hoard-flame", palettes, detect);
+      expect(result).toMatch(/^Finnish-inspired/);
+    });
+
+    it('Draconic origin: out-of-allow-list cultural detection is ignored (Yoruba)', () => {
+      // Yoruba is NOT in Draconic's allow-list (primary + alt-pool).
+      // The architectural protection: the user signal can't escape
+      // the per-origin allow-list. Falls through to 70/30 (forced
+      // primary here via Math.random=0).
+      randomSpy.mockReturnValue(0); // 70% branch
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette('Draconic', "Olorun's hoard", palettes, detect);
+      expect(result).not.toMatch(/^Yoruba-inspired/);
+      expect(result.startsWith('Draconic')).toBe(true);
+    });
+
+    it('Abyssal origin: 70% routes to Abyssal palette (overriding the horror pool)', () => {
+      // Pre-fix, Abyssal origin used the 12-member horror pool
+      // (uniform random ~8% chance of matching Abyssal palette).
+      // Now Abyssal origin lands on Abyssal palette 70% of the
+      // time via this branch — fictional-origin runs FIRST.
+      randomSpy.mockReturnValue(0); // 70% branch
+      const result = selectLanguagePalette('Abyssal', '', palettes, detectNothing);
+      expect(result.startsWith('Abyssal')).toBe(true);
+    });
+
+    it('Infernal origin: 70% routes to Infernal palette (overriding the horror pool)', () => {
+      randomSpy.mockReturnValue(0); // 70% branch
+      const result = selectLanguagePalette('Infernal', '', palettes, detectNothing);
+      expect(result.startsWith('Infernal')).toBe(true);
+    });
+
+    it('Aberrant origin: 70% routes to Aberrant palette (overriding the horror pool)', () => {
+      randomSpy.mockReturnValue(0); // 70% branch
+      const result = selectLanguagePalette('Aberrant', '', palettes, detectNothing);
+      expect(result.startsWith('Aberrant')).toBe(true);
+    });
+
+    it('Necromantic origin still goes through the horror pool (NOT in fictional-origin map)', () => {
+      // Sanity check the disjointness: Necromantic / Vampiric /
+      // Lycanthropic / Shadow are horror-coded but have no matching
+      // fictional palette of their own, so they continue to pull
+      // from the 12-member horror pool. The fictional-origin branch
+      // must not accidentally claim them.
+      randomSpy.mockReturnValue(0.0); // pool[0] = Latin-inspired
+      const result = selectLanguagePalette('Necromantic', '', palettes, detectNothing);
+      expect(result.startsWith('Latin-inspired')).toBe(true);
+    });
+
+    it('fictionalOriginPalettes contains exactly the five expected origins', () => {
+      // Membership lock against silent additions/removals. Adding a
+      // sixth origin to this map is a deliberate architectural
+      // change and should require updating this test alongside the
+      // source.
+      expect(Object.keys(fictionalOriginPalettes).sort()).toEqual([
+        'Aberrant',
+        'Abyssal',
+        'Draconic',
+        'Infernal',
+        'Primordial',
+      ]);
+    });
+
+    it('Draconic alt-pool includes Finnish (Kalevala fit)', () => {
+      // User-confirmed tonal fit: Finnish (Kalevala primal-mythic
+      // register, Tuoni/Louhi tradition) belongs in Draconic's alt-
+      // pool. Regression guard against silent removal.
+      expect(fictionalOriginPalettes['Draconic'].altPool).toContain('Finnish-inspired');
+    });
+
+    it('every fictionalOriginPalettes entry has a primary string and a non-empty altPool', () => {
+      // Shape integrity: a malformed entry (missing primary, empty
+      // altPool) would break the 70/30 routing silently.
+      for (const [origin, entry] of Object.entries(fictionalOriginPalettes)) {
+        expect(typeof entry.primary).toBe('string');
+        expect(entry.primary.length).toBeGreaterThan(0);
+        expect(Array.isArray(entry.altPool)).toBe(true);
+        expect(entry.altPool.length).toBeGreaterThan(0);
+        // primary must NOT also appear in altPool (alt is the variety
+        // share — it should always pick a different palette).
+        expect(entry.altPool).not.toContain(entry.primary);
+      }
+    });
+
+    it('fictionalOriginPalettes does NOT overlap with fantasy-race origins', () => {
+      // Fantasy races have their own allow-list architecture; the
+      // two protection branches must not claim the same origin.
+      const fantasyRaces = Object.keys(fantasyRaceConventionalPalettes);
+      for (const fictionalOrigin of Object.keys(fictionalOriginPalettes)) {
+        expect(fantasyRaces).not.toContain(fictionalOrigin);
+      }
+    });
+  });
+
   describe('Orcish/Goblinoid allow-list architecture', () => {
     // Orcs and goblins are restricted to a curated allow-list of
     // European registers (fictional fantasy + Germanic + Celtic +
     // Slavic + Latin) with documented orc/goblin-fantasy precedent.
-    // Selection is pool-only — no 30% alternative branch — and
-    // cultural detection from user input is subordinated to the pool.
+    // Selection is allow-list-restricted — no 30% alternative branch —
+    // and cultural detection from user input is subordinated to the
+    // allow-list.
     // The architecture replaced an earlier filter approach
     // (orcGoblinExcludedPalettes) that had a code-path gap allowing
     // Goblinoid + Navajo/Diné to reach a production output.
 
-    // Index rolls span the pool's range; pool-only branch makes one
-    // Math.random call per generation (just the index pick).
+    // Index rolls span the pool's range; the allow-list branch makes
+    // one Math.random call per generation (just the index pick).
     const indexRolls = [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99];
 
     it.each(indexRolls)(
@@ -241,6 +439,42 @@ describe('selectLanguagePalette', () => {
         randomSpy.mockReturnValue(indexRoll);
         const result = selectLanguagePalette('Goblinoid', '', palettes, detectNothing);
         expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
+      },
+    );
+
+    it.each(indexRolls)(
+      'Dwarven always returns a palette in the Dwarven allow-list pool (index roll = %f)',
+      (indexRoll) => {
+        // Dwarven joined the Western-fantasy-bound (allow-list-
+        // restricted) tier — Norse/Germanic mountain-craft archetype
+        // with no parallels in most non-Western mythological
+        // traditions.
+        randomSpy.mockReturnValue(indexRoll);
+        const result = selectLanguagePalette('Dwarven', '', palettes, detectNothing);
+        expect(isInConventionalPool(result, 'Dwarven')).toBe(true);
+      },
+    );
+
+    it.each(indexRolls)(
+      'Gnomish always returns a palette in the Gnomish allow-list pool (index roll = %f)',
+      (indexRoll) => {
+        // Gnomish joined the Western-fantasy-bound (allow-list-
+        // restricted) tier — European inventor-tinkerer archetype.
+        randomSpy.mockReturnValue(indexRoll);
+        const result = selectLanguagePalette('Gnomish', '', palettes, detectNothing);
+        expect(isInConventionalPool(result, 'Gnomish')).toBe(true);
+      },
+    );
+
+    it.each(indexRolls)(
+      'Elven always returns a palette in the Elven allow-list pool (index roll = %f)',
+      (indexRoll) => {
+        // Elven joined the Western-fantasy-bound (allow-list-
+        // restricted) tier — Sindarin/Celtic refined-aesthetic
+        // archetype.
+        randomSpy.mockReturnValue(indexRoll);
+        const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
+        expect(isInConventionalPool(result, 'Elven')).toBe(true);
       },
     );
 
@@ -312,7 +546,7 @@ describe('selectLanguagePalette', () => {
     it('Orcish + "Akiko of the lands" (Japanese-coded user input) returns Orcish-pool palette, not Japanese', () => {
       // Brief verification case verbatim. Japanese cultural detection
       // would normally fire from "Akiko" (Japanese given name) — the
-      // pool-only branch overrides that signal because orc/goblin
+      // allow-list branch overrides that signal because orc/goblin
       // contexts subordinate cultural detection to the European
       // allow-list. This is the architectural commitment the
       // production-failure (Stone-Flesh Vest with Yoruba names) was
@@ -325,33 +559,117 @@ describe('selectLanguagePalette', () => {
     });
 
     it('Goblinoid + cultural detection of out-of-pool palette is OVERRIDDEN by pool selection', () => {
-      // Same protection for Goblinoid. Reproduces the original
-      // production failure scenario at the architecture level.
+      // Same protection for Goblinoid. The original production failure
+      // (Goblinoid + Navajo/Diné) is no longer reproducible since the
+      // Navajo/Diné palette was removed entirely, but the architectural
+      // protection remains: ANY out-of-pool palette is overridden.
+      // Lakota stands in here as a still-shipped protected-tradition
+      // palette; the override mechanism is palette-agnostic.
       randomSpy.mockReturnValue(0); // pool[0] = Goblin-inspired
-      const detect = stubDetect('Navajo/Diné-inspired: clan-rooted naming');
-      const result = selectLanguagePalette('Goblinoid', 'Hashk\'aan goblin clan', palettes, detect);
-      expect(result).not.toMatch(/^Navajo\/Diné-inspired/);
+      const detect = stubDetect('Lakota-inspired: descriptive compounds (e.g., Wakinyan-Tanka)');
+      const result = selectLanguagePalette('Goblinoid', 'Wakinyan goblin clan', palettes, detect);
+      expect(result).not.toMatch(/^Lakota-inspired/);
       expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
     });
 
-    it('Elven + cultural detection of any palette is still honored (pool-only is orc/goblin-specific)', () => {
-      // Regression guard: the pool-only architecture is scoped to orcs
-      // and goblins. Other fantasy races still respect priority-1
-      // cultural detection across all palettes.
+    it('Dwarven + Yoruba cultural detection is OVERRIDDEN by pool (Western-fantasy-bound)', () => {
+      // Dwarven joined WESTERN_FANTASY_BOUND_RACES — Norse/Germanic-coded archetype
+      // shouldn't pair with non-Western register. Pool wins regardless
+      // of cultural-detection signal.
+      randomSpy.mockReturnValue(0);
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Elven', "Olorun's gift", palettes, detect);
-      expect(result).toMatch(/^Yoruba-inspired/);
+      const result = selectLanguagePalette('Dwarven', "Olorun's hammer", palettes, detect);
+      expect(result).not.toMatch(/^Yoruba-inspired/);
+      expect(isInConventionalPool(result, 'Dwarven')).toBe(true);
     });
 
-    it('Elven + alt branch can land on protected-list palettes (no orc/goblin filter)', () => {
-      // Regression guard: the orc/goblin protection should not bleed
-      // into other races. Iterate Elven alt-branch picks; at least one
-      // should land on a palette that would have been blocked under
-      // the old filter (Yoruba/Andean/Chinese/Japanese in this pool).
+    it('Gnomish + Japanese cultural detection is OVERRIDDEN by pool', () => {
+      randomSpy.mockReturnValue(0);
+      const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
+      const result = selectLanguagePalette('Gnomish', "Akiko's clockwork", palettes, detect);
+      expect(result).not.toMatch(/^Japanese-inspired/);
+      expect(isInConventionalPool(result, 'Gnomish')).toBe(true);
+    });
+
+    it('Elven + Yoruba cultural detection is OVERRIDDEN by pool (post-promotion)', () => {
+      // Pre-Task-1, Elven was the canonical example of cultural-
+      // detection-wins (priority 1 honored Yoruba-coded input even on
+      // an Elven origin). Post-promotion to WESTERN_FANTASY_BOUND_RACES, the Elven
+      // pool wins — Yoruba is not in the Sindarin/Welsh/Old-Irish/
+      // Old-Occitan/Latin pool, so the pool overrides the detection
+      // signal. This test pins the new behavior.
+      randomSpy.mockReturnValue(0);
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette('Elven', "Olorun's gift", palettes, detect);
+      expect(result).not.toMatch(/^Yoruba-inspired/);
+      expect(isInConventionalPool(result, 'Elven')).toBe(true);
+    });
+
+    it('Elven + Sindarin cultural detection (in-pool) IS still honored', () => {
+      // Sindarin-inspired IS in the Elven pool. In-pool cultural detection
+      // wins — symmetric with the orc/goblin in-pool case.
+      const detect = stubDetect('Sindarin-inspired (elvish): elegant (e.g., Galadhriel)');
+      const result = selectLanguagePalette('Elven', 'a Sindarin verse', palettes, detect);
+      expect(result).toMatch(/^Sindarin-inspired/);
+    });
+
+    it('Elven pool includes Finnish (Kalevala fit)', () => {
+      // User-confirmed tonal fit: Finnish (Kalevala forest-magic /
+      // runic register) belongs in Elven's allow-list. Regression
+      // guard against silent removal — Finnish was previously
+      // trimmed from this pool ("reads as its own thing rather than
+      // conventionally elven") and was restored on user direction.
+      expect(fantasyRaceConventionalPalettes['Elven']).toContain('Finnish-inspired');
+    });
+
+    it('Elven + Finnish cultural detection (in-pool, post-restoration) IS honored', () => {
+      // With Finnish back in the Elven pool, Finnish-coded user input
+      // ("Aino's bow" → Aino is a Kalevala figure) resolves to Finnish
+      // palette via the in-pool cultural-detection path.
+      const detect = stubDetect('Finnish-inspired: vowel harmony, agglutinative (e.g., Aino)');
+      const result = selectLanguagePalette('Elven', "Aino's bow", palettes, detect);
+      expect(result).toMatch(/^Finnish-inspired/);
+    });
+
+    it('Elven never lands on protected-list palettes (post-promotion regression guard)', () => {
+      // Pre-Task-1, this test asserted Elven COULD land on Yoruba/
+      // Andean/Chinese/Japanese via the 30% alt branch (the explicit
+      // architectural commitment that orc/goblin protection didn't
+      // bleed into other races). Post-promotion, Elven IS allow-list-
+      // restricted — protected-list palettes are now structurally
+      // unreachable for Elven generations. This test inverts the
+      // original to lock in the new behavior.
       let sawProtectedListPalette = false;
       for (const indexRoll of indexRolls) {
         randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(indexRoll);
         const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
+        if (/^(Yoruba|Andean|Chinese|Japanese)-inspired/.test(result)) {
+          sawProtectedListPalette = true;
+          break;
+        }
+      }
+      expect(sawProtectedListPalette).toBe(false);
+    });
+
+    it('Giant + Yoruba cultural detection IS honored (Giant is cross-cultural archetype)', () => {
+      // Regression guard: Giant is NOT in WESTERN_FANTASY_BOUND_RACES. Cross-
+      // cultural archetype (jötnar/titans/rakshasas/oni exist across
+      // many traditions). Yoruba-coded input is honored on a Giant
+      // origin via priority-1 cultural detection.
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette('Giant', "Olorun's giant kin", palettes, detect);
+      expect(result).toMatch(/^Yoruba-inspired/);
+    });
+
+    it('Giant alt-branch can land on protected-list palettes (cross-cultural archetype)', () => {
+      // Regression guard: Giant uses priority-2 weighted (70/30 with
+      // broad alt-branch), so the 30% case CAN land on Yoruba/Andean/
+      // etc. This is the architectural commitment that cross-cultural
+      // archetypes pair freely.
+      let sawProtectedListPalette = false;
+      for (const indexRoll of indexRolls) {
+        randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(indexRoll);
+        const result = selectLanguagePalette('Giant', '', palettes, detectNothing);
         if (/^(Yoruba|Andean|Chinese|Japanese)-inspired/.test(result)) {
           sawProtectedListPalette = true;
           break;
@@ -366,6 +684,186 @@ describe('selectLanguagePalette', () => {
       // be a sign the dual-mechanism architecture has snuck back in.
       const mod = await import('./select-language-palette.mjs');
       expect(mod).not.toHaveProperty('orcGoblinExcludedPalettes');
+    });
+  });
+
+  describe('Horror-origin allow-list architecture', () => {
+    // Horror-coded aesthetic origins (Infernal, Abyssal, Necromantic,
+    // Vampiric, Lycanthropic, Aberrant) are restricted to the
+    // horrorOriginPalettePool — European registers with horror-genre
+    // precedent (Latin/Norse/Germanic/Slavic/Romanian/Sindarin) plus
+    // the fictional horror-native registers (Abyssal/Infernal/Aberrant).
+    // The protection blocks pairings that would impose Western horror
+    // conventions onto non-Western cultural registers (Necromantic +
+    // Yoruba), engage culturally-protected concepts inappropriately
+    // (Lycanthropic + Diné skinwalker), or reproduce Lovecraft Otherness-
+    // coding (Aberrant + non-Western palette).
+    //
+    // Selection is uniform-random across the pool (no 70/30 weighting
+    // like orc/goblin) because horror origins lack a single "primary
+    // register" — Necromantic items can lean Latin/Romanian/Norse/
+    // Sindarin/Abyssal-Infernal-Aberrant and all are valid genre
+    // pairings. Spread is the desired behavior.
+
+    const indexRolls = [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99];
+
+    const isInHorrorPool = (palette) =>
+      horrorOriginPalettePool.some(prefix => palette.startsWith(prefix));
+
+    // Aberrant / Abyssal / Infernal route through the fictional-origin
+    // branch first (matching fictional palette 70%, per-origin alt-pool
+    // 30%) and never reach the horror branch. Their per-origin alt-
+    // pools may include palettes outside `horrorOriginPalettePool`
+    // (e.g., Infernal alt-pool includes Greek, which isn't in horror
+    // pool but fits classical demonology). This test applies only to
+    // the four horror origins WITHOUT a matching fictional palette.
+    const horrorOnlyOrigins = horrorRestrictedOrigins.filter(
+      origin => !['Aberrant', 'Abyssal', 'Infernal'].includes(origin),
+    );
+
+    it.each(horrorOnlyOrigins)(
+      '%s always returns a palette in the horror-origin pool',
+      (origin) => {
+        for (const indexRoll of indexRolls) {
+          randomSpy.mockReturnValueOnce(indexRoll);
+          const result = selectLanguagePalette(origin, '', palettes, detectNothing);
+          expect(isInHorrorPool(result)).toBe(true);
+        }
+      },
+    );
+
+    it('Necromantic + cultural detection of in-pool palette is honored', () => {
+      // Romanian is in the horror pool and Romanian-coded user input
+      // (gothic-vampire register) aligns with horror genre. The pool
+      // architecture honors user signals that align with the allow-list.
+      const detect = stubDetect('Romanian-inspired: Latin-rooted with Slavic influence (e.g., Mihai)');
+      const result = selectLanguagePalette('Necromantic', "Mihai's grimoire", palettes, detect);
+      expect(result).toMatch(/^Romanian-inspired/);
+    });
+
+    it('Necromantic + cultural detection of out-of-pool palette is OVERRIDDEN by pool selection', () => {
+      // The architectural protection: even when user signal would
+      // resolve to a non-pool palette (Yoruba here — Western death-
+      // magic imposed on West African register), the pool wins.
+      randomSpy.mockReturnValue(0); // pool[0] = Latin-inspired
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette('Necromantic', "Olorun's death-mask", palettes, detect);
+      expect(result).not.toMatch(/^Yoruba-inspired/);
+      expect(isInHorrorPool(result)).toBe(true);
+    });
+
+    it('Lycanthropic + Lakota cultural detection is OVERRIDDEN', () => {
+      // The original protection case for the horror restriction targeted
+      // Lycanthropic + Navajo/Diné (the skinwalker tradition is sacred
+      // and not appropriate for fictional appropriation). The Navajo/Diné
+      // palette has since been removed entirely under the same caution,
+      // so the literal pairing is no longer reachable. This test now
+      // covers the analogous case with another Indigenous-tradition
+      // palette still in the system — the protection mechanism is
+      // palette-agnostic.
+      randomSpy.mockReturnValue(0);
+      const detect = stubDetect('Lakota-inspired: descriptive compounds (e.g., Wakinyan-Tanka)');
+      const result = selectLanguagePalette('Lycanthropic', 'Wakinyan moon-cursed', palettes, detect);
+      expect(result).not.toMatch(/^Lakota-inspired/);
+      expect(isInHorrorPool(result)).toBe(true);
+    });
+
+    it('Aberrant + Japanese cultural detection is OVERRIDDEN (Lovecraft Otherness-coding prevention)', () => {
+      // Aberrant + non-Western register reproduces the Lovecraft-
+      // tradition pattern of "alien = foreign culture." Pool wins.
+      randomSpy.mockReturnValue(0);
+      const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
+      const result = selectLanguagePalette('Aberrant', 'Akiko of the wrong-geometries', palettes, detect);
+      expect(result).not.toMatch(/^Japanese-inspired/);
+      expect(isInHorrorPool(result)).toBe(true);
+    });
+
+    it('Vampiric + Andean cultural detection is OVERRIDDEN', () => {
+      // Vampiric coding pulls from European-folk-vampirism; pairing
+      // with Andean register is the kind of cross-tradition imposition
+      // the protection exists to prevent.
+      randomSpy.mockReturnValue(0);
+      const detect = stubDetect('Andean-inspired: structured Quechua (e.g., Inti-Wasi)');
+      const result = selectLanguagePalette('Vampiric', "Inkari's eternal hunger", palettes, detect);
+      expect(result).not.toMatch(/^Andean-inspired/);
+      expect(isInHorrorPool(result)).toBe(true);
+    });
+
+    it('Shadow + Yoruba cultural detection is OVERRIDDEN (Western-occultism imposition)', () => {
+      // Shadow joined the horror restriction after production validation
+      // showed Shadow-magic register imposing Western occultism on non-
+      // Western palettes. Yoruba is out-of-pool here; pool wins.
+      randomSpy.mockReturnValue(0);
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette('Shadow', "Olorun's shadowed gift", palettes, detect);
+      expect(result).not.toMatch(/^Yoruba-inspired/);
+      expect(isInHorrorPool(result)).toBe(true);
+    });
+
+    it('Shadow always returns a palette in the horror pool', () => {
+      // Parallel to the it.each loop earlier — verify Shadow consistently
+      // resolves into the horror-pool regardless of index roll.
+      const indexRolls = [0.0, 0.2, 0.5, 0.85, 0.99];
+      for (const indexRoll of indexRolls) {
+        randomSpy.mockReturnValueOnce(indexRoll);
+        const result = selectLanguagePalette('Shadow', '', palettes, detectNothing);
+        expect(isInHorrorPool(result)).toBe(true);
+      }
+    });
+
+    it('Celestial (non-horror aesthetic origin) does NOT fire the horror branch', () => {
+      // Regression guard: the horror restriction is scoped to the seven
+      // horror-coded origins. Other aesthetic origins still respect
+      // priority-1 cultural detection across all palettes.
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette('Celestial', "Olorun's blessing", palettes, detect);
+      expect(result).toMatch(/^Yoruba-inspired/);
+    });
+
+    it('Fey (non-horror aesthetic origin) does NOT fire the horror branch', () => {
+      const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
+      const result = selectLanguagePalette('Fey', 'Akiko of the twilight grove', palettes, detect);
+      expect(result).toMatch(/^Japanese-inspired/);
+    });
+
+    it('horror restriction is checked BEFORE orc/goblin (origin-based wins over keyword-based)', () => {
+      // Brief specifies origin-based restrictions are checked before
+      // fantasy-race restrictions. With resolvedOrigin=Necromantic and
+      // lore mentioning "orcish", the keyword-detected fantasyRace would
+      // be 'Orcish' but the horror branch fires first because it gates
+      // on resolvedOrigin directly. Result: horror pool, not orc pool.
+      randomSpy.mockReturnValue(0);
+      const result = selectLanguagePalette('Necromantic', 'orcish battleaxe of the death-cult', palettes, detectNothing);
+      expect(isInHorrorPool(result)).toBe(true);
+      // The orc pool contains 'Welsh-inspired' and 'Old-Irish-inspired'
+      // which are NOT in the horror pool — verify we didn't slip into
+      // the orc branch.
+      expect(result).not.toMatch(/^Welsh-inspired/);
+      expect(result).not.toMatch(/^Old-Irish-inspired/);
+    });
+
+    it('horror restriction is gated on resolvedOrigin only, not on user-input keywords', () => {
+      // Brief: "When resolvedOrigin matches one of these six". Keyword
+      // detection ("vampire" in lore with origin=null) does not trigger
+      // the horror branch. This asymmetry is intentional — words like
+      // "vampire"/"necromancer" appear in many fantasy contexts and
+      // would over-trigger the restriction.
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette(null, 'a vampire necromancer of ancient evil', palettes, detect);
+      expect(result).toMatch(/^Yoruba-inspired/);
+    });
+
+    it('Fantasy-race origin (Giant) does NOT fire the horror branch', () => {
+      // Giant is a fantasy race (not a horror-coded origin) and is on
+      // the priority-2 weighted branch (cross-cultural archetype).
+      // Cultural detection is priority 1 for Giant, honored across
+      // all palettes. Pre-Task-1 this test used Elven as the
+      // cross-cultural example; post-Task-1, Elven is allow-list-
+      // restricted and Giant is the canonical cross-cultural-
+      // archetype fantasy race.
+      const detect = stubDetect('Yoruba-inspired: rhythmic');
+      const result = selectLanguagePalette('Giant', "Olorun's giant kin", palettes, detect);
+      expect(result).toMatch(/^Yoruba-inspired/);
     });
   });
 
@@ -438,6 +936,71 @@ describe('selectLanguagePalette', () => {
         expect(keywords.length).toBeGreaterThan(0);
         keywords.forEach(k => expect(typeof k).toBe('string'));
       }
+    });
+
+    it('horrorRestrictedOrigins covers exactly the seven horror-coded aesthetic origins', () => {
+      // Shadow joined the horror restriction after production validation
+      // surfaced the same cross-cultural-imposition pattern with Shadow-
+      // origin items (Western occultism imposed on non-Western palettes).
+      const expected = ['Infernal', 'Abyssal', 'Necromantic', 'Vampiric', 'Lycanthropic', 'Aberrant', 'Shadow'];
+      expect([...horrorRestrictedOrigins].sort()).toEqual([...expected].sort());
+    });
+
+    it('horrorOriginPalettePool contains the expected European + fictional registers', () => {
+      // Drift away from this pool — adding a non-Western register,
+      // dropping one of the European registers without explicit reason —
+      // should fail this test and force a deliberate decision rather
+      // than a quiet change.
+      const expected = [
+        'Latin-inspired',
+        'Old-Norse-inspired',
+        'Anglo-Saxon-inspired',
+        'Old-High-German-inspired',
+        'Middle-High-German-inspired',
+        'Gothic-inspired',
+        'Old-Slavic-inspired',
+        'Romanian-inspired',
+        'Sindarin-inspired',
+        'Abyssal',
+        'Infernal',
+        'Aberrant',
+      ];
+      expect([...horrorOriginPalettePool].sort()).toEqual([...expected].sort());
+    });
+
+    it('horror origins do not overlap with fantasy-race origins', () => {
+      // Horror-coded protection is origin-coded; race-coded protection
+      // is in fantasyRaceConventionalPalettes. The two protection layers
+      // are disjoint — overlap would mean a single origin gets routed
+      // to both branches, indicating a design conflict.
+      const fantasyRaces = Object.keys(fantasyRaceConventionalPalettes);
+      for (const horror of horrorRestrictedOrigins) {
+        expect(fantasyRaces).not.toContain(horror);
+      }
+    });
+
+    it('WESTERN_FANTASY_BOUND_RACES is a subset of fantasyRaceConventionalPalettes keys', () => {
+      // Every Western-fantasy-bound race must have a defined allow-
+      // list. A race in WESTERN_FANTASY_BOUND_RACES without a pool
+      // entry would crash the branch.
+      const fantasyRaces = Object.keys(fantasyRaceConventionalPalettes);
+      for (const race of WESTERN_FANTASY_BOUND_RACES) {
+        expect(fantasyRaces).toContain(race);
+      }
+    });
+
+    it('WESTERN_FANTASY_BOUND_RACES contains exactly the five Western-fantasy-bound races', () => {
+      // Locks the membership against silent additions or removals.
+      // Adding/removing a race is a deliberate architectural decision
+      // and should require updating this test alongside the source.
+      // The five members are Orcish, Goblinoid, Dwarven, Gnomish, Elven —
+      // the Western-fantasy-bound tier per the architecture doc.
+      // Fey and Giant are NOT in this list because their archetype-slot
+      // exists in many living mythological traditions (cross-cultural
+      // archetypes pair freely with any palette).
+      expect([...WESTERN_FANTASY_BOUND_RACES].sort()).toEqual(
+        ['Dwarven', 'Elven', 'Gnomish', 'Goblinoid', 'Orcish'],
+      );
     });
   });
 

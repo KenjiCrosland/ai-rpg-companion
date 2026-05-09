@@ -137,18 +137,19 @@ export const userInputLanguageDetection = {
     'lei', 'pikake', 'hula', 'kahuna', 'mahalo', 'aloha', 'lehua', 'koa',
     'kapu', 'pueo', 'nene', 'ohana',
   ],
-  // The Indigenous-North-American generic was removed. Lakota and
-  // Navajo/Diné are added with conservative term lists. Pan-Indigenous
-  // popular-fiction terms (tomahawk, wampum, medicine bundle,
-  // dreamcatcher, kachina) are intentionally NOT mapped — they don't
-  // cleanly belong to either Lakota or Navajo, and Hopi-sacred terms
-  // like kachina warrant the appropriation caution the brief flags.
-  // The LLM can interpret these terms from world knowledge.
+  // The Indigenous-North-American generic was removed. Lakota is added
+  // with a conservative term list. Pan-Indigenous popular-fiction terms
+  // (tomahawk, wampum, medicine bundle, dreamcatcher, kachina) are
+  // intentionally NOT mapped — they don't cleanly belong to Lakota,
+  // and Hopi-sacred terms like kachina warrant the appropriation
+  // caution the brief flags. The LLM can interpret these from world
+  // knowledge. The Navajo/Diné palette and detection map were removed
+  // entirely under the same caution — the skinwalker tradition is
+  // sacred and not appropriate for fictional appropriation, and clan-
+  // name / sacred-geographic terms carry too high a collision-risk to
+  // ship as a curated pool.
   'Lakota-inspired': [
     'wakinyan', 'tatanka', 'wakan', 'tipi', 'paha-sapa', 'wiyaka',
-  ],
-  'Navajo/Diné-inspired': [
-    'hózhǫ́', 'diyin', 'hooghan', 'navajo', 'diné',
   ],
   'Andean-inspired': [
     'quipu', 'chuspa', 'macana', 'inti', 'pachamama',

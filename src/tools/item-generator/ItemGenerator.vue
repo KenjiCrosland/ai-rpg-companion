@@ -59,6 +59,23 @@
             <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore (optional)"
               placeholder="Enter any details about the item lore" class="item-lore-details">
             </cdr-input>
+            <!-- TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE -->
+            <fieldset v-if="isDev" class="test-palette-override">
+              <legend>TEST: Palette Override (dev only)</legend>
+              <label>
+                Palette:
+                <select v-model="testPaletteOverride">
+                  <option value="">Auto (use detection)</option>
+                  <option v-for="opt in paletteOverrideOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                  </option>
+                </select>
+              </label>
+              <p v-if="lastUsedPalette" class="test-palette-override__last">
+                Last generation used: <code>{{ lastUsedPalette }}</code>
+              </p>
+            </fieldset>
+            <!-- END TEST-PALETTE-OVERRIDE -->
             <ParActionButton class="generate-button" type="submit" :full-width="true">Generate Magic Item
             </ParActionButton>
           </form>
@@ -308,11 +325,30 @@ import {
   selectLanguagePalette,
   resolveFantasyRace,
   fantasyRaceConventionalPalettes,
+  WESTERN_FANTASY_BOUND_RACES,
 } from './utils/select-language-palette.mjs';
 import { originMaterialPools, allMaterials } from './utils/material-pools.mjs';
 import { rotatePaletteExamples } from './utils/orc-goblin-name-pools.mjs';
 import { languagePalettes } from './utils/language-palettes.mjs';
+import { buildYorubaPromptBlock } from './utils/yoruba-prompt.mjs';
+import { buildAndeanPromptBlock } from './utils/andean-prompt.mjs';
+import { buildCatchallPromptBlock } from './utils/catchall-prompt.mjs';
+import { buildFictionalPaletteWhitelistBlock } from './utils/fictional-palette-whitelist-prompt.mjs';
+import { buildOriginCharacterWhitelistBlock } from './utils/origin-character-whitelist-prompt.mjs';
+import { filterOriginsForForcedPalette } from './utils/filter-origins-for-forced-palette.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
+
+// TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
+// process.env.NODE_ENV avoids the import.meta parse error under Jest;
+// Vite statically replaces it at build time. Same pattern as ai-client.mjs.
+const isDev = process.env.NODE_ENV !== 'production';
+const testPaletteOverride = ref('');
+const lastUsedPalette = ref('');
+const paletteOverrideOptions = languagePalettes.map(p => ({
+  value: p,
+  label: p.length > 60 ? p.slice(0, 57) + '…' : p,
+}));
+// END TEST-PALETTE-OVERRIDE
 
 const toast = useToast();
 
@@ -665,95 +701,16 @@ const generateMagicItem = async () => {
     'Wizardry':      'Created through formal arcane study — the item bears academic precision, school-coded magic, and the rigor of arcane theory.',
   };
 
-  // languagePalettes is imported from ./utils/language-palettes.mjs.
-  // Lives in its own module so test specs can verify integrity (every
-  // prefix referenced in fantasyRaceConventionalPalettes resolves to
-  // an entry there) without depending on inline data here.
-
-  // Language palette selection runs through the full priority hierarchy:
-  //   1. Cultural detection from user input (Akiko → Japanese, etc.)
-  //   2. Fantasy-race weighted (70/30 conventional/other) — when the
-  //      origin or user input signals a core fantasy race, palette
-  //      selection biases toward the genre-conventional pairing
-  //      (Elven → Sindarin, Dwarven → Germanic, etc.) without locking
-  //      out unconventional pairings entirely.
-  //   3. Uniform random across the full pool.
-  // Note: resolvedOrigin may not be set yet at this point in the
-  // function (the blank-canvas branch runs after mood selection below),
-  // so the fantasy-race weighting at this step only fires from
-  // user-input keywords ("elven longbow") — not from a deferred
-  // dropdown selection that hasn't been resolved yet. The dropdown
-  // case is handled because itemOrigin.value (assigned to
-  // resolvedOrigin earlier) is set immediately on dropdown selection.
-  const userInputForLangDetection = `${itemName.value} ${itemLore.value}`;
-  const selectedPalette = selectLanguagePalette(
-    resolvedOrigin,
-    userInputForLangDetection,
-    languagePalettes,
-    detectLanguageFromUserInput,
-  );
-
-  // Unconventional pairing = fantasy-race origin paired with a palette
-  // OTHER than its genre-conventional one (e.g., Elven origin + Slavic
-  // palette, Gnomish origin + Mesoamerican palette). Fires for the 30%
-  // case in selectLanguagePalette's weighted branch. We use it to gate
-  // the deeper "translate, don't mash up" prompt section, which is too
-  // expensive in tokens to render for every fantasy-race generation.
-  // After the multi-palette pool refactor, each fantasy race's
-  // conventional palette is an array of prefixes. The pairing is
-  // unconventional iff none of the pool prefixes matches the
-  // selected palette.
-  const isUnconventionalPairing = !!(
-    resolvedOrigin
-    && fantasyRaceConventionalPalettes[resolvedOrigin]
-    && !fantasyRaceConventionalPalettes[resolvedOrigin].some(prefix =>
-      selectedPalette.startsWith(prefix),
-    )
-  );
-
-  // Orc/Goblin context = fantasy-race resolution (per the same logic
-  // selectLanguagePalette uses) yields 'Orcish' or 'Goblinoid'. Catches
-  // both the dropdown case and the keyword-in-lore case, including the
-  // mixed scenario the user reported (origin=Necromantic + lore="Orcish
-  // Battleaxe" → fantasyRace='Orcish' via priority 2b keyword scan).
-  //
-  // Two layers of protection:
-  // 1. STRUCTURAL — selectLanguagePalette uses a pool-only branch for
-  //    Orcish/Goblinoid (no 30% alternative, cultural-detection input
-  //    subordinated to the pool). The selected palette can only come
-  //    from the curated European/fictional allow-list.
-  // 2. PROMPT-SIDE — the LANGUAGE PALETTE RESTRICTION block below
-  //    revokes the LLM's LANGUAGE PALETTE OVERRIDE authority for these
-  //    contexts so creative re-association during generation can't
-  //    re-introduce the orc-coded pairings the structural protection
-  //    blocks.
-  // Defense-in-depth: if a future code change regresses the structural
-  // protection, the prompt block catches it; if the LLM ignores the
-  // prompt block, the structural protection has already restricted
-  // the pre-selected palette to the safe pool.
-  const fantasyRaceForGen = resolveFantasyRace(
-    resolvedOrigin,
-    userInputForLangDetection,
-  );
-  const isOrcGoblinContext = fantasyRaceForGen === 'Orcish' || fantasyRaceForGen === 'Goblinoid';
-
-  // Orc and goblin conventional pools are intentionally single-palette
-  // (see fantasyRaceConventionalPalettes docstring on the racism-coding
-  // caveat), so they don't get the cross-palette rotation that gives
-  // Elven/Dwarven/Gnomish/Giant generations name variety. Instead, we
-  // rotate the palette description's "(e.g., …)" example tail by
-  // sampling from a 100-name curated pool per race. Non-orc/goblin
-  // palettes pass through this helper unchanged.
-  const displayedPalette = rotatePaletteExamples(selectedPalette);
-
   // Pre-select a mood/tone. Pool calibrated for tonal variety — roughly
   // 1/4 dark, 1/4 light, 1/4 neutral/utilitarian, 1/4 weird/strange.
-  // Earlier pool had 5+ explicitly melancholic options out of 18, which
-  // was producing a recognizable "Lirael's Lament / Zonothar's Sorrow"
-  // possessive-emotional-noun naming cluster across generations.
-  // Removed: "haunted and sorrowful" (overlapped tragic/melancholy);
-  //          "ancient and weathered" (overlapped tragic in practice).
-  // Added five upbeat / industrious options.
+  // Mood selection happens here (before palette selection) because the
+  // blank-canvas origin selector below depends on it, and the blank-
+  // canvas origin selector MUST run before palette selection so the
+  // orc/goblin and horror-coded protection layers see the resolved
+  // origin. Previously this block lived after palette selection, which
+  // let the dev palette override (and the existing random palette
+  // selection) silently bypass the protections when the user hadn't
+  // picked an origin from the dropdown.
   const moods = [
     // Dark register
     'ominous and foreboding — something feels wrong about this item',
@@ -824,16 +781,135 @@ const generateMagicItem = async () => {
     'rebellious and defiant — this item was forged in resistance':    ['Infernal', 'Lycanthropic'],
   };
 
-  // Resolve origin for the blank-canvas case (deferred from earlier in
-  // the function because origin selection needs the mood). Aesthetic
-  // origins compatible with the mood + all cultural origins are
-  // eligible. User-input cases (name/lore provided) leave resolvedOrigin
-  // null so the LLM derives thematic context from the user's text.
+  // Resolve origin for the blank-canvas case. Aesthetic origins
+  // compatible with the mood + all cultural origins are eligible.
+  // User-input cases (name/lore provided) leave resolvedOrigin null so
+  // the LLM derives thematic context from the user's text.
   if (!resolvedOrigin && !itemName.value.trim() && !itemLore.value.trim()) {
     const aestheticOrigins = moodOriginCompatibility[selectedMood] || [];
-    const eligibleOrigins = [...aestheticOrigins, ...culturalOrigins];
+    let eligibleOrigins = [...aestheticOrigins, ...culturalOrigins];
+
+    // TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
+    // When the dev forces a palette via the override dropdown, also
+    // filter the random origin pool to exclude origins that would
+    // protection-override the forced palette. See filter-origins-for-
+    // forced-palette.mjs for the full rationale and unit tests.
+    if (isDev && testPaletteOverride.value) {
+      eligibleOrigins = filterOriginsForForcedPalette(
+        eligibleOrigins,
+        testPaletteOverride.value,
+      );
+    }
+    // END TEST-PALETTE-OVERRIDE
+
     resolvedOrigin = eligibleOrigins[Math.floor(Math.random() * eligibleOrigins.length)];
   }
+
+  // languagePalettes is imported from ./utils/language-palettes.mjs.
+  // Lives in its own module so test specs can verify integrity (every
+  // prefix referenced in fantasyRaceConventionalPalettes resolves to
+  // an entry there) without depending on inline data here.
+
+  // Language palette selection runs through the full priority hierarchy:
+  //   1. Cultural detection from user input (Akiko → Japanese, etc.)
+  //   2. Fantasy-race weighted (70/30 conventional/other) — when the
+  //      origin or user input signals a core fantasy race, palette
+  //      selection biases toward the genre-conventional pairing
+  //      (Elven → Sindarin, Dwarven → Germanic, etc.) without locking
+  //      out unconventional pairings entirely.
+  //   3. Uniform random across the full pool.
+  // resolvedOrigin is fully resolved at this point — dropdown selection
+  // OR blank-canvas random pick (which honors the dev palette-override
+  // filter above) OR null when user-provided text drives thematic
+  // context. Protection layers (orc/goblin allow-list, horror pool)
+  // see the final resolvedOrigin and fire correctly.
+  const userInputForLangDetection = `${itemName.value} ${itemLore.value}`;
+  // TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
+  // The override routes THROUGH selectLanguagePalette as the cultural-
+  // detection input, not around it. This preserves the architectural
+  // protections (horror-origin pool, orc/goblin allow-list) that would
+  // otherwise be silently bypassed in dev:
+  //   - Non-restricted origins: override fires as priority-1 detection
+  //     and wins.
+  //   - Horror origins (Abyssal/Infernal/Necromantic/Vampiric/
+  //     Lycanthropic/Aberrant): override wins only if the palette is
+  //     in the horror pool; otherwise pool wins.
+  //   - Orc/Goblin: override wins only if in the allow-list pool;
+  //     otherwise pool wins.
+  // The "Last generation used" badge below shows the actual palette
+  // selected, so when protections override the override, the dev sees
+  // the real outcome.
+  const detectFn = (isDev && testPaletteOverride.value)
+    ? () => testPaletteOverride.value
+    : detectLanguageFromUserInput;
+  const selectedPalette = selectLanguagePalette(
+    resolvedOrigin,
+    userInputForLangDetection,
+    languagePalettes,
+    detectFn,
+  );
+  lastUsedPalette.value = selectedPalette;
+  // END TEST-PALETTE-OVERRIDE
+
+  // Unconventional pairing = fantasy-race origin paired with a palette
+  // OTHER than its genre-conventional one (e.g., Elven origin + Slavic
+  // palette, Gnomish origin + Mesoamerican palette). Fires for the 30%
+  // case in selectLanguagePalette's weighted branch. We use it to gate
+  // the deeper "translate, don't mash up" prompt section, which is too
+  // expensive in tokens to render for every fantasy-race generation.
+  // After the multi-palette pool refactor, each fantasy race's
+  // conventional palette is an array of prefixes. The pairing is
+  // unconventional iff none of the pool prefixes matches the
+  // selected palette.
+  const isUnconventionalPairing = !!(
+    resolvedOrigin
+    && fantasyRaceConventionalPalettes[resolvedOrigin]
+    && !fantasyRaceConventionalPalettes[resolvedOrigin].some(prefix =>
+      selectedPalette.startsWith(prefix),
+    )
+  );
+
+  // Western-fantasy-bound race context = fantasy-race resolution (per
+  // the same logic selectLanguagePalette uses) yields one of the five
+  // Western-fantasy-bound races (Orcish, Goblinoid, Dwarven, Gnomish,
+  // Elven — see WESTERN_FANTASY_BOUND_RACES in select-language-palette.mjs).
+  // Catches both the dropdown case and the keyword-in-lore case
+  // (origin=Necromantic + lore="Orcish Battleaxe" → fantasyRace='Orcish'
+  // via priority 2b keyword scan).
+  //
+  // Two layers of protection:
+  // 1. STRUCTURAL — selectLanguagePalette uses an allow-list-restricted
+  //    branch for these races (no 30% alternative, cultural-detection
+  //    input subordinated to the allow-list). The selected palette can
+  //    only come from the race's curated European/fictional allow-list.
+  // 2. PROMPT-SIDE — the LANGUAGE PALETTE RESTRICTION block below
+  //    revokes the LLM's LANGUAGE PALETTE OVERRIDE authority for these
+  //    contexts so creative re-association during generation can't
+  //    re-introduce the cross-cultural pairings the structural
+  //    protection blocks.
+  // Defense-in-depth: if a future code change regresses the structural
+  // protection, the prompt block catches it; if the LLM ignores the
+  // prompt block, the structural protection has already restricted
+  // the pre-selected palette to the safe pool.
+  //
+  // Cross-cultural-archetype races (Fey, Giant) are deliberately NOT
+  // covered — their archetype-slots exist in many living mythological
+  // traditions, so non-Western pairings genuinely include those
+  // cultures rather than decorating a Western archetype.
+  const fantasyRaceForGen = resolveFantasyRace(
+    resolvedOrigin,
+    userInputForLangDetection,
+  );
+  const isWesternFantasyRaceContext = WESTERN_FANTASY_BOUND_RACES.includes(fantasyRaceForGen);
+
+  // Orc and goblin conventional pools are intentionally single-palette
+  // (see fantasyRaceConventionalPalettes docstring on the racism-coding
+  // caveat), so they don't get the cross-palette rotation that gives
+  // Elven/Dwarven/Gnomish/Giant generations name variety. Instead, we
+  // rotate the palette description's "(e.g., …)" example tail by
+  // sampling from a 100-name curated pool per race. Non-orc/goblin
+  // palettes pass through this helper unchanged.
+  const displayedPalette = rotatePaletteExamples(selectedPalette);
 
   // Pre-select an item quirk
   const quirks = [
@@ -1101,47 +1177,7 @@ The lore MUST explicitly name the origin culture (elves, dwarves, orcs, gnomes, 
 ${isUnconventionalPairing ? `
 UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP:
 
-This item pairs ${resolvedOrigin} thematic origin with ${selectedPalette.split(':')[0]} linguistic palette. This is an opportunity for genuine cultural fusion, not surface-level renaming.
-
-DO NOT produce ${resolvedOrigin} characters with ${selectedPalette.split(':')[0]}-flavored first names attached to generic-fantasy occupations. That's surface fusion — names changed, everything else default. Instead, translate ${resolvedOrigin} traits and traditions into ${selectedPalette.split(':')[0]}-cultural expression.
-
-Think through:
-- How would ${resolvedOrigin} cultural roles translate into the ${selectedPalette.split(':')[0]} cultural framework? Don't import generic-fantasy occupations; consider what roles the cultural tradition actually had.
-- What material culture would emerge from this fusion? Don't default to standard fantasy materials (gears, brass fittings, leather-bound books); consider what the cultural tradition actually used.
-- What writing systems, ritual practices, and craft traditions would the ${resolvedOrigin} carry within this cultural context?
-- How would the ${resolvedOrigin}'s defining traits (the qualities that make them ${resolvedOrigin}) express through the ${selectedPalette.split(':')[0]}-cultural framework rather than through generic-fantasy conventions?
-
-Worked example — Gnomish origin + Mesoamerican-inspired palette:
-
-Surface renaming (DON'T do this):
-"Tezcamil Cogspring built a clockwork orrery in his workshop, marking the passage of years with brass gears."
-
-Deeper translation (DO this):
-"Yei Tecpatl Tlachiani — Three Flint, the Star-Watcher — carved the heliacal rising of Venus into amate-paper codices folded in the gnomish observatory at Mictlan-Tepetl. Three Flint's people did not build with brass gears; they built with painted stone and knotted record-cords, expressing their gnomish precision through calendrical observation rather than mechanical contraption. Their ingenuity tracked the eight-thousand-day Long Count rather than designing clockwork."
-
-The gnomes are still gnomes — small, clever, precise, ingenious. But their ingenuity expresses through Mesoamerican astronomical and recording traditions rather than through European-flavored mechanical workshops. The names belong fully to the cultural framework. The materials, places, and practices belong to it too.
-
-Worked example — Dwarven origin + Yoruba-inspired palette:
-
-Surface renaming (DON'T):
-"Adégoke Ironforge worked at his anvil, hammering steel into shape."
-
-Deeper translation (DO):
-"Adégoke Ojú-Iná — Adégoke Eye-of-Forge — was eldest of the Òkè-Ìrin (Iron-Mountain) clan. Among his people, smithing was not solitary craft but communal practice. Apprentices sang call-and-response patterns to time hammer-strikes; the iron itself was understood to carry the spirit of metal, requiring offering and respect before work could begin. Adégoke's masterwork hammer bore not maker's marks but the cowrie-shell pattern that named his lineage going back fourteen generations."
-
-The dwarves are still dwarves — clan-bound, deep-mountain craftspeople, masters of metallurgy. But their tradition expresses through West African communal smithing practices, spirit-respect for materials, and lineage-marking rather than through Germanic individualistic maker's-marks.
-
-Worked example — Orcish origin + Sindarin-inspired palette:
-
-Surface renaming (DON'T):
-"Galadhash Bloodclaw led the warband across the plains."
-
-Deeper translation (DO):
-"Galadhrast i-Gôr — Galadhrast the Tribute-Bearer — was lineage-keeper of the Mâr-Hûron (Mountain-Hawk) clan. Her people had taken the lessons of older elven traditions during generations of contact, but rendered them through orcish values: the songs the elves used for memory of beauty, her clan used for memory of ancestors and battle-debts. Her staff bore the carved names of three hundred and seven clan members, each rendered in a script that combined elvish phonetics with orcish lineage-marks."
-
-The orcs are still orcs — clan-bound, warrior-oriented, ancestor-respecting. But their tradition has been shaped by elvish aesthetic forms — elvish-style scripts, elvish-style songs of memory — while preserving orcish content (battle-debts, lineage-tribute, warrior values). Two cultures in genuine contact rather than one renamed as the other.
-
-This is the integration to aim for. The fantasy race keeps its identity. The cultural framework provides the actual practices, materials, and forms through which that identity expresses.
+This item pairs ${resolvedOrigin} thematic identity with the ${selectedPalette.split(':')[0]} cultural framework. Render the origin's defining traits through the palette's actual practices, materials, and forms — not by giving generic-fantasy occupations names from the palette. The race keeps its identity; the cultural framework provides the practices, materials, and forms through which that identity expresses. Avoid surface renaming where only the proper nouns change while everything else stays default-fantasy.
 
 EXPLICIT ORIGIN IDENTIFICATION — REQUIRED:
 
@@ -1239,7 +1275,7 @@ DO this:
 The English translation should capture the cultural concept evocatively, not just literally. "Wand of First Bloom" conveys the meaning of "Sulkasipailon Kukka" better than "Feather-Stroke's Flower" would. Translate for poetic effect, not word-for-word.
 
 APPLY translation rule (item name in English, original in description):
-- All real-world non-English-language palettes: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic/Persian, Persian, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Navajo/Diné, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
+- All real-world non-English-language palettes: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic/Persian, Persian, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
 
 (Norse, Welsh, Anglo-Saxon, etc. are technically European but their original-language names — "Sigrún Stormhammer," "Æthelflæd" — are intimidating to many DMs at the table. Apply the translation rule to these too — better to err on the side of usability.)
 
@@ -1284,7 +1320,7 @@ When the lore needs any of these culturally-specific named entities, INVENT a fi
 - Foundational ancestral figures from creation narratives
 - Real historical figures with cultural-religious significance
 
-Invented names should sound culturally appropriate to the palette and carry meaningful semantic content where possible — a Yoruba-register iron-spirit might be "Olosun," a Diné-register weaver-spirit might be "Hashtłʼish" (using the Navajo word for clay as a constructed name). Don't take a common noun and label it as a sacred figure (e.g., "Kibarua" — Swahili for "casual laborer" — isn't a deity name).
+Invented names should sound culturally appropriate to the palette and carry meaningful semantic content where possible — a Yoruba-register iron-spirit might be "Olosun," constructed from a non-sacred word in the register. Don't take a common noun and label it as a sacred figure (e.g., "Kibarua" — Swahili for "casual laborer" — isn't a deity name).
 
 LIMITED EXCEPTIONS — real names CAN be used for these palettes only:
 
@@ -1298,7 +1334,7 @@ LIMITED EXCEPTIONS — real names CAN be used for these palettes only:
 
 These exceptions reflect Western fantasy genre convention — these traditions have been integrated into fantasy long enough that real names are genre-expected.
 
-For ALL other palettes (including but not limited to Yoruba, Akan, Igbo, Swahili, Atlas-Berber, Arabic, Persian, Hindu/Sanskrit, Chinese, Japanese, Korean, Thai, Mongolian, Tibetan, Maya, Aztec/Nahuatl, Andean, Lakota, Navajo/Diné, Maori, Hawaiian, Slavic, Russian, Romanian, Hungarian, Finnish, Caucasian, Pamir), INVENT fictional named entities. Do not use real religious figures, real clan names, real sacred place names, real political-religious titles, or real culturally-significant historical figures from these traditions in fictional contexts.
+For ALL other palettes (including but not limited to Yoruba, Akan, Igbo, Swahili, Atlas-Berber, Arabic, Persian, Hindu/Sanskrit, Chinese, Japanese, Korean, Thai, Mongolian, Tibetan, Maya, Aztec/Nahuatl, Andean, Lakota, Maori, Hawaiian, Slavic, Russian, Romanian, Hungarian, Finnish, Caucasian, Pamir), INVENT fictional named entities. Do not use real religious figures, real clan names, real sacred place names, real political-religious titles, or real culturally-significant historical figures from these traditions in fictional contexts.
 
 Note: Hebrew/Jewish religious-cultural specifics are not in scope at all — the Hebrew palette has been removed from the system. If a user's input invokes Hebrew-language signals (shofar, menorah, golem, sephirot, etc.), apply the universal-invent rule even more strictly: do not generate fictional content that references Jewish religious tradition, sacred figures, or sacred concepts. Choose a different cultural register for the item.
 
@@ -1315,10 +1351,10 @@ You have world knowledge of cultural-linguistic registers; activate it. The user
 If the user's input contains MIXED cultural signals (e.g. "Akiko of the Volga"), pick the strongest/most prominent signal and commit to it consistently across all generated names. Don't blend traditions within a single name.
 
 If the user's input has no clear cultural-linguistic signal, use the pre-selected palette as written.
-${isOrcGoblinContext ? `
-LANGUAGE PALETTE RESTRICTION — ORC/GOBLIN CONTEXT (OVERRIDES THE AUTHORITY ABOVE):
+${isWesternFantasyRaceContext ? `
+LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT (OVERRIDES THE AUTHORITY ABOVE):
 
-This item is in an orc or goblin context (origin or user-typed keyword). Orcs and goblins as fantasy categories have a documented history of being used as racial proxies for African, East Asian, Indigenous, Pacific Islander, and other real-world peoples. Producing an orc/goblin item with the linguistic register of any of those traditions reproduces that racist coding.
+This item is in a Western-fantasy-bound race context (origin or user-typed keyword indicates one of: Orcish, Goblinoid, Dwarven, Gnomish, Elven). These five fantasy-race categories are Norse/Germanic/Celtic-coded archetypes with no parallels in most non-Western mythological traditions. Pairing them with non-Western linguistic registers doesn't include those cultures in fantasy; it conscripts those cultures' linguistic registers to decorate Western archetypes — a documented appropriation pattern in fantasy media. Orcs and goblins additionally carry documented racial-proxy history with non-European real-world peoples, making the pattern especially acute for those two.
 
 The LANGUAGE PALETTE OVERRIDE authority above is REVOKED for this generation. You must NOT generate names — for the item, characters, factions, or locations — in any of the following registers, even if you would otherwise infer them from the user's input or from creative association:
 
@@ -1328,7 +1364,7 @@ The LANGUAGE PALETTE OVERRIDE authority above is REVOKED for this generation. Yo
 - Chinese, Japanese, Korean, Mongolian, Tibetan, Thai
 - Maori, Hawaiian, or other Pacific Islander traditions
 - Maya, Aztec/Nahuatl, Andean, or other Latin American Indigenous traditions
-- Lakota, Navajo/Diné, or other North American Indigenous traditions
+- Lakota or other North American Indigenous traditions
 
 This restriction is absolute. It is not subject to creative reinterpretation, "translation" framing, or unconventional-pairing reasoning. If the user's input mentions something that would normally trigger one of these palettes (e.g., a place name, a deity, a cultural artifact), use the pre-selected palette ("${displayedPalette}") instead.
 
@@ -1339,6 +1375,12 @@ Allowed registers for this generation:
 
 Do not produce any name in this generation that would identify with the restricted-register list above. This applies to ALL names: item, characters, factions, places, no exceptions.
 ` : ''}
+${buildYorubaPromptBlock(selectedPalette)}
+${buildAndeanPromptBlock(selectedPalette)}
+${buildCatchallPromptBlock(selectedPalette)}
+${buildFictionalPaletteWhitelistBlock(selectedPalette)}
+${buildOriginCharacterWhitelistBlock(resolvedOrigin)}
+
 ORIGIN-PALETTE INDEPENDENCE:
 
 The naming palette is independent of the item's thematic origin. A ${resolvedOrigin || '[origin determined from input]'} item with ${selectedPalette.split(':')[0]} naming is a perfectly valid combination — embrace the creative possibility rather than fighting the pairing. Do not drift the origin's aesthetic toward the palette's culture, or the palette's linguistic register toward the origin's stereotype. They describe different dimensions of the item.
@@ -2873,4 +2915,48 @@ onUnmounted(() => {
     flex-wrap: wrap;
   }
 }
+
+/* TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE */
+.test-palette-override {
+  border: 2px dashed #d97706;
+  background: #fff7ed;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+
+  legend {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #9a3412;
+    padding: 0 0.5rem;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+  }
+
+  select {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+    width: 100%;
+  }
+
+  &__last {
+    margin: 0.5rem 0 0;
+    font-size: 0.8125rem;
+    color: #57534e;
+
+    code {
+      background: #fef3c7;
+      padding: 0.125rem 0.25rem;
+      border-radius: 2px;
+      font-size: 0.8125rem;
+    }
+  }
+}
+/* END TEST-PALETTE-OVERRIDE */
 </style>

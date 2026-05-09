@@ -27,8 +27,101 @@
  * (every prefix referenced in fantasyRaceConventionalPalettes
  * resolves to an entry here, no orphan references) without depending
  * on inline data inside ItemGenerator.vue.
+ *
+ * PROTECTED-PALETTE FEATURE FLAG
+ * ------------------------------
+ *
+ * `enableProtectedPalettes` (default: false) gates every non-Western,
+ * non-fictional palette out of the consumer-facing `languagePalettes`
+ * export. The full list survives as `allLanguagePalettes` and the
+ * downstream protection machinery (catchall block, Yoruba/Andean pool
+ * prompts, item-name avoid-lists, character-name whitelists) stays
+ * intact, so re-enabling is a one-line flip — no architectural
+ * unwinding required.
+ *
+ * Why off by default: the protections still need work to consistently
+ * suppress sacred-coded outputs across all the affected palettes. Until
+ * that work lands, shipping these palettes risks producing culturally
+ * insensitive items at the user's expense. Western-canonical and
+ * fictional-fantasy palettes don't carry the same risk and remain
+ * available.
+ *
+ * What gets filtered when the flag is off:
+ *   - Every prefix in PROTECTED_PALETTE_PREFIXES is dropped from
+ *     `languagePalettes` (the consumer-facing array).
+ *   - Cultural detection auto-fails for these palettes because
+ *     `detectLanguageFromUserInput` only returns palettes present in
+ *     the caller-provided pool.
+ *   - The catchall prompt block, Yoruba/Andean pool prompts, and
+ *     item-name avoid-lists become unreachable because their gating
+ *     palettes are no longer selectable. The code paths stay defined.
+ *
+ * What is NOT affected:
+ *   - `fantasyRaceConventionalPalettes` (Western-only allow-lists for
+ *     Orcish/Goblinoid/Dwarven/Gnomish/Elven; no protected members).
+ *   - `horrorOriginPalettePool` (Western-only/fictional; no protected
+ *     members).
+ *   - The Giant cross-cultural-archetype branch (filters into
+ *     whatever's in `languagePalettes`, so naturally restricts to the
+ *     active set).
+ *
+ * To re-enable: flip `enableProtectedPalettes` to `true`. That is the
+ * only change required. Tests that exercise protected palettes pass
+ * their own inline arrays, so test runs are unaffected by the flag's
+ * value.
  */
-export const languagePalettes = [
+
+export const enableProtectedPalettes = false;
+
+/**
+ * Palette prefixes shipped only when `enableProtectedPalettes` is true.
+ * Every entry here is a real-world cultural-linguistic tradition with
+ * non-trivial appropriation/sacred-coding risk that we don't yet have
+ * sufficient protection to mitigate consistently in production.
+ *
+ * Membership is conservative: when in doubt, a palette belongs in this
+ * list. Western-canonical registers (Latin-family, Norse-family,
+ * Germanic-family, Celtic-family, Slavic-family, Hungarian, Finnish,
+ * Italian Renaissance, Old Occitan) and fictional-fantasy registers
+ * (Sindarin, Draconic, Goblin, Orcish, Gnomish, Aberrant, Abyssal,
+ * Infernal, Primordial, Technomagical) are NOT in this list and remain
+ * available with the flag off.
+ */
+export const PROTECTED_PALETTE_PREFIXES = [
+  // East / Southeast / Central / South Asian
+  'Japanese-inspired',
+  'Chinese-inspired',
+  'Korean-inspired',
+  'Thai-inspired',
+  'Mongolian-inspired',
+  'Tibetan-inspired',
+  'Hindi/Sanskrit-inspired',
+  'Pamir-inspired',
+  // Middle Eastern
+  'Arabic/Persian-inspired',
+  'Persian-inspired',
+  // North African
+  'Atlas-Berber-inspired',
+  // Sub-Saharan African
+  'Yoruba-inspired',
+  'Akan-inspired',
+  'Igbo-inspired',
+  'Swahili-inspired',
+  // Pacific
+  'Maori-inspired',
+  'Hawaiian-inspired',
+  // Mesoamerican
+  'Maya-inspired',
+  'Aztec/Nahuatl-inspired',
+  // Andean
+  'Andean-inspired',
+  // Indigenous American
+  'Lakota-inspired',
+  // Caucasus
+  'Caucasian-inspired',
+];
+
+export const allLanguagePalettes = [
   // Real-world cultural traditions
   'Latin-inspired: formal, structured (e.g., Aurelium, Ferrata, Nexus Imperium)',
   'Italian-Renaissance-inspired: Renaissance-era Italian inventor-craftsperson register (e.g., Leonardo, Beatrice, Filippo)',
@@ -159,13 +252,13 @@ export const languagePalettes = [
   // leader respectively; using them as fictional seeds pulls the LLM
   // toward reproducing sacred-cultural content directly.
   'Lakota-inspired: descriptive compound names, sacred-natural register',
-  // Navajo/Diné: example tail removed under the protected-palette
-  // seed audit. Hashk'aan-Hadzohí and Kinłichíi'nii are real Navajo
-  // clan names; Tó-Aheedlíinii is a real sacred geographic feature.
-  // The Goblinoid + Navajo/Diné production failure (Staff of the
-  // Broken Hearth) used these directly as fictional empire/character
-  // names — exactly the appropriation pattern the audit prevents.
-  'Navajo/Diné-inspired: clan-rooted naming, sacred geography',
+  // Navajo/Diné: removed entirely. The skinwalker tradition is sacred
+  // and not appropriate for fictional appropriation; clan names and
+  // sacred-geographic terms (Hashk'aan-Hadzohí, Kinłichíi'nii,
+  // Tó-Aheedlíinii) carry too high a collision-risk for a curated
+  // pool to safely contain. Diné-coded user input falls through to
+  // the LLM's world-knowledge override path with strict universal-
+  // invent rules. Detection-map entries removed in parallel.
   // Fictional / fantasy linguistic traditions
   'Sindarin-inspired (elvish): elegant, vowel-rich (e.g., Galadhriel, Thindol, Nimrathel)',
   'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax, Vyrmokk, Kaelsithur)',
@@ -178,3 +271,17 @@ export const languagePalettes = [
   'Primordial: pre-language sounds, elemental (e.g., Aath\'kol, Rumblith, Dross)',
   'Technomagical: clinical with flair (e.g., Arcanaforge Mark IV, Voltspire, Aethercog)',
 ];
+
+/**
+ * Consumer-facing palette list. With `enableProtectedPalettes` off,
+ * this is `allLanguagePalettes` minus every entry whose prefix is in
+ * `PROTECTED_PALETTE_PREFIXES`. With the flag on, it equals
+ * `allLanguagePalettes`. Existing callers (ItemGenerator.vue,
+ * selectLanguagePalette callers, the test-palette-override dropdown)
+ * import this name and silently see only the active set.
+ */
+export const languagePalettes = enableProtectedPalettes
+  ? allLanguagePalettes
+  : allLanguagePalettes.filter(
+      entry => !PROTECTED_PALETTE_PREFIXES.some(prefix => entry.startsWith(prefix)),
+    );
