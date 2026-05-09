@@ -1,17 +1,17 @@
 import {
-  paletteCharacterEpithetWhitelists,
-  getWhitelistForPalette,
-} from './palette-whitelists.mjs';
+  registerCharacterEpithetWhitelists,
+  getWhitelistForRegister,
+} from './register-whitelists.mjs';
 
-describe('palette-whitelists — data integrity', () => {
-  describe('paletteCharacterEpithetWhitelists', () => {
-    it('is a non-empty object keyed by palette prefix', () => {
-      expect(typeof paletteCharacterEpithetWhitelists).toBe('object');
-      expect(Object.keys(paletteCharacterEpithetWhitelists).length).toBeGreaterThan(0);
+describe('register-whitelists — data integrity', () => {
+  describe('registerCharacterEpithetWhitelists', () => {
+    it('is a non-empty object keyed by register prefix', () => {
+      expect(typeof registerCharacterEpithetWhitelists).toBe('object');
+      expect(Object.keys(registerCharacterEpithetWhitelists).length).toBeGreaterThan(0);
     });
 
     it('every value is a non-empty array of strings', () => {
-      for (const [prefix, list] of Object.entries(paletteCharacterEpithetWhitelists)) {
+      for (const [prefix, list] of Object.entries(registerCharacterEpithetWhitelists)) {
         expect(Array.isArray(list)).toBe(true);
         expect(list.length).toBeGreaterThan(0);
         for (const entry of list) {
@@ -49,7 +49,7 @@ describe('palette-whitelists — data integrity', () => {
         'Infernal',
         'Primordial',
       ]);
-      for (const [prefix, list] of Object.entries(paletteCharacterEpithetWhitelists)) {
+      for (const [prefix, list] of Object.entries(registerCharacterEpithetWhitelists)) {
         if (fictionalPrefixes.has(prefix)) {
           expect(list.length).toBeGreaterThanOrEqual(30);
           expect(list.length).toBeLessThanOrEqual(90);
@@ -60,18 +60,18 @@ describe('palette-whitelists — data integrity', () => {
       }
     });
 
-    it('does NOT include pool palettes (Yoruba, Andean)', () => {
-      // Pool palettes have full pool architecture via their own prompt
+    it('does NOT include pool registers (Yoruba, Andean)', () => {
+      // Pool registers have full pool architecture via their own prompt
       // builders. Adding them to this whitelist would cause both the
       // pool block and the catchall block to fire, contradicting each
       // other.
-      expect(paletteCharacterEpithetWhitelists).not.toHaveProperty('Yoruba-inspired');
-      expect(paletteCharacterEpithetWhitelists).not.toHaveProperty('Andean-inspired');
+      expect(registerCharacterEpithetWhitelists).not.toHaveProperty('Yoruba-inspired');
+      expect(registerCharacterEpithetWhitelists).not.toHaveProperty('Andean-inspired');
     });
   });
 
   describe('Maori whitelist (first registered v2 whitelist)', () => {
-    const maori = paletteCharacterEpithetWhitelists['Maori-inspired'];
+    const maori = registerCharacterEpithetWhitelists['Maori-inspired'];
 
     it('exists', () => {
       expect(Array.isArray(maori)).toBe(true);
@@ -121,24 +121,24 @@ describe('palette-whitelists — data integrity', () => {
     });
   });
 
-  describe('getWhitelistForPalette', () => {
-    it('returns the array for a registered palette descriptor (Maori)', () => {
-      const result = getWhitelistForPalette('Maori-inspired: vowel-rich Te Reo phonetics');
+  describe('getWhitelistForRegister', () => {
+    it('returns the array for a registered register descriptor (Maori)', () => {
+      const result = getWhitelistForRegister('Maori-inspired: vowel-rich Te Reo phonetics');
       expect(Array.isArray(result)).toBe(true);
       expect(result).toContain('Manawa-Kaha');
     });
 
-    it('returns null for non-registered palettes', () => {
-      expect(getWhitelistForPalette('Latin-inspired: formal')).toBe(null);
-      expect(getWhitelistForPalette('Hindi/Sanskrit-inspired: melodic')).toBe(null);
-      expect(getWhitelistForPalette('Yoruba-inspired: rhythmic')).toBe(null);
+    it('returns null for non-registered registers', () => {
+      expect(getWhitelistForRegister('Latin-inspired: formal')).toBe(null);
+      expect(getWhitelistForRegister('Hindi/Sanskrit-inspired: melodic')).toBe(null);
+      expect(getWhitelistForRegister('Yoruba-inspired: rhythmic')).toBe(null);
     });
 
     it('returns null for null / undefined / empty / non-string input', () => {
-      expect(getWhitelistForPalette(null)).toBe(null);
-      expect(getWhitelistForPalette(undefined)).toBe(null);
-      expect(getWhitelistForPalette('')).toBe(null);
-      expect(getWhitelistForPalette(42)).toBe(null);
+      expect(getWhitelistForRegister(null)).toBe(null);
+      expect(getWhitelistForRegister(undefined)).toBe(null);
+      expect(getWhitelistForRegister('')).toBe(null);
+      expect(getWhitelistForRegister(42)).toBe(null);
     });
   });
 });

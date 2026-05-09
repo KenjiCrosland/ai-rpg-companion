@@ -1,21 +1,21 @@
 import {
-  selectLanguagePalette,
+  selectRegister,
   resolveFantasyRace,
-  fantasyRaceConventionalPalettes,
+  fantasyRaceConventionalRegisters,
   fantasyRaceKeywords,
   horrorRestrictedOrigins,
-  horrorOriginPalettePool,
-  fictionalOriginPalettes,
+  horrorOriginRegisterPool,
+  fictionalOriginRegisters,
   WESTERN_FANTASY_BOUND_RACES,
-} from './select-language-palette.mjs';
+} from './select-register.mjs';
 
-// Realistic palette pool covering at least one prefix from each fantasy
-// race's conventional pool, plus a handful of unrelated palettes for
-// alt-branch testing. The function looks up palettes by prefix, so any
+// Realistic register pool covering at least one prefix from each fantasy
+// race's conventional pool, plus a handful of unrelated registers for
+// alt-branch testing. The function looks up registers by prefix, so any
 // entry whose prefix matches a fantasy-race conventional prefix is
 // reachable via the conventional path.
 //
-// With the multi-palette pool architecture, each fantasy race has 1-6
+// With the multi-register pool architecture, each fantasy race has 1-6
 // conventional prefixes. Tests that need a deterministic conventional
 // pick mock Math.random() to 0 (which selects pool index 0 — the first
 // prefix in each race's pool); the test pool MUST contain at least
@@ -26,7 +26,7 @@ import {
 //   Goblinoid  pool[0] = 'Goblin-inspired'          ✓
 //   Gnomish    pool[0] = 'Gnomish'                  ✓
 //   Giant      pool[0] = 'Norse-inspired'           ✓
-const palettes = [
+const registers = [
   'Latin-inspired: formal (e.g., Aurelium)',
   'Sindarin-inspired (elvish): elegant (e.g., Galadhriel)',
   'Welsh-inspired: soft consonants (e.g., Branwen)',
@@ -57,7 +57,7 @@ const palettes = [
   'Abyssal: guttural, chaotic (e.g., Ghar\'zuul)',
   'Infernal: sharp, aggressive (e.g., Vex\'tharion)',
   'Aberrant: unpronounceable clusters (e.g., Xith\'vaar)',
-  // Fictional-origin matching palettes — needed so the fictional-
+  // Fictional-origin matching registers — needed so the fictional-
   // origin routing branch can resolve to a real in-pool entry.
   'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax)',
   'Primordial: pre-language sounds, elemental (e.g., Aath\'kol)',
@@ -66,16 +66,16 @@ const palettes = [
 
 // Helper: assert that `result` starts with one of the prefixes in the
 // race's conventional pool. Used by tests that don't care which
-// specific palette in the pool was rolled, just that the conventional
+// specific register in the pool was rolled, just that the conventional
 // branch fired and produced a member of the pool.
 const isInConventionalPool = (result, race) =>
-  fantasyRaceConventionalPalettes[race].some(prefix => result.startsWith(prefix));
+  fantasyRaceConventionalRegisters[race].some(prefix => result.startsWith(prefix));
 
 // Stub detection function with controllable return value.
 const stubDetect = (returnValue) => () => returnValue;
 const detectNothing = stubDetect(null);
 
-describe('selectLanguagePalette', () => {
+describe('selectRegister', () => {
   let randomSpy;
   beforeEach(() => {
     randomSpy = jest.spyOn(Math, 'random');
@@ -88,15 +88,15 @@ describe('selectLanguagePalette', () => {
     // Post-Task-1, the five Western-fantasy-bound races (Orcish,
     // Goblinoid, Dwarven, Gnomish, Elven) are allow-list-restricted —
     // priority-1 cultural detection only wins for them when the
-    // detected palette is in the race's allow-list. For the cross-
+    // detected register is in the race's allow-list. For the cross-
     // cultural-archetype race (Giant), priority-1 cultural detection
     // wins unconditionally.
-    it('returns the detected palette when detection fires (Giant + non-pool palette)', () => {
+    it('returns the detected register when detection fires (Giant + non-pool register)', () => {
       const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
-      const result = selectLanguagePalette('Giant', "Akiko's giant kin", palettes, detect);
+      const result = selectRegister('Giant', "Akiko's giant kin", registers, detect);
       // Japanese is NOT in the Giant pool (Norse/Greek/Anglo-Saxon).
       // Cultural detection is priority 1 for cross-cultural-archetype
-      // races; it wins even when the detected palette is non-conventional.
+      // races; it wins even when the detected register is non-conventional.
       expect(result).toMatch(/^Japanese-inspired/);
     });
 
@@ -108,55 +108,55 @@ describe('selectLanguagePalette', () => {
       // allow-list restriction.
       randomSpy.mockReturnValue(0.0);
       const detect = stubDetect('Yoruba-inspired: rhythmic with diacriticals');
-      const result = selectLanguagePalette('Giant', "Olorun's hammer", palettes, detect);
+      const result = selectRegister('Giant', "Olorun's hammer", registers, detect);
       expect(result).toMatch(/^Yoruba-inspired/);
     });
   });
 
   describe('priority 2 — fantasy-race weighting (dropdown signal, Giant only post-promotion)', () => {
     // Pre-Task-1, the priority-2 weighted branch (70/30 with broad
-    // alt-branch into the full palette pool) fired for Elven, Dwarven,
+    // alt-branch into the full register pool) fired for Elven, Dwarven,
     // Gnomish, AND Giant. Post-Task-1, the first three are allow-list-
     // restricted and the priority-2 branch is reserved for the single
     // remaining cross-cultural-archetype fantasy race: Giant.
 
-    it('returns a palette from the race\'s conventional pool when random < 0.7 (Giant)', () => {
+    it('returns a register from the race\'s conventional pool when random < 0.7 (Giant)', () => {
       // The 70/30 roll uses Math.random call #1; the within-pool index
       // pick uses Math.random call #2. mockReturnValue(0) hits the
       // conventional branch and selects pool index 0 (Norse-inspired
       // for Giant).
       randomSpy.mockReturnValue(0);
-      const result = selectLanguagePalette('Giant', '', palettes, detectNothing);
+      const result = selectRegister('Giant', '', registers, detectNothing);
       expect(isInConventionalPool(result, 'Giant')).toBe(true);
       expect(result).toMatch(/^Norse-inspired/);
     });
 
-    it('returns non-conventional palette when random >= 0.7 (Giant alt branch)', () => {
+    it('returns non-conventional register when random >= 0.7 (Giant alt branch)', () => {
       // Post-promotion, only Giant retains the priority-2 alt-branch
-      // semantics — the 30% case can land on any palette outside the
+      // semantics — the 30% case can land on any register outside the
       // Giant pool (Norse/Greek/Anglo-Saxon). This is the architectural
       // commitment that cross-cultural-archetype races pair freely.
       randomSpy.mockReturnValue(0.85);
-      const result = selectLanguagePalette('Giant', '', palettes, detectNothing);
+      const result = selectRegister('Giant', '', registers, detectNothing);
       expect(isInConventionalPool(result, 'Giant')).toBe(false);
     });
 
     it('70/30 boundary: random === 0.7 picks "other" (strict less-than, Giant)', () => {
       randomSpy.mockReturnValue(0.7);
-      const result = selectLanguagePalette('Giant', '', palettes, detectNothing);
+      const result = selectRegister('Giant', '', registers, detectNothing);
       expect(isInConventionalPool(result, 'Giant')).toBe(false);
     });
 
     it.each([
       'Dwarven', 'Orcish', 'Goblinoid', 'Gnomish', 'Giant', 'Elven',
-    ])('maps %s dropdown to a palette in its conventional pool on the 70%% roll', (race) => {
+    ])('maps %s dropdown to a register in its conventional pool on the 70%% roll', (race) => {
       // 70% roll is the convergent case — Western-fantasy-bound
       // (allow-list-restricted) and priority-2 both land on pool[0]
       // when Math.random === 0. The test asserts the structural
       // invariant (race-pool match) regardless of which branch the
       // race is in.
       randomSpy.mockReturnValue(0);
-      const result = selectLanguagePalette(race, '', palettes, detectNothing);
+      const result = selectRegister(race, '', registers, detectNothing);
       expect(isInConventionalPool(result, race)).toBe(true);
     });
   });
@@ -164,29 +164,29 @@ describe('selectLanguagePalette', () => {
   describe('priority 2 — fantasy-race weighting (input keyword signal)', () => {
     it('detects "elven" in user input even with no dropdown', () => {
       randomSpy.mockReturnValue(0); // conventional branch + pool[0]
-      const result = selectLanguagePalette(null, 'an elven longbow', palettes, detectNothing);
+      const result = selectRegister(null, 'an elven longbow', registers, detectNothing);
       expect(isInConventionalPool(result, 'Elven')).toBe(true);
     });
 
     it('detects various Elven keywords (elf, elves, elvish)', () => {
       randomSpy.mockReturnValue(0);
       expect(isInConventionalPool(
-        selectLanguagePalette(null, 'a single elf', palettes, detectNothing),
+        selectRegister(null, 'a single elf', registers, detectNothing),
         'Elven',
       )).toBe(true);
       expect(isInConventionalPool(
-        selectLanguagePalette(null, 'forged by elves', palettes, detectNothing),
+        selectRegister(null, 'forged by elves', registers, detectNothing),
         'Elven',
       )).toBe(true);
       expect(isInConventionalPool(
-        selectLanguagePalette(null, 'elvish craftsmanship', palettes, detectNothing),
+        selectRegister(null, 'elvish craftsmanship', registers, detectNothing),
         'Elven',
       )).toBe(true);
     });
 
     it('detects "dwarven" via keyword path → Dwarven conventional pool', () => {
       randomSpy.mockReturnValue(0);
-      const result = selectLanguagePalette(null, 'an ancient dwarven warhammer', palettes, detectNothing);
+      const result = selectRegister(null, 'an ancient dwarven warhammer', registers, detectNothing);
       expect(isInConventionalPool(result, 'Dwarven')).toBe(true);
     });
 
@@ -196,10 +196,10 @@ describe('selectLanguagePalette', () => {
       // Elven is declared before Orcish, so Elven wins. Documents the
       // resolution.
       randomSpy.mockReturnValue(0);
-      const result = selectLanguagePalette(
+      const result = selectRegister(
         null,
         'elven blade carried by an orcish chieftain',
-        palettes,
+        registers,
         detectNothing,
       );
       expect(isInConventionalPool(result, 'Elven')).toBe(true);
@@ -210,9 +210,9 @@ describe('selectLanguagePalette', () => {
       // "elf" should NOT match inside "self" or "shelf". \belf\b protects.
       // Keyword detection uses regex (no Math.random), so the first
       // Math.random call is the uniform-random fallback index pick.
-      randomSpy.mockReturnValue(0.0); // → palettes[0] = Latin
-      const result = selectLanguagePalette(null, 'on the shelf, the self', palettes, detectNothing);
-      // No race detected → priority 3 uniform random fallback → palettes[0].
+      randomSpy.mockReturnValue(0.0); // → registers[0] = Latin
+      const result = selectRegister(null, 'on the shelf, the self', registers, detectNothing);
+      // No race detected → priority 3 uniform random fallback → registers[0].
       expect(result).toMatch(/^Latin-inspired/);
     });
   });
@@ -220,23 +220,23 @@ describe('selectLanguagePalette', () => {
   describe('priority 3 — uniform random fallback', () => {
     it('falls through to uniform random when no signal is present', () => {
       // No detection, no fantasy race. Function reaches the final branch.
-      randomSpy.mockReturnValue(0.0); // index 0 → first palette
-      const result = selectLanguagePalette(null, '', palettes, detectNothing);
-      expect(result).toBe(palettes[0]);
+      randomSpy.mockReturnValue(0.0); // index 0 → first register
+      const result = selectRegister(null, '', registers, detectNothing);
+      expect(result).toBe(registers[0]);
     });
 
     it('uniform random respects the full pool', () => {
       // Math.random=0.99 floors to last index of the pool.
       randomSpy.mockReturnValue(0.99);
-      const result = selectLanguagePalette(null, '', palettes, detectNothing);
-      expect(result).toBe(palettes[Math.floor(0.99 * palettes.length)]);
+      const result = selectRegister(null, '', registers, detectNothing);
+      expect(result).toBe(registers[Math.floor(0.99 * registers.length)]);
     });
   });
 
   describe('aesthetic origins do not trigger fantasy-race weighting', () => {
     // Aesthetic origins (Celestial, Fey, Verdant, Wizardry, etc.) are
-    // intentionally absent from fantasyRaceOriginConventionalPalettes
-    // and from fictionalOriginPalettes. They should NOT bias palette
+    // intentionally absent from fantasyRaceOriginConventionalRegisters
+    // and from fictionalOriginRegisters. They should NOT bias register
     // selection — the architectural choice is that these aesthetic
     // origins pair freely with any linguistic register.
     //
@@ -247,23 +247,23 @@ describe('selectLanguagePalette', () => {
       '%s does not trigger fantasy-race weighting',
       (origin) => {
         randomSpy.mockReturnValue(0.0);
-        const result = selectLanguagePalette(origin, '', palettes, detectNothing);
-        // Should fall through to uniform random (priority 3) → palettes[0]
-        expect(result).toBe(palettes[0]);
+        const result = selectRegister(origin, '', registers, detectNothing);
+        // Should fall through to uniform random (priority 3) → registers[0]
+        expect(result).toBe(registers[0]);
       }
     );
   });
 
-  describe('fictional-origin → matching-palette routing (70/30)', () => {
+  describe('fictional-origin → matching-register routing (70/30)', () => {
     // Five fictional origins (Draconic, Aberrant, Abyssal, Infernal,
-    // Primordial) route to their matching fictional palette 70% of
+    // Primordial) route to their matching fictional register 70% of
     // the time and to a per-origin curated alt-pool 30% of the time.
     // The 70% case fires the matching whitelist; the 30% case
     // provides cross-cultural tonal variety. Overrides cultural
     // detection, horror restriction, and fantasy-race restriction.
     //
     // Motivating bug: Draconic-origin items were rolling Finnish
-    // (or any other active palette) because Draconic wasn't in any
+    // (or any other active register) because Draconic wasn't in any
     // branch, so the Draconic whitelist almost never fired. Same
     // gap for Primordial; ~8% match rate for Aberrant/Abyssal/
     // Infernal in the 12-member horror pool.
@@ -274,9 +274,9 @@ describe('selectLanguagePalette', () => {
       ['Abyssal',    'Abyssal'],
       ['Infernal',   'Infernal'],
       ['Primordial', 'Primordial'],
-    ])('%s origin: 70%% roll returns %s primary palette', (origin, expectedPrefix) => {
+    ])('%s origin: 70%% roll returns %s primary register', (origin, expectedPrefix) => {
       randomSpy.mockReturnValue(0); // < 0.7 → primary branch
-      const result = selectLanguagePalette(origin, '', palettes, detectNothing);
+      const result = selectRegister(origin, '', registers, detectNothing);
       expect(result.startsWith(expectedPrefix)).toBe(true);
     });
 
@@ -288,9 +288,9 @@ describe('selectLanguagePalette', () => {
       ['Primordial', 'Primordial'],
     ])('%s origin: 30%% roll returns alt-pool member (NOT %s primary)', (origin, primaryPrefix) => {
       randomSpy.mockReturnValue(0.85); // ≥ 0.7 → alt branch
-      const altPool = fictionalOriginPalettes[origin].altPool;
-      const result = selectLanguagePalette(origin, '', palettes, detectNothing);
-      // Alt-branch result is NOT the primary palette.
+      const altPool = fictionalOriginRegisters[origin].altPool;
+      const result = selectRegister(origin, '', registers, detectNothing);
+      // Alt-branch result is NOT the primary register.
       expect(result.startsWith(primaryPrefix)).toBe(false);
       // Alt-branch result IS one of the curated alt-pool prefixes.
       const inAltPool = altPool.some(prefix => result.startsWith(prefix));
@@ -299,11 +299,11 @@ describe('selectLanguagePalette', () => {
 
     it('70/30 boundary: random === 0.7 takes the alt branch (strict less-than)', () => {
       randomSpy.mockReturnValue(0.7);
-      const result = selectLanguagePalette('Draconic', '', palettes, detectNothing);
+      const result = selectRegister('Draconic', '', registers, detectNothing);
       // At exactly 0.7, the strict-less-than primary check fails and
       // we fall to the alt-pool branch.
       expect(result.startsWith('Draconic')).toBe(false);
-      const inAltPool = fictionalOriginPalettes['Draconic'].altPool.some(
+      const inAltPool = fictionalOriginRegisters['Draconic'].altPool.some(
         prefix => result.startsWith(prefix),
       );
       expect(inAltPool).toBe(true);
@@ -315,7 +315,7 @@ describe('selectLanguagePalette', () => {
       // resolves via in-allow-list cultural detection regardless of
       // 70/30 roll. Mirrors the fantasy-race in-pool detection path.
       const detect = stubDetect('Finnish-inspired: vowel harmony, agglutinative (e.g., Aino)');
-      const result = selectLanguagePalette('Draconic', "Aino's hoard-flame", palettes, detect);
+      const result = selectRegister('Draconic', "Aino's hoard-flame", registers, detect);
       expect(result).toMatch(/^Finnish-inspired/);
     });
 
@@ -326,50 +326,50 @@ describe('selectLanguagePalette', () => {
       // primary here via Math.random=0).
       randomSpy.mockReturnValue(0); // 70% branch
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Draconic', "Olorun's hoard", palettes, detect);
+      const result = selectRegister('Draconic', "Olorun's hoard", registers, detect);
       expect(result).not.toMatch(/^Yoruba-inspired/);
       expect(result.startsWith('Draconic')).toBe(true);
     });
 
-    it('Abyssal origin: 70% routes to Abyssal palette (overriding the horror pool)', () => {
+    it('Abyssal origin: 70% routes to Abyssal register (overriding the horror pool)', () => {
       // Pre-fix, Abyssal origin used the 12-member horror pool
-      // (uniform random ~8% chance of matching Abyssal palette).
-      // Now Abyssal origin lands on Abyssal palette 70% of the
+      // (uniform random ~8% chance of matching Abyssal register).
+      // Now Abyssal origin lands on Abyssal register 70% of the
       // time via this branch — fictional-origin runs FIRST.
       randomSpy.mockReturnValue(0); // 70% branch
-      const result = selectLanguagePalette('Abyssal', '', palettes, detectNothing);
+      const result = selectRegister('Abyssal', '', registers, detectNothing);
       expect(result.startsWith('Abyssal')).toBe(true);
     });
 
-    it('Infernal origin: 70% routes to Infernal palette (overriding the horror pool)', () => {
+    it('Infernal origin: 70% routes to Infernal register (overriding the horror pool)', () => {
       randomSpy.mockReturnValue(0); // 70% branch
-      const result = selectLanguagePalette('Infernal', '', palettes, detectNothing);
+      const result = selectRegister('Infernal', '', registers, detectNothing);
       expect(result.startsWith('Infernal')).toBe(true);
     });
 
-    it('Aberrant origin: 70% routes to Aberrant palette (overriding the horror pool)', () => {
+    it('Aberrant origin: 70% routes to Aberrant register (overriding the horror pool)', () => {
       randomSpy.mockReturnValue(0); // 70% branch
-      const result = selectLanguagePalette('Aberrant', '', palettes, detectNothing);
+      const result = selectRegister('Aberrant', '', registers, detectNothing);
       expect(result.startsWith('Aberrant')).toBe(true);
     });
 
     it('Necromantic origin still goes through the horror pool (NOT in fictional-origin map)', () => {
       // Sanity check the disjointness: Necromantic / Vampiric /
       // Lycanthropic / Shadow are horror-coded but have no matching
-      // fictional palette of their own, so they continue to pull
+      // fictional register of their own, so they continue to pull
       // from the 12-member horror pool. The fictional-origin branch
       // must not accidentally claim them.
       randomSpy.mockReturnValue(0.0); // pool[0] = Latin-inspired
-      const result = selectLanguagePalette('Necromantic', '', palettes, detectNothing);
+      const result = selectRegister('Necromantic', '', registers, detectNothing);
       expect(result.startsWith('Latin-inspired')).toBe(true);
     });
 
-    it('fictionalOriginPalettes contains exactly the five expected origins', () => {
+    it('fictionalOriginRegisters contains exactly the five expected origins', () => {
       // Membership lock against silent additions/removals. Adding a
       // sixth origin to this map is a deliberate architectural
       // change and should require updating this test alongside the
       // source.
-      expect(Object.keys(fictionalOriginPalettes).sort()).toEqual([
+      expect(Object.keys(fictionalOriginRegisters).sort()).toEqual([
         'Aberrant',
         'Abyssal',
         'Draconic',
@@ -382,28 +382,28 @@ describe('selectLanguagePalette', () => {
       // User-confirmed tonal fit: Finnish (Kalevala primal-mythic
       // register, Tuoni/Louhi tradition) belongs in Draconic's alt-
       // pool. Regression guard against silent removal.
-      expect(fictionalOriginPalettes['Draconic'].altPool).toContain('Finnish-inspired');
+      expect(fictionalOriginRegisters['Draconic'].altPool).toContain('Finnish-inspired');
     });
 
-    it('every fictionalOriginPalettes entry has a primary string and a non-empty altPool', () => {
+    it('every fictionalOriginRegisters entry has a primary string and a non-empty altPool', () => {
       // Shape integrity: a malformed entry (missing primary, empty
       // altPool) would break the 70/30 routing silently.
-      for (const [origin, entry] of Object.entries(fictionalOriginPalettes)) {
+      for (const [origin, entry] of Object.entries(fictionalOriginRegisters)) {
         expect(typeof entry.primary).toBe('string');
         expect(entry.primary.length).toBeGreaterThan(0);
         expect(Array.isArray(entry.altPool)).toBe(true);
         expect(entry.altPool.length).toBeGreaterThan(0);
         // primary must NOT also appear in altPool (alt is the variety
-        // share — it should always pick a different palette).
+        // share — it should always pick a different register).
         expect(entry.altPool).not.toContain(entry.primary);
       }
     });
 
-    it('fictionalOriginPalettes does NOT overlap with fantasy-race origins', () => {
+    it('fictionalOriginRegisters does NOT overlap with fantasy-race origins', () => {
       // Fantasy races have their own allow-list architecture; the
       // two protection branches must not claim the same origin.
-      const fantasyRaces = Object.keys(fantasyRaceConventionalPalettes);
-      for (const fictionalOrigin of Object.keys(fictionalOriginPalettes)) {
+      const fantasyRaces = Object.keys(fantasyRaceConventionalRegisters);
+      for (const fictionalOrigin of Object.keys(fictionalOriginRegisters)) {
         expect(fantasyRaces).not.toContain(fictionalOrigin);
       }
     });
@@ -417,7 +417,7 @@ describe('selectLanguagePalette', () => {
     // and cultural detection from user input is subordinated to the
     // allow-list.
     // The architecture replaced an earlier filter approach
-    // (orcGoblinExcludedPalettes) that had a code-path gap allowing
+    // (orcGoblinExcludedRegisters) that had a code-path gap allowing
     // Goblinoid + Navajo/Diné to reach a production output.
 
     // Index rolls span the pool's range; the allow-list branch makes
@@ -425,55 +425,55 @@ describe('selectLanguagePalette', () => {
     const indexRolls = [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99];
 
     it.each(indexRolls)(
-      'Orcish always returns a palette in the Orcish allow-list pool (index roll = %f)',
+      'Orcish always returns a register in the Orcish allow-list pool (index roll = %f)',
       (indexRoll) => {
         randomSpy.mockReturnValue(indexRoll);
-        const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
+        const result = selectRegister('Orcish', '', registers, detectNothing);
         expect(isInConventionalPool(result, 'Orcish')).toBe(true);
       },
     );
 
     it.each(indexRolls)(
-      'Goblinoid always returns a palette in the Goblinoid allow-list pool (index roll = %f)',
+      'Goblinoid always returns a register in the Goblinoid allow-list pool (index roll = %f)',
       (indexRoll) => {
         randomSpy.mockReturnValue(indexRoll);
-        const result = selectLanguagePalette('Goblinoid', '', palettes, detectNothing);
+        const result = selectRegister('Goblinoid', '', registers, detectNothing);
         expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
       },
     );
 
     it.each(indexRolls)(
-      'Dwarven always returns a palette in the Dwarven allow-list pool (index roll = %f)',
+      'Dwarven always returns a register in the Dwarven allow-list pool (index roll = %f)',
       (indexRoll) => {
         // Dwarven joined the Western-fantasy-bound (allow-list-
         // restricted) tier — Norse/Germanic mountain-craft archetype
         // with no parallels in most non-Western mythological
         // traditions.
         randomSpy.mockReturnValue(indexRoll);
-        const result = selectLanguagePalette('Dwarven', '', palettes, detectNothing);
+        const result = selectRegister('Dwarven', '', registers, detectNothing);
         expect(isInConventionalPool(result, 'Dwarven')).toBe(true);
       },
     );
 
     it.each(indexRolls)(
-      'Gnomish always returns a palette in the Gnomish allow-list pool (index roll = %f)',
+      'Gnomish always returns a register in the Gnomish allow-list pool (index roll = %f)',
       (indexRoll) => {
         // Gnomish joined the Western-fantasy-bound (allow-list-
         // restricted) tier — European inventor-tinkerer archetype.
         randomSpy.mockReturnValue(indexRoll);
-        const result = selectLanguagePalette('Gnomish', '', palettes, detectNothing);
+        const result = selectRegister('Gnomish', '', registers, detectNothing);
         expect(isInConventionalPool(result, 'Gnomish')).toBe(true);
       },
     );
 
     it.each(indexRolls)(
-      'Elven always returns a palette in the Elven allow-list pool (index roll = %f)',
+      'Elven always returns a register in the Elven allow-list pool (index roll = %f)',
       (indexRoll) => {
         // Elven joined the Western-fantasy-bound (allow-list-
         // restricted) tier — Sindarin/Celtic refined-aesthetic
         // archetype.
         randomSpy.mockReturnValue(indexRoll);
-        const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
+        const result = selectRegister('Elven', '', registers, detectNothing);
         expect(isInConventionalPool(result, 'Elven')).toBe(true);
       },
     );
@@ -489,61 +489,61 @@ describe('selectLanguagePalette', () => {
       it('Orcish: Math.random < 0.7 returns the Orcish primary register', () => {
         // 70/30 roll: 0.5 < 0.7 → primary branch → 'Orcish'.
         randomSpy.mockReturnValue(0.5);
-        const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
+        const result = selectRegister('Orcish', '', registers, detectNothing);
         expect(result).toMatch(/^Orcish[: ]/);
       });
 
-      it('Orcish: Math.random ≥ 0.7 returns a non-primary allow-list palette', () => {
+      it('Orcish: Math.random ≥ 0.7 returns a non-primary allow-list register', () => {
         // 70/30 roll: 0.85 ≥ 0.7 → alt-pool branch.
         // alt-pool index pick: 0.0 → first alt-pool entry.
         randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(0.0);
-        const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
+        const result = selectRegister('Orcish', '', registers, detectNothing);
         expect(result).not.toMatch(/^Orcish[: ]/);
         expect(isInConventionalPool(result, 'Orcish')).toBe(true);
       });
 
       it('Orcish: 70/30 boundary (Math.random === 0.7) takes the alt branch (strict less-than)', () => {
         randomSpy.mockReturnValueOnce(0.7).mockReturnValueOnce(0.0);
-        const result = selectLanguagePalette('Orcish', '', palettes, detectNothing);
+        const result = selectRegister('Orcish', '', registers, detectNothing);
         expect(result).not.toMatch(/^Orcish[: ]/);
       });
 
       it('Goblinoid: Math.random < 0.7 returns the Goblin-inspired primary register', () => {
         randomSpy.mockReturnValue(0.5);
-        const result = selectLanguagePalette('Goblinoid', '', palettes, detectNothing);
+        const result = selectRegister('Goblinoid', '', registers, detectNothing);
         expect(result).toMatch(/^Goblin-inspired/);
       });
 
-      it('Goblinoid: Math.random ≥ 0.7 returns a non-primary allow-list palette', () => {
+      it('Goblinoid: Math.random ≥ 0.7 returns a non-primary allow-list register', () => {
         randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(0.0);
-        const result = selectLanguagePalette('Goblinoid', '', palettes, detectNothing);
+        const result = selectRegister('Goblinoid', '', registers, detectNothing);
         expect(result).not.toMatch(/^Goblin-inspired/);
         expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
       });
     });
 
-    it('Orcish + cultural detection of in-pool palette is honored', () => {
+    it('Orcish + cultural detection of in-pool register is honored', () => {
       // Norse-coded user input that resolves to Old-Norse-inspired
       // (which IS in the Orcish pool) is honored. The pool architecture
       // doesn't override user signals that align with the allow-list.
       const detect = stubDetect('Old-Norse-inspired: Eddaic register (e.g., Sigrún)');
-      const result = selectLanguagePalette('Orcish', "Mjolnir's echo", palettes, detect);
+      const result = selectRegister('Orcish', "Mjolnir's echo", registers, detect);
       expect(result).toMatch(/^Old-Norse-inspired/);
     });
 
-    it('Orcish + cultural detection of out-of-pool palette is OVERRIDDEN by pool selection', () => {
+    it('Orcish + cultural detection of out-of-pool register is OVERRIDDEN by pool selection', () => {
       // The architectural protection: even when the user signal would
-      // resolve to a protected-list palette (Yoruba here), the pool
+      // resolve to a protected-list register (Yoruba here), the pool
       // wins. This is the bug fix for the Goblinoid + Navajo/Diné
       // production failure — no cultural-detection escape hatch.
       randomSpy.mockReturnValue(0); // pool[0] = Orcish
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Orcish', "Olorun's drum", palettes, detect);
+      const result = selectRegister('Orcish', "Olorun's drum", registers, detect);
       expect(result).not.toMatch(/^Yoruba-inspired/);
       expect(isInConventionalPool(result, 'Orcish')).toBe(true);
     });
 
-    it('Orcish + "Akiko of the lands" (Japanese-coded user input) returns Orcish-pool palette, not Japanese', () => {
+    it('Orcish + "Akiko of the lands" (Japanese-coded user input) returns Orcish-pool register, not Japanese', () => {
       // Brief verification case verbatim. Japanese cultural detection
       // would normally fire from "Akiko" (Japanese given name) — the
       // allow-list branch overrides that signal because orc/goblin
@@ -553,21 +553,21 @@ describe('selectLanguagePalette', () => {
       // meant to prevent.
       randomSpy.mockReturnValue(0); // pool[0] = Orcish
       const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
-      const result = selectLanguagePalette('Orcish', 'Akiko of the lands', palettes, detect);
+      const result = selectRegister('Orcish', 'Akiko of the lands', registers, detect);
       expect(result).not.toMatch(/^Japanese-inspired/);
       expect(isInConventionalPool(result, 'Orcish')).toBe(true);
     });
 
-    it('Goblinoid + cultural detection of out-of-pool palette is OVERRIDDEN by pool selection', () => {
+    it('Goblinoid + cultural detection of out-of-pool register is OVERRIDDEN by pool selection', () => {
       // Same protection for Goblinoid. The original production failure
       // (Goblinoid + Navajo/Diné) is no longer reproducible since the
-      // Navajo/Diné palette was removed entirely, but the architectural
-      // protection remains: ANY out-of-pool palette is overridden.
+      // Navajo/Diné register was removed entirely, but the architectural
+      // protection remains: ANY out-of-pool register is overridden.
       // Lakota stands in here as a still-shipped protected-tradition
-      // palette; the override mechanism is palette-agnostic.
+      // register; the override mechanism is register-agnostic.
       randomSpy.mockReturnValue(0); // pool[0] = Goblin-inspired
       const detect = stubDetect('Lakota-inspired: descriptive compounds (e.g., Wakinyan-Tanka)');
-      const result = selectLanguagePalette('Goblinoid', 'Wakinyan goblin clan', palettes, detect);
+      const result = selectRegister('Goblinoid', 'Wakinyan goblin clan', registers, detect);
       expect(result).not.toMatch(/^Lakota-inspired/);
       expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
     });
@@ -578,7 +578,7 @@ describe('selectLanguagePalette', () => {
       // of cultural-detection signal.
       randomSpy.mockReturnValue(0);
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Dwarven', "Olorun's hammer", palettes, detect);
+      const result = selectRegister('Dwarven', "Olorun's hammer", registers, detect);
       expect(result).not.toMatch(/^Yoruba-inspired/);
       expect(isInConventionalPool(result, 'Dwarven')).toBe(true);
     });
@@ -586,7 +586,7 @@ describe('selectLanguagePalette', () => {
     it('Gnomish + Japanese cultural detection is OVERRIDDEN by pool', () => {
       randomSpy.mockReturnValue(0);
       const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
-      const result = selectLanguagePalette('Gnomish', "Akiko's clockwork", palettes, detect);
+      const result = selectRegister('Gnomish', "Akiko's clockwork", registers, detect);
       expect(result).not.toMatch(/^Japanese-inspired/);
       expect(isInConventionalPool(result, 'Gnomish')).toBe(true);
     });
@@ -600,7 +600,7 @@ describe('selectLanguagePalette', () => {
       // signal. This test pins the new behavior.
       randomSpy.mockReturnValue(0);
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Elven', "Olorun's gift", palettes, detect);
+      const result = selectRegister('Elven', "Olorun's gift", registers, detect);
       expect(result).not.toMatch(/^Yoruba-inspired/);
       expect(isInConventionalPool(result, 'Elven')).toBe(true);
     });
@@ -609,7 +609,7 @@ describe('selectLanguagePalette', () => {
       // Sindarin-inspired IS in the Elven pool. In-pool cultural detection
       // wins — symmetric with the orc/goblin in-pool case.
       const detect = stubDetect('Sindarin-inspired (elvish): elegant (e.g., Galadhriel)');
-      const result = selectLanguagePalette('Elven', 'a Sindarin verse', palettes, detect);
+      const result = selectRegister('Elven', 'a Sindarin verse', registers, detect);
       expect(result).toMatch(/^Sindarin-inspired/);
     });
 
@@ -619,36 +619,36 @@ describe('selectLanguagePalette', () => {
       // guard against silent removal — Finnish was previously
       // trimmed from this pool ("reads as its own thing rather than
       // conventionally elven") and was restored on user direction.
-      expect(fantasyRaceConventionalPalettes['Elven']).toContain('Finnish-inspired');
+      expect(fantasyRaceConventionalRegisters['Elven']).toContain('Finnish-inspired');
     });
 
     it('Elven + Finnish cultural detection (in-pool, post-restoration) IS honored', () => {
       // With Finnish back in the Elven pool, Finnish-coded user input
       // ("Aino's bow" → Aino is a Kalevala figure) resolves to Finnish
-      // palette via the in-pool cultural-detection path.
+      // register via the in-pool cultural-detection path.
       const detect = stubDetect('Finnish-inspired: vowel harmony, agglutinative (e.g., Aino)');
-      const result = selectLanguagePalette('Elven', "Aino's bow", palettes, detect);
+      const result = selectRegister('Elven', "Aino's bow", registers, detect);
       expect(result).toMatch(/^Finnish-inspired/);
     });
 
-    it('Elven never lands on protected-list palettes (post-promotion regression guard)', () => {
+    it('Elven never lands on protected-list registers (post-promotion regression guard)', () => {
       // Pre-Task-1, this test asserted Elven COULD land on Yoruba/
       // Andean/Chinese/Japanese via the 30% alt branch (the explicit
       // architectural commitment that orc/goblin protection didn't
       // bleed into other races). Post-promotion, Elven IS allow-list-
-      // restricted — protected-list palettes are now structurally
+      // restricted — protected-list registers are now structurally
       // unreachable for Elven generations. This test inverts the
       // original to lock in the new behavior.
-      let sawProtectedListPalette = false;
+      let sawProtectedListRegister = false;
       for (const indexRoll of indexRolls) {
         randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(indexRoll);
-        const result = selectLanguagePalette('Elven', '', palettes, detectNothing);
+        const result = selectRegister('Elven', '', registers, detectNothing);
         if (/^(Yoruba|Andean|Chinese|Japanese)-inspired/.test(result)) {
-          sawProtectedListPalette = true;
+          sawProtectedListRegister = true;
           break;
         }
       }
-      expect(sawProtectedListPalette).toBe(false);
+      expect(sawProtectedListRegister).toBe(false);
     });
 
     it('Giant + Yoruba cultural detection IS honored (Giant is cross-cultural archetype)', () => {
@@ -657,47 +657,47 @@ describe('selectLanguagePalette', () => {
       // many traditions). Yoruba-coded input is honored on a Giant
       // origin via priority-1 cultural detection.
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Giant', "Olorun's giant kin", palettes, detect);
+      const result = selectRegister('Giant', "Olorun's giant kin", registers, detect);
       expect(result).toMatch(/^Yoruba-inspired/);
     });
 
-    it('Giant alt-branch can land on protected-list palettes (cross-cultural archetype)', () => {
+    it('Giant alt-branch can land on protected-list registers (cross-cultural archetype)', () => {
       // Regression guard: Giant uses priority-2 weighted (70/30 with
       // broad alt-branch), so the 30% case CAN land on Yoruba/Andean/
       // etc. This is the architectural commitment that cross-cultural
       // archetypes pair freely.
-      let sawProtectedListPalette = false;
+      let sawProtectedListRegister = false;
       for (const indexRoll of indexRolls) {
         randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(indexRoll);
-        const result = selectLanguagePalette('Giant', '', palettes, detectNothing);
+        const result = selectRegister('Giant', '', registers, detectNothing);
         if (/^(Yoruba|Andean|Chinese|Japanese)-inspired/.test(result)) {
-          sawProtectedListPalette = true;
+          sawProtectedListRegister = true;
           break;
         }
       }
-      expect(sawProtectedListPalette).toBe(true);
+      expect(sawProtectedListRegister).toBe(true);
     });
 
-    it('orcGoblinExcludedPalettes is no longer exported (replaced by allow-list architecture)', async () => {
+    it('orcGoblinExcludedRegisters is no longer exported (replaced by allow-list architecture)', async () => {
       // Regression guard: the old filter export was removed when the
       // allow-list shipped. A future contributor reintroducing it would
       // be a sign the dual-mechanism architecture has snuck back in.
-      const mod = await import('./select-language-palette.mjs');
-      expect(mod).not.toHaveProperty('orcGoblinExcludedPalettes');
+      const mod = await import('./select-register.mjs');
+      expect(mod).not.toHaveProperty('orcGoblinExcludedRegisters');
     });
   });
 
   describe('Horror-origin allow-list architecture', () => {
     // Horror-coded aesthetic origins (Infernal, Abyssal, Necromantic,
     // Vampiric, Lycanthropic, Aberrant) are restricted to the
-    // horrorOriginPalettePool — European registers with horror-genre
+    // horrorOriginRegisterPool — European registers with horror-genre
     // precedent (Latin/Norse/Germanic/Slavic/Romanian/Sindarin) plus
     // the fictional horror-native registers (Abyssal/Infernal/Aberrant).
     // The protection blocks pairings that would impose Western horror
     // conventions onto non-Western cultural registers (Necromantic +
     // Yoruba), engage culturally-protected concepts inappropriately
     // (Lycanthropic + Diné skinwalker), or reproduce Lovecraft Otherness-
-    // coding (Aberrant + non-Western palette).
+    // coding (Aberrant + non-Western register).
     //
     // Selection is uniform-random across the pool (no 70/30 weighting
     // like orc/goblin) because horror origins lack a single "primary
@@ -707,47 +707,47 @@ describe('selectLanguagePalette', () => {
 
     const indexRolls = [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99];
 
-    const isInHorrorPool = (palette) =>
-      horrorOriginPalettePool.some(prefix => palette.startsWith(prefix));
+    const isInHorrorPool = (register) =>
+      horrorOriginRegisterPool.some(prefix => register.startsWith(prefix));
 
     // Aberrant / Abyssal / Infernal route through the fictional-origin
-    // branch first (matching fictional palette 70%, per-origin alt-pool
+    // branch first (matching fictional register 70%, per-origin alt-pool
     // 30%) and never reach the horror branch. Their per-origin alt-
-    // pools may include palettes outside `horrorOriginPalettePool`
+    // pools may include registers outside `horrorOriginRegisterPool`
     // (e.g., Infernal alt-pool includes Greek, which isn't in horror
     // pool but fits classical demonology). This test applies only to
-    // the four horror origins WITHOUT a matching fictional palette.
+    // the four horror origins WITHOUT a matching fictional register.
     const horrorOnlyOrigins = horrorRestrictedOrigins.filter(
       origin => !['Aberrant', 'Abyssal', 'Infernal'].includes(origin),
     );
 
     it.each(horrorOnlyOrigins)(
-      '%s always returns a palette in the horror-origin pool',
+      '%s always returns a register in the horror-origin pool',
       (origin) => {
         for (const indexRoll of indexRolls) {
           randomSpy.mockReturnValueOnce(indexRoll);
-          const result = selectLanguagePalette(origin, '', palettes, detectNothing);
+          const result = selectRegister(origin, '', registers, detectNothing);
           expect(isInHorrorPool(result)).toBe(true);
         }
       },
     );
 
-    it('Necromantic + cultural detection of in-pool palette is honored', () => {
+    it('Necromantic + cultural detection of in-pool register is honored', () => {
       // Romanian is in the horror pool and Romanian-coded user input
       // (gothic-vampire register) aligns with horror genre. The pool
       // architecture honors user signals that align with the allow-list.
       const detect = stubDetect('Romanian-inspired: Latin-rooted with Slavic influence (e.g., Mihai)');
-      const result = selectLanguagePalette('Necromantic', "Mihai's grimoire", palettes, detect);
+      const result = selectRegister('Necromantic', "Mihai's grimoire", registers, detect);
       expect(result).toMatch(/^Romanian-inspired/);
     });
 
-    it('Necromantic + cultural detection of out-of-pool palette is OVERRIDDEN by pool selection', () => {
+    it('Necromantic + cultural detection of out-of-pool register is OVERRIDDEN by pool selection', () => {
       // The architectural protection: even when user signal would
-      // resolve to a non-pool palette (Yoruba here — Western death-
+      // resolve to a non-pool register (Yoruba here — Western death-
       // magic imposed on West African register), the pool wins.
       randomSpy.mockReturnValue(0); // pool[0] = Latin-inspired
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Necromantic', "Olorun's death-mask", palettes, detect);
+      const result = selectRegister('Necromantic', "Olorun's death-mask", registers, detect);
       expect(result).not.toMatch(/^Yoruba-inspired/);
       expect(isInHorrorPool(result)).toBe(true);
     });
@@ -756,14 +756,14 @@ describe('selectLanguagePalette', () => {
       // The original protection case for the horror restriction targeted
       // Lycanthropic + Navajo/Diné (the skinwalker tradition is sacred
       // and not appropriate for fictional appropriation). The Navajo/Diné
-      // palette has since been removed entirely under the same caution,
+      // register has since been removed entirely under the same caution,
       // so the literal pairing is no longer reachable. This test now
       // covers the analogous case with another Indigenous-tradition
-      // palette still in the system — the protection mechanism is
-      // palette-agnostic.
+      // register still in the system — the protection mechanism is
+      // register-agnostic.
       randomSpy.mockReturnValue(0);
       const detect = stubDetect('Lakota-inspired: descriptive compounds (e.g., Wakinyan-Tanka)');
-      const result = selectLanguagePalette('Lycanthropic', 'Wakinyan moon-cursed', palettes, detect);
+      const result = selectRegister('Lycanthropic', 'Wakinyan moon-cursed', registers, detect);
       expect(result).not.toMatch(/^Lakota-inspired/);
       expect(isInHorrorPool(result)).toBe(true);
     });
@@ -773,7 +773,7 @@ describe('selectLanguagePalette', () => {
       // tradition pattern of "alien = foreign culture." Pool wins.
       randomSpy.mockReturnValue(0);
       const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
-      const result = selectLanguagePalette('Aberrant', 'Akiko of the wrong-geometries', palettes, detect);
+      const result = selectRegister('Aberrant', 'Akiko of the wrong-geometries', registers, detect);
       expect(result).not.toMatch(/^Japanese-inspired/);
       expect(isInHorrorPool(result)).toBe(true);
     });
@@ -784,7 +784,7 @@ describe('selectLanguagePalette', () => {
       // the protection exists to prevent.
       randomSpy.mockReturnValue(0);
       const detect = stubDetect('Andean-inspired: structured Quechua (e.g., Inti-Wasi)');
-      const result = selectLanguagePalette('Vampiric', "Inkari's eternal hunger", palettes, detect);
+      const result = selectRegister('Vampiric', "Inkari's eternal hunger", registers, detect);
       expect(result).not.toMatch(/^Andean-inspired/);
       expect(isInHorrorPool(result)).toBe(true);
     });
@@ -792,21 +792,21 @@ describe('selectLanguagePalette', () => {
     it('Shadow + Yoruba cultural detection is OVERRIDDEN (Western-occultism imposition)', () => {
       // Shadow joined the horror restriction after production validation
       // showed Shadow-magic register imposing Western occultism on non-
-      // Western palettes. Yoruba is out-of-pool here; pool wins.
+      // Western registers. Yoruba is out-of-pool here; pool wins.
       randomSpy.mockReturnValue(0);
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Shadow', "Olorun's shadowed gift", palettes, detect);
+      const result = selectRegister('Shadow', "Olorun's shadowed gift", registers, detect);
       expect(result).not.toMatch(/^Yoruba-inspired/);
       expect(isInHorrorPool(result)).toBe(true);
     });
 
-    it('Shadow always returns a palette in the horror pool', () => {
+    it('Shadow always returns a register in the horror pool', () => {
       // Parallel to the it.each loop earlier — verify Shadow consistently
       // resolves into the horror-pool regardless of index roll.
       const indexRolls = [0.0, 0.2, 0.5, 0.85, 0.99];
       for (const indexRoll of indexRolls) {
         randomSpy.mockReturnValueOnce(indexRoll);
-        const result = selectLanguagePalette('Shadow', '', palettes, detectNothing);
+        const result = selectRegister('Shadow', '', registers, detectNothing);
         expect(isInHorrorPool(result)).toBe(true);
       }
     });
@@ -814,15 +814,15 @@ describe('selectLanguagePalette', () => {
     it('Celestial (non-horror aesthetic origin) does NOT fire the horror branch', () => {
       // Regression guard: the horror restriction is scoped to the seven
       // horror-coded origins. Other aesthetic origins still respect
-      // priority-1 cultural detection across all palettes.
+      // priority-1 cultural detection across all registers.
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Celestial', "Olorun's blessing", palettes, detect);
+      const result = selectRegister('Celestial', "Olorun's blessing", registers, detect);
       expect(result).toMatch(/^Yoruba-inspired/);
     });
 
     it('Fey (non-horror aesthetic origin) does NOT fire the horror branch', () => {
       const detect = stubDetect('Japanese-inspired: clean syllables (e.g., Kagezuki)');
-      const result = selectLanguagePalette('Fey', 'Akiko of the twilight grove', palettes, detect);
+      const result = selectRegister('Fey', 'Akiko of the twilight grove', registers, detect);
       expect(result).toMatch(/^Japanese-inspired/);
     });
 
@@ -833,7 +833,7 @@ describe('selectLanguagePalette', () => {
       // be 'Orcish' but the horror branch fires first because it gates
       // on resolvedOrigin directly. Result: horror pool, not orc pool.
       randomSpy.mockReturnValue(0);
-      const result = selectLanguagePalette('Necromantic', 'orcish battleaxe of the death-cult', palettes, detectNothing);
+      const result = selectRegister('Necromantic', 'orcish battleaxe of the death-cult', registers, detectNothing);
       expect(isInHorrorPool(result)).toBe(true);
       // The orc pool contains 'Welsh-inspired' and 'Old-Irish-inspired'
       // which are NOT in the horror pool — verify we didn't slip into
@@ -849,7 +849,7 @@ describe('selectLanguagePalette', () => {
       // "vampire"/"necromancer" appear in many fantasy contexts and
       // would over-trigger the restriction.
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette(null, 'a vampire necromancer of ancient evil', palettes, detect);
+      const result = selectRegister(null, 'a vampire necromancer of ancient evil', registers, detect);
       expect(result).toMatch(/^Yoruba-inspired/);
     });
 
@@ -857,36 +857,36 @@ describe('selectLanguagePalette', () => {
       // Giant is a fantasy race (not a horror-coded origin) and is on
       // the priority-2 weighted branch (cross-cultural archetype).
       // Cultural detection is priority 1 for Giant, honored across
-      // all palettes. Pre-Task-1 this test used Elven as the
+      // all registers. Pre-Task-1 this test used Elven as the
       // cross-cultural example; post-Task-1, Elven is allow-list-
       // restricted and Giant is the canonical cross-cultural-
       // archetype fantasy race.
       const detect = stubDetect('Yoruba-inspired: rhythmic');
-      const result = selectLanguagePalette('Giant', "Olorun's giant kin", palettes, detect);
+      const result = selectRegister('Giant', "Olorun's giant kin", registers, detect);
       expect(result).toMatch(/^Yoruba-inspired/);
     });
   });
 
   describe('exported maps (regression guards)', () => {
-    it('fantasyRaceConventionalPalettes covers exactly the six core races', () => {
+    it('fantasyRaceConventionalRegisters covers exactly the six core races', () => {
       const expected = ['Elven', 'Dwarven', 'Orcish', 'Goblinoid', 'Gnomish', 'Giant'];
-      expect(Object.keys(fantasyRaceConventionalPalettes).sort()).toEqual(expected.sort());
+      expect(Object.keys(fantasyRaceConventionalRegisters).sort()).toEqual(expected.sort());
     });
 
-    it('fantasyRaceConventionalPalettes values are non-empty arrays of palette prefixes', () => {
-      for (const [race, prefixes] of Object.entries(fantasyRaceConventionalPalettes)) {
+    it('fantasyRaceConventionalRegisters values are non-empty arrays of register prefixes', () => {
+      for (const [race, prefixes] of Object.entries(fantasyRaceConventionalRegisters)) {
         expect(Array.isArray(prefixes)).toBe(true);
         expect(prefixes.length).toBeGreaterThanOrEqual(1);
         prefixes.forEach(p => expect(typeof p).toBe('string'));
       }
     });
 
-    it('every fantasy race has a multi-palette conventional pool', () => {
+    it('every fantasy race has a multi-register conventional pool', () => {
       // After the orc/goblin allow-list architecture, every race has
-      // multiple palettes: Elven/Dwarven/Gnomish/Giant for cross-
-      // palette name-rotation variety; Orcish/Goblinoid for the
+      // multiple registers: Elven/Dwarven/Gnomish/Giant for cross-
+      // register name-rotation variety; Orcish/Goblinoid for the
       // European-register allow-list.
-      for (const [race, prefixes] of Object.entries(fantasyRaceConventionalPalettes)) {
+      for (const [race, prefixes] of Object.entries(fantasyRaceConventionalRegisters)) {
         expect(prefixes.length).toBeGreaterThan(1);
       }
     });
@@ -909,7 +909,7 @@ describe('selectLanguagePalette', () => {
         'Old-Slavic-inspired',
         'Latin-inspired',
       ];
-      expect([...fantasyRaceConventionalPalettes['Orcish']].sort())
+      expect([...fantasyRaceConventionalRegisters['Orcish']].sort())
         .toEqual([...expected].sort());
     });
 
@@ -922,7 +922,7 @@ describe('selectLanguagePalette', () => {
         'Gothic-inspired',
         'Old-Slavic-inspired',
       ];
-      expect([...fantasyRaceConventionalPalettes['Goblinoid']].sort())
+      expect([...fantasyRaceConventionalRegisters['Goblinoid']].sort())
         .toEqual([...expected].sort());
     });
 
@@ -941,12 +941,12 @@ describe('selectLanguagePalette', () => {
     it('horrorRestrictedOrigins covers exactly the seven horror-coded aesthetic origins', () => {
       // Shadow joined the horror restriction after production validation
       // surfaced the same cross-cultural-imposition pattern with Shadow-
-      // origin items (Western occultism imposed on non-Western palettes).
+      // origin items (Western occultism imposed on non-Western registers).
       const expected = ['Infernal', 'Abyssal', 'Necromantic', 'Vampiric', 'Lycanthropic', 'Aberrant', 'Shadow'];
       expect([...horrorRestrictedOrigins].sort()).toEqual([...expected].sort());
     });
 
-    it('horrorOriginPalettePool contains the expected European + fictional registers', () => {
+    it('horrorOriginRegisterPool contains the expected European + fictional registers', () => {
       // Drift away from this pool — adding a non-Western register,
       // dropping one of the European registers without explicit reason —
       // should fail this test and force a deliberate decision rather
@@ -965,25 +965,25 @@ describe('selectLanguagePalette', () => {
         'Infernal',
         'Aberrant',
       ];
-      expect([...horrorOriginPalettePool].sort()).toEqual([...expected].sort());
+      expect([...horrorOriginRegisterPool].sort()).toEqual([...expected].sort());
     });
 
     it('horror origins do not overlap with fantasy-race origins', () => {
       // Horror-coded protection is origin-coded; race-coded protection
-      // is in fantasyRaceConventionalPalettes. The two protection layers
+      // is in fantasyRaceConventionalRegisters. The two protection layers
       // are disjoint — overlap would mean a single origin gets routed
       // to both branches, indicating a design conflict.
-      const fantasyRaces = Object.keys(fantasyRaceConventionalPalettes);
+      const fantasyRaces = Object.keys(fantasyRaceConventionalRegisters);
       for (const horror of horrorRestrictedOrigins) {
         expect(fantasyRaces).not.toContain(horror);
       }
     });
 
-    it('WESTERN_FANTASY_BOUND_RACES is a subset of fantasyRaceConventionalPalettes keys', () => {
+    it('WESTERN_FANTASY_BOUND_RACES is a subset of fantasyRaceConventionalRegisters keys', () => {
       // Every Western-fantasy-bound race must have a defined allow-
       // list. A race in WESTERN_FANTASY_BOUND_RACES without a pool
       // entry would crash the branch.
-      const fantasyRaces = Object.keys(fantasyRaceConventionalPalettes);
+      const fantasyRaces = Object.keys(fantasyRaceConventionalRegisters);
       for (const race of WESTERN_FANTASY_BOUND_RACES) {
         expect(fantasyRaces).toContain(race);
       }
@@ -997,7 +997,7 @@ describe('selectLanguagePalette', () => {
       // the Western-fantasy-bound tier per the architecture doc.
       // Fey and Giant are NOT in this list because their archetype-slot
       // exists in many living mythological traditions (cross-cultural
-      // archetypes pair freely with any palette).
+      // archetypes pair freely with any register).
       expect([...WESTERN_FANTASY_BOUND_RACES].sort()).toEqual(
         ['Dwarven', 'Elven', 'Gnomish', 'Goblinoid', 'Orcish'],
       );
@@ -1005,10 +1005,10 @@ describe('selectLanguagePalette', () => {
   });
 
   describe('resolveFantasyRace (helper exported for prompt-side gating)', () => {
-    // The same race resolution selectLanguagePalette uses internally.
+    // The same race resolution selectRegister uses internally.
     // ItemGenerator imports this to gate the orc/goblin override-
     // revocation prompt block — that block must fire whenever the
-    // palette filter would have fired, including the keyword-in-lore
+    // register filter would have fired, including the keyword-in-lore
     // case the user reproduced (origin=Necromantic, lore="Orcish
     // Battleaxe" → fantasyRace='Orcish' via priority 2b).
 
@@ -1034,7 +1034,7 @@ describe('selectLanguagePalette', () => {
 
     it('first-found-wins on conflicting keyword signals (declaration order)', () => {
       // Elven appears before Orcish in the keyword map — same resolution
-      // selectLanguagePalette already uses for its 70/30 weighting branch.
+      // selectRegister already uses for its 70/30 weighting branch.
       expect(resolveFantasyRace(null, 'elven blade carried by an orcish chieftain'))
         .toBe('Elven');
     });

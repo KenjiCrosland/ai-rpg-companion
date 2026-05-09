@@ -9,8 +9,8 @@
  * forms, multi-syllable clan-house names, earned honor-names (deed-
  * based titles), and Khuzdul-style + compound-surname hybrids.
  *
- * Keyed by ORIGIN, not palette: this pool fires whenever the user
- * picks Dwarven origin, regardless of which Germanic-family palette
+ * Keyed by ORIGIN, not register: this pool fires whenever the user
+ * picks Dwarven origin, regardless of which Germanic-family register
  * (Old-Norse, Anglo-Saxon, Old-High-German, Middle-High-German,
  * Gothic) gets rolled. The names are characteristically dwarven across
  * all of those registers, so origin-binding is the right gate.

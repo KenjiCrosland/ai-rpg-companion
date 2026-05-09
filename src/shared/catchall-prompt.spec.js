@@ -1,27 +1,27 @@
 import {
   buildCatchallPromptBlock,
-  isCatchallPalette,
-  CATCHALL_PALETTE_PREFIXES,
+  isCatchallRegister,
+  CATCHALL_REGISTER_PREFIXES,
   getItemNameAvoidList,
-  paletteItemNameAvoidLists,
+  registerItemNameAvoidLists,
 } from './catchall-prompt.mjs';
 
 describe('catchall-prompt', () => {
-  describe('CATCHALL_PALETTE_PREFIXES', () => {
+  describe('CATCHALL_REGISTER_PREFIXES', () => {
     it('is a non-empty array', () => {
-      expect(Array.isArray(CATCHALL_PALETTE_PREFIXES)).toBe(true);
-      expect(CATCHALL_PALETTE_PREFIXES.length).toBeGreaterThan(0);
+      expect(Array.isArray(CATCHALL_REGISTER_PREFIXES)).toBe(true);
+      expect(CATCHALL_REGISTER_PREFIXES.length).toBeGreaterThan(0);
     });
 
-    it('does NOT include pool palettes (Yoruba, Andean)', () => {
-      // Pool palettes have dedicated prompt builders. The catchall must
+    it('does NOT include pool registers (Yoruba, Andean)', () => {
+      // Pool registers have dedicated prompt builders. The catchall must
       // not duplicate their handling — both blocks would fire and
       // contradict each other.
-      expect(CATCHALL_PALETTE_PREFIXES).not.toContain('Yoruba-inspired');
-      expect(CATCHALL_PALETTE_PREFIXES).not.toContain('Andean-inspired');
+      expect(CATCHALL_REGISTER_PREFIXES).not.toContain('Yoruba-inspired');
+      expect(CATCHALL_REGISTER_PREFIXES).not.toContain('Andean-inspired');
     });
 
-    it('does NOT include Western-canonical palettes', () => {
+    it('does NOT include Western-canonical registers', () => {
       // Western-canonical registers (Latin/Norse/Germanic/Celtic/
       // Slavic/etc.) have established fantasy-genre conventions and
       // don't need catchall density constraints. The universal-invent
@@ -49,11 +49,11 @@ describe('catchall-prompt', () => {
         'Old-Occitan-inspired',
       ];
       for (const prefix of westernCanonical) {
-        expect(CATCHALL_PALETTE_PREFIXES).not.toContain(prefix);
+        expect(CATCHALL_REGISTER_PREFIXES).not.toContain(prefix);
       }
     });
 
-    it('does NOT include fictional fantasy palettes', () => {
+    it('does NOT include fictional fantasy registers', () => {
       // No real-world referents to protect; universal-invent rules
       // already permit fictional name use freely.
       const fictionalFantasy = [
@@ -69,19 +69,19 @@ describe('catchall-prompt', () => {
         'Technomagical',
       ];
       for (const prefix of fictionalFantasy) {
-        expect(CATCHALL_PALETTE_PREFIXES).not.toContain(prefix);
+        expect(CATCHALL_REGISTER_PREFIXES).not.toContain(prefix);
       }
     });
 
-    it('does NOT include the removed Navajo/Diné palette', () => {
-      // The Navajo/Diné palette was removed entirely from the system
+    it('does NOT include the removed Navajo/Diné register', () => {
+      // The Navajo/Diné register was removed entirely from the system
       // under appropriation caution. Including it here would imply the
-      // palette is still routable, which it isn't.
-      expect(CATCHALL_PALETTE_PREFIXES).not.toContain('Navajo/Diné-inspired');
-      expect(CATCHALL_PALETTE_PREFIXES).not.toContain('Diné-inspired');
+      // register is still routable, which it isn't.
+      expect(CATCHALL_REGISTER_PREFIXES).not.toContain('Navajo/Diné-inspired');
+      expect(CATCHALL_REGISTER_PREFIXES).not.toContain('Diné-inspired');
     });
 
-    it('includes representative cultural-protection-sensitive palettes', () => {
+    it('includes representative cultural-protection-sensitive registers', () => {
       // Spot-check the categories the catchall is meant to cover.
       // Drift away from any of these (e.g., a future contributor
       // dropping Lakota assuming "Indigenous American is handled
@@ -105,48 +105,48 @@ describe('catchall-prompt', () => {
         'Lakota-inspired',
       ];
       for (const prefix of expected) {
-        expect(CATCHALL_PALETTE_PREFIXES).toContain(prefix);
+        expect(CATCHALL_REGISTER_PREFIXES).toContain(prefix);
       }
     });
   });
 
-  describe('isCatchallPalette', () => {
-    it('returns true for a catchall palette descriptor (Japanese)', () => {
-      expect(isCatchallPalette('Japanese-inspired: clean syllables (e.g., Kagezuki)')).toBe(true);
+  describe('isCatchallRegister', () => {
+    it('returns true for a catchall register descriptor (Japanese)', () => {
+      expect(isCatchallRegister('Japanese-inspired: clean syllables (e.g., Kagezuki)')).toBe(true);
     });
 
-    it('returns true for a catchall palette descriptor (Hindi/Sanskrit)', () => {
+    it('returns true for a catchall register descriptor (Hindi/Sanskrit)', () => {
       // Slash-containing prefix should match correctly.
-      expect(isCatchallPalette('Hindi/Sanskrit-inspired: melodic, ceremonial')).toBe(true);
+      expect(isCatchallRegister('Hindi/Sanskrit-inspired: melodic, ceremonial')).toBe(true);
     });
 
-    it('returns false for pool palettes', () => {
-      expect(isCatchallPalette('Yoruba-inspired: rhythmic with diacriticals')).toBe(false);
-      expect(isCatchallPalette('Andean-inspired: structured Quechua flavor')).toBe(false);
+    it('returns false for pool registers', () => {
+      expect(isCatchallRegister('Yoruba-inspired: rhythmic with diacriticals')).toBe(false);
+      expect(isCatchallRegister('Andean-inspired: structured Quechua flavor')).toBe(false);
     });
 
-    it('returns false for Western-canonical palettes', () => {
-      expect(isCatchallPalette('Latin-inspired: formal, structured')).toBe(false);
-      expect(isCatchallPalette('Old-Norse-inspired: Eddaic register')).toBe(false);
-      expect(isCatchallPalette('Welsh-inspired: soft consonants')).toBe(false);
+    it('returns false for Western-canonical registers', () => {
+      expect(isCatchallRegister('Latin-inspired: formal, structured')).toBe(false);
+      expect(isCatchallRegister('Old-Norse-inspired: Eddaic register')).toBe(false);
+      expect(isCatchallRegister('Welsh-inspired: soft consonants')).toBe(false);
     });
 
-    it('returns false for fictional fantasy palettes', () => {
-      expect(isCatchallPalette('Sindarin-inspired (elvish): elegant')).toBe(false);
-      expect(isCatchallPalette('Orcish: brutal, guttural')).toBe(false);
-      expect(isCatchallPalette('Abyssal: guttural, chaotic')).toBe(false);
+    it('returns false for fictional fantasy registers', () => {
+      expect(isCatchallRegister('Sindarin-inspired (elvish): elegant')).toBe(false);
+      expect(isCatchallRegister('Orcish: brutal, guttural')).toBe(false);
+      expect(isCatchallRegister('Abyssal: guttural, chaotic')).toBe(false);
     });
 
     it('returns false for null / undefined / empty / non-string input', () => {
-      expect(isCatchallPalette(null)).toBe(false);
-      expect(isCatchallPalette(undefined)).toBe(false);
-      expect(isCatchallPalette('')).toBe(false);
-      expect(isCatchallPalette(42)).toBe(false);
+      expect(isCatchallRegister(null)).toBe(false);
+      expect(isCatchallRegister(undefined)).toBe(false);
+      expect(isCatchallRegister('')).toBe(false);
+      expect(isCatchallRegister(42)).toBe(false);
     });
   });
 
   describe('buildCatchallPromptBlock', () => {
-    it('returns empty string for non-catchall palettes', () => {
+    it('returns empty string for non-catchall registers', () => {
       expect(buildCatchallPromptBlock('Yoruba-inspired: rhythmic')).toBe('');
       expect(buildCatchallPromptBlock('Andean-inspired: structured Quechua')).toBe('');
       expect(buildCatchallPromptBlock('Latin-inspired: formal')).toBe('');
@@ -154,7 +154,7 @@ describe('catchall-prompt', () => {
       expect(buildCatchallPromptBlock(null)).toBe('');
     });
 
-    it('returns the catchall block for a catchall palette', () => {
+    it('returns the catchall block for a catchall register', () => {
       const block = buildCatchallPromptBlock('Japanese-inspired: clean syllables');
       expect(block).toMatch(/NAMING ARCHITECTURE FOR THIS GENERATION/);
       expect(block).toMatch(/ONE character name/);
@@ -182,8 +182,8 @@ describe('catchall-prompt', () => {
     });
   });
 
-  describe('whitelist augmentation (per-palette character-name list)', () => {
-    it('uses freehand-construction instruction when palette has no whitelist', () => {
+  describe('whitelist augmentation (per-register character-name list)', () => {
+    it('uses freehand-construction instruction when register has no whitelist', () => {
       // Hindi/Sanskrit has no whitelist (yet). Catchall falls back to
       // the freehand-epithet-construction instruction.
       const block = buildCatchallPromptBlock('Hindi/Sanskrit-inspired: melodic, ceremonial');
@@ -191,7 +191,7 @@ describe('catchall-prompt', () => {
       expect(block).not.toMatch(/from this curated list/);
     });
 
-    it('uses pick-from-list instruction when palette has a whitelist (Maori)', () => {
+    it('uses pick-from-list instruction when register has a whitelist (Maori)', () => {
       // Maori was the first whitelist registered after the Tangaroa-
       // as-fictional-smith production failure. The catchall must
       // replace freehand construction with the curated list.
@@ -220,22 +220,22 @@ describe('catchall-prompt', () => {
     });
   });
 
-  describe('item-name avoid-list (per-palette sacred-term protection)', () => {
-    describe('paletteItemNameAvoidLists registry', () => {
+  describe('item-name avoid-list (per-register sacred-term protection)', () => {
+    describe('registerItemNameAvoidLists registry', () => {
       it('registers a Maori avoid-list', () => {
         // The Maori avoid-list is the first entry. Production output
         // showed DeepSeek reaching for the most prominent (and most
         // sacred) Te Reo terms when constructing item names; the list
         // fences off that surface.
-        expect(paletteItemNameAvoidLists['Maori-inspired']).toBeDefined();
-        expect(Array.isArray(paletteItemNameAvoidLists['Maori-inspired'])).toBe(true);
-        expect(paletteItemNameAvoidLists['Maori-inspired'].length).toBeGreaterThan(0);
+        expect(registerItemNameAvoidLists['Maori-inspired']).toBeDefined();
+        expect(Array.isArray(registerItemNameAvoidLists['Maori-inspired'])).toBe(true);
+        expect(registerItemNameAvoidLists['Maori-inspired'].length).toBeGreaterThan(0);
       });
 
       it('includes representative sacred Te Reo terms in the Maori list', () => {
         // Spot-check a sample of the high-collision sacred surface.
         // Drift (a contributor stripping these out) should fail this test.
-        const list = paletteItemNameAvoidLists['Maori-inspired'];
+        const list = registerItemNameAvoidLists['Maori-inspired'];
         for (const term of ['mana', 'tapu', 'wairua', 'atua', 'tohunga', 'whakapapa']) {
           expect(list).toContain(term);
         }
@@ -243,13 +243,13 @@ describe('catchall-prompt', () => {
     });
 
     describe('getItemNameAvoidList', () => {
-      it('returns the Maori list for a Maori palette descriptor', () => {
+      it('returns the Maori list for a Maori register descriptor', () => {
         const list = getItemNameAvoidList('Maori-inspired: vowel-rich Te Reo phonetics');
-        expect(list).toEqual(paletteItemNameAvoidLists['Maori-inspired']);
+        expect(list).toEqual(registerItemNameAvoidLists['Maori-inspired']);
       });
 
-      it('returns null for catchall palettes without an avoid-list', () => {
-        // Hindi/Sanskrit, Hawaiian, etc. are catchall palettes but
+      it('returns null for catchall registers without an avoid-list', () => {
+        // Hindi/Sanskrit, Hawaiian, etc. are catchall registers but
         // have no registered avoid-list yet. Lookup must return null,
         // not an empty array, so the bullet falls back to the
         // baseline copy.

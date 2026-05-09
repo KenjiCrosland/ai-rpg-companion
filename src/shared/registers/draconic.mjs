@@ -4,7 +4,7 @@
  * 80 names spanning eight sub-conventions intentionally — sub-
  * convention diversity is the protective architecture. When DeepSeek
  * picks "one name from this list," it's not just preserving the
- * palette's phonetic register; it's getting variety across ancient
+ * register's phonetic register; it's getting variety across ancient
  * wyrm names, hatchling/kobold short forms, compound deed-names,
  * sibilant-heavy mage-wyrm names, clan-suffix names, Iokharic-script
  * compounds, wyrmling-earned titles, and thunder-voiced drake names.

@@ -1,22 +1,22 @@
 /**
- * selectLanguagePalette — pick a naming palette using a three-tier
+ * selectRegister — pick a naming register using a three-tier
  * priority order designed to honor the user's strongest signal.
  *
  * The origin-language separation refactor decoupled origin (thematic)
- * from palette (linguistic) so they can pair freely. That decoupling
+ * from register (linguistic) so they can pair freely. That decoupling
  * surfaced two issues:
  *
  *   1. Fantasy-race origins (Elven, Dwarven, Orcish, Goblinoid, Gnomish,
- *      Giant) were getting unconventional palette pairings too often.
+ *      Giant) were getting unconventional register pairings too often.
  *      Genre conventions strongly associate elves with Sindarin-style
  *      naming, dwarves with Germanic, orcs with Orcish-phonetic, etc.
- *      Fully uniform-random palette selection ignored those conventions
+ *      Fully uniform-random register selection ignored those conventions
  *      entirely. The fix: 70% chance conventional, 30% chance other —
  *      preserves architectural flexibility while respecting genre.
  *
  *   2. Cultural-linguistic signals in user input (proper names, place
- *      names) were sometimes being overridden by random palette rolls.
- *      Already handled by detectLanguageFromUserInput; this function
+ *      names) were sometimes being overridden by random register rolls.
+ *      Already handled by detectRegisterFromInput; this function
  *      preserves that as priority 1.
  *
  * Priority order:
@@ -26,48 +26,48 @@
  *   2. Fantasy-race weighted selection. Triggered when the user
  *      signals a fantasy race (dropdown selection or keyword in
  *      input). 70% conventional, 30% any other.
- *   3. Uniform random across the full palette pool. No signal, no
+ *   3. Uniform random across the full register pool. No signal, no
  *      weighting.
  *
  * @param {string|null} resolvedOrigin — the determined origin (may be
  *                                       null if user input is unresolved).
  * @param {string} userInput — combined name + lore.
- * @param {string[]} languagePalettes — full palette pool to select from.
+ * @param {string[]} registerList — full register pool to select from.
  * @param {Function} detectLanguageFn — injected detection function
- *                                      (typically detectLanguageFromUserInput).
- * @returns {string} — the selected palette string.
+ *                                      (typically detectRegisterFromInput).
+ * @returns {string} — the selected register string.
  */
 
 /**
- * Maps fantasy-race origins to their conventional language palette
- * pool (one or more palette prefixes that strongly associate with the
+ * Maps fantasy-race origins to their conventional language register
+ * pool (one or more register prefixes that strongly associate with the
  * race in genre convention). Only the six core fantasy races are
  * included — most aesthetic origins (Celestial, Fey, Elemental, etc.)
- * deliberately have no conventional palette and pair freely with any
+ * deliberately have no conventional register and pair freely with any
  * linguistic register. The six horror-coded aesthetic origins
  * (Infernal, Abyssal, Necromantic, Vampiric, Lycanthropic, Aberrant)
  * have their OWN protection layer via `horrorRestrictedOrigins` /
- * `horrorOriginPalettePool` below — that is origin-coded protection,
+ * `horrorOriginRegisterPool` below — that is origin-coded protection,
  * separate from this race-coded one. Both layers exist for the same
  * structural reason: certain genre-conventional pairings (orc + non-
  * European register, Necromantic + non-Western religious-cultural
  * register, etc.) carry real-world coding risk that uniform-random
- * palette selection would surface.
+ * register selection would surface.
  *
- * Multi-palette pools (Elven, Dwarven, Gnomish, Giant) replaced earlier
- * single-palette defaults to avoid reproducing Tolkien-as-canon and to
+ * Multi-register pools (Elven, Dwarven, Gnomish, Giant) replaced earlier
+ * single-register defaults to avoid reproducing Tolkien-as-canon and to
  * spread example-name rotation across multiple registers per generation.
  *
- * Orcish and Goblinoid palettes are ALLOW-LISTS: a curated set of
+ * Orcish and Goblinoid registers are ALLOW-LISTS: a curated set of
  * European registers (fictional fantasy + Germanic + Celtic + Slavic +
  * Latin) with documented orc/goblin-fantasy precedent that don't carry
  * the racist-coding history protected-list traditions do. Selection
  * for these races is allow-list-restricted (no 30% alternative
  * branch), and cultural detection from user input is subordinated to
- * the allow-list — if a user signal would resolve to a palette outside
+ * the allow-list — if a user signal would resolve to a register outside
  * the allow-list in an orc/goblin context, the allow-list wins. The
  * architecture replaces the earlier filter-based approach
- * (orcGoblinExcludedPalettes) which had a code-path gap that let
+ * (orcGoblinExcludedRegisters) which had a code-path gap that let
  * Goblinoid + Navajo/Diné slip through to a production output. An
  * allow-list makes the bad combinations structurally impossible
  * rather than relying on the filter to recognize and block them.
@@ -110,15 +110,15 @@
  *     European registers (Norse jötnar, Greek titans/cyclopes, Anglo-
  *     Saxon eotenas). An earlier iteration included Hebrew-inspired
  *     for the Nephilim primordial-giant tradition; Hebrew was first
- *     moved to the protected list, then removed from the palette
+ *     moved to the protected list, then removed from the register
  *     system entirely. Real-tradition pairings of Jewish religious-
  *     cultural specifics with fictional fantasy races carry too much
  *     risk regardless of the specific tradition cited as justification.
- *     The Hebrew palette and detection-map entries are both gone;
+ *     The Hebrew register and detection-map entries are both gone;
  *     Hebrew-coded user input falls through to the LLM's world-
  *     knowledge override path with strict universal-invent rules.
  */
-export const fantasyRaceConventionalPalettes = {
+export const fantasyRaceConventionalRegisters = {
   'Elven': [
     'Sindarin-inspired',
     'Middle-Welsh-inspired',
@@ -171,25 +171,25 @@ export const fantasyRaceConventionalPalettes = {
  * Aesthetic origins whose genre-conventional framing pulls from
  * specific Western literary-religious horror traditions (Faustian,
  * gothic, Lovecraftian, European-folk-vampirism, dark-shadow-magic).
- * When paired with non-Western cultural palettes, the pairing risks:
+ * When paired with non-Western cultural registers, the pairing risks:
  *   - Imposing Western-Christian horror conventions onto unrelated
  *     cultural registers (e.g., Necromantic + Yoruba reproducing
  *     "African = death-magic" coding patterns),
  *   - Engaging culturally-protected concepts inappropriately
  *     (the original motivating case was Lycanthropic + Diné invoking
- *     the skinwalker tradition; the Diné palette has since been
+ *     the skinwalker tradition; the Diné register has since been
  *     removed entirely under that same caution, but analogous risks
- *     remain for other Indigenous-tradition palettes the protection
+ *     remain for other Indigenous-tradition registers the protection
  *     covers),
  *   - Reproducing Lovecraft-tradition Otherness-coding patterns
- *     (Aberrant + non-Western palette → "alien = foreign culture").
+ *     (Aberrant + non-Western register → "alien = foreign culture").
  *
- * Selection for these origins is restricted to `horrorOriginPalettePool`
+ * Selection for these origins is restricted to `horrorOriginRegisterPool`
  * via the same allow-list logic the orc/goblin branch uses. Cultural
- * detection from user input is honored ONLY when the detected palette
+ * detection from user input is honored ONLY when the detected register
  * is in the pool; otherwise the allow-list wins. This is origin-coded
  * protection, parallel to but separate from the race-coded protection
- * in `fantasyRaceConventionalPalettes`.
+ * in `fantasyRaceConventionalRegisters`.
  *
  * Shadow joined this list after production validation surfaced the
  * same cross-cultural-imposition pattern with Shadow-origin items —
@@ -208,43 +208,43 @@ export const horrorRestrictedOrigins = [
 ];
 
 /**
- * Fictional-origin palette routing with 70/30 weighting.
+ * Fictional-origin register routing with 70/30 weighting.
  *
  * Each entry maps a fictional-fantasy origin to:
- *   - `primary`: the matching fictional palette prefix (the one that
- *     fires the per-palette whitelist). Selected on the 70% branch.
- *   - `altPool`: a curated list of alt-palette prefixes that pair
+ *   - `primary`: the matching fictional register prefix (the one that
+ *     fires the per-register whitelist). Selected on the 70% branch.
+ *   - `altPool`: a curated list of alt-register prefixes that pair
  *     tonally with the origin. Selected uniformly on the 30% branch
  *     for cross-cultural variety. The alt-pool is per-origin (not
  *     shared) so each origin's variety stays thematically coherent
  *     — e.g., Draconic alt-rolls into Beowulf-/Ladon-/jötnar-
  *     tradition registers, not into Yoruba or Japanese.
  *
- * Why this branch exists: without it, the matching fictional palette
+ * Why this branch exists: without it, the matching fictional register
  * was reachable only by uniform-random rolls (1/N chance for Draconic
  * /Primordial, falling through to priority 3) or as one of 12 members
  * of the horror pool (~8% chance for Aberrant/Abyssal/Infernal). The
  * matching fictional whitelist almost never fired, producing
  * Finnish-flavored Draconic items, Latin-flavored Primordial items,
- * etc. — the opposite of what the per-palette whitelists are for.
+ * etc. — the opposite of what the per-register whitelists are for.
  *
  * Architectural placement: this branch runs BEFORE the horror branch
  * so Aberrant/Abyssal/Infernal origins route here (70/30 with their
  * own alt-pool) instead of into the horror pool (12-member uniform).
  * Necromantic / Vampiric / Lycanthropic / Shadow are NOT in this map
- * — they have no matching fictional palette of their own and continue
+ * — they have no matching fictional register of their own and continue
  * to use the horror pool. Sindarin is NOT in this map because
- * Sindarin is not an origin (it's a palette only); the Sindarin
- * whitelist fires when Elven origin rolls the Sindarin palette via
+ * Sindarin is not an origin (it's a register only); the Sindarin
+ * whitelist fires when Elven origin rolls the Sindarin register via
  * the Elven allow-list (~70% of Elven generations).
  *
  * Cultural detection from user input is honored ONLY when the
- * detected palette is in (primary ∪ altPool). A user typing Latin-
+ * detected register is in (primary ∪ altPool). A user typing Latin-
  * coded names with a Draconic origin gets Latin (Latin is in
  * Draconic's alt-pool). A user typing Yoruba-coded names with a
  * Draconic origin gets the 70/30 roll instead (Yoruba is not in the
  * allow-list). This mirrors the fantasy-race architecture and lets
- * the user steer to a specific in-allow-list palette via input
+ * the user steer to a specific in-allow-list register via input
  * signals while keeping the allow-list as a hard boundary.
  *
  * 70/30 weighting uses `FANTASY_RACE_CONVENTIONAL_PROBABILITY` (the
@@ -252,7 +252,7 @@ export const horrorRestrictedOrigins = [
  * the same primary-vs-alt split, so reusing the constant keeps the
  * meaning consistent.
  */
-export const fictionalOriginPalettes = {
+export const fictionalOriginRegisters = {
   'Draconic': {
     primary: 'Draconic',
     altPool: [
@@ -304,7 +304,7 @@ export const fictionalOriginPalettes = {
 };
 
 /**
- * Allow-list of palette prefixes that horror-restricted origins may
+ * Allow-list of register prefixes that horror-restricted origins may
  * use. Selection is uniform-random across the pool (no 70/30 weighting
  * like orc/goblin) because horror origins don't have a single
  * "primary register" the way orcs have an Orcish fictional register —
@@ -322,7 +322,7 @@ export const fictionalOriginPalettes = {
  *
  * Notes:
  *   - Necromantic, Vampiric, Lycanthropic exist as origin names but
- *     not as palette prefixes (no `Necromantic-inspired` palette
+ *     not as register prefixes (no `Necromantic-inspired` register
  *     entry), so they don't appear in the pool.
  *   - Romanian-inspired is included for the gothic-vampire / Carpathian
  *     horror tradition that sits in genre canon (Stoker, Murnau,
@@ -332,7 +332,7 @@ export const fictionalOriginPalettes = {
  *     barrow-wights, the rings' wraith-creation, post-Tolkien dark-
  *     elven traditions).
  */
-export const horrorOriginPalettePool = [
+export const horrorOriginRegisterPool = [
   'Latin-inspired',
   'Old-Norse-inspired',
   'Anglo-Saxon-inspired',
@@ -363,25 +363,25 @@ export const fantasyRaceKeywords = {
   'Giant':     ['giant', 'giants'],
 };
 
-/** Probability that a fantasy-race-signaled palette selection picks the
- *  conventional palette (Sindarin for Elven, Germanic for Dwarven, etc.).
- *  The remaining (1 - this) probability picks any other palette uniformly.
- *  See selectLanguagePalette's docblock for the reasoning. */
+/** Probability that a fantasy-race-signaled register selection picks the
+ *  conventional register (Sindarin for Elven, Germanic for Dwarven, etc.).
+ *  The remaining (1 - this) probability picks any other register uniformly.
+ *  See selectRegister's docblock for the reasoning. */
 const FANTASY_RACE_CONVENTIONAL_PROBABILITY = 0.7;
 
 /**
- * Fantasy races whose palette selection is restricted to a curated
- * palette allow-list (no 30% alt-branch into the broader palette
+ * Fantasy races whose register selection is restricted to a curated
+ * register allow-list (no 30% alt-branch into the broader register
  * set). Within the allow-list, the 70/30 weighting still applies —
  * the primary register at index 0 fires 70% of the time, the rest
  * of the allow-list covers the 30%. Cultural detection from user
- * input is honored ONLY when the detected palette is in the allow-
+ * input is honored ONLY when the detected register is in the allow-
  * list; otherwise the allow-list wins.
  *
  * Naming note: this constant used to be called WESTERN_FANTASY_BOUND_RACES, which
  * collided with the unrelated "pool" vocabulary used for the Yoruba/
- * Andean character/place/spirit name lists in src/data/cultural-pools.
- * Same word, different concept (palette set vs. name set). Renamed to
+ * Andean character/place/spirit name lists in src/shared/registers.
+ * Same word, different concept (register set vs. name set). Renamed to
  * WESTERN_FANTASY_BOUND_RACES to match the tier scheme in
  * ARCHITECTURE.md and to free "pool" for the name-list usage.
  *
@@ -395,7 +395,7 @@ const FANTASY_RACE_CONVENTIONAL_PROBABILITY = 0.7;
  *
  * Members (all five Western-fantasy-bound races):
  *   - Orcish, Goblinoid: documented racial-coding history with non-
- *     European palettes (the canonical orc-as-racial-proxy pattern).
+ *     European registers (the canonical orc-as-racial-proxy pattern).
  *   - Dwarven: Norse/Germanic mountain-craft archetype.
  *   - Gnomish: European inventor-tinkerer archetype.
  *   - Elven: Sindarin / Celtic refined-aesthetic archetype.
@@ -404,7 +404,7 @@ const FANTASY_RACE_CONVENTIONAL_PROBABILITY = 0.7;
  *   - Fey, Giant: cross-cultural archetypes — the slot exists in many
  *     living mythological traditions (kitsune/huli jing/mami wata/
  *     patupaiarehe for fey; jötnar/titans/rakshasas/oni for giants).
- *     These pair freely with any palette; non-Western pairings
+ *     These pair freely with any register; non-Western pairings
  *     genuinely include those cultures' tradition rather than
  *     decorating a Western archetype. Giant was briefly added to this
  *     list under the "Giant + non-Western pairings read as primitive
@@ -422,11 +422,11 @@ export const WESTERN_FANTASY_BOUND_RACES = ['Orcish', 'Goblinoid', 'Dwarven', 'G
  * weighted toward, given the resolved origin dropdown and the combined
  * user input (name + lore).
  *
- * Same logic that selectLanguagePalette applies internally for the
+ * Same logic that selectRegister applies internally for the
  * 70/30 weighting; extracted so callers can ALSO know the fantasy-race
  * state at prompt-construction time. The item generator uses it to
  * gate the orc/goblin-context override-revocation prompt block — that
- * block needs to fire whenever the palette filter would have fired,
+ * block needs to fire whenever the register filter would have fired,
  * including the priority-2b keyword case (e.g., dropdown=Necromantic,
  * lore="Orcish Battleaxe" → fantasyRace='Orcish').
  *
@@ -437,7 +437,7 @@ export const WESTERN_FANTASY_BOUND_RACES = ['Orcish', 'Goblinoid', 'Dwarven', 'G
  */
 export function resolveFantasyRace(resolvedOrigin, userInput) {
   // 2a. Dropdown origin — does it signal a core fantasy race?
-  if (resolvedOrigin && fantasyRaceConventionalPalettes[resolvedOrigin]) {
+  if (resolvedOrigin && fantasyRaceConventionalRegisters[resolvedOrigin]) {
     return resolvedOrigin;
   }
 
@@ -460,51 +460,51 @@ export function resolveFantasyRace(resolvedOrigin, userInput) {
 }
 
 /**
- * Pick a palette from a conventional pool given a list of prefixes and
- * the caller's available palette list. Returns the resolved palette
+ * Pick a register from a conventional pool given a list of prefixes and
+ * the caller's available register list. Returns the resolved register
  * string, or null if no prefix in the pool matches an entry in the
- * palette list.
+ * register list.
  */
-function pickFromPool(conventionalPrefixes, languagePalettes) {
+function pickFromPool(conventionalPrefixes, registerList) {
   const selectedPrefix = conventionalPrefixes[
     Math.floor(Math.random() * conventionalPrefixes.length)
   ];
-  return languagePalettes.find(p => p.startsWith(selectedPrefix)) || null;
+  return registerList.find(p => p.startsWith(selectedPrefix)) || null;
 }
 
 /**
- * True if the resolved palette starts with any prefix in the race's
+ * True if the resolved register starts with any prefix in the race's
  * conventional pool.
  */
-function isInConventionalPool(palette, conventionalPrefixes) {
-  return conventionalPrefixes.some(prefix => palette.startsWith(prefix));
+function isInConventionalPool(register, conventionalPrefixes) {
+  return conventionalPrefixes.some(prefix => register.startsWith(prefix));
 }
 
-export function selectLanguagePalette(
+export function selectRegister(
   resolvedOrigin,
   userInput,
-  languagePalettes,
+  registerList,
   detectLanguageFn,
 ) {
-  const culturalDetection = detectLanguageFn(userInput, languagePalettes);
+  const culturalDetection = detectLanguageFn(userInput, registerList);
   const fantasyRace = resolveFantasyRace(resolvedOrigin, userInput);
 
-  // Fictional-origin → primary-palette + alt-pool routing (70/30).
+  // Fictional-origin → primary-register + alt-pool routing (70/30).
   // Highest priority — overrides cultural detection, horror
   // restriction, and fantasy-race restriction. See
-  // `fictionalOriginPalettes` docblock for the rationale (the
-  // matching fictional whitelist needs the matching palette to fire
+  // `fictionalOriginRegisters` docblock for the rationale (the
+  // matching fictional whitelist needs the matching register to fire
   // most of the time, with a small share of cross-cultural variety
   // for tonal interest).
   //
-  // 70%: pick the matching fictional palette (whitelist fires).
+  // 70%: pick the matching fictional register (whitelist fires).
   // 30%: pick uniformly from the per-origin curated alt-pool (no
   //      whitelist; tonal variety).
   //
   // Runs before the horror branch so Aberrant / Abyssal / Infernal
   // route here instead of into the 12-member horror pool.
-  if (resolvedOrigin && fictionalOriginPalettes[resolvedOrigin]) {
-    const { primary, altPool } = fictionalOriginPalettes[resolvedOrigin];
+  if (resolvedOrigin && fictionalOriginRegisters[resolvedOrigin]) {
+    const { primary, altPool } = fictionalOriginRegisters[resolvedOrigin];
     const allowList = [primary, ...altPool];
 
     // In-allow-list cultural detection wins (mirrors fantasy-race
@@ -516,21 +516,21 @@ export function selectLanguagePalette(
     }
 
     if (Math.random() < FANTASY_RACE_CONVENTIONAL_PROBABILITY) {
-      const primaryPalette = languagePalettes.find(p => p.startsWith(primary));
-      if (primaryPalette) return primaryPalette;
+      const primaryRegister = registerList.find(p => p.startsWith(primary));
+      if (primaryRegister) return primaryRegister;
       // Fall through to alt-branch only if the primary prefix isn't in
-      // the caller's palette pool (defensive — production palette list
-      // always contains the five fictional palettes).
+      // the caller's register pool (defensive — production register list
+      // always contains the five fictional registers).
     }
 
     // 30% case: uniform random from the per-origin alt-pool.
-    const altPalette = pickFromPool(altPool, languagePalettes);
-    if (altPalette) return altPalette;
+    const altRegister = pickFromPool(altPool, registerList);
+    if (altRegister) return altRegister;
 
     // Last-ditch defensive fall-through: neither primary nor any
     // alt-pool member resolved against the active pool. Try primary
     // one more time before letting the remaining branches handle it.
-    const fallback = languagePalettes.find(p => p.startsWith(primary));
+    const fallback = registerList.find(p => p.startsWith(primary));
     if (fallback) return fallback;
   }
 
@@ -539,7 +539,7 @@ export function selectLanguagePalette(
   // (real-world horror-genre traditions) plus the fictional horror-
   // native registers (Abyssal, Infernal, Aberrant). Same protection
   // logic as the orc/goblin branch — cultural detection honored ONLY
-  // when the detected palette is in the pool; otherwise the allow-list
+  // when the detected register is in the pool; otherwise the allow-list
   // wins. Selection is uniform-random (no 70/30 weighting) because
   // horror origins don't have a single "primary register" to weight
   // toward.
@@ -551,29 +551,29 @@ export function selectLanguagePalette(
   // coded and never resolve to a fantasy race.
   //
   // The protection blocks Necromantic + Yoruba (Western death-magic
-  // imposed on West African register), Aberrant + non-Western palette
+  // imposed on West African register), Aberrant + non-Western register
   // (Lovecraft Otherness coding), and similar pairings that uniform-
-  // random palette selection would otherwise surface. The original
+  // random register selection would otherwise surface. The original
   // motivating case was Lycanthropic + Diné (skinwalker appropriation);
-  // the Diné palette has since been removed entirely under that same
+  // the Diné register has since been removed entirely under that same
   // caution, but the protection still covers analogous risks for the
-  // remaining Indigenous-tradition palettes.
+  // remaining Indigenous-tradition registers.
   if (resolvedOrigin && horrorRestrictedOrigins.includes(resolvedOrigin)) {
-    if (culturalDetection && isInConventionalPool(culturalDetection, horrorOriginPalettePool)) {
+    if (culturalDetection && isInConventionalPool(culturalDetection, horrorOriginRegisterPool)) {
       return culturalDetection;
     }
-    return pickFromPool(horrorOriginPalettePool, languagePalettes)
-      || languagePalettes[0];
+    return pickFromPool(horrorOriginRegisterPool, registerList)
+      || registerList[0];
   }
 
   // Western-fantasy-bound race architecture (Orcish, Goblinoid,
   // Dwarven, Gnomish, Elven): allow-list-restricted selection with a
   // 70/30 weighting. Cultural detection from user input is honored
-  // ONLY when the detected palette is in the race's allow-list — a
-  // user signal that would resolve to a protected-list palette
+  // ONLY when the detected register is in the race's allow-list — a
+  // user signal that would resolve to a protected-list register
   // (Yoruba, Lakota, etc.) does not override the architectural
   // protection. The orc/goblin members replaced an earlier filter-
-  // based approach (orcGoblinExcludedPalettes) that had a code-path
+  // based approach (orcGoblinExcludedRegisters) that had a code-path
   // gap; the Dwarven/Gnomish/Elven members were added after
   // production validation showed problematic cross-cultural pairings
   // for Western-fantasy-bound races.
@@ -591,26 +591,26 @@ export function selectLanguagePalette(
   // WESTERN_FANTASY_BOUND_RACES above. The branch condition is data-
   // driven so adding a race is a one-line change.
   if (WESTERN_FANTASY_BOUND_RACES.includes(fantasyRace)) {
-    const pool = fantasyRaceConventionalPalettes[fantasyRace];
+    const pool = fantasyRaceConventionalRegisters[fantasyRace];
     if (culturalDetection && isInConventionalPool(culturalDetection, pool)) {
       return culturalDetection;
     }
 
     const primaryPrefix = pool[0];
     if (Math.random() < FANTASY_RACE_CONVENTIONAL_PROBABILITY) {
-      const primaryPalette = languagePalettes.find(p => p.startsWith(primaryPrefix));
-      if (primaryPalette) return primaryPalette;
+      const primaryRegister = registerList.find(p => p.startsWith(primaryPrefix));
+      if (primaryRegister) return primaryRegister;
       // Fall through to alt-branch only if the primary prefix isn't
-      // in the caller's palette pool (defensive — production palette
+      // in the caller's register pool (defensive — production register
       // list always contains it).
     }
 
     // 30% case: pick from the European cross-cultural pool members
     // (everything except the primary register).
     const altPool = pool.filter(prefix => prefix !== primaryPrefix);
-    return pickFromPool(altPool, languagePalettes)
-      || languagePalettes.find(p => p.startsWith(primaryPrefix))
-      || languagePalettes[0];
+    return pickFromPool(altPool, registerList)
+      || registerList.find(p => p.startsWith(primaryPrefix))
+      || registerList[0];
   }
 
   // Priority 1: cultural detection from user input (contexts that are
@@ -622,41 +622,41 @@ export function selectLanguagePalette(
 
   // Priority 2: fantasy-race weighted selection (Giant — the cross-
   // cultural-archetype race NOT in WESTERN_FANTASY_BOUND_RACES).
-  // 70% conventional palette pool, 30% any palette outside the pool.
+  // 70% conventional register pool, 30% any register outside the pool.
   // The Western-fantasy-bound races returned above; if execution
   // reaches here with a fantasyRace, it's the cross-cultural-
   // archetype race left on the weighted branch (Giant). Fey isn't a
-  // member of fantasyRaceConventionalPalettes at all and never
+  // member of fantasyRaceConventionalRegisters at all and never
   // resolves to a fantasyRace via resolveFantasyRace, so it skips
   // this branch entirely and falls through to priority 3 uniform
   // random.
   if (fantasyRace) {
-    const conventionalPrefixes = fantasyRaceConventionalPalettes[fantasyRace];
+    const conventionalPrefixes = fantasyRaceConventionalRegisters[fantasyRace];
 
     if (Math.random() < FANTASY_RACE_CONVENTIONAL_PROBABILITY) {
-      const conventionalPalette = pickFromPool(conventionalPrefixes, languagePalettes);
-      if (conventionalPalette) {
-        return conventionalPalette;
+      const conventionalRegister = pickFromPool(conventionalPrefixes, registerList);
+      if (conventionalRegister) {
+        return conventionalRegister;
       }
       // Fall through to the alt branch if the prefix isn't found in the
-      // caller's palette pool (defensive — production palette list is
+      // caller's register pool (defensive — production register list is
       // expected to contain every prefix referenced by the conventional
       // pools, but a reduced pool passed by tests or partial data state
       // shouldn't crash).
     }
 
-    // 30% case: pick any palette outside the race's conventional pool.
+    // 30% case: pick any register outside the race's conventional pool.
     // Excluding ALL conventional prefixes means the alt branch always
     // produces a genuinely cross-cultural pairing.
-    const otherPalettes = languagePalettes.filter(palette =>
-      !isInConventionalPool(palette, conventionalPrefixes),
+    const otherRegisters = registerList.filter(register =>
+      !isInConventionalPool(register, conventionalPrefixes),
     );
-    if (otherPalettes.length === 0) {
-      return pickFromPool(conventionalPrefixes, languagePalettes) || languagePalettes[0];
+    if (otherRegisters.length === 0) {
+      return pickFromPool(conventionalPrefixes, registerList) || registerList[0];
     }
-    return otherPalettes[Math.floor(Math.random() * otherPalettes.length)];
+    return otherRegisters[Math.floor(Math.random() * otherRegisters.length)];
   }
 
   // Priority 3: uniform random across the full pool.
-  return languagePalettes[Math.floor(Math.random() * languagePalettes.length)];
+  return registerList[Math.floor(Math.random() * registerList.length)];
 }

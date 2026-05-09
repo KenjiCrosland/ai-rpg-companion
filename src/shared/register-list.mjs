@@ -1,8 +1,8 @@
 /**
- * Language palettes — purely linguistic. No thematic implications;
- * any palette can pair with any origin. Adding entries here is always
+ * Language registers — purely linguistic. No thematic implications;
+ * any register can pair with any origin. Adding entries here is always
  * allowed; removing requires considering whether any saved item lore
- * references the palette.
+ * references the register.
  *
  * The set is intentionally biased toward specific cultural-linguistic
  * traditions over generic regional categories. Earlier versions used
@@ -18,68 +18,68 @@
  *
  * Format: each entry is a single string of the form
  *   `<prefix>: <descriptor> (e.g., <Example1>, <Example2>, <Example3>)`
- * where <prefix> is the unique key the rest of the palette machinery
- * (selectLanguagePalette, fantasyRaceConventionalPalettes,
- * orcGoblinExcludedPalettes, userInputLanguageDetection,
- * rotatePaletteExamples) refers to via String#startsWith.
+ * where <prefix> is the unique key the rest of the register machinery
+ * (selectRegister, fantasyRaceConventionalRegisters,
+ * orcGoblinExcludedRegisters, userInputLanguageDetection,
+ * rotateRegisterExamples) refers to via String#startsWith.
  *
  * Lives in its own module so test suites can verify integrity
- * (every prefix referenced in fantasyRaceConventionalPalettes
+ * (every prefix referenced in fantasyRaceConventionalRegisters
  * resolves to an entry here, no orphan references) without depending
  * on inline data inside ItemGenerator.vue.
  *
- * PROTECTED-PALETTE FEATURE FLAG
+ * PROTECTED-REGISTER FEATURE FLAG
  * ------------------------------
  *
- * `enableProtectedPalettes` (default: false) gates every non-Western,
- * non-fictional palette out of the consumer-facing `languagePalettes`
- * export. The full list survives as `allLanguagePalettes` and the
+ * `enableProtectedRegisters` (default: false) gates every non-Western,
+ * non-fictional register out of the consumer-facing `registerList`
+ * export. The full list survives as `allLanguageRegisters` and the
  * downstream protection machinery (catchall block, Yoruba/Andean pool
  * prompts, item-name avoid-lists, character-name whitelists) stays
  * intact, so re-enabling is a one-line flip — no architectural
  * unwinding required.
  *
  * Why off by default: the protections still need work to consistently
- * suppress sacred-coded outputs across all the affected palettes. Until
- * that work lands, shipping these palettes risks producing culturally
+ * suppress sacred-coded outputs across all the affected registers. Until
+ * that work lands, shipping these registers risks producing culturally
  * insensitive items at the user's expense. Western-canonical and
- * fictional-fantasy palettes don't carry the same risk and remain
+ * fictional-fantasy registers don't carry the same risk and remain
  * available.
  *
  * What gets filtered when the flag is off:
- *   - Every prefix in PROTECTED_PALETTE_PREFIXES is dropped from
- *     `languagePalettes` (the consumer-facing array).
- *   - Cultural detection auto-fails for these palettes because
- *     `detectLanguageFromUserInput` only returns palettes present in
+ *   - Every prefix in PROTECTED_REGISTER_PREFIXES is dropped from
+ *     `registerList` (the consumer-facing array).
+ *   - Cultural detection auto-fails for these registers because
+ *     `detectRegisterFromInput` only returns registers present in
  *     the caller-provided pool.
  *   - The catchall prompt block, Yoruba/Andean pool prompts, and
  *     item-name avoid-lists become unreachable because their gating
- *     palettes are no longer selectable. The code paths stay defined.
+ *     registers are no longer selectable. The code paths stay defined.
  *
  * What is NOT affected:
- *   - `fantasyRaceConventionalPalettes` (Western-only allow-lists for
+ *   - `fantasyRaceConventionalRegisters` (Western-only allow-lists for
  *     Orcish/Goblinoid/Dwarven/Gnomish/Elven; no protected members).
- *   - `horrorOriginPalettePool` (Western-only/fictional; no protected
+ *   - `horrorOriginRegisterPool` (Western-only/fictional; no protected
  *     members).
  *   - The Giant cross-cultural-archetype branch (filters into
- *     whatever's in `languagePalettes`, so naturally restricts to the
+ *     whatever's in `registerList`, so naturally restricts to the
  *     active set).
  *
- * To re-enable: flip `enableProtectedPalettes` to `true`. That is the
- * only change required. Tests that exercise protected palettes pass
+ * To re-enable: flip `enableProtectedRegisters` to `true`. That is the
+ * only change required. Tests that exercise protected registers pass
  * their own inline arrays, so test runs are unaffected by the flag's
  * value.
  */
 
-export const enableProtectedPalettes = false;
+export const enableProtectedRegisters = false;
 
 /**
- * Palette prefixes shipped only when `enableProtectedPalettes` is true.
+ * Register prefixes shipped only when `enableProtectedRegisters` is true.
  * Every entry here is a real-world cultural-linguistic tradition with
  * non-trivial appropriation/sacred-coding risk that we don't yet have
  * sufficient protection to mitigate consistently in production.
  *
- * Membership is conservative: when in doubt, a palette belongs in this
+ * Membership is conservative: when in doubt, a register belongs in this
  * list. Western-canonical registers (Latin-family, Norse-family,
  * Germanic-family, Celtic-family, Slavic-family, Hungarian, Finnish,
  * Italian Renaissance, Old Occitan) and fictional-fantasy registers
@@ -87,7 +87,7 @@ export const enableProtectedPalettes = false;
  * Infernal, Primordial, Technomagical) are NOT in this list and remain
  * available with the flag off.
  */
-export const PROTECTED_PALETTE_PREFIXES = [
+export const PROTECTED_REGISTER_PREFIXES = [
   // East / Southeast / Central / South Asian
   'Japanese-inspired',
   'Chinese-inspired',
@@ -121,7 +121,7 @@ export const PROTECTED_PALETTE_PREFIXES = [
   'Caucasian-inspired',
 ];
 
-export const allLanguagePalettes = [
+export const allLanguageRegisters = [
   // Real-world cultural traditions
   'Latin-inspired: formal, structured (e.g., Aurelium, Ferrata, Nexus Imperium)',
   'Italian-Renaissance-inspired: Renaissance-era Italian inventor-craftsperson register (e.g., Leonardo, Beatrice, Filippo)',
@@ -146,7 +146,7 @@ export const allLanguagePalettes = [
   'Old-Irish-inspired: pre-modern Gaeilge phonetics, Mythological Cycle register, sí-tradition (e.g., Cúchulainn, Étaín, Lugh)',
   'Old-Occitan-inspired: troubadour register, courtly love poetry, refined Mediterranean aesthetic (e.g., Bertran, Azalaïs, Raimon)',
   'Caucasian-inspired: mountain-peoples register drawing on Georgian/Ossetian/Chechen phonetics (e.g., Tamuna, Otar, Nart)',
-  // Atlas-Berber: example tail removed under the protected-palette
+  // Atlas-Berber: example tail removed under the protected-register
   // seed audit. Tin-Hinan, Massinissa, and Yuba are real historical
   // Amazigh/Numidian figures; using them as fictional fantasy seeds
   // pulls the LLM toward reproducing real cultural specifics. The
@@ -162,62 +162,62 @@ export const allLanguagePalettes = [
   // descendants of Muhammad. Qamar al-Sahir ("moon of the magician")
   // and Zafira are constructed/secular and stay.
   'Arabic/Persian-inspired: flowing, melodic; pre-Islamic Arabic OR Persian register only — no Islamic religious vocabulary (e.g., Qamar al-Sahir, Zafira)',
-  // Persian: example tail removed under the protected-palette seed
+  // Persian: example tail removed under the protected-register seed
   // audit. Anahita is a real Zoroastrian goddess; Cyrus and Roxana
   // are real historical figures (Persian emperor and Alexander's
-  // wife). The older Arabic/Persian-inspired palette above stays
+  // wife). The older Arabic/Persian-inspired register above stays
   // unaudited — its seeds (Qamar al-Sahir, Zafira) are constructed
   // and don't carry the same real-referent weight.
   'Persian-inspired: refined classical-aesthetic register',
-  // Hebrew-inspired was removed from the palette list entirely. The
+  // Hebrew-inspired was removed from the register list entirely. The
   // earlier audit removed its seed examples and dropped it from the
   // Giant conventional pool; this further removal keeps Jewish
   // religious-cultural specifics off the random-rolling path even
   // for cultural detection. The detection-map entry was likewise
   // removed; user-typed Hebrew-language signals (shofar, menorah,
   // golem, etc.) now fall through to the LLM's world-knowledge path
-  // via the LANGUAGE PALETTE OVERRIDE prompt block, where the
+  // via the LANGUAGE REGISTER OVERRIDE prompt block, where the
   // universal-invent rule still applies.
   'Japanese-inspired: clean syllables, natural imagery (e.g., Kagezuki, Shiawase, Tsubasa)',
   'Chinese-inspired: tonal, philosophical (e.g., Jianhao, Mei-Lin, Wangshu)',
   'Korean-inspired: structured, balanced (e.g., Soohyun, Jaewon, Hyejin)',
-  // Mongolian: example tail removed under the protected-palette seed
+  // Mongolian: example tail removed under the protected-register seed
   // audit. Temujin is Genghis Khan's birth name — a specific,
   // historically and politically loaded real person, not a generic
   // naming convention. Khulan was one of his wives. Using these as
   // fictional fantasy seeds reproduces the same pattern that the
   // Lakota / Sitting Bull example modeled.
   'Mongolian-inspired: bold, sweeping',
-  // Tibetan: example tail removed under the protected-palette seed
+  // Tibetan: example tail removed under the protected-register seed
   // audit. Dorje refers to the vajra, a sacred Vajrayana Buddhist
   // ritual implement (and conceptual figure). Tashi and Pema are
   // common given names with religious meanings ("auspicious," "lotus")
   // — the conservative call is to drop the tail rather than parse
   // which seeds carry sacred weight.
   'Tibetan-inspired: aspirated, contemplative',
-  // Hindi/Sanskrit: example tail removed under the protected-palette
+  // Hindi/Sanskrit: example tail removed under the protected-register
   // seed audit. "Devraj" is a deity epithet (king-of-Devas, used for
   // Indra); the other examples were too close to deity-adjacent
   // semantics to keep without cultural-knowledge consultation.
   'Hindi/Sanskrit-inspired: melodic, ceremonial',
   'Thai-inspired: tonal, flowing (e.g., Niran, Suchada, Anong)',
-  // Maori: example tail removed under the protected-palette seed
+  // Maori: example tail removed under the protected-register seed
   // audit. Tāne-mahuta is a real Māori atua (god of the forest);
   // using it as a fictional fantasy seed pulls the LLM toward
   // reproducing real Māori cosmology directly.
   'Maori-inspired: vowel-rich Te Reo phonetics, nature-grounded',
-  // Hawaiian: example tail removed under the protected-palette seed
+  // Hawaiian: example tail removed under the protected-register seed
   // audit. The previous seeds were constructed Hawaiian-language
   // names ("lehuanani" = "beautiful lehua"), but lehua is a sacred
   // plant in Hawaiian cultural-religious tradition; the conservative
   // call is to remove the tail and let the descriptor teach the
   // register on its own.
   'Hawaiian-inspired: \'Ōlelo Hawai\'i phonetics with okina and macron, place-coded',
-  // Yoruba: example tail removed under the protected-palette seed
+  // Yoruba: example tail removed under the protected-register seed
   // audit. "Olorun" is the Yoruba supreme deity; deity names were the
   // original failure mode this audit addresses.
   'Yoruba-inspired: rhythmic with diacriticals',
-  // Akan: example tail removed under the protected-palette seed audit.
+  // Akan: example tail removed under the protected-register seed audit.
   // Kwame/Adwoa/Yaa are Akan day-names — a real and central naming
   // convention rather than fictional samples; their iconic association
   // with real public figures (e.g., Kwame Nkrumah) made them too
@@ -231,22 +231,22 @@ export const allLanguagePalettes = [
   // (strong) and Imani (faith) stay — common given names without
   // specific religious or political reference.
   'Swahili-inspired (East African): rolling rhythm (e.g., Subira, Zuberi, Imani)',
-  // Maya: example tail removed under the protected-palette seed
+  // Maya: example tail removed under the protected-register seed
   // audit. Ix-Chel (jaguar moon-goddess of midwifery and weaving) and
   // Kʼinich (the solar-deity epithet K'inich Ajaw) are real Maya
   // deities; using them as fictional seeds reproduces sacred-cultural
   // content directly.
   'Maya-inspired: glottal stops and aspirated consonants, day-name structures',
-  // Aztec/Nahuatl: example tail removed under the protected-palette
+  // Aztec/Nahuatl: example tail removed under the protected-register
   // seed audit. Tezcatlipoca (Smoking Mirror, a major Aztec god) is a
   // real deity; the descriptor still mentions "deity-and-place naming"
   // to teach the register without seeding a specific deity name.
   'Aztec/Nahuatl-inspired: tl-clusters and compound words, deity-and-place naming',
-  // Andean: example tail removed under the protected-palette seed
+  // Andean: example tail removed under the protected-register seed
   // audit. Inti (Inca sun god, root of "Inti-Wasi" = "House of Sun")
   // and Killa (Inca moon goddess, Mama Killa) are real Inca deities.
   'Andean-inspired: structured Quechua flavor',
-  // Lakota: example tail removed under the protected-palette seed
+  // Lakota: example tail removed under the protected-register seed
   // audit. Wakinyan-Tanka (the Great Thunder Beings) and Tatanka-
   // Iyotaka (Sitting Bull) are sacred figures and a real historical
   // leader respectively; using them as fictional seeds pulls the LLM
@@ -273,15 +273,15 @@ export const allLanguagePalettes = [
 ];
 
 /**
- * Consumer-facing palette list. With `enableProtectedPalettes` off,
- * this is `allLanguagePalettes` minus every entry whose prefix is in
- * `PROTECTED_PALETTE_PREFIXES`. With the flag on, it equals
- * `allLanguagePalettes`. Existing callers (ItemGenerator.vue,
- * selectLanguagePalette callers, the test-palette-override dropdown)
+ * Consumer-facing register list. With `enableProtectedRegisters` off,
+ * this is `allLanguageRegisters` minus every entry whose prefix is in
+ * `PROTECTED_REGISTER_PREFIXES`. With the flag on, it equals
+ * `allLanguageRegisters`. Existing callers (ItemGenerator.vue,
+ * selectRegister callers, the test-register-override dropdown)
  * import this name and silently see only the active set.
  */
-export const languagePalettes = enableProtectedPalettes
-  ? allLanguagePalettes
-  : allLanguagePalettes.filter(
-      entry => !PROTECTED_PALETTE_PREFIXES.some(prefix => entry.startsWith(prefix)),
+export const registerList = enableProtectedRegisters
+  ? allLanguageRegisters
+  : allLanguageRegisters.filter(
+      entry => !PROTECTED_REGISTER_PREFIXES.some(prefix => entry.startsWith(prefix)),
     );

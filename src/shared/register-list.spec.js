@@ -1,28 +1,28 @@
 import {
-  allLanguagePalettes,
-  languagePalettes,
-  enableProtectedPalettes,
-  PROTECTED_PALETTE_PREFIXES,
-} from './language-palettes.mjs';
+  allLanguageRegisters,
+  registerList,
+  enableProtectedRegisters,
+  PROTECTED_REGISTER_PREFIXES,
+} from './register-list.mjs';
 
-describe('language-palettes — protected-palette feature flag', () => {
-  describe('enableProtectedPalettes', () => {
+describe('language-registers — protected-register feature flag', () => {
+  describe('enableProtectedRegisters', () => {
     it('defaults to false', () => {
-      // Production ships with protected palettes off until the
+      // Production ships with protected registers off until the
       // protection machinery is robust enough to revisit. Flipping to
       // true is a deliberate decision and should require updating
       // this test alongside the source.
-      expect(enableProtectedPalettes).toBe(false);
+      expect(enableProtectedRegisters).toBe(false);
     });
   });
 
-  describe('PROTECTED_PALETTE_PREFIXES', () => {
+  describe('PROTECTED_REGISTER_PREFIXES', () => {
     it('is a non-empty array', () => {
-      expect(Array.isArray(PROTECTED_PALETTE_PREFIXES)).toBe(true);
-      expect(PROTECTED_PALETTE_PREFIXES.length).toBeGreaterThan(0);
+      expect(Array.isArray(PROTECTED_REGISTER_PREFIXES)).toBe(true);
+      expect(PROTECTED_REGISTER_PREFIXES.length).toBeGreaterThan(0);
     });
 
-    it('includes representative non-Western palettes', () => {
+    it('includes representative non-Western registers', () => {
       // Spot-check the categories the flag is meant to gate. Drift
       // (a contributor silently dropping one) should fail this test.
       const expected = [
@@ -45,11 +45,11 @@ describe('language-palettes — protected-palette feature flag', () => {
         'Caucasian-inspired',
       ];
       for (const prefix of expected) {
-        expect(PROTECTED_PALETTE_PREFIXES).toContain(prefix);
+        expect(PROTECTED_REGISTER_PREFIXES).toContain(prefix);
       }
     });
 
-    it('does NOT include Western-canonical palettes', () => {
+    it('does NOT include Western-canonical registers', () => {
       // Western-canonical registers don't carry the same appropriation/
       // sacred-coding risk and remain available with the flag off.
       const westernCanonical = [
@@ -71,12 +71,12 @@ describe('language-palettes — protected-palette feature flag', () => {
         'Old-Occitan-inspired',
       ];
       for (const prefix of westernCanonical) {
-        expect(PROTECTED_PALETTE_PREFIXES).not.toContain(prefix);
+        expect(PROTECTED_REGISTER_PREFIXES).not.toContain(prefix);
       }
     });
 
-    it('does NOT include fictional fantasy palettes', () => {
-      // Fictional palettes have no real-world referents — no risk to
+    it('does NOT include fictional fantasy registers', () => {
+      // Fictional registers have no real-world referents — no risk to
       // gate.
       const fictionalFantasy = [
         'Sindarin-inspired',
@@ -91,23 +91,23 @@ describe('language-palettes — protected-palette feature flag', () => {
         'Technomagical',
       ];
       for (const prefix of fictionalFantasy) {
-        expect(PROTECTED_PALETTE_PREFIXES).not.toContain(prefix);
+        expect(PROTECTED_REGISTER_PREFIXES).not.toContain(prefix);
       }
     });
   });
 
-  describe('allLanguagePalettes', () => {
-    it('contains every protected-palette entry regardless of flag', () => {
+  describe('allLanguageRegisters', () => {
+    it('contains every protected-register entry regardless of flag', () => {
       // The full list is the source of truth for re-enabling. Tests,
       // protection-machinery validators, and dev tooling all depend on
       // it staying complete even when the flag is off.
-      for (const prefix of PROTECTED_PALETTE_PREFIXES) {
-        const match = allLanguagePalettes.find(p => p.startsWith(prefix));
+      for (const prefix of PROTECTED_REGISTER_PREFIXES) {
+        const match = allLanguageRegisters.find(p => p.startsWith(prefix));
         expect(match).toBeDefined();
       }
     });
 
-    it('contains representative Western/fictional palettes', () => {
+    it('contains representative Western/fictional registers', () => {
       const expected = [
         'Latin-inspired',
         'Old-Norse-inspired',
@@ -115,26 +115,26 @@ describe('language-palettes — protected-palette feature flag', () => {
         'Orcish',
       ];
       for (const prefix of expected) {
-        const match = allLanguagePalettes.find(p => p.startsWith(prefix));
+        const match = allLanguageRegisters.find(p => p.startsWith(prefix));
         expect(match).toBeDefined();
       }
     });
   });
 
-  describe('languagePalettes (consumer-facing, flag-gated)', () => {
-    it('omits every protected palette when the flag is off (default)', () => {
+  describe('registerList (consumer-facing, flag-gated)', () => {
+    it('omits every protected register when the flag is off (default)', () => {
       // This is the user-visible production behavior. With the flag
-      // off, no protected palette can be selected, detected from user
+      // off, no protected register can be selected, detected from user
       // input, or rolled into a generation.
-      for (const prefix of PROTECTED_PALETTE_PREFIXES) {
-        const leak = languagePalettes.find(p => p.startsWith(prefix));
+      for (const prefix of PROTECTED_REGISTER_PREFIXES) {
+        const leak = registerList.find(p => p.startsWith(prefix));
         expect(leak).toBeUndefined();
       }
     });
 
-    it('keeps every Western-canonical palette when the flag is off', () => {
-      // The Western set is the active palette pool with the flag off.
-      // Drift here would shrink the user-visible palette pool.
+    it('keeps every Western-canonical register when the flag is off', () => {
+      // The Western set is the active register pool with the flag off.
+      // Drift here would shrink the user-visible register pool.
       const westernCanonical = [
         'Latin-inspired',
         'Italian-Renaissance-inspired',
@@ -160,12 +160,12 @@ describe('language-palettes — protected-palette feature flag', () => {
         'Old-Occitan-inspired',
       ];
       for (const prefix of westernCanonical) {
-        const match = languagePalettes.find(p => p.startsWith(prefix));
+        const match = registerList.find(p => p.startsWith(prefix));
         expect(match).toBeDefined();
       }
     });
 
-    it('keeps every fictional-fantasy palette when the flag is off', () => {
+    it('keeps every fictional-fantasy register when the flag is off', () => {
       const fictional = [
         'Sindarin-inspired',
         'Draconic',
@@ -179,35 +179,35 @@ describe('language-palettes — protected-palette feature flag', () => {
         'Technomagical',
       ];
       for (const prefix of fictional) {
-        const match = languagePalettes.find(p => p.startsWith(prefix));
+        const match = registerList.find(p => p.startsWith(prefix));
         expect(match).toBeDefined();
       }
     });
 
-    it('is shorter than allLanguagePalettes when the flag is off', () => {
+    it('is shorter than allLanguageRegisters when the flag is off', () => {
       // Sanity check the filter actually fires. If they're equal, the
       // filter has been silently disabled (e.g., via a buggy edit to
-      // PROTECTED_PALETTE_PREFIXES).
-      expect(languagePalettes.length).toBeLessThan(allLanguagePalettes.length);
-      expect(allLanguagePalettes.length - languagePalettes.length)
-        .toBe(PROTECTED_PALETTE_PREFIXES.length);
+      // PROTECTED_REGISTER_PREFIXES).
+      expect(registerList.length).toBeLessThan(allLanguageRegisters.length);
+      expect(allLanguageRegisters.length - registerList.length)
+        .toBe(PROTECTED_REGISTER_PREFIXES.length);
     });
   });
 
   describe('integrity guards (regardless of flag)', () => {
-    it('every PROTECTED_PALETTE_PREFIXES entry resolves to an allLanguagePalettes entry', () => {
-      // A protected prefix that doesn't correspond to a real palette
+    it('every PROTECTED_REGISTER_PREFIXES entry resolves to an allLanguageRegisters entry', () => {
+      // A protected prefix that doesn't correspond to a real register
       // is a typo — it would silently fail to filter anything.
-      for (const prefix of PROTECTED_PALETTE_PREFIXES) {
-        const match = allLanguagePalettes.find(p => p.startsWith(prefix));
+      for (const prefix of PROTECTED_REGISTER_PREFIXES) {
+        const match = allLanguageRegisters.find(p => p.startsWith(prefix));
         expect(match).toBeDefined();
       }
     });
 
-    it('allLanguagePalettes entries each have a unique prefix', () => {
+    it('allLanguageRegisters entries each have a unique prefix', () => {
       // Duplicate prefixes would make startsWith lookups
       // non-deterministic.
-      const prefixes = allLanguagePalettes.map(p => p.split(':')[0]);
+      const prefixes = allLanguageRegisters.map(p => p.split(':')[0]);
       expect(new Set(prefixes).size).toBe(prefixes.length);
     });
   });

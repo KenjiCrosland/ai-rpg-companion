@@ -13,9 +13,10 @@ import { nextTick } from 'vue';
 import ItemGenerator from './ItemGenerator.vue';
 import * as openAi from "@/util/ai-client.mjs";
 import { originMaterialPools, allMaterials } from './utils/material-pools.mjs';
-import { orcGivenNames, goblinoidGivenNames } from './utils/orc-goblin-name-pools.mjs';
-import { fantasyRaceConventionalPalettes } from './utils/select-language-palette.mjs';
-import { languagePalettes } from './utils/language-palettes.mjs';
+import { orcishCharacterEpithets } from '@/shared/registers/orcish.mjs';
+import { goblinoidCharacterEpithets } from '@/shared/registers/goblinoid.mjs';
+import { fantasyRaceConventionalRegisters } from '@/shared/select-register.mjs';
+import { registerList } from '@/shared/register-list.mjs';
 
 // Mock the open-ai module
 jest.mock('@/util/ai-client.mjs', () => ({
@@ -241,7 +242,7 @@ describe('ItemGenerator - Prompt Generation', () => {
 
       // Should have naming style guidance instead
       expect(prompt).toContain('NAMING STYLE:');
-      expect(prompt).toContain('Use this linguistic palette for ALL names');
+      expect(prompt).toContain('Use this linguistic register for ALL names');
       expect(prompt).not.toContain('USER-PROVIDED NAME — DO NOT CHANGE');
     });
 
@@ -363,18 +364,18 @@ describe('ItemGenerator - Prompt Generation', () => {
     });
   });
 
-  describe('Origin/Palette Pairing — Conditional Translation Block', () => {
+  describe('Origin/Register Pairing — Conditional Translation Block', () => {
     // The prompt distinguishes two cases for fantasy-race origins:
     //   - Conventional pairing (Elven+Sindarin, Dwarven+Germanic, etc.)
     //     → simple "ORIGIN DRIVES LORE CONTENT:" guidance
-    //   - Unconventional pairing (Giant + non-pool palette, post-Task-1)
+    //   - Unconventional pairing (Giant + non-pool register, post-Task-1)
     //     → "UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP" block
     //       (trimmed in Task 4 — principle kept, three worked examples
     //       removed because they modeled pairings the architecture no
     //       longer allows post-Task-1, and the Mesoamerican example
     //       contained a sacred-concept teaching artifact we want out
     //       of the prompt)
-    // Math.random is stubbed because selectLanguagePalette uses it to roll
+    // Math.random is stubbed because selectRegister uses it to roll
     // the 70/30 weighted choice. Stubbing to 0.5 forces the conventional
     // branch; 0.85 forces the "other" (unconventional) branch.
 
@@ -386,14 +387,14 @@ describe('ItemGenerator - Prompt Generation', () => {
       randomSpy.mockRestore();
     });
 
-    it('renders UNCONVENTIONAL PAIRING block when fantasy-race origin pairs with non-conventional palette', async () => {
+    it('renders UNCONVENTIONAL PAIRING block when fantasy-race origin pairs with non-conventional register', async () => {
       // Post-Task-1, the only fantasy race that can reach the
       // unconventional-pairing branch is Giant (the cross-cultural-
       // archetype race left on priority-2 weighted with broad alt-
       // branch). The five Western-fantasy-bound races are allow-list-
-      // restricted, so their selected palette is always in their
+      // restricted, so their selected register is always in their
       // allow-list and the unconventional branch never fires for them.
-      randomSpy.mockReturnValue(0.85); // forces non-pool palette for Giant
+      randomSpy.mockReturnValue(0.85); // forces non-pool register for Giant
       wrapper = mount(ItemGenerator, { props: { premium: true } });
 
       const originSelect = wrapper.findAll('select')[2];
@@ -402,7 +403,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       // Routing assertion: the unconventional-pairing block fires for
-      // Giant + non-pool palette, and the simple ORIGIN-DRIVES block
+      // Giant + non-pool register, and the simple ORIGIN-DRIVES block
       // does not (the two are mutually exclusive). Block CONTENT —
       // principle phrasing, presence/absence of the stripped worked
       // examples, etc. — is a prompt-string concern verified through
@@ -412,7 +413,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).not.toMatch(/ORIGIN DRIVES LORE CONTENT:\s+The thematic origin/);
     });
 
-    it('renders simple ORIGIN DRIVES LORE CONTENT block (and not UNCONVENTIONAL) when fantasy-race origin pairs with its conventional palette', async () => {
+    it('renders simple ORIGIN DRIVES LORE CONTENT block (and not UNCONVENTIONAL) when fantasy-race origin pairs with its conventional register', async () => {
       // Same context as above, but Math.random < 0.7 forces the
       // conventional pool[0] (Norse-inspired for Giant). The
       // unconventional branch never fires.
@@ -434,8 +435,8 @@ describe('ItemGenerator - Prompt Generation', () => {
 
     it('renders simple ORIGIN DRIVES LORE CONTENT block when origin is not a fantasy race', async () => {
       // Non-fantasy-race origin (Draconic) → conditional flag is always
-      // false regardless of which palette gets rolled, so the simple block
-      // is the right one even on a "weird" palette.
+      // false regardless of which register gets rolled, so the simple block
+      // is the right one even on a "weird" register.
       randomSpy.mockReturnValue(0.85);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
 
@@ -464,12 +465,12 @@ describe('ItemGenerator - Prompt Generation', () => {
     // assertions were on principle phrasing ("lore MUST explicitly
     // name the origin culture", "A reader should be able to identify
     // the origin from the lore alone"). Routing (simple block fires
-    // for Elven + conventional palette) is covered elsewhere.
+    // for Elven + conventional register) is covered elsewhere.
 
-    it('renders LANGUAGE PALETTE RESTRICTION when origin is Orcish (override-revocation block)', async () => {
+    it('renders LANGUAGE REGISTER RESTRICTION when origin is Orcish (override-revocation block)', async () => {
       // The orc-coded-pairing failure user reported: code-side filter
-      // correctly excluded orc-coded palettes from random selection,
-      // but the LLM-authority LANGUAGE PALETTE OVERRIDE block let the
+      // correctly excluded orc-coded registers from random selection,
+      // but the LLM-authority LANGUAGE REGISTER OVERRIDE block let the
       // model override to Japanese anyway. The fix revokes that
       // authority prompt-side when fantasy race is Orcish or Goblinoid.
       randomSpy.mockReturnValue(0.5);
@@ -480,7 +481,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
       expect(prompt).toContain('OVERRIDES THE AUTHORITY ABOVE');
       expect(prompt).toContain('REVOKED for this generation');
       // The full restricted-register list must be present so the LLM
@@ -492,7 +493,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('Lakota or other North American Indigenous traditions');
     });
 
-    it('renders LANGUAGE PALETTE RESTRICTION when origin is Goblinoid', async () => {
+    it('renders LANGUAGE REGISTER RESTRICTION when origin is Goblinoid', async () => {
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       const originSelect = wrapper.findAll('select')[2];
@@ -501,10 +502,10 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
-    it('renders LANGUAGE PALETTE RESTRICTION when lore mentions orcish on a non-fantasy-race origin (user repro)', async () => {
+    it('renders LANGUAGE REGISTER RESTRICTION when lore mentions orcish on a non-fantasy-race origin (user repro)', async () => {
       // The exact user-reported scenario: dropdown=Necromantic, lore=
       // "Orcish Battleaxe". fantasyRace resolves to 'Orcish' via the
       // keyword path (priority 2b in resolveFantasyRace), so the
@@ -526,13 +527,13 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
       // Worth verifying the restriction is hard-banning Japanese
       // specifically since that was the failure case in the bug report.
       expect(prompt).toContain('Chinese, Japanese, Korean, Mongolian, Tibetan, Thai');
     });
 
-    it('does NOT render LANGUAGE PALETTE RESTRICTION when origin is non-fantasy-race with no Western-bound-race keyword', async () => {
+    it('does NOT render LANGUAGE REGISTER RESTRICTION when origin is non-fantasy-race with no Western-bound-race keyword', async () => {
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       const originSelect = wrapper.findAll('select')[2];
@@ -541,10 +542,10 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).not.toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      expect(prompt).not.toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
-    it('renders LANGUAGE PALETTE RESTRICTION for Elven (now Western-fantasy-bound)', async () => {
+    it('renders LANGUAGE REGISTER RESTRICTION for Elven (now Western-fantasy-bound)', async () => {
       // Pre-Task-1 this test asserted Elven did NOT render the
       // restriction (the restriction was orc/goblin-scoped). Post-
       // Task-1, Elven joined WESTERN_FANTASY_BOUND_RACES alongside Dwarven and
@@ -558,10 +559,10 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
-    it('renders LANGUAGE PALETTE RESTRICTION for Dwarven (now Western-fantasy-bound)', async () => {
+    it('renders LANGUAGE REGISTER RESTRICTION for Dwarven (now Western-fantasy-bound)', async () => {
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       const originSelect = wrapper.findAll('select')[2];
@@ -570,10 +571,10 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
-    it('renders LANGUAGE PALETTE RESTRICTION for Gnomish (now Western-fantasy-bound)', async () => {
+    it('renders LANGUAGE REGISTER RESTRICTION for Gnomish (now Western-fantasy-bound)', async () => {
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
       const originSelect = wrapper.findAll('select')[2];
@@ -582,10 +583,10 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
-    it('does NOT render LANGUAGE PALETTE RESTRICTION for Giant (cross-cultural archetype)', async () => {
+    it('does NOT render LANGUAGE REGISTER RESTRICTION for Giant (cross-cultural archetype)', async () => {
       // Regression guard: Giant is NOT in WESTERN_FANTASY_BOUND_RACES — its
       // archetype-slot exists in many living mythological traditions
       // (jötnar/titans/rakshasas/oni). The Western-fantasy-bound
@@ -598,13 +599,13 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).not.toContain('LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      expect(prompt).not.toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
-    it('always renders ITEM NAMING — TRANSLATION FOR NON-ENGLISH PALETTES directive', async () => {
+    it('always renders ITEM NAMING — TRANSLATION FOR NON-ENGLISH REGISTERS directive', async () => {
       // The translation rule is a general naming directive (not gated
-      // on which palette gets rolled) — DeepSeek decides which side
-      // of the apply/don't-apply lists the selected palette belongs
+      // on which register gets rolled) — DeepSeek decides which side
+      // of the apply/don't-apply lists the selected register belongs
       // to. So the prompt must contain it for every generation.
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
@@ -612,7 +613,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('ITEM NAMING — TRANSLATION FOR NON-ENGLISH PALETTES');
+      expect(prompt).toContain('ITEM NAMING — TRANSLATION FOR NON-ENGLISH REGISTERS');
       // Worked-example anchors documented in the brief — a regression
       // here means a contributor trimmed examples without realizing
       // they're load-bearing for DeepSeek's pattern-match.
@@ -621,7 +622,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('Tizi-Uzzu');
       expect(prompt).toContain('Pou o te Maunga');
       // Apply / don't-apply sections must both be present so DeepSeek
-      // knows which palettes trigger the rule.
+      // knows which registers trigger the rule.
       expect(prompt).toContain('APPLY translation rule');
       expect(prompt).toContain('DO NOT apply translation rule');
       // Latin/Greek/Italian Renaissance must be on the don't-apply side.
@@ -630,69 +631,23 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('DESCRIPTION INTEGRATION PATTERN');
     });
 
-    it('Orcish dropdown rotates the palette example tail when the rolled palette IS Orcish', async () => {
-      // Under the allow-list architecture, an Orcish dropdown picks
-      // from a 10-palette pool; rotation only fires when the rolled
-      // palette is actually the 'Orcish' palette (rotatePaletteExamples
-      // is keyed on prefix). Mock Math.random=0 so pool[0] is selected,
-      // which is 'Orcish' (the primary fictional register). The prompt's
-      // NAMING STYLE block must embed names from the orc pool, not the
-      // static "Grokthash, Uzgark, Dra'mok" defaults.
-      randomSpy.mockReturnValue(0);
-      wrapper = mount(ItemGenerator, { props: { premium: true } });
-      const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Orcish');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
+    // Sunset: the two "rotates the register example tail" tests
+    // (Orcish + Goblinoid) were removed when the example-tail rotation
+    // was sunset in favor of the unified strict-whitelist injection.
+    // The orc/goblin pool data still exists and is now consumed via
+    // buildCharacterWhitelistBlock (mandatory strictness); the
+    // injected whitelist is a routing-decision concern verified by
+    // tests on character-whitelist-prompt and character-whitelist-
+    // registry, not via prompt-string content here.
 
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      const namingLine = prompt.match(/Use this linguistic palette for ALL names[^\n]*/)[0];
-      // Verify the rolled palette IS Orcish (otherwise the rotation
-      // wouldn't fire and this test would be checking the wrong path).
-      expect(namingLine).toMatch(/location names: Orcish:/);
-
-      const exampleTail = namingLine.match(/\(e\.g\., (.+?)\)/);
-      expect(exampleTail).not.toBeNull();
-      const sampled = exampleTail[1].split(', ');
-      expect(sampled.length).toBeGreaterThanOrEqual(3);
-      for (const name of sampled) {
-        expect(orcGivenNames).toContain(name);
-      }
-      // The static defaults must not appear together in the rotated tail.
-      expect(exampleTail[1]).not.toContain('Grokthash, Uzgark, Dra\'mok');
-    });
-
-    it('Goblinoid dropdown rotates the palette example tail when the rolled palette IS Goblin-inspired', async () => {
-      // Same pool-pick determinism as Orcish: pool[0] = 'Goblin-inspired'
-      // for Goblinoid, so Math.random=0 forces the path that triggers
-      // rotation.
-      randomSpy.mockReturnValue(0);
-      wrapper = mount(ItemGenerator, { props: { premium: true } });
-      const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Goblinoid');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
-
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      const namingLine = prompt.match(/Use this linguistic palette for ALL names[^\n]*/)[0];
-      expect(namingLine).toMatch(/location names: Goblin-inspired:/);
-
-      const exampleTail = namingLine.match(/\(e\.g\., (.+?)\)/);
-      expect(exampleTail).not.toBeNull();
-      const sampled = exampleTail[1].split(', ');
-      for (const name of sampled) {
-        expect(goblinoidGivenNames).toContain(name);
-      }
-    });
-
-    it('Orcish dropdown can roll a non-Orcish allow-list palette (no rotation in that case)', async () => {
+    it('Orcish dropdown can roll a non-Orcish allow-list register', async () => {
       // Regression guard for the allow-list architecture: when the pool
-      // pick lands on Old-Norse, Anglo-Saxon, etc., those palettes
+      // pick lands on Old-Norse, Anglo-Saxon, etc., those registers
       // keep their static seeds (no orc-pool rotation). Iterate index
       // rolls and confirm at least one lands on a non-Orcish member of
       // the pool.
       const indexRolls = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95];
-      let sawNonOrcishPaletteInPool = false;
+      let sawNonOrcishRegisterInPool = false;
       for (const indexRoll of indexRolls) {
         if (wrapper) wrapper.unmount();
         jest.clearAllMocks();
@@ -703,49 +658,49 @@ describe('ItemGenerator - Prompt Generation', () => {
         await wrapper.find('form').trigger('submit');
         await flushPromises();
         const prompt = openAi.generateGptResponse.mock.calls[0][0];
-        const namingLine = prompt.match(/Use this linguistic palette for ALL names[^\n]*/)[0];
+        const namingLine = prompt.match(/Use this linguistic register for ALL names[^\n]*/)[0];
         if (!/location names: Orcish:/.test(namingLine)) {
-          sawNonOrcishPaletteInPool = true;
+          sawNonOrcishRegisterInPool = true;
           break;
         }
       }
-      expect(sawNonOrcishPaletteInPool).toBe(true);
+      expect(sawNonOrcishRegisterInPool).toBe(true);
     });
 
-    describe('every conventional pool prefix resolves to a languagePalettes entry', () => {
+    describe('every conventional pool prefix resolves to a registerList entry', () => {
       // Non-LLM integrity check: a prefix listed in
-      // fantasyRaceConventionalPalettes that doesn't exist in
-      // languagePalettes silently falls through to the 30% alt branch
-      // — not a crash but a wrong-behavior bug. With languagePalettes
+      // fantasyRaceConventionalRegisters that doesn't exist in
+      // registerList silently falls through to the 30% alt branch
+      // — not a crash but a wrong-behavior bug. With registerList
       // extracted to its own module, the check is a direct lookup
       // against the imported list (no need to drive selection through
       // a mocked component, which is unreliable because earlier
       // Math.random consumers in generateMagicItem shift the mock
       // queue's alignment).
       const cases = [];
-      for (const [race, pool] of Object.entries(fantasyRaceConventionalPalettes)) {
+      for (const [race, pool] of Object.entries(fantasyRaceConventionalRegisters)) {
         for (const prefix of pool) {
           cases.push([race, prefix]);
         }
       }
 
       it.each(cases)('%s pool prefix "%s" resolves', (race, prefix) => {
-        const matchingEntry = languagePalettes.find(p => p.startsWith(prefix));
+        const matchingEntry = registerList.find(p => p.startsWith(prefix));
         expect(matchingEntry).toBeDefined();
       });
 
-      it('languagePalettes entries each have unique prefixes (no collisions)', () => {
-        // If two languagePalettes entries shared a prefix, startsWith
+      it('registerList entries each have unique prefixes (no collisions)', () => {
+        // If two registerList entries shared a prefix, startsWith
         // lookups would non-deterministically match either depending
         // on array order. Each "prefix:" head should be unique.
-        const prefixes = languagePalettes.map(p => p.split(':')[0]);
+        const prefixes = registerList.map(p => p.split(':')[0]);
         expect(new Set(prefixes).size).toBe(prefixes.length);
       });
     });
 
-    it('Elven dropdown does NOT rotate via orc/goblin pool (multi-palette races bypass)', async () => {
-      // Regression guard: rotation is scoped to single-palette races.
-      // Elven gets variety from cross-palette rotation, so the orc/
+    it('Elven dropdown does NOT rotate via orc/goblin pool (multi-register races bypass)', async () => {
+      // Regression guard: rotation is scoped to single-register races.
+      // Elven gets variety from cross-register rotation, so the orc/
       // goblin rotation must not interfere.
       randomSpy.mockReturnValue(0);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
@@ -755,15 +710,15 @@ describe('ItemGenerator - Prompt Generation', () => {
       await flushPromises();
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      const namingLine = prompt.match(/Use this linguistic palette for ALL names[^\n]*/)[0];
+      const namingLine = prompt.match(/Use this linguistic register for ALL names[^\n]*/)[0];
       const exampleTail = namingLine.match(/\(e\.g\., (.+?)\)/);
       // Should still have an example tail (the static one from the
-      // Sindarin palette); none of those names should be in the orc
+      // Sindarin register); none of those names should be in the orc
       // or goblin pool.
       const sampled = exampleTail[1].split(', ');
       for (const name of sampled) {
-        expect(orcGivenNames).not.toContain(name);
-        expect(goblinoidGivenNames).not.toContain(name);
+        expect(orcishCharacterEpithets).not.toContain(name);
+        expect(goblinoidCharacterEpithets).not.toContain(name);
       }
     });
 
@@ -773,7 +728,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       // real-world cultural register, with a short LIMITED EXCEPTIONS
       // list grounded in fantasy-genre convention (Greek, Roman,
       // Egyptian, Norse-family, Germanic-family, Celtic-family,
-      // Sindarin + fictional palettes). User-typed real-entity
+      // Sindarin + fictional registers). User-typed real-entity
       // invocations still honored via cultural detection (priority 1).
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
@@ -797,7 +752,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       // names that aren't real deities) and the common-noun
       // counter-example. A Diné-register example (Hashtłʼish, Navajo
       // word for clay) used to anchor here too; it was removed when
-      // the Navajo/Diné palette was deleted under appropriation caution.
+      // the Navajo/Diné register was deleted under appropriation caution.
       expect(prompt).toContain('Olosun');
       expect(prompt).toContain('Kibarua');
 
@@ -810,12 +765,12 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('Norse-inspired, Old-Norse-inspired');
       expect(prompt).toContain('Anglo-Saxon-inspired, Old-High-German-inspired');
       expect(prompt).toContain('Celtic-inspired, Welsh-inspired, Irish-inspired, Old-Irish-inspired');
-      expect(prompt).toContain('Sindarin-inspired and all fictional palettes');
+      expect(prompt).toContain('Sindarin-inspired and all fictional registers');
 
       // Explicit non-exception list — pins the most acute production-
       // failure traditions (Maori, Lakota, Yoruba) so a future
       // contributor can't quietly drop them. Navajo/Diné used to be
-      // pinned here too; the palette was removed entirely under
+      // pinned here too; the register was removed entirely under
       // appropriation caution, so we no longer assert its presence.
       expect(prompt).toContain('Yoruba');
       expect(prompt).toContain('Lakota');
@@ -867,14 +822,14 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('ORIGIN DRIVES LORE CONTENT');
       expect(prompt).toContain('lore MUST explicitly name the origin culture');
       // And the translation directive coexists.
-      expect(prompt).toContain('ITEM NAMING — TRANSLATION FOR NON-ENGLISH PALETTES');
+      expect(prompt).toContain('ITEM NAMING — TRANSLATION FOR NON-ENGLISH REGISTERS');
     });
 
     it('does not render UNCONVENTIONAL block for each of the six fantasy races on the conventional roll', async () => {
-      // Smoke-test that all six entries in fantasyRaceOriginConventionalPalettes
+      // Smoke-test that all six entries in fantasyRaceOriginConventionalRegisters
       // hit the conventional branch when Math.random < 0.7. Catches future
-      // accidents where a race is added to the keyword/palette map but
-      // selectLanguagePalette doesn't recognize it.
+      // accidents where a race is added to the keyword/register map but
+      // selectRegister doesn't recognize it.
       randomSpy.mockReturnValue(0.5);
       const races = ['Elven', 'Dwarven', 'Orcish', 'Goblinoid', 'Gnomish', 'Giant'];
 

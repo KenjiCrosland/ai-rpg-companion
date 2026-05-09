@@ -26,7 +26,7 @@
  *     yorubaPlaceEpithets,
  *     yorubaSpiritEpithets,
  *     yorubaCulturalNotes,
- *   } from '@/data/cultural-pools/yoruba.mjs';
+ *   } from '@/shared/registers/yoruba.mjs';
  *
  * Native-speaker review of the constructions before broad rollout
  * is encouraged. Production user feedback identifies any constructions

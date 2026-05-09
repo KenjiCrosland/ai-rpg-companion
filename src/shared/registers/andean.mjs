@@ -5,7 +5,7 @@
  * METHODOLOGY AND SCOPE
  * ----------------------------------------------------------------------------
  *
- * This palette draws on Cuzco Quechua linguistic and material patterns — the
+ * This register draws on Cuzco Quechua linguistic and material patterns — the
  * imperial register associated with the Inca state, distinguished by its full
  * three-way stop contrast (plain, aspirated, ejective) and uvular q. Quechua
  * is a living language family spoken today by roughly 13 million people across
@@ -22,13 +22,13 @@
  * ROUTING SCOPE
  * ----------------------------------------------------------------------------
  *
- * In-scope inputs (palette should fire):
+ * In-scope inputs (register should fire):
  *   - "Andean", "Inca", "Cuzco", "Cusco", "Quechua", "Quechua-inspired"
  *   - Cuzco-region or Bolivian-altiplano cultural framings with Quechua coding
  *   - Highland South American fantasy framings with explicit Inca-imperial
  *     register cues
  *
- * Out-of-scope adjacents (need their own palette if added later):
+ * Out-of-scope adjacents (need their own register if added later):
  *   - Aymara — separate language family, distinct phonology and pantheon
  *   - Ecuadorian Kichwa — lacks ejective/aspirated contrasts; different name
  *     conventions
@@ -36,7 +36,7 @@
  *   - Pre-Inca coastal cultures (Moche, Chimú, Nazca) — distinct material
  *     culture and pantheon
  *
- * Acceptable fall-through (route to general handling, not this palette):
+ * Acceptable fall-through (route to general handling, not this register):
  *   - Generic "South American fantasy" without specific Andean coding
  *   - "Indigenous American" without further specification
  *   - "Mesoamerican" framings (Aztec, Maya, etc.)
@@ -224,7 +224,7 @@ export const andeanAvoidList = [
 ];
 
 export const andeanCulturalNotes = `
-This palette draws on Andean and Cuzco-Quechua linguistic and material patterns. Quechua is a living language family spoken today by roughly 13 million people across Peru, Bolivia, Ecuador, and parts of Chile, Argentina, and Colombia. The Cuzco variety modeled here is the imperial register associated with the Inca state, distinguished by its full ejective and aspirated consonant inventory. This is an active living tradition deserving serious engagement.
+This register draws on Andean and Cuzco-Quechua linguistic and material patterns. Quechua is a living language family spoken today by roughly 13 million people across Peru, Bolivia, Ecuador, and parts of Chile, Argentina, and Colombia. The Cuzco variety modeled here is the imperial register associated with the Inca state, distinguished by its full ejective and aspirated consonant inventory. This is an active living tradition deserving serious engagement.
 
 PHONOLOGY: Three vowels only — a, i, u. No e or o except in Spanish-influenced spellings. Cuzco Quechua has a uvular q (distinct from k) and a three-way stop contrast: plain (p, t, ch, k, q), aspirated (ph, th, chh, kh, qh), and ejective (p', t', ch', k', q'). The apostrophe marks an ejective; an h after a stop marks aspiration. Other consonants: m, n, ñ, l, ll (palatal lateral), s, h, w, y, r. Stress falls on the penultimate syllable. Vowel sequences are separate syllables, not diphthongs. Preserve apostrophes and h-after-stop spellings exactly — these are phonemic, not decorative.
 

@@ -59,23 +59,23 @@
             <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore (optional)"
               placeholder="Enter any details about the item lore" class="item-lore-details">
             </cdr-input>
-            <!-- TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE -->
-            <fieldset v-if="isDev" class="test-palette-override">
-              <legend>TEST: Palette Override (dev only)</legend>
+            <!-- TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE -->
+            <fieldset v-if="isDev" class="test-register-override">
+              <legend>TEST: Register Override (dev only)</legend>
               <label>
-                Palette:
-                <select v-model="testPaletteOverride">
+                Register:
+                <select v-model="testRegisterOverride">
                   <option value="">Auto (use detection)</option>
-                  <option v-for="opt in paletteOverrideOptions" :key="opt.value" :value="opt.value">
+                  <option v-for="opt in registerOverrideOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
                   </option>
                 </select>
               </label>
-              <p v-if="lastUsedPalette" class="test-palette-override__last">
-                Last generation used: <code>{{ lastUsedPalette }}</code>
+              <p v-if="lastUsedRegister" class="test-register-override__last">
+                Last generation used: <code>{{ lastUsedRegister }}</code>
               </p>
             </fieldset>
-            <!-- END TEST-PALETTE-OVERRIDE -->
+            <!-- END TEST-REGISTER-OVERRIDE -->
             <ParActionButton class="generate-button" type="submit" :full-width="true">Generate Magic Item
             </ParActionButton>
           </form>
@@ -320,35 +320,32 @@ import { useToast } from '@/composables/useToast';
 import { renameItemReferences, removeReferencesForItem } from '@/util/item-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { detectFromUserInput } from './utils/detect-user-input.mjs';
-import { detectLanguageFromUserInput } from './utils/detect-language-from-input.mjs';
+import { detectRegisterFromInput } from '@/shared/detect-register-from-input.mjs';
 import {
-  selectLanguagePalette,
+  selectRegister,
   resolveFantasyRace,
-  fantasyRaceConventionalPalettes,
+  fantasyRaceConventionalRegisters,
   WESTERN_FANTASY_BOUND_RACES,
-} from './utils/select-language-palette.mjs';
+} from '@/shared/select-register.mjs';
 import { originMaterialPools, allMaterials } from './utils/material-pools.mjs';
-import { rotatePaletteExamples } from './utils/orc-goblin-name-pools.mjs';
-import { languagePalettes } from './utils/language-palettes.mjs';
-import { buildYorubaPromptBlock } from './utils/yoruba-prompt.mjs';
-import { buildAndeanPromptBlock } from './utils/andean-prompt.mjs';
-import { buildCatchallPromptBlock } from './utils/catchall-prompt.mjs';
-import { buildFictionalPaletteWhitelistBlock } from './utils/fictional-palette-whitelist-prompt.mjs';
-import { buildOriginCharacterWhitelistBlock } from './utils/origin-character-whitelist-prompt.mjs';
-import { filterOriginsForForcedPalette } from './utils/filter-origins-for-forced-palette.mjs';
+import { registerList } from '@/shared/register-list.mjs';
+import { buildPoolPromptBlock } from '@/shared/pool-prompt.mjs';
+import { buildCatchallPromptBlock } from '@/shared/catchall-prompt.mjs';
+import { buildCharacterWhitelistBlock } from '@/shared/character-whitelist-prompt.mjs';
+import { filterOriginsForForcedRegister } from '@/shared/filter-origins-for-forced-register.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
-// TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
+// TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
 // process.env.NODE_ENV avoids the import.meta parse error under Jest;
 // Vite statically replaces it at build time. Same pattern as ai-client.mjs.
 const isDev = process.env.NODE_ENV !== 'production';
-const testPaletteOverride = ref('');
-const lastUsedPalette = ref('');
-const paletteOverrideOptions = languagePalettes.map(p => ({
+const testRegisterOverride = ref('');
+const lastUsedRegister = ref('');
+const registerOverrideOptions = registerList.map(p => ({
   value: p,
   label: p.length > 60 ? p.slice(0, 57) + '…' : p,
 }));
-// END TEST-PALETTE-OVERRIDE
+// END TEST-REGISTER-OVERRIDE
 
 const toast = useToast();
 
@@ -666,12 +663,12 @@ const generateMagicItem = async () => {
     : userGenericMatchesResolvedType ? pickFromGenericSubpool()
     : weaponTypes[Math.floor(Math.random() * weaponTypes.length)];
 
-  // Origin definitions — purely thematic. The previous originPaletteMap
-  // bundled origin (thematic) with naming palette (linguistic), which
+  // Origin definitions — purely thematic. The previous originRegisterMap
+  // bundled origin (thematic) with naming register (linguistic), which
   // forced stereotype pairings (Slavic = Necromantic, Arabic = Shadow)
   // and prevented combinations like "Japanese-named Celestial item."
   // The refactor splits these into independent dimensions: origin
-  // describes what the item IS thematically; languagePalettes (below)
+  // describes what the item IS thematically; registerList (below)
   // describes how proper nouns SOUND. Either can pair with any of the
   // other freely.
   const originDefinitions = {
@@ -703,12 +700,12 @@ const generateMagicItem = async () => {
 
   // Pre-select a mood/tone. Pool calibrated for tonal variety — roughly
   // 1/4 dark, 1/4 light, 1/4 neutral/utilitarian, 1/4 weird/strange.
-  // Mood selection happens here (before palette selection) because the
+  // Mood selection happens here (before register selection) because the
   // blank-canvas origin selector below depends on it, and the blank-
-  // canvas origin selector MUST run before palette selection so the
+  // canvas origin selector MUST run before register selection so the
   // orc/goblin and horror-coded protection layers see the resolved
-  // origin. Previously this block lived after palette selection, which
-  // let the dev palette override (and the existing random palette
+  // origin. Previously this block lived after register selection, which
+  // let the dev register override (and the existing random register
   // selection) silently bypass the protections when the user hadn't
   // picked an origin from the dropdown.
   const moods = [
@@ -789,108 +786,108 @@ const generateMagicItem = async () => {
     const aestheticOrigins = moodOriginCompatibility[selectedMood] || [];
     let eligibleOrigins = [...aestheticOrigins, ...culturalOrigins];
 
-    // TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
-    // When the dev forces a palette via the override dropdown, also
+    // TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
+    // When the dev forces a register via the override dropdown, also
     // filter the random origin pool to exclude origins that would
-    // protection-override the forced palette. See filter-origins-for-
-    // forced-palette.mjs for the full rationale and unit tests.
-    if (isDev && testPaletteOverride.value) {
-      eligibleOrigins = filterOriginsForForcedPalette(
+    // protection-override the forced register. See filter-origins-for-
+    // forced-register.mjs for the full rationale and unit tests.
+    if (isDev && testRegisterOverride.value) {
+      eligibleOrigins = filterOriginsForForcedRegister(
         eligibleOrigins,
-        testPaletteOverride.value,
+        testRegisterOverride.value,
       );
     }
-    // END TEST-PALETTE-OVERRIDE
+    // END TEST-REGISTER-OVERRIDE
 
     resolvedOrigin = eligibleOrigins[Math.floor(Math.random() * eligibleOrigins.length)];
   }
 
-  // languagePalettes is imported from ./utils/language-palettes.mjs.
+  // registerList is imported from ./utils/register-list.mjs.
   // Lives in its own module so test specs can verify integrity (every
-  // prefix referenced in fantasyRaceConventionalPalettes resolves to
+  // prefix referenced in fantasyRaceConventionalRegisters resolves to
   // an entry there) without depending on inline data here.
 
-  // Language palette selection runs through the full priority hierarchy:
+  // Language register selection runs through the full priority hierarchy:
   //   1. Cultural detection from user input (Akiko → Japanese, etc.)
   //   2. Fantasy-race weighted (70/30 conventional/other) — when the
-  //      origin or user input signals a core fantasy race, palette
+  //      origin or user input signals a core fantasy race, register
   //      selection biases toward the genre-conventional pairing
   //      (Elven → Sindarin, Dwarven → Germanic, etc.) without locking
   //      out unconventional pairings entirely.
   //   3. Uniform random across the full pool.
   // resolvedOrigin is fully resolved at this point — dropdown selection
-  // OR blank-canvas random pick (which honors the dev palette-override
+  // OR blank-canvas random pick (which honors the dev register-override
   // filter above) OR null when user-provided text drives thematic
   // context. Protection layers (orc/goblin allow-list, horror pool)
   // see the final resolvedOrigin and fire correctly.
   const userInputForLangDetection = `${itemName.value} ${itemLore.value}`;
-  // TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
-  // The override routes THROUGH selectLanguagePalette as the cultural-
+  // TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
+  // The override routes THROUGH selectRegister as the cultural-
   // detection input, not around it. This preserves the architectural
   // protections (horror-origin pool, orc/goblin allow-list) that would
   // otherwise be silently bypassed in dev:
   //   - Non-restricted origins: override fires as priority-1 detection
   //     and wins.
   //   - Horror origins (Abyssal/Infernal/Necromantic/Vampiric/
-  //     Lycanthropic/Aberrant): override wins only if the palette is
+  //     Lycanthropic/Aberrant): override wins only if the register is
   //     in the horror pool; otherwise pool wins.
   //   - Orc/Goblin: override wins only if in the allow-list pool;
   //     otherwise pool wins.
-  // The "Last generation used" badge below shows the actual palette
+  // The "Last generation used" badge below shows the actual register
   // selected, so when protections override the override, the dev sees
   // the real outcome.
-  const detectFn = (isDev && testPaletteOverride.value)
-    ? () => testPaletteOverride.value
-    : detectLanguageFromUserInput;
-  const selectedPalette = selectLanguagePalette(
+  const detectFn = (isDev && testRegisterOverride.value)
+    ? () => testRegisterOverride.value
+    : detectRegisterFromInput;
+  const selectedRegister = selectRegister(
     resolvedOrigin,
     userInputForLangDetection,
-    languagePalettes,
+    registerList,
     detectFn,
   );
-  lastUsedPalette.value = selectedPalette;
-  // END TEST-PALETTE-OVERRIDE
+  lastUsedRegister.value = selectedRegister;
+  // END TEST-REGISTER-OVERRIDE
 
-  // Unconventional pairing = fantasy-race origin paired with a palette
+  // Unconventional pairing = fantasy-race origin paired with a register
   // OTHER than its genre-conventional one (e.g., Elven origin + Slavic
-  // palette, Gnomish origin + Mesoamerican palette). Fires for the 30%
-  // case in selectLanguagePalette's weighted branch. We use it to gate
+  // register, Gnomish origin + Mesoamerican register). Fires for the 30%
+  // case in selectRegister's weighted branch. We use it to gate
   // the deeper "translate, don't mash up" prompt section, which is too
   // expensive in tokens to render for every fantasy-race generation.
-  // After the multi-palette pool refactor, each fantasy race's
-  // conventional palette is an array of prefixes. The pairing is
+  // After the multi-register pool refactor, each fantasy race's
+  // conventional register is an array of prefixes. The pairing is
   // unconventional iff none of the pool prefixes matches the
-  // selected palette.
+  // selected register.
   const isUnconventionalPairing = !!(
     resolvedOrigin
-    && fantasyRaceConventionalPalettes[resolvedOrigin]
-    && !fantasyRaceConventionalPalettes[resolvedOrigin].some(prefix =>
-      selectedPalette.startsWith(prefix),
+    && fantasyRaceConventionalRegisters[resolvedOrigin]
+    && !fantasyRaceConventionalRegisters[resolvedOrigin].some(prefix =>
+      selectedRegister.startsWith(prefix),
     )
   );
 
   // Western-fantasy-bound race context = fantasy-race resolution (per
-  // the same logic selectLanguagePalette uses) yields one of the five
+  // the same logic selectRegister uses) yields one of the five
   // Western-fantasy-bound races (Orcish, Goblinoid, Dwarven, Gnomish,
-  // Elven — see WESTERN_FANTASY_BOUND_RACES in select-language-palette.mjs).
+  // Elven — see WESTERN_FANTASY_BOUND_RACES in select-register.mjs).
   // Catches both the dropdown case and the keyword-in-lore case
   // (origin=Necromantic + lore="Orcish Battleaxe" → fantasyRace='Orcish'
   // via priority 2b keyword scan).
   //
   // Two layers of protection:
-  // 1. STRUCTURAL — selectLanguagePalette uses an allow-list-restricted
+  // 1. STRUCTURAL — selectRegister uses an allow-list-restricted
   //    branch for these races (no 30% alternative, cultural-detection
-  //    input subordinated to the allow-list). The selected palette can
+  //    input subordinated to the allow-list). The selected register can
   //    only come from the race's curated European/fictional allow-list.
-  // 2. PROMPT-SIDE — the LANGUAGE PALETTE RESTRICTION block below
-  //    revokes the LLM's LANGUAGE PALETTE OVERRIDE authority for these
+  // 2. PROMPT-SIDE — the LANGUAGE REGISTER RESTRICTION block below
+  //    revokes the LLM's LANGUAGE REGISTER OVERRIDE authority for these
   //    contexts so creative re-association during generation can't
   //    re-introduce the cross-cultural pairings the structural
   //    protection blocks.
   // Defense-in-depth: if a future code change regresses the structural
   // protection, the prompt block catches it; if the LLM ignores the
   // prompt block, the structural protection has already restricted
-  // the pre-selected palette to the safe pool.
+  // the pre-selected register to the safe pool.
   //
   // Cross-cultural-archetype races (Fey, Giant) are deliberately NOT
   // covered — their archetype-slots exist in many living mythological
@@ -902,14 +899,15 @@ const generateMagicItem = async () => {
   );
   const isWesternFantasyRaceContext = WESTERN_FANTASY_BOUND_RACES.includes(fantasyRaceForGen);
 
-  // Orc and goblin conventional pools are intentionally single-palette
-  // (see fantasyRaceConventionalPalettes docstring on the racism-coding
-  // caveat), so they don't get the cross-palette rotation that gives
-  // Elven/Dwarven/Gnomish/Giant generations name variety. Instead, we
-  // rotate the palette description's "(e.g., …)" example tail by
-  // sampling from a 100-name curated pool per race. Non-orc/goblin
-  // palettes pass through this helper unchanged.
-  const displayedPalette = rotatePaletteExamples(selectedPalette);
+  // Orc and goblin conventional pools are intentionally single-register
+  // (see fantasyRaceConventionalRegisters docstring on the racism-coding
+  // No example-tail rotation: orc/goblin items now use the unified
+  // strict whitelist injection (the curated 100-name pool fires
+  // mandatorily via buildCharacterWhitelistBlock below). The previous
+  // `rotateRegisterExamples` helper that sampled 3 names into the
+  // register descriptor's "(e.g., …)" tail is sunset because the full
+  // pool is now provided directly to the LLM as a strict whitelist.
+  const displayedRegister = selectedRegister;
 
   // Pre-select an item quirk
   const quirks = [
@@ -1020,7 +1018,7 @@ const generateMagicItem = async () => {
   // (random origin is never assigned when user provides name/lore)
   const userExplicitlyChoseOrigin = !!itemOrigin.value;
   // Origin instruction now uses originDefinitions for thematic context.
-  // The previous originPaletteMap bundled origin with naming; that
+  // The previous originRegisterMap bundled origin with naming; that
   // bundling forced stereotype pairings (Slavic = Necromantic, Arabic =
   // Shadow). The refactor splits them: this block carries the thematic
   // register only, and the naming section below carries the linguistic
@@ -1170,14 +1168,14 @@ ${originInstruction}
 ${resolvedOrigin && !isUnconventionalPairing ? `
 ORIGIN DRIVES LORE CONTENT:
 
-The thematic origin "${resolvedOrigin}" should shape the lore's content. Characters mentioned, places referenced, and cultural traditions invoked should reflect the origin. The naming palette determines how proper nouns sound; the origin determines what the lore is about.
+The thematic origin "${resolvedOrigin}" should shape the lore's content. Characters mentioned, places referenced, and cultural traditions invoked should reflect the origin. The naming register determines how proper nouns sound; the origin determines what the lore is about.
 
 The lore MUST explicitly name the origin culture (elves, dwarves, orcs, gnomes, goblins, giants, fey, celestials, etc.) at least once. A reader should be able to identify the origin from the lore alone — origin-ambiguous lore that could equally describe humans or any other origin has failed.
 ` : ''}
 ${isUnconventionalPairing ? `
 UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP:
 
-This item pairs ${resolvedOrigin} thematic identity with the ${selectedPalette.split(':')[0]} cultural framework. Render the origin's defining traits through the palette's actual practices, materials, and forms — not by giving generic-fantasy occupations names from the palette. The race keeps its identity; the cultural framework provides the practices, materials, and forms through which that identity expresses. Avoid surface renaming where only the proper nouns change while everything else stays default-fantasy.
+This item pairs ${resolvedOrigin} thematic identity with the ${selectedRegister.split(':')[0]} cultural framework. Render the origin's defining traits through the register's actual practices, materials, and forms — not by giving generic-fantasy occupations names from the register. The race keeps its identity; the cultural framework provides the practices, materials, and forms through which that identity expresses. Avoid surface renaming where only the proper nouns change while everything else stays default-fantasy.
 
 EXPLICIT ORIGIN IDENTIFICATION — REQUIRED:
 
@@ -1191,7 +1189,7 @@ Provide a specific cultural subgroup or location when possible:
 - Gnomish origin → "the gnomes of [Place]," "the gnomish [Order/Guild]"
 - Aesthetic origins → reference the origin's nature directly: "the celestial host of [Place]," "the necromancers of [Order]," "the fey of [Court]"
 
-The cultural framework (the language palette) provides linguistic style and practices. The origin culture is the actor — the elves, dwarves, orcs, etc. are the ones doing things within this cultural framework.
+The cultural framework (the language register) provides linguistic style and practices. The origin culture is the actor — the elves, dwarves, orcs, etc. are the ones doing things within this cultural framework.
 
 Reading test: a reader who finishes the lore should be able to identify the origin culture without needing additional context. If the lore could equally describe humans, generic fantasy beings, or members of any other origin, the identification has failed.
 
@@ -1200,7 +1198,7 @@ Don't just rename — translate.
 ${itemName.value.trim() ? `USER-PROVIDED NAME — DO NOT CHANGE:
 The user has named this item "${itemName.value}". This name is FINAL and MUST appear exactly as written in the "name" field of your output. Do NOT rename, alter, translate, or "improve" it. Build the item's identity AROUND this name — the origin, lore, description, and all features should support and complement the name the user chose.
 ` : `NAMING STYLE:
-Use this linguistic palette for ALL names — the item name, character names, faction names, and location names: ${displayedPalette}
+Use this linguistic register for ALL names — the item name, character names, faction names, and location names: ${displayedRegister}
 All names should feel like they belong to the same world. Do not blend or mix linguistic origins within a single name — commit fully to one style.
 
 NAMING — AVOID OVERUSED DESCRIPTORS:
@@ -1226,17 +1224,17 @@ Match the naming register to the mood and origin. Do not default to melancholy, 
 `}
 NAMING — DO NOT REUSE EXAMPLE NAMES:
 
-The example names shown in the palette description (after "e.g.,") illustrate the linguistic register and phonetic style. They are NOT a list to choose from.
+The example names shown in the register description (after "e.g.,") illustrate the linguistic register and phonetic style. They are NOT a list to choose from.
 
-Do NOT use the example names directly in your output. Generate ORIGINAL names that match the palette's phonetic patterns and structural style.
+Do NOT use the example names directly in your output. Generate ORIGINAL names that match the register's phonetic patterns and structural style.
 
-For instance, if the palette description includes "(e.g., Galadhriel, Thindol, Nimrathel)" — those names are samples teaching you the Sindarin register. Generate different names in that same register (e.g., Aelindar, Mithrandel, Lirathiel).
+For instance, if the register description includes "(e.g., Galadhriel, Thindol, Nimrathel)" — those names are samples teaching you the Sindarin register. Generate different names in that same register (e.g., Aelindar, Mithrandel, Lirathiel).
 
-This rule applies to all palettes. The examples teach style; your output should commit to that style with original names.
+This rule applies to all registers. The examples teach style; your output should commit to that style with original names.
 
-ITEM NAMING — TRANSLATION FOR NON-ENGLISH PALETTES:
+ITEM NAMING — TRANSLATION FOR NON-ENGLISH REGISTERS:
 
-When the linguistic palette is non-English (Tamazight, Maori, Yoruba, Finnish, Japanese, Quechua, Mongolian, Tibetan, Welsh, Irish, Slavic, etc.), the item name should be the ENGLISH TRANSLATION of the cultural concept, not the original-language phrase.
+When the linguistic register is non-English (Tamazight, Maori, Yoruba, Finnish, Japanese, Quechua, Mongolian, Tibetan, Welsh, Irish, Slavic, etc.), the item name should be the ENGLISH TRANSLATION of the cultural concept, not the original-language phrase.
 
 The original-language name appears in the description's first sentence with cultural framing.
 
@@ -1275,7 +1273,7 @@ DO this:
 The English translation should capture the cultural concept evocatively, not just literally. "Wand of First Bloom" conveys the meaning of "Sulkasipailon Kukka" better than "Feather-Stroke's Flower" would. Translate for poetic effect, not word-for-word.
 
 APPLY translation rule (item name in English, original in description):
-- All real-world non-English-language palettes: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic/Persian, Persian, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
+- All real-world non-English-language registers: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic/Persian, Persian, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
 
 (Norse, Welsh, Anglo-Saxon, etc. are technically European but their original-language names — "Sigrún Stormhammer," "Æthelflæd" — are intimidating to many DMs at the table. Apply the translation rule to these too — better to err on the side of usability.)
 
@@ -1301,7 +1299,7 @@ Good integration patterns:
 
 LANGUAGE FRAMING — USE IN-WORLD TERMS, NOT REAL-WORLD LINGUISTIC CATEGORIES:
 
-When the lore references the language the original-language name comes from, use the in-world culture's own term for their tongue, never the real-world linguistic category. The character names and item name come from the palette's register, but the framing language is fictional.
+When the lore references the language the original-language name comes from, use the in-world culture's own term for their tongue, never the real-world linguistic category. The character names and item name come from the register's register, but the framing language is fictional.
 
 - For fantasy-race origins, use the race's own term: "the elven tongue," "the old dwarven tongue," "the orcish war-tongue," "the goblin cant."
 - For cultural-coded items without a fantasy-race origin, invent a brief in-world descriptor that fits the item's setting (e.g., "the old tongue of the highland clans," "the speech of the river-folk," "the temple-tongue of the lost city").
@@ -1311,7 +1309,7 @@ This rule does NOT override the explicit-origin-naming requirement. The lore mus
 
 CULTURAL-SPECIFIC NAMES — INVENT BY DEFAULT:
 
-When the lore needs any of these culturally-specific named entities, INVENT a fictional name in the palette's register rather than using a real one:
+When the lore needs any of these culturally-specific named entities, INVENT a fictional name in the register's register rather than using a real one:
 
 - Deities, religious figures, sacred beings, mythological figures
 - Clans, kinship groups, family lineages, tribal names
@@ -1320,9 +1318,9 @@ When the lore needs any of these culturally-specific named entities, INVENT a fi
 - Foundational ancestral figures from creation narratives
 - Real historical figures with cultural-religious significance
 
-Invented names should sound culturally appropriate to the palette and carry meaningful semantic content where possible — a Yoruba-register iron-spirit might be "Olosun," constructed from a non-sacred word in the register. Don't take a common noun and label it as a sacred figure (e.g., "Kibarua" — Swahili for "casual laborer" — isn't a deity name).
+Invented names should sound culturally appropriate to the register and carry meaningful semantic content where possible — a Yoruba-register iron-spirit might be "Olosun," constructed from a non-sacred word in the register. Don't take a common noun and label it as a sacred figure (e.g., "Kibarua" — Swahili for "casual laborer" — isn't a deity name).
 
-LIMITED EXCEPTIONS — real names CAN be used for these palettes only:
+LIMITED EXCEPTIONS — real names CAN be used for these registers only:
 
 - Greek-inspired (Zeus, Athena, Apollo, etc.)
 - Latin-inspired / Roman (Jupiter, Mars, Minerva, etc.)
@@ -1330,33 +1328,33 @@ LIMITED EXCEPTIONS — real names CAN be used for these palettes only:
 - All Norse-related: Norse-inspired, Old-Norse-inspired (Odin, Thor, Loki, etc.)
 - Anglo-Saxon-inspired, Old-High-German-inspired, Middle-High-German-inspired, Gothic-inspired (Germanic mythological figures)
 - Celtic-inspired, Welsh-inspired, Irish-inspired, Old-Irish-inspired (Celtic mythological figures)
-- Sindarin-inspired and all fictional palettes (no real-world referents)
+- Sindarin-inspired and all fictional registers (no real-world referents)
 
 These exceptions reflect Western fantasy genre convention — these traditions have been integrated into fantasy long enough that real names are genre-expected.
 
-For ALL other palettes (including but not limited to Yoruba, Akan, Igbo, Swahili, Atlas-Berber, Arabic, Persian, Hindu/Sanskrit, Chinese, Japanese, Korean, Thai, Mongolian, Tibetan, Maya, Aztec/Nahuatl, Andean, Lakota, Maori, Hawaiian, Slavic, Russian, Romanian, Hungarian, Finnish, Caucasian, Pamir), INVENT fictional named entities. Do not use real religious figures, real clan names, real sacred place names, real political-religious titles, or real culturally-significant historical figures from these traditions in fictional contexts.
+For ALL other registers (including but not limited to Yoruba, Akan, Igbo, Swahili, Atlas-Berber, Arabic, Persian, Hindu/Sanskrit, Chinese, Japanese, Korean, Thai, Mongolian, Tibetan, Maya, Aztec/Nahuatl, Andean, Lakota, Maori, Hawaiian, Slavic, Russian, Romanian, Hungarian, Finnish, Caucasian, Pamir), INVENT fictional named entities. Do not use real religious figures, real clan names, real sacred place names, real political-religious titles, or real culturally-significant historical figures from these traditions in fictional contexts.
 
-Note: Hebrew/Jewish religious-cultural specifics are not in scope at all — the Hebrew palette has been removed from the system. If a user's input invokes Hebrew-language signals (shofar, menorah, golem, sephirot, etc.), apply the universal-invent rule even more strictly: do not generate fictional content that references Jewish religious tradition, sacred figures, or sacred concepts. Choose a different cultural register for the item.
+Note: Hebrew/Jewish religious-cultural specifics are not in scope at all — the Hebrew register has been removed from the system. If a user's input invokes Hebrew-language signals (shofar, menorah, golem, sephirot, etc.), apply the universal-invent rule even more strictly: do not generate fictional content that references Jewish religious tradition, sacred figures, or sacred concepts. Choose a different cultural register for the item.
 
 Cultural detection from user input still wins. If the user explicitly invokes a real entity ("an item blessed by Athena," "the temple of Inti"), honor their input. The invention rule applies to system-generated content where the user didn't specifically invoke the entity.
 
-LANGUAGE PALETTE OVERRIDE (LLM AUTHORITY):
+LANGUAGE REGISTER OVERRIDE (LLM AUTHORITY):
 
-The pre-selected naming palette ("${displayedPalette}") is a fallback, not a constraint. The system pre-selects a palette via random selection and a small keyword detection map (covering specific cultural terms like ofuda, atlatl, mjolnir). The keyword map is intentionally narrow — it doesn't cover the broader universe of cultural-linguistic signals that real users will type.
+The pre-selected naming register ("${displayedRegister}") is a fallback, not a constraint. The system pre-selects a register via random selection and a small keyword detection map (covering specific cultural terms like ofuda, atlatl, mjolnir). The keyword map is intentionally narrow — it doesn't cover the broader universe of cultural-linguistic signals that real users will type.
 
-If the user's name or lore contains clear cultural-linguistic signals — proper names from a specific tradition (e.g. "Akiko" → Japanese, "Olaf" → Norse, "Rashidah" → Arabic, "Inkari" → Andean), place names (e.g. "Volga" → Slavic, "Helsinki" → Finnish, "Kyoto" → Japanese, "Andes" → Andean), geographic references (e.g. "Sahel" → West African, "Yangtze" → Chinese, "Atacama" → Andean), historical references, deity names, or any other markers of a specific real-world or fantasy linguistic tradition — OVERRIDE the pre-selected palette and use the tradition the user's input implies for ALL generated names (item, characters, factions, locations).
+If the user's name or lore contains clear cultural-linguistic signals — proper names from a specific tradition (e.g. "Akiko" → Japanese, "Olaf" → Norse, "Rashidah" → Arabic, "Inkari" → Andean), place names (e.g. "Volga" → Slavic, "Helsinki" → Finnish, "Kyoto" → Japanese, "Andes" → Andean), geographic references (e.g. "Sahel" → West African, "Yangtze" → Chinese, "Atacama" → Andean), historical references, deity names, or any other markers of a specific real-world or fantasy linguistic tradition — OVERRIDE the pre-selected register and use the tradition the user's input implies for ALL generated names (item, characters, factions, locations).
 
-You have world knowledge of cultural-linguistic registers; activate it. The user's signal is the authoritative one. The pre-selected palette is the fallback when no cultural signal is detectable.
+You have world knowledge of cultural-linguistic registers; activate it. The user's signal is the authoritative one. The pre-selected register is the fallback when no cultural signal is detectable.
 
 If the user's input contains MIXED cultural signals (e.g. "Akiko of the Volga"), pick the strongest/most prominent signal and commit to it consistently across all generated names. Don't blend traditions within a single name.
 
-If the user's input has no clear cultural-linguistic signal, use the pre-selected palette as written.
+If the user's input has no clear cultural-linguistic signal, use the pre-selected register as written.
 ${isWesternFantasyRaceContext ? `
-LANGUAGE PALETTE RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT (OVERRIDES THE AUTHORITY ABOVE):
+LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT (OVERRIDES THE AUTHORITY ABOVE):
 
 This item is in a Western-fantasy-bound race context (origin or user-typed keyword indicates one of: Orcish, Goblinoid, Dwarven, Gnomish, Elven). These five fantasy-race categories are Norse/Germanic/Celtic-coded archetypes with no parallels in most non-Western mythological traditions. Pairing them with non-Western linguistic registers doesn't include those cultures in fantasy; it conscripts those cultures' linguistic registers to decorate Western archetypes — a documented appropriation pattern in fantasy media. Orcs and goblins additionally carry documented racial-proxy history with non-European real-world peoples, making the pattern especially acute for those two.
 
-The LANGUAGE PALETTE OVERRIDE authority above is REVOKED for this generation. You must NOT generate names — for the item, characters, factions, or locations — in any of the following registers, even if you would otherwise infer them from the user's input or from creative association:
+The LANGUAGE REGISTER OVERRIDE authority above is REVOKED for this generation. You must NOT generate names — for the item, characters, factions, or locations — in any of the following registers, even if you would otherwise infer them from the user's input or from creative association:
 
 - Yoruba, Akan, Igbo, Swahili, or any other African real-world tradition
 - Arabic, Persian
@@ -1366,24 +1364,22 @@ The LANGUAGE PALETTE OVERRIDE authority above is REVOKED for this generation. Yo
 - Maya, Aztec/Nahuatl, Andean, or other Latin American Indigenous traditions
 - Lakota or other North American Indigenous traditions
 
-This restriction is absolute. It is not subject to creative reinterpretation, "translation" framing, or unconventional-pairing reasoning. If the user's input mentions something that would normally trigger one of these palettes (e.g., a place name, a deity, a cultural artifact), use the pre-selected palette ("${displayedPalette}") instead.
+This restriction is absolute. It is not subject to creative reinterpretation, "translation" framing, or unconventional-pairing reasoning. If the user's input mentions something that would normally trigger one of these registers (e.g., a place name, a deity, a cultural artifact), use the pre-selected register ("${displayedRegister}") instead.
 
 Allowed registers for this generation:
-- Pre-selected palette: "${displayedPalette}" (use this by default)
+- Pre-selected register: "${displayedRegister}" (use this by default)
 - European real-world: Latin, Greek, Slavic, Russian, Romanian, Hungarian, Norse, Germanic, Celtic
 - Fantasy-fictional: Sindarin, Draconic, Goblin-inspired, Orcish, Aberrant, Abyssal, Infernal, Primordial, Technomagical
 
 Do not produce any name in this generation that would identify with the restricted-register list above. This applies to ALL names: item, characters, factions, places, no exceptions.
 ` : ''}
-${buildYorubaPromptBlock(selectedPalette)}
-${buildAndeanPromptBlock(selectedPalette)}
-${buildCatchallPromptBlock(selectedPalette)}
-${buildFictionalPaletteWhitelistBlock(selectedPalette)}
-${buildOriginCharacterWhitelistBlock(resolvedOrigin)}
+${buildPoolPromptBlock(selectedRegister)}
+${buildCatchallPromptBlock(selectedRegister)}
+${buildCharacterWhitelistBlock(resolvedOrigin, selectedRegister)}
 
-ORIGIN-PALETTE INDEPENDENCE:
+ORIGIN-REGISTER INDEPENDENCE:
 
-The naming palette is independent of the item's thematic origin. A ${resolvedOrigin || '[origin determined from input]'} item with ${selectedPalette.split(':')[0]} naming is a perfectly valid combination — embrace the creative possibility rather than fighting the pairing. Do not drift the origin's aesthetic toward the palette's culture, or the palette's linguistic register toward the origin's stereotype. They describe different dimensions of the item.
+The naming register is independent of the item's thematic origin. A ${resolvedOrigin || '[origin determined from input]'} item with ${selectedRegister.split(':')[0]} naming is a perfectly valid combination — embrace the creative possibility rather than fighting the pairing. Do not drift the origin's aesthetic toward the register's culture, or the register's linguistic register toward the origin's stereotype. They describe different dimensions of the item.
 
 All names should feel like they belong to the same linguistic family. Do not blend or mix linguistic origins within a single name — commit fully to one style.
 
@@ -1445,7 +1441,7 @@ Witnesses:
 - Witness / Chronicler (who recorded its existence in an account, ballad, or letter)
 - Prophet / Heralded (who foretold the wielder it would choose)
 
-Use a proper name in the same linguistic palette as the item name. Weave the character into the prose naturally — one or two named individuals is plenty; do NOT list them like a roster, and do NOT label them with the archetype tag in the lore text. If the user provided lore, only add a named individual when their text does not already feature one.
+Use a proper name in the same linguistic register as the item name. Weave the character into the prose naturally — one or two named individuals is plenty; do NOT list them like a roster, and do NOT label them with the archetype tag in the lore text. If the user provided lore, only add a named individual when their text does not already feature one.
 
 COHERENCE:
 All of the creative seeds above describe ONE item and must work together as a unified concept.${itemName.value.trim() || itemLore.value.trim() ? ' USER INPUT TAKES PRIORITY — if the user provided a name or lore, the creative seeds (origin, mood, material) should adapt to fit the user\'s vision, not the other way around. The user\'s name and lore are the anchor; the seeds are supporting flavor.' : ' If the naming style is Japanese-inspired and the origin is Fey, then the result should feel like a fey item from a Japanese-inspired culture — not a generic fantasy item with a Japanese name bolted on.'}
@@ -1570,7 +1566,7 @@ ITEM STRUCTURE TO COMPLETE:
   "features": ${JSON.stringify(featuresAndBonuses.features)},
   "reason_for_rarity_level": "[Explain why this item fits its rarity based on the guidelines above]",
   "physical_description": "[2-3 sentences describing the item's appearance incorporating the magical material, mood, and any quirk. ${resolvedItemType === 'Potion' ? 'For potions: describe the liquid color, consistency, swirls, particles, smell, and taste.' : ''}]",
-  "lore": "${itemLore.value || '[Create compelling backstory using the lore style and historical context above. All character names, faction names, and location names must use the same linguistic palette as the item name.]'}",
+  "lore": "${itemLore.value || '[Create compelling backstory using the lore style and historical context above. All character names, faction names, and location names must use the same linguistic register as the item name.]'}",
   "related_npcs": [
     /*
       Add one stub for every NAMED INDIVIDUAL person/being relevant to this item — oracles, smiths,
@@ -1699,7 +1695,7 @@ const generateNameFallback = async (item) => {
   const physical = (item?.physical_description || '').toString().trim();
   const lore = (item?.lore || '').toString().trim();
   // Cap lore at ~600 chars to keep the focused prompt small. The
-  // linguistic palette of names appears across the lore, so the head
+  // linguistic register of names appears across the lore, so the head
   // is enough for the model to match style.
   const loreExcerpt = lore.length > 600 ? `${lore.slice(0, 600)}…` : lore;
 
@@ -2697,7 +2693,7 @@ onUnmounted(() => {
 
 /* Card surface uses parchment tokens directly. The previous block of
    local --card-* / --title-color / --body-text aliases mapped 1:1 to
-   parchment values (the item card was the de-facto reference palette);
+   parchment values (the item card was the de-facto reference register);
    inlining the tokens removes the indirection and stops any drift from
    the parchment system over time. NPCCard.vue went through the same
    sweep — both cards now render against the same paper tone. */
@@ -2854,7 +2850,7 @@ onUnmounted(() => {
   border-radius: var(--par-radius-md, 4px);
 }
 
-/* Small-caps label. Mirrors the feature-name's burgundy palette so the
+/* Small-caps label. Mirrors the feature-name's burgundy register so the
    eye recognizes it as a section affordance, but the all-caps + tight
    tracking + smaller size mark it as supplementary. */
 .item-card-lore-label {
@@ -2916,8 +2912,8 @@ onUnmounted(() => {
   }
 }
 
-/* TEST-PALETTE-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE */
-.test-palette-override {
+/* TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE */
+.test-register-override {
   border: 2px dashed #d97706;
   background: #fff7ed;
   padding: 0.75rem 1rem;
@@ -2958,5 +2954,5 @@ onUnmounted(() => {
     }
   }
 }
-/* END TEST-PALETTE-OVERRIDE */
+/* END TEST-REGISTER-OVERRIDE */
 </style>

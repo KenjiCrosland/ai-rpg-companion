@@ -1,18 +1,18 @@
 /**
- * detectLanguageFromUserInput — bias palette selection based on
+ * detectRegisterFromInput — bias register selection based on
  * culturally-specific terms in the user's input.
  *
  * The item generator's broader refactor decoupled origin (thematic) from
- * language palette (linguistic), so they can pair freely. But when a
+ * language register (linguistic), so they can pair freely. But when a
  * user types something with a clear linguistic signal — "Shiawase Ofuda"
  * implies Japanese, "Atlatl of the Hunt" implies Aztec/Nahuatl,
- * "Tane-mahuta's Mere" implies Maori — the palette should honor that
+ * "Tane-mahuta's Mere" implies Maori — the register should honor that
  * signal rather than rolling a random one. This function does that
  * detection.
  *
  * Coverage is intentionally incomplete. The map below seeds known terms
- * across the registers that ship in the language palette list; the LLM
- * falls back on world knowledge via the LANGUAGE PALETTE OVERRIDE prompt
+ * across the registers that ship in the language register list; the LLM
+ * falls back on world knowledge via the LANGUAGE REGISTER OVERRIDE prompt
  * block when nothing matches. Adding entries is always allowed.
  *
  * The map favors specific cultural-linguistic traditions over generic
@@ -29,23 +29,23 @@
  *
  * Term-resolution rules:
  *   - Case-insensitive word-boundary match.
- *   - Length-descending sort across ALL terms (not per-palette), so a
+ *   - Length-descending sort across ALL terms (not per-register), so a
  *     more-specific multi-word term beats a shorter one regardless of
- *     which palette they belong to.
+ *     which register they belong to.
  *   - First match wins on length ties (stable sort + iteration order).
  *   - When a term genuinely belongs to multiple traditions, the
- *     palette listed FIRST in the map wins on ties.
+ *     register listed FIRST in the map wins on ties.
  *
  * @param {string} userInput  — combined name + lore.
- * @param {string[]} languagePalettes  — the full palette pool to look up
+ * @param {string[]} registerList  — the full register pool to look up
  *                                       the resolved language string in.
- * @returns {string|null}  — the matching languagePalettes entry, or null
+ * @returns {string|null}  — the matching registerList entry, or null
  *                           if no detection fired.
  */
 
 /**
- * Map of palette-prefix → detection terms. The palette prefix is matched
- * against the start of each entry in languagePalettes (e.g. the prefix
+ * Map of register-prefix → detection terms. The register prefix is matched
+ * against the start of each entry in registerList (e.g. the prefix
  * 'Japanese-inspired' matches the entry that begins
  * 'Japanese-inspired: clean syllables...').
  */
@@ -55,7 +55,7 @@ export const userInputLanguageDetection = {
     'shuriken', 'tessen', 'kanabo', 'naginata', 'shiawase', 'kage',
     'tsuki', 'sora', 'haru', 'ame',
   ],
-  // Mesoamerican was previously a single generic palette flattening Maya
+  // Mesoamerican was previously a single generic register flattening Maya
   // and Aztec/Nahuatl. Split per the cultural-specificity refactor:
   // atlatl/macuahuitl/tepoztopilli/quetzal/tezcatlipoca are Nahuatl;
   // kukulkan and the day-name register go to Maya.
@@ -67,7 +67,7 @@ export const userInputLanguageDetection = {
     'atlatl', 'macuahuitl', 'tepoztopilli', 'tlachtli', 'quetzal',
     'tezcatlipoca', 'xochipilli', 'huitzilopochtli', 'tenochtitlan',
   ],
-  // West African was previously a single generic palette flattening
+  // West African was previously a single generic register flattening
   // hundreds of distinct cultures. Yoruba was already separate; Akan
   // (Ghana) and Igbo (Nigeria) added. Some former entries were dropped
   // from detection because they don't cleanly map to either Akan or
@@ -75,7 +75,7 @@ export const userInputLanguageDetection = {
   // shoka (ambiguous), ababio (Akan but not in the brief's term list),
   // ife-kari (Yoruba — already covered in Yoruba below). The LLM can
   // still pick up these signals from world knowledge via the LANGUAGE
-  // PALETTE OVERRIDE prompt block.
+  // REGISTER OVERRIDE prompt block.
   'Yoruba-inspired': [
     'orisha', 'olorun', 'shango', 'oshun', 'ifa', 'adégoke', 'ifelola',
     'ife-kari',
@@ -86,14 +86,14 @@ export const userInputLanguageDetection = {
   'Igbo-inspired': [
     'ofo', 'ikenga', 'mmanwu', 'igbo', 'biafra',
   ],
-  // Swahili is East African — labeling clarified in the palette list.
+  // Swahili is East African — labeling clarified in the register list.
   'Swahili-inspired': [
     'rungu', 'fimbo', 'asante', 'imani', 'pendo', 'zuberi',
   ],
   // Arabic/Persian: detection terms restricted to weapon names
   // (pre-Islamic and broadly Persianate vocabulary) and folkloric
   // creatures (jinn, simurgh). Specifically Islamic-religious terms
-  // do NOT appear here — the palette is constrained at the descriptor
+  // do NOT appear here — the register is constrained at the descriptor
   // level to pre-Islamic Arabic OR Persian; the detection terms
   // mirror that constraint.
   'Arabic/Persian-inspired': [
@@ -101,7 +101,7 @@ export const userInputLanguageDetection = {
     'jinn', 'efrit',
   ],
   // Hebrew-inspired removed from the detection map alongside its
-  // removal from the palette list. User-typed Hebrew signals (shofar,
+  // removal from the register list. User-typed Hebrew signals (shofar,
   // menorah, golem, etc.) fall through to the LLM's world-knowledge
   // override path, where the universal-invent rule still governs.
   'Hindi/Sanskrit-inspired': [
@@ -123,11 +123,11 @@ export const userInputLanguageDetection = {
   'Thai-inspired': [
     'krabi', 'krabong', 'daab',
   ],
-  // Polynesian was previously a single generic palette flattening Maori,
+  // Polynesian was previously a single generic register flattening Maori,
   // Hawaiian, Samoan, Tongan, etc. Split into Maori and Hawaiian per the
   // cultural-specificity refactor; other Polynesian traditions (Samoan,
   // Tongan, Tahitian, Marquesan, Rapa Nui) are not detected for now —
-  // the LLM falls back on world knowledge via LANGUAGE PALETTE OVERRIDE.
+  // the LLM falls back on world knowledge via LANGUAGE REGISTER OVERRIDE.
   'Maori-inspired': [
     'mere', 'patu', 'taiaha', 'tewhatewha', 'mana', 'tapu', 'tiki', 'pou',
     'maunga', 'whenua', 'aroha', 'aotearoa', 'maori', 'iwi', 'hapu',
@@ -143,7 +143,7 @@ export const userInputLanguageDetection = {
   // intentionally NOT mapped — they don't cleanly belong to Lakota,
   // and Hopi-sacred terms like kachina warrant the appropriation
   // caution the brief flags. The LLM can interpret these from world
-  // knowledge. The Navajo/Diné palette and detection map were removed
+  // knowledge. The Navajo/Diné register and detection map were removed
   // entirely under the same caution — the skinwalker tradition is
   // sacred and not appropriate for fictional appropriation, and clan-
   // name / sacred-geographic terms carry too high a collision-risk to
@@ -188,29 +188,29 @@ export const userInputLanguageDetection = {
   ],
 };
 
-export function detectLanguageFromUserInput(userInput, languagePalettes) {
-  if (!userInput || !languagePalettes || languagePalettes.length === 0) {
+export function detectRegisterFromInput(userInput, registerList) {
+  if (!userInput || !registerList || registerList.length === 0) {
     return null;
   }
 
-  // Build a flat list of {term, palettePrefix} pairs so we can sort
-  // ALL terms together by length descending. Per-palette sort would
-  // miss the "atlatl" cross-palette case.
+  // Build a flat list of {term, registerPrefix} pairs so we can sort
+  // ALL terms together by length descending. Per-register sort would
+  // miss the "atlatl" cross-register case.
   const allTerms = Object.entries(userInputLanguageDetection).flatMap(
-    ([palettePrefix, terms]) => terms.map(term => ({ term, palettePrefix }))
+    ([registerPrefix, terms]) => terms.map(term => ({ term, registerPrefix }))
   );
   allTerms.sort((a, b) => b.term.length - a.term.length);
 
-  for (const { term, palettePrefix } of allTerms) {
+  for (const { term, registerPrefix } of allTerms) {
     const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const pattern = new RegExp(`\\b${escaped}\\b`, 'i');
     if (pattern.test(userInput)) {
-      // Find the full palette string in the provided languagePalettes
-      // pool. The map keys are prefixes; entries in languagePalettes
+      // Find the full register string in the provided registerList
+      // pool. The map keys are prefixes; entries in registerList
       // start with the prefix followed by ": ...".
-      const palette = languagePalettes.find(p => p.startsWith(palettePrefix));
-      if (palette) return palette;
-      // If the palette prefix isn't found in the pool (e.g. caller
+      const register = registerList.find(p => p.startsWith(registerPrefix));
+      if (register) return register;
+      // If the register prefix isn't found in the pool (e.g. caller
       // passed a reduced set), keep scanning for another matching
       // term. Don't return a string the caller didn't provide.
     }
