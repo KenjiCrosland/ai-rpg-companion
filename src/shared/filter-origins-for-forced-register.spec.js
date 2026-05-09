@@ -28,20 +28,13 @@ const HORROR_ORIGINS = ['Infernal', 'Abyssal', 'Necromantic', 'Vampiric', 'Lycan
 
 describe('filterOriginsForForcedRegister', () => {
   describe('falsy / non-string forcedRegister returns input unchanged', () => {
-    it('returns input when forcedRegister is empty string', () => {
-      expect(filterOriginsForForcedRegister(ALL_ELIGIBLE, '')).toEqual(ALL_ELIGIBLE);
-    });
-
-    it('returns input when forcedRegister is null', () => {
-      expect(filterOriginsForForcedRegister(ALL_ELIGIBLE, null)).toEqual(ALL_ELIGIBLE);
-    });
-
-    it('returns input when forcedRegister is undefined', () => {
-      expect(filterOriginsForForcedRegister(ALL_ELIGIBLE, undefined)).toEqual(ALL_ELIGIBLE);
-    });
-
-    it('returns input when forcedRegister is a non-string (defensive)', () => {
-      expect(filterOriginsForForcedRegister(ALL_ELIGIBLE, 42)).toEqual(ALL_ELIGIBLE);
+    it.each([
+      ['empty string', ''],
+      ['null', null],
+      ['undefined', undefined],
+      ['non-string defensive', 42],
+    ])('returns input when forcedRegister is %s', (_label, forcedRegister) => {
+      expect(filterOriginsForForcedRegister(ALL_ELIGIBLE, forcedRegister)).toEqual(ALL_ELIGIBLE);
     });
   });
 

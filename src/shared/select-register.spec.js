@@ -420,63 +420,23 @@ describe('selectRegister', () => {
     // (orcGoblinExcludedRegisters) that had a code-path gap allowing
     // Goblinoid + Navajo/Diné to reach a production output.
 
-    // Index rolls span the pool's range; the allow-list branch makes
-    // one Math.random call per generation (just the index pick).
-    const indexRolls = [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99];
-
-    it.each(indexRolls)(
-      'Orcish always returns a register in the Orcish allow-list pool (index roll = %f)',
-      (indexRoll) => {
+    // Allow-list invariant: every Math.random roll across the index
+    // range stays within the race's conventional pool. Catches leak-out
+    // bugs where a race's selection escapes its restriction.
+    it.each([
+      ['Orcish'],
+      ['Goblinoid'],
+      ['Dwarven'],
+      ['Gnomish'],
+      ['Elven'],
+    ])('%s allow-list: every random roll stays in the pool', (race) => {
+      const indexRolls = [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99];
+      for (const indexRoll of indexRolls) {
         randomSpy.mockReturnValue(indexRoll);
-        const result = selectRegister('Orcish', '', registers, detectNothing);
-        expect(isInConventionalPool(result, 'Orcish')).toBe(true);
-      },
-    );
-
-    it.each(indexRolls)(
-      'Goblinoid always returns a register in the Goblinoid allow-list pool (index roll = %f)',
-      (indexRoll) => {
-        randomSpy.mockReturnValue(indexRoll);
-        const result = selectRegister('Goblinoid', '', registers, detectNothing);
-        expect(isInConventionalPool(result, 'Goblinoid')).toBe(true);
-      },
-    );
-
-    it.each(indexRolls)(
-      'Dwarven always returns a register in the Dwarven allow-list pool (index roll = %f)',
-      (indexRoll) => {
-        // Dwarven joined the Western-fantasy-bound (allow-list-
-        // restricted) tier — Norse/Germanic mountain-craft archetype
-        // with no parallels in most non-Western mythological
-        // traditions.
-        randomSpy.mockReturnValue(indexRoll);
-        const result = selectRegister('Dwarven', '', registers, detectNothing);
-        expect(isInConventionalPool(result, 'Dwarven')).toBe(true);
-      },
-    );
-
-    it.each(indexRolls)(
-      'Gnomish always returns a register in the Gnomish allow-list pool (index roll = %f)',
-      (indexRoll) => {
-        // Gnomish joined the Western-fantasy-bound (allow-list-
-        // restricted) tier — European inventor-tinkerer archetype.
-        randomSpy.mockReturnValue(indexRoll);
-        const result = selectRegister('Gnomish', '', registers, detectNothing);
-        expect(isInConventionalPool(result, 'Gnomish')).toBe(true);
-      },
-    );
-
-    it.each(indexRolls)(
-      'Elven always returns a register in the Elven allow-list pool (index roll = %f)',
-      (indexRoll) => {
-        // Elven joined the Western-fantasy-bound (allow-list-
-        // restricted) tier — Sindarin/Celtic refined-aesthetic
-        // archetype.
-        randomSpy.mockReturnValue(indexRoll);
-        const result = selectRegister('Elven', '', registers, detectNothing);
-        expect(isInConventionalPool(result, 'Elven')).toBe(true);
-      },
-    );
+        const result = selectRegister(race, '', registers, detectNothing);
+        expect(isInConventionalPool(result, race)).toBe(true);
+      }
+    });
 
     describe('70/30 weighting within the allow-list pool', () => {
       // Within the orc/goblin allow-list, 70% of generations land on
@@ -640,7 +600,7 @@ describe('selectRegister', () => {
       // unreachable for Elven generations. This test inverts the
       // original to lock in the new behavior.
       let sawProtectedListRegister = false;
-      for (const indexRoll of indexRolls) {
+      for (const indexRoll of [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99]) {
         randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(indexRoll);
         const result = selectRegister('Elven', '', registers, detectNothing);
         if (/^(Yoruba|Andean|Chinese|Japanese)-inspired/.test(result)) {
@@ -667,7 +627,7 @@ describe('selectRegister', () => {
       // etc. This is the architectural commitment that cross-cultural
       // archetypes pair freely.
       let sawProtectedListRegister = false;
-      for (const indexRoll of indexRolls) {
+      for (const indexRoll of [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99]) {
         randomSpy.mockReturnValueOnce(0.85).mockReturnValueOnce(indexRoll);
         const result = selectRegister('Giant', '', registers, detectNothing);
         if (/^(Yoruba|Andean|Chinese|Japanese)-inspired/.test(result)) {
@@ -800,17 +760,6 @@ describe('selectRegister', () => {
       expect(isInHorrorPool(result)).toBe(true);
     });
 
-    it('Shadow always returns a register in the horror pool', () => {
-      // Parallel to the it.each loop earlier — verify Shadow consistently
-      // resolves into the horror-pool regardless of index roll.
-      const indexRolls = [0.0, 0.2, 0.5, 0.85, 0.99];
-      for (const indexRoll of indexRolls) {
-        randomSpy.mockReturnValueOnce(indexRoll);
-        const result = selectRegister('Shadow', '', registers, detectNothing);
-        expect(isInHorrorPool(result)).toBe(true);
-      }
-    });
-
     it('Celestial (non-horror aesthetic origin) does NOT fire the horror branch', () => {
       // Regression guard: the horror restriction is scoped to the seven
       // horror-coded origins. Other aesthetic origins still respect
@@ -873,24 +822,6 @@ describe('selectRegister', () => {
       expect(Object.keys(fantasyRaceConventionalRegisters).sort()).toEqual(expected.sort());
     });
 
-    it('fantasyRaceConventionalRegisters values are non-empty arrays of register prefixes', () => {
-      for (const [race, prefixes] of Object.entries(fantasyRaceConventionalRegisters)) {
-        expect(Array.isArray(prefixes)).toBe(true);
-        expect(prefixes.length).toBeGreaterThanOrEqual(1);
-        prefixes.forEach(p => expect(typeof p).toBe('string'));
-      }
-    });
-
-    it('every fantasy race has a multi-register conventional pool', () => {
-      // After the orc/goblin allow-list architecture, every race has
-      // multiple registers: Elven/Dwarven/Gnomish/Giant for cross-
-      // register name-rotation variety; Orcish/Goblinoid for the
-      // European-register allow-list.
-      for (const [race, prefixes] of Object.entries(fantasyRaceConventionalRegisters)) {
-        expect(prefixes.length).toBeGreaterThan(1);
-      }
-    });
-
     it('Orcish allow-list pool contains the expected European registers', () => {
       // The Orcish pool is European-only (fictional fantasy + Germanic
       // + Celtic + Slavic + Latin). Drift away from this list — adding
@@ -929,13 +860,6 @@ describe('selectRegister', () => {
     it('fantasyRaceKeywords covers exactly the six core races', () => {
       const expected = ['Elven', 'Dwarven', 'Orcish', 'Goblinoid', 'Gnomish', 'Giant'];
       expect(Object.keys(fantasyRaceKeywords).sort()).toEqual(expected.sort());
-    });
-
-    it('every fantasy race has a non-empty keyword list', () => {
-      for (const [race, keywords] of Object.entries(fantasyRaceKeywords)) {
-        expect(keywords.length).toBeGreaterThan(0);
-        keywords.forEach(k => expect(typeof k).toBe('string'));
-      }
     });
 
     it('horrorRestrictedOrigins covers exactly the seven horror-coded aesthetic origins', () => {

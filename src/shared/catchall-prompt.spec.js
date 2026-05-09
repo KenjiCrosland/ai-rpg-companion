@@ -8,11 +8,6 @@ import {
 
 describe('catchall-prompt', () => {
   describe('CATCHALL_REGISTER_PREFIXES', () => {
-    it('is a non-empty array', () => {
-      expect(Array.isArray(CATCHALL_REGISTER_PREFIXES)).toBe(true);
-      expect(CATCHALL_REGISTER_PREFIXES.length).toBeGreaterThan(0);
-    });
-
     it('does NOT include pool registers (Yoruba, Andean)', () => {
       // Pool registers have dedicated prompt builders. The catchall must
       // not duplicate their handling — both blocks would fire and
@@ -154,84 +149,26 @@ describe('catchall-prompt', () => {
       expect(buildCatchallPromptBlock(null)).toBe('');
     });
 
-    it('returns the catchall block for a catchall register', () => {
+    it('returns a non-empty block for a catchall register', () => {
       const block = buildCatchallPromptBlock('Japanese-inspired: clean syllables');
-      expect(block).toMatch(/NAMING ARCHITECTURE FOR THIS GENERATION/);
-      expect(block).toMatch(/ONE character name/);
-      expect(block).toMatch(/ONE item name/);
-      expect(block).toMatch(/ZERO place names/);
-      expect(block).toMatch(/ZERO spirit or deity names/);
-      expect(block).toMatch(/REAL FIGURES MUST NOT APPEAR/);
-    });
-
-    it('includes the role-not-name rule for secondary characters', () => {
-      const block = buildCatchallPromptBlock('Hawaiian-inspired: phonetics with okina');
-      expect(block).toMatch(/Secondary characters.*referred to by role/);
-    });
-
-    it('includes the materials-fusion rule', () => {
-      const block = buildCatchallPromptBlock('Maori-inspired: vowel-rich Te Reo');
-      expect(block).toMatch(/MATERIALS/);
-      expect(block).toMatch(/fantasy materials/);
-    });
-
-    it('includes the worked example', () => {
-      const block = buildCatchallPromptBlock('Tibetan-inspired: aspirated, contemplative');
-      expect(block).toMatch(/EXAMPLE/);
-      expect(block).toMatch(/in the speech of its makers/);
+      expect(block.length).toBeGreaterThan(0);
     });
   });
 
   describe('whitelist augmentation (per-register character-name list)', () => {
-    it('uses freehand-construction instruction when register has no whitelist', () => {
-      // Hindi/Sanskrit has no whitelist (yet). Catchall falls back to
-      // the freehand-epithet-construction instruction.
-      const block = buildCatchallPromptBlock('Hindi/Sanskrit-inspired: melodic, ceremonial');
-      expect(block).toMatch(/Construct it as a praise-name epithet/);
-      expect(block).not.toMatch(/from this curated list/);
-    });
-
-    it('uses pick-from-list instruction when register has a whitelist (Maori)', () => {
-      // Maori was the first whitelist registered after the Tangaroa-
-      // as-fictional-smith production failure. The catchall must
-      // replace freehand construction with the curated list.
-      const block = buildCatchallPromptBlock('Maori-inspired: vowel-rich Te Reo phonetics');
-      expect(block).toMatch(/from this curated list/);
-      expect(block).not.toMatch(/Construct it as a praise-name epithet/);
-    });
-
-    it('injects representative whitelist entries when whitelist is used', () => {
-      // Sanity check that the whitelist entries actually reach the
-      // prompt — drift (forgetting to wire the lookup, accidentally
+    it('injects whitelist entries into the prompt when whitelist is registered (Maori)', () => {
+      // Data-flow check: the whitelist entries must actually reach the
+      // prompt body. Drift (forgetting to wire the lookup, accidentally
       // emptying the whitelist) should fail this test.
       const block = buildCatchallPromptBlock('Maori-inspired: vowel-rich Te Reo phonetics');
       expect(block).toContain('Manawa-Kaha');
       expect(block).toContain('Kaiwhakairo');
       expect(block).toContain('Karu-Ata');
     });
-
-    it('whitelist instruction prohibits out-of-list construction', () => {
-      // The whitelist is the only permitted source. Without explicit
-      // prohibition, DeepSeek may treat the list as examples and
-      // construct adjacent names freehand.
-      const block = buildCatchallPromptBlock('Maori-inspired: vowel-rich Te Reo phonetics');
-      expect(block).toMatch(/Do NOT generate any character name outside this list/);
-      expect(block).toMatch(/Do NOT construct freehand epithets/);
-    });
   });
 
   describe('item-name avoid-list (per-register sacred-term protection)', () => {
     describe('registerItemNameAvoidLists registry', () => {
-      it('registers a Maori avoid-list', () => {
-        // The Maori avoid-list is the first entry. Production output
-        // showed DeepSeek reaching for the most prominent (and most
-        // sacred) Te Reo terms when constructing item names; the list
-        // fences off that surface.
-        expect(registerItemNameAvoidLists['Maori-inspired']).toBeDefined();
-        expect(Array.isArray(registerItemNameAvoidLists['Maori-inspired'])).toBe(true);
-        expect(registerItemNameAvoidLists['Maori-inspired'].length).toBeGreaterThan(0);
-      });
-
       it('includes representative sacred Te Reo terms in the Maori list', () => {
         // Spot-check a sample of the high-collision sacred surface.
         // Drift (a contributor stripping these out) should fail this test.

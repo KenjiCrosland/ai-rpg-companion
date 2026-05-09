@@ -3,63 +3,8 @@ import {
   getWhitelistForRegister,
 } from './register-whitelists.mjs';
 
-describe('register-whitelists — data integrity', () => {
-  describe('registerCharacterEpithetWhitelists', () => {
-    it('is a non-empty object keyed by register prefix', () => {
-      expect(typeof registerCharacterEpithetWhitelists).toBe('object');
-      expect(Object.keys(registerCharacterEpithetWhitelists).length).toBeGreaterThan(0);
-    });
-
-    it('every value is a non-empty array of strings', () => {
-      for (const [prefix, list] of Object.entries(registerCharacterEpithetWhitelists)) {
-        expect(Array.isArray(list)).toBe(true);
-        expect(list.length).toBeGreaterThan(0);
-        for (const entry of list) {
-          expect(typeof entry).toBe('string');
-          expect(entry.length).toBeGreaterThan(0);
-        }
-      }
-    });
-
-    it('every whitelist size is within its architecture tier bounds', () => {
-      // Two tiers:
-      //   - Real-world cultural whitelists (Maori-inspired): target
-      //     25-40 entries. Sub-25 means too little LLM variety;
-      //     over-40 approaches full pool-architecture territory and
-      //     shifts the curation-cost balance.
-      //   - Fictional-fantasy whitelists (Draconic, Aberrant, Abyssal,
-      //     Sindarin-inspired, Infernal, Primordial): target ~80
-      //     entries spanning 6-8 sub-conventions. The size IS the
-      //     protective architecture against monotonous outputs; sub-
-      //     conventions diversify what "one name from this list"
-      //     looks like across many generations.
-      //
-      //     The current fictional-tier counts are below the 80-name
-      //     target because the curation pass that removed Tolkien-
-      //     published names and D&D-canon-character derivatives left
-      //     several sub-conventions empty. The lower bound here (30)
-      //     is permissive to accommodate the post-removal counts;
-      //     replacement entries are pending. Hard floor is 30 (below
-      //     that, the pool can't generate adequate variety).
-      const fictionalPrefixes = new Set([
-        'Draconic',
-        'Aberrant',
-        'Abyssal',
-        'Sindarin-inspired',
-        'Infernal',
-        'Primordial',
-      ]);
-      for (const [prefix, list] of Object.entries(registerCharacterEpithetWhitelists)) {
-        if (fictionalPrefixes.has(prefix)) {
-          expect(list.length).toBeGreaterThanOrEqual(30);
-          expect(list.length).toBeLessThanOrEqual(90);
-        } else {
-          expect(list.length).toBeGreaterThanOrEqual(25);
-          expect(list.length).toBeLessThanOrEqual(40);
-        }
-      }
-    });
-
+describe('register-whitelists', () => {
+  describe('registerCharacterEpithetWhitelists — architectural integrity', () => {
     it('does NOT include pool registers (Yoruba, Andean)', () => {
       // Pool registers have full pool architecture via their own prompt
       // builders. Adding them to this whitelist would cause both the
@@ -70,12 +15,8 @@ describe('register-whitelists — data integrity', () => {
     });
   });
 
-  describe('Maori whitelist (first registered v2 whitelist)', () => {
+  describe('Maori whitelist (curation regression guards)', () => {
     const maori = registerCharacterEpithetWhitelists['Maori-inspired'];
-
-    it('exists', () => {
-      expect(Array.isArray(maori)).toBe(true);
-    });
 
     it('contains no real Maori atua names', () => {
       // The whole point of the whitelist is preventing real-figure

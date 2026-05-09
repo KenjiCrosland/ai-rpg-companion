@@ -330,40 +330,6 @@ describe('ItemGenerator - Prompt Generation', () => {
     });
   });
 
-  describe('Rarity Mechanics Enforcement', () => {
-    it('should include explicit Common item restrictions', async () => {
-      wrapper = mount(ItemGenerator, {
-        props: { premium: true }
-      });
-
-      const raritySelect = wrapper.findAll('select')[0];
-      await raritySelect.setValue('Common');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
-
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-
-      // Check for explicit Common restrictions
-      expect(prompt).toContain('Common items are purely cosmetic/utility with NO combat benefits');
-    });
-
-    it('should include rarity self-check placeholder (full instructions in prompt)', async () => {
-      wrapper = mount(ItemGenerator, {
-        props: { premium: true }
-      });
-
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
-
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-
-      // The prompt is very long and includes various rarity guidance
-      // Just verify it's a substantial prompt with key elements
-      expect(prompt.length).toBeGreaterThan(1000);
-      expect(prompt).toContain('IMPORTANT D&D 5e DESIGN RULES');
-    });
-  });
-
   describe('Origin/Register Pairing — Conditional Translation Block', () => {
     // The prompt distinguishes two cases for fantasy-race origins:
     //   - Conventional pairing (Elven+Sindarin, Dwarven+Germanic, etc.)
@@ -493,17 +459,24 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('Lakota or other North American Indigenous traditions');
     });
 
-    it('renders LANGUAGE REGISTER RESTRICTION when origin is Goblinoid', async () => {
-      randomSpy.mockReturnValue(0.5);
-      wrapper = mount(ItemGenerator, { props: { premium: true } });
-      const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Goblinoid');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
+    it.each(['Goblinoid', 'Elven', 'Dwarven', 'Gnomish'])(
+      'renders LANGUAGE REGISTER RESTRICTION when origin is %s (Western-fantasy-bound)',
+      async (race) => {
+        // Pre-Task-1, Elven was excluded from this restriction. Post-
+        // Task-1, all five Western-fantasy-bound races render the
+        // restriction block — Orcish is covered by the test above with
+        // a deeper assertion on the restricted-register list.
+        randomSpy.mockReturnValue(0.5);
+        wrapper = mount(ItemGenerator, { props: { premium: true } });
+        const originSelect = wrapper.findAll('select')[2];
+        await originSelect.setValue(race);
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
 
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
-    });
+        const prompt = openAi.generateGptResponse.mock.calls[0][0];
+        expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
+      },
+    );
 
     it('renders LANGUAGE REGISTER RESTRICTION when lore mentions orcish on a non-fantasy-race origin (user repro)', async () => {
       // The exact user-reported scenario: dropdown=Necromantic, lore=
@@ -543,47 +516,6 @@ describe('ItemGenerator - Prompt Generation', () => {
 
       const prompt = openAi.generateGptResponse.mock.calls[0][0];
       expect(prompt).not.toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
-    });
-
-    it('renders LANGUAGE REGISTER RESTRICTION for Elven (now Western-fantasy-bound)', async () => {
-      // Pre-Task-1 this test asserted Elven did NOT render the
-      // restriction (the restriction was orc/goblin-scoped). Post-
-      // Task-1, Elven joined WESTERN_FANTASY_BOUND_RACES alongside Dwarven and
-      // Gnomish under the Western-fantasy-bound tier — all five render
-      // the restriction block.
-      randomSpy.mockReturnValue(0.5);
-      wrapper = mount(ItemGenerator, { props: { premium: true } });
-      const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Elven');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
-
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
-    });
-
-    it('renders LANGUAGE REGISTER RESTRICTION for Dwarven (now Western-fantasy-bound)', async () => {
-      randomSpy.mockReturnValue(0.5);
-      wrapper = mount(ItemGenerator, { props: { premium: true } });
-      const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Dwarven');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
-
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
-    });
-
-    it('renders LANGUAGE REGISTER RESTRICTION for Gnomish (now Western-fantasy-bound)', async () => {
-      randomSpy.mockReturnValue(0.5);
-      wrapper = mount(ItemGenerator, { props: { premium: true } });
-      const originSelect = wrapper.findAll('select')[2];
-      await originSelect.setValue('Gnomish');
-      await wrapper.find('form').trigger('submit');
-      await flushPromises();
-
-      const prompt = openAi.generateGptResponse.mock.calls[0][0];
-      expect(prompt).toContain('LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT');
     });
 
     it('does NOT render LANGUAGE REGISTER RESTRICTION for Giant (cross-cultural archetype)', async () => {

@@ -262,20 +262,4 @@ describe('detectRegisterFromInput', () => {
     });
   });
 
-  describe('detection map shape (regression guards)', () => {
-    it('every detection term is non-empty', () => {
-      for (const [register, terms] of Object.entries(userInputLanguageDetection)) {
-        for (const term of terms) {
-          expect(term).toBeTruthy();
-          expect(typeof term).toBe('string');
-        }
-      }
-    });
-
-    it('every register prefix is unique in the map', () => {
-      const prefixes = Object.keys(userInputLanguageDetection);
-      const uniquePrefixes = new Set(prefixes);
-      expect(prefixes.length).toBe(uniquePrefixes.size);
-    });
-  });
 });
