@@ -22,7 +22,7 @@ import * as goblinoid from './goblinoid.mjs';
 import * as infernal from './infernal.mjs';
 import * as orcish from './orcish.mjs';
 import * as primordial from './primordial.mjs';
-import * as sindarin from './sindarin.mjs';
+import * as elven from './elven.mjs';
 import * as yoruba from './yoruba.mjs';
 
 // Map of register-name → array-export-names that should pass the
@@ -40,7 +40,7 @@ const REGISTER_POOL_EXPORTS = {
   infernal:   { module: infernal,   pools: ['infernalCharacterEpithets'] },
   orcish:     { module: orcish,     pools: ['orcishCharacterEpithets'] },
   primordial: { module: primordial, pools: ['primordialCharacterEpithets'] },
-  sindarin:   { module: sindarin,   pools: ['sindarinCharacterEpithets'] },
+  elven:   { module: elven,   pools: ['elvenCharacterEpithets'] },
   yoruba:     { module: yoruba,     pools: ['yorubaCharacterEpithets', 'yorubaPlaceEpithets', 'yorubaSpiritEpithets'] },
 };
 

@@ -20,7 +20,7 @@ import {
 // pick mock Math.random() to 0 (which selects pool index 0 — the first
 // prefix in each race's pool); the test pool MUST contain at least
 // that first-prefix entry for each race used in tests. Specifically:
-//   Elven      pool[0] = 'Sindarin-inspired'        ✓
+//   Elven      pool[0] = 'Elven'        ✓
 //   Dwarven    pool[0] = 'Old-Norse-inspired'       ✓
 //   Orcish     pool[0] = 'Orcish'                   ✓
 //   Goblinoid  pool[0] = 'Goblin-inspired'          ✓
@@ -28,7 +28,7 @@ import {
 //   Giant      pool[0] = 'Norse-inspired'           ✓
 const registers = [
   'Latin-inspired: formal (e.g., Aurelium)',
-  'Sindarin-inspired (elvish): elegant (e.g., Galadhriel)',
+  'Elven: elegant (e.g., Aelindariel)',
   'Welsh-inspired: soft consonants (e.g., Branwen)',
   'Old-Irish-inspired: pre-modern Gaeilge (e.g., placeholder)',
   'Old-Occitan-inspired: troubadour register',
@@ -555,7 +555,7 @@ describe('selectRegister', () => {
       // Pre-Task-1, Elven was the canonical example of cultural-
       // detection-wins (priority 1 honored Yoruba-coded input even on
       // an Elven origin). Post-promotion to WESTERN_FANTASY_BOUND_RACES, the Elven
-      // pool wins — Yoruba is not in the Sindarin/Welsh/Old-Irish/
+      // pool wins — Yoruba is not in the Elven/Welsh/Old-Irish/
       // Old-Occitan/Latin pool, so the pool overrides the detection
       // signal. This test pins the new behavior.
       randomSpy.mockReturnValue(0);
@@ -565,12 +565,12 @@ describe('selectRegister', () => {
       expect(isInConventionalPool(result, 'Elven')).toBe(true);
     });
 
-    it('Elven + Sindarin cultural detection (in-pool) IS still honored', () => {
-      // Sindarin-inspired IS in the Elven pool. In-pool cultural detection
+    it('Elven + Elven cultural detection (in-pool) IS still honored', () => {
+      // Elven IS in the Elven pool. In-pool cultural detection
       // wins — symmetric with the orc/goblin in-pool case.
-      const detect = stubDetect('Sindarin-inspired (elvish): elegant (e.g., Galadhriel)');
-      const result = selectRegister('Elven', 'a Sindarin verse', registers, detect);
-      expect(result).toMatch(/^Sindarin-inspired/);
+      const detect = stubDetect('Elven: elegant (e.g., Aelindariel)');
+      const result = selectRegister('Elven', 'a Elven verse', registers, detect);
+      expect(result).toMatch(/^Elven/);
     });
 
     it('Elven pool includes Finnish (Kalevala fit)', () => {
@@ -651,7 +651,7 @@ describe('selectRegister', () => {
     // Horror-coded aesthetic origins (Infernal, Abyssal, Necromantic,
     // Vampiric, Lycanthropic, Aberrant) are restricted to the
     // horrorOriginRegisterPool — European registers with horror-genre
-    // precedent (Latin/Norse/Germanic/Slavic/Romanian/Sindarin) plus
+    // precedent (Latin/Norse/Germanic/Slavic/Romanian/Elven) plus
     // the fictional horror-native registers (Abyssal/Infernal/Aberrant).
     // The protection blocks pairings that would impose Western horror
     // conventions onto non-Western cultural registers (Necromantic +
@@ -662,7 +662,7 @@ describe('selectRegister', () => {
     // Selection is uniform-random across the pool (no 70/30 weighting
     // like orc/goblin) because horror origins lack a single "primary
     // register" — Necromantic items can lean Latin/Romanian/Norse/
-    // Sindarin/Abyssal-Infernal-Aberrant and all are valid genre
+    // Elven/Abyssal-Infernal-Aberrant and all are valid genre
     // pairings. Spread is the desired behavior.
 
     const indexRolls = [0.0, 0.1, 0.2, 0.35, 0.5, 0.65, 0.75, 0.85, 0.95, 0.99];
@@ -884,7 +884,7 @@ describe('selectRegister', () => {
         'Gothic-inspired',
         'Old-Slavic-inspired',
         'Romanian-inspired',
-        'Sindarin-inspired',
+        'Elven',
         'Abyssal',
         'Infernal',
         'Aberrant',

@@ -24,14 +24,14 @@ describe('character-whitelist-prompt — return-value behavior', () => {
 
   it('returns non-empty when preferred pool matches and mathRandom < 0.7', () => {
     // Elven/Dwarven preferred + roll under threshold → fires.
-    expect(buildCharacterWhitelistBlock('Elven',   'Sindarin-inspired: elegant',   0)).not.toBe('');
+    expect(buildCharacterWhitelistBlock('Elven',   'Elven: elegant',   0)).not.toBe('');
     expect(buildCharacterWhitelistBlock('Dwarven', 'Old-Norse-inspired: Eddaic',   0.5)).not.toBe('');
-    expect(buildCharacterWhitelistBlock('Elven',   'Sindarin-inspired: elegant',   0.69999)).not.toBe('');
+    expect(buildCharacterWhitelistBlock('Elven',   'Elven: elegant',   0.69999)).not.toBe('');
   });
 
   it('returns empty when preferred pool matches but mathRandom >= 0.7', () => {
     // Strictness gate fails → no injection. The 30% case.
-    expect(buildCharacterWhitelistBlock('Elven',    'Sindarin-inspired: elegant', 0.7)).toBe('');
+    expect(buildCharacterWhitelistBlock('Elven',    'Elven: elegant', 0.7)).toBe('');
     expect(buildCharacterWhitelistBlock('Dwarven',  'Old-Norse-inspired: Eddaic', 0.85)).toBe('');
     expect(buildCharacterWhitelistBlock('Draconic', 'Draconic: harsh',            0.95)).toBe('');
   });

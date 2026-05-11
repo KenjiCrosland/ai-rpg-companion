@@ -83,7 +83,7 @@ export const enableProtectedRegisters = false;
  * list. Western-canonical registers (Latin-family, Norse-family,
  * Germanic-family, Celtic-family, Slavic-family, Hungarian, Finnish,
  * Italian Renaissance, Old Occitan) and fictional-fantasy registers
- * (Sindarin, Draconic, Goblin, Orcish, Gnomish, Aberrant, Abyssal,
+ * (Elven, Draconic, Goblin, Orcish, Gnomish, Aberrant, Abyssal,
  * Infernal, Primordial, Technomagical) are NOT in this list and remain
  * available with the flag off.
  */
@@ -260,7 +260,7 @@ export const allLanguageRegisters = [
   // the LLM's world-knowledge override path with strict universal-
   // invent rules. Detection-map entries removed in parallel.
   // Fictional / fantasy linguistic traditions
-  'Sindarin-inspired (elvish): elegant, vowel-rich (e.g., Galadhriel, Thindol, Nimrathel)',
+  'Elven: lyrical, vowel-rich (e.g., Aelindariel, Saereldreth, Glorwenneth)',
   'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax, Vyrmokk, Kaelsithur)',
   'Goblin-inspired: sharp, crude, percussive (e.g., Skragbit, Mukgash, Krik-tak)',
   'Orcish: brutal, guttural (e.g., Grokthash, Uzgark, Dra\'mok)',
@@ -285,3 +285,50 @@ export const registerList = enableProtectedRegisters
   : allLanguageRegisters.filter(
       entry => !PROTECTED_REGISTER_PREFIXES.some(prefix => entry.startsWith(prefix)),
     );
+
+/**
+ * Thematic registers describe cosmic genres (alien horror, demonic
+ * realms, hellish power, primal elemental forces) rather than just
+ * linguistic flavor. DeepSeek treats these as full genre commitments —
+ * an NPC rolled with Aberrant tends to come out as a cosmic-horror
+ * keeper; Infernal produces centuries-old oath-binders; Abyssal lands
+ * on demonic envoys; Primordial drifts toward elemental wardens. The
+ * register doesn't act as just-naming-flavor for these the way it does
+ * for Hungarian / Welsh / Goblin-inspired / Elven.
+ *
+ * The categorization gates the orchestrator's FANTASY_UNSPECIFIED
+ * routing in the NPC generator: ambiguous fantasy inputs ("a tavern
+ * patron") roll across humanoid-only registers via
+ * `humanoidRegisterList` so the LLM produces a normal person with
+ * cultural / species flavor. Thematic registers still fire when the
+ * user explicitly invokes the genre (inference returns the specific
+ * thematic token), in empty-input random selection (bulk-variety case
+ * where genre-shifts are welcome), or in seeded generations from
+ * already-thematic-coded source items.
+ *
+ * Draconic stays humanoid — the LLM reads it as dragonborn-style
+ * naming, not a cosmic-genre commitment.
+ *
+ * Membership is intentionally narrow: only registers whose presence
+ * causes a measurable genre-displacement in production for ambiguous
+ * inputs. Add an entry here only after observing the same
+ * displacement pattern in real generations.
+ */
+export const THEMATIC_REGISTER_PREFIXES = [
+  'Aberrant',
+  'Abyssal',
+  'Infernal',
+  'Primordial',
+];
+
+/**
+ * Humanoid-only register pool — `registerList` minus the thematic
+ * registers above. Used when the orchestrator wants random fantasy
+ * naming variety without committing the NPC to a cosmic genre. Inherits
+ * the protected-register filter from `registerList`, so flipping
+ * `enableProtectedRegisters` on automatically extends the humanoid
+ * pool with the additional non-thematic protected registers.
+ */
+export const humanoidRegisterList = registerList.filter(
+  entry => !THEMATIC_REGISTER_PREFIXES.some(prefix => entry.startsWith(prefix)),
+);

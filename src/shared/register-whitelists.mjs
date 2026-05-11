@@ -4,7 +4,7 @@
  * Reduced after Phase-1 unification: the unified character-whitelist
  * registry at `character-whitelist-registry.mjs` is now the source of
  * truth for race-origin pools (Orcish/Goblinoid/Elven/Dwarven) and
- * fictional-register pools (Sindarin/Draconic/Aberrant/Abyssal/
+ * fictional-register pools (Elven/Draconic/Aberrant/Abyssal/
  * Infernal/Primordial). This file retains only the entries that
  * `catchall-prompt.mjs` consumes through `getWhitelistForRegister` —
  * currently just Maori. The catchall path is flag-off today

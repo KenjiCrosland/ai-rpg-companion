@@ -55,7 +55,7 @@ import { getWhitelistForRegister } from '@/shared/register-whitelists.mjs';
  * Hungarian, Finnish, Romanian, Russian, Italian-Renaissance, Greek)
  * are NOT in this list — they continue to use the universal-invent
  * rules in the main prompt without catchall augmentation. Fictional
- * fantasy registers (Sindarin, Orcish, Goblin, Gnomish, Draconic, etc.)
+ * fantasy registers (Elven, Orcish, Goblin, Gnomish, Draconic, etc.)
  * are also excluded — there are no real-world referents to protect.
  *
  * Pool registers (Yoruba, Andean) are NOT in this list — they have

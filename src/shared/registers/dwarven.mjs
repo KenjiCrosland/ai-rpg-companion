@@ -1,13 +1,14 @@
 /**
- * Dwarven character-epithet pool for the cros.land item generator.
+ * Dwarven character-epithet pool for the cros.land generators.
  *
- * 100 names spanning eight sub-conventions: Khuzdul-style harsh
- * constructions (Semitic-pattern phonology, no Tolkien morpheme reuse),
- * Norse-pattern outer male names, Norse-pattern female names (Tolkien
- * did not name female dwarves; these are dwarven-by-genre-convention),
- * compound English-readable deed-surnames, patronymic title-stacking
- * forms, multi-syllable clan-house names, earned honor-names (deed-
- * based titles), and Khuzdul-style + compound-surname hybrids.
+ * 100 names spanning eight sub-conventions: ancient-dwarven harsh
+ * constructions (Semitic-pattern phonology, original morphemes only),
+ * Norse-pattern outer male names, Norse-pattern female names (these
+ * are dwarven-by-genre-convention; female dwarven naming is sparse in
+ * canonical fantasy), compound English-readable deed-surnames,
+ * patronymic title-stacking forms, multi-syllable clan-house names,
+ * earned honor-names (deed-based titles), and ancient-dwarven +
+ * compound-surname hybrids.
  *
  * Keyed by ORIGIN, not register: this pool fires whenever the user
  * picks Dwarven origin, regardless of which Germanic-family register
@@ -15,31 +16,32 @@
  * Gothic) gets rolled. The names are characteristically dwarven across
  * all of those registers, so origin-binding is the right gate.
  *
- * Audit notes — names DELIBERATELY excluded per project policy
- * (Tolkien-published-name and D&D-canon-character avoidance):
- *   - All -dûm endings (Khazad-dûm pattern)
- *   - All -bûl endings (Mazarbûl pattern)
- *   - All Khaz- prefixes (Khazad pattern)
- *   - All Bharak- constructions (Caradhras Khuzdul name)
- *   - Tharbad references (Tolkien Eriador city)
- *   - Felak- constructions (Felakgundu epithet)
- *   - Zigil (Tolkien Khuzdul "silver")
- *   - Bund- (Tolkien Khuzdul "head")
- *   - Mazarbûl (Chamber in Moria)
- *   - Tholin (too close to Thorin)
- *   - Thrar (too close to Thrór)
- *   - Frar (Balin's company)
- *   - Bruenor / Battlehammer (D&D-iconic via Bruenor Battlehammer)
- *   - Oakenshield (Thorin's surname)
- *   - "Long-Beard" / Longbeards reference (Tolkien for Durin's folk)
- *   - Tharzghâl / -ghâl ending (Azaghâl-coded)
+ * Audit notes — names DELIBERATELY excluded during pool construction
+ * per project policy (avoidance of published-character names and
+ * fantasy-canon iconic surnames):
+ *   - All -dûm endings (published city pattern)
+ *   - All -bûl endings (published chamber pattern)
+ *   - All Khaz- prefixes (published clan pattern)
+ *   - All Bharak- constructions (published city name)
+ *   - Tharbad references (published city)
+ *   - Felak- constructions (published epithet)
+ *   - Zigil (published "silver" morpheme)
+ *   - Bund- (published "head" morpheme)
+ *   - Mazarbûl (published chamber name)
+ *   - Tholin (too close to a published name)
+ *   - Thrar (too close to a published name)
+ *   - Frar (published company member)
+ *   - Bruenor / Battlehammer (canon-iconic surname)
+ *   - Oakenshield (canon-iconic surname)
+ *   - "Long-Beard" / Longbeards reference (published clan term)
+ *   - Tharzghâl / -ghâl ending (published-coded suffix)
  *
  * Item-name construction stays freehand — the whitelist applies only
  * to the lore's single named character.
  */
 export const dwarvenCharacterEpithets = [
-  // Khuzdul-Style Harsh Constructions (Semitic-pattern phonology, no
-  // Tolkien morpheme reuse)
+  // Ancient-dwarven harsh constructions (Semitic-pattern phonology,
+  // original morphemes only — no published-IP morpheme reuse)
   'Vrazgur',
   'Drukurol',
   'Azokvurn',
@@ -57,7 +59,7 @@ export const dwarvenCharacterEpithets = [
   'Korzakar',
 
   // Norse-Pattern Outer Names (Male — pattern-following originals,
-  // not Völuspá-or-Tolkien names)
+  // not drawn from any published canon)
   'Borvin',
   'Brogi',
   'Veski',
@@ -74,8 +76,9 @@ export const dwarvenCharacterEpithets = [
   'Grimulf',
   'Throvald',
 
-  // Norse-Pattern Female Names (Old Norse names — Tolkien did not name
-  // female dwarves, so these are dwarven only by genre convention)
+  // Norse-Pattern Female Names (Old Norse names — female dwarven
+  // naming is sparse in fantasy canon, so these are dwarven only by
+  // genre convention)
   'Hilda',
   'Disa',
   'Gunnhild',
@@ -145,7 +148,7 @@ export const dwarvenCharacterEpithets = [
   'Brogi the Coal-Counter',
   'Hroldur Goldreckoner',
 
-  // Khuzdul-Style + Compound-Surname Hybrid
+  // Ancient-dwarven + Compound-Surname Hybrid
   'Drongar Stonefist',
   'Thargrim Ironbeard',
   'Khordrim Forgewright',

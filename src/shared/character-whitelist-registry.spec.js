@@ -8,6 +8,8 @@ import {
   fantasyRaceConventionalRegisters,
   WESTERN_FANTASY_BOUND_RACES,
 } from '@/shared/select-register.mjs';
+import { goblinoidCharacterEpithets } from '@/shared/registers/goblinoid.mjs';
+import { orcishCharacterEpithets } from '@/shared/registers/orcish.mjs';
 
 describe('character-whitelist-registry', () => {
   describe('getCharacterWhitelistForGeneration — lookup correctness', () => {
@@ -15,7 +17,7 @@ describe('character-whitelist-registry', () => {
       const cases = [
         ['Orcish',    'Orcish: brutal, guttural',          'mandatory'],
         ['Goblinoid', 'Goblin-inspired: sharp, crude',     'mandatory'],
-        ['Elven',     'Sindarin-inspired (elvish): ...',   'preferred'],
+        ['Elven',     'Elven: ...',   'preferred'],
         ['Dwarven',   'Old-Norse-inspired: Eddaic',        'preferred'],
       ];
       for (const [origin, register, expectedStrictness] of cases) {
@@ -31,8 +33,8 @@ describe('character-whitelist-registry', () => {
       // Necromantic / Aberrant + a fictional register that matches:
       // origin has no pool entry, register does → register-bound fires.
       const cases = [
-        // Necromantic origin + Sindarin register (rolled via horror pool)
-        ['Necromantic', 'Sindarin-inspired (elvish): elegant', 'preferred'],
+        // Necromantic origin + Elven register (rolled via horror pool)
+        ['Necromantic', 'Elven: elegant', 'preferred'],
         // Aberrant origin + Aberrant register (the 70% primary)
         ['Aberrant',    'Aberrant: unpronounceable clusters',  'preferred'],
         // Draconic, Abyssal, Infernal, Primordial similarly
@@ -65,20 +67,53 @@ describe('character-whitelist-registry', () => {
     });
   });
 
+  describe('register-bound lookup catches the NPC-generator random-fallback case', () => {
+    // Production regression: NPC generator with empty input runs
+    // `selectRegister` priority-3 random over the full registerList.
+    // It can land on Goblin-inspired or Orcish even though the user
+    // typed nothing, in which case `resolveFantasyRace` returns null
+    // (no race keyword in input). With null origin, the registry must
+    // fall through to register-prefix lookup — and pre-fix, those
+    // prefixes had no entry so the whitelist silently didn't fire,
+    // letting DeepSeek anchor on the static example names
+    // (Skragbit, Mukgash, Krik-tak) and producing clustering across
+    // generations.
+
+    it('null origin + Goblin-inspired register routes to the goblin pool with mandatory strictness', () => {
+      const result = getCharacterWhitelistForGeneration(
+        null,
+        'Goblin-inspired: sharp, crude, percussive (e.g., Skragbit)',
+      );
+      expect(result).not.toBeNull();
+      expect(result.pool).toBe(goblinoidCharacterEpithets);
+      expect(result.strictness).toBe('mandatory');
+    });
+
+    it('null origin + Orcish register routes to the orcish pool with mandatory strictness', () => {
+      const result = getCharacterWhitelistForGeneration(
+        null,
+        'Orcish: brutal, guttural (e.g., Grokthash)',
+      );
+      expect(result).not.toBeNull();
+      expect(result.pool).toBe(orcishCharacterEpithets);
+      expect(result.strictness).toBe('mandatory');
+    });
+  });
+
   describe('origin-bound precedes register-bound', () => {
-    it('Elven origin + Sindarin register routes via origin path (not register path)', () => {
+    it('Elven origin + Elven register routes via origin path (not register path)', () => {
       // Both maps would resolve: origin Elven → preferred pool, register
-      // Sindarin → preferred pool. Same pool data either way (Sindarin
+      // Elven → preferred pool. Same pool data either way (Elven
       // pool is the Elven character pool by user direction). The
       // precedence test pins the routing decision so a future contributor
       // adding a different pool to Elven origin doesn't accidentally
       // get superseded by the register-keyed entry.
       const result = getCharacterWhitelistForGeneration(
         'Elven',
-        'Sindarin-inspired (elvish): elegant',
+        'Elven: elegant',
       );
       expect(result).toBe(ORIGIN_CHARACTER_WHITELISTS['Elven']);
-      expect(result).not.toBe(REGISTER_CHARACTER_WHITELISTS['Sindarin-inspired']);
+      expect(result).not.toBe(REGISTER_CHARACTER_WHITELISTS['Elven']);
     });
   });
 

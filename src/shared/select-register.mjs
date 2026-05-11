@@ -8,7 +8,7 @@
  *
  *   1. Fantasy-race origins (Elven, Dwarven, Orcish, Goblinoid, Gnomish,
  *      Giant) were getting unconventional register pairings too often.
- *      Genre conventions strongly associate elves with Sindarin-style
+ *      Genre conventions strongly associate elves with Elven-style
  *      naming, dwarves with Germanic, orcs with Orcish-phonetic, etc.
  *      Fully uniform-random register selection ignored those conventions
  *      entirely. The fix: 70% chance conventional, 30% chance other —
@@ -55,7 +55,7 @@
  * register selection would surface.
  *
  * Multi-register pools (Elven, Dwarven, Gnomish, Giant) replaced earlier
- * single-register defaults to avoid reproducing Tolkien-as-canon and to
+ * single-register defaults to avoid reproducing single-author-canon and to
  * spread example-name rotation across multiple registers per generation.
  *
  * Orcish and Goblinoid registers are ALLOW-LISTS: a curated set of
@@ -74,7 +74,7 @@
  *
  * Race-specific notes:
  *   - Elven: refined-aesthetic / forest / longevity-coded traditions
- *     with clear fantasy-genre precedent. Tolkien-default Sindarin
+ *     with clear fantasy-genre precedent. default Elven
  *     (primary) plus archaic Celtic registers (Middle Welsh from the
  *     Mabinogion, Old Irish from the Mythological Cycle), Old Occitan
  *     for troubadour refined-aesthetic, Latin for high-classical
@@ -86,7 +86,7 @@
  *     trimmed; they reach elven items only via cultural detection or
  *     uniform-random fall-through paths that this branch overrides.
  *   - Dwarven: mountain-craft cultures with strong clan structures.
- *     Old Norse (Tolkien's source) plus Anglo-Saxon, Old High German,
+ *     Old Norse plus Anglo-Saxon, Old High German,
  *     Middle High German (Nibelungenlied register), and Gothic
  *     (earliest documented Germanic). Earlier iterations included
  *     Caucasian, Atlas Berber, Pamir — trimmed for the same "reads
@@ -94,7 +94,7 @@
  *     coding history with dwarves is too fraught) and Andean stays
  *     out (on the orc/goblin exclusion list).
  *   - Orcish: allow-list of European registers with orc-fantasy
- *     precedent — Old Norse (jötnar/troll-adjacent figures, Tolkien-
+ *     precedent — Old Norse (jötnar/troll-adjacent figures, high-fantasy-
  *     tradition support), Anglo-Saxon (Beowulf-era register), Old/
  *     Middle High German and Gothic (Germanic mythological registers),
  *     Welsh and Old Irish (Celtic registers without orc-coding stigma),
@@ -120,7 +120,7 @@
  */
 export const fantasyRaceConventionalRegisters = {
   'Elven': [
-    'Sindarin-inspired',
+    'Elven',
     'Middle-Welsh-inspired',
     'Old-Irish-inspired',
     'Old-Occitan-inspired',
@@ -136,7 +136,7 @@ export const fantasyRaceConventionalRegisters = {
   ],
   'Orcish': [
     'Orcish',                       // primary fictional register
-    'Old-Norse-inspired',           // Tolkien-tradition; Brioc/Grief-Forged precedent
+    'Old-Norse-inspired',           // high-fantasy-tradition; Brioc/Grief-Forged precedent
     'Anglo-Saxon-inspired',         // Beowulf-era register
     'Old-High-German-inspired',     // Germanic mythological register
     'Middle-High-German-inspired',  // Nibelungenlied register
@@ -233,9 +233,9 @@ export const horrorRestrictedOrigins = [
  * own alt-pool) instead of into the horror pool (12-member uniform).
  * Necromantic / Vampiric / Lycanthropic / Shadow are NOT in this map
  * — they have no matching fictional register of their own and continue
- * to use the horror pool. Sindarin is NOT in this map because
- * Sindarin is not an origin (it's a register only); the Sindarin
- * whitelist fires when Elven origin rolls the Sindarin register via
+ * to use the horror pool. Elven is NOT in this map because
+ * Elven is not an origin (it's a register only); the Elven
+ * whitelist fires when Elven origin rolls the Elven register via
  * the Elven allow-list (~70% of Elven generations).
  *
  * Cultural detection from user input is honored ONLY when the
@@ -267,7 +267,7 @@ export const fictionalOriginRegisters = {
   'Aberrant': {
     primary: 'Aberrant',
     altPool: [
-      'Sindarin-inspired',        // high-elven-corrupted aberrant
+      'Elven',        // high-elven-corrupted aberrant
       'Old-Slavic-inspired',      // folk-horror / whisper-tradition
       'Romanian-inspired',        // gothic-horror
       'Gothic-inspired',          // medieval mystery / forbidden
@@ -310,13 +310,13 @@ export const fictionalOriginRegisters = {
  * "primary register" the way orcs have an Orcish fictional register —
  * Necromantic items can lean Latin (academic-occult), Romanian (gothic
  * vampirism), Old Norse (rune-magic), Gothic (medieval death-cult),
- * Sindarin (high-elven necromancers), or any of the fictional registers
+ * Elven (high-elven necromancers), or any of the fictional registers
  * (Abyssal, Infernal, Aberrant). All these are valid horror traditions;
  * spread across the pool is the desired behavior.
  *
  * Pool composition:
  *   - European real-world registers with documented horror-genre
- *     precedent (Latin/Norse/Germanic/Slavic/Romanian/Sindarin).
+ *     precedent (Latin/Norse/Germanic/Slavic/Romanian/Elven).
  *   - Fictional fantasy registers (Abyssal/Infernal/Aberrant) that
  *     are themselves horror-genre native.
  *
@@ -327,10 +327,9 @@ export const fictionalOriginRegisters = {
  *   - Romanian-inspired is included for the gothic-vampire / Carpathian
  *     horror tradition that sits in genre canon (Stoker, Murnau,
  *     contemporary Eastern-European folk-horror).
- *   - Sindarin-inspired is included because high-fantasy elven
- *     necromancy/vampirism is a recognized subgenre (e.g., Tolkien's
- *     barrow-wights, the rings' wraith-creation, post-Tolkien dark-
- *     elven traditions).
+ *   - Elven is included because high-fantasy elven
+ *     necromancy/vampirism is a recognized subgenre (barrow-wights,
+ *     wraiths, dark-elven traditions across the genre).
  */
 export const horrorOriginRegisterPool = [
   'Latin-inspired',
@@ -341,7 +340,7 @@ export const horrorOriginRegisterPool = [
   'Gothic-inspired',
   'Old-Slavic-inspired',
   'Romanian-inspired',
-  'Sindarin-inspired',
+  'Elven',
   'Abyssal',
   'Infernal',
   'Aberrant',
@@ -353,18 +352,91 @@ export const horrorOriginRegisterPool = [
  * intent even when the user hasn't explicitly selected from the
  * dropdown — e.g., "ancient elven longbow" in lore triggers Elven
  * race weighting via the "elven" keyword.
+ *
+ * Keyword categories per race:
+ *   - canonical (elf/elven/elvish/elves)
+ *   - sub-races and variants (drow, eladrin, duergar, hobgoblin, …)
+ *   - hyphenated compounds (half-elf, half-orc, …) — hyphen escapes via
+ *     the regex compile step in resolveFantasyRace
+ *   - common misspellings users actually type (gobblin, dwerf, …)
+ *
+ * Declaration order resolves multi-race input ("elven blade carried by
+ * an orcish chieftain" → Elven wins because Elven is declared first).
  */
 export const fantasyRaceKeywords = {
-  'Elven':     ['elf', 'elven', 'elvish', 'elves'],
-  'Dwarven':   ['dwarf', 'dwarven', 'dwarvish', 'dwarves'],
-  'Orcish':    ['orc', 'orcish', 'orcs'],
-  'Goblinoid': ['goblin', 'goblinoid', 'goblins', 'hobgoblin', 'hobgoblins'],
-  'Gnomish':   ['gnome', 'gnomish', 'gnomes'],
-  'Giant':     ['giant', 'giants'],
+  'Elven': [
+    'elf', 'elven', 'elvish', 'elves',
+    'drow', 'eladrin', 'sea elf', 'wood elf', 'high elf', 'wild elf',
+    'half-elf', 'half-elven', 'halfelf', 'half elf',
+    'elph', 'elfen',
+  ],
+  'Dwarven': [
+    'dwarf', 'dwarven', 'dwarvish', 'dwarves',
+    'duergar', 'mountain dwarf', 'hill dwarf', 'shield dwarf',
+    'dwerf', 'dwarrow',
+  ],
+  'Orcish': [
+    'orc', 'orcish', 'orcs',
+    'half-orc', 'halforc', 'half orc',
+    'orck', 'orken', 'orx',
+  ],
+  'Goblinoid': [
+    'goblin', 'goblinoid', 'goblins',
+    'hobgoblin', 'hobgoblins', 'bugbear', 'bugbears',
+    'gobblin', 'gobblins', 'goblen', 'goblyn', 'gobblyn',
+  ],
+  'Gnomish': [
+    'gnome', 'gnomish', 'gnomes',
+    'rock gnome', 'forest gnome', 'deep gnome', 'svirfneblin',
+    'gnomic',
+  ],
+  'Giant': [
+    'giant', 'giants',
+    'jotun', 'jötunn', 'jötnar', 'jotnar',
+    'ogre', 'ogres', 'cyclops', 'cyclopes', 'titan', 'titans',
+    'firbolg', 'firbolgs', 'goliath', 'goliaths',
+  ],
+};
+
+/**
+ * Maps aesthetic / horror / fictional origins to keywords that signal
+ * the origin when present in user-provided name or description. Parallel
+ * to `fantasyRaceKeywords` but for non-race origins. Used by
+ * `detectOriginFromInput` for callers (e.g., the NPC generator) that
+ * derive origin entirely from a single free-text input — no dropdown.
+ *
+ * Declaration order resolves overlap. The Abyssal-vs-Infernal "demon" /
+ * "fiend" ambiguity is handled by listing Abyssal first (so "demon"
+ * resolves Abyssal) and putting the unambiguously-devil-coded terms
+ * (devil/devilish/hellish/hellfire) on Infernal. Generic "fiend" stays
+ * with Infernal because in D&D usage "fiend" most often refers to the
+ * lawful-evil pact-devil tradition; chaotic-evil "demon" stays with
+ * Abyssal.
+ *
+ * Tier 1 + Tier 2 origins covered. Tier 3 (Wizardry / Alchemical /
+ * Technomagical / Deep Sea / Primordial / Verdant) intentionally
+ * absent — too generic ("wizard", "alchemist") or too rare to invest
+ * in keyword detection.
+ */
+export const aestheticOriginKeywords = {
+  // Tier 1 — high-signal, common in fantasy prose
+  'Draconic':    ['dragon', 'dragons', 'draconic', 'wyrm', 'wyrms', 'drake', 'drakes', 'wyvern', 'wyverns', 'dragonborn'],
+  'Fey':         ['fey', 'feywild', 'faerie', 'faeries', 'fairy', 'fairies', 'sidhe', 'dryad', 'dryads', 'satyr', 'satyrs', 'nymph', 'nymphs', 'pixie', 'pixies', 'sprite', 'sprites'],
+  'Vampiric':    ['vampire', 'vampires', 'vampiric', 'vampyric', 'dhampir', 'dhampirs'],
+  'Necromantic': ['necromancer', 'necromancers', 'necromantic', 'necromancy', 'lich', 'liches', 'undead', 'wight', 'wights', 'ghoul', 'ghouls', 'wraith', 'wraiths', 'skeletal', 'death-cult', 'deathcult'],
+  'Lycanthropic':['werewolf', 'werewolves', 'lycanthrope', 'lycanthropes', 'lycanthropic', 'lycanthropy', 'shapeshifter', 'shapeshifters', 'wereboar', 'wererat', 'weretiger'],
+  'Celestial':   ['angel', 'angels', 'angelic', 'celestial', 'celestials', 'seraph', 'seraphim', 'archon', 'archons', 'aasimar', 'deva', 'devas'],
+  'Abyssal':     ['demon', 'demons', 'demonic', 'abyssal', 'abyss', 'tiefling', 'tieflings'],
+  'Infernal':    ['devil', 'devils', 'devilish', 'infernal', 'fiend', 'fiends', 'fiendish', 'hellish', 'hellfire', 'hells'],
+  // Tier 2 — narrower but unambiguous
+  'Aberrant':    ['aberration', 'aberrations', 'aberrant', 'mind flayer', 'mind flayers', 'mindflayer', 'illithid', 'illithids', 'beholder', 'beholders', 'eldritch'],
+  'Shadow':      ['shadow', 'shadows', 'shade', 'shades', 'shadowfell', 'shadar-kai', 'shadarkai'],
+  'Astral':      ['astral', 'githyanki', 'githzerai', 'gith'],
+  'Elemental':   ['elemental', 'elementals', 'djinn', 'djinni', 'efreeti', 'efreet', 'genie', 'genies', 'dao', 'marid', 'genasi'],
 };
 
 /** Probability that a fantasy-race-signaled register selection picks the
- *  conventional register (Sindarin for Elven, Germanic for Dwarven, etc.).
+ *  conventional register (Elven for Elven, Germanic for Dwarven, etc.).
  *  The remaining (1 - this) probability picks any other register uniformly.
  *  See selectRegister's docblock for the reasoning. */
 const FANTASY_RACE_CONVENTIONAL_PROBABILITY = 0.7;
@@ -398,7 +470,7 @@ const FANTASY_RACE_CONVENTIONAL_PROBABILITY = 0.7;
  *     European registers (the canonical orc-as-racial-proxy pattern).
  *   - Dwarven: Norse/Germanic mountain-craft archetype.
  *   - Gnomish: European inventor-tinkerer archetype.
- *   - Elven: Sindarin / Celtic refined-aesthetic archetype.
+ *   - Elven: Elven / Celtic refined-aesthetic archetype.
  *
  * Explicitly NOT in this list:
  *   - Fey, Giant: cross-cultural archetypes — the slot exists in many
@@ -446,17 +518,67 @@ export function resolveFantasyRace(resolvedOrigin, userInput) {
   //     (e.g., "elven blade carried by an orcish chieftain"), the first
   //     in declaration order wins.
   if (userInput) {
-    for (const [race, keywords] of Object.entries(fantasyRaceKeywords)) {
-      const found = keywords.some(keyword => {
-        const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const pattern = new RegExp(`\\b${escaped}\\b`, 'i');
-        return pattern.test(userInput);
-      });
-      if (found) return race;
-    }
+    return matchKeywordMap(userInput, fantasyRaceKeywords);
   }
 
   return null;
+}
+
+/**
+ * Compile a single regex that matches any keyword in `keywords` on a
+ * word boundary, case-insensitive. Special chars in keywords are
+ * escaped (so 'half-orc' matches the literal hyphen, not a regex
+ * character class).
+ *
+ * Returns the matched origin/race name from the map, or null. Used by
+ * resolveFantasyRace and detectOriginFromInput to share keyword-match
+ * semantics. Iteration follows map declaration order so the
+ * disambiguation rules documented on each map (e.g., Abyssal-before-
+ * Infernal for "demon") hold.
+ */
+function matchKeywordMap(userInput, keywordMap) {
+  for (const [origin, keywords] of Object.entries(keywordMap)) {
+    const found = keywords.some(keyword => {
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(`\\b${escaped}\\b`, 'i');
+      return pattern.test(userInput);
+    });
+    if (found) return origin;
+  }
+  return null;
+}
+
+/**
+ * Detect the origin (fantasy race OR aesthetic origin) from a free-
+ * text user input. Used by callers without an origin dropdown (NPC
+ * generator) to derive an origin signal from the user's description.
+ *
+ * Resolution order:
+ *   1. Fantasy-race keywords (Elven, Dwarven, Orcish, …) — race-specific
+ *      signals like "drow" / "half-orc" / "duergar" are more specific
+ *      than aesthetic origins and should win when present.
+ *   2. Aesthetic-origin keywords (Draconic, Fey, Vampiric, …) — the
+ *      thematic register signal.
+ *
+ * Returns null if no keyword matches. The caller decides what to do
+ * with null (typically: fall through to uniform-random register
+ * selection).
+ *
+ * Why two maps instead of one: race detection drives different
+ * downstream behavior than aesthetic-origin detection. Race detection
+ * gates the WESTERN_FANTASY_BOUND_RACES register restriction; aesthetic
+ * origins route through `horrorRestrictedOrigins` /
+ * `fictionalOriginRegisters`. Keeping the maps separate makes the two
+ * code paths easy to reason about independently.
+ *
+ * @param {string} userInput — the user's free-text description.
+ * @returns {string|null} — origin/race name or null.
+ */
+export function detectOriginFromInput(userInput) {
+  if (!userInput) return null;
+  const race = matchKeywordMap(userInput, fantasyRaceKeywords);
+  if (race) return race;
+  return matchKeywordMap(userInput, aestheticOriginKeywords);
 }
 
 /**
@@ -580,7 +702,7 @@ export function selectRegister(
   //
   // Within the allow-list, 70% of generations pick the primary
   // register (pool[0] — 'Orcish' / 'Goblin-inspired' /
-  // 'Old-Norse-inspired' / 'Gnomish' / 'Sindarin-inspired') and 30%
+  // 'Old-Norse-inspired' / 'Gnomish' / 'Elven') and 30%
   // pick uniformly from the remaining members. Without this
   // weighting, uniform selection would fire the primary register
   // only 1-in-N of the time (10% for Orcish, 17% for Goblinoid, 20%

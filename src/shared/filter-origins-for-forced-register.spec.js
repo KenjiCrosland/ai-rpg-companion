@@ -7,7 +7,7 @@ const YORUBA = 'Yoruba-inspired: rhythmic with diacriticals';
 const ANDEAN = 'Andean-inspired: structured Quechua flavor';
 const LATIN = 'Latin-inspired: formal, structured (e.g., Aurelium)';
 const OLD_NORSE = 'Old-Norse-inspired: Eddaic register (e.g., Sigrún)';
-const SINDARIN = 'Sindarin-inspired (elvish): elegant, vowel-rich';
+const SINDARIN = 'Elven: elegant, vowel-rich';
 const GOBLIN_INSPIRED = 'Goblin-inspired: sharp, crude, percussive';
 const ORCISH = 'Orcish: brutal, guttural';
 const ROMANIAN = 'Romanian-inspired: Latin-rooted with Slavic influence';
@@ -140,7 +140,7 @@ describe('filterOriginsForForcedRegister', () => {
     // Orcish, Goblinoid, and Dwarven pools, plus the horror pool. It
     // is NOT in the Gnomish pool (Gnomish = Greek/Anglo-Saxon/Italian-
     // Renaissance + the Gnomish fictional register), the Elven pool
-    // (Sindarin/Welsh/Old-Irish/Occitan/Latin), or the Giant pool
+    // (Elven/Welsh/Old-Irish/Occitan/Latin), or the Giant pool
     // (which references modern 'Norse-inspired', a separate descriptor).
     const filtered = filterOriginsForForcedRegister(ALL_ELIGIBLE, OLD_NORSE);
 
@@ -166,7 +166,7 @@ describe('filterOriginsForForcedRegister', () => {
   describe('Anglo-Saxon-inspired (in 4 of 5 Western-fantasy-bound race allow-lists — NOT in Elven)', () => {
     // Anglo-Saxon-inspired is in the Orcish, Goblinoid, Dwarven, and
     // Gnomish allow-lists, plus the horror pool. The Elven allow-list
-    // is Sindarin/Welsh/Old-Irish/Occitan/Latin — no Anglo-Saxon.
+    // is Elven/Welsh/Old-Irish/Occitan/Latin — no Anglo-Saxon.
     // After the Western-fantasy-bound promotion, no single register is
     // in all five race allow-lists (the intersection is empty), so
     // "returns full input" is unreachable for any forced register.
@@ -192,8 +192,8 @@ describe('filterOriginsForForcedRegister', () => {
     });
   });
 
-  describe('Sindarin (in horror pool only, NOT in orc/goblin pools)', () => {
-    // Sindarin is in the horror pool (high-elven necromancers exist as
+  describe('Elven (in horror pool only, NOT in orc/goblin pools)', () => {
+    // Elven is in the horror pool (high-elven necromancers exist as
     // a recognized subgenre) but isn't in either orc or goblin pool.
     const filtered = filterOriginsForForcedRegister(ALL_ELIGIBLE, SINDARIN);
 
@@ -202,7 +202,7 @@ describe('filterOriginsForForcedRegister', () => {
       expect(filtered).not.toContain('Goblinoid');
     });
 
-    it('keeps all horror-coded origins (Sindarin IS in horror pool)', () => {
+    it('keeps all horror-coded origins (Elven IS in horror pool)', () => {
       for (const horrorOrigin of HORROR_ORIGINS) {
         expect(filtered).toContain(horrorOrigin);
       }

@@ -11,7 +11,7 @@
  *      guttural feel without the glottal stops.
  *   4. Hyphenated compound (Tarbash-Mokk, Gorhak-Drum) — reads as
  *      lineage-marked rather than the apostrophe's glottal break.
- *   5. English title-epithet (Bloodfang, Skullsplitter) — D&D / Tolkien
+ *   5. English title-epithet (Bloodfang, Skullsplitter) — D&D / high-fantasy
  *      genre convention; fits orc war-leader figures.
  *
  * Routed via `ORIGIN_CHARACTER_WHITELISTS['Orcish']` in the unified

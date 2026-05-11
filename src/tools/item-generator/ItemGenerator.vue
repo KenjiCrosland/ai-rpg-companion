@@ -333,6 +333,8 @@ import { buildPoolPromptBlock } from '@/shared/pool-prompt.mjs';
 import { buildCatchallPromptBlock } from '@/shared/catchall-prompt.mjs';
 import { buildCharacterWhitelistBlock } from '@/shared/character-whitelist-prompt.mjs';
 import { filterOriginsForForcedRegister } from '@/shared/filter-origins-for-forced-register.mjs';
+import { buildLanguageRegisterRestrictionBlock } from '@/shared/language-register-restriction.mjs';
+import { rotateRegisterExamples } from '@/shared/rotate-register-examples.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 // TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE
@@ -812,7 +814,7 @@ const generateMagicItem = async () => {
   //   2. Fantasy-race weighted (70/30 conventional/other) — when the
   //      origin or user input signals a core fantasy race, register
   //      selection biases toward the genre-conventional pairing
-  //      (Elven → Sindarin, Dwarven → Germanic, etc.) without locking
+  //      (Elven → Elven, Dwarven → Germanic, etc.) without locking
   //      out unconventional pairings entirely.
   //   3. Uniform random across the full pool.
   // resolvedOrigin is fully resolved at this point — dropdown selection
@@ -901,13 +903,17 @@ const generateMagicItem = async () => {
 
   // Orc and goblin conventional pools are intentionally single-register
   // (see fantasyRaceConventionalRegisters docstring on the racism-coding
-  // No example-tail rotation: orc/goblin items now use the unified
-  // strict whitelist injection (the curated 100-name pool fires
-  // mandatorily via buildCharacterWhitelistBlock below). The previous
-  // `rotateRegisterExamples` helper that sampled 3 names into the
-  // register descriptor's "(e.g., …)" tail is sunset because the full
-  // pool is now provided directly to the LLM as a strict whitelist.
-  const displayedRegister = selectedRegister;
+  // architecture).
+  //
+  // Rotate the descriptor's "(e.g., …)" tail with fresh whitelist samples
+  // for fictional palettes (Goblin-inspired, Orcish, Elven, Draconic,
+  // Aberrant, Abyssal, Infernal, Primordial). Static tails on those
+  // descriptors anchor DeepSeek's character-name selection onto the same
+  // 3-4 names per generation even though the curated whitelist is
+  // injected separately. Real-cultural registers without whitelists pass
+  // through unchanged — their static examples are the only seeded names
+  // the LLM receives and need to stay as the model.
+  const displayedRegister = rotateRegisterExamples(selectedRegister);
 
   // Pre-select an item quirk
   const quirks = [
@@ -1228,7 +1234,7 @@ The example names shown in the register description (after "e.g.,") illustrate t
 
 Do NOT use the example names directly in your output. Generate ORIGINAL names that match the register's phonetic patterns and structural style.
 
-For instance, if the register description includes "(e.g., Galadhriel, Thindol, Nimrathel)" — those names are samples teaching you the Sindarin register. Generate different names in that same register (e.g., Aelindar, Mithrandel, Lirathiel).
+For instance, if the register description includes "(e.g., Aelindariel, Saereldreth, Glorwenneth)" — those names are samples teaching you the Elven register. Generate different names in that same register (e.g., Lirathien, Hatholdir, Felarath).
 
 This rule applies to all registers. The examples teach style; your output should commit to that style with original names.
 
@@ -1281,7 +1287,7 @@ DO NOT apply translation rule (original name as item title is fine):
 - Latin (English speakers handle Latin reasonably well)
 - Greek (English speakers manage Greek-derived names)
 - Italian Renaissance (English speakers handle Italian)
-- Sindarin (Tolkien-derived elvish; standard fantasy)
+- Elven (high-fantasy elven; standard fantasy)
 - Orcish, Goblin-inspired, Gnomish, Draconic, Aberrant, Abyssal, Infernal, Primordial, Technomagical (fictional fantasy registers)
 
 Rule of thumb: if the linguistic register involves diacriticals, unfamiliar phonetics, or non-Roman characters, apply the translation rule. If the register reads as standard fantasy or familiar European, keep original names as titles.
@@ -1328,7 +1334,7 @@ LIMITED EXCEPTIONS — real names CAN be used for these registers only:
 - All Norse-related: Norse-inspired, Old-Norse-inspired (Odin, Thor, Loki, etc.)
 - Anglo-Saxon-inspired, Old-High-German-inspired, Middle-High-German-inspired, Gothic-inspired (Germanic mythological figures)
 - Celtic-inspired, Welsh-inspired, Irish-inspired, Old-Irish-inspired (Celtic mythological figures)
-- Sindarin-inspired and all fictional registers (no real-world referents)
+- Elven and all fictional registers (no real-world referents)
 
 These exceptions reflect Western fantasy genre convention — these traditions have been integrated into fantasy long enough that real names are genre-expected.
 
@@ -1349,30 +1355,11 @@ You have world knowledge of cultural-linguistic registers; activate it. The user
 If the user's input contains MIXED cultural signals (e.g. "Akiko of the Volga"), pick the strongest/most prominent signal and commit to it consistently across all generated names. Don't blend traditions within a single name.
 
 If the user's input has no clear cultural-linguistic signal, use the pre-selected register as written.
-${isWesternFantasyRaceContext ? `
-LANGUAGE REGISTER RESTRICTION — WESTERN-FANTASY-BOUND RACE CONTEXT (OVERRIDES THE AUTHORITY ABOVE):
-
-This item is in a Western-fantasy-bound race context (origin or user-typed keyword indicates one of: Orcish, Goblinoid, Dwarven, Gnomish, Elven). These five fantasy-race categories are Norse/Germanic/Celtic-coded archetypes with no parallels in most non-Western mythological traditions. Pairing them with non-Western linguistic registers doesn't include those cultures in fantasy; it conscripts those cultures' linguistic registers to decorate Western archetypes — a documented appropriation pattern in fantasy media. Orcs and goblins additionally carry documented racial-proxy history with non-European real-world peoples, making the pattern especially acute for those two.
-
-The LANGUAGE REGISTER OVERRIDE authority above is REVOKED for this generation. You must NOT generate names — for the item, characters, factions, or locations — in any of the following registers, even if you would otherwise infer them from the user's input or from creative association:
-
-- Yoruba, Akan, Igbo, Swahili, or any other African real-world tradition
-- Arabic, Persian
-- Hindi, Sanskrit
-- Chinese, Japanese, Korean, Mongolian, Tibetan, Thai
-- Maori, Hawaiian, or other Pacific Islander traditions
-- Maya, Aztec/Nahuatl, Andean, or other Latin American Indigenous traditions
-- Lakota or other North American Indigenous traditions
-
-This restriction is absolute. It is not subject to creative reinterpretation, "translation" framing, or unconventional-pairing reasoning. If the user's input mentions something that would normally trigger one of these registers (e.g., a place name, a deity, a cultural artifact), use the pre-selected register ("${displayedRegister}") instead.
-
-Allowed registers for this generation:
-- Pre-selected register: "${displayedRegister}" (use this by default)
-- European real-world: Latin, Greek, Slavic, Russian, Romanian, Hungarian, Norse, Germanic, Celtic
-- Fantasy-fictional: Sindarin, Draconic, Goblin-inspired, Orcish, Aberrant, Abyssal, Infernal, Primordial, Technomagical
-
-Do not produce any name in this generation that would identify with the restricted-register list above. This applies to ALL names: item, characters, factions, places, no exceptions.
-` : ''}
+${buildLanguageRegisterRestrictionBlock({
+  register: displayedRegister,
+  isWesternFantasyRaceContext,
+  entityNoun: 'item',
+})}
 ${buildPoolPromptBlock(selectedRegister)}
 ${buildCatchallPromptBlock(selectedRegister)}
 ${buildCharacterWhitelistBlock(resolvedOrigin, selectedRegister)}
@@ -1667,6 +1654,11 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
 
     magicItemDescription.value.questHooks = [];
     magicItemDescription.value.related_npcs = normalizeRelatedNPCs(magicItemDescription.value.related_npcs);
+    // Persist the selected register on the saved item so cross-tool
+    // promotions (e.g., item → NPC) can inherit it without re-detecting
+    // from the lore. Legacy items without this field fall back to
+    // detection at promotion time.
+    magicItemDescription.value.selectedRegister = selectedRegister;
     loadingItem.value = false;
     saveItem(magicItemDescription.value);
     const index = savedItems.value.findIndex((item) => item.name === magicItemDescription.value.name);

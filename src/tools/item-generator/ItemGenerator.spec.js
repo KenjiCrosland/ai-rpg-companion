@@ -332,7 +332,7 @@ describe('ItemGenerator - Prompt Generation', () => {
 
   describe('Origin/Register Pairing — Conditional Translation Block', () => {
     // The prompt distinguishes two cases for fantasy-race origins:
-    //   - Conventional pairing (Elven+Sindarin, Dwarven+Germanic, etc.)
+    //   - Conventional pairing (Elven+Elven, Dwarven+Germanic, etc.)
     //     → simple "ORIGIN DRIVES LORE CONTENT:" guidance
     //   - Unconventional pairing (Giant + non-pool register, post-Task-1)
     //     → "UNCONVENTIONAL PAIRING — TRANSLATE, DON'T MASH UP" block
@@ -645,7 +645,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       const namingLine = prompt.match(/Use this linguistic register for ALL names[^\n]*/)[0];
       const exampleTail = namingLine.match(/\(e\.g\., (.+?)\)/);
       // Should still have an example tail (the static one from the
-      // Sindarin register); none of those names should be in the orc
+      // Elven register); none of those names should be in the orc
       // or goblin pool.
       const sampled = exampleTail[1].split(', ');
       for (const name of sampled) {
@@ -660,7 +660,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       // real-world cultural register, with a short LIMITED EXCEPTIONS
       // list grounded in fantasy-genre convention (Greek, Roman,
       // Egyptian, Norse-family, Germanic-family, Celtic-family,
-      // Sindarin + fictional registers). User-typed real-entity
+      // Elven + fictional registers). User-typed real-entity
       // invocations still honored via cultural detection (priority 1).
       randomSpy.mockReturnValue(0.5);
       wrapper = mount(ItemGenerator, { props: { premium: true } });
@@ -697,7 +697,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('Norse-inspired, Old-Norse-inspired');
       expect(prompt).toContain('Anglo-Saxon-inspired, Old-High-German-inspired');
       expect(prompt).toContain('Celtic-inspired, Welsh-inspired, Irish-inspired, Old-Irish-inspired');
-      expect(prompt).toContain('Sindarin-inspired and all fictional registers');
+      expect(prompt).toContain('Elven and all fictional registers');
 
       // Explicit non-exception list — pins the most acute production-
       // failure traditions (Maori, Lakota, Yoruba) so a future

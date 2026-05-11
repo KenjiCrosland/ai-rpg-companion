@@ -15,14 +15,14 @@
  *     regardless of which register in the origin's allow-list gets
  *     rolled. Use case: origins whose character names work across
  *     multiple registers (Dwarven names work in Old-Norse, Anglo-
- *     Saxon, etc.; Sindarin Elven names are characteristically elven
+ *     Saxon, etc.; Elven Elven names are characteristically elven
  *     across the Elven allow-list).
  *
  *   REGISTER_CHARACTER_WHITELISTS — keyed by register prefix
- *     (Sindarin-inspired, Draconic, etc.). Fires when the rolled
+ *     (Elven, Draconic, etc.). Fires when the rolled
  *     register matches and no origin pool already routed. Catches
  *     edge cases where a register is rolled outside its primary
- *     origin (e.g., Sindarin via Aberrant alt-pool, horror pool, dev
+ *     origin (e.g., Elven via Aberrant alt-pool, horror pool, dev
  *     override) and where the register is its own primary identifier
  *     (fictional palettes Draconic/Aberrant/etc. — origin = register
  *     name 70% of the time, alt-pool 30%; whitelist fires on the 70%
@@ -46,7 +46,7 @@
  *   `preferred` — pool fires 70% of generations when context matches;
  *     30% of the time the gate skips and the LLM constructs the name
  *     freehand in the rolled register. Used for Elven, Dwarven, and
- *     fictional registers (Sindarin/Draconic/Aberrant/Abyssal/
+ *     fictional registers (Elven/Draconic/Aberrant/Abyssal/
  *     Infernal/Primordial). The 30% non-pool case is automatically
  *     constrained to the origin's allow-list (selectRegister
  *     already rolls within the allow-list), so the freehand name
@@ -66,12 +66,12 @@ import { goblinoidCharacterEpithets } from '@/shared/registers/goblinoid.mjs';
 import { infernalCharacterEpithets } from '@/shared/registers/infernal.mjs';
 import { orcishCharacterEpithets } from '@/shared/registers/orcish.mjs';
 import { primordialCharacterEpithets } from '@/shared/registers/primordial.mjs';
-import { sindarinCharacterEpithets } from '@/shared/registers/sindarin.mjs';
+import { elvenCharacterEpithets } from '@/shared/registers/elven.mjs';
 
 export const ORIGIN_CHARACTER_WHITELISTS = {
   'Orcish':    { pool: orcishCharacterEpithets,             strictness: 'mandatory' },
   'Goblinoid': { pool: goblinoidCharacterEpithets,       strictness: 'mandatory' },
-  'Elven':     { pool: sindarinCharacterEpithets, strictness: 'preferred' },
+  'Elven':     { pool: elvenCharacterEpithets, strictness: 'preferred' },
   'Dwarven':   { pool: dwarvenCharacterEpithets,  strictness: 'preferred' },
   // Gnomish, Giant, Fey: deliberately absent. Gnomish and Giant fall
   // through to freehand construction in their rolled register; Fey is
@@ -85,8 +85,21 @@ export const REGISTER_CHARACTER_WHITELISTS = {
   // typically the 70% primary case for the matching fictional origin
   // (selectRegister.fictionalOriginRegisters), or the rare
   // case where the register is rolled outside its primary origin
-  // (Sindarin via Aberrant/horror alt-pool, dev override).
-  'Sindarin-inspired': { pool: sindarinCharacterEpithets, strictness: 'preferred' },
+  // (Elven via Aberrant/horror alt-pool, dev override) or where a
+  // caller (NPC generator) does not resolve a fantasy race from input
+  // and so passes null as the origin.
+  //
+  // Goblin-inspired and Orcish are duplicated here AND in
+  // ORIGIN_CHARACTER_WHITELISTS above. The origin-axis entry fires when
+  // the caller resolves a Goblinoid/Orcish race (item generator path,
+  // or NPC generator with a goblin/orc keyword in input). The register-
+  // axis entry fires when no race resolved but the random fallback
+  // landed on the register anyway (NPC generator with empty / non-
+  // goblin input). Either path produces an NPC the user will read as
+  // a goblin/orc, so the protective whitelist must fire either way.
+  'Elven': { pool: elvenCharacterEpithets, strictness: 'preferred' },
+  'Goblin-inspired':   { pool: goblinoidCharacterEpithets, strictness: 'mandatory' },
+  'Orcish':            { pool: orcishCharacterEpithets,    strictness: 'mandatory' },
   'Draconic':          { pool: draconicCharacterEpithets, strictness: 'preferred' },
   'Aberrant':          { pool: aberrantCharacterEpithets, strictness: 'preferred' },
   'Abyssal':           { pool: abyssalCharacterEpithets,  strictness: 'preferred' },

@@ -52,7 +52,7 @@ describe('catchall-prompt', () => {
       // No real-world referents to protect; universal-invent rules
       // already permit fictional name use freely.
       const fictionalFantasy = [
-        'Sindarin-inspired',
+        'Elven',
         'Orcish',
         'Goblin-inspired',
         'Gnomish',
@@ -127,7 +127,7 @@ describe('catchall-prompt', () => {
     });
 
     it('returns false for fictional fantasy registers', () => {
-      expect(isCatchallRegister('Sindarin-inspired (elvish): elegant')).toBe(false);
+      expect(isCatchallRegister('Elven: elegant')).toBe(false);
       expect(isCatchallRegister('Orcish: brutal, guttural')).toBe(false);
       expect(isCatchallRegister('Abyssal: guttural, chaotic')).toBe(false);
     });
@@ -145,7 +145,7 @@ describe('catchall-prompt', () => {
       expect(buildCatchallPromptBlock('Yoruba-inspired: rhythmic')).toBe('');
       expect(buildCatchallPromptBlock('Andean-inspired: structured Quechua')).toBe('');
       expect(buildCatchallPromptBlock('Latin-inspired: formal')).toBe('');
-      expect(buildCatchallPromptBlock('Sindarin-inspired (elvish): elegant')).toBe('');
+      expect(buildCatchallPromptBlock('Elven: elegant')).toBe('');
       expect(buildCatchallPromptBlock(null)).toBe('');
     });
 
