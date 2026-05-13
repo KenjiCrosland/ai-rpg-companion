@@ -334,6 +334,9 @@ import { buildCatchallPromptBlock } from '@/shared/catchall-prompt.mjs';
 import { buildCharacterWhitelistBlock } from '@/shared/character-whitelist-prompt.mjs';
 import { filterOriginsForForcedRegister } from '@/shared/filter-origins-for-forced-register.mjs';
 import { buildLanguageRegisterRestrictionBlock } from '@/shared/language-register-restriction.mjs';
+import { buildRealWorldCategoryRestrictionBlock } from '@/shared/real-world-category-restriction.mjs';
+import { buildDeityModeBlock } from '@/shared/deity-mode-block.mjs';
+import { findRegisterByPrefix } from '@/shared/registers/index.mjs';
 import { rotateRegisterExamples } from '@/shared/rotate-register-examples.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
@@ -1217,14 +1220,31 @@ Do not name items using these structures unless the user explicitly requested it
 - Possessive name + abstract suffering: "Vael's Anguish," "Korrish's Despair," "Thaedra's Grief"
 - Em-dash descriptive constructions: "Kaelthorn — Last of the Veiled," "Sunfall — Banner of the Dawn"
 
+NAMING — VARY STRUCTURAL PATTERN:
+Item names fall into several distinct structural patterns. Vary across generations rather than reflexively defaulting to one. Pick the pattern that best fits THIS item's mood and origin:
+
+- Genitive ("[Noun] of the [Qualifier]"): the workhorse pattern — descriptive object + qualifier. Use it freely, but it should be one tool among several. If your default-first-instinct lands here, reach for a different one this time.
+- Compound noun: a single hyphenated or fused word built from two roots — material-noun, sense-noun, or domain-noun pairings. Punchy and memorable, no connective needed.
+- Verb-noun action compound ("[Verb][Noun]" or "[Verb]-[Noun]"): the action the item performs as its name, verb-first. Produces a punchier, more active feel than neutral noun-noun compounds.
+- Possessive ("[Owner]'s [Object]"): the maker, the first wielder, the witness, the unlucky finder — possessive of a specific or unlikely owner.
+- Definite article ("The [Noun]" or "The [Adjective] [Noun]"): single resonant noun framed as a definite thing, for items that feel iconic or singular.
+- Paired noun ("[Noun A] and [Noun B]"): two paired elements joined by "and" — often elemental, material, or oppositional pairings. Carries folkloric weight.
+- Negation or absence ("The [Absence-Word] [Noun]," "[Adjective-Of-Lack] [Noun]"): names that point to what something LACKS rather than what it has. Strong for cursed, unmade, mysterious, or hollowed-out items.
+- Numerical or ordinal ("[Ordinal] [Noun]," "[Number]-Fold [Noun]"): uses a number or ordinal as part of the name. Distinctive and ritualistic-feeling; fits cosmological, mythic, or order-of-X items.
+- Bare evocative noun: one word that carries the whole weight — a sound, a quality, a moment, a verb-turned-noun.
+
+The genitive form is the LLM's grammatical safe-default; that's why it dominates without active rebalancing. Treat it as one option among many, not the reflex.
+
 Aim for tonal variety across generations. Items can be:
-- Triumphant: "Sunfall," "The Banner of First Dawn," "Iron Promise"
-- Practical: "The Quartermaster's Edge," "Reliable Iron," "Worker's Friend"
-- Mysterious: "The Question," "Witness Stone," "What Remains"
-- Sinister: "Fang of the Hollow King," "The Last Mercy," "Black Tally"
-- Whimsical: "Boblin's Lucky Coin," "The Grocer's Friend," "Three Cheerful Sparks"
-- Mythic: "Dawnbreaker," "The Voice of the Mountain," "World-Knot"
-- Plain descriptive: "Ironwood Stave," "The Salt Knife," "Greyhammer"
+- Triumphant: themes of victory, light, steadfastness, oath-keeping. Names tend toward short compounds or brief evocative phrases that carry a sense of arrival or vindication.
+- Practical: themes of trade, labor, daily craft, occupational pride. Names tend toward possessives of a trade-role or simple descriptors of utility.
+- Mysterious: themes of the unknown, the unanswered, the partially-revealed. Names tend toward abstract single nouns, short questions, or open-ended phrases.
+- Sinister: themes of predation, betrayal, ruin, the grim aftermath. Names tend toward predatory-creature compounds, grim title-phrases, or terms with finality.
+- Whimsical: themes of humble joys, small absurdities, lucky charms, eccentric craft. Names tend toward possessives of an unlikely owner, modest objects, or playful compound phrases.
+- Mythic: themes of cosmology, foundation, world-shaping, deep time. Names tend toward short compound nouns, definite-article phrases, or single resonant words.
+- Plain descriptive: themes of unflashy function, honest tool-making, materials-first naming. Names tend toward material-plus-form compounds with no flourishes.
+
+Invent fresh names per generation rather than reaching for the same compounds repeatedly. The mood category describes the theme; the actual name should match this generation's specific lore, origin, and register — not a pattern carried over from prior generations.
 
 Match the naming register to the mood and origin. Do not default to melancholy, lament, sorrow, or weeping unless the lore specifically calls for it.
 `}
@@ -1254,27 +1274,27 @@ Examples:
 
 DON'T do this:
 - Item name: "Sulkasipailon Kukka"
-- Description: "This wand is a slender birch branch..."
+- Description: "This wand is..."
 
 DO this:
 - Item name: "Wand of First Bloom"
-- Description: "This wand, called Sulkasipailon Kukka by the elven sages of the Birch Grove, is a slender birch branch..."
+- Description: "This wand, called Sulkasipailon Kukka by the sages who first cut it, is..."
 
 DON'T do this:
 - Item name: "Tizi-Uzzu"
-- Description: "A heavy wand of unfinished raw oak..."
+- Description: "This wand is..."
 
 DO this:
 - Item name: "Pass-Wand" (or "Wand of the Mountain Pass" — translator's choice based on what reads naturally)
-- Description: "Known as Tizi-Uzzu in the old tongue of the highland clans who carved it, this heavy wand of unfinished raw oak..."
+- Description: "Known as Tizi-Uzzu in the old tongue of the highland clans who carved it, this wand is..."
 
 DON'T do this:
 - Item name: "Pou o te Maunga"
-- Description: "A tall staff of dark, salt-crusted meteoric iron..."
+- Description: "This staff is..."
 
 DO this:
 - Item name: "Heart of the Mountain"
-- Description: "Called Pou o te Maunga by the Tapa-Whenua dwarves who first carved it, this tall staff of dark, salt-crusted meteoric iron..."
+- Description: "Called Pou o te Maunga by the carvers who first shaped it, this staff is..."
 
 The English translation should capture the cultural concept evocatively, not just literally. "Wand of First Bloom" conveys the meaning of "Sulkasipailon Kukka" better than "Feather-Stroke's Flower" would. Translate for poetic effect, not word-for-word.
 
@@ -1303,15 +1323,9 @@ Good integration patterns:
 - "Known as [Original Name] in the [language/tongue] of [those who made it], this [physical description]..."
 - "The [cultural group] who first carved this [item type] called it [Original Name]; it is [physical description]..."
 
-LANGUAGE FRAMING — USE IN-WORLD TERMS, NOT REAL-WORLD LINGUISTIC CATEGORIES:
+${buildRealWorldCategoryRestrictionBlock()}
 
-When the lore references the language the original-language name comes from, use the in-world culture's own term for their tongue, never the real-world linguistic category. The character names and item name come from the register's register, but the framing language is fictional.
-
-- For fantasy-race origins, use the race's own term: "the elven tongue," "the old dwarven tongue," "the orcish war-tongue," "the goblin cant."
-- For cultural-coded items without a fantasy-race origin, invent a brief in-world descriptor that fits the item's setting (e.g., "the old tongue of the highland clans," "the speech of the river-folk," "the temple-tongue of the lost city").
-- NEVER say "the Old Irish register," "the Tamazight tongue," "the Yoruba-inspired tongue," or any phrasing that names the real-world linguistic category.
-
-This rule does NOT override the explicit-origin-naming requirement. The lore must still name the origin culture (elves, dwarves, orcs, etc.) — typically in the same sentence that introduces the original-language name.
+${buildDeityModeBlock(findRegisterByPrefix(selectedRegister))}
 
 CULTURAL-SPECIFIC NAMES — INVENT BY DEFAULT:
 

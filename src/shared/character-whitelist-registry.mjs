@@ -1,14 +1,8 @@
 /**
  * Unified character-whitelist registry.
  *
- * Replaces the previous split between `register-whitelists.mjs` (per-
- * register character pools) and `origin-character-whitelists.mjs`
- * (per-origin character pools). Same data, single lookup, with an
- * explicit `strictness` tag on each entry that gates whether the
- * whitelist injection fires deterministically (`mandatory`) or via a
- * 70/30 random gate (`preferred`).
- *
- * Two keying axes:
+ * Two keying axes, both derived from `ALL_REGISTERS` in
+ * `src/shared/registers/index.mjs`:
  *
  *   ORIGIN_CHARACTER_WHITELISTS  — keyed by origin name (Orcish,
  *     Dwarven, etc.). Fires whenever the user picks that origin,
@@ -18,16 +12,20 @@
  *     Saxon, etc.; Elven Elven names are characteristically elven
  *     across the Elven allow-list).
  *
+ *     Derived from every register entry with `fantasyRaceKey`. Each
+ *     such entry's `fantasyRaceKey` becomes the origin-axis key; its
+ *     `characterPool` and `characterPoolStrictness` populate the
+ *     value.
+ *
  *   REGISTER_CHARACTER_WHITELISTS — keyed by register prefix
- *     (Elven, Draconic, etc.). Fires when the rolled
- *     register matches and no origin pool already routed. Catches
- *     edge cases where a register is rolled outside its primary
- *     origin (e.g., Elven via Aberrant alt-pool, horror pool, dev
- *     override) and where the register is its own primary identifier
- *     (fictional palettes Draconic/Aberrant/etc. — origin = register
- *     name 70% of the time, alt-pool 30%; whitelist fires on the 70%
- *     case automatically because origin's primary register equals the
- *     pool's key).
+ *     (Elven, Draconic, etc.). Fires when the rolled register matches
+ *     and no origin pool already routed. Catches edge cases where a
+ *     register is rolled outside its primary origin (e.g., Elven via
+ *     Aberrant alt-pool, dev override) and where the register is its
+ *     own primary identifier (fictional palettes Draconic/Aberrant/
+ *     etc. — origin = register name 70% of the time, alt-pool 30%).
+ *
+ *     Derived from every register entry with `prefix` AND `characterPool`.
  *
  * Lookup precedence: origin-bound wins over register-bound when both
  * match. This pins the architectural commitment that race-origin
@@ -37,80 +35,53 @@
  * Strictness:
  *
  *   `mandatory` — pool fires 100% of generations when context matches.
- *     No 70/30 gate. Used for Orcish/Goblinoid (the curated pool IS
- *     the only permitted source) and reserved for future culturally-
- *     sensitive registers (Maori, Andean) when those flag-gate back
- *     on. The strictness signals "this pool is the protective
- *     architecture; bypassing it produces unsafe outputs."
+ *     Used for Orcish/Goblinoid (the curated pool IS the only
+ *     permitted source) and the Maori protected pool. Signals "this
+ *     pool is the protective architecture; bypassing it produces
+ *     unsafe outputs."
  *
  *   `preferred` — pool fires 70% of generations when context matches;
  *     30% of the time the gate skips and the LLM constructs the name
  *     freehand in the rolled register. Used for Elven, Dwarven, and
- *     fictional registers (Elven/Draconic/Aberrant/Abyssal/
+ *     fictional thematic registers (Draconic/Aberrant/Abyssal/
  *     Infernal/Primordial). The 30% non-pool case is automatically
- *     constrained to the origin's allow-list (selectRegister
- *     already rolls within the allow-list), so the freehand name
- *     stays on-register — it's just not from the curated pool.
- *
- * Currently-flag-gated entries: Maori-inspired and Andean-inspired
- * are commented out below — those registers are unreachable under
- * `enableProtectedRegisters: false` and the catchall/yoruba/andean
- * prompt builders already return empty strings for them. When the
- * flag flips on, uncomment and the unified mechanism takes over.
+ *     constrained to the origin's allow-list (selectRegister already
+ *     rolls within the allow-list), so the freehand name stays
+ *     on-register — it's just not from the curated pool.
  */
-import { aberrantCharacterEpithets } from '@/shared/registers/aberrant.mjs';
-import { abyssalCharacterEpithets } from '@/shared/registers/abyssal.mjs';
-import { draconicCharacterEpithets } from '@/shared/registers/draconic.mjs';
-import { dwarvenCharacterEpithets } from '@/shared/registers/dwarven.mjs';
-import { goblinoidCharacterEpithets } from '@/shared/registers/goblinoid.mjs';
-import { infernalCharacterEpithets } from '@/shared/registers/infernal.mjs';
-import { orcishCharacterEpithets } from '@/shared/registers/orcish.mjs';
-import { primordialCharacterEpithets } from '@/shared/registers/primordial.mjs';
-import { elvenCharacterEpithets } from '@/shared/registers/elven.mjs';
+import { ALL_REGISTERS } from '@/shared/registers/index.mjs';
 
-export const ORIGIN_CHARACTER_WHITELISTS = {
-  'Orcish':    { pool: orcishCharacterEpithets,             strictness: 'mandatory' },
-  'Goblinoid': { pool: goblinoidCharacterEpithets,       strictness: 'mandatory' },
-  'Elven':     { pool: elvenCharacterEpithets, strictness: 'preferred' },
-  'Dwarven':   { pool: dwarvenCharacterEpithets,  strictness: 'preferred' },
-  // Gnomish, Giant, Fey: deliberately absent. Gnomish and Giant fall
-  // through to freehand construction in their rolled register; Fey is
-  // not in fantasyRaceConventionalRegisters at all (cross-cultural
-  // archetype — Fey items pair freely with any palette via uniform
-  // random).
-};
+export const ORIGIN_CHARACTER_WHITELISTS = Object.fromEntries(
+  ALL_REGISTERS
+    .filter(r => r.fantasyRaceKey && Array.isArray(r.characterPool))
+    .map(r => [
+      r.fantasyRaceKey,
+      { pool: r.characterPool, strictness: r.characterPoolStrictness ?? 'preferred' },
+    ]),
+);
+// Note: Gnomish, Giant, and Fey are deliberately absent. Gnomish and
+// Giant fall through to freehand construction in their rolled
+// register; Fey is not in fantasyRaceConventionalRegisters at all
+// (cross-cultural archetype — Fey items pair freely with any palette
+// via uniform random).
 
-export const REGISTER_CHARACTER_WHITELISTS = {
-  // Fictional registers. Fire when the matching register is rolled —
-  // typically the 70% primary case for the matching fictional origin
-  // (selectRegister.fictionalOriginRegisters), or the rare
-  // case where the register is rolled outside its primary origin
-  // (Elven via Aberrant/horror alt-pool, dev override) or where a
-  // caller (NPC generator) does not resolve a fantasy race from input
-  // and so passes null as the origin.
-  //
-  // Goblin-inspired and Orcish are duplicated here AND in
-  // ORIGIN_CHARACTER_WHITELISTS above. The origin-axis entry fires when
-  // the caller resolves a Goblinoid/Orcish race (item generator path,
-  // or NPC generator with a goblin/orc keyword in input). The register-
-  // axis entry fires when no race resolved but the random fallback
-  // landed on the register anyway (NPC generator with empty / non-
-  // goblin input). Either path produces an NPC the user will read as
-  // a goblin/orc, so the protective whitelist must fire either way.
-  'Elven': { pool: elvenCharacterEpithets, strictness: 'preferred' },
-  'Goblin-inspired':   { pool: goblinoidCharacterEpithets, strictness: 'mandatory' },
-  'Orcish':            { pool: orcishCharacterEpithets,    strictness: 'mandatory' },
-  'Draconic':          { pool: draconicCharacterEpithets, strictness: 'preferred' },
-  'Aberrant':          { pool: aberrantCharacterEpithets, strictness: 'preferred' },
-  'Abyssal':           { pool: abyssalCharacterEpithets,  strictness: 'preferred' },
-  'Infernal':          { pool: infernalCharacterEpithets, strictness: 'preferred' },
-  'Primordial':        { pool: primordialCharacterEpithets, strictness: 'preferred' },
-  // Maori-inspired (mandatory): currently flag-gated off; when
-  // enableProtectedRegisters flips on, restore this entry pointing
-  // to the Maori curated pool.
-  // Andean-inspired (mandatory): same as Maori — flag-gated, restore
-  // when enabling.
-};
+export const REGISTER_CHARACTER_WHITELISTS = Object.fromEntries(
+  ALL_REGISTERS
+    .filter(r => typeof r.prefix === 'string' && Array.isArray(r.characterPool))
+    .map(r => [
+      r.prefix,
+      { pool: r.characterPool, strictness: r.characterPoolStrictness ?? 'preferred' },
+    ]),
+);
+// Note: Goblin-inspired and Orcish appear in both maps because their
+// registers carry both a fantasyRaceKey and a register prefix. The
+// origin-axis entry fires when the caller resolves a Goblinoid/Orcish
+// race (item generator path, or NPC generator with a goblin/orc
+// keyword in input). The register-axis entry fires when no race
+// resolved but the random fallback landed on the register anyway (NPC
+// generator with empty / non-goblin input). Either path produces an
+// NPC the user will read as a goblin/orc, so the protective whitelist
+// must fire either way.
 
 const PREFERRED_PROBABILITY = 0.7;
 

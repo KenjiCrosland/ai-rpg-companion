@@ -128,3 +128,11 @@ export const infernalCharacterEpithets = [
   'Tar the Rest-Denier',
   'Bel the Word-Made-Iron',
 ];
+
+export const infernalRegister = {
+  prefix: 'Infernal',
+  descriptor: "Infernal: sharp, aggressive (e.g., Vex'tharion, Morkaal, Sazrith)",
+  characterPool: infernalCharacterEpithets,
+  characterPoolStrictness: 'preferred',
+  thematic: true,
+};

@@ -43,3 +43,11 @@ export const orcishCharacterEpithets = [
   'Bloodfang', 'Skullsplitter', 'Ironback', 'Boneripper', 'Throatcrusher',
   'Tuskbreaker', 'Goretooth', 'Stonejaw', 'Warbreaker', 'Ashclaw',
 ];
+
+export const orcishRegister = {
+  prefix: 'Orcish',
+  descriptor: "Orcish: brutal, guttural (e.g., Grokthash, Uzgark, Dra'mok)",
+  characterPool: orcishCharacterEpithets,
+  characterPoolStrictness: 'mandatory',
+  fantasyRaceKey: 'Orcish',
+};

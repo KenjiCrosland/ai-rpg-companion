@@ -87,6 +87,24 @@
                         <StatblockFuzzySearch v-model="selectedStatblock" label="Associated Statblock"
                             placeholder="Search for a statblock..." :optional="true" :highlight-on-mount="isDeepLink" />
 
+                        <!-- TEST-REGISTER-OVERRIDE — dev only -->
+                        <fieldset v-if="isDev" class="test-register-override">
+                            <legend>TEST: Register Override (dev only)</legend>
+                            <label>
+                                Register:
+                                <select v-model="testRegisterOverride">
+                                    <option value="">Auto (use inference / random)</option>
+                                    <option v-for="opt in registerOverrideOptions" :key="opt.value" :value="opt.value">
+                                        {{ opt.label }}
+                                    </option>
+                                </select>
+                            </label>
+                            <p v-if="lastUsedRegister" class="test-register-override__last">
+                                Last generation used: <code>{{ lastUsedRegister }}</code>
+                            </p>
+                        </fieldset>
+                        <!-- END TEST-REGISTER-OVERRIDE -->
+
                         <ParActionButton type="submit" :disabled="loadingPart1" class="generate-button">Generate
                             NPC</ParActionButton>
                     </form>
@@ -346,6 +364,19 @@ import { selectRegister } from '@/shared/select-register.mjs';
 import { detectRegisterFromInput } from '@/shared/detect-register-from-input.mjs';
 import { registerList, humanoidRegisterList } from '@/shared/register-list.mjs';
 import { inferRegisterAndName, FANTASY_UNSPECIFIED } from './utils/infer-register-and-name.mjs';
+
+// TEST-REGISTER-OVERRIDE — dev-only register selector (parallels the
+// item generator's version). process.env.NODE_ENV avoids the
+// import.meta parse error under Jest; Vite statically replaces it at
+// build time.
+const isDev = process.env.NODE_ENV !== 'production';
+const testRegisterOverride = ref('');
+const lastUsedRegister = ref('');
+const registerOverrideOptions = registerList.map(p => ({
+    value: p,
+    label: p.length > 60 ? p.slice(0, 57) + '…' : p,
+}));
+// END TEST-REGISTER-OVERRIDE
 import { buildStatblockContext } from './utils/statblock-context.mjs';
 import { addReference, getReferencesForEntity, removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import {
@@ -1607,9 +1638,22 @@ async function handleGenerateNPC() {
     // line). Relationships still inherit the item's register so the
     // generated cast stays culturally coherent with the source item.
     const seededUserName = pendingSeed.value?.entities?.[0]?.name?.trim() || null;
+    // TEST-REGISTER-OVERRIDE — when set, forces the resolved register
+    // to the dev-selected value. userName still routes through the
+    // appropriate source (seed > inference) so a forced register
+    // doesn't erase user-provided / stub names.
+    const devOverride = isDev && testRegisterOverride.value ? testRegisterOverride.value : null;
     let resolvedRegister = null;
     let userName = null;
-    if (seededRegister) {
+    if (devOverride) {
+        resolvedRegister = devOverride;
+        if (seededUserName) {
+            userName = seededUserName;
+        } else if (userInput) {
+            const inferred = await inferRegisterAndName(userInput);
+            userName = inferred.userName;
+        }
+    } else if (seededRegister) {
         resolvedRegister = seededRegister;
         userName = seededUserName;
     } else if (!userInput) {
@@ -1623,6 +1667,7 @@ async function handleGenerateNPC() {
         }
         userName = inferred.userName;
     }
+    lastUsedRegister.value = resolvedRegister || '';
     const sourceRegister = userName ? null : resolvedRegister;
     const relationshipsRegister = resolvedRegister;
 
@@ -2399,4 +2444,48 @@ div[class^="cdr-skeleton-bone"] {
         border-radius: 8px;
     }
 }
+
+/* TEST-REGISTER-OVERRIDE — dev only */
+.test-register-override {
+    border: 2px dashed #d97706;
+    background: #fff7ed;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+
+    legend {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #9a3412;
+        padding: 0 0.5rem;
+    }
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    select {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
+        width: 100%;
+    }
+
+    &__last {
+        margin: 0.5rem 0 0;
+        font-size: 0.8125rem;
+        color: #57534e;
+
+        code {
+            background: #fef3c7;
+            padding: 0.125rem 0.25rem;
+            border-radius: 2px;
+            font-size: 0.8125rem;
+        }
+    }
+}
+/* END TEST-REGISTER-OVERRIDE */
 </style>

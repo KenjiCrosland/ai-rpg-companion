@@ -120,3 +120,11 @@ export const primordialCharacterEpithets = [
   // Sa'<Prince>-... pattern. Replacement entries should construct
   // janni-servant names without anchor on the Princes.
 ];
+
+export const primordialRegister = {
+  prefix: 'Primordial',
+  descriptor: "Primordial: pre-language sounds, elemental (e.g., Aath'kol, Rumblith, Dross)",
+  characterPool: primordialCharacterEpithets,
+  characterPoolStrictness: 'preferred',
+  thematic: true,
+};

@@ -39,3 +39,11 @@ export const goblinoidCharacterEpithets = [
   'Plibwiblet', 'Tribbsnig', 'Wibwobsnig', 'Glibblesnak', 'Mubblekrik',
   'Wuggleknit', 'Snicklepok', 'Wobblegrip', 'Skribblepok',
 ];
+
+export const goblinoidRegister = {
+  prefix: 'Goblin-inspired',
+  descriptor: 'Goblin-inspired: sharp, crude, percussive (e.g., Skragbit, Mukgash, Krik-tak)',
+  characterPool: goblinoidCharacterEpithets,
+  characterPoolStrictness: 'mandatory',
+  fantasyRaceKey: 'Goblinoid',
+};

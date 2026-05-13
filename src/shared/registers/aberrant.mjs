@@ -114,3 +114,17 @@ export const aberrantCharacterEpithets = [
   "Vorl'kaen-Who-Speaks-Backwards",
   "Xal'mareth-of-the-Sundered-Page",
 ];
+
+/**
+ * Hybrid register object — single source of truth for the Aberrant
+ * register. Bare-array export above stays canonical; `characterPool`
+ * is an alias so callers that want the full register metadata can
+ * grab the object via the registers/index.mjs aggregator.
+ */
+export const aberrantRegister = {
+  prefix: 'Aberrant',
+  descriptor: "Aberrant: unpronounceable clusters, wrong-sounding (e.g., Xith'vaar, Qolenth, Uurm)",
+  characterPool: aberrantCharacterEpithets,
+  characterPoolStrictness: 'preferred',
+  thematic: true,
+};

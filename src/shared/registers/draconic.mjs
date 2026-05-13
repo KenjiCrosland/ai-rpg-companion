@@ -115,3 +115,10 @@ export const draconicCharacterEpithets = [
   'Brotmark',
   'Krunzgar',
 ];
+
+export const draconicRegister = {
+  prefix: 'Draconic',
+  descriptor: 'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax, Vyrmokk, Kaelsithur)',
+  characterPool: draconicCharacterEpithets,
+  characterPoolStrictness: 'preferred',
+};

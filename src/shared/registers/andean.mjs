@@ -365,3 +365,35 @@ export const andeanSpiritEpithets = [
   'Mayuqispiyuq',     // river-clarity-bearer (a spirit of pure waters)
   'Quyllurñawiyuq',   // star-eye-bearer (a celestial sentinel)
 ];
+
+/**
+ * Hybrid register object — single source of truth for the Andean
+ * (Cuzco Quechua) register. Bare-array exports above stay canonical;
+ * the object below aliases them and adds the pool-prompt metadata
+ * (itemNameGuidance, spellingReminder, properNounsPoolOnly) that
+ * pool-prompt.mjs used to carry in a separate POOL_DESCRIPTORS table.
+ */
+export const andeanRegister = {
+  prefix: 'Andean-inspired',
+  descriptor: 'Andean-inspired: structured Quechua flavor',
+  protected: true,
+  promptArchitecture: 'pool',
+  // Living religious tradition — Andean cosmovision (Pachamama,
+  // Inti, apus, huacas) is practiced today across the Andes.
+  // Real deity and apu names off-limits in any context.
+  deityMode: 'restricted',
+  cultureName: 'Quechua',
+  characterPool: andeanCharacterEpithets,
+  placePool: andeanPlaceEpithets,
+  spiritPool: andeanSpiritEpithets,
+  characterPoolStrictness: 'mandatory',
+  culturalNotes: andeanCulturalNotes,
+  pools: {
+    character: { label: 'Quechua descriptive bynames', entries: andeanCharacterEpithets },
+    place:     { label: 'place compounds',             entries: andeanPlaceEpithets },
+    spirit:    { label: 'spirit epithets',             entries: andeanSpiritEpithets },
+  },
+  itemNameGuidance: `The single exception is the item's own original-language name, which may be constructed — but ONLY from the constrained vocabulary specified in the ITEM-NAME CONSTRUCTION paragraph above (item-types, material descriptors, quality descriptors). Every constructed item-name compound must clear the COMPOUND CONSTRUCTION PATTERNS TO AVOID checklist (no [X]-kancha, no Yawar-X, no [X]-ñawi, no [X]-Inka, no [X]-amaru, no avoid-list components).`,
+  spellingReminder: `Do NOT alter the spelling, apostrophes (which mark phonemic ejectives), or h-after-stop sequences (which mark aspiration) of pool names. These are correct as written and phonemic, not decorative.`,
+  properNounsPoolOnly: true,
+};

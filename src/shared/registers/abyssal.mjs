@@ -125,3 +125,11 @@ export const abyssalCharacterEpithets = [
   'Saggrolithex',
   'Drovgaragheth',
 ];
+
+export const abyssalRegister = {
+  prefix: 'Abyssal',
+  descriptor: "Abyssal: guttural, chaotic (e.g., Ghar'zuul, Rotmaw, Vilesung)",
+  characterPool: abyssalCharacterEpithets,
+  characterPoolStrictness: 'preferred',
+  thematic: true,
+};

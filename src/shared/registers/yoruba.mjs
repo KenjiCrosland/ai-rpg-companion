@@ -143,3 +143,36 @@ The character names in the provided pools are praise-name (Oríkì) epithets fol
 Yoruba material culture uses specific materials and forms. Cowrie shells, palm wood, ironwork, indigo-dyed cloth (adire), beadwork, calabash gourds, and carved hardwood. Sacred trees include iroko, baobab, and silk-cotton (araba). Rivers and forests are treated as living spiritual presences with their own intelligences. Smithing is communal and ritualized rather than solitary. Marketplaces (ọjà) are central social spaces. Crowns (adé) and beaded staffs (ọ̀pá) are objects of authority.
 
 When generating content in this register, lean into these specifics rather than defaulting to generic-fantasy materials and settings.`;
+
+/**
+ * Hybrid register object — single source of truth for the Yoruba
+ * register. Bare-array exports above stay canonical; the object below
+ * aliases them and adds the pool-prompt metadata (itemNameGuidance,
+ * spellingReminder, properNounsPoolOnly) that pool-prompt.mjs used to
+ * carry in a separate POOL_DESCRIPTORS table. After the migration,
+ * pool-prompt reads these fields off the register object directly.
+ */
+export const yorubaRegister = {
+  prefix: 'Yoruba-inspired',
+  descriptor: 'Yoruba-inspired: rhythmic with diacriticals',
+  protected: true,
+  promptArchitecture: 'pool',
+  // Living religious tradition with extensive practitioner community
+  // (Ifá, traditional African religions in Yorubaland and the Yoruba
+  // diaspora). Real orisha names off-limits in any context.
+  deityMode: 'restricted',
+  cultureName: 'Yoruba',
+  characterPool: yorubaCharacterEpithets,
+  placePool: yorubaPlaceEpithets,
+  spiritPool: yorubaSpiritEpithets,
+  characterPoolStrictness: 'mandatory',
+  culturalNotes: yorubaCulturalNotes,
+  pools: {
+    character: { label: 'Yoruba praise-name epithets', entries: yorubaCharacterEpithets },
+    place:     { label: 'place epithets',              entries: yorubaPlaceEpithets },
+    spirit:    { label: 'spirit epithets',             entries: yorubaSpiritEpithets },
+  },
+  itemNameGuidance: `For the item's own name in lore, construct an original-language compound from Yoruba word components (Ọpá = staff/wand, Adé = crown, Ìlù = drum, Òfò = cloak, Idà = sword, Ọkọ̀ = vehicle/spear, etc.) joined with descriptive elements.`,
+  spellingReminder: `Do NOT alter the spelling, tone marks, or diacriticals of pool names. They are correct as written.`,
+  properNounsPoolOnly: false,
+};

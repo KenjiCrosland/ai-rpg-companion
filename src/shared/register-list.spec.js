@@ -9,11 +9,14 @@ import {
 
 describe('register-list — protected-register feature flag', () => {
   describe('enableProtectedRegisters', () => {
-    it('defaults to false', () => {
-      // Production ships with protected registers off until the
-      // protection machinery is robust enough to revisit. Flipping to
-      // true is a deliberate decision and should require updating
-      // this test alongside the source.
+    it('defaults to false in production (protective filter engaged)', () => {
+      // The flag was briefly on during the per-register migration
+      // pilot so the consolidated shape could be exercised end-to-end.
+      // Production ships with it off — protected registers (Maori,
+      // Yoruba, Andean, Japanese, Chinese, Lakota, etc.) are filtered
+      // out of registerList until the protection machinery is fully
+      // validated. Flipping to true is a deliberate decision and
+      // should require updating this test alongside the source.
       expect(enableProtectedRegisters).toBe(false);
     });
   });
@@ -107,10 +110,9 @@ describe('register-list — protected-register feature flag', () => {
       }
     });
 
-    it('keeps every non-protected register (Western-canonical + fictional) when the flag is off', () => {
-      // The Western + fictional set is the active register pool with
-      // the flag off. Drift here would shrink the user-visible pool
-      // (registers silently disappearing from selection).
+    it('keeps every non-protected register (Western-canonical + fictional + ancient-Mediterranean)', () => {
+      // Drift here would shrink the user-visible pool (registers
+      // silently disappearing from selection).
       const nonProtected = [
         // Western-canonical
         'Latin-inspired', 'Italian-Renaissance-inspired', 'Greek-inspired',
@@ -121,6 +123,10 @@ describe('register-list — protected-register feature flag', () => {
         'Middle-High-German-inspired', 'Celtic-inspired', 'Welsh-inspired',
         'Middle-Welsh-inspired', 'Irish-inspired', 'Old-Irish-inspired',
         'Old-Occitan-inspired',
+        // Ancient extinct-religion Mediterranean (non-protected — no
+        // living community standing)
+        'Mesopotamian-inspired', 'Phoenician-Punic-inspired',
+        'Egyptian-inspired', 'Etruscan-inspired',
         // Fictional fantasy
         'Elven', 'Draconic', 'Goblin-inspired', 'Orcish',
         'Gnomish', 'Aberrant', 'Abyssal', 'Infernal', 'Primordial',

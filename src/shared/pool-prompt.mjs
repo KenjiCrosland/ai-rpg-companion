@@ -1,99 +1,44 @@
 /**
  * Generic pool-architecture prompt-block builder.
  *
- * Replaces the previous per-register prompt builders (yoruba-prompt.mjs,
- * andean-prompt.mjs) with a single descriptor-driven builder. Each
- * pool-architecture register (character pool + place pool + spirit
- * pool + cultural notes + item-name guidance) is described by an
- * entry in `POOL_DESCRIPTORS` below; the builder reads the descriptor
- * for the rolled register and emits a uniform block.
+ * Pool-architecture registers (character pool + place pool + spirit
+ * pool + cultural notes + item-name guidance) are the most-protective
+ * tier of the cultural-protection ladder (above whitelist+catchall,
+ * above bare catchall, above universal-invent).
  *
- * Pool-architecture registers are the most-protective tier of the
- * cultural-protection ladder (above whitelist+catchall, above bare
- * catchall, above universal-invent). Currently all entries here are
- * flag-gated off (`enableProtectedRegisters: false` makes Yoruba and
- * Andean unreachable). When the flag re-enables, the descriptor
- * registry below drives all of them — no per-register prompt-builder
- * file required.
+ * The per-register descriptor table previously lived inline here. It
+ * has now consolidated into the register entries themselves —
+ * `yorubaRegister` and `andeanRegister` in `src/shared/registers/`
+ * declare `promptArchitecture: 'pool'` and carry every pool-prompt
+ * field (cultureName, pools, culturalNotes, itemNameGuidance,
+ * spellingReminder, properNounsPoolOnly). This builder reads off the
+ * register object directly.
  *
- * Adding a new pool-architecture register: add an entry to
- * `POOL_DESCRIPTORS` referencing the data file's exports. No new
- * prompt-builder file needed.
+ * Adding a new pool-architecture register: create
+ * `src/shared/registers/<name>.mjs` exporting an `xxxRegister` object
+ * with `promptArchitecture: 'pool'` plus the required fields, add it
+ * to `ALL_REGISTERS` in `src/shared/registers/index.mjs`. No edits to
+ * this file required.
  *
  * Returns empty string for any register without a registered
  * descriptor, so the caller can append the result unconditionally.
  */
 
-import {
-  yorubaCharacterEpithets,
-  yorubaPlaceEpithets,
-  yorubaSpiritEpithets,
-  yorubaCulturalNotes,
-} from '@/shared/registers/yoruba.mjs';
-import {
-  andeanCharacterEpithets,
-  andeanPlaceEpithets,
-  andeanSpiritEpithets,
-  andeanCulturalNotes,
-} from '@/shared/registers/andean.mjs';
+import { ALL_REGISTERS } from '@/shared/registers/index.mjs';
 
-/**
- * Per-register descriptor schema:
- *
- *   registerPrefix:   string startsWith key (e.g., 'Yoruba-inspired')
- *   cultureName:      human-readable culture name for the in-prompt
- *                     phrasing (e.g., 'Yoruba', 'Quechua')
- *   pools:            { character, place, spirit } — each
- *                     `{ label, entries }`. The label appears in the
- *                     prompt sentence introducing the pool.
- *   culturalNotes:    pre-built cultural-notes prose from the data
- *                     file; injected verbatim at the top of the block.
- *   itemNameGuidance: per-register paragraph governing the single
- *                     constructable proper noun (the item's own name)
- *   spellingReminder: per-register reminder about diacriticals,
- *                     apostrophes, ejective marks, etc.
- *   properNounsPoolOnly: when true, characters/places/spirits are
- *                     strictly pool-sourced (no construction allowed);
- *                     when false, the construction option is permitted.
- *                     Tightens the construction-rule sentence below.
- */
-const POOL_DESCRIPTORS = [
-  {
-    registerPrefix: 'Yoruba-inspired',
-    cultureName: 'Yoruba',
-    pools: {
-      character: { label: 'Yoruba praise-name epithets', entries: yorubaCharacterEpithets },
-      place:     { label: 'place epithets',              entries: yorubaPlaceEpithets },
-      spirit:    { label: 'spirit epithets',             entries: yorubaSpiritEpithets },
-    },
-    culturalNotes: yorubaCulturalNotes,
-    itemNameGuidance: `For the item's own name in lore, construct an original-language compound from Yoruba word components (Ọpá = staff/wand, Adé = crown, Ìlù = drum, Òfò = cloak, Idà = sword, Ọkọ̀ = vehicle/spear, etc.) joined with descriptive elements.`,
-    spellingReminder: `Do NOT alter the spelling, tone marks, or diacriticals of pool names. They are correct as written.`,
-    properNounsPoolOnly: false,
-  },
-  {
-    registerPrefix: 'Andean-inspired',
-    cultureName: 'Quechua',
-    pools: {
-      character: { label: 'Quechua descriptive bynames', entries: andeanCharacterEpithets },
-      place:     { label: 'place compounds',             entries: andeanPlaceEpithets },
-      spirit:    { label: 'spirit epithets',             entries: andeanSpiritEpithets },
-    },
-    culturalNotes: andeanCulturalNotes,
-    itemNameGuidance: `The single exception is the item's own original-language name, which may be constructed — but ONLY from the constrained vocabulary specified in the ITEM-NAME CONSTRUCTION paragraph above (item-types, material descriptors, quality descriptors). Every constructed item-name compound must clear the COMPOUND CONSTRUCTION PATTERNS TO AVOID checklist (no [X]-kancha, no Yawar-X, no [X]-ñawi, no [X]-Inka, no [X]-amaru, no avoid-list components).`,
-    spellingReminder: `Do NOT alter the spelling, apostrophes (which mark phonemic ejectives), or h-after-stop sequences (which mark aspiration) of pool names. These are correct as written and phonemic, not decorative.`,
-    properNounsPoolOnly: true,
-  },
-];
+function findPoolRegister(selectedRegister) {
+  if (typeof selectedRegister !== 'string') return null;
+  return ALL_REGISTERS.find(r =>
+    r.promptArchitecture === 'pool' && selectedRegister.startsWith(r.prefix),
+  ) || null;
+}
 
 export function isPoolArchitectureRegister(selectedRegister) {
-  if (typeof selectedRegister !== 'string') return false;
-  return POOL_DESCRIPTORS.some(d => selectedRegister.startsWith(d.registerPrefix));
+  return findPoolRegister(selectedRegister) !== null;
 }
 
 export function buildPoolPromptBlock(selectedRegister) {
-  if (typeof selectedRegister !== 'string') return '';
-  const descriptor = POOL_DESCRIPTORS.find(d => selectedRegister.startsWith(d.registerPrefix));
+  const descriptor = findPoolRegister(selectedRegister);
   if (!descriptor) return '';
 
   const {

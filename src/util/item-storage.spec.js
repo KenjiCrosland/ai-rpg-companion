@@ -342,12 +342,15 @@ describe('item-storage', () => {
       );
     });
 
-    it('backfills register via cultural detection when item has no selectedRegister (legacy)', () => {
-      // Legacy items predate the persistence change. Detection runs over
-      // name + lore + physical_description so the seed still carries a
-      // register signal when one is recoverable. Uses a non-protected
-      // register (Old-Norse-inspired) so the test isn't dependent on
-      // the enableProtectedRegisters feature flag.
+    it('returns null register for legacy items with no selectedRegister (cultural detection deleted)', () => {
+      // Legacy items predate the persistence change. Earlier versions
+      // ran cultural keyword detection over name + lore +
+      // physical_description to recover a register from text signals
+      // (Sigrún → Norse-inspired). The detection map was deleted during
+      // the per-register migration sweep — the LLM's LANGUAGE REGISTER
+      // OVERRIDE block handles cultural signals at generation time
+      // instead. Legacy items now seed with register=null and the
+      // generator's override authority takes over.
       saveItemToStorage({
         name: 'Sigrún\'s Hammer',
         item_type: 'Weapon',
@@ -364,9 +367,7 @@ describe('item-storage', () => {
         entityName: 'Sigrún',
       });
 
-      // Detection should fire on the Norse-coded signal in the item's
-      // text (`Sigrún` / `Mjolnir`).
-      expect(seed.source.register).toMatch(/^(Old-)?Norse-inspired/);
+      expect(seed.source.register).toBeNull();
     });
 
     it('returns null register when legacy item has no detectable signal', () => {

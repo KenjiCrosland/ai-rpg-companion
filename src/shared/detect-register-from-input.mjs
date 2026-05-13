@@ -1,220 +1,41 @@
 /**
- * detectRegisterFromInput — bias register selection based on
- * culturally-specific terms in the user's input.
+ * detectRegisterFromInput — keyword-driven cultural-register detection.
  *
- * The item generator's broader refactor decoupled origin (thematic) from
- * language register (linguistic), so they can pair freely. But when a
- * user types something with a clear linguistic signal — "Shiawase Ofuda"
- * implies Japanese, "Atlatl of the Hunt" implies Aztec/Nahuatl,
- * "Tane-mahuta's Mere" implies Maori — the register should honor that
- * signal rather than rolling a random one. This function does that
- * detection.
+ * Status: deprecated / no-op.
  *
- * Coverage is intentionally incomplete. The map below seeds known terms
- * across the registers that ship in the language register list; the LLM
- * falls back on world knowledge via the LANGUAGE REGISTER OVERRIDE prompt
- * block when nothing matches. Adding entries is always allowed.
+ * The cultural-language detection map (~30 entries spanning Japanese,
+ * Maori, Yoruba, Lakota, Russian, Hungarian, Latin, Greek, Norse, etc.)
+ * was deleted during the per-register migration sweep. It was vestigial
+ * for two reasons:
  *
- * The map favors specific cultural-linguistic traditions over generic
- * regional categories — earlier versions used "Mesoamerican-inspired",
- * "Polynesian-inspired", "West African-inspired", "Indigenous-North-
- * American-inspired", and "Eastern European-inspired" as catch-alls,
- * but those flatten distinct living cultures (Maya ≠ Aztec, Maori ≠
- * Hawaiian, Yoruba ≠ Akan ≠ Igbo, etc.). Splits were applied where
- * DeepSeek demonstrably engages with the underlying traditions
- * distinctly. Pan-traditional popular-fiction terms (tomahawk, wampum,
- * dreamcatcher, kachina, kpinga, mambele) are deliberately NOT mapped —
- * they don't cleanly belong to a single specific tradition, and the
- * LLM can interpret them from world knowledge.
+ *   1. Protected registers were flag-gated off in production for most
+ *      of the map's life, so cultural-keyword detection routing to
+ *      Maori / Yoruba / Andean / etc. was unreachable at runtime.
  *
- * Term-resolution rules:
- *   - Case-insensitive word-boundary match.
- *   - Length-descending sort across ALL terms (not per-register), so a
- *     more-specific multi-word term beats a shorter one regardless of
- *     which register they belong to.
- *   - First match wins on length ties (stable sort + iteration order).
- *   - When a term genuinely belongs to multiple traditions, the
- *     register listed FIRST in the map wins on ties.
+ *   2. The prompt already carries a LANGUAGE REGISTER OVERRIDE block
+ *      authorizing the LLM to detect cultural signals from its own
+ *      training and switch register accordingly ("Akiko → Japanese,"
+ *      "Olaf → Norse," "Inkari → Andean"). The hand-curated keyword
+ *      map was a redundant safety net for traditions where the LLM
+ *      has strong training coverage anyway.
  *
- * @param {string} userInput  — combined name + lore.
- * @param {string[]} registerList  — the full register pool to look up
- *                                       the resolved language string in.
- * @returns {string|null}  — the matching registerList entry, or null
- *                           if no detection fired.
+ * Fantasy-race detection (elven, goblin, orc, dwarven, gnomish, giant)
+ * still happens — it lives in `resolveFantasyRace` in
+ * `select-register.mjs`, unaffected by this deletion.
+ *
+ * Aesthetic-origin detection (fey, draconic, infernal, abyssal, etc.)
+ * still happens — it lives in `aestheticOriginKeywords` in
+ * `select-register.mjs`, unaffected by this deletion.
+ *
+ * The function shape stays so existing callers (selectRegister,
+ * ItemGenerator.vue, item-storage backfill) don't need to change.
+ * Calls always return null; the LLM's override authority handles
+ * cultural detection.
+ *
+ * @param {string} userInput  — combined name + lore. Ignored.
+ * @param {string[]} registerList  — full register pool. Ignored.
+ * @returns {null}
  */
-
-/**
- * Map of register-prefix → detection terms. The register prefix is matched
- * against the start of each entry in registerList (e.g. the prefix
- * 'Japanese-inspired' matches the entry that begins
- * 'Japanese-inspired: clean syllables...').
- */
-export const userInputLanguageDetection = {
-  'Japanese-inspired': [
-    'ofuda', 'kasaya', 'tsuba', 'wakizashi', 'nodachi', 'tonfa', 'sai',
-    'shuriken', 'tessen', 'kanabo', 'naginata', 'shiawase', 'kage',
-    'tsuki', 'sora', 'haru', 'ame',
-  ],
-  // Mesoamerican was previously a single generic register flattening Maya
-  // and Aztec/Nahuatl. Split per the cultural-specificity refactor:
-  // atlatl/macuahuitl/tepoztopilli/quetzal/tezcatlipoca are Nahuatl;
-  // kukulkan and the day-name register go to Maya.
-  'Maya-inspired': [
-    'kukulkan', 'itzamna', 'ixchel', 'kʼinich', 'balam', 'tikal',
-    'palenque', 'chichen', 'cenote',
-  ],
-  'Aztec/Nahuatl-inspired': [
-    'atlatl', 'macuahuitl', 'tepoztopilli', 'tlachtli', 'quetzal',
-    'tezcatlipoca', 'xochipilli', 'huitzilopochtli', 'tenochtitlan',
-  ],
-  // West African was previously a single generic register flattening
-  // hundreds of distinct cultures. Yoruba was already separate; Akan
-  // (Ghana) and Igbo (Nigeria) added. Some former entries were dropped
-  // from detection because they don't cleanly map to either Akan or
-  // Igbo: kpinga (Zande, Central Africa), mambele (Mangbetu/Azande),
-  // shoka (ambiguous), ababio (Akan but not in the brief's term list),
-  // ife-kari (Yoruba — already covered in Yoruba below). The LLM can
-  // still pick up these signals from world knowledge via the LANGUAGE
-  // REGISTER OVERRIDE prompt block.
-  'Yoruba-inspired': [
-    'orisha', 'olorun', 'shango', 'oshun', 'ifa', 'adégoke', 'ifelola',
-    'ife-kari',
-  ],
-  'Akan-inspired': [
-    'kente', 'ashanti', 'kumasi', 'sankofa', 'adinkra', 'kwame', 'akwasi',
-  ],
-  'Igbo-inspired': [
-    'ofo', 'ikenga', 'mmanwu', 'igbo', 'biafra',
-  ],
-  // Swahili is East African — labeling clarified in the register list.
-  'Swahili-inspired': [
-    'rungu', 'fimbo', 'asante', 'imani', 'pendo', 'zuberi',
-  ],
-  // Arabic/Persian: detection terms restricted to weapon names
-  // (pre-Islamic and broadly Persianate vocabulary) and folkloric
-  // creatures (jinn, simurgh). Specifically Islamic-religious terms
-  // do NOT appear here — the register is constrained at the descriptor
-  // level to pre-Islamic Arabic OR Persian; the detection terms
-  // mirror that constraint.
-  'Arabic/Persian-inspired': [
-    'khanjar', 'jambiya', 'shamshir', 'talwar', 'janbiya', 'simurgh',
-    'jinn', 'efrit',
-  ],
-  // Hebrew-inspired removed from the detection map alongside its
-  // removal from the register list. User-typed Hebrew signals (shofar,
-  // menorah, golem, etc.) fall through to the LLM's world-knowledge
-  // override path, where the universal-invent rule still governs.
-  'Hindi/Sanskrit-inspired': [
-    'urumi', 'katar', 'chakram', 'bagh nakh', 'pata', 'mandala',
-    'yantra', 'mudra',
-  ],
-  'Chinese-inspired': [
-    'jian', 'dao', 'qiang', 'guandao', 'feng huang', 'baihu', 'qilin',
-  ],
-  'Korean-inspired': [
-    'jang-do', 'gwandal', 'hwando', 'sangmo',
-  ],
-  'Mongolian-inspired': [
-    'ger', 'ovoo', 'urga', 'morin khuur',
-  ],
-  'Tibetan-inspired': [
-    'phurba', 'kapala', 'mala', 'thangka',
-  ],
-  'Thai-inspired': [
-    'krabi', 'krabong', 'daab',
-  ],
-  // Polynesian was previously a single generic register flattening Maori,
-  // Hawaiian, Samoan, Tongan, etc. Split into Maori and Hawaiian per the
-  // cultural-specificity refactor; other Polynesian traditions (Samoan,
-  // Tongan, Tahitian, Marquesan, Rapa Nui) are not detected for now —
-  // the LLM falls back on world knowledge via LANGUAGE REGISTER OVERRIDE.
-  'Maori-inspired': [
-    'mere', 'patu', 'taiaha', 'tewhatewha', 'mana', 'tapu', 'tiki', 'pou',
-    'maunga', 'whenua', 'aroha', 'aotearoa', 'maori', 'iwi', 'hapu',
-    'whakapapa',
-  ],
-  'Hawaiian-inspired': [
-    'lei', 'pikake', 'hula', 'kahuna', 'mahalo', 'aloha', 'lehua', 'koa',
-    'kapu', 'pueo', 'nene', 'ohana',
-  ],
-  // The Indigenous-North-American generic was removed. Lakota is added
-  // with a conservative term list. Pan-Indigenous popular-fiction terms
-  // (tomahawk, wampum, medicine bundle, dreamcatcher, kachina) are
-  // intentionally NOT mapped — they don't cleanly belong to Lakota,
-  // and Hopi-sacred terms like kachina warrant the appropriation
-  // caution the brief flags. The LLM can interpret these from world
-  // knowledge. The Navajo/Diné register and detection map were removed
-  // entirely under the same caution — the skinwalker tradition is
-  // sacred and not appropriate for fictional appropriation, and clan-
-  // name / sacred-geographic terms carry too high a collision-risk to
-  // ship as a curated pool.
-  'Lakota-inspired': [
-    'wakinyan', 'tatanka', 'wakan', 'tipi', 'paha-sapa', 'wiyaka',
-  ],
-  'Andean-inspired': [
-    'quipu', 'chuspa', 'macana', 'inti', 'pachamama',
-  ],
-  // Slavic stays as a broad pan-Slavic register. Russian-coded terms
-  // (shashka, sablya, cherkesska, baba yaga, rusalka, koschei, etc.)
-  // moved to Russian-inspired below. domovoi remains here because it's
-  // a genuinely pan-Slavic household-spirit concept.
-  'Slavic-inspired': [
-    'domovoi',
-  ],
-  'Russian-inspired': [
-    'shashka', 'sablya', 'cherkesska', 'baba yaga', 'rusalka', 'koschei',
-    'tsar', 'kremlin', 'volga',
-  ],
-  'Romanian-inspired': [
-    'draculesti', 'wallachia', 'transilvania', 'voievod',
-  ],
-  'Hungarian-inspired': [
-    'magyar', 'puszta', 'hortobagy', 'csikos',
-  ],
-  'Celtic-inspired': [
-    'claymore', 'sgian-dubh', 'targe', 'banshee', 'tuatha', 'sidhe',
-  ],
-  'Norse-inspired': [
-    'seax', 'langeax', 'ulfberht', 'aegis', 'mjolnir', 'gungnir',
-  ],
-  'Germanic-inspired': [
-    'katzbalger', 'zweihander', 'flamberge', 'bidenhander',
-  ],
-  'Greek-inspired': [
-    'xiphos', 'kopis', 'sarissa', 'aspis',
-  ],
-  'Latin-inspired': [
-    'gladius', 'pilum', 'spatha', 'scutum',
-  ],
-};
-
-export function detectRegisterFromInput(userInput, registerList) {
-  if (!userInput || !registerList || registerList.length === 0) {
-    return null;
-  }
-
-  // Build a flat list of {term, registerPrefix} pairs so we can sort
-  // ALL terms together by length descending. Per-register sort would
-  // miss the "atlatl" cross-register case.
-  const allTerms = Object.entries(userInputLanguageDetection).flatMap(
-    ([registerPrefix, terms]) => terms.map(term => ({ term, registerPrefix }))
-  );
-  allTerms.sort((a, b) => b.term.length - a.term.length);
-
-  for (const { term, registerPrefix } of allTerms) {
-    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`\\b${escaped}\\b`, 'i');
-    if (pattern.test(userInput)) {
-      // Find the full register string in the provided registerList
-      // pool. The map keys are prefixes; entries in registerList
-      // start with the prefix followed by ": ...".
-      const register = registerList.find(p => p.startsWith(registerPrefix));
-      if (register) return register;
-      // If the register prefix isn't found in the pool (e.g. caller
-      // passed a reduced set), keep scanning for another matching
-      // term. Don't return a string the caller didn't provide.
-    }
-  }
-
+export function detectRegisterFromInput(_userInput, _registerList) {
   return null;
 }

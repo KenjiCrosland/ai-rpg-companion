@@ -160,3 +160,18 @@ export const dwarvenCharacterEpithets = [
   'Tharbal Deephold',
   'Vrazgar Steelbeard',
 ];
+
+/**
+ * Dwarven is an origin-only pool — it has no register descriptor of its
+ * own (dwarves canonically pair with Old-Norse-inspired / Anglo-Saxon-
+ * inspired / Germanic-inspired registers). The hybrid object below
+ * carries only `fantasyRaceKey` + pool data so the unified registry can
+ * route ORIGIN_CHARACTER_WHITELISTS['Dwarven'] through the same shape
+ * as the other race pools. No `prefix` / `descriptor` — Dwarven won't
+ * appear in `registerList`.
+ */
+export const dwarvenRegister = {
+  fantasyRaceKey: 'Dwarven',
+  characterPool: dwarvenCharacterEpithets,
+  characterPoolStrictness: 'preferred',
+};

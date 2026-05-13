@@ -2,8 +2,11 @@ import { buildPoolPromptBlock } from '@/shared/pool-prompt.mjs';
 import { buildCatchallPromptBlock } from '@/shared/catchall-prompt.mjs';
 import { buildCharacterWhitelistBlock } from '@/shared/character-whitelist-prompt.mjs';
 import { buildLanguageRegisterRestrictionBlock } from '@/shared/language-register-restriction.mjs';
+import { buildRealWorldCategoryRestrictionBlock } from '@/shared/real-world-category-restriction.mjs';
+import { buildDeityModeBlock } from '@/shared/deity-mode-block.mjs';
 import { WESTERN_FANTASY_BOUND_RACES } from '@/shared/select-register.mjs';
 import { registerList } from '@/shared/register-list.mjs';
+import { findRegisterByPrefix } from '@/shared/registers/index.mjs';
 import { rotateRegisterExamples } from '@/shared/rotate-register-examples.mjs';
 
 /** Probability that a relationships generation includes an outsider
@@ -184,9 +187,12 @@ Two of the three relationship targets should be drawn from the source register's
   const taggedOutsiderWhitelist = outsiderWhitelist
     ? `OUTSIDER ${outsiderWhitelist}`
     : '';
+  const sourceRegisterEntry = findRegisterByPrefix(register);
   const blocks = [
     baseline,
     overrideAuthority,
+    buildRealWorldCategoryRestrictionBlock(),
+    buildDeityModeBlock(sourceRegisterEntry),
     buildLanguageRegisterRestrictionBlock({
       register,
       isWesternFantasyRaceContext,

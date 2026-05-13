@@ -95,3 +95,11 @@ export const elvenCharacterEpithets = [
   'Aerlin',
   'Ithron',
 ];
+
+export const elvenRegister = {
+  prefix: 'Elven',
+  descriptor: 'Elven: lyrical, vowel-rich (e.g., Aelindariel, Saereldreth, Glorwenneth)',
+  characterPool: elvenCharacterEpithets,
+  characterPoolStrictness: 'preferred',
+  fantasyRaceKey: 'Elven',
+};

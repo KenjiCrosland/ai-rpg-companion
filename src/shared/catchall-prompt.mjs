@@ -2,107 +2,89 @@
  * Catchall prompt-block builder for non-pool risky registers.
  *
  * For registers that carry cultural-protection risk but don't yet have
- * a dedicated pool (Yoruba/Andean), this module returns a prompt block
- * that constrains naming density and protects against real-figure
- * usage. Returns an empty string for registers outside the catchall set
- * (pool registers, low-risk Western-coded registers, fictional fantasy
- * registers), so the caller can append the result unconditionally.
+ * a dedicated pool (Yoruba/Andean are pool-tier; everything else
+ * protected lands here), this module returns a prompt block that
+ * constrains naming density and protects against real-figure usage.
+ * Returns an empty string for registers outside the catchall set, so
+ * the caller can append the result unconditionally.
  *
- * Architecture: density-constraint with optional per-register whitelist
- * augmentation. The catchall instructs the LLM to use AT MOST one
- * register-language character name and one register-language item name
- * per generation, with all other places/spirits/secondary characters
- * in English-descriptive form. The narrow naming surface reduces
- * collision risk without requiring per-register curation.
+ * Architecture: density-constraint plus per-register item-name avoid-
+ * list. The catchall instructs the LLM to use AT MOST one register-
+ * language character name and one register-language item name per
+ * generation, with all other places/spirits/secondary characters in
+ * English-descriptive form. The narrow naming surface reduces collision
+ * risk without requiring per-register curation.
  *
- * Per-register whitelist (added v2 after the Tangaroa/Maori failure):
- * a register may register a curated character-name array in
- * `registerCharacterEpithetWhitelists` (see
- * `src/shared/registers/register-whitelists.mjs`). When a whitelist
- * exists for the active register, the freehand-construction
- * instruction is replaced with a pick-from-list instruction. This is
- * an intermediate protection level between bare catchall and full
- * pool architecture — sufficient for registers where DeepSeek's
- * training-data pantheon density would otherwise produce real-figure
- * usage during freehand construction.
+ * Character-name whitelist injection happens separately in
+ * `buildCharacterWhitelistBlock` (unified registry path). This block
+ * stays pure-structural — the character-name bullet describes density
+ * and role, the whitelist block describes WHO. Previously the catchall
+ * injected the whitelist too, which double-injected the same list when
+ * the unified registry also fired. The whitelist now appears once,
+ * always via the dedicated block.
  *
- * Graduation tiers (least → most protective):
- *   1. Universal-invent rules in main prompt (Western-canonical and
- *      fictional fantasy registers).
- *   2. Catchall density constraints + freehand epithet construction
- *      (most non-Western registers; this module's default behavior).
- *   3. Catchall density constraints + character-name whitelist (this
- *      module + a registered whitelist; Maori is the first).
- *   4. Full pool architecture with dedicated prompt builder (Yoruba,
- *      Andean; characters + places + spirits all pool-sourced).
- *
- * Promotion happens when production data shows a tier failing for a
- * specific register. Each tier is cheaper to ship than the next.
- *
- * Architecture note: this is a minimum-viable shared block paralleling
- * yoruba-prompt.mjs and andean-prompt.mjs. The full per-register prompt
- * architecture plan (`plans/per-register-prompt-architecture.md`) calls
- * for routing through a dedicated dispatcher; this file is the
- * precursor.
- */
-import { getWhitelistForRegister } from '@/shared/register-whitelists.mjs';
-
-/**
- * Register prefixes routed to the catchall. Selection criteria:
- * non-Western or otherwise cultural-protection-sensitive registers that
- * don't yet have pool curation. Western-canonical registers (Latin,
- * Norse-family, Germanic-family, Celtic-family, Slavic-family,
- * Hungarian, Finnish, Romanian, Russian, Italian-Renaissance, Greek)
- * are NOT in this list — they continue to use the universal-invent
- * rules in the main prompt without catchall augmentation. Fictional
- * fantasy registers (Elven, Orcish, Goblin, Gnomish, Draconic, etc.)
- * are also excluded — there are no real-world referents to protect.
- *
- * Pool registers (Yoruba, Andean) are NOT in this list — they have
- * dedicated prompt blocks via yoruba-prompt.mjs / andean-prompt.mjs.
+ * The set of catchall registers and the per-register item-name avoid-
+ * list both derive from `ALL_REGISTERS` — every entry with
+ * `promptArchitecture: 'catchall'` is a catchall register, and any
+ * such entry with an `itemNameAvoidList` array carries an avoid-list
+ * injection.
  *
  * Removed registers (Navajo/Diné) are NOT in this list — they were
  * deleted entirely from the register system under appropriation
  * caution. Diné-coded user input falls through to the LLM's world-
  * knowledge override path with strict universal-invent rules.
+ *
+ * Graduation tiers (least → most protective):
+ *   1. Universal-invent rules in main prompt (Western-canonical and
+ *      fictional fantasy registers — no protected flag).
+ *   2. Catchall density constraints + freehand epithet construction
+ *      (most protected registers without a curated pool; this
+ *      module's default behavior).
+ *   3. Catchall density constraints + character-name whitelist via
+ *      `buildCharacterWhitelistBlock` (this module's structural block
+ *      + a separate whitelist injection; Maori is the first).
+ *   4. Full pool architecture with dedicated prompt builder (Yoruba,
+ *      Andean; characters + places + spirits all pool-sourced via
+ *      `buildPoolPromptBlock`).
  */
+
+import { ALL_REGISTERS } from '@/shared/registers/index.mjs';
+
 /**
- * Per-register item-name avoid-lists.
+ * Register prefixes routed to the catchall. Derived from
+ * `ALL_REGISTERS` — `promptArchitecture: 'catchall'` opts a register
+ * in. Pool-architecture registers (Yoruba, Andean) explicitly take
+ * the `'pool'` path instead and don't appear here.
+ */
+export const CATCHALL_REGISTER_PREFIXES = ALL_REGISTERS
+  .filter(r => r.promptArchitecture === 'catchall')
+  .map(r => r.prefix);
+
+/**
+ * Per-register item-name avoid-lists. Derived from `ALL_REGISTERS` —
+ * any catchall register that declares an `itemNameAvoidList` field
+ * contributes here.
  *
- * Sacred or ceremonially-weighted terms in the register's language that
- * the LLM must NOT use as components of the generation's single item
- * name (the parenthetical "called [X] in the speech of its makers"
- * slot). The catchall already instructs "non-sacred everyday word
- * components," but production output showed DeepSeek selecting from
- * the most prominent Te Reo Māori vocabulary regardless — words that
- * happen to sit at the top of any English-language reference are
- * disproportionately the spiritual/ceremonial ones, which is exactly
- * the wrong end of the corpus to reach for.
- *
- * The avoid-list flips that default: name the specific terms not to
- * use, with the reason ("carries sacred or ceremonial weight"). The
- * LLM has plenty of non-sacred Te Reo to draw on (material,
- * environmental, descriptive vocabulary) once the sacred surface is
+ * Sacred or ceremonially-weighted terms in the register's language
+ * that the LLM must NOT use as components of the generation's single
+ * item name. Production output showed DeepSeek selecting from the
+ * most prominent register vocabulary regardless — words that happen
+ * to sit at the top of any English-language reference are
+ * disproportionately the spiritual/ceremonial ones. The avoid-list
+ * flips that default: name the specific terms not to use, with the
+ * reason ("carries sacred or ceremonial weight"). The LLM has plenty
+ * of non-sacred vocabulary to draw on once the sacred surface is
  * fenced off.
  *
- * Data-in-catchall pattern: the list lives inline here rather than in
- * a separate data file, paralleling CATCHALL_REGISTER_PREFIXES. Promote
- * to `src/shared/registers/` if/when a second register graduates to
- * needing one and the inline footprint starts crowding the file.
- *
- * Adding a register: register a new entry keyed by the register prefix.
- * Keep the term list focused on items that would be reached for
- * naturally during item-naming (not every sacred term in the language)
- * — the goal is to fence off the high-collision surface, not catalog
- * the entire sacred register.
+ * Adding an avoid-list to a new register: add the `itemNameAvoidList`
+ * field to that register's entry in `src/shared/registers/`. No
+ * changes to this file required.
  */
-export const registerItemNameAvoidLists = {
-  'Maori-inspired': [
-    'whakapapa', 'pō', 'mana', 'tapu', 'mauri', 'hau', 'wairua',
-    'kaitiaki', 'atua', 'whatu', 'karakia', 'tohunga', 'marae',
-    'tangi', 'tipuna',
-  ],
-};
+export const registerItemNameAvoidLists = Object.fromEntries(
+  ALL_REGISTERS
+    .filter(r => r.promptArchitecture === 'catchall' && Array.isArray(r.itemNameAvoidList))
+    .map(r => [r.prefix, r.itemNameAvoidList]),
+);
 
 export function getItemNameAvoidList(selectedRegister) {
   if (typeof selectedRegister !== 'string') return null;
@@ -112,37 +94,6 @@ export function getItemNameAvoidList(selectedRegister) {
   return entry ? entry[1] : null;
 }
 
-export const CATCHALL_REGISTER_PREFIXES = [
-  // East / Southeast / Central / South Asian
-  'Japanese-inspired',
-  'Chinese-inspired',
-  'Korean-inspired',
-  'Thai-inspired',
-  'Mongolian-inspired',
-  'Tibetan-inspired',
-  'Hindi/Sanskrit-inspired',
-  'Pamir-inspired',
-  // Middle Eastern
-  'Arabic/Persian-inspired',
-  'Persian-inspired',
-  // North African
-  'Atlas-Berber-inspired',
-  // Sub-Saharan African (Yoruba excluded — has pool)
-  'Akan-inspired',
-  'Igbo-inspired',
-  'Swahili-inspired',
-  // Pacific
-  'Maori-inspired',
-  'Hawaiian-inspired',
-  // Mesoamerican (Andean excluded — has pool)
-  'Maya-inspired',
-  'Aztec/Nahuatl-inspired',
-  // Indigenous American
-  'Lakota-inspired',
-  // Caucasus
-  'Caucasian-inspired',
-];
-
 export function isCatchallRegister(selectedRegister) {
   if (typeof selectedRegister !== 'string') return false;
   return CATCHALL_REGISTER_PREFIXES.some(prefix => selectedRegister.startsWith(prefix));
@@ -151,14 +102,11 @@ export function isCatchallRegister(selectedRegister) {
 export function buildCatchallPromptBlock(selectedRegister) {
   if (!isCatchallRegister(selectedRegister)) return '';
 
-  const whitelist = getWhitelistForRegister(selectedRegister);
-  const characterNameBullet = whitelist
-    ? `- ONE character name from this curated list — pick exactly one and use it as written, preserving all macrons and diacriticals; do NOT modify, compound, or affix it. This is the lore's single named figure (typically the creator, primary wielder, or key witness):
-
-  ${whitelist.join(', ')}
-
-  Do NOT generate any character name outside this list. Do NOT construct freehand epithets in the register's language even if you know the morphology — the list is the only permitted source for this generation's named character.`
-    : `- ONE character name in the register's language. This is the lore's single named figure (typically the creator, primary wielder, or key witness). Construct it as a praise-name epithet — a descriptive identity-handle following the cultural register's epithet conventions, NOT a theophoric or circumstantial given name.`;
+  // Character-name bullet is pure-structural: the WHO comes from
+  // `buildCharacterWhitelistBlock` when the register has a whitelist,
+  // freehand epithet construction otherwise. Both routes are governed
+  // by the unified registry now — no per-register branching here.
+  const characterNameBullet = `- ONE character name in the register's language. This is the lore's single named figure (typically the creator, primary wielder, or key witness). If a separate CHARACTER WHITELIST FOR THIS GENERATION block is present below, pick the name from that list; otherwise construct a praise-name epithet — a descriptive identity-handle following the cultural register's epithet conventions, NOT a theophoric or circumstantial given name.`;
 
   const itemNameAvoidList = getItemNameAvoidList(selectedRegister);
   const itemNameBullet = itemNameAvoidList
@@ -175,11 +123,11 @@ ${characterNameBullet}
 
 ${itemNameBullet}
 
-- ZERO place names in the register's language. Refer to all places using English-descriptive forms that draw on the cultural register's material and atmospheric specificity (e.g., "the high forge-town," "the indigo-dyer's grove," "the salt-trader's crossing," "the cloud-mountain pass").
+- ZERO place names in the register's language. Refer to all places using English-descriptive forms drawn from THIS register's actual material culture, occupations, landforms, trade goods, or craft processes. Invent the place description freshly per generation; do not borrow place-descriptor vocabulary from other traditions.
 
-- ZERO spirit or deity names in the register's language. Refer to all spirits and deities using English-descriptive forms (e.g., "the river-spirit of the indigo waters," "the mountain-spirit of the high pass," "the keeper of the cowrie-counts").
+- ZERO spirit or deity names in the register's language. Refer to all spirits and deities using English-descriptive forms drawn from this register's own cosmological domains (water-features, terrain features, craft-domains, natural cycles specific to this register's environment). Invent the spirit description freshly per generation.
 
-- Secondary characters (apprentices, family members, witnesses, elders) referred to by role rather than by additional names (e.g., "his apprentice," "the dye-mother who taught him," "the elders of the smith-clan").
+- Secondary characters (apprentices, family members, witnesses, elders) referred to by role rather than by additional names. Build the role description from this register's actual occupational and kinship vocabulary.
 
 REAL FIGURES MUST NOT APPEAR:
 
@@ -187,11 +135,11 @@ Do not use real religious figures (deities, prophets, sacred ancestors) from any
 
 MATERIALS:
 
-Combine real cultural materials from this register's tradition (substrate, structure) with fantasy materials (starshine pearl, moonstone, voidstone, voltiac copper, witchwood, soulsilver, nebula-cloth, etc.) used as magic-bearing components or embellishments.
+Combine real cultural materials from this register's actual tradition (substrate, structure) with invented fantasy materials of your own choosing used as magic-bearing components or embellishments. Generate fresh fantasy materials per generation rather than reaching for stock fantasy-material vocabulary.
 
-EXAMPLE:
+STRUCTURE FOR THE LORE'S COSMOLOGICAL FRAMING:
 
-"Called [item-name in register language] in the speech of its makers, this rod was forged by [character-name in register language], the smith of the high forge-town, who pressed iron from the spirit-touched waters. It was lost when his apprentice fled with it through the cloud-mountains, and recovered generations later by river-fisherfolk near the market crossroads. The river-spirit of the indigo waters is said to whisper warnings to whoever holds it now."
+Build the lore as a short scene with: an item-name in the register's language; a single named character (drawn from the whitelist if one is registered, or constructed per the rule above) with an occupation rooted in this register's craft tradition; a place referred to by English-descriptive form; a brief history that moves the item from creation to current location; an English-descriptive spirit or cosmological reference that gives the item magical weight. Do not import phrasing from other registers' traditions — every descriptor should be plausibly drawn from THIS register's actual material and environmental record.
 
 ONE character name. ONE item name. All else in culturally-grounded English.`;
 }

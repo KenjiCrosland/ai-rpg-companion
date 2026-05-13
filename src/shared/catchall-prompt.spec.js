@@ -155,15 +155,27 @@ describe('catchall-prompt', () => {
     });
   });
 
-  describe('whitelist augmentation (per-register character-name list)', () => {
-    it('injects whitelist entries into the prompt when whitelist is registered (Maori)', () => {
-      // Data-flow check: the whitelist entries must actually reach the
-      // prompt body. Drift (forgetting to wire the lookup, accidentally
-      // emptying the whitelist) should fail this test.
+  describe('whitelist deduplication (per-register character-name list)', () => {
+    it('does NOT inject whitelist entries into the catchall block — buildCharacterWhitelistBlock handles that', () => {
+      // The whitelist used to appear in the catchall block AND in the
+      // dedicated character-whitelist block, producing the same list of
+      // names twice in the prompt. The dedup landed during the per-
+      // register migration sweep: catchall stays pure-structural, the
+      // dedicated block is the universal whitelist injector. This test
+      // pins the no-duplication contract.
       const block = buildCatchallPromptBlock('Maori-inspired: vowel-rich Te Reo phonetics');
-      expect(block).toContain('Manawa-Kaha');
-      expect(block).toContain('Kaiwhakairo');
-      expect(block).toContain('Karu-Ata');
+      expect(block).not.toContain('Manawa-Kaha');
+      expect(block).not.toContain('Kaiwhakairo');
+      expect(block).not.toContain('Karu-Ata');
+    });
+
+    it('references the dedicated whitelist block in the character-name bullet', () => {
+      // The catchall's character-name bullet hints that the whitelist
+      // lives elsewhere so the LLM looks for it. If the wording drifts
+      // and stops mentioning the dedicated block, the LLM is left
+      // without guidance on where to find the curated list.
+      const block = buildCatchallPromptBlock('Maori-inspired: vowel-rich Te Reo phonetics');
+      expect(block).toMatch(/CHARACTER WHITELIST FOR THIS GENERATION/);
     });
   });
 
