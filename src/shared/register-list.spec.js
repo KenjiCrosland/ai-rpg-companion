@@ -124,10 +124,11 @@ describe('register-list — protected-register feature flag', () => {
         'Middle-High-German-inspired', 'Celtic-inspired', 'Welsh-inspired',
         'Middle-Welsh-inspired', 'Irish-inspired', 'Old-Irish-inspired',
         'Old-Occitan-inspired',
-        // Ancient extinct-religion Mediterranean (non-protected — no
-        // living community standing)
+        // Ancient extinct-tradition (non-protected — no living
+        // community standing). Mediterranean entries plus Tocharian
+        // (Tarim Basin Buddhist oasis culture, non-Mediterranean).
         'Mesopotamian-inspired', 'Phoenician-Punic-inspired',
-        'Egyptian-inspired', 'Etruscan-inspired',
+        'Egyptian-inspired', 'Etruscan-inspired', 'Tocharian-inspired',
         // Fictional fantasy
         'Elven', 'Draconic', 'Goblin-inspired', 'Orcish',
         'Gnomish', 'Aberrant', 'Abyssal', 'Infernal', 'Primordial',

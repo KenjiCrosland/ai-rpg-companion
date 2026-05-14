@@ -237,6 +237,39 @@ const minimalRegisters = [
     ],
   },
 
+  // Non-Mediterranean ancient extinct-tradition entry. Tocharian-
+  // specific religion is extinct (the Tocharian language died out by
+  // roughly 1000 CE), but the broader Buddhist canon it sits inside
+  // is a living tradition — the descriptor instructs the LLM to
+  // handle Buddhist canonical figures with restraint while permitting
+  // pre-Buddhist Tocharian-specific deity reference per the deity
+  // block's active-engagement mode.
+  {
+    prefix: 'Tocharian-inspired',
+    descriptor: 'Tocharian-inspired: ancient Buddhist Tarim Basin oasis culture (roughly 500-1000 CE). Phonology uses Indo-European roots with characteristic Tocharian-B endings (-as, -ke, -ñe) overlaid by Sanskrit-pattern Buddhist liturgical naming (Suvarnapushpa, Aryadhruva, Karunavardhi, Indrasimha). Material culture is cave-monastery complexes carved into cliffs (Kizil and Kucha pattern), stupas and reliquary mounds, river-jade from cold mountain rivers, raw and dyed silk from the jade-and-silk caravan trade, woolen felt, lapis lazuli imported through Badakhshan, painted wooden Buddhist sculpture, palm-leaf and birchbark manuscripts, gold leaf and cinnabar pigments from cave-mural workshops, indigo and saffron textiles. Public-domain historical figures from Tocharian inscriptions (Prince Suvarnapushpa, Buddhist patron-monks, named caravan donors) and broader jade-and-silk caravan culture can appear directly as historical reference. Pre-Buddhist Tocharian deities (solar and lunar figures, mountain-pass spirits) and Tocharian-syncretic cave-monastery dharmapalas are authorized for SPARING historical-mythological reference per the deity-handling block. Broader Buddhist canonical figures (Buddha by name, named major bodhisattvas like Avalokiteshvara or Manjushri, specific named sutras) require RESTRICTED handling — substitute by epithet, do not name directly in fictional contexts.',
+    deityMode: 'active-engagement',
+    // Mix of constructed-Buddhist epithets (evoking living-tradition
+    // figures without naming them) and pre-Buddhist Tocharian-syncretic
+    // deity epithets. Same idiom-engagement principle as Mesopotamian:
+    // the epithet evokes the deity without naming directly. Particularly
+    // important here because the broader Buddhist canonical figures
+    // (Buddha, named major bodhisattvas) are LIVING-tradition material
+    // that needs restricted handling, even though the Tocharian-specific
+    // tradition is extinct.
+    deityEpithets: [
+      'the Awakened One of the Pure Lands',     // generic-Buddha avoiding name
+      'Lord of the Compassionate Hand',          // Avalokiteshvara without naming
+      'the Wisdom-Sword Bearer',                 // Manjushri without naming
+      'the Healer of the Three Worlds',          // Bhaisajyaguru without naming
+      'the Wheel-Turner of the High Pass',       // dharma-wheel turner, localized
+      'the Pure-Eyed Watcher',                   // bodhisattva quality
+      'the Six-Petaled Lotus Throne',            // bodhisattva imagery generic
+      'the Sun-Chariot Rider',                   // pre-Buddhist solar (Kom-syncretic)
+      'the Silver-Footed One of the Pass',       // pre-Buddhist lunar/mountain
+      'the Mountain-Cave Guardian',              // local protector spirits
+    ],
+  },
+
   // Protected registers (catchall-tier — density rules apply, no curated pool)
   // Deity-mode classification: most protected catchall registers cover
   // living religious traditions and are 'restricted' (no real deity

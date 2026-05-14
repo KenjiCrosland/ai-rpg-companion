@@ -155,11 +155,13 @@ export const TOKEN_TO_REGISTER_PREFIX = {
   'greek':              'Greek-inspired',
   'italian-renaissance':'Italian-Renaissance-inspired',
 
-  // Ancient extinct-religion Mediterranean (non-protected)
+  // Ancient extinct-tradition (non-protected). Mediterranean entries
+  // plus Tocharian (Tarim Basin Buddhist oasis culture, non-Mediterranean).
   'mesopotamian':       'Mesopotamian-inspired',
   'phoenician-punic':   'Phoenician-Punic-inspired',
   'egyptian':           'Egyptian-inspired',
   'etruscan':           'Etruscan-inspired',
+  'tocharian':          'Tocharian-inspired',
 
   // Protected catchall — recognized at classifier-time so we can
   // route to freehand (null) when the flag gates these off, instead
