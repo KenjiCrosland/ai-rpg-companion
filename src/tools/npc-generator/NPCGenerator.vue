@@ -372,10 +372,12 @@ import { inferRegisterAndName, FANTASY_UNSPECIFIED } from './utils/infer-registe
 const isDev = process.env.NODE_ENV !== 'production';
 const testRegisterOverride = ref('');
 const lastUsedRegister = ref('');
-const registerOverrideOptions = registerList.map(p => ({
-    value: p,
-    label: p.length > 60 ? p.slice(0, 57) + '…' : p,
-}));
+const registerOverrideOptions = registerList
+    .map(p => ({
+        value: p,
+        label: p.length > 60 ? p.slice(0, 57) + '…' : p,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 // END TEST-REGISTER-OVERRIDE
 import { buildStatblockContext } from './utils/statblock-context.mjs';
 import { addReference, getReferencesForEntity, removeReferencesForEntity } from '@/util/reference-storage.mjs';
@@ -2468,9 +2470,10 @@ div[class^="cdr-skeleton-bone"] {
         font-size: 0.875rem;
     }
 
-    select {
+    select,
+    select option {
         padding: 0.375rem 0.5rem;
-        font-size: 0.875rem;
+        font-size: 1.3125rem;
         width: 100%;
     }
 

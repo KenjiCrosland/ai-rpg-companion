@@ -35,4 +35,28 @@ describe('character-whitelist-prompt — return-value behavior', () => {
     expect(buildCharacterWhitelistBlock('Dwarven',  'Old-Norse-inspired: Eddaic', 0.85)).toBe('');
     expect(buildCharacterWhitelistBlock('Draconic', 'Draconic: harsh',            0.95)).toBe('');
   });
+
+  describe('whitelistScope routing', () => {
+    // Default scope ('primary') and strict scope ('all-characters')
+    // produce structurally different blocks. The primary block names
+    // "the lore's single named character"; the strict block enforces
+    // "EVERY character named anywhere in the output." These two
+    // sentinels distinguish the branches without testing the rest of
+    // the prompt-string content.
+
+    it('emits the strict block for registers with whitelistScope: all-characters', () => {
+      const block = buildCharacterWhitelistBlock(null, 'Arabic-inspired: 6th-century');
+      expect(block).toContain('STRICT MODE');
+      expect(block).toContain('EVERY character');
+    });
+
+    it('emits the primary-scope block for registers without whitelistScope', () => {
+      // Maori has a mandatory pool but no whitelistScope field, so it
+      // defaults to 'primary'. The strict-mode sentinels must be absent.
+      const block = buildCharacterWhitelistBlock(null, 'Maori-inspired: vowel-rich');
+      expect(block).not.toContain('STRICT MODE');
+      expect(block).not.toContain('EVERY character');
+      expect(block).toContain('single named character');
+    });
+  });
 });

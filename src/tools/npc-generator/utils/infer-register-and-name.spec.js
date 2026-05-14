@@ -137,26 +137,29 @@ describe('inferRegisterAndName — routing behavior', () => {
     expect(result).toEqual({ register: null, userName: null });
   });
 
-  it('recognize-then-gate: protected token resolves to null when registerList filters it out', async () => {
-    // 'maori', 'japanese', 'mongolian', etc. ARE in TOKEN_TO_REGISTER_PREFIX
-    // — the classifier learns to recognize the cultural signal. But
-    // their prefixes are filtered out of `registerList` when
-    // `enableProtectedRegisters` is false, so the resolver returns
-    // null and the orchestrator falls through to freehand generation.
-    // This is the key fix for the "drunken ronin" → Eckhart-the-Drunk
-    // bug: recognition is broad, gating is downstream.
+  // The recognize-then-gate trio below describes the contract for both
+  // flag states. The classifier always recognizes the cultural signal;
+  // the resolver's lookup in `registerList` decides whether the
+  // descriptor is reachable. With `enableProtectedRegisters` OFF
+  // (current state), these tokens resolve to null and the orchestrator
+  // falls through to freehand generation — the "drunken ronin" →
+  // Eckhart bug guard. When the flag flips back on, the same tokens
+  // resolve to their descriptors and the catchall protection
+  // machinery handles the safety surface downstream.
+
+  it('recognize-then-gate: maori token resolves to null when flag is off', async () => {
     aiClient.generateGptResponse.mockResolvedValue('{"register":"maori","userName":null}');
     const result = await inferRegisterAndName('a Maori-inspired warrior');
     expect(result.register).toBeNull();
   });
 
-  it('recognize-then-gate: japanese token resolves to null (protected and gated off)', async () => {
+  it('recognize-then-gate: japanese token resolves to null when flag is off', async () => {
     aiClient.generateGptResponse.mockResolvedValue('{"register":"japanese","userName":null}');
     const result = await inferRegisterAndName('a drunken ronin');
     expect(result.register).toBeNull();
   });
 
-  it('recognize-then-gate: mongolian token resolves to null (protected and gated off)', async () => {
+  it('recognize-then-gate: mongolian token resolves to null when flag is off', async () => {
     aiClient.generateGptResponse.mockResolvedValue('{"register":"mongolian","userName":null}');
     const result = await inferRegisterAndName('a shaman of the eastern steppes');
     expect(result.register).toBeNull();

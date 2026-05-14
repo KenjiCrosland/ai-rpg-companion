@@ -56,6 +56,7 @@ import { goblinoidRegister }  from './goblinoid.mjs';
 import { infernalRegister }   from './infernal.mjs';
 import { maoriRegister }      from './maori.mjs';
 import { orcishRegister }     from './orcish.mjs';
+import { arabicRegister }     from './arabic.mjs';
 import { primordialRegister } from './primordial.mjs';
 import { yorubaRegister }     from './yoruba.mjs';
 
@@ -211,15 +212,15 @@ const minimalRegisters = [
   // Protected registers (catchall-tier — density rules apply, no curated pool)
   // Deity-mode classification: most protected catchall registers cover
   // living religious traditions and are 'restricted' (no real deity
-  // names anywhere). Pre-Islamic Arabic and Persian (Zoroastrian) are
-  // active-engagement per the user's classification (the registers
-  // scope to extinct or near-extinct traditions; descriptor scopes
-  // Arabic/Persian to pre-Islamic Arabic OR Persian explicitly).
+  // names anywhere). The Arabic register (per-file, see `./arabic.mjs`)
+  // is protected and restricted-mode; its previous combined form
+  // (`Arabic/Persian-inspired`) and the standalone `Persian-inspired`
+  // entry were both removed when the consolidated Arabic file landed.
+  // Persian-specific handling will return as its own per-file register
+  // when it gets a pool and cultural notes.
   { prefix: 'Caucasian-inspired',            descriptor: 'Caucasian-inspired: mountain-peoples register drawing on Georgian/Ossetian/Chechen phonetics',                                                                       protected: true, promptArchitecture: 'catchall', deityMode: 'restricted' },
   { prefix: 'Atlas-Berber-inspired',         descriptor: 'Atlas-Berber-inspired: Amazigh register, North African mountain-craft tradition',                                                                       protected: true, promptArchitecture: 'catchall', deityMode: 'restricted' },
   { prefix: 'Pamir-inspired',                descriptor: 'Pamir-inspired: high-Central-Asian mountain register, Persian-adjacent',                                                                                                protected: true, promptArchitecture: 'catchall', deityMode: 'restricted' },
-  { prefix: 'Arabic/Persian-inspired',       descriptor: 'Arabic/Persian-inspired: flowing, melodic; pre-Islamic Arabic OR Persian register only — no Islamic religious vocabulary',                                              protected: true, promptArchitecture: 'catchall', deityMode: 'active-engagement' },
-  { prefix: 'Persian-inspired',              descriptor: 'Persian-inspired: refined classical-aesthetic register',                                                                                                protected: true, promptArchitecture: 'catchall', deityMode: 'active-engagement' },
   { prefix: 'Japanese-inspired',             descriptor: 'Japanese-inspired: clean syllables, natural imagery',                                                                                                                                                                                protected: true, promptArchitecture: 'catchall', deityMode: 'restricted' },
   { prefix: 'Chinese-inspired',              descriptor: 'Chinese-inspired: tonal, philosophical',                                                                                                                                                                                              protected: true, promptArchitecture: 'catchall', deityMode: 'restricted' },
   { prefix: 'Korean-inspired',               descriptor: 'Korean-inspired: structured, balanced',                                                                                                                                                                                                protected: true, promptArchitecture: 'catchall', deityMode: 'restricted' },
@@ -253,6 +254,7 @@ export const ALL_REGISTERS = [
   andeanRegister,
   // Catchall protected with curated pool
   maoriRegister,
+  arabicRegister,
   // Fictional fantasy with curated pool
   elvenRegister,
   draconicRegister,

@@ -50,7 +50,7 @@ This ${entityNoun} is in a Western-fantasy-bound race context (origin or user-ty
 The LANGUAGE REGISTER OVERRIDE authority above is REVOKED for this generation. You must NOT generate names — for the ${entityNoun}, characters, factions, or locations — in any of the following registers, even if you would otherwise infer them from the user's input or from creative association:
 
 - Yoruba, Akan, Igbo, Swahili, or any other African real-world tradition
-- Arabic, Persian
+- Arabic
 - Hindi, Sanskrit
 - Chinese, Japanese, Korean, Mongolian, Tibetan, Thai
 - Maori, Hawaiian, or other Pacific Islander traditions

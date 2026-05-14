@@ -56,7 +56,11 @@ export const ORIGIN_CHARACTER_WHITELISTS = Object.fromEntries(
     .filter(r => r.fantasyRaceKey && Array.isArray(r.characterPool))
     .map(r => [
       r.fantasyRaceKey,
-      { pool: r.characterPool, strictness: r.characterPoolStrictness ?? 'preferred' },
+      {
+        pool: r.characterPool,
+        strictness: r.characterPoolStrictness ?? 'preferred',
+        scope: r.whitelistScope ?? 'primary',
+      },
     ]),
 );
 // Note: Gnomish, Giant, and Fey are deliberately absent. Gnomish and
@@ -70,7 +74,11 @@ export const REGISTER_CHARACTER_WHITELISTS = Object.fromEntries(
     .filter(r => typeof r.prefix === 'string' && Array.isArray(r.characterPool))
     .map(r => [
       r.prefix,
-      { pool: r.characterPool, strictness: r.characterPoolStrictness ?? 'preferred' },
+      {
+        pool: r.characterPool,
+        strictness: r.characterPoolStrictness ?? 'preferred',
+        scope: r.whitelistScope ?? 'primary',
+      },
     ]),
 );
 // Note: Goblin-inspired and Orcish appear in both maps because their
@@ -90,7 +98,7 @@ const PREFERRED_PROBABILITY = 0.7;
  * resolved origin and rolled register. Origin-bound wins over
  * register-bound on collision.
  *
- * @returns {{ pool: string[], strictness: 'mandatory' | 'preferred' } | null}
+ * @returns {{ pool: string[], strictness: 'mandatory' | 'preferred', scope: 'primary' | 'all-characters' } | null}
  */
 export function getCharacterWhitelistForGeneration(resolvedOrigin, selectedRegister) {
   if (typeof resolvedOrigin === 'string' && ORIGIN_CHARACTER_WHITELISTS[resolvedOrigin]) {

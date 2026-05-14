@@ -94,6 +94,56 @@ export function getItemNameAvoidList(selectedRegister) {
   return entry ? entry[1] : null;
 }
 
+/**
+ * Per-register `culturalNotes` prose. Derived from `ALL_REGISTERS` —
+ * any catchall register that declares a non-empty `culturalNotes`
+ * string contributes here. The notes carry register-specific framing
+ * (period scope, sacred-boundary commitment, English-fallback
+ * conventions, favored narrative forms, anti-trope guidance) that the
+ * universal density rules can't supply on their own.
+ */
+export const registerCulturalNotes = Object.fromEntries(
+  ALL_REGISTERS
+    .filter(r =>
+      r.promptArchitecture === 'catchall'
+      && typeof r.culturalNotes === 'string'
+      && r.culturalNotes.trim().length > 0,
+    )
+    .map(r => [r.prefix, r.culturalNotes]),
+);
+
+export function getCulturalNotes(selectedRegister) {
+  if (typeof selectedRegister !== 'string') return null;
+  const entry = Object.entries(registerCulturalNotes).find(
+    ([prefix]) => selectedRegister.startsWith(prefix),
+  );
+  return entry ? entry[1] : null;
+}
+
+/**
+ * Strip the curator-facing RESIDUAL RISK section from a register's
+ * `culturalNotes`, returning only the LLM-facing prose.
+ *
+ * Convention across register files: `culturalNotes` is multi-paragraph
+ * prose with ALL-CAPS section headers ("PERIOD SCOPE.", "NAMING
+ * SCOPE.", "SACRED-BOUNDARY COMMITMENT.", …, "RESIDUAL RISK."). All
+ * sections except RESIDUAL RISK are LLM-facing. RESIDUAL RISK is
+ * curator metadata — provenance, verification priorities, native-
+ * speaker review notes — that has zero value in a generation prompt
+ * and would anchor the LLM on the wrong things (production-feedback
+ * vocabulary leaking into lore output).
+ *
+ * If a register's notes lack a RESIDUAL RISK section the full string
+ * is returned. Always-string return; never null, so the caller can
+ * concatenate unconditionally.
+ */
+export function extractLLMFacingCulturalNotes(culturalNotes) {
+  if (typeof culturalNotes !== 'string') return '';
+  const cutoff = culturalNotes.indexOf('RESIDUAL RISK.');
+  if (cutoff === -1) return culturalNotes.trim();
+  return culturalNotes.slice(0, cutoff).trim();
+}
+
 export function isCatchallRegister(selectedRegister) {
   if (typeof selectedRegister !== 'string') return false;
   return CATCHALL_REGISTER_PREFIXES.some(prefix => selectedRegister.startsWith(prefix));
@@ -101,6 +151,20 @@ export function isCatchallRegister(selectedRegister) {
 
 export function buildCatchallPromptBlock(selectedRegister) {
   if (!isCatchallRegister(selectedRegister)) return '';
+
+  // Register-specific cultural framing (period scope, sacred-boundary
+  // commitment, favored narrative forms, anti-trope guidance) when the
+  // register supplies it. Placed at the top so the LLM has the cultural
+  // context before encountering the universal density rules. RESIDUAL
+  // RISK section stripped — that's curator metadata, not LLM guidance.
+  const culturalNotes = getCulturalNotes(selectedRegister);
+  const culturalNotesHeader = culturalNotes
+    ? `REGISTER-SPECIFIC CULTURAL GUIDANCE:
+
+${extractLLMFacingCulturalNotes(culturalNotes)}
+
+`
+    : '';
 
   // Character-name bullet is pure-structural: the WHO comes from
   // `buildCharacterWhitelistBlock` when the register has a whitelist,
@@ -115,7 +179,7 @@ export function buildCatchallPromptBlock(selectedRegister) {
   Do NOT use any of these culturally-protected or sacred terms as components of the item name: ${itemNameAvoidList.join(', ')}. These terms carry sacred, ceremonial, or genealogical weight in this register; reusing them as fictional item-name components is appropriative even when the surrounding compound is invented. Reach for material, environmental, or descriptive vocabulary instead (textures, colors, tools, weather, terrain, craft actions).`
     : `- ONE item name in the register's language. This is the item's original-language name that appears parenthetically in the lore (e.g., "called [X] in the speech of its makers"). Construct it from non-sacred everyday word components in the register's language.`;
 
-  return `NAMING ARCHITECTURE FOR THIS GENERATION:
+  return `${culturalNotesHeader}NAMING ARCHITECTURE FOR THIS GENERATION:
 
 This register uses a cultural register whose phonetics may be unfamiliar to English-speaking readers. To preserve readability while maintaining cultural register, use the following naming pattern:
 

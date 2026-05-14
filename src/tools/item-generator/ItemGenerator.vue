@@ -346,10 +346,12 @@ import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 const isDev = process.env.NODE_ENV !== 'production';
 const testRegisterOverride = ref('');
 const lastUsedRegister = ref('');
-const registerOverrideOptions = registerList.map(p => ({
-  value: p,
-  label: p.length > 60 ? p.slice(0, 57) + '…' : p,
-}));
+const registerOverrideOptions = registerList
+  .map(p => ({
+    value: p,
+    label: p.length > 60 ? p.slice(0, 57) + '…' : p,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 // END TEST-REGISTER-OVERRIDE
 
 const toast = useToast();
@@ -1299,7 +1301,7 @@ DO this:
 The English translation should capture the cultural concept evocatively, not just literally. "Wand of First Bloom" conveys the meaning of "Sulkasipailon Kukka" better than "Feather-Stroke's Flower" would. Translate for poetic effect, not word-for-word.
 
 APPLY translation rule (item name in English, original in description):
-- All real-world non-English-language registers: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic/Persian, Persian, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
+- All real-world non-English-language registers: Tamazight (Atlas-Berber), Maori, Hawaiian, Yoruba, Akan, Igbo, Swahili, Arabic, Hindi/Sanskrit, Chinese, Korean, Japanese, Mongolian, Tibetan, Thai, Maya, Aztec/Nahuatl, Lakota, Andean, Russian, Romanian, Hungarian, Slavic, Old Slavic, Celtic, Welsh, Irish, Norse, Old Norse, Germanic, Old High German, Caucasian, Pamir, Finnish, Anglo-Saxon
 
 (Norse, Welsh, Anglo-Saxon, etc. are technically European but their original-language names — "Sigrún Stormhammer," "Æthelflæd" — are intimidating to many DMs at the table. Apply the translation rule to these too — better to err on the side of usability.)
 
@@ -1352,7 +1354,7 @@ LIMITED EXCEPTIONS — real names CAN be used for these registers only:
 
 These exceptions reflect Western fantasy genre convention — these traditions have been integrated into fantasy long enough that real names are genre-expected.
 
-For ALL other registers (including but not limited to Yoruba, Akan, Igbo, Swahili, Atlas-Berber, Arabic, Persian, Hindu/Sanskrit, Chinese, Japanese, Korean, Thai, Mongolian, Tibetan, Maya, Aztec/Nahuatl, Andean, Lakota, Maori, Hawaiian, Slavic, Russian, Romanian, Hungarian, Finnish, Caucasian, Pamir), INVENT fictional named entities. Do not use real religious figures, real clan names, real sacred place names, real political-religious titles, or real culturally-significant historical figures from these traditions in fictional contexts.
+For ALL other registers (including but not limited to Yoruba, Akan, Igbo, Swahili, Atlas-Berber, Arabic, Hindu/Sanskrit, Chinese, Japanese, Korean, Thai, Mongolian, Tibetan, Maya, Aztec/Nahuatl, Andean, Lakota, Maori, Hawaiian, Slavic, Russian, Romanian, Hungarian, Finnish, Caucasian, Pamir), INVENT fictional named entities. Do not use real religious figures, real clan names, real sacred place names, real political-religious titles, or real culturally-significant historical figures from these traditions in fictional contexts.
 
 Note: Hebrew/Jewish religious-cultural specifics are not in scope at all — the Hebrew register has been removed from the system. If a user's input invokes Hebrew-language signals (shofar, menorah, golem, sephirot, etc.), apply the universal-invent rule even more strictly: do not generate fictional content that references Jewish religious tradition, sacred figures, or sacred concepts. Choose a different cultural register for the item.
 
@@ -2941,9 +2943,10 @@ onUnmounted(() => {
     font-size: 0.875rem;
   }
 
-  select {
+  select,
+  select option {
     padding: 0.375rem 0.5rem;
-    font-size: 0.875rem;
+    font-size: 1.3125rem;
     width: 100%;
   }
 

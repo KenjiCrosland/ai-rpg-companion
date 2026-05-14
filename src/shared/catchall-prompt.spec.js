@@ -88,7 +88,7 @@ describe('catchall-prompt', () => {
         'Mongolian-inspired',
         'Tibetan-inspired',
         'Hindi/Sanskrit-inspired',
-        'Arabic/Persian-inspired',
+        'Arabic-inspired',
         'Atlas-Berber-inspired',
         'Akan-inspired',
         'Igbo-inspired',

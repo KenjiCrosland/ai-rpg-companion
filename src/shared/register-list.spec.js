@@ -10,13 +10,14 @@ import {
 describe('register-list — protected-register feature flag', () => {
   describe('enableProtectedRegisters', () => {
     it('defaults to false in production (protective filter engaged)', () => {
-      // The flag was briefly on during the per-register migration
-      // pilot so the consolidated shape could be exercised end-to-end.
-      // Production ships with it off — protected registers (Maori,
-      // Yoruba, Andean, Japanese, Chinese, Lakota, etc.) are filtered
-      // out of registerList until the protection machinery is fully
-      // validated. Flipping to true is a deliberate decision and
-      // should require updating this test alongside the source.
+      // Production ships with the flag off — protected registers
+      // (Maori, Yoruba, Andean, Arabic, Japanese, Chinese, Lakota,
+      // etc.) are filtered out of `registerList` until the protection
+      // machinery is fully validated per register. Arabic was the
+      // pilot under the flag-on state; turned off again after
+      // production review surfaced remaining failure modes. Flipping
+      // back to true is a deliberate decision and should require
+      // updating this test alongside the source.
       expect(enableProtectedRegisters).toBe(false);
     });
   });
@@ -31,7 +32,7 @@ describe('register-list — protected-register feature flag', () => {
         'Chinese-inspired',
         'Korean-inspired',
         'Hindi/Sanskrit-inspired',
-        'Arabic/Persian-inspired',
+        'Arabic-inspired',
         'Atlas-Berber-inspired',
         'Yoruba-inspired',
         'Akan-inspired',

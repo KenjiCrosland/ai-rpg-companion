@@ -167,8 +167,7 @@ export const TOKEN_TO_REGISTER_PREFIX = {
   'caucasian':          'Caucasian-inspired',
   'atlas-berber':       'Atlas-Berber-inspired',
   'pamir':              'Pamir-inspired',
-  'arabic-persian':     'Arabic/Persian-inspired',
-  'persian':            'Persian-inspired',
+  'arabic':             'Arabic-inspired',
   'japanese':           'Japanese-inspired',
   'chinese':            'Chinese-inspired',
   'korean':             'Korean-inspired',
@@ -264,7 +263,7 @@ Return a JSON object with two fields:
    (a) A specific token from this list, when the input carries an EXPLICIT cultural, racial, or linguistic signal — a culturally-distinct loanword (ronin, samurai, boyar, sheikh, druid, valkyrie, pharaoh, conquistador), a named ethnicity, a register-specific occupation, or a place that pins down a culture:
        ${TOKENS.join(', ')}
 
-       Map the input to the token of the culture it most clearly references. "Ronin" or "samurai" → japanese. "Boyar" → russian. "Sheikh" or "vizier" → arabic-persian. "Pharaoh" or "vizier of the river-kingdom" → egyptian. "Druid" → celtic. "Skald" or "viking" → old-norse. "Berserker" or "thane" → anglo-saxon. "Curandera" → no token (no Latin-American register; fall through to null). Only use a token when the cultural signal is explicit — do NOT pick a token from implicit tropes (a "scholar" is not Chinese; a "merchant" is not Phoenician; a "warrior" is not Norse).
+       Map the input to the token of the culture it most clearly references. "Ronin" or "samurai" → japanese. "Boyar" → russian. "Bedouin warrior" or "Sheikh" → arabic. "Pharaoh" or "vizier of the river-kingdom" → egyptian. "Druid" → celtic. "Skald" or "viking" → old-norse. "Berserker" or "thane" → anglo-saxon. "Curandera" → no token (no Latin-American register; fall through to null). Only use a token when the cultural signal is explicit — do NOT pick a token from implicit tropes (a "scholar" is not Chinese; a "merchant" is not Phoenician; a "warrior" is not Norse).
 
    (b) The exact string "fantasy_unspecified" when the input describes a fantasy NPC but does NOT pin down a specific register — generic fantasy roles or settings without a cultural / racial / linguistic marker. Examples: "a tavern patron", "a village blacksmith", "a wandering merchant", "a hooded stranger", "an old wizard", "a bandit captain". Use this whenever the NPC fits a default sword-and-sorcery world but the user hasn't said which culture they belong to.
 
