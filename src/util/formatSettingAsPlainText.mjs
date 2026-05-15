@@ -1,3 +1,5 @@
+import { renderOverview, overviewAstToText } from './renderSettingOverview.mjs';
+
 function formatSettingOverview(settings) {
   const factionPowerLevels = [
     'Nonexistent',
@@ -49,23 +51,10 @@ function formatSettingOverview(settings) {
         : setting.place_name.toUpperCase();
       addSection(addDoubleDashedSectionTitle(settingTitle));
 
-      const ov = setting.setting_overview;
-
-      // If the setting has been consolidated (edited, or migrated
-      // from the pre-rename key set), emit combined_content as the
-      // body. Otherwise emit the new individual fields.
-      if (ov.combined_content) {
-        addSection(ov.combined_content);
-      } else {
-        addSection([ov.overview, ov.relation_to_larger_setting]);
-        addSection(ov.history);
-        addSection([ov.current_ruler_sentence]);
-        addSection([ov.social_history, ov.notable_social_facet]);
-        addSection([ov.economic_history, ov.notable_economic_facet]);
-        addSection([ov.military_history, ov.notable_security_facet]);
-        addSection([ov.central_dynamic, ov.responses_in_motion]);
-        addSection(ov.present_state);
-      }
+      // Single source of truth: walk the rendered AST. Strips markdown
+      // markers and lays out section headings as dashed underlines.
+      // Handles both structured-field and legacy combined_content cases.
+      addSection(overviewAstToText(renderOverview(setting.setting_overview)));
 
       // Add NPC List
       addSection(addDashedSectionTitle('NPCs'));

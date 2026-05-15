@@ -113,9 +113,11 @@
           <QuestHooksTab :setting="currentSetting" :premium="premium" @updated-setting="onQuestHooksUpdated" />
         </TabPanel>
       </Tabs>
-      <ParActionButton class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
-        @click="deleteSetting(currentSettingIndex)">Delete
-        Setting</ParActionButton>
+      <div class="delete-setting-row" v-if="settingOverviewExists && !currentlyLoading">
+        <ParActionButton variant="secondary" @click="deleteSetting(currentSettingIndex)">
+          Delete Setting
+        </ParActionButton>
+      </div>
 
       <!-- Footer below content -->
       <div class="footer-meta" v-if="settingOverviewExists">
@@ -1043,7 +1045,10 @@ $transition-speed: 0.3s;
   flex-direction: column;
   align-items: center;
   margin: 3rem auto;
-  max-width: 800px;
+  /* Match NPCGenerator's content area width (940px) so the parchment
+     card surface gets the same canvas — narrower (800px) was clamping
+     the card body well inside the 65ch readability target. */
+  max-width: 940px;
 
   .content-tabs {
     box-shadow: 0 4px 6px #0000001a;
@@ -1237,7 +1242,14 @@ $transition-speed: 0.3s;
   margin: 1.5rem 0;
 }
 
-.delete-button {
+/* Setting-level destructive action — right-aligned in its own row so
+   it pairs with the trailing edge of the tab area instead of floating
+   orphaned. Uses ParActionButton secondary variant (faded slate ghost)
+   so a permanent action doesn't compete for attention. */
+.delete-setting-row {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
   margin-top: 2rem;
 }
 

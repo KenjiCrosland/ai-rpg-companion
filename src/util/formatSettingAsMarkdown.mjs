@@ -1,3 +1,5 @@
+import { renderOverview, overviewAstToMarkdown } from './renderSettingOverview.mjs';
+
 function formatSettingOverview(settings) {
   const factionPowerLevels = [
     'Nonexistent',
@@ -38,25 +40,12 @@ function formatSettingOverview(settings) {
         text += `*${settingSubtitle}*\n`;
       }
 
-      const ov = setting.setting_overview;
-
-      // Consolidated body (combined_content) for edited or migrated
-      // legacy settings; individual new-key fields for fresh data.
-      // combined_content already contains overview + relation +
-      // history + the rest, so it replaces all subsequent sections.
-      if (ov.combined_content) {
-        text += '\n\n';
-        addSection(ov.combined_content);
-      } else {
-        text += `\n ${ov.overview}  ${ov.relation_to_larger_setting}\n:\n\n`;
-        addSection(ov.history);
-        addSection([ov.current_ruler_sentence]);
-        addSection([ov.social_history, ov.notable_social_facet]);
-        addSection([ov.economic_history, ov.notable_economic_facet]);
-        addSection([ov.military_history, ov.notable_security_facet]);
-        addSection([ov.central_dynamic, ov.responses_in_motion]);
-        addSection(ov.present_state, 2);
-      }
+      // Single source of truth: render the overview AST back to
+      // markdown. Preserves bold/italic markers, beat blockquotes,
+      // and section headings; handles both structured-field and
+      // legacy combined_content cases uniformly.
+      text += '\n\n';
+      addSection(overviewAstToMarkdown(renderOverview(setting.setting_overview)), 2);
 
       // Add NPC List
       addSection(addMarkdownSectionTitle('NPCs'), 2);

@@ -1,79 +1,104 @@
 <template>
-  <div>
+  <div class="setting-card parchment">
     <!-- View Mode -->
-    <div v-if="!isEditing">
-      <div class="setting-title-block">
-        <h2 class="setting-name">{{ displayName }}</h2>
-        <p v-if="displayTitle" class="setting-epithet">{{ displayTitle }}</p>
+    <template v-if="!isEditing">
+      <!-- Header: name + epithet + edit button -->
+      <div class="setting-card-header">
+        <div class="setting-card-header-text">
+          <h2 class="setting-card-name">{{ displayName }}</h2>
+          <p v-if="displayTitle" class="setting-card-epithet">{{ displayTitle }}</p>
+        </div>
+        <div class="setting-card-header-actions">
+          <ParCardButton size="small" @click="startEditing">Edit Overview</ParCardButton>
+        </div>
       </div>
 
-      <div v-if="setting.setting_overview.combined_content" class="overview-content">
-        <p v-for="(paragraph, index) in setting.setting_overview.combined_content.split('\n\n')" :key="index">
-          {{ paragraph }}
-        </p>
-      </div>
-      <div v-else class="overview-content">
-        <p v-if="setting.setting_overview.overview || setting.setting_overview.relation_to_larger_setting">
-          {{ setting.setting_overview.overview }} {{ setting.setting_overview.relation_to_larger_setting }}
-        </p>
-        <p v-if="setting.setting_overview.history">{{ setting.setting_overview.history }}</p>
-        <p v-if="setting.setting_overview.current_ruler_sentence">{{ setting.setting_overview.current_ruler_sentence }}</p>
-        <p v-if="setting.setting_overview.social_history || setting.setting_overview.notable_social_facet">
-          {{ setting.setting_overview.social_history }} {{ setting.setting_overview.notable_social_facet }}
-        </p>
-        <p v-if="setting.setting_overview.economic_history || setting.setting_overview.notable_economic_facet">
-          {{ setting.setting_overview.economic_history }} {{ setting.setting_overview.notable_economic_facet }}
-        </p>
-        <p v-if="setting.setting_overview.military_history || setting.setting_overview.notable_security_facet">
-          {{ setting.setting_overview.military_history }} {{ setting.setting_overview.notable_security_facet }}
-        </p>
-        <p v-if="setting.setting_overview.central_dynamic || setting.setting_overview.responses_in_motion">
-          {{ setting.setting_overview.central_dynamic }} {{ setting.setting_overview.responses_in_motion }}
-        </p>
-        <p v-if="setting.setting_overview.present_state">{{ setting.setting_overview.present_state }}</p>
-      </div>
+      <!-- Content (lead + sections), AST-driven -->
+      <div class="setting-card-content">
+        <!-- Lead: read-aloud opener. Upright body weight; the burgundy
+             left bar marks it as the opener, no italic, no hairlines. -->
+        <div v-if="overviewAst.lead" class="setting-card-read-aloud">
+          <p>
+            <template v-for="(node, ni) in overviewAst.lead.children" :key="ni">
+              <span v-if="node.type === 'entity'" class="par-entity">{{ node.value }}</span>
+              <strong v-else-if="node.type === 'bold'">{{ node.value }}</strong>
+              <em v-else-if="node.type === 'italic'">{{ node.value }}</em>
+              <template v-else>{{ node.value }}</template>
+            </template>
+          </p>
+        </div>
 
-      <div class="button-group">
-        <ParActionButton @click="startEditing" variant="secondary">Edit Overview</ParActionButton>
+        <!-- Sections — every block (static lore and "right now" beat
+             alike) is a plain paragraph at body weight. -->
+        <section
+          v-for="(section, si) in overviewAst.sections"
+          :key="si"
+          class="setting-card-section"
+        >
+          <h3 v-if="section.heading" class="setting-section-heading">
+            {{ section.heading }}
+          </h3>
+
+          <p
+            v-for="(block, bi) in section.blocks"
+            :key="bi"
+            class="setting-paragraph"
+          >
+            <template v-for="(node, ni) in block.children" :key="ni">
+              <span v-if="node.type === 'entity'" class="par-entity">{{ node.value }}</span>
+              <strong v-else-if="node.type === 'bold'">{{ node.value }}</strong>
+              <em v-else-if="node.type === 'italic'">{{ node.value }}</em>
+              <template v-else>{{ node.value }}</template>
+            </template>
+          </p>
+        </section>
       </div>
-    </div>
+    </template>
 
     <!-- Edit Mode -->
-    <div v-else class="edit-form">
-      <h2>Edit Setting Overview</h2>
+    <div v-else class="setting-edit">
+      <header class="setting-edit__header">
+        <h2 class="setting-edit__title">Edit Setting Overview</h2>
+      </header>
 
-      <cdr-input v-model="editForm.name" label="Name" background="secondary" class="edit-field">
-        <template #helper-text-bottom>
-          The bare place name (e.g., "Hjallmark").
-        </template>
-      </cdr-input>
+      <ParInput
+        v-model="editForm.name"
+        label="Name"
+        hint='The bare place name (e.g., "Hjallmark").'
+        class="setting-edit__field"
+      />
 
-      <cdr-input v-model="editForm.title" label="Subtitle" background="secondary" class="edit-field">
-        <template #helper-text-bottom>
-          A short evocative phrase that pairs with the name (e.g., "Village of the Drawn Blade").
-        </template>
-      </cdr-input>
+      <ParInput
+        v-model="editForm.title"
+        label="Subtitle"
+        hint='A short evocative phrase that pairs with the name (e.g., "Village of the Drawn Blade").'
+        class="setting-edit__field"
+      />
 
-      <cdr-input v-model="editForm.content" label="Overview Content" background="secondary" :rows="15"
-        tag="textarea" class="edit-field">
-        <template #helper-text-bottom>
-          The main content of your setting overview. Use double line breaks for paragraphs.
-        </template>
-      </cdr-input>
+      <ParTextarea
+        v-model="editForm.content"
+        label="Overview Content"
+        :rows="18"
+        hint="Plain prose. Use `## Heading` lines to mark sections and double line breaks between paragraphs. Use *italic* sparingly for foreign in-world terms."
+        class="setting-edit__field"
+      />
 
-      <div class="button-group">
-        <ParActionButton @click="saveEdit">Save Changes</ParActionButton>
-        <ParActionButton @click="cancelEdit" variant="secondary">Cancel</ParActionButton>
-      </div>
+      <footer class="setting-edit__footer">
+        <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
+        <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+      </footer>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
 import { ref, computed, watch } from 'vue';
-import { CdrInput } from '@rei/cedar';
+import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
 import { combineSettingOverview } from '@/util/combineSettingOverview.mjs';
+import {
+  renderOverview,
+  consolidateOverviewToMarkdown,
+} from '@/util/renderSettingOverview.mjs';
 
 const props = defineProps({
   setting: {
@@ -88,40 +113,35 @@ const props = defineProps({
 
 const emit = defineEmits(['updated-setting']);
 
-// -------------------------
-// Local state
-// -------------------------
 const isEditing = ref(false);
-const editForm = ref({
-  name: '',
-  title: '',
-  content: '',
-});
+const editForm = ref({ name: '', title: '', content: '' });
 
-// Display name: prefer the canonical place_name on the setting; fall
-// back to the AI's name field if place_name wasn't populated.
 const displayName = computed(() => {
   return props.setting.place_name
     || props.setting.setting_overview?.name
     || '';
 });
 
-// Display subtitle: setting_overview.title now holds a short evocative
-// phrase (3-5 words). Legacy settings generated before this prompt
-// change have a longer composed title in the same field — it still
-// renders, just longer than ideal.
 const displayTitle = computed(() => props.setting.setting_overview?.title || '');
 
+// Parsed AST. The renderer takes care of first-mention entity emphasis
+// when the overview carries a `named_entities` array; legacy entries
+// (combined_content prose, or older structured-field data without
+// named_entities) flow through the same path and render as plain prose.
+const overviewAst = computed(() => {
+  return renderOverview(props.setting.setting_overview);
+});
 
-// -------------------------
-// Edit actions
-// -------------------------
 const startEditing = () => {
   const overview = props.setting.setting_overview;
+  const content = overview?.combined_content
+    || consolidateOverviewToMarkdown(overview)
+    || combineSettingOverview(overview);
+
   editForm.value = {
     name: props.setting.place_name || overview?.name || '',
     title: overview?.title || '',
-    content: overview?.combined_content || combineSettingOverview(overview),
+    content,
   };
   isEditing.value = true;
 };
@@ -144,7 +164,6 @@ const saveEdit = () => {
   isEditing.value = false;
 };
 
-// Reset edit state when the parent switches to a different setting
 watch(
   () => props.setting,
   (newSetting, oldSetting) => {
@@ -156,46 +175,185 @@ watch(
 </script>
 
 <style scoped>
-.setting-title-block {
-  margin-bottom: 2rem;
+/* Card container — 1.5px tan border on all four sides. The burgundy
+   top ribbon was dropped because the active tab indicator above the
+   card already carries the structural emphasis at the top edge. */
+.setting-card {
+  background: var(--par-color-surface, #fdfbf6);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: 2px;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  font-size: 17px;
+  line-height: 1.75;
 }
 
-.setting-name {
-  margin: 0 0 0.25rem 0;
+/* Header */
+.setting-card-header {
+  padding: 2rem 3rem 1.5rem;
+  background: rgba(0, 0, 0, 0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.setting-card-header-text {
+  min-width: 0;
+}
+
+.setting-card-name {
+  margin: 0 0 0.125rem;
+  font-size: 2.8rem;
+  font-weight: 500;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.02em;
   line-height: 1.15;
 }
 
-.setting-epithet {
-  margin: 0 0 1rem 0;
-  font-size: 1.6rem;
+.setting-card-epithet {
+  margin: 0;
+  font-size: 1.4rem;
   font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
   font-weight: 400;
-  color: #6b7280;
-  line-height: 1.3;
 }
 
-.overview-content {
-  margin-bottom: 2rem;
+.setting-card-header-actions {
+  flex-shrink: 0;
 }
 
-
-.edit-form .edit-field {
-  margin-bottom: 1.5rem;
+/* Content wrapper centers prose at readable line length */
+.setting-card-content {
+  max-width: 65ch;
+  margin-inline: auto;
+  padding: 0 3rem 2.5rem;
 }
 
-.button-group {
+/* Atmospheric opener. Italic muted prose, mirroring the item card's
+   .item-card-description treatment — establishing-shot mood at a
+   slightly looser rhythm than the body sections below. */
+.setting-card-read-aloud {
+  margin: 1.5rem 0 2rem;
+}
+
+.setting-card-read-aloud p {
+  margin: 0;
+  font-size: 1.75rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.65;
+}
+
+/* Sections — more rest between them than before. Labels stand alone
+   without a hairline rule; the small-caps + burgundy treatment is
+   distinctive enough. */
+.setting-card-section {
+  margin: 2.5rem 0 0;
+}
+
+.setting-card-section:first-of-type {
+  margin-top: 1rem;
+}
+
+.setting-section-heading {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+/* Paragraphs — every block (static lore and "right now" alike) renders
+   at body weight as a plain paragraph. */
+.setting-paragraph {
+  margin: 0 0 0.75rem;
+  font-size: 1.6rem;
+  color: var(--par-color-text, #222);
+  line-height: 3rem;
+}
+
+.setting-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.setting-paragraph + .setting-paragraph {
+  margin-top: 1em;
+}
+
+.setting-paragraph em,
+.setting-card-read-aloud em {
+  font-style: italic;
+}
+
+/* If the LLM ever emits `**bold**` despite the prompt asking it not
+   to, match .par-entity treatment (weight 600 + softer text-secondary
+   ink) so a stray marker doesn't compete with first-mention emphasis. */
+.setting-paragraph strong,
+.setting-card-read-aloud strong {
+  font-weight: 600;
+  color: var(--par-color-text-secondary, #555);
+}
+
+/* Named-entity first-mention emphasis. Weight 600 carries the
+   anchor; the softer ink (text-secondary #555 instead of body #222)
+   tones down the contrast so the heavier strokes don't spike
+   visually against the page — especially on long Mesopotamian /
+   Welsh / Finnish names where heavy + black-ink compounded too
+   strongly. Heavier weight + softer color reads as "anchored but
+   quiet." */
+.par-entity {
+  font-weight: 600;
+  color: var(--par-color-text-secondary, #555);
+}
+
+/* Edit form */
+.setting-edit {
+  padding: 0 3rem 2rem;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+  flex-direction: column;
+  gap: 1.4rem;
 }
 
-@media (max-width: 768px) {
-  .button-group {
+.setting-edit__header {
+  padding-top: 2rem;
+}
+
+.setting-edit__title {
+  margin: 0;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.02em;
+}
+
+.setting-edit__footer {
+  margin-top: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--par-color-divider, #e2dccd);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+  .setting-card-header,
+  .setting-card-content,
+  .setting-edit {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .setting-card-header {
     flex-direction: column;
   }
 
-  .button-group button {
-    width: 100%;
+  .setting-card-name {
+    font-size: 2.2rem;
   }
 }
 </style>

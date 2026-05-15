@@ -39,6 +39,8 @@ import {
   CHARACTER_VALUE_TO_SUBDIMENSION,
   TENSION_DESCRIPTIONS,
 } from '../utils/setting-dimensions.mjs';
+import { buildDeityModeBlock } from '@/shared/deity-mode-block.mjs';
+import { findRegisterByPrefix } from '@/shared/registers/index.mjs';
 
 const FORBIDDEN_NPC_NAMES =
   'Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde';
@@ -80,6 +82,61 @@ const EXPRESSION_MODES = {
 };
 
 /**
+ * Registers whose orthography imposes significant cognitive load on
+ * English-speaking GMs reading the setting at-table. Welsh / Irish
+ * orthography (digraphs ll, dd, ch, mh, bh; mutation patterns), and
+ * Finnish (long compound words, repeated double consonants) all
+ * produce names that are visually heavy and slow to parse even when
+ * authentic. The texture is worth it, but unconstrained the LLM will
+ * stack 6-10 register-coherent names per overview and bury the read.
+ *
+ * Match is substring-insensitive so 'Welsh-inspired', 'Middle-Welsh-
+ * inspired', 'Old-Irish-inspired', and 'Finnish-inspired' all hit.
+ * Extend the list if production observation surfaces another register
+ * with the same readability tax (Old-Slavic, Sanskrit, etc.).
+ */
+const HIGH_COGNITIVE_LOAD_REGISTER_KEYWORDS = ['welsh', 'irish', 'finnish', 'mesopotamian'];
+
+function isHighCognitiveLoadRegister(register) {
+  if (!register || typeof register !== 'string') return false;
+  const lower = register.toLowerCase();
+  return HIGH_COGNITIVE_LOAD_REGISTER_KEYWORDS.some(k => lower.includes(k));
+}
+
+/**
+ * Readability guidance for registers whose orthography is hard for
+ * English-speaking readers to parse at-table. The texture is the
+ * point of the register — strip it and the setting reads generic —
+ * but unconstrained generation produces 6-10 names per overview where
+ * a GM has to stop and decode each one. This block caps the load:
+ * fewer total names, shorter forms, role-words and epithets carrying
+ * the repetition.
+ *
+ * Returns an empty string for low-load registers (Anglo-Saxon, Latin,
+ * Greek, Old-Norse, etc.) — they're already accessible at-table and
+ * don't need the directive.
+ */
+function buildHighCognitiveLoadReadabilityBlock(register) {
+  if (!isHighCognitiveLoadRegister(register)) return '';
+  return `READABILITY (this register's orthography imposes cognitive load on English-speaking GMs reading at-table; the texture is valuable but cap the load):
+
+- TOTAL BUDGET: across the entire overview, use AT MOST 3-5 register-coherent proper nouns. NOT one per field. NOT one per sentence. Counted across the whole output: ruler name, setting/place name, one notable NPC, one named landmark or institution — that's already 4. Stop there.
+
+- LENGTH: prefer 2-syllable names (3 max). Bran over Branwen. Caer over Caerfyrddin. Eda over Edalwyn. Keep the single longest authentic name for the ruler or a focal NPC where the texture is worth the cost.
+
+- AFTER FIRST USE, USE ROLE-WORDS OR EPITHETS, NOT THE NAME AGAIN: introduce the name once, then refer back by their role or by a short epithet in plain English. "**Gwarchodwyr** now light shadow-torches each dusk" — and in the next sentence "the Watch-Master" or "the wardens," NOT "Gwarchodwyr" again. The register-coherent name appears ONCE per entity unless the second mention is many sentences away.
+
+- IN-WORLD ITALIC TERMS (like *ffaglau cysgod*, *sídhe*, *kantele*): cap at ONE across the entire overview. Each one costs reader attention; spend it on the single most flavor-defining term, not every concept.
+
+- NEVER STACK two register-coherent names in the same sentence. If a sentence has two such terms, swap one for its English role-word. "**Magnus**, *brenin* of **Hjallmark**" becomes "**Magnus**, king of **Hjallmark**."
+
+- For supporting / minor NPCs, prefer English-language role-words ("the bog-keeper", "the iron-warden") over register-coherent names. Reserve names for entities the GM will actually need to address by name at the table.
+
+- DEITIES IN PROSE: reference gods/spirits by EPITHET, not by name. "the Earth-Maker" instead of "Enki"; "the Storm-Bringer" instead of "Adad"; "the Star-Lady" instead of "Ishtar"; "the Soil-Burner" instead of "Nergal". Names of gods are not free — each named deity costs the same attention as a named character. Authentic register-specific epithets are listed in the DEITY HANDLING block below (when one fires); use those directly. Most generations should name NO deities at all.
+`;
+}
+
+/**
  * Build the fantasy-texture directive. Production observation
  * (~2026-05): strongly culturally-coded registers (Slavic, Russian,
  * Old-Slavic) produced setting outputs that read as historical
@@ -102,10 +159,25 @@ const EXPRESSION_MODES = {
  */
 function buildFantasyTextureBlock(register) {
   if (!register) return '';
-  return `FANTASY TEXTURE REQUIREMENT:
-This is a folkloric fantasy setting, not historical fiction. The setting MUST include at least one supernatural element that is LITERALLY TRUE in the world — a spirit, a creature, a magic-working, a folk-belief made real — drawn from the register's own mythological tradition (e.g., Slavic → leshy/rusalka/domovoi; Celtic → Tylwyth Teg/sídhe; Norse → jötnar/draugr; for other registers, use that culture's known folkloric tradition). The element should appear in at least one of: main_problem, history, recent_event_*, current_ruler_sentence, npc_list, or mystical detail.
+  return `FANTASY TEXTURE REQUIREMENT (mandatory — verify before returning):
+This is a folkloric fantasy setting, not historical fiction. The setting MUST include at least one supernatural element that is ACTIVELY OPERATING in the present-tense narrative — a spirit, creature, magic-working, or folk-belief made literally true that:
+  (a) appears in the current-day setting, not just in history or legend,
+  (b) is FUNCTIONING, not merely remembered, feared, hoped-for, or believed-in.
 
-Do NOT write historical fiction with fantasy names. The difference is that in THIS world the folk-magic actually works — the rusalka is in the river, the sídhe hill is dangerous to climb. The supernatural can be subtle but it MUST be present and real.
+The element should be drawn from the register's own mythological tradition. Suggestive examples:
+  Slavic → leshy in the wood, rusalka in the river, domovoi behind the hearth
+  Celtic → sídhe on the hill, Tylwyth Teg watching the bog, púca on the road
+  Norse → draugr in the howe, jötunn at the pass, fylgja walking beside someone
+  Mesopotamian → apkallu spirits at the gate, lilītu at the threshold, ūtukku haunting the canal, edimmu refusing burial, mušḫuššu seen at dusk on the temple wall
+  Egyptian → akh visiting the priest, sheut following its caster, kheper-scarab in the morning grain
+  Greek/Roman → genius loci speaking through the spring, dryad answering from the olive, lar of the household sharing the meal
+  Finnish → metsänpeitto hiding travelers, väki of the lake refusing the fisherman, haltija of the threshold
+
+The element must show up CONCRETELY in at least one of: overview (atmosphere), notable_social_facet, notable_economic_facet, notable_security_facet, central_dynamic, responses_in_motion, or npc_list — and it must be UNAMBIGUOUSLY REAL within the setting. Not "the old women say it is the touch of Nergal" (folk-belief framing); rather "the canal-pool grows cold each dusk and the catfish drift up dead — the ūtukku is awake again." The first is historical fiction with a divine name. The second is fantasy.
+
+ANTI-PATTERN ALERT: rituals that have "never been performed successfully," priests who "no longer remember the words," dead gods, lost magic, faded blessings — these read as fantasy but FUNCTION as historical fiction. If every supernatural reference is past-tense, broken, or aspirational, the setting fails the texture requirement. At least one supernatural beat must be present-tense and working.
+
+The supernatural can be subtle (a single sentence on a sensory beat, a brief NPC encounter) but it MUST be there, MUST be real, and MUST be active in present time. Do NOT write historical fiction with fantasy names.
 `;
 }
 
@@ -222,13 +294,21 @@ All proper nouns (place names, character names, faction names, organizational na
 
   const expressionModesBlock = buildExpressionModesBlock(character);
   const fantasyTextureBlock = buildFantasyTextureBlock(register);
+  const readabilityBlock = buildHighCognitiveLoadReadabilityBlock(register);
+  const deityModeBlock = buildDeityModeBlock(findRegisterByPrefix(register));
 
   return `SETTING TYPE: ${type || 'unspecified — pick a fitting type'}
 CHARACTER QUALITIES: ${characterStr}
 LINGUISTIC REGISTER: ${registerStr}
 NAME: ${nameInstruction}${descriptionStr}${loreStr}
 
-${fantasyTextureBlock}
+${fantasyTextureBlock}${readabilityBlock}${deityModeBlock ? '\n' + deityModeBlock + '\n' : ''}
+PROSE FORMATTING (the renderer handles emphasis — keep your prose clean):
+- FIRST-MENTION EMPHASIS: every PERSON you name in the prose MUST appear in the \`named_entities\` JSON array at the bottom (rulers, historical figures, NPCs — anyone introduced by a personal name). The renderer wraps the FIRST occurrence of each listed name in semibold, signaling "new character introduced." Places, factions, buildings, regions, and titles of office do NOT go in this array — context carries them. Deity names also do NOT go in this array.
+- Do NOT use markdown bold (\`**text**\`) for proper nouns. The renderer applies first-mention emphasis automatically using the \`named_entities\` array you return. Wrap nothing in \`**\` — write proper nouns as plain text.
+- Use *italic* (\`*term*\`) ONLY for foreign in-world terms that genuinely shift register (e.g., *sídhe*, *kantele*, *aes dána*) and want a visual cue that they're foreign vocabulary. Cap italic usage strictly: at most one or two italic terms across the ENTIRE overview. Do NOT italicize whole sentences. Do NOT use italic on proper names.
+- Every field is a plain paragraph of prose. No blockquotes, no callouts, no special structure. Temporality ("Yesterday at dawn…", "Two harvests ago…") is signaled by the words themselves, not by markdown markers.
+
 GENERATION RULES:
 - The three character qualities shape the setting's overall feel. Express each one through the mode noted below — NOT by repeating its literal word across every field. Texture comes from structure, events, and consequence, not from keyword repetition.
 - Each quality's literal keyword should appear sparingly across the entire output (at most once or twice). For atmospheric qualities especially, the keyword appears at most ONCE — never make a sensory quality into the political, economic, or religious driver.
@@ -325,19 +405,24 @@ Return JSON with the following fields. Temperature: 0.9. Keep sentences concise;
 {
   "name": "The bare register-coherent place name only (e.g., 'Valderia', 'Ashenmoor', 'Glenmara'). No articles, no qualities, no type — just the proper noun. This is what shows in sidebars and lists.",
   "title": "A short evocative phrase (3-5 words, max 6) that pairs with the name as a subtitle in the UI. STRUCTURE: a phrase, not a sentence or clause — NO 'where X does Y' constructions, NO verbs in conjugated form. Most should follow '[Type] of [Poetic Phrase]' (4-5 words) or 'the [Poetic Noun-Phrase]' (3-4 words) — these convey both the setting type AND the place's character. The phrase SUGGESTS the character qualities through concrete imagery — it MUST NOT use any character quality word as an adjective ('plague-stricken', 'ancient', 'ember-banked', 'duel-honored', 'coastal', etc. are FORBIDDEN). GOOD invented examples: 'Village of the Drawn Blade' (suggests duel-honored); 'City of Tolling Bells' (suggests plague-stricken); 'Republic of Banked Coals' (suggests ember-banked); 'Monastery of the Long Silence' (suggests ancient); 'the Codified March' (suggests legal/structured); 'Hold of the Iron Vigil' (suggests militant); 'the Lantern-Bound Quarter' (suggests insular). BAD — never generate: 'Duel-Honored Coastal Village' (pastes quality keywords); 'Village Where the Fjord-Edge Holds the Gavel' (sentence-clause structure, too long, 8 words). Keep it tight.",
-  "overview": "A brief overview embodying the character qualities and reflecting current state.",
-  "relation_to_larger_setting": "How this setting relates to a larger world. Provide a register-coherent name for the larger context if relevant.",
-  "history": "A brief history including founding and significant recent events.",
-  "current_ruler_sentence": "A sentence describing the current ruler — register-coherent name, position, recent action.",
-  "social_history": "A brief social-structure history.",
-  "notable_social_facet": "OPTIONAL. 1 sentence max about current social life. May be a routine that's holding, a gradual change, atmospheric texture, a notable absence, or a discrete development — whatever matches the central tension's character. Empty string is acceptable if nothing notable applies.",
-  "economic_history": "A brief economic-structure history.",
-  "notable_economic_facet": "OPTIONAL. 1 sentence max about current economic life. May be a steady arrangement, an ongoing project, an incremental shift, or a discrete development. Empty string is acceptable.",
-  "military_history": "A brief military / security history.",
-  "notable_security_facet": "OPTIONAL. 1 sentence max about the current security posture — militia, guard, levy, fortifications, or formal military arrangements. May be a routine, a holding pattern, an ongoing arrangement, or a discrete development. Empty string is acceptable.",
-  "central_dynamic": "The central dynamic of the setting — how the central tension shapes daily life. A specific named scene, recurring pattern, or present condition that captures the tension. The character of this dynamic follows from the tension: a recovery-rebuilding setting's central_dynamic is the ongoing work of repair; an aspirational-striving setting's is the active pursuit of the goal; an ongoing-accommodation setting's is the daily negotiation of sustained difficulty; an open-secret setting's is the structure of willful inaction; an inheritance-burden setting's is the way the ancestral weight shapes present life; an imminent-crisis setting's is the approaching decision-point. Match the tension.",
-  "responses_in_motion": "1-2 sentences on what is currently in motion in response to the central tension. The shape of these responses follows the tension: adaptations, institutional responses, ritual practices, long-term efforts, evolving accommodations, generational labor, or active interventions — whichever fits. Who's leading the effort, what trade-offs or obstacles.",
-  "present_state": "Present state of the setting in the tension's terms. A recovery setting's present_state reads about whether repair is holding; an aspirational setting's about the state of the work; a cyclical setting's about position within the cycle; an imminent-crisis setting's about the approach of the break. Tie back to central_dynamic and responses_in_motion. Match the tension.",
+  "overview": "ATMOSPHERIC opener. 2-3 short sentences of sensory, mood-setting prose: what one sees, smells, hears, feels in this place at a moment. The establishing shot — film-camera-on-a-tripod-style, not encyclopedia entry. NO geographical positioning ('a kingdom in the X mountains', 'a port city on the Y coast'); positioning lives in relation_to_larger_setting. NO history. NO political structure. Just texture and mood. Plain prose, no markdown markers on proper nouns.",
+  "relation_to_larger_setting": "GEOGRAPHIC AND POLITICAL POSITIONING. Where this setting sits on the map: what type of place it is, the terrain it occupies, the larger geographical region containing it, neighboring polities, larger trade/political/military networks. Use register-coherent names for any larger geographical or political contexts. 2-3 sentences. The reader should finish this field knowing where this place IS — what surrounds it, what larger body it belongs to. Plain prose.",
+  "history": "A brief history including founding and significant recent events. Plain prose.",
+  "current_ruler_sentence": "A single sentence describing the current ruler — name, position, recent action. Plain prose, no blockquote markers.",
+  "social_history": "A brief social-structure history. Plain prose.",
+  "notable_social_facet": "OPTIONAL. One sentence about current social life. May be a routine that's holding, a gradual change, atmospheric texture, a notable absence, or a discrete development. The temporality reads in the prose itself (\"Yesterday at dawn…\", \"This past spring…\"); do NOT add markdown markers. Empty string is acceptable if nothing notable applies.",
+  "economic_history": "A brief economic-structure history. Plain prose.",
+  "notable_economic_facet": "OPTIONAL. One sentence about current economic life. May be a steady arrangement, ongoing project, incremental shift, or development. Plain prose. Empty string is acceptable.",
+  "military_history": "A brief military / security history. Plain prose.",
+  "notable_security_facet": "OPTIONAL. One sentence about current security posture. May be a routine, holding pattern, arrangement, or development. Plain prose. Empty string is acceptable.",
+  "central_dynamic": "The central dynamic of the setting — how the central tension shapes daily life. Plain prose. A specific named scene, recurring pattern, or present condition that captures the tension. The character of this dynamic follows from the tension: a recovery-rebuilding setting's central_dynamic is the ongoing work of repair; an aspirational-striving setting's is the active pursuit of the goal; an ongoing-accommodation setting's is the daily negotiation of sustained difficulty; an open-secret setting's is the structure of willful inaction; an inheritance-burden setting's is the way the ancestral weight shapes present life; an imminent-crisis setting's is the approaching decision-point. Match the tension.",
+  "responses_in_motion": "1-2 sentences on what is currently in motion in response to the central tension. Plain prose. The shape of these responses follows the tension: adaptations, institutional responses, ritual practices, long-term efforts, evolving accommodations, generational labor, or active interventions — whichever fits. Who's leading the effort, what trade-offs or obstacles.",
+  "present_state": "Present state of the setting in the tension's terms. Plain prose. A recovery setting's present_state reads about whether repair is holding; an aspirational setting's about the state of the work; a cyclical setting's about position within the cycle; an imminent-crisis setting's about the approach of the break. Tie back to central_dynamic and responses_in_motion. Match the tension.",
+  "named_entities": [
+    "Example Person One",
+    "Example Person Two"
+  ],
+  "//named_entities_note": "REPLACE the example entries above with the CHARACTER NAMES (people only — first name + family/clan/byname if applicable) of every individual named in the prose fields above. Rules: (a) PEOPLE ONLY. Include rulers, NPCs, historical figures, and any other individual named by a personal name. (b) EXCLUDE place names, region names, polity names, faction names, building names, geographical features — those are handled by context, not by emphasis. (c) EXCLUDE titles of offices and role-words even when they look like proper nouns ('Winding-Leader', 'the Lawgiver', 'High Priest', 'Watch-Master', 'Lord Mayor' — these are roles, not personal names). When a person is introduced with both name + title (e.g., 'Greta Gearspring the Founder'), include ONLY the personal-name part: 'Greta Gearspring'. (d) Match the prose VERBATIM, case-sensitive — if your prose says 'Greta Gearspring' include 'Greta Gearspring' with the same capitalization and any diacritics. (e) EXCLUDE deity names (gods are referenced by epithet per the deity-handling block). (f) Include EVERY individual named in the prose — typically 3-6 people across overview / history / leadership / society / present_state / npc_list. If you mention a person by name once anywhere in the prose, they belong here. The renderer wraps the FIRST occurrence of each entry in semibold, signaling 'new character introduced — track this name.'",
   "npc_list": [
     {
       "name": "Register-coherent NPC name (individuals only, not organizations)",
@@ -375,6 +460,8 @@ All proper nouns MUST match this register. This sub-location inherits the parent
   const expressionModesBlock = buildExpressionModesBlock(character);
   const tensionBlock = buildTensionGuidanceBlock(tension);
   const fantasyTextureBlock = buildFantasyTextureBlock(register);
+  const readabilityBlock = buildHighCognitiveLoadReadabilityBlock(register);
+  const deityModeBlock = buildDeityModeBlock(findRegisterByPrefix(register));
   const antiClusteringBlock = buildAntiClusteringBlock(bannedTropes);
   // Lore preservation applies when the parent setting carries lore
   // (which may itself contain named entities the user established
@@ -399,7 +486,12 @@ CHARACTER QUALITIES: ${characterStr}
 LINGUISTIC REGISTER: ${registerStr}
 NAME: ${nameInstruction}
 
-${fantasyTextureBlock}
+${fantasyTextureBlock}${readabilityBlock}${deityModeBlock ? '\n' + deityModeBlock + '\n' : ''}
+PROSE FORMATTING (the renderer handles emphasis — keep your prose clean):
+- Do NOT use markdown bold (\`**text**\`) for proper nouns. The renderer applies first-mention emphasis using the \`named_entities\` array you return.
+- Use *italic* (\`*term*\`) ONLY for foreign in-world terms that genuinely shift register. Cap italic usage strictly: at most one or two italic terms across the ENTIRE overview. Do NOT italicize whole sentences. Do NOT italicize proper names.
+- Every field is a plain paragraph of prose. No blockquotes, no callouts, no special structure.
+
 GENERATION RULES:
 - The three character qualities shape the sub-location's overall feel. Express each one through the mode noted below — NOT by repeating its literal word across every field. Texture comes from structure, events, and consequence.
 - Each quality's literal keyword should appear sparingly (at most once or twice). For atmospheric qualities, the keyword appears at most ONCE — never make a sensory quality into the political, economic, or religious driver.
@@ -420,19 +512,24 @@ Return JSON with the same field structure as a top-level setting. Temperature: 0
 {
   "name": "The bare register-coherent place name only (e.g., 'Riverside', 'Ashen Watch', 'Hearthgate'). No articles or qualities — just the proper noun. Shows in sidebars.",
   "title": "A short evocative phrase (3-5 words, max 6) that pairs with the name as a subtitle. STRUCTURE: a phrase, not a sentence — NO 'where X does Y' clauses, NO conjugated verbs. Most should follow '[Type] of [Poetic Phrase]' or 'the [Poetic Noun-Phrase]'. The phrase SUGGESTS the character qualities through imagery — it MUST NOT use any character quality word as an adjective. GOOD invented examples: 'Quarter of the Singing Stones'; 'Watchtower of the Long Vigil'; 'the Smoke-Veiled District'; 'Foundry of the Banked Coals'. BAD: 'The Bell-Ringing Quarter of Estharic' (pastes quality keyword); 'Quarter Where Bells Wake the Dead and the Smoke Settles' (sentence-clause, too long).",
-  "overview": "A brief overview embodying the character qualities and reflecting current state and relation to the parent",
-  "relation_to_larger_setting": "How this sub-location relates to ${parentName || 'the parent setting'} specifically — geographic position, political role, economic function, or cultural significance.",
-  "history": "A brief history specific to the sub-location, including how it became part of the parent setting",
-  "current_ruler_sentence": "The local ruler or prominent individual of the sub-location (may be a vassal of the parent's ruler, or just a notable figure if the sub-location is too small for formal leadership). Use a register-coherent name.",
-  "social_history": "Brief social history specific to this sub-location",
-  "notable_social_facet": "OPTIONAL. 1 sentence max about current social life. May be a routine, gradual shift, atmospheric detail, or development. Empty string is acceptable.",
-  "economic_history": "Brief economic role of this sub-location, especially its role within the parent setting's economy",
-  "notable_economic_facet": "OPTIONAL. 1 sentence max about current economic life. May be a steady arrangement, ongoing project, or development. Empty string is acceptable.",
-  "military_history": "Brief security history (for small sub-locations, this may be the local militia, guard, or informal posse)",
-  "notable_security_facet": "OPTIONAL. 1 sentence max about the current security posture. May be a routine, ongoing arrangement, or development. Empty string is acceptable.",
-  "central_dynamic": "The central dynamic of the sub-location — how the central tension shapes life here. Frame in the tension's terms — see the CENTRAL TENSION block above. Match the tension's character; do not impose a different framing.",
-  "responses_in_motion": "1-2 sentences on what is currently in motion in response to the tension. The shape follows the tension: adaptations, institutional responses, ritual practices, long-term efforts, or active interventions — whichever fits.",
-  "present_state": "Present state of the sub-location in the tension's terms.",
+  "overview": "ATMOSPHERIC opener. 2-3 short sentences of sensory, mood-setting prose: what one sees, smells, hears, feels in this sub-location at a moment. The establishing shot — texture and mood, not encyclopedia entry. NO geographical positioning (that lives in relation_to_larger_setting). NO history. NO political structure. Plain prose, no markdown markers.",
+  "relation_to_larger_setting": "GEOGRAPHIC AND POLITICAL POSITIONING within ${parentName || 'the parent setting'}. Where this sub-location sits: which district / quarter / region of the parent, what surrounds it, its political role or economic function within the parent's structure, what neighboring sub-locations it borders. 2-3 sentences. The reader should finish this field knowing where this place sits inside the parent. Plain prose.",
+  "history": "A brief history specific to the sub-location, including how it became part of the parent setting. Plain prose.",
+  "current_ruler_sentence": "A single sentence describing the local ruler or notable figure (may be a vassal of the parent's ruler, or just a notable figure for sub-locations too small for formal leadership). Plain prose, no markers. Register-coherent name.",
+  "social_history": "Brief social history specific to this sub-location. Plain prose.",
+  "notable_social_facet": "OPTIONAL. One sentence about current social life. Plain prose. Empty string is acceptable.",
+  "economic_history": "Brief economic role of this sub-location, especially its role within the parent setting's economy. Plain prose.",
+  "notable_economic_facet": "OPTIONAL. One sentence about current economic life. Plain prose. Empty string is acceptable.",
+  "military_history": "Brief security history (for small sub-locations, this may be the local militia, guard, or informal posse). Plain prose.",
+  "notable_security_facet": "OPTIONAL. One sentence about current security posture. Plain prose. Empty string is acceptable.",
+  "central_dynamic": "The central dynamic of the sub-location — how the central tension shapes life here. Plain prose. Frame in the tension's terms — see the CENTRAL TENSION block above. Match the tension's character; do not impose a different framing.",
+  "responses_in_motion": "1-2 sentences on what is currently in motion in response to the tension. Plain prose. The shape follows the tension: adaptations, institutional responses, ritual practices, long-term efforts, or active interventions — whichever fits.",
+  "present_state": "Present state of the sub-location in the tension's terms. Plain prose.",
+  "named_entities": [
+    "Example Person One",
+    "Example Person Two"
+  ],
+  "//named_entities_note": "REPLACE the example entries above with the CHARACTER NAMES (people only) of every individual named in the prose fields above. Rules: (a) PEOPLE ONLY — rulers, NPCs, historical figures, anyone named by a personal name. (b) EXCLUDE places, regions, polities, factions, buildings, geographical features. (c) EXCLUDE titles of offices and role-words even when capitalized ('Winding-Leader', 'the Lawgiver', 'High Priest', 'Watch-Master' — these are roles, not personal names). When a person is introduced with name + title (e.g., 'Greta Gearspring the Founder'), include ONLY the personal-name part. (d) Match the prose VERBATIM, case-sensitive. (e) EXCLUDE deity names (gods are referenced by epithet). (f) Include EVERY individual named in the prose — typically 3-6 people total.",
   "npc_list": [
     {
       "name": "Register-coherent NPC name",
