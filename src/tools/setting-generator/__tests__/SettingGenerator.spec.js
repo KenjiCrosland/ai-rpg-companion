@@ -64,8 +64,9 @@ jest.mock('../utils/infer-setting-dimensions.mjs', () => ({
 }));
 
 // Mock the dimensions module — generateCharacterCandidates,
-// pickRandomTension, and getBannedTropesForGeneration are all called
-// directly from the component during setting / sublocation generation.
+// pickRandomTension, getBannedTropesForGeneration, detectCozyMode,
+// and detectLowStakesTension are all called directly from the
+// component during setting / sublocation generation.
 jest.mock('../utils/setting-dimensions.mjs', () => ({
   generateCharacterCandidates: jest.fn(() => [['ancient', 'corrupt', 'misty']]),
   pickRandomTension: jest.fn(() => 'ongoing-accommodation'),
@@ -73,6 +74,8 @@ jest.mock('../utils/setting-dimensions.mjs', () => ({
     'silence-cult',
     'aging-authority-succession',
   ]),
+  detectCozyMode: jest.fn(() => false),
+  detectLowStakesTension: jest.fn(() => null),
 }));
 
 // Mock GeneratorLayout component

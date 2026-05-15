@@ -173,16 +173,36 @@ Return a JSON object with four fields:
 
 ${characterSection}
 
-3. "register": The linguistic register for the setting's naming. The value MUST be one of three things:
+3. "register": The linguistic register for the setting's naming. The value MUST be one of three things. Pick by working through the cases in order:
 
-   (a) A specific token from this list, when the input carries an EXPLICIT cultural / linguistic signal (a culturally-distinct loanword, a named ethnicity, a register-specific occupation, a place that pins down a culture):
+   (a) A specific token from this list, when the input contains an EXPLICIT cultural / linguistic signal OR a fantasy-canon setting with strong cultural roots:
        ${TOKENS.join(', ')}
 
-       Map the input to the token of the culture it most clearly references. Only use a token when the cultural signal is explicit; do NOT pick a token from implicit tropes.
+       What COUNTS as an explicit cultural signal:
+       - Real culture name ("Welsh village," "Yoruba diaspora")
+       - Named ethnicity ("Norse settlers," "Hellenic colonists")
+       - Real-world geographic anchor ("on the Russian steppe," "the Mesopotamian floodplain")
+       - Culturally-distinct loanword used naturally ("the sultan," "the polis," "the daimyo")
+       - Register-specific occupation or institution ("the legionnaire," "the shaman-king," "the caliph's diwan")
+       - Real-world religious/legal system ("Shinto shrines," "the caliphate," "the polis")
 
-   (b) The exact string "fantasy_unspecified" when the input describes a generic fantasy setting without a cultural / linguistic marker. The orchestrator routes this to a random humanoid register from the variety pool.
+       FANTASY-CANON SETTINGS also count as signals — these are fictional realms with strong literary / cultural roots that map to a register:
+       - Feywild / fey-court / fey-pact / fairy realm / Tylwyth Teg / sídhe → welsh, middle-welsh, or old-irish (Celtic fairy tradition)
+       - Norse-flavored realm / draugr / Vanir / jötnar / Yggdrasil → norse or old-norse
+       - Greek mythological setting / pantheon-of-Olympus / titans-and-heroes → greek
+       - Pharaonic / pyramid / ankh-and-djed setting → egyptian
+       - Russian folkloric / leshy / rusalka / domovoi → russian or old-slavic
+       - Anglo-Saxon / wyrm-and-mead-hall / Beowulf-style → anglo-saxon
+       - Aztec / mexica / featherserpent → aztec (if in pool)
+       Pick the closest matching register from the list above.
 
-   (c) null when the input describes a non-fantasy genre (cyberpunk, sci-fi, modern, historical) OR a cultural signal that doesn't match any token above.
+       What does NOT count as an explicit signal: vague ancient-civilization feel ("bronze, temples, exiles, necropolis"), generic medieval markers ("knights, castles, kingdom, abbey"), classical-fantasy genre tropes ("ancient ruins, temples on hills, founding exiles"), invented fantasy names that happen to phonologically resemble a real culture ("Velrith" is NOT a Mesopotamian signal; "Aelinwood" is NOT a Celtic signal). These are fantasy-genre defaults the LLM gravitates toward; do not promote them to cultural signals.
+
+   (b) null in TWO cases:
+       - Non-fantasy genre signal (cyberpunk, sci-fi, modern, historical-fiction).
+       - Generic-fantasy input where the user has established their own naming convention via INVENTED proper nouns (place names like "Velrith" / "the Drowning Quarter," character names like "Lysette Sarvane," faction names like "House Tarn," festival names like "Bronzewater Festival"). When the user has already provided multiple invented proper nouns establishing a style, return null so the LLM extends the user's invented style freely without a register constraint imposed on top. NOTE: D&D race / class descriptors ("elf," "tiefling," "warlock," "ranger") are NOT proper nouns and do NOT count as established naming conventions for this case.
+
+   (c) The exact string "fantasy_unspecified" when the input describes generic fantasy WITHOUT case (a) and WITHOUT case (b) — i.e., no real-world cultural signal, no fantasy-canon setting reference, and no invented proper nouns establishing a user-owned naming style. Examples: "a flourishing kingdom" (no names, no canon reference), "a haunted city in the mountains" (descriptive only). The orchestrator routes this to a random humanoid register from the variety pool. This is a normal, expected case — do not avoid it; pick it whenever (a) and (b) don't apply.
 
 4. "userName": The setting's specific name if the user provided one, or null if no name is given.
    - "a town called Ashenmoor" → userName: "Ashenmoor"
@@ -192,10 +212,12 @@ ${characterSection}
 Return ONLY valid JSON with the fields listed above. No prose before or after, no markdown code fences, no commentary.
 
 Example outputs:
-{"type": "kingdom", "character": ["ancient", "corrupt", "misty"], "register": "welsh", "userName": null}
-{"type": "monastery", "character": ["scholarly", "mountainous", "fog-shrouded"], "register": "old-irish", "userName": "Glenmara"}
-{"type": "port-city", "character": ["mercantile", "cosmopolitan", "sun-scorched"], "register": "fantasy_unspecified", "userName": null}
-{"type": "ruined-city", "character": ["fallen", "haunted", "twilit"], "register": null, "userName": null}    (input was "a post-apocalyptic ruin")`;
+{"type": "kingdom", "character": ["ancient", "corrupt", "misty"], "register": "welsh", "userName": null}    (input mentioned "Welsh-style settlement")
+{"type": "treetop-village", "character": ["fey-touched", "forest-hidden", "twilit"], "register": "middle-welsh", "userName": null}    (input was "Feywild treetop village with fey-pact warlock" — fey-canon maps to Celtic via middle-welsh)
+{"type": "monastery", "character": ["scholarly", "mountainous", "fog-shrouded"], "register": "old-irish", "userName": "Glenmara"}    (Old Irish phonology evident in user-named "Glenmara")
+{"type": "port-city", "character": ["mercantile", "cosmopolitan", "sun-scorched"], "register": null, "userName": "Velrith"}    (user provided extensive lore with multiple invented proper nouns: "Velrith," "House Sarvane," "Drowning Quarter," "Bronzewater Festival" — null lets the LLM extend their established style without imposing a register)
+{"type": "kingdom", "character": ["ancient", "corrupt", "misty"], "register": "fantasy_unspecified", "userName": null}    (input was "a flourishing kingdom" — no canon reference, no invented proper nouns; fantasy_unspecified routes to a random register)
+{"type": "ruined-city", "character": ["fallen", "haunted", "twilit"], "register": null, "userName": null}    (input was "a post-apocalyptic ruin" — non-fantasy genre)`;
 }
 
 /**
@@ -243,16 +265,73 @@ ${subdimensionLines}
 }
 
 /**
+ * Western-medieval default register subset. Used when the user has
+ * provided input but no cultural signal — the absence of signal often
+ * implies expectation (Western-medieval fantasy default) rather than
+ * openness to anything. Production observation: routing such cases
+ * to the full pool occasionally produced well-crafted but off-brand
+ * outputs (e.g., "border town between two warring kingdoms" rolling
+ * Egyptian register with sistrums and granite pylons — coherent but
+ * not what the user expected).
+ *
+ * Empty-input generations still draw from the full humanoidRegisterList
+ * so users browsing for variety see Yoruba, Lakota, Sanskrit, etc.
+ * User-input-without-signal generations draw from this curated subset
+ * — same variety principle, narrower pool that stays within Western
+ * medieval expectations.
+ *
+ * The list covers British Isles, Germanic Europe, Scandinavia, and
+ * the Romance/Latin world — registers that match the cros.land and
+ * typical-TTRPG default aesthetic.
+ */
+const WESTERN_MEDIEVAL_DEFAULT_PREFIXES = [
+  'Latin-inspired',
+  'Italian-Renaissance-inspired',
+  'Norse-inspired',
+  'Old-Norse-inspired',
+  'Gothic-inspired',
+  'Anglo-Saxon-inspired',
+  'Germanic-inspired',
+  'Old-High-German-inspired',
+  'Middle-High-German-inspired',
+  'Celtic-inspired',
+  'Welsh-inspired',
+  'Middle-Welsh-inspired',
+  'Irish-inspired',
+  'Old-Irish-inspired',
+  'Old-Occitan-inspired',
+];
+
+/**
+ * Pick a random register from the Western-medieval default subset.
+ * Filters humanoidRegisterList by the curated prefix list above. If
+ * no entries match (unlikely — the prefixes are taken from the
+ * canonical list), falls back to the full pool to avoid breaking the
+ * generation.
+ */
+function pickWesternDefaultRegister(rng) {
+  const pool = humanoidRegisterList.filter(register =>
+    WESTERN_MEDIEVAL_DEFAULT_PREFIXES.some(prefix => register.startsWith(prefix))
+  );
+  if (pool.length === 0) {
+    return humanoidRegisterList.length > 0
+      ? humanoidRegisterList[Math.floor(rng() * humanoidRegisterList.length)]
+      : null;
+  }
+  return pool[Math.floor(rng() * pool.length)];
+}
+
+/**
  * Resolve a classifier-style register token to a full
  * humanoidRegisterList descriptor, or null when the prefix is
  * filtered out (protected gate) / unrecognized.
  *
- * The `fantasy_unspecified` token routes here too — when the LLM
- * decides the input carries no explicit cultural signal, the
- * resolver picks a random humanoid register from the variety pool.
- * This is what gives generic-input generations their cultural
- * texture instead of leaving the main prompt with a literal
- * "fantasy_unspecified" string that means nothing to the LLM.
+ * The `fantasy_unspecified` token routes here too — when called this
+ * way (empty-input path), the resolver picks a random humanoid
+ * register from the FULL variety pool to maximize cultural exposure
+ * for browsing users. The orchestrator routes user-input cases
+ * through `pickWesternDefaultRegister` instead (narrower pool, stays
+ * within Western-medieval expectations).
  *
  * Differs from the NPC inference's resolver only in pool source —
  * settings draw from `humanoidRegisterList` (excludes thematic
@@ -347,7 +426,34 @@ export async function inferSettingDimensions({ description = '', lore = '', rng 
     ? parsed.character.filter(c => typeof c === 'string' && c.trim().length > 0).map(c => c.trim())
     : null;
 
-  const resolvedRegister = resolveRegisterToken(parsed.register, rng);
+  // Register resolution branches on input presence and the LLM's pick:
+  //
+  //   - Empty input: force fantasy_unspecified → full humanoid pool
+  //     random. Variety is the goal when users have no preference.
+  //
+  //   - User input with specific token: respect the LLM's mapping
+  //     (e.g., "Welsh village" → welsh, "Feywild" → middle-welsh).
+  //
+  //   - User input with explicit null: respect it. The LLM picks null
+  //     either for non-fantasy genres (cyberpunk, sci-fi, modern) or
+  //     when the user has established their own invented naming
+  //     convention that should be extended without a register imposed.
+  //
+  //   - User input with fantasy_unspecified: the LLM signaled "no
+  //     cultural marker, generic fantasy." Production observation
+  //     showed routing this to the full pool produced occasional
+  //     off-brand picks (Egyptian for a "border town" input). Users
+  //     who provided input but no signal usually expect a Western-
+  //     medieval default. Restrict to that subset; still random for
+  //     variety, but within expected aesthetic.
+  let resolvedRegister;
+  if (!hasUserInput) {
+    resolvedRegister = resolveRegisterToken('fantasy_unspecified', rng);
+  } else if (typeof parsed.register === 'string' && parsed.register.toLowerCase() === 'fantasy_unspecified') {
+    resolvedRegister = pickWesternDefaultRegister(rng);
+  } else {
+    resolvedRegister = resolveRegisterToken(parsed.register, rng);
+  }
 
   const resolvedUserName = typeof parsed.userName === 'string' && parsed.userName.trim().length > 0
     ? parsed.userName.trim()

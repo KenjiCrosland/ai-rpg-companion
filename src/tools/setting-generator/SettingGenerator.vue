@@ -189,6 +189,8 @@ import {
   generateCharacterCandidates,
   pickRandomTension,
   getBannedTropesForGeneration,
+  detectCozyMode,
+  detectLowStakesTension,
 } from './utils/setting-dimensions.mjs';
 import { combineSettingOverview } from '@/util/combineSettingOverview.mjs';
 import '@rei/cedar/dist/style/cdr-link.css';
@@ -840,6 +842,22 @@ async function generateSetting(payload = {}) {
   } catch (e) {
     console.error('Setting dimension inference failed:', e);
     inferred = { type: null, character: null, register: null, userName: null, tension: null };
+  }
+
+  // Tension override layer: user tonal signals take precedence over
+  // the rolled tension. Order matters — cozy is the strongest signal
+  // ("no tension at all"), so it wins. Low-stakes signals (sacred,
+  // festive, wondrous, scholarly, hospitable, generational) route to
+  // a specific lower-stakes tension that has some texture but
+  // bounded stakes. If neither override fires, the rolled tension
+  // stands.
+  if (detectCozyMode(description, lore)) {
+    inferred.tension = 'cozy-routine';
+  } else {
+    const lowStakesTension = detectLowStakesTension(description, lore);
+    if (lowStakesTension) {
+      inferred.tension = lowStakesTension;
+    }
   }
 
   // Persist the dimensional metadata so sublocations can inherit

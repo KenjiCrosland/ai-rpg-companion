@@ -243,6 +243,49 @@ ${expressionModesBlock || '(no specific guidance — express the qualities coher
 }
 
 /**
+ * Lore-preservation directive. When the user provides lore that
+ * contains specific named entities (festivals, characters, places,
+ * organizations, customs), production observation showed the LLM
+ * treating those names as creative inspiration — keeping the
+ * imagery but reframing or renaming the institutions. Users
+ * extending their existing worldbuilding need named entities to
+ * survive the generation verbatim.
+ *
+ * Returns an empty string when no lore is provided. When lore is
+ * present, the directive instructs the LLM to preserve named
+ * entities with the user's exact terminology, treat contradictions
+ * as creative challenges to reconcile rather than license to drop
+ * names, and accept passing mentions when an entity doesn't fit
+ * centrally.
+ */
+function buildLorePreservationBlock(lore) {
+  if (!lore || typeof lore !== 'string' || !lore.trim()) return '';
+  return `LORE PRESERVATION:
+Specific named entities in the user-provided lore are AUTHORITATIVE and must be preserved with the user's exact terminology. This includes:
+- Named festivals, holidays, or recurring events (e.g., "the Long Night," "the Bone Feast")
+- Named characters, including player characters and their relationships
+- Named places (districts, landmarks, neighboring settlements)
+- Named organizations (guilds, orders, factions, cults)
+- Named customs, rituals, or institutions
+
+These elements must appear in the generated output using the user's exact names and basic framing. Build the setting AROUND user-named details rather than replacing them with thematically-similar inventions. If the user says "Long Night festival," the output must include the Long Night festival by that name — not a reframed institution that shares the festival's imagery.
+
+UNNAMED PC REFERENCES AND USER-REQUESTED CONNECTIONS are also AUTHORITATIVE, even without proper nouns. When the user describes a PC's relationship to the setting or requests specific narrative hooks, the output must acknowledge those connections at minimum as passing references:
+- "my halfling cleric grew up here" → the setting must acknowledge the cleric's origin (a hint of family, a familiar street or building from their childhood, an old neighbor who remembers them, a parent's grave or homestead)
+- "old friend or family member" → at minimum one such NPC must appear in the npc_list or be mentioned in passing
+- "the warlock should have something interesting waiting for them" → some setting element must support that hook (a strange visitor seeking them, an inherited letter, a recurring dream that pulls them toward a local landmark)
+- "the cleric should feel out of place" → some setting element must specifically support that emotional beat
+- "PCs are stopping by between adventures" → the setting must read as a place adventurers can rest and resupply, not a crisis-point that demands their intervention
+
+Drop NONE of the user's requested connections. If a connection seems to conflict with another constraint, find a way to reconcile rather than omitting.
+
+If user-named entities seem to conflict with each other or with other constraints, find ways to reconcile them rather than dropping any. Contradictions in user input are creative challenges to resolve, not permission to ignore specific named elements.
+
+Passing mentions are acceptable when entities don't fit centrally. A user-named character mentioned in passing acknowledges the user's worldbuilding even if that character isn't central to the setting.
+`;
+}
+
+/**
  * Builds the late-context framing that sits immediately before the
  * JSON schema: anti-clustering trope bans and the tension-guidance
  * block. These two are positioned for maximum salience at the
@@ -269,11 +312,13 @@ ${tensionBlock}`;
 export function settingOverviewPrompt(args = {}) {
   const constraints = buildSettingConstraints(args);
   const framing = buildSettingFraming(args);
+  const lorePreservation = buildLorePreservationBlock(args.lore);
 
   return `Generate a detailed setting overview using the following constraints. These are FULLY-SPECIFIED inputs from an upstream inference call — do not override or substitute them.
 
 ${constraints}
 
+${lorePreservation}
 ${framing}
 Return JSON with the following fields. Temperature: 0.9. Keep sentences concise; avoid run-on prose.
 
@@ -331,6 +376,13 @@ All proper nouns MUST match this register. This sub-location inherits the parent
   const tensionBlock = buildTensionGuidanceBlock(tension);
   const fantasyTextureBlock = buildFantasyTextureBlock(register);
   const antiClusteringBlock = buildAntiClusteringBlock(bannedTropes);
+  // Lore preservation applies when the parent setting carries lore
+  // (which may itself contain named entities the user established
+  // when generating the parent) or when the sub-location stub
+  // description carries names the user added or edited.
+  const lorePreservation = buildLorePreservationBlock(
+    [parentLore, subLocationDescription].filter(Boolean).join('\n')
+  );
 
   return `Generate a detailed overview for a sub-location within a larger setting.
 
@@ -360,6 +412,7 @@ ${expressionModesBlock || '(no specific guidance — express the qualities coher
 - Avoid common fantasy tropes and cliches.
 - Do NOT use these NPC names: ${FORBIDDEN_NPC_NAMES}.
 
+${lorePreservation}
 ${antiClusteringBlock}
 ${tensionBlock}
 Return JSON with the same field structure as a top-level setting. Temperature: 0.9.

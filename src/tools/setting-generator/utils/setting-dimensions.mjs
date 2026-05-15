@@ -431,6 +431,20 @@ export const SETTING_TENSIONS = [
   'reputational-burden',
   'inheritance-burden',
   'forgotten-knowledge',
+  // Lower-stakes tensions — stable communities with social /
+  // spiritual / intellectual / aesthetic frictions, NOT survival
+  // stakes. These contribute to variety even on non-tonally-directed
+  // generations. When non-conflict tonal signals appear in user
+  // input (sacred, festive, wondrous, scholarly, hospitable,
+  // apprenticeship), the orchestrator routes specifically to one of
+  // these via detectLowStakesTension.
+  'communal-friction',
+  'sacred-practice',
+  'celebration-preparation',
+  'wonder-stewardship',
+  'knowledge-cultivation',
+  'hospitality-strain',
+  'generational-transition',
 ];
 
 export const TENSION_DESCRIPTIONS = {
@@ -449,6 +463,26 @@ export const TENSION_DESCRIPTIONS = {
   'reputational-burden': 'the setting is famous or infamous for something, and that reputation now constrains its choices. Pilgrims overrun a sacred site; duelists flock to a martial city; a trade-port must keep its image polished. The fame became a cage; the community performs itself for outsiders.',
   'inheritance-burden': 'ancestors built (or did) something — a structure, an oath, a precedent, a debt — and the current generation maintains it or lives with the consequences. The inheritance may be neutral or even prized, but it shapes everything. Distinct from recovery-rebuilding (post-disaster repair).',
   'forgotten-knowledge': 'institutional memory is decaying. The people who knew how to do X are gone, books are crumbling, the dialect is dying, the technique is half-remembered. The community is losing its grip on its own competence and the identity that depended on it.',
+  // Lower-stakes tensions. Stakes are social / spiritual /
+  // intellectual / aesthetic, NOT survival. Resolution doesn\'t
+  // require violence or political upheaval. The community continues
+  // functioning regardless of outcome. Multiple stakeholders hold
+  // reasonable positions. Closing line should match the everyday-
+  // stakes register, not crisis-completion.
+  'communal-friction': 'low-stakes social friction within an otherwise stable community — a brewing rivalry between two guilds, a festival custom dispute, an awkward newcomer integration, a generational disagreement about how things should be done. Stakes are social or aesthetic, NOT survival; the community continues functioning regardless of outcome. Resolution doesn\'t require violence or political upheaval. Multiple parties hold reasonable positions. The friction is the texture of daily life rather than a problem demanding heroic resolution. Closing line: warm and settled, not crisis-completion.',
+  'sacred-practice': 'internal tension in a religious or contemplative community — a dispute over scriptural interpretation, pilgrim-management logistics, novice training disagreements, a debate about an obscure point of liturgy, the rhythms of monastic or temple life. Stakes are spiritual and institutional, NOT physical. Resolution comes through ritual practice, reasoned debate, or quiet accommodation — never violence. The community continues its devotional life regardless of outcome. Multiple stakeholders bring legitimate theological / pedagogical perspectives. Closing line evokes ongoing practice, not dramatic conclusion.',
+  'celebration-preparation': 'tension surrounding an upcoming festival, ceremony, or seasonal observance — performer rivalry, logistics complications, social dynamics around who hosts whom, last-year-vs-this-year planning disputes, food-and-drink prep stresses. Stakes are aesthetic, social, or reputational, NOT survival. Resolution unfolds through the celebration itself; the community gathers regardless of how the preparation goes. Multiple participants have stakes in how it goes. Closing line evokes the approach of the celebration, not crisis.',
+  'wonder-stewardship': 'tension in a community that holds something wondrous — a sacred spring, a singing tree, a phoenix nest, a healing pool, a planar gateway, a star-touched stone. Access management, commercialization debates, stewardship questions about who tends it, how often it can be witnessed, what the etiquette is. Stakes are aesthetic and custodial, NOT survival; the wonder is stable and the community has held it for generations. Resolution is ongoing community negotiation, not crisis. Multiple parties value the wonder differently. Closing line evokes continued stewardship.',
+  'knowledge-cultivation': 'tension in a scholarly or apprenticeship community — intellectual rivalry between schools of thought, pedagogical disputes about how a craft is taught, access politics around rare books or instruments, generational transmission of technique. Stakes are intellectual and reputational, NOT survival. Resolution comes through debate, publication, scholarly demonstration. The community continues its scholarship regardless of who wins which argument. Multiple positions are tenable. Closing line evokes the continuing intellectual life of the place.',
+  'hospitality-strain': 'tension in a liminal or transit community — managing seasonal influx of pilgrims, travelers, or caravans, balancing locals-vs-visitors, capacity limits, etiquette tensions between resident and newcomer, the question of how welcoming to be. Stakes are social and economic, NOT survival; the town has weathered worse and the travelers keep coming. Resolution unfolds through accommodation, custom, and seasonal rhythms. Multiple stakeholders (locals, regulars, newcomers, guild-houses) have legitimate positions. Closing line evokes the continued passage of travelers.',
+  'generational-transition': 'communal-scale tension around the transmission of craft, role, or knowledge — an aging master without a clear successor, a guild deciding how to evolve its practice, a ritual tradition questioning whether to admit new kinds of members, an apprenticeship pipeline narrowing. Stakes are cultural and continuity-of-practice, NOT survival. Resolution comes through apprenticeship, evolution of practice, or gentle replacement. The craft / role / knowledge persists regardless. Multiple parties have legitimate views on continuity vs. change. Closing line evokes the bridge between generations.',
+  // cozy-routine is NOT part of the random pool (SETTING_TENSIONS).
+  // It's only reachable when the orchestrator detects cozy / downtime
+  // signals in user input via detectCozyMode and overrides the rolled
+  // tension. The description below tells the LLM how to interpret
+  // every "central tension" reference in the prompt — as the absence
+  // of dramatic tension rather than its presence.
+  'cozy-routine': 'NO dramatic tension. The user has explicitly requested cozy / peaceful / downtime / between-adventures content; the setting is in a stable, warm, low-stakes rhythm. The "central dynamic" is the texture of routine daily life — seasonal labor, market days, neighborly rhythms, gentle traditions, the kind of place adventurers go to rest and resupply. "responses_in_motion" describes pleasant or warmly-mundane current happenings — a harvest in progress, a wedding being planned, a visiting bard, a guild dispute resolved amicably, a new baker setting up shop. "present_state" is mood and atmosphere, not stakes. NO forcing decisions, NO imminent threats, NO political crises, NO succession schisms, NO looming-darkness foreshadowing, NO "borrowed-time" or "the calm before" framing. Recent events are routine, atmospheric, or warmly-mundane. The closing line is settled and warm — the setting feels safe to return to.',
 };
 
 /**
@@ -459,6 +493,140 @@ export const TENSION_DESCRIPTIONS = {
  */
 export function pickRandomTension(rng = Math.random) {
   return SETTING_TENSIONS[Math.floor(rng() * SETTING_TENSIONS.length)];
+}
+
+/**
+ * Cozy-mode signals. Production observation: when users explicitly
+ * requested cozy / peaceful / downtime content, the random tension
+ * roll still produced dramatic tension (a "rising hill-king" decision
+ * point for a "safe and warm" village). The cozy framing only got
+ * applied to sensory surface, not narrative spine.
+ *
+ * detectCozyMode scans user input for any of these phrases. When
+ * matched, the orchestrator overrides the random tension to
+ * 'cozy-routine' (not in the random pool) so the main prompt's
+ * tension-guidance block tells the LLM to produce stable, warm,
+ * low-stakes content rather than dramatic stakes.
+ *
+ * The signal list is curated for low false-positive risk: phrases
+ * here are almost always intentional tonal markers when they appear
+ * in setting-generation lore. Add to this list as new production
+ * cases surface phrasings that should trigger cozy mode.
+ */
+const COZY_SIGNALS = [
+  'cozy',
+  'downtime',
+  'between adventures',
+  'slice-of-life',
+  'slice of life',
+  'low-stakes',
+  'low stakes',
+  'rest and resupply',
+  'safe and warm',
+  'safe, warm',
+  'safe, peaceful',
+  'homecoming',
+  'no political intrigue',
+  'no political',
+  'no crisis',
+  'no intrigue',
+  'no drama',
+  'peaceful',
+  'gentle',
+  'tranquil',
+  'idyllic',
+  'pastoral',
+  'lazy',
+];
+
+/**
+ * Detect cozy-mode tonal request in user input. Returns true if any
+ * COZY_SIGNALS phrase appears in description or lore (case-insensitive).
+ * False otherwise.
+ */
+export function detectCozyMode(description = '', lore = '') {
+  const text = `${description || ''}\n${lore || ''}`.toLowerCase();
+  return COZY_SIGNALS.some(signal => text.includes(signal));
+}
+
+/**
+ * Low-stakes signal → specific tension mapping. Each entry's signals
+ * are checked in order; first match wins. The mapped tension is one
+ * of the lower-stakes tensions added to SETTING_TENSIONS — community
+ * continues functioning, stakes are aesthetic / social / spiritual /
+ * intellectual rather than survival.
+ *
+ * This is a DIFFERENT layer from cozy-mode. Cozy → cozy-routine (no
+ * tension at all). Low-stakes signals → a specific tension with some
+ * texture but bounded stakes. Cozy detection runs first; if it
+ * matches, this layer is skipped.
+ */
+const LOW_STAKES_SIGNAL_MAP = [
+  {
+    signals: [
+      'sacred', 'contemplative', 'monastic', 'devotional',
+      'pilgrim', 'pilgrimage', 'cloister', 'meditation',
+      'religious order', 'temple-life',
+    ],
+    tension: 'sacred-practice',
+  },
+  {
+    signals: [
+      'festival', 'celebration', 'ceremony', 'festive',
+      'midsummer', 'midwinter', 'harvest feast', 'feast day',
+      'carnival',
+    ],
+    tension: 'celebration-preparation',
+  },
+  {
+    signals: [
+      'wondrous', 'sublime', 'marvelous', 'wonder',
+      'phenomenon', 'miraculous', 'numinous',
+    ],
+    tension: 'wonder-stewardship',
+  },
+  {
+    signals: [
+      'scholarly', 'academic', 'pedagogical',
+      'library', 'archive', 'university', 'school of thought',
+      'apprentice', 'apprenticeship', 'craft mastery',
+    ],
+    tension: 'knowledge-cultivation',
+  },
+  {
+    signals: [
+      'hospitable', 'hospitality', 'way station', 'waystation',
+      'caravan stop', 'travelers stopping', 'wayfarers',
+      'pilgrim hostel', 'crossroads inn',
+    ],
+    tension: 'hospitality-strain',
+  },
+  {
+    signals: [
+      'generational transition', 'aging master', 'succession of craft',
+      'passing the torch', 'inheriting the practice',
+    ],
+    tension: 'generational-transition',
+  },
+];
+
+/**
+ * Detect a low-stakes tonal signal in user input and return the
+ * mapped tension key. Returns null when no signal matches.
+ *
+ * Caller order: detectCozyMode first (strongest signal → cozy-routine
+ * override). If not cozy, call this — when it returns a tension,
+ * override the rolled tension to that value. Otherwise, the rolled
+ * tension stands.
+ */
+export function detectLowStakesTension(description = '', lore = '') {
+  const text = `${description || ''}\n${lore || ''}`.toLowerCase();
+  for (const entry of LOW_STAKES_SIGNAL_MAP) {
+    if (entry.signals.some(signal => text.includes(signal))) {
+      return entry.tension;
+    }
+  }
+  return null;
 }
 
 /**
