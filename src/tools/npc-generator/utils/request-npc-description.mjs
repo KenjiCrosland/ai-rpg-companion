@@ -1,7 +1,7 @@
 import { generateNPCDescription } from "./npc-generator.mjs";
 import { isIntelligentCreature } from "./statblock-context.mjs";
 
-export async function requestNPCDescription(typeOfNPC, extraDescription = {}, sequentialLoading = false, emit) {
+export async function requestNPCDescription(typeOfNPC, extraDescription = {}, sequentialLoading = false, emit, options = {}) {
     //TODO: pass an options object
   const fullPrompt = () => {
     // Check for statblock context first
@@ -67,7 +67,21 @@ export async function requestNPCDescription(typeOfNPC, extraDescription = {}, se
       part2: (npcDescription) => handlePart(2, npcDescription),
       error1: (error) => handleError(error),
       error2: (error) => handleError(error),
-    }, { isCreatureProfile });
+    }, {
+      isCreatureProfile,
+      // Two register slots: source NPC and relationships. The caller
+      // (NPCGenerator.vue) decides each independently — `sourceRegister`
+      // is null when a user-named character makes whitelist injection
+      // counterproductive; `relationshipsRegister` mirrors the inferred
+      // register regardless of userName.
+      sourceRegister: options.sourceRegister !== undefined
+        ? options.sourceRegister
+        : (options.register || null),
+      relationshipsRegister: options.relationshipsRegister !== undefined
+        ? options.relationshipsRegister
+        : (options.register || null),
+      fantasyRace: options.fantasyRace || null,
+    });
   } catch (error) {
     handleError(error);
   }

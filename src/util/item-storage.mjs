@@ -9,6 +9,8 @@
  */
 
 import { addReference, getReferencesForEntity, removeReferencesForEntity, referenceExists } from './reference-storage.mjs';
+import { detectRegisterFromInput } from '@/shared/detect-register-from-input.mjs';
+import { registerList } from '@/shared/register-list.mjs';
 
 const STORAGE_KEY = 'savedItems';
 
@@ -371,6 +373,20 @@ export function buildSeededInputFromItem({ fromId, entityName }) {
     ? selectedStubs[0].source_quote.trim() || undefined
     : undefined;
 
+  // Resolve the item's naming register so the NPC generator (and any
+  // future cross-tool seed consumer) can inherit it instead of re-
+  // detecting from prose. Items generated after the register-persistence
+  // change carry `selectedRegister` directly. Legacy items don't, so we
+  // backfill via cultural detection on the item's combined text. Falls
+  // through to null when nothing is detectable — caller can then run its
+  // own detection on user-provided context.
+  const register = item.selectedRegister
+    || detectRegisterFromInput(
+        `${item.name || ''} ${physical} ${lore}`.trim(),
+        registerList,
+      )
+    || null;
+
   return {
     source: {
       type: 'item',
@@ -383,6 +399,7 @@ export function buildSeededInputFromItem({ fromId, entityName }) {
       rarity: (item.rarity || '').trim(),
       lore,
       physical_description: physical,
+      register,
     },
     entities: selectedStubs.map(stub => ({
       type: 'npc',

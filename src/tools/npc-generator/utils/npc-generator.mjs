@@ -59,11 +59,34 @@ export function adaptCreatureProfileToNPC(creatureProfile) {
   };
 }
 
+/**
+ * Validate Part 2 (relationships) JSON.
+ *
+ * Required shape: `relationships` is a flat object whose values are
+ * non-empty strings. The most common failure mode this rejects is the
+ * LLM wrapping the three relationships inside an extra layer keyed by
+ * the source NPC's name — DeepSeek occasionally produces
+ *   { relationships: { "Source NPC": { "Target1": "...", ... } } }
+ * instead of the flat
+ *   { relationships: { "Target1": "...", "Target2": "...", "Target3": "..." } }
+ * Rejecting nested values triggers `generateGptResponse`'s retry layer,
+ * which combined with the prompt's explicit anti-example resolves the
+ * shape on the second attempt in practice.
+ *
+ * Also rejects: empty `relationships` (no entries usable), array
+ * `relationships` (non-object), null `relationships`, and any value
+ * that isn't a non-empty string.
+ */
 export function validatePart2(jsonString) {
   try {
     const jsonObj = JSON.parse(jsonString);
-    const keys = ['relationships'];
-    return keys.every((key) => key in jsonObj);
+    if (!jsonObj || typeof jsonObj !== 'object' || Array.isArray(jsonObj)) return false;
+    if (!('relationships' in jsonObj)) return false;
+    const relationships = jsonObj.relationships;
+    if (!relationships || typeof relationships !== 'object' || Array.isArray(relationships)) return false;
+    const values = Object.values(relationships);
+    if (values.length === 0) return false;
+    return values.every(v => typeof v === 'string' && v.trim().length > 0);
   } catch (error) {
     return false;
   }
@@ -72,9 +95,27 @@ export function validatePart2(jsonString) {
 export async function generateNPCDescription(typeOfPlace, callbacks, options = {}) {
     try {
       const isCreatureProfile = options.isCreatureProfile || false;
+      // Two register slots — distinct because the orchestrator may
+      // suppress the whitelist for the source NPC (when userName was
+      // detected) while still injecting it for relationships. The
+      // upstream caller (NPCGenerator.vue) owns this decision.
+      // Backwards-compat: when only `register` is supplied, both
+      // slots use it.
+      const register = options.register || null;
+      const sourceRegister = options.sourceRegister !== undefined
+        ? options.sourceRegister
+        : register;
+      const relationshipsRegister = options.relationshipsRegister !== undefined
+        ? options.relationshipsRegister
+        : register;
+      const fantasyRace = options.fantasyRace || null;
 
       // Use different prompt and validator for creature profiles
-      const npcPrompt = createNPCPrompt(typeOfPlace, { isCreatureProfile });
+      const npcPrompt = createNPCPrompt(typeOfPlace, {
+        isCreatureProfile,
+        register: sourceRegister,
+        fantasyRace,
+      });
       const validator = isCreatureProfile ? validateCreatureProfile : validateNPCDescription;
       const npcJsonString = await generateGptResponse(npcPrompt, validator);
       let npcDescriptionPart1 = JSON.parse(npcJsonString);
@@ -88,10 +129,13 @@ export async function generateNPCDescription(typeOfPlace, callbacks, options = {
         callbacks.part1(npcDescriptionPart1);
       }
 
-      // Pass isCreatureProfile flag to Part 2 prompt
       const part2Prompt = createRelationshipAndTipsPrompt(
         JSON.stringify(npcDescriptionPart1),
-        { isCreatureProfile }
+        {
+          isCreatureProfile,
+          register: relationshipsRegister,
+          fantasyRace,
+        }
       );
       const relationshipJsonString = await generateGptResponse(part2Prompt, validatePart2);
       const npcDescriptionPart2 = JSON.parse(relationshipJsonString);

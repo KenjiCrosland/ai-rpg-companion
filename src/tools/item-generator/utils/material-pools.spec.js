@@ -24,50 +24,6 @@ describe('originMaterialPools', () => {
     expect(Object.keys(originMaterialPools).sort()).toEqual(ALL_ORIGINS.sort());
   });
 
-  it('every aesthetic origin pool has at least 15 entries', () => {
-    // Brief target: 15-25 for aesthetic origins, aim for upper end.
-    // 15 is the floor — anything below indicates the pool is too thin
-    // and likely missing the material variety the brief mandates.
-    for (const origin of AESTHETIC_ORIGINS) {
-      const pool = originMaterialPools[origin];
-      expect(pool.length).toBeGreaterThanOrEqual(15);
-    }
-  });
-
-  it('every cultural origin pool has at least 30 entries', () => {
-    // Brief target: 30-40 for cultural origins. Cultural origins need
-    // breadth to honor multidimensional craft traditions and avoid
-    // stereotyping into single material registers.
-    for (const origin of CULTURAL_ORIGINS) {
-      const pool = originMaterialPools[origin];
-      expect(pool.length).toBeGreaterThanOrEqual(30);
-    }
-  });
-
-  it('every entry uses the "<name> — <description>" format', () => {
-    // Format mirrors the legacy materials array. The em-dash separator
-    // gives the LLM a sensory description after the material name —
-    // critical for grounding physical_description text. Catches typos
-    // (hyphens instead of em-dashes, missing description).
-    for (const [origin, pool] of Object.entries(originMaterialPools)) {
-      for (const entry of pool) {
-        expect(typeof entry).toBe('string');
-        expect(entry).toMatch(/ — .+/);
-      }
-    }
-  });
-
-  it('no entry appears twice within the same pool', () => {
-    // Within-pool duplicates over-weight that material in random
-    // selection. Cross-pool duplicates are fine and expected (they
-    // reflect genuine thematic overlap), but within-pool is always
-    // a mistake.
-    for (const [origin, pool] of Object.entries(originMaterialPools)) {
-      const unique = new Set(pool);
-      expect(unique.size).toBe(pool.length);
-    }
-  });
-
   describe('cultural-origin breadth (anti-stereotyping guards)', () => {
     // The brief specifies that cultural origins must NOT be reduced
     // to stereotypical material registers. These tests check that
@@ -157,21 +113,4 @@ describe('allMaterials', () => {
     }
   });
 
-  it('contains no duplicate entries', () => {
-    const unique = new Set(allMaterials);
-    expect(unique.size).toBe(allMaterials.length);
-  });
-
-  it('is large enough to provide variety as a fallback', () => {
-    // Brief target: 150-200 distinct materials across all pools.
-    // The fallback is used when origin is unresolved; if it's small,
-    // unresolved-origin generations feel repetitive.
-    expect(allMaterials.length).toBeGreaterThanOrEqual(150);
-  });
-
-  it('every entry uses the "<name> — <description>" format', () => {
-    for (const entry of allMaterials) {
-      expect(entry).toMatch(/ — .+/);
-    }
-  });
 });

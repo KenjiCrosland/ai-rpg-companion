@@ -13,6 +13,7 @@ import {
   getNPCReferencesForItem,
   findItemStubsForNPC,
   resetItemStubsForDeletedNPC,
+  buildSeededInputFromItem,
 } from './item-storage.mjs';
 
 class LocalStorageMock {
@@ -311,6 +312,85 @@ describe('item-storage', () => {
       const items = JSON.parse(localStorage.getItem('savedItems'));
       expect(items[0].related_npcs[0].npc_id).toBe('npc_yelena_001');
       expect(items[0].related_npcs[1].npc_id).toBeNull();
+    });
+  });
+
+  describe('buildSeededInputFromItem — register propagation', () => {
+    it('propagates persisted selectedRegister onto seed.source.register', () => {
+      // Items generated after the register-persistence change carry
+      // selectedRegister directly. The seed must surface it so the NPC
+      // generator can use it without re-detection.
+      saveItemToStorage({
+        name: 'Sigrún\'s Spear',
+        item_type: 'Weapon',
+        rarity: 'Rare',
+        physical_description: 'A spear with rune-etched haft.',
+        lore: 'Wielded by Sigrún in the long winter.',
+        selectedRegister: 'Old-Norse-inspired: Eddaic register (e.g., Sigrún)',
+        related_npcs: [
+          { name: 'Sigrún', role_brief: 'wielder', context: '', npc_id: null, npc_folder: null },
+        ],
+      });
+
+      const seed = buildSeededInputFromItem({
+        fromId: 'Sigrún\'s Spear',
+        entityName: 'Sigrún',
+      });
+
+      expect(seed.source.register).toBe(
+        'Old-Norse-inspired: Eddaic register (e.g., Sigrún)',
+      );
+    });
+
+    it('returns null register for legacy items with no selectedRegister (cultural detection deleted)', () => {
+      // Legacy items predate the persistence change. Earlier versions
+      // ran cultural keyword detection over name + lore +
+      // physical_description to recover a register from text signals
+      // (Sigrún → Norse-inspired). The detection map was deleted during
+      // the per-register migration sweep — the LLM's LANGUAGE REGISTER
+      // OVERRIDE block handles cultural signals at generation time
+      // instead. Legacy items now seed with register=null and the
+      // generator's override authority takes over.
+      saveItemToStorage({
+        name: 'Sigrún\'s Hammer',
+        item_type: 'Weapon',
+        rarity: 'Rare',
+        physical_description: 'A heavy iron hammer with rune-etched haft.',
+        lore: 'Forged by Sigrún and bearing the mark of Mjolnir-style runework.',
+        related_npcs: [
+          { name: 'Sigrún', role_brief: 'wielder', context: '', npc_id: null, npc_folder: null },
+        ],
+      });
+
+      const seed = buildSeededInputFromItem({
+        fromId: 'Sigrún\'s Hammer',
+        entityName: 'Sigrún',
+      });
+
+      expect(seed.source.register).toBeNull();
+    });
+
+    it('returns null register when legacy item has no detectable signal', () => {
+      saveItemToStorage({
+        name: 'Plain Dagger',
+        item_type: 'Weapon',
+        rarity: 'Common',
+        physical_description: 'An unremarkable iron dagger.',
+        lore: 'No story is known about this dagger.',
+        related_npcs: [
+          { name: 'A Bystander', role_brief: 'observer', context: '', npc_id: null, npc_folder: null },
+        ],
+      });
+
+      const seed = buildSeededInputFromItem({
+        fromId: 'Plain Dagger',
+        entityName: 'A Bystander',
+      });
+
+      // Detection on undetectable text returns null (which the caller
+      // treats as "no register signal from the item — fall through to
+      // user-input detection").
+      expect(seed.source.register).toBe(null);
     });
   });
 });

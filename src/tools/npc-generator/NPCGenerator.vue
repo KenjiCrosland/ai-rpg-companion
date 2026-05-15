@@ -4,15 +4,14 @@
             <div class="sidebar-content">
                 <div class="sidebar-scroll">
                     <cdr-accordion-group>
-                        <cdr-accordion level="3" v-for="(folder, folderName) in npcs" :key="folderName"
-                            :id="folderName" :opened="openedFolders[folderName]"
+                        <cdr-accordion level="3" v-for="(folder, folderName) in npcs" :key="folderName" :id="folderName"
+                            :opened="openedFolders[folderName]"
                             @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
                             <template #label>
                                 {{ folderName }}
                             </template>
                             <ul class="npc-list">
-                                <li v-for="(npc, index) in folder" :key="index"
-                                    :id="`npc-${folderName}-${index}`"
+                                <li v-for="(npc, index) in folder" :key="index" :id="`npc-${folderName}-${index}`"
                                     :class="{ 'active-tab': currentNPCIndex === index && activeFolder === folderName }">
                                     <button class="npc-button" @click="selectNPC(folderName, index)">
                                         {{ npc.npcDescriptionPart1?.character_name || 'Unnamed NPC' }}
@@ -59,11 +58,8 @@
                         <h1>Create NPC: {{ seedStubName }}</h1>
                         <p class="value-prop">
                             From your {{ seedSourceType }}
-                            <a
-                                href="#"
-                                class="seed-source-link"
-                                @click.prevent="navigateBackToSeedSource"
-                            >{{ seedSourceName }}</a>
+                            <a href="#" class="seed-source-link" @click.prevent="navigateBackToSeedSource">{{
+                                seedSourceName }}</a>
                         </p>
                     </template>
                     <template v-else>
@@ -82,19 +78,32 @@
                             <!-- Examples are orientation for fresh visitors; in a
                                  seeded flow the field is already pre-filled with
                                  the right content, and alternatives are noise. -->
-                            <template v-if="!isSeededFlow" #helper-text-bottom>Examples: A notable tavern patron, a shugenja of the Phoenix
-                                clan,
-                                a sentient gazebo named Gary, an edgerunner suffering from bouts of cyberpsychosis, a
+                            <template v-if="!isSeededFlow" #helper-text-bottom>Examples: A notable tavern patron, a
+                                drunken ronin,
+                                a sentient gazebo named Gary, a cyberpunk hacker losing themselves to the implants, a
                                 goblin named Boblin</template>
                         </cdr-input>
 
-                        <StatblockFuzzySearch
-                            v-model="selectedStatblock"
-                            label="Associated Statblock"
-                            placeholder="Search for a statblock..."
-                            :optional="true"
-                            :highlight-on-mount="isDeepLink"
-                        />
+                        <StatblockFuzzySearch v-model="selectedStatblock" label="Associated Statblock"
+                            placeholder="Search for a statblock..." :optional="true" :highlight-on-mount="isDeepLink" />
+
+                        <!-- TEST-REGISTER-OVERRIDE — dev only -->
+                        <fieldset v-if="isDev" class="test-register-override">
+                            <legend>TEST: Register Override (dev only)</legend>
+                            <label>
+                                Register:
+                                <select v-model="testRegisterOverride">
+                                    <option value="">Auto (use inference / random)</option>
+                                    <option v-for="opt in registerOverrideOptions" :key="opt.value" :value="opt.value">
+                                        {{ opt.label }}
+                                    </option>
+                                </select>
+                            </label>
+                            <p v-if="lastUsedRegister" class="test-register-override__last">
+                                Last generation used: <code>{{ lastUsedRegister }}</code>
+                            </p>
+                        </fieldset>
+                        <!-- END TEST-REGISTER-OVERRIDE -->
 
                         <ParActionButton type="submit" :disabled="loadingPart1" class="generate-button">Generate
                             NPC</ParActionButton>
@@ -112,13 +121,15 @@
                     <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
                     <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
                         <template #body>
-                            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
+                            <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs
+                                across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
                         </template>
                         <template #features>
                             <li>Cross-device save and load — your NPCs sync between browsers and devices.</li>
                             <li>Unlimited combat statblock generation — no daily cap.</li>
                             <li>
-                                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+                                <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and
+                                    benefits on Patreon</a><span aria-hidden="true"> →</span>
                             </li>
                         </template>
                     </PatreonCallout>
@@ -127,7 +138,9 @@
                          status reads as a coherent block, matching the
                          upsell callout above. -->
                     <ParCallout v-else>
-                        <p v-if="!isSeededFlow">All features unlimited. NPC data is saved on this browser. Export to a file to use on another device.</p>
+                        <p v-if="!isSeededFlow">All features unlimited. NPC data is saved on this browser. Export to a
+                            file to
+                            use on another device.</p>
                         <ParActionButton @click="showDataManagerModal = true">
                             Save/Load Data from a File
                         </ParActionButton>
@@ -140,55 +153,44 @@
                 v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
 
                 <!-- NPC Card (always shown when loading or data exists) -->
-                <NPCCard
-                    v-if="loadingPart1 || npcDescriptionPart1"
-                    :npc="normalizeGeneratorNPC(currentNPC)"
-                    :origin="computedOrigin"
-                    :source-type="computedSourceType"
-                    :source-name="computedSourceName"
-                    :source-id="computedSourceId"
-                    :npc-id="currentNPC?.npc_id"
-                    :is-editing="isEditingNPC"
-                    :show-relationship-generator="true"
-                    :is-generating-relationship="loadingNewRelationship"
-                    :has-statblock="!!(npcDescriptionPart1?.statblock_name)"
-                    :editable="true"
-                    :show-delete="true"
-                    :show-npc-generator-link="false"
-                    :show-move-to-folder="!!(npcDescriptionPart2 && !loadingPart2)"
-                    :show-export="!!(npcDescriptionPart2 && !loadingPart2)"
-                    :export-open="showExport"
+                <NPCCard v-if="loadingPart1 || npcDescriptionPart1" :npc="normalizeGeneratorNPC(currentNPC)"
+                    :origin="computedOrigin" :source-type="computedSourceType" :source-name="computedSourceName"
+                    :source-id="computedSourceId" :npc-id="currentNPC?.npc_id" :is-editing="isEditingNPC"
+                    :show-relationship-generator="true" :is-generating-relationship="loadingNewRelationship"
+                    :has-statblock="!!(npcDescriptionPart1?.statblock_name)" :editable="true" :show-delete="true"
+                    :show-npc-generator-link="false" :show-move-to-folder="!!(npcDescriptionPart2 && !loadingPart2)"
+                    :show-export="!!(npcDescriptionPart2 && !loadingPart2)" :export-open="showExport"
                     :show-origin-note="!!(currentNPC?.typeOfPlace && currentNPC.typeOfPlace !== 'Uncategorized')"
-                    :loading-description="loadingPart1"
-                    :loading-relationships="loadingPart2 || loadingPart1"
-                    @start-edit="startEditingNPC"
-                    @save-edit="handleSaveEdit($event)"
-                    @cancel-edit="cancelEditNPC"
-                    @delete="deleteCurrentNPC"
-                    @generate-relationship="handleGenerateRelationship($event)"
-                    @move-to-folder="showFolderMover = !showFolderMover"
-                    @toggle-export="showExport = !showExport"
-                />
+                    :loading-description="loadingPart1" :loading-relationships="loadingPart2 || loadingPart1"
+                    @start-edit="startEditingNPC" @save-edit="handleSaveEdit($event)" @cancel-edit="cancelEditNPC"
+                    @delete="deleteCurrentNPC" @generate-relationship="handleGenerateRelationship($event)"
+                    @move-to-folder="showFolderMover = !showFolderMover" @toggle-export="showExport = !showExport" />
 
                 <!-- Below-card panels (folder mover, export, homebrewery link) -->
                 <div v-if="npcDescriptionPart2 && !loadingPart2 && !isEditingNPC">
 
                     <!-- Folder Mover Interface -->
-                    <div v-if="showFolderMover" class="folder-mover" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <div v-if="showFolderMover" class="folder-mover"
+                        style="margin-top: 1.5rem; padding: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
                         <h4 style="margin-top: 0; margin-bottom: 1rem;">Move NPC to Folder</h4>
 
-                        <cdr-select v-model="folderMoveTarget" label="Destination folder" prompt="Select a folder" background="secondary" style="margin-bottom: 1rem;">
+                        <cdr-select v-model="folderMoveTarget" label="Destination folder" prompt="Select a folder"
+                            background="secondary" style="margin-bottom: 1rem;">
                             <option v-for="folder in folderOptions" :key="folder" :value="folder">{{ folder }}</option>
                             <option value="__new__">+ Create new folder</option>
                         </cdr-select>
 
-                        <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name" background="secondary" style="margin-bottom: 1rem;" />
+                        <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name"
+                            background="secondary" style="margin-bottom: 1rem;" />
 
                         <div class="button-group" style="margin-top: 1rem;">
-                            <ParActionButton @click="handleFolderMove" :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
+                            <ParActionButton @click="handleFolderMove"
+                                :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
                                 Move NPC
                             </ParActionButton>
-                            <ParActionButton @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';" variant="secondary">
+                            <ParActionButton
+                                @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';"
+                                variant="secondary">
                                 Cancel
                             </ParActionButton>
                         </div>
@@ -222,7 +224,9 @@
                     </div>
                 </div>
                 <div v-if="npcDescriptionPart2 && !loadingPart2">
-                    <h3>{{ npcDescriptionPart1.statblock_name ? 'Associated Statblock' : 'Generate D&D 5e Statblock for ' + npcDescriptionPart1.character_name }}</h3>
+                    <h3>{{ npcDescriptionPart1.statblock_name ? 'Associated Statblock' :
+                        'Generate D&D 5e Statblock for' +
+                        npcDescriptionPart1.character_name }}</h3>
                     <div>
                         <!-- Generate or Attach Statblock (only show if no statblock attached) -->
                         <div v-if="!npcDescriptionPart1.statblock_name" class="generate-monster">
@@ -236,31 +240,39 @@
 
                             <div style="display: flex; gap: 0.5rem;">
                                 <ParActionButton @click="generateStatblock()">Generate Statblock</ParActionButton>
-                                <ParActionButton variant="secondary" @click="showAttachStatblockModal = true">Attach Statblock</ParActionButton>
+                                <ParActionButton variant="secondary" @click="showAttachStatblockModal = true">Attach
+                                    Statblock
+                                </ParActionButton>
                             </div>
                         </div>
 
                         <!-- Attach Statblock Modal (inline) -->
                         <div v-if="showAttachStatblockModal" class="attach-statblock-modal">
-                            <StatblockFuzzySearch
-                                v-model="attachStatblockSelection"
-                                label="Select a Statblock to Attach"
-                                placeholder="Search for a statblock..."
-                                :optional="false"
-                            />
+                            <StatblockFuzzySearch v-model="attachStatblockSelection"
+                                label="Select a Statblock to Attach" placeholder="Search for a statblock..."
+                                :optional="false" />
                             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                <ParActionButton @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">Attach</ParActionButton>
-                                <ParActionButton variant="secondary" @click="cancelAttachStatblock">Cancel</ParActionButton>
+                                <ParActionButton @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">
+                                    Attach
+                                </ParActionButton>
+                                <ParActionButton variant="secondary" @click="cancelAttachStatblock">Cancel
+                                </ParActionButton>
                             </div>
                         </div>
 
                         <!-- Statblock Not Found Warning -->
-                        <div v-if="npcDescriptionPart1?.statblock_name && !statblock && !loadingStatblockPart1 && !loadingStatblockPart2" class="statblock-not-found-message">
+                        <div v-if="npcDescriptionPart1?.statblock_name && !statblock && !loadingStatblockPart1 && !loadingStatblockPart2"
+                            class="statblock-not-found-message">
                             <p><strong>Statblock not found</strong></p>
-                            <p>The statblock "{{ npcDescriptionPart1.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
+                            <p>The statblock "{{ npcDescriptionPart1.statblock_name }}" was not found. It may have been
+                                deleted
+                                or renamed in the Statblock Generator.</p>
                             <div class="button-group">
-                                <ParActionButton @click="generateStatblock()" size="small">Regenerate Statblock</ParActionButton>
-                                <ParActionButton @click="clearStatblockReference()" variant="secondary" size="small">Clear Reference</ParActionButton>
+                                <ParActionButton @click="generateStatblock()" size="small">Regenerate Statblock
+                                </ParActionButton>
+                                <ParActionButton @click="clearStatblockReference()" variant="secondary" size="small">
+                                    Clear
+                                    Reference</ParActionButton>
                             </div>
                         </div>
 
@@ -272,12 +284,15 @@
                         <!-- Statblock Limit Message -->
                         <div v-if="statblockLimitReached" class="statblock-limit-message">
                             <p><strong>Statblock generation limit reached</strong></p>
-                            <p>You've reached your daily statblock generation limit (5 per 24 hours). Unlock unlimited access below.</p>
+                            <p>You've reached your daily statblock generation limit (5 per 24 hours). Unlock unlimited
+                                access
+                                below.</p>
                         </div>
 
                         <!-- Statblock Saved Message -->
                         <!-- Show link for custom statblocks (or legacy NPCs without source field) -->
-                        <div v-if="statblock && npcDescriptionPart1?.statblock_name && npcDescriptionPart1?.statblock_source !== 'srd'" class="statblock-saved-message">
+                        <div v-if="statblock && npcDescriptionPart1?.statblock_name && npcDescriptionPart1?.statblock_source !== 'srd'"
+                            class="statblock-saved-message">
                             <p>
                                 Edit this statblock in the
                                 <a href="#" @click.prevent="openInStatblockGenerator">Statblock Generator</a>
@@ -293,13 +308,15 @@
                 <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
                 <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
                     <template #body>
-                        <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
+                        <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across
+                            devices and unlocks unlimited combat statblock generation for your NPCs.</p>
                     </template>
                     <template #features>
                         <li>Cross-device save and load — your NPCs sync between browsers and devices.</li>
                         <li>Unlimited combat statblock generation — no daily cap.</li>
                         <li>
-                            <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
+                            <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits
+                                on Patreon</a><span aria-hidden="true"> →</span>
                         </li>
                     </template>
                 </PatreonCallout>
@@ -308,7 +325,8 @@
                      status reads as a coherent block, matching the
                      upsell callout above. -->
                 <ParCallout v-else>
-                    <p>All features unlimited. NPC data is saved on this browser. Export to a file to use on another device.</p>
+                    <p>All features unlimited. NPC data is saved on this browser. Export to a file to use on another
+                        device.</p>
                     <ParActionButton @click="showDataManagerModal = true">
                         Save/Load Data from a File
                     </ParActionButton>
@@ -342,17 +360,36 @@ import { normalizeGeneratorNPC, migrateNPCIds, migrateDungeonNPCsToSharedStorage
 import { migrateSourceTypeFromTypeOfPlace } from '@/util/migrate-source-type-from-type-of-place.mjs';
 import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { generateSingleRelationshipPrompt } from './npc-prompts.mjs';
+import { selectRegister } from '@/shared/select-register.mjs';
+import { detectRegisterFromInput } from '@/shared/detect-register-from-input.mjs';
+import { registerList, humanoidRegisterList } from '@/shared/register-list.mjs';
+import { inferRegisterAndName, FANTASY_UNSPECIFIED } from './utils/infer-register-and-name.mjs';
+
+// TEST-REGISTER-OVERRIDE — dev-only register selector (parallels the
+// item generator's version). process.env.NODE_ENV avoids the
+// import.meta parse error under Jest; Vite statically replaces it at
+// build time.
+const isDev = process.env.NODE_ENV !== 'production';
+const testRegisterOverride = ref('');
+const lastUsedRegister = ref('');
+const registerOverrideOptions = registerList
+    .map(p => ({
+        value: p,
+        label: p.length > 60 ? p.slice(0, 57) + '…' : p,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+// END TEST-REGISTER-OVERRIDE
 import { buildStatblockContext } from './utils/statblock-context.mjs';
 import { addReference, getReferencesForEntity, removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import {
-  loadSeededInput,
-  buildPrefillForSeed,
-  writeBackPromotedNPC,
-  addReferenceForSeed,
-  findStubsReferencingNPC,
-  resetStubsForDeletedNPC,
-  getToolForSourceType,
-  sourceExists,
+    loadSeededInput,
+    buildPrefillForSeed,
+    writeBackPromotedNPC,
+    addReferenceForSeed,
+    findStubsReferencingNPC,
+    resetStubsForDeletedNPC,
+    getToolForSourceType,
+    sourceExists,
 } from '@/util/seeded-input.mjs';
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';
@@ -1328,11 +1365,11 @@ function handleSaveEdit(editedData) {
     // show the new name. Linkage isn't broken either way (npc_id is
     // stable), but the displayed names go stale without this.
     if (
-      currentNPC.value?.npc_id &&
-      editedData.name &&
-      editedData.name !== previousName
+        currentNPC.value?.npc_id &&
+        editedData.name &&
+        editedData.name !== previousName
     ) {
-      renameNPCReferences(currentNPC.value.npc_id, editedData.name);
+        renameNPCReferences(currentNPC.value.npc_id, editedData.name);
     }
 
     // Show toast indicating where the NPC was updated
@@ -1568,6 +1605,74 @@ async function handleGenerateNPC() {
         extraDescription.statblock = selectedStatblock.value.statblock;
     }
 
+    // Three-path register resolution:
+    //   1. Seeded (NPC promoted from item) → use seed.register, no inference.
+    //   2. Empty user input → random fantasy register via selectRegister
+    //      across the FULL pool. Bulk-variety case where genre-shifts
+    //      onto Aberrant / Abyssal / Infernal / Primordial are welcome.
+    //   3. Non-empty user input → single combined inferRegisterAndName call.
+    //      The inference returns one of three signals:
+    //        - a register descriptor → use it directly. If the user
+    //          explicitly invoked a thematic register (Aberrant /
+    //          Abyssal / Infernal / Primordial), that genre commitment
+    //          is what they asked for.
+    //        - FANTASY_UNSPECIFIED → input is generic fantasy ("a tavern
+    //          patron", "a wandering merchant"). Route through random
+    //          selection across HUMANOID-ONLY registers
+    //          (`humanoidRegisterList`). Letting random selection land
+    //          on a thematic register here causes genre-displacement —
+    //          DeepSeek reads Aberrant as cosmic-horror commitment, not
+    //          as linguistic flavor, and produces cosmic-horror keepers
+    //          instead of normal tavern patrons.
+    //        - null → non-fantasy genre (cyberpunk / noir / modern);
+    //          no whitelist, freehand generation.
+    // Whitelist routing rules applied to the result:
+    //   - Source NPC: register iff register set AND no userName
+    //   - Relationships: register iff register set (independent of userName)
+    const userInput = (typeOfPlace.value || '').trim();
+    const seededRegister = pendingSeed.value?.source?.register || null;
+    // Seeded promotions always carry a stub name on entities[0]. Treat
+    // it as a user-provided name so the source-NPC whitelist gets
+    // suppressed below (otherwise the curated pool overrides the
+    // stub name — e.g., a "Skragdun" stub on a goblin-coded item turns
+    // into a pool pick because the Goblin whitelist directive "MUST
+    // pick from this curated list" wins over the prefill's "Name:"
+    // line). Relationships still inherit the item's register so the
+    // generated cast stays culturally coherent with the source item.
+    const seededUserName = pendingSeed.value?.entities?.[0]?.name?.trim() || null;
+    // TEST-REGISTER-OVERRIDE — when set, forces the resolved register
+    // to the dev-selected value. userName still routes through the
+    // appropriate source (seed > inference) so a forced register
+    // doesn't erase user-provided / stub names.
+    const devOverride = isDev && testRegisterOverride.value ? testRegisterOverride.value : null;
+    let resolvedRegister = null;
+    let userName = null;
+    if (devOverride) {
+        resolvedRegister = devOverride;
+        if (seededUserName) {
+            userName = seededUserName;
+        } else if (userInput) {
+            const inferred = await inferRegisterAndName(userInput);
+            userName = inferred.userName;
+        }
+    } else if (seededRegister) {
+        resolvedRegister = seededRegister;
+        userName = seededUserName;
+    } else if (!userInput) {
+        resolvedRegister = selectRegister(null, '', registerList, detectRegisterFromInput);
+    } else {
+        const inferred = await inferRegisterAndName(userInput);
+        if (inferred.register === FANTASY_UNSPECIFIED) {
+            resolvedRegister = selectRegister(null, '', humanoidRegisterList, detectRegisterFromInput);
+        } else {
+            resolvedRegister = inferred.register;
+        }
+        userName = inferred.userName;
+    }
+    lastUsedRegister.value = resolvedRegister || '';
+    const sourceRegister = userName ? null : resolvedRegister;
+    const relationshipsRegister = resolvedRegister;
+
     await requestNPCDescription(
         typeOfPlace.value,
         extraDescription,
@@ -1580,7 +1685,8 @@ async function handleGenerateNPC() {
             } else if (event === 'set-loading-state') {
                 setLoadingState(payload);
             }
-        }
+        },
+        { sourceRegister, relationshipsRegister, fantasyRace: null },
     );
 }
 
@@ -2340,4 +2446,49 @@ div[class^="cdr-skeleton-bone"] {
         border-radius: 8px;
     }
 }
+
+/* TEST-REGISTER-OVERRIDE — dev only */
+.test-register-override {
+    border: 2px dashed #d97706;
+    background: #fff7ed;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+
+    legend {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #9a3412;
+        padding: 0 0.5rem;
+    }
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    select,
+    select option {
+        padding: 0.375rem 0.5rem;
+        font-size: 1.3125rem;
+        width: 100%;
+    }
+
+    &__last {
+        margin: 0.5rem 0 0;
+        font-size: 0.8125rem;
+        color: #57534e;
+
+        code {
+            background: #fef3c7;
+            padding: 0.125rem 0.25rem;
+            border-radius: 2px;
+            font-size: 0.8125rem;
+        }
+    }
+}
+/* END TEST-REGISTER-OVERRIDE */
 </style>

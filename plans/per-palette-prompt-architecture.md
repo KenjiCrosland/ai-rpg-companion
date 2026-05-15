@@ -1,13 +1,31 @@
-# Per-Palette Prompt Architecture (Yoruba First)
+# Per-Palette Prompt Architecture (Yoruba First) — Shared Cultural-Pool Infrastructure
 
 ## Trigger
 
 Pick this up when:
 - Production feedback surfaces fresh real-orisha-as-fictional-deity failures (Olódùmarè, Ajagun, Apu Killa, etc.) for the Yoruba palette, OR
 - Work begins on a per-palette pool for any obscure register (Diné, Maori, Hindu/Sanskrit, Arabic-Islamic, etc.) — this brief lays the architecture all of them will share, OR
+- Work begins on adopting cultural-pool protection in any non-item generator (NPC, location, encounter, setting, bookshelf, lore/timeline) — this brief locates the pools at the shared layer specifically so those generators can adopt without rebuilding, OR
 - The item generator's monolithic prompt becomes a refactor obstacle for unrelated work.
 
 This brief assumes the orc/goblin pool-only architecture (70/30 weighting, allow-list selection in `select-language-palette.mjs`) is shipped and stable. If a stale-build issue resurfaces, address that diagnostic first.
+
+## Strategic Framing — Shared Infrastructure, Not Item-Generator Improvement
+
+An earlier draft of this plan scoped pools and prompt modules as item-generator-specific. Production data (Pachakutiq used as fictional demon-flesh-forging emperor in the Mank'aku output, plus the broader pattern across testing) shifted the read on the architecture's value: this isn't an item-generator improvement. It's foundational cultural-engagement infrastructure that every generator producing cultural-coded content will eventually need.
+
+Generators that benefit from shared cultural pools:
+- Item generator (immediate, in this brief)
+- NPC generator (highest cultural-engagement surface area; likely next adoption)
+- Location generator (settlement names, founder names, place-deity references)
+- Encounter generator (named NPCs in encounters)
+- Setting generator (peoples, regions, religions of cultural-coded settings)
+- Bookshelf generator (author names, titles)
+- Lore/timeline generator (historical figures, kingdoms, dynasties)
+
+The pool construction work is a one-time investment per palette. Each downstream generator that adopts the shared resource gets cultural-engagement protection without rebuilding pools. Cost-benefit: same 7-10 hours as the item-generator-only framing, but the work now ships infrastructure usable across the suite.
+
+Pools therefore live at `src/data/cultural-pools/` (generator-agnostic data). Item-generator-specific composition stays in the item-generator directory and imports from the shared path.
 
 ## Problem
 
@@ -22,36 +40,43 @@ Route to palette-specific prompt builders for obscure registers. Each palette-sp
 ### Scope
 
 In scope:
+- Create `src/data/cultural-pools/` directory with adoption-pattern README.
+- New shared Yoruba data module at `src/data/cultural-pools/yoruba.mjs` (pool data + cultural notes + avoid-list, generator-agnostic).
 - Refactor prompt construction out of `ItemGenerator.vue` into prompt modules.
-- New shared module for non-cultural scaffolding (rarity rules, attunement, item types, mood/material/quirk seeding, JSON output structure).
+- New item-generator scaffolding module for non-cultural prompt fragments (rarity rules, attunement, item types, mood/material/quirk seeding, JSON output structure).
 - New general prompt module for Western-canonical and fictional-fantasy palettes.
-- New Yoruba prompt module with full cultural content (notes + four pools + avoid-list).
+- New item-generator Yoruba prompt module that imports the shared resource and composes it into item-generator-specific instructions.
 - New routing dispatcher.
 - Update tests.
 
 Out of scope:
 - Per-palette modules for any palette other than Yoruba. Architecture is built so the next palettes drop in cleanly; their content is later work.
+- Adoption of the shared resource by NPC generator, location generator, or any other tool. Those are subsequent briefs once the suite is ready to extend cultural-pool protection.
 - Place-name pool curation beyond the initial ~15 entries provided.
 - Native-speaker review of the Yoruba pools (handled via production feedback after ship).
 
 ### File Structure
 
 ```
+src/data/cultural-pools/
+├── README.md                       NEW — adoption pattern for future generators
+└── yoruba.mjs                      NEW — pool data + cultural notes + avoid-list (generator-agnostic)
+
 src/tools/item-generator/utils/
 ├── prompts/
-│   ├── prompt-shared.mjs           NEW — non-cultural scaffolding
+│   ├── prompt-shared.mjs           NEW — item-generator non-cultural scaffolding
 │   ├── prompt-general.mjs          NEW — Western canon + fictional fantasy
-│   ├── prompt-yoruba.mjs           NEW — Yoruba-specific
-│   ├── route-prompt.mjs            NEW — dispatcher
-│   └── pools/
-│       └── yoruba-name-pools.mjs   NEW — Yoruba pools as data
+│   ├── prompt-yoruba.mjs           NEW — Yoruba composition (imports from src/data/cultural-pools/yoruba.mjs)
+│   └── route-prompt.mjs            NEW — dispatcher
 ├── select-language-palette.mjs     UNCHANGED
 ├── language-palettes.mjs           UNCHANGED
 ├── orc-goblin-name-pools.mjs       UNCHANGED
 └── ...
 ```
 
-`pools/` subdirectory anticipates future palette pools (diné, maori, etc.) without crowding the main utils directory.
+The pools live at `src/data/cultural-pools/` so any generator (NPC, location, encounter, etc.) can import them without crossing tool boundaries. This matches the existing project convention — `src/data/` already holds shared name pools (`place-names.json`, `place-adjectives.json`, `place-types.json`) and `.mjs` data modules (`tactical-frameworks.mjs`). Cultural pools fit the same pattern: data shared across generators, with `.mjs` chosen over `.json` because the cultural-notes string benefits from multi-line template-literal formatting.
+
+Item-generator-specific composition (the `prompts/` subdirectory) stays inside the item-generator tool. Each future generator that adopts the shared resource will have its own composition layer in its own tool directory.
 
 ### Routing Dispatcher
 
@@ -216,9 +241,9 @@ export function buildGeneralPrompt(seeds) {
 
 The five `*General` functions (`namingStyleGeneral`, `namingTranslationGeneral`, `universalInventRule`, `languagePaletteOverride`, `orcGoblinRestriction`) are the cultural-engagement rules currently in `ItemGenerator.vue`'s template literal. They live in `prompt-general.mjs` because palette-specific modules replace them with concrete pools.
 
-### Yoruba Prompt Module
+### Yoruba Prompt Module (Item Generator Composition Layer)
 
-`prompt-yoruba.mjs` replaces the five general cultural-engagement functions with Yoruba-specific content. Everything else is the same shared scaffolding.
+`prompt-yoruba.mjs` replaces the five general cultural-engagement functions with Yoruba-specific content. Everything else is the same shared scaffolding. The cultural data is imported from the shared cultural-pools module — this file's job is to compose that data into item-generator-specific instructions.
 
 ```javascript
 import * as shared from './prompt-shared.mjs';
@@ -226,8 +251,9 @@ import {
   yorubaPersonalNames,
   yorubaDeityNames,
   yorubaPlaceNames,
+  yorubaCulturalNotes,
   yorubaAvoidList,
-} from './pools/yoruba-name-pools.mjs';
+} from '@/data/cultural-pools/yoruba.mjs';
 
 export function buildYorubaPrompt(seeds) {
   return [
@@ -244,10 +270,10 @@ export function buildYorubaPrompt(seeds) {
     shared.originDrivesLoreContent(seeds),
     shared.unconventionalPairing(seeds),
     shared.explicitOriginIdentification(seeds),
-    yorubaCulturalNotes(),                           // see below
-    yorubaNamingFromPools(seeds),                    // see below
-    yorubaItemNamingTranslation(seeds),              // see below
-    yorubaAvoidListBlock(),                          // see below
+    yorubaCulturalNotesBlock(),                      // see below — thin wrapper
+    yorubaNamingFromPools(seeds),                    // see below — item-specific composition
+    yorubaItemNamingTranslation(seeds),              // see below — item-generator-specific
+    yorubaAvoidListBlock(),                          // see below — thin wrapper
     shared.moodToneBlock(seeds),
     shared.materialBlock(seeds),
     shared.quirkBlock(seeds),
@@ -265,25 +291,37 @@ export function buildYorubaPrompt(seeds) {
 }
 ```
 
-#### `yorubaCulturalNotes()`
+The four cultural functions below are item-generator-specific. Two are thin wrappers around the shared data (cultural notes, avoid-list — generator-agnostic content). Two compose the shared data into instructions specific to item-context use (naming pools used for "this item's lore," item-name translation rule). Other generators will compose differently — an NPC generator will say "for the NPC's own name, family lineage, and birthplace" instead of "for character names in this item's lore."
 
-Returns a static string:
+#### `yorubaCulturalNotesBlock()` (thin wrapper)
+
+Returns the shared `yorubaCulturalNotes` string verbatim. The cultural-context content is generator-agnostic — there's nothing item-specific to add. This wrapper exists only so the composition layer in `prompt-yoruba.mjs` reads consistently with the other section helpers.
+
+```javascript
+function yorubaCulturalNotesBlock() {
+  return yorubaCulturalNotes;
+}
+```
+
+The shared `yorubaCulturalNotes` content (defined in `src/data/cultural-pools/yoruba.mjs`):
 
 ```
 YORUBA CULTURAL CONTEXT:
 
-This item belongs to a fantasy world where the linguistic and cultural register is Yoruba-inspired. Yoruba is a real West African tradition (primarily Nigeria, Benin, Togo, with substantial diaspora communities in Brazil, Cuba, the US, and the Caribbean) with active contemporary religious practice. Treat this register with the seriousness you would give to writing a fantasy item rooted in any real living tradition.
+This generation belongs to a fantasy world where the linguistic and cultural register is Yoruba-inspired. Yoruba is a real West African tradition (primarily Nigeria, Benin, Togo, with substantial diaspora communities in Brazil, Cuba, the US, and the Caribbean) with active contemporary religious practice. Treat this register with the seriousness you would give to writing a fantasy work rooted in any real living tradition.
 
 Yoruba names typically express circumstantial meaning — they describe what was happening at the child's birth, the family's hopes, or the spiritual context. Names parse meaningfully: a name might mean "joy comes to the household" or "the path is open." Common structural patterns are verb-object compounds, agent-prefix + verb, descriptive noun phrases. Tone marks (high ´, low `, mid no-mark) and diacritical vowels (ọ, ẹ) appear throughout. Names are often unisex; gender isn't typically encoded morphologically.
 
 Yoruba material culture uses specific materials and forms. Cowrie shells, palm wood, ironwork, indigo-dyed cloth (adire), beadwork, calabash gourds, and carved hardwood. Sacred trees include iroko, baobab, and silk-cotton (araba). Rivers and forests are treated as living spiritual presences with their own intelligences. Smithing is communal and ritualized rather than solitary. Marketplaces (ọjà) are central social spaces. Crowns (adé) and beaded staffs (ọ̀pá) are objects of authority.
 
-When writing lore for this item, lean into these specifics rather than defaulting to generic-fantasy materials and settings.
+When generating content in this register, lean into these specifics rather than defaulting to generic-fantasy materials and settings.
 ```
 
-#### `yorubaNamingFromPools(seeds)`
+The shared content uses generator-agnostic phrasing ("This generation," "When generating content"). The item-generator wrapper reads it verbatim. NPC generator will read it verbatim too. Subsequent NPC-specific naming-pool composition handles the per-context framing.
 
-Returns a string that lists the pools and instructs DeepSeek to pick from them:
+#### `yorubaNamingFromPools(seeds)` (item-generator-specific composition)
+
+Lists the pools and instructs DeepSeek how to use them in item-context. The framing references "this item's lore" — NPC generator will compose the same shared pools differently (e.g., "for the NPC's own name, family lineage, and birthplace").
 
 ```
 NAMES FOR THIS GENERATION — USE ONLY FROM THESE POOLS:
@@ -307,7 +345,9 @@ Pool selection rules:
 - Do NOT alter the spelling, tone marks, or diacriticals of pool names. They are correct as written.
 ```
 
-#### `yorubaItemNamingTranslation(seeds)`
+#### `yorubaItemNamingTranslation(seeds)` (item-generator-specific)
+
+This block is genuinely item-specific — it covers the item's own name in lore, which only makes sense for items, not NPCs or locations. Other generators will not have an analog.
 
 ```
 ITEM NAMING:
@@ -324,7 +364,9 @@ The original-language name does not need to be a real Yoruba phrase; constructed
 When framing the language in lore, use the in-world culture's own term (e.g., "the tongue of its makers," "the speech of the [Place from pool] elders"). Do NOT use real-world linguistic category names like "the Yoruba tongue" or "in Yoruba."
 ```
 
-#### `yorubaAvoidListBlock()`
+#### `yorubaAvoidListBlock()` (thin wrapper)
+
+The avoid-list applies regardless of generator context — real Yoruba religious figures should never appear in any fictional generation, item or NPC or location. This wrapper composes the shared `yorubaAvoidList` array into prompt-format instruction. NPC generator and other adopters will compose the same array similarly.
 
 ```
 NAMES TO NEVER USE — REAL RELIGIOUS FIGURES AND DEITIES:
@@ -338,15 +380,38 @@ If you find yourself reaching for one of these names because it fits the lore, u
 Real Yoruba religious figures used in fictional contexts cause harm to the practitioners of an active living religion. This restriction is absolute.
 ```
 
-### Yoruba Pools Module
+### Shared Yoruba Module
 
-`pools/yoruba-name-pools.mjs`:
+`src/data/cultural-pools/yoruba.mjs`:
+
+This module is a generator-agnostic shared resource. It exports raw cultural data — name pools, cultural notes, avoid-list — with no item-generator-specific instructions and no prompt-fragment logic. Any generator producing cultural-coded content imports from this module and decides for itself how to compose the data into prompt instructions.
 
 ```javascript
 /**
- * Yoruba-style name pools for cros.land item generation.
+ * Yoruba cultural-pool resource for cros.land generators.
  *
- * These pools are constructed-not-real names following Yoruba phonetic
+ * This module is a shared data resource. It contains Yoruba-style
+ * pool data (constructed-not-real names following Yoruba phonetic
+ * patterns) plus cultural-context notes and an avoid-list of real
+ * religious/cultural figures. Any generator producing cultural-coded
+ * content can import these resources to provide DeepSeek with
+ * concrete grounding instead of relying on abstract invent-fictional-
+ * names rules that DeepSeek follows imperfectly for unfamiliar
+ * registers.
+ *
+ * Usage pattern:
+ *   import {
+ *     yorubaPersonalNames,
+ *     yorubaDeityNames,
+ *     yorubaPlaceNames,
+ *     yorubaCulturalNotes,
+ *     yorubaAvoidList,
+ *   } from '@/data/cultural-pools/yoruba.mjs';
+ *
+ *   // Compose into generator-specific prompt instructions.
+ *   // The shared resource provides DATA; the generator decides HOW to use it.
+ *
+ * The pools are constructed-not-real names following Yoruba phonetic
  * patterns (vowel-rich, tonal marks, diacritical vowels, common
  * compound structures). They avoid all known orisha and Ajogun names,
  * avoid the most common real Yoruba personal-name prefixes
@@ -365,6 +430,18 @@ Real Yoruba religious figures used in fictional contexts cause harm to the pract
  * but not blocking. The avoidList covers the highest-risk failure
  * mode (real orishas in fictional contexts) and is comprehensive.
  */
+
+export const yorubaCulturalNotes = `
+YORUBA CULTURAL CONTEXT:
+
+This generation belongs to a fantasy world where the linguistic and cultural register is Yoruba-inspired. Yoruba is a real West African tradition (primarily Nigeria, Benin, Togo, with substantial diaspora communities in Brazil, Cuba, the US, and the Caribbean) with active contemporary religious practice. Treat this register with the seriousness you would give to writing a fantasy work rooted in any real living tradition.
+
+Yoruba names typically express circumstantial meaning — they describe what was happening at the child's birth, the family's hopes, or the spiritual context. Names parse meaningfully: a name might mean "joy comes to the household" or "the path is open." Common structural patterns are verb-object compounds, agent-prefix + verb, descriptive noun phrases. Tone marks (high ´, low \`, mid no-mark) and diacritical vowels (ọ, ẹ) appear throughout. Names are often unisex; gender isn't typically encoded morphologically.
+
+Yoruba material culture uses specific materials and forms. Cowrie shells, palm wood, ironwork, indigo-dyed cloth (adire), beadwork, calabash gourds, and carved hardwood. Sacred trees include iroko, baobab, and silk-cotton (araba). Rivers and forests are treated as living spiritual presences with their own intelligences. Smithing is communal and ritualized rather than solitary. Marketplaces (ọjà) are central social spaces. Crowns (adé) and beaded staffs (ọ̀pá) are objects of authority.
+
+When generating content in this register, lean into these specifics rather than defaulting to generic-fantasy materials and settings.
+`.trim();
 
 export const yorubaPersonalNames = [
   'Tìfọ́yìn', 'Sòkáyé', 'Bélùmí', 'Ènìjọ́lá', 'Ìmọ̀ránfẹ́',
@@ -444,17 +521,100 @@ export const yorubaAvoidList = [
 ];
 ```
 
+### Adoption-Pattern README
+
+Create `src/data/cultural-pools/README.md` documenting the adoption pattern so the convention is clear when other generators adopt:
+
+```markdown
+# Cultural Pools — Shared Resource for Generators
+
+This directory contains palette-specific cultural data (name pools,
+cultural notes, avoid-lists) used by generators across cros.land to
+produce cultural-coded content with reduced appropriation risk.
+
+## Available Palettes
+
+- `yoruba.mjs` — Yoruba (West African; Nigeria, Benin, Togo, diaspora)
+
+Future palettes will be added here as their pools are constructed.
+
+## Adoption Pattern
+
+When adding a new palette to a generator:
+
+1. **Detect the palette.** The generator's existing palette-selection
+   logic determines which palette is active for a generation.
+
+2. **Import the shared resource.** When a palette has a shared module
+   in `cultural-pools/`, import the pools, cultural notes, and
+   avoid-list:
+
+       import {
+         yorubaPersonalNames,
+         yorubaDeityNames,
+         yorubaPlaceNames,
+         yorubaCulturalNotes,
+         yorubaAvoidList,
+       } from '@/data/cultural-pools/yoruba.mjs';
+
+3. **Compose into generator-specific instructions.** The shared
+   resource provides DATA; the generator decides HOW to use it. For
+   an item generator, the personal names are for characters in the
+   lore. For an NPC generator, the personal names are for the NPC's
+   own name, family, etc. The composition is generator-specific.
+
+4. **Use the cultural notes verbatim.** The cultural-notes string
+   describes phonetic patterns, naming conventions, and material
+   culture that don't change between generator contexts. Include
+   it in the prompt unchanged.
+
+5. **Use the avoid-list verbatim.** The avoid-list applies regardless
+   of generator context. Compose it into the prompt's "do not use"
+   instructions.
+
+## Adding a New Palette
+
+When constructing pools for a new palette (Andean, Diné, Maori, etc.):
+
+1. Research the palette's phonetic patterns, naming conventions, and
+   material culture. Document in cultural notes.
+2. Construct ~30 personal names following phonetic patterns, avoiding
+   common name prefixes that produce real names.
+3. Construct ~10 deity/spirit names avoiding all known real deity
+   sound patterns.
+4. Construct ~15 place names avoiding real city/sacred-site names.
+5. Compile an avoid-list of real religious figures, sacred concepts,
+   and culturally-significant historical figures.
+6. Write cultural notes (1-2 paragraphs) describing what makes the
+   register feel authentic.
+7. Document residual collision risk in the file's docstring.
+8. Native-speaker review encouraged but not blocking; production
+   feedback is the practical verification mechanism.
+
+## Verification
+
+For any palette adopted by a generator:
+
+- Test that pool entries don't appear in the avoid-list (catches
+  accidental real-name inclusion at the data level).
+- Generate sample outputs and confirm names are pool-sourced.
+- Track production feedback for collision reports; swap pool entries
+  as needed.
+```
+
 ### Migration Steps
 
-1. **Create the `prompts/` directory** under `src/tools/item-generator/utils/`.
+0. **Create `src/data/cultural-pools/`** and add the `README.md` documenting the adoption pattern (above).
+
+1. **Create `src/tools/item-generator/utils/prompts/`** directory.
 
 2. **Create `prompt-shared.mjs`** by extracting the existing prompt sections from `ItemGenerator.vue`'s `generateMagicItem` function. Each section becomes a function. Logic doesn't change. Use the function inventory above as a checklist.
 
 3. **Create `prompt-general.mjs`** that composes the shared fragments with the five cultural-engagement functions (`namingStyleGeneral`, `namingTranslationGeneral`, `universalInventRule`, `languagePaletteOverride`, `orcGoblinRestriction`) extracted verbatim from the current prompt.
 
-4. **Create `pools/yoruba-name-pools.mjs`** with the four exports above.
+4. **Create `src/data/cultural-pools/yoruba.mjs`** with the five exports (`yorubaPersonalNames`, `yorubaDeityNames`, `yorubaPlaceNames`, `yorubaCulturalNotes`, `yorubaAvoidList`).
 
-5. **Create `prompt-yoruba.mjs`** with the four Yoruba-specific functions (`yorubaCulturalNotes`, `yorubaNamingFromPools`, `yorubaItemNamingTranslation`, `yorubaAvoidListBlock`) and the composition function `buildYorubaPrompt`.
+5. **Create `prompt-yoruba.mjs`** in `src/tools/item-generator/utils/prompts/` with the four Yoruba composition functions (`yorubaCulturalNotesBlock`, `yorubaNamingFromPools`, `yorubaItemNamingTranslation`, `yorubaAvoidListBlock`) and the composition function `buildYorubaPrompt`. Imports cultural data from `@/data/cultural-pools/yoruba.mjs`.
 
 6. **Create `route-prompt.mjs`** with the dispatcher.
 
@@ -467,10 +627,11 @@ export const yorubaAvoidList = [
 
 8. **Verify the existing test suite passes** without changes. The migration is a pure refactor for general-palette generations; behavior shouldn't change for non-Yoruba palettes.
 
-9. **Add new tests** for the Yoruba module:
-   - `prompt-yoruba.spec.mjs`: build a prompt with a Yoruba-palette seed object and assert the prompt contains the cultural notes block, the personal-name pool list, the deity pool list, the place pool list, and the avoid-list block. Assert it does NOT contain the general universal-invent rule or the abstract translation rule.
-   - `pools/yoruba-name-pools.spec.mjs`: assert pool sizes (≥30 personal, ≥10 deity, ≥15 place, ≥40 avoid). Assert no pool entry appears in the avoid-list (catches accidental real-name inclusion at the data level).
-   - `route-prompt.spec.mjs`: assert that a Yoruba-palette seed routes to `buildYorubaPrompt` and a non-Yoruba seed routes to `buildGeneralPrompt`.
+9. **Add new tests**:
+   - **Shared-data tests** at `src/data/cultural-pools/yoruba.spec.mjs`: assert pool sizes (≥30 personal, ≥10 deity, ≥15 place, ≥40 avoid). Assert no pool entry appears in the avoid-list (catches accidental real-name inclusion at the data level). Assert `yorubaCulturalNotes` is a non-empty string. These tests live with the data because the data is generator-agnostic.
+   - **Item-generator composition tests** in the item-generator test directory:
+     - `prompt-yoruba.spec.mjs`: build a prompt with a Yoruba-palette seed object and assert the prompt contains the cultural notes block, the personal-name pool list, the deity pool list, the place pool list, and the avoid-list block. Assert it does NOT contain the general universal-invent rule or the abstract translation rule.
+     - `route-prompt.spec.mjs`: assert that a Yoruba-palette seed routes to `buildYorubaPrompt` and a non-Yoruba seed routes to `buildGeneralPrompt`.
 
 ### Verification
 
@@ -490,6 +651,8 @@ After ship:
 
 5. **In-world language framing**: Spot-check Yoruba outputs for the "tongue of its makers" / "speech of the X elders" pattern. Reject any "in the Yoruba tongue" or "Yoruba-inspired register" framing.
 
+6. **Cross-generator readiness check**: verify the shared module's exports are accessible via the import path from a non-item-generator location. Run an `import` from a sandbox/test file in another tool's directory and confirm the data is reachable. This is a smoke test for the shared-resource architecture working end-to-end — the whole point of locating pools at `src/data/cultural-pools/` is that the next generator (NPC, location, etc.) can import them without crossing tool boundaries. If this smoke test fails, the architecture isn't actually delivering the shared-infrastructure value the brief promises.
+
 ### Why This Works Better
 
 The current monolithic prompt asks DeepSeek to perform a cognitive task it can't reliably perform: "invent culturally-appropriate Yoruba names without using real ones." DeepSeek's training data on Yoruba is shallow; when it reaches for a Yoruba name component, it pulls the most-frequent terms in its training (which are the major orishas and supreme deity).
@@ -502,16 +665,31 @@ For the broader trajectory: this same architecture extends to NPC generation, lo
 
 ### Estimated Scope
 
-- Shared module extraction: 2-3 hours (mechanical refactor).
+- `src/data/cultural-pools/` setup + README: 30-60 minutes (organization + adoption-pattern doc).
+- Shared module extraction (item-generator scaffolding): 2-3 hours (mechanical refactor).
 - General prompt module: 1 hour (composition).
-- Yoruba pools module: 30 minutes (data file).
-- Yoruba prompt module: 1-2 hours (composition + four cultural functions).
+- Shared Yoruba data module: 30 minutes (data file).
+- Item-generator Yoruba prompt module: 1-2 hours (composition + four cultural functions).
 - Routing dispatcher: 15 minutes.
 - `ItemGenerator.vue` integration: 30-60 minutes.
 - Tests: 1-2 hours.
 - Verification: 1 hour.
 
-Total: 7-10 hours. Substantial but bounded.
+Total: 7.5-11 hours. The shared-infrastructure overhead is 30-60 minutes; the rest is identical to the item-generator-only framing. Same total work, but the output is reusable across the suite — every subsequent generator that adopts gets cultural-engagement protection without rebuilding the pool.
+
+### Cross-Generator Adoption Roadmap (Reference Only — Not For This Brief)
+
+After this brief ships and the item generator integration is verified:
+
+**Phase 1 (this brief):** Item generator + Yoruba shared resource.
+
+**Phase 2 (subsequent brief):** NPC generator adopts the Yoruba shared resource. NPC generator likely has its own prompt-construction logic that needs analogous refactoring (general + Yoruba module + routing). The shared cultural data does NOT change; only the NPC-generator-side composition does. Wrappers like `yorubaCulturalNotesBlock` and `yorubaAvoidListBlock` are likely identical to the item-generator versions; `yorubaNamingFromPools` will be re-composed for NPC context (e.g., "for the NPC's own name, family lineage, and birthplace" instead of "for character names in this item's lore").
+
+**Phase 3 (subsequent brief):** Add Andean and Diné to `src/data/cultural-pools/`. Both have produced acute appropriations in production; both warrant priority alongside Yoruba. Each addition is pool-construction work (~3-4 hours) plus the item-generator and NPC-generator composition work to use them.
+
+**Phase 4 and beyond:** Maori, Hindu/Sanskrit, Arabic-Islamic, Lakota, Maya, Aztec/Nahuatl, Hawaiian, and other underrepresented palettes per production feedback frequency.
+
+The cross-generator architecture means each new palette ships protection across all adopted generators simultaneously. The investment compounds.
 
 ### Future Palette Modules (Out of Scope, For Reference)
 
@@ -527,7 +705,7 @@ After this ships and stabilizes, the same pattern applies to:
 - Hindu/Sanskrit — deity density, real religious specifics
 - Arabic-Islamic — sacred figures, Quranic specifics
 
-Each requires its own pools, cultural notes, and avoid-list. Estimate ~4-6 hours per palette after architecture is in place. Not all need to ship; prioritize based on production failure frequency.
+Each requires its own pools, cultural notes, and avoid-list at `src/data/cultural-pools/<palette>.mjs`. Estimate ~3-4 hours per palette for pool construction + 1-2 hours per generator that adopts. Not all need to ship; prioritize based on production failure frequency.
 
 ### Acknowledged Risks
 

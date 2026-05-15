@@ -29,6 +29,16 @@ jest.mock('./utils/npc-generator.mjs');
 // Mock NPC prompts
 jest.mock('./npc-prompts.mjs');
 
+// Mock the upfront register/name inference. Tests in this file
+// don't exercise the inference call itself (covered separately in
+// infer-register-and-name.spec.js); short-circuiting it here keeps
+// the existing assertions on `generateGptResponse` call counts
+// matching their original "Part 1 + Part 2" intent.
+jest.mock('./utils/infer-register-and-name.mjs', () => ({
+  inferRegisterAndName: jest.fn(async () => ({ register: null, userName: null })),
+  FANTASY_UNSPECIFIED: 'fantasy_unspecified',
+}));
+
 // Mock seeded-input substrate so the cross-tool promotion writebacks
 // (addReferenceForSeed / writeBackPromotedNPC) can be observed without
 // touching localStorage. The other functions are wrapped so the mount
@@ -574,6 +584,71 @@ describe('NPCGenerator', () => {
         folderName: expect.any(String),
       });
       expect(writeCall[1].npc_id).toMatch(/^npc_/);
+    });
+
+    it('suppresses the source-NPC register/whitelist when seed carries a stub name', async () => {
+      // Production bug: a "Skragdun" stub on a goblin-coded item promoted
+      // to an NPC where the source-NPC whitelist directive ("MUST pick
+      // from this curated list") overrode the stub name, producing a
+      // pool-pick instead of using the user-provided stub name verbatim.
+      //
+      // Fix: treat the stub name as a user-provided name in the seeded
+      // branch, which suppresses the source-NPC register (and its
+      // whitelist) while keeping the relationships register so the
+      // generated cast stays culturally coherent with the source item.
+      const goblinRegister = 'Goblin-inspired: sharp, crude, percussive';
+      const goblinSeed = {
+        source: {
+          type: 'item',
+          id: 'Shudder-Froth of the Deep-Crushed',
+          name: 'Shudder-Froth of the Deep-Crushed',
+          register: goblinRegister,
+        },
+        destination: { type: 'npc' },
+        entities: [{
+          type: 'npc',
+          name: 'Skragdun',
+          role_or_description: 'Source of the Shudder-Froth of the Deep-Crushed',
+        }],
+      };
+      navigation.getNavigationParams.mockReturnValue({
+        fromType: 'item',
+        fromId: 'Shudder-Froth of the Deep-Crushed',
+        entityName: 'Skragdun',
+      });
+      seededInput.loadSeededInput.mockReturnValue(goblinSeed);
+      seededInput.buildPrefillForSeed.mockReturnValue('item context prefill');
+
+      let capturedOptions = null;
+      npcGenerator.generateNPCDescription.mockImplementation(async (typeOfNPC, callbacks, options) => {
+        capturedOptions = options;
+        if (callbacks.part1) {
+          callbacks.part1({
+            character_name: 'Skragdun',
+            description_of_position: 'A spectral giant...',
+            reason_for_being_there: 'Tethered to the sea-floor...',
+            distinctive_feature_or_mannerism: 'Grinding fists...',
+            character_secret: 'Hopes to possess a mortal...',
+            read_aloud_description: 'A massive shadow stirs...',
+            roleplaying_tips: 'Speak in a low growl...',
+          });
+        }
+      });
+
+      wrapper = mount(NPCGenerator, { props: { premium: false } });
+      await flushPromises();
+      const form = wrapper.find('form');
+      await form.trigger('submit.prevent');
+      await flushPromises();
+
+      // Source slot is suppressed — the stub name acts as a
+      // user-provided name and overrides the whitelist.
+      expect(capturedOptions.sourceRegister).toBeNull();
+      // Relationships slot keeps the item's register so the cast stays
+      // culturally coherent with the source item (Pribbit, Pliz-tok,
+      // etc. from the goblinoid pool — but Skragdun is the stub name,
+      // not a pool pick).
+      expect(capturedOptions.relationshipsRegister).toBe(goblinRegister);
     });
 
     it('does not double-fire the writeback when Part 2 also completes', async () => {
