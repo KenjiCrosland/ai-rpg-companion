@@ -29,35 +29,34 @@ function formatSettingOverview(settings) {
         return `${'#'.repeat(level)} ${title}`;
       }
 
-      // Add setting overview sections
+      // Add setting overview sections — emit the name as H1 and
+      // setting_overview.title as an italicized subtitle line so the
+      // markdown export mirrors the UI's hierarchy.
+      const settingSubtitle = setting.setting_overview?.title;
       text += `# ${setting.place_name.toUpperCase()}\n`;
-      text += `\n ${setting.setting_overview.overview}  ${setting.setting_overview.relation_to_larger_setting}\n:\n\n`;
+      if (settingSubtitle) {
+        text += `*${settingSubtitle}*\n`;
+      }
 
-      addSection(setting.setting_overview.history);
+      const ov = setting.setting_overview;
 
-      // Combine specific sections
-      addSection([
-        setting.setting_overview.current_ruler_sentence,
-        setting.setting_overview.recent_event_current_ruler,
-      ]);
-      addSection([
-        setting.setting_overview.social_history,
-        setting.setting_overview.recent_event_social,
-      ]);
-      addSection([
-        setting.setting_overview.economic_history,
-        setting.setting_overview.impactful_economic_event,
-      ]);
-      addSection([
-        setting.setting_overview.military_history,
-        setting.setting_overview.recent_event_military,
-      ]);
-      addSection([
-        setting.setting_overview.main_problem,
-        setting.setting_overview.potential_solutions,
-      ]);
-
-      addSection(setting.setting_overview.conclusion, 2);
+      // Consolidated body (combined_content) for edited or migrated
+      // legacy settings; individual new-key fields for fresh data.
+      // combined_content already contains overview + relation +
+      // history + the rest, so it replaces all subsequent sections.
+      if (ov.combined_content) {
+        text += '\n\n';
+        addSection(ov.combined_content);
+      } else {
+        text += `\n ${ov.overview}  ${ov.relation_to_larger_setting}\n:\n\n`;
+        addSection(ov.history);
+        addSection([ov.current_ruler_sentence]);
+        addSection([ov.social_history, ov.notable_social_facet]);
+        addSection([ov.economic_history, ov.notable_economic_facet]);
+        addSection([ov.military_history, ov.notable_security_facet]);
+        addSection([ov.central_dynamic, ov.responses_in_motion]);
+        addSection(ov.present_state, 2);
+      }
 
       // Add NPC List
       addSection(addMarkdownSectionTitle('NPCs'), 2);
@@ -154,7 +153,10 @@ function formatSettingOverview(settings) {
               (child) => child.place_name === location.name,
             )
           ) {
-            addSection(addMarkdownSectionTitle(location.title, 3));
+            const locationTitle = location.title
+              ? `${location.name}, ${location.title}`
+              : location.name;
+            addSection(addMarkdownSectionTitle(locationTitle, 3));
             addSection(location.description, 2);
           }
         });

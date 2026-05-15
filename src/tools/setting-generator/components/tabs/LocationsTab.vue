@@ -28,7 +28,10 @@
 
             <!-- View Mode -->
             <div v-if="editingLocationIndex !== index">
-              <h2>{{ location.name }}</h2>
+              <div class="location-title-block">
+                <h2 class="location-name">{{ location.name }}</h2>
+                <p v-if="location.title" class="location-epithet">{{ location.title }}</p>
+              </div>
               <p>{{ location.description }}</p>
               <p v-if="location.setting_scale">{{ location.setting_scale }}</p>
 
@@ -38,9 +41,7 @@
                   sublocationIndex: index,
                   subLocationName: location.name,
                   subLocationDescription: location.description,
-                  adjective: location.adjective,
                   setting_type: location.setting_type,
-                  title: location.title
                 })">
                   Generate Full Description
                 </ParActionButton>
@@ -81,7 +82,12 @@
               </template>
               <div>Delete Sub-Location</div>
             </cdr-tooltip>
-            <h2>{{ location.name }}</h2>
+            <div class="location-title-block">
+              <h2 class="location-name">{{ location.name }}</h2>
+              <p v-if="allSettings[location.main_index]?.setting_overview?.title" class="location-epithet">
+                {{ allSettings[location.main_index].setting_overview.title }}
+              </p>
+            </div>
             <p>{{ allSettings[location.main_index]?.setting_overview?.overview }} {{ allSettings[location.main_index]?.setting_overview?.relation_to_larger_setting }}</p>
             <p>{{ allSettings[location.main_index]?.setting_overview?.history }}</p>
             <p>
@@ -198,7 +204,7 @@ function sublocationValidation(jsonString) {
   try {
     const jsonObj = JSON.parse(jsonString);
     return jsonObj.every(location =>
-      ['name', 'description', 'title', 'setting_type', 'adjective'].every(key => key in location)
+      ['name', 'description', 'title', 'setting_type'].every(key => key in location)
     );
   } catch { return false; }
 }
@@ -280,7 +286,11 @@ async function generateSubLocations() {
   }
 
   const overviewText = getOverviewText(props.setting.setting_overview);
-  const prompt = subLocationsPrompt(overviewText, currentSubLocationsText);
+  const prompt = subLocationsPrompt({
+    settingDescription: overviewText,
+    existingSubLocations: currentSubLocationsText,
+    register: props.setting.register || null,
+  });
 
   try {
     loadingSubLocations.value = true;
@@ -309,6 +319,24 @@ watch(
 </script>
 
 <style scoped>
+.location-title-block {
+  margin-bottom: 1rem;
+}
+
+.location-name {
+  margin: 0 0 0.25rem 0;
+  line-height: 1.15;
+}
+
+.location-epithet {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.4rem;
+  font-style: italic;
+  font-weight: 400;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
 .delete-button {
   position: absolute;
   top: 65px;

@@ -35,14 +35,44 @@ jest.mock('@/util/formatSettingAsHTML.mjs', () => ({
   formatSettingAsHtml: jest.fn((tree) => 'html export'),
 }));
 
-// Mock prompts
+// Mock prompts — new object-arg signatures matching the dimensional
+// architecture (inference produces type/character/register/userName/
+// tension; orchestrator additionally rolls bannedTropes per
+// generation and feeds all to the main generation call).
 jest.mock('../prompts/index.mjs', () => ({
-  settingOverviewPrompt: jest.fn((adjective, type, name, lore) =>
-    `Setting Overview Prompt: ${adjective} ${type} of ${name} - ${lore}`
+  settingOverviewPrompt: jest.fn(({ type, character, register, userName, tension, bannedTropes, description, lore } = {}) =>
+    `Setting Overview Prompt: type=${type} char=${(character || []).join('+')} register=${register} name=${userName} tension=${tension} banned=${(bannedTropes || []).length} desc=${description} lore=${lore}`
   ),
-  sublocationOverviewPrompt: jest.fn((name, parentOverview, description) =>
-    `Sublocation Prompt: ${name} in context of ${parentOverview} - ${description}`
+  sublocationOverviewPrompt: jest.fn(({ type, character, register, userName, tension, bannedTropes, parentName, parentLore, subLocationDescription } = {}) =>
+    `Sublocation Prompt: type=${type} char=${(character || []).join('+')} register=${register} name=${userName} tension=${tension} banned=${(bannedTropes || []).length} parent=${parentName} parentLore=${parentLore} desc=${subLocationDescription}`
   ),
+  subLocationsPrompt: jest.fn(({ settingDescription, existingSubLocations, register } = {}) =>
+    `Sublocations Prompt: desc=${settingDescription} existing=${existingSubLocations} register=${register}`
+  ),
+}));
+
+// Mock the inference module — return a fixed shape so the main
+// generation call gets predictable dimensions to feed to its prompt.
+jest.mock('../utils/infer-setting-dimensions.mjs', () => ({
+  inferSettingDimensions: jest.fn(async () => ({
+    type: 'kingdom',
+    character: ['ancient', 'corrupt', 'misty'],
+    register: null,
+    userName: null,
+    tension: 'recovery-rebuilding',
+  })),
+}));
+
+// Mock the dimensions module — generateCharacterCandidates,
+// pickRandomTension, and getBannedTropesForGeneration are all called
+// directly from the component during setting / sublocation generation.
+jest.mock('../utils/setting-dimensions.mjs', () => ({
+  generateCharacterCandidates: jest.fn(() => [['ancient', 'corrupt', 'misty']]),
+  pickRandomTension: jest.fn(() => 'ongoing-accommodation'),
+  getBannedTropesForGeneration: jest.fn(() => [
+    'silence-cult',
+    'aging-authority-succession',
+  ]),
 }));
 
 // Mock GeneratorLayout component
@@ -193,24 +223,24 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         props: { premium: false }
       });
 
-      // Mock API response
+      // Mock API response — the new prompt returns `name` (bare) and
+      // `title` (short evocative phrase that pairs with the name).
       const mockResponse = JSON.stringify({
         name: 'Valderia',
+        title: 'Republic of Banked Coals',
         overview: 'A flourishing kingdom',
         relation_to_larger_setting: 'Part of the Empire',
         history: 'Ancient history',
         current_ruler_sentence: 'King Marcus rules',
-        recent_event_current_ruler: 'Recent coronation',
-        recent_event_consequences: 'Peace treaty signed',
         social_history: 'Feudal society',
-        recent_event_social: 'Festival held',
+        notable_social_facet: 'Festival held',
         economic_history: 'Trade routes established',
-        impactful_economic_event: 'Gold discovered',
+        notable_economic_facet: 'Gold discovered',
         military_history: 'Defended against invasion',
-        recent_event_military: 'Training new guards',
-        main_problem: 'Dragon threat',
-        potential_solutions: 'Hire adventurers',
-        conclusion: 'Hope remains',
+        notable_security_facet: 'Training new guards',
+        central_dynamic: 'Dragon threat',
+        responses_in_motion: 'Hire adventurers',
+        present_state: 'Hope remains',
         npc_list: [
           { name: 'Marcus', description: 'The King' }
         ]
@@ -218,27 +248,23 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
-      // Fill form and submit
-      const adjective = wrapper.find('#adjective');
-      const settingType = wrapper.find('#setting_type');
-      const placeName = wrapper.find('#place_name');
-
-      await adjective.setValue('Flourishing');
-      await settingType.setValue('Kingdom');
-      await placeName.setValue('Valderia');
+      // Fill the single description input and submit.
+      await wrapper.find('#setting_description').setValue('A flourishing kingdom called Valderia');
 
       const form = wrapper.find('form');
       await form.trigger('submit.prevent');
       await flushPromises();
       await nextTick();
 
-      // Verify localStorage
+      // Verify localStorage — place_name is the bare name (for the
+      // sidebar); setting_overview.title holds the short evocative
+      // phrase that renders as a subordinate subtitle.
       const saved = JSON.parse(localStorage.getItem('gameSettings'));
       expect(saved).toBeTruthy();
       expect(saved).toBeInstanceOf(Array);
       expect(saved[0].place_name).toBe('Valderia');
       expect(saved[0].setting_overview).toBeTruthy();
-      expect(saved[0].setting_overview.name).toBe('Valderia');
+      expect(saved[0].setting_overview.title).toBe('Republic of Banked Coals');
     });
 
     it('should preserve setting structure when saving and loading', async () => {
@@ -566,28 +592,27 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
 
       const mockResponse = JSON.stringify({
         name: 'Test',
+        title: 'City of Trials',
         overview: 'Overview',
         relation_to_larger_setting: '',
         history: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: []
       });
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
       // Fill and submit form
-      await wrapper.find('#place_name').setValue('Test Setting');
+      await wrapper.find('#setting_description').setValue('Test Setting');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
       await nextTick();
@@ -654,8 +679,9 @@ describe('SettingGenerator - API Integration', () => {
   });
 
   describe('Prompt Generation', () => {
-    it('should call settingOverviewPrompt for new top-level setting', async () => {
+    it('should call inferSettingDimensions then settingOverviewPrompt for new top-level setting', async () => {
       const { settingOverviewPrompt } = require('../prompts/index.mjs');
+      const { inferSettingDimensions } = require('../utils/infer-setting-dimensions.mjs');
 
       const wrapper = mount(SettingGenerator, {
         props: { premium: false }
@@ -663,73 +689,75 @@ describe('SettingGenerator - API Integration', () => {
 
       const mockResponse = JSON.stringify({
         name: 'Valderia',
+        title: 'Kingdom of Long Memory',
         overview: 'A kingdom',
         relation_to_larger_setting: '',
         history: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: []
       });
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
-      await wrapper.find('#adjective').setValue('Flourishing');
-      await wrapper.find('#setting_type').setValue('Kingdom');
-      await wrapper.find('#place_name').setValue('Valderia');
-
+      await wrapper.find('#setting_description').setValue('A flourishing kingdom');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
 
-      expect(settingOverviewPrompt).toHaveBeenCalledWith(
-        'Flourishing',
-        'Kingdom',
-        'Valderia',
-        '' // place_lore defaults to empty string
-      );
+      // Inference runs first to extract type/character/register/userName.
+      expect(inferSettingDimensions).toHaveBeenCalledWith({
+        description: 'A flourishing kingdom',
+        lore: '',
+      });
+
+      // Main prompt is called once with fully-specified dimensions
+      // from the inference call.
+      expect(settingOverviewPrompt).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'kingdom',
+        character: ['ancient', 'corrupt', 'misty'],
+        description: 'A flourishing kingdom',
+      }));
     });
 
-    it('should use random values when form fields are empty', async () => {
+    it('should work with empty form fields (inference-from-nothing path)', async () => {
       const wrapper = mount(SettingGenerator, {
         props: { premium: false }
       });
 
       const mockResponse = JSON.stringify({
-        name: 'Random Place',
+        name: 'Mistholm',
+        title: 'Hold of the Fog',
         overview: 'Overview',
         relation_to_larger_setting: '',
         history: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: []
       });
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
-      // Submit with empty fields
+      // Submit with empty fields — inference handles the empty-input case
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
 
-      // Should call generateGptResponse with some prompt
+      // Should still call generateGptResponse (main generation call)
       expect(openAi.generateGptResponse).toHaveBeenCalled();
     });
 
@@ -740,27 +768,26 @@ describe('SettingGenerator - API Integration', () => {
 
       const mockResponse = JSON.stringify({
         name: 'Test',
+        title: 'City of Trials',
         overview: 'Overview',
         relation_to_larger_setting: '',
         history: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: []
       });
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
-      await wrapper.find('#place_name').setValue('Test');
+      await wrapper.find('#setting_description').setValue('Test');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
 
@@ -779,21 +806,20 @@ describe('SettingGenerator - API Integration', () => {
 
       const mockOverview = {
         name: 'Valderia',
+        title: 'Kingdom of Golden Bough',
         overview: 'A flourishing kingdom',
         history: 'Founded 500 years ago',
         relation_to_larger_setting: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: [
           { name: 'King Marcus', description: 'Wise ruler' }
         ]
@@ -801,7 +827,7 @@ describe('SettingGenerator - API Integration', () => {
 
       openAi.generateGptResponse.mockResolvedValue(JSON.stringify(mockOverview));
 
-      await wrapper.find('#place_name').setValue('Valderia');
+      await wrapper.find('#setting_description').setValue('Valderia');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
       await nextTick();
@@ -822,7 +848,7 @@ describe('SettingGenerator - API Integration', () => {
 
       openAi.generateGptResponse.mockRejectedValue(new Error('API Error'));
 
-      await wrapper.find('#place_name').setValue('Test');
+      await wrapper.find('#setting_description').setValue('Test');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
       await nextTick();

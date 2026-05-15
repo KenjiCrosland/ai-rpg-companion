@@ -50,18 +50,15 @@
         <!-- ZONE 2: Form card -->
         <div class="form-card">
           <form @submit.prevent="generateSetting" class="setting-form">
-            <div class="form-row-identity">
-              <cdr-input id="adjective" v-model="currentSetting.adjective" background="secondary"
-                label="Adjective (optional)" placeholder="e.g. Flourishing, Decrepit, Decadent" />
-              <cdr-input id="setting_type" v-model="currentSetting.setting_type" background="secondary"
-                label="Type of Place (optional)" placeholder="e.g. Kingdom, Town, Republic" />
-              <cdr-input id="place_name" v-model="currentSetting.place_name" background="secondary"
-                label="Place Name (optional)" placeholder="e.g. Valderia, Ashenmoor" />
+            <div class="form-row-description">
+              <cdr-input id="setting_description" v-model="currentSetting.setting_description" background="secondary"
+                label="Describe your setting (optional)"
+                placeholder="e.g. A decadent mercantile republic in decline — or leave blank for a surprise." />
             </div>
             <div class="form-row-lore">
               <cdr-input :rows="4" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
                 label="Setting Lore (optional)"
-                placeholder="Describe your setting in as much or as little detail as you like — or leave blank for a surprise.">
+                placeholder="Paste in existing lore, or describe deeper history — optional.">
                 <template #helper-text-bottom>
                   Already have lore? Paste it from the <cdr-link
                     href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link> to build
@@ -146,8 +143,7 @@
           <Tabs>
             <TabPanel label="Overview">
               <div class="tab-skeleton">
-                <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
-                  currentSetting.setting_overview?.title) }}</h2>
+                <h2>{{ currentSetting.place_name || 'Generating Setting...' }}</h2>
                 <OverviewSkeleton />
               </div>
 
@@ -171,7 +167,10 @@
 import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrLink, CdrSkeleton } from "@rei/cedar";
-import { settingOverviewPrompt, sublocationOverviewPrompt } from "./prompts/index.mjs";
+import {
+  settingOverviewPrompt,
+  sublocationOverviewPrompt,
+} from "./prompts/index.mjs";
 import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
@@ -185,8 +184,13 @@ import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
-import placeAdjectives from '@/data/place-adjectives.json';
-import place_names from '@/data/place-names.json';
+import { inferSettingDimensions } from './utils/infer-setting-dimensions.mjs';
+import {
+  generateCharacterCandidates,
+  pickRandomTension,
+  getBannedTropesForGeneration,
+} from './utils/setting-dimensions.mjs';
+import { combineSettingOverview } from '@/util/combineSettingOverview.mjs';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-popover.css';
@@ -233,10 +237,16 @@ const onFactionsUpdated = (updatedSetting) => {
   }
 };
 
-// Handler for OverviewTab emit — persists edited title and combined_content
+// Handler for OverviewTab emit — persists edited name, epithet, and
+// combined_content. The name lives both on the top-level place_name
+// (sidebar source of truth) and on setting_overview.name (kept in
+// sync for export utilities that read from the overview).
 const onOverviewUpdated = (updatedSetting) => {
   const idx = currentSettingIndex.value;
   if (settings.value[idx]) {
+    if (updatedSetting.place_name !== undefined) {
+      settings.value[idx].place_name = updatedSetting.place_name;
+    }
     settings.value[idx].setting_overview = updatedSetting.setting_overview;
     saveSettingsToLocalStorage();
   }
@@ -299,10 +309,14 @@ function makeSettingId() {
 
 const defaultSetting = reactive({
   id: '',
-  adjective: '',
-  setting_type: '',
+  setting_description: '',
   place_name: '',
   place_lore: '',
+  type: null,
+  character: null,
+  register: null,
+  userName: null,
+  tension: null,
   setting_overview: null,
   factions: [],
   importantLocations: [],
@@ -457,34 +471,37 @@ watch(currentSettingIndex, (newValue, oldValue) => {
   }
 });
 
-const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', title = '', parentIndex = null) => {
-  const newSetting = reactive({
-    id: makeSettingId(),
-    adjective: adjective,
-    setting_type: setting_type,
-    place_name: place_name,
-    title: title,
-    place_lore: '',
-    setting_overview: null,
-    factions: [],
-    importantLocations: [],
-    npcs: [],
-    questHooks: [],
-    parentIndex: isSublocation ? parentIndex : null,
-    loadingFactions: false,
-    loadingSubLocations: false,
-    loadingNewFaction: false,
-  });
-
-  // Push the new setting to the settings array
-  settings.value.push(newSetting);
-
-  // Update currentSettingIndex to the index of the newly created setting
+// Empty-slate "+ New Setting" button — creates a blank setting and
+// focuses the form. Form submission runs the inference + generation
+// pipeline against whatever the user typed (or nothing).
+const createNewSetting = () => {
+  settings.value.push(reactive(freshDefaultSetting()));
   currentSettingIndex.value = settings.value.length - 1;
-  isNewSetting.value = true;  // Mark as new
+  isNewSetting.value = true;
+};
 
-  // Optionally save settings to local storage or another persistent state
-  //saveSettingsToLocalStorage();
+// Sublocation-creation: takes the stub's name/type/title plus the
+// parent's register seed. The descriptive title from the stub seeds
+// `place_name` so the sidebar has something to show while the AI
+// generates. After generation, place_name is overwritten with the
+// overview's full title.
+const createSublocationSetting = ({
+  parentIndex,
+  subLocationName,
+  setting_type,
+  register,
+}) => {
+  const newSetting = reactive({
+    ...freshDefaultSetting(),
+    place_name: subLocationName || '',
+    userName: subLocationName || null,
+    type: setting_type || null,
+    register: register || null,
+    parentIndex: parentIndex,
+  });
+  settings.value.push(newSetting);
+  currentSettingIndex.value = settings.value.length - 1;
+  isNewSetting.value = true;
 };
 
 
@@ -529,10 +546,50 @@ function loadSettingsFromLocalStorage() {
       settings.value.forEach(setting => {
         migrateSettingNPCs(setting);
       });
+
+      // Consolidate legacy setting overviews into combined_content.
+      // Settings generated before the field-rename pass have keys
+      // like main_problem / conclusion / recent_event_* that the
+      // render path no longer reads. Rather than dual-read in render
+      // and exports forever, we consolidate those legacy fields into
+      // a single combined_content string here, on load. Once
+      // migrated, the render/export paths only need to handle two
+      // shapes: (a) combined_content blob (legacy + edited), or
+      // (b) the new individual-field set (fresh generations).
+      migrateLegacyOverviews();
     } catch (error) {
       console.error("Failed to parse settings from local storage:", error);
     }
   }
+}
+
+function migrateLegacyOverviews() {
+  let changed = false;
+  for (const setting of settings.value) {
+    const overview = setting.setting_overview;
+    if (!overview) continue;
+    if (overview.combined_content) continue;
+    // A "legacy" overview is one with old keys (main_problem,
+    // conclusion, recent_event_*, impactful_economic_event,
+    // potential_solutions) but missing the new canonical equivalents.
+    // Fresh generations have central_dynamic + present_state +
+    // notable_*_facet fields — those skip migration and render
+    // through the individual-field path.
+    const hasNewKeys = overview.central_dynamic || overview.present_state;
+    const hasLegacyKeys =
+      overview.main_problem
+      || overview.conclusion
+      || overview.recent_event_current_ruler
+      || overview.recent_event_social
+      || overview.recent_event_military
+      || overview.impactful_economic_event
+      || overview.potential_solutions;
+    if (!hasNewKeys && hasLegacyKeys) {
+      overview.combined_content = combineSettingOverview(overview);
+      changed = true;
+    }
+  }
+  if (changed) saveSettingsToLocalStorage();
 }
 
 function migrateSettingNPCs(setting) {
@@ -629,33 +686,32 @@ const settingOverviewExists = computed(() => {
   return !!overview && overview.length > 0;
 });
 
-function formatTitle(string1, string2, string3, title) {
-  if (title) return title;
-  if (!string1 || !string2 || !string3) return '';
-  // Helper function to capitalize the first letter of each word in a string
-  function capitalize(text) {
-    return text.split(' ') // Split the string into words
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // Capitalize each word
-      .join(' '); // Rejoin the words into a single string
-  }
-
-  // Apply the capitalize function to each string and format them
-  return `The ${capitalize(string1)} ${capitalize(string2)} of ${capitalize(string3)}`;
-}
 
 
 // Validation and utility functions
+// Validator for the full setting overview response. Required keys
+// are the structural pillars — the response is rejected without them
+// and the retry logic kicks in. The notable_*_facet fields and
+// npc_list are explicitly optional by prompt design (facets are
+// empty-allowed; the LLM occasionally drops npc_list and NPCs can be
+// added later from the NPCs tab). Same validator for top-level
+// settings and sublocations since both use the full schema.
 const kingdomValidation = jsonString => {
   try {
     const jsonObj = JSON.parse(jsonString);
-    const keys = ['overview', 'relation_to_larger_setting', 'history', 'current_ruler_sentence', 'recent_event_current_ruler',
-      'recent_event_consequences', 'social_history', 'recent_event_social', 'economic_history',
-      'impactful_economic_event', 'military_history', 'recent_event_military', 'main_problem', 'potential_solutions', 'conclusion', 'npc_list'];
-    const npcKeys = ['name', 'description'];
-    for (let npc of jsonObj.npc_list) {
-      if (!npcKeys.every(key => key in npc)) return false;
+    const requiredKeys = [
+      'name', 'title', 'overview', 'history', 'current_ruler_sentence',
+      'social_history', 'economic_history', 'military_history',
+      'central_dynamic', 'present_state',
+    ];
+    if (!requiredKeys.every(key => key in jsonObj)) return false;
+    if (Array.isArray(jsonObj.npc_list)) {
+      const npcKeys = ['name', 'description'];
+      for (const npc of jsonObj.npc_list) {
+        if (!npcKeys.every(key => key in npc)) return false;
+      }
     }
-    return keys.every(key => key in jsonObj);
+    return true;
   } catch (error) {
     return false;
   }
@@ -699,39 +755,151 @@ function getOverviewText(overviewObject) {
   }).join('\n');
 }
 
-function generateSetting({ sublocationIndex, subLocationName, subLocationDescription, adjective, setting_type }) {
+// Build a single random character combination (one value from each
+// of 3 distinct sub-dimensions). Used for sublocations, where the
+// register is seeded from the parent and we just need a coherent
+// character set without spending an inference call.
+function rollCharacter() {
+  return generateCharacterCandidates(1)[0];
+}
+
+async function generateSetting(payload = {}) {
+  const { sublocationIndex, subLocationName, subLocationDescription, setting_type } = payload;
   const operationIndex = currentSettingIndex.value;
   const setting = settings.value[operationIndex];
 
-  // Directly update properties in a reactive way
+  const isSublocation = isNumber(sublocationIndex);
 
-  setting.setting_type = setting.setting_type || randomType(setting);
-  setting.adjective = setting.adjective || randomAdjective(setting) || '';
-  setting.place_name = setting.place_name || randomName(setting) || '';
-  setting.place_lore = setting.place_lore || '';
+  if (isSublocation) {
+    // Parent register propagates as a seed; type/userName come from
+    // the stub. Character and tension are code-picked from their
+    // pools (no inference call for sublocations — the description
+    // and parent context provide plenty of anchoring).
+    const parentRegister = setting.register || null;
+    const parentName = setting.place_name || '';
+    const parentLore = setting.place_lore || getOverviewText(setting.setting_overview) || '';
+    const character = rollCharacter();
+    const tension = pickRandomTension();
+    const bannedTropes = getBannedTropesForGeneration();
 
-  let nameToPass = subLocationName || setting.place_name || '';
-  let parentLocationOverview = setting.place_lore || getOverviewText(setting.setting_overview) || '';
+    // Diagnostic: log dimensions being sent to the main prompt so
+    // distribution can be checked empirically across a batch of
+    // generations. Remove once verified.
+    console.log('[setting-gen][sublocation]', {
+      type: setting_type || null,
+      character,
+      register: parentRegister,
+      userName: subLocationName || null,
+      tension,
+      bannedTropeCount: bannedTropes.length,
+      parentName,
+    });
 
-  let prompt;
-  if (isNumber(sublocationIndex)) {
-    prompt = sublocationOverviewPrompt(nameToPass, parentLocationOverview, subLocationDescription);
-  } else {
-    prompt = settingOverviewPrompt(setting.adjective, setting.setting_type, setting.place_name, setting.place_lore);
+    const prompt = sublocationOverviewPrompt({
+      type: setting_type || null,
+      character,
+      register: parentRegister,
+      userName: subLocationName || null,
+      tension,
+      bannedTropes,
+      parentName,
+      parentLore,
+      subLocationDescription: subLocationDescription || '',
+    });
+
+    enqueueRequest('generateSetting', {
+      operationIndex,
+      prompt,
+      sublocationIndex,
+      subLocationName,
+      setting_type,
+      register: parentRegister,
+      character,
+      tension,
+    });
+    return;
   }
-  enqueueRequest('generateSetting', { operationIndex, prompt, sublocationIndex: sublocationIndex, subLocationName, adjective, setting_type });
+
+  // Top-level: run the inference call to extract type/character/
+  // register/userName from user input (or roll from pools when input
+  // is empty), then call the single main prompt with fully-specified
+  // dimensions. Single-call is coherent by construction — every
+  // field is generated in one context window so internal facts cohere.
+  // (We tried a two-phase variant for perceived-latency wins; it
+  // introduced subtle continuity drift between phases that wasn't
+  // worth the wall-clock improvement.)
+  setting.loadingsettingOverview = true;
+  currentlyLoading.value = true;
+
+  const description = setting.setting_description || '';
+  const lore = setting.place_lore || '';
+
+  let inferred;
+  try {
+    inferred = await inferSettingDimensions({ description, lore });
+  } catch (e) {
+    console.error('Setting dimension inference failed:', e);
+    inferred = { type: null, character: null, register: null, userName: null, tension: null };
+  }
+
+  // Persist the dimensional metadata so sublocations can inherit
+  // register, and so reloads preserve the constraints.
+  setting.type = inferred.type;
+  setting.character = inferred.character;
+  setting.register = inferred.register;
+  setting.userName = inferred.userName;
+  setting.tension = inferred.tension;
+
+  const bannedTropes = getBannedTropesForGeneration();
+
+  console.log('[setting-gen][top-level]', {
+    type: inferred.type,
+    character: inferred.character,
+    register: inferred.register,
+    userName: inferred.userName,
+    tension: inferred.tension,
+    bannedTropeCount: bannedTropes.length,
+    descriptionLength: description.length,
+    loreLength: lore.length,
+  });
+
+  const prompt = settingOverviewPrompt({
+    type: inferred.type,
+    character: inferred.character,
+    register: inferred.register,
+    userName: inferred.userName,
+    tension: inferred.tension,
+    bannedTropes,
+    description,
+    lore,
+  });
+
+  enqueueRequest('generateSetting', { operationIndex, prompt });
 }
 
 
 // Generation functions
-async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex, subLocationName, adjective, setting_type, title }) {
+async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex, subLocationName, setting_type, register, character, tension }) {
 
   try {
     let parentIndex;
     if (isNumber(sublocationIndex)) {
       parentIndex = operationIndex;
-      createNewSetting(true, adjective, setting_type, subLocationName, title, parentIndex);
+      createSublocationSetting({
+        parentIndex,
+        subLocationName,
+        setting_type,
+        register,
+      });
       operationIndex = settings.value.length - 1;
+      // Stash the rolled character + tension on the sublocation
+      // setting so reloads preserve the dimensional metadata.
+      if (character) {
+        settings.value[operationIndex].character = character;
+      }
+      if (tension) {
+        settings.value[operationIndex].tension = tension;
+      }
     }
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].loadingsettingOverview = true;
@@ -744,7 +912,11 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
     const overview = JSON.parse(response);
 
     if (settings.value[operationIndex]) {
-      if (!settings.value[operationIndex].place_name) {
+      // place_name holds the bare name (used in sidebar/lists);
+      // setting_overview.title holds the short evocative phrase
+      // that renders as a subordinate subtitle in the overview
+      // header.
+      if (overview.name) {
         settings.value[operationIndex].place_name = overview.name;
       }
       settings.value[operationIndex].setting_overview = overview;
@@ -772,24 +944,6 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
   }
 }
 
-// Random type, adjective, and name functions
-function randomType(setting) {
-  if (setting.place_lore !== '') return '';
-  const placeTypes = Object.keys(placeAdjectives);
-  return placeTypes[Math.floor(Math.random() * placeTypes.length)];
-}
-
-function randomAdjective(setting) {
-  if (setting.place_lore !== '') return '';
-  if (!placeAdjectives[setting.setting_type.toLowerCase()]) return '';
-  return placeAdjectives[setting.setting_type.toLowerCase()][Math.floor(Math.random() * placeAdjectives[setting.setting_type.toLowerCase()].length)];
-}
-
-function randomName(setting) {
-  if (setting.place_lore !== '') return '';
-  if (!place_names[setting.setting_type.toLowerCase()]) return '';
-  return place_names[setting.setting_type.toLowerCase()][Math.floor(Math.random() * place_names[setting.setting_type.toLowerCase()].length)];
-}
 </script>
 
 
