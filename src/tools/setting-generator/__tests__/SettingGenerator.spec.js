@@ -93,10 +93,16 @@ jest.mock('@/components/DataManagerModal.vue', () => ({
   emits: ['update:opened']
 }));
 
-// Mock OverviewSkeleton
+// Mock OverviewSkeleton (still used by Factions/Locations tabs)
 jest.mock('@/components/skeletons/OverviewSkeleton.vue', () => ({
   name: 'OverviewSkeleton',
   template: '<div>Loading overview...</div>'
+}));
+
+// Mock SettingOverviewCardSkeleton (parchment-framed loading state)
+jest.mock('../components/SettingOverviewCardSkeleton.vue', () => ({
+  name: 'SettingOverviewCardSkeleton',
+  template: '<div>Loading setting card...</div>'
 }));
 
 // Mock tab components

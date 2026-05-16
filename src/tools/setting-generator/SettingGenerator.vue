@@ -140,27 +140,23 @@
         </ParCallout>
       </div>
 
-      <div class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
-        <CdrSkeleton>
-          <Tabs>
-            <TabPanel label="Overview">
-              <div class="tab-skeleton">
-                <h2>{{ currentSetting.place_name || 'Generating Setting...' }}</h2>
-                <OverviewSkeleton />
-              </div>
-
-            </TabPanel>
-            <TabPanel label="Locations" :disabled="true">
-            </TabPanel>
-            <TabPanel label="Factions" :disabled="true">
-            </TabPanel>
-            <TabPanel label="NPCs" :disabled="true">
-            </TabPanel>
-            <TabPanel label="Quest Hooks" :disabled="true">
-            </TabPanel>
-          </Tabs>
-        </CdrSkeleton>
-      </div>
+      <!-- Loading branch mirrors the loaded-state Tabs wrapper exactly
+           (class, width style) so the skeleton card has identical
+           horizontal context to the rendered OverviewTab card. -->
+      <Tabs class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview"
+        height="auto" style="width: 100%">
+        <TabPanel label="Overview">
+          <SettingOverviewCardSkeleton />
+        </TabPanel>
+        <TabPanel label="Locations" :disabled="true">
+        </TabPanel>
+        <TabPanel label="Factions" :disabled="true">
+        </TabPanel>
+        <TabPanel label="NPCs" :disabled="true">
+        </TabPanel>
+        <TabPanel label="Quest Hooks" :disabled="true">
+        </TabPanel>
+      </Tabs>
     </div>
   </GeneratorLayout>
 </template>
@@ -168,12 +164,12 @@
 <script setup>
 import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
-import { CdrInput, CdrLink, CdrSkeleton } from "@rei/cedar";
+import { CdrInput, CdrLink } from "@rei/cedar";
 import {
   settingOverviewPrompt,
   sublocationOverviewPrompt,
 } from "./prompts/index.mjs";
-import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
+import SettingOverviewCardSkeleton from "./components/SettingOverviewCardSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
@@ -1273,17 +1269,6 @@ $transition-speed: 0.3s;
 
 .faction-description {
   margin: 1rem .5rem;
-}
-
-.tab-skeleton {
-  width: 800px;
-  margin-top: 2rem;
-}
-
-@media (max-width: 768px) {
-  .tab-skeleton {
-    width: 100%;
-  }
 }
 
 .skeleton-hr {
