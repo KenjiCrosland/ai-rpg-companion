@@ -206,17 +206,24 @@ function prefillFromStub(seededInput) {
  * Build a SeededInput from navigation params. Returns null if the source
  * type is unknown or the entity cannot be located.
  *
+ * `destinationType` lets builders pick the right stub list for the
+ * destination tool — items, for example, carry both `related_npcs` and
+ * `related_settings`, and which one to seed from depends on whether the
+ * user clicked "Create NPC" or "Create Setting." Defaults to 'npc' for
+ * back-compat with the original NPC-only flow.
+ *
  * @param {Object} params
  * @param {string} params.fromType
  * @param {string} params.fromId
  * @param {string} [params.entityName]
+ * @param {'npc'|'setting'|'dungeon'} [params.destinationType]
  * @returns {Object|null}
  */
-export function loadSeededInput({ fromType, fromId, entityName }) {
+export function loadSeededInput({ fromType, fromId, entityName, destinationType }) {
   if (!fromType || !fromId) return null;
   const builder = builders[fromType];
   if (!builder) return null;
-  return builder({ fromId, entityName });
+  return builder({ fromId, entityName, destinationType });
 }
 
 /**

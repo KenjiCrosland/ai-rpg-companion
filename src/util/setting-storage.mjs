@@ -208,6 +208,98 @@ const NPC_GENERATED_FIELDS = [
 ];
 
 /**
+ * Locate a setting by its stable id. Returns null when not found.
+ *
+ * @param {string} settingId
+ * @returns {Object|null}
+ */
+export function getSettingById(settingId) {
+  if (!settingId) return null;
+  const settings = readSettings();
+  return settings.find(s => s?.id === settingId) || null;
+}
+
+/**
+ * Compose a concise brief for a setting from its existing structured
+ * fields. Used by cross-tool seeded prompts to surface relationship-
+ * critical context for sibling settings (e.g., "the Tockwrought Vault
+ * is in the Mwythig, ruled by Llew ap Madog") so the LLM doesn't
+ * reinvent regions / rulers / families when generating co-realized
+ * settings from the same item.
+ *
+ * Pure function — no AI call, no localStorage. Reads only the
+ * structured fields the overview-generation prompt populates:
+ *   - place_name (or setting_overview.name)
+ *   - setting_overview.title (epithet)
+ *   - setting_overview.relation_to_larger_setting (Region section)
+ *   - setting_overview.current_ruler_sentence (Leadership section)
+ *
+ * Returns an empty string when there's no setting or it has no
+ * meaningful structured data. Token budget: ~80-150 tokens per
+ * brief on a fully-fleshed setting.
+ *
+ * @param {Object|null} setting
+ * @returns {string}
+ */
+export function getSettingBrief(setting) {
+  if (!setting || typeof setting !== 'object') return '';
+  const ov = setting.setting_overview || {};
+
+  const name = (setting.place_name || ov.name || '').trim();
+  const title = (ov.title || '').trim();
+  const region = (ov.relation_to_larger_setting || '').trim();
+  const leadership = (ov.current_ruler_sentence || '').trim();
+
+  if (!name && !region && !leadership) return '';
+
+  const lines = [];
+  if (name) {
+    lines.push(title ? `${name} (${title})` : name);
+  }
+  if (region) {
+    lines.push(`Region: ${region}`);
+  }
+  if (leadership) {
+    lines.push(`Leadership: ${leadership}`);
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Clear the denormalized source-provenance fields on every setting
+ * whose `sourceType` / `sourceId` points at the given source entity.
+ * Called when the source entity is deleted (e.g., an item is removed
+ * in the Item Generator) so the setting's "Inspired by [X]" link
+ * doesn't keep rendering as a live link to a gone-source.
+ *
+ * The reference graph (`tool-references`) is cleaned up separately by
+ * `removeReferencesForEntity` — this helper just clears the
+ * denormalized fast-path fields the setting card reads at render
+ * time.
+ *
+ * @param {string} sourceType - 'item' | 'dungeon' | 'setting' | …
+ * @param {string} sourceId
+ * @returns {number} count of settings cleared
+ */
+export function resetSettingSourceForDeletedEntity(sourceType, sourceId) {
+  if (!sourceType || !sourceId) return 0;
+  const settings = readSettings();
+  let resetCount = 0;
+  for (const setting of settings) {
+    if (setting?.sourceType !== sourceType) continue;
+    if (setting.sourceId !== sourceId) continue;
+    delete setting.sourceType;
+    delete setting.sourceId;
+    delete setting.sourceName;
+    resetCount++;
+  }
+  if (resetCount > 0) {
+    persistSettings(settings);
+  }
+  return resetCount;
+}
+
+/**
  * Reset every setting stub pointing to the given NPC id back to its
  * pre-promotion shape. Counterpart to `findSettingStubsForNPC`, called
  * when the canonical NPC is deleted.

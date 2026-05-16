@@ -366,6 +366,43 @@ Passing mentions are acceptable when entities don't fit centrally. A user-named 
 }
 
 /**
+ * Build the SIBLING SETTINGS directive. Used when this generation has
+ * other settings that share a source (e.g., multiple settings promoted
+ * from the same item's lore, or sublocations sharing a parent). Pastes
+ * the full markdown of each sibling and instructs the LLM to treat
+ * their named entities, geography, and history as canonical.
+ *
+ * Without this, cross-setting drift is common: the same NPC ends up
+ * with two roles, the same region gets two different names, the same
+ * founder is both hero and villain. Brief stub names are not enough
+ * to anchor — the model needs the actual prose of the sibling so it
+ * can see WHICH facts have already been canonized and reuse them.
+ *
+ * Returns an empty string when siblingSettings is missing or empty.
+ *
+ * @param {Array<string>} siblingSettings - Full markdown strings, one
+ *   per sibling. Caller passes already-rendered prose
+ *   (consolidateOverviewToMarkdown of each canonical setting).
+ */
+function buildSiblingSettingsBlock(siblingSettings) {
+  if (!Array.isArray(siblingSettings) || siblingSettings.length === 0) return '';
+  const siblings = siblingSettings
+    .map((md, i) => `--- Sibling ${i + 1} ---\n${md}`)
+    .join('\n\n');
+  return `SIBLING SETTINGS (already generated; treat as canonical context):
+${siblings}
+
+When the new setting could reasonably share characters, factions, geography, or history with these siblings, USE the established names and details from above. Do not invent contradictory facts for entities that already appear in a sibling. Specifically:
+- NAMED CHARACTERS (people, rulers, deities) introduced in a sibling are CANONICAL. If your new setting would naturally reference one — same family, same office, same incident — use the existing name and role. Do not invent a second character with the same name in a different role.
+- GEOGRAPHIC POSITIONING (regions, neighboring polities, named roads or landmarks) established in a sibling is CANONICAL. If your new setting sits adjacent to, within, or contains a sibling's geography, anchor it accordingly. Do not place the same named landmark in two different regions.
+- HISTORICAL EVENTS, founding stories, and named institutions established in a sibling are CANONICAL. Do not contradict the timeline (when something happened, who founded what, who broke faith with whom).
+- RESIDENT SPIRITS, supernatural elements, and folkloric figures: if a sibling has already named one for this location or cluster, reference rather than reinvent.
+
+The new setting should feel like it belongs in the same world as the siblings — not like a parallel-universe version with similar-sounding-but-different facts.
+`;
+}
+
+/**
  * Builds the late-context framing that sits immediately before the
  * JSON schema: anti-clustering trope bans and the tension-guidance
  * block. These two are positioned for maximum salience at the
@@ -393,12 +430,13 @@ export function settingOverviewPrompt(args = {}) {
   const constraints = buildSettingConstraints(args);
   const framing = buildSettingFraming(args);
   const lorePreservation = buildLorePreservationBlock(args.lore);
+  const siblingBlock = buildSiblingSettingsBlock(args.siblingSettings);
 
   return `Generate a detailed setting overview using the following constraints. These are FULLY-SPECIFIED inputs from an upstream inference call — do not override or substitute them.
 
 ${constraints}
 
-${lorePreservation}
+${lorePreservation}${siblingBlock ? '\n' + siblingBlock + '\n' : ''}
 ${framing}
 Return JSON with the following fields. Temperature: 0.9. Keep sentences concise; avoid run-on prose.
 
@@ -442,6 +480,7 @@ export function sublocationOverviewPrompt({
   parentName,
   parentLore,
   subLocationDescription,
+  siblingSettings,
 } = {}) {
   const characterStr = Array.isArray(character) && character.length > 0
     ? character.join(', ')
@@ -470,6 +509,7 @@ All proper nouns MUST match this register. This sub-location inherits the parent
   const lorePreservation = buildLorePreservationBlock(
     [parentLore, subLocationDescription].filter(Boolean).join('\n')
   );
+  const siblingBlock = buildSiblingSettingsBlock(siblingSettings);
 
   return `Generate a detailed overview for a sub-location within a larger setting.
 
@@ -504,7 +544,7 @@ ${expressionModesBlock || '(no specific guidance — express the qualities coher
 - Avoid common fantasy tropes and cliches.
 - Do NOT use these NPC names: ${FORBIDDEN_NPC_NAMES}.
 
-${lorePreservation}
+${lorePreservation}${siblingBlock ? '\n' + siblingBlock + '\n' : ''}
 ${antiClusteringBlock}
 ${tensionBlock}
 Return JSON with the same field structure as a top-level setting. Temperature: 0.9.

@@ -8,6 +8,9 @@ import {
   linkNPCToSettingStubsBySeed,
   findSettingStubsForNPC,
   resetSettingStubsForDeletedNPC,
+  resetSettingSourceForDeletedEntity,
+  getSettingById,
+  getSettingBrief,
 } from '../setting-storage.mjs';
 
 describe('setting-storage', () => {
@@ -317,6 +320,117 @@ describe('setting-storage', () => {
       expect(stub.npc_id).toBeNull();
       expect(stub.read_aloud_description).toBeUndefined();
       expect(stub.description_of_position).toBeUndefined();
+    });
+  });
+
+  describe('resetSettingSourceForDeletedEntity', () => {
+    it('clears sourceType/sourceId/sourceName on every matching setting', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'A', sourceType: 'item', sourceId: 'Whispering Crown', sourceName: 'Whispering Crown' },
+        { id: 'set_b', place_name: 'B', sourceType: 'item', sourceId: 'OtherItem', sourceName: 'OtherItem' },
+        { id: 'set_c', place_name: 'C', sourceType: 'item', sourceId: 'Whispering Crown', sourceName: 'Whispering Crown' },
+      ]));
+
+      const count = resetSettingSourceForDeletedEntity('item', 'Whispering Crown');
+      expect(count).toBe(2);
+
+      const after = JSON.parse(localStorage.getItem('gameSettings'));
+      expect(after[0].sourceType).toBeUndefined();
+      expect(after[0].sourceId).toBeUndefined();
+      expect(after[0].sourceName).toBeUndefined();
+      // Untouched setting keeps its source fields intact.
+      expect(after[1].sourceType).toBe('item');
+      expect(after[1].sourceId).toBe('OtherItem');
+      expect(after[2].sourceType).toBeUndefined();
+    });
+
+    it('does not touch settings whose sourceType differs from the deleted entity type', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'A', sourceType: 'dungeon', sourceId: 'Whispering Crown', sourceName: 'Whispering Crown' },
+      ]));
+
+      const count = resetSettingSourceForDeletedEntity('item', 'Whispering Crown');
+      expect(count).toBe(0);
+
+      const after = JSON.parse(localStorage.getItem('gameSettings'))[0];
+      expect(after.sourceType).toBe('dungeon');
+      expect(after.sourceId).toBe('Whispering Crown');
+    });
+
+    it('returns 0 with no match and does not persist a no-op write', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'A' },
+      ]));
+      const before = localStorage.getItem('gameSettings');
+
+      const count = resetSettingSourceForDeletedEntity('item', 'Anything');
+      expect(count).toBe(0);
+      // Same string back means no write happened.
+      expect(localStorage.getItem('gameSettings')).toBe(before);
+    });
+
+    it('returns 0 with missing args', () => {
+      expect(resetSettingSourceForDeletedEntity(null, 'x')).toBe(0);
+      expect(resetSettingSourceForDeletedEntity('item', null)).toBe(0);
+      expect(resetSettingSourceForDeletedEntity(null, null)).toBe(0);
+    });
+  });
+
+  describe('getSettingById', () => {
+    it('returns the setting whose id matches', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'A' },
+        { id: 'set_b', place_name: 'B' },
+      ]));
+      expect(getSettingById('set_b')?.place_name).toBe('B');
+    });
+
+    it('returns null when no match', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([{ id: 'set_a' }]));
+      expect(getSettingById('set_missing')).toBeNull();
+      expect(getSettingById(null)).toBeNull();
+    });
+  });
+
+  describe('getSettingBrief', () => {
+    it('composes name + title + region + leadership from structured fields', () => {
+      const setting = {
+        place_name: 'Tockwrought Vault',
+        setting_overview: {
+          title: 'Mound of the Latched Promise',
+          relation_to_larger_setting: 'The Vault lies within the territory of the Mwythig.',
+          current_ruler_sentence: 'Llew ap Madog, the Gear-Keeper, holds nominal authority.',
+        },
+      };
+      const brief = getSettingBrief(setting);
+      expect(brief).toContain('Tockwrought Vault (Mound of the Latched Promise)');
+      expect(brief).toContain('Region: The Vault lies within the territory of the Mwythig.');
+      expect(brief).toContain('Leadership: Llew ap Madog, the Gear-Keeper, holds nominal authority.');
+    });
+
+    it('falls back to setting_overview.name when place_name is missing', () => {
+      const setting = {
+        setting_overview: { name: 'Fallback Name', relation_to_larger_setting: 'somewhere' },
+      };
+      expect(getSettingBrief(setting)).toContain('Fallback Name');
+    });
+
+    it('omits sections whose fields are blank', () => {
+      const setting = {
+        place_name: 'Bare',
+        setting_overview: { relation_to_larger_setting: '', current_ruler_sentence: '' },
+      };
+      const brief = getSettingBrief(setting);
+      expect(brief).toBe('Bare');
+      expect(brief).not.toContain('Region:');
+      expect(brief).not.toContain('Leadership:');
+    });
+
+    it('returns empty string for null / shapeless input', () => {
+      expect(getSettingBrief(null)).toBe('');
+      expect(getSettingBrief(undefined)).toBe('');
+      expect(getSettingBrief({})).toBe('');
+      expect(getSettingBrief({ setting_overview: {} })).toBe('');
     });
   });
 });

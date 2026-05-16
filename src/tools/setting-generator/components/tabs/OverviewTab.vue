@@ -7,6 +7,12 @@
         <div class="setting-card-header-text">
           <h2 class="setting-card-name">{{ displayName }}</h2>
           <p v-if="displayTitle" class="setting-card-epithet">{{ displayTitle }}</p>
+          <p v-if="sourceInfo" class="setting-card-source">
+            Inspired by
+            <a v-if="!sourceMissing" href="#" class="setting-card-source-link" @click.prevent="navigateToSource">{{ sourceInfo.name }}</a>
+            <span v-else>{{ sourceInfo.name }}</span>
+            <span v-if="sourceMissing" class="setting-card-source-deleted"> (deleted)</span>
+          </p>
         </div>
         <div class="setting-card-header-actions">
           <ParCardButton size="small" @click="startEditing">Edit Overview</ParCardButton>
@@ -99,6 +105,8 @@ import {
   renderOverview,
   consolidateOverviewToMarkdown,
 } from '@/util/renderSettingOverview.mjs';
+import { navigateToTool } from '@/util/navigation.mjs';
+import { sourceExists, getToolForSourceType } from '@/util/seeded-input.mjs';
 
 const props = defineProps({
   setting: {
@@ -123,6 +131,35 @@ const displayName = computed(() => {
 });
 
 const displayTitle = computed(() => props.setting.setting_overview?.title || '');
+
+// Source provenance — populated by SettingGenerator.finalizePendingSeed
+// after a cross-tool generation (e.g., from an item card's "Create
+// Setting"). The denormalized fields let the header render an "Inspired
+// by [Item]" line without walking tool-references on every render.
+const sourceInfo = computed(() => {
+  const type = props.setting?.sourceType;
+  const id = props.setting?.sourceId;
+  if (!type || !id) return null;
+  const name = props.setting?.sourceName || id;
+  return { type, id, name };
+});
+
+const sourceMissing = computed(() => {
+  if (!sourceInfo.value) return false;
+  return !sourceExists(sourceInfo.value.type, sourceInfo.value.id);
+});
+
+function navigateToSource() {
+  const info = sourceInfo.value;
+  if (!info || sourceMissing.value) return;
+  const tool = getToolForSourceType(info.type);
+  if (!tool) return;
+  // For items the deep-link param is `item` (selects by name); future
+  // source types can be added here when their flows ship.
+  if (info.type === 'item') {
+    navigateToTool(tool.id, { item: info.name });
+  }
+}
 
 // Parsed AST. The renderer takes care of first-mention entity emphasis
 // when the overview carries a `named_entities` array; legacy entries
@@ -218,6 +255,33 @@ watch(
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);
   font-weight: 400;
+}
+
+/* Cross-tool source line — "Inspired by [Item]". Same register as the
+   NPCCard subtitle ("From [source]"): italic muted body, with the
+   source name in upright burgundy that reads as a link. */
+.setting-card-source {
+  margin: 0.4rem 0 0;
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+.setting-card-source-link {
+  color: var(--par-color-title, #7a1f1f);
+  text-decoration: underline;
+  font-style: normal;
+}
+
+.setting-card-source-link:hover {
+  color: var(--par-color-title-deep, #58180d);
+  text-decoration: none;
+}
+
+.setting-card-source-deleted {
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-style: italic;
+  font-size: 0.95em;
 }
 
 .setting-card-header-actions {

@@ -684,6 +684,12 @@ describe('SettingGenerator - API Integration', () => {
 
   afterEach(() => {
     localStorageMock.clear();
+    // jsdom's real localStorage is shared across tests in this file and
+    // isn't shadowed by global.localStorage = localStorageMock — clearing
+    // the mock's internal store is not enough. Clear the real one too so
+    // mount-time reads (e.g., the new "show form by default if saved data
+    // exists" logic) don't see leftover data from a prior test.
+    try { localStorage.clear(); } catch {}
     jest.clearAllMocks();
   });
 

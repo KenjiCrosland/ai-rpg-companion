@@ -7,6 +7,9 @@ import {
   getItemFromStorage,
   saveItemToStorage,
   linkNPCToItemStub,
+  linkSettingToItemStub,
+  findItemStubsForSetting,
+  resetItemStubsForDeletedSetting,
   renameItemReferences,
   addNPCMentionedInItemReference,
   removeReferencesForItem,
@@ -259,6 +262,27 @@ describe('item-storage', () => {
       expect(after[1].seeded_from.source_id).toBe('OtherItem'); // untouched
     });
 
+    it('updates denormalized source fields on settings whose sourceId points at the renamed item', () => {
+      // Settings carry sourceType/sourceId/sourceName when promoted from
+      // an item-stub via the Item → Setting flow. The setting card reads
+      // those fields directly to render the "Inspired by [Item]" link;
+      // without this propagation the link would render the old item name
+      // and the existence check would mark the source as "(deleted)."
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'A', sourceType: 'item', sourceId: 'OldName', sourceName: 'OldName' },
+        { id: 'set_b', place_name: 'B', sourceType: 'item', sourceId: 'OtherItem', sourceName: 'OtherItem' },
+        { id: 'set_c', place_name: 'C', sourceType: 'dungeon', sourceId: 'OldName', sourceName: 'OldName' }, // wrong type, must not touch
+      ]));
+
+      renameItemReferences('OldName', 'NewName');
+
+      const after = JSON.parse(localStorage.getItem('gameSettings'));
+      expect(after[0].sourceId).toBe('NewName');
+      expect(after[0].sourceName).toBe('NewName');
+      expect(after[1].sourceId).toBe('OtherItem');   // untouched
+      expect(after[2].sourceId).toBe('OldName');     // dungeon-typed, untouched
+    });
+
     it('updates seeded_from provenance on dungeon NPC stubs', () => {
       localStorage.setItem('dungeons', JSON.stringify([
         {
@@ -312,6 +336,282 @@ describe('item-storage', () => {
       const items = JSON.parse(localStorage.getItem('savedItems'));
       expect(items[0].related_npcs[0].npc_id).toBe('npc_yelena_001');
       expect(items[0].related_npcs[1].npc_id).toBeNull();
+    });
+  });
+
+  describe('linkSettingToItemStub / findItemStubsForSetting / resetItemStubsForDeletedSetting', () => {
+    const itemWithSettingStubs = {
+      name: 'The Whispering Crown',
+      related_settings: [
+        { name: 'The Whispering Glade', role_brief: 'Where the crown was buried', context: '', source_quote: '', setting_id: null },
+        { name: 'Tower of Vorn', role_brief: 'Where the crown was forged', context: '', source_quote: '', setting_id: null },
+      ],
+    };
+
+    it('linkSettingToItemStub stamps setting_id on the matching stub (case-insensitive name match)', () => {
+      saveItemToStorage(itemWithSettingStubs);
+      const ok = linkSettingToItemStub('The Whispering Crown', 'the whispering glade', 'set_abc123');
+      expect(ok).toBe(true);
+      const stored = getItemFromStorage('The Whispering Crown');
+      expect(stored.related_settings[0].setting_id).toBe('set_abc123');
+      expect(stored.related_settings[1].setting_id).toBeNull();
+    });
+
+    it('linkSettingToItemStub returns false when item or stub does not exist', () => {
+      saveItemToStorage(itemWithSettingStubs);
+      expect(linkSettingToItemStub('Wrong Item', 'The Whispering Glade', 'set_abc')).toBe(false);
+      expect(linkSettingToItemStub('The Whispering Crown', 'Nowhere Real', 'set_abc')).toBe(false);
+    });
+
+    it('linkSettingToItemStub is a no-op when any required arg is missing', () => {
+      saveItemToStorage(itemWithSettingStubs);
+      expect(linkSettingToItemStub(null, 'x', 'set_abc')).toBe(false);
+      expect(linkSettingToItemStub('The Whispering Crown', null, 'set_abc')).toBe(false);
+      expect(linkSettingToItemStub('The Whispering Crown', 'x', null)).toBe(false);
+    });
+
+    it('findItemStubsForSetting walks all items and returns matches', () => {
+      saveItemToStorage({
+        name: 'Item A',
+        related_settings: [
+          { name: 'Glade', setting_id: 'set_xyz' },
+          { name: 'Tower', setting_id: 'set_unrelated' },
+        ],
+      });
+      saveItemToStorage({
+        name: 'Item B',
+        related_settings: [{ name: 'Glade', setting_id: 'set_xyz' }],
+      });
+      saveItemToStorage({ name: 'Item C', related_settings: [] });
+
+      const matches = findItemStubsForSetting('set_xyz');
+      expect(matches).toEqual([
+        { itemName: 'Item A', stubName: 'Glade' },
+        { itemName: 'Item B', stubName: 'Glade' },
+      ]);
+    });
+
+    it('findItemStubsForSetting returns empty array when nothing matches', () => {
+      saveItemToStorage(itemWithSettingStubs);
+      expect(findItemStubsForSetting('set_does_not_exist')).toEqual([]);
+      expect(findItemStubsForSetting(null)).toEqual([]);
+    });
+
+    it('resetItemStubsForDeletedSetting clears setting_id on every matching stub', () => {
+      saveItemToStorage({
+        name: 'Item A',
+        related_settings: [
+          { name: 'Glade', setting_id: 'set_xyz' },
+          { name: 'Tower', setting_id: 'set_unrelated' },
+        ],
+      });
+      saveItemToStorage({
+        name: 'Item B',
+        related_settings: [{ name: 'Glade', setting_id: 'set_xyz' }],
+      });
+
+      const count = resetItemStubsForDeletedSetting('set_xyz');
+      expect(count).toBe(2);
+
+      const itemA = getItemFromStorage('Item A');
+      expect(itemA.related_settings[0].setting_id).toBeNull();
+      expect(itemA.related_settings[1].setting_id).toBe('set_unrelated'); // untouched
+      const itemB = getItemFromStorage('Item B');
+      expect(itemB.related_settings[0].setting_id).toBeNull();
+    });
+
+    it('resetItemStubsForDeletedSetting returns 0 when nothing matches', () => {
+      saveItemToStorage(itemWithSettingStubs);
+      expect(resetItemStubsForDeletedSetting('set_nope')).toBe(0);
+      expect(resetItemStubsForDeletedSetting(null)).toBe(0);
+    });
+  });
+
+  describe('buildSeededInputFromItem — destinationType', () => {
+    const item = {
+      name: 'Heart of the Sunless Wood',
+      item_type: 'Wondrous Item',
+      rarity: 'Very Rare',
+      physical_description: 'A jagged shard of obsidian wrapped in silver wire.',
+      lore: 'Forged in the Whispering Glade by an unknown smith.',
+      selectedRegister: 'Old-Norse-inspired',
+      related_npcs: [
+        { name: 'Yelena of the Duskwood', role_brief: 'Oracle who saw the vision', context: '', source_quote: '' },
+      ],
+      related_settings: [
+        { name: 'The Whispering Glade', role_brief: 'Forge that produced the Heart', context: 'A clearing in the Sunless Wood', source_quote: '...the Whispering Glade...', setting_id: null },
+        { name: 'Tower of Vorn', role_brief: 'Vault holding the Heart', context: '', source_quote: '', setting_id: null },
+      ],
+    };
+
+    it('defaults to NPC stubs when destinationType is omitted (back-compat)', () => {
+      saveItemToStorage(item);
+      const seed = buildSeededInputFromItem({ fromId: 'Heart of the Sunless Wood' });
+      expect(seed.entities).toHaveLength(1);
+      expect(seed.entities[0].type).toBe('npc');
+      expect(seed.entities[0].name).toBe('Yelena of the Duskwood');
+    });
+
+    it('pulls from related_settings when destinationType is "setting"', () => {
+      saveItemToStorage(item);
+      const seed = buildSeededInputFromItem({
+        fromId: 'Heart of the Sunless Wood',
+        destinationType: 'setting',
+      });
+      expect(seed.entities).toHaveLength(2);
+      expect(seed.entities.every(e => e.type === 'location')).toBe(true);
+      expect(seed.entities.map(e => e.name)).toEqual(['The Whispering Glade', 'Tower of Vorn']);
+    });
+
+    it('pulls from related_settings when destinationType is "dungeon" (treats dungeons as locations too)', () => {
+      saveItemToStorage(item);
+      const seed = buildSeededInputFromItem({
+        fromId: 'Heart of the Sunless Wood',
+        destinationType: 'dungeon',
+      });
+      expect(seed.entities[0].type).toBe('location');
+      expect(seed.entities.map(e => e.name)).toEqual(['The Whispering Glade', 'Tower of Vorn']);
+    });
+
+    it('with entityName + destinationType=setting, returns the single matching location stub', () => {
+      saveItemToStorage(item);
+      const seed = buildSeededInputFromItem({
+        fromId: 'Heart of the Sunless Wood',
+        entityName: 'tower of vorn',
+        destinationType: 'setting',
+      });
+      expect(seed.entities).toHaveLength(1);
+      expect(seed.entities[0].name).toBe('Tower of Vorn');
+      expect(seed.entities[0].type).toBe('location');
+    });
+
+    it('returns null when entityName does not match any setting stub', () => {
+      saveItemToStorage(item);
+      const seed = buildSeededInputFromItem({
+        fromId: 'Heart of the Sunless Wood',
+        entityName: 'Nowhere Real',
+        destinationType: 'setting',
+      });
+      expect(seed).toBeNull();
+    });
+
+    it('with no related_settings on the item, returns a seed with empty entities array (whole-item mode)', () => {
+      saveItemToStorage({ ...item, related_settings: [] });
+      const seed = buildSeededInputFromItem({
+        fromId: 'Heart of the Sunless Wood',
+        destinationType: 'setting',
+      });
+      expect(seed.entities).toEqual([]);
+    });
+  });
+
+  describe('buildSeededInputFromItem — realized sibling entities', () => {
+    it('surfaces promoted-only NPC + setting siblings on the seed source', () => {
+      saveItemToStorage({
+        name: 'The Heart',
+        related_npcs: [
+          { name: 'Yelena', role_brief: 'Oracle', npc_id: 'npc_yelena' },
+          { name: 'Vorn', role_brief: 'Smith', npc_id: null },         // unpromoted, must be excluded
+        ],
+        related_settings: [
+          { name: 'The Glade', role_brief: 'Forge', setting_id: 'set_glade' },
+          { name: 'Tower', role_brief: 'Vault', setting_id: null },     // unpromoted, must be excluded
+        ],
+      });
+
+      const seed = buildSeededInputFromItem({
+        fromId: 'The Heart',
+        destinationType: 'setting',
+        entityName: 'Tower',
+      });
+
+      expect(seed.source.realized.npcs).toEqual([
+        { name: 'Yelena', role_brief: 'Oracle' },
+      ]);
+      // Tower is the one being promoted → it's the entity, not a sibling.
+      // The Glade is the only other promoted setting. setting_id is
+      // carried through so SettingGenerator can resolve the canonical
+      // setting for full-content sibling threading at prompt time.
+      expect(seed.source.realized.settings).toEqual([
+        { name: 'The Glade', role_brief: 'Forge', setting_id: 'set_glade' },
+      ]);
+    });
+
+    it('excludes the entity currently being promoted from settings siblings (NPC dest)', () => {
+      saveItemToStorage({
+        name: 'The Heart',
+        related_npcs: [
+          { name: 'Yelena', role_brief: 'Oracle', npc_id: 'npc_yelena' },
+          { name: 'Skragbit', role_brief: 'Shaman', npc_id: 'npc_skrag' },
+        ],
+        related_settings: [
+          { name: 'The Glade', role_brief: 'Forge', setting_id: 'set_glade' },
+        ],
+      });
+
+      const seed = buildSeededInputFromItem({
+        fromId: 'The Heart',
+        destinationType: 'npc',
+        entityName: 'Yelena',
+      });
+
+      // Yelena is being promoted; only Skragbit is a sibling.
+      expect(seed.source.realized.npcs).toEqual([
+        { name: 'Skragbit', role_brief: 'Shaman' },
+      ]);
+      expect(seed.source.realized.settings).toEqual([
+        { name: 'The Glade', role_brief: 'Forge', setting_id: 'set_glade' },
+      ]);
+    });
+
+    it('returns empty realized arrays when there are no promoted siblings', () => {
+      saveItemToStorage({
+        name: 'Bare Item',
+        related_npcs: [{ name: 'Vorn', npc_id: null }],
+        related_settings: [{ name: 'Tower', setting_id: null }],
+      });
+
+      const seed = buildSeededInputFromItem({
+        fromId: 'Bare Item',
+        destinationType: 'setting',
+      });
+
+      expect(seed.source.realized.npcs).toEqual([]);
+      expect(seed.source.realized.settings).toEqual([]);
+    });
+
+    it('handles items with no related arrays at all', () => {
+      saveItemToStorage({ name: 'Empty Item' });
+      const seed = buildSeededInputFromItem({
+        fromId: 'Empty Item',
+        destinationType: 'setting',
+      });
+      expect(seed.source.realized.npcs).toEqual([]);
+      expect(seed.source.realized.settings).toEqual([]);
+    });
+
+    it('carries setting_id through so the destination tool can resolve canonical siblings', () => {
+      saveItemToStorage({
+        name: 'The Heart',
+        related_settings: [
+          { name: 'The Glade', role_brief: 'Forge', setting_id: 'set_glade' },
+          { name: 'Tower', role_brief: 'Vault', setting_id: 'set_tower' },
+        ],
+      });
+
+      const seed = buildSeededInputFromItem({
+        fromId: 'The Heart',
+        destinationType: 'setting',
+        entityName: 'The Glade',
+      });
+
+      // Only the OTHER promoted setting (Tower) appears as a sibling,
+      // and its setting_id is carried so SettingGenerator can call
+      // getSettingById → consolidateOverviewToMarkdown to get the full
+      // markdown for the prompt's SIBLING SETTINGS block.
+      expect(seed.source.realized.settings).toEqual([
+        { name: 'Tower', role_brief: 'Vault', setting_id: 'set_tower' },
+      ]);
     });
   });
 
