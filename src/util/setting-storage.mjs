@@ -220,6 +220,222 @@ export function getSettingById(settingId) {
 }
 
 /**
+ * All settings whose parentId matches the given id. Top-level settings
+ * are reachable by passing `null`. Returns an empty array when nothing
+ * matches.
+ *
+ * @param {string|null} parentId
+ * @returns {Array<Object>}
+ */
+export function getChildSettings(parentId) {
+  const settings = readSettings();
+  return settings.filter(s => (s?.parentId ?? null) === (parentId ?? null));
+}
+
+/**
+ * All settings that share a parent with the given setting, excluding
+ * the setting itself. Returns an empty array when the setting can't be
+ * found (so the caller never has to special-case the not-found case
+ * for downstream `applyInheritanceFromSiblings`).
+ *
+ * @param {string} settingId
+ * @returns {Array<Object>}
+ */
+export function getSiblingSettings(settingId) {
+  if (!settingId) return [];
+  const settings = readSettings();
+  const self = settings.find(s => s?.id === settingId);
+  if (!self) return [];
+  const parentId = self.parentId ?? null;
+  return settings.filter(s =>
+    s?.id !== settingId
+    && (s?.parentId ?? null) === parentId
+  );
+}
+
+/**
+ * Reconcile a freshly-extracted batch of related_places against the
+ * setting's existing array. Mirrors `mergeStubs` from the item-side
+ * related-settings extraction:
+ *
+ *   - Promoted stubs (`promoted_setting_id` present) are sacred and
+ *     survive every rescan untouched — the user has invested an
+ *     LLM call into promoting them; we don't drop or rename.
+ *   - Unpromoted stubs are dropped; the fresh extraction is
+ *     authoritative for the unpromoted slice. Variant names from
+ *     prior scans evaporate (the LLM's latest read of the prose wins).
+ *   - Fresh stubs whose case-insensitive name matches a promoted stub
+ *     are dropped — keeps re-extractions from resurrecting an unpromoted
+ *     twin alongside the promoted one.
+ *   - Fresh stubs are deduped by case-insensitive name (defensive
+ *     against the LLM emitting the same place twice with different
+ *     casing).
+ *
+ * Pure function — does not mutate inputs.
+ *
+ * @param {Array<Object>} existing - current setting.related_places
+ * @param {Array<Object>} fresh    - newly-extracted stubs (validated shape)
+ * @returns {Array<Object>}
+ */
+export function mergeRelatedPlaces(existing, fresh) {
+  const existingArr = Array.isArray(existing) ? existing : [];
+  const freshArr = Array.isArray(fresh) ? fresh : [];
+
+  // Keep promoted entries verbatim.
+  const promoted = existingArr
+    .filter(s => s && s.promoted_setting_id)
+    .map(s => ({ ...s }));
+
+  const seen = new Set(
+    promoted
+      .map(s => (s.name || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  const reconciled = [...promoted];
+  for (const stub of freshArr) {
+    const name = (stub?.name || '').trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    reconciled.push({
+      name,
+      kind: stub.kind || 'feature',
+      source_quote: (stub.source_quote || '').trim(),
+      role_brief: (stub.role_brief || '').trim(),
+      suggested_setting_type: (stub.suggested_setting_type || '').trim(),
+      promoted_setting_id: null,
+    });
+  }
+
+  return reconciled;
+}
+
+/**
+ * Drop extracted entries whose name matches a place already realized
+ * in the user's setting tree (ancestors or siblings of the current
+ * setting). Compare case-insensitively. Pure function — does not
+ * mutate inputs.
+ *
+ * Why this isn't in the prompt: the live tree changes between
+ * generations (a sibling promoted yesterday should suppress today's
+ * re-extraction of the same name). The merge step has the live tree
+ * state; the prompt does not.
+ *
+ * @param {Array<Object>} places   - freshly-extracted stubs
+ * @param {Array<string>} excludeNames - names of settings that already
+ *   exist in the relevant tree slice (the current setting itself,
+ *   its ancestors, its siblings under the same parent)
+ * @returns {Array<Object>}
+ */
+export function filterRelatedPlacesByExistingNames(places, excludeNames) {
+  if (!Array.isArray(places)) return [];
+  const blocked = new Set(
+    (Array.isArray(excludeNames) ? excludeNames : [])
+      .map(n => (n || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+  if (blocked.size === 0) return places.slice();
+  return places.filter(p => !blocked.has((p?.name || '').trim().toLowerCase()));
+}
+
+/**
+ * Move a setting under a different parent (or to top-level when
+ * `newParentId` is null). The atomic primitive behind the "promote
+ * region-named entity as the new parent of this setting" flow in the
+ * Locations tab.
+ *
+ * Refuses to write — and returns a structured reason — when:
+ *   - settingId is missing or doesn't resolve in storage
+ *   - newParentId is set but doesn't resolve in storage
+ *   - newParentId === settingId (self-loop)
+ *   - newParentId is a descendant of settingId (cycle, per wouldCreateCycle)
+ *
+ * Idempotent: when the setting is already under the requested parent,
+ * returns ok without writing.
+ *
+ * @param {string} settingId
+ * @param {string|null} newParentId  - null promotes to top-level
+ * @returns {{ok: boolean, reason?: string}}
+ */
+export function reparentSetting(settingId, newParentId) {
+  if (!settingId) return { ok: false, reason: 'missing-setting-id' };
+
+  const settings = readSettings();
+  const target = settings.find(s => s?.id === settingId);
+  if (!target) return { ok: false, reason: 'setting-not-found' };
+
+  // Normalize: explicit null → top-level. undefined treated the same
+  // so callers don't have to be precious about which falsy value to pass.
+  const resolvedParentId = newParentId || null;
+
+  if (resolvedParentId && !settings.some(s => s?.id === resolvedParentId)) {
+    return { ok: false, reason: 'parent-not-found' };
+  }
+  if (resolvedParentId === settingId) {
+    return { ok: false, reason: 'self-parent' };
+  }
+  if (wouldCreateCycle(settingId, resolvedParentId)) {
+    return { ok: false, reason: 'would-create-cycle' };
+  }
+
+  if ((target.parentId ?? null) === resolvedParentId) {
+    // Already under that parent — no write needed. Returning ok keeps
+    // callers from having to special-case the no-op.
+    return { ok: true };
+  }
+
+  target.parentId = resolvedParentId;
+  persistSettings(settings);
+  return { ok: true };
+}
+
+/**
+ * Guard for the reparent operation. Returns true when reparenting
+ * `settingId` under `proposedParentId` would create a cycle in the
+ * parent chain — either because the proposed parent is the setting
+ * itself, or because the proposed parent is a descendant of the
+ * setting.
+ *
+ * Walks up from the proposed parent following parentId pointers; if
+ * the walk reaches `settingId`, the proposed reparent would close a
+ * loop. The walk also bails out if it visits any id twice (defensive
+ * against pre-existing malformed data), so this returns true rather
+ * than spinning.
+ *
+ * Passing a null proposed parent (promoting to top-level) is always
+ * safe and returns false.
+ *
+ * @param {string} settingId           - setting being reparented
+ * @param {string|null} proposedParentId
+ * @returns {boolean}
+ */
+export function wouldCreateCycle(settingId, proposedParentId) {
+  if (!settingId) return false;
+  if (proposedParentId == null) return false;
+  if (proposedParentId === settingId) return true;
+
+  const settings = readSettings();
+  const byId = new Map();
+  for (const s of settings) {
+    if (s?.id) byId.set(s.id, s);
+  }
+
+  const visited = new Set();
+  let cursor = proposedParentId;
+  while (cursor) {
+    if (cursor === settingId) return true;
+    if (visited.has(cursor)) return true;
+    visited.add(cursor);
+    const node = byId.get(cursor);
+    if (!node) return false;
+    cursor = node.parentId ?? null;
+  }
+  return false;
+}
+
+/**
  * Compose a concise brief for a setting from its existing structured
  * fields. Used by cross-tool seeded prompts to surface relationship-
  * critical context for sibling settings (e.g., "the Tockwrought Vault

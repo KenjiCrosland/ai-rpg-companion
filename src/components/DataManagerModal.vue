@@ -63,6 +63,7 @@ import {
   CdrLink
 } from '@rei/cedar';
 import { writeQuota, QUOTA_FIELDS } from '@/util/quota-storage.mjs';
+import { runPendingMigrations } from '@/util/migration-runner.mjs';
 
 // Cedar CSS
 import '@rei/cedar/dist/style/cdr-modal.css';
@@ -316,11 +317,26 @@ function handleFileChange(event) {
       }
 
       // Reset migrations-completed so the imported blob flows through
-      // assign-dungeon-ids / assign-setting-ids / sweep-orphan-references
-      // / rename-npc-item-fields on next boot. Old exports may carry
-      // legacy id forms; new exports are already migrated but re-running
-      // the migrations is idempotent.
+      // every migration (assign-dungeon-ids, assign-setting-ids,
+      // migrate-setting-parent-id, sweep-orphan-references, etc.).
+      // Old exports may carry legacy id / index forms; new exports are
+      // already migrated but re-running the migrations is idempotent.
       localStorage.removeItem('migrations-completed');
+
+      // Run migrations synchronously, in the import action itself,
+      // rather than relying on the page-reload bootstrap to trigger
+      // them. This guarantees the imported data is in its post-
+      // migration shape by the time `location.reload()` fires, so
+      // there's no transient window where the new code reads legacy
+      // field names (e.g., post-parentId code reading still-parentIndex
+      // data → orphaned tree). Safe to call here even though base.js
+      // will also call it on next mount — migrations are gated by
+      // migrations-completed and skip work already done.
+      try {
+        runPendingMigrations();
+      } catch (err) {
+        console.error('Post-import migrations failed:', err);
+      }
 
       // After importing `monsters`, seed fresh quota fields so the
       // user lands in the standard "fresh window" state on next read

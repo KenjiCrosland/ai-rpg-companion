@@ -1,6 +1,7 @@
 import { createApp, h, ref, onMounted } from 'vue';
 import AppToast from '../components/AppToast.vue';
 import { registerToast } from '../composables/useToast';
+import { runPendingMigrations } from '@/util/migration-runner.mjs';
 
 // Parchment design tokens — loaded once, shared by all tools.
 // See src/parchment/CLAUDE.md.
@@ -36,6 +37,23 @@ import '@rei/cedar/dist/style/cdr-tooltip.css';
  *                                 and passes :premium="true" to the component.
  */
 export function mountApp(component, withPremium = false) {
+  // Run any pending data migrations BEFORE mounting. Each tool is its
+  // own SPA entry — there's no App.vue wrapping them in production —
+  // so the dashboard's migration call doesn't reach tool pages. Without
+  // this, a user importing legacy data via DataManagerModal would
+  // reload onto the tool page with unmigrated data in localStorage,
+  // and the new code paths would read the wrong field names. Migrations
+  // are idempotent and skip ones already in `migrations-completed`, so
+  // calling here per-mount is essentially free.
+  try {
+    runPendingMigrations();
+  } catch (err) {
+    // Defensive: a migration crash should never prevent the tool from
+    // mounting at all. Log and continue; the unmigrated path will
+    // expose the underlying issue.
+    console.error('runPendingMigrations failed in mountApp:', err);
+  }
+
   const el = document.getElementById('app');
   const isPremium = withPremium && el?.dataset.premium === 'true';
 

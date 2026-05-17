@@ -38,7 +38,7 @@ Settings can be nested infinitely:
     - **Market District** (child of city)
       - **Adventurer's Guild Hall** (child of district)
 
-Each setting tracks its `parentIndex` to maintain the tree structure. When a parent is deleted, all children are recursively deleted.
+Each setting tracks its `parentId` (a stable `set_*` id) to maintain the tree structure. When a parent is deleted, its direct children are re-parented up one level (to the deleted setting's parent, or top-level if there was none).
 
 ### Setting Types
 
@@ -89,7 +89,7 @@ All prompts use the parent setting's context to ensure thematic consistency.
 - `settings` - Array of all saved settings (loaded from localStorage)
 - `settingsTree` - Computed hierarchical tree from flat settings array
 - `currentSetting` - Currently active setting being edited/viewed
-- `parentIndex` - Index of parent setting (null for top-level)
+- `parentId` - Stable `set_*` id of parent setting (null for top-level)
 - `activeTab` - Currently active tab (overview, locations, factions, npcs, quests)
 - `showDataManagerModal` - Toggle for import/export modal
 - `loading_*` - Loading states for each generation type
@@ -120,23 +120,23 @@ All prompts use the parent setting's context to ensure thematic consistency.
     questHooks: [
       { title: "...", description: "...", stakes: "...", possible_outcomes: "..." }
     ],
-    parentIndex: null,  // null for top-level, otherwise index of parent
+    parentId: null,  // null for top-level, otherwise stable id of parent
     created: "2024-01-01T00:00:00.000Z"
   }
 ]
 ```
 
-**Tree Building**: The `settingsTree` computed property transforms the flat array into a hierarchical structure by matching `parentIndex` values.
+**Tree Building**: The `settingsTree` computed property transforms the flat array into a hierarchical structure by matching `parentId` values against each setting's `id`.
 
-### Reindexing on Deletion
+### Reference Cleanup on Deletion
 
 When a setting is deleted, the component:
-1. Recursively deletes all children
-2. Updates `parentIndex` for all settings after the deleted index
-3. Updates `main_index` in all `importantLocations` arrays
+1. Re-parents direct children up one level (sets their `parentId` to the deleted setting's `parentId`)
+2. Detaches any `importantLocations[].promoted_setting_id` pointers that referenced the deleted setting (sets them to null and flips `has_detailed_description` back to false)
+3. Removes cross-tool reference edges via `removeReferencesForEntity('setting', deletedId)`
 4. Saves updated settings to localStorage
 
-This ensures referential integrity in the hierarchical structure.
+Stable string ids mean no reindexing is needed — every other setting's references stay valid regardless of which array slot they occupy.
 
 ## Tab System
 
@@ -235,9 +235,8 @@ src/data/
 - Correctly build settings tree from parent/child relationships
 
 **Setting Deletion with Reindexing (3 tests)**
-- Delete setting and update parentIndex of children
-- Update importantLocations main_index when deleting setting
-- Decrement parentIndex for settings after deleted index
+- Preserve parentId of unrelated siblings across an unrelated delete (no reindex)
+- Keep promoted_setting_id pointers valid regardless of array position
 
 **Loading State Management (2 tests)**
 - Set all loading states to false before saving

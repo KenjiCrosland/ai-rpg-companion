@@ -117,7 +117,7 @@ jest.mock('../components/tabs/LocationsTab.vue', () => ({
   name: 'LocationsTab',
   template: '<div>Locations Tab</div>',
   props: ['setting', 'allSettings', 'premium'],
-  emits: ['updated-setting', 'generate-sublocation', 'delete-sublocation-setting']
+  emits: ['updated-setting', 'generate-sublocation', 'delete-sublocation-setting', 'promote-related-place']
 }));
 
 jest.mock('../components/tabs/FactionsTab.vue', () => ({
@@ -290,7 +290,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         importantLocations: [{ name: 'Yawning Portal', open: false }],
         npcs: [{ name: 'Durnan', open: false }],
         questHooks: [],
-        parentIndex: null,
+        parentId: null,
         loadingFactions: false,
         loadingSubLocations: false,
         loadingsettingOverview: false
@@ -324,7 +324,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: null,
+          parentId: null,
           loadingFactions: false,
           loadingSubLocations: false,
           loadingsettingOverview: false
@@ -378,6 +378,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
   describe('Hierarchical Tree Structure', () => {
     it('should maintain parent-child relationships when saving', async () => {
       const parentSetting = {
+        id: 'set_parent_cormyr',
         adjective: 'Grand',
         setting_type: 'Kingdom',
         place_name: 'Cormyr',
@@ -387,13 +388,14 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         importantLocations: [],
         npcs: [],
         questHooks: [],
-        parentIndex: null,
+        parentId: null,
         loadingFactions: false,
         loadingSubLocations: false,
         loadingsettingOverview: false
       };
 
       const childSetting = {
+        id: 'set_child_suzail',
         adjective: 'Bustling',
         setting_type: 'City',
         place_name: 'Suzail',
@@ -403,7 +405,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         importantLocations: [],
         npcs: [],
         questHooks: [],
-        parentIndex: 0, // References parent at index 0
+        parentId: 'set_parent_cormyr',
         loadingFactions: false,
         loadingSubLocations: false,
         loadingsettingOverview: false
@@ -418,38 +420,41 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
       await nextTick();
 
       const loaded = JSON.parse(localStorage.getItem('gameSettings'));
-      expect(loaded[1].parentIndex).toBe(0);
-      expect(loaded[0].parentIndex).toBe(null);
+      expect(loaded[1].parentId).toBe('set_parent_cormyr');
+      expect(loaded[0].parentId).toBe(null);
     });
 
     it('should correctly build settings tree from parent/child relationships', async () => {
       const settings = [
         {
+          id: 'set_kingdom',
           place_name: 'Kingdom',
           setting_overview: { overview: 'Top level' },
           factions: [],
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: null,
+          parentId: null,
         },
         {
+          id: 'set_city1',
           place_name: 'City 1',
           setting_overview: { overview: 'Child of Kingdom' },
           factions: [],
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: 0,
+          parentId: 'set_kingdom',
         },
         {
+          id: 'set_district1',
           place_name: 'District 1',
           setting_overview: { overview: 'Child of City 1' },
           factions: [],
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: 1,
+          parentId: 'set_city1',
         }
       ];
 
@@ -465,42 +470,25 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
       // We verify the tree structure is correct by checking localStorage preservation
       const loaded = JSON.parse(localStorage.getItem('gameSettings'));
       expect(loaded).toHaveLength(3);
-      expect(loaded[0].parentIndex).toBe(null);
-      expect(loaded[1].parentIndex).toBe(0);
-      expect(loaded[2].parentIndex).toBe(1);
+      expect(loaded[0].parentId).toBe(null);
+      expect(loaded[1].parentId).toBe('set_kingdom');
+      expect(loaded[2].parentId).toBe('set_city1');
     });
   });
 
-  describe('Setting Deletion with Reindexing', () => {
-    it('should delete setting and update parentIndex of children', async () => {
+  describe('Setting Deletion with Reference Cleanup', () => {
+    // With stable string ids, "reindexing on delete" doesn't exist
+    // anymore — parentId pointers are unaffected by array shifts.
+    // What still needs verification: cross-setting references (parentId
+    // on children, promoted_setting_id on parent stubs) survive
+    // unrelated deletes intact, and pointers TO the deleted setting are
+    // detached rather than left dangling.
+
+    it('preserves parentId of unrelated siblings across an unrelated delete', async () => {
       const settings = [
-        {
-          place_name: 'Kingdom',
-          setting_overview: { overview: 'Top' },
-          factions: [],
-          importantLocations: [],
-          npcs: [],
-          questHooks: [],
-          parentIndex: null,
-        },
-        {
-          place_name: 'City (to delete)',
-          setting_overview: { overview: 'Middle' },
-          factions: [],
-          importantLocations: [],
-          npcs: [],
-          questHooks: [],
-          parentIndex: 0,
-        },
-        {
-          place_name: 'District',
-          setting_overview: { overview: 'Bottom' },
-          factions: [],
-          importantLocations: [],
-          npcs: [],
-          questHooks: [],
-          parentIndex: 1, // Child of City
-        }
+        { id: 'set_a', place_name: 'A', setting_overview: { overview: 'A' }, factions: [], importantLocations: [], npcs: [], questHooks: [], parentId: null },
+        { id: 'set_b', place_name: 'B (delete)', setting_overview: { overview: 'B' }, factions: [], importantLocations: [], npcs: [], questHooks: [], parentId: null },
+        { id: 'set_c', place_name: 'C', setting_overview: { overview: 'C' }, factions: [], importantLocations: [], npcs: [], questHooks: [], parentId: null },
       ];
 
       localStorage.setItem('gameSettings', JSON.stringify(settings));
@@ -511,46 +499,56 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
 
       await nextTick();
 
-      // Trigger deletion of setting at index 1
-      // This would be done through the component's deleteSetting method
-      // Since we can't easily call internal methods, we verify the logic through localStorage
-
-      // We'll verify the expected behavior: when deleting index 1,
-      // - District's parentIndex should change from 1 to 0 (City's parent)
-      // - Array should shrink to 2 items
-
-      // This test verifies the LOGIC is correct by setting up the scenario
       const loaded = JSON.parse(localStorage.getItem('gameSettings'));
       expect(loaded).toHaveLength(3);
-      expect(loaded[2].parentIndex).toBe(1);
+      // ids preserved exactly as written; no reindex of parentId fields needed.
+      expect(loaded.map(s => s.id)).toEqual(['set_a', 'set_b', 'set_c']);
+      expect(loaded.every(s => s.parentId === null)).toBe(true);
     });
 
-    it('should update importantLocations main_index when deleting setting', async () => {
+    it('keeps promoted_setting_id pointers valid regardless of array position', async () => {
+      // Parent setting carries an importantLocations stub pointing at a
+      // promoted sub-setting by id. The pointer is id-bound, so the
+      // physical position of the sub-setting in the array doesn't
+      // matter — even with an unrelated setting sitting between them
+      // (the old index-based main_index would break here).
       const settings = [
         {
+          id: 'set_kingdom',
           place_name: 'Kingdom',
           setting_overview: { overview: 'Top' },
           factions: [],
           importantLocations: [
             {
               name: 'Important Place',
-              main_index: 1, // References setting at index 1
+              promoted_setting_id: 'set_district',
               has_detailed_description: true,
               open: false
             }
           ],
           npcs: [],
           questHooks: [],
-          parentIndex: null,
+          parentId: null,
         },
         {
-          place_name: 'City (to delete)',
-          setting_overview: { overview: 'Will be deleted' },
+          id: 'set_unrelated',
+          place_name: 'Unrelated',
+          setting_overview: { overview: 'Unrelated' },
           factions: [],
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: 0,
+          parentId: null,
+        },
+        {
+          id: 'set_district',
+          place_name: 'District',
+          setting_overview: { overview: 'Promoted sub-setting' },
+          factions: [],
+          importantLocations: [],
+          npcs: [],
+          questHooks: [],
+          parentId: 'set_kingdom',
         }
       ];
 
@@ -562,34 +560,13 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
 
       await nextTick();
 
-      // Verify initial state
       const loaded = JSON.parse(localStorage.getItem('gameSettings'));
-      expect(loaded[0].importantLocations[0].main_index).toBe(1);
-      expect(loaded[0].importantLocations[0].has_detailed_description).toBe(true);
-
-      // After deletion of index 1, main_index should be null
-      // and has_detailed_description should be false
-    });
-
-    it('should decrement parentIndex for settings after deleted index', async () => {
-      const settings = [
-        { place_name: 'A', setting_overview: {}, factions: [], importantLocations: [], npcs: [], questHooks: [], parentIndex: null },
-        { place_name: 'B (delete)', setting_overview: {}, factions: [], importantLocations: [], npcs: [], questHooks: [], parentIndex: null },
-        { place_name: 'C', setting_overview: {}, factions: [], importantLocations: [], npcs: [], questHooks: [], parentIndex: null },
-      ];
-
-      localStorage.setItem('gameSettings', JSON.stringify(settings));
-
-      const wrapper = mount(SettingGenerator, {
-        props: { premium: false }
-      });
-
-      await nextTick();
-
-      // After deleting index 1, setting C (originally index 2) becomes index 1
-      // Any references to index 2 should become index 1
-      const loaded = JSON.parse(localStorage.getItem('gameSettings'));
-      expect(loaded).toHaveLength(3);
+      const kingdom = loaded.find(s => s.id === 'set_kingdom');
+      expect(kingdom.importantLocations[0].promoted_setting_id).toBe('set_district');
+      expect(kingdom.importantLocations[0].has_detailed_description).toBe(true);
+      // And the child still points at the correct parent by id.
+      const district = loaded.find(s => s.id === 'set_district');
+      expect(district.parentId).toBe('set_kingdom');
     });
   });
 
@@ -641,7 +618,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         importantLocations: [{ name: 'Location 1', open: true }],
         npcs: [{ name: 'NPC 1', open: true }],
         questHooks: [],
-        parentIndex: null,
+        parentId: null,
         loadingFactions: false,
         loadingSubLocations: false,
         loadingsettingOverview: false
@@ -908,7 +885,7 @@ describe('SettingGenerator - Export Formats', () => {
       importantLocations: [],
       npcs: [],
       questHooks: [],
-      parentIndex: null
+      parentId: null
     }];
 
     localStorage.setItem('gameSettings', JSON.stringify(settings));
@@ -941,7 +918,7 @@ describe('SettingGenerator - Export Formats', () => {
       importantLocations: [],
       npcs: [],
       questHooks: [],
-      parentIndex: null
+      parentId: null
     }];
 
     localStorage.setItem('gameSettings', JSON.stringify(settings));
@@ -973,7 +950,7 @@ describe('SettingGenerator - Export Formats', () => {
       importantLocations: [],
       npcs: [],
       questHooks: [],
-      parentIndex: null
+      parentId: null
     }];
 
     localStorage.setItem('gameSettings', JSON.stringify(settings));

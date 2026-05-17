@@ -11,6 +11,12 @@ import {
   resetSettingSourceForDeletedEntity,
   getSettingById,
   getSettingBrief,
+  getChildSettings,
+  getSiblingSettings,
+  wouldCreateCycle,
+  reparentSetting,
+  mergeRelatedPlaces,
+  filterRelatedPlacesByExistingNames,
 } from '../setting-storage.mjs';
 
 describe('setting-storage', () => {
@@ -431,6 +437,419 @@ describe('setting-storage', () => {
       expect(getSettingBrief(undefined)).toBe('');
       expect(getSettingBrief({})).toBe('');
       expect(getSettingBrief({ setting_overview: {} })).toBe('');
+    });
+  });
+
+  describe('getChildSettings', () => {
+    it('returns all settings whose parentId matches the given id', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city_a', parentId: 'set_kingdom' },
+        { id: 'set_city_b', parentId: 'set_kingdom' },
+        { id: 'set_district', parentId: 'set_city_a' },
+      ]));
+
+      const kids = getChildSettings('set_kingdom');
+      expect(kids.map(s => s.id)).toEqual(['set_city_a', 'set_city_b']);
+    });
+
+    it('returns top-level settings when called with null', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+        { id: 'set_b', parentId: 'set_a' },
+        { id: 'set_c', parentId: null },
+      ]));
+
+      const tops = getChildSettings(null);
+      expect(tops.map(s => s.id)).toEqual(['set_a', 'set_c']);
+    });
+
+    it('treats missing parentId field as null (legacy / fresh records)', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a' }, // no parentId field at all
+        { id: 'set_b', parentId: null },
+      ]));
+
+      expect(getChildSettings(null).map(s => s.id)).toEqual(['set_a', 'set_b']);
+    });
+
+    it('returns empty array when nothing matches', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+      ]));
+      expect(getChildSettings('set_unknown')).toEqual([]);
+    });
+  });
+
+  describe('getSiblingSettings', () => {
+    it('returns same-parent settings excluding the requested one', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city_a', parentId: 'set_kingdom' },
+        { id: 'set_city_b', parentId: 'set_kingdom' },
+        { id: 'set_city_c', parentId: 'set_kingdom' },
+        { id: 'set_unrelated', parentId: 'set_other' },
+      ]));
+
+      const sibs = getSiblingSettings('set_city_a');
+      expect(sibs.map(s => s.id)).toEqual(['set_city_b', 'set_city_c']);
+    });
+
+    it('returns top-level peers when the requested setting is top-level', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+        { id: 'set_b', parentId: null },
+        { id: 'set_c', parentId: 'set_a' },
+      ]));
+
+      const sibs = getSiblingSettings('set_a');
+      expect(sibs.map(s => s.id)).toEqual(['set_b']);
+    });
+
+    it('returns empty array when the setting cannot be found', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+      ]));
+      expect(getSiblingSettings('set_does_not_exist')).toEqual([]);
+    });
+
+    it('returns empty array for null/empty id', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+      ]));
+      expect(getSiblingSettings(null)).toEqual([]);
+      expect(getSiblingSettings('')).toEqual([]);
+    });
+  });
+
+  describe('wouldCreateCycle', () => {
+    it('returns true when reparenting under self', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+      ]));
+      expect(wouldCreateCycle('set_a', 'set_a')).toBe(true);
+    });
+
+    it('returns true when reparenting under a direct child', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city', parentId: 'set_kingdom' },
+      ]));
+      // Moving the kingdom under one of its own cities = cycle.
+      expect(wouldCreateCycle('set_kingdom', 'set_city')).toBe(true);
+    });
+
+    it('returns true when reparenting under a deep descendant', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city', parentId: 'set_kingdom' },
+        { id: 'set_district', parentId: 'set_city' },
+        { id: 'set_building', parentId: 'set_district' },
+      ]));
+      expect(wouldCreateCycle('set_kingdom', 'set_building')).toBe(true);
+      expect(wouldCreateCycle('set_city', 'set_building')).toBe(true);
+    });
+
+    it('returns false when reparenting under an unrelated setting', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+        { id: 'set_b', parentId: null },
+        { id: 'set_child_of_a', parentId: 'set_a' },
+      ]));
+      // set_child_of_a moving under set_b is fine — no cycle.
+      expect(wouldCreateCycle('set_child_of_a', 'set_b')).toBe(false);
+      // Two top-level settings becoming parent-child is fine.
+      expect(wouldCreateCycle('set_a', 'set_b')).toBe(false);
+    });
+
+    it('returns false when proposed parent is null (top-level promotion)', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city', parentId: 'set_kingdom' },
+      ]));
+      expect(wouldCreateCycle('set_city', null)).toBe(false);
+    });
+
+    it('returns false for empty / missing settingId', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+      ]));
+      expect(wouldCreateCycle(null, 'set_a')).toBe(false);
+      expect(wouldCreateCycle('', 'set_a')).toBe(false);
+    });
+
+    it('does not spin when pre-existing data contains a cycle', () => {
+      // Defensive: malformed pre-existing data where two settings
+      // already point at each other. Walking the chain shouldn\'t
+      // loop forever — the visited-set bails out and returns true
+      // (any pre-existing cycle implies a reparent would touch it).
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: 'set_b' },
+        { id: 'set_b', parentId: 'set_a' },
+      ]));
+      expect(() => wouldCreateCycle('set_c_new', 'set_a')).not.toThrow();
+    });
+  });
+
+  describe('reparentSetting', () => {
+    it('moves a top-level setting under a different parent', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_old_kingdom', parentId: null },
+        { id: 'set_new_kingdom', parentId: null },
+        { id: 'set_city', parentId: 'set_old_kingdom' },
+      ]));
+
+      const result = reparentSetting('set_city', 'set_new_kingdom');
+      expect(result.ok).toBe(true);
+
+      const after = JSON.parse(localStorage.getItem('gameSettings'));
+      const city = after.find(s => s.id === 'set_city');
+      expect(city.parentId).toBe('set_new_kingdom');
+    });
+
+    it('promotes a child to top-level when newParentId is null', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city', parentId: 'set_kingdom' },
+      ]));
+
+      const result = reparentSetting('set_city', null);
+      expect(result.ok).toBe(true);
+
+      const after = JSON.parse(localStorage.getItem('gameSettings'));
+      const city = after.find(s => s.id === 'set_city');
+      expect(city.parentId).toBe(null);
+    });
+
+    it('treats undefined newParentId the same as null (top-level promotion)', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city', parentId: 'set_kingdom' },
+      ]));
+
+      const result = reparentSetting('set_city', undefined);
+      expect(result.ok).toBe(true);
+
+      const after = JSON.parse(localStorage.getItem('gameSettings'));
+      expect(after.find(s => s.id === 'set_city').parentId).toBe(null);
+    });
+
+    it('refuses self-reparent', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+      ]));
+
+      const result = reparentSetting('set_a', 'set_a');
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('self-parent');
+
+      // No mutation persisted.
+      expect(JSON.parse(localStorage.getItem('gameSettings'))[0].parentId).toBe(null);
+    });
+
+    it('refuses reparent under a descendant (would create cycle)', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city', parentId: 'set_kingdom' },
+        { id: 'set_district', parentId: 'set_city' },
+      ]));
+
+      const result = reparentSetting('set_kingdom', 'set_district');
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('would-create-cycle');
+
+      // Original parentage preserved.
+      const after = JSON.parse(localStorage.getItem('gameSettings'));
+      expect(after.find(s => s.id === 'set_kingdom').parentId).toBe(null);
+    });
+
+    it('refuses when setting does not exist', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+      ]));
+      const result = reparentSetting('set_ghost', 'set_a');
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('setting-not-found');
+    });
+
+    it('refuses when proposed parent does not exist', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', parentId: null },
+      ]));
+      const result = reparentSetting('set_a', 'set_ghost_parent');
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('parent-not-found');
+    });
+
+    it('refuses when settingId is missing', () => {
+      const result = reparentSetting(null, 'set_a');
+      expect(result.ok).toBe(false);
+      expect(result.reason).toBe('missing-setting-id');
+    });
+
+    it('is idempotent — re-parenting under the current parent is a no-op success', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_kingdom', parentId: null },
+        { id: 'set_city', parentId: 'set_kingdom' },
+      ]));
+      const before = localStorage.getItem('gameSettings');
+
+      const result = reparentSetting('set_city', 'set_kingdom');
+      expect(result.ok).toBe(true);
+
+      // No write happened (string-equal localStorage snapshot before/after).
+      expect(localStorage.getItem('gameSettings')).toBe(before);
+    });
+  });
+
+  describe('mergeRelatedPlaces', () => {
+    it('preserves promoted entries verbatim across a rescan', () => {
+      const existing = [
+        {
+          name: 'Krakova-Gora',
+          kind: 'parent',
+          promoted_setting_id: 'set_krakova',
+          source_quote: 'crowns the slope of Krakova-Gora',
+          role_brief: 'Dormant volcano',
+          suggested_setting_type: 'wilderness',
+        },
+      ];
+      // A rescan produces only siblings (LLM forgot Krakova this round).
+      const fresh = [
+        { name: 'Tverzh', kind: 'sibling', source_quote: 'to the southwest, Tverzh', role_brief: 'Trading city', suggested_setting_type: 'city' },
+      ];
+      const merged = mergeRelatedPlaces(existing, fresh);
+
+      // Promoted entry survives.
+      expect(merged.find(p => p.name === 'Krakova-Gora')).toBeTruthy();
+      expect(merged.find(p => p.name === 'Krakova-Gora').promoted_setting_id).toBe('set_krakova');
+      // Fresh entry appended.
+      expect(merged.find(p => p.name === 'Tverzh')).toBeTruthy();
+    });
+
+    it('drops unpromoted entries when rescan does not surface them', () => {
+      const existing = [
+        { name: 'Tverzh', kind: 'sibling', promoted_setting_id: null },
+        { name: 'Gray Ribs', kind: 'parent', promoted_setting_id: null },
+      ];
+      // Fresh extraction only finds Tverzh — Gray Ribs falls out.
+      const fresh = [
+        { name: 'Tverzh', kind: 'sibling' },
+      ];
+      const merged = mergeRelatedPlaces(existing, fresh);
+      expect(merged.map(p => p.name)).toEqual(['Tverzh']);
+    });
+
+    it('case-insensitive dedup — fresh stub matching promoted name is dropped', () => {
+      const existing = [
+        { name: 'Krakova-Gora', kind: 'parent', promoted_setting_id: 'set_krakova' },
+      ];
+      const fresh = [
+        // LLM emitted variant casing this round.
+        { name: 'krakova-gora', kind: 'parent', source_quote: 'q' },
+      ];
+      const merged = mergeRelatedPlaces(existing, fresh);
+      // Promoted version survives; the variant is dropped (not a duplicate).
+      expect(merged).toHaveLength(1);
+      expect(merged[0].name).toBe('Krakova-Gora');
+      expect(merged[0].promoted_setting_id).toBe('set_krakova');
+    });
+
+    it('dedup within the fresh batch (defensive against LLM emitting duplicates)', () => {
+      const fresh = [
+        { name: 'Tverzh', kind: 'sibling', source_quote: 'first mention' },
+        { name: 'tverzh', kind: 'sibling', source_quote: 'duplicate variant casing' },
+      ];
+      const merged = mergeRelatedPlaces([], fresh);
+      expect(merged).toHaveLength(1);
+      // First occurrence wins.
+      expect(merged[0].name).toBe('Tverzh');
+      expect(merged[0].source_quote).toBe('first mention');
+    });
+
+    it('initializes promoted_setting_id to null on fresh entries', () => {
+      const merged = mergeRelatedPlaces([], [{ name: 'X', kind: 'feature' }]);
+      expect(merged[0].promoted_setting_id).toBe(null);
+    });
+
+    it('drops fresh entries with empty / missing name', () => {
+      const merged = mergeRelatedPlaces([], [
+        { name: '', kind: 'feature' },
+        { kind: 'feature' },
+        { name: '   ', kind: 'feature' },
+        { name: 'Valid', kind: 'feature' },
+      ]);
+      expect(merged.map(p => p.name)).toEqual(['Valid']);
+    });
+
+    it('normalizes shape: trims and defaults kind to feature when missing', () => {
+      const merged = mergeRelatedPlaces([], [
+        { name: '  Trimmed  ', source_quote: '  q  ', role_brief: '  r  ' },
+      ]);
+      expect(merged[0]).toEqual({
+        name: 'Trimmed',
+        kind: 'feature',
+        source_quote: 'q',
+        role_brief: 'r',
+        suggested_setting_type: '',
+        promoted_setting_id: null,
+      });
+    });
+
+    it('handles non-array inputs gracefully', () => {
+      expect(mergeRelatedPlaces(null, null)).toEqual([]);
+      expect(mergeRelatedPlaces(undefined, undefined)).toEqual([]);
+      expect(mergeRelatedPlaces([], 'not-array')).toEqual([]);
+    });
+
+    it('does not mutate input arrays', () => {
+      const existing = [
+        { name: 'A', kind: 'parent', promoted_setting_id: 'set_a' },
+      ];
+      const fresh = [
+        { name: 'B', kind: 'sibling' },
+      ];
+      const existingSnapshot = JSON.parse(JSON.stringify(existing));
+      const freshSnapshot = JSON.parse(JSON.stringify(fresh));
+
+      mergeRelatedPlaces(existing, fresh);
+
+      expect(existing).toEqual(existingSnapshot);
+      expect(fresh).toEqual(freshSnapshot);
+    });
+  });
+
+  describe('filterRelatedPlacesByExistingNames', () => {
+    const places = [
+      { name: 'Tverzh', kind: 'sibling' },
+      { name: 'Krakova-Gora', kind: 'parent' },
+      { name: 'Gray Ribs', kind: 'parent' },
+      { name: 'Yavich', kind: 'feature' },
+    ];
+
+    it('drops entries whose name matches one of the excluded names', () => {
+      const out = filterRelatedPlacesByExistingNames(places, ['Tverzh', 'Yavich']);
+      expect(out.map(p => p.name)).toEqual(['Krakova-Gora', 'Gray Ribs']);
+    });
+
+    it('match is case-insensitive', () => {
+      const out = filterRelatedPlacesByExistingNames(places, ['tverzh', 'GRAY RIBS']);
+      expect(out.map(p => p.name)).toEqual(['Krakova-Gora', 'Yavich']);
+    });
+
+    it('returns a copy unchanged when exclude list is empty', () => {
+      const out = filterRelatedPlacesByExistingNames(places, []);
+      expect(out).toEqual(places);
+      expect(out).not.toBe(places);
+    });
+
+    it('handles non-array places input', () => {
+      expect(filterRelatedPlacesByExistingNames(null, ['X'])).toEqual([]);
+    });
+
+    it('ignores null / empty / whitespace exclude names', () => {
+      const out = filterRelatedPlacesByExistingNames(places, [null, '', '   ', 'Tverzh']);
+      expect(out.map(p => p.name)).toEqual(['Krakova-Gora', 'Gray Ribs', 'Yavich']);
     });
   });
 });

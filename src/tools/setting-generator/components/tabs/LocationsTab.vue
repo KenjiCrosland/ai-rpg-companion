@@ -15,7 +15,7 @@
           <template #label>{{ location.name }}</template>
 
           <!-- Simple (no full description yet) -->
-          <div v-if="!location.main_index && !location.loading">
+          <div v-if="!location.promoted_setting_id && !location.loading">
             <cdr-tooltip id="tooltip-location-delete" position="left" class="delete-button">
               <template #trigger>
                 <cdr-button size="small" :icon-only="true" :with-background="true"
@@ -76,7 +76,7 @@
             <cdr-tooltip id="tooltip-setting-delete" position="left" class="delete-button">
               <template #trigger>
                 <cdr-button size="small" :icon-only="true" :with-background="true"
-                  @click.stop="$emit('delete-sublocation-setting', location.main_index)">
+                  @click.stop="$emit('delete-sublocation-setting', location.promoted_setting_id)">
                   <template #icon><icon-x-sm /></template>
                 </cdr-button>
               </template>
@@ -84,22 +84,22 @@
             </cdr-tooltip>
             <div class="location-title-block">
               <h2 class="location-name">{{ location.name }}</h2>
-              <p v-if="allSettings[location.main_index]?.setting_overview?.title" class="location-epithet">
-                {{ allSettings[location.main_index].setting_overview.title }}
+              <p v-if="settingsById.get(location.promoted_setting_id)?.setting_overview?.title" class="location-epithet">
+                {{ settingsById.get(location.promoted_setting_id).setting_overview.title }}
               </p>
             </div>
-            <p>{{ allSettings[location.main_index]?.setting_overview?.overview }} {{ allSettings[location.main_index]?.setting_overview?.relation_to_larger_setting }}</p>
-            <p>{{ allSettings[location.main_index]?.setting_overview?.history }}</p>
+            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.overview }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.relation_to_larger_setting }}</p>
+            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.history }}</p>
             <p>
-              {{ allSettings[location.main_index]?.setting_overview?.current_ruler_sentence }}
-              {{ allSettings[location.main_index]?.setting_overview?.recent_event_current_ruler }}
-              {{ allSettings[location.main_index]?.setting_overview?.recent_event_consequences }}
+              {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.current_ruler_sentence }}
+              {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.recent_event_current_ruler }}
+              {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.recent_event_consequences }}
             </p>
-            <p>{{ allSettings[location.main_index]?.setting_overview?.social_history }} {{ allSettings[location.main_index]?.setting_overview?.recent_event_social }}</p>
-            <p>{{ allSettings[location.main_index]?.setting_overview?.economic_history }} {{ allSettings[location.main_index]?.setting_overview?.impactful_economic_event }}</p>
-            <p>{{ allSettings[location.main_index]?.setting_overview?.military_history }} {{ allSettings[location.main_index]?.setting_overview?.recent_event_military }}</p>
-            <p>{{ allSettings[location.main_index]?.setting_overview?.main_problem }} {{ allSettings[location.main_index]?.setting_overview?.potential_solutions }}</p>
-            <p>{{ allSettings[location.main_index]?.setting_overview?.conclusion }}</p>
+            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.social_history }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.recent_event_social }}</p>
+            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.economic_history }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.impactful_economic_event }}</p>
+            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.military_history }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.recent_event_military }}</p>
+            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.main_problem }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.potential_solutions }}</p>
+            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.conclusion }}</p>
 
             <div class="info-message"
               style="margin-top: 2rem; padding: 1rem; background-color: #f4f2ed; border-radius: 4px;">
@@ -138,12 +138,24 @@
     <div v-if="loadingSubLocations">
       <BlockSkeleton />
     </div>
+
+    <!-- Related Places: extracted from this setting's own prose
+         (regions, neighbors, internal landmarks, geographic features).
+         Distinct from Important Locations: Important Locations are
+         invented for the setting; Related Places are the entities the
+         setting's narrative actually named, ready to be promoted into
+         first-class settings with the right hierarchical relationship. -->
+    <RelatedPlacesSection
+      :setting="setting"
+      @promote-related-place="$emit('promote-related-place', $event)"
+      @remove-related-place="onRemoveRelatedPlace"
+    />
   </div>
 </template>
 
 <script setup>
 import { ParActionButton } from "@/parchment";
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import {
   CdrButton,
   CdrInput,
@@ -157,13 +169,15 @@ import OverviewSkeleton from '@/components/skeletons/OverviewSkeleton.vue';
 import BlockSkeleton from '@/components/skeletons/BlockSkeleton.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { subLocationsPrompt } from '../../prompts/index.mjs';
+import RelatedPlacesSection from '../RelatedPlacesSection.vue';
 
 const props = defineProps({
   setting: {
     type: Object,
     required: true,
   },
-  // Full settings array needed to look up sub-setting overviews by main_index
+  // Full settings array needed to look up promoted sub-setting overviews
+  // by promoted_setting_id (rendered via the settingsById computed below).
   allSettings: {
     type: Array,
     required: true,
@@ -174,7 +188,32 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['updated-setting', 'generate-sublocation', 'delete-sublocation-setting']);
+const emit = defineEmits([
+  'updated-setting',
+  'generate-sublocation',
+  'delete-sublocation-setting',
+  'promote-related-place',
+]);
+
+// Local handler for removing a related_places stub. Mutates a copy of
+// related_places and re-emits via updated-setting so the parent owns
+// persistence.
+function onRemoveRelatedPlace({ stub }) {
+  const next = (props.setting.related_places || []).filter(p => p?.name !== stub?.name);
+  emit('updated-setting', { ...props.setting, related_places: next });
+}
+
+// Map<id, setting> for O(1) lookup by promoted_setting_id in the
+// template. Rebuilt whenever the allSettings prop changes (Vue's
+// shallow-reactivity on prop arrays still triggers computed
+// recomputation when the array reference shifts).
+const settingsById = computed(() => {
+  const map = new Map();
+  for (const s of props.allSettings || []) {
+    if (s?.id) map.set(s.id, s);
+  }
+  return map;
+});
 
 // -------------------------
 // Local state
@@ -250,7 +289,7 @@ const addNewSubLocation = () => {
     name: newLocationName.value,
     description: newLocationDescription.value,
     setting_scale: '',
-    main_index: null,
+    promoted_setting_id: null,
     has_detailed_description: false,
     open: true,
   };

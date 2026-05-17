@@ -18,6 +18,7 @@ import { renameNPCItemFields } from './rename-npc-item-fields.mjs';
 import { promoteNPCIds } from './promote-npc-id.mjs';
 import { assignDungeonIds } from './assign-dungeon-ids.mjs';
 import { assignSettingIds } from './assign-setting-ids.mjs';
+import { migrateSettingParentId } from './migrate-setting-parent-id.mjs';
 import { dropNPCFolder } from './drop-npc-folder.mjs';
 import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
 import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-nested.mjs';
@@ -39,13 +40,17 @@ import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-n
  *   4. assign-dungeon-ids / assign-setting-ids — convert entities to
  *      stable string ids and rewrite refs that targeted them by name or
  *      numeric value.
- *   5. drop-npc-folder — remove the `npc_folder` denormalization from
+ *   5. migrate-setting-parent-id — promote settings' parentIndex →
+ *      parentId and importantLocations[].main_index →
+ *      promoted_setting_id. Depends on assign-setting-ids having run
+ *      first so every setting has a resolvable id.
+ *   6. drop-npc-folder — remove the `npc_folder` denormalization from
  *      every cross-tool stub. Substrate lookups walk by id now; the
  *      cached folder hint is dead weight and a stale-cache hazard.
- *   6. sweep-orphan-references — drops any refs whose source/target no
+ *   7. sweep-orphan-references — drops any refs whose source/target no
  *      longer resolves; runs after the id migrations so their post-
  *      rewrite refs aren't seen as orphans.
- *   7. promote-npc-statblock-ref-to-nested — moves canonical NPC
+ *   8. promote-npc-statblock-ref-to-nested — moves canonical NPC
  *      statblock_name/folder from top-level to npcDescriptionPart1.
  *      Lets `getNPCStatblockRef` drop its legacy-top-level fallback
  *      branch and removes the dual-read pattern from the codebase.
@@ -58,6 +63,7 @@ const migrations = [
   { name: 'promote-npc-id', run: promoteNPCIds },
   { name: 'assign-dungeon-ids', run: assignDungeonIds },
   { name: 'assign-setting-ids', run: assignSettingIds },
+  { name: 'migrate-setting-parent-id', run: migrateSettingParentId },
   { name: 'drop-npc-folder', run: dropNPCFolder },
   { name: 'sweep-orphan-references', run: sweepOrphanReferences },
   { name: 'promote-npc-statblock-ref-to-nested', run: promoteNPCStatblockRefToNested },
