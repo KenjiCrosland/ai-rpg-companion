@@ -3,7 +3,8 @@
  *
  * RelatedPlacesSection tests — focused on the structural contract:
  * stubs grouped correctly by kind, the right action buttons fire the
- * right emits, removal goes through update flow.
+ * right emits, removal goes through update flow, Features bucket is
+ * populated in data but never rendered in UI.
  *
  * Open-ended visual content (group help text, etc.) isn't tested per
  * the project's test convention.
@@ -12,15 +13,21 @@
 import { mount } from '@vue/test-utils';
 import RelatedPlacesSection from '../RelatedPlacesSection.vue';
 
-// Lightweight stub for ParCardButton. Fallthrough attrs (including
-// @click from the parent) bind to the root <button> automatically;
-// adding an explicit @click="$emit('click')" would double-fire because
-// the parent's listener lands twice (once via fallthrough, once via
-// the explicit $emit).
+// Lightweight stubs for the parchment primitives used in RelatedPlacesSection.
+// Fallthrough attrs (including @click from the parent) bind to the root
+// <button> automatically; adding an explicit @click="$emit('click')" would
+// double-fire because the parent's listener lands twice (once via
+// fallthrough, once via the explicit $emit).
 jest.mock('@/parchment', () => ({
-  ParCardButton: {
-    name: 'ParCardButton',
+  ParActionButton: {
+    name: 'ParActionButton',
     template: '<button type="button"><slot></slot></button>',
+    props: ['variant', 'disabled'],
+  },
+  ParAddNewButton: {
+    name: 'ParAddNewButton',
+    template: '<button type="button"><slot></slot></button>',
+    props: ['disabled'],
   },
 }));
 
@@ -40,6 +47,14 @@ function makeSetting(related_places = []) {
   };
 }
 
+// Helper: find the first row-level "Create Setting" button inside the
+// list (not the form's submit button, which only appears when the
+// form is expanded). Since AddRelatedPlaceForm starts collapsed in
+// every test below, all "Create Setting" buttons are row buttons.
+function findRowCreateButtons(wrapper) {
+  return wrapper.findAll('button').filter(b => b.text().trim() === 'Create Setting');
+}
+
 describe('RelatedPlacesSection — rendering by kind', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -52,7 +67,7 @@ describe('RelatedPlacesSection — rendering by kind', () => {
     expect(wrapper.text()).toContain('No related places yet');
   });
 
-  it('groups stubs into Within / Adjacent / Contains / Features', () => {
+  it('groups stubs into Part Of / Neighbors / Contains; features are hidden', () => {
     const setting = makeSetting([
       { name: 'Krakova-Gora', kind: 'parent', role_brief: 'Volcano', source_quote: 'crowns the slope' },
       { name: 'Tverzh', kind: 'sibling', role_brief: 'Trading city' },
@@ -62,18 +77,26 @@ describe('RelatedPlacesSection — rendering by kind', () => {
 
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
 
-    expect(wrapper.text()).toContain('Within');
-    expect(wrapper.text()).toContain('Adjacent');
+    expect(wrapper.text()).toContain('Part Of');
+    expect(wrapper.text()).toContain('Neighbors');
     expect(wrapper.text()).toContain('Contains');
-    expect(wrapper.text()).toContain('Features');
 
     expect(wrapper.text()).toContain('Krakova-Gora');
     expect(wrapper.text()).toContain('Tverzh');
     expect(wrapper.text()).toContain('Smoke Quarter');
-    expect(wrapper.text()).toContain('Silver Road');
+
+    // Features section is intentionally hidden — feature stubs exist in
+    // the data layer for classification-bucket completeness but never
+    // render in the UI. The stub name should NOT appear anywhere on
+    // the page.
+    expect(wrapper.text()).not.toContain('Features');
+    expect(wrapper.text()).not.toContain('Silver Road');
   });
 
-  it('renders the source_quote and role_brief for each stub', () => {
+  it('renders the role_brief for each stub but hides source_quote from UI', () => {
+    // source_quote stays in data (still feeds the promotion prompt for
+    // LLM context) but isn't rendered — the card UI matches the spec
+    // mockup which shows just name + role_brief + actions.
     const setting = makeSetting([
       {
         name: 'Krakova-Gora',
@@ -85,7 +108,7 @@ describe('RelatedPlacesSection — rendering by kind', () => {
 
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
     expect(wrapper.text()).toContain('Dormant volcano the city crowns');
-    expect(wrapper.text()).toContain('Gorod-Ognya crowns the western slope of Krakova-Gora.');
+    expect(wrapper.text()).not.toContain('Gorod-Ognya crowns the western slope of Krakova-Gora.');
   });
 
   it('omits groups whose stub list is empty', () => {
@@ -94,84 +117,78 @@ describe('RelatedPlacesSection — rendering by kind', () => {
     ]);
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
 
-    expect(wrapper.text()).toContain('Within');
-    expect(wrapper.text()).not.toContain('Adjacent');
+    expect(wrapper.text()).toContain('Part Of');
+    expect(wrapper.text()).not.toContain('Neighbors');
     expect(wrapper.text()).not.toContain('Contains');
-    expect(wrapper.text()).not.toContain('Features');
   });
 
-  it('routes unknown kind values into the Features bucket (defensive)', () => {
+  it('routes unknown kind values into the feature bucket (which does not render)', () => {
     const setting = makeSetting([
       { name: 'Mystery Place', kind: 'unrecognized-kind' },
     ]);
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
-    expect(wrapper.text()).toContain('Features');
-    expect(wrapper.text()).toContain('Mystery Place');
+    // The stub is bucketed into features by defensive fallback, and
+    // features are not rendered — so the user sees the empty state.
+    expect(wrapper.text()).toContain('No related places yet');
+    expect(wrapper.text()).not.toContain('Mystery Place');
+  });
+
+  it('reads "no related places" when only feature-kind stubs are present', () => {
+    // hasAnyPromotableStubs only counts parent/sibling/sublocation; a
+    // setting populated only with features should still show the
+    // empty-state copy.
+    const setting = makeSetting([
+      { name: 'Silver Road', kind: 'feature' },
+      { name: 'Yavich', kind: 'feature' },
+    ]);
+    const wrapper = mount(RelatedPlacesSection, { props: { setting } });
+    expect(wrapper.text()).toContain('No related places yet');
   });
 });
 
-describe('RelatedPlacesSection — promote button labels and emits', () => {
-  it('emits promote-related-place with kind=parent when "Create as Parent" is clicked', async () => {
+describe('RelatedPlacesSection — promote button emits', () => {
+  it('emits promote-related-place with kind=parent for a Part-Of row', async () => {
     const setting = makeSetting([
       { name: 'Krakova-Gora', kind: 'parent' },
     ]);
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
 
-    const btn = wrapper
-      .findAll('button')
-      .find(b => b.text().includes('Create as Parent'));
-    expect(btn).toBeTruthy();
+    const buttons = findRowCreateButtons(wrapper);
+    expect(buttons).toHaveLength(1);
 
-    await btn.trigger('click');
+    await buttons[0].trigger('click');
     const events = wrapper.emitted('promote-related-place');
-    expect(events).toBeTruthy();
     expect(events).toHaveLength(1);
     expect(events[0][0].kind).toBe('parent');
     expect(events[0][0].stub.name).toBe('Krakova-Gora');
   });
 
-  it('emits promote-related-place with kind=sibling when "Create as Sibling" is clicked', async () => {
+  it('emits promote-related-place with kind=sibling for a Neighbors row', async () => {
     const setting = makeSetting([
       { name: 'Tverzh', kind: 'sibling' },
     ]);
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
 
-    const btn = wrapper
-      .findAll('button')
-      .find(b => b.text().includes('Create as Sibling'));
-    await btn.trigger('click');
+    const buttons = findRowCreateButtons(wrapper);
+    await buttons[0].trigger('click');
 
     const events = wrapper.emitted('promote-related-place');
     expect(events[0][0].kind).toBe('sibling');
     expect(events[0][0].stub.name).toBe('Tverzh');
   });
 
-  it('emits promote-related-place with kind=sublocation when "Create as Sublocation" is clicked', async () => {
+  it('emits promote-related-place with kind=sublocation for a Contains row', async () => {
     const setting = makeSetting([
       { name: 'Smoke Quarter', kind: 'sublocation' },
     ]);
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
 
-    const btn = wrapper
-      .findAll('button')
-      .find(b => b.text().includes('Create as Sublocation'));
-    await btn.trigger('click');
+    const buttons = findRowCreateButtons(wrapper);
+    await buttons[0].trigger('click');
 
     const events = wrapper.emitted('promote-related-place');
     expect(events[0][0].kind).toBe('sublocation');
     expect(events[0][0].stub.name).toBe('Smoke Quarter');
-  });
-
-  it('does NOT render a promote button for feature kind', () => {
-    const setting = makeSetting([
-      { name: 'Silver Road', kind: 'feature' },
-    ]);
-    const wrapper = mount(RelatedPlacesSection, { props: { setting } });
-
-    const promote = wrapper
-      .findAll('button')
-      .find(b => /Create as|Promote/.test(b.text()));
-    expect(promote).toBeUndefined();
   });
 
   it('shows "View in Setting Generator" instead of Create when promoted_setting_id is present', async () => {
@@ -184,10 +201,8 @@ describe('RelatedPlacesSection — promote button labels and emits', () => {
     ]);
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
 
-    const createBtn = wrapper
-      .findAll('button')
-      .find(b => b.text().includes('Create as Parent'));
-    expect(createBtn).toBeUndefined();
+    // No row-level "Create Setting" button when the stub is promoted.
+    expect(findRowCreateButtons(wrapper)).toHaveLength(0);
 
     const viewBtn = wrapper
       .findAll('button')
@@ -196,6 +211,36 @@ describe('RelatedPlacesSection — promote button labels and emits', () => {
 
     await viewBtn.trigger('click');
     expect(navigateToTool).toHaveBeenCalledWith('setting-generator', { setting: 'set_krakova' });
+  });
+});
+
+describe('RelatedPlacesSection — manual add form', () => {
+  it('synthesizes a stub and emits promote-related-place when add-and-promote fires', async () => {
+    const setting = makeSetting([]);
+    const wrapper = mount(RelatedPlacesSection, { props: { setting } });
+
+    // Simulate the AddRelatedPlaceForm child firing its event.
+    const form = wrapper.findComponent({ name: 'AddRelatedPlaceForm' });
+    expect(form.exists()).toBe(true);
+
+    form.vm.$emit('add-and-promote', {
+      kind: 'sibling',
+      name: 'Aethelmar',
+      role_brief: 'Anglo-Saxon trading port',
+      suggested_setting_type: '',
+    });
+
+    const events = wrapper.emitted('promote-related-place');
+    expect(events).toHaveLength(1);
+    expect(events[0][0].kind).toBe('sibling');
+    expect(events[0][0].stub).toEqual({
+      name: 'Aethelmar',
+      kind: 'sibling',
+      role_brief: 'Anglo-Saxon trading port',
+      source_quote: '',
+      suggested_setting_type: '',
+      promoted_setting_id: null,
+    });
   });
 });
 

@@ -22,6 +22,7 @@ import { migrateSettingParentId } from './migrate-setting-parent-id.mjs';
 import { dropNPCFolder } from './drop-npc-folder.mjs';
 import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
 import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-nested.mjs';
+import { sweepAuntUncleSiblingStubs } from './sweep-aunt-uncle-sibling-stubs.mjs';
 
 /**
  * List of all migrations to run.
@@ -54,6 +55,13 @@ import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-n
  *      statblock_name/folder from top-level to npcDescriptionPart1.
  *      Lets `getNPCStatblockRef` drop its legacy-top-level fallback
  *      branch and removes the dual-read pattern from the codebase.
+ *   9. sweep-aunt-uncle-sibling-stubs — drops sibling-kind
+ *      related_places stubs whose names match the setting's
+ *      "aunt/uncle" set (parent's siblings + parent's sibling stubs).
+ *      Cleans up scale-mismatched peer claims the extraction LLM
+ *      produced before `collectRelatedSettingNames` learned to
+ *      exclude aunts/uncles. Depends on `migrate-setting-parent-id`
+ *      so every setting has a resolvable parentId to walk.
  *
  * Add new migrations to the end of this array.
  */
@@ -67,6 +75,7 @@ const migrations = [
   { name: 'drop-npc-folder', run: dropNPCFolder },
   { name: 'sweep-orphan-references', run: sweepOrphanReferences },
   { name: 'promote-npc-statblock-ref-to-nested', run: promoteNPCStatblockRefToNested },
+  { name: 'sweep-aunt-uncle-sibling-stubs', run: sweepAuntUncleSiblingStubs },
 ];
 
 /**

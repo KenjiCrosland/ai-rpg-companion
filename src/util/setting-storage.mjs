@@ -254,6 +254,55 @@ export function getSiblingSettings(settingId) {
 }
 
 /**
+ * Names that should be treated as "scale-mismatched siblings" for the
+ * given setting — places that are really at the parent's scale, but
+ * tend to surface in this setting's prose because they're mentioned as
+ * adjacent regions/polities. The extraction LLM has no aunt/uncle slot
+ * in the parent/sibling/sublocation/feature schema, so it defaults to
+ * 'sibling' and produces incoherent peer claims (a city listed as
+ * sibling of a region, etc.).
+ *
+ * Returns names from two sources:
+ *   - Realized: settings that share the parent's parentId (the
+ *     parent's tree-siblings, i.e. this setting's aunts/uncles).
+ *   - Stubs: sibling-kind entries on the parent's own related_places
+ *     list (the parent's extraction already labelled them as
+ *     parent-scale peers, promoted or not).
+ *
+ * Top-level settings (no parent) return an empty array — they have no
+ * scale above them to mismatch against.
+ *
+ * Pure function — does not mutate inputs. Names are returned with
+ * original casing; callers normalize for matching.
+ *
+ * @param {Object} setting
+ * @param {Array<Object>} allSettings
+ * @returns {Array<string>}
+ */
+export function auntUncleNamesFor(setting, allSettings) {
+  const out = [];
+  if (!setting || !setting.parentId) return out;
+  const all = Array.isArray(allSettings) ? allSettings : [];
+  const parent = all.find(s => s?.id === setting.parentId);
+  if (!parent) return out;
+
+  const parentParentId = parent.parentId ?? null;
+  for (const s of all) {
+    if (!s || s.id === parent.id) continue;
+    if ((s.parentId ?? null) !== parentParentId) continue;
+    if (s.place_name) out.push(s.place_name);
+  }
+
+  if (Array.isArray(parent.related_places)) {
+    for (const stub of parent.related_places) {
+      if (stub?.kind === 'sibling' && stub.name) out.push(stub.name);
+    }
+  }
+
+  return out;
+}
+
+/**
  * Reconcile a freshly-extracted batch of related_places against the
  * setting's existing array. Mirrors `mergeStubs` from the item-side
  * related-settings extraction:
@@ -310,6 +359,43 @@ export function mergeRelatedPlaces(existing, fresh) {
   }
 
   return reconciled;
+}
+
+/**
+ * For each fresh related-places stub whose name matches an existing
+ * setting in the library (case-insensitive), pre-fill its
+ * `promoted_setting_id` so the UI shows "View in Setting Generator"
+ * instead of "Create Setting" — and so the next promote click links
+ * to the existing setting rather than creating a duplicate.
+ *
+ * Skips entries that already carry a `promoted_setting_id` (caller
+ * may have set them explicitly).
+ *
+ * Pure function — does not mutate inputs. Returns a new array.
+ *
+ * @param {Array<Object>} places   - fresh stubs from extraction
+ * @param {Array<Object>} allSettings - the user's full library
+ * @returns {Array<Object>}
+ */
+export function linkExistingSettingsByName(places, allSettings) {
+  if (!Array.isArray(places)) return [];
+  const settings = Array.isArray(allSettings) ? allSettings : [];
+  const byName = new Map();
+  for (const s of settings) {
+    if (!s?.id || !s.place_name) continue;
+    const key = s.place_name.trim().toLowerCase();
+    if (!key || byName.has(key)) continue; // first-match wins on duplicate names
+    byName.set(key, s.id);
+  }
+  return places.map(p => {
+    if (!p || typeof p !== 'object') return p;
+    if (p.promoted_setting_id) return p;
+    const key = (p.name || '').trim().toLowerCase();
+    if (!key) return p;
+    const existingId = byName.get(key);
+    if (!existingId) return p;
+    return { ...p, promoted_setting_id: existingId };
+  });
 }
 
 /**

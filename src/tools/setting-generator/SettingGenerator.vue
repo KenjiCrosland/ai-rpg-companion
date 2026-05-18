@@ -98,7 +98,7 @@
         <TabPanel label="Overview">
           <OverviewTab :setting="currentSetting" :premium="premium" @updated-setting="onOverviewUpdated" />
         </TabPanel>
-        <TabPanel label="Locations">
+        <TabPanel label="Locations" :bare="true">
           <LocationsTab :setting="currentSetting" :all-settings="settings" :premium="premium"
             @updated-setting="onLocationsUpdated" @generate-sublocation="generateSetting"
             @delete-sublocation-setting="deleteSetting"
@@ -186,7 +186,7 @@ import { getNavigationParams } from '@/util/navigation.mjs';
 import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
 import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
 import { linkSettingToItemStub, resetItemStubsForDeletedSetting } from '@/util/item-storage.mjs';
-import { getSettingById, mergeRelatedPlaces } from '@/util/setting-storage.mjs';
+import { getSettingById, mergeRelatedPlaces, auntUncleNamesFor } from '@/util/setting-storage.mjs';
 import { consolidateOverviewToMarkdown } from '@/util/renderSettingOverview.mjs';
 import { inferSettingDimensions } from './utils/infer-setting-dimensions.mjs';
 import {
@@ -198,6 +198,7 @@ import {
 } from './utils/setting-dimensions.mjs';
 import { applyInheritanceFromSiblings } from './utils/inheritance.mjs';
 import { extractRelatedPlaces } from './utils/extract-related-places.mjs';
+import { sortUnnamedToBottom, siblingIdsToReparent } from './utils/sidebar-tree.mjs';
 import { combineSettingOverview } from '@/util/combineSettingOverview.mjs';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
@@ -487,6 +488,13 @@ const settingsTree = computed(() => {
     }
   });
 
+  // Sort each tree level so settings without a place_name fall to the
+  // bottom. Keeps the in-progress draft (the "show form by default"
+  // blank that gets pushed at mount) from sitting above the user's
+  // named settings in the sidebar. Stable within each bucket so named
+  // settings keep their insertion order.
+  sortUnnamedToBottom(tree);
+
   return tree;
 });
 
@@ -748,25 +756,41 @@ function loadSettingsFromLocalStorage() {
 function healParentPromotionLinks() {
   let changed = false;
   const byId = new Map();
+  const byName = new Map();
   for (const s of settings.value) {
     if (s?.id) byId.set(s.id, s);
+    const nameKey = (s?.place_name || '').trim().toLowerCase();
+    if (s?.id && nameKey && !byName.has(nameKey)) byName.set(nameKey, s.id);
   }
   for (const setting of settings.value) {
     if (!setting || !Array.isArray(setting.related_places)) continue;
     for (const stub of setting.related_places) {
+      // (a) Back-fill promoted_setting_id when the stub's name matches
+      // an existing setting in the library. Heals data created before
+      // linkExistingSettingsByName ran during extraction (e.g., the
+      // user already has Aethelmar as a real setting AND a stub for
+      // Aethelmar with promoted_setting_id null). Skip self-matches.
+      if (!stub?.promoted_setting_id) {
+        const nameKey = (stub?.name || '').trim().toLowerCase();
+        const existingId = nameKey ? byName.get(nameKey) : null;
+        if (existingId && existingId !== setting.id) {
+          stub.promoted_setting_id = existingId;
+          changed = true;
+        }
+      }
       const promotedId = stub?.promoted_setting_id;
       if (!promotedId) continue;
-      // Clear pointers to settings that no longer exist (e.g., the
+      // (b) Clear pointers to settings that no longer exist (e.g., the
       // user deleted the promoted target). The stub remains; only the
       // pointer is reset, so the UI flips from "View in Setting
-      // Generator" back to "Create as <Kind>" and the user can
-      // re-promote when ready.
+      // Generator" back to "Create Setting" and the user can re-promote
+      // when ready.
       if (!byId.has(promotedId)) {
         stub.promoted_setting_id = null;
         changed = true;
         continue;
       }
-      // For kind === 'parent', also ensure setting.parentId mirrors
+      // (c) For kind === 'parent', also ensure setting.parentId mirrors
       // the stub's promoted_setting_id. Heals an earlier regression
       // where reparentSetting read pre-save localStorage and silently
       // failed; the stub's promoted_setting_id was set correctly but
@@ -1247,9 +1271,41 @@ async function generateSetting(payload = {}) {
  * to the same originating item.
  */
 async function onPromoteRelatedPlace({ stub, kind }) {
-  if (!stub?.name || !kind) return;
+  if (!stub || !kind) return;
   const current = settings.value[currentSettingIndex.value];
   if (!current) return;
+
+  // Idempotent stub-presence guarantee. Two entry points feed this
+  // handler: (a) extraction-promoted stubs that are already in
+  // current.related_places (clicked from the Related Places list), and
+  // (b) manually-created stubs synthesized by AddRelatedPlaceForm and
+  // emitted without first being appended. In case (b), ensure the
+  // stub lands in related_places before promotion so the
+  // promoted_setting_id finalization (which looks up by name in
+  // related_places) has a target. Case-insensitive name dedup so
+  // extracted + manual entries don't both occupy a slot.
+  //
+  // A SECOND case (b) variant: the manual form may have submitted an
+  // empty name — "just generate me a new sublocation of this kind."
+  // In that case there's no stub to track (nothing to name in
+  // related_places yet), so we skip the add. The new setting will get
+  // its place_name from the LLM after generation, and won't be
+  // back-linked to a related_places stub since none exists.
+  if (!Array.isArray(current.related_places)) current.related_places = [];
+  const stubKey = (stub.name || '').trim().toLowerCase();
+  const alreadyPresent = stubKey && current.related_places.some(
+    p => (p?.name || '').trim().toLowerCase() === stubKey
+  );
+  if (stubKey && !alreadyPresent) {
+    current.related_places.unshift({
+      name: stub.name,
+      kind,
+      source_quote: stub.source_quote || '',
+      role_brief: stub.role_brief || '',
+      suggested_setting_type: stub.suggested_setting_type || '',
+      promoted_setting_id: null,
+    });
+  }
 
   // Determine where the new setting sits in the tree.
   const newSettingParentId = kind === 'sublocation'
@@ -1351,15 +1407,45 @@ async function onPromoteRelatedPlace({ stub, kind }) {
   const bannedTropes = getBannedTropesForGeneration();
   const siblingSettings = buildSiblingMarkdown(candidateSiblings);
 
+  // Parent-promote: collect the children-to-be (source + any siblings
+  // that will cascade under the new parent). The generation prompt
+  // needs to know about these so the prose treats them as contained
+  // places, not as peers. Without this, the LLM reads "Aethelmar and
+  // Repubblica" in the user's source-quote / role-brief and assumes
+  // they're external neighbors.
+  let childrenSettings = [];
+  if (kind === 'parent') {
+    const sourceOldParentId = current.parentId ?? null;
+    const cascadeIds = siblingIdsToReparent({
+      settings: settings.value,
+      source: current,
+      oldParentId: sourceOldParentId,
+    });
+    const childrenToBe = [current, ...cascadeIds
+      .map(id => settings.value.find(s => s?.id === id))
+      .filter(Boolean)];
+    childrenSettings = buildSiblingMarkdown(childrenToBe);
+  }
+
   // Build a stub-aware description that anchors the LLM to the prose
   // origin: where this place was named, why it matters, the verbatim
   // quote so the generation stays consistent with current's narrative.
-  const descriptionLines = [`Name: ${stub.name}`];
+  //
+  // When the stub has no name (the manual form was submitted blank to
+  // request a "surprise me with a new sublocation"), the relationship
+  // framing alone carries the description — the LLM picks the name and
+  // shape from the kind + parent context + register.
+  const descriptionLines = [];
+  if (stub.name) descriptionLines.push(`Name: ${stub.name}`);
   if (stub.role_brief) descriptionLines.push(`Role: ${stub.role_brief}.`);
   if (kind === 'parent') {
     descriptionLines.push(`This is the larger place that contains ${current.place_name || 'the current setting'}.`);
   } else if (kind === 'sibling') {
     descriptionLines.push(`This is a peer of ${current.place_name || 'the current setting'} at similar scale.`);
+  } else if (kind === 'sublocation' && !stub.name && !stub.role_brief) {
+    // Empty-stub sublocation — make the relationship explicit since
+    // there's no other signal in the description.
+    descriptionLines.push(`This is a new place INSIDE ${current.place_name || 'the current setting'}. Invent it fresh from the parent's character and register.`);
   }
   if (stub.source_quote) {
     descriptionLines.push('');
@@ -1368,13 +1454,18 @@ async function onPromoteRelatedPlace({ stub, kind }) {
   }
   const description = descriptionLines.join('\n');
 
+  // userName: pass through whatever the user typed (or null when blank
+  // so the prompt's "Generate a register-coherent bare name" branch
+  // fires instead of the "use this name verbatim" branch).
+  const userName = stub.name || null;
+
   let prompt;
   if (promptParentSetting) {
     prompt = sublocationOverviewPrompt({
       type: stub.suggested_setting_type || null,
       character: resolvedCharacter,
       register: resolvedRegister,
-      userName: stub.name,
+      userName,
       tension,
       bannedTropes,
       parentName: promptParentSetting.place_name || '',
@@ -1383,18 +1474,20 @@ async function onPromoteRelatedPlace({ stub, kind }) {
         || '',
       subLocationDescription: description,
       siblingSettings,
+      childrenSettings,
     });
   } else {
     prompt = settingOverviewPrompt({
       type: stub.suggested_setting_type || null,
       character: resolvedCharacter,
       register: resolvedRegister,
-      userName: stub.name,
+      userName,
       tension,
       bannedTropes,
       description,
       lore: '',
       siblingSettings,
+      childrenSettings,
     });
   }
 
@@ -1551,7 +1644,22 @@ function finalizePendingPromotion(operationIndex) {
   }
 
   if (promo.kind === 'parent' && source) {
+    const oldParentId = source.parentId ?? null;
     source.parentId = newSetting.id;
+
+    // Cascade: settings that were promoted as siblings of source
+    // should follow source under the new parent. See
+    // siblingIdsToReparent for the constraint set (one-hop only,
+    // skips siblings the user has manually moved elsewhere).
+    const cascadeIds = siblingIdsToReparent({
+      settings: settings.value,
+      source,
+      oldParentId,
+    });
+    for (const id of cascadeIds) {
+      const sibling = settings.value.find(s => s?.id === id);
+      if (sibling) sibling.parentId = newSetting.id;
+    }
   }
 
   delete newSetting._pendingPromotion;
@@ -1573,15 +1681,20 @@ async function runRelatedPlacesExtraction(operationIndex) {
   if (!setting?.setting_overview) return;
 
   // Names to suppress from extraction results: the current setting,
-  // its ancestors (walk parentId chain), and its siblings (other
-  // settings sharing the parent). Anything the user has already
-  // realized as a first-class setting shouldn't surface again as a
-  // stub awaiting promotion.
-  const excludeNames = collectAncestorAndSiblingNames(setting);
+  // its ancestors (parentId chain), its siblings (same parentId), and
+  // its children (settings with parentId === current.id). Anything
+  // already realized in the tree shouldn't surface as a stub again —
+  // the prose may still mention them (correctly, per
+  // childrenSettings), but the related_places list is for places
+  // NOT yet realized.
+  const excludeNames = collectRelatedSettingNames(setting);
 
   let stubs;
   try {
-    stubs = await extractRelatedPlaces(setting, { excludeNames });
+    stubs = await extractRelatedPlaces(setting, {
+      excludeNames,
+      allSettings: settings.value,
+    });
   } catch (err) {
     console.warn('[setting-gen] related-places extraction failed:', err);
     return;
@@ -1599,10 +1712,20 @@ async function runRelatedPlacesExtraction(operationIndex) {
 /**
  * Walk the current settings array to collect names of every entity
  * that should suppress extraction matches: the setting itself, every
- * ancestor up the parentId chain, and every sibling under the same
- * parent. Returns a flat array of place_name strings.
+ * ancestor up the parentId chain, every sibling under the same
+ * parent, and every direct child. Returns a flat array of place_name
+ * strings.
+ *
+ * Why children too: after a parent-promote cascade, the new parent
+ * setting (now generated) has children whose names appear in its
+ * prose. Background extraction was re-surfacing those children as
+ * fresh stubs (often mis-classified as siblings because the prose
+ * mentioned them as peers of each other). Excluding children from
+ * extraction keeps them from being duplicated; they remain visible
+ * in the sidebar tree where the containment relationship is
+ * authoritative.
  */
-function collectAncestorAndSiblingNames(setting) {
+function collectRelatedSettingNames(setting) {
   const names = [];
   if (!setting) return names;
 
@@ -1631,6 +1754,25 @@ function collectAncestorAndSiblingNames(setting) {
   );
   for (const s of sameParent) {
     if (s.place_name) names.push(s.place_name);
+  }
+
+  // Children: parentId === setting.id. After a parent-promote
+  // cascade, these are the settings that got moved under the new
+  // parent; their names already appear in the parent's prose and
+  // we don't want extraction to re-surface them as stubs.
+  const children = settings.value.filter(s => s?.parentId === setting.id);
+  for (const s of children) {
+    if (s.place_name) names.push(s.place_name);
+  }
+
+  // Aunts/uncles: places at the parent's scale that the LLM tends
+  // to bucket as 'sibling' here because the schema has no
+  // aunt/uncle slot. Surfacing them produces incoherent peer
+  // claims (a city listed as sibling of a region, etc.). Pulling
+  // them into the exclude list mirrors the retroactive cleanup
+  // done by sweep-aunt-uncle-sibling-stubs.
+  for (const name of auntUncleNamesFor(setting, settings.value)) {
+    names.push(name);
   }
 
   return names;

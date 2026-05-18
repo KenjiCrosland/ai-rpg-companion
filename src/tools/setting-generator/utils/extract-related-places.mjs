@@ -26,7 +26,10 @@ import {
   createRegionEntityExtractionPrompt,
   validateRegionEntityExtraction,
 } from '../prompts/region-entity-extraction-prompts.mjs';
-import { filterRelatedPlacesByExistingNames } from '@/util/setting-storage.mjs';
+import {
+  filterRelatedPlacesByExistingNames,
+  linkExistingSettingsByName,
+} from '@/util/setting-storage.mjs';
 
 /**
  * Normalize a raw LLM stub into the storage shape used by
@@ -50,11 +53,16 @@ function normalizeStub(raw) {
  * @param {Object} [options]
  * @param {Array<string>} [options.excludeNames] - names of settings
  *   already realized in the relevant tree slice (ancestors + siblings +
- *   the current setting itself). Used to suppress already-promoted
- *   entries from the stub list.
+ *   children + the current setting itself). Used to suppress
+ *   already-promoted entries from the stub list.
+ * @param {Array<Object>} [options.allSettings] - the full settings
+ *   library, used to pre-fill promoted_setting_id when an extracted
+ *   stub's name matches an existing setting outside the
+ *   already-excluded tree slice (defensive against the LLM extracting
+ *   a name that exists somewhere unrelated in the library).
  * @returns {Promise<Array<Object>>} normalized stubs ready to merge
  */
-export async function extractRelatedPlaces(setting, { excludeNames = [] } = {}) {
+export async function extractRelatedPlaces(setting, { excludeNames = [], allSettings = [] } = {}) {
   if (!setting || typeof setting !== 'object') return [];
   const overview = setting.setting_overview || {};
 
@@ -102,5 +110,11 @@ export async function extractRelatedPlaces(setting, { excludeNames = [] } = {}) 
     .map(normalizeStub)
     .filter(s => s.name);
 
-  return filterRelatedPlacesByExistingNames(normalized, allExclude);
+  // Drop entries that match excluded names (tree-related: self,
+  // ancestors, siblings, children), then pre-fill promoted_setting_id
+  // for any remaining stubs whose name matches a setting elsewhere in
+  // the library — so the UI flips to "View" instead of creating a
+  // duplicate on the next promote.
+  const filtered = filterRelatedPlacesByExistingNames(normalized, allExclude);
+  return linkExistingSettingsByName(filtered, allSettings);
 }

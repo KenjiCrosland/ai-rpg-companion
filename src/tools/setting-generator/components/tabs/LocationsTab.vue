@@ -1,8 +1,12 @@
 <template>
   <div>
-    <h2>Important Locations</h2>
-
-    <div v-if="setting.importantLocations && setting.importantLocations.length > 0 && !loadingSubLocations">
+    <!-- Legacy: importantLocations[] was populated by the old bulk
+         subLocationsPrompt flow (5-6 invented sublocation stubs at
+         once). That entry point is gone; this block remains only to
+         render existing data for users who already had it. New
+         sublocations now come through Related Places (extraction or
+         the manual add-place form). -->
+    <div v-if="setting.importantLocations && setting.importantLocations.length > 0">
       <cdr-accordion-group>
         <cdr-accordion
           v-for="(location, index) in setting.importantLocations"
@@ -113,38 +117,11 @@
           </div>
         </cdr-accordion>
       </cdr-accordion-group>
-
-      <div style="padding: 2rem">
-        <h3>Create New Important Location</h3>
-        <cdr-input id="location-name" v-model="newLocationName" label="Location Name" />
-        <cdr-input :rows="4" id="location-description" v-model="newLocationDescription" label="Location Description" />
-        <ParActionButton style="margin-top: 2rem;" @click="addNewSubLocation" variant="secondary">Add Location</ParActionButton>
-      </div>
-      <hr style="margin-top: 2rem">
-      <ParActionButton style="margin-top: 3rem" @click="generateSubLocations">
-        Re-Generate Important Locations for {{ setting.place_name }}
-      </ParActionButton>
     </div>
 
-    <div v-if="!(setting.importantLocations.length > 0) && !loadingSubLocations">
-      <p>Important locations are key sites within the setting that can serve as focal points for adventures or
-        intrigue. They can be anything from a grand castle to a hidden underground lair. Generate a full location
-        description to flesh out the setting.</p>
-      <ParActionButton @click="generateSubLocations">
-        Generate Important Locations for {{ setting.place_name }}
-      </ParActionButton>
-    </div>
-
-    <div v-if="loadingSubLocations">
-      <BlockSkeleton />
-    </div>
-
-    <!-- Related Places: extracted from this setting's own prose
-         (regions, neighbors, internal landmarks, geographic features).
-         Distinct from Important Locations: Important Locations are
-         invented for the setting; Related Places are the entities the
-         setting's narrative actually named, ready to be promoted into
-         first-class settings with the right hierarchical relationship. -->
+    <!-- Related Places: extracted from this setting's prose, or added
+         manually via the form inside the section. Replaces the old
+         bulk-invented Important Locations entry point. -->
     <RelatedPlacesSection
       :setting="setting"
       @promote-related-place="$emit('promote-related-place', $event)"
@@ -166,9 +143,6 @@ import {
   IconXSm,
 } from '@rei/cedar';
 import OverviewSkeleton from '@/components/skeletons/OverviewSkeleton.vue';
-import BlockSkeleton from '@/components/skeletons/BlockSkeleton.vue';
-import { generateGptResponse } from "@/util/ai-client.mjs";
-import { subLocationsPrompt } from '../../prompts/index.mjs';
 import RelatedPlacesSection from '../RelatedPlacesSection.vue';
 
 const props = defineProps({
@@ -215,42 +189,16 @@ const settingsById = computed(() => {
   return map;
 });
 
-// -------------------------
-// Local state
-// -------------------------
-const loadingSubLocations = ref(false);
+// Edit state for the legacy importantLocations entries that still
+// render. New sublocations come through Related Places now, but
+// existing importantLocations remain editable in place.
 const editingLocationIndex = ref(null);
 const locationEditForm = ref({
   name: '',
   description: '',
   setting_scale: '',
 });
-const newLocationName = ref('');
-const newLocationDescription = ref('');
 
-// -------------------------
-// Helpers
-// -------------------------
-function getOverviewText(overviewObject) {
-  if (!overviewObject) return '';
-  return Object.entries(overviewObject).map(([, value]) => {
-    if (Array.isArray(value)) return '';
-    return `${value}`;
-  }).join('\n');
-}
-
-function sublocationValidation(jsonString) {
-  try {
-    const jsonObj = JSON.parse(jsonString);
-    return jsonObj.every(location =>
-      ['name', 'description', 'title', 'setting_type'].every(key => key in location)
-    );
-  } catch { return false; }
-}
-
-// -------------------------
-// Edit location
-// -------------------------
 const startEditingLocation = (index) => {
   const location = props.setting.importantLocations[index];
   locationEditForm.value = {
@@ -280,71 +228,11 @@ const saveEditLocation = () => {
   editingLocationIndex.value = null;
 };
 
-// -------------------------
-// Add / delete locations
-// -------------------------
-const addNewSubLocation = () => {
-  if (!newLocationName.value) return;
-  const newLoc = {
-    name: newLocationName.value,
-    description: newLocationDescription.value,
-    setting_scale: '',
-    promoted_setting_id: null,
-    has_detailed_description: false,
-    open: true,
-  };
-  emit('updated-setting', {
-    ...props.setting,
-    importantLocations: [...props.setting.importantLocations, newLoc],
-  });
-  newLocationName.value = '';
-  newLocationDescription.value = '';
-};
-
 const deleteSublocation = (index) => {
   const updated = [...props.setting.importantLocations];
   updated.splice(index, 1);
   emit('updated-setting', { ...props.setting, importantLocations: updated });
 };
-
-// -------------------------
-// Generate sub-locations
-// -------------------------
-async function generateSubLocations() {
-  let existingLocations = props.setting.importantLocations;
-  let currentSubLocationsText = '';
-
-  if (existingLocations.length > 0) {
-    if (!confirm("Are you sure you want to regenerate sublocations? This will erase sublocations which don't have a full description.")) return;
-    // Keep only those with full descriptions
-    existingLocations = existingLocations.filter(loc => loc.has_detailed_description);
-    if (existingLocations.length > 0) {
-      currentSubLocationsText = 'These sublocations already exist so don\'t include them in the generated results: ' +
-        existingLocations.map(loc => loc.name).join(', ');
-    }
-  }
-
-  const overviewText = getOverviewText(props.setting.setting_overview);
-  const prompt = subLocationsPrompt({
-    settingDescription: overviewText,
-    existingSubLocations: currentSubLocationsText,
-    register: props.setting.register || null,
-  });
-
-  try {
-    loadingSubLocations.value = true;
-    const response = await generateGptResponse(prompt, sublocationValidation);
-    const newLocations = JSON.parse(response);
-    emit('updated-setting', {
-      ...props.setting,
-      importantLocations: [...existingLocations, ...newLocations],
-    });
-  } catch (error) {
-    console.error('Error generating sublocations:', error);
-  } finally {
-    loadingSubLocations.value = false;
-  }
-}
 
 // Reset edit state when parent switches to a different setting
 watch(

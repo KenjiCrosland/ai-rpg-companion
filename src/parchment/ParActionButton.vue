@@ -74,15 +74,24 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'primary',
-    // 'primary'   — saturated lapis fill, the form CTA. The default.
-    // 'secondary' — faded slate outline, the supporting alternative
-    //               (Cancel beside Generate, etc.). Same component
-    //               family, lower visual volume.
-    // 'luminous'  — cabochon gradient. Reserved for rare special-
-    //               importance moments (premium upsell, etc.).
-    //               Don't proliferate — the variant earns its
-    //               complexity through scarcity.
-    validator: v => ['primary', 'secondary', 'luminous'].includes(v),
+    // 'primary'         — saturated lapis fill, serif, the form CTA.
+    //                     The default; reserved for prominent single
+    //                     CTAs ("Generate Setting" on a form page).
+    // 'primary-outline' — saturated lapis OUTLINE, sans-serif, compact.
+    //                     For inline data-row actions that repeat per
+    //                     card (Create Setting, View). Deliberately a
+    //                     lighter visual register than primary so a
+    //                     page with 6+ related places doesn't read as
+    //                     a wall of blue.
+    // 'secondary'       — faded SLATE outline, serif. Supporting
+    //                     alternative beside a primary CTA (Cancel
+    //                     beside Generate). Same family as primary,
+    //                     lower visual volume.
+    // 'luminous'        — cabochon gradient. Reserved for rare special-
+    //                     importance moments (premium upsell, etc.).
+    //                     Don't proliferate — the variant earns its
+    //                     complexity through scarcity.
+    validator: v => ['primary', 'primary-outline', 'secondary', 'luminous'].includes(v),
   },
   size: {
     type: String,
@@ -119,8 +128,9 @@ const classes = computed(() => [
   'par-action',
   `par-action--${props.size}`,
   {
-    // Variant: only secondary and luminous need their own class. The
+    // Variant: only non-primary variants need their own class. The
     // base .par-action styles already are the primary treatment.
+    'par-action--variant-primary-outline': props.variant === 'primary-outline',
     'par-action--variant-secondary': props.variant === 'secondary',
     'par-action--variant-luminous': props.variant === 'luminous',
     'par-action--full-width': props.fullWidth && !props.iconOnly,
@@ -276,6 +286,65 @@ function handleClick(event) {
 .par-action--large :slotted(svg) {
   width: 2rem;
   height: 2rem;
+}
+
+/* -----------------------------------------------------------------------
+   Primary-outline variant — saturated lapis OUTLINE, sans-serif, compact.
+   Intentionally a lighter visual register than primary: this variant is
+   the "act on this item" affordance that repeats per row in dense lists
+   (Create Setting on each Related Place card). A row of 6 serif/large
+   primary buttons reads as a wall of blue and dominates the surface; the
+   compact outline treatment recedes and lets the row content stay
+   primary. Saturated lapis (not slate, like secondary) keeps the action
+   signal strong despite the lower weight.
+
+   This variant deliberately diverges from the base .par-action typography:
+     - sans-serif (vs serif) — reads as chrome action, not editorial CTA
+     - 13px (vs 16px) — compact for row contexts
+     - weight 500 (vs 600) — quieter
+     - radius 2px (vs 6px) — tighter, more data-row
+     - padding 7px 14px (vs 8px 16px) — slightly trimmer
+
+   When you need a serif/large primary action, use variant="primary".
+   When you need a desaturated slate alternative, use variant="secondary".
+   ----------------------------------------------------------------------- */
+.par-action--variant-primary-outline {
+  background-color: transparent;
+  color: var(--par-color-action-primary, #2A4D70);
+  fill: var(--par-color-action-primary, #2A4D70);
+  border: 1px solid var(--par-color-action-primary, #2A4D70);
+  border-radius: 0.2rem;
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-size: 1.3rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 0.7rem 1.4rem;
+}
+
+.par-action--variant-primary-outline:hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-action-primary-hover-bg, rgba(42, 77, 112, 0.08));
+}
+
+.par-action--variant-primary-outline:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-action-primary-hover-bg, rgba(42, 77, 112, 0.08));
+  /* Slightly darker on active — uses a deeper tint of the same lapis
+     by relying on additive opacity rather than a second token. */
+  box-shadow: inset 0 0 0 9999px rgba(42, 77, 112, 0.05);
+}
+
+.par-action--variant-primary-outline:focus-visible {
+  outline: 2px solid var(--par-color-action-primary, #2A4D70);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(42, 77, 112, 0.25);
+}
+
+.par-action--variant-primary-outline:disabled,
+.par-action--variant-primary-outline[aria-disabled="true"] {
+  background-color: transparent;
+  color: rgba(42, 77, 112, 0.35);
+  fill: rgba(42, 77, 112, 0.35);
+  border-color: rgba(42, 77, 112, 0.35);
+  cursor: not-allowed;
 }
 
 /* -----------------------------------------------------------------------

@@ -109,3 +109,97 @@ Watch-Master Veylin keeps order.`;
     expect(prompt).not.toContain('SIBLING SETTINGS');
   });
 });
+
+describe('settingOverviewPrompt — childrenSettings', () => {
+  const baseArgs = {
+    type: 'region',
+    character: ['embattled', 'mercantile', 'wind-scoured'],
+    register: 'Gothic-inspired',
+    userName: 'Eldryssian Plain',
+    tension: 'external-relationship',
+    bannedTropes: [],
+    description: 'A broad plain between two kingdoms.',
+    lore: '',
+  };
+
+  it('emits the PLACES THIS SETTING CONTAINS block with full child content when present', () => {
+    const child = `# Repubblica dei Cinque Martelli
+
+A city-state cut into the side of a steep valley.
+
+## Region
+
+The Repubblica sits at the crossroads of the Via della Ruota.
+
+## Leadership
+
+The Consiglio dei Martelli governs.`;
+
+    const prompt = settingOverviewPrompt({
+      ...baseArgs,
+      childrenSettings: [child],
+    });
+
+    expect(prompt).toContain('PLACES THIS SETTING CONTAINS');
+    expect(prompt).toContain('--- Child 1 ---');
+    expect(prompt).toContain('Repubblica dei Cinque Martelli');
+    // The anti-peer directive is the load-bearing line that prevents
+    // the Eldryssian-plain-treats-its-children-as-neighbors class of bug.
+    expect(prompt).toContain('within its borders');
+    expect(prompt).toMatch(/DO NOT describe them as.*neighboring/);
+  });
+
+  it('numbers multiple children with --- Child N --- separators', () => {
+    const prompt = settingOverviewPrompt({
+      ...baseArgs,
+      childrenSettings: ['First child', 'Second child', 'Third child'],
+    });
+    expect(prompt).toContain('--- Child 1 ---');
+    expect(prompt).toContain('--- Child 2 ---');
+    expect(prompt).toContain('--- Child 3 ---');
+  });
+
+  it('omits the PLACES THIS SETTING CONTAINS block when childrenSettings is empty or missing', () => {
+    const empty = settingOverviewPrompt({ ...baseArgs, childrenSettings: [] });
+    expect(empty).not.toContain('PLACES THIS SETTING CONTAINS');
+
+    const missing = settingOverviewPrompt({ ...baseArgs });
+    expect(missing).not.toContain('PLACES THIS SETTING CONTAINS');
+  });
+});
+
+describe('sublocationOverviewPrompt — childrenSettings', () => {
+  const baseArgs = {
+    type: 'duchy',
+    character: ['feudal', 'tense', 'ancestral'],
+    register: 'Anglo-Saxon-inspired',
+    userName: 'Aethelmar',
+    tension: 'inheritance-burden',
+    bannedTropes: [],
+    parentName: 'The Wider Realm',
+    parentLore: 'A loose confederation of duchies.',
+    subLocationDescription: '',
+  };
+
+  it('emits the PLACES THIS SETTING CONTAINS block for a sublocation that itself contains children', () => {
+    const child = `# Salt-Quarter
+
+A district by the wharves.
+
+## Leadership
+
+The Quarter-Reeve runs the toll-house.`;
+
+    const prompt = sublocationOverviewPrompt({
+      ...baseArgs,
+      childrenSettings: [child],
+    });
+    expect(prompt).toContain('PLACES THIS SETTING CONTAINS');
+    expect(prompt).toContain('Salt-Quarter');
+  });
+
+  it('omits the PLACES THIS SETTING CONTAINS block when no children are passed', () => {
+    const prompt = sublocationOverviewPrompt(baseArgs);
+    expect(prompt).not.toContain('PLACES THIS SETTING CONTAINS');
+  });
+});

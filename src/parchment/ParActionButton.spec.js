@@ -153,14 +153,33 @@ describe('ParActionButton', () => {
       expect(wrapper.classes()).toContain('par-action--variant-secondary');
     });
 
-    it('accepts primary, secondary, and luminous via prop validator', () => {
+    it('accepts primary, primary-outline, secondary, and luminous via prop validator', () => {
       const validator = ParActionButton.props.variant.validator;
       expect(validator('primary')).toBe(true);
+      expect(validator('primary-outline')).toBe(true);
       expect(validator('secondary')).toBe(true);
       expect(validator('luminous')).toBe(true);
       expect(validator('tertiary')).toBe(false);
       expect(validator('destructive')).toBe(false);
       expect(validator('')).toBe(false);
+    });
+
+    it('applies par-action--variant-primary-outline class when variant="primary-outline"', () => {
+      const wrapper = mount(ParActionButton, { props: { variant: 'primary-outline' } });
+      expect(wrapper.classes()).toContain('par-action--variant-primary-outline');
+      // Variants are mutually exclusive — primary-outline should not
+      // also carry the secondary or luminous classes.
+      expect(wrapper.classes()).not.toContain('par-action--variant-secondary');
+      expect(wrapper.classes()).not.toContain('par-action--variant-luminous');
+    });
+
+    it('primary-outline composes with structural props (fullWidth, iconOnly, size)', () => {
+      const wrapper = mount(ParActionButton, {
+        props: { variant: 'primary-outline', size: 'small', fullWidth: true },
+      });
+      expect(wrapper.classes()).toContain('par-action--variant-primary-outline');
+      expect(wrapper.classes()).toContain('par-action--small');
+      expect(wrapper.classes()).toContain('par-action--full-width');
     });
 
     it('applies par-action--variant-luminous class when variant="luminous"', () => {

@@ -17,6 +17,7 @@ import {
   reparentSetting,
   mergeRelatedPlaces,
   filterRelatedPlacesByExistingNames,
+  linkExistingSettingsByName,
 } from '../setting-storage.mjs';
 
 describe('setting-storage', () => {
@@ -850,6 +851,82 @@ describe('setting-storage', () => {
     it('ignores null / empty / whitespace exclude names', () => {
       const out = filterRelatedPlacesByExistingNames(places, [null, '', '   ', 'Tverzh']);
       expect(out.map(p => p.name)).toEqual(['Krakova-Gora', 'Gray Ribs', 'Yavich']);
+    });
+  });
+
+  describe('linkExistingSettingsByName', () => {
+    const allSettings = [
+      { id: 'set_aethelmar', place_name: 'Aethelmar' },
+      { id: 'set_tverzh', place_name: 'Tverzh' },
+      { id: 'set_no_name', place_name: '' },
+    ];
+
+    it('pre-fills promoted_setting_id when stub name matches an existing setting', () => {
+      const places = [
+        { name: 'Aethelmar', kind: 'sibling', promoted_setting_id: null },
+        { name: 'New Place', kind: 'sibling', promoted_setting_id: null },
+      ];
+      const out = linkExistingSettingsByName(places, allSettings);
+      expect(out[0].promoted_setting_id).toBe('set_aethelmar');
+      expect(out[1].promoted_setting_id).toBe(null);
+    });
+
+    it('case-insensitive match', () => {
+      const places = [
+        { name: 'AETHELMAR', kind: 'sibling', promoted_setting_id: null },
+        { name: 'tverzh', kind: 'sibling', promoted_setting_id: null },
+      ];
+      const out = linkExistingSettingsByName(places, allSettings);
+      expect(out[0].promoted_setting_id).toBe('set_aethelmar');
+      expect(out[1].promoted_setting_id).toBe('set_tverzh');
+    });
+
+    it('does not overwrite a promoted_setting_id that the caller already set', () => {
+      const places = [
+        { name: 'Aethelmar', kind: 'sibling', promoted_setting_id: 'set_explicit' },
+      ];
+      const out = linkExistingSettingsByName(places, allSettings);
+      expect(out[0].promoted_setting_id).toBe('set_explicit');
+    });
+
+    it('skips library entries with no id or no place_name', () => {
+      const places = [
+        { name: 'Nameless', kind: 'sibling', promoted_setting_id: null },
+      ];
+      const out = linkExistingSettingsByName(places, allSettings);
+      expect(out[0].promoted_setting_id).toBe(null);
+    });
+
+    it('first-match wins when the library has duplicate names (defensive)', () => {
+      const dupSettings = [
+        { id: 'set_first', place_name: 'Aethelmar' },
+        { id: 'set_second', place_name: 'Aethelmar' },
+      ];
+      const places = [{ name: 'Aethelmar', kind: 'sibling', promoted_setting_id: null }];
+      const out = linkExistingSettingsByName(places, dupSettings);
+      expect(out[0].promoted_setting_id).toBe('set_first');
+    });
+
+    it('does not mutate input arrays', () => {
+      const places = [{ name: 'Aethelmar', kind: 'sibling', promoted_setting_id: null }];
+      const placesSnapshot = JSON.parse(JSON.stringify(places));
+      linkExistingSettingsByName(places, allSettings);
+      expect(places).toEqual(placesSnapshot);
+    });
+
+    it('handles non-array inputs gracefully', () => {
+      expect(linkExistingSettingsByName(null, allSettings)).toEqual([]);
+      expect(linkExistingSettingsByName([{ name: 'X' }], null)).toEqual([{ name: 'X' }]);
+    });
+
+    it('skips stubs with empty / whitespace name', () => {
+      const places = [
+        { name: '', promoted_setting_id: null },
+        { name: '   ', promoted_setting_id: null },
+      ];
+      const out = linkExistingSettingsByName(places, allSettings);
+      expect(out[0].promoted_setting_id).toBe(null);
+      expect(out[1].promoted_setting_id).toBe(null);
     });
   });
 });

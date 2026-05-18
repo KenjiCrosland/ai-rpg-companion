@@ -4,7 +4,6 @@
 export {
   settingOverviewPrompt,
   sublocationOverviewPrompt,
-  subLocationsPrompt,
 } from './setting-prompts.mjs';
 
 export {

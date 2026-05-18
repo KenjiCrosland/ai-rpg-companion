@@ -23,7 +23,17 @@
   --par-color-text-disabled:   #ccc;
 
   /* Color: surfaces */
-  --par-color-surface:         #fdfbf6;
+  --par-color-surface:         #FBF7F0;
+  /* Page surface — transitional value, very close to pure white so
+     the parchment zone has no visible seam against surrounding Cedar
+     white chrome (sidebar, modals, etc.). The lift between cards and
+     page is currently carried by the card border + shadow rather than
+     surface contrast.
+       Migration path: when the global Cedar→parchment migration ships,
+       bump this token toward #F5EFE2 (or wherever the form page lands)
+       to restore strong cream-on-cream surface contrast. Cards stay at
+       --par-color-surface the whole time; only this token shifts. */
+  --par-color-surface-page:    #FBF8F1;
   --par-color-border:          #e8e2d4;
   --par-color-border-strong:   #c9b99a;
   /* Border: deep tan — emphasized/hover state for callouts, focused
@@ -57,6 +67,43 @@
   /* Color: action interactions */
   --par-color-action-hover:    rgba(122, 31, 31, 0.06);
   --par-color-action-active:   rgba(122, 31, 31, 0.12);
+
+  /* Parchment-prefixed action-color aliases. These mirror the
+     unprefixed --color-action-* values below, but consumers inside
+     the parchment system reference them through --par-* so the
+     namespace stays consistent. Values match the chrome lapis +
+     slate so a single re-theme touches both layers at once.
+
+     primary           — saturated lapis used for "act on this item"
+                         affordances on parchment surfaces (Create
+                         Setting, View, primary-outline buttons).
+                         Matches --color-action-hover (the deeper
+                         lapis), not --color-action-rest — the deeper
+                         value reads as an action signal even at
+                         small text sizes against parchment cream.
+     primary-hover-bg  — light lapis tint, used as the rest→hover
+                         background fill for outlined / dashed
+                         lapis affordances.
+     muted             — faded slate. Quiet secondary actions (× dismiss
+                         at rest, "info" icons). Matches
+                         --color-action-secondary-rest.
+     destructive-hover — burgundy tint used as the hover background
+                         on dismiss / destructive affordances —
+                         the only place burgundy is allowed into
+                         the action layer, and only as the hover
+                         confirmation step. */
+  --par-color-action-primary:           #2A4D70;
+  --par-color-action-primary-hover-bg:  rgba(42, 77, 112, 0.08);
+  --par-color-action-muted:             #5A7A9A;
+  --par-color-action-destructive-hover: rgba(122, 31, 31, 0.06);
+
+  /* Card lift — warm-toned shadow used by cards sitting on the
+     page surface during the transitional state (page is near-white,
+     surface contrast is minimal, so the shadow does the lift work).
+     Deliberately red-leaning rgba so the shadow matches the parchment
+     register rather than reading as a cool grey Material-style drop.
+     Optional once surface contrast comes back post-migration. */
+  --par-color-card-shadow:              0 1px 3px rgba(122, 50, 30, 0.04);
 
   /* Typography. Source Serif 4 (Adobe, OFL-licensed) is the parchment
      serif: designed for screen reading, full real-weight files at

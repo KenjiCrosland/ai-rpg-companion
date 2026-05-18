@@ -25,13 +25,11 @@
  *     the parent's register as a constraint so sub-location names
  *     stay coherent with the parent.
  *
- *   subLocationsPrompt — generates a list of sub-location stubs
- *     within a parent setting. Each stub has name, setting_type,
- *     title, and brief description. Full dimensional inference
- *     happens later when the user expands a stub into a full
- *     sub-location via sublocationOverviewPrompt.
+ * (subLocationsPrompt was removed — bulk stub generation no longer
+ * matches how the rest of the tool works. Single-shot manual creation
+ * and prose-extraction promotion replaced it.)
  *
- * All three prompts forbid the same list of overused NPC names —
+ * Both prompts forbid the same list of overused NPC names —
  * see `FORBIDDEN_NPC_NAMES` below.
  */
 
@@ -403,6 +401,45 @@ The new setting should feel like it belongs in the same world as the siblings �
 }
 
 /**
+ * Build the CHILDREN SETTINGS directive. Used by the parent-promote
+ * flow: when generating a setting that will contain existing
+ * children (the source of the parent-promote plus any cascaded
+ * siblings), tell the LLM about them so the prose treats them as
+ * places it contains — not as peers, neighbors, or "regions where X
+ * happens to be."
+ *
+ * Without this, the LLM treats child names mentioned in user input
+ * as references to external places. Production observation: a new
+ * region setting generated as parent of two existing cities ended
+ * up describing those cities as "neighbors at the crossroads" rather
+ * than as places "within its borders," because the generation prompt
+ * had no signal that they were contained by the new region.
+ *
+ * Returns an empty string when childrenSettings is missing or empty.
+ *
+ * @param {Array<string>} childrenSettings - Full markdown strings,
+ *   one per child. Caller passes already-rendered prose
+ *   (consolidateOverviewToMarkdown of each canonical child setting).
+ */
+function buildChildrenSettingsBlock(childrenSettings) {
+  if (!Array.isArray(childrenSettings) || childrenSettings.length === 0) return '';
+  const children = childrenSettings
+    .map((md, i) => `--- Child ${i + 1} ---\n${md}`)
+    .join('\n\n');
+  return `PLACES THIS SETTING CONTAINS (canonical; treat as parts of yourself):
+${children}
+
+These places sit INSIDE the setting you are generating. When your prose mentions them, frame them accordingly:
+- USE phrases like "within its borders," "the city of X lies to the south of the capital," "the kingdom contains," "among the lands of [this setting] is X" — relationships that make the containment relationship clear.
+- DO NOT describe them as "neighboring," "adjacent," "across the border," "to the east/west of," or "peer of" — those phrasings would imply they sit OUTSIDE you. They don't.
+- NAMED CHARACTERS, factions, geographic features, and historical events established in a child's prose are CANONICAL. Reference them by their established names; never invent variant names or reframe their roles.
+- The relation_to_larger_setting field for your setting should describe what's OUTSIDE you (neighboring polities, larger containing region), not what's inside. Reserve the contained children for the central_dynamic, social_history, or other fields where their relationship to you is relevant.
+
+The new setting should read as a parent place containing these children — not as a peer of them.
+`;
+}
+
+/**
  * Builds the late-context framing that sits immediately before the
  * JSON schema: anti-clustering trope bans and the tension-guidance
  * block. These two are positioned for maximum salience at the
@@ -431,12 +468,13 @@ export function settingOverviewPrompt(args = {}) {
   const framing = buildSettingFraming(args);
   const lorePreservation = buildLorePreservationBlock(args.lore);
   const siblingBlock = buildSiblingSettingsBlock(args.siblingSettings);
+  const childrenBlock = buildChildrenSettingsBlock(args.childrenSettings);
 
   return `Generate a detailed setting overview using the following constraints. These are FULLY-SPECIFIED inputs from an upstream inference call — do not override or substitute them.
 
 ${constraints}
 
-${lorePreservation}${siblingBlock ? '\n' + siblingBlock + '\n' : ''}
+${lorePreservation}${siblingBlock ? '\n' + siblingBlock + '\n' : ''}${childrenBlock ? '\n' + childrenBlock + '\n' : ''}
 ${framing}
 Return JSON with the following fields. Temperature: 0.9. Keep sentences concise; avoid run-on prose.
 
@@ -481,6 +519,7 @@ export function sublocationOverviewPrompt({
   parentLore,
   subLocationDescription,
   siblingSettings,
+  childrenSettings,
 } = {}) {
   const characterStr = Array.isArray(character) && character.length > 0
     ? character.join(', ')
@@ -510,6 +549,7 @@ All proper nouns MUST match this register. This sub-location inherits the parent
     [parentLore, subLocationDescription].filter(Boolean).join('\n')
   );
   const siblingBlock = buildSiblingSettingsBlock(siblingSettings);
+  const childrenBlock = buildChildrenSettingsBlock(childrenSettings);
 
   return `Generate a detailed overview for a sub-location within a larger setting.
 
@@ -544,7 +584,7 @@ ${expressionModesBlock || '(no specific guidance — express the qualities coher
 - Avoid common fantasy tropes and cliches.
 - Do NOT use these NPC names: ${FORBIDDEN_NPC_NAMES}.
 
-${lorePreservation}${siblingBlock ? '\n' + siblingBlock + '\n' : ''}
+${lorePreservation}${siblingBlock ? '\n' + siblingBlock + '\n' : ''}${childrenBlock ? '\n' + childrenBlock + '\n' : ''}
 ${antiClusteringBlock}
 ${tensionBlock}
 Return JSON with the same field structure as a top-level setting. Temperature: 0.9.
@@ -579,39 +619,9 @@ Return JSON with the same field structure as a top-level setting. Temperature: 0
 }`;
 }
 
-export function subLocationsPrompt({
-  settingDescription,
-  existingSubLocations,
-  register,
-} = {}) {
-  const registerStr = register
-    ? `\n\nLINGUISTIC REGISTER: ${register}\n\nAll sub-location names MUST match this register. Sub-locations are part of the parent setting and inherit its naming style.`
-    : '\n\nNo specific register set; use the naming style established in the setting description.';
-
-  const existingStr = existingSubLocations
-    ? `\nExisting sub-locations to include and build on:\n${existingSubLocations}\n`
-    : '';
-
-  return `Below is a description of a setting:
-${settingDescription || '(no description provided)'}
-${existingStr}${registerStr}
-
-Return a JSON array containing 5-6 sub-locations within this setting. If existing sub-locations are listed above, include them in the array and add fresh entries to round out the total to 5-6. Each sub-location's scale must be appropriately smaller than the parent setting:
-- Parent 'country' → sub-locations are 'regions'
-- Parent 'region' → sub-locations are 'cities' or 'towns'
-- Parent 'city' → sub-locations are 'districts' or 'quarters'
-- Parent 'building' → sub-locations are 'rooms' or 'wings'
-
-All sub-locations must be CONTAINED within the parent setting — not neighboring settings. Avoid common fantasy tropes.
-
-Temperature: 0.9.
-
-[
-  {
-    "name": "Sub-location's bare name (register-coherent)",
-    "setting_type": "The type of place this sub-location is (e.g., 'district', 'fortress', 'monastery', 'forest', 'quarter')",
-    "title": "A short evocative phrase (3-5 words, max 6) that pairs with the name as a subtitle. STRUCTURE: a phrase, not a sentence — NO 'where X does Y' clauses, NO conjugated verbs. Most should follow '[Type] of [Poetic Phrase]' or 'the [Poetic Noun-Phrase]'. Suggest the place's character through concrete imagery; never paste quality keyword adjectives. GOOD invented examples: 'Quarter of the Singing Stones'; 'Watchtower of the Long Vigil'; 'the Smoke-Veiled District'. BAD: 'The Bell-Ringing Quarter of Estharic'; 'Ashen Watchtower of the Eastern Pass'.",
-    "description": "Two sentences: first a general overview of the sub-location, second describing why it's important or notable."
-  }
-]`;
-}
+// subLocationsPrompt was deleted along with the bulk "Generate
+// Important Locations" UI entry point. Sublocations now come through
+// the Related Places extraction (auto from prose) or the manual
+// add-place form (user-typed name + kind + description), both of
+// which feed onPromoteRelatedPlace and produce a single, fully-formed
+// sub-setting per click — never a batch of stubs to whittle down.
