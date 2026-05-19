@@ -207,7 +207,12 @@ import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
 import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
-import { linkSettingToItemStub, resetItemStubsForDeletedSetting, findItemStubMatchingName } from '@/util/item-storage.mjs';
+import {
+  linkSettingToItemStub,
+  resetItemStubsForDeletedSetting,
+  findItemStubMatchingName,
+  addSettingStubToItem,
+} from '@/util/item-storage.mjs';
 import { getSettingById, mergeRelatedPlaces, auntUncleNamesFor } from '@/util/setting-storage.mjs';
 import { consolidateOverviewToMarkdown } from '@/util/renderSettingOverview.mjs';
 import { inferSettingDimensions } from './utils/infer-setting-dimensions.mjs';
@@ -1906,6 +1911,40 @@ function finalizePendingPromotion(operationIndex) {
     newSetting.sourceType = from.source_type;
     newSetting.sourceId = from.source_id;
     newSetting.sourceName = from.source_name || from.source_id;
+  } else if (
+    newSetting.sourceType === 'item'
+    && newSetting.sourceId
+    && newSetting.place_name
+  ) {
+    // Descendant back-link: the new setting inherited item provenance
+    // from its parent (line ~1463 in onPromoteRelatedPlace), but the
+    // cross-tool seeded_from branch above didn't fire — no item-side
+    // stub matched, so this is a user-invented descendant rather than
+    // a re-link to existing item lore. Register the new setting on
+    // the originating item so the item card surfaces it; also write
+    // the inspired_by_item reference edge to keep the cross-tool
+    // graph in sync with the inherited provenance.
+    addSettingStubToItem(newSetting.sourceId, {
+      settingId: newSetting.id,
+      settingName: newSetting.place_name,
+      roleBrief: sourceStub?.role_brief || '',
+    });
+
+    addReferenceForSeed(
+      {
+        source: {
+          type: 'item',
+          id: newSetting.sourceId,
+          name: newSetting.sourceName || newSetting.sourceId,
+        },
+        entities: [{ type: 'setting', name: newSetting.place_name }],
+      },
+      {
+        type: 'setting',
+        id: newSetting.id,
+        name: newSetting.place_name,
+      },
+    );
   }
 
   delete newSetting._pendingPromotion;

@@ -183,6 +183,74 @@ export function linkSettingToItemStub(itemName, stubName, settingId) {
 }
 
 /**
+ * Add a setting stub to an item's related_settings, for the case
+ * where a downstream setting inherits item provenance from its
+ * parent (e.g., a sublocation of an item-inspired setting). Without
+ * this, the item card only knows about settings the LLM named in the
+ * item's own lore; manually-added descendants never surface.
+ *
+ * Idempotent, two-pass:
+ *   1. NAME MATCH (preferred). If the item already has a stub with
+ *      the same name (case-insensitive trim), update its setting_id
+ *      via linkSettingToItemStub — handles the "lore extraction
+ *      surfaced this name first, descent creation came later"
+ *      ordering. Returns true.
+ *   2. ID MATCH. If any existing stub already points at this
+ *      setting_id, no-op — defensive against a duplicate fire.
+ *   3. PUSH. Otherwise add a fresh stub with no source_quote. The
+ *      absence of source_quote is the only data-layer distinction
+ *      between lore-extracted and descendant-added stubs; the UI
+ *      can use it later to render them differently if needed.
+ *
+ * @param {string} itemName
+ * @param {Object} stub
+ * @param {string} stub.settingId   - the new setting's id
+ * @param {string} stub.settingName - the new setting's place_name
+ *                                    (used as the stub's display name)
+ * @param {string} [stub.roleBrief] - optional role descriptor lifted
+ *                                    from the source related_places stub
+ * @returns {boolean} true if a stub was added or updated
+ */
+export function addSettingStubToItem(itemName, { settingId, settingName, roleBrief = '' } = {}) {
+  if (!itemName || !settingId || !settingName) return false;
+
+  // 1. Name-match preferred path: lore extraction may have surfaced
+  // this name first; update that stub's setting_id rather than
+  // duplicate. linkSettingToItemStub returns true when a name-match
+  // succeeded and the setting_id was written.
+  if (linkSettingToItemStub(itemName, settingName, settingId)) {
+    return true;
+  }
+
+  const items = getAllItems();
+  const item = items.find(i => i?.name === itemName);
+  if (!item) return false;
+
+  if (!Array.isArray(item.related_settings)) {
+    item.related_settings = [];
+  }
+
+  // 2. Id-match defensive check: a previous fire might have added
+  // this exact setting_id under a different name (e.g., the setting
+  // was renamed after promotion). No-op rather than push a duplicate.
+  if (item.related_settings.some(s => s?.setting_id === settingId)) {
+    return false;
+  }
+
+  // 3. Push fresh stub. No source_quote — this stub didn't come from
+  // the item's own lore. The item card can render it identically to
+  // lore-extracted stubs for now; a visual distinction can land later
+  // by checking for the absence of source_quote.
+  item.related_settings.push({
+    name: settingName,
+    setting_id: settingId,
+    role_brief: roleBrief,
+  });
+  persistItems(items);
+  return true;
+}
+
+/**
  * Walk savedItems and find any items whose `related_settings` contain a
  * stub pointing to the given setting id. Used during setting deletion to
  * roll back item-side stub links so the source item's UI returns to

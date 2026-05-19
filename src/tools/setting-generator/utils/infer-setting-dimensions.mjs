@@ -291,6 +291,10 @@ ${characterSection}
        - "a single drovers' inn"
        - "the cellar where the prisoner is kept"
        - "a hidden glade the fey use for revels"
+       - "a wind-scoured watch-post with a handful of keepers"
+       - "a small order's lodge holding ten brethren"
+       - "a forester's lodge run by one ranger"
+       - "a hermit's cell with a single attendant"
 
    "landscape" = a GEOGRAPHIC FEATURE or BOUNDED HISTORICAL SITE — uninhabited or thinly-inhabited, with extent and named parts, but no governance and no single space to stand in. Examples that ROUTE TO LANDSCAPE:
        - "a mountain range with named peaks and dangerous passes"
@@ -303,14 +307,21 @@ ${characterSection}
        - "the ghost-shore of the Sundering Sea"
        - "a haunted ruin-field on the old border"
 
-   How to distinguish:
-   - polity: people live here and govern themselves; the setting has economy, social structure, leadership succession.
-   - place: a single room or small bounded space; you can stand inside the whole thing; a GM describes the walls and what's in them.
+   How to distinguish — signals beyond the type label:
+
+   - HEADCOUNT. If the permanent population can be counted on one or two hands (a handful of keepers, a hermit and a helper, one family, a small lineage of caretakers), the setting is PLACE-scale even when called an "outpost," "monastery," "lodge," or "garrison." The polity-scale schema needs a real social fabric — multiple roles, succession beyond a single line, a populace — to fill it. Ten keepers do not have an economy or a defense; one captain and twenty soldiers do.
+
+   - FOOTPRINT. If you could walk across the whole structure in a minute or two (a stone house in a cleft, a single tower, a hut + watch-yard, a one-building inn), it's PLACE-scale. A polity-scale site has districts, wards, quarters, multiple buildings serving distinct functions. "Monastery" can mean either; the description's footprint cues distinguish them.
+
+   - DEFLATED-SECTIONS TEST (strongest signal). Mentally check whether the polity-scale fields would have meaningful content. If "Economy" would come back as "the keepers live on moss-water and dried hare," "Defense" as "the walls are dry-stone, waist-high in places — never garrisoned," "Society" as "no children; the post has always been a place of passing," then those sections are STRUCTURALLY EMPTY at this scale. That's the place-scale schema fitting better — the prose belongs in what_happens_here and who_frequents_here, not in deflated polity slots.
+
+   - polity: people LIVE here and govern themselves; the setting has real economy, social structure, leadership succession that would fill paragraphs naturally.
+   - place: a single room, small bounded structure, or compound run by one to a handful of people; a GM describes the walls and what's in them; the people who matter fit in one or two NPC sketches.
    - landscape: extends across miles or a battlefield-sized footprint; no governance; inhabited by populations (fauna, scavengers, hermits, ghosts) rather than a named ruler.
 
-   Judge from the description, not the type label alone — "monastery" can be a large complex (polity) or a single cell on a cliff (place); "mountains" can be a tinged-with-magic range (landscape) or a kingdom whose territory happens to include mountains (polity).
+   Judge from the description, not the type label alone — "monastery" can be a large complex (polity) or a single cell on a cliff (place); "outpost" can be a frontier garrison-town (polity) or a wind-scoured hut with three keepers (place); "mountains" can be a magical range (landscape) or a kingdom whose territory includes mountains (polity).
 
-   When in doubt, return "polity" — the polity schema renders gracefully against terser content, but place and landscape schemas cannot expand to cover polity concerns.
+   When in doubt: apply the deflated-sections test. If the polity sections would have to be padded or come back as "there is no real X here," route to place. The polity schema does NOT render gracefully when half its sections describe absences; the absence becomes the content, which is exactly the bloat the place-scale split was made to avoid.
 
 Return ONLY valid JSON with the fields listed above. No prose before or after, no markdown code fences, no commentary.
 
@@ -319,6 +330,7 @@ Example outputs:
 {"type": "treetop-village", "character": ["fey-touched", "forest-hidden", "twilit"], "register": "middle-welsh", "userName": null, "scale": "polity"}    (input was "Feywild treetop village with fey-pact warlock" — fey-canon maps to Celtic via middle-welsh)
 {"type": "monastery", "character": ["scholarly", "mountainous", "fog-shrouded"], "register": "old-irish", "userName": "Glenmara", "scale": "polity"}    (Old Irish phonology evident in user-named "Glenmara"; monastery here is a full complex, polity-scale)
 {"type": "shrine", "character": ["fey-touched", "forest-hidden", "twilit"], "register": "middle-welsh", "userName": null, "scale": "place"}    (input was "a single wayside shrine the fey have claimed" — small, one-room, place-scale)
+{"type": "watch-outpost", "character": ["isolated", "monastic", "wind-scoured"], "register": "old-norse", "userName": "Korrin Outpost", "scale": "place"}    (input was "a small order of watch-keepers in a stone house on the mountain's spur" — headcount fits in one hand, no real economy or defense; the polity-scale Economy / Defense / Society sections would all come back as deflated negatives, so place-scale fits)
 {"type": "mountain-range", "character": ["ancient", "mountainous", "song-keeping"], "register": "old-norse", "userName": "Stonemother", "scale": "landscape"}    (input was "the Stonemother — a great range where the dwarven clans dig deep" — geographic feature, populations rather than rulers, landscape-scale)
 {"type": "battlefield", "character": ["embattled", "haunted", "twice-burned"], "register": "old-norse", "userName": "the Broken Gate", "scale": "landscape"}    (input was "the Broken Gate, a battlefield where the siege-golems were unmade" — bounded historical site, ghosts and scavengers rather than residents, landscape-scale)
 {"type": "port-city", "character": ["mercantile", "cosmopolitan", "sun-scorched"], "register": null, "userName": "Velrith", "scale": "polity"}    (user provided extensive lore with multiple invented proper nouns)

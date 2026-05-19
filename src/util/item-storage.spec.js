@@ -19,6 +19,7 @@ import {
   buildSeededInputFromItem,
   leadingWordMatch,
   findItemStubMatchingName,
+  addSettingStubToItem,
 } from './item-storage.mjs';
 
 class LocalStorageMock {
@@ -805,6 +806,130 @@ describe('item-storage', () => {
       expect(findItemStubMatchingName('', 'Stonemother')).toBeNull();
       expect(findItemStubMatchingName('Vardlokkur', '')).toBeNull();
       expect(findItemStubMatchingName(null, null)).toBeNull();
+    });
+  });
+
+  describe('addSettingStubToItem', () => {
+    test('pushes a fresh stub when the item has no matching name', () => {
+      saveItemToStorage({
+        name: 'Vardlokkur',
+        related_settings: [{ name: 'Stonemother', source_quote: 'lore' }],
+      });
+      const ok = addSettingStubToItem('Vardlokkur', {
+        settingId: 'set_korrin',
+        settingName: 'Korrin Outpost',
+        roleBrief: 'Watch-keepers post on the spur',
+      });
+      expect(ok).toBe(true);
+
+      const item = getItemFromStorage('Vardlokkur');
+      const korrin = item.related_settings.find(s => s.name === 'Korrin Outpost');
+      expect(korrin).toEqual({
+        name: 'Korrin Outpost',
+        setting_id: 'set_korrin',
+        role_brief: 'Watch-keepers post on the spur',
+      });
+      // The descendant stub has NO source_quote — that's the data-
+      // layer distinction from lore-extracted stubs.
+      expect('source_quote' in korrin).toBe(false);
+    });
+
+    test('updates an existing same-name stub instead of duplicating (lore-first ordering)', () => {
+      // Lore extraction surfaced "Korrin Outpost" first (with a quote);
+      // descendant creation came later. The existing stub's setting_id
+      // gets set; the source_quote stays.
+      saveItemToStorage({
+        name: 'Vardlokkur',
+        related_settings: [{
+          name: 'Korrin Outpost',
+          source_quote: 'a lonely watch on the spur',
+          role_brief: 'extracted role',
+        }],
+      });
+
+      const ok = addSettingStubToItem('Vardlokkur', {
+        settingId: 'set_korrin',
+        settingName: 'Korrin Outpost',
+        roleBrief: 'Watch-keepers post on the spur',
+      });
+      expect(ok).toBe(true);
+
+      const item = getItemFromStorage('Vardlokkur');
+      expect(item.related_settings).toHaveLength(1);
+      const stub = item.related_settings[0];
+      expect(stub.setting_id).toBe('set_korrin');
+      // The lore source_quote survives the link.
+      expect(stub.source_quote).toBe('a lonely watch on the spur');
+    });
+
+    test('no-op when a stub already has this setting_id (idempotent on repeat fire)', () => {
+      saveItemToStorage({
+        name: 'Vardlokkur',
+        related_settings: [
+          { name: 'Korrin Outpost', setting_id: 'set_korrin', role_brief: 'first add' },
+        ],
+      });
+      // Second fire under a different name (e.g. setting was renamed
+      // after the first add) but same setting_id.
+      const ok = addSettingStubToItem('Vardlokkur', {
+        settingId: 'set_korrin',
+        settingName: 'Korrin Watch',  // different name
+        roleBrief: 'second-add role',
+      });
+      expect(ok).toBe(false);
+
+      const item = getItemFromStorage('Vardlokkur');
+      expect(item.related_settings).toHaveLength(1);
+      expect(item.related_settings[0].name).toBe('Korrin Outpost');
+      expect(item.related_settings[0].role_brief).toBe('first add');
+    });
+
+    test('initializes related_settings array when item has none', () => {
+      saveItemToStorage({ name: 'BareItem' });
+      const ok = addSettingStubToItem('BareItem', {
+        settingId: 'set_x',
+        settingName: 'X',
+      });
+      expect(ok).toBe(true);
+      const item = getItemFromStorage('BareItem');
+      expect(item.related_settings).toEqual([
+        { name: 'X', setting_id: 'set_x', role_brief: '' },
+      ]);
+    });
+
+    test('returns false when item does not exist', () => {
+      const ok = addSettingStubToItem('NonexistentItem', {
+        settingId: 'set_x',
+        settingName: 'X',
+      });
+      expect(ok).toBe(false);
+    });
+
+    test('returns false on missing required arguments', () => {
+      saveItemToStorage({ name: 'Vardlokkur', related_settings: [] });
+      expect(addSettingStubToItem('', { settingId: 'a', settingName: 'b' })).toBe(false);
+      expect(addSettingStubToItem('Vardlokkur', { settingName: 'b' })).toBe(false);
+      expect(addSettingStubToItem('Vardlokkur', { settingId: 'a' })).toBe(false);
+      expect(addSettingStubToItem('Vardlokkur', undefined)).toBe(false);
+    });
+
+    test('resetItemStubsForDeletedSetting clears the back-link cleanly', () => {
+      // Symmetry check: when Korrin gets created, then deleted, the
+      // Vardlokkur stub's setting_id should clear back to null. The
+      // existing reset helper already handles this — verify it does
+      // the right thing on a descendant-added stub.
+      saveItemToStorage({ name: 'Vardlokkur', related_settings: [] });
+      addSettingStubToItem('Vardlokkur', {
+        settingId: 'set_korrin',
+        settingName: 'Korrin Outpost',
+      });
+      resetItemStubsForDeletedSetting('set_korrin');
+
+      const item = getItemFromStorage('Vardlokkur');
+      const stub = item.related_settings.find(s => s.name === 'Korrin Outpost');
+      // Stub stays (the name and role survive deletion), but setting_id clears.
+      expect(stub).toBeTruthy();
+      expect(stub.setting_id).toBeFalsy();
     });
   });
 });
