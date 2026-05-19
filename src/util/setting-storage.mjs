@@ -348,14 +348,24 @@ export function mergeRelatedPlaces(existing, fresh) {
     const key = name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    reconciled.push({
+    const entry = {
       name,
       kind: stub.kind || 'feature',
       source_quote: (stub.source_quote || '').trim(),
       role_brief: (stub.role_brief || '').trim(),
       suggested_setting_type: (stub.suggested_setting_type || '').trim(),
       promoted_setting_id: null,
-    });
+    };
+    // Cross-tool provenance carry: when the extraction tagged the
+    // stub with `seeded_from` (because it matched a stub on the
+    // setting's source item), preserve that field so the promotion
+    // handler can fire the secondary writeback to the originating
+    // tool. See attachSeededFromMatchingItemStubs in
+    // extract-related-places.mjs.
+    if (stub.seeded_from && typeof stub.seeded_from === 'object') {
+      entry.seeded_from = { ...stub.seeded_from };
+    }
+    reconciled.push(entry);
   }
 
   return reconciled;

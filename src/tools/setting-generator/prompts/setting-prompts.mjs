@@ -619,6 +619,317 @@ Return JSON with the same field structure as a top-level setting. Temperature: 0
 }`;
 }
 
+/**
+ * Place-scale tension guidance. The polity-scale tensionBlock
+ * (buildTensionGuidanceBlock) names polity fields — central_dynamic,
+ * responses_in_motion, notable_*_facets — that don't exist in
+ * place-scale schema. This variant names the place-scale fields and
+ * says where tension lands when it does land.
+ *
+ * At place-scale most tension lives in two fields: who_frequents_here
+ * (an NPC's backstory carries the bound-here feeling) and
+ * hidden_detail (the physical residue). Sometimes it shows in
+ * what_happens_here (a council under threat meets under tighter
+ * guard). Atmospheric vignette and features rarely carry tension
+ * directly — texture, not stakes, is their job.
+ */
+function buildPlaceTensionGuidanceBlock(tension) {
+  if (!tension || !TENSION_DESCRIPTIONS[tension]) return '';
+  return `CENTRAL TENSION: ${tension}
+${TENSION_DESCRIPTIONS[tension]}
+
+How this shapes a place-scale output:
+- who_frequents_here is the primary carrier — an NPC's backstory binds them to this place because of the tension (the brother who fell here; the council that meets despite the threat). Backstory IS tension at this scale.
+- hidden_detail often carries the tension's residue — the bloodstain, the embedded bullet, the chalk tally nobody admits keeping.
+- what_happens_here picks up tension only when the activity itself is shaped by it (a council meeting under tighter guard; a market thinning each season).
+- overview, where_it_sits, and features stay primarily about texture and orientation — they may glance at the tension but don't carry it.
+- Express tension through structural arrangement and concrete detail, not by naming the tension keyword. A place at this scale is small; tension lands as one or two specific facts, not as an organizing principle for the whole field set.
+`;
+}
+
+/**
+ * Generate a place-scale setting overview. Place-scale = a single
+ * small space (square, hall, tower, sacred grove, building room),
+ * NOT a polity. Six prose fields total — atmospheric vignette, what
+ * happens here, where it sits, features, who frequents here, hidden
+ * detail — plus name / title / named_entities. No npc_list array;
+ * NPCs live inside the who_frequents_here prose with backstory.
+ *
+ * The router in SettingGenerator.vue branches on setting.scale: when
+ * scale === 'place', this prompt fires; otherwise settingOverviewPrompt
+ * (top-level) or sublocationOverviewPrompt (sublocation) fires. The
+ * inference call upstream decides the scale; see
+ * infer-setting-dimensions.mjs for the ceiling logic.
+ *
+ * Accepts optional `parentName` / `parentLore`: place-scale settings
+ * usually sit inside a parent (a piazza inside a city), and the
+ * "where it sits" field benefits from being anchored to that parent
+ * by name. Top-level place-scale generations omit parent context.
+ *
+ * @param {Object} args
+ * @param {string} [args.type]
+ * @param {Array<string>} [args.character]
+ * @param {string} [args.register]
+ * @param {string} [args.userName]
+ * @param {string} [args.tension]
+ * @param {Array<string>} [args.bannedTropes]
+ * @param {string} [args.description]
+ * @param {string} [args.lore]
+ * @param {string} [args.parentName]
+ * @param {string} [args.parentLore]
+ * @param {Array<string>} [args.siblingSettings]
+ * @param {Array<string>} [args.childrenSettings]
+ */
+export function placeOverviewPrompt(args = {}) {
+  const constraints = buildSettingConstraints(args);
+  const lorePreservation = buildLorePreservationBlock(
+    [args.parentLore, args.lore].filter(Boolean).join('\n')
+  );
+  const siblingBlock = buildSiblingSettingsBlock(args.siblingSettings);
+  const childrenBlock = buildChildrenSettingsBlock(args.childrenSettings);
+  const tensionBlock = buildPlaceTensionGuidanceBlock(args.tension);
+  const antiClusteringBlock = buildAntiClusteringBlock(args.bannedTropes);
+  const parentName = args.parentName;
+  const parentLine = parentName ? `${parentName.toUpperCase()}` : 'THE LARGER SETTING';
+
+  return `Generate a PLACE-SCALE setting overview. This is a SMALL place — a piazza, a tower, a hall, a sacred grove, a single building — not a polity. The output is a concrete description of one space, not a worldbuilding write-up of a region. Every field is shorter and more sensory than polity-scale generation; the schema below is the entire output.
+
+${constraints}
+
+${parentName ? `PARENT SETTING: ${parentName}
+PARENT SETTING LORE:
+${args.parentLore || '(no additional parent lore)'}
+
+` : ''}${lorePreservation}${siblingBlock ? '\n' + siblingBlock + '\n' : ''}${childrenBlock ? '\n' + childrenBlock + '\n' : ''}
+${antiClusteringBlock}
+${tensionBlock}
+Return JSON with EXACTLY these fields. Temperature: 0.9. No extra fields, no commentary outside the JSON.
+
+{
+  "name": "The bare register-coherent place name only (e.g., 'Piazza dei Fonditori', 'the Long Shed', 'the Iron Grove'). What shows in sidebars and lists. No qualities, no type word, no article unless part of the name proper.",
+  "title": "A short evocative phrase (3-5 words, max 6) that pairs with the name as a subtitle. STRUCTURE: a phrase, not a sentence — no 'where X does Y' clauses, no conjugated verbs. Usually '[Type] of [Poetic Phrase]' or 'the [Poetic Noun-Phrase]'. The phrase SUGGESTS the character qualities through imagery; it MUST NOT paste a character quality word as an adjective. GOOD: 'Piazza of the Cracked Cobbles' (suggests violent past). BAD: 'Bloodstained Piazza' (pastes a quality keyword).",
+  "overview": "ATMOSPHERIC VIGNETTE — what a GM reads aloud when the party walks in. 2-3 short sentences. Sensory texture only: what one sees, smells, hears, feels at a moment. NO history. NO political structure. NO geographic positioning (that's where_it_sits). NO who-runs-it. Just the establishing shot — film-camera-on-tripod, not encyclopedia entry. Plain prose, no markdown markers.",
+  "where_it_sits": "WHERE THIS PLACE SITS IN ${parentLine}. 1-2 sentences. Orientation: what part of the parent it occupies (a quarter, a side of the hill, a street, an end of the building), what's adjacent, how a traveler reaches it. Concrete and spatial. Plain prose. ${parentName ? `Anchor to ${parentName} by name where natural.` : 'When no parent context is provided, describe the immediate surrounding terrain or settlement instead.'}",
+  "features": "WHAT'S HERE — what fills the place physically. 2-3 sentences. Furnishings, fixtures, doors, windows, distinctive objects. Include a rough sense of size or dimensions ('a single chamber roughly fifteen paces across,' 'three connected rooms,' 'an open square the width of two cart-lengths,' 'a corridor narrow enough that two people abreast must turn sideways'). Concrete enough that a GM can describe the space without making it up on the spot. Plain prose.",
+  "what_happens_here": "WHAT THIS PLACE IS FOR — the function. 2-3 sentences. The activity this place exists to host, on what cadence (daily, weekly, on full moons, on feast days). Fold in sustaining arrangements (who pays for upkeep, who guards the door, who's admitted) ONLY when they're load-bearing for play — a council hall mentions its guards because they'd block a sneaking PC; a baker's stall does not mention its lease because nobody at the table cares. Plain prose.",
+  "who_frequents_here": "ONE OR TWO NAMED NPCs whose lives are bound to this place. 3-5 sentences of prose, ONE paragraph. For each NPC: name + brief role/manner + the BACKSTORY that ties THEM to THIS place specifically — the personal reason this place matters to them. Time-of-day appears ONLY when load-bearing for the NPC (sweeping at dusk because of what happened at dusk; unlocking at Vespers because that's when council meets). DO NOT parade demographics or list ambient crowds. ONE backstory-anchored person, or at most two — whichever fits this scale. Even a place that seems empty has someone: the abandoned cellar has the scavenger who comes for the copper pipes; the disused shrine has the old woman who lights a candle each Sunday. Plain prose. Register-coherent names.",
+  "hidden_detail": "ONE small physical thing a perceptive person would notice — an old mark of past trouble, or a present-day oddity, or something subtly off. ONE sentence, maybe two if a brief why is needed. Examples: 'A dark stain on the third step, scrubbed but never gone, from a fistfight last winter.' 'An embedded musket-ball in the lintel, painted over but still bulging through the plaster.' 'A single floorboard in the western corner polished smoother than the others.' 'A chalk tally on the doorpost — nine marks, none of them recent — that nobody admits to keeping.' Keep it pointable-to: a detail a GM can drop into a perception check. Plain prose.",
+  "named_entities": [
+    "Example Person One",
+    "Example Person Two"
+  ],
+  "//named_entities_note": "REPLACE the example entries above with the CHARACTER NAMES (people only) of every individual named in the prose fields above. Rules: (a) PEOPLE ONLY — anyone introduced by a personal name. (b) EXCLUDE places, regions, polities, factions, buildings, geographical features. (c) EXCLUDE titles of offices and role-words even when capitalized ('the warden,' 'the priest,' 'the sweeper'). When a person is introduced with name + title (e.g., 'Renzo the Sweeper'), include ONLY the personal-name part: 'Renzo.' (d) Match the prose VERBATIM, case-sensitive. (e) EXCLUDE deity names. (f) At place scale typically 1-2 entries, sometimes 3.",
+  "npc_list": [
+    {
+      "name": "Same name as one of the named_entities — the named NPCs from who_frequents_here, structured for the NPCs tab",
+      "description": "One sentence summary of the NPC's role + the personal connection to this place. Recap from your who_frequents_here prose — don't introduce new facts."
+    }
+  ],
+  "//npc_list_note": "1-2 entries, matching the 1-2 NPCs you named in who_frequents_here. Names must match the prose VERBATIM. Descriptions condense the NPC's role + their bound-to-this-place backstory into a single sentence (the NPCs tab uses these as standalone stubs). DO NOT include unnamed populations or scavengers — only named individuals."
+}`;
+}
+
+/**
+ * Shape-only validator for placeOverviewPrompt responses. Required
+ * fields present and of the right type; content quality (atmosphere,
+ * NPC backstory depth, hidden-detail concreteness) is verified by
+ * manual production review per the project test convention.
+ *
+ * Field set matches the place-scale schema:
+ *   - 8 required strings (name, title + 6 content fields)
+ *   - named_entities array of strings
+ *
+ * Notably absent from the place schema (and so NOT required here):
+ * history, current_ruler_sentence, social_history, economic_history,
+ * military_history, notable_*_facets, central_dynamic,
+ * responses_in_motion, present_state, npc_list. Those are polity-
+ * scale concerns; place-scale routes through the trimmer 6-slot shape.
+ */
+export function validatePlaceOverviewResponse(jsonString) {
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch (e) {
+    return false;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+
+  const requiredStringFields = [
+    'name', 'title', 'overview', 'where_it_sits',
+    'features', 'what_happens_here', 'who_frequents_here', 'hidden_detail',
+  ];
+  for (const field of requiredStringFields) {
+    if (typeof parsed[field] !== 'string' || !parsed[field].trim()) return false;
+  }
+  if (!Array.isArray(parsed.named_entities)) return false;
+  if (!parsed.named_entities.every(n => typeof n === 'string')) return false;
+  // npc_list is structurally optional (handler defaults to [] for
+  // back-compat with responses pre-dating the place-scale npc_list
+  // addition). When present it must be an array of {name, description}
+  // objects so SettingGenerator can populate setting.npcs[] for the
+  // NPCs tab. Same rule as polity-scale npc_list.
+  if (parsed.npc_list !== undefined) {
+    if (!Array.isArray(parsed.npc_list)) return false;
+    for (const npc of parsed.npc_list) {
+      if (!npc || typeof npc !== 'object') return false;
+      if (typeof npc.name !== 'string' || !npc.name.trim()) return false;
+      if (typeof npc.description !== 'string') return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Landscape-scale tension guidance. Like the place-scale variant, but
+ * the load-bearing fields are different — at landscape scale, tension
+ * lives primarily in what_lives_here (the embattled fauna, the
+ * haunted dead, the recovering ecosystem), travel_and_hazards (the
+ * danger character), and hidden_detail (the residue of past events).
+ * Extent and where_it_sits stay primarily spatial; the vignette is
+ * tension-tinged atmosphere but rarely the primary carrier.
+ */
+function buildLandscapeTensionGuidanceBlock(tension) {
+  if (!tension || !TENSION_DESCRIPTIONS[tension]) return '';
+  return `CENTRAL TENSION: ${tension}
+${TENSION_DESCRIPTIONS[tension]}
+
+How this shapes a landscape-scale output:
+- what_lives_here is a primary carrier — the populations (people, fauna, spirits) that inhabit this landscape register the tension through what they're doing now (a hermit cult thinning under siege; the wolves grown bold after a hard winter; the dead unsettled by recent disturbance).
+- travel_and_hazards carries tension as concrete danger character — what makes this landscape dangerous right now, not just always.
+- hidden_detail carries tension as physical residue (a forgotten cairn at the pass; a half-buried sword catching morning light).
+- extent and where_it_sits stay primarily spatial — what this landscape covers and where it sits. They may glance at the tension but don't carry it.
+- overview is atmospheric — tension may shade its mood, but the vignette is texture, not stakes.
+- Express tension through structural arrangement and concrete detail, not by naming the tension keyword. Landscape settings are wider than places; tension lands as one or two specific conditions, not as an organizing principle for the whole field set.
+`;
+}
+
+/**
+ * Generate a landscape-scale setting overview. Landscape-scale = a
+ * geographic feature or bounded historical site: mountain range,
+ * river system, forest, desert, plains, archipelago, coastline,
+ * battlefield, ghost-shore, ruin-field. Sits between polity-scale
+ * (no governance, no named NPC list) and place-scale (not a single
+ * standable space).
+ *
+ * Six prose fields total — atmospheric vignette, extent, where it
+ * sits, what lives here, travel and hazards, hidden detail — plus
+ * name / title / named_entities. No npc_list array; populations and
+ * the occasional named individual live inside what_lives_here prose.
+ *
+ * The router in SettingGenerator.vue branches on setting.scale: when
+ * scale === 'landscape', this prompt fires. The inference call upstream
+ * decides scale; see infer-setting-dimensions.mjs.
+ *
+ * Accepts optional `parentName` / `parentLore`: most landscape
+ * settings sit inside a parent (a mountain range inside a region, a
+ * battlefield within a kingdom), and where_it_sits benefits from
+ * being anchored to that parent by name.
+ *
+ * @param {Object} args
+ * @param {string} [args.type]
+ * @param {Array<string>} [args.character]
+ * @param {string} [args.register]
+ * @param {string} [args.userName]
+ * @param {string} [args.tension]
+ * @param {Array<string>} [args.bannedTropes]
+ * @param {string} [args.description]
+ * @param {string} [args.lore]
+ * @param {string} [args.parentName]
+ * @param {string} [args.parentLore]
+ * @param {Array<string>} [args.siblingSettings]
+ * @param {Array<string>} [args.childrenSettings]
+ */
+export function landscapeOverviewPrompt(args = {}) {
+  const constraints = buildSettingConstraints(args);
+  const lorePreservation = buildLorePreservationBlock(
+    [args.parentLore, args.lore].filter(Boolean).join('\n')
+  );
+  const siblingBlock = buildSiblingSettingsBlock(args.siblingSettings);
+  const childrenBlock = buildChildrenSettingsBlock(args.childrenSettings);
+  const tensionBlock = buildLandscapeTensionGuidanceBlock(args.tension);
+  const antiClusteringBlock = buildAntiClusteringBlock(args.bannedTropes);
+  const parentName = args.parentName;
+  const parentLine = parentName ? `${parentName.toUpperCase()}` : 'THE LARGER REGION';
+
+  return `Generate a LANDSCAPE-SCALE setting overview. This is a geographic feature or bounded historical site — a mountain range, river system, forest, desert, plains, archipelago, coastline, battlefield, ghost-shore, ruin-field. NOT a polity (no government, no economy at this register) and NOT a single standable space (it has extent and parts, not a "what's in this room"). The schema below is the entire output: six prose fields capture the landscape's character, extent, life, and hazards.
+
+${constraints}
+
+${parentName ? `PARENT SETTING: ${parentName}
+PARENT SETTING LORE:
+${args.parentLore || '(no additional parent lore)'}
+
+` : ''}${lorePreservation}${siblingBlock ? '\n' + siblingBlock + '\n' : ''}${childrenBlock ? '\n' + childrenBlock + '\n' : ''}
+${antiClusteringBlock}
+${tensionBlock}
+Return JSON with EXACTLY these fields. Temperature: 0.9. No extra fields, no commentary outside the JSON.
+
+{
+  "name": "The bare register-coherent name only (e.g., 'Stonemother', 'the Broken Gate', 'Storm-tooth Range', 'the Bone Coast'). No qualities, no type word. Article only if it's part of the name proper.",
+  "title": "A short evocative phrase (3-5 words, max 6) that pairs with the name as a subtitle. STRUCTURE: a phrase, not a sentence — no 'where X does Y' clauses, no conjugated verbs. Usually '[Type] of [Poetic Phrase]' or 'the [Poetic Noun-Phrase]'. The phrase SUGGESTS the character qualities through imagery; it MUST NOT paste a character quality word as an adjective. GOOD: 'Range of the Singing Peaks' (suggests mythic-poetic); 'the Cracked Obsidian Field' (suggests battlefield). BAD: 'Haunted Battlefield' (pastes a quality keyword).",
+  "overview": "ATMOSPHERIC VIGNETTE — what the GM reads when the party arrives at the edge or stands within. 2-3 short sentences. Sensory texture only: what one sees, smells, hears, feels at a moment. NO origin / history. NO travel routes. NO named landmarks (those live in extent). NO inhabitants (those live in what_lives_here). Just the establishing shot — film-camera-on-tripod, not encyclopedia entry. Plain prose, no markdown markers.",
+  "extent": "WHAT THIS LANDSCAPE COVERS — its bounds, scale, and named parts. 2-3 sentences. For wide geographic features (range, forest, river): named peaks / passes / valleys / tributaries / clearings, rough scale, what marks its edges. For bounded historical sites (battlefield, ruin-field): the footprint, the named segments or landmarks within (the gate, the front line, the central tor), distinguishing features that orient a traveler. Concrete and spatial. Plain prose.",
+  "where_it_sits": "WHERE THIS LANDSCAPE SITS IN ${parentLine}. 1-2 sentences. Orientation: what regions, polities, or other landscapes border it; what roads or rivers connect to it; how a traveler from the parent reaches its edge. Plain prose. ${parentName ? `Anchor to ${parentName} by name where natural.` : 'When no parent context is provided, describe the immediate surrounding regions or polities instead.'}",
+  "what_lives_here": "WHAT INHABITS THIS LANDSCAPE. 2-4 sentences. Populations: flora, fauna, beasts, monsters, isolated communities, scavengers, ghosts — whatever class of inhabitant fits the type and tension. Usually described as types or groups rather than named individuals, since landscape scale doesn't have the daily-frequenter intimacy of place scale. ONE named individual is fine when load-bearing (the hermit who keeps the high cairn; the mad watcher of the Broken Gate); more than one starts to feel like polity-NPCs. For uninhabited landscapes (a recent battlefield, a desert waste), name what scavenges or haunts the place. Plain prose. Register-coherent names.",
+  "travel_and_hazards": "HOW ONE MOVES THROUGH + WHAT MAKES IT DANGEROUS. 2-3 sentences. Roads, trails, seasonal access (a pass that opens only in summer; a coast walkable only at low tide). Concrete hazards — physical (snowblind passes, sinking ground, riptide) AND atmospheric / supernatural (lingering magic, restless dead, the wyrm in its lair). Frame both routine travel and what specifically can kill an unprepared party. Plain prose.",
+  "hidden_detail": "ONE small physical thing a perceptive person would notice — an old marker, a present-day oddity, a small physical residue of a past event. ONE sentence, maybe two if a brief why is needed. Examples: 'A weathered cairn at the south pass, three stones taller than a man, marking where the last clan-king fell.' 'A half-buried sword in the obsidian, its edge still catching the morning light.' 'A single tree at the center of the burn-field that still puts out green leaves, despite the salt the besiegers spread.' Keep it pointable-to: a detail a GM can drop into a perception check. Plain prose.",
+  "named_entities": [
+    "Example Person One",
+    "Example Person Two"
+  ],
+  "//named_entities_note": "REPLACE the example entries above with the CHARACTER NAMES (people only) of every individual named in the prose fields above. Rules: (a) PEOPLE ONLY — anyone introduced by a personal name. (b) EXCLUDE places, regions, polities, factions, buildings, geographical features. (c) EXCLUDE titles of offices and role-words even when capitalized ('the hermit,' 'the watcher,' 'the warden'). When a person is introduced with name + title, include ONLY the personal-name part. (d) Match the prose VERBATIM, case-sensitive. (e) EXCLUDE deity names. (f) At landscape scale typically 0-2 entries — many landscapes have no named individuals at all, and that's fine. Return an empty array when no people are named.",
+  "npc_list": [
+    {
+      "name": "Same name as one of the named_entities — the named individual(s) you put in what_lives_here",
+      "description": "One sentence summary of the NPC's role + their connection to this landscape. Condense from your what_lives_here prose — don't introduce new facts."
+    }
+  ],
+  "//npc_list_note": "0-2 entries — many landscapes have no named individuals (just populations like 'bears and ice-wolves'), in which case return an empty array. When the prose names a hermit, watcher, or other specific person tied to this landscape, structure them here for the NPCs tab. Names must match the prose VERBATIM. DO NOT include unnamed populations or species — only named individuals."
+}`;
+}
+
+/**
+ * Shape-only validator for landscapeOverviewPrompt responses. Required
+ * fields present and of the right type; content quality is verified
+ * by manual production review per the project test convention.
+ *
+ * Field set matches the landscape-scale schema:
+ *   - 8 required strings (name, title + 6 content fields)
+ *   - named_entities array of strings (empty array allowed — many
+ *     landscapes have no named individuals)
+ */
+export function validateLandscapeOverviewResponse(jsonString) {
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch (e) {
+    return false;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+
+  const requiredStringFields = [
+    'name', 'title', 'overview', 'extent',
+    'where_it_sits', 'what_lives_here', 'travel_and_hazards', 'hidden_detail',
+  ];
+  for (const field of requiredStringFields) {
+    if (typeof parsed[field] !== 'string' || !parsed[field].trim()) return false;
+  }
+  if (!Array.isArray(parsed.named_entities)) return false;
+  if (!parsed.named_entities.every(n => typeof n === 'string')) return false;
+  // npc_list is structurally optional. Empty array is the common case
+  // at landscape scale (many landscapes have no named individuals).
+  // When present, must be an array of {name, description} objects.
+  if (parsed.npc_list !== undefined) {
+    if (!Array.isArray(parsed.npc_list)) return false;
+    for (const npc of parsed.npc_list) {
+      if (!npc || typeof npc !== 'object') return false;
+      if (typeof npc.name !== 'string' || !npc.name.trim()) return false;
+      if (typeof npc.description !== 'string') return false;
+    }
+  }
+  return true;
+}
+
 // subLocationsPrompt was deleted along with the bulk "Generate
 // Important Locations" UI entry point. Sublocations now come through
 // the Related Places extraction (auto from prose) or the manual

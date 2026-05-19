@@ -12,7 +12,25 @@
  * `./setting-dimensions.mjs`; new dimensions or rebalancing happens
  * there with no prompt changes.
  *
- * Output shape: { type, character, register, userName, tension }
+ * Output shape: { type, character, register, userName, tension, scale }
+ *
+ *   scale — 'polity' | 'place' | 'landscape'.
+ *     'place' = small, single-space settings (square, hall, tower,
+ *       sacred grove, a single building) where the polity-scale
+ *       schema is bloat.
+ *     'landscape' = geographic features and bounded historical sites
+ *       (mountain range, river, forest, desert, battlefield,
+ *       ghost-shore, ruin-field) — uninhabited or thinly-inhabited
+ *       settings with extent and parts, but no governance and no
+ *       single space to stand in.
+ *     'polity' = everything else (region, kingdom, city, town,
+ *       district, monastery-as-complex, etc.) — the default.
+ *     The LLM judges this from the description; code overrides to
+ *     'polity' for a small set of types that are unambiguously too
+ *     large to be either place- or landscape-scale regardless of how
+ *     the description reads (region, kingdom, empire, plane). The
+ *     router in SettingGenerator.vue picks the right prompt based on
+ *     this field.
  *
  *   type — one entry from SETTING_TYPES (e.g., 'kingdom', 'monastery',
  *     'oasis-settlement'). The LLM picks based on user input or rolls
@@ -113,7 +131,57 @@ export function validateInferenceResponse(raw) {
     || (Array.isArray(parsed.character) && parsed.character.every(c => typeof c === 'string'));
   const hasRegister = parsed.register === null || typeof parsed.register === 'string';
   const hasUserName = parsed.userName === null || typeof parsed.userName === 'string';
-  return hasType && hasCharacter && hasRegister && hasUserName;
+  // Scale is OPTIONAL at the validator level. Older inference calls
+  // pre-dating the place-scale split returned no scale field; the
+  // resolver below defaults missing/invalid scale to 'polity' so
+  // pre-existing call sites continue to work without breakage. Only
+  // reject explicit non-string non-null values (numbers, objects).
+  const hasScale = parsed.scale === undefined
+    || parsed.scale === null
+    || typeof parsed.scale === 'string';
+  return hasType && hasCharacter && hasRegister && hasUserName && hasScale;
+}
+
+/**
+ * Types whose scale CANNOT be place regardless of description. The
+ * LLM's scale judgment is overridden to 'polity' when the picked type
+ * matches one of these — small wayside shrine in a "kingdom"
+ * description should never route place-scale because the type label
+ * itself rules it out.
+ *
+ * Kept deliberately small (the four types that are unambiguously too
+ * large): the goal is to catch a bad-day LLM call on obvious cases,
+ * not to enumerate every polity type. Most types stay LLM-judged
+ * since "small monastery vs grand monastery" can only be resolved by
+ * the description.
+ *
+ * Match is case-insensitive on the trimmed type string.
+ */
+const ALWAYS_POLITY_TYPES = new Set(['region', 'kingdom', 'empire', 'plane']);
+
+/**
+ * Normalize the LLM's scale field to one of 'polity' | 'place' |
+ * 'landscape'. Applies the ALWAYS_POLITY_TYPES ceiling, defaults to
+ * 'polity' on missing / invalid input. Exported for direct testing.
+ *
+ * The ceiling only forces 'polity' — it doesn't have a 'no-landscape'
+ * twin because landscape is a contextual judgment (a "kingdom" of
+ * unsettled hills could be landscape-shaped narratively, but the
+ * ceiling overrides any LLM that called it landscape). The narrow
+ * effect: the four ceiling types ALWAYS go polity, everything else
+ * defers to the LLM's pick among the three scales.
+ *
+ * @param {unknown} rawScale - LLM-provided scale, or null/undefined
+ * @param {unknown} rawType - LLM-provided type, used for the ceiling
+ * @returns {'polity' | 'place' | 'landscape'}
+ */
+export function resolveScale(rawScale, rawType) {
+  const typeStr = typeof rawType === 'string' ? rawType.trim().toLowerCase() : '';
+  if (typeStr && ALWAYS_POLITY_TYPES.has(typeStr)) return 'polity';
+  const scaleStr = typeof rawScale === 'string' ? rawScale.trim().toLowerCase() : '';
+  if (scaleStr === 'place') return 'place';
+  if (scaleStr === 'landscape') return 'landscape';
+  return 'polity';
 }
 
 /**
@@ -209,15 +277,53 @@ ${characterSection}
    - "Valderia, a decadent republic" → userName: "Valderia"
    - "a haunted city in the mountains" → userName: null (only descriptive)
 
+5. "scale": The size class of this setting — "polity", "place", or "landscape".
+
+   "polity" = a region, kingdom, city, town, village, district, monastery-as-complex, or any setting large enough to have history, economy, factions, governance. The default for most settings.
+
+   "place" = a SMALL, SINGLE-SPACE setting where the polity-scale fields (economy, military, leadership succession) would be bloat. Examples that ROUTE TO PLACE:
+       - "a sacred grove at the bend of the river"
+       - "a tower with a great water-clock"
+       - "the smith's workshop above the forge"
+       - "a piazza where the revolt was crushed"
+       - "the council chamber"
+       - "a wayside shrine"
+       - "a single drovers' inn"
+       - "the cellar where the prisoner is kept"
+       - "a hidden glade the fey use for revels"
+
+   "landscape" = a GEOGRAPHIC FEATURE or BOUNDED HISTORICAL SITE — uninhabited or thinly-inhabited, with extent and named parts, but no governance and no single space to stand in. Examples that ROUTE TO LANDSCAPE:
+       - "a mountain range with named peaks and dangerous passes"
+       - "the Stonemother — a great range where the dwarven clans dig deep"
+       - "the Bone Coast, where the salt-drowned dead still walk"
+       - "the Broken Gate, a battlefield where the siege-golems were unmade"
+       - "the Whispering Forest, deep and old"
+       - "the burn-field where the besiegers spread salt"
+       - "the Dragon-glass Desert"
+       - "the ghost-shore of the Sundering Sea"
+       - "a haunted ruin-field on the old border"
+
+   How to distinguish:
+   - polity: people live here and govern themselves; the setting has economy, social structure, leadership succession.
+   - place: a single room or small bounded space; you can stand inside the whole thing; a GM describes the walls and what's in them.
+   - landscape: extends across miles or a battlefield-sized footprint; no governance; inhabited by populations (fauna, scavengers, hermits, ghosts) rather than a named ruler.
+
+   Judge from the description, not the type label alone — "monastery" can be a large complex (polity) or a single cell on a cliff (place); "mountains" can be a tinged-with-magic range (landscape) or a kingdom whose territory happens to include mountains (polity).
+
+   When in doubt, return "polity" — the polity schema renders gracefully against terser content, but place and landscape schemas cannot expand to cover polity concerns.
+
 Return ONLY valid JSON with the fields listed above. No prose before or after, no markdown code fences, no commentary.
 
 Example outputs:
-{"type": "kingdom", "character": ["ancient", "corrupt", "misty"], "register": "welsh", "userName": null}    (input mentioned "Welsh-style settlement")
-{"type": "treetop-village", "character": ["fey-touched", "forest-hidden", "twilit"], "register": "middle-welsh", "userName": null}    (input was "Feywild treetop village with fey-pact warlock" — fey-canon maps to Celtic via middle-welsh)
-{"type": "monastery", "character": ["scholarly", "mountainous", "fog-shrouded"], "register": "old-irish", "userName": "Glenmara"}    (Old Irish phonology evident in user-named "Glenmara")
-{"type": "port-city", "character": ["mercantile", "cosmopolitan", "sun-scorched"], "register": null, "userName": "Velrith"}    (user provided extensive lore with multiple invented proper nouns: "Velrith," "House Sarvane," "Drowning Quarter," "Bronzewater Festival" — null lets the LLM extend their established style without imposing a register)
-{"type": "kingdom", "character": ["ancient", "corrupt", "misty"], "register": "fantasy_unspecified", "userName": null}    (input was "a flourishing kingdom" — no canon reference, no invented proper nouns; fantasy_unspecified routes to a random register)
-{"type": "ruined-city", "character": ["fallen", "haunted", "twilit"], "register": null, "userName": null}    (input was "a post-apocalyptic ruin" — non-fantasy genre)`;
+{"type": "kingdom", "character": ["ancient", "corrupt", "misty"], "register": "welsh", "userName": null, "scale": "polity"}    (input mentioned "Welsh-style settlement")
+{"type": "treetop-village", "character": ["fey-touched", "forest-hidden", "twilit"], "register": "middle-welsh", "userName": null, "scale": "polity"}    (input was "Feywild treetop village with fey-pact warlock" — fey-canon maps to Celtic via middle-welsh)
+{"type": "monastery", "character": ["scholarly", "mountainous", "fog-shrouded"], "register": "old-irish", "userName": "Glenmara", "scale": "polity"}    (Old Irish phonology evident in user-named "Glenmara"; monastery here is a full complex, polity-scale)
+{"type": "shrine", "character": ["fey-touched", "forest-hidden", "twilit"], "register": "middle-welsh", "userName": null, "scale": "place"}    (input was "a single wayside shrine the fey have claimed" — small, one-room, place-scale)
+{"type": "mountain-range", "character": ["ancient", "mountainous", "song-keeping"], "register": "old-norse", "userName": "Stonemother", "scale": "landscape"}    (input was "the Stonemother — a great range where the dwarven clans dig deep" — geographic feature, populations rather than rulers, landscape-scale)
+{"type": "battlefield", "character": ["embattled", "haunted", "twice-burned"], "register": "old-norse", "userName": "the Broken Gate", "scale": "landscape"}    (input was "the Broken Gate, a battlefield where the siege-golems were unmade" — bounded historical site, ghosts and scavengers rather than residents, landscape-scale)
+{"type": "port-city", "character": ["mercantile", "cosmopolitan", "sun-scorched"], "register": null, "userName": "Velrith", "scale": "polity"}    (user provided extensive lore with multiple invented proper nouns)
+{"type": "kingdom", "character": ["ancient", "corrupt", "misty"], "register": "fantasy_unspecified", "userName": null, "scale": "polity"}    (input was "a flourishing kingdom" — no canon reference, no invented proper nouns)
+{"type": "ruined-city", "character": ["fallen", "haunted", "twilit"], "register": null, "userName": null, "scale": "polity"}    (input was "a post-apocalyptic ruin" — non-fantasy genre)`;
 }
 
 /**
@@ -402,7 +508,7 @@ export async function inferSettingDimensions({ description = '', lore = '', rng 
 
   const prompt = buildPrompt({ description, lore, characterCandidates });
 
-  const emptyResult = { type: null, character: null, register: null, userName: null, tension: codePickedTension };
+  const emptyResult = { type: null, character: null, register: null, userName: null, tension: codePickedTension, scale: 'polity' };
 
   let response;
   try {
@@ -459,11 +565,14 @@ export async function inferSettingDimensions({ description = '', lore = '', rng 
     ? parsed.userName.trim()
     : null;
 
+  const resolvedScale = resolveScale(parsed.scale, resolvedType);
+
   return {
     type: resolvedType,
     character: resolvedCharacter,
     register: resolvedRegister,
     userName: resolvedUserName,
     tension: codePickedTension,
+    scale: resolvedScale,
   };
 }

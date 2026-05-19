@@ -353,24 +353,20 @@ watch(
 }
 
 /* If the LLM ever emits `**bold**` despite the prompt asking it not
-   to, match .par-entity treatment (weight 600 + softer text-secondary
-   ink) so a stray marker doesn't compete with first-mention emphasis. */
+   to, match .par-entity treatment (weight 600, body-text color) so
+   a stray marker doesn't compete with first-mention emphasis. */
 .setting-paragraph strong,
 .setting-card-read-aloud strong {
   font-weight: 600;
-  color: var(--par-color-text-secondary, #555);
 }
 
 /* Named-entity first-mention emphasis. Weight 600 carries the
-   anchor; the softer ink (text-secondary #555 instead of body #222)
-   tones down the contrast so the heavier strokes don't spike
-   visually against the page — especially on long Mesopotamian /
-   Welsh / Finnish names where heavy + black-ink compounded too
-   strongly. Heavier weight + softer color reads as "anchored but
-   quiet." */
+   anchor; color inherits from body text so the bold reads as
+   emphasis without also fading. Since emphasis fires only on the
+   FIRST mention, a single anchor per name doesn't accumulate into
+   visual noise even at body color. */
 .par-entity {
   font-weight: 600;
-  color: var(--par-color-text-secondary, #555);
 }
 
 /* Edit form */

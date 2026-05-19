@@ -35,20 +35,42 @@
 /**
  * Build the extraction prompt.
  *
+ * Two ways to supply prose: the legacy three-field shape
+ * (region/history/leadership) for polity-scale callers, or the
+ * generalized `proseSections` array of `{label, text}` items for
+ * any scale. When proseSections is provided, the three legacy fields
+ * are ignored — callers should pick one shape or the other.
+ *
+ * proseSections is the right shape for place- and landscape-scale
+ * settings, whose source prose lives in different fields (overview,
+ * where_it_sits, features, what_happens_here, who_frequents_here,
+ * hidden_detail for place; extent, what_lives_here, travel_and_hazards
+ * for landscape). The classification task (parent/sibling/sublocation/
+ * feature) still applies — a piazza's prose still names its parent
+ * city, sibling piazzas, sublocations within, and named features.
+ *
  * @param {Object} args
  * @param {string} args.settingName  - Bare name of the current setting (used
  *   to tell the LLM to exclude it from results).
  * @param {string} [args.register]   - The current setting's register (e.g.,
  *   'Slavic-inspired'). Used as soft context — the LLM may use register-
  *   coherent name forms.
- * @param {string} [args.region]     - relation_to_larger_setting prose.
- * @param {string} [args.history]    - history prose.
- * @param {string} [args.leadership] - current_ruler_sentence prose.
+ * @param {Array<{label: string, text: string}>} [args.proseSections] -
+ *   Generalized prose blocks for any scale. Each entry's label becomes
+ *   the section heading in the prompt (e.g., 'WHERE IT SITS'). When
+ *   provided, region/history/leadership are ignored.
+ * @param {string} [args.region]     - LEGACY: relation_to_larger_setting prose.
+ *   Ignored when proseSections is provided.
+ * @param {string} [args.history]    - LEGACY: history prose. Ignored when
+ *   proseSections is provided.
+ * @param {string} [args.leadership] - LEGACY: current_ruler_sentence prose.
+ *   Ignored when proseSections is provided.
  * @returns {string}
  */
 export function createRegionEntityExtractionPrompt({
   settingName,
   register,
+  proseSections,
   region,
   history,
   leadership,
@@ -56,15 +78,27 @@ export function createRegionEntityExtractionPrompt({
   const safe = (s) => (s || '').toString().trim();
   const name = safe(settingName) || '(unnamed setting)';
   const reg = safe(register);
-  const regionText = safe(region);
-  const historyText = safe(history);
-  const leadershipText = safe(leadership);
 
-  const proseBlock = [
-    regionText ? `REGION:\n${regionText}` : '',
-    historyText ? `HISTORY:\n${historyText}` : '',
-    leadershipText ? `LEADERSHIP:\n${leadershipText}` : '',
-  ].filter(Boolean).join('\n\n');
+  // New shape (proseSections) takes precedence when present; the
+  // legacy three-field shape stays the fallback so existing callers
+  // and tests keep working.
+  const sections = Array.isArray(proseSections) && proseSections.length > 0
+    ? proseSections
+    : [
+        { label: 'REGION', text: region },
+        { label: 'HISTORY', text: history },
+        { label: 'LEADERSHIP', text: leadership },
+      ];
+
+  const proseBlock = sections
+    .map(s => {
+      const text = safe(s && s.text);
+      const label = safe(s && s.label);
+      if (!text || !label) return '';
+      return `${label}:\n${text}`;
+    })
+    .filter(Boolean)
+    .join('\n\n');
 
   return `You are extracting NAMED PLACES from a D&D 5e setting's overview prose, so the user can promote them into first-class settings of their own.
 

@@ -773,6 +773,49 @@ describe('setting-storage', () => {
       expect(merged[0].promoted_setting_id).toBe(null);
     });
 
+    it('preserves seeded_from on fresh entries when present', () => {
+      // The extraction tags stubs with seeded_from when their name
+      // matches a stub on the setting's source item; the merge must
+      // carry this through so the promotion handler can fire the
+      // secondary cross-tool writeback.
+      const fresh = [
+        {
+          name: 'Stonemother',
+          kind: 'parent',
+          source_quote: '...',
+          seeded_from: {
+            source_type: 'item',
+            source_id: 'Vardlokkur',
+            source_name: 'Vardlokkur',
+            stub_name: 'Stonemother',
+          },
+        },
+      ];
+      const merged = mergeRelatedPlaces([], fresh);
+      expect(merged[0].seeded_from).toEqual({
+        source_type: 'item',
+        source_id: 'Vardlokkur',
+        source_name: 'Vardlokkur',
+        stub_name: 'Stonemother',
+      });
+    });
+
+    it('does not add a seeded_from field when the fresh stub has none', () => {
+      const merged = mergeRelatedPlaces([], [{ name: 'X', kind: 'feature' }]);
+      expect('seeded_from' in merged[0]).toBe(false);
+    });
+
+    it('clones seeded_from so subsequent mutations do not bleed back', () => {
+      const fresh = [{
+        name: 'Stonemother',
+        kind: 'parent',
+        seeded_from: { source_type: 'item', source_id: 'Vardlokkur', stub_name: 'Stonemother' },
+      }];
+      const merged = mergeRelatedPlaces([], fresh);
+      merged[0].seeded_from.source_id = 'Mutated';
+      expect(fresh[0].seeded_from.source_id).toBe('Vardlokkur');
+    });
+
     it('drops fresh entries with empty / missing name', () => {
       const merged = mergeRelatedPlaces([], [
         { name: '', kind: 'feature' },

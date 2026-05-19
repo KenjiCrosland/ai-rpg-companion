@@ -169,6 +169,10 @@ import { CdrInput, CdrLink } from "@rei/cedar";
 import {
   settingOverviewPrompt,
   sublocationOverviewPrompt,
+  placeOverviewPrompt,
+  validatePlaceOverviewResponse,
+  landscapeOverviewPrompt,
+  validateLandscapeOverviewResponse,
 } from "./prompts/index.mjs";
 import SettingOverviewCardSkeleton from "./components/SettingOverviewCardSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
@@ -185,7 +189,7 @@ import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
 import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
-import { linkSettingToItemStub, resetItemStubsForDeletedSetting } from '@/util/item-storage.mjs';
+import { linkSettingToItemStub, resetItemStubsForDeletedSetting, findItemStubMatchingName } from '@/util/item-storage.mjs';
 import { getSettingById, mergeRelatedPlaces, auntUncleNamesFor } from '@/util/setting-storage.mjs';
 import { consolidateOverviewToMarkdown } from '@/util/renderSettingOverview.mjs';
 import { inferSettingDimensions } from './utils/infer-setting-dimensions.mjs';
@@ -1112,6 +1116,13 @@ async function generateSetting(payload = {}) {
     // a coherent set (shared geography, no contradicting NPCs, etc.).
     const siblingSettings = collectSublocationSiblings(parentSettingId, subLocationName);
 
+    // Legacy importantLocations-stub expansion stays polity-only —
+    // this flow predates the place-scale split and only renders for
+    // users with stale data from the deprecated bulk-generate UI.
+    // New sublocations route through onPromoteRelatedPlace, which
+    // does run scale-aware inference. If the legacy flow ever sees
+    // place-scale demand, run inferSettingDimensions here and branch
+    // exactly like the promote-related-place site does.
     const prompt = sublocationOverviewPrompt({
       type: setting_type || null,
       character,
@@ -1203,12 +1214,15 @@ async function generateSetting(payload = {}) {
   inferred.character = seededDimensions.character;
 
   // Persist the dimensional metadata so sublocations can inherit
-  // register, and so reloads preserve the constraints.
+  // register, and so reloads preserve the constraints. Scale is
+  // persisted so handleGenerateSetting picks the right validator
+  // and so the renderer can branch on it without re-running inference.
   setting.type = inferred.type;
   setting.character = inferred.character;
   setting.register = inferred.register;
   setting.userName = inferred.userName;
   setting.tension = inferred.tension;
+  setting.scale = inferred.scale;
 
   const bannedTropes = getBannedTropesForGeneration();
 
@@ -1230,7 +1244,12 @@ async function generateSetting(payload = {}) {
   // rather than reinventing in-conflict facts.
   const siblingSettings = collectSeededSiblings(pendingSeed.value);
 
-  const prompt = settingOverviewPrompt({
+  // Scale-based prompt routing. Top-level place/landscape generations
+  // are rarer than polity ones (those scales usually sit inside a
+  // parent) but supported — both alternate prompts handle the
+  // no-parent case by describing surrounding region instead of a
+  // named parent.
+  const promptArgs = {
     type: inferred.type,
     character: inferred.character,
     register: inferred.register,
@@ -1240,7 +1259,15 @@ async function generateSetting(payload = {}) {
     description,
     lore,
     siblingSettings,
-  });
+  };
+  let prompt;
+  if (inferred.scale === 'place') {
+    prompt = placeOverviewPrompt(promptArgs);
+  } else if (inferred.scale === 'landscape') {
+    prompt = landscapeOverviewPrompt(promptArgs);
+  } else {
+    prompt = settingOverviewPrompt(promptArgs);
+  }
 
   enqueueRequest('generateSetting', { operationIndex, prompt });
 }
@@ -1398,11 +1425,22 @@ async function onPromoteRelatedPlace({ stub, kind }) {
   // dramatic shape).
   const tension = inferred.tension || pickRandomTension();
 
+  // Scale resolution for promoted-stub generations. The stub's
+  // suggested_setting_type and its role_brief feed the inferrer; the
+  // inferrer's scale judgment + the always-polity ceiling decide
+  // whether this promotion routes to place / landscape / polity.
+  // Defensive fallback to 'polity' so any inferrer regression doesn't
+  // misroute promotions to a narrower schema.
+  let resolvedScale = 'polity';
+  if (inferred.scale === 'place') resolvedScale = 'place';
+  else if (inferred.scale === 'landscape') resolvedScale = 'landscape';
+
   // Persist resolved dimensions on the new setting so reloads preserve
-  // them.
+  // them and so handleGenerateSetting picks the right validator.
   newSetting.register = resolvedRegister;
   newSetting.character = resolvedCharacter;
   newSetting.tension = tension;
+  newSetting.scale = resolvedScale;
 
   const bannedTropes = getBannedTropesForGeneration();
   const siblingSettings = buildSiblingMarkdown(candidateSiblings);
@@ -1459,8 +1497,35 @@ async function onPromoteRelatedPlace({ stub, kind }) {
   // fires instead of the "use this name verbatim" branch).
   const userName = stub.name || null;
 
+  // Scale-aware prompt routing. Place/landscape promotions go through
+  // their dedicated prompts regardless of whether the stub has a
+  // parent — both prompts handle parented and unparented cases.
+  // Polity-scale promotions branch on parent presence as before:
+  // sublocation for parented, top-level for unparented.
+  const stubBasedPromptArgs = {
+    type: stub.suggested_setting_type || null,
+    character: resolvedCharacter,
+    register: resolvedRegister,
+    userName,
+    tension,
+    bannedTropes,
+    description,
+    lore: '',
+    parentName: promptParentSetting?.place_name || '',
+    parentLore: promptParentSetting
+      ? (promptParentSetting.place_lore
+        || getOverviewText(promptParentSetting.setting_overview)
+        || '')
+      : '',
+    siblingSettings,
+    childrenSettings,
+  };
   let prompt;
-  if (promptParentSetting) {
+  if (resolvedScale === 'place') {
+    prompt = placeOverviewPrompt(stubBasedPromptArgs);
+  } else if (resolvedScale === 'landscape') {
+    prompt = landscapeOverviewPrompt(stubBasedPromptArgs);
+  } else if (promptParentSetting) {
     prompt = sublocationOverviewPrompt({
       type: stub.suggested_setting_type || null,
       character: resolvedCharacter,
@@ -1539,7 +1604,22 @@ async function handleGenerateSetting({ operationIndex, parentId, prompt, subloca
     if (parentSetting && parentSetting.importantLocations?.[sublocationIndex]) {
       parentSetting.importantLocations[sublocationIndex].loading = true;
     }
-    const response = await generateGptResponse(prompt, kingdomValidation);
+    // Pick the validator that matches the prompt's schema. Each scale
+    // produces a different field shape; running the wrong validator
+    // would fail every retry. The scale comes from the persisted
+    // setting (set earlier in the flow when inference resolved scale),
+    // with a defensive fallback to polity for legacy settings that
+    // pre-date the scale splits.
+    const persistedScale = settings.value[operationIndex]?.scale;
+    let validator;
+    if (persistedScale === 'place') {
+      validator = validatePlaceOverviewResponse;
+    } else if (persistedScale === 'landscape') {
+      validator = validateLandscapeOverviewResponse;
+    } else {
+      validator = kingdomValidation;
+    }
+    const response = await generateGptResponse(prompt, validator);
     const overview = JSON.parse(response);
 
     if (settings.value[operationIndex]) {
@@ -1632,14 +1712,38 @@ function finalizePendingPromotion(operationIndex) {
   const promo = newSetting?._pendingPromotion;
   if (!promo) return;
 
+  let sourceStub = null;
   const source = settings.value.find(s => s?.id === promo.sourceSettingId);
   if (source && Array.isArray(source.related_places)) {
     const target = promo.sourceStubName.trim().toLowerCase();
-    const stub = source.related_places.find(
+    sourceStub = source.related_places.find(
       p => (p?.name || '').trim().toLowerCase() === target
     );
-    if (stub) {
-      stub.promoted_setting_id = newSetting.id;
+    if (sourceStub) {
+      sourceStub.promoted_setting_id = newSetting.id;
+
+      // Promotion-time fallback for the cross-tool seeded_from tag.
+      // Extraction-time tagging may have missed this stub because of
+      // a name mismatch (LLM extracted "Stonemother range" while the
+      // item stub is just "Stonemother") or because the stub was
+      // added manually via AddRelatedPlaceForm (bypasses extraction
+      // entirely). Re-attempt the match here with the leading-word
+      // matcher so the back-link can still fire below.
+      if (
+        !sourceStub.seeded_from
+        && source.sourceType === 'item'
+        && source.sourceId
+      ) {
+        const itemStub = findItemStubMatchingName(source.sourceId, sourceStub.name);
+        if (itemStub) {
+          sourceStub.seeded_from = {
+            source_type: 'item',
+            source_id: source.sourceId,
+            source_name: source.sourceName || source.sourceId,
+            stub_name: itemStub.name,
+          };
+        }
+      }
     }
   }
 
@@ -1660,6 +1764,43 @@ function finalizePendingPromotion(operationIndex) {
       const sibling = settings.value.find(s => s?.id === id);
       if (sibling) sibling.parentId = newSetting.id;
     }
+  }
+
+  // Cross-tool back-link: if the source stub carries `seeded_from`
+  // (the extraction matched its name against a stub on the source
+  // setting's originating item), fire the secondary writeback so the
+  // item's stub flips from "Create Setting" to "View" and the
+  // reference graph gets the inspired_by_item edge. This mirrors what
+  // finalizePendingSeed does for top-level cross-tool generations.
+  // Without this, promoting Stonemother from Broken Gate's tab would
+  // create the Stonemother setting but leave the Vardlokkur item's
+  // own Stonemother stub un-linked.
+  const from = sourceStub?.seeded_from;
+  if (from && from.source_type === 'item' && from.source_id && from.stub_name) {
+    linkSettingToItemStub(from.source_id, from.stub_name, newSetting.id);
+
+    addReferenceForSeed(
+      {
+        source: {
+          type: from.source_type,
+          id: from.source_id,
+          name: from.source_name || from.source_id,
+        },
+        entities: [{ type: 'setting', name: from.stub_name }],
+      },
+      {
+        type: 'setting',
+        id: newSetting.id,
+        name: newSetting.place_name || 'Unnamed Setting',
+      },
+    );
+
+    // Denormalize source provenance onto the new setting so the
+    // OverviewTab can render "Inspired by [item]" without walking
+    // tool-references on every render — mirrors finalizePendingSeed.
+    newSetting.sourceType = from.source_type;
+    newSetting.sourceId = from.source_id;
+    newSetting.sourceName = from.source_name || from.source_id;
   }
 
   delete newSetting._pendingPromotion;

@@ -42,6 +42,89 @@ function persistItems(items) {
 }
 
 /**
+ * Tokenize a name for cross-tool stub matching. Lowercases, trims,
+ * strips a leading "the " article, and splits on whitespace. Internal
+ * punctuation stays attached to tokens ("Stonemother's" stays one
+ * token) so possessives don't false-positive against the bare noun.
+ *
+ * Returns an array of tokens (possibly empty).
+ */
+function tokenizeForMatch(name) {
+  if (typeof name !== 'string') return [];
+  const stripped = name.trim().toLowerCase().replace(/^the\s+/, '');
+  if (!stripped) return [];
+  return stripped.split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Leading-word match: returns true if the shorter token sequence is
+ * an exact leading prefix of the longer one (after the
+ * tokenizeForMatch normalization). Symmetric — either argument can
+ * be the shorter one.
+ *
+ * Behavior:
+ *   - "Stonemother" matches "Stonemother range"  (leading subset)
+ *   - "the Stonemother" matches "Stonemother"    ("the" stripped → equal)
+ *   - "Stonemother range" does NOT match "Range of Stonemother"
+ *   - "Stonemother" does NOT match "Stonemother's Daughter"
+ *     (possessive 's stays on the first token, so the tokens differ)
+ *   - case-insensitive; whitespace-tolerant
+ *
+ * Used to wire the cross-tool back-link when an extracted or manually-
+ * added related-place stub doesn't match an item-side stub exactly
+ * (e.g. user types "Stonemother range" while the item has "Stonemother").
+ *
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
+export function leadingWordMatch(a, b) {
+  const tokensA = tokenizeForMatch(a);
+  const tokensB = tokenizeForMatch(b);
+  if (tokensA.length === 0 || tokensB.length === 0) return false;
+  const [shorter, longer] = tokensA.length <= tokensB.length
+    ? [tokensA, tokensB]
+    : [tokensB, tokensA];
+  for (let i = 0; i < shorter.length; i++) {
+    if (shorter[i] !== longer[i]) return false;
+  }
+  return true;
+}
+
+/**
+ * Find a stub on the given item whose name leading-word-matches the
+ * candidate name. Returns the matching stub object (with original
+ * casing preserved on its `name` field) or null.
+ *
+ * When multiple stubs match (rare — usually a misclick or fuzzy
+ * import), prefer the SHORTEST stub name. Item-side stub names are
+ * typically the canonical short form ("Stonemother" over "the
+ * Stonemother range"), so shortest-match resolves toward the
+ * canonical identity.
+ *
+ * @param {string} itemName       - the item's name (item identity)
+ * @param {string} candidateName  - the name from the related-place stub
+ *                                  on a setting that wants to back-link
+ * @returns {Object|null}
+ */
+export function findItemStubMatchingName(itemName, candidateName) {
+  if (!itemName || !candidateName) return null;
+  const item = getItemFromStorage(itemName);
+  if (!item || !Array.isArray(item.related_settings)) return null;
+  let best = null;
+  let bestLen = Infinity;
+  for (const stub of item.related_settings) {
+    if (!stub || typeof stub.name !== 'string') continue;
+    if (!leadingWordMatch(stub.name, candidateName)) continue;
+    if (stub.name.length < bestLen) {
+      best = stub;
+      bestLen = stub.name.length;
+    }
+  }
+  return best;
+}
+
+/**
  * Find an item by name.
  * @param {string} name
  * @returns {Object|null}

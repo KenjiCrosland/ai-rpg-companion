@@ -72,6 +72,61 @@ describe('createRegionEntityExtractionPrompt', () => {
     const prompt = createRegionEntityExtractionPrompt({ ...baseArgs, settingName: '' });
     expect(prompt).toContain('CURRENT SETTING: (unnamed setting)');
   });
+
+  it('renders proseSections verbatim under their custom labels when provided', () => {
+    // The new generalized shape: any-scale callers pass labeled prose
+    // blocks instead of the three legacy fields. Place-scale and
+    // landscape-scale extraction relies on this path.
+    const prompt = createRegionEntityExtractionPrompt({
+      settingName: 'Piazza dei Fonditori',
+      register: 'Italian-Renaissance-inspired',
+      proseSections: [
+        { label: 'WHERE IT SITS', text: 'At the foot of the Collina dei Conclavi, on the Via della Ruota.' },
+        { label: 'FEATURES', text: 'Thirty paces across, a dry fountain at the center.' },
+      ],
+    });
+    expect(prompt).toContain('WHERE IT SITS:\nAt the foot of the Collina');
+    expect(prompt).toContain('FEATURES:\nThirty paces across');
+    // The legacy labels should not appear when proseSections is provided.
+    expect(prompt).not.toContain('REGION:');
+    expect(prompt).not.toContain('HISTORY:');
+    expect(prompt).not.toContain('LEADERSHIP:');
+  });
+
+  it('ignores the legacy region/history/leadership fields when proseSections is provided', () => {
+    const prompt = createRegionEntityExtractionPrompt({
+      settingName: 'Piazza',
+      register: null,
+      proseSections: [
+        { label: 'WHERE IT SITS', text: 'New-shape prose.' },
+      ],
+      // These should be silently ignored.
+      region: 'Old-shape region prose.',
+      history: 'Old-shape history prose.',
+      leadership: 'Old-shape leadership prose.',
+    });
+    expect(prompt).toContain('WHERE IT SITS:\nNew-shape prose.');
+    expect(prompt).not.toContain('Old-shape');
+  });
+
+  it('skips proseSections entries with empty text or missing label', () => {
+    const prompt = createRegionEntityExtractionPrompt({
+      settingName: 'Piazza',
+      register: null,
+      proseSections: [
+        { label: 'PRESENT', text: 'This appears.' },
+        { label: 'EMPTY', text: '' },
+        { label: 'WHITESPACE', text: '   ' },
+        { label: '', text: 'This has no label.' },
+        { text: 'This has no label property at all.' },
+      ],
+    });
+    expect(prompt).toContain('PRESENT:\nThis appears.');
+    expect(prompt).not.toContain('EMPTY:');
+    expect(prompt).not.toContain('WHITESPACE:');
+    expect(prompt).not.toContain('This has no label.');
+    expect(prompt).not.toContain('This has no label property at all.');
+  });
 });
 
 describe('validateRegionEntityExtraction', () => {

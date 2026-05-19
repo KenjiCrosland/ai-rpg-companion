@@ -17,6 +17,8 @@ import {
   findItemStubsForNPC,
   resetItemStubsForDeletedNPC,
   buildSeededInputFromItem,
+  leadingWordMatch,
+  findItemStubMatchingName,
 } from './item-storage.mjs';
 
 class LocalStorageMock {
@@ -691,6 +693,118 @@ describe('item-storage', () => {
       // treats as "no register signal from the item — fall through to
       // user-input detection").
       expect(seed.source.register).toBe(null);
+    });
+  });
+
+  describe('leadingWordMatch', () => {
+    test('exact match (case-insensitive, trimmed)', () => {
+      expect(leadingWordMatch('Stonemother', 'Stonemother')).toBe(true);
+      expect(leadingWordMatch('STONEMOTHER', 'stonemother')).toBe(true);
+      expect(leadingWordMatch('  Stonemother  ', 'Stonemother')).toBe(true);
+    });
+
+    test('shorter name is a leading word-prefix of longer name', () => {
+      expect(leadingWordMatch('Stonemother', 'Stonemother range')).toBe(true);
+      expect(leadingWordMatch('Stonemother range', 'Stonemother')).toBe(true); // symmetric
+      expect(leadingWordMatch('Broken Gate', 'Broken Gate Battlefield')).toBe(true);
+    });
+
+    test('leading "the " article is stripped before matching', () => {
+      expect(leadingWordMatch('the Stonemother', 'Stonemother')).toBe(true);
+      expect(leadingWordMatch('Stonemother', 'the Stonemother')).toBe(true);
+      expect(leadingWordMatch('the Stonemother', 'the Stonemother range')).toBe(true);
+    });
+
+    test('trailing-word match is NOT a match (only leading)', () => {
+      expect(leadingWordMatch('Stonemother', 'Range of Stonemother')).toBe(false);
+      expect(leadingWordMatch('Gate', 'the Broken Gate')).toBe(false);
+    });
+
+    test('possessive split keeps the apostrophe attached, avoiding false positives', () => {
+      // "Stonemother" tokens = ["stonemother"]
+      // "Stonemother's Daughter" tokens = ["stonemother's", "daughter"]
+      // First-token comparison: "stonemother" !== "stonemother's"
+      expect(leadingWordMatch('Stonemother', "Stonemother's Daughter")).toBe(false);
+      expect(leadingWordMatch("Stonemother's Daughter", 'Stonemother')).toBe(false);
+    });
+
+    test('different first words do not match', () => {
+      expect(leadingWordMatch('Stonemother', 'Ironmother')).toBe(false);
+      expect(leadingWordMatch('Broken Gate', 'Broken Wheel')).toBe(false);
+      // Only the leading sequence has to match; second tokens may diverge,
+      // but only AFTER all the shorter name's tokens have matched.
+    });
+
+    test('empty / whitespace / non-string inputs return false', () => {
+      expect(leadingWordMatch('', 'Stonemother')).toBe(false);
+      expect(leadingWordMatch('Stonemother', '')).toBe(false);
+      expect(leadingWordMatch('   ', 'Stonemother')).toBe(false);
+      expect(leadingWordMatch(null, 'Stonemother')).toBe(false);
+      expect(leadingWordMatch('Stonemother', undefined)).toBe(false);
+      expect(leadingWordMatch(42, 'Stonemother')).toBe(false);
+    });
+  });
+
+  describe('findItemStubMatchingName', () => {
+    test('returns the matching stub when leading-word match hits', () => {
+      saveItemToStorage({
+        name: 'Vardlokkur',
+        related_settings: [
+          { name: 'Stonemother', role_brief: 'mountain-range' },
+          { name: 'the Broken Gate', role_brief: 'battlefield' },
+        ],
+      });
+
+      const match = findItemStubMatchingName('Vardlokkur', 'Stonemother range');
+      expect(match).toBeTruthy();
+      expect(match.name).toBe('Stonemother');
+    });
+
+    test('matches "the X" against item stub "X" and vice versa', () => {
+      saveItemToStorage({
+        name: 'Vardlokkur',
+        related_settings: [{ name: 'Stonemother' }],
+      });
+      expect(findItemStubMatchingName('Vardlokkur', 'the Stonemother').name).toBe('Stonemother');
+      expect(findItemStubMatchingName('Vardlokkur', 'the Stonemother range').name).toBe('Stonemother');
+    });
+
+    test('returns the shortest match when multiple stubs match (canonical short form wins)', () => {
+      saveItemToStorage({
+        name: 'Vardlokkur',
+        related_settings: [
+          { name: 'Stonemother range', role_brief: 'longer' },
+          { name: 'Stonemother', role_brief: 'short' },
+        ],
+      });
+
+      const match = findItemStubMatchingName('Vardlokkur', 'Stonemother peaks');
+      expect(match.name).toBe('Stonemother');
+    });
+
+    test('returns null when no stub matches', () => {
+      saveItemToStorage({
+        name: 'Vardlokkur',
+        related_settings: [{ name: 'Stonemother' }, { name: 'the Broken Gate' }],
+      });
+      expect(findItemStubMatchingName('Vardlokkur', 'Aethelmar')).toBeNull();
+      expect(findItemStubMatchingName('Vardlokkur', 'Range of Stonemother')).toBeNull();
+    });
+
+    test('returns null when item is not in storage', () => {
+      expect(findItemStubMatchingName('NonexistentItem', 'Stonemother')).toBeNull();
+    });
+
+    test('returns null when item has no related_settings', () => {
+      saveItemToStorage({ name: 'BareItem' });
+      expect(findItemStubMatchingName('BareItem', 'Anything')).toBeNull();
+    });
+
+    test('returns null for empty / missing arguments', () => {
+      saveItemToStorage({ name: 'Vardlokkur', related_settings: [{ name: 'Stonemother' }] });
+      expect(findItemStubMatchingName('', 'Stonemother')).toBeNull();
+      expect(findItemStubMatchingName('Vardlokkur', '')).toBeNull();
+      expect(findItemStubMatchingName(null, null)).toBeNull();
     });
   });
 });

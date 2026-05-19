@@ -40,6 +40,152 @@ describe('consolidateOverviewToMarkdown', () => {
     expect(md).toContain('Social history text.');
   });
 
+  it('emits place-scale headings when the overview carries place-shape fields', () => {
+    // Disjoint schemas: presence of any place-shape field (where_it_sits,
+    // features, what_happens_here, who_frequents_here, hidden_detail)
+    // switches the consolidator to the place section map.
+    const md = consolidateOverviewToMarkdown({
+      overview: 'A piazza at dusk.',
+      what_happens_here: 'Bell-founders haggle here at the morning bells.',
+      where_it_sits: 'At the foot of the Collina dei Conclavi.',
+      features: 'Thirty paces across, ringed with low stone benches.',
+      who_frequents_here: 'Old Renzo Pettirosso sweeps at dusk.',
+      hidden_detail: 'A dark stain on the third step that never washes out.',
+    });
+
+    expect(md).toContain('A piazza at dusk.');
+    expect(md).toContain('## What happens here');
+    expect(md).toContain('Bell-founders haggle');
+    expect(md).toContain('## Where it sits');
+    expect(md).toContain('At the foot of the Collina');
+    expect(md).toContain('## Features');
+    expect(md).toContain('Thirty paces across');
+    expect(md).toContain('## Who frequents here');
+    expect(md).toContain('Old Renzo Pettirosso sweeps');
+    expect(md).toContain('## Hidden detail');
+    expect(md).toContain('A dark stain on the third step');
+
+    // Polity headings must NOT appear when the place map is in effect.
+    expect(md).not.toContain('## History');
+    expect(md).not.toContain('## Leadership');
+    expect(md).not.toContain('## Society');
+    expect(md).not.toContain('## Economy');
+    expect(md).not.toContain('## Defense');
+    expect(md).not.toContain('## Present State');
+    expect(md).not.toContain('## Region');
+  });
+
+  it('honors the place-scale section order: purpose → orient → physical → people → bonus', () => {
+    // The headers should appear in this specific sequence; render
+    // order is the spec.
+    const md = consolidateOverviewToMarkdown({
+      overview: 'Lead.',
+      hidden_detail: 'Last.',
+      who_frequents_here: 'Fourth.',
+      features: 'Third.',
+      where_it_sits: 'Second.',
+      what_happens_here: 'First.',
+    });
+    const order = [
+      md.indexOf('## What happens here'),
+      md.indexOf('## Where it sits'),
+      md.indexOf('## Features'),
+      md.indexOf('## Who frequents here'),
+      md.indexOf('## Hidden detail'),
+    ];
+    expect(order.every(i => i > 0)).toBe(true);
+    for (let i = 1; i < order.length; i++) {
+      expect(order[i]).toBeGreaterThan(order[i - 1]);
+    }
+  });
+
+  it('emits landscape-scale headings when the overview carries landscape-shape fields', () => {
+    // Landscape markers (extent / what_lives_here / travel_and_hazards)
+    // dispatch to the landscape section map. The two fields shared
+    // with place-scale (where_it_sits, hidden_detail) are not used as
+    // markers because they can't distinguish the two shapes.
+    const md = consolidateOverviewToMarkdown({
+      overview: 'A great range of dark stone, the wind off the high passes carrying a low drone.',
+      extent: 'The range runs north-south for sixty days\' walk.',
+      where_it_sits: 'Between the Eldryssian plain and the Imperial Core.',
+      what_lives_here: 'Bears, ice-wolves, the dwarven Klofasteinn clan in the deep gallery.',
+      travel_and_hazards: 'The Bear-Pass opens for three months in summer.',
+      hidden_detail: 'A weathered cairn at the south pass.',
+    });
+
+    expect(md).toContain('A great range of dark stone');
+    expect(md).toContain('## Extent');
+    expect(md).toContain('## Where it sits');
+    expect(md).toContain('## What lives here');
+    expect(md).toContain('## Travel and hazards');
+    expect(md).toContain('## Hidden detail');
+
+    // Polity and place headings must NOT appear when the landscape
+    // map is in effect.
+    expect(md).not.toContain('## History');
+    expect(md).not.toContain('## Leadership');
+    expect(md).not.toContain('## Region');
+    expect(md).not.toContain('## What happens here');
+    expect(md).not.toContain('## Features');
+    expect(md).not.toContain('## Who frequents here');
+  });
+
+  it('honors the landscape-scale section order: extent → orient → life → travel → hidden', () => {
+    const md = consolidateOverviewToMarkdown({
+      overview: 'Lead.',
+      hidden_detail: 'Last.',
+      travel_and_hazards: 'Fourth.',
+      what_lives_here: 'Third.',
+      where_it_sits: 'Second.',
+      extent: 'First.',
+    });
+    const order = [
+      md.indexOf('## Extent'),
+      md.indexOf('## Where it sits'),
+      md.indexOf('## What lives here'),
+      md.indexOf('## Travel and hazards'),
+      md.indexOf('## Hidden detail'),
+    ];
+    expect(order.every(i => i > 0)).toBe(true);
+    for (let i = 1; i < order.length; i++) {
+      expect(order[i]).toBeGreaterThan(order[i - 1]);
+    }
+  });
+
+  it('prefers landscape over place when both kinds of markers exist (defensive)', () => {
+    // The schemas don't actually overlap in production, but if a
+    // hand-edited overview ends up with both, landscape wins because
+    // its markers (extent / what_lives_here / travel_and_hazards) are
+    // checked first. This makes the dispatch deterministic instead
+    // of leaving render output dependent on field declaration order.
+    const md = consolidateOverviewToMarkdown({
+      overview: 'Lead.',
+      extent: 'Mountain range extent.',
+      what_lives_here: 'Bears and hermits.',
+      travel_and_hazards: 'Summer-only passes.',
+      // place markers present but should not affect dispatch
+      what_happens_here: 'Should not appear as section content.',
+      features: 'Should not appear as section content.',
+      who_frequents_here: 'Should not appear as section content.',
+    });
+    expect(md).toContain('## Extent');
+    expect(md).not.toContain('## What happens here');
+    expect(md).not.toContain('## Features');
+    expect(md).not.toContain('## Who frequents here');
+  });
+
+  it('falls back to the polity map when no place markers are present', () => {
+    // The dispatch is field-based, not flag-based. An overview with
+    // polity fields gets polity headings even without an explicit
+    // scale flag (legacy data, edited overviews, etc.).
+    const md = consolidateOverviewToMarkdown({
+      overview: 'Lead.',
+      history: 'Founded in the third age.',
+    });
+    expect(md).toContain('## History');
+    expect(md).not.toContain('## What happens here');
+  });
+
   it('skips sections whose fields are all blank', () => {
     const md = consolidateOverviewToMarkdown({
       overview: 'Lead.',

@@ -48,9 +48,30 @@
  * The LLM never sees these strings; they're injected at consolidation
  * time. Changing a label here propagates to every un-edited setting
  * on next render.
+ *
+ * Three shapes, picked by field presence (the schemas are disjoint
+ * on their non-overlapping marker fields):
+ *
+ *   POLITY_SECTION_MAP — Region / History / Leadership / Society /
+ *     Economy / Defense / Present State. The classic full-overview
+ *     shape produced by settingOverviewPrompt and sublocationOverviewPrompt.
+ *
+ *   PLACE_SECTION_MAP — What happens here / Where it sits / Features
+ *     / Who frequents here / Hidden detail. The trimmer shape produced
+ *     by placeOverviewPrompt for small, single-space settings.
+ *
+ *   LANDSCAPE_SECTION_MAP — Extent / Where it sits / What lives here
+ *     / Travel and hazards / Hidden detail. The shape produced by
+ *     landscapeOverviewPrompt for geographic features and bounded
+ *     historical sites (mountain ranges, battlefields, ghost-shores).
+ *
+ * All three start with the same unheaded `overview` lead block — the
+ * atmospheric read-aloud opener is universal. The place and landscape
+ * maps share two field names (where_it_sits, hidden_detail), so the
+ * picker dispatches on the maps' UNIQUE marker fields, not on the
+ * shared ones.
  */
-const SECTION_MAP = [
-  // No-heading lead block: the overview field is the read-aloud pull-quote.
+const POLITY_SECTION_MAP = [
   { heading: null, fields: ['overview'], isLead: true },
   { heading: 'Region', fields: ['relation_to_larger_setting'] },
   { heading: 'History', fields: ['history'] },
@@ -60,6 +81,58 @@ const SECTION_MAP = [
   { heading: 'Defense', fields: ['military_history', 'notable_security_facet'] },
   { heading: 'Present State', fields: ['central_dynamic', 'responses_in_motion', 'present_state'] },
 ];
+
+const PLACE_SECTION_MAP = [
+  { heading: null, fields: ['overview'], isLead: true },
+  { heading: 'What happens here', fields: ['what_happens_here'] },
+  { heading: 'Where it sits', fields: ['where_it_sits'] },
+  { heading: 'Features', fields: ['features'] },
+  { heading: 'Who frequents here', fields: ['who_frequents_here'] },
+  { heading: 'Hidden detail', fields: ['hidden_detail'] },
+];
+
+const LANDSCAPE_SECTION_MAP = [
+  { heading: null, fields: ['overview'], isLead: true },
+  { heading: 'Extent', fields: ['extent'] },
+  { heading: 'Where it sits', fields: ['where_it_sits'] },
+  { heading: 'What lives here', fields: ['what_lives_here'] },
+  { heading: 'Travel and hazards', fields: ['travel_and_hazards'] },
+  { heading: 'Hidden detail', fields: ['hidden_detail'] },
+];
+
+/**
+ * Pick the section map for a given overview by field-shape detection.
+ * Each shape has a set of UNIQUE marker fields not shared with the
+ * other shapes. The picker checks landscape markers first (extent,
+ * what_lives_here, travel_and_hazards), then place markers
+ * (what_happens_here, features, who_frequents_here), then defaults to
+ * polity. Shared fields between place and landscape (where_it_sits,
+ * hidden_detail) are NOT used as markers because they can't
+ * distinguish the two shapes.
+ *
+ * Defensive default to polity for unknown shapes — graceful
+ * degradation, since the polity map will simply skip fields it
+ * can't find rather than emit empty sections.
+ */
+function pickSectionMap(overview) {
+  if (!overview || typeof overview !== 'object') return POLITY_SECTION_MAP;
+
+  const landscapeMarkers = ['extent', 'what_lives_here', 'travel_and_hazards'];
+  for (const field of landscapeMarkers) {
+    if (typeof overview[field] === 'string' && overview[field].trim()) {
+      return LANDSCAPE_SECTION_MAP;
+    }
+  }
+
+  const placeMarkers = ['what_happens_here', 'features', 'who_frequents_here'];
+  for (const field of placeMarkers) {
+    if (typeof overview[field] === 'string' && overview[field].trim()) {
+      return PLACE_SECTION_MAP;
+    }
+  }
+
+  return POLITY_SECTION_MAP;
+}
 
 /**
  * Consolidate a setting_overview JSON object into a markdown string
@@ -71,8 +144,9 @@ const SECTION_MAP = [
  */
 export function consolidateOverviewToMarkdown(overview) {
   if (!overview || typeof overview !== 'object') return '';
+  const sectionMap = pickSectionMap(overview);
   const parts = [];
-  for (const section of SECTION_MAP) {
+  for (const section of sectionMap) {
     // Non-lead sections: every non-blank field becomes its own
     // \n\n-separated paragraph. This keeps the static-lore prose and
     // the "right now" beat ("Yesterday at dawn…") visually distinct
