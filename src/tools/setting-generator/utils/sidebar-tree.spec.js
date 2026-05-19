@@ -11,6 +11,8 @@
 import {
   sortUnnamedToBottom,
   siblingIdsToReparent,
+  flattenVisibleSettings,
+  expandPathToSetting,
 } from './sidebar-tree.mjs';
 
 describe('sortUnnamedToBottom', () => {
@@ -213,5 +215,178 @@ describe('siblingIdsToReparent', () => {
     const settings = [source, { id: 'set_sib', parentId: null }];
     const ids = siblingIdsToReparent({ settings, source, oldParentId: undefined });
     expect(ids).toEqual(['set_sib']);
+  });
+});
+
+describe('flattenVisibleSettings', () => {
+  // Helper to build minimal tree nodes for these tests. The real
+  // settingsTree spreads more fields (originalIndex, etc.); they
+  // pass through unchanged via the spread, so they don't need to
+  // be exercised here.
+  function node(id, place_name, children = []) {
+    return { id, place_name, children };
+  }
+
+  it('returns top-level nodes with depth 0 when nothing is expanded', () => {
+    const tree = [
+      node('a', 'A', [node('a1', 'A1')]),
+      node('b', 'B'),
+    ];
+    const flat = flattenVisibleSettings(tree, new Set(), 0);
+    expect(flat.map(n => [n.id, n.depth])).toEqual([
+      ['a', 0],
+      ['b', 0],
+    ]);
+  });
+
+  it('emits children at depth + 1 when their parent is expanded', () => {
+    const tree = [
+      node('a', 'A', [
+        node('a1', 'A1', [node('a1x', 'A1x')]),
+        node('a2', 'A2'),
+      ]),
+    ];
+    const flat = flattenVisibleSettings(tree, new Set(['a']), 0);
+    // Only A is expanded — A1 and A2 visible at depth 1; A1x not visible.
+    expect(flat.map(n => [n.id, n.depth])).toEqual([
+      ['a', 0],
+      ['a1', 1],
+      ['a2', 1],
+    ]);
+  });
+
+  it('recurses through multiple levels when each ancestor is expanded', () => {
+    const tree = [
+      node('a', 'A', [
+        node('a1', 'A1', [node('a1x', 'A1x')]),
+      ]),
+    ];
+    const flat = flattenVisibleSettings(tree, new Set(['a', 'a1']), 0);
+    expect(flat.map(n => [n.id, n.depth])).toEqual([
+      ['a', 0],
+      ['a1', 1],
+      ['a1x', 2],
+    ]);
+  });
+
+  it('tags hasChildren and isExpanded on each node', () => {
+    const tree = [
+      node('a', 'A', [node('a1', 'A1')]),  // has child, expanded
+      node('b', 'B', [node('b1', 'B1')]),  // has child, collapsed
+      node('c', 'C'),                       // leaf
+    ];
+    const flat = flattenVisibleSettings(tree, new Set(['a']), 0);
+    const byId = Object.fromEntries(flat.map(n => [n.id, n]));
+    expect(byId.a.hasChildren).toBe(true);
+    expect(byId.a.isExpanded).toBe(true);
+    expect(byId.b.hasChildren).toBe(true);
+    expect(byId.b.isExpanded).toBe(false);
+    expect(byId.c.hasChildren).toBe(false);
+    expect(byId.c.isExpanded).toBe(false);
+    // B's child should not be visible (B is collapsed).
+    expect(byId.b1).toBeUndefined();
+  });
+
+  it('skips collapsed branches and the entire subtree beneath them', () => {
+    const tree = [
+      node('a', 'A', [
+        node('a1', 'A1', [node('a1x', 'A1x', [node('deep', 'deep')])]),
+      ]),
+    ];
+    // A is expanded but A1 is collapsed — A1 visible, A1x and deeper hidden.
+    const flat = flattenVisibleSettings(tree, new Set(['a']), 0);
+    expect(flat.map(n => n.id)).toEqual(['a', 'a1']);
+  });
+
+  it('preserves the rest of the node fields (id, originalIndex, place_name) through the spread', () => {
+    const tree = [
+      { id: 'a', place_name: 'A', originalIndex: 7, children: [] },
+    ];
+    const flat = flattenVisibleSettings(tree, new Set(), 0);
+    expect(flat[0]).toMatchObject({
+      id: 'a',
+      place_name: 'A',
+      originalIndex: 7,
+      depth: 0,
+      hasChildren: false,
+      isExpanded: false,
+    });
+  });
+
+  it('tolerates a non-array tree, missing nodes, or non-Set expandedIds', () => {
+    expect(flattenVisibleSettings(null, new Set())).toEqual([]);
+    expect(flattenVisibleSettings(undefined, new Set())).toEqual([]);
+    expect(flattenVisibleSettings([], new Set())).toEqual([]);
+    // Non-Set expansion arg — should not throw, treats as empty set.
+    const tree = [node('a', 'A', [node('a1', 'A1')])];
+    const flat = flattenVisibleSettings(tree, ['a']);
+    // No expansion (arg not a Set), so A1 hidden.
+    expect(flat.map(n => n.id)).toEqual(['a']);
+  });
+});
+
+describe('expandPathToSetting', () => {
+  // Three-deep tree:
+  //   region (top)
+  //     city (parent: region)
+  //       district (parent: city)
+  //         building (parent: district)
+  const settings = [
+    { id: 'region', parentId: null },
+    { id: 'city', parentId: 'region' },
+    { id: 'district', parentId: 'city' },
+    { id: 'building', parentId: 'district' },
+    { id: 'lone', parentId: null },
+  ];
+
+  it('returns all ancestors of the target (target itself NOT included)', () => {
+    const out = expandPathToSetting(settings, 'building', new Set());
+    expect([...out].sort()).toEqual(['city', 'district', 'region']);
+    expect(out.has('building')).toBe(false);
+  });
+
+  it('returns an empty set for a top-level target', () => {
+    const out = expandPathToSetting(settings, 'lone', new Set());
+    expect([...out]).toEqual([]);
+  });
+
+  it('returns an empty set for an unknown target id', () => {
+    const out = expandPathToSetting(settings, 'nonexistent', new Set());
+    expect([...out]).toEqual([]);
+  });
+
+  it('preserves entries already in currentExpanded (set union, never collapses)', () => {
+    const existing = new Set(['unrelated-branch-1', 'unrelated-branch-2']);
+    const out = expandPathToSetting(settings, 'district', existing);
+    expect(out.has('unrelated-branch-1')).toBe(true);
+    expect(out.has('unrelated-branch-2')).toBe(true);
+    expect(out.has('region')).toBe(true);
+    expect(out.has('city')).toBe(true);
+  });
+
+  it('returns a NEW set (does not mutate the input)', () => {
+    const existing = new Set(['unrelated']);
+    const out = expandPathToSetting(settings, 'building', existing);
+    expect(out).not.toBe(existing);
+    expect(existing.has('region')).toBe(false);
+  });
+
+  it('handles cycle-shaped data defensively without infinite-looping', () => {
+    // Pathological: a points to b, b points to a. Should not hang.
+    const cycle = [
+      { id: 'a', parentId: 'b' },
+      { id: 'b', parentId: 'a' },
+    ];
+    const out = expandPathToSetting(cycle, 'a', new Set());
+    expect([...out].sort()).toEqual(['a', 'b']);
+  });
+
+  it('handles invalid inputs gracefully', () => {
+    expect([...expandPathToSetting(null, 'a', new Set())]).toEqual([]);
+    expect([...expandPathToSetting(settings, null, new Set())]).toEqual([]);
+    expect([...expandPathToSetting(settings, '', new Set())]).toEqual([]);
+    // null currentExpanded → empty set baseline
+    expect([...expandPathToSetting(settings, 'building', null)].sort())
+      .toEqual(['city', 'district', 'region']);
   });
 });

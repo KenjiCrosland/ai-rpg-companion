@@ -3,13 +3,31 @@
     <template #sidebar>
       <div class="sidebar-content">
         <ul class="settings-tabs">
-          <!-- Flatten settings tree and display each with appropriate indentation -->
-          <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
-            :class="{ 'active-tab': currentSettingIndex === setting.originalIndex }"
-            :style="{ marginLeft: `${setting.depth * 20}px` }">
-            <button class="setting-button" @click="selectSetting(setting.originalIndex)">
-              {{ setting.place_name || 'Unnamed Setting' }}
-            </button>
+          <!-- Collapsible tree: every node renders at its depth as a
+               (chevron-or-spacer) + label row. Branches stay collapsed
+               by default; auto-expand reveals the path to the
+               currently-selected setting; manual toggles persist for
+               the session. -->
+          <li v-for="setting in visibleSidebarSettings"
+            :key="setting.id || setting.originalIndex"
+            :class="['setting-tree-item', { 'active-tab': currentSettingIndex === setting.originalIndex }]">
+            <div class="setting-tree-row" :style="{ paddingLeft: `${setting.depth * 16}px` }">
+              <button v-if="setting.hasChildren"
+                type="button"
+                class="setting-tree-chevron"
+                :class="{ 'is-expanded': setting.isExpanded }"
+                :aria-label="setting.isExpanded
+                  ? `Collapse ${setting.place_name || 'Unnamed Setting'}`
+                  : `Expand ${setting.place_name || 'Unnamed Setting'}`"
+                :aria-expanded="setting.isExpanded ? 'true' : 'false'"
+                @click.stop="toggleExpanded(setting.id)">
+                <span class="setting-tree-chevron-glyph" aria-hidden="true">▶</span>
+              </button>
+              <span v-else class="setting-tree-chevron-spacer" aria-hidden="true"></span>
+              <button class="setting-tree-label" @click="selectSetting(setting.originalIndex)">
+                {{ setting.place_name || 'Unnamed Setting' }}
+              </button>
+            </div>
           </li>
           <li>
             <button v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" class="setting-button"
@@ -202,7 +220,12 @@ import {
 } from './utils/setting-dimensions.mjs';
 import { applyInheritanceFromSiblings } from './utils/inheritance.mjs';
 import { extractRelatedPlaces } from './utils/extract-related-places.mjs';
-import { sortUnnamedToBottom, siblingIdsToReparent } from './utils/sidebar-tree.mjs';
+import {
+  sortUnnamedToBottom,
+  siblingIdsToReparent,
+  flattenVisibleSettings,
+  expandPathToSetting,
+} from './utils/sidebar-tree.mjs';
 import { combineSettingOverview } from '@/util/combineSettingOverview.mjs';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
@@ -512,6 +535,88 @@ function flattenSettings(tree, depth = 0) {
   });
   return flat;
 }
+
+// Sidebar tree expansion state. Sub-trees stay collapsed by default;
+// the user toggles open the branches they're working in. Persisted to
+// sessionStorage so the layout survives an in-tab reload but resets
+// on a fresh tab (sessionStorage felt right — across-tab persistence
+// would surprise a user opening a new tab to a different campaign).
+//
+// Auto-expand: a watcher below opens the ancestor path whenever
+// currentSettingIndex changes, so navigating to a deep node (via
+// click, link, or newly-promoted sublocation auto-selection) reveals
+// the path without the user hunting.
+const EXPANSION_STORAGE_KEY = 'setting-sidebar-expanded';
+
+function loadExpandedSettingIds() {
+  if (typeof window === 'undefined' || !window.sessionStorage) return new Set();
+  try {
+    const raw = window.sessionStorage.getItem(EXPANSION_STORAGE_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr.filter(x => typeof x === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+const expandedSettingIds = ref(loadExpandedSettingIds());
+
+function persistExpansion() {
+  if (typeof window === 'undefined' || !window.sessionStorage) return;
+  try {
+    window.sessionStorage.setItem(
+      EXPANSION_STORAGE_KEY,
+      JSON.stringify([...expandedSettingIds.value]),
+    );
+  } catch {
+    // sessionStorage full or disabled — silent. Expansion state lives
+    // in memory for the rest of the session either way.
+  }
+}
+
+function toggleExpanded(settingId) {
+  if (!settingId) return;
+  const next = new Set(expandedSettingIds.value);
+  if (next.has(settingId)) {
+    next.delete(settingId);
+  } else {
+    next.add(settingId);
+  }
+  expandedSettingIds.value = next;
+  persistExpansion();
+}
+
+// Filtered + depth-tagged list the sidebar renders. Recomputes when
+// the tree shape changes OR when the user toggles a branch.
+const visibleSidebarSettings = computed(() =>
+  flattenVisibleSettings(settingsTree.value, expandedSettingIds.value)
+);
+
+// Auto-expand the ancestor path to the currently-selected setting.
+// Set-union semantics — never collapses a branch the user already
+// opened. Runs immediate so the initial render shows the right
+// branches for the persisted-or-default selection.
+watch(
+  () => currentSettingIndex.value,
+  (newIndex) => {
+    if (newIndex == null) return;
+    const target = settings.value[newIndex];
+    if (!target?.id) return;
+    const next = expandPathToSetting(
+      settings.value,
+      target.id,
+      expandedSettingIds.value,
+    );
+    // Only persist when the set actually changed; avoids a spurious
+    // sessionStorage write on every selection click.
+    if (next.size !== expandedSettingIds.value.size) {
+      expandedSettingIds.value = next;
+      persistExpansion();
+    }
+  },
+  { immediate: true },
+);
 
 const selectSetting = (index) => {
   currentSettingIndex.value = index;
@@ -1949,39 +2054,113 @@ $transition-speed: 0.3s;
 
   li {
     margin-bottom: 4px;
+  }
 
-    &.active-tab {
-      .setting-button {
-        background-color: $active-color;
-        border-left-color: $active-border-color;
-      }
+  /* Tree rows — chevron column + label, sharing a row-level
+     background so the selection highlight reads at any depth.
+     Border-left accent stays at the leftmost edge regardless of
+     indent so deep selections are still visible at a glance. */
+  .setting-tree-item {
+    &.active-tab .setting-tree-row {
+      background-color: $active-color;
+      border-left-color: $active-border-color;
+    }
+  }
+
+  .setting-tree-row {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+    background-color: $default-background-color;
+    border-left: 5px solid transparent;
+    transition: background-color $transition-speed, border-left-color $transition-speed;
+
+    &:hover {
+      background-color: $hover-background-color;
+    }
+  }
+
+  .setting-tree-chevron,
+  .setting-tree-chevron-spacer {
+    flex: 0 0 24px;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .setting-tree-chevron {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--par-color-text-muted, #6b6b6b);
+
+    .setting-tree-chevron-glyph {
+      display: inline-block;
+      font-size: 0.9rem;
+      line-height: 1;
+      transition: transform 0.15s ease;
     }
 
-    .setting-button {
-      width: 100%;
-      padding: 12px 20px;
-      font-size: 1.5rem;
-      text-align: left;
-      background-color: $default-background-color;
-      border: none;
-      color: inherit;
-      cursor: pointer;
-      border-left: 5px solid transparent;
-      transition: background-color $transition-speed, border-left-color $transition-speed;
+    &.is-expanded .setting-tree-chevron-glyph {
+      transform: rotate(90deg);
+    }
 
-      &:hover {
-        background-color: $hover-background-color;
-      }
+    &:hover {
+      color: var(--par-color-text, #222);
+    }
 
-      &:focus {
-        outline: none;
-        border-left-color: $active-border-color;
-      }
+    &:focus-visible {
+      outline: 2px solid var(--par-color-action-primary, #2A4D70);
+      outline-offset: -2px;
+    }
+  }
 
-      &.active {
-        background-color: $active-color;
-        border-color: $active-border-color;
-      }
+  .setting-tree-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 12px 16px 12px 4px;
+    font-size: 1.5rem;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    /* Long names (Italian compounds, deep hierarchies) truncate
+       with ellipsis rather than wrap or push the row wider. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  /* Standalone setting-button — kept for the "+ New Setting" row at
+     the bottom of the list. The tree rows use setting-tree-* classes
+     above; this block stays for the lone-button case so its styling
+     doesn't need a separate variant. */
+  .setting-button {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1.5rem;
+    text-align: left;
+    background-color: $default-background-color;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    border-left: 5px solid transparent;
+    transition: background-color $transition-speed, border-left-color $transition-speed;
+
+    &:hover {
+      background-color: $hover-background-color;
+    }
+
+    &:focus {
+      outline: none;
+      border-left-color: $active-border-color;
     }
   }
 }

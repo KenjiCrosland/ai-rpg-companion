@@ -50,6 +50,85 @@ export function sortUnnamedToBottom(level) {
 }
 
 /**
+ * Flatten a settings tree to a depth-tagged list, skipping any
+ * subtree whose root is not in `expandedIds`. Each emitted node
+ * carries:
+ *   - depth:       render-time indent level (0 = top-level)
+ *   - hasChildren: whether this node has any sub-nodes
+ *   - isExpanded:  whether this node is currently expanded
+ *                  (only meaningful when hasChildren is true)
+ *   - id / originalIndex / place_name / children / ...:
+ *                  the node's own fields, spread through
+ *
+ * Pure function — does not mutate inputs.
+ *
+ * @param {Array<Object>} tree         - settings tree (each node has
+ *                                       `children` and `id`)
+ * @param {Set<string>}    expandedIds  - setting ids currently expanded
+ * @param {number}         depth        - internal recursion arg; callers pass 0
+ * @returns {Array<Object>}
+ */
+export function flattenVisibleSettings(tree, expandedIds, depth = 0) {
+  const flat = [];
+  if (!Array.isArray(tree)) return flat;
+  const expanded = expandedIds instanceof Set ? expandedIds : new Set();
+  for (const node of tree) {
+    if (!node) continue;
+    const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+    const isExpanded = hasChildren && expanded.has(node.id);
+    flat.push({ ...node, depth, hasChildren, isExpanded });
+    if (isExpanded) {
+      flat.push(...flattenVisibleSettings(node.children, expanded, depth + 1));
+    }
+  }
+  return flat;
+}
+
+/**
+ * Given a flat settings array and a target setting id, return a NEW
+ * expanded set that contains every ancestor of the target PLUS
+ * whatever was already in `currentExpanded`. The target itself is
+ * NOT added — expansion state of the target is independent of the
+ * "is it on the path" question.
+ *
+ * The auto-expand behavior fires on selection changes:
+ * `Don't auto-collapse branches the user previously opened. Don't
+ * auto-expand branches the user previously closed. The auto-expand
+ * behavior only fires when navigating to a new selection and only
+ * operates on the path to that selection.`
+ *
+ * Implementation is set-union, so it can never collapse a branch
+ * the user already opened.
+ *
+ * Defensive against cycles via a seen-set guard.
+ *
+ * Pure function — does not mutate inputs.
+ *
+ * @param {Array<Object>} settings        - flat settings array
+ * @param {string|null}   settingId       - target setting whose path to expand
+ * @param {Set<string>}   currentExpanded - existing expanded set
+ * @returns {Set<string>}
+ */
+export function expandPathToSetting(settings, settingId, currentExpanded) {
+  const next = new Set(currentExpanded || []);
+  if (!settingId || !Array.isArray(settings)) return next;
+  const byId = new Map();
+  for (const s of settings) {
+    if (s?.id) byId.set(s.id, s);
+  }
+  const target = byId.get(settingId);
+  if (!target) return next;
+  const seen = new Set();
+  let cursor = target.parentId ?? null;
+  while (cursor && !seen.has(cursor)) {
+    seen.add(cursor);
+    next.add(cursor);
+    cursor = byId.get(cursor)?.parentId ?? null;
+  }
+  return next;
+}
+
+/**
  * Compute the ids of settings that should follow `source` to a new
  * parent during a parent-promote cascade.
  *
