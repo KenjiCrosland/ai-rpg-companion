@@ -23,6 +23,7 @@ import { dropNPCFolder } from './drop-npc-folder.mjs';
 import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
 import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-nested.mjs';
 import { sweepAuntUncleSiblingStubs } from './sweep-aunt-uncle-sibling-stubs.mjs';
+import { sweepStubNames } from './sweep-stub-names.mjs';
 
 /**
  * List of all migrations to run.
@@ -62,6 +63,11 @@ import { sweepAuntUncleSiblingStubs } from './sweep-aunt-uncle-sibling-stubs.mjs
  *      produced before `collectRelatedSettingNames` learned to
  *      exclude aunts/uncles. Depends on `migrate-setting-parent-id`
  *      so every setting has a resolvable parentId to walk.
+ *  10. sweep-stub-names — aligns every stub's display `name` to its
+ *      linked setting's current `place_name`. Cleans up stale names
+ *      left over from setting renames performed before
+ *      OverviewTab.saveEdit gained rename-propagation. Idempotent.
+ *      Depends on `assign-setting-ids` so id-linked stubs can resolve.
  *
  * Add new migrations to the end of this array.
  */
@@ -76,6 +82,7 @@ const migrations = [
   { name: 'sweep-orphan-references', run: sweepOrphanReferences },
   { name: 'promote-npc-statblock-ref-to-nested', run: promoteNPCStatblockRefToNested },
   { name: 'sweep-aunt-uncle-sibling-stubs', run: sweepAuntUncleSiblingStubs },
+  { name: 'sweep-stub-names', run: sweepStubNames },
 ];
 
 /**

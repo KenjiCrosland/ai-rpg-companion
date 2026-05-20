@@ -14,23 +14,29 @@
  *
  * Output shape: { type, character, register, userName, tension, scale }
  *
- *   scale — 'polity' | 'place' | 'landscape'.
- *     'place' = small, single-space settings (square, hall, tower,
- *       sacred grove, a single building) where the polity-scale
- *       schema is bloat.
- *     'landscape' = geographic features and bounded historical sites
- *       (mountain range, river, forest, desert, battlefield,
- *       ghost-shore, ruin-field) — uninhabited or thinly-inhabited
- *       settings with extent and parts, but no governance and no
- *       single space to stand in.
- *     'polity' = everything else (region, kingdom, city, town,
- *       district, monastery-as-complex, etc.) — the default.
- *     The LLM judges this from the description; code overrides to
- *     'polity' for a small set of types that are unambiguously too
- *     large to be either place- or landscape-scale regardless of how
- *     the description reads (region, kingdom, empire, plane). The
- *     router in SettingGenerator.vue picks the right prompt based on
- *     this field.
+ *   scale — 'polity' | 'place' | 'landscape'. Determined by what
+ *     this setting CONTAINS (the single-rule architecture replacing
+ *     an earlier headcount / footprint / deflated-sections stack):
+ *     'place' = a single bounded location that contains nothing
+ *       inside it that could itself be a sub-location (one room,
+ *       one structure, one spring, one square, one chamber). May
+ *       sit INSIDE a larger polity whose customs cluster around it;
+ *       those customs belong in `what_happens_here`, not in deflated
+ *       polity slots.
+ *     'landscape' = geographic features or bounded historical sites
+ *       (mountain range, river, forest, desert, battlefield) that
+ *       span distances with named parts but no single center to
+ *       stand in. Inhabited by populations (fauna, scavengers,
+ *       hermits, ghosts) rather than a named ruler.
+ *     'polity' = CONTAINS multiple distinct places (a region
+ *       contains cities, a hamlet contains its hearths + its spring
+ *       + its road, a monastery-complex contains chapter house +
+ *       dormitory + scriptorium). Default for most inhabited
+ *       settings. Code overrides to 'polity' for a small set of
+ *       types unambiguously too large to be either place- or
+ *       landscape-scale (region, kingdom, empire, plane). The
+ *       router in SettingGenerator.vue picks the right prompt based
+ *       on this field.
  *
  *   type — one entry from SETTING_TYPES (e.g., 'kingdom', 'monastery',
  *     'oasis-settlement'). The LLM picks based on user input or rolls
@@ -235,7 +241,7 @@ User input lore: "${safeLore}"
 
 Return a JSON object with four fields:
 
-1. "type": The setting type. The value MUST be one of the following options. Pick the one that best fits the user input; when no signal exists, pick from the pool with a preference for variety (avoid leaning on the same option across many generations).
+1. "type": The setting type. The value MUST be one of the following options. Pick the type that matches WHAT THIS SETTING IS — its own identity, not surrounding context. "A spring that the hamlet gathers around" is a spring, not a hamlet. "A tower on the cliff above the village" is a tower, not a village. The hamlet / village in those phrasings are surrounding context the setting sits INSIDE; the type matches the entity being introduced, not the context noun. If the description names a feature with no perfect entry in the list, pick the closest match by what the entity IS (a sacred spring → "elemental-spring" or "shrine"; a market square → "ritual-precinct" or whatever fits best) — do NOT fall back to a context-noun match just because that word is in the list. When no signal exists at all, pick from the pool with a preference for variety (avoid leaning on the same option across many generations).
 
    ${SETTING_TYPES.join(', ')}
 
@@ -277,51 +283,29 @@ ${characterSection}
    - "Valderia, a decadent republic" → userName: "Valderia"
    - "a haunted city in the mountains" → userName: null (only descriptive)
 
-5. "scale": The size class of this setting — "polity", "place", or "landscape".
+5. "scale": The size class — "polity", "place", or "landscape" — determined by what this setting CONTAINS.
 
-   "polity" = a region, kingdom, city, town, village, district, monastery-as-complex, or any setting large enough to have history, economy, factions, governance. The default for most settings.
+   - "polity" = CONTAINS multiple distinct places. A region contains cities. A city contains districts. A hamlet contains its hearths, its shared well, the path to the pass. A monastery-complex contains a chapter house, dormitory, scriptorium, refectory. People LIVE across these places and govern themselves.
 
-   "place" = a SMALL, SINGLE-SPACE setting where the polity-scale fields (economy, military, leadership succession) would be bloat. Examples that ROUTE TO PLACE:
-       - "a sacred grove at the bend of the river"
-       - "a tower with a great water-clock"
-       - "the smith's workshop above the forge"
-       - "a piazza where the revolt was crushed"
-       - "the council chamber"
-       - "a wayside shrine"
-       - "a single drovers' inn"
-       - "the cellar where the prisoner is kept"
-       - "a hidden glade the fey use for revels"
-       - "a wind-scoured watch-post with a handful of keepers"
-       - "a small order's lodge holding ten brethren"
-       - "a forester's lodge run by one ranger"
-       - "a hermit's cell with a single attendant"
+   - "place" = is a SINGLE bounded location — one room, one structure, one spring, one square, one chamber, one cell. It may sit INSIDE a larger polity whose customs cluster around it; those customs belong in what_happens_here, not in deflated polity slots. The defining question is structural, not social: a sacred grove with daily rituals is still ONE space.
 
-   "landscape" = a GEOGRAPHIC FEATURE or BOUNDED HISTORICAL SITE — uninhabited or thinly-inhabited, with extent and named parts, but no governance and no single space to stand in. Examples that ROUTE TO LANDSCAPE:
-       - "a mountain range with named peaks and dangerous passes"
-       - "the Stonemother — a great range where the dwarven clans dig deep"
-       - "the Bone Coast, where the salt-drowned dead still walk"
-       - "the Broken Gate, a battlefield where the siege-golems were unmade"
-       - "the Whispering Forest, deep and old"
-       - "the burn-field where the besiegers spread salt"
-       - "the Dragon-glass Desert"
-       - "the ghost-shore of the Sundering Sea"
-       - "a haunted ruin-field on the old border"
+   - "landscape" = extends across miles or a battlefield-sized footprint with named parts but no single center to stand in. Inhabited by populations (fauna, scavengers, hermits, ghosts) rather than a named ruler.
 
-   How to distinguish — signals beyond the type label:
+   THE CONTAINMENT TEST (single decision rule):
+     Ask: "could this setting plausibly be a sub-location OF something else, with nothing inside it that could itself be a sub-location?"
+     - If yes → place.
+     - If it CONTAINS multiple distinct sub-locations → polity.
+     - If it spans distances and contains no center → landscape.
 
-   - HEADCOUNT. If the permanent population can be counted on one or two hands (a handful of keepers, a hermit and a helper, one family, a small lineage of caretakers), the setting is PLACE-scale even when called an "outpost," "monastery," "lodge," or "garrison." The polity-scale schema needs a real social fabric — multiple roles, succession beyond a single line, a populace — to fill it. Ten keepers do not have an economy or a defense; one captain and twenty soldiers do.
+   Worked examples (the rule applied):
+   - "the central spring of a hamlet" → contained by the hamlet, contains nothing → place
+   - "a wind-scoured watch-post, one stone house with three keepers" → contained by the mountain, contains nothing → place
+   - "a hamlet of a dozen houses around a shared spring" → contains the spring, the hearths, the path to the pass → polity
+   - "a mountain range with named peaks and dangerous passes" → spans distances, no center → landscape
+   - "a monastery with chapter house, dormitory, library" → contains multiple buildings → polity
+   - "a hermit's stone cell on the cliff" → contained by the cliff, contains nothing → place
 
-   - FOOTPRINT. If you could walk across the whole structure in a minute or two (a stone house in a cleft, a single tower, a hut + watch-yard, a one-building inn), it's PLACE-scale. A polity-scale site has districts, wards, quarters, multiple buildings serving distinct functions. "Monastery" can mean either; the description's footprint cues distinguish them.
-
-   - DEFLATED-SECTIONS TEST (strongest signal). Mentally check whether the polity-scale fields would have meaningful content. If "Economy" would come back as "the keepers live on moss-water and dried hare," "Defense" as "the walls are dry-stone, waist-high in places — never garrisoned," "Society" as "no children; the post has always been a place of passing," then those sections are STRUCTURALLY EMPTY at this scale. That's the place-scale schema fitting better — the prose belongs in what_happens_here and who_frequents_here, not in deflated polity slots.
-
-   - polity: people LIVE here and govern themselves; the setting has real economy, social structure, leadership succession that would fill paragraphs naturally.
-   - place: a single room, small bounded structure, or compound run by one to a handful of people; a GM describes the walls and what's in them; the people who matter fit in one or two NPC sketches.
-   - landscape: extends across miles or a battlefield-sized footprint; no governance; inhabited by populations (fauna, scavengers, hermits, ghosts) rather than a named ruler.
-
-   Judge from the description, not the type label alone — "monastery" can be a large complex (polity) or a single cell on a cliff (place); "outpost" can be a frontier garrison-town (polity) or a wind-scoured hut with three keepers (place); "mountains" can be a magical range (landscape) or a kingdom whose territory includes mountains (polity).
-
-   When in doubt: apply the deflated-sections test. If the polity sections would have to be padded or come back as "there is no real X here," route to place. The polity schema does NOT render gracefully when half its sections describe absences; the absence becomes the content, which is exactly the bloat the place-scale split was made to avoid.
+   IMPORTANT: the type label can mislead — apply the test to the DESCRIPTION, not the type word. A "monastery" can be polity (full complex of distinct buildings) or place (a single cell on a cliff). A "village" of one family in one house is place. An "outpost" with a real garrison + inner/outer ward + storehouse is polity. The containment test is what decides.
 
 Return ONLY valid JSON with the fields listed above. No prose before or after, no markdown code fences, no commentary.
 
@@ -330,7 +314,7 @@ Example outputs:
 {"type": "treetop-village", "character": ["fey-touched", "forest-hidden", "twilit"], "register": "middle-welsh", "userName": null, "scale": "polity"}    (input was "Feywild treetop village with fey-pact warlock" — fey-canon maps to Celtic via middle-welsh)
 {"type": "monastery", "character": ["scholarly", "mountainous", "fog-shrouded"], "register": "old-irish", "userName": "Glenmara", "scale": "polity"}    (Old Irish phonology evident in user-named "Glenmara"; monastery here is a full complex, polity-scale)
 {"type": "shrine", "character": ["fey-touched", "forest-hidden", "twilit"], "register": "middle-welsh", "userName": null, "scale": "place"}    (input was "a single wayside shrine the fey have claimed" — small, one-room, place-scale)
-{"type": "watch-outpost", "character": ["isolated", "monastic", "wind-scoured"], "register": "old-norse", "userName": "Korrin Outpost", "scale": "place"}    (input was "a small order of watch-keepers in a stone house on the mountain's spur" — headcount fits in one hand, no real economy or defense; the polity-scale Economy / Defense / Society sections would all come back as deflated negatives, so place-scale fits)
+{"type": "watch-outpost", "character": ["isolated", "monastic", "wind-scoured"], "register": "old-norse", "userName": "Korrin Outpost", "scale": "place"}    (input was "a small order of watch-keepers in a stone house on the mountain's spur" — one stone house, contains nothing inside; could itself be a sub-location of the mountain range; containment test → place)
 {"type": "mountain-range", "character": ["ancient", "mountainous", "song-keeping"], "register": "old-norse", "userName": "Stonemother", "scale": "landscape"}    (input was "the Stonemother — a great range where the dwarven clans dig deep" — geographic feature, populations rather than rulers, landscape-scale)
 {"type": "battlefield", "character": ["embattled", "haunted", "twice-burned"], "register": "old-norse", "userName": "the Broken Gate", "scale": "landscape"}    (input was "the Broken Gate, a battlefield where the siege-golems were unmade" — bounded historical site, ghosts and scavengers rather than residents, landscape-scale)
 {"type": "port-city", "character": ["mercantile", "cosmopolitan", "sun-scorched"], "register": null, "userName": "Velrith", "scale": "polity"}    (user provided extensive lore with multiple invented proper nouns)

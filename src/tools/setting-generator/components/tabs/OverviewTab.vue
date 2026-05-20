@@ -107,6 +107,7 @@ import {
 } from '@/util/renderSettingOverview.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { sourceExists, getToolForSourceType } from '@/util/seeded-input.mjs';
+import { renameSettingReferences } from '@/util/setting-storage.mjs';
 
 const props = defineProps({
   setting: {
@@ -188,6 +189,20 @@ const cancelEdit = () => {
 };
 
 const saveEdit = () => {
+  // Detect rename so we can propagate the new name to every stub
+  // that references this setting (Related Places on other settings,
+  // Related Settings on items, tool-references edges, NPC source
+  // provenance). Settings carry stable ids so the link survives a
+  // rename — but stubs store the display name as a static field
+  // rather than dereferencing the live entity, so without
+  // propagation the user sees the old name in every list pointing
+  // back at this setting.
+  const oldName = props.setting.place_name || '';
+  const newName = editForm.value.name || '';
+  if (props.setting.id && newName && oldName !== newName) {
+    renameSettingReferences(props.setting.id, newName);
+  }
+
   emit('updated-setting', {
     ...props.setting,
     place_name: editForm.value.name,

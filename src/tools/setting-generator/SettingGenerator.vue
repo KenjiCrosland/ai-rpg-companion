@@ -1481,15 +1481,23 @@ async function onPromoteRelatedPlace({ stub, kind }) {
   currentlyLoading.value = true;
   const operationIndex = settings.value.length - 1;
 
-  // Run dimension inference against the stub's name + source quote.
+  // Run dimension inference against the stub's name + role brief.
   // This catches cases where the stub's NAME carries a clear cultural
   // signal that differs from the current setting's register (e.g.,
   // promoting "Aethelmar" as a sibling of an Italian Renaissance
   // setting — the LLM detects Anglo-Saxon from the name and overrides
-  // the sibling-inheritance default). Without this, every promoted
-  // sibling/parent inherits the current setting's register regardless
-  // of how culturally distinct the name signals.
-  const inferenceInput = [stub.name, stub.role_brief, stub.source_quote]
+  // the sibling-inheritance default).
+  //
+  // stub.source_quote is DELIBERATELY EXCLUDED: it's parent-setting
+  // prose ("a handful of low stone houses gathered around a single
+  // spring called the Weeping-Cleft"), and concatenating it into the
+  // sub-location's own description contaminated type/scale
+  // classification — the LLM read the parent's hamlet-shape and
+  // typed the sub-location as 'hamlet', which then correctly routed
+  // to polity even when the sub-location is a single spring.
+  // Register signal from the source_quote is rarely needed beyond
+  // what the name already carries.
+  const inferenceInput = [stub.name, stub.role_brief]
     .filter(Boolean)
     .join('. ');
   let inferred = { type: null, character: null, register: null, userName: null, tension: null };

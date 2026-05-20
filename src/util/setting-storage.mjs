@@ -612,6 +612,138 @@ export function resetSettingSourceForDeletedEntity(sourceType, sourceId) {
 }
 
 /**
+ * Propagate a setting rename across every store that stores the
+ * setting's name as a display field on a stub. Settings are
+ * identified by stable id, so the link survives a rename — but stubs
+ * keep static `name` fields rather than dereferencing the live
+ * entity at render time, so without this propagation the user sees
+ * the old name persistently in Related Places lists, item cards,
+ * etc.
+ *
+ * Walks four stores:
+ *   1. `gameSettings` — every setting's `related_places[]` entries
+ *      whose `promoted_setting_id` matches get their `name` updated.
+ *   2. `savedItems` — every item's `related_settings[]` entries
+ *      whose `setting_id` matches get their `name` updated.
+ *   3. `tool-references` — every edge whose source or target is this
+ *      setting gets its denormalized `source_name` / `target_name`
+ *      updated.
+ *   4. `npcGeneratorNPCs` — NPCs whose `sourceType === 'setting'` and
+ *      `sourceId` matches get their `sourceName` updated (the
+ *      denormalized field the NPCCard's subtitle reads).
+ *
+ * Called from the OverviewTab's saveEdit when the user renames a
+ * setting. Idempotent and safe when nothing matches.
+ *
+ * @param {string} settingId
+ * @param {string} newName
+ * @returns {{ totalUpdated: number }}
+ */
+export function renameSettingReferences(settingId, newName) {
+  if (!settingId || typeof newName !== 'string') return { totalUpdated: 0 };
+  let totalUpdated = 0;
+
+  // 1. Other settings' related_places[] stubs.
+  const settings = readSettings();
+  if (settings.length > 0) {
+    let changed = false;
+    for (const s of settings) {
+      if (!Array.isArray(s?.related_places)) continue;
+      for (const stub of s.related_places) {
+        if (stub?.promoted_setting_id === settingId && stub.name !== newName) {
+          stub.name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+      }
+    }
+    if (changed) persistSettings(settings);
+  }
+
+  // 2. Items' related_settings[] stubs.
+  const itemsRaw = localStorage.getItem('savedItems');
+  if (itemsRaw) {
+    let items;
+    try {
+      items = JSON.parse(itemsRaw);
+    } catch {
+      items = null;
+    }
+    if (Array.isArray(items)) {
+      let changed = false;
+      for (const item of items) {
+        if (!Array.isArray(item?.related_settings)) continue;
+        for (const stub of item.related_settings) {
+          if (stub?.setting_id === settingId && stub.name !== newName) {
+            stub.name = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) localStorage.setItem('savedItems', JSON.stringify(items));
+    }
+  }
+
+  // 3. Reference graph edges where this setting is source or target.
+  const refsRaw = localStorage.getItem('tool-references');
+  if (refsRaw) {
+    let refs;
+    try {
+      refs = JSON.parse(refsRaw);
+    } catch {
+      refs = null;
+    }
+    if (refs && typeof refs === 'object') {
+      let changed = false;
+      for (const ref of Object.values(refs)) {
+        if (ref?.target_type === 'setting' && ref.target_id === settingId
+            && ref.target_name !== newName) {
+          ref.target_name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+        if (ref?.source_type === 'setting' && ref.source_id === settingId
+            && ref.source_name !== newName) {
+          ref.source_name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+      }
+      if (changed) localStorage.setItem('tool-references', JSON.stringify(refs));
+    }
+  }
+
+  // 4. NPCs whose source provenance points at this setting.
+  const npcsRaw = localStorage.getItem('npcGeneratorNPCs');
+  if (npcsRaw) {
+    let npcs;
+    try {
+      npcs = JSON.parse(npcsRaw);
+    } catch {
+      npcs = null;
+    }
+    if (npcs && typeof npcs === 'object') {
+      let changed = false;
+      for (const folder of Object.values(npcs)) {
+        if (!Array.isArray(folder)) continue;
+        for (const npc of folder) {
+          if (npc?.sourceType === 'setting' && npc.sourceId === settingId
+              && npc.sourceName !== newName) {
+            npc.sourceName = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcs));
+    }
+  }
+
+  return { totalUpdated };
+}
+
+/**
  * Reset every setting stub pointing to the given NPC id back to its
  * pre-promotion shape. Counterpart to `findSettingStubsForNPC`, called
  * when the canonical NPC is deleted.

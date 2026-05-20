@@ -18,6 +18,7 @@ import {
   mergeRelatedPlaces,
   filterRelatedPlacesByExistingNames,
   linkExistingSettingsByName,
+  renameSettingReferences,
 } from '../setting-storage.mjs';
 
 describe('setting-storage', () => {
@@ -970,6 +971,218 @@ describe('setting-storage', () => {
       const out = linkExistingSettingsByName(places, allSettings);
       expect(out[0].promoted_setting_id).toBe(null);
       expect(out[1].promoted_setting_id).toBe(null);
+    });
+  });
+
+  describe('renameSettingReferences', () => {
+    it('updates related_places stub names across other settings', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_target', place_name: 'New Name', related_places: [] },
+        {
+          id: 'set_a',
+          place_name: 'A',
+          related_places: [
+            { name: 'Old Name', kind: 'sibling', promoted_setting_id: 'set_target' },
+            { name: 'Other', kind: 'sibling', promoted_setting_id: 'set_other' },
+          ],
+        },
+        {
+          id: 'set_b',
+          place_name: 'B',
+          related_places: [
+            { name: 'Old Name', kind: 'child', promoted_setting_id: 'set_target' },
+          ],
+        },
+      ]));
+
+      const { totalUpdated } = renameSettingReferences('set_target', 'New Name');
+
+      expect(totalUpdated).toBe(2);
+      const settings = JSON.parse(localStorage.getItem('gameSettings'));
+      expect(settings[1].related_places[0].name).toBe('New Name');
+      expect(settings[1].related_places[1].name).toBe('Other');
+      expect(settings[2].related_places[0].name).toBe('New Name');
+    });
+
+    it('updates item-side related_settings stub names', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_target', place_name: 'New Name' },
+      ]));
+      localStorage.setItem('savedItems', JSON.stringify([
+        {
+          name: 'Hearthstaff',
+          related_settings: [
+            { name: 'Old Name', setting_id: 'set_target', role_brief: 'origin' },
+            { name: 'Unrelated', setting_id: 'set_other' },
+          ],
+        },
+      ]));
+
+      const { totalUpdated } = renameSettingReferences('set_target', 'New Name');
+
+      expect(totalUpdated).toBe(1);
+      const items = JSON.parse(localStorage.getItem('savedItems'));
+      expect(items[0].related_settings[0].name).toBe('New Name');
+      expect(items[0].related_settings[0].role_brief).toBe('origin');
+      expect(items[0].related_settings[1].name).toBe('Unrelated');
+    });
+
+    it('updates tool-references edges where the setting is source or target', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_target', place_name: 'New Name' },
+      ]));
+      localStorage.setItem('tool-references', JSON.stringify({
+        'ref-1': {
+          source_type: 'setting',
+          source_id: 'set_target',
+          source_name: 'Old Name',
+          target_type: 'item',
+          target_id: 'Hearthstaff',
+          target_name: 'Hearthstaff',
+          relationship: 'inspired_by_item',
+        },
+        'ref-2': {
+          source_type: 'npc',
+          source_id: 'npc_1',
+          source_name: 'Aldric',
+          target_type: 'setting',
+          target_id: 'set_target',
+          target_name: 'Old Name',
+          relationship: 'appears_in_setting',
+        },
+        'ref-3': {
+          source_type: 'setting',
+          source_id: 'set_other',
+          source_name: 'Other',
+          target_type: 'item',
+          target_id: 'X',
+          target_name: 'X',
+          relationship: 'inspired_by_item',
+        },
+      }));
+
+      const { totalUpdated } = renameSettingReferences('set_target', 'New Name');
+
+      expect(totalUpdated).toBe(2);
+      const refs = JSON.parse(localStorage.getItem('tool-references'));
+      expect(refs['ref-1'].source_name).toBe('New Name');
+      expect(refs['ref-2'].target_name).toBe('New Name');
+      expect(refs['ref-3'].source_name).toBe('Other');
+    });
+
+    it('updates NPC sourceName when sourceType=setting and sourceId matches', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_target', place_name: 'New Name' },
+      ]));
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify({
+        'Folder A': [
+          { npc_id: 'npc_1', name: 'Aldric', sourceType: 'setting', sourceId: 'set_target', sourceName: 'Old Name' },
+          { npc_id: 'npc_2', name: 'Bera', sourceType: 'item', sourceId: 'Hearthstaff', sourceName: 'Hearthstaff' },
+        ],
+        'Folder B': [
+          { npc_id: 'npc_3', name: 'Cedric', sourceType: 'setting', sourceId: 'set_target', sourceName: 'Old Name' },
+          { npc_id: 'npc_4', name: 'Dax', sourceType: 'setting', sourceId: 'set_other', sourceName: 'Other' },
+        ],
+      }));
+
+      const { totalUpdated } = renameSettingReferences('set_target', 'New Name');
+
+      expect(totalUpdated).toBe(2);
+      const npcs = JSON.parse(localStorage.getItem('npcGeneratorNPCs'));
+      expect(npcs['Folder A'][0].sourceName).toBe('New Name');
+      expect(npcs['Folder A'][1].sourceName).toBe('Hearthstaff');
+      expect(npcs['Folder B'][0].sourceName).toBe('New Name');
+      expect(npcs['Folder B'][1].sourceName).toBe('Other');
+    });
+
+    it('is idempotent when names already match', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_target', place_name: 'New Name' },
+        {
+          id: 'set_a',
+          place_name: 'A',
+          related_places: [
+            { name: 'New Name', promoted_setting_id: 'set_target' },
+          ],
+        },
+      ]));
+      localStorage.setItem('savedItems', JSON.stringify([
+        { name: 'Item', related_settings: [{ name: 'New Name', setting_id: 'set_target' }] },
+      ]));
+
+      const { totalUpdated } = renameSettingReferences('set_target', 'New Name');
+      expect(totalUpdated).toBe(0);
+    });
+
+    it('returns { totalUpdated: 0 } for missing args', () => {
+      expect(renameSettingReferences(null, 'X')).toEqual({ totalUpdated: 0 });
+      expect(renameSettingReferences('set_x', null)).toEqual({ totalUpdated: 0 });
+      expect(renameSettingReferences('', 'X')).toEqual({ totalUpdated: 0 });
+    });
+
+    it('does not write when nothing changed', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_target', place_name: 'New Name' },
+        {
+          id: 'set_a',
+          place_name: 'A',
+          related_places: [
+            { name: 'Unrelated', promoted_setting_id: 'set_other' },
+          ],
+        },
+      ]));
+      const before = localStorage.getItem('gameSettings');
+
+      renameSettingReferences('set_target', 'New Name');
+
+      // Settings object preserved byte-for-byte (no rewrite).
+      expect(localStorage.getItem('gameSettings')).toBe(before);
+    });
+
+    it('walks all four stores in a single call', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_target', place_name: 'New Name' },
+        {
+          id: 'set_a',
+          place_name: 'A',
+          related_places: [
+            { name: 'Old Name', promoted_setting_id: 'set_target' },
+          ],
+        },
+      ]));
+      localStorage.setItem('savedItems', JSON.stringify([
+        { name: 'Item', related_settings: [{ name: 'Old Name', setting_id: 'set_target' }] },
+      ]));
+      localStorage.setItem('tool-references', JSON.stringify({
+        'ref-1': {
+          source_type: 'setting',
+          source_id: 'set_target',
+          source_name: 'Old Name',
+          target_type: 'item',
+          target_id: 'Item',
+          target_name: 'Item',
+          relationship: 'inspired_by_item',
+        },
+      }));
+      localStorage.setItem('npcGeneratorNPCs', JSON.stringify({
+        'Folder': [
+          { npc_id: 'npc_1', name: 'Aldric', sourceType: 'setting', sourceId: 'set_target', sourceName: 'Old Name' },
+        ],
+      }));
+
+      const { totalUpdated } = renameSettingReferences('set_target', 'New Name');
+      expect(totalUpdated).toBe(4);
+    });
+
+    it('tolerates malformed JSON in dependent stores', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_target', place_name: 'New Name' },
+      ]));
+      localStorage.setItem('savedItems', '{not json');
+      localStorage.setItem('tool-references', '{not json');
+      localStorage.setItem('npcGeneratorNPCs', '{not json');
+
+      expect(() => renameSettingReferences('set_target', 'New Name')).not.toThrow();
     });
   });
 });
