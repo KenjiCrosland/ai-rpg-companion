@@ -242,7 +242,7 @@
     </div>
 
     <!-- Footer Bar -->
-    <div v-if="!loadingDescription && !loadingRelationships && !isEditing && !bodyHidden" class="card-footer-bar">
+    <div v-if="!loadingDescription && !loadingRelationships && !isEditing && !bodyHidden && !stubMode" class="card-footer-bar">
       <div class="card-footer-bar__actions">
         <ParCardButton v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
           View in NPC Generator

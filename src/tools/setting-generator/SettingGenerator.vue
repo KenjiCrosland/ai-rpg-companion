@@ -35,14 +35,9 @@
           </li>
         </ul>
         <div class="copy-buttons">
-
-          <ParActionButton @click="copySettingsAsPlainText" variant="secondary">Copy As Plain Text</ParActionButton>
-          <ParActionButton @click="copySettingsAsHtml" variant="secondary">Copy As HTML</ParActionButton>
-          <ParActionButton @click="copySettingsAsMarkdown" variant="secondary">Copy As Homebrewery Markdown</ParActionButton>
-          <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
-            <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
-            there. You will need to add your own pagebreaks.
-          </p>
+          <!-- Export buttons moved to <SettingExports> below the main
+               content area. Only Delete All stays in the sidebar
+               because it's destructive cleanup, not an export. -->
           <ParActionButton @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</ParActionButton>
         </div>
       </div>
@@ -132,11 +127,12 @@
           <QuestHooksTab :setting="currentSetting" :premium="premium" @updated-setting="onQuestHooksUpdated" />
         </TabPanel>
       </Tabs>
-      <div class="delete-setting-row" v-if="settingOverviewExists && !currentlyLoading">
-        <ParActionButton variant="secondary" @click="deleteSetting(currentSetting.id)">
-          Delete Setting
-        </ParActionButton>
-      </div>
+      <SettingOperations
+        v-if="settingOverviewExists && !currentlyLoading"
+        :settings-tree="settingsTree"
+        :loading="currentlyLoading"
+        @delete-setting="deleteSetting(currentSetting.id)"
+      />
 
       <!-- Footer below content -->
       <div class="footer-meta" v-if="settingOverviewExists">
@@ -198,9 +194,6 @@ import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
-import { formatSettingAsPlainText } from "@/util/formatSettingAsPlainText.mjs";
-import { formatSettingAsMarkdown } from "@/util/formatSettingAsMarkdown.mjs";
-import { formatSettingAsHtml } from "@/util/formatSettingAsHTML.mjs";
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
@@ -238,6 +231,7 @@ import '@rei/cedar/dist/style/cdr-popover.css';
 import QuestHooksTab from './components/tabs/QuestHooksTab.vue';
 import OverviewTab from './components/tabs/OverviewTab.vue';
 import FactionsTab from './components/tabs/FactionsTab.vue';
+import SettingOperations from './components/SettingOperations.vue';
 import LocationsTab from './components/tabs/LocationsTab.vue';
 import NPCsTab from './components/tabs/NPCsTab.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -310,24 +304,6 @@ const onQuestHooksUpdated = (updatedSetting) => {
     saveSettingsToLocalStorage();
   }
 };
-
-function copySettingsAsPlainText() {
-  const text = formatSettingAsPlainText(settingsTree.value);
-  navigator.clipboard.writeText(text);
-  alert("Settings copied to clipboard as plain text!");
-}
-
-function copySettingsAsMarkdown() {
-  const text = formatSettingAsMarkdown(settingsTree.value);
-  navigator.clipboard.writeText(text);
-  alert("Settings copied to clipboard as Homebrewery Markdown!");
-}
-
-function copySettingsAsHtml() {
-  const text = formatSettingAsHtml(settingsTree.value);
-  navigator.clipboard.writeText(text);
-  alert("Settings copied to clipboard as HTML!");
-}
 
 function deleteAllSettings() {
   if (confirm("Are you sure you want to delete all settings?")) {
