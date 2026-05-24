@@ -21,7 +21,9 @@
                   : `Expand ${setting.place_name || 'Unnamed Setting'}`"
                 :aria-expanded="setting.isExpanded ? 'true' : 'false'"
                 @click.stop="toggleExpanded(setting.id)">
-                <span class="setting-tree-chevron-glyph" aria-hidden="true">▶</span>
+                <svg class="setting-tree-chevron-glyph" viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">
+                  <polygon points="2,1 8,5 2,9" fill="currentColor" />
+                </svg>
               </button>
               <span v-else class="setting-tree-chevron-spacer" aria-hidden="true"></span>
               <button class="setting-tree-label" @click="selectSetting(setting.originalIndex)">
@@ -129,7 +131,7 @@
       </Tabs>
       <SettingOperations
         v-if="settingOverviewExists && !currentlyLoading"
-        :settings-tree="settingsTree"
+        :settings-tree="currentSettingSubtree"
         :loading="currentlyLoading"
         @delete-setting="deleteSetting(currentSetting.id)"
       />
@@ -142,6 +144,7 @@
           </template>
           <template #features>
             <li>Cross-device save and load — your settings sync between browsers and devices.</li>
+            <li>Unlimited cross-tool generation — promote items into full settings and dungeons without the 5/day free-tier cap.</li>
             <li>
               <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
             </li>
@@ -232,6 +235,7 @@ import QuestHooksTab from './components/tabs/QuestHooksTab.vue';
 import OverviewTab from './components/tabs/OverviewTab.vue';
 import FactionsTab from './components/tabs/FactionsTab.vue';
 import SettingOperations from './components/SettingOperations.vue';
+import { canGenerateCrossTool } from '@/util/can-generate-cross-tool.mjs';
 import LocationsTab from './components/tabs/LocationsTab.vue';
 import NPCsTab from './components/tabs/NPCsTab.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -504,6 +508,29 @@ const settingsTree = computed(() => {
   sortUnnamedToBottom(tree);
 
   return tree;
+});
+
+/**
+ * Walk the settings tree to find a node by id. Used to extract the
+ * current setting's sub-tree (active node + descendants) for the
+ * export panel — the user expects "export this setting" to mean the
+ * setting they're viewing plus its sub-locations, not the entire
+ * workspace of sibling regions.
+ */
+function findNodeById(tree, id) {
+  for (const node of tree) {
+    if (node.id === id) return node;
+    const found = findNodeById(node.children || [], id);
+    if (found) return found;
+  }
+  return null;
+}
+
+const currentSettingSubtree = computed(() => {
+  const id = currentSetting.value?.id;
+  if (!id) return [];
+  const node = findNodeById(settingsTree.value, id);
+  return node ? [node] : [];
 });
 
 function flattenSettings(tree, depth = 0) {
@@ -1234,6 +1261,18 @@ async function generateSetting(payload = {}) {
       tension,
     });
     return;
+  }
+
+  // Cross-tool gate: if this top-level generation is being seeded from
+  // another tool (currently item → setting), check the 5/day quota
+  // before any AI calls fire. Free combos (e.g., no seed at all)
+  // short-circuit the gate and return true. Gate handles its own toast
+  // on failure; we just bail and leave the form in place so the user
+  // can come back tomorrow or upgrade.
+  const seedSourceType = pendingSeed.value?.source?.type;
+  if (seedSourceType) {
+    const canGenerate = await canGenerateCrossTool(seedSourceType, 'setting', props.premium);
+    if (!canGenerate) return;
   }
 
   // Top-level: run the inference call to extract type/character/
@@ -2119,10 +2158,12 @@ $transition-speed: 0.3s;
     cursor: pointer;
     color: var(--par-color-text-muted, #6b6b6b);
 
+    /* Inline SVG triangle, not a Unicode glyph: WordPress's emoji
+       conversion script substitutes `▶` (U+25B6) for an s.w.org-hosted
+       emoji image, so a text-character chevron renders as a blue
+       play-button image in production. SVG bypasses that path entirely. */
     .setting-tree-chevron-glyph {
       display: inline-block;
-      font-size: 0.9rem;
-      line-height: 1;
       transition: transform 0.15s ease;
     }
 

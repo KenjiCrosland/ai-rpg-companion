@@ -332,11 +332,9 @@ function handleFileChange(event) {
       // data → orphaned tree). Safe to call here even though base.js
       // will also call it on next mount — migrations are gated by
       // migrations-completed and skip work already done.
-      try {
-        runPendingMigrations();
-      } catch (err) {
+      runPendingMigrations().catch((err) => {
         console.error('Post-import migrations failed:', err);
-      }
+      });
 
       // After importing `monsters`, seed fresh quota fields so the
       // user lands in the standard "fresh window" state on next read

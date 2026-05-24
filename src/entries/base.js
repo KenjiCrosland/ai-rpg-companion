@@ -2,6 +2,7 @@ import { createApp, h, ref, onMounted } from 'vue';
 import AppToast from '../components/AppToast.vue';
 import { registerToast } from '../composables/useToast';
 import { runPendingMigrations } from '@/util/migration-runner.mjs';
+import { getEffectivePremium, initDevPremiumControls } from '@/util/dev-premium-controls.mjs';
 
 // Parchment design tokens — loaded once, shared by all tools.
 // See src/parchment/CLAUDE.md.
@@ -45,17 +46,22 @@ export function mountApp(component, withPremium = false) {
   // and the new code paths would read the wrong field names. Migrations
   // are idempotent and skip ones already in `migrations-completed`, so
   // calling here per-mount is essentially free.
-  try {
-    runPendingMigrations();
-  } catch (err) {
-    // Defensive: a migration crash should never prevent the tool from
-    // mounting at all. Log and continue; the unmigrated path will
-    // expose the underlying issue.
+  // Fire-and-forget — runPendingMigrations is async (some migrations
+  // sign via SubtleCrypto). Errors logged via .catch so the runner's
+  // promise rejection doesn't surface unhandled. Mount proceeds in
+  // parallel because a migration crash shouldn't prevent the tool
+  // from rendering at all.
+  runPendingMigrations().catch((err) => {
     console.error('runPendingMigrations failed in mountApp:', err);
-  }
+  });
+
+  // Expose `window.devPremium` for cross-tool premium testing (no-op
+  // in production builds). Called per-mount but the helper is
+  // idempotent so re-mounts don't re-register.
+  initDevPremiumControls();
 
   const el = document.getElementById('app');
-  const isPremium = withPremium && el?.dataset.premium === 'true';
+  const isPremium = getEffectivePremium({ withPremium, el });
 
   const Root = {
     setup() {
@@ -67,7 +73,11 @@ export function mountApp(component, withPremium = false) {
 
       return () => [
         h(AppToast, { ref: toastRef, position: 'top-center' }),
-        h(component, withPremium ? { premium: isPremium } : {}),
+        // Pass the prop when the entry opts into premium AND/OR the
+        // dev override has forced it true. Free-only entries that
+        // didn't pass `withPremium` still get the override propagated
+        // so cross-tool nav lands on a premium-rendering destination.
+        h(component, (withPremium || isPremium) ? { premium: isPremium } : {}),
       ];
     },
   };

@@ -128,6 +128,18 @@ function vue_app_enqueue_assets() {
             color: inherit;
         }
 
+        /* Genesis theme injects `.entry-content h4 { margin-top: 40px }`
+           (specificity 0,1,1) which pushes Cedar accordion headers
+           (cdr-accordion level="4" renders as an h4) down by 40px,
+           opening a visible gap above every accordion. Override at
+           0,2,2 by anchoring to both .entry-content and #app — wins on
+           specificity, no !important needed. Vue components needing
+           intentional h4 top-margin can hit 0,2,2 themselves via
+           sibling selectors or doubled-class tricks. */
+        .entry-content #app h4 {
+            margin-top: 0;
+        }
+
         /* Patreon Button Overrides */
         .patreon-universal-button a {
             text-decoration: none;

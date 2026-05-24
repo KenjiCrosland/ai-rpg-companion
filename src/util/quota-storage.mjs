@@ -14,6 +14,15 @@ const DOMAINS = {
   statblock:    { host: 'monsters', field: '_q' },
   'quest-hook': { host: 'monsters', field: '_qh' },
   lore:         { host: 'monsters', field: '_lr' },
+  // Cross-tool generations (item → setting, item → dungeon, future
+  // cross-tool flows). Shares the `monsters` host with the other
+  // counters — convention parity, and deleting the host costs the
+  // user their saved monster statblocks (real loss). Unlike
+  // `statblock`, this gate does not use `recoverAtCount`: monsters on
+  // the host are NOT causally related to cross-tool history, so a
+  // user with statblocks but no cross-tool refs is a normal case
+  // (fresh state expected), not a manual-deletion attacker.
+  'cross-tool': { host: 'monsters', field: '_xt' },
 };
 
 // Field names callers writing the same host key must preserve when

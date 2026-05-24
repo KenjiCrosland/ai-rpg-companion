@@ -24,6 +24,7 @@ import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
 import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-nested.mjs';
 import { sweepAuntUncleSiblingStubs } from './sweep-aunt-uncle-sibling-stubs.mjs';
 import { sweepStubNames } from './sweep-stub-names.mjs';
+import { seedCrossToolQuota } from './seed-cross-tool-quota.mjs';
 
 /**
  * List of all migrations to run.
@@ -68,6 +69,10 @@ import { sweepStubNames } from './sweep-stub-names.mjs';
  *      left over from setting renames performed before
  *      OverviewTab.saveEdit gained rename-propagation. Idempotent.
  *      Depends on `assign-setting-ids` so id-linked stubs can resolve.
+ *  11. seed-cross-tool-quota — seeds `_xt: { c: 0 }` on the `monsters`
+ *      host so the cross-tool gate can safely use `recoverAtCount`.
+ *      Async — signs via SubtleCrypto. Order-independent; placed at
+ *      the end so it doesn't gate any earlier data work.
  *
  * Add new migrations to the end of this array.
  */
@@ -83,15 +88,20 @@ const migrations = [
   { name: 'promote-npc-statblock-ref-to-nested', run: promoteNPCStatblockRefToNested },
   { name: 'sweep-aunt-uncle-sibling-stubs', run: sweepAuntUncleSiblingStubs },
   { name: 'sweep-stub-names', run: sweepStubNames },
+  { name: 'seed-cross-tool-quota', run: seedCrossToolQuota },
 ];
 
 /**
  * Run all pending migrations that haven't been completed yet.
- * Migrations are run synchronously in order.
+ * Migrations are awaited in order — a migration may return a Promise
+ * (e.g., the cross-tool quota seed signs via SubtleCrypto). Sync
+ * migrations work unchanged because `await` on a non-thenable value
+ * resolves immediately.
  *
- * If a migration throws an error, it won't be marked complete and will retry on next load.
+ * If a migration throws, it won't be marked complete and will retry
+ * on next load.
  */
-export function runPendingMigrations() {
+export async function runPendingMigrations() {
   let completed;
 
   try {
@@ -105,7 +115,7 @@ export function runPendingMigrations() {
     if (!completed.includes(migration.name)) {
       try {
         console.log(`Running migration: ${migration.name}...`);
-        migration.run();
+        await migration.run();
         completed.push(migration.name);
         localStorage.setItem('migrations-completed', JSON.stringify(completed));
         console.log(`Migration complete: ${migration.name}`);

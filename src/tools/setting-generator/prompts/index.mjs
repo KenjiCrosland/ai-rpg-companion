@@ -14,6 +14,8 @@ export {
   factionListPrompt,
   detailedFactionPrompt,
   singleFactionPrompt,
+  classifyNPCsByFactionPrompt,
+  classifyNPCsByFactionValidation,
 } from './faction-prompts.mjs';
 
 export {
