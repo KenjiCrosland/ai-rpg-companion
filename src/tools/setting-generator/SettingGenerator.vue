@@ -3,13 +3,33 @@
     <template #sidebar>
       <div class="sidebar-content">
         <ul class="settings-tabs">
-          <!-- Flatten settings tree and display each with appropriate indentation -->
-          <li v-for="setting in flattenSettings(settingsTree)" :key="setting.originalIndex"
-            :class="{ 'active-tab': currentSettingIndex === setting.originalIndex }"
-            :style="{ marginLeft: `${setting.depth * 20}px` }">
-            <button class="setting-button" @click="selectSetting(setting.originalIndex)">
-              {{ setting.place_name || 'Unnamed Setting' }}
-            </button>
+          <!-- Collapsible tree: every node renders at its depth as a
+               (chevron-or-spacer) + label row. Branches stay collapsed
+               by default; auto-expand reveals the path to the
+               currently-selected setting; manual toggles persist for
+               the session. -->
+          <li v-for="setting in visibleSidebarSettings"
+            :key="setting.id || setting.originalIndex"
+            :class="['setting-tree-item', { 'active-tab': currentSettingIndex === setting.originalIndex }]">
+            <div class="setting-tree-row" :style="{ paddingLeft: `${setting.depth * 16}px` }">
+              <button v-if="setting.hasChildren"
+                type="button"
+                class="setting-tree-chevron"
+                :class="{ 'is-expanded': setting.isExpanded }"
+                :aria-label="setting.isExpanded
+                  ? `Collapse ${setting.place_name || 'Unnamed Setting'}`
+                  : `Expand ${setting.place_name || 'Unnamed Setting'}`"
+                :aria-expanded="setting.isExpanded ? 'true' : 'false'"
+                @click.stop="toggleExpanded(setting.id)">
+                <svg class="setting-tree-chevron-glyph" viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">
+                  <polygon points="2,1 8,5 2,9" fill="currentColor" />
+                </svg>
+              </button>
+              <span v-else class="setting-tree-chevron-spacer" aria-hidden="true"></span>
+              <button class="setting-tree-label" @click="selectSetting(setting.originalIndex)">
+                {{ setting.place_name || 'Unnamed Setting' }}
+              </button>
+            </div>
           </li>
           <li>
             <button v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" class="setting-button"
@@ -17,14 +37,9 @@
           </li>
         </ul>
         <div class="copy-buttons">
-
-          <ParActionButton @click="copySettingsAsPlainText" variant="secondary">Copy As Plain Text</ParActionButton>
-          <ParActionButton @click="copySettingsAsHtml" variant="secondary">Copy As HTML</ParActionButton>
-          <ParActionButton @click="copySettingsAsMarkdown" variant="secondary">Copy As Homebrewery Markdown</ParActionButton>
-          <p>Use the above buttons to copy or download all setting info into your desired format. For homebrewery go
-            <cdr-link href="https://homebrewery.naturalcrit.com/new">here</cdr-link> and paste the markdown
-            there. You will need to add your own pagebreaks.
-          </p>
+          <!-- Export buttons moved to <SettingExports> below the main
+               content area. Only Delete All stays in the sidebar
+               because it's destructive cleanup, not an export. -->
           <ParActionButton @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</ParActionButton>
         </div>
       </div>
@@ -50,18 +65,15 @@
         <!-- ZONE 2: Form card -->
         <div class="form-card">
           <form @submit.prevent="generateSetting" class="setting-form">
-            <div class="form-row-identity">
-              <cdr-input id="adjective" v-model="currentSetting.adjective" background="secondary"
-                label="Adjective (optional)" placeholder="e.g. Flourishing, Decrepit, Decadent" />
-              <cdr-input id="setting_type" v-model="currentSetting.setting_type" background="secondary"
-                label="Type of Place (optional)" placeholder="e.g. Kingdom, Town, Republic" />
-              <cdr-input id="place_name" v-model="currentSetting.place_name" background="secondary"
-                label="Place Name (optional)" placeholder="e.g. Valderia, Ashenmoor" />
+            <div class="form-row-description">
+              <cdr-input id="setting_description" v-model="currentSetting.setting_description" background="secondary"
+                label="Describe your setting (optional)"
+                placeholder="e.g. A decadent mercantile republic in decline — or leave blank for a surprise." />
             </div>
             <div class="form-row-lore">
               <cdr-input :rows="4" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
                 label="Setting Lore (optional)"
-                placeholder="Describe your setting in as much or as little detail as you like — or leave blank for a surprise.">
+                placeholder="Paste in existing lore, or describe deeper history — optional.">
                 <template #helper-text-bottom>
                   Already have lore? Paste it from the <cdr-link
                     href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link> to build
@@ -101,10 +113,11 @@
         <TabPanel label="Overview">
           <OverviewTab :setting="currentSetting" :premium="premium" @updated-setting="onOverviewUpdated" />
         </TabPanel>
-        <TabPanel label="Locations">
+        <TabPanel label="Locations" :bare="true">
           <LocationsTab :setting="currentSetting" :all-settings="settings" :premium="premium"
             @updated-setting="onLocationsUpdated" @generate-sublocation="generateSetting"
-            @delete-sublocation-setting="deleteSetting" />
+            @delete-sublocation-setting="deleteSetting"
+            @promote-related-place="onPromoteRelatedPlace" />
         </TabPanel>
         <TabPanel label="Factions">
           <FactionsTab :setting="currentSetting" :premium="premium" @updated-setting="onFactionsUpdated" />
@@ -116,9 +129,12 @@
           <QuestHooksTab :setting="currentSetting" :premium="premium" @updated-setting="onQuestHooksUpdated" />
         </TabPanel>
       </Tabs>
-      <ParActionButton class="delete-button" v-if="settingOverviewExists && !currentlyLoading"
-        @click="deleteSetting(currentSettingIndex)">Delete
-        Setting</ParActionButton>
+      <SettingOperations
+        v-if="settingOverviewExists && !currentlyLoading"
+        :settings-tree="currentSettingSubtree"
+        :loading="currentlyLoading"
+        @delete-setting="deleteSetting(currentSetting.id)"
+      />
 
       <!-- Footer below content -->
       <div class="footer-meta" v-if="settingOverviewExists">
@@ -128,6 +144,7 @@
           </template>
           <template #features>
             <li>Cross-device save and load — your settings sync between browsers and devices.</li>
+            <li>Unlimited cross-tool generation — promote items into full settings and dungeons without the 5/day free-tier cap.</li>
             <li>
               <a :href="patreonTiersUrl" target="_blank" rel="noopener">See all premium tiers and benefits on Patreon</a><span aria-hidden="true"> →</span>
             </li>
@@ -141,28 +158,23 @@
         </ParCallout>
       </div>
 
-      <div class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview">
-        <CdrSkeleton>
-          <Tabs>
-            <TabPanel label="Overview">
-              <div class="tab-skeleton">
-                <h2>{{ formatTitle(currentSetting.adjective, currentSetting.setting_type, currentSetting.place_name,
-                  currentSetting.setting_overview?.title) }}</h2>
-                <OverviewSkeleton />
-              </div>
-
-            </TabPanel>
-            <TabPanel label="Locations" :disabled="true">
-            </TabPanel>
-            <TabPanel label="Factions" :disabled="true">
-            </TabPanel>
-            <TabPanel label="NPCs" :disabled="true">
-            </TabPanel>
-            <TabPanel label="Quest Hooks" :disabled="true">
-            </TabPanel>
-          </Tabs>
-        </CdrSkeleton>
-      </div>
+      <!-- Loading branch mirrors the loaded-state Tabs wrapper exactly
+           (class, width style) so the skeleton card has identical
+           horizontal context to the rendered OverviewTab card. -->
+      <Tabs class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview"
+        height="auto" style="width: 100%">
+        <TabPanel label="Overview">
+          <SettingOverviewCardSkeleton />
+        </TabPanel>
+        <TabPanel label="Locations" :disabled="true">
+        </TabPanel>
+        <TabPanel label="Factions" :disabled="true">
+        </TabPanel>
+        <TabPanel label="NPCs" :disabled="true">
+        </TabPanel>
+        <TabPanel label="Quest Hooks" :disabled="true">
+        </TabPanel>
+      </Tabs>
     </div>
   </GeneratorLayout>
 </template>
@@ -170,29 +182,60 @@
 <script setup>
 import { ParActionButton, ParCallout } from "@/parchment";
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
-import { CdrInput, CdrLink, CdrSkeleton } from "@rei/cedar";
-import { settingOverviewPrompt, sublocationOverviewPrompt } from "./prompts/index.mjs";
-import OverviewSkeleton from "@/components/skeletons/OverviewSkeleton.vue";
+import { CdrInput, CdrLink } from "@rei/cedar";
+import {
+  settingOverviewPrompt,
+  sublocationOverviewPrompt,
+  placeOverviewPrompt,
+  validatePlaceOverviewResponse,
+  landscapeOverviewPrompt,
+  validateLandscapeOverviewResponse,
+} from "./prompts/index.mjs";
+import SettingOverviewCardSkeleton from "./components/SettingOverviewCardSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
-import { formatSettingAsPlainText } from "@/util/formatSettingAsPlainText.mjs";
-import { formatSettingAsMarkdown } from "@/util/formatSettingAsMarkdown.mjs";
-import { formatSettingAsHtml } from "@/util/formatSettingAsHTML.mjs";
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
-import placeAdjectives from '@/data/place-adjectives.json';
-import place_names from '@/data/place-names.json';
+import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
+import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
+import {
+  linkSettingToItemStub,
+  resetItemStubsForDeletedSetting,
+  findItemStubMatchingName,
+  addSettingStubToItem,
+} from '@/util/item-storage.mjs';
+import { getSettingById, mergeRelatedPlaces, auntUncleNamesFor } from '@/util/setting-storage.mjs';
+import { consolidateOverviewToMarkdown } from '@/util/renderSettingOverview.mjs';
+import { inferSettingDimensions } from './utils/infer-setting-dimensions.mjs';
+import {
+  generateCharacterCandidates,
+  pickRandomTension,
+  getBannedTropesForGeneration,
+  detectCozyMode,
+  detectLowStakesTension,
+} from './utils/setting-dimensions.mjs';
+import { applyInheritanceFromSiblings } from './utils/inheritance.mjs';
+import { extractRelatedPlaces } from './utils/extract-related-places.mjs';
+import {
+  sortUnnamedToBottom,
+  siblingIdsToReparent,
+  flattenVisibleSettings,
+  expandPathToSetting,
+} from './utils/sidebar-tree.mjs';
+import { combineSettingOverview } from '@/util/combineSettingOverview.mjs';
 import '@rei/cedar/dist/style/cdr-link.css';
 import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-popover.css';
 import QuestHooksTab from './components/tabs/QuestHooksTab.vue';
 import OverviewTab from './components/tabs/OverviewTab.vue';
 import FactionsTab from './components/tabs/FactionsTab.vue';
+import SettingOperations from './components/SettingOperations.vue';
+import { canGenerateCrossTool } from '@/util/can-generate-cross-tool.mjs';
 import LocationsTab from './components/tabs/LocationsTab.vue';
 import NPCsTab from './components/tabs/NPCsTab.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -233,10 +276,16 @@ const onFactionsUpdated = (updatedSetting) => {
   }
 };
 
-// Handler for OverviewTab emit — persists edited title and combined_content
+// Handler for OverviewTab emit — persists edited name, epithet, and
+// combined_content. The name lives both on the top-level place_name
+// (sidebar source of truth) and on setting_overview.name (kept in
+// sync for export utilities that read from the overview).
 const onOverviewUpdated = (updatedSetting) => {
   const idx = currentSettingIndex.value;
   if (settings.value[idx]) {
+    if (updatedSetting.place_name !== undefined) {
+      settings.value[idx].place_name = updatedSetting.place_name;
+    }
     settings.value[idx].setting_overview = updatedSetting.setting_overview;
     saveSettingsToLocalStorage();
   }
@@ -260,24 +309,6 @@ const onQuestHooksUpdated = (updatedSetting) => {
   }
 };
 
-function copySettingsAsPlainText() {
-  const text = formatSettingAsPlainText(settingsTree.value);
-  navigator.clipboard.writeText(text);
-  alert("Settings copied to clipboard as plain text!");
-}
-
-function copySettingsAsMarkdown() {
-  const text = formatSettingAsMarkdown(settingsTree.value);
-  navigator.clipboard.writeText(text);
-  alert("Settings copied to clipboard as Homebrewery Markdown!");
-}
-
-function copySettingsAsHtml() {
-  const text = formatSettingAsHtml(settingsTree.value);
-  navigator.clipboard.writeText(text);
-  alert("Settings copied to clipboard as HTML!");
-}
-
 function deleteAllSettings() {
   if (confirm("Are you sure you want to delete all settings?")) {
     settings.value = [reactive(freshDefaultSetting())];
@@ -299,16 +330,20 @@ function makeSettingId() {
 
 const defaultSetting = reactive({
   id: '',
-  adjective: '',
-  setting_type: '',
+  setting_description: '',
   place_name: '',
   place_lore: '',
+  type: null,
+  character: null,
+  register: null,
+  userName: null,
+  tension: null,
   setting_overview: null,
   factions: [],
   importantLocations: [],
   npcs: [],
   questHooks: [],
-  parentIndex: null,
+  parentId: null,
   loadingFactions: false,
   loadingSubLocations: false,
   loadingsettingOverview: false,
@@ -321,50 +356,181 @@ function freshDefaultSetting() {
 const settings = ref([reactive(freshDefaultSetting())]);
 const currentSetting = computed(() => settings.value[currentSettingIndex.value] || reactive({ ...defaultSetting }));
 
+// Pending cross-tool seed (e.g., from an item card's "Create Setting"
+// action). Held from mount until the post-generation finalize writes
+// the back-link onto the source-tool's stub.
+const pendingSeed = ref(null);
+
 onMounted(async () => {
+  // Reset to a clean state before loading. Defends against test-time
+  // module re-mount where module-level state can leak between component
+  // instances; in production this is a no-op since the component
+  // mounts once per page load.
+  settings.value = [reactive(freshDefaultSetting())];
+  currentSettingIndex.value = 0;
+
   loadSettingsFromLocalStorage();
 
-  // Handle deep linking from NPC Generator
   const params = getNavigationParams();
 
+  // Deep-link: NPC Generator → setting NPCs tab. Select the named
+  // setting and switch to its NPCs tab.
   if (params.source && params.tab === 'npcs') {
-    // Find setting by name
     const settingIndex = settings.value.findIndex(s =>
       s.place_name === params.source
     );
-
     if (settingIndex !== -1) {
-      // Select the setting
       currentSettingIndex.value = settingIndex;
-
-      // Wait for the watcher to reset tab index (it runs on nextTick)
       await nextTick();
       await nextTick();
-
-      // NOW switch to NPCs tab (index 3) after the watcher has run
       activeTabIndex.value = 3;
     }
+    return;
+  }
+
+  // Deep-link: Item Generator → "View in Setting Generator" for a
+  // promoted stub. Select that setting by id.
+  if (params.setting) {
+    const settingIndex = settings.value.findIndex(s => s.id === params.setting);
+    if (settingIndex !== -1) {
+      currentSettingIndex.value = settingIndex;
+    }
+    return;
+  }
+
+  // Cross-tool seed: Item Generator → "Create Setting" from a stub.
+  // Push a fresh blank setting (so the landing form is visible),
+  // prefill setting_description from the seed, and remember the seed
+  // so the post-generation hook writes the cross-tool back-link.
+  if (params.fromType && params.fromId) {
+    const seed = loadSeededInput({
+      fromType: params.fromType,
+      fromId: params.fromId,
+      entityName: params.entityName,
+      destinationType: 'setting',
+    });
+    if (seed) {
+      const prefill = buildSettingPrefillFromItem(seed);
+      createNewSetting();
+      if (prefill) {
+        settings.value[currentSettingIndex.value].setting_description = prefill;
+      }
+      pendingSeed.value = seed;
+      return;
+    }
+  }
+
+  // Default: land on the form, not on someone's existing setting. If
+  // the user has saved settings, loadSettingsFromLocalStorage put us on
+  // the first one (parchment card view, no form). Push a fresh blank
+  // and switch to it so the landing experience is "ready to generate"
+  // for both new and returning users. The sidebar still shows every
+  // saved setting; clicking one switches to its card view as before.
+  //
+  // Gate on localStorage rather than settings.value — settings.value is
+  // module-level, so test state leaks across mounts; localStorage is
+  // authoritative for "has this user saved a setting before."
+  if (localStorage.getItem('gameSettings')) {
+    createNewSetting();
   }
 });
-const settingsTree = computed(() => {
-  let tree = [];
-  let settingsMap = new Map();
 
-  // Initialize map entries for all settings with their indices as keys
-  settings.value.forEach((setting, index) => {
-    settingsMap.set(index, { ...setting, children: [], originalIndex: index });
+/**
+ * Finalize a pending cross-tool seed after the destination setting has
+ * been generated and saved. Writes:
+ *   1. The promotion edge (setting → inspired_by_item → item) via the
+ *      shared substrate.
+ *   2. The source-side back-link (`setting_id` onto the item's
+ *      related_settings stub) so the item card flips from "Create
+ *      Setting" to "View in Setting Generator" without a refresh.
+ *
+ * No-op if no seed is pending or the setting has no id yet.
+ */
+function finalizePendingSeed(setting) {
+  const seed = pendingSeed.value;
+  if (!seed || !setting?.id) return;
+
+  addReferenceForSeed(seed, {
+    type: 'setting',
+    id: setting.id,
+    name: setting.place_name || 'Unnamed Setting',
   });
 
-  // Populate children arrays based on the parentIndex
+  const stubName = seed.entities?.[0]?.name;
+  if (stubName) {
+    linkSettingToItemStub(seed.source.id, stubName, setting.id);
+  }
+
+  // Denormalize source provenance onto the setting record so the
+  // OverviewTab can render "Inspired by [source]" without walking
+  // tool-references on every render. Mirrors the NPC pattern's
+  // sourceType / sourceId / sourceName fields.
+  setting.sourceType = seed.source.type;
+  setting.sourceId = seed.source.id;
+  setting.sourceName = seed.source.name;
+
+  pendingSeed.value = null;
+}
+const settingsTree = computed(() => {
+  let tree = [];
+  // Tree-build walks the flat settings array twice: once to seed
+  // wrapper nodes keyed by id, then again to attach each node to its
+  // parent (or to the top-level tree array if parentId is null /
+  // unresolvable). Index-keyed lookup was the old way; id-keyed lookup
+  // is what survives delete operations without reindex.
+  const settingsById = new Map();
   settings.value.forEach((setting, index) => {
-    if (typeof setting.parentIndex === 'number' && settingsMap.has(setting.parentIndex)) {
-      settingsMap.get(setting.parentIndex).children.push(settingsMap.get(index));
-    } else if (setting.parentIndex === null) {
-      tree.push(settingsMap.get(index));
+    if (!setting?.id) return;
+    settingsById.set(setting.id, { ...setting, children: [], originalIndex: index });
+  });
+
+  settings.value.forEach((setting) => {
+    if (!setting?.id) return;
+    const node = settingsById.get(setting.id);
+    if (!node) return;
+    const parentId = setting.parentId ?? null;
+    const parentNode = parentId ? settingsById.get(parentId) : null;
+    if (parentNode) {
+      parentNode.children.push(node);
+    } else {
+      // Top-level: parentId is null, OR parentId points at a setting
+      // that no longer exists (orphaned by some upstream operation —
+      // promote to top-level rather than dropping silently).
+      tree.push(node);
     }
   });
 
+  // Sort each tree level so settings without a place_name fall to the
+  // bottom. Keeps the in-progress draft (the "show form by default"
+  // blank that gets pushed at mount) from sitting above the user's
+  // named settings in the sidebar. Stable within each bucket so named
+  // settings keep their insertion order.
+  sortUnnamedToBottom(tree);
+
   return tree;
+});
+
+/**
+ * Walk the settings tree to find a node by id. Used to extract the
+ * current setting's sub-tree (active node + descendants) for the
+ * export panel — the user expects "export this setting" to mean the
+ * setting they're viewing plus its sub-locations, not the entire
+ * workspace of sibling regions.
+ */
+function findNodeById(tree, id) {
+  for (const node of tree) {
+    if (node.id === id) return node;
+    const found = findNodeById(node.children || [], id);
+    if (found) return found;
+  }
+  return null;
+}
+
+const currentSettingSubtree = computed(() => {
+  const id = currentSetting.value?.id;
+  if (!id) return [];
+  const node = findNodeById(settingsTree.value, id);
+  return node ? [node] : [];
 });
 
 function flattenSettings(tree, depth = 0) {
@@ -378,6 +544,88 @@ function flattenSettings(tree, depth = 0) {
   return flat;
 }
 
+// Sidebar tree expansion state. Sub-trees stay collapsed by default;
+// the user toggles open the branches they're working in. Persisted to
+// sessionStorage so the layout survives an in-tab reload but resets
+// on a fresh tab (sessionStorage felt right — across-tab persistence
+// would surprise a user opening a new tab to a different campaign).
+//
+// Auto-expand: a watcher below opens the ancestor path whenever
+// currentSettingIndex changes, so navigating to a deep node (via
+// click, link, or newly-promoted sublocation auto-selection) reveals
+// the path without the user hunting.
+const EXPANSION_STORAGE_KEY = 'setting-sidebar-expanded';
+
+function loadExpandedSettingIds() {
+  if (typeof window === 'undefined' || !window.sessionStorage) return new Set();
+  try {
+    const raw = window.sessionStorage.getItem(EXPANSION_STORAGE_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr.filter(x => typeof x === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+const expandedSettingIds = ref(loadExpandedSettingIds());
+
+function persistExpansion() {
+  if (typeof window === 'undefined' || !window.sessionStorage) return;
+  try {
+    window.sessionStorage.setItem(
+      EXPANSION_STORAGE_KEY,
+      JSON.stringify([...expandedSettingIds.value]),
+    );
+  } catch {
+    // sessionStorage full or disabled — silent. Expansion state lives
+    // in memory for the rest of the session either way.
+  }
+}
+
+function toggleExpanded(settingId) {
+  if (!settingId) return;
+  const next = new Set(expandedSettingIds.value);
+  if (next.has(settingId)) {
+    next.delete(settingId);
+  } else {
+    next.add(settingId);
+  }
+  expandedSettingIds.value = next;
+  persistExpansion();
+}
+
+// Filtered + depth-tagged list the sidebar renders. Recomputes when
+// the tree shape changes OR when the user toggles a branch.
+const visibleSidebarSettings = computed(() =>
+  flattenVisibleSettings(settingsTree.value, expandedSettingIds.value)
+);
+
+// Auto-expand the ancestor path to the currently-selected setting.
+// Set-union semantics — never collapses a branch the user already
+// opened. Runs immediate so the initial render shows the right
+// branches for the persisted-or-default selection.
+watch(
+  () => currentSettingIndex.value,
+  (newIndex) => {
+    if (newIndex == null) return;
+    const target = settings.value[newIndex];
+    if (!target?.id) return;
+    const next = expandPathToSetting(
+      settings.value,
+      target.id,
+      expandedSettingIds.value,
+    );
+    // Only persist when the set actually changed; avoids a spurious
+    // sessionStorage write on every selection click.
+    if (next.size !== expandedSettingIds.value.size) {
+      expandedSettingIds.value = next;
+      persistExpansion();
+    }
+  },
+  { immediate: true },
+);
+
 const selectSetting = (index) => {
   currentSettingIndex.value = index;
   isNewSetting.value = false;  // Not new since it's selected from existing ones
@@ -389,46 +637,55 @@ const updateOriginalIndices = () => {
   });
 };
 
-const deleteSetting = (indexToDelete) => {
+const deleteSetting = (idToDelete) => {
   //confirm deletion
   if (!confirm("Are you sure you want to delete this setting?")) return;
-  if (indexToDelete < 0 || indexToDelete >= settings.value.length) return;  // Safety check
+  if (!idToDelete) return;
+  const indexToDelete = settings.value.findIndex(s => s?.id === idToDelete);
+  if (indexToDelete < 0) return;
 
-  // Capture the parentIndex of the setting to be deleted for reassigning children
-  const parentOfDeleted = settings.value[indexToDelete].parentIndex;
-  // Capture the deleted setting's id so we can drop its references after removal.
-  // (Children are re-parented, not cascading-deleted — only one id needs cleanup.)
-  const deletedId = settings.value[indexToDelete].id;
+  // Capture the deleted setting's id + parentId so we can re-parent its
+  // children and clean up references after removal.
+  const deletedId = idToDelete;
+  const deletedParentId = settings.value[indexToDelete].parentId ?? null;
 
-  // Update children of the deleted setting to the parent of the deleted setting
-  settings.value.forEach((setting, index) => {
-    if (setting.parentIndex === indexToDelete) {
-      setting.parentIndex = parentOfDeleted;
+  // Re-parent any direct children of the deleted setting up one level,
+  // and detach any promoted-stub pointers across all settings that
+  // pointed at this id. Two stub families to clean: importantLocations
+  // (legacy free-invented sublocations) and related_places (extracted
+  // from prose, kind-grouped). Both stubs remain in place but flip
+  // back to "needs promotion" — the user keeps the textual context
+  // and can re-promote later.
+  settings.value.forEach((setting) => {
+    if (setting?.parentId === deletedId) {
+      setting.parentId = deletedParentId;
     }
-    // Additionally check and update main_index in importantLocations if needed
-    setting.importantLocations.forEach(location => {
-      if (location.main_index === indexToDelete) {
-        //location.main_index = parentOfDeleted !== null ? parentOfDeleted : null;  // Reassign or remove depending on parent availability
-        location.main_index = null;  // Always remove main_index
-        location.has_detailed_description = false;  // Reset detailed description flag
-      } else if (location.main_index > indexToDelete) {
-        location.main_index--;  // Adjust indices that are higher than the deleted index
+    (setting?.importantLocations || []).forEach(location => {
+      if (location?.promoted_setting_id === deletedId) {
+        location.promoted_setting_id = null;
+        location.has_detailed_description = false;
+      }
+    });
+    (setting?.related_places || []).forEach(place => {
+      if (place?.promoted_setting_id === deletedId) {
+        place.promoted_setting_id = null;
       }
     });
   });
 
-  // Remove the setting
+  // Remove the setting itself.
   settings.value.splice(indexToDelete, 1);
 
-  // Update parentIndex for all remaining settings
-  settings.value.forEach(setting => {
-    if (typeof setting.parentIndex === 'number' && setting.parentIndex > indexToDelete) {
-      setting.parentIndex--;  // Adjust parentIndex down by one to account for the shift
-    }
-  });
-
   if (deletedId) {
+    // Reference-graph cleanup: drop every edge where this setting is
+    // source or target (e.g., `setting → inspired_by_item → item`,
+    // `npc → appears_in_setting → setting`).
     removeReferencesForEntity('setting', deletedId);
+    // Source-side stub cleanup: flip every item's related_settings stub
+    // that pointed at this setting back to setting_id: null, so the item
+    // card's UI reverts from "View in Setting Generator" to "Create
+    // Setting" instead of dangling on a dead link.
+    resetItemStubsForDeletedSetting(deletedId);
   }
 
   saveSettingsToLocalStorage();
@@ -457,59 +714,78 @@ watch(currentSettingIndex, (newValue, oldValue) => {
   }
 });
 
-const createNewSetting = (isSublocation, adjective = '', setting_type = '', place_name = '', title = '', parentIndex = null) => {
-  const newSetting = reactive({
-    id: makeSettingId(),
-    adjective: adjective,
-    setting_type: setting_type,
-    place_name: place_name,
-    title: title,
-    place_lore: '',
-    setting_overview: null,
-    factions: [],
-    importantLocations: [],
-    npcs: [],
-    questHooks: [],
-    parentIndex: isSublocation ? parentIndex : null,
-    loadingFactions: false,
-    loadingSubLocations: false,
-    loadingNewFaction: false,
-  });
-
-  // Push the new setting to the settings array
-  settings.value.push(newSetting);
-
-  // Update currentSettingIndex to the index of the newly created setting
+// Empty-slate "+ New Setting" button — creates a blank setting and
+// focuses the form. Form submission runs the inference + generation
+// pipeline against whatever the user typed (or nothing).
+const createNewSetting = () => {
+  settings.value.push(reactive(freshDefaultSetting()));
   currentSettingIndex.value = settings.value.length - 1;
-  isNewSetting.value = true;  // Mark as new
+  isNewSetting.value = true;
+};
 
-  // Optionally save settings to local storage or another persistent state
-  //saveSettingsToLocalStorage();
+// Sublocation-creation: takes the stub's name/type/title plus the
+// parent's register seed. The descriptive title from the stub seeds
+// `place_name` so the sidebar has something to show while the AI
+// generates. After generation, place_name is overwritten with the
+// overview's full title.
+const createSublocationSetting = ({
+  parentId,
+  subLocationName,
+  setting_type,
+  register,
+}) => {
+  const newSetting = reactive({
+    ...freshDefaultSetting(),
+    place_name: subLocationName || '',
+    userName: subLocationName || null,
+    type: setting_type || null,
+    register: register || null,
+    parentId: parentId,
+  });
+  settings.value.push(newSetting);
+  currentSettingIndex.value = settings.value.length - 1;
+  isNewSetting.value = true;
 };
 
 
 
 function saveSettingsToLocalStorage() {
+  // Drop empty-draft settings (no setting_overview, not loading)
+  // before persisting. The "show form by default" behavior pushes a
+  // fresh blank draft into settings.value at each mount; if the user
+  // never generates in it but triggers a save (e.g., deletes another
+  // setting), the draft would otherwise leak into localStorage and
+  // accumulate as "Unnamed Setting" sidebar entries over time.
+  // Filtering both at load and at save means the leak is caught in
+  // both directions: load drops anything that snuck through previously,
+  // save prevents new pollution from being written.
+  const filtered = filterAndReindexDraftSettings(settings.value);
+
   // Map over settings to adjust NPCs and remove non-serializable values
-  const settingsToSave = settings.value.map(setting => ({
-    ...setting,
-    setting_overview: setting.setting_overview,
-    factions: setting.factions.map(faction => ({
-      ...faction,
-      open: false // Set all faction.open properties to false before saving
-    })),
-    loadingFactions: false,  // Set loadingFactions to false before saving
-    loadingSubLocations: false,  // Set loadingSubLocations to false before saving
-    loadingsettingOverview: false,  // Set loadingsettingOverview to false before saving
-    importantLocations: setting.importantLocations.map(location => ({
-      ...location,
-      open: false // Set all location.open properties to false before saving
-    })),
-    npcs: setting.npcs.map(npc => ({
-      ...npc,
-      open: false // Set all npc.open properties to false before saving
-    }))
-  }));
+  const settingsToSave = filtered.map(setting => {
+    // Drop the transient promotion marker; only matters while a
+    // generation is in flight, never persisted.
+    const { _pendingPromotion, ...rest } = setting;
+    return {
+      ...rest,
+      setting_overview: setting.setting_overview,
+      factions: setting.factions.map(faction => ({
+        ...faction,
+        open: false // Set all faction.open properties to false before saving
+      })),
+      loadingFactions: false,  // Set loadingFactions to false before saving
+      loadingSubLocations: false,  // Set loadingSubLocations to false before saving
+      loadingsettingOverview: false,  // Set loadingsettingOverview to false before saving
+      importantLocations: setting.importantLocations.map(location => ({
+        ...location,
+        open: false // Set all location.open properties to false before saving
+      })),
+      npcs: setting.npcs.map(npc => ({
+        ...npc,
+        open: false // Set all npc.open properties to false before saving
+      }))
+    };
+  });
 
   // Serialize the modified settings to a JSON string
   const serializedSettings = JSON.stringify(settingsToSave);
@@ -518,21 +794,160 @@ function saveSettingsToLocalStorage() {
   localStorage.setItem('gameSettings', serializedSettings);
 }
 
+/**
+ * Filter out empty-draft settings and re-link orphaned references.
+ *
+ * The "show form by default" behavior pushes a fresh blank
+ * freshDefaultSetting() onto settings.value at every mount. If the
+ * user then triggers any save (via delete, edit, etc.) before
+ * generating in that draft, the blank gets persisted. Repeating that
+ * cycle (mount → delete → mount → delete…) leaks one "Unnamed
+ * Setting" per cycle.
+ *
+ * Drops every setting that has no setting_overview AND isn't currently
+ * mid-generation. References are by stable id (`parentId`,
+ * `promoted_setting_id`), so the surviving settings keep their links
+ * with no remap needed; the only fix-up is detaching pointers that
+ * referenced a filtered-out id (children become top-level, promoted
+ * stubs revert to "needs promotion").
+ */
+function filterAndReindexDraftSettings(settingsArr) {
+  if (!Array.isArray(settingsArr)) return [];
+
+  const kept = settingsArr.filter(s => !!s?.setting_overview || !!s?.loadingsettingOverview);
+  const keptIds = new Set(kept.map(s => s?.id).filter(Boolean));
+
+  return kept.map(s => ({
+    ...s,
+    parentId: s?.parentId && keptIds.has(s.parentId) ? s.parentId : null,
+    importantLocations: (s.importantLocations || []).map(loc => ({
+      ...loc,
+      promoted_setting_id:
+        loc?.promoted_setting_id && keptIds.has(loc.promoted_setting_id)
+          ? loc.promoted_setting_id
+          : null,
+    })),
+  }));
+}
+
 function loadSettingsFromLocalStorage() {
   const serializedSettings = localStorage.getItem('gameSettings');
   if (serializedSettings) {
     try {
       const parsedSettings = JSON.parse(serializedSettings);
-      settings.value = parsedSettings.map(setting => reactive(setting));
+      const cleaned = filterAndReindexDraftSettings(parsedSettings);
+      settings.value = cleaned.map(setting => reactive(setting));
 
       // Migrate existing NPCs to shared storage
       settings.value.forEach(setting => {
         migrateSettingNPCs(setting);
       });
+
+      // Consolidate legacy setting overviews into combined_content.
+      // Settings generated before the field-rename pass have keys
+      // like main_problem / conclusion / recent_event_* that the
+      // render path no longer reads. Rather than dual-read in render
+      // and exports forever, we consolidate those legacy fields into
+      // a single combined_content string here, on load. Once
+      // migrated, the render/export paths only need to handle two
+      // shapes: (a) combined_content blob (legacy + edited), or
+      // (b) the new individual-field set (fresh generations).
+      migrateLegacyOverviews();
+
+      // Self-heal a known regression in parent-promotion:
+      // earlier versions of finalizePendingPromotion called
+      // `reparentSetting` against localStorage before the new parent
+      // had been persisted, so the reparent silently failed even
+      // though the promoted_setting_id stub side was correctly
+      // updated. Result: setting whose related_places carries a
+      // `kind: 'parent'` stub with promoted_setting_id set, but the
+      // setting's own parentId still null. Re-link those here.
+      // Idempotent: when parentId already matches, this is a no-op.
+      healParentPromotionLinks();
     } catch (error) {
       console.error("Failed to parse settings from local storage:", error);
     }
   }
+}
+
+function healParentPromotionLinks() {
+  let changed = false;
+  const byId = new Map();
+  const byName = new Map();
+  for (const s of settings.value) {
+    if (s?.id) byId.set(s.id, s);
+    const nameKey = (s?.place_name || '').trim().toLowerCase();
+    if (s?.id && nameKey && !byName.has(nameKey)) byName.set(nameKey, s.id);
+  }
+  for (const setting of settings.value) {
+    if (!setting || !Array.isArray(setting.related_places)) continue;
+    for (const stub of setting.related_places) {
+      // (a) Back-fill promoted_setting_id when the stub's name matches
+      // an existing setting in the library. Heals data created before
+      // linkExistingSettingsByName ran during extraction (e.g., the
+      // user already has Aethelmar as a real setting AND a stub for
+      // Aethelmar with promoted_setting_id null). Skip self-matches.
+      if (!stub?.promoted_setting_id) {
+        const nameKey = (stub?.name || '').trim().toLowerCase();
+        const existingId = nameKey ? byName.get(nameKey) : null;
+        if (existingId && existingId !== setting.id) {
+          stub.promoted_setting_id = existingId;
+          changed = true;
+        }
+      }
+      const promotedId = stub?.promoted_setting_id;
+      if (!promotedId) continue;
+      // (b) Clear pointers to settings that no longer exist (e.g., the
+      // user deleted the promoted target). The stub remains; only the
+      // pointer is reset, so the UI flips from "View in Setting
+      // Generator" back to "Create Setting" and the user can re-promote
+      // when ready.
+      if (!byId.has(promotedId)) {
+        stub.promoted_setting_id = null;
+        changed = true;
+        continue;
+      }
+      // (c) For kind === 'parent', also ensure setting.parentId mirrors
+      // the stub's promoted_setting_id. Heals an earlier regression
+      // where reparentSetting read pre-save localStorage and silently
+      // failed; the stub's promoted_setting_id was set correctly but
+      // setting.parentId stayed null.
+      if (stub.kind === 'parent' && (setting.parentId ?? null) !== promotedId) {
+        setting.parentId = promotedId;
+        changed = true;
+      }
+    }
+  }
+  if (changed) saveSettingsToLocalStorage();
+}
+
+function migrateLegacyOverviews() {
+  let changed = false;
+  for (const setting of settings.value) {
+    const overview = setting.setting_overview;
+    if (!overview) continue;
+    if (overview.combined_content) continue;
+    // A "legacy" overview is one with old keys (main_problem,
+    // conclusion, recent_event_*, impactful_economic_event,
+    // potential_solutions) but missing the new canonical equivalents.
+    // Fresh generations have central_dynamic + present_state +
+    // notable_*_facet fields — those skip migration and render
+    // through the individual-field path.
+    const hasNewKeys = overview.central_dynamic || overview.present_state;
+    const hasLegacyKeys =
+      overview.main_problem
+      || overview.conclusion
+      || overview.recent_event_current_ruler
+      || overview.recent_event_social
+      || overview.recent_event_military
+      || overview.impactful_economic_event
+      || overview.potential_solutions;
+    if (!hasNewKeys && hasLegacyKeys) {
+      overview.combined_content = combineSettingOverview(overview);
+      changed = true;
+    }
+  }
+  if (changed) saveSettingsToLocalStorage();
 }
 
 function migrateSettingNPCs(setting) {
@@ -629,33 +1044,32 @@ const settingOverviewExists = computed(() => {
   return !!overview && overview.length > 0;
 });
 
-function formatTitle(string1, string2, string3, title) {
-  if (title) return title;
-  if (!string1 || !string2 || !string3) return '';
-  // Helper function to capitalize the first letter of each word in a string
-  function capitalize(text) {
-    return text.split(' ') // Split the string into words
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // Capitalize each word
-      .join(' '); // Rejoin the words into a single string
-  }
-
-  // Apply the capitalize function to each string and format them
-  return `The ${capitalize(string1)} ${capitalize(string2)} of ${capitalize(string3)}`;
-}
 
 
 // Validation and utility functions
+// Validator for the full setting overview response. Required keys
+// are the structural pillars — the response is rejected without them
+// and the retry logic kicks in. The notable_*_facet fields and
+// npc_list are explicitly optional by prompt design (facets are
+// empty-allowed; the LLM occasionally drops npc_list and NPCs can be
+// added later from the NPCs tab). Same validator for top-level
+// settings and sublocations since both use the full schema.
 const kingdomValidation = jsonString => {
   try {
     const jsonObj = JSON.parse(jsonString);
-    const keys = ['overview', 'relation_to_larger_setting', 'history', 'current_ruler_sentence', 'recent_event_current_ruler',
-      'recent_event_consequences', 'social_history', 'recent_event_social', 'economic_history',
-      'impactful_economic_event', 'military_history', 'recent_event_military', 'main_problem', 'potential_solutions', 'conclusion', 'npc_list'];
-    const npcKeys = ['name', 'description'];
-    for (let npc of jsonObj.npc_list) {
-      if (!npcKeys.every(key => key in npc)) return false;
+    const requiredKeys = [
+      'name', 'title', 'overview', 'history', 'current_ruler_sentence',
+      'social_history', 'economic_history', 'military_history',
+      'central_dynamic', 'present_state',
+    ];
+    if (!requiredKeys.every(key => key in jsonObj)) return false;
+    if (Array.isArray(jsonObj.npc_list)) {
+      const npcKeys = ['name', 'description'];
+      for (const npc of jsonObj.npc_list) {
+        if (!npcKeys.every(key => key in npc)) return false;
+      }
     }
-    return keys.every(key => key in jsonObj);
+    return true;
   } catch (error) {
     return false;
   }
@@ -699,52 +1113,654 @@ function getOverviewText(overviewObject) {
   }).join('\n');
 }
 
-function generateSetting({ sublocationIndex, subLocationName, subLocationDescription, adjective, setting_type }) {
+// Build a single random character combination (one value from each
+// of 3 distinct sub-dimensions). Used for sublocations, where the
+// register is seeded from the parent and we just need a coherent
+// character set without spending an inference call.
+function rollCharacter() {
+  return generateCharacterCandidates(1)[0];
+}
+
+/**
+ * Render an array of canonical settings into the markdown strings the
+ * setting-overview prompts expect as `siblingSettings`. Skips empties
+ * (settings without an overview) so the prompt block doesn't fire on
+ * placeholders. Returns an empty array if nothing renderable is found.
+ */
+function buildSiblingMarkdown(settingsList) {
+  if (!Array.isArray(settingsList)) return [];
+  const result = [];
+  for (const s of settingsList) {
+    if (!s?.setting_overview) continue;
+    const md = consolidateOverviewToMarkdown(s.setting_overview);
+    if (md && md.trim()) {
+      const heading = s.place_name || s.setting_overview?.name || 'Sibling';
+      result.push(`# ${heading}\n\n${md}`);
+    }
+  }
+  return result;
+}
+
+/**
+ * Collect sibling settings for a top-level generation seeded from
+ * another tool's stub (e.g., item → setting). Pulls the realized
+ * settings list off the pending seed and resolves each via its
+ * canonical id. Filters to those with full overview content; settings
+ * that haven't generated yet are skipped.
+ */
+function collectSeededSiblings(seed) {
+  const realized = seed?.source?.realized?.settings;
+  if (!Array.isArray(realized) || realized.length === 0) return [];
+  const canonical = realized
+    .map(s => getSettingById(s.setting_id))
+    .filter(Boolean);
+  return buildSiblingMarkdown(canonical);
+}
+
+/**
+ * Collect sibling sublocations under a shared parent. Walks the
+ * settings array for entries whose parentId matches and whose
+ * place_name differs from the one being generated (excludes self).
+ * Same shape as collectSeededSiblings so both feed into the same
+ * `siblingSettings` prompt param.
+ */
+function collectSublocationSiblings(parentId, selfPlaceName) {
+  if (!parentId) return [];
+  const siblings = settings.value.filter((s) =>
+    s?.parentId === parentId
+    && s.setting_overview
+    && (s.place_name || '').trim() !== (selfPlaceName || '').trim()
+  );
+  return buildSiblingMarkdown(siblings);
+}
+
+async function generateSetting(payload = {}) {
+  const { sublocationIndex, subLocationName, subLocationDescription, setting_type } = payload;
   const operationIndex = currentSettingIndex.value;
   const setting = settings.value[operationIndex];
 
-  // Directly update properties in a reactive way
+  const isSublocation = isNumber(sublocationIndex);
 
-  setting.setting_type = setting.setting_type || randomType(setting);
-  setting.adjective = setting.adjective || randomAdjective(setting) || '';
-  setting.place_name = setting.place_name || randomName(setting) || '';
-  setting.place_lore = setting.place_lore || '';
+  if (isSublocation) {
+    // Parent register propagates as a seed; type/userName come from
+    // the stub. Character is rolled fresh by default. Tension and
+    // banned tropes always roll fresh per generation.
+    const parentRegister = setting.register || null;
+    const parentName = setting.place_name || '';
+    const parentLore = setting.place_lore || getOverviewText(setting.setting_overview) || '';
 
-  let nameToPass = subLocationName || setting.place_name || '';
-  let parentLocationOverview = setting.place_lore || getOverviewText(setting.setting_overview) || '';
+    // Sibling inheritance: if other sublocations under this parent
+    // have already been generated, inherit register + character from
+    // the first one (option A — broad type, all sublocations are
+    // siblings regardless of setting_type). Keeps atmospheric and
+    // cultural coherence across sublocations of the same parent
+    // without forcing tension to homogenize.
+    const parentSettingId = setting.id;
+    const sublocationSiblings = settings.value.filter((s) =>
+      s?.parentId === parentSettingId
+      && !!s?.setting_overview
+    );
+    const inherited = applyInheritanceFromSiblings(
+      { register: parentRegister, character: rollCharacter() },
+      sublocationSiblings,
+    );
 
-  let prompt;
-  if (isNumber(sublocationIndex)) {
-    prompt = sublocationOverviewPrompt(nameToPass, parentLocationOverview, subLocationDescription);
-  } else {
-    prompt = settingOverviewPrompt(setting.adjective, setting.setting_type, setting.place_name, setting.place_lore);
+    const character = inherited.character;
+    const register = inherited.register;
+    const tension = pickRandomTension();
+    const bannedTropes = getBannedTropesForGeneration();
+
+    // Diagnostic: log dimensions being sent to the main prompt so
+    // distribution can be checked empirically across a batch of
+    // generations. Remove once verified.
+    console.log('[setting-gen][sublocation]', {
+      type: setting_type || null,
+      character,
+      register,
+      userName: subLocationName || null,
+      tension,
+      bannedTropeCount: bannedTropes.length,
+      parentName,
+      siblingCount: sublocationSiblings.length,
+    });
+
+    // Sibling sublocations of the same parent — pass their full
+    // overviews to the prompt so the new sublocation lands as part of
+    // a coherent set (shared geography, no contradicting NPCs, etc.).
+    const siblingSettings = collectSublocationSiblings(parentSettingId, subLocationName);
+
+    // Legacy importantLocations-stub expansion stays polity-only —
+    // this flow predates the place-scale split and only renders for
+    // users with stale data from the deprecated bulk-generate UI.
+    // New sublocations route through onPromoteRelatedPlace, which
+    // does run scale-aware inference. If the legacy flow ever sees
+    // place-scale demand, run inferSettingDimensions here and branch
+    // exactly like the promote-related-place site does.
+    const prompt = sublocationOverviewPrompt({
+      type: setting_type || null,
+      character,
+      register,
+      userName: subLocationName || null,
+      tension,
+      bannedTropes,
+      parentName,
+      parentLore,
+      subLocationDescription: subLocationDescription || '',
+      siblingSettings,
+    });
+
+    enqueueRequest('generateSetting', {
+      operationIndex,
+      parentId: parentSettingId,
+      prompt,
+      sublocationIndex,
+      subLocationName,
+      setting_type,
+      register,
+      character,
+      tension,
+    });
+    return;
   }
-  enqueueRequest('generateSetting', { operationIndex, prompt, sublocationIndex: sublocationIndex, subLocationName, adjective, setting_type });
+
+  // Cross-tool gate: if this top-level generation is being seeded from
+  // another tool (currently item → setting), check the 5/day quota
+  // before any AI calls fire. Free combos (e.g., no seed at all)
+  // short-circuit the gate and return true. Gate handles its own toast
+  // on failure; we just bail and leave the form in place so the user
+  // can come back tomorrow or upgrade.
+  const seedSourceType = pendingSeed.value?.source?.type;
+  if (seedSourceType) {
+    const canGenerate = await canGenerateCrossTool(seedSourceType, 'setting', props.premium);
+    if (!canGenerate) return;
+  }
+
+  // Top-level: run the inference call to extract type/character/
+  // register/userName from user input (or roll from pools when input
+  // is empty), then call the single main prompt with fully-specified
+  // dimensions. Single-call is coherent by construction — every
+  // field is generated in one context window so internal facts cohere.
+  // (We tried a two-phase variant for perceived-latency wins; it
+  // introduced subtle continuity drift between phases that wasn't
+  // worth the wall-clock improvement.)
+  setting.loadingsettingOverview = true;
+  currentlyLoading.value = true;
+
+  const description = setting.setting_description || '';
+  const lore = setting.place_lore || '';
+
+  let inferred;
+  try {
+    inferred = await inferSettingDimensions({ description, lore });
+  } catch (e) {
+    console.error('Setting dimension inference failed:', e);
+    inferred = { type: null, character: null, register: null, userName: null, tension: null };
+  }
+
+  // Tension override layer: user tonal signals take precedence over
+  // the rolled tension. Order matters — cozy is the strongest signal
+  // ("no tension at all"), so it wins. Low-stakes signals (sacred,
+  // festive, wondrous, scholarly, hospitable, generational) route to
+  // a specific lower-stakes tension that has some texture but
+  // bounded stakes. If neither override fires, the rolled tension
+  // stands.
+  if (detectCozyMode(description, lore)) {
+    inferred.tension = 'cozy-routine';
+  } else {
+    const lowStakesTension = detectLowStakesTension(description, lore);
+    if (lowStakesTension) {
+      inferred.tension = lowStakesTension;
+    }
+  }
+
+  // Sibling inheritance for cross-tool seeded generations: if the user
+  // has already promoted other settings from the same source item,
+  // inherit register + character from the first sibling so the cluster
+  // reads as culturally coherent. Tension stays fresh per generation.
+  // Resolve canonical sibling records via getSettingById so we read
+  // the real persisted dimensions rather than the stub-level snapshot.
+  const seedSiblingsRaw = pendingSeed.value?.source?.realized?.settings;
+  const seedSiblingsCanonical = Array.isArray(seedSiblingsRaw)
+    ? seedSiblingsRaw
+        .map(stub => getSettingById(stub.setting_id))
+        .filter(Boolean)
+    : [];
+  // Fallback chain for register when no siblings: inferred → source
+  // item's detected register → null (let the prompt's pool-roll fire).
+  const seedSourceRegister = pendingSeed.value?.source?.register || null;
+  const seededDimensions = applyInheritanceFromSiblings(
+    {
+      register: inferred.register || seedSourceRegister,
+      character: inferred.character,
+    },
+    seedSiblingsCanonical,
+  );
+  inferred.register = seededDimensions.register;
+  inferred.character = seededDimensions.character;
+
+  // Persist the dimensional metadata so sublocations can inherit
+  // register, and so reloads preserve the constraints. Scale is
+  // persisted so handleGenerateSetting picks the right validator
+  // and so the renderer can branch on it without re-running inference.
+  setting.type = inferred.type;
+  setting.character = inferred.character;
+  setting.register = inferred.register;
+  setting.userName = inferred.userName;
+  setting.tension = inferred.tension;
+  setting.scale = inferred.scale;
+
+  const bannedTropes = getBannedTropesForGeneration();
+
+  console.log('[setting-gen][top-level]', {
+    type: inferred.type,
+    character: inferred.character,
+    register: inferred.register,
+    userName: inferred.userName,
+    tension: inferred.tension,
+    bannedTropeCount: bannedTropes.length,
+    descriptionLength: description.length,
+    loreLength: lore.length,
+  });
+
+  // Sibling settings for top-level cross-tool generations: other
+  // settings the user has already promoted from the same source (e.g.,
+  // the same item's lore). Pass their full overviews so the new
+  // generation anchors to canonical names, geography, and history
+  // rather than reinventing in-conflict facts.
+  const siblingSettings = collectSeededSiblings(pendingSeed.value);
+
+  // Scale-based prompt routing. Top-level place/landscape generations
+  // are rarer than polity ones (those scales usually sit inside a
+  // parent) but supported — both alternate prompts handle the
+  // no-parent case by describing surrounding region instead of a
+  // named parent.
+  const promptArgs = {
+    type: inferred.type,
+    character: inferred.character,
+    register: inferred.register,
+    userName: inferred.userName,
+    tension: inferred.tension,
+    bannedTropes,
+    description,
+    lore,
+    siblingSettings,
+  };
+  let prompt;
+  if (inferred.scale === 'place') {
+    prompt = placeOverviewPrompt(promptArgs);
+  } else if (inferred.scale === 'landscape') {
+    prompt = landscapeOverviewPrompt(promptArgs);
+  } else {
+    prompt = settingOverviewPrompt(promptArgs);
+  }
+
+  enqueueRequest('generateSetting', { operationIndex, prompt });
 }
 
 
+/**
+ * Promote a stub from `setting.related_places` into a real generated
+ * setting. Dispatches on `kind`:
+ *
+ *   - 'sublocation': new setting sits UNDER the current setting
+ *     (parentId = current.id). Uses sublocationOverviewPrompt with
+ *     current as parent context.
+ *   - 'sibling':     new setting sits at the SAME LEVEL as current
+ *     (parentId = current.parentId). If current is top-level, the new
+ *     sibling is top-level too. Uses sublocationOverviewPrompt when
+ *     there's a shared parent, settingOverviewPrompt otherwise.
+ *   - 'parent':      new setting takes current's slot (parentId =
+ *     current.parentId). After generation succeeds, current is
+ *     re-parented under the new setting.
+ *
+ * All three flows stamp a `_pendingPromotion` marker on the new
+ * setting so handleGenerateSetting's post-success hook can finalize:
+ * set `promoted_setting_id` on the source `related_places` stub, and
+ * (for 'parent') perform the reparent of the source setting.
+ *
+ * Cross-tool source provenance (sourceType/sourceId/sourceName) is
+ * inherited from the current setting so promoted siblings stay linked
+ * to the same originating item.
+ */
+async function onPromoteRelatedPlace({ stub, kind }) {
+  if (!stub || !kind) return;
+  const current = settings.value[currentSettingIndex.value];
+  if (!current) return;
+
+  // Idempotent stub-presence guarantee. Two entry points feed this
+  // handler: (a) extraction-promoted stubs that are already in
+  // current.related_places (clicked from the Related Places list), and
+  // (b) manually-created stubs synthesized by AddRelatedPlaceForm and
+  // emitted without first being appended. In case (b), ensure the
+  // stub lands in related_places before promotion so the
+  // promoted_setting_id finalization (which looks up by name in
+  // related_places) has a target. Case-insensitive name dedup so
+  // extracted + manual entries don't both occupy a slot.
+  //
+  // A SECOND case (b) variant: the manual form may have submitted an
+  // empty name — "just generate me a new sublocation of this kind."
+  // In that case there's no stub to track (nothing to name in
+  // related_places yet), so we skip the add. The new setting will get
+  // its place_name from the LLM after generation, and won't be
+  // back-linked to a related_places stub since none exists.
+  if (!Array.isArray(current.related_places)) current.related_places = [];
+  const stubKey = (stub.name || '').trim().toLowerCase();
+  const alreadyPresent = stubKey && current.related_places.some(
+    p => (p?.name || '').trim().toLowerCase() === stubKey
+  );
+  if (stubKey && !alreadyPresent) {
+    current.related_places.unshift({
+      name: stub.name,
+      kind,
+      source_quote: stub.source_quote || '',
+      role_brief: stub.role_brief || '',
+      suggested_setting_type: stub.suggested_setting_type || '',
+      promoted_setting_id: null,
+    });
+  }
+
+  // Determine where the new setting sits in the tree.
+  const newSettingParentId = kind === 'sublocation'
+    ? current.id
+    : (current.parentId ?? null);
+
+  // Parent setting that will be the prompt context (if any).
+  const promptParentSetting = newSettingParentId
+    ? settings.value.find(s => s?.id === newSettingParentId)
+    : null;
+
+  // Create the new setting in settings.value with the promotion marker.
+  // Register/character/tension are resolved AFTER inference below — we
+  // create the record with null placeholders here so the in-memory
+  // entry is on the sidebar immediately, then fill in dimensions.
+  const newSetting = reactive({
+    ...freshDefaultSetting(),
+    place_name: stub.name,
+    userName: stub.name,
+    type: stub.suggested_setting_type || null,
+    register: null,
+    parentId: newSettingParentId,
+    sourceType: current.sourceType || null,
+    sourceId: current.sourceId || null,
+    sourceName: current.sourceName || null,
+    loadingsettingOverview: true,
+    _pendingPromotion: {
+      sourceSettingId: current.id,
+      sourceStubName: stub.name,
+      kind,
+    },
+  });
+  settings.value.push(newSetting);
+  currentSettingIndex.value = settings.value.length - 1;
+  isNewSetting.value = true;
+  currentlyLoading.value = true;
+  const operationIndex = settings.value.length - 1;
+
+  // Run dimension inference against the stub's name + role brief.
+  // This catches cases where the stub's NAME carries a clear cultural
+  // signal that differs from the current setting's register (e.g.,
+  // promoting "Aethelmar" as a sibling of an Italian Renaissance
+  // setting — the LLM detects Anglo-Saxon from the name and overrides
+  // the sibling-inheritance default).
+  //
+  // stub.source_quote is DELIBERATELY EXCLUDED: it's parent-setting
+  // prose ("a handful of low stone houses gathered around a single
+  // spring called the Weeping-Cleft"), and concatenating it into the
+  // sub-location's own description contaminated type/scale
+  // classification — the LLM read the parent's hamlet-shape and
+  // typed the sub-location as 'hamlet', which then correctly routed
+  // to polity even when the sub-location is a single spring.
+  // Register signal from the source_quote is rarely needed beyond
+  // what the name already carries.
+  const inferenceInput = [stub.name, stub.role_brief]
+    .filter(Boolean)
+    .join('. ');
+  let inferred = { type: null, character: null, register: null, userName: null, tension: null };
+  try {
+    inferred = await inferSettingDimensions({ description: inferenceInput, lore: '' });
+  } catch (e) {
+    console.warn('[setting-gen][promote] dimension inference failed:', e);
+  }
+
+  // Sibling pool for inheritance fallback when inference doesn't fire.
+  const candidateSiblings = settings.value.filter(s =>
+    s?.id !== newSetting.id
+    && (s?.parentId ?? null) === newSettingParentId
+    && !!s?.setting_overview
+  );
+
+  // Register priority: inferred (name-driven) → sibling inheritance →
+  // current's register. The inferred register wins whenever inference
+  // detected a cultural signal in the name; otherwise siblings carry
+  // the cluster's coherence; otherwise fall back to the current
+  // setting's register as a last resort.
+  let resolvedRegister = inferred.register;
+  if (!resolvedRegister) {
+    const inheritedRegister = applyInheritanceFromSiblings(
+      { register: current.register || null, character: null },
+      candidateSiblings,
+    ).register;
+    resolvedRegister = inheritedRegister || current.register || null;
+  }
+
+  // Character priority: inferred → sibling inheritance → fresh roll.
+  let resolvedCharacter = inferred.character;
+  if (!resolvedCharacter) {
+    const inheritedCharacter = applyInheritanceFromSiblings(
+      { register: null, character: rollCharacter() },
+      candidateSiblings,
+    ).character;
+    resolvedCharacter = inheritedCharacter;
+  }
+
+  // Tension: inferred wins if it surfaced; otherwise roll fresh per
+  // generation (never inherited — different tensions need their own
+  // dramatic shape).
+  const tension = inferred.tension || pickRandomTension();
+
+  // Scale resolution for promoted-stub generations. The stub's
+  // suggested_setting_type and its role_brief feed the inferrer; the
+  // inferrer's scale judgment + the always-polity ceiling decide
+  // whether this promotion routes to place / landscape / polity.
+  // Defensive fallback to 'polity' so any inferrer regression doesn't
+  // misroute promotions to a narrower schema.
+  let resolvedScale = 'polity';
+  if (inferred.scale === 'place') resolvedScale = 'place';
+  else if (inferred.scale === 'landscape') resolvedScale = 'landscape';
+
+  // Persist resolved dimensions on the new setting so reloads preserve
+  // them and so handleGenerateSetting picks the right validator.
+  newSetting.register = resolvedRegister;
+  newSetting.character = resolvedCharacter;
+  newSetting.tension = tension;
+  newSetting.scale = resolvedScale;
+
+  const bannedTropes = getBannedTropesForGeneration();
+  const siblingSettings = buildSiblingMarkdown(candidateSiblings);
+
+  // Parent-promote: collect the children-to-be (source + any siblings
+  // that will cascade under the new parent). The generation prompt
+  // needs to know about these so the prose treats them as contained
+  // places, not as peers. Without this, the LLM reads "Aethelmar and
+  // Repubblica" in the user's source-quote / role-brief and assumes
+  // they're external neighbors.
+  let childrenSettings = [];
+  if (kind === 'parent') {
+    const sourceOldParentId = current.parentId ?? null;
+    const cascadeIds = siblingIdsToReparent({
+      settings: settings.value,
+      source: current,
+      oldParentId: sourceOldParentId,
+    });
+    const childrenToBe = [current, ...cascadeIds
+      .map(id => settings.value.find(s => s?.id === id))
+      .filter(Boolean)];
+    childrenSettings = buildSiblingMarkdown(childrenToBe);
+  }
+
+  // Build a stub-aware description that anchors the LLM to the prose
+  // origin: where this place was named, why it matters, the verbatim
+  // quote so the generation stays consistent with current's narrative.
+  //
+  // When the stub has no name (the manual form was submitted blank to
+  // request a "surprise me with a new sublocation"), the relationship
+  // framing alone carries the description — the LLM picks the name and
+  // shape from the kind + parent context + register.
+  const descriptionLines = [];
+  if (stub.name) descriptionLines.push(`Name: ${stub.name}`);
+  if (stub.role_brief) descriptionLines.push(`Role: ${stub.role_brief}.`);
+  if (kind === 'parent') {
+    descriptionLines.push(`This is the larger place that contains ${current.place_name || 'the current setting'}.`);
+  } else if (kind === 'sibling') {
+    descriptionLines.push(`This is a peer of ${current.place_name || 'the current setting'} at similar scale.`);
+  } else if (kind === 'sublocation' && !stub.name && !stub.role_brief) {
+    // Empty-stub sublocation — make the relationship explicit since
+    // there's no other signal in the description.
+    descriptionLines.push(`This is a new place INSIDE ${current.place_name || 'the current setting'}. Invent it fresh from the parent's character and register.`);
+  }
+  if (stub.source_quote) {
+    descriptionLines.push('');
+    descriptionLines.push(`Where this place appears in the prose of ${current.place_name || 'the current setting'}:`);
+    descriptionLines.push(stub.source_quote);
+  }
+  const description = descriptionLines.join('\n');
+
+  // userName: pass through whatever the user typed (or null when blank
+  // so the prompt's "Generate a register-coherent bare name" branch
+  // fires instead of the "use this name verbatim" branch).
+  const userName = stub.name || null;
+
+  // Scale-aware prompt routing. Place/landscape promotions go through
+  // their dedicated prompts regardless of whether the stub has a
+  // parent — both prompts handle parented and unparented cases.
+  // Polity-scale promotions branch on parent presence as before:
+  // sublocation for parented, top-level for unparented.
+  const stubBasedPromptArgs = {
+    type: stub.suggested_setting_type || null,
+    character: resolvedCharacter,
+    register: resolvedRegister,
+    userName,
+    tension,
+    bannedTropes,
+    description,
+    lore: '',
+    parentName: promptParentSetting?.place_name || '',
+    parentLore: promptParentSetting
+      ? (promptParentSetting.place_lore
+        || getOverviewText(promptParentSetting.setting_overview)
+        || '')
+      : '',
+    siblingSettings,
+    childrenSettings,
+  };
+  let prompt;
+  if (resolvedScale === 'place') {
+    prompt = placeOverviewPrompt(stubBasedPromptArgs);
+  } else if (resolvedScale === 'landscape') {
+    prompt = landscapeOverviewPrompt(stubBasedPromptArgs);
+  } else if (promptParentSetting) {
+    prompt = sublocationOverviewPrompt({
+      type: stub.suggested_setting_type || null,
+      character: resolvedCharacter,
+      register: resolvedRegister,
+      userName,
+      tension,
+      bannedTropes,
+      parentName: promptParentSetting.place_name || '',
+      parentLore: promptParentSetting.place_lore
+        || getOverviewText(promptParentSetting.setting_overview)
+        || '',
+      subLocationDescription: description,
+      siblingSettings,
+      childrenSettings,
+    });
+  } else {
+    prompt = settingOverviewPrompt({
+      type: stub.suggested_setting_type || null,
+      character: resolvedCharacter,
+      register: resolvedRegister,
+      userName,
+      tension,
+      bannedTropes,
+      description,
+      lore: '',
+      siblingSettings,
+      childrenSettings,
+    });
+  }
+
+  console.log('[setting-gen][promote]', {
+    kind,
+    stubName: stub.name,
+    inferredRegister: inferred.register,
+    resolvedRegister,
+    inferredCharacter: inferred.character,
+    resolvedCharacter,
+    fromCurrentRegister: current.register,
+  });
+
+  enqueueRequest('generateSetting', { operationIndex, prompt });
+}
+
 // Generation functions
-async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex, subLocationName, adjective, setting_type, title }) {
+async function handleGenerateSetting({ operationIndex, parentId, prompt, sublocationIndex, subLocationName, setting_type, register, character, tension }) {
 
   try {
-    let parentIndex;
-    if (isNumber(sublocationIndex)) {
-      parentIndex = operationIndex;
-      createNewSetting(true, adjective, setting_type, subLocationName, title, parentIndex);
+    const isSublocation = isNumber(sublocationIndex);
+    if (isSublocation) {
+      createSublocationSetting({
+        parentId,
+        subLocationName,
+        setting_type,
+        register,
+      });
       operationIndex = settings.value.length - 1;
+      // Stash the rolled character + tension on the sublocation
+      // setting so reloads preserve the dimensional metadata.
+      if (character) {
+        settings.value[operationIndex].character = character;
+      }
+      if (tension) {
+        settings.value[operationIndex].tension = tension;
+      }
     }
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].loadingsettingOverview = true;
       currentlyLoading.value = true;
     }
-    if (isNumber(parentIndex)) {
-      settings.value[parentIndex].importantLocations[sublocationIndex].loading = true;
+    // Resolve the parent (by stable id) once, so all stub writes go
+    // through the same reference. If the parent was deleted mid-flight
+    // (rare), the stub writes simply no-op.
+    const parentSetting = isSublocation && parentId
+      ? settings.value.find(s => s?.id === parentId)
+      : null;
+    if (parentSetting && parentSetting.importantLocations?.[sublocationIndex]) {
+      parentSetting.importantLocations[sublocationIndex].loading = true;
     }
-    const response = await generateGptResponse(prompt, kingdomValidation);
+    // Pick the validator that matches the prompt's schema. Each scale
+    // produces a different field shape; running the wrong validator
+    // would fail every retry. The scale comes from the persisted
+    // setting (set earlier in the flow when inference resolved scale),
+    // with a defensive fallback to polity for legacy settings that
+    // pre-date the scale splits.
+    const persistedScale = settings.value[operationIndex]?.scale;
+    let validator;
+    if (persistedScale === 'place') {
+      validator = validatePlaceOverviewResponse;
+    } else if (persistedScale === 'landscape') {
+      validator = validateLandscapeOverviewResponse;
+    } else {
+      validator = kingdomValidation;
+    }
+    const response = await generateGptResponse(prompt, validator);
     const overview = JSON.parse(response);
 
     if (settings.value[operationIndex]) {
-      if (!settings.value[operationIndex].place_name) {
+      // place_name holds the bare name (used in sidebar/lists);
+      // setting_overview.title holds the short evocative phrase
+      // that renders as a subordinate subtitle in the overview
+      // header.
+      if (overview.name) {
         settings.value[operationIndex].place_name = overview.name;
       }
       settings.value[operationIndex].setting_overview = overview;
@@ -755,41 +1771,321 @@ async function handleGenerateSetting({ operationIndex, prompt, sublocationIndex,
       }));
       settings.value[operationIndex].loadingsettingOverview = false;
       currentlyLoading.value = false;
-      if (isNumber(parentIndex)) {
-        settings.value[parentIndex].importantLocations[sublocationIndex].has_detailed_description = true;
-        settings.value[parentIndex].importantLocations[sublocationIndex].main_index = operationIndex;
-        settings.value[parentIndex].importantLocations[sublocationIndex].loading = false;
+      // Cross-tool finalize: when this generation ran for a top-level
+      // setting from a pending item-stub seed, write the back-link
+      // edge + flip the source item's stub from "Create Setting" to
+      // "View in Setting Generator". No-op for sublocations and for
+      // generations that didn't come from a cross-tool flow.
+      if (!isSublocation) {
+        finalizePendingSeed(settings.value[operationIndex]);
+      }
+      if (parentSetting && parentSetting.importantLocations?.[sublocationIndex]) {
+        const stub = parentSetting.importantLocations[sublocationIndex];
+        stub.has_detailed_description = true;
+        stub.promoted_setting_id = settings.value[operationIndex].id;
+        stub.loading = false;
         currentlyLoading.value = false;
       }
+
+      // Finalize a pending related_places promotion if this generation
+      // was triggered by onPromoteRelatedPlace. The marker lives on the
+      // newly-generated setting itself so the post-success hook can
+      // (a) set promoted_setting_id on the source stub and (b) for
+      // 'parent' kind, swap the source setting under the new parent.
+      finalizePendingPromotion(operationIndex);
+
       saveSettingsToLocalStorage();  // Save to local storage after update
+
+      // Background extraction of NAMED PLACES mentioned in the prose
+      // (parent / sibling / sublocation / feature). Fires and forgets —
+      // failure shouldn't block the user-visible generation result. The
+      // stubs land under setting.related_places and feed the Locations
+      // tab's "Related Places" section.
+      runRelatedPlacesExtraction(operationIndex);
     }
   } catch (error) {
     console.error("Error generating kingdom description:", error);
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].loadingsettingOverview = false;
       currentlyLoading.value = false;
+      // Drop the promotion marker on failure so it doesn't get persisted
+      // as a permanent zombie property on the new setting.
+      delete settings.value[operationIndex]._pendingPromotion;
     }
   }
 }
 
-// Random type, adjective, and name functions
-function randomType(setting) {
-  if (setting.place_lore !== '') return '';
-  const placeTypes = Object.keys(placeAdjectives);
-  return placeTypes[Math.floor(Math.random() * placeTypes.length)];
+/**
+ * Finalize a pending related_places promotion after the new setting's
+ * overview has landed. Two effects:
+ *
+ *   (a) Set `promoted_setting_id` on the source `related_places` stub
+ *       so the UI flips from "Create as <kind>" to "View in Setting
+ *       Generator" and re-extractions don't try to re-create it.
+ *   (b) For kind === 'parent', swap the source setting under the
+ *       newly-generated parent (source.parentId = newSetting.id).
+ *
+ * Why we do NOT go through `reparentSetting` here:
+ *   `reparentSetting` reads from localStorage and validates the new
+ *   parent exists in the persisted store. At this point in the flow
+ *   the new parent has only been minted in memory — the next
+ *   `saveSettingsToLocalStorage` will persist it. So the storage-layer
+ *   guards trip spuriously (parent-not-found) and the reparent fails.
+ *   For this specific path the guards are moot anyway: the new parent
+ *   just came into existence with no descendants, so a cycle is
+ *   impossible. We mutate `parentId` in memory and let the trailing
+ *   save persist the consistent state.
+ *
+ * No-op when the new setting carries no `_pendingPromotion` marker.
+ * The marker is deleted whether or not the source/stub still exists,
+ * so a torn-down source (rare) doesn't strand the marker on disk.
+ */
+function finalizePendingPromotion(operationIndex) {
+  const newSetting = settings.value[operationIndex];
+  const promo = newSetting?._pendingPromotion;
+  if (!promo) return;
+
+  let sourceStub = null;
+  const source = settings.value.find(s => s?.id === promo.sourceSettingId);
+  if (source && Array.isArray(source.related_places)) {
+    const target = promo.sourceStubName.trim().toLowerCase();
+    sourceStub = source.related_places.find(
+      p => (p?.name || '').trim().toLowerCase() === target
+    );
+    if (sourceStub) {
+      sourceStub.promoted_setting_id = newSetting.id;
+
+      // Promotion-time fallback for the cross-tool seeded_from tag.
+      // Extraction-time tagging may have missed this stub because of
+      // a name mismatch (LLM extracted "Stonemother range" while the
+      // item stub is just "Stonemother") or because the stub was
+      // added manually via AddRelatedPlaceForm (bypasses extraction
+      // entirely). Re-attempt the match here with the leading-word
+      // matcher so the back-link can still fire below.
+      if (
+        !sourceStub.seeded_from
+        && source.sourceType === 'item'
+        && source.sourceId
+      ) {
+        const itemStub = findItemStubMatchingName(source.sourceId, sourceStub.name);
+        if (itemStub) {
+          sourceStub.seeded_from = {
+            source_type: 'item',
+            source_id: source.sourceId,
+            source_name: source.sourceName || source.sourceId,
+            stub_name: itemStub.name,
+          };
+        }
+      }
+    }
+  }
+
+  if (promo.kind === 'parent' && source) {
+    const oldParentId = source.parentId ?? null;
+    source.parentId = newSetting.id;
+
+    // Cascade: settings that were promoted as siblings of source
+    // should follow source under the new parent. See
+    // siblingIdsToReparent for the constraint set (one-hop only,
+    // skips siblings the user has manually moved elsewhere).
+    const cascadeIds = siblingIdsToReparent({
+      settings: settings.value,
+      source,
+      oldParentId,
+    });
+    for (const id of cascadeIds) {
+      const sibling = settings.value.find(s => s?.id === id);
+      if (sibling) sibling.parentId = newSetting.id;
+    }
+  }
+
+  // Cross-tool back-link: if the source stub carries `seeded_from`
+  // (the extraction matched its name against a stub on the source
+  // setting's originating item), fire the secondary writeback so the
+  // item's stub flips from "Create Setting" to "View" and the
+  // reference graph gets the inspired_by_item edge. This mirrors what
+  // finalizePendingSeed does for top-level cross-tool generations.
+  // Without this, promoting Stonemother from Broken Gate's tab would
+  // create the Stonemother setting but leave the Vardlokkur item's
+  // own Stonemother stub un-linked.
+  const from = sourceStub?.seeded_from;
+  if (from && from.source_type === 'item' && from.source_id && from.stub_name) {
+    linkSettingToItemStub(from.source_id, from.stub_name, newSetting.id);
+
+    addReferenceForSeed(
+      {
+        source: {
+          type: from.source_type,
+          id: from.source_id,
+          name: from.source_name || from.source_id,
+        },
+        entities: [{ type: 'setting', name: from.stub_name }],
+      },
+      {
+        type: 'setting',
+        id: newSetting.id,
+        name: newSetting.place_name || 'Unnamed Setting',
+      },
+    );
+
+    // Denormalize source provenance onto the new setting so the
+    // OverviewTab can render "Inspired by [item]" without walking
+    // tool-references on every render — mirrors finalizePendingSeed.
+    newSetting.sourceType = from.source_type;
+    newSetting.sourceId = from.source_id;
+    newSetting.sourceName = from.source_name || from.source_id;
+  } else if (
+    newSetting.sourceType === 'item'
+    && newSetting.sourceId
+    && newSetting.place_name
+  ) {
+    // Descendant back-link: the new setting inherited item provenance
+    // from its parent (line ~1463 in onPromoteRelatedPlace), but the
+    // cross-tool seeded_from branch above didn't fire — no item-side
+    // stub matched, so this is a user-invented descendant rather than
+    // a re-link to existing item lore. Register the new setting on
+    // the originating item so the item card surfaces it; also write
+    // the inspired_by_item reference edge to keep the cross-tool
+    // graph in sync with the inherited provenance.
+    addSettingStubToItem(newSetting.sourceId, {
+      settingId: newSetting.id,
+      settingName: newSetting.place_name,
+      roleBrief: sourceStub?.role_brief || '',
+    });
+
+    addReferenceForSeed(
+      {
+        source: {
+          type: 'item',
+          id: newSetting.sourceId,
+          name: newSetting.sourceName || newSetting.sourceId,
+        },
+        entities: [{ type: 'setting', name: newSetting.place_name }],
+      },
+      {
+        type: 'setting',
+        id: newSetting.id,
+        name: newSetting.place_name,
+      },
+    );
+  }
+
+  delete newSetting._pendingPromotion;
 }
 
-function randomAdjective(setting) {
-  if (setting.place_lore !== '') return '';
-  if (!placeAdjectives[setting.setting_type.toLowerCase()]) return '';
-  return placeAdjectives[setting.setting_type.toLowerCase()][Math.floor(Math.random() * placeAdjectives[setting.setting_type.toLowerCase()].length)];
+/**
+ * Fire-and-forget extraction of NAMED PLACES from the just-generated
+ * setting's prose. Called after handleGenerateSetting writes the
+ * overview to localStorage; runs in the background and merges results
+ * back into `setting.related_places` when done.
+ *
+ * Failures are logged and swallowed — the user's primary action
+ * (generating the setting) has already succeeded by the time this
+ * fires. We don't want a downstream LLM hiccup to surface as a
+ * generation error.
+ */
+async function runRelatedPlacesExtraction(operationIndex) {
+  const setting = settings.value[operationIndex];
+  if (!setting?.setting_overview) return;
+
+  // Names to suppress from extraction results: the current setting,
+  // its ancestors (parentId chain), its siblings (same parentId), and
+  // its children (settings with parentId === current.id). Anything
+  // already realized in the tree shouldn't surface as a stub again —
+  // the prose may still mention them (correctly, per
+  // childrenSettings), but the related_places list is for places
+  // NOT yet realized.
+  const excludeNames = collectRelatedSettingNames(setting);
+
+  let stubs;
+  try {
+    stubs = await extractRelatedPlaces(setting, {
+      excludeNames,
+      allSettings: settings.value,
+    });
+  } catch (err) {
+    console.warn('[setting-gen] related-places extraction failed:', err);
+    return;
+  }
+
+  // The setting may have moved in the array (rare — concurrent edits)
+  // or been deleted in flight. Look it up by id to be safe.
+  const live = settings.value.find(s => s?.id === setting.id);
+  if (!live) return;
+
+  live.related_places = mergeRelatedPlaces(live.related_places, stubs);
+  saveSettingsToLocalStorage();
 }
 
-function randomName(setting) {
-  if (setting.place_lore !== '') return '';
-  if (!place_names[setting.setting_type.toLowerCase()]) return '';
-  return place_names[setting.setting_type.toLowerCase()][Math.floor(Math.random() * place_names[setting.setting_type.toLowerCase()].length)];
+/**
+ * Walk the current settings array to collect names of every entity
+ * that should suppress extraction matches: the setting itself, every
+ * ancestor up the parentId chain, every sibling under the same
+ * parent, and every direct child. Returns a flat array of place_name
+ * strings.
+ *
+ * Why children too: after a parent-promote cascade, the new parent
+ * setting (now generated) has children whose names appear in its
+ * prose. Background extraction was re-surfacing those children as
+ * fresh stubs (often mis-classified as siblings because the prose
+ * mentioned them as peers of each other). Excluding children from
+ * extraction keeps them from being duplicated; they remain visible
+ * in the sidebar tree where the containment relationship is
+ * authoritative.
+ */
+function collectRelatedSettingNames(setting) {
+  const names = [];
+  if (!setting) return names;
+
+  // Self
+  if (setting.place_name) names.push(setting.place_name);
+
+  // Ancestors: walk up parentId chain.
+  const byId = new Map();
+  for (const s of settings.value) {
+    if (s?.id) byId.set(s.id, s);
+  }
+  const seen = new Set();
+  let cursor = setting.parentId ?? null;
+  while (cursor && !seen.has(cursor)) {
+    seen.add(cursor);
+    const node = byId.get(cursor);
+    if (!node) break;
+    if (node.place_name) names.push(node.place_name);
+    cursor = node.parentId ?? null;
+  }
+
+  // Siblings: same parentId, different id.
+  const sameParent = settings.value.filter(s =>
+    s?.id !== setting.id
+    && (s?.parentId ?? null) === (setting.parentId ?? null)
+  );
+  for (const s of sameParent) {
+    if (s.place_name) names.push(s.place_name);
+  }
+
+  // Children: parentId === setting.id. After a parent-promote
+  // cascade, these are the settings that got moved under the new
+  // parent; their names already appear in the parent's prose and
+  // we don't want extraction to re-surface them as stubs.
+  const children = settings.value.filter(s => s?.parentId === setting.id);
+  for (const s of children) {
+    if (s.place_name) names.push(s.place_name);
+  }
+
+  // Aunts/uncles: places at the parent's scale that the LLM tends
+  // to bucket as 'sibling' here because the schema has no
+  // aunt/uncle slot. Surfacing them produces incoherent peer
+  // claims (a city listed as sibling of a region, etc.). Pulling
+  // them into the exclude list mirrors the retroactive cleanup
+  // done by sweep-aunt-uncle-sibling-stubs.
+  for (const name of auntUncleNamesFor(setting, settings.value)) {
+    names.push(name);
+  }
+
+  return names;
 }
+
 </script>
 
 
@@ -820,39 +2116,115 @@ $transition-speed: 0.3s;
 
   li {
     margin-bottom: 4px;
+  }
 
-    &.active-tab {
-      .setting-button {
-        background-color: $active-color;
-        border-left-color: $active-border-color;
-      }
+  /* Tree rows — chevron column + label, sharing a row-level
+     background so the selection highlight reads at any depth.
+     Border-left accent stays at the leftmost edge regardless of
+     indent so deep selections are still visible at a glance. */
+  .setting-tree-item {
+    &.active-tab .setting-tree-row {
+      background-color: $active-color;
+      border-left-color: $active-border-color;
+    }
+  }
+
+  .setting-tree-row {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+    background-color: $default-background-color;
+    border-left: 5px solid transparent;
+    transition: background-color $transition-speed, border-left-color $transition-speed;
+
+    &:hover {
+      background-color: $hover-background-color;
+    }
+  }
+
+  .setting-tree-chevron,
+  .setting-tree-chevron-spacer {
+    flex: 0 0 24px;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .setting-tree-chevron {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--par-color-text-muted, #6b6b6b);
+
+    /* Inline SVG triangle, not a Unicode glyph: WordPress's emoji
+       conversion script substitutes `▶` (U+25B6) for an s.w.org-hosted
+       emoji image, so a text-character chevron renders as a blue
+       play-button image in production. SVG bypasses that path entirely. */
+    .setting-tree-chevron-glyph {
+      display: inline-block;
+      transition: transform 0.15s ease;
     }
 
-    .setting-button {
-      width: 100%;
-      padding: 12px 20px;
-      font-size: 1.5rem;
-      text-align: left;
-      background-color: $default-background-color;
-      border: none;
-      color: inherit;
-      cursor: pointer;
-      border-left: 5px solid transparent;
-      transition: background-color $transition-speed, border-left-color $transition-speed;
+    &.is-expanded .setting-tree-chevron-glyph {
+      transform: rotate(90deg);
+    }
 
-      &:hover {
-        background-color: $hover-background-color;
-      }
+    &:hover {
+      color: var(--par-color-text, #222);
+    }
 
-      &:focus {
-        outline: none;
-        border-left-color: $active-border-color;
-      }
+    &:focus-visible {
+      outline: 2px solid var(--par-color-action-primary, #2A4D70);
+      outline-offset: -2px;
+    }
+  }
 
-      &.active {
-        background-color: $active-color;
-        border-color: $active-border-color;
-      }
+  .setting-tree-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 12px 16px 12px 4px;
+    font-size: 1.5rem;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    /* Long names (Italian compounds, deep hierarchies) truncate
+       with ellipsis rather than wrap or push the row wider. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  /* Standalone setting-button — kept for the "+ New Setting" row at
+     the bottom of the list. The tree rows use setting-tree-* classes
+     above; this block stays for the lone-button case so its styling
+     doesn't need a separate variant. */
+  .setting-button {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1.5rem;
+    text-align: left;
+    background-color: $default-background-color;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    border-left: 5px solid transparent;
+    transition: background-color $transition-speed, border-left-color $transition-speed;
+
+    &:hover {
+      background-color: $hover-background-color;
+    }
+
+    &:focus {
+      outline: none;
+      border-left-color: $active-border-color;
     }
   }
 }
@@ -871,7 +2243,10 @@ $transition-speed: 0.3s;
   flex-direction: column;
   align-items: center;
   margin: 3rem auto;
-  max-width: 800px;
+  /* Match NPCGenerator's content area width (940px) so the parchment
+     card surface gets the same canvas — narrower (800px) was clamping
+     the card body well inside the 65ch readability target. */
+  max-width: 940px;
 
   .content-tabs {
     box-shadow: 0 4px 6px #0000001a;
@@ -1065,7 +2440,14 @@ $transition-speed: 0.3s;
   margin: 1.5rem 0;
 }
 
-.delete-button {
+/* Setting-level destructive action — right-aligned in its own row so
+   it pairs with the trailing edge of the tab area instead of floating
+   orphaned. Uses ParActionButton secondary variant (faded slate ghost)
+   so a permanent action doesn't compete for attention. */
+.delete-setting-row {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
   margin-top: 2rem;
 }
 
@@ -1089,17 +2471,6 @@ $transition-speed: 0.3s;
 
 .faction-description {
   margin: 1rem .5rem;
-}
-
-.tab-skeleton {
-  width: 800px;
-  margin-top: 2rem;
-}
-
-@media (max-width: 768px) {
-  .tab-skeleton {
-    width: 100%;
-  }
 }
 
 .skeleton-hr {

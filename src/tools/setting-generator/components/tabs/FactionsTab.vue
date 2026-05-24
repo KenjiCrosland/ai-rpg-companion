@@ -182,6 +182,8 @@ import {
   factionListPrompt,
   detailedFactionPrompt,
   singleFactionPrompt,
+  classifyNPCsByFactionPrompt,
+  classifyNPCsByFactionValidation,
 } from '../../prompts/index.mjs';
 
 const props = defineProps({
@@ -400,6 +402,42 @@ async function generateFactions() {
         });
       }
     });
+
+    // Classify existing un-affiliated NPCs into the new factions so
+    // they leave the "Unaffiliated" bucket. NPCs extracted from setting
+    // prose before factions existed have no faction field; we ask the
+    // LLM which (if any) faction each one fits. NPCs that don't clearly
+    // belong to any get `faction: null` and stay in Unaffiliated.
+    //
+    // Done as a best-effort step: if the classification call fails or
+    // returns malformed JSON, we still emit the faction list + new
+    // NPCs — the user can manually re-classify later when we ship the
+    // manual UI. Faction leaders are excluded from classification —
+    // they were just assigned their own faction above.
+    const npcsToClassify = newNpcs.filter(npc => !npc.faction && npc.name);
+    if (npcsToClassify.length > 0 && factions.length > 0) {
+      try {
+        const classifyPrompt = classifyNPCsByFactionPrompt(npcsToClassify, factions);
+        const classifyResponse = await generateGptResponse(classifyPrompt, classifyNPCsByFactionValidation);
+        const { assignments } = JSON.parse(classifyResponse);
+        const factionNameSet = new Set(factions.map(f => f.name));
+        const assignmentMap = new Map();
+        for (const a of assignments) {
+          // Only accept faction values that exist in the just-generated
+          // list — guards against the LLM hallucinating faction names.
+          if (a.faction && factionNameSet.has(a.faction)) {
+            assignmentMap.set(a.name, a.faction);
+          }
+        }
+        for (let i = 0; i < newNpcs.length; i++) {
+          if (newNpcs[i].faction) continue;
+          const assigned = assignmentMap.get(newNpcs[i].name);
+          if (assigned) newNpcs[i] = { ...newNpcs[i], faction: assigned };
+        }
+      } catch (err) {
+        console.warn('NPC-to-faction classification failed; NPCs stay Unaffiliated:', err);
+      }
+    }
 
     emitUpdated({ factions, npcs: newNpcs });
   } catch (error) {

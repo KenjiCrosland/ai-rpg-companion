@@ -1,5 +1,5 @@
 <template>
-  <div class="npc-card parchment">
+  <div class="npc-card parchment" :class="{ 'npc-card--collapsed': bodyHidden }">
     <!-- Header: name + buttons -->
     <div class="npc-card-header">
       <div>
@@ -28,17 +28,62 @@
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
         <ParCardButton
-          v-if="editable && !isEditing && !loadingDescription"
+          v-if="editable && !isEditing && !loadingDescription && !bodyHidden && !stubMode"
           size="small"
           @click="$emit('start-edit')"
         >
           Edit NPC
         </ParCardButton>
+        <button
+          v-if="collapsible && !loadingDescription"
+          type="button"
+          class="npc-card-collapse"
+          :class="{ 'npc-card-collapse--open': !isCollapsed }"
+          :title="isCollapsed ? 'Expand' : 'Collapse'"
+          :aria-label="isCollapsed ? 'Expand NPC' : 'Collapse NPC'"
+          @click="$emit('toggle-collapse')"
+        >
+          <svg viewBox="0 0 12 12" width="18" height="18" aria-hidden="true">
+            <polyline
+              points="2,4 6,8 10,4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
       </div>
     </div>
 
+    <!-- Stub-mode body — used when this card represents an NPC that
+         hasn't been promoted to full detail yet. Shows the Generate
+         CTA in place of read-aloud / details / relationships; same
+         burgundy chrome wraps it so the visual frame stays uniform
+         with promoted NPCs. Skeleton takes over while generation is
+         in flight. -->
+    <div v-if="stubMode && !isEditing && !bodyHidden" class="npc-card-stub-body">
+      <CdrSkeleton v-if="loadingDescription">
+        <CdrSkeletonBone type="line" style="width:95%; margin-bottom: 0.5rem;" />
+        <CdrSkeletonBone type="line" style="width:88%; margin-bottom: 0.5rem;" />
+        <CdrSkeletonBone type="line" style="width:60%; margin-bottom: 1.5rem;" />
+      </CdrSkeleton>
+      <template v-else>
+        <p class="npc-card-stub-message">
+          No detailed description yet. Generate one to flesh out this
+          NPC's appearance, voice, secrets, and relationships.
+        </p>
+        <div class="npc-card-stub-actions">
+          <ParCardButton @click="$emit('generate-detailed')">
+            Generate Detailed Description
+          </ParCardButton>
+        </div>
+      </template>
+    </div>
+
     <!-- Content wrapper for view mode (centers all content with shared left edge) -->
-    <div v-if="!isEditing" class="npc-card-content">
+    <div v-if="!stubMode && !isEditing && !bodyHidden" class="npc-card-content">
       <!-- Read-aloud - skeleton or content -->
       <div class="npc-card-read-aloud">
         <CdrSkeleton v-if="loadingDescription">
@@ -118,7 +163,7 @@
     </div>
 
     <!-- Edit form (replaces body when editing) -->
-    <div v-if="isEditing" class="npc-edit">
+    <div v-if="isEditing && !bodyHidden" class="npc-edit">
       <header class="npc-edit__header">
         <h2 class="npc-edit__title">Edit NPC</h2>
       </header>
@@ -197,7 +242,7 @@
     </div>
 
     <!-- Footer Bar -->
-    <div v-if="!loadingDescription && !loadingRelationships && !isEditing" class="card-footer-bar">
+    <div v-if="!loadingDescription && !loadingRelationships && !isEditing && !bodyHidden && !stubMode" class="card-footer-bar">
       <div class="card-footer-bar__actions">
         <ParCardButton v-if="shouldShowNpcGeneratorLink" @click="navigateToNPCGenerator">
           View in NPC Generator
@@ -359,6 +404,35 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+
+  // Render the card with an in-header expand/collapse chevron. When
+  // `isCollapsed` is true the body (content / edit panel / footer) is
+  // hidden and the card shrinks to its header strip. Used by the
+  // Setting Generator's NPC tab to render a list of NPCs that can each
+  // expand in place; default false leaves call sites that don't opt in
+  // (NPC Generator, Dungeon Generator, etc.) rendering as before.
+  collapsible: {
+    type: Boolean,
+    default: false,
+  },
+
+  // Controlled collapsed state. Has no effect unless `collapsible` is
+  // true. Parent owns the state and toggles it via the `toggle-collapse`
+  // emit so multi-card lists can drive expansion from outside.
+  isCollapsed: {
+    type: Boolean,
+    default: false,
+  },
+
+  // Render the card as a stub — same burgundy chrome, but the body
+  // shows a "Generate Detailed Description" CTA instead of the
+  // read-aloud / details / relationships block. Used by the Setting
+  // Generator's NPC tab to give un-generated NPCs the same expanded
+  // visual frame as promoted ones (with different contents inside).
+  stubMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([
@@ -371,7 +445,15 @@ const emit = defineEmits([
   'delete-relationship',
   'move-to-folder',
   'toggle-export',
+  'toggle-collapse',
+  'generate-detailed',
 ]);
+
+// Hide the body (content / edit panel / footer) when the card is in
+// collapsible mode AND currently collapsed. Default behavior (callers
+// that don't opt into collapsible) leaves bodyHidden false so the card
+// renders unchanged.
+const bodyHidden = computed(() => props.collapsible && props.isCollapsed);
 
 // Computed: body paragraphs
 const bodyParagraphs = computed(() => {
@@ -603,8 +685,79 @@ function navigateToNPCGenerator() {
   align-items: flex-start;
 }
 
+/* When the card is in collapsed mode, the header is the only visible
+   element — drop the bottom margin that normally separates it from
+   the body, so adjacent collapsed cards in a list pack tightly. */
+.npc-card--collapsed .npc-card-header {
+  margin-bottom: 0;
+}
+
+/* Stub-mode body — sits where the rich detail content normally
+   sits. Subdued explanatory copy + centered CTA, framed by the
+   same burgundy chrome the promoted card uses. The padding
+   matches the content wrapper so the card frame doesn't shift
+   when an NPC promotes from stub to detailed. */
+.npc-card-stub-body {
+  padding: 0 3rem 2.5rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+.npc-card-stub-message {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+.npc-card-stub-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* In-header collapse chevron (only rendered when `collapsible` is
+   true). Bordered-box glyph that matches the collapsed-row chevron
+   used in lists embedding this card — same size, same chrome — so a
+   row's chevron stays visually in place across collapse/expand. */
+.npc-card-collapse {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  color: var(--par-color-action-muted, #5A7A9A);
+  cursor: pointer;
+  border-radius: var(--par-radius-sm, 3px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.npc-card-collapse svg {
+  display: block;
+  transition: transform 0.18s ease;
+}
+
+.npc-card-collapse:hover {
+  color: var(--par-color-title, #7a1f1f);
+  border-color: var(--par-color-title, #7a1f1f);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.npc-card-collapse:focus-visible {
+  outline: 2px solid var(--par-color-action-primary, #2A4D70);
+  outline-offset: 2px;
+}
+
+.npc-card-collapse--open svg {
+  transform: rotate(180deg);
+}
+
 .npc-card-name {
   margin: 0 0 0.125rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 2.8rem;
   font-weight: 500;
   color: var(--par-color-title, #7a1f1f);

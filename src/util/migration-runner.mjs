@@ -18,9 +18,13 @@ import { renameNPCItemFields } from './rename-npc-item-fields.mjs';
 import { promoteNPCIds } from './promote-npc-id.mjs';
 import { assignDungeonIds } from './assign-dungeon-ids.mjs';
 import { assignSettingIds } from './assign-setting-ids.mjs';
+import { migrateSettingParentId } from './migrate-setting-parent-id.mjs';
 import { dropNPCFolder } from './drop-npc-folder.mjs';
 import { sweepOrphanReferences } from './sweep-orphan-references.mjs';
 import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-nested.mjs';
+import { sweepAuntUncleSiblingStubs } from './sweep-aunt-uncle-sibling-stubs.mjs';
+import { sweepStubNames } from './sweep-stub-names.mjs';
+import { seedCrossToolQuota } from './seed-cross-tool-quota.mjs';
 
 /**
  * List of all migrations to run.
@@ -39,16 +43,36 @@ import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-n
  *   4. assign-dungeon-ids / assign-setting-ids — convert entities to
  *      stable string ids and rewrite refs that targeted them by name or
  *      numeric value.
- *   5. drop-npc-folder — remove the `npc_folder` denormalization from
+ *   5. migrate-setting-parent-id — promote settings' parentIndex →
+ *      parentId and importantLocations[].main_index →
+ *      promoted_setting_id. Depends on assign-setting-ids having run
+ *      first so every setting has a resolvable id.
+ *   6. drop-npc-folder — remove the `npc_folder` denormalization from
  *      every cross-tool stub. Substrate lookups walk by id now; the
  *      cached folder hint is dead weight and a stale-cache hazard.
- *   6. sweep-orphan-references — drops any refs whose source/target no
+ *   7. sweep-orphan-references — drops any refs whose source/target no
  *      longer resolves; runs after the id migrations so their post-
  *      rewrite refs aren't seen as orphans.
- *   7. promote-npc-statblock-ref-to-nested — moves canonical NPC
+ *   8. promote-npc-statblock-ref-to-nested — moves canonical NPC
  *      statblock_name/folder from top-level to npcDescriptionPart1.
  *      Lets `getNPCStatblockRef` drop its legacy-top-level fallback
  *      branch and removes the dual-read pattern from the codebase.
+ *   9. sweep-aunt-uncle-sibling-stubs — drops sibling-kind
+ *      related_places stubs whose names match the setting's
+ *      "aunt/uncle" set (parent's siblings + parent's sibling stubs).
+ *      Cleans up scale-mismatched peer claims the extraction LLM
+ *      produced before `collectRelatedSettingNames` learned to
+ *      exclude aunts/uncles. Depends on `migrate-setting-parent-id`
+ *      so every setting has a resolvable parentId to walk.
+ *  10. sweep-stub-names — aligns every stub's display `name` to its
+ *      linked setting's current `place_name`. Cleans up stale names
+ *      left over from setting renames performed before
+ *      OverviewTab.saveEdit gained rename-propagation. Idempotent.
+ *      Depends on `assign-setting-ids` so id-linked stubs can resolve.
+ *  11. seed-cross-tool-quota — seeds `_xt: { c: 0 }` on the `monsters`
+ *      host so the cross-tool gate can safely use `recoverAtCount`.
+ *      Async — signs via SubtleCrypto. Order-independent; placed at
+ *      the end so it doesn't gate any earlier data work.
  *
  * Add new migrations to the end of this array.
  */
@@ -58,18 +82,26 @@ const migrations = [
   { name: 'promote-npc-id', run: promoteNPCIds },
   { name: 'assign-dungeon-ids', run: assignDungeonIds },
   { name: 'assign-setting-ids', run: assignSettingIds },
+  { name: 'migrate-setting-parent-id', run: migrateSettingParentId },
   { name: 'drop-npc-folder', run: dropNPCFolder },
   { name: 'sweep-orphan-references', run: sweepOrphanReferences },
   { name: 'promote-npc-statblock-ref-to-nested', run: promoteNPCStatblockRefToNested },
+  { name: 'sweep-aunt-uncle-sibling-stubs', run: sweepAuntUncleSiblingStubs },
+  { name: 'sweep-stub-names', run: sweepStubNames },
+  { name: 'seed-cross-tool-quota', run: seedCrossToolQuota },
 ];
 
 /**
  * Run all pending migrations that haven't been completed yet.
- * Migrations are run synchronously in order.
+ * Migrations are awaited in order — a migration may return a Promise
+ * (e.g., the cross-tool quota seed signs via SubtleCrypto). Sync
+ * migrations work unchanged because `await` on a non-thenable value
+ * resolves immediately.
  *
- * If a migration throws an error, it won't be marked complete and will retry on next load.
+ * If a migration throws, it won't be marked complete and will retry
+ * on next load.
  */
-export function runPendingMigrations() {
+export async function runPendingMigrations() {
   let completed;
 
   try {
@@ -83,7 +115,7 @@ export function runPendingMigrations() {
     if (!completed.includes(migration.name)) {
       try {
         console.log(`Running migration: ${migration.name}...`);
-        migration.run();
+        await migration.run();
         completed.push(migration.name);
         localStorage.setItem('migrations-completed', JSON.stringify(completed));
         console.log(`Migration complete: ${migration.name}`);

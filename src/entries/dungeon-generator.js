@@ -27,9 +27,17 @@ import '@rei/cedar/dist/style/cdr-toggle-group.css';
 import '@rei/cedar/dist/style/cdr-tooltip.css';
 
 import '../tools/dungeon-generator/style.css';
+import { getEffectivePremium, initDevPremiumControls } from '../util/dev-premium-controls.mjs';
+
+// Expose `window.devPremium` for cross-tool premium testing. Idempotent;
+// no-op in production builds.
+initDevPremiumControls();
 
 const el = document.getElementById('app');
-const isPremium = el?.dataset.premium === 'true';
+// Dungeon-generator's bespoke entry uses the same effective-premium
+// helper as base.js so the dev override propagates here too — testing
+// item → dungeon flows as premium without subscription state.
+const isPremium = getEffectivePremium({ withPremium: true, el });
 
 const Root = {
   setup() {

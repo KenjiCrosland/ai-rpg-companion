@@ -194,6 +194,12 @@
             <RelatedNPCsSection v-if="!isEditing" :item="magicItemDescription" @update:item="handleUpdatedItem"
               @switch-to-lore-builder="activeTabIndex = 1" />
 
+            <!-- Related Settings — sits below NPCs as a parallel
+                 cross-tool stub list. Same parchment surface, same
+                 row styling. -->
+            <RelatedSettingsSection v-if="!isEditing" :item="magicItemDescription" @update:item="handleUpdatedItem"
+              @switch-to-lore-builder="activeTabIndex = 1" />
+
             <!-- Edit Mode -->
             <div v-else class="item-edit">
               <header class="item-edit__header">
@@ -310,6 +316,7 @@ import ItemSkeleton from '@/components/skeletons/ItemSkeleton.vue';
 import QuestHookTab from './components/QuestHookTab.vue';
 import LoreBuilderTab from './components/LoreBuilderTab.vue';
 import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
+import RelatedSettingsSection from './components/RelatedSettingsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
 import { ParCardButton, ParActionButton, ParCallout, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
@@ -318,6 +325,7 @@ import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
 import { useToast } from '@/composables/useToast';
 import { renameItemReferences, removeReferencesForItem } from '@/util/item-storage.mjs';
+import { resetSettingSourceForDeletedEntity } from '@/util/setting-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { detectFromUserInput } from './utils/detect-user-input.mjs';
 import { detectRegisterFromInput } from '@/shared/detect-register-from-input.mjs';
@@ -1604,6 +1612,35 @@ ITEM STRUCTURE TO COMPLETE:
 
       If the lore mentions no named individuals or groups, return an empty array [].
     */
+  ],
+  "related_settings": [
+    /*
+      Add one stub for every NAMED LOCATION the lore anchors to a place — settlements, forges,
+      temples, chambers, forests, mountains, ruins, regions, planes. Anywhere the item was made,
+      hidden, used, lost, recovered, or otherwise had its history play out, AS LONG AS the place
+      has a proper name in the lore.
+
+      LOCATIONS vs NON-LOCATIONS — important distinction:
+        - A specific named place (e.g., "the Whispering Glade", "Forge of Vorn", "Throne of Aša"):
+          extract directly using that name.
+        - A category-only reference with no proper name ("a forest", "the king's hall", "an old
+          smithy"): SKIP. Locations need a proper name to anchor a full setting generation.
+        - Organizations / factions / cults / orders / lineages: SKIP — those belong in
+          related_npcs (as invented members), not here.
+        - A region AND a specific place inside it both named ("the Sunless Wood, where the
+          Whispering Glade lies"): extract BOTH as separate stubs.
+
+      Each stub:
+        - name: the place's proper name as it appears in the lore (verbatim).
+        - role_brief: ≤10 words describing the place's relationship to this item AND containing
+          the EXACT item name verbatim. Examples: "Forge that produced ${itemName.value || '[item name]'}",
+          "Vault holding ${itemName.value || '[item name]'}", "Battlefield where ${itemName.value || '[item name]'} was lost".
+        - context: one sentence describing what the place is and how it relates to this item.
+          Geographic / political character if useful.
+        - source_quote: the verbatim sentence(s) in the lore field where this place appears.
+
+      If the lore mentions no named places, return an empty array [].
+    */
   ]
 }
 
@@ -1670,6 +1707,7 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
 
     magicItemDescription.value.questHooks = [];
     magicItemDescription.value.related_npcs = normalizeRelatedNPCs(magicItemDescription.value.related_npcs);
+    magicItemDescription.value.related_settings = normalizeRelatedSettings(magicItemDescription.value.related_settings);
     // Persist the selected register on the saved item so cross-tool
     // promotions (e.g., item → NPC) can inherit it without re-detecting
     // from the lore. Legacy items without this field fall back to
@@ -1771,6 +1809,16 @@ const itemValidation = (jsonString) => {
       );
       if (!ok) return false;
     }
+    // related_settings is optional too; same minimal shape requirement
+    // (everything beyond name is normalized post-parse).
+    if ('related_settings' in jsonObj) {
+      if (!Array.isArray(jsonObj.related_settings)) return false;
+      const ok = jsonObj.related_settings.every(stub =>
+        stub && typeof stub === 'object'
+        && typeof stub.name === 'string'
+      );
+      if (!ok) return false;
+    }
     return true;
   } catch (error) {
     return false;
@@ -1797,6 +1845,31 @@ const normalizeRelatedNPCs = (raw) => {
       context: (entry.context || '').toString().trim(),
       source_quote: (entry.source_quote || '').toString().trim(),
       npc_id: entry.npc_id || null,
+    });
+  }
+  return stubs;
+}
+
+// Normalize a related_settings array (locations the item's lore names
+// that could be promoted into full settings). Same shape and dedupe
+// rules as normalizeRelatedNPCs; `setting_id` is the promotion-link
+// field instead of `npc_id`.
+const normalizeRelatedSettings = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const stubs = [];
+  for (const entry of raw) {
+    const name = (entry?.name || '').toString().trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    stubs.push({
+      name,
+      role_brief: (entry.role_brief || '').toString().trim(),
+      context: (entry.context || '').toString().trim(),
+      source_quote: (entry.source_quote || '').toString().trim(),
+      setting_id: entry.setting_id || null,
     });
   }
   return stubs;
@@ -1988,6 +2061,11 @@ const deleteItem = () => {
       localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
       if (deletedName) {
         removeReferencesForItem(deletedName);
+        // Settings that record this item as their inspiration source
+        // need their denormalized fields cleared too — the reference
+        // graph alone wouldn't stop the setting card from rendering
+        // "Inspired by [Item]" as a live link.
+        resetSettingSourceForDeletedEntity('item', deletedName);
       }
       activeItemIndex.value = null;
       magicItemDescription.value = null;

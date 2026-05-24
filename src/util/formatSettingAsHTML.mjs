@@ -1,3 +1,5 @@
+import { renderOverview, overviewAstToHtml } from './renderSettingOverview.mjs';
+
 function formatSettingOverview(settings) {
   const factionPowerLevels = [
     'Nonexistent',
@@ -33,36 +35,19 @@ function formatSettingOverview(settings) {
       if (index > 0) {
         text += '<hr/>\n';
       }
+      // Render the bare name as the H1, then setting_overview.title
+      // as a styled subtitle paragraph below. Mirrors the UI's
+      // hierarchy.
+      const settingSubtitle = setting.setting_overview?.title;
       text += addHtmlSectionTitle(setting.place_name.toUpperCase(), 1);
+      if (settingSubtitle) {
+        text += `<p style="font-style: italic; color: #6b7280; margin-top: -0.5rem;">${settingSubtitle}</p>\n`;
+      }
 
-      addSection(
-        `${setting.setting_overview.overview} ${setting.setting_overview.relation_to_larger_setting}`,
-      );
-      addSection(setting.setting_overview.history);
-
-      // Combine specific sections
-      addSection([
-        setting.setting_overview.current_ruler_sentence,
-        setting.setting_overview.recent_event_current_ruler,
-      ]);
-      addSection([
-        setting.setting_overview.social_history,
-        setting.setting_overview.recent_event_social,
-      ]);
-      addSection([
-        setting.setting_overview.economic_history,
-        setting.setting_overview.impactful_economic_event,
-      ]);
-      addSection([
-        setting.setting_overview.military_history,
-        setting.setting_overview.recent_event_military,
-      ]);
-      addSection([
-        setting.setting_overview.main_problem,
-        setting.setting_overview.potential_solutions,
-      ]);
-
-      addSection(setting.setting_overview.conclusion);
+      // Single source of truth: walk the overview AST. Emits
+      // <p>/<blockquote>/<h3>/<strong>/<em>. Handles both structured-
+      // field and legacy combined_content cases uniformly.
+      text += overviewAstToHtml(renderOverview(setting.setting_overview)) + '\n';
 
       // Add NPC List
       text += addHtmlSectionTitle('NPCs', 2);
@@ -161,7 +146,10 @@ function formatSettingOverview(settings) {
               (child) => child.place_name === location.name,
             )
           ) {
-            text += addHtmlSectionTitle(location.title, 3);
+            const locationTitle = location.title
+              ? `${location.name}, ${location.title}`
+              : location.name;
+            text += addHtmlSectionTitle(locationTitle, 3);
             addSection(location.description);
           }
         });

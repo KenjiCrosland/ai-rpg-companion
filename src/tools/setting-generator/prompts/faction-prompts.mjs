@@ -1,3 +1,93 @@
+/**
+ * Build a prompt that classifies a list of existing NPCs into a list
+ * of factions. Used after faction generation so NPCs extracted from
+ * the setting prose (which had no faction context at extraction time)
+ * get pulled out of the "Unaffiliated" bucket and grouped under the
+ * faction that best fits their role description.
+ *
+ * Input:
+ *   npcs:     [{ name, description }, ...]
+ *   factions: [{ name, motto, faction_leader_description, key_resources_and_assets }, ...]
+ *
+ * Expected output (JSON):
+ *   {
+ *     "assignments": [
+ *       { "name": "Aldwyn the Spring-Watcher", "faction": "The Hidden Order" },
+ *       { "name": "Vera the Drover",          "faction": null },
+ *       ...
+ *     ]
+ *   }
+ *
+ * NPCs that don't clearly belong to any faction should receive
+ * `faction: null` — the consumer leaves their existing `faction` field
+ * untouched (they stay in Unaffiliated). False positives are worse
+ * than leaving an NPC unclassified, so the prompt errs toward null.
+ */
+export function classifyNPCsByFactionPrompt(npcs, factions) {
+  const npcLines = (npcs || [])
+    .map((n) => `  - ${n.name}: ${n.description || ''}`)
+    .join('\n');
+
+  const factionLines = (factions || [])
+    .map((f) => {
+      const parts = [
+        f.motto ? `motto: "${f.motto}"` : '',
+        f.faction_leader ? `leader: ${f.faction_leader}` : '',
+        f.faction_leader_description ? `leader role: ${f.faction_leader_description}` : '',
+        f.key_resources_and_assets ? `resources: ${f.key_resources_and_assets}` : '',
+      ].filter(Boolean).join(' — ');
+      return `  - ${f.name}${parts ? ` (${parts})` : ''}`;
+    })
+    .join('\n');
+
+  return `Classify each NPC below into one of the listed factions, OR
+return null for that NPC if they do not clearly belong to any of
+them. Err toward null when in doubt — incorrect assignments are
+worse than leaving an NPC unaffiliated.
+
+NPCs to classify:
+${npcLines}
+
+Available factions:
+${factionLines}
+
+Return JSON with this exact shape:
+{
+  "assignments": [
+    { "name": "<exact NPC name as listed above>", "faction": "<exact faction name>" or null }
+  ]
+}
+
+Rules:
+- Every NPC in the input MUST appear once in the assignments array.
+- The "name" value must match the NPC name above character-for-character.
+- The "faction" value must be either one of the exact faction names above OR null.
+- No prose, no commentary, no markdown fences — just the JSON object.`;
+}
+
+/**
+ * Shape validator for classifyNPCsByFactionPrompt responses.
+ * Accepts:
+ *   - Top-level object with `assignments` array
+ *   - Each entry has string `name` and (string|null) `faction`
+ */
+export function classifyNPCsByFactionValidation(jsonString) {
+  try {
+    const obj = JSON.parse(jsonString);
+    if (!obj || typeof obj !== 'object' || !Array.isArray(obj.assignments)) {
+      return false;
+    }
+    return obj.assignments.every((a) =>
+      a
+      && typeof a === 'object'
+      && typeof a.name === 'string'
+      && (a.faction === null || typeof a.faction === 'string')
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function factionListPrompt(kingdomDescription) {
   return `
   Below is a description of a setting in in JSON format:

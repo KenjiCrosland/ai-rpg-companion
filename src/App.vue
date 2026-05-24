@@ -196,8 +196,11 @@ export default {
   mounted() {
     registerToast(this.$refs.toast);
 
-    // Run pending data migrations
-    runPendingMigrations();
+    // Run pending data migrations (async — some migrations sign via
+    // SubtleCrypto). Fire-and-forget; errors logged via .catch.
+    runPendingMigrations().catch((err) => {
+      console.error('runPendingMigrations failed in App mount:', err);
+    });
 
     // Add keyboard shortcut for dev switcher
     if (import.meta.env.DEV) {

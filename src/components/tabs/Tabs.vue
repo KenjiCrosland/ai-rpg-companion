@@ -95,7 +95,12 @@ provide('currentIndex', currentIndex);
   overflow: hidden;
   list-style: none;
   padding: 0;
-  border-bottom: .1rem solid #928b80;
+  /* Whisper-thin separator instead of a hard rule. The bar previously
+     read as a Cedar chrome element pasted above the content; at 0.05rem
+     and 6% opacity it functions as a layout cue without containing the
+     content beneath it. The greyish hex matches the previous accent
+     hue — only the weight and opacity change. */
+  border-bottom: 0.05rem solid rgba(146, 139, 128, 0.06);
 }
 
 @media (max-width: 768px) {
@@ -136,24 +141,27 @@ provide('currentIndex', currentIndex);
 /* not aria-selected */
 .tab-header-item[aria-selected="false"] {
   color: #423b2fbf;
-  /* lighter color for better visibility */
-  background-color: #fff;
-  /* lighter background for inactive tab */
+  /* Transparent rather than white so inactive tabs inherit the
+     parchment page surface beneath. A white inactive bg against a
+     warm-cream page would create a hard chrome-vs-parchment seam at
+     the tab strip — the whole strip should read as one continuous
+     surface. */
+  background-color: transparent;
   font-weight: 300;
-  border-bottom: 3px solid #fff;
-  border-top: 3px solid #fff;
-  /* lighter text for inactive tab */
+  border-bottom: 3px solid transparent;
+  border-top: 3px solid transparent;
 }
 
 .tab-header-item[aria-selected="true"] {
   color: #0c0b08bf;
-  /* darker color for better visibility */
-  background-color: #f0f0f0;
-  /* lighter background for active tab */
+  /* Warm parchment tint — slightly darker than the page surface
+     (--par-color-surface-page #FBF8F1) so the active tab reads as
+     gently recessed into the parchment rather than as a Cedar-grey
+     element pasted above. */
+  background-color: #F8F5EF;
   font-weight: 500;
   border-bottom: 3px solid #406eb5;
-  border-top: 3px solid #f0f0f0;
-  /* bolder text for active tab */
+  border-top: 3px solid #F8F5EF;
 }
 
 .tab-header-item.disabled {
@@ -165,7 +173,7 @@ provide('currentIndex', currentIndex);
 .tab-header-item.disabled:hover,
 .tab-header-item.disabled:focus {
   background-color: transparent;
-  border: 3px solid #fff;
+  border: 3px solid transparent;
   font-weight: 300;
   color: #aaa;
 }
@@ -175,6 +183,9 @@ provide('currentIndex', currentIndex);
   border: 3px solid #406eb5;
   color: #406eb5;
   font-weight: 600;
-  background-color: #f0f0f0;
+  /* Match the active-tab parchment tint on hover so hovering an
+     inactive tab previews the same warm-cream sit-on-parchment
+     reading the active tab uses. */
+  background-color: #F8F5EF;
 }
 </style>

@@ -1,3 +1,5 @@
+import { renderOverview, overviewAstToText } from './renderSettingOverview.mjs';
+
 function formatSettingOverview(settings) {
   const factionPowerLevels = [
     'Nonexistent',
@@ -40,38 +42,19 @@ function formatSettingOverview(settings) {
         return `${title}\n${dashes}`;
       }
 
-      // Add setting overview sections
-      addSection(addDoubleDashedSectionTitle(setting.place_name.toUpperCase()));
+      // Add setting overview sections — compose the name with the
+      // subtitle so the export carries the full identity (the UI
+      // separates name/title typographically; plain text doesn't).
+      const settingSubtitle = setting.setting_overview?.title;
+      const settingTitle = settingSubtitle
+        ? `${setting.place_name.toUpperCase()}, ${settingSubtitle}`
+        : setting.place_name.toUpperCase();
+      addSection(addDoubleDashedSectionTitle(settingTitle));
 
-      addSection([
-        setting.setting_overview.overview,
-        setting.setting_overview.relation_to_larger_setting,
-      ]);
-      addSection(setting.setting_overview.history);
-
-      // Combine specific sections
-      addSection([
-        setting.setting_overview.current_ruler_sentence,
-        setting.setting_overview.recent_event_current_ruler,
-      ]);
-      addSection([
-        setting.setting_overview.social_history,
-        setting.setting_overview.recent_event_social,
-      ]);
-      addSection([
-        setting.setting_overview.economic_history,
-        setting.setting_overview.impactful_economic_event,
-      ]);
-      addSection([
-        setting.setting_overview.military_history,
-        setting.setting_overview.recent_event_military,
-      ]);
-      addSection([
-        setting.setting_overview.main_problem,
-        setting.setting_overview.potential_solutions,
-      ]);
-
-      addSection(setting.setting_overview.conclusion);
+      // Single source of truth: walk the rendered AST. Strips markdown
+      // markers and lays out section headings as dashed underlines.
+      // Handles both structured-field and legacy combined_content cases.
+      addSection(overviewAstToText(renderOverview(setting.setting_overview)));
 
       // Add NPC List
       addSection(addDashedSectionTitle('NPCs'));
@@ -156,7 +139,10 @@ function formatSettingOverview(settings) {
               (child) => child.place_name === location.name,
             )
           ) {
-            addSection(`${location.title}\n${location.description}`);
+            const locationTitle = location.title
+              ? `${location.name}, ${location.title}`
+              : location.name;
+            addSection(`${locationTitle}\n${location.description}`);
           }
         });
       }

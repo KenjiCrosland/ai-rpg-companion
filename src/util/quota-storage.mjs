@@ -14,6 +14,15 @@ const DOMAINS = {
   statblock:    { host: 'monsters', field: '_q' },
   'quest-hook': { host: 'monsters', field: '_qh' },
   lore:         { host: 'monsters', field: '_lr' },
+  // Cross-tool generations (item → setting, item → dungeon, future
+  // cross-tool flows). Shares the `monsters` host with the other
+  // counters — convention parity, and deleting the host costs the
+  // user their saved monster statblocks (real loss). Unlike
+  // `statblock`, this gate does not use `recoverAtCount`: monsters on
+  // the host are NOT causally related to cross-tool history, so a
+  // user with statblocks but no cross-tool refs is a normal case
+  // (fresh state expected), not a manual-deletion attacker.
+  'cross-tool': { host: 'monsters', field: '_xt' },
 };
 
 // Field names callers writing the same host key must preserve when
@@ -256,6 +265,55 @@ export async function ensureQuotaSeeded(domain) {
   if (stored === null) return;
   if (stored[field]) return;
   await writeQuota(domain, { count: 0, firstGenTime: null });
+}
+
+/**
+ * Seed fresh quota fields for multiple domains in a SINGLE
+ * read-modify-write pass against each affected host. Solves the
+ * race-condition bug that hit DataManagerModal: calling per-domain
+ * writeQuota in parallel (via Promise.all) had all three reads see
+ * the same pre-write blob, so the last-write-wins serialization
+ * lost the first two domains' fields.
+ *
+ * Behavior:
+ *   - Domains are grouped by host (statblock / quest-hook / lore all
+ *     share `monsters`, so they collapse to one R-M-W on `monsters`).
+ *   - Each host's blob is read once, every requested domain's field
+ *     is stamped onto it with a fresh signed payload, then the blob
+ *     is written back.
+ *   - Skips silently if the host blob is malformed (mirrors writeQuota's
+ *     refusal to overwrite null state).
+ *
+ * Use this when seeding more than one domain at a time on the same
+ * host — never serialize per-domain writeQuota calls with Promise.all.
+ *
+ * @param {Array<string>} domains - domain names from DOMAINS map
+ */
+export async function seedFreshQuotas(domains) {
+  if (!Array.isArray(domains) || domains.length === 0) return;
+
+  // Group requested domains by host so each host is touched once.
+  const byHost = new Map();
+  for (const domain of domains) {
+    const cfg = DOMAINS[domain];
+    if (!cfg) continue;
+    if (!byHost.has(cfg.host)) byHost.set(cfg.host, []);
+    byHost.get(cfg.host).push({ domain, field: cfg.field });
+  }
+
+  for (const [host, entries] of byHost) {
+    const stored = readHost(host);
+    if (stored === null) continue;
+    for (const { domain, field } of entries) {
+      stored[field] = {
+        c: 0,
+        t: null,
+        v: VERSION,
+        s: await sign(domain, 0, null),
+      };
+    }
+    writeHost(host, stored);
+  }
 }
 
 /**

@@ -1,3 +1,5 @@
+import { renderOverview, overviewAstToMarkdown } from './renderSettingOverview.mjs';
+
 function formatSettingOverview(settings) {
   const factionPowerLevels = [
     'Nonexistent',
@@ -29,35 +31,21 @@ function formatSettingOverview(settings) {
         return `${'#'.repeat(level)} ${title}`;
       }
 
-      // Add setting overview sections
+      // Add setting overview sections — emit the name as H1 and
+      // setting_overview.title as an italicized subtitle line so the
+      // markdown export mirrors the UI's hierarchy.
+      const settingSubtitle = setting.setting_overview?.title;
       text += `# ${setting.place_name.toUpperCase()}\n`;
-      text += `\n ${setting.setting_overview.overview}  ${setting.setting_overview.relation_to_larger_setting}\n:\n\n`;
+      if (settingSubtitle) {
+        text += `*${settingSubtitle}*\n`;
+      }
 
-      addSection(setting.setting_overview.history);
-
-      // Combine specific sections
-      addSection([
-        setting.setting_overview.current_ruler_sentence,
-        setting.setting_overview.recent_event_current_ruler,
-      ]);
-      addSection([
-        setting.setting_overview.social_history,
-        setting.setting_overview.recent_event_social,
-      ]);
-      addSection([
-        setting.setting_overview.economic_history,
-        setting.setting_overview.impactful_economic_event,
-      ]);
-      addSection([
-        setting.setting_overview.military_history,
-        setting.setting_overview.recent_event_military,
-      ]);
-      addSection([
-        setting.setting_overview.main_problem,
-        setting.setting_overview.potential_solutions,
-      ]);
-
-      addSection(setting.setting_overview.conclusion, 2);
+      // Single source of truth: render the overview AST back to
+      // markdown. Preserves bold/italic markers, beat blockquotes,
+      // and section headings; handles both structured-field and
+      // legacy combined_content cases uniformly.
+      text += '\n\n';
+      addSection(overviewAstToMarkdown(renderOverview(setting.setting_overview)), 2);
 
       // Add NPC List
       addSection(addMarkdownSectionTitle('NPCs'), 2);
@@ -154,7 +142,10 @@ function formatSettingOverview(settings) {
               (child) => child.place_name === location.name,
             )
           ) {
-            addSection(addMarkdownSectionTitle(location.title, 3));
+            const locationTitle = location.title
+              ? `${location.name}, ${location.title}`
+              : location.name;
+            addSection(addMarkdownSectionTitle(locationTitle, 3));
             addSection(location.description, 2);
           }
         });

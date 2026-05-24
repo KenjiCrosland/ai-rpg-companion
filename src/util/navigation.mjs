@@ -20,12 +20,29 @@ export function navigateToTool(toolName, params = {}) {
   const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   if (isDev) {
-    // Development: Store params in sessionStorage, page name in localStorage (App.vue reads it)
+    // Development: Store params in sessionStorage, page name in
+    // localStorage (App.vue reads it). Preserve premium tier across
+    // navigation: App.vue routes free vs premium via separate
+    // `dev-current-page` values (e.g., 'setting-generator' vs
+    // 'setting-generator-premium'). If we're currently on a
+    // `-premium` page OR the dev-premium-override flag is on, route
+    // to the `-premium` destination so the user stays in premium
+    // context through cross-tool flows. Production navigates to the
+    // same WordPress URL for both tiers — the backend decides which
+    // template renders — so this fork only matters in dev.
+    const currentPage = localStorage.getItem('dev-current-page') || '';
+    const overrideOn = localStorage.getItem('dev-premium-override') === 'true';
+    const isPremiumContext = overrideOn || /-premium$/.test(currentPage);
+    const destPage = isPremiumContext ? `${toolName}-premium` : toolName;
+
     sessionStorage.setItem('tool-navigation-params', JSON.stringify(params));
-    localStorage.setItem('dev-current-page', toolName);
+    localStorage.setItem('dev-current-page', destPage);
     window.location.href = '/';
   } else {
-    // Production: Build full cros.land URL with query params
+    // Production: Build full cros.land URL with query params. Premium
+    // and free share the same URL per tool — WordPress decides which
+    // template renders based on the user's subscription state, then
+    // writes `data-premium="true"` on #app accordingly.
     const toolUrls = {
       'npc-generator': '/rpg-ai-npc-generator/',
       'statblock-generator': '/ai-powered-dnd-5e-monster-statblock-generator/',

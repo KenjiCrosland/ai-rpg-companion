@@ -21,6 +21,7 @@ import {
   readQuota,
   writeQuota,
   remainingFromQuota,
+  seedFreshQuotas,
   QUOTA_FIELDS,
   __TEST_ONLY__,
 } from './quota-storage.mjs';
@@ -228,6 +229,91 @@ describe('quota-storage', () => {
     test('null/undefined quota returns 0 defensively', () => {
       expect(remainingFromQuota(null, CAP, WINDOW)).toBe(0);
       expect(remainingFromQuota(undefined, CAP, WINDOW)).toBe(0);
+    });
+  });
+
+  describe('seedFreshQuotas — bulk seed without races', () => {
+    test('seeds all three monster-host domains in a single read-modify-write', async () => {
+      // User imported a `monsters` blob with no quota fields. After
+      // the seed, all three quota fields must be present and valid —
+      // the bug was that doing this with Promise.all of three writeQuota
+      // calls produced a race where the last write clobbered the first
+      // two, leaving _q and _qh missing on disk.
+      localStorage.setItem('monsters', JSON.stringify({
+        Uncategorized: [{ name: 'Goblin' }],
+      }));
+
+      await seedFreshQuotas(['statblock', 'quest-hook', 'lore']);
+
+      const stored = JSON.parse(localStorage.getItem('monsters'));
+      expect(stored._q).toBeDefined();
+      expect(stored._qh).toBeDefined();
+      expect(stored._lr).toBeDefined();
+      expect(stored._q.c).toBe(0);
+      expect(stored._q.t).toBe(null);
+      // User data preserved alongside the seeded fields.
+      expect(stored.Uncategorized).toEqual([{ name: 'Goblin' }]);
+    });
+
+    test('each seeded payload validates on the next readQuota call', async () => {
+      localStorage.setItem('monsters', JSON.stringify({
+        Uncategorized: [{ name: 'Goblin' }],
+      }));
+      await seedFreshQuotas(['statblock', 'quest-hook', 'lore']);
+
+      const sQuota = await readQuota('statblock');
+      const qhQuota = await readQuota('quest-hook');
+      const lQuota = await readQuota('lore');
+      expect(sQuota).toEqual({ count: 0, firstGenTime: null, valid: true });
+      expect(qhQuota).toEqual({ count: 0, firstGenTime: null, valid: true });
+      expect(lQuota).toEqual({ count: 0, firstGenTime: null, valid: true });
+    });
+
+    test('reproduces the DataManagerModal race: parallel writeQuota loses fields', async () => {
+      // Regression contract: doing seeding in parallel via writeQuota
+      // (the old code path) DROPS fields under the localStorage R-M-W
+      // race. This test documents the previous bug so future
+      // refactors can't regress to that pattern.
+      localStorage.setItem('monsters', JSON.stringify({
+        Uncategorized: [{ name: 'Goblin' }],
+      }));
+      await Promise.all([
+        writeQuota('statblock', { count: 0, firstGenTime: null }),
+        writeQuota('quest-hook', { count: 0, firstGenTime: null }),
+        writeQuota('lore', { count: 0, firstGenTime: null }),
+      ]);
+
+      const stored = JSON.parse(localStorage.getItem('monsters'));
+      // At least one of the three fields ends up missing because of
+      // the race; the bulk seed path above never hits this.
+      const present = ['_q', '_qh', '_lr'].filter(k => stored[k] !== undefined);
+      expect(present.length).toBeLessThan(3);
+    });
+
+    test('refuses to overwrite a malformed host blob', async () => {
+      // Mirrors writeQuota's defensive bail.
+      const broken = '{"Uncategorized":[broken json';
+      localStorage.setItem('monsters', broken);
+      await seedFreshQuotas(['statblock', 'quest-hook', 'lore']);
+      expect(localStorage.getItem('monsters')).toBe(broken);
+    });
+
+    test('skips unknown domain names without throwing', async () => {
+      localStorage.setItem('monsters', JSON.stringify({}));
+      await seedFreshQuotas(['statblock', 'not-a-domain', 'lore']);
+
+      const stored = JSON.parse(localStorage.getItem('monsters'));
+      expect(stored._q).toBeDefined();
+      expect(stored._lr).toBeDefined();
+    });
+
+    test('empty / non-array input is a no-op', async () => {
+      localStorage.setItem('monsters', JSON.stringify({ A: [] }));
+      await seedFreshQuotas([]);
+      await seedFreshQuotas(null);
+      await seedFreshQuotas(undefined);
+      const stored = JSON.parse(localStorage.getItem('monsters'));
+      expect(stored._q).toBeUndefined();
     });
   });
 });

@@ -35,14 +35,47 @@ jest.mock('@/util/formatSettingAsHTML.mjs', () => ({
   formatSettingAsHtml: jest.fn((tree) => 'html export'),
 }));
 
-// Mock prompts
+// Mock prompts — new object-arg signatures matching the dimensional
+// architecture (inference produces type/character/register/userName/
+// tension; orchestrator additionally rolls bannedTropes per
+// generation and feeds all to the main generation call).
 jest.mock('../prompts/index.mjs', () => ({
-  settingOverviewPrompt: jest.fn((adjective, type, name, lore) =>
-    `Setting Overview Prompt: ${adjective} ${type} of ${name} - ${lore}`
+  settingOverviewPrompt: jest.fn(({ type, character, register, userName, tension, bannedTropes, description, lore } = {}) =>
+    `Setting Overview Prompt: type=${type} char=${(character || []).join('+')} register=${register} name=${userName} tension=${tension} banned=${(bannedTropes || []).length} desc=${description} lore=${lore}`
   ),
-  sublocationOverviewPrompt: jest.fn((name, parentOverview, description) =>
-    `Sublocation Prompt: ${name} in context of ${parentOverview} - ${description}`
+  sublocationOverviewPrompt: jest.fn(({ type, character, register, userName, tension, bannedTropes, parentName, parentLore, subLocationDescription } = {}) =>
+    `Sublocation Prompt: type=${type} char=${(character || []).join('+')} register=${register} name=${userName} tension=${tension} banned=${(bannedTropes || []).length} parent=${parentName} parentLore=${parentLore} desc=${subLocationDescription}`
   ),
+  subLocationsPrompt: jest.fn(({ settingDescription, existingSubLocations, register } = {}) =>
+    `Sublocations Prompt: desc=${settingDescription} existing=${existingSubLocations} register=${register}`
+  ),
+}));
+
+// Mock the inference module — return a fixed shape so the main
+// generation call gets predictable dimensions to feed to its prompt.
+jest.mock('../utils/infer-setting-dimensions.mjs', () => ({
+  inferSettingDimensions: jest.fn(async () => ({
+    type: 'kingdom',
+    character: ['ancient', 'corrupt', 'misty'],
+    register: null,
+    userName: null,
+    tension: 'recovery-rebuilding',
+  })),
+}));
+
+// Mock the dimensions module — generateCharacterCandidates,
+// pickRandomTension, getBannedTropesForGeneration, detectCozyMode,
+// and detectLowStakesTension are all called directly from the
+// component during setting / sublocation generation.
+jest.mock('../utils/setting-dimensions.mjs', () => ({
+  generateCharacterCandidates: jest.fn(() => [['ancient', 'corrupt', 'misty']]),
+  pickRandomTension: jest.fn(() => 'ongoing-accommodation'),
+  getBannedTropesForGeneration: jest.fn(() => [
+    'silence-cult',
+    'aging-authority-succession',
+  ]),
+  detectCozyMode: jest.fn(() => false),
+  detectLowStakesTension: jest.fn(() => null),
 }));
 
 // Mock GeneratorLayout component
@@ -60,10 +93,16 @@ jest.mock('@/components/DataManagerModal.vue', () => ({
   emits: ['update:opened']
 }));
 
-// Mock OverviewSkeleton
+// Mock OverviewSkeleton (still used by Factions/Locations tabs)
 jest.mock('@/components/skeletons/OverviewSkeleton.vue', () => ({
   name: 'OverviewSkeleton',
   template: '<div>Loading overview...</div>'
+}));
+
+// Mock SettingOverviewCardSkeleton (parchment-framed loading state)
+jest.mock('../components/SettingOverviewCardSkeleton.vue', () => ({
+  name: 'SettingOverviewCardSkeleton',
+  template: '<div>Loading setting card...</div>'
 }));
 
 // Mock tab components
@@ -78,7 +117,7 @@ jest.mock('../components/tabs/LocationsTab.vue', () => ({
   name: 'LocationsTab',
   template: '<div>Locations Tab</div>',
   props: ['setting', 'allSettings', 'premium'],
-  emits: ['updated-setting', 'generate-sublocation', 'delete-sublocation-setting']
+  emits: ['updated-setting', 'generate-sublocation', 'delete-sublocation-setting', 'promote-related-place']
 }));
 
 jest.mock('../components/tabs/FactionsTab.vue', () => ({
@@ -193,24 +232,24 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         props: { premium: false }
       });
 
-      // Mock API response
+      // Mock API response — the new prompt returns `name` (bare) and
+      // `title` (short evocative phrase that pairs with the name).
       const mockResponse = JSON.stringify({
         name: 'Valderia',
+        title: 'Republic of Banked Coals',
         overview: 'A flourishing kingdom',
         relation_to_larger_setting: 'Part of the Empire',
         history: 'Ancient history',
         current_ruler_sentence: 'King Marcus rules',
-        recent_event_current_ruler: 'Recent coronation',
-        recent_event_consequences: 'Peace treaty signed',
         social_history: 'Feudal society',
-        recent_event_social: 'Festival held',
+        notable_social_facet: 'Festival held',
         economic_history: 'Trade routes established',
-        impactful_economic_event: 'Gold discovered',
+        notable_economic_facet: 'Gold discovered',
         military_history: 'Defended against invasion',
-        recent_event_military: 'Training new guards',
-        main_problem: 'Dragon threat',
-        potential_solutions: 'Hire adventurers',
-        conclusion: 'Hope remains',
+        notable_security_facet: 'Training new guards',
+        central_dynamic: 'Dragon threat',
+        responses_in_motion: 'Hire adventurers',
+        present_state: 'Hope remains',
         npc_list: [
           { name: 'Marcus', description: 'The King' }
         ]
@@ -218,27 +257,23 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
-      // Fill form and submit
-      const adjective = wrapper.find('#adjective');
-      const settingType = wrapper.find('#setting_type');
-      const placeName = wrapper.find('#place_name');
-
-      await adjective.setValue('Flourishing');
-      await settingType.setValue('Kingdom');
-      await placeName.setValue('Valderia');
+      // Fill the single description input and submit.
+      await wrapper.find('#setting_description').setValue('A flourishing kingdom called Valderia');
 
       const form = wrapper.find('form');
       await form.trigger('submit.prevent');
       await flushPromises();
       await nextTick();
 
-      // Verify localStorage
+      // Verify localStorage — place_name is the bare name (for the
+      // sidebar); setting_overview.title holds the short evocative
+      // phrase that renders as a subordinate subtitle.
       const saved = JSON.parse(localStorage.getItem('gameSettings'));
       expect(saved).toBeTruthy();
       expect(saved).toBeInstanceOf(Array);
       expect(saved[0].place_name).toBe('Valderia');
       expect(saved[0].setting_overview).toBeTruthy();
-      expect(saved[0].setting_overview.name).toBe('Valderia');
+      expect(saved[0].setting_overview.title).toBe('Republic of Banked Coals');
     });
 
     it('should preserve setting structure when saving and loading', async () => {
@@ -255,7 +290,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         importantLocations: [{ name: 'Yawning Portal', open: false }],
         npcs: [{ name: 'Durnan', open: false }],
         questHooks: [],
-        parentIndex: null,
+        parentId: null,
         loadingFactions: false,
         loadingSubLocations: false,
         loadingsettingOverview: false
@@ -289,7 +324,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: null,
+          parentId: null,
           loadingFactions: false,
           loadingSubLocations: false,
           loadingsettingOverview: false
@@ -343,6 +378,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
   describe('Hierarchical Tree Structure', () => {
     it('should maintain parent-child relationships when saving', async () => {
       const parentSetting = {
+        id: 'set_parent_cormyr',
         adjective: 'Grand',
         setting_type: 'Kingdom',
         place_name: 'Cormyr',
@@ -352,13 +388,14 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         importantLocations: [],
         npcs: [],
         questHooks: [],
-        parentIndex: null,
+        parentId: null,
         loadingFactions: false,
         loadingSubLocations: false,
         loadingsettingOverview: false
       };
 
       const childSetting = {
+        id: 'set_child_suzail',
         adjective: 'Bustling',
         setting_type: 'City',
         place_name: 'Suzail',
@@ -368,7 +405,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         importantLocations: [],
         npcs: [],
         questHooks: [],
-        parentIndex: 0, // References parent at index 0
+        parentId: 'set_parent_cormyr',
         loadingFactions: false,
         loadingSubLocations: false,
         loadingsettingOverview: false
@@ -383,38 +420,41 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
       await nextTick();
 
       const loaded = JSON.parse(localStorage.getItem('gameSettings'));
-      expect(loaded[1].parentIndex).toBe(0);
-      expect(loaded[0].parentIndex).toBe(null);
+      expect(loaded[1].parentId).toBe('set_parent_cormyr');
+      expect(loaded[0].parentId).toBe(null);
     });
 
     it('should correctly build settings tree from parent/child relationships', async () => {
       const settings = [
         {
+          id: 'set_kingdom',
           place_name: 'Kingdom',
           setting_overview: { overview: 'Top level' },
           factions: [],
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: null,
+          parentId: null,
         },
         {
+          id: 'set_city1',
           place_name: 'City 1',
           setting_overview: { overview: 'Child of Kingdom' },
           factions: [],
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: 0,
+          parentId: 'set_kingdom',
         },
         {
+          id: 'set_district1',
           place_name: 'District 1',
           setting_overview: { overview: 'Child of City 1' },
           factions: [],
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: 1,
+          parentId: 'set_city1',
         }
       ];
 
@@ -430,42 +470,25 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
       // We verify the tree structure is correct by checking localStorage preservation
       const loaded = JSON.parse(localStorage.getItem('gameSettings'));
       expect(loaded).toHaveLength(3);
-      expect(loaded[0].parentIndex).toBe(null);
-      expect(loaded[1].parentIndex).toBe(0);
-      expect(loaded[2].parentIndex).toBe(1);
+      expect(loaded[0].parentId).toBe(null);
+      expect(loaded[1].parentId).toBe('set_kingdom');
+      expect(loaded[2].parentId).toBe('set_city1');
     });
   });
 
-  describe('Setting Deletion with Reindexing', () => {
-    it('should delete setting and update parentIndex of children', async () => {
+  describe('Setting Deletion with Reference Cleanup', () => {
+    // With stable string ids, "reindexing on delete" doesn't exist
+    // anymore — parentId pointers are unaffected by array shifts.
+    // What still needs verification: cross-setting references (parentId
+    // on children, promoted_setting_id on parent stubs) survive
+    // unrelated deletes intact, and pointers TO the deleted setting are
+    // detached rather than left dangling.
+
+    it('preserves parentId of unrelated siblings across an unrelated delete', async () => {
       const settings = [
-        {
-          place_name: 'Kingdom',
-          setting_overview: { overview: 'Top' },
-          factions: [],
-          importantLocations: [],
-          npcs: [],
-          questHooks: [],
-          parentIndex: null,
-        },
-        {
-          place_name: 'City (to delete)',
-          setting_overview: { overview: 'Middle' },
-          factions: [],
-          importantLocations: [],
-          npcs: [],
-          questHooks: [],
-          parentIndex: 0,
-        },
-        {
-          place_name: 'District',
-          setting_overview: { overview: 'Bottom' },
-          factions: [],
-          importantLocations: [],
-          npcs: [],
-          questHooks: [],
-          parentIndex: 1, // Child of City
-        }
+        { id: 'set_a', place_name: 'A', setting_overview: { overview: 'A' }, factions: [], importantLocations: [], npcs: [], questHooks: [], parentId: null },
+        { id: 'set_b', place_name: 'B (delete)', setting_overview: { overview: 'B' }, factions: [], importantLocations: [], npcs: [], questHooks: [], parentId: null },
+        { id: 'set_c', place_name: 'C', setting_overview: { overview: 'C' }, factions: [], importantLocations: [], npcs: [], questHooks: [], parentId: null },
       ];
 
       localStorage.setItem('gameSettings', JSON.stringify(settings));
@@ -476,46 +499,56 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
 
       await nextTick();
 
-      // Trigger deletion of setting at index 1
-      // This would be done through the component's deleteSetting method
-      // Since we can't easily call internal methods, we verify the logic through localStorage
-
-      // We'll verify the expected behavior: when deleting index 1,
-      // - District's parentIndex should change from 1 to 0 (City's parent)
-      // - Array should shrink to 2 items
-
-      // This test verifies the LOGIC is correct by setting up the scenario
       const loaded = JSON.parse(localStorage.getItem('gameSettings'));
       expect(loaded).toHaveLength(3);
-      expect(loaded[2].parentIndex).toBe(1);
+      // ids preserved exactly as written; no reindex of parentId fields needed.
+      expect(loaded.map(s => s.id)).toEqual(['set_a', 'set_b', 'set_c']);
+      expect(loaded.every(s => s.parentId === null)).toBe(true);
     });
 
-    it('should update importantLocations main_index when deleting setting', async () => {
+    it('keeps promoted_setting_id pointers valid regardless of array position', async () => {
+      // Parent setting carries an importantLocations stub pointing at a
+      // promoted sub-setting by id. The pointer is id-bound, so the
+      // physical position of the sub-setting in the array doesn't
+      // matter — even with an unrelated setting sitting between them
+      // (the old index-based main_index would break here).
       const settings = [
         {
+          id: 'set_kingdom',
           place_name: 'Kingdom',
           setting_overview: { overview: 'Top' },
           factions: [],
           importantLocations: [
             {
               name: 'Important Place',
-              main_index: 1, // References setting at index 1
+              promoted_setting_id: 'set_district',
               has_detailed_description: true,
               open: false
             }
           ],
           npcs: [],
           questHooks: [],
-          parentIndex: null,
+          parentId: null,
         },
         {
-          place_name: 'City (to delete)',
-          setting_overview: { overview: 'Will be deleted' },
+          id: 'set_unrelated',
+          place_name: 'Unrelated',
+          setting_overview: { overview: 'Unrelated' },
           factions: [],
           importantLocations: [],
           npcs: [],
           questHooks: [],
-          parentIndex: 0,
+          parentId: null,
+        },
+        {
+          id: 'set_district',
+          place_name: 'District',
+          setting_overview: { overview: 'Promoted sub-setting' },
+          factions: [],
+          importantLocations: [],
+          npcs: [],
+          questHooks: [],
+          parentId: 'set_kingdom',
         }
       ];
 
@@ -527,34 +560,13 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
 
       await nextTick();
 
-      // Verify initial state
       const loaded = JSON.parse(localStorage.getItem('gameSettings'));
-      expect(loaded[0].importantLocations[0].main_index).toBe(1);
-      expect(loaded[0].importantLocations[0].has_detailed_description).toBe(true);
-
-      // After deletion of index 1, main_index should be null
-      // and has_detailed_description should be false
-    });
-
-    it('should decrement parentIndex for settings after deleted index', async () => {
-      const settings = [
-        { place_name: 'A', setting_overview: {}, factions: [], importantLocations: [], npcs: [], questHooks: [], parentIndex: null },
-        { place_name: 'B (delete)', setting_overview: {}, factions: [], importantLocations: [], npcs: [], questHooks: [], parentIndex: null },
-        { place_name: 'C', setting_overview: {}, factions: [], importantLocations: [], npcs: [], questHooks: [], parentIndex: null },
-      ];
-
-      localStorage.setItem('gameSettings', JSON.stringify(settings));
-
-      const wrapper = mount(SettingGenerator, {
-        props: { premium: false }
-      });
-
-      await nextTick();
-
-      // After deleting index 1, setting C (originally index 2) becomes index 1
-      // Any references to index 2 should become index 1
-      const loaded = JSON.parse(localStorage.getItem('gameSettings'));
-      expect(loaded).toHaveLength(3);
+      const kingdom = loaded.find(s => s.id === 'set_kingdom');
+      expect(kingdom.importantLocations[0].promoted_setting_id).toBe('set_district');
+      expect(kingdom.importantLocations[0].has_detailed_description).toBe(true);
+      // And the child still points at the correct parent by id.
+      const district = loaded.find(s => s.id === 'set_district');
+      expect(district.parentId).toBe('set_kingdom');
     });
   });
 
@@ -566,28 +578,27 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
 
       const mockResponse = JSON.stringify({
         name: 'Test',
+        title: 'City of Trials',
         overview: 'Overview',
         relation_to_larger_setting: '',
         history: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: []
       });
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
       // Fill and submit form
-      await wrapper.find('#place_name').setValue('Test Setting');
+      await wrapper.find('#setting_description').setValue('Test Setting');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
       await nextTick();
@@ -607,7 +618,7 @@ describe('SettingGenerator - CRITICAL: Local Storage Data Layer', () => {
         importantLocations: [{ name: 'Location 1', open: true }],
         npcs: [{ name: 'NPC 1', open: true }],
         questHooks: [],
-        parentIndex: null,
+        parentId: null,
         loadingFactions: false,
         loadingSubLocations: false,
         loadingsettingOverview: false
@@ -650,12 +661,19 @@ describe('SettingGenerator - API Integration', () => {
 
   afterEach(() => {
     localStorageMock.clear();
+    // jsdom's real localStorage is shared across tests in this file and
+    // isn't shadowed by global.localStorage = localStorageMock — clearing
+    // the mock's internal store is not enough. Clear the real one too so
+    // mount-time reads (e.g., the new "show form by default if saved data
+    // exists" logic) don't see leftover data from a prior test.
+    try { localStorage.clear(); } catch {}
     jest.clearAllMocks();
   });
 
   describe('Prompt Generation', () => {
-    it('should call settingOverviewPrompt for new top-level setting', async () => {
+    it('should call inferSettingDimensions then settingOverviewPrompt for new top-level setting', async () => {
       const { settingOverviewPrompt } = require('../prompts/index.mjs');
+      const { inferSettingDimensions } = require('../utils/infer-setting-dimensions.mjs');
 
       const wrapper = mount(SettingGenerator, {
         props: { premium: false }
@@ -663,73 +681,75 @@ describe('SettingGenerator - API Integration', () => {
 
       const mockResponse = JSON.stringify({
         name: 'Valderia',
+        title: 'Kingdom of Long Memory',
         overview: 'A kingdom',
         relation_to_larger_setting: '',
         history: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: []
       });
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
-      await wrapper.find('#adjective').setValue('Flourishing');
-      await wrapper.find('#setting_type').setValue('Kingdom');
-      await wrapper.find('#place_name').setValue('Valderia');
-
+      await wrapper.find('#setting_description').setValue('A flourishing kingdom');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
 
-      expect(settingOverviewPrompt).toHaveBeenCalledWith(
-        'Flourishing',
-        'Kingdom',
-        'Valderia',
-        '' // place_lore defaults to empty string
-      );
+      // Inference runs first to extract type/character/register/userName.
+      expect(inferSettingDimensions).toHaveBeenCalledWith({
+        description: 'A flourishing kingdom',
+        lore: '',
+      });
+
+      // Main prompt is called once with fully-specified dimensions
+      // from the inference call.
+      expect(settingOverviewPrompt).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'kingdom',
+        character: ['ancient', 'corrupt', 'misty'],
+        description: 'A flourishing kingdom',
+      }));
     });
 
-    it('should use random values when form fields are empty', async () => {
+    it('should work with empty form fields (inference-from-nothing path)', async () => {
       const wrapper = mount(SettingGenerator, {
         props: { premium: false }
       });
 
       const mockResponse = JSON.stringify({
-        name: 'Random Place',
+        name: 'Mistholm',
+        title: 'Hold of the Fog',
         overview: 'Overview',
         relation_to_larger_setting: '',
         history: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: []
       });
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
-      // Submit with empty fields
+      // Submit with empty fields — inference handles the empty-input case
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
 
-      // Should call generateGptResponse with some prompt
+      // Should still call generateGptResponse (main generation call)
       expect(openAi.generateGptResponse).toHaveBeenCalled();
     });
 
@@ -740,27 +760,26 @@ describe('SettingGenerator - API Integration', () => {
 
       const mockResponse = JSON.stringify({
         name: 'Test',
+        title: 'City of Trials',
         overview: 'Overview',
         relation_to_larger_setting: '',
         history: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: []
       });
 
       openAi.generateGptResponse.mockResolvedValue(mockResponse);
 
-      await wrapper.find('#place_name').setValue('Test');
+      await wrapper.find('#setting_description').setValue('Test');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
 
@@ -779,21 +798,20 @@ describe('SettingGenerator - API Integration', () => {
 
       const mockOverview = {
         name: 'Valderia',
+        title: 'Kingdom of Golden Bough',
         overview: 'A flourishing kingdom',
         history: 'Founded 500 years ago',
         relation_to_larger_setting: '',
         current_ruler_sentence: '',
-        recent_event_current_ruler: '',
-        recent_event_consequences: '',
         social_history: '',
-        recent_event_social: '',
+        notable_social_facet: '',
         economic_history: '',
-        impactful_economic_event: '',
+        notable_economic_facet: '',
         military_history: '',
-        recent_event_military: '',
-        main_problem: '',
-        potential_solutions: '',
-        conclusion: '',
+        notable_security_facet: '',
+        central_dynamic: '',
+        responses_in_motion: '',
+        present_state: '',
         npc_list: [
           { name: 'King Marcus', description: 'Wise ruler' }
         ]
@@ -801,7 +819,7 @@ describe('SettingGenerator - API Integration', () => {
 
       openAi.generateGptResponse.mockResolvedValue(JSON.stringify(mockOverview));
 
-      await wrapper.find('#place_name').setValue('Valderia');
+      await wrapper.find('#setting_description').setValue('Valderia');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
       await nextTick();
@@ -822,7 +840,7 @@ describe('SettingGenerator - API Integration', () => {
 
       openAi.generateGptResponse.mockRejectedValue(new Error('API Error'));
 
-      await wrapper.find('#place_name').setValue('Test');
+      await wrapper.find('#setting_description').setValue('Test');
       await wrapper.find('form').trigger('submit.prevent');
       await flushPromises();
       await nextTick();
@@ -867,7 +885,7 @@ describe('SettingGenerator - Export Formats', () => {
       importantLocations: [],
       npcs: [],
       questHooks: [],
-      parentIndex: null
+      parentId: null
     }];
 
     localStorage.setItem('gameSettings', JSON.stringify(settings));
@@ -900,7 +918,7 @@ describe('SettingGenerator - Export Formats', () => {
       importantLocations: [],
       npcs: [],
       questHooks: [],
-      parentIndex: null
+      parentId: null
     }];
 
     localStorage.setItem('gameSettings', JSON.stringify(settings));
@@ -932,7 +950,7 @@ describe('SettingGenerator - Export Formats', () => {
       importantLocations: [],
       npcs: [],
       questHooks: [],
-      parentIndex: null
+      parentId: null
     }];
 
     localStorage.setItem('gameSettings', JSON.stringify(settings));
