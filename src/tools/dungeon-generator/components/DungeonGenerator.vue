@@ -47,13 +47,11 @@
         <!-- ZONE 2: Form card -->
         <div class="form-card">
           <form @submit.prevent="handleGenerateDungeon">
-            <div class="generator-fields">
-              <cdr-input id="adjective" v-model="dungeonStore.overviewForm.adjective" background="secondary"
-                label="Adjective (optional)" placeholder="e.g. Forgotten, Decaying, Sunken" />
-              <cdr-input id="setting_type" v-model="dungeonStore.overviewForm.setting_type" background="secondary"
-                label="Type of Dungeon (optional)" placeholder="e.g. Temple, Fortress, Outpost" />
-              <cdr-input id="place_name" v-model="dungeonStore.overviewForm.place_name" background="secondary"
-                label="Place Name (optional)" placeholder="e.g. Grimhold, Farwatch Outpost" />
+            <div class="form-row-description">
+              <cdr-input id="dungeon_description" v-model="dungeonStore.overviewForm.description"
+                background="secondary"
+                label="Describe your dungeon (optional)"
+                placeholder="e.g. A sunken Mesopotamian ziggurat called Edutu — or leave blank for a surprise." />
             </div>
             <cdr-select class="generator-field-select" id="difficulty" v-model="dungeonStore.overviewForm.difficulty"
               background="secondary" label="Dungeon Difficulty" :options="difficultyOptions"
@@ -64,7 +62,7 @@
             </cdr-select>
             <div class="lore-field-input">
               <cdr-input :rows="5" tag="textarea" v-model="dungeonStore.overviewForm.place_lore" background="secondary"
-                label="Dungeon Lore (optional)" placeholder="Enter additional details">
+                label="Dungeon Lore (optional)" placeholder="Paste in existing lore, or describe deeper history — optional.">
                 <template #helper-text-bottom>
                   Need help with lore? Use the
                   <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link>.

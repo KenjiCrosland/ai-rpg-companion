@@ -29,17 +29,38 @@ describe('dungeonToHTML', () => {
     const result = dungeonToHTML(basicDungeon);
 
     expect(result).toContain('<h1>THE CURSED CATACOMBS</h1>');
-    expect(result).toContain('<p>Dark tunnels beneath the city.');
-    expect(result).toContain('Connected to the old cemetery.</p>');
+    // Lead is wrapped in a styled paragraph via the shared renderer.
+    expect(result).toContain('<p class="setting-lead"><em>Dark tunnels beneath the city.</em></p>');
+    // Sections render as <h3> headings + <p> paragraphs.
+    expect(result).toContain('<h3>Region</h3>');
+    expect(result).toContain('<p>Connected to the old cemetery.</p>');
+    expect(result).toContain('<h3>Approach</h3>');
     expect(result).toContain('<p>Enter through the mausoleum.</p>');
-    expect(result).toContain('<strong>Difficulty Level:</strong> Tier 3: Champion');
+    expect(result).toContain('<h3>Difficulty</h3>');
+    expect(result).toContain('<p>Tier 3: Champion</p>');
   });
 
-  it('should properly escape HTML and combine arrays', () => {
+  it('should route legacy power-and-event fields to the right sections', () => {
+    // Each legacy field maps to one section in the legacy section map.
+    // Per-field content becomes a separate <p> paragraph under its
+    // section heading rather than being string-joined as in the
+    // legacy exporter.
     const result = dungeonToHTML(basicDungeon);
 
-    expect(result).toContain('A vampire lord dwells here. To spread his undead plague.');
-    expect(result).toContain('Zombie servants and vampire spawn. Recently turned the mayor into a thrall.');
+    // Dominant Power section gathers dominant_power + dominant_power_goals
+    // + miniboss_description.
+    expect(result).toContain('<h3>Dominant Power</h3>');
+    expect(result).toContain('<p>A vampire lord dwells here.</p>');
+    expect(result).toContain('<p>To spread his undead plague.</p>');
+    // Inhabitants section gathers dominant_power_minions.
+    expect(result).toContain('<h3>Inhabitants</h3>');
+    expect(result).toContain('<p>Zombie servants and vampire spawn.</p>');
+    // Present State section gathers the dramatic-arc tail
+    // (dominant_power_event, recent_event_consequences, secondary_*,
+    // main_problem, potential_solutions, conclusion).
+    expect(result).toContain('<h3>Present State</h3>');
+    expect(result).toContain('<p>Recently turned the mayor into a thrall.</p>');
+    expect(result).toContain('<p>The vampire must be stopped.</p>');
   });
 
   it('should handle dungeon with NPCs (short description)', () => {
@@ -320,12 +341,16 @@ describe('dungeonToHTML', () => {
 
     const result = dungeonToHTML(dungeonWithEmptyFields);
 
-    // Should combine main_problem and potential_solutions
-    expect(result).toContain('The dragon. Fight it.');
-    // Should have dominant_power in its own paragraph
+    // dominant_power renders under Dominant Power as its own paragraph.
+    expect(result).toContain('<h3>Dominant Power</h3>');
     expect(result).toContain('<p>A dragon.</p>');
-    // Should not have double spaces or empty paragraphs for missing fields
-    expect(result).not.toContain('</p><p></p>');
+    // main_problem and potential_solutions each become their own <p>
+    // paragraph under Present State (no longer joined into one).
+    expect(result).toContain('<h3>Present State</h3>');
+    expect(result).toContain('<p>The dragon.</p>');
+    expect(result).toContain('<p>Fight it.</p>');
+    // Empty fields don't produce empty <p></p> elements.
+    expect(result).not.toContain('<p></p>');
   });
 
   it('should properly handle statblock with empty optional fields', () => {

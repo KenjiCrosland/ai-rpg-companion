@@ -34,7 +34,12 @@ describe('dungeonToPlainText', () => {
     expect(result).toContain('Abandoned mines filled with danger.');
     expect(result).toContain('Once provided ore to the kingdom.');
     expect(result).toContain('Follow the mountain trail.');
-    expect(result).toContain('Difficulty Level: Tier 2: Expert');
+    // Section headings are now rendered as underlined blocks via the
+    // shared AST text converter. Difficulty becomes its own section
+    // ("Difficulty\n----------") rather than the legacy
+    // "Difficulty Level: ..." inline.
+    expect(result).toContain('Difficulty');
+    expect(result).toContain('Tier 2: Expert');
   });
 
   it('should create proper section dividers', () => {
@@ -400,12 +405,20 @@ describe('dungeonToPlainText', () => {
     expect(result).toContain('Known throughout the land for fair deals.');
   });
 
-  it('should combine array fields with spaces', () => {
+  it('should route legacy fields to their section paragraphs', () => {
     const result = dungeonToPlainText(basicDungeon);
 
-    // These fields should be combined into single paragraphs
-    expect(result).toContain('A black dragon has claimed it. Hoarding treasure and terrorizing locals.');
-    expect(result).toContain('Kobolds worship the dragon. Recently raided a nearby village.');
-    expect(result).toContain('The dragon must be defeated. Negotiate or fight.');
+    // Each field is its own paragraph under its mapped section rather
+    // than string-joined as in the legacy exporter. Content is
+    // preserved; structure is sectioned via the shared AST renderer.
+    expect(result).toContain('Dominant Power');
+    expect(result).toContain('A black dragon has claimed it.');
+    expect(result).toContain('Hoarding treasure and terrorizing locals.');
+    expect(result).toContain('Inhabitants');
+    expect(result).toContain('Kobolds worship the dragon.');
+    expect(result).toContain('Present State');
+    expect(result).toContain('Recently raided a nearby village.');
+    expect(result).toContain('The dragon must be defeated.');
+    expect(result).toContain('Negotiate or fight.');
   });
 });

@@ -1,11 +1,11 @@
 import { computed } from 'vue';
-import adjectives from '../data/adjectives.json';
-import potentialNames from '../data/dungeon-names.json';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import {
   dungeonOverviewPrompt,
   validateDungeonOverview,
 } from '../prompts/dungeon-overview.mjs';
+import { inferDungeonDimensions } from '../util/infer-dungeon-dimensions.mjs';
+import { getBannedDungeonTropesForGeneration } from '../util/dungeon-dimensions.mjs';
 import {
   dungeons,
   currentDungeonId,
@@ -15,108 +15,110 @@ import {
 } from './dungeon-state.mjs';
 import { saveDungeons } from './dungeon-utils.mjs';
 
+/**
+ * Aggregate the dungeon's overview prose into a single string for
+ * downstream consumers (monster-store passes this to monster prompts
+ * for thematic context; export utilities feed it forward, etc.).
+ *
+ * Handles BOTH the new field shape (post-2026-05 redesign) and the
+ * legacy shape so saved dungeons created before the redesign keep
+ * producing usable context. New shape is detected by the presence of
+ * `central_dynamic` — a field that only exists in the new prompt.
+ */
 export const currentDungeonOverviewString = computed(() => {
-  if (currentDungeon.value && currentDungeon.value.dungeonOverview) {
-    return `${currentDungeon.value.dungeonOverview.overview}
+  const ov = currentDungeon.value?.dungeonOverview;
+  if (!ov) return '';
 
-${currentDungeon.value.dungeonOverview.relation_to_larger_setting} ${currentDungeon.value.dungeonOverview.finding_the_dungeon}
-    
-${currentDungeon.value.dungeonOverview.history}
-    
-${currentDungeon.value.dungeonOverview.dominant_power} ${currentDungeon.value.dungeonOverview.dominant_power_goals} ${currentDungeon.value.dungeonOverview.dominant_power_minions}
-    
-${currentDungeon.value.dungeonOverview.miniboss_description}
-    
-${currentDungeon.value.dungeonOverview.dominant_power_event} ${currentDungeon.value.dungeonOverview.recent_event_consequences}
-
-${currentDungeon.value.dungeonOverview.secondary_power} ${currentDungeon.value.dungeonOverview.secondary_power_event}
-    
-${currentDungeon.value.dungeonOverview.main_problem} ${currentDungeon.value.dungeonOverview.potential_solutions}
-    
-${currentDungeon.value.dungeonOverview.conclusion}`;
+  // New shape: detected by central_dynamic presence.
+  if (typeof ov.central_dynamic === 'string') {
+    return [
+      ov.overview,
+      [ov.relation_to_larger_setting, ov.approach_and_threshold].filter(Boolean).join(' '),
+      ov.history,
+      ov.dominant_power,
+      [ov.inhabitants, ov.notable_inhabitant_facet].filter(Boolean).join(' '),
+      [ov.treasures_and_resources, ov.notable_resource_facet].filter(Boolean).join(' '),
+      [ov.traps_and_security, ov.notable_security_facet].filter(Boolean).join(' '),
+      ov.central_dynamic,
+      ov.current_occupation,
+      ov.present_state,
+    ].filter((p) => p && p.trim().length > 0).join('\n\n');
   }
-  return '';
+
+  // Legacy shape (pre-2026-05): old field names. Render any present
+  // fields, skip absent ones so partially-populated old dungeons
+  // don't render literal "undefined".
+  return [
+    ov.overview,
+    [ov.relation_to_larger_setting, ov.finding_the_dungeon].filter(Boolean).join(' '),
+    ov.history,
+    [ov.dominant_power, ov.dominant_power_goals, ov.dominant_power_minions].filter(Boolean).join(' '),
+    ov.miniboss_description,
+    [ov.dominant_power_event, ov.recent_event_consequences].filter(Boolean).join(' '),
+    [ov.secondary_power, ov.secondary_power_event].filter(Boolean).join(' '),
+    [ov.main_problem, ov.potential_solutions].filter(Boolean).join(' '),
+    ov.conclusion,
+  ].filter((p) => p && p.trim().length > 0).join('\n\n');
 });
 
+/**
+ * Generate a dungeon overview via the redesigned two-step pipeline:
+ *   1. inferDungeonDimensions resolves type / character / register /
+ *      userName / tension / difficulty from the form's description /
+ *      lore / difficulty fields.
+ *   2. dungeonOverviewPrompt builds the main-call prompt with all
+ *      dimensions pre-specified, plus a rotating ban-list of overused
+ *      dungeon tropes from getBannedDungeonTropesForGeneration.
+ *
+ * Persists the resolved dimensions on the dungeon record itself so a
+ * future room-generation pass can inherit register (and other axes)
+ * without re-rolling.
+ */
 export async function generateDungeonOverview() {
   try {
     activeTabIndex.value = 0;
 
-    const potentialSettingTypes = [
-      'temple',
-      'outpost',
-      'catacombs',
-      'hideout',
-      'caves',
-      'crypt',
-      'lair',
-      'stronghold',
-      'mines',
-      'tower',
-      'lab',
-      'ruins',
-      'underwater temple',
-      'fort',
-      'sewer',
-      'grove',
-      'castle',
-      'undercity',
-      'tomb',
-      'sanctuary',
-      'prison',
-      'monastery',
-      'shrine',
-      'ziggurat',
-    ];
+    // Form passes straight through to inference. Inference extracts
+    // any user-supplied dungeon name from the description prose
+    // ("a tomb called the Hollow Vault" → userName: "the Hollow Vault")
+    // — no separate name field needed in the form.
+    const description = overviewForm.value.description || '';
+    const lore = overviewForm.value.place_lore || '';
+    const formDifficulty = overviewForm.value.difficulty || null;
 
-    let settingType =
-      overviewForm.value.setting_type.toLowerCase() ||
-      potentialSettingTypes[
-        Math.floor(Math.random() * potentialSettingTypes.length)
-      ];
+    // Step 1: resolve all six dimensions.
+    const inferred = await inferDungeonDimensions({
+      description,
+      lore,
+      difficulty: formDifficulty,
+    });
 
-    let adjective = '';
-    // Check if overviewForm.value.adjective is provided
-    if (overviewForm.value.adjective) {
-      // If user provided a custom adjective, just use it
-      adjective = overviewForm.value.adjective;
-    } else {
-      // No custom adjective, pick from adjectives for settingType or fallback to generic
-      if (adjectives[settingType] && adjectives[settingType].length > 0) {
-        adjective =
-          adjectives[settingType][
-            Math.floor(Math.random() * adjectives[settingType].length)
-          ];
-      } else {
-        // If no adjectives for this settingType, fallback to generic
-        adjective =
-          adjectives['generic'][
-            Math.floor(Math.random() * adjectives['generic'].length)
-          ];
-      }
-    }
+    const bannedTropes = getBannedDungeonTropesForGeneration();
 
-    let placeName = '';
-    if (potentialNames[settingType] || overviewForm.value.place_name) {
-      placeName =
-        overviewForm.value.place_name.toLowerCase() ||
-        potentialNames[settingType][
-          Math.floor(Math.random() * potentialNames[settingType].length)
-        ];
-    } else {
-      placeName =
-        potentialNames['generic'][
-          Math.floor(Math.random() * potentialNames['generic'].length)
-        ];
-    }
+    console.log('[dungeon-gen]', {
+      type: inferred.type,
+      character: inferred.character,
+      register: inferred.register,
+      userName: inferred.userName,
+      tension: inferred.tension,
+      difficulty: inferred.difficulty,
+      bannedTropeCount: bannedTropes.length,
+      descriptionLength: description.length,
+      loreLength: lore.length,
+    });
 
-    const prompt = dungeonOverviewPrompt(
-      adjective,
-      settingType,
-      placeName,
-      overviewForm.value.place_lore,
-      overviewForm.value.difficulty,
-    );
+    // Step 2: main-call generation.
+    const prompt = dungeonOverviewPrompt({
+      type: inferred.type,
+      character: inferred.character,
+      register: inferred.register,
+      userName: inferred.userName,
+      tension: inferred.tension,
+      difficulty: inferred.difficulty,
+      description,
+      lore,
+      bannedTropes,
+    });
     const response = await generateGptResponse(prompt, validateDungeonOverview);
 
     if (!response) {
@@ -128,6 +130,17 @@ export async function generateDungeonOverview() {
     const newDungeon = {
       id: `dng_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       dungeonOverview: overview,
+      // Persist dimensions for future room inheritance + renderer /
+      // export-side fallback decisions. Stored at the top level (not
+      // inside dungeonOverview) so a re-roll of just the overview
+      // prose later can preserve them independently.
+      dimensions: {
+        type: inferred.type,
+        character: inferred.character,
+        register: inferred.register,
+        tension: inferred.tension,
+        difficulty: inferred.difficulty,
+      },
       rooms: null,
       roomDescriptions: null,
       roomNames: [],
@@ -156,9 +169,7 @@ export async function generateDungeonOverview() {
     currentDungeonId.value = newDungeon.id;
 
     // Reset form
-    overviewForm.value.adjective = '';
-    overviewForm.value.setting_type = '';
-    overviewForm.value.place_name = '';
+    overviewForm.value.description = '';
     overviewForm.value.place_lore = '';
     overviewForm.value.difficulty = '';
 
