@@ -31,13 +31,13 @@ describe('dungeonToHTML', () => {
     expect(result).toContain('<h1>THE CURSED CATACOMBS</h1>');
     // Lead is wrapped in a styled paragraph via the shared renderer.
     expect(result).toContain('<p class="setting-lead"><em>Dark tunnels beneath the city.</em></p>');
-    // Sections render as <h3> headings + <p> paragraphs.
-    expect(result).toContain('<h3>Region</h3>');
-    expect(result).toContain('<p>Connected to the old cemetery.</p>');
+    // Sections render as <h3> headings + <p> paragraphs. Region merged
+    // into Approach in the consolidation.
     expect(result).toContain('<h3>Approach</h3>');
+    expect(result).toContain('<p>Connected to the old cemetery.</p>');
     expect(result).toContain('<p>Enter through the mausoleum.</p>');
-    expect(result).toContain('<h3>Difficulty</h3>');
-    expect(result).toContain('<p>Tier 3: Champion</p>');
+    // Difficulty section was removed from the shared section map.
+    expect(result).not.toContain('<h3>Difficulty</h3>');
   });
 
   it('should route legacy power-and-event fields to the right sections', () => {
@@ -47,13 +47,11 @@ describe('dungeonToHTML', () => {
     // legacy exporter.
     const result = dungeonToHTML(basicDungeon);
 
-    // Dominant Power section gathers dominant_power + dominant_power_goals
-    // + miniboss_description.
-    expect(result).toContain('<h3>Dominant Power</h3>');
+    // Inhabitants section now gathers dominant_power + dominant_power_goals
+    // + miniboss_description + dominant_power_minions (merged in the consolidation).
+    expect(result).toContain('<h3>Inhabitants</h3>');
     expect(result).toContain('<p>A vampire lord dwells here.</p>');
     expect(result).toContain('<p>To spread his undead plague.</p>');
-    // Inhabitants section gathers dominant_power_minions.
-    expect(result).toContain('<h3>Inhabitants</h3>');
     expect(result).toContain('<p>Zombie servants and vampire spawn.</p>');
     // Present State section gathers the dramatic-arc tail
     // (dominant_power_event, recent_event_consequences, secondary_*,
@@ -341,8 +339,8 @@ describe('dungeonToHTML', () => {
 
     const result = dungeonToHTML(dungeonWithEmptyFields);
 
-    // dominant_power renders under Dominant Power as its own paragraph.
-    expect(result).toContain('<h3>Dominant Power</h3>');
+    // dominant_power renders under Inhabitants (merged) as its own paragraph.
+    expect(result).toContain('<h3>Inhabitants</h3>');
     expect(result).toContain('<p>A dragon.</p>');
     // main_problem and potential_solutions each become their own <p>
     // paragraph under Present State (no longer joined into one).

@@ -34,12 +34,9 @@ describe('dungeonToPlainText', () => {
     expect(result).toContain('Abandoned mines filled with danger.');
     expect(result).toContain('Once provided ore to the kingdom.');
     expect(result).toContain('Follow the mountain trail.');
-    // Section headings are now rendered as underlined blocks via the
-    // shared AST text converter. Difficulty becomes its own section
-    // ("Difficulty\n----------") rather than the legacy
-    // "Difficulty Level: ..." inline.
-    expect(result).toContain('Difficulty');
-    expect(result).toContain('Tier 2: Expert');
+    // Difficulty section was removed from the shared section map —
+    // the rendered prose no longer carries a Difficulty heading.
+    expect(result).not.toMatch(/Difficulty\n-+/);
   });
 
   it('should create proper section dividers', () => {
@@ -411,10 +408,10 @@ describe('dungeonToPlainText', () => {
     // Each field is its own paragraph under its mapped section rather
     // than string-joined as in the legacy exporter. Content is
     // preserved; structure is sectioned via the shared AST renderer.
-    expect(result).toContain('Dominant Power');
+    // Dominant Power merged into Inhabitants in the consolidation.
+    expect(result).toContain('Inhabitants');
     expect(result).toContain('A black dragon has claimed it.');
     expect(result).toContain('Hoarding treasure and terrorizing locals.');
-    expect(result).toContain('Inhabitants');
     expect(result).toContain('Kobolds worship the dragon.');
     expect(result).toContain('Present State');
     expect(result).toContain('Recently raided a nearby village.');

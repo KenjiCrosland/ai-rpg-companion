@@ -123,7 +123,7 @@ export const primordialCharacterEpithets = [
 
 export const primordialRegister = {
   prefix: 'Primordial',
-  descriptor: "Primordial: pre-language sounds, elemental (e.g., Aath'kol, Rumblith, Dross)",
+  descriptor: "Primordial: pre-language phonology — names that sound rumbled, eroded, or weathered rather than spoken. Long open vowels (aa, oo, uu), apostrophes marking pauses in the breath, compound shapes pairing an elemental root (rumble, stone, brine, gust, ember, frost, mire) with a position or motion suffix. Derive fresh names from the phonology; do not copy from prior generations.",
   characterPool: primordialCharacterEpithets,
   characterPoolStrictness: 'preferred',
   thematic: true,

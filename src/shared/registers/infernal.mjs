@@ -131,7 +131,7 @@ export const infernalCharacterEpithets = [
 
 export const infernalRegister = {
   prefix: 'Infernal',
-  descriptor: "Infernal: sharp, aggressive (e.g., Vex'tharion, Morkaal, Sazrith)",
+  descriptor: "Infernal: sharp, aggressive phonology — jagged consonant clusters (zr, kr, vth, gz, rth), apostrophes marking glottal stops, polysyllabic names that resolve into a hiss or a strike. Naming evokes legal-binding metaphors: oath-marks, contract-suffixes, sigil-roots. Derive fresh names from the phonology; do not copy from prior generations.",
   characterPool: infernalCharacterEpithets,
   characterPoolStrictness: 'preferred',
   thematic: true,

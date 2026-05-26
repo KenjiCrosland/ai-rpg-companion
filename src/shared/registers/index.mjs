@@ -237,8 +237,8 @@ const minimalRegisters = [
   { prefix: 'Lakota-inspired',               descriptor: 'Lakota-inspired: descriptive compound names, sacred-natural register',                                                                                  protected: true, promptArchitecture: 'catchall', deityMode: 'restricted' },
 
   // Fictional fantasy without curated pools (universal-invent path)
-  { prefix: 'Gnomish',                       descriptor: 'Gnomish: clever, playful, mechanical (e.g., Fizzwocket, Cogsworth, Tinberlin)' },
-  { prefix: 'Technomagical',                 descriptor: 'Technomagical: clinical with flair (e.g., Arcanaforge Mark IV, Voltspire, Aethercog)' },
+  { prefix: 'Gnomish',                       descriptor: 'Gnomish: clever, playful, percussive phonology — doubled consonants, sibilant clusters, syllables that tick like clockwork. Compound shapes pair a tinker-verb-root (fizz, cog, gear, spring, tin, gizmo) with a mechanism-noun or whimsical suffix (-wocket, -worth, -berlin, -nipper, -spline). Derive fresh names from the phonology; do not copy from prior generations.' },
+  { prefix: 'Technomagical',                 descriptor: 'Technomagical: clinical and theatrical naming — compound register-of-art names that pair an arcane-mechanical prefix (Arcana-, Aether-, Volt-, Spectro-, Chrono-, Magneto-, Helio-, Cryo-) with an industrial-or-mystical noun (forge, spire, cog, weave, vault, lattice, coil). Model-number suffixes (Mark IV, Type B, Series III) acceptable when context fits. Derive fresh names from the phonology; do not copy from prior generations.' },
 ];
 
 /**

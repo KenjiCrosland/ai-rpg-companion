@@ -118,7 +118,7 @@ export const draconicCharacterEpithets = [
 
 export const draconicRegister = {
   prefix: 'Draconic',
-  descriptor: 'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax, Vyrmokk, Kaelsithur)',
+  descriptor: 'Draconic: sibilant-heavy phonology (z, s, sz, sh, kh); long polysyllabic names with deep open vowels (a, o, u) carrying weight. Compound endings around -rax, -mokk, -thur, -ith, -drex convey age and territorial claim; names sound ancient, slow, sovereign. Derive fresh names from the phonology; do not copy from prior generations.',
   characterPool: draconicCharacterEpithets,
   characterPoolStrictness: 'preferred',
 };

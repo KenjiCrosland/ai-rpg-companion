@@ -130,3 +130,31 @@ export const THEMATIC_REGISTER_PREFIXES = ALL_REGISTERS
 export const humanoidRegisterList = registerList.filter(
   entry => !THEMATIC_REGISTER_PREFIXES.some(prefix => entry.startsWith(prefix)),
 );
+
+/**
+ * Anti-leak directive shared across all tool prompts that use
+ * linguistic registers. Tells the LLM not to mention the real-world
+ * cultural / linguistic source of the register (Latin, Norse, Welsh,
+ * Egyptian, etc.) inside generated prose — the register is the
+ * prompt's framing, not in-world history.
+ *
+ * Observed leaks in production:
+ *   - "inscribed with a single word in an older dialect of Latin"
+ *   - "the runes are written in archaic Norse"
+ *   - "the names come from the Yoruba tradition"
+ *
+ * IMPORTANT: PASS/FAIL examples use BRACKET PLACEHOLDERS, never
+ * fixed proper nouns. Earlier versions of this directive used named
+ * exemplars (Vethari, Tace) — those got picked up by the LLM across
+ * generations and became recognizable recurring names. Placeholders
+ * teach the shape without seeding fixed content.
+ *
+ * The directive is tool-agnostic — it talks about "the world" rather
+ * than "the setting" or "the dungeon" so the same string serves every
+ * consumer. Tool-specific PASS/FAIL examples should be appended in
+ * the calling prompt, never edited here.
+ */
+export const REGISTER_PROSE_DIRECTIVE =
+  `NEVER name the real-world cultural / linguistic source of the register in the prose. The world's tongues, scripts, traditions, and peoples are IN-WORLD, not real-world. Real-world cultural / linguistic labels (Latin, Norse, Welsh, Old Irish, Egyptian, Mesopotamian, Greek, Slavic, Yoruba, Aztec, Japanese — and any other real-world label) are the prompt's framing for you, not the world's history. They do NOT appear in any body field.
+
+When a script, tongue, or tradition needs framing in the prose, give it a fantasy name — an in-world handle keyed to the world itself: the Old Tongue, the script of the First Empire, the speech of an invented people from this dungeon's history. Name it after the in-world institution, cult, empire, or lineage that records it — never after the real-world tradition that informs its sound.`;

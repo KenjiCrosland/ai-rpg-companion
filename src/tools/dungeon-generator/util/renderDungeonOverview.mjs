@@ -25,16 +25,18 @@
  * Two section maps, picked by field-shape detection:
  *
 *   DUNGEON_SECTION_MAP_NEW — the post-2026-05 redesign shape.
- *     Approach (entrance / first-scene), Region, History, Dominant
- *     Power, Inhabitants (+ notable_inhabitant_facet), Defenses
- *     (+ notable_security_facet), Present State (central_dynamic +
- *     current_occupation + present_state), Difficulty.
+ *     Approach (region + entrance/first-scene), History, Inhabitants
+ *     (dominant_power + inhabitants + notable_inhabitant_facet),
+ *     Hazards (+ notable_hazard_facet), Present State (central_dynamic
+ *     + current_occupation + present_state), Difficulty. Region and
+ *     Approach merge so the GM gets the "how you reach it" view in one
+ *     section; Dominant Power and Inhabitants merge because the ruler
+ *     IS the apex of the inhabitants when one exists.
  *
- *   DUNGEON_SECTION_MAP_LEGACY — the pre-2026-05 shape. Same section
- *     vocabulary where possible (Region / Approach / History /
- *     Dominant Power / Present State / Difficulty), legacy field
- *     names underneath. Treasures / Defenses / Inhabitants don't
- *     have legacy equivalents and are simply absent.
+ *   DUNGEON_SECTION_MAP_LEGACY — the pre-2026-05 shape. Same merged
+ *     section vocabulary (Approach / History / Inhabitants / Present
+ *     State / Difficulty), legacy field names underneath. Hazards
+ *     doesn't have a legacy equivalent and is simply absent.
  */
 
 import {
@@ -44,26 +46,21 @@ import {
 
 const DUNGEON_SECTION_MAP_NEW = [
   { heading: null, fields: ['overview'], isLead: true },
-  { heading: 'Region', fields: ['relation_to_larger_setting'] },
-  { heading: 'Approach', fields: ['approach_and_threshold'] },
+  { heading: 'Approach', fields: ['relation_to_larger_setting', 'approach_and_threshold'] },
   { heading: 'History', fields: ['history'] },
-  { heading: 'Dominant Power', fields: ['dominant_power'] },
-  { heading: 'Inhabitants', fields: ['inhabitants', 'notable_inhabitant_facet'] },
-  { heading: 'Defenses', fields: ['traps_and_security', 'notable_security_facet'] },
+  { heading: 'Inhabitants', fields: ['dominant_power', 'inhabitants', 'notable_inhabitant_facet'] },
+  { heading: 'Hazards', fields: ['hazards_and_dangers', 'notable_hazard_facet'] },
   { heading: 'Present State', fields: ['central_dynamic', 'current_occupation', 'present_state'] },
-  { heading: 'Difficulty', fields: ['difficulty_level'] },
 ];
 
 const DUNGEON_SECTION_MAP_LEGACY = [
   { heading: null, fields: ['overview'], isLead: true },
-  { heading: 'Region', fields: ['relation_to_larger_setting'] },
-  { heading: 'Approach', fields: ['finding_the_dungeon'] },
+  { heading: 'Approach', fields: ['relation_to_larger_setting', 'finding_the_dungeon'] },
   { heading: 'History', fields: ['history'] },
   {
-    heading: 'Dominant Power',
-    fields: ['dominant_power', 'dominant_power_goals', 'miniboss_description'],
+    heading: 'Inhabitants',
+    fields: ['dominant_power', 'dominant_power_goals', 'miniboss_description', 'dominant_power_minions'],
   },
-  { heading: 'Inhabitants', fields: ['dominant_power_minions'] },
   {
     heading: 'Present State',
     fields: [
@@ -73,7 +70,6 @@ const DUNGEON_SECTION_MAP_LEGACY = [
       'conclusion',
     ],
   },
-  { heading: 'Difficulty', fields: ['difficulty_level'] },
 ];
 
 /**
@@ -101,7 +97,7 @@ export function pickSectionMap(overview) {
  * separate \n\n-separated paragraphs (same convention as setting).
  * The lead joins its fields into one paragraph. Empty sections (no
  * non-blank fields) are skipped — legacy data missing Treasures /
- * Defenses doesn't emit empty sections.
+ * Hazards doesn't emit empty sections.
  */
 export function consolidateOverviewToMarkdown(overview) {
   if (!overview || typeof overview !== 'object') return '';

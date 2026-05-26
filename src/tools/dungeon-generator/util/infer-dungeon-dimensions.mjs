@@ -7,7 +7,7 @@
  * unspecified dimensions, then the main generation call receives
  * fully-specified constraints rather than rolling on its own.
  *
- * Output shape: { type, character, register, userName, tension, difficulty }
+ * Output shape: { type, character, register, userName, tension, difficulty, powerStructure, organizingLogic, contender, povFrame, placeType, nameTemplate, contact, registerPool, motive, formedNature, mode, monsterPopulation }
  *
  *   type — one entry from DUNGEON_TYPES. The LLM picks based on user
  *     input or rolls from the pool when no signal exists. The pool is
@@ -20,7 +20,7 @@
  *
  *   register — full humanoid-register descriptor (or null). Same
  *     register pool and resolution logic as settings — recognize-then-
- *     gate via the protected-flag mechanism in humanoidRegisterList.
+ *     gate via the protected-flag mechanism in registerList.
  *
  *   userName — user-extracted dungeon name if present in input, or
  *     null. The main generation call uses this verbatim.
@@ -37,6 +37,49 @@
  *     doesn't surface at Tier 1) AND used as a fallback weighting
  *     when the LLM doesn't return a usable type.
  *
+ *   organizingLogic — array of length 1 or 2 of entries from
+ *     ORGANIZING_LOGICS (or ['invent'] for the open slot). The
+ *     structural "bones" of the place — what it was built or shaped
+ *     for. LLM extracts from user input when present; code-rolls
+ *     otherwise. Composite (length 2) for palimpsest places (a tomb
+ *     repurposed as a base, an undercity grown into a creature warren).
+ *
+ *   powerStructure — one entry from POWER_STRUCTURES. Coupled to
+ *     organizingLogic via mismatch bias (`pickHolderForOrganizingLogic`)
+ *     so the "ancient place, new residents" default predominates and
+ *     fusion (the thing that built the place still rules it) is the
+ *     rare-deliberate path.
+ *
+ *   contender — fold object { present: boolean, kind? }. Code-rolled.
+ *     Presence rates: 5% default, 20% for hazard_no_ruler holders, 50%
+ *     for the acquisition motive. When present, kind picks uniformly
+ *     from CONTENDER_KINDS (19 categorically distinct contender shapes).
+ *
+ *   povFrame — one entry from POV_FRAMES, gated on holder + tension.
+ *     Re-specs the overview field as a POV hook (a voice with bias and
+ *     partial knowledge) rather than omniscient atmospheric prose.
+ *     Couplings prevent obvious nonsense (no failed_negotiation with
+ *      *     a hazard-only place; no survivor of a dormant-with-witness place).
+ *
+ *   placeType — the place-type noun for the dungeon's title (Sepulcher,
+ *     Hold, Foundry, Warren, etc.), pre-rolled from the bucket gated on
+ *     organizingLogic. Code-rolled because the LLM's genre prior pulls
+ *     toward funerary vocabulary regardless of what was rolled. Null
+ *     for the 'invent' open-slot organizingLogic (LLM picks free).
+ *
+ *   nameTemplate — the structural shape of the dungeon's title
+ *     (A-F, see NAME_TEMPLATES). Code-rolled because the LLM defaults
+ *     to one template after a few generations regardless of bias
+ *     guidance in prose. Filtered to B/D/F (no register-noun) when
+ *     register is null.
+ *
+ *   contact — fold object `{ present: boolean, reliability?, offers?,
+ *     openSlot? }` for an in-dungeon NPC the party can potentially
+ *     use. Rolled orthogonally (no holder gating at roll time); the
+ *     LLM coherence pass reconciles against the rest (downgrades
+ *     treacherous under will-less holders, drops under no-survivors
+ *     tension, may link to a present contender).
+ *
  * Path scoping: called for both the empty-input AND the user-input
  * paths. Seeded-from-item path (when that ships) will bypass this
  * inference and supply dimensions directly.
@@ -48,7 +91,7 @@
  */
 
 import { generateGptResponse } from '@/util/ai-client.mjs';
-import { humanoidRegisterList } from '@/shared/register-list.mjs';
+import { registerList } from '@/shared/register-list.mjs';
 import { TOKEN_TO_REGISTER_PREFIX } from '@/tools/npc-generator/utils/infer-register-and-name.mjs';
 import {
   DUNGEON_TYPES,
@@ -57,11 +100,30 @@ import {
   DUNGEON_CHARACTER_VALUE_TO_SUBDIMENSION,
   TIER_WEIGHTED_TYPES,
   DIFFICULTY_TIERS,
+  ORGANIZING_LOGICS,
   generateCharacterCandidates,
   pickRandomTension,
   pickRandomDifficulty,
+  pickRandomOrganizingLogic,
+  pickRandomContender,
+  pickHolderForOrganizingLogic,
+  pickRandomPovFrame,
+  pickPlaceTypeForLogic,
+  pickRandomNameTemplate,
+  pickRandomContact,
+  pickRegisterPoolSubset,
+  applyLegibilityRules,
+  pickRandomMotive,
+  MOTIVES,
+  pickRandomFormedNature,
+  pickRandomMode,
+  MODE_MENUS,
+  CONTACT_RELIABILITIES,
+  CONTACT_OFFERS,
+  CONTACT_COHERENCE_DIRECTIVES,
   pickWeightedDungeonType,
   resolveDifficulty,
+  rollMonsterPopulation,
 } from './dungeon-dimensions.mjs';
 
 const TOKENS = Object.keys(TOKEN_TO_REGISTER_PREFIX);
@@ -103,7 +165,27 @@ export function validateInferenceResponse(raw) {
     || (Array.isArray(parsed.character) && parsed.character.every(c => typeof c === 'string'));
   const hasRegister = parsed.register === null || typeof parsed.register === 'string';
   const hasUserName = parsed.userName === null || typeof parsed.userName === 'string';
-  return hasType && hasCharacter && hasRegister && hasUserName;
+  // organizingLogic is optional in the response — if absent the
+  // resolver code-rolls. When present, accepts string OR array-of-strings.
+  const hasOrganizingLogic =
+    parsed.organizingLogic === undefined
+    || parsed.organizingLogic === null
+    || typeof parsed.organizingLogic === 'string'
+    || (Array.isArray(parsed.organizingLogic) && parsed.organizingLogic.every(l => typeof l === 'string'));
+  // contact is optional in the response — if absent the resolver uses
+  // the pre-roll. When present, accepts an object with at minimum a
+  // boolean `present`.
+  const hasContact =
+    parsed.contact === undefined
+    || parsed.contact === null
+    || (typeof parsed.contact === 'object' && !Array.isArray(parsed.contact) && typeof parsed.contact.present === 'boolean');
+  // motive is optional in the response — if absent the resolver
+  // uses the pre-roll. When present, accepts a string.
+  const hasMotive =
+    parsed.motive === undefined
+    || parsed.motive === null
+    || typeof parsed.motive === 'string';
+  return hasType && hasCharacter && hasRegister && hasUserName && hasOrganizingLogic && hasContact && hasMotive;
 }
 
 /**
@@ -112,7 +194,7 @@ export function validateInferenceResponse(raw) {
  * The type section always includes a tier hint so the LLM picks a
  * scale-appropriate type even when user input doesn't specify one.
  */
-function buildPrompt({ description, lore, characterCandidates, tier }) {
+function buildPrompt({ description, lore, characterCandidates, tier, preRolledOrganizingLogic, preRolledContact, preRolledHolder, preRolledTension, preRolledMotive }) {
   const safeDescription = (description || '').replace(/"/g, '\\"');
   const safeLore = (lore || '').replace(/"/g, '\\"');
 
@@ -137,11 +219,22 @@ Stake-scope at this tier: ${tierEntry.scopeOfStakes}
 
 Return a JSON object with four fields:
 
-1. "type": The dungeon type. The value MUST be one of the following options. Pick the type that matches WHAT THIS DUNGEON IS — its own identity, not surrounding context. "A tomb inside a mountain" is a tomb, not a mountain. "A cult-compound inside an abandoned fortress" is a cult-compound, not a fortress. The surrounding context informs framing but the type is the entity being introduced.
+1. "type": The dungeon's PHYSICAL FORM — gross shape, scale, and cosmological frame. NOT what it was built FOR (that's organizingLogic, field 5 below). NOT its mood or geography (that's character, field 2 below).
+
+   The value MUST be one of the following options:
 
    ${DUNGEON_TYPES.join(', ')}
 
-   TIER-AWARE TYPE SELECTION: the difficulty tier is fixed at ${tier}. Cosmic-scale types (${softWeightedTypes}) read best at Tier 3+ and should be reserved for those tiers unless the user input explicitly demands them. At Tier 1-2, prefer grounded types (tomb, crypt, mine, ruin, lair, sewer-maze, manor-cursed, brewery-ruin, fortress, prison, etc.). At Tier 5, the cosmic types come into their own. Match the type to the scope-of-stakes above. When no signal exists in the input, pick from the pool with a preference for variety (avoid leaning on the same option across many generations).
+   How type interacts with the OTHER dimensions: a "tomb" is NOT a type — "tomb" is what it was built FOR (purpose = funerary, supplied by organizingLogic). A tomb could be SHAPED as a chambered-complex, a vertical-shaft, an undercity, a single-great-chamber, or even a planar-pocket. Pick the SHAPE based on what the user input or the place's organizing logic implies about CONTAINER FORM, never the purpose.
+
+   Examples:
+   - "an ancient tomb" → type: "chambered-complex" (the shape) + organizingLogic: ["funerary"] (the purpose); placeType renders as Tomb/Crypt/Barrow
+   - "a god-corpse the party traverses" → type: "single-great-chamber" or "cave-system" (the shape) + organizingLogic: ["formed"]; placeType renders as Hollow/Maw/Gut
+   - "a wizard's tower" → type: "tower" or "spire" (the shape) + organizingLogic: ["production"]; placeType renders as Foundry/Works
+   - "an undercity of bandits" → type: "undercity" (the shape) + organizingLogic: ["inhabited_base"]
+   - "a Far Realm enclave" → type: "planar-pocket" (the frame) + organizingLogic: ["formed"] or ["containment"]
+
+   TIER-AWARE TYPE SELECTION: the difficulty tier is fixed at ${tier}. Cosmic-scale types (${softWeightedTypes}) read best at Tier 3+ and should be reserved for those tiers unless the user input explicitly demands them. At Tier 1-2, prefer grounded shapes (single-great-chamber, chambered-complex, cave-system, maze, vertical-shaft, tower, spire, wreck). Vast scales (undercity, sprawling-labyrinth) lean Tier 2+. Match the form's implied scale to the scope-of-stakes above. When no signal exists in the input, pick with a preference for variety.
 
 ${characterSection}
 
@@ -180,14 +273,86 @@ ${characterSection}
    - "Skyhold, the prison of the storm-king" → userName: "Skyhold"
    - "an ancient ruin in the mountains" → userName: null (only descriptive)
 
+5. "organizingLogic": The STRUCTURAL INTENT of the space — what it was built or shaped FOR. This is the bones, separate from the "type" (skin / scale). Return as a JSON array of ONE or TWO strings from:
+
+   - "funerary" — built to inter and honor the dead.
+   - "containment" — built to keep something IN; locks face inward; depth = danger.
+   - "production" — built to make, extract, or process (mine, foundry, lab, workshop, cistern).
+   - "inhabited_base" — organized for occupants to LIVE in and DEFEND it (war-camp, garrison, village, hideout).
+   - "creature_territory" — SHAPED by a beast's habits, not designed (den, nest, roost).
+   - "formed" — NOT built by design (geological, organic / anatomical, reality-warped).
+   - "invent" — user input establishes a structural intent that genuinely answers the question but is NOT one of the above. Use SPARINGLY.
+
+   Return TWO values when the input describes a PALIMPSEST place — two intents layered, friction between them:
+   - "a tomb repurposed as a cult base" → ["funerary", "inhabited_base"]
+   - "an old mine now occupied by bandits" → ["production", "inhabited_base"]
+   - "an undercity grown into a creature warren" → ["formed", "creature_territory"]
+   - "a god-corpse with a cult inside" → ["formed", "inhabited_base"]
+
+   Return ONE value otherwise:
+   - "ancient tomb" → ["funerary"]
+   - "old fortress" → ["inhabited_base"]
+   - "deep cave system" → ["formed"]
+   - "abandoned village" → ["inhabited_base"]  (the bones are still inhabited_base; the abandonment is the holder, not the logic)
+   - "wizard's tower" → ["production"]
+
+   Return null when no input signal exists — the orchestrator code-rolls.
+
+   COHERENCE CHECK (mandatory pass before returning organizingLogic):
+
+   We have PRE-ROLLED an organizingLogic for this generation: ${JSON.stringify(preRolledOrganizingLogic)}.
+
+   You have three valid moves:
+   (a) CONFIRM the pre-roll — return it verbatim.
+   (b) OVERRIDE because the USER INPUT clearly signals a different organizingLogic ("an ancient tomb" forces ["funerary"] regardless of the pre-roll).
+   (c) OVERRIDE because the pre-roll is STRUCTURALLY INCOHERENT with the character you've selected — the dungeon could not be both at once. Pick the nearest coherent organizingLogic instead.
+
+   What "structurally incoherent" means: the place could not function as both. Examples:
+   - Pre-roll ["funerary"] + character includes occupational / institutional / embattled / mercantile signals → incoherent (a tomb is not a working guildhall). Override toward inhabited_base or production depending on the character.
+   - Pre-roll ["creature_territory"] + character includes scholarly / monastic / law-bound signals → incoherent (a beast's den is not a scriptorium). Override toward inhabited_base.
+   - Pre-roll ["containment"] + character includes thriving / festival / open-trade signals → incoherent (a prison is not a marketplace). Override toward inhabited_base or production.
+
+   What "structurally incoherent" does NOT mean: merely unusual. A cult ascendant inside an ancient tomb is unusual but coherent — KEEP it. An old foundry haunted by its makers is unusual but coherent — KEEP it. The bar is the dungeon could NOT BE BOTH AT ONCE, not "this is rare." Most pre-rolls should CONFIRM.
+
+   If you override, your returned organizingLogic IS what gets persisted and what downstream coupling derives from. The pre-roll is discarded.
+
+6. "contact" (optional override): The pre-rolled CONTACT for this generation: ${JSON.stringify(preRolledContact)}.
+
+   Pre-rolled holder: ${JSON.stringify(preRolledHolder)}. Pre-rolled tension: ${JSON.stringify(preRolledTension)}.
+
+   ${CONTACT_COHERENCE_DIRECTIVES}
+
+   Return your resolved contact as an object: { present: boolean, reliability?: string, offers?: string, openSlot?: boolean }. Omit reliability/offers when present:false. Return the field UNSET (or null) to confirm the pre-roll as-is.
+
+7. "motive" (optional override): The party's REASON to delve. Pre-rolled: ${JSON.stringify(preRolledMotive)}.
+
+   The value MUST be one of:
+   - "acquisition" — claim a prize; a rival wants it too. The dungeon revolves around a desirable, named thing.
+   - "prevention" — stop a catastrophe before a doom-clock runs out.
+   - "recovery" — extract a target (captive person, stolen object, witness) held within.
+   - "discovery" — find, map, or answer something; knowledge is the prize.
+   - "invent" — user input establishes a motive that genuinely answers "why is the party going in?" but is NOT one of the above.
+
+   Examples of user-input → motive:
+   - "find the lost crown of [name]" → "recovery"
+   - "the rival faction wants the orb" → "acquisition"
+   - "stop the cult before they summon" → "prevention"
+   - "map the lower vaults; find out what the records mean" → "discovery"
+   - "claim the dragon's hoard" → "acquisition"
+   - "free the captured prince" → "recovery"
+
+   You may CONFIRM the pre-roll (return it as-is or omit the field) OR OVERRIDE based on user input. Default-bias toward acquisition / recovery / discovery when the user signal is ambiguous — production has historically over-rendered prevention.
+
+   Return the field UNSET (or null) to confirm the pre-roll as-is.
+
 Return ONLY valid JSON with the fields listed above. No prose before or after, no markdown code fences, no commentary.
 
 Example outputs:
-{"type": "tomb", "character": ["ancient", "haunted", "moss-furred"], "register": "old-norse", "userName": "Eikheim Barrow", "scale-hint": "T1 grounded"}
-{"type": "ziggurat", "character": ["scholarly", "ancient", "sun-scorched"], "register": "mesopotamian", "userName": null, "scale-hint": "T3 mid-tier"}
-{"type": "god-corpse", "character": ["forgotten", "planar-bleeding", "silence-deep"], "register": "old-norse", "userName": null, "scale-hint": "T5 cosmic — appropriate"}
-{"type": "manor-cursed", "character": ["fallen", "cobweb-veiled", "moonlit"], "register": "fantasy_unspecified", "userName": null, "scale-hint": "T1 grounded"}
-{"type": "factory-ruin", "character": ["forgotten", "decaying", "kiln-acrid"], "register": null, "userName": "the Verlith Foundry", "scale-hint": "user-named, generic register"}`;
+{"type": "chambered-complex", "character": ["ancient", "haunted", "moss-furred"], "register": "old-norse", "userName": "Eikheim Barrow", "organizingLogic": ["funerary"], "scale-hint": "T1 grounded — tomb-purpose in a branching chamber shape"}
+{"type": "spire", "character": ["scholarly", "ancient", "sun-scorched"], "register": "mesopotamian", "userName": null, "organizingLogic": ["funerary", "production"], "scale-hint": "T3 mid-tier — palimpsest of grave-monument + workshop, vertical shape"}
+{"type": "single-great-chamber", "character": ["forgotten", "planar-bleeding", "silence-deep"], "register": "old-norse", "userName": null, "organizingLogic": ["formed"], "scale-hint": "T5 cosmic — god-corpse organic form, one vast chamber"}
+{"type": "tower", "character": ["fallen", "cobweb-veiled", "moonlit"], "register": "fantasy_unspecified", "userName": null, "organizingLogic": ["inhabited_base"], "scale-hint": "T1 grounded — cursed-manor purpose in a tower shape"}
+{"type": "undercity", "character": ["forgotten", "decaying", "kiln-acrid"], "register": null, "userName": "the Verlith Foundry", "organizingLogic": ["production"], "scale-hint": "T2-3 — production purpose in a vast underground sprawl"}`;
 }
 
 /**
@@ -231,63 +396,40 @@ ${subdimensionLines}
 }
 
 /**
- * Western-medieval default register subset. Same rationale as
- * setting's inference: when the user provides input but no cultural
- * signal, default to a Western-medieval pool rather than the full
- * humanoid register list — production observation showed full-pool
- * defaults producing off-brand outputs (Egyptian register for a
- * "border keep" input).
+ * Pick a random register from the full pool. Matches the item
+ * generator's behavior — the full `registerList` (including the
+ * thematic-genre registers like Aberrant, Abyssal, Infernal,
+ * Primordial) is in scope, with no narrowing filter.
+ *
+ * The earlier Western-medieval-only filter was removed at the user's
+ * request for parity with item / NPC generators: vague fantasy inputs
+ * now have access to fantasy species (Elven / Orcish / Goblin /
+ * Gnomish / Draconic), ancient-world registers (Egyptian /
+ * Mesopotamian), other cultural registers, and the thematic genres.
  */
-const WESTERN_MEDIEVAL_DEFAULT_PREFIXES = [
-  'Latin-inspired',
-  'Italian-Renaissance-inspired',
-  'Norse-inspired',
-  'Old-Norse-inspired',
-  'Gothic-inspired',
-  'Anglo-Saxon-inspired',
-  'Germanic-inspired',
-  'Old-High-German-inspired',
-  'Middle-High-German-inspired',
-  'Celtic-inspired',
-  'Welsh-inspired',
-  'Middle-Welsh-inspired',
-  'Irish-inspired',
-  'Old-Irish-inspired',
-  'Old-Occitan-inspired',
-];
-
-function pickWesternDefaultRegister(rng) {
-  const pool = humanoidRegisterList.filter(register =>
-    WESTERN_MEDIEVAL_DEFAULT_PREFIXES.some(prefix => register.startsWith(prefix))
-  );
-  if (pool.length === 0) {
-    return humanoidRegisterList.length > 0
-      ? humanoidRegisterList[Math.floor(rng() * humanoidRegisterList.length)]
-      : null;
-  }
-  return pool[Math.floor(rng() * pool.length)];
+function pickRegisterFromFullPool(rng) {
+  if (registerList.length === 0) return null;
+  return registerList[Math.floor(rng() * registerList.length)];
 }
 
 /**
- * Resolve a classifier-style register token to a full
- * humanoidRegisterList descriptor, or null when the prefix is
- * filtered out (protected gate) / unrecognized.
+ * Resolve a classifier-style register token to a full registerList
+ * descriptor, or null when the prefix is filtered out (protected
+ * gate) / unrecognized.
  *
  * The `fantasy_unspecified` token routes here too — when called this
- * way (empty-input path), the resolver picks a random humanoid
- * register from the full variety pool to maximize cultural exposure
- * for browsing users.
+ * way (empty-input path), the resolver picks a random register from
+ * the full pool to maximize cultural exposure for browsing users.
  */
 function resolveRegisterToken(token, rng = Math.random) {
   if (typeof token !== 'string') return null;
   const lowered = token.toLowerCase();
   if (lowered === 'fantasy_unspecified') {
-    if (humanoidRegisterList.length === 0) return null;
-    return humanoidRegisterList[Math.floor(rng() * humanoidRegisterList.length)];
+    return pickRegisterFromFullPool(rng);
   }
   if (!TOKENS.includes(lowered)) return null;
   const prefix = TOKEN_TO_REGISTER_PREFIX[lowered];
-  return humanoidRegisterList.find(r => r.startsWith(prefix)) || null;
+  return registerList.find(r => r.startsWith(prefix)) || null;
 }
 
 /**
@@ -298,7 +440,7 @@ function resolveRegisterToken(token, rng = Math.random) {
  * @param {string} [args.lore] — user's pasted dungeon lore (optional)
  * @param {number|string|null} [args.difficulty] — user-selected difficulty (1-5), or null/undefined to roll
  * @param {() => number} [args.rng] — injectable randomness for deterministic testing
- * @returns {Promise<{type: string|null, character: string[]|null, register: string|null, userName: string|null, tension: string, difficulty: number}>}
+ * @returns {Promise<{type: string|null, character: string[]|null, register: string|null, userName: string|null, tension: string, difficulty: number, powerStructure: string}>}
  */
 export async function inferDungeonDimensions({
   description = '',
@@ -313,9 +455,50 @@ export async function inferDungeonDimensions({
   // Difficulty: caller-supplied first, then code-roll.
   const resolvedDifficulty = resolveDifficulty(difficulty) || pickRandomDifficulty(rng);
 
-  // Tension: ALWAYS code-picked uniformly. Same empirical lesson as
-  // setting's tension — LLM clusters, code-random doesn't.
+  // Tension: ALWAYS code-picked uniformly. Same empirical lesson —
+  // LLM clusters on structural axes; code-random gives even
+  // distribution.
   const tension = pickRandomTension(rng);
+
+  // Organizing logic / holder / contender form a coupled chain:
+  //   organizingLogic → (mismatch-biased) holder → (presence-gated) contender.
+  // Pre-roll the chain here so the fallback emptyResult has a
+  // coherent (logic, holder, contender) triple. If the LLM call
+  // succeeds and provides an organizingLogic, the chain is re-derived
+  // below using the LLM's value.
+  const fallbackOrganizingLogic = pickRandomOrganizingLogic(rng);
+  const fallbackPowerStructure = pickHolderForOrganizingLogic(fallbackOrganizingLogic, rng);
+  // Motive: pre-roll so the fallback emptyResult has it AND so
+  // pickRandomContender can bias presence under acquisition.
+  const fallbackMotive = pickRandomMotive(rng);
+  // FormedNature: rolled ONLY when 'formed' is in organizingLogic.
+  // Other logics don't have an ambient-force problem to solve, so
+  // the field is null.
+  const fallbackFormedNature = fallbackOrganizingLogic.includes('formed')
+    ? pickRandomFormedNature(rng)
+    : null;
+  // Mode: rolled from the holder's menu (per-power-structure verbs).
+  // 10% open slot, else uniform over the menu's anchors. Null when
+  // holder has no menu (defensive).
+  const fallbackMode = pickRandomMode(rng, { holder: fallbackPowerStructure });
+  const fallbackContenderRoll = pickRandomContender(rng, { holder: fallbackPowerStructure, motive: fallbackMotive });
+  const fallbackPovFrame = pickRandomPovFrame(rng, { holder: fallbackPowerStructure, tension });
+  const fallbackPlaceType = pickPlaceTypeForLogic(fallbackOrganizingLogic, rng);
+  // contact rolls orthogonally — no holder/tension gating at roll time.
+  // The LLM coherence pass reconciles in the inference call.
+  const fallbackContactRoll = pickRandomContact(rng);
+  // Apply legibility rules to the (contender, contact) pair after both
+  // are rolled: SUPPRESS rival-tension doubles, CAP crowded conditions.
+  // Motive is load-bearing for CAP — under acquisition, the contender
+  // wins the tie-break (it's the rival in the race).
+  const { contender: fallbackContender, contact: fallbackContact } = applyLegibilityRules({
+    contender: fallbackContenderRoll,
+    contact: fallbackContactRoll,
+    holder: fallbackPowerStructure,
+    tension,
+    motive: fallbackMotive,
+    rng,
+  });
 
   // Character: candidate-based on empty input, direct-selection when
   // user provided context for the LLM to anchor to.
@@ -328,14 +511,36 @@ export async function inferDungeonDimensions({
     lore,
     characterCandidates,
     tier: resolvedDifficulty,
+    preRolledOrganizingLogic: fallbackOrganizingLogic,
+    preRolledContact: fallbackContact,
+    preRolledHolder: fallbackPowerStructure,
+    preRolledTension: tension,
+    preRolledMotive: fallbackMotive,
   });
 
   // Default result: code-fall-throughs for every dimension. Returned
   // on LLM failure so the caller's pipeline keeps moving.
   const fallbackType = pickWeightedDungeonType(resolvedDifficulty, rng);
-  const fallbackRegister = hasUserInput
-    ? pickWesternDefaultRegister(rng)
-    : resolveRegisterToken('fantasy_unspecified', rng);
+  // Both branches now route through the full registerList — parity
+  // with the item generator. The empty-input branch goes via
+  // resolveRegisterToken('fantasy_unspecified') for the comment trail;
+  // both ultimately hit pickRegisterFromFullPool.
+  const fallbackRegister = pickRegisterFromFullPool(rng);
+  // Pool injection: a rotated 6-name subset of the register's curated
+  // character pool, for the LLM to derive from. Null when the register
+  // is a catchall (no curated pool); the prompt falls back to
+  // descriptor-only.
+  const fallbackRegisterPool = pickRegisterPoolSubset(fallbackRegister, rng);
+  // nameTemplate pre-roll: gated on register availability. Both
+  // branches above resolve a register, so the fallback assumes
+  // hasRegister: true. The post-LLM re-derive below re-checks against
+  // the LLM-resolved register and filters to B/D/F if it came back null.
+  const fallbackNameTemplate = pickRandomNameTemplate(rng, { hasRegister: !!fallbackRegister });
+
+  // Monster population: ONE creature_type + ONE relation that apply
+  // to all three encounter slots. The 3-slot roster shares a kind so
+  // the dungeon reads as one population, not three unrelated creatures.
+  const fallbackMonsterPopulation = rollMonsterPopulation({ rng });
 
   const emptyResult = {
     type: fallbackType,
@@ -344,6 +549,18 @@ export async function inferDungeonDimensions({
     userName: null,
     tension,
     difficulty: resolvedDifficulty,
+    powerStructure: fallbackPowerStructure,
+    organizingLogic: fallbackOrganizingLogic,
+    contender: fallbackContender,
+    povFrame: fallbackPovFrame,
+    placeType: fallbackPlaceType,
+    nameTemplate: fallbackNameTemplate,
+    contact: fallbackContact,
+    registerPool: fallbackRegisterPool,
+    motive: fallbackMotive,
+    formedNature: fallbackFormedNature,
+    mode: fallbackMode,
+    monsterPopulation: fallbackMonsterPopulation,
   };
 
   let response;
@@ -377,11 +594,14 @@ export async function inferDungeonDimensions({
   // Register: same branching as setting's inference.
   let resolvedRegister;
   if (!hasUserInput) {
-    // Empty input: force fantasy_unspecified path → full humanoid pool.
+    // Empty input: pick from the full register pool.
     resolvedRegister = resolveRegisterToken('fantasy_unspecified', rng);
   } else if (typeof parsed.register === 'string' && parsed.register.toLowerCase() === 'fantasy_unspecified') {
-    // User-input with no specific cultural signal → Western-medieval default pool.
-    resolvedRegister = pickWesternDefaultRegister(rng);
+    // User-input with no specific cultural signal → also full pool.
+    // Item generator parity: no narrowing filter; vague fantasy inputs
+    // get access to all registers (Western-medieval, fantasy species,
+    // ancient-world, other cultural, thematic).
+    resolvedRegister = pickRegisterFromFullPool(rng);
   } else {
     resolvedRegister = resolveRegisterToken(parsed.register, rng);
   }
@@ -390,6 +610,84 @@ export async function inferDungeonDimensions({
     ? parsed.userName.trim()
     : null;
 
+  // Organizing logic: LLM pick if valid (array or single string), else
+  // fall back to the pre-roll. Composite is capped at 2 values.
+  let resolvedOrganizingLogic = fallbackOrganizingLogic;
+  if (Array.isArray(parsed.organizingLogic) && parsed.organizingLogic.length > 0) {
+    const valid = parsed.organizingLogic
+      .filter(l => typeof l === 'string')
+      .map(l => l.trim())
+      .filter(l => ORGANIZING_LOGICS.includes(l));
+    if (valid.length > 0) resolvedOrganizingLogic = valid.slice(0, 2);
+  } else if (typeof parsed.organizingLogic === 'string') {
+    const v = parsed.organizingLogic.trim();
+    if (ORGANIZING_LOGICS.includes(v)) resolvedOrganizingLogic = [v];
+  }
+
+  // Holder + contender: re-derive from the LLM-resolved organizing
+  // logic to keep the coupling and presence-gating coherent. If the
+  // LLM didn't move organizingLogic off the fallback, these rolls
+  // would diverge slightly from the pre-rolls (different rng state)
+  // but the coupling invariants still hold.
+  // Motive: LLM pick if a valid string, else fall back to pre-roll.
+  // The picker pool is MOTIVES (incl. 'invent').
+  let resolvedMotive = fallbackMotive;
+  if (typeof parsed.motive === 'string') {
+    const candidate = parsed.motive.trim();
+    if (MOTIVES.includes(candidate)) resolvedMotive = candidate;
+  }
+
+  const resolvedPowerStructure = pickHolderForOrganizingLogic(resolvedOrganizingLogic, rng);
+  let resolvedContender = pickRandomContender(rng, { holder: resolvedPowerStructure, motive: resolvedMotive });
+  const resolvedPovFrame = pickRandomPovFrame(rng, { holder: resolvedPowerStructure, tension });
+  // placeType re-derives from the LLM-resolved organizingLogic so a
+  // user-input or coherence-check override flows through to the noun.
+  const resolvedPlaceType = pickPlaceTypeForLogic(resolvedOrganizingLogic, rng);
+  // nameTemplate re-derives against the LLM-resolved register so the
+  // template-bucket filter (B/D/F when no register) honors the LLM's
+  // actual register resolution, not the pre-roll's guess.
+  const resolvedNameTemplate = pickRandomNameTemplate(rng, { hasRegister: !!resolvedRegister });
+
+  // Contact: take the LLM coherence-pass value when present + valid,
+  // else fall back to the pre-roll. The validator already gate-checks
+  // that `parsed.contact.present` is boolean if the object is supplied;
+  // here we narrow the shape and clean up orphan sub-fields.
+  let resolvedContact = fallbackContact;
+  if (parsed.contact && typeof parsed.contact === 'object' && typeof parsed.contact.present === 'boolean') {
+    if (!parsed.contact.present) {
+      resolvedContact = { present: false };
+    } else if (parsed.contact.openSlot === true) {
+      resolvedContact = { present: true, openSlot: true };
+    } else {
+      const reliability = typeof parsed.contact.reliability === 'string'
+        && CONTACT_RELIABILITIES.includes(parsed.contact.reliability)
+          ? parsed.contact.reliability
+          : null;
+      const offers = typeof parsed.contact.offers === 'string'
+        && CONTACT_OFFERS.includes(parsed.contact.offers)
+          ? parsed.contact.offers
+          : null;
+      if (reliability && offers) {
+        resolvedContact = { present: true, reliability, offers };
+      }
+      // If LLM returned present:true but invalid reliability/offers,
+      // keep the pre-roll. Don't half-construct a contact.
+    }
+  }
+
+  // Apply legibility rules with the LLM-resolved holder + tension + motive.
+  // SUPPRESS rival-tension contenders, CAP crowded conditions to one
+  // of the pair. Under acquisition motive, the contender wins the
+  // tie-break (the rival in the race is load-bearing).
+  ({ contender: resolvedContender, contact: resolvedContact } = applyLegibilityRules({
+    contender: resolvedContender,
+    contact: resolvedContact,
+    holder: resolvedPowerStructure,
+    tension,
+    motive: resolvedMotive,
+    rng,
+  }));
+
   return {
     type: resolvedType,
     character: resolvedCharacter,
@@ -397,5 +695,31 @@ export async function inferDungeonDimensions({
     userName: resolvedUserName,
     tension,
     difficulty: resolvedDifficulty,
+    powerStructure: resolvedPowerStructure,
+    organizingLogic: resolvedOrganizingLogic,
+    contender: resolvedContender,
+    povFrame: resolvedPovFrame,
+    placeType: resolvedPlaceType,
+    nameTemplate: resolvedNameTemplate,
+    contact: resolvedContact,
+    // Re-derive the pool subset from the LLM-resolved register so a
+    // user-input register override flows through to the injected pool.
+    registerPool: pickRegisterPoolSubset(resolvedRegister, rng),
+    motive: resolvedMotive,
+    // Re-derive formedNature against the LLM-resolved organizingLogic.
+    // If the LLM overrode the logic away from 'formed', the field
+    // drops to null. If overrode INTO 'formed', a fresh roll fires.
+    formedNature: resolvedOrganizingLogic.includes('formed')
+      ? (fallbackFormedNature || pickRandomFormedNature(rng))
+      : null,
+    // Re-derive mode against the LLM-resolved holder so the menu
+    // tracks any holder override. If the holder didn't move, the
+    // pre-roll is still valid (we'd reroll the same menu); we re-pick
+    // for simplicity at the cost of one extra rng draw.
+    mode: pickRandomMode(rng, { holder: resolvedPowerStructure }),
+    // Monster population is a fresh roll (creature_type + relation,
+    // both dungeon-wide; the 3 encounter slots inherit them). No
+    // coupling to LLM-resolved fields — pure code-roll.
+    monsterPopulation: rollMonsterPopulation({ rng }),
   };
 }

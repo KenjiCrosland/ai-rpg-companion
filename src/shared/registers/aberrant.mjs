@@ -123,7 +123,7 @@ export const aberrantCharacterEpithets = [
  */
 export const aberrantRegister = {
   prefix: 'Aberrant',
-  descriptor: "Aberrant: unpronounceable clusters, wrong-sounding (e.g., Xith'vaar, Qolenth, Uurm)",
+  descriptor: "Aberrant: unpronounceable clusters that resist natural articulation. Apostrophe-broken syllables marking glottal stops, multi-consonant onsets and codas (xth, qrn, vth, uum), vowel-poor frames; names feel pre-linguistic or post-linguistic rather than spoken — the mouth doesn't quite want to make them. Derive fresh names from the phonology; do not copy from prior generations.",
   characterPool: aberrantCharacterEpithets,
   characterPoolStrictness: 'preferred',
   thematic: true,

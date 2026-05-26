@@ -46,8 +46,8 @@ function validResponseBody() {
     dominant_power: 'Vetheras, the lich-king, dreams in the central vault.',
     inhabitants: 'A handful of skeleton wardens, plus a band of cultists in the antechamber.',
     notable_inhabitant_facet: 'The cultists have begun arguing among themselves.',
-    traps_and_security: 'The doors close on a slow rune-clock.',
-    notable_security_facet: '',
+    hazards_and_dangers: 'The doors close on a slow rune-clock.',
+    notable_hazard_facet: '',
     central_dynamic: 'Vetheras stirs more each cycle of the moon.',
     current_occupation: 'Three cultists are conducting the seventh vigil.',
     present_state: 'The barrow hums faintly at midnight.',
@@ -92,12 +92,24 @@ describe('generateDungeonOverview', () => {
     // Default mocks: inference returns plausible values; AI returns a
     // well-shaped overview. Individual tests override these as needed.
     inferDungeonDimensions.mockResolvedValue({
-      type: 'tomb',
+      type: 'chambered-complex',
       character: ['ancient', 'haunted', 'moss-furred'],
       register: 'Old-Norse-inspired: ...',
       userName: null,
       tension: 'sealed-and-stirring',
       difficulty: 1,
+      powerStructure: 'single_apex',
+      povFrame: 'sages_rumor',
+      placeType: 'Sepulcher',
+      nameTemplate: { id: 'A', shape: '[Register-noun] [Place-type]', requiresRegister: true, examples: ['Eikheim Barrow'] },
+      contact: { present: false },
+      motive: 'prevention',
+      formedNature: null,
+      mode: 'confront',
+      monsterPopulation: {
+        creature_type: 'undead',
+        relation: 'dominant_power_thrall',
+      },
     });
     generateGptResponse.mockResolvedValue(JSON.stringify(validResponseBody()));
   });
@@ -131,12 +143,20 @@ describe('generateDungeonOverview', () => {
 
   it('honors the userName extracted from the description by inference', async () => {
     inferDungeonDimensions.mockResolvedValue({
-      type: 'tomb',
+      type: 'chambered-complex',
       character: ['ancient', 'haunted', 'moss-furred'],
       register: null,
       userName: 'the Hollow Vault',
       tension: 'sealed-and-stirring',
       difficulty: 1,
+      powerStructure: 'single_apex',
+      povFrame: 'sages_rumor',
+      placeType: 'Sepulcher',
+      nameTemplate: { id: 'A', shape: '[Register-noun] [Place-type]', requiresRegister: true, examples: ['Eikheim Barrow'] },
+      contact: { present: false },
+      motive: 'prevention',
+      formedNature: null,
+      mode: 'confront',
     });
     overviewForm.value.description = 'a tomb called the Hollow Vault';
 
@@ -150,23 +170,47 @@ describe('generateDungeonOverview', () => {
 
   it('persists the resolved dimensions on the new dungeon record', async () => {
     inferDungeonDimensions.mockResolvedValue({
-      type: 'ziggurat',
+      type: 'spire',
       character: ['scholarly', 'ancient', 'sun-scorched'],
       register: 'Mesopotamian-inspired: ...',
       userName: null,
       tension: 'forgotten-knowledge',
       difficulty: 3,
+      powerStructure: 'living_order',
+      organizingLogic: ['production', 'funerary'],
+      contender: { present: true, kind: 'rival_expedition' },
+      povFrame: 'recovered_notes',
+      placeType: 'Foundry',
+      nameTemplate: { id: 'C', shape: '[Place-type] of [Register-noun]', requiresRegister: true, examples: ['Crypt of Vetheras'] },
+      contact: { present: true, reliability: 'hidden_motive', offers: 'information' },
+      motive: 'acquisition',
+      formedNature: null,
+      mode: 'subvert',
     });
 
     await generateDungeonOverview();
 
     const dungeon = dungeons.value[0];
     expect(dungeon.dimensions).toEqual({
-      type: 'ziggurat',
+      type: 'spire',
       character: ['scholarly', 'ancient', 'sun-scorched'],
       register: 'Mesopotamian-inspired: ...',
       tension: 'forgotten-knowledge',
       difficulty: 3,
+      powerStructure: 'living_order',
+      organizingLogic: ['production', 'funerary'],
+      contender: { present: true, kind: 'rival_expedition' },
+      povFrame: 'recovered_notes',
+      placeType: 'Foundry',
+      // dimensions persists only the template id, not the full object.
+      nameTemplate: 'C',
+      // contact persists the full object (sub-fields omitted when absent).
+      contact: { present: true, reliability: 'hidden_motive', offers: 'information' },
+      motive: 'acquisition',
+      // formedNature is null when 'formed' is not in organizingLogic.
+      formedNature: null,
+      // mode is drawn from the holder's menu — 'subvert' is valid for living_order.
+      mode: 'subvert',
     });
   });
 
@@ -228,6 +272,26 @@ describe('generateDungeonOverview', () => {
     // The default banned-trope rotation pulls ~70% of 4 → 3 entries.
     // We just check the section appears.
     expect(promptCall).toContain('ANTI-CLUSTERING');
+  });
+
+  it('threads the inferred monsterPopulation into the main-call prompt', async () => {
+    await generateDungeonOverview();
+    const promptCall = generateGptResponse.mock.calls[0][0];
+    expect(promptCall).toContain('MINION POPULATION (pre-rolled');
+    // The beforeEach mock seeds an undead minion population with a
+    // dominant_power_thrall relation; the rolled values surface in
+    // the constraint block.
+    expect(promptCall).toContain('"undead"');
+    expect(promptCall).toContain('"dominant_power_thrall"');
+  });
+
+  it('persists the inferred monsterPopulation on the new dungeon record', async () => {
+    await generateDungeonOverview();
+    const dungeon = dungeons.value[0];
+    expect(dungeon.dimensions.monsterPopulation).toEqual({
+      creature_type: 'undead',
+      relation: 'dominant_power_thrall',
+    });
   });
 
   it('throws + alerts when the AI returns nothing', async () => {

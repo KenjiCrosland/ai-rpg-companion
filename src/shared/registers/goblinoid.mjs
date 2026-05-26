@@ -42,7 +42,7 @@ export const goblinoidCharacterEpithets = [
 
 export const goblinoidRegister = {
   prefix: 'Goblin-inspired',
-  descriptor: 'Goblin-inspired: sharp, crude, percussive (e.g., Skragbit, Mukgash, Krik-tak)',
+  descriptor: 'Goblin-inspired: sharp, crude, percussive phonology — hard consonants (k, g, t, p), short bitten syllables with no flow, apostrophes or hyphens marking glottal clicks (e.g. Krik-tak structure). Compound shapes pair a grub/grime/break/snatch verb-root with a body-or-tool noun. Derive fresh names from the phonology; do not copy from prior generations.',
   characterPool: goblinoidCharacterEpithets,
   characterPoolStrictness: 'mandatory',
   fantasyRaceKey: 'Goblinoid',

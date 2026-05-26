@@ -46,7 +46,7 @@ export const orcishCharacterEpithets = [
 
 export const orcishRegister = {
   prefix: 'Orcish',
-  descriptor: "Orcish: brutal, guttural (e.g., Grokthash, Uzgark, Dra'mok)",
+  descriptor: "Orcish: guttural and bitten phonology — hard back-of-throat consonants (k, g, kh), short two-or-three-syllable warrior-names of a force-verb-root (grok-, uz-, dra-, krag-, mok-) plus a body-or-weapon noun (-thash, -gark, -tooth, -fang, -gore). Apostrophes mark a glottal break. Derive fresh names from the phonology; do not copy from prior generations.",
   characterPool: orcishCharacterEpithets,
   characterPoolStrictness: 'mandatory',
   fantasyRaceKey: 'Orcish',

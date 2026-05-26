@@ -128,7 +128,7 @@ export const abyssalCharacterEpithets = [
 
 export const abyssalRegister = {
   prefix: 'Abyssal',
-  descriptor: "Abyssal: guttural, chaotic (e.g., Ghar'zuul, Rotmaw, Vilesung)",
+  descriptor: "Abyssal: guttural, throat-rough phonology; jagged consonant clusters (ghr, zhr, vth), harsh fricatives, syllables that resolve into accusation or threat. Apostrophes mark glottal breaks. Compound names commonly pair a violence-verb or decay-noun (rot-, vile-, gore-, maw-) with a body-part or anatomical noun (-zuul, -sung, -tooth, -spine). Derive fresh names from the phonology; do not copy from prior generations.",
   characterPool: abyssalCharacterEpithets,
   characterPoolStrictness: 'preferred',
   thematic: true,

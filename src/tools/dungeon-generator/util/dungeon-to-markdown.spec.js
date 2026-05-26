@@ -37,19 +37,16 @@ describe('dungeonToMarkdown', () => {
     // Lead (no heading) renders before the first section.
     expect(result).toContain('An ancient temple lost to time.');
     // Section headings (## Section) replace the legacy paragraph-only
-    // structure. Region / Approach / History / Dominant Power /
-    // Inhabitants / Present State / Difficulty all surface for legacy
-    // shape via the legacy section map.
-    expect(result).toContain('## Region');
-    expect(result).toContain('It sits on the edge of the kingdom.');
+    // structure. Approach (region merged in) / History / Inhabitants
+    // (dominant_power merged in) / Present State / Difficulty surface
+    // for legacy shape via the legacy section map.
     expect(result).toContain('## Approach');
+    expect(result).toContain('It sits on the edge of the kingdom.');
     expect(result).toContain('Follow the old road through the forest.');
     expect(result).toContain('## History');
     expect(result).toContain('Built centuries ago by a forgotten civilization.');
-    // Difficulty is now a section heading + value, not the legacy
-    // `**Difficulty Level:**` bold-prefixed line.
-    expect(result).toContain('## Difficulty');
-    expect(result).toContain('Tier 2: Expert');
+    // Difficulty section was removed from the shared section map.
+    expect(result).not.toContain('## Difficulty');
   });
 
   it('should handle dungeon with NPCs (short description)', () => {
@@ -290,8 +287,7 @@ describe('dungeonToMarkdown', () => {
 
     expect(result).toContain('# MINIMAL DUNGEON');
     expect(result).toContain('A simple place.');
-    expect(result).toContain('## Difficulty');
-    expect(result).toContain('Tier 1');
+    expect(result).not.toContain('## Difficulty');
   });
 
   it('should handle complete dungeon with all elements', () => {

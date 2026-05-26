@@ -98,7 +98,7 @@ export const elvenCharacterEpithets = [
 
 export const elvenRegister = {
   prefix: 'Elven',
-  descriptor: 'Elven: lyrical, vowel-rich (e.g., Aelindariel, Saereldreth, Glorwenneth)',
+  descriptor: 'Elven: lyrical and vowel-rich — open vowels (a, e, i), soft liquid consonants (l, r, n), flowing polysyllabic names with no hard stops. Characteristic compound endings around -wen, -iel, -ariel, -ndor; names carry meanings of light, leaf, song, star, river. Derive fresh names from the phonology; do not copy from prior generations.',
   characterPool: elvenCharacterEpithets,
   characterPoolStrictness: 'preferred',
   fantasyRaceKey: 'Elven',

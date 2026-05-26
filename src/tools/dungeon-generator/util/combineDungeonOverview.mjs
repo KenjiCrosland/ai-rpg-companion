@@ -39,8 +39,8 @@ export function combineDungeonOverview(overview) {
     overview.central_dynamic
       ? [overview.inhabitants, overview.notable_inhabitant_facet]
       : [overview.dominant_power_minions],
-    // Defenses — new shape only.
-    [overview.traps_and_security, overview.notable_security_facet],
+    // Hazards — new shape only.
+    [overview.hazards_and_dangers, overview.notable_hazard_facet],
     // Present State — new shape (central_dynamic + current_occupation
     // + present_state) or legacy (the dramatic-arc tail:
     // dominant_power_event + recent_event_consequences + secondary_*
