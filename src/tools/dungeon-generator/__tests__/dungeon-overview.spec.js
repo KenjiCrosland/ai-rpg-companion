@@ -26,15 +26,12 @@ import {
   CONTENDER_KINDS,
   CONTENDER_KIND_DIRECTIVES,
   CONTENDER_PRESENT_FRAMING,
+  CONTACT_KINDS,
+  CONTACT_KIND_DIRECTIVES,
+  CONTACT_PRESENT_FRAMING,
   POV_FRAMES,
   POV_FRAME_DIRECTIVES,
   NAME_TEMPLATES,
-  CONTACT_RELIABILITIES,
-  CONTACT_OFFERS,
-  CONTACT_PRESENT_FRAMING,
-  CONTACT_RELIABILITY_DIRECTIVES,
-  CONTACT_OFFERS_DIRECTIVES,
-  CONTACT_INVENT_DIRECTIVE,
   MOTIVES,
   MOTIVE_DIRECTIVES,
   MOTIVE_PRESENT_STATE_CLAUSES,
@@ -52,6 +49,7 @@ function validResponse() {
     name: 'Eikheim Barrow',
     title: 'Tomb of the Singing Bones',
     overview: 'A low mound of moss-furred stone, mist clinging to the entrance lintel.',
+    quest_hook: 'A factor of the Ash-Bearers offers 200gp and a token of safe-passage if the party recovers the Singing Bones from the central vault before the next full moon.',
     relation_to_larger_setting: 'It sits at the southern edge of the Iron Hills.',
     approach_and_threshold: 'A worn stone stair descends into a chamber lit by phosphorescent lichen.',
     history: 'Built by the Ash-Bearers three centuries ago.',
@@ -61,8 +59,12 @@ function validResponse() {
     hazards_and_dangers: 'The doors close on a slow rune-clock; the central vault is warded against sound.',
     notable_hazard_facet: '',
     central_dynamic: 'Vetheras stirs more each cycle of the moon, and the cultists believe his waking is near.',
-    current_occupation: 'Three cultists are conducting the seventh of nine planned vigils.',
     present_state: 'The barrow hums faintly at midnight; the air around the central vault has thickened.',
+    resolution_paths: [
+      'Smash the central vault\'s phylactery-altar — Vetheras dissipates, the barrow collapses with him.',
+      'Bind Vetheras into a fresh dreamless sleep using the rune-clock\'s slow cycle.',
+      'Seal the entrance behind the rune-clock; the cult dies of starvation but Vetheras stirs on.',
+    ],
     difficulty_level: 'A Tier 1 dungeon suited for novice adventurers with local stakes.',
     named_entities: ['Vetheras', 'Aldwyn'],
     npc_list: [
@@ -260,49 +262,82 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
     expect(funeraryIdx).toBeGreaterThan(productionIdx);
   });
 
-  // ---- contender routing ----
+  // ---- thirdParty routing ----
 
-  it('omits the CONTENDER block when contender is null or absent', () => {
-    const a = dungeonOverviewPrompt({ ...baseArgs, contender: null });
-    const b = dungeonOverviewPrompt({ ...baseArgs, contender: { present: false } });
-    expect(a).not.toContain(CONTENDER_PRESENT_FRAMING);
-    expect(b).not.toContain(CONTENDER_PRESENT_FRAMING);
-  });
-
-  it('routes the contender present framing + per-kind directive for every kind', () => {
-    for (const kind of CONTENDER_KINDS) {
-      const prompt = dungeonOverviewPrompt({
-        ...baseArgs,
-        contender: { present: true, kind },
-      });
-      expect(prompt).toContain(CONTENDER_PRESENT_FRAMING);
-      expect(prompt).toContain(CONTENDER_KIND_DIRECTIVES[kind]);
+  it('omits the CONTENDER + CONTACT blocks when thirdParty is null or absent', () => {
+    const a = dungeonOverviewPrompt({ ...baseArgs, thirdParty: null });
+    const b = dungeonOverviewPrompt({ ...baseArgs, thirdParty: { present: false } });
+    for (const prompt of [a, b]) {
+      expect(prompt).not.toContain(CONTENDER_PRESENT_FRAMING);
+      expect(prompt).not.toContain(CONTACT_PRESENT_FRAMING);
     }
   });
 
-  it('falls back to framing-only when kind is missing or unknown', () => {
-    // No kind: framing still injects; no spurious directive.
+  it('routes the contender present framing + per-kind directive for every adversary kind', () => {
+    for (const kind of CONTENDER_KINDS) {
+      const prompt = dungeonOverviewPrompt({
+        ...baseArgs,
+        thirdParty: { present: true, type: 'adversary', kind },
+      });
+      expect(prompt).toContain(CONTENDER_PRESENT_FRAMING);
+      expect(prompt).toContain(CONTENDER_KIND_DIRECTIVES[kind]);
+      // Ally framing should NOT leak when type is adversary.
+      expect(prompt).not.toContain(CONTACT_PRESENT_FRAMING);
+    }
+  });
+
+  it('routes the contact present framing + per-kind directive for every ally kind', () => {
+    for (const kind of CONTACT_KINDS) {
+      const prompt = dungeonOverviewPrompt({
+        ...baseArgs,
+        thirdParty: { present: true, type: 'ally', kind },
+      });
+      expect(prompt).toContain(CONTACT_PRESENT_FRAMING);
+      expect(prompt).toContain(CONTACT_KIND_DIRECTIVES[kind]);
+      // Adversary framing should NOT leak when type is ally.
+      expect(prompt).not.toContain(CONTENDER_PRESENT_FRAMING);
+    }
+  });
+
+  it('falls back to framing-only when adversary kind is missing or unknown', () => {
     const noKind = dungeonOverviewPrompt({
       ...baseArgs,
-      contender: { present: true },
+      thirdParty: { present: true, type: 'adversary' },
     });
     expect(noKind).toContain(CONTENDER_PRESENT_FRAMING);
-    // Unknown kind: framing still injects; no spurious directive.
     const unknown = dungeonOverviewPrompt({
       ...baseArgs,
-      contender: { present: true, kind: 'not_a_real_kind' },
+      thirdParty: { present: true, type: 'adversary', kind: 'not_a_real_kind' },
     });
     expect(unknown).toContain(CONTENDER_PRESENT_FRAMING);
   });
 
-  it('current_occupation field text references the contender only when present', () => {
-    const absent = dungeonOverviewPrompt({ ...baseArgs, contender: { present: false } });
-    const present = dungeonOverviewPrompt({
+  it('falls back to framing-only when ally kind is missing or unknown', () => {
+    const noKind = dungeonOverviewPrompt({
       ...baseArgs,
-      contender: { present: true, kind: 'rival_expedition' },
+      thirdParty: { present: true, type: 'ally' },
     });
-    expect(absent).not.toContain('CONTENDER (rival outsider) has been pre-rolled');
-    expect(present).toContain('CONTENDER (rival outsider) has been pre-rolled');
+    expect(noKind).toContain(CONTACT_PRESENT_FRAMING);
+    const unknown = dungeonOverviewPrompt({
+      ...baseArgs,
+      thirdParty: { present: true, type: 'ally', kind: 'not_a_real_kind' },
+    });
+    expect(unknown).toContain(CONTACT_PRESENT_FRAMING);
+  });
+
+  it('current_occupation field text references the third party only when present', () => {
+    const absent = dungeonOverviewPrompt({ ...baseArgs, thirdParty: { present: false } });
+    const adv = dungeonOverviewPrompt({
+      ...baseArgs,
+      thirdParty: { present: true, type: 'adversary', kind: 'rival_expedition' },
+    });
+    const ally = dungeonOverviewPrompt({
+      ...baseArgs,
+      thirdParty: { present: true, type: 'ally', kind: 'informant' },
+    });
+    expect(absent).not.toContain('THIRD PARTY');
+    expect(adv).toContain('THIRD PARTY (adversary');
+    expect(ally).toContain('THIRD PARTY (ally');
   });
 
   // ---- OPERATIONAL_VOICE_BLOCK + POV overview carve-out ----
@@ -384,64 +419,36 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
     for (const tpl of NAME_TEMPLATES) {
       const prompt = dungeonOverviewPrompt({ ...baseArgs, nameTemplate: tpl });
       expect(prompt).toContain(`Template ${tpl.id} — ${tpl.shape}`);
-      // Full template listing + bias warning are suppressed when the
-      // constraint fires.
+      // Full template listing is suppressed when the constraint fires.
       expect(prompt).not.toContain('NAME TEMPLATES — pick ONE per generation');
-      expect(prompt).not.toContain('TEMPLATE-BIAS WARNING');
     }
   });
 
-  it('falls back to the full template listing + bias warning when nameTemplate is null', () => {
+  it('falls back to the full template listing when nameTemplate is null', () => {
     const prompt = dungeonOverviewPrompt({ ...baseArgs, nameTemplate: null });
     expect(prompt).toContain('NAME TEMPLATES — pick ONE per generation');
-    expect(prompt).toContain('TEMPLATE-BIAS WARNING');
   });
 
-  it('injects the compound-adjective nudge only for templates B and F', () => {
-    for (const tpl of NAME_TEMPLATES) {
-      const prompt = dungeonOverviewPrompt({ ...baseArgs, nameTemplate: tpl });
-      const expectNudge = tpl.id === 'B' || tpl.id === 'F';
-      if (expectNudge) {
-        expect(prompt).toContain('SINGLE-WORD adjective');
-        expect(prompt).toContain('compound hyphenated adjectives');
-      } else {
-        expect(prompt).not.toContain('SINGLE-WORD adjective');
-      }
-    }
+  it('always injects the IMAGE-FROM-CONTENT rule regardless of template', () => {
+    // The load-bearing requirement is the image-from-content rule;
+    // it applies whether nameTemplate is pre-rolled or free.
+    const withTpl = dungeonOverviewPrompt({ ...baseArgs, nameTemplate: NAME_TEMPLATES[0] });
+    const noTpl = dungeonOverviewPrompt({ ...baseArgs, nameTemplate: null });
+    expect(withTpl).toContain('IMAGE-FROM-CONTENT');
+    expect(noTpl).toContain('IMAGE-FROM-CONTENT');
   });
 
-  // ---- contact routing ----
-
-  it('omits the CONTACT block when contact is null or absent', () => {
-    const a = dungeonOverviewPrompt({ ...baseArgs, contact: null });
-    const b = dungeonOverviewPrompt({ ...baseArgs, contact: { present: false } });
-    expect(a).not.toContain(CONTACT_PRESENT_FRAMING);
-    expect(a).not.toContain(CONTACT_INVENT_DIRECTIVE);
-    expect(b).not.toContain(CONTACT_PRESENT_FRAMING);
-    expect(b).not.toContain(CONTACT_INVENT_DIRECTIVE);
-  });
-
-  it('routes the contact present framing + reliability + offers directives when present', () => {
-    for (const reliability of CONTACT_RELIABILITIES) {
-      for (const offers of CONTACT_OFFERS) {
-        const prompt = dungeonOverviewPrompt({
-          ...baseArgs,
-          contact: { present: true, reliability, offers },
-        });
-        expect(prompt).toContain(CONTACT_PRESENT_FRAMING);
-        expect(prompt).toContain(CONTACT_RELIABILITY_DIRECTIVES[reliability]);
-        expect(prompt).toContain(CONTACT_OFFERS_DIRECTIVES[offers]);
-      }
-    }
-  });
-
-  it('routes the open-slot directive when contact.openSlot is true', () => {
-    const prompt = dungeonOverviewPrompt({
-      ...baseArgs,
-      contact: { present: true, openSlot: true },
-    });
-    expect(prompt).toContain(CONTACT_INVENT_DIRECTIVE);
-    expect(prompt).not.toContain(CONTACT_PRESENT_FRAMING);
+  it('name and title appear LAST in the JSON schema body (after monsters)', () => {
+    const prompt = dungeonOverviewPrompt({ ...baseArgs });
+    // The schema body has "monsters" appearing before "name" and "title".
+    // Find the SCHEMA-LEVEL keys (2-space indent). The nested "name" in
+    // npc_list / monsters uses 6-space indent so won't match.
+    const monstersIdx = prompt.indexOf('\n  "monsters": [');
+    const nameSchemaIdx = prompt.indexOf('\n  "name": ');
+    const titleSchemaIdx = prompt.indexOf('\n  "title": "');
+    expect(monstersIdx).toBeGreaterThan(-1);
+    expect(nameSchemaIdx).toBeGreaterThan(monstersIdx);
+    expect(titleSchemaIdx).toBeGreaterThan(nameSchemaIdx);
   });
 
   // ---- motive routing ----
@@ -632,6 +639,56 @@ describe('validateDungeonOverview', () => {
     const r = validResponse();
     delete r.monsters[1].CR;
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  // ---- quest_hook + resolution_paths ----
+
+  it('rejects when quest_hook is missing', () => {
+    const r = validResponse();
+    delete r.quest_hook;
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('rejects when quest_hook is empty string', () => {
+    const r = validResponse();
+    r.quest_hook = '';
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('rejects when resolution_paths is missing', () => {
+    const r = validResponse();
+    delete r.resolution_paths;
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('rejects when resolution_paths is not an array', () => {
+    const r = validResponse();
+    r.resolution_paths = 'one path, another path, a third path';
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('rejects when resolution_paths has fewer than 2 entries', () => {
+    const r = validResponse();
+    r.resolution_paths = ['only one path'];
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('rejects when resolution_paths has more than 4 entries', () => {
+    const r = validResponse();
+    r.resolution_paths = ['a', 'b', 'c', 'd', 'e'];
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('rejects when a resolution_paths entry is empty', () => {
+    const r = validResponse();
+    r.resolution_paths = ['real path one.', '', 'real path three.'];
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('accepts resolution_paths with exactly 3 entries', () => {
+    const r = validResponse();
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
+    expect(r.resolution_paths).toHaveLength(3);
   });
 
 });

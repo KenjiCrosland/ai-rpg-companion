@@ -23,7 +23,6 @@ describe('combineDungeonOverview', () => {
       hazards_and_dangers: 'Doors close on a slow rune-clock.',
       notable_hazard_facet: '',
       central_dynamic: 'Vetheras stirs more each cycle.',
-      current_occupation: 'Three cultists are conducting the seventh vigil.',
       present_state: 'The barrow hums faintly at midnight.',
       difficulty_level: 'A Tier 1 dungeon for novice adventurers.',
     };
@@ -39,7 +38,6 @@ describe('combineDungeonOverview', () => {
       expect(result).toContain('arguing');
       expect(result).toContain('rune-clock');
       expect(result).toContain('stirs more each cycle');
-      expect(result).toContain('seventh vigil');
       expect(result).toContain('hums faintly');
       expect(result).toContain('Tier 1');
     });

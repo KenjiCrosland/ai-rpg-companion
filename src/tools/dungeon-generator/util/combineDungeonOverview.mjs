@@ -24,6 +24,8 @@ export function combineDungeonOverview(overview) {
   const sections = [
     // Lead — overview is the same in both shapes.
     [overview.overview],
+    // Quest hook — new shape only; absent on legacy dungeons.
+    [overview.quest_hook],
     // Region — same field name in both shapes.
     [overview.relation_to_larger_setting],
     // Approach — new (approach_and_threshold) or legacy (finding_the_dungeon).
@@ -41,18 +43,21 @@ export function combineDungeonOverview(overview) {
       : [overview.dominant_power_minions],
     // Hazards — new shape only.
     [overview.hazards_and_dangers, overview.notable_hazard_facet],
-    // Present State — new shape (central_dynamic + current_occupation
-    // + present_state) or legacy (the dramatic-arc tail:
-    // dominant_power_event + recent_event_consequences + secondary_*
-    // + main_problem + potential_solutions + conclusion).
+    // Present State — new shape (central_dynamic + present_state)
+    // or legacy (the dramatic-arc tail: dominant_power_event +
+    // recent_event_consequences + secondary_* + main_problem +
+    // potential_solutions + conclusion).
     overview.central_dynamic
-      ? [overview.central_dynamic, overview.current_occupation, overview.present_state]
+      ? [overview.central_dynamic, overview.present_state]
       : [
           overview.dominant_power_event, overview.recent_event_consequences,
           overview.secondary_power, overview.secondary_power_event,
           overview.main_problem, overview.potential_solutions,
           overview.conclusion,
         ],
+    // Resolution paths — new shape only; rendered as joined sentences
+    // so downstream prose-aggregating consumers see the levers.
+    [Array.isArray(overview.resolution_paths) ? overview.resolution_paths.join(' ') : null],
     // Difficulty — same field name in both shapes.
     [overview.difficulty_level],
   ];

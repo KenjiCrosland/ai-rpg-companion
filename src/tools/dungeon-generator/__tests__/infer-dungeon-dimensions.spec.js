@@ -24,8 +24,6 @@ import {
   DUNGEON_TENSIONS,
   DIFFICULTY_TIER_KEYS,
   PLACE_TYPE_VOCABULARY,
-  CONTACT_RELIABILITIES,
-  CONTACT_OFFERS,
   FORMED_NATURES,
 } from '../util/dungeon-dimensions.mjs';
 
@@ -342,76 +340,45 @@ describe('inferDungeonDimensions', () => {
     expect(PLACE_TYPE_VOCABULARY.production).toContain(result.placeType);
   });
 
-  // ---- contact: roll integrity + coherence-directive routing + persistence ----
+  // ---- thirdParty: roll integrity + shape persistence ----
 
-  it('returns a well-formed contact (rolled or LLM-cohered) on every call', async () => {
+  it('returns a well-formed thirdParty on every call', async () => {
+    const { CONTENDER_KINDS, CONTACT_KINDS } = require('../util/dungeon-dimensions.mjs');
     generateGptResponse.mockResolvedValue(JSON.stringify({
       type: 'chambered-complex', character: ['ancient', 'haunted', 'moss-furred'],
       register: 'norse', userName: null,
     }));
     for (let seed = 1; seed <= 50; seed++) {
       const result = await inferDungeonDimensions({ description: 'x', rng: () => (seed % 100) / 100 });
-      expect(typeof result.contact).toBe('object');
-      expect(typeof result.contact.present).toBe('boolean');
-      if (!result.contact.present) {
+      expect(typeof result.thirdParty).toBe('object');
+      expect(typeof result.thirdParty.present).toBe('boolean');
+      if (!result.thirdParty.present) {
         // present:false ⇒ no orphan sub-fields
-        expect(result.contact.reliability).toBeUndefined();
-        expect(result.contact.offers).toBeUndefined();
-      } else if (result.contact.openSlot) {
-        expect(result.contact.openSlot).toBe(true);
+        expect(result.thirdParty.type).toBeUndefined();
+        expect(result.thirdParty.kind).toBeUndefined();
       } else {
-        expect(CONTACT_RELIABILITIES).toContain(result.contact.reliability);
-        expect(CONTACT_OFFERS).toContain(result.contact.offers);
+        expect(['adversary', 'ally']).toContain(result.thirdParty.type);
+        if (result.thirdParty.type === 'adversary') {
+          expect(CONTENDER_KINDS).toContain(result.thirdParty.kind);
+        } else {
+          expect(CONTACT_KINDS).toContain(result.thirdParty.kind);
+        }
       }
     }
   });
 
-  it('contact coherence-directive anchor phrases are present in the inference prompt', async () => {
+  it('thirdParty is a pure code-roll — no LLM section in the inference prompt', async () => {
+    // The old contact-coherence section was removed; no THIRDPARTY or
+    // CONTACT or CONTENDER section should appear in the inference prompt.
     generateGptResponse.mockResolvedValue(JSON.stringify({
       type: 'chambered-complex', character: ['ancient', 'haunted', 'moss-furred'],
       register: 'norse', userName: null,
     }));
     await inferDungeonDimensions({ description: 'x' });
     const prompt = generateGptResponse.mock.calls[0][0];
-    expect(prompt).toContain('COHERENCE CHECK for the pre-rolled CONTACT');
-    expect(prompt).toContain('DOWNGRADE TREACHEROUS UNDER A WILL-LESS HOLDER');
-    expect(prompt).toContain('DROP UNDER A NO-SURVIVORS TENSION');
-    expect(prompt).toContain('LINK the contact to a present contender');
-  });
-
-  it('pre-rolled contact is interpolated into the inference prompt', async () => {
-    generateGptResponse.mockResolvedValue(JSON.stringify({
-      type: 'chambered-complex', character: ['ancient', 'haunted', 'moss-furred'],
-      register: 'norse', userName: null,
-    }));
-    await inferDungeonDimensions({ description: 'x', rng: () => 0.5 });
-    const prompt = generateGptResponse.mock.calls[0][0];
-    // Loose match: the pre-roll appears as a JSON object fragment after the anchor phrase.
-    expect(prompt).toMatch(/pre-rolled CONTACT for this generation:\s*\{/);
-  });
-
-  it('LLM-cohered contact override persists in the result', async () => {
-    // LLM returns an override (drops the pre-rolled contact).
-    generateGptResponse.mockResolvedValue(JSON.stringify({
-      type: 'chambered-complex', character: ['ancient', 'haunted', 'moss-furred'],
-      register: 'norse', userName: null,
-      contact: { present: false },
-    }));
-    const result = await inferDungeonDimensions({ description: 'x' });
-    expect(result.contact).toEqual({ present: false });
-  });
-
-  it('LLM-cohered contact downgrade preserves the new reliability/offers', async () => {
-    generateGptResponse.mockResolvedValue(JSON.stringify({
-      type: 'chambered-complex', character: ['ancient', 'haunted', 'moss-furred'],
-      register: 'norse', userName: null,
-      contact: { present: true, reliability: 'self_serving', offers: 'information' },
-    }));
-    // rng=0 → tension 'sealed-and-stirring' + holder 'single_apex'
-    // (neither rival nor crowded), so the post-LLM legibility CAP
-    // can't fire and the contact survives unaltered.
-    const result = await inferDungeonDimensions({ description: 'x', rng: () => 0 });
-    expect(result.contact).toEqual({ present: true, reliability: 'self_serving', offers: 'information' });
+    expect(prompt).not.toContain('COHERENCE CHECK for the pre-rolled CONTACT');
+    expect(prompt).not.toContain('pre-rolled CONTACT for this generation');
+    expect(prompt).not.toContain('thirdParty');
   });
 
   // ---- formedNature scoping + reachability ----
@@ -463,19 +430,6 @@ describe('inferDungeonDimensions', () => {
     // LLM override wins; resolvedOrganizingLogic = ['funerary']; formedNature null.
     expect(result.organizingLogic).toEqual(['funerary']);
     expect(result.formedNature).toBeNull();
-  });
-
-  it('LLM-returned contact with invalid reliability falls back to pre-roll', async () => {
-    // Bogus reliability — resolver discards the LLM contact and keeps pre-roll.
-    generateGptResponse.mockResolvedValue(JSON.stringify({
-      type: 'chambered-complex', character: ['ancient', 'haunted', 'moss-furred'],
-      register: 'norse', userName: null,
-      contact: { present: true, reliability: 'not_a_real_value', offers: 'information' },
-    }));
-    const result = await inferDungeonDimensions({ description: 'x', rng: () => 0.5 });
-    // Pre-roll wins. The resulting contact is whatever the pre-roll produced.
-    // We just verify it's well-formed (not the bogus LLM value).
-    expect(result.contact.reliability).not.toBe('not_a_real_value');
   });
 
   it('returns a monster population (creature_type + relation) on success', async () => {

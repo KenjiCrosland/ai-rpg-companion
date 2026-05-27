@@ -7,7 +7,7 @@
  * unspecified dimensions, then the main generation call receives
  * fully-specified constraints rather than rolling on its own.
  *
- * Output shape: { type, character, register, userName, tension, difficulty, powerStructure, organizingLogic, contender, povFrame, placeType, nameTemplate, contact, registerPool, motive, formedNature, mode, monsterPopulation }
+ * Output shape: { type, character, register, userName, tension, difficulty, powerStructure, organizingLogic, thirdParty, povFrame, placeType, nameTemplate, registerPool, motive, formedNature, mode, monsterPopulation }
  *
  *   type — one entry from DUNGEON_TYPES. The LLM picks based on user
  *     input or rolls from the pool when no signal exists. The pool is
@@ -50,10 +50,14 @@
  *     fusion (the thing that built the place still rules it) is the
  *     rare-deliberate path.
  *
- *   contender — fold object { present: boolean, kind? }. Code-rolled.
- *     Presence rates: 5% default, 20% for hazard_no_ruler holders, 50%
- *     for the acquisition motive. When present, kind picks uniformly
- *     from CONTENDER_KINDS (19 categorically distinct contender shapes).
+ *   thirdParty — unified non-controlling outsider (replaces the old
+ *     contender + contact split). Shape: `{ present: false }` or
+ *     `{ present: true, type: 'adversary' | 'ally', kind }`. Adversary
+ *     picks from CONTENDER_KINDS (19 entries); ally picks from
+ *     CONTACT_KINDS (10 entries). Presence + type split are
+ *     code-rolled, with motive bumping presence and biasing toward
+ *     adversary under acquisition. SUPPRESS rule flips adversary →
+ *     ally under rival-coded tensions.
  *
  *   povFrame — one entry from POV_FRAMES, gated on holder + tension.
  *     Re-specs the overview field as a POV hook (a voice with bias and
@@ -72,13 +76,6 @@
  *     to one template after a few generations regardless of bias
  *     guidance in prose. Filtered to B/D/F (no register-noun) when
  *     register is null.
- *
- *   contact — fold object `{ present: boolean, reliability?, offers?,
- *     openSlot? }` for an in-dungeon NPC the party can potentially
- *     use. Rolled orthogonally (no holder gating at roll time); the
- *     LLM coherence pass reconciles against the rest (downgrades
- *     treacherous under will-less holders, drops under no-survivors
- *     tension, may link to a present contender).
  *
  * Path scoping: called for both the empty-input AND the user-input
  * paths. Seeded-from-item path (when that ships) will bypass this
@@ -105,22 +102,17 @@ import {
   pickRandomTension,
   pickRandomDifficulty,
   pickRandomOrganizingLogic,
-  pickRandomContender,
+  pickRandomThirdParty,
   pickHolderForOrganizingLogic,
   pickRandomPovFrame,
   pickPlaceTypeForLogic,
   pickRandomNameTemplate,
-  pickRandomContact,
   pickRegisterPoolSubset,
-  applyLegibilityRules,
   pickRandomMotive,
   MOTIVES,
   pickRandomFormedNature,
   pickRandomMode,
   MODE_MENUS,
-  CONTACT_RELIABILITIES,
-  CONTACT_OFFERS,
-  CONTACT_COHERENCE_DIRECTIVES,
   pickWeightedDungeonType,
   resolveDifficulty,
   rollMonsterPopulation,
@@ -172,20 +164,13 @@ export function validateInferenceResponse(raw) {
     || parsed.organizingLogic === null
     || typeof parsed.organizingLogic === 'string'
     || (Array.isArray(parsed.organizingLogic) && parsed.organizingLogic.every(l => typeof l === 'string'));
-  // contact is optional in the response — if absent the resolver uses
-  // the pre-roll. When present, accepts an object with at minimum a
-  // boolean `present`.
-  const hasContact =
-    parsed.contact === undefined
-    || parsed.contact === null
-    || (typeof parsed.contact === 'object' && !Array.isArray(parsed.contact) && typeof parsed.contact.present === 'boolean');
   // motive is optional in the response — if absent the resolver
   // uses the pre-roll. When present, accepts a string.
   const hasMotive =
     parsed.motive === undefined
     || parsed.motive === null
     || typeof parsed.motive === 'string';
-  return hasType && hasCharacter && hasRegister && hasUserName && hasOrganizingLogic && hasContact && hasMotive;
+  return hasType && hasCharacter && hasRegister && hasUserName && hasOrganizingLogic && hasMotive;
 }
 
 /**
@@ -194,7 +179,7 @@ export function validateInferenceResponse(raw) {
  * The type section always includes a tier hint so the LLM picks a
  * scale-appropriate type even when user input doesn't specify one.
  */
-function buildPrompt({ description, lore, characterCandidates, tier, preRolledOrganizingLogic, preRolledContact, preRolledHolder, preRolledTension, preRolledMotive }) {
+function buildPrompt({ description, lore, characterCandidates, tier, preRolledOrganizingLogic, preRolledHolder, preRolledTension, preRolledMotive }) {
   const safeDescription = (description || '').replace(/"/g, '\\"');
   const safeLore = (lore || '').replace(/"/g, '\\"');
 
@@ -316,15 +301,7 @@ ${characterSection}
 
    If you override, your returned organizingLogic IS what gets persisted and what downstream coupling derives from. The pre-roll is discarded.
 
-6. "contact" (optional override): The pre-rolled CONTACT for this generation: ${JSON.stringify(preRolledContact)}.
-
-   Pre-rolled holder: ${JSON.stringify(preRolledHolder)}. Pre-rolled tension: ${JSON.stringify(preRolledTension)}.
-
-   ${CONTACT_COHERENCE_DIRECTIVES}
-
-   Return your resolved contact as an object: { present: boolean, reliability?: string, offers?: string, openSlot?: boolean }. Omit reliability/offers when present:false. Return the field UNSET (or null) to confirm the pre-roll as-is.
-
-7. "motive" (optional override): The party's REASON to delve. Pre-rolled: ${JSON.stringify(preRolledMotive)}.
+6. "motive" (optional override): The party's REASON to delve. Pre-rolled: ${JSON.stringify(preRolledMotive)}.
 
    The value MUST be one of:
    - "acquisition" — claim a prize; a rival wants it too. The dungeon revolves around a desirable, named thing.
@@ -455,49 +432,48 @@ export async function inferDungeonDimensions({
   // Difficulty: caller-supplied first, then code-roll.
   const resolvedDifficulty = resolveDifficulty(difficulty) || pickRandomDifficulty(rng);
 
-  // Tension: ALWAYS code-picked uniformly. Same empirical lesson —
-  // LLM clusters on structural axes; code-random gives even
-  // distribution.
-  const tension = pickRandomTension(rng);
+  // Tension: code-picked, tier-weighted. Cosmic-coded tensions
+  // (sealed-and-stirring, awakening-architecture, etc.) are down-
+  // weighted at tier 1-2 to stop the cosmic-drift on low-tier
+  // generations; mortal-scale tensions are up-weighted.
+  const tension = pickRandomTension(rng, { tier: resolvedDifficulty });
 
   // Organizing logic / holder / contender form a coupled chain:
   //   organizingLogic → (mismatch-biased) holder → (presence-gated) contender.
   // Pre-roll the chain here so the fallback emptyResult has a
-  // coherent (logic, holder, contender) triple. If the LLM call
-  // succeeds and provides an organizingLogic, the chain is re-derived
-  // below using the LLM's value.
-  const fallbackOrganizingLogic = pickRandomOrganizingLogic(rng);
+  // coherent (logic, holder, contender) triple. organizingLogic is
+  // tier-weighted: `formed` is hard-banned at T1-2 (inherently
+  // cosmic-scale); `containment` leans high; `inhabited_base` leans
+  // low. If the LLM call succeeds and provides an organizingLogic,
+  // the chain is re-derived below using the LLM's value.
+  const fallbackOrganizingLogic = pickRandomOrganizingLogic(rng, { tier: resolvedDifficulty });
   const fallbackPowerStructure = pickHolderForOrganizingLogic(fallbackOrganizingLogic, rng);
   // Motive: pre-roll so the fallback emptyResult has it AND so
   // pickRandomContender can bias presence under acquisition.
   const fallbackMotive = pickRandomMotive(rng);
   // FormedNature: rolled ONLY when 'formed' is in organizingLogic.
   // Other logics don't have an ambient-force problem to solve, so
-  // the field is null.
+  // the field is null. Holder-gated: under several_unrelated the
+  // picker forces `remnant` (a phenomenon-shaped "third power"
+  // reads as scenery pretending to be a faction).
   const fallbackFormedNature = fallbackOrganizingLogic.includes('formed')
-    ? pickRandomFormedNature(rng)
+    ? pickRandomFormedNature(rng, { holder: fallbackPowerStructure })
     : null;
   // Mode: rolled from the holder's menu (per-power-structure verbs).
   // 10% open slot, else uniform over the menu's anchors. Null when
   // holder has no menu (defensive).
   const fallbackMode = pickRandomMode(rng, { holder: fallbackPowerStructure });
-  const fallbackContenderRoll = pickRandomContender(rng, { holder: fallbackPowerStructure, motive: fallbackMotive });
   const fallbackPovFrame = pickRandomPovFrame(rng, { holder: fallbackPowerStructure, tension });
   const fallbackPlaceType = pickPlaceTypeForLogic(fallbackOrganizingLogic, rng);
-  // contact rolls orthogonally — no holder/tension gating at roll time.
-  // The LLM coherence pass reconciles in the inference call.
-  const fallbackContactRoll = pickRandomContact(rng);
-  // Apply legibility rules to the (contender, contact) pair after both
-  // are rolled: SUPPRESS rival-tension doubles, CAP crowded conditions.
-  // Motive is load-bearing for CAP — under acquisition, the contender
-  // wins the tie-break (it's the rival in the race).
-  const { contender: fallbackContender, contact: fallbackContact } = applyLegibilityRules({
-    contender: fallbackContenderRoll,
-    contact: fallbackContactRoll,
+  // Third-party: unified contender + contact axis. ONE third party per
+  // dungeon (adversary or ally, never both). Tension feeds the SUPPRESS
+  // rule (rival-coded tensions flip an adversary roll to ally so the
+  // dungeon doesn't double up on rivals).
+  const fallbackThirdParty = pickRandomThirdParty(rng, {
     holder: fallbackPowerStructure,
-    tension,
     motive: fallbackMotive,
-    rng,
+    tension,
+    tier: resolvedDifficulty,
   });
 
   // Character: candidate-based on empty input, direct-selection when
@@ -512,7 +488,6 @@ export async function inferDungeonDimensions({
     characterCandidates,
     tier: resolvedDifficulty,
     preRolledOrganizingLogic: fallbackOrganizingLogic,
-    preRolledContact: fallbackContact,
     preRolledHolder: fallbackPowerStructure,
     preRolledTension: tension,
     preRolledMotive: fallbackMotive,
@@ -551,11 +526,10 @@ export async function inferDungeonDimensions({
     difficulty: resolvedDifficulty,
     powerStructure: fallbackPowerStructure,
     organizingLogic: fallbackOrganizingLogic,
-    contender: fallbackContender,
+    thirdParty: fallbackThirdParty,
     povFrame: fallbackPovFrame,
     placeType: fallbackPlaceType,
     nameTemplate: fallbackNameTemplate,
-    contact: fallbackContact,
     registerPool: fallbackRegisterPool,
     motive: fallbackMotive,
     formedNature: fallbackFormedNature,
@@ -638,7 +612,15 @@ export async function inferDungeonDimensions({
   }
 
   const resolvedPowerStructure = pickHolderForOrganizingLogic(resolvedOrganizingLogic, rng);
-  let resolvedContender = pickRandomContender(rng, { holder: resolvedPowerStructure, motive: resolvedMotive });
+  // Third-party: re-roll against the LLM-resolved holder + motive so a
+  // user-input or coherence-pass override flows through to the
+  // presence rate, type split, and SUPPRESS rule.
+  const resolvedThirdParty = pickRandomThirdParty(rng, {
+    holder: resolvedPowerStructure,
+    motive: resolvedMotive,
+    tension,
+    tier: resolvedDifficulty,
+  });
   const resolvedPovFrame = pickRandomPovFrame(rng, { holder: resolvedPowerStructure, tension });
   // placeType re-derives from the LLM-resolved organizingLogic so a
   // user-input or coherence-check override flows through to the noun.
@@ -647,46 +629,6 @@ export async function inferDungeonDimensions({
   // template-bucket filter (B/D/F when no register) honors the LLM's
   // actual register resolution, not the pre-roll's guess.
   const resolvedNameTemplate = pickRandomNameTemplate(rng, { hasRegister: !!resolvedRegister });
-
-  // Contact: take the LLM coherence-pass value when present + valid,
-  // else fall back to the pre-roll. The validator already gate-checks
-  // that `parsed.contact.present` is boolean if the object is supplied;
-  // here we narrow the shape and clean up orphan sub-fields.
-  let resolvedContact = fallbackContact;
-  if (parsed.contact && typeof parsed.contact === 'object' && typeof parsed.contact.present === 'boolean') {
-    if (!parsed.contact.present) {
-      resolvedContact = { present: false };
-    } else if (parsed.contact.openSlot === true) {
-      resolvedContact = { present: true, openSlot: true };
-    } else {
-      const reliability = typeof parsed.contact.reliability === 'string'
-        && CONTACT_RELIABILITIES.includes(parsed.contact.reliability)
-          ? parsed.contact.reliability
-          : null;
-      const offers = typeof parsed.contact.offers === 'string'
-        && CONTACT_OFFERS.includes(parsed.contact.offers)
-          ? parsed.contact.offers
-          : null;
-      if (reliability && offers) {
-        resolvedContact = { present: true, reliability, offers };
-      }
-      // If LLM returned present:true but invalid reliability/offers,
-      // keep the pre-roll. Don't half-construct a contact.
-    }
-  }
-
-  // Apply legibility rules with the LLM-resolved holder + tension + motive.
-  // SUPPRESS rival-tension contenders, CAP crowded conditions to one
-  // of the pair. Under acquisition motive, the contender wins the
-  // tie-break (the rival in the race is load-bearing).
-  ({ contender: resolvedContender, contact: resolvedContact } = applyLegibilityRules({
-    contender: resolvedContender,
-    contact: resolvedContact,
-    holder: resolvedPowerStructure,
-    tension,
-    motive: resolvedMotive,
-    rng,
-  }));
 
   return {
     type: resolvedType,
@@ -697,20 +639,21 @@ export async function inferDungeonDimensions({
     difficulty: resolvedDifficulty,
     powerStructure: resolvedPowerStructure,
     organizingLogic: resolvedOrganizingLogic,
-    contender: resolvedContender,
+    thirdParty: resolvedThirdParty,
     povFrame: resolvedPovFrame,
     placeType: resolvedPlaceType,
     nameTemplate: resolvedNameTemplate,
-    contact: resolvedContact,
     // Re-derive the pool subset from the LLM-resolved register so a
     // user-input register override flows through to the injected pool.
     registerPool: pickRegisterPoolSubset(resolvedRegister, rng),
     motive: resolvedMotive,
-    // Re-derive formedNature against the LLM-resolved organizingLogic.
-    // If the LLM overrode the logic away from 'formed', the field
-    // drops to null. If overrode INTO 'formed', a fresh roll fires.
+    // Re-derive formedNature against the LLM-resolved organizingLogic
+    // AND the resolved holder. If the LLM overrode the logic away from
+    // 'formed', the field drops to null. If overrode INTO 'formed', a
+    // fresh roll fires under the resolved holder (so several_unrelated
+    // still forces `remnant`).
     formedNature: resolvedOrganizingLogic.includes('formed')
-      ? (fallbackFormedNature || pickRandomFormedNature(rng))
+      ? (fallbackFormedNature || pickRandomFormedNature(rng, { holder: resolvedPowerStructure }))
       : null,
     // Re-derive mode against the LLM-resolved holder so the menu
     // tracks any holder override. If the holder didn't move, the

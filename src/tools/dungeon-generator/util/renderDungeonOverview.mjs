@@ -46,11 +46,19 @@ import {
 
 const DUNGEON_SECTION_MAP_NEW = [
   { heading: null, fields: ['overview'], isLead: true },
+  { heading: 'Quest Hook', fields: ['quest_hook'] },
   { heading: 'Approach', fields: ['relation_to_larger_setting', 'approach_and_threshold'] },
   { heading: 'History', fields: ['history'] },
   { heading: 'Inhabitants', fields: ['dominant_power', 'inhabitants', 'notable_inhabitant_facet'] },
-  { heading: 'Hazards', fields: ['hazards_and_dangers', 'notable_hazard_facet'] },
-  { heading: 'Present State', fields: ['central_dynamic', 'current_occupation', 'present_state'] },
+  // Hazards intentionally NOT rendered to the GM-facing overview UI.
+  // The hazards_and_dangers field is still generated, validated, and
+  // persisted — the downstream room generator reads it for spatial
+  // hazard instantiation. The field's content surfaces to the GM via
+  // POV/inhabitants/present_state consequences rather than as a
+  // standalone "Hazards" paragraph (which consistently produced the
+  // weakest, most generic prose in the overview).
+  { heading: 'Present State', fields: ['central_dynamic', 'present_state'] },
+  { heading: 'Resolution Paths', fields: ['resolution_paths'], isList: true },
 ];
 
 const DUNGEON_SECTION_MAP_LEGACY = [
@@ -104,6 +112,21 @@ export function consolidateOverviewToMarkdown(overview) {
   const sectionMap = pickSectionMap(overview);
   const parts = [];
   for (const section of sectionMap) {
+    // isList sections expect a single array-valued field. Each entry
+    // is its own paragraph so the LLM's '**Fast/costly:** ...' bold-
+    // prefixed strings render as one labeled paragraph each. Empty /
+    // missing arrays skip the section entirely.
+    if (section.isList) {
+      const arr = overview[section.fields[0]];
+      if (!Array.isArray(arr) || arr.length === 0) continue;
+      const items = arr
+        .filter(v => typeof v === 'string' && v.trim())
+        .map(v => v.trim());
+      if (items.length === 0) continue;
+      if (section.heading) parts.push(`## ${section.heading}`);
+      parts.push(...items);
+      continue;
+    }
     const values = section.fields
       .map(f => overview[f])
       .filter(v => typeof v === 'string' && v.trim())

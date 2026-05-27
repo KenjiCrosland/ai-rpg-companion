@@ -24,13 +24,6 @@ import {
   ORGANIZING_LOGIC_DIRECTIVES,
   PLACE_TYPE_VOCABULARY,
   NAME_TEMPLATES,
-  CONTACT_RELIABILITIES,
-  CONTACT_OFFERS,
-  CONTACT_RELIABILITY_DIRECTIVES,
-  CONTACT_OFFERS_DIRECTIVES,
-  CONTACT_PRESENT_FRAMING,
-  CONTACT_INVENT_DIRECTIVE,
-  CONTACT_COHERENCE_DIRECTIVES,
   CONTENDER_KINDS,
   CONTENDER_KIND_DIRECTIVES,
   CONTENDER_PRESENT_FRAMING,
@@ -45,15 +38,12 @@ import {
   pickRandomDifficulty,
   pickRandomPowerStructure,
   pickRandomOrganizingLogic,
-  pickRandomContender,
   pickHolderForOrganizingLogic,
   pickPlaceTypeForLogic,
   pickRandomNameTemplate,
-  pickRandomContact,
   pickRandomMotive,
   pickRandomFormedNature,
   pickRandomMode,
-  applyLegibilityRules,
   MODE_MENUS,
   MODE_DIRECTIVES,
   MOTIVES,
@@ -271,13 +261,39 @@ describe('pickRandomTension', () => {
     }
   });
 
-  it('honors injected rng for determinism', () => {
+  it('honors injected rng for determinism (no tier → uniform path)', () => {
     // rng() returning 0 always → first entry.
     const picked = pickRandomTension(() => 0);
     expect(picked).toBe(DUNGEON_TENSIONS[0]);
     // rng() returning just-under-1 → last entry.
     const last = pickRandomTension(() => 0.9999);
     expect(last).toBe(DUNGEON_TENSIONS[DUNGEON_TENSIONS.length - 1]);
+  });
+
+  it('tier-cascade: cosmic-coded tensions are rare at tier 1', () => {
+    // Sweep many seeds; sealed-and-stirring should land less often at
+    // tier 1 (0.2 weight) than freshly-occupied (1.5 weight).
+    let sealedCount = 0;
+    let freshCount = 0;
+    const trials = 2000;
+    for (let seed = 1; seed <= trials; seed++) {
+      const t = pickRandomTension(mulberry32(seed), { tier: 1 });
+      if (t === 'sealed-and-stirring') sealedCount++;
+      if (t === 'freshly-occupied') freshCount++;
+    }
+    expect(freshCount).toBeGreaterThan(sealedCount * 3);
+  });
+
+  it('tier-cascade: cosmic-coded tensions are common at tier 5', () => {
+    let sealedCount = 0;
+    let freshCount = 0;
+    const trials = 2000;
+    for (let seed = 1; seed <= trials; seed++) {
+      const t = pickRandomTension(mulberry32(seed), { tier: 5 });
+      if (t === 'sealed-and-stirring') sealedCount++;
+      if (t === 'freshly-occupied') freshCount++;
+    }
+    expect(sealedCount).toBeGreaterThan(freshCount);
   });
 });
 
@@ -296,11 +312,10 @@ describe('pickRandomDifficulty', () => {
 });
 
 describe('POWER_STRUCTURES', () => {
-  it('contains the 4 documented values (vacant was removed)', () => {
+  it('contains the 3 documented values (vacant and hazard_no_ruler were removed)', () => {
     expect(POWER_STRUCTURES).toEqual([
       'single_apex',
       'several_unrelated',
-      'hazard_no_ruler',
       'living_order',
     ]);
   });
@@ -320,6 +335,25 @@ describe('POWER_STRUCTURES', () => {
         expect(typeof POWER_STRUCTURE_DOMINANT_POWER_OVERRIDES[v]).toBe('string');
       }
     }
+  });
+});
+
+describe('POWER_STRUCTURE_WEIGHTS', () => {
+  it('living_order is roughly 1/3 the weight of single_apex (deliberate minority)', () => {
+    // The infiltration shape is satisfying but needs contrast — drop
+    // living_order to ~1/6 of rolls instead of uniform 1/3.
+    const trials = 10000;
+    const counts = { single_apex: 0, several_unrelated: 0, living_order: 0 };
+    for (let seed = 1; seed <= trials; seed++) {
+      counts[pickRandomPowerStructure(mulberry32(seed))]++;
+    }
+    // Configured 0.42 / 0.42 / 0.16. Allow wide bands for sampling.
+    expect(counts.single_apex / trials).toBeGreaterThan(0.35);
+    expect(counts.single_apex / trials).toBeLessThan(0.50);
+    expect(counts.several_unrelated / trials).toBeGreaterThan(0.35);
+    expect(counts.several_unrelated / trials).toBeLessThan(0.50);
+    expect(counts.living_order / trials).toBeGreaterThan(0.10);
+    expect(counts.living_order / trials).toBeLessThan(0.22);
   });
 });
 
@@ -413,6 +447,30 @@ describe('pickWeightedDungeonType', () => {
       if (softSet.has(pickWeightedDungeonType(5, rng5))) tier5Count++;
     }
     expect(tier5Count).toBeGreaterThan(tier1Count * 3);
+  });
+
+  it('hard-ban: planar-pocket never rolls at tier 1', () => {
+    // Weight is 0 at tier 1 — should never appear regardless of rng.
+    for (let seed = 1; seed <= 3000; seed++) {
+      expect(pickWeightedDungeonType(1, mulberry32(seed))).not.toBe('planar-pocket');
+    }
+  });
+
+  it('hard-ban: planar-pocket never rolls at tier 2', () => {
+    for (let seed = 1; seed <= 3000; seed++) {
+      expect(pickWeightedDungeonType(2, mulberry32(seed))).not.toBe('planar-pocket');
+    }
+  });
+
+  it('planar-pocket is reachable at tier 5', () => {
+    let sawPlanar = false;
+    for (let seed = 1; seed <= 1000; seed++) {
+      if (pickWeightedDungeonType(5, mulberry32(seed)) === 'planar-pocket') {
+        sawPlanar = true;
+        break;
+      }
+    }
+    expect(sawPlanar).toBe(true);
   });
 });
 
@@ -531,6 +589,44 @@ describe('pickRandomOrganizingLogic', () => {
     expect(share).toBeGreaterThan(0.25);
     expect(share).toBeLessThan(0.55);
   });
+
+  it('tier-cascade: formed is hard-banned at tier 1', () => {
+    // Sweep many seeds at tier 1; `formed` weight is 0 there.
+    // It must NEVER appear (open-slot 'invent' is unaffected).
+    for (let seed = 1; seed <= 2000; seed++) {
+      const r = pickRandomOrganizingLogic(mulberry32(seed), { tier: 1 });
+      expect(r).not.toContain('formed');
+    }
+  });
+
+  it('tier-cascade: formed is hard-banned at tier 2', () => {
+    for (let seed = 1; seed <= 2000; seed++) {
+      const r = pickRandomOrganizingLogic(mulberry32(seed), { tier: 2 });
+      expect(r).not.toContain('formed');
+    }
+  });
+
+  it('tier-cascade: formed appears at tier 5', () => {
+    let sawFormed = false;
+    for (let seed = 1; seed <= 1000; seed++) {
+      const r = pickRandomOrganizingLogic(mulberry32(seed), { tier: 5 });
+      if (r.includes('formed')) { sawFormed = true; break; }
+    }
+    expect(sawFormed).toBe(true);
+  });
+
+  it('tier-cascade: inhabited_base lands more often at tier 1 than tier 5', () => {
+    function inhabitedRate(tier) {
+      let count = 0;
+      const trials = 2000;
+      for (let seed = 1; seed <= trials; seed++) {
+        const r = pickRandomOrganizingLogic(mulberry32(seed), { tier });
+        if (r.includes('inhabited_base')) count++;
+      }
+      return count / trials;
+    }
+    expect(inhabitedRate(1)).toBeGreaterThan(inhabitedRate(5));
+  });
 });
 
 describe('CONTENDER enums + directive maps', () => {
@@ -561,49 +657,162 @@ describe('CONTENDER enums + directive maps', () => {
   });
 });
 
-describe('pickRandomContender', () => {
+describe('pickRandomThirdParty', () => {
+  const { pickRandomThirdParty, CONTACT_KINDS } = require('../util/dungeon-dimensions.mjs');
+
   it('absent path returns { present: false }', () => {
     // rng=0.99 → exceeds presence rate → absent.
-    const r = pickRandomContender(() => 0.99, { holder: 'single_apex' });
+    const r = pickRandomThirdParty(() => 0.99, { holder: 'single_apex' });
     expect(r).toEqual({ present: false });
   });
 
-  it('present path returns { present: true, kind }', () => {
-    // [0.0 presence-passes, 0.0 → kind index 0] → present + first kind.
-    const rng = sequencedRng([0.0, 0.0]);
-    const r = pickRandomContender(rng, { holder: 'single_apex', motive: 'acquisition' });
-    expect(r.present).toBe(true);
-    expect(CONTENDER_KINDS).toContain(r.kind);
-  });
-
-  it('returned kind is always uniformly drawn from CONTENDER_KINDS', () => {
-    // Sweep seeds; every PRESENT contender has a kind in the enum.
-    for (let seed = 1; seed <= 500; seed++) {
-      const r = pickRandomContender(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition' });
+  it('present path returns { present, type, kind } with a valid type', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition' });
       if (r.present) {
-        expect(CONTENDER_KINDS).toContain(r.kind);
-        // No legacy position/stance/openSlot leaking through.
+        expect(['adversary', 'ally']).toContain(r.type);
+        if (r.type === 'adversary') {
+          expect(CONTENDER_KINDS).toContain(r.kind);
+        } else {
+          expect(CONTACT_KINDS).toContain(r.kind);
+        }
+        // No legacy fields leaking through.
+        expect(r.reliability).toBeUndefined();
+        expect(r.offers).toBeUndefined();
+        expect(r.openSlot).toBeUndefined();
         expect(r.position).toBeUndefined();
         expect(r.stance).toBeUndefined();
-        expect(r.openSlot).toBeUndefined();
       }
     }
   });
 
-  it('low-resistance holder (hazard_no_ruler) biases toward presence', () => {
-    function presenceRate(holder) {
-      let present = 0;
-      const trials = 4000;
-      for (let seed = 1; seed <= trials; seed++) {
-        const r = pickRandomContender(mulberry32(seed), { holder });
-        if (r.present) present++;
-      }
-      return present / trials;
+  it('acquisition motive biases type toward adversary', () => {
+    let adversary = 0;
+    let ally = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition' });
+      if (r.present && r.type === 'adversary') adversary++;
+      if (r.present && r.type === 'ally') ally++;
     }
-    const hazardRate = presenceRate('hazard_no_ruler');
-    const apexRate = presenceRate('single_apex');
-    // Configured: 20% low-resistance, 5% default. Bias must hold over 4000 samples.
-    expect(hazardRate).toBeGreaterThan(apexRate);
+    // Configured 75/25 adversary/ally under acquisition; allow wide band.
+    expect(adversary).toBeGreaterThan(ally * 2);
+  });
+
+  it('non-acquisition motive splits type ~50/50', () => {
+    let adversary = 0;
+    let ally = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'prevention' });
+      if (r.present && r.type === 'adversary') adversary++;
+      if (r.present && r.type === 'ally') ally++;
+    }
+    // Configured 50/50; expect neither side to dominate by 2x.
+    expect(adversary).toBeLessThan(ally * 2);
+    expect(ally).toBeLessThan(adversary * 2);
+  });
+
+  it('SUPPRESS: rival-coded tension flips adversary rolls to ally', () => {
+    // Under occupied-by-rivals or methodically-looted, adversary type
+    // should never appear (the tension already supplies the rival).
+    for (const tension of ['occupied-by-rivals', 'methodically-looted']) {
+      for (let seed = 1; seed <= 2000; seed++) {
+        const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tension });
+        if (r.present) expect(r.type).not.toBe('adversary');
+      }
+    }
+  });
+
+  it('SUPPRESS: non-rival-tension still allows adversary type', () => {
+    let sawAdversary = false;
+    for (let seed = 1; seed <= 2000; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tension: 'sealed-and-stirring' });
+      if (r.present && r.type === 'adversary') { sawAdversary = true; break; }
+    }
+    expect(sawAdversary).toBe(true);
+  });
+
+  it('presence rate is near-saturating (~95% default)', () => {
+    let present = 0;
+    const trials = 4000;
+    for (let seed = 1; seed <= trials; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'prevention' });
+      if (r.present) present++;
+    }
+    const rate = present / trials;
+    // Configured 0.95; allow a wide band for sampling variance.
+    expect(rate).toBeGreaterThan(0.90);
+    expect(rate).toBeLessThan(1.00);
+  });
+
+  // ---- Hard filter: KIND_REQUIRES_ESTABLISHED (freshly-occupied) ----
+
+  it('FILTER (tension): freshly-occupied never rolls kinds that require an established NPC layer', () => {
+    const forbidden = new Set([
+      'prior_failed_party', 'insider_already_inside',
+      'survivor', 'dungeon_native', 'scholar_in_residence',
+    ]);
+    for (let seed = 1; seed <= 4000; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', tension: 'freshly-occupied' });
+      if (!r.present) continue;
+      expect(forbidden.has(r.kind)).toBe(false);
+    }
+  });
+
+  // ---- Hard filter: KIND_REQUIRES_HIGH_TIER (tier 1-2) ----
+
+  it('FILTER (tier): tier 1 never rolls divine_stake or time_displaced', () => {
+    for (let seed = 1; seed <= 4000; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tier: 1 });
+      if (!r.present) continue;
+      expect(r.kind).not.toBe('divine_stake');
+      expect(r.kind).not.toBe('time_displaced');
+    }
+  });
+
+  it('FILTER (tier): tier 2 never rolls divine_stake or time_displaced', () => {
+    for (let seed = 1; seed <= 4000; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tier: 2 });
+      if (!r.present) continue;
+      expect(r.kind).not.toBe('divine_stake');
+      expect(r.kind).not.toBe('time_displaced');
+    }
+  });
+
+  it('FILTER (tier): tier 5 allows the cosmic-coded kinds to roll', () => {
+    let sawCosmic = false;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tier: 5 });
+      if (r.present && (r.kind === 'divine_stake' || r.kind === 'time_displaced')) {
+        sawCosmic = true;
+        break;
+      }
+    }
+    expect(sawCosmic).toBe(true);
+  });
+});
+
+describe('CONTACT_KINDS + CONTACT_KIND_DIRECTIVES', () => {
+  const { CONTACT_KINDS, CONTACT_KIND_DIRECTIVES, CONTACT_PRESENT_FRAMING } = require('../util/dungeon-dimensions.mjs');
+
+  it('CONTACT_KINDS has the 10 documented entries', () => {
+    expect(CONTACT_KINDS).toEqual(expect.arrayContaining([
+      'informant', 'guide', 'defector', 'prisoner', 'scholar_in_residence',
+      'hired_specialist', 'survivor', 'dungeon_native', 'bound_servitor',
+      'witness_chronicler',
+    ]));
+    expect(CONTACT_KINDS).toHaveLength(10);
+  });
+
+  it('every kind has a non-empty directive entry', () => {
+    for (const k of CONTACT_KINDS) {
+      expect(typeof CONTACT_KIND_DIRECTIVES[k]).toBe('string');
+      expect(CONTACT_KIND_DIRECTIVES[k].length).toBeGreaterThan(0);
+    }
+  });
+
+  it('present framing is a non-empty string', () => {
+    expect(typeof CONTACT_PRESENT_FRAMING).toBe('string');
+    expect(CONTACT_PRESENT_FRAMING.length).toBeGreaterThan(0);
   });
 });
 
@@ -639,17 +848,19 @@ describe('pickHolderForOrganizingLogic', () => {
   });
 
   it('rerolls when the first roll lands on a fusion target', () => {
-    // funerary's fusion targets are now [single_apex].
-    // POWER_STRUCTURES order: [single_apex, several_unrelated, hazard_no_ruler, living_order].
-    // pickRandomPowerStructure uses floor(rng() * 4). Force first roll to single_apex (rng 0.0 → index 0),
-    // second roll to hazard_no_ruler (rng 0.5 → index 2). Reroll fires once; final holder is hazard_no_ruler.
+    // funerary's fusion targets are [single_apex].
+    // Weighted picker thresholds: single_apex [0, 0.42), several_unrelated
+    // [0.42, 0.84), living_order [0.84, 1.0). Force first roll to
+    // single_apex (rng 0.0 → fusion target), reroll to several_unrelated
+    // (rng 0.5 → in [0.42, 0.84)). Reroll fires once; final is several_unrelated.
     const rng = sequencedRng([0.0, 0.5]);
     const holder = pickHolderForOrganizingLogic('funerary', rng);
-    expect(holder).toBe('hazard_no_ruler');
+    expect(holder).toBe('several_unrelated');
   });
 
   it('does NOT reroll when the first roll is already a mismatch', () => {
-    // funerary's fusion targets are [single_apex]. Roll hazard_no_ruler first (index 2 → rng 0.5).
+    // funerary's fusion targets are [single_apex]. Roll several_unrelated
+    // first (rng 0.5 → in [0.42, 0.84) band of weighted picker).
     // Only one rng call should be consumed.
     const calls = [];
     const rng = (() => {
@@ -658,7 +869,7 @@ describe('pickHolderForOrganizingLogic', () => {
       return () => { calls.push(i); return seq[i++ % seq.length]; };
     })();
     const holder = pickHolderForOrganizingLogic('funerary', rng);
-    expect(holder).toBe('hazard_no_ruler');
+    expect(holder).toBe('several_unrelated');
     expect(calls.length).toBe(1);
   });
 
@@ -675,9 +886,11 @@ describe('pickHolderForOrganizingLogic', () => {
     //   funerary fusion = [single_apex]
     //   creature_territory fusion = [single_apex]
     // Union: {single_apex}
-    // POWER_STRUCTURES (4 entries, no vacant): pick uses floor(rng * 4).
-    // Roll single_apex first (index 0 → rng 0.0), then living_order (index 3 → rng 0.75). Reroll once.
-    const rng = sequencedRng([0.0, 0.75]);
+    // Weighted picker thresholds: single_apex [0, 0.42), several_unrelated
+    // [0.42, 0.84), living_order [0.84, 1.0). Force first roll to
+    // single_apex (rng 0.0 → fusion target), reroll to living_order
+    // (rng 0.9 → in [0.84, 1.0)).
+    const rng = sequencedRng([0.0, 0.9]);
     const holder = pickHolderForOrganizingLogic(['funerary', 'creature_territory'], rng);
     expect(holder).toBe('living_order');
   });
@@ -783,7 +996,7 @@ describe('pickPlaceTypeForLogic', () => {
 });
 
 describe('NAME_TEMPLATES', () => {
-  it('contains the 6 documented templates A through F', () => {
+  it('contains the 6 image-anchored templates A through F', () => {
     expect(NAME_TEMPLATES).toHaveLength(6);
     expect(NAME_TEMPLATES.map(t => t.id)).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
   });
@@ -798,21 +1011,29 @@ describe('NAME_TEMPLATES', () => {
     }
   });
 
-  it('templates A, C, E require a register-noun; B, D, F do not', () => {
-    const byId = Object.fromEntries(NAME_TEMPLATES.map(t => [t.id, t]));
-    expect(byId.A.requiresRegister).toBe(true);
-    expect(byId.B.requiresRegister).toBe(false);
-    expect(byId.C.requiresRegister).toBe(true);
-    expect(byId.D.requiresRegister).toBe(false);
-    expect(byId.E.requiresRegister).toBe(true);
-    expect(byId.F.requiresRegister).toBe(false);
+  it('no template requires a register (all are image-anchored, register-agnostic)', () => {
+    for (const t of NAME_TEMPLATES) {
+      expect(t.requiresRegister).toBe(false);
+    }
   });
 
-  it('no template example uses a leading article ("the", "a", "an")', () => {
-    // The strip-the rule applies to titles; examples should reflect it.
+  it('every template shape contains an [image] slot (the load-bearing element)', () => {
+    for (const t of NAME_TEMPLATES) {
+      expect(t.shape).toContain('[image]');
+    }
+  });
+
+  it('only Template F uses a leading article ("The"); A-E examples never start with an article', () => {
+    // Article-led names ("The Maw," "The Cradle") are the genre's
+    // strongest names but cluster if every template allows them.
+    // Cap by template — F is 1 of 6, so ~17% of dungeons get this shape.
     for (const t of NAME_TEMPLATES) {
       for (const ex of t.examples) {
-        expect(ex).not.toMatch(/^(the|a|an)\s/i);
+        if (t.id === 'F') {
+          expect(ex).toMatch(/^The\s/);
+        } else {
+          expect(ex).not.toMatch(/^(the|a|an)\s/i);
+        }
       }
     }
   });
@@ -826,15 +1047,20 @@ describe('pickRandomNameTemplate', () => {
     }
   });
 
-  it('filters to non-register templates when hasRegister: false', () => {
-    for (let seed = 1; seed <= 200; seed++) {
-      const t = pickRandomNameTemplate(mulberry32(seed), { hasRegister: false });
-      expect(t.requiresRegister).toBe(false);
-      expect(['B', 'D', 'F']).toContain(t.id);
+  it('ignores hasRegister flag (all templates are register-agnostic)', () => {
+    // The flag is kept for callsite compatibility but never filters.
+    const seenWithRegister = new Set();
+    const seenWithoutRegister = new Set();
+    for (let seed = 1; seed <= 500; seed++) {
+      seenWithRegister.add(pickRandomNameTemplate(mulberry32(seed), { hasRegister: true }).id);
+      seenWithoutRegister.add(pickRandomNameTemplate(mulberry32(seed), { hasRegister: false }).id);
     }
+    // Both paths reach every template.
+    expect(seenWithRegister).toEqual(new Set(['A', 'B', 'C', 'D', 'E', 'F']));
+    expect(seenWithoutRegister).toEqual(new Set(['A', 'B', 'C', 'D', 'E', 'F']));
   });
 
-  it('all six templates are reachable when hasRegister: true', () => {
+  it('all six templates are reachable', () => {
     const seen = new Set();
     for (let seed = 1; seed <= 500; seed++) {
       seen.add(pickRandomNameTemplate(mulberry32(seed)).id);
@@ -846,131 +1072,6 @@ describe('pickRandomNameTemplate', () => {
     // rng=0 → first template; rng=0.9999 → last template
     expect(pickRandomNameTemplate(() => 0).id).toBe('A');
     expect(pickRandomNameTemplate(() => 0.9999).id).toBe('F');
-    // With register gated out: rng=0 → first non-register (B); rng=0.9999 → last non-register (F)
-    expect(pickRandomNameTemplate(() => 0, { hasRegister: false }).id).toBe('B');
-    expect(pickRandomNameTemplate(() => 0.9999, { hasRegister: false }).id).toBe('F');
-  });
-});
-
-describe('CONTACT enums + directive maps', () => {
-  it('CONTACT_RELIABILITIES contains the 10 documented values', () => {
-    expect(CONTACT_RELIABILITIES).toEqual([
-      'genuine',
-      'transactional_fair',
-      'transactional_greedy',
-      'cowardly',
-      'mistaken',
-      'mad_but_honest',
-      'self_serving',
-      'desperate',
-      'hidden_motive',
-      'treacherous',
-    ]);
-  });
-
-  it('CONTACT_OFFERS contains the 3 documented values', () => {
-    expect(CONTACT_OFFERS).toEqual(['information', 'access', 'force']);
-  });
-
-  it('every reliability has a directive entry', () => {
-    for (const r of CONTACT_RELIABILITIES) {
-      expect(typeof CONTACT_RELIABILITY_DIRECTIVES[r]).toBe('string');
-      expect(CONTACT_RELIABILITY_DIRECTIVES[r].length).toBeGreaterThan(0);
-    }
-  });
-
-  it('every offer has a directive entry', () => {
-    for (const o of CONTACT_OFFERS) {
-      expect(typeof CONTACT_OFFERS_DIRECTIVES[o]).toBe('string');
-      expect(CONTACT_OFFERS_DIRECTIVES[o].length).toBeGreaterThan(0);
-    }
-  });
-
-  it('present framing, invent directive, and coherence directives are non-empty strings', () => {
-    for (const s of [CONTACT_PRESENT_FRAMING, CONTACT_INVENT_DIRECTIVE, CONTACT_COHERENCE_DIRECTIVES]) {
-      expect(typeof s).toBe('string');
-      expect(s.length).toBeGreaterThan(0);
-    }
-  });
-
-  it('hidden_motive directive contains the "do not resolve" guard', () => {
-    // The hidden_motive vs treacherous distinction is load-bearing —
-    // this verifies the constant carries the open-question framing.
-    // Routing-level: we check the exported text contains the
-    // anchor phrase, not how the LLM renders it.
-    expect(CONTACT_RELIABILITY_DIRECTIVES.hidden_motive).toContain('Do NOT resolve it');
-  });
-});
-
-describe('pickRandomContact', () => {
-  it('absent path returns { present: false } with no sub-fields', () => {
-    // rng=0.99 → skip open slot; rng=0.99 → skip presence
-    const rng = sequencedRng([0.99, 0.99]);
-    const r = pickRandomContact(rng);
-    expect(r).toEqual({ present: false });
-    expect(r.reliability).toBeUndefined();
-    expect(r.offers).toBeUndefined();
-  });
-
-  it('present path returns { present, reliability, offers } from the allowed sets', () => {
-    // rng=0.99 (skip open slot), 0.0 (present), 0.0 (first reliability), 0.0 (first offers)
-    const rng = sequencedRng([0.99, 0.0, 0.0, 0.0]);
-    const r = pickRandomContact(rng);
-    expect(r.present).toBe(true);
-    expect(CONTACT_RELIABILITIES).toContain(r.reliability);
-    expect(CONTACT_OFFERS).toContain(r.offers);
-    expect(r.openSlot).toBeUndefined();
-  });
-
-  it('open slot returns { present: true, openSlot: true } with no reliability/offers', () => {
-    const rng = sequencedRng([0.0]); // 0.0 < 0.10 → invent
-    const r = pickRandomContact(rng);
-    expect(r).toEqual({ present: true, openSlot: true });
-  });
-
-  it('every reliability value is reachable over enough seeds', () => {
-    const seen = new Set();
-    for (let seed = 1; seed <= 2000; seed++) {
-      const r = pickRandomContact(mulberry32(seed));
-      if (r.present && !r.openSlot && r.reliability) seen.add(r.reliability);
-    }
-    for (const r of CONTACT_RELIABILITIES) {
-      expect(seen.has(r)).toBe(true);
-    }
-  });
-
-  it('every offer value is reachable over enough seeds', () => {
-    const seen = new Set();
-    for (let seed = 1; seed <= 2000; seed++) {
-      const r = pickRandomContact(mulberry32(seed));
-      if (r.present && !r.openSlot && r.offers) seen.add(r.offers);
-    }
-    for (const o of CONTACT_OFFERS) {
-      expect(seen.has(o)).toBe(true);
-    }
-  });
-
-  it('openSlot is reachable', () => {
-    let sawOpenSlot = false;
-    for (let seed = 1; seed <= 500; seed++) {
-      const r = pickRandomContact(mulberry32(seed));
-      if (r.openSlot) { sawOpenSlot = true; break; }
-    }
-    expect(sawOpenSlot).toBe(true);
-  });
-
-  it('roll is orthogonal — no holder argument required, no holder-gating', () => {
-    // The picker takes only rng. Verify it accepts no extra args and
-    // produces well-formed contacts across many seeds without any
-    // coupling logic firing.
-    for (let seed = 1; seed <= 200; seed++) {
-      const r = pickRandomContact(mulberry32(seed));
-      expect(typeof r.present).toBe('boolean');
-      if (r.present && !r.openSlot) {
-        expect(CONTACT_RELIABILITIES).toContain(r.reliability);
-        expect(CONTACT_OFFERS).toContain(r.offers);
-      }
-    }
   });
 });
 
@@ -1085,25 +1186,63 @@ describe('pickRandomFormedNature', () => {
     expect(pickRandomFormedNature(() => 0)).toBe('phenomenon');
     expect(pickRandomFormedNature(() => 0.9999)).toBe('remnant');
   });
+
+  it('HOLDER FILTER: several_unrelated forces remnant (never phenomenon)', () => {
+    // Phenomenon under several_unrelated produces a non-sentient "third
+    // power" that reads as scenery pretending to be a faction. Picker
+    // forces remnant to keep the third slot agent-shaped.
+    for (let seed = 1; seed <= 500; seed++) {
+      const result = pickRandomFormedNature(mulberry32(seed), { holder: 'several_unrelated' });
+      expect(result).toBe('remnant');
+    }
+  });
+
+  it('HOLDER FILTER: single_apex allows both natures', () => {
+    // Under single_apex, a phenomenon reads as the apex's lingering
+    // effect on the space. No filtering applies; both natures roll.
+    const seen = new Set();
+    for (let seed = 1; seed <= 500; seed++) {
+      seen.add(pickRandomFormedNature(mulberry32(seed), { holder: 'single_apex' }));
+    }
+    expect(seen.has('phenomenon')).toBe(true);
+    expect(seen.has('remnant')).toBe(true);
+  });
+
+  it('HOLDER FILTER: null holder behaves like uniform 50/50', () => {
+    const seen = new Set();
+    for (let seed = 1; seed <= 500; seed++) {
+      seen.add(pickRandomFormedNature(mulberry32(seed), { holder: null }));
+    }
+    expect(seen.has('phenomenon')).toBe(true);
+    expect(seen.has('remnant')).toBe(true);
+  });
 });
 
 describe('MODE_MENUS', () => {
-  it('every powerStructure has a non-empty menu', () => {
+  it('every powerStructure EXCEPT living_order has a non-empty menu', () => {
+    // living_order intentionally has no mode menu — its infiltration
+    // mode is mandatory and lives in the LIVING ORDER directive, so a
+    // separate MODE block adds nothing.
     for (const ps of POWER_STRUCTURES) {
-      expect(Array.isArray(MODE_MENUS[ps])).toBe(true);
-      expect(MODE_MENUS[ps].length).toBeGreaterThan(0);
+      if (ps === 'living_order') {
+        expect(MODE_MENUS[ps]).toBeUndefined();
+      } else {
+        expect(Array.isArray(MODE_MENUS[ps])).toBe(true);
+        expect(MODE_MENUS[ps].length).toBeGreaterThan(0);
+      }
     }
   });
 
   it("every menu carries the 'invent' open slot", () => {
     for (const ps of POWER_STRUCTURES) {
+      if (ps === 'living_order') continue; // no menu by design
       expect(MODE_MENUS[ps]).toContain('invent');
     }
   });
 
   it('menus are pairwise distinct (no cross-menu duplication except invent)', () => {
-    // 'outwit' and 'infiltrate' etc. live in only one menu each; the
-    // shared key is 'invent'. Verify no other value appears in two menus.
+    // 'outwit' and 'play_them_against' etc. live in only one menu each;
+    // the shared key is 'invent'. Verify no other value appears in two menus.
     const counts = new Map();
     for (const menu of Object.values(MODE_MENUS)) {
       for (const mode of menu) {
@@ -1143,8 +1282,14 @@ describe('pickRandomMode', () => {
   });
 
   it("never returns a mode from a different holder's menu (no cross-menu leakage)", () => {
-    // For each holder, every drawn mode must be in that holder's menu.
     for (const holder of POWER_STRUCTURES) {
+      if (holder === 'living_order') {
+        // No menu: picker returns null.
+        for (let seed = 1; seed <= 100; seed++) {
+          expect(pickRandomMode(mulberry32(seed), { holder })).toBeNull();
+        }
+        continue;
+      }
       const menu = new Set(MODE_MENUS[holder]);
       for (let seed = 1; seed <= 500; seed++) {
         const mode = pickRandomMode(mulberry32(seed), { holder });
@@ -1155,6 +1300,7 @@ describe('pickRandomMode', () => {
 
   it('every mode in every menu is reachable over enough seeds', () => {
     for (const holder of POWER_STRUCTURES) {
+      if (holder === 'living_order') continue; // no menu by design
       const seen = new Set();
       for (let seed = 1; seed <= 1000; seed++) {
         seen.add(pickRandomMode(mulberry32(seed), { holder }));
@@ -1166,215 +1312,17 @@ describe('pickRandomMode', () => {
   });
 
   it('open-slot rolls produce invent', () => {
-    // rng=0 → first call < 0.10 → 'invent'
+    // rng=0 → first call < 0.10 → 'invent'. living_order skipped (no menu).
     for (const holder of POWER_STRUCTURES) {
+      if (holder === 'living_order') continue;
       expect(pickRandomMode(() => 0, { holder })).toBe('invent');
     }
   });
-});
 
-describe('pickRandomContender — motive bias', () => {
-  it('acquisition motive biases contender toward present (~50%)', () => {
-    let presentCount = 0;
-    const trials = 2000;
-    for (let seed = 1; seed <= trials; seed++) {
-      const r = pickRandomContender(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition' });
-      if (r.present) presentCount++;
+  it('living_order returns null (no mode rolled — infiltration is mandatory by directive)', () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      expect(pickRandomMode(mulberry32(seed), { holder: 'living_order' })).toBeNull();
     }
-    const rate = presentCount / trials;
-    // Configured 0.50; allow a wide band for sampling variance.
-    expect(rate).toBeGreaterThan(0.40);
-    expect(rate).toBeLessThan(0.60);
-  });
-
-  it('non-acquisition motive uses the default presence rate (~5% for single_apex)', () => {
-    let presentCount = 0;
-    const trials = 2000;
-    for (let seed = 1; seed <= trials; seed++) {
-      const r = pickRandomContender(mulberry32(seed), { holder: 'single_apex', motive: 'prevention' });
-      if (r.present) presentCount++;
-    }
-    const rate = presentCount / trials;
-    // Configured 0.05. Contender is rare flavor by default; the kind
-    // enumeration carries the variety when it does show up.
-    expect(rate).toBeLessThan(0.10);
-    expect(rate).toBeGreaterThan(0.02);
-  });
-});
-
-describe('applyLegibilityRules', () => {
-  // Shared roll: a contender + contact both present, before legibility.
-  const bothPresent = () => ({
-    contender: { present: true, position: 'ahead', stance: 'at_war' },
-    contact: { present: true, reliability: 'genuine', offers: 'information' },
-  });
-
-  // ---- SUPPRESS: rival-tension forces contender absent ----
-
-  it('SUPPRESS: rival tension forces contender.present = false regardless of holder', () => {
-    for (const tension of ['occupied-by-rivals', 'methodically-looted']) {
-      for (const holder of ['single_apex', 'hazard_no_ruler', 'living_order', 'several_unrelated']) {
-        for (let seed = 1; seed <= 20; seed++) {
-          const { contender } = applyLegibilityRules({
-            ...bothPresent(),
-            holder, tension, rng: mulberry32(seed),
-          });
-          expect(contender.present).toBe(false);
-        }
-      }
-    }
-  });
-
-  it('SUPPRESS: contact is unaffected by rival tension', () => {
-    for (const tension of ['occupied-by-rivals', 'methodically-looted']) {
-      const { contact } = applyLegibilityRules({
-        contender: { present: true, position: 'ahead', stance: 'at_war' },
-        contact: { present: true, reliability: 'genuine', offers: 'information' },
-        holder: 'single_apex', // lean holder so CAP doesn't fire
-        tension,
-        rng: mulberry32(1),
-      });
-      expect(contact.present).toBe(true);
-      expect(contact.reliability).toBe('genuine');
-    }
-  });
-
-  // ---- CAP: crowded conditions allow at most one present ----
-
-  it('CAP: crowded holder caps contender + contact to one present', () => {
-    for (const holder of ['several_unrelated', 'living_order']) {
-      for (let seed = 1; seed <= 100; seed++) {
-        const { contender, contact } = applyLegibilityRules({
-          ...bothPresent(),
-          holder,
-          tension: 'sealed-and-stirring', // non-listed tension
-          rng: mulberry32(seed),
-        });
-        // Never both present.
-        expect(contender.present && contact.present).toBe(false);
-        // Exactly one present (we started with both present, the rule
-        // drops one — it doesn't drop both).
-        expect(contender.present || contact.present).toBe(true);
-      }
-    }
-  });
-
-  it('CAP: crowded tension (pilgrimage-route) caps the pair under any holder', () => {
-    for (const holder of ['single_apex', 'hazard_no_ruler', 'living_order', 'several_unrelated']) {
-      for (let seed = 1; seed <= 50; seed++) {
-        const { contender, contact } = applyLegibilityRules({
-          ...bothPresent(),
-          holder,
-          tension: 'pilgrimage-route',
-          rng: mulberry32(seed),
-        });
-        expect(contender.present && contact.present).toBe(false);
-      }
-    }
-  });
-
-  it('CAP: passes through when only one of the pair is present', () => {
-    // contender absent, contact present → no cap fires, contact stays.
-    const r = applyLegibilityRules({
-      contender: { present: false },
-      contact: { present: true, reliability: 'genuine', offers: 'information' },
-      holder: 'several_unrelated',
-      tension: 'sealed-and-stirring',
-      rng: mulberry32(1),
-    });
-    expect(r.contender.present).toBe(false);
-    expect(r.contact.present).toBe(true);
-  });
-
-  // ---- Lean pass-through: no rule fires ----
-
-  it('Lean pass-through: lean holder + non-listed tension leaves the pair untouched', () => {
-    const leanHolders = ['single_apex', 'hazard_no_ruler'];
-    const nonListedTensions = ['sealed-and-stirring', 'cult-ascendant', 'forgotten-knowledge', 'boss-decline'];
-    for (const holder of leanHolders) {
-      for (const tension of nonListedTensions) {
-        for (let seed = 1; seed <= 20; seed++) {
-          const r = applyLegibilityRules({
-            ...bothPresent(),
-            holder, tension, rng: mulberry32(seed),
-          });
-          // Both stay present (verifies "neither is forced off").
-          expect(r.contender.present).toBe(true);
-          expect(r.contact.present).toBe(true);
-        }
-      }
-    }
-  });
-
-  // ---- Composition: SUPPRESS first, then CAP ----
-
-  it('Composition: rival tension under crowded holder suppresses contender, contact stays', () => {
-    // occupied-by-rivals (rival tension) + several_unrelated (crowded holder).
-    // SUPPRESS first → contender absent. Then CAP: only contact present, no further action.
-    for (let seed = 1; seed <= 20; seed++) {
-      const r = applyLegibilityRules({
-        ...bothPresent(),
-        holder: 'several_unrelated',
-        tension: 'occupied-by-rivals',
-        rng: mulberry32(seed),
-      });
-      expect(r.contender.present).toBe(false);
-      expect(r.contact.present).toBe(true);
-    }
-  });
-
-  // ---- Motive-aware CAP: acquisition preserves contender ----
-
-  it('CAP under acquisition: drops contact, NEVER contender (deterministic)', () => {
-    // Acquisition's contender is load-bearing (the rival in the race).
-    // Under any crowded condition with both present, contact MUST drop.
-    for (const holder of ['several_unrelated', 'living_order']) {
-      for (let seed = 1; seed <= 100; seed++) {
-        const r = applyLegibilityRules({
-          ...bothPresent(),
-          holder,
-          tension: 'sealed-and-stirring',
-          motive: 'acquisition',
-          rng: mulberry32(seed),
-        });
-        expect(r.contender.present).toBe(true);
-        expect(r.contact.present).toBe(false);
-      }
-    }
-  });
-
-  it('CAP under acquisition + crowded tension: still drops contact', () => {
-    for (let seed = 1; seed <= 50; seed++) {
-      const r = applyLegibilityRules({
-        ...bothPresent(),
-        holder: 'single_apex', // lean holder
-        tension: 'pilgrimage-route', // crowded tension
-        motive: 'acquisition',
-        rng: mulberry32(seed),
-      });
-      expect(r.contender.present).toBe(true);
-      expect(r.contact.present).toBe(false);
-    }
-  });
-
-  it('CAP under non-acquisition: 50/50 random drop (over many seeds, both can be dropped)', () => {
-    // Sanity that the random branch still fires for non-acquisition motives.
-    let contenderDropped = 0;
-    let contactDropped = 0;
-    for (let seed = 1; seed <= 500; seed++) {
-      const r = applyLegibilityRules({
-        ...bothPresent(),
-        holder: 'several_unrelated',
-        tension: 'sealed-and-stirring',
-        motive: 'prevention',
-        rng: mulberry32(seed),
-      });
-      if (!r.contender.present) contenderDropped++;
-      if (!r.contact.present) contactDropped++;
-    }
-    // Both should be dropped sometimes (50/50 split with sampling noise).
-    expect(contenderDropped).toBeGreaterThan(0);
-    expect(contactDropped).toBeGreaterThan(0);
   });
 });
 
@@ -1460,39 +1408,10 @@ describe('pickRandomPovFrame', () => {
     expect(sawInvent).toBe(true);
   });
 
-  it('never returns failed_negotiation when holder is hazard_no_ruler', () => {
-    for (let seed = 1; seed <= 1000; seed++) {
-      const f = pickRandomPovFrame(mulberry32(seed), { holder: 'hazard_no_ruler' });
-      if (f === 'invent') continue; // open slot can produce anything
-      expect(f).not.toBe('failed_negotiation');
-    }
-  });
-
-  it('never returns tribute_caravan when holder is hazard_no_ruler', () => {
-    for (let seed = 1; seed <= 1000; seed++) {
-      const f = pickRandomPovFrame(mulberry32(seed), { holder: 'hazard_no_ruler' });
-      if (f === 'invent') continue;
-      expect(f).not.toBe('tribute_caravan');
-    }
-  });
-
   it('never returns survivor when tension is dormant-with-witness ("no survivor for a sealed state")', () => {
     for (let seed = 1; seed <= 1000; seed++) {
       const f = pickRandomPovFrame(mulberry32(seed), { tension: 'dormant-with-witness' });
       if (f === 'invent') continue;
-      expect(f).not.toBe('survivor');
-    }
-  });
-
-  it('honors both gates simultaneously (holder + tension)', () => {
-    for (let seed = 1; seed <= 1000; seed++) {
-      const f = pickRandomPovFrame(mulberry32(seed), {
-        holder: 'hazard_no_ruler',
-        tension: 'dormant-with-witness',
-      });
-      if (f === 'invent') continue;
-      expect(f).not.toBe('failed_negotiation');
-      expect(f).not.toBe('tribute_caravan');
       expect(f).not.toBe('survivor');
     }
   });

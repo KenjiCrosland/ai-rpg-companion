@@ -128,20 +128,25 @@ export const PURPOSE_KEYWORDS = [
 ];
 
 /**
- * Soft-weighting for types whose narrative scale doesn't fit low
+ * Tier-weighting for types whose narrative scale doesn't fit low
  * tiers cleanly. Weights below 1.0 reduce that type's selection
- * probability at the given tier; weights above 1.0 increase it. Types
- * not listed here are uniform-weighted across all tiers.
+ * probability at the given tier; weights above 1.0 increase it; a
+ * weight of 0 hard-bans the type at that tier. Types not listed
+ * here are uniform-weighted across all tiers (type is shape-only
+ * by design; most types don't carry inherent scope).
  *
- * Not hard-gated: even at Tier 1, god-corpse has a 0.1 weight, so a
- * Tier 1 god-corpse can still roll (just rarely). User can also
- * explicitly request any type at any tier via form input — the
- * weighting only affects the empty-input random roll.
+ * planar-pocket is the one type that IS inherently cosmic by shape
+ * (a bubble of off-axis reality is not a local thing), so it's
+ * hard-banned at tier 1-2 to stop the cosmic-drift that dominates
+ * low-tier generations. Tier 3+ keeps the soft-weight ramp.
+ *
+ * User can still explicitly request any type at any tier via form
+ * input — the weighting only affects the empty-input random roll.
  *
  * Indexed by tier (1-5).
  */
 export const TIER_WEIGHTED_TYPES = {
-  'planar-pocket':       [0.1,  0.3, 0.8, 1.2, 1.5], // cosmic frame, lean T3+
+  'planar-pocket':       [0,    0,   0.8, 1.2, 1.5], // hard-ban T1-2; cosmic-only shape
   'undercity':           [0.3,  0.6, 1.0, 1.3, 1.5], // vast scale, lean T2+
   'sprawling-labyrinth': [0.5,  0.7, 1.0, 1.2, 1.3], // soft vast-scale bias
 };
@@ -188,9 +193,9 @@ export const DUNGEON_TENSIONS = [
 /**
  * Prose descriptions for each tension. The main prompt uses these to
  * reshape the field framings — "central_dynamic" reads through the
- * tension's lens, "current_occupation" describes who/what is in there
+ * tension's lens, "inhabitants" describes who/what is in there
  * NOW in that tension's terms, "present_state" carries the tension's
- * pacing and pressure.
+ * pacing and pressure as a tight clock.
  */
 export const DUNGEON_TENSION_DESCRIPTIONS = {
   'sealed-and-stirring':
@@ -350,12 +355,10 @@ export const DUNGEON_TRAVERSAL_INVARIANT =
  * single supernatural apex with servant-class inhabitants every time,
  * regardless of tension. The pre-roll forces structural variety.
  *
- * 4 values:
+ * 3 values:
  *   - single_apex        — one entity rules; servant-class inhabitants.
  *   - several_unrelated  — 2-3 powers coexisting, each independently
  *                          related to the place; not allied, not rivals.
- *   - hazard_no_ruler    — non-sentient process dominates; cannot be
- *                          reasoned with, only navigated.
  *   - living_order       — functioning institution of living people
  *                          occupies the place; rendered as an
  *                          infiltration (NOT a court / audience hall).
@@ -365,13 +368,17 @@ export const DUNGEON_TRAVERSAL_INVARIANT =
  * NOTE: an earlier 'vacant' value (the original ruling power is gone)
  * was removed — its texture (abandoned villages, scavenger-dwellings)
  * is reproduced by single_apex / several_unrelated holders with
- * decay-coded character qualities. Every dungeon now has an active
- * dominant force.
+ * decay-coded character qualities. An earlier 'hazard_no_ruler' value
+ * (non-sentient process dominates) was also removed — non-sentient
+ * forces make weak antagonists (can't decide, can't escalate, can't
+ * be outwitted). Ambient processes still appear as TEXTURE/hazards
+ * in dungeons with active holders; the dominant power slot is now
+ * agents-only by construction. Every dungeon has an active dominant
+ * agent.
  */
 export const POWER_STRUCTURES = [
   'single_apex',
   'several_unrelated',
-  'hazard_no_ruler',
   'living_order',
 ];
 
@@ -387,73 +394,90 @@ export const POWER_STRUCTURE_DIRECTIVES = {
 
   several_unrelated:
     "POWER STRUCTURE: several unrelated forces — 2 or 3 powers coexist here, each INCIDENTAL to the others. The defining property: each force is here for its OWN reasons, arrived at its OWN time, and pursues its OWN agenda regardless of the others' presence. The structural test: removing any one of them leaves the situations of the others UNCHANGED, because each force's relationship is with the PLACE and with ITSELF, not with the other forces.\n\n" +
-    "Each of the 2-3 forces must have AGENCY — a thinking faction, a sentient creature, a willful spirit, a self-directed power. Inert environmental hazards (a rot, a bloom, a flood, a fire that just burns) belong in hazards_and_dangers; they are SCENERY to all powers here, not one of the powers. The minimum bar: each force can be ENGAGED on its own terms — talked to, fought, avoided, allied with — independently of the others.\n\n" +
-    "Examples of the shape: a clan of squatter predators hunting in the upper halls + a hermit who arrived years ago and stayed + a sleeper-spirit who wakes on a slow cycle independent of either; or, a colony of fungal-creatures with a hive-mind + a passing scholar studying them + an animated guardian-construct still defending its original purpose. Each has its own reason for being here; none of them is the 'main' power. Route the secondary forces' specifics into inhabitants and current_occupation. The party can engage any of them on its own terms.",
-
-  hazard_no_ruler:
-    "POWER STRUCTURE: hazard, no ruler — the dominant force here is a non-sentient process. A spreading rot, a temporal slippage, a fungal bloom, a radiation field, a thinning-of-reality, a tidal magical effect, a self-perpetuating ritual that no longer needs its makers. It cannot be reasoned with, allied with, or negotiated with — it can only be navigated, mitigated, endured, or (sometimes) reversed. Inhabitants are the things that survive or exploit the hazard, not its servants. There is no throne to occupy. The large_creature in monsters[] is either a creature spawned or warped by the hazard, or a separate predator that adapted to it.",
+    "AGENT-ONLY RULE — HARD CONSTRAINT: every power named in this slot must be an AGENT with intent — a thinking faction, a sentient creature, a willful spirit, a bound will, a god's remnant, a beast with territory and habit. The minimum bar: each force can DECIDE something, can ESCALATE, can be ENGAGED on its own terms (talked to, fought, avoided, bargained with). Inert environmental processes — a geological sink, an ambient cold, a freezing breath, a hum that just hums, a rot that just spreads, a fire that just burns — are NOT powers here. They belong in hazards_and_dangers as the TEXTURE the powers navigate. A glacier is a hazard; the spirit OF the glacier is a power. A poisoned air is a hazard; the cult that breathes it is a power. If your three forces include something process-shaped, render it as a SPIRIT or CREATURE that embodies the process (a frost-spirit, a hunger-bound beast, a binding-will), not as the process itself.\n\n" +
+    "Examples of the shape: a clan of squatter predators hunting in the upper halls + a hermit who arrived years ago and stayed + a sleeper-spirit who wakes on a slow cycle independent of either; or, a colony of fungal-creatures with a hive-mind + a passing scholar studying them + an animated guardian-construct still defending its original purpose. Each has its own reason for being here; none of them is the 'main' power. Route the secondary forces' specifics into inhabitants (with each one's current position and activity). The party can engage any of them on its own terms.",
 
   living_order:
-    "POWER STRUCTURE: living order — a functioning institution of LIVING PEOPLE occupies and operates this place by procedure, rule, and routine: a monastic order, a guild, a magistracy, a guard company, a research conclave. RENDER AS AN INFILTRATION, NOT A COURT. Four mandatory properties:\n\n1. AN OBJECTIVE DEEPER IN THE SPACE. The party must reach, retrieve, or get past the order to do something — a sealed archive, a prisoner in a lower cell, a relic in the inner sanctum, a witness, a stolen item, a fugitive in protective custody. They penetrate toward this objective; they do not arrive for a meeting.\n\n2. THE ORDER DISTRIBUTED ACROSS ROOMS AS THE OBSTACLE LAYER. Sentries patrol corridors and may see through a disguise; customs must be observed in each refectory, shrine, or common room; ranks and protocols (forms of address, gestures, passwords, prescribed routes) must be mimicked; restricted zones admit only certain ranks. The social challenge is spatialized room-by-room, the way traps and locked doors are in a combat crawl — NEVER one ruler in one chamber addressed by petitioners.\n\n3. A DEGRADING COVER / CREDIBILITY RESOURCE. The party passes by appearing to belong — a disguise, a forged standing, an observed ritual, a borrowed sigil, a memorized password. Suspicion accrues: wrong answers, missed customs, failed checks, unfamiliar faces, lingering in restricted zones all spend cover. This is the infiltration's attrition clock — the equivalent of dwindling light or rations in a traditional crawl.\n\n4. A LETHAL FORCE-DISPARITY. The order vastly outmatches the party in open conflict, so subterfuge is mandatory, not optional flavor. When cover breaks, the mode flips from infiltration to flight: the party becomes prey in a hostile, fully-mobilized space and must escape. That fail-state is what makes the disguise matter.\n\nThe overview MUST imply a navigable infiltration space — a social/stealth challenge per chamber with a flight fail-state under it — not an audience hall and a waiting room. The social order is the texture of the resistance, not a substitute for traversal. NO supernatural apex; NO undead figurehead; NO mind-controlled cultists. If a head of the institution exists, name them and put them in npc_list as a normal NPC subject to the institution's rules — they are not an audience-hall apex the party walks up to and addresses.",
+    "POWER STRUCTURE: living order — a functioning institution of LIVING PEOPLE occupies and operates this place by procedure, rule, and routine: a monastic order, a guild, a magistracy, a guard company, a research conclave. RENDER AS AN INFILTRATION, NOT A COURT. Three mandatory properties:\n\n1. AN OBJECTIVE DEEPER IN THE SPACE. The party must reach, retrieve, or get past the order to do something — a sealed archive, a prisoner in a lower cell, a relic in the inner sanctum, a witness, a stolen item, a fugitive in protective custody. They penetrate toward this objective; they do not arrive for a meeting.\n\n2. ONE INFILTRATION VECTOR + ONE COMPLICATION. Pick exactly ONE plausible way someone outside the order could get inside, named concretely — a stolen vestment, a forged standing, a bribable doorman, a sponsoring member who vouches, the order's standing welcome to a similar-looking traveling sect, the once-a-week ritual day when outsiders are admitted. Then ONE complication that creates pressure once inside — a single observed gesture the party must perform at a chokepoint, a senior who returns at a specific hour and knows every face, a recently-changed sigil only the inner ranks carry. NOT a gauntlet of countersigns, rank-signets, geyser-cadences, bow-angles, and rotating passwords stacked on top of each other. ONE way in. ONE complication. The dungeon is an infiltration, not a checklist.\n\n3. COVER BREAKS → FLIGHT. The order vastly outmatches the party in open conflict, so subterfuge is mandatory. When the vector or complication breaks, the mode flips: the party becomes prey in a fully-mobilized space and must escape. That fail-state is what makes the cover matter. NO supernatural apex, NO undead figurehead, NO mind-controlled cultists. If a head of the institution exists, name them in npc_list as a normal NPC subject to the institution's rules.\n\n" +
+    "FIELD ROUTING for living_order — distribute the infiltration intelligence across fields by purpose. Do NOT pile it all into inhabitants:\n" +
+    "- inhabitants: HIERARCHY + GOALS + NUMBERS only. Who commands whom in one phrase, what the order wants here, one phrase on size. Stay inside the one-sentence-per-faction rule. NO vectors, NO complications, NO password specifics — those go to approach_and_threshold.\n" +
+    "- approach_and_threshold: the ONE infiltration vector + ONE complication named in property 2 above. Concrete, single, specific. Not a list.\n" +
+    "- present_state: the EXPLOITABLE SEAM. What's disrupted right now, who's distracted, what the order's attention is focused on that creates the party's window — the head hiding a crisis from their own membership, the watch-captain drinking since their kin went missing, a senior recently replaced by a forgery the others haven't noticed. LIVE GAPS the party can read on arrival, not standing facts about the institution.",
 };
 
 /**
  * Name templates for the dungeon's title. Code-rolled to break the
- * LLM's tendency to default to one template within a few generations
- * (production observation: 5/6 dungeons converged on template B,
- * 3/6 within template B reached for compound hyphenated adjectives).
+ * LLM's tendency to default to one template within a few generations.
  *
- * Six templates: three use a register-flavored proper noun (A, C, E)
- * and three are English-only (B, D, F). The picker filters out
- * register-requiring templates when no register is available.
+ * Four image-anchored shapes. The load-bearing word in every template
+ * is a CONCRETE IMAGE — a specific noun mined from the dungeon's
+ * strangest true detail (the signature creature, the prize, the
+ * central material, the one striking image). The LLM is generating
+ * the name LAST in the JSON (after body fields), so it can see the
+ * dungeon and source the image from what's actually there.
+ *
+ * No template requires a register — register-flavored proper nouns
+ * may appear as the image (e.g. "Nest of the Grik-torn") subject to
+ * the one-register-word-max rule, but the image is the load-bearer.
+ *
+ * The earlier register-led / adjective-only templates were retired —
+ * register-led names ("Eikheim Barrow") read as template-fill when
+ * the model hasn't seen the dungeon yet; adjective-only names
+ * ("Cold Citadel") were the worst clustering offender because the
+ * adjective slot had no image to anchor.
  */
 export const NAME_TEMPLATES = [
   {
     id: 'A',
-    shape: '[Register-noun] [Place-type]',
-    requiresRegister: true,
-    examples: ['Eikheim Barrow', 'Vetha Crypt', 'Drakhal Mine', 'Slánú Hold'],
+    shape: '[image] [place-type]',
+    requiresRegister: false,
+    examples: ['Bone Hollow', 'Mirror Tomb', 'Salt Sepulcher', 'Glass Warren'],
   },
   {
     id: 'B',
-    shape: '[English-adjective] [Place-type]',
+    shape: '[adjective] [image] [place-type]',
     requiresRegister: false,
-    examples: ['Hollow Vault', 'Burnt Spire', 'Silent Hold', 'Drowned Catacombs'],
+    examples: ['Frigid Bone Hollow', 'Drowned Mirror Tomb', 'Hollow Salt Sepulcher'],
   },
   {
     id: 'C',
-    shape: '[Place-type] of [Register-noun]',
-    requiresRegister: true,
-    examples: ['Crypt of Vetheras', 'Tomb of Eikheim', 'Vault of Halgrim', 'Sepulcher of Slánú'],
+    shape: '[place-type] of (the) [image]',
+    requiresRegister: false,
+    examples: ['Garden of Bone', 'Choir of Ash', 'Cathedral of Salt', 'Sanctum of Unfading Roses', 'Nest of the Grik-torn'],
   },
   {
     id: 'D',
-    shape: '[Place-type] of [English-noun phrase]',
+    shape: '[image]-[participle] [place-type]',
     requiresRegister: false,
-    examples: ['Halls of Slow Light', 'Sepulcher of Bones', 'Tomb of the Last King', 'Pit of Long Names'],
+    examples: ['Moss-Buried Warren', 'Grief-Sunk Hall', 'Wax-Sealed Hold'],
   },
   {
     id: 'E',
-    shape: "[Register-noun]'s [Place-type]",
-    requiresRegister: true,
-    examples: ["Vetheras's Crypt", "Halgrim's Hold", "Brunhild's Sanctum", "Eikheim's Maze"],
+    shape: "[name]'s [image] [place-type]",
+    requiresRegister: false,
+    examples: ["Aethorix's Ash Mill", "Gwenfaer's Glass Compound", "Vetheras's Bone Crypt"],
   },
   {
+    // The article-led form. Some of the genre's strongest names use it
+    // ("the Maw," "the Cradle," "the Drowning"). The cap comes from
+    // template rotation — F is 1 of 6, so ~17% of dungeons get this
+    // shape (down from the 100% clustering that produced the original
+    // ban). The image must still be mined from content; this template
+    // pairs especially well with EVENT and CONSEQUENCE image devices.
     id: 'F',
-    shape: '[English-adjective] [English-noun]',
+    shape: 'The [image]',
     requiresRegister: false,
-    examples: ['Sunken Wreck', 'Iron Sanctum', 'Cold Citadel', 'Bright Hollow'],
+    examples: ['The Maw', 'The Cradle', 'The Drowning', 'The Witherward', 'The Quiet Mile', 'The Last Forge'],
   },
 ];
 
 /**
- * Pick a name template uniformly. When register is unavailable,
- * filters to the three templates that don't require a register-noun
- * (B, D, F).
+ * Pick a name template uniformly. All templates are register-agnostic
+ * — the hasRegister flag is retained for callsite compatibility but
+ * has no effect (the picker never filters).
  */
-export function pickRandomNameTemplate(rng = Math.random, { hasRegister = true } = {}) {
-  const eligible = NAME_TEMPLATES.filter(t => hasRegister || !t.requiresRegister);
-  return eligible[Math.floor(rng() * eligible.length)];
+export function pickRandomNameTemplate(rng = Math.random, { hasRegister = true } = {}) { // eslint-disable-line no-unused-vars
+  return NAME_TEMPLATES[Math.floor(rng() * NAME_TEMPLATES.length)];
 }
 
 /**
@@ -512,10 +536,7 @@ export function pickPlaceTypeForLogic(organizingLogic, rng = Math.random) {
  */
 export const POWER_STRUCTURE_DOMINANT_POWER_OVERRIDES = {
   several_unrelated:
-    "NO SINGLE RULER. The dungeon hosts 2-3 unrelated powers. Name them and describe their independent relationships to the place — none rules the others; eliminating one does not affect the others. Use this field to enumerate and characterize them at a high level; route their specifics into inhabitants and current_occupation. If any of them is an intelligent named entity, they also appear in npc_list. If any is a bestial monstrous entity, it can be the large_creature in monsters[].",
-
-  hazard_no_ruler:
-    "THE HAZARD IS THE DOMINANT FORCE. Describe the non-sentient process that defines this place — what it is, how it manifests, what it does to creatures and objects within range. Explicitly note that nobody rules — the hazard rules. Inhabitants is for the things that endure or exploit it, not for servants of an apex. The large_creature in monsters[] should be either a creature spawned or warped by the hazard, or a separate predator that adapted to it.",
+    "NO SINGLE RULER. The dungeon hosts 2-3 unrelated powers. Name them and describe their independent relationships to the place — none rules the others; eliminating one does not affect the others. Use this field to enumerate and characterize them at a high level; route their specifics (current position, activity, terms) into inhabitants. If any of them is an intelligent named entity, they also appear in npc_list. If any is a bestial monstrous entity, it can be the large_creature in monsters[].",
 
   living_order:
     "THE INSTITUTION OCCUPIES THIS PLACE, DISTRIBUTED ACROSS ITS ROOMS. Name the living-people organization that operates here by procedure and rule — the order, the guild, the company, the conclave. Describe its governance: hierarchy, who answers to whom, what its members do, where in the space each rank is found. The dungeon is rendered as an INFILTRATION: the order is the obstacle layer spatialized room-by-room (sentries, customs, passwords, ranks the party must mimic, restricted zones), with a degrading cover/credibility resource as the attrition clock and a lethal force-disparity beneath that makes subterfuge mandatory. When cover breaks, the party flips to flight. If a head of the institution exists, name them and put them in npc_list as a normal NPC — never as an audience-hall apex the party walks up to and addresses.",
@@ -590,11 +611,10 @@ export const ORGANIZING_LOGIC_DIRECTIVES = {
  *   kind:    one of CONTENDER_KINDS (only when present)
  *
  * Code-rolled. Presence is rare by default (5%) so the contender lands
- * as flavor when it shows up, not as a fixture. Two boosters: the
- * hazard_no_ruler holder (4x — the natural home for a rival expedition
- * to an unclaimed ruin) and the ACQUISITION motive (10x — the rival
- * in the race is structurally load-bearing under acquisition; halving
- * it would gut the motive's premise).
+ * as flavor when it shows up, not as a fixture. One booster: the
+ * ACQUISITION motive (10x — the rival in the race is structurally
+ * load-bearing under acquisition; halving it would gut the motive's
+ * premise).
  *
  * Kind replaces the previous position × stance × openSlot trio.
  * Position and stance were a 12-cell grid that read as variations on
@@ -628,7 +648,7 @@ export const CONTENDER_KINDS = [
 ];
 
 export const CONTENDER_PRESENT_FRAMING =
-  "CONTENDER (rival outsider, present): A non-controlling outsider is in play around this dungeon — racing for the prize, blocking the party, profiting from the chaos, or pressing a claim. They DO NOT command the space (they are not the holder); they are a CLOCK and a COUNTERPARTY. Render them as a LIVE AGENT: leaving fresh signs, catchable mid-action, parley-able, sabotage-able, possibly about to seize or destroy the prize before the party arrives. NEVER inert figures stuck in a side room. The contender's specifics belong primarily in the current_occupation field.";
+  "CONTENDER (rival outsider, present): A non-controlling outsider is in play around this dungeon — racing for the prize, blocking the party, profiting from the chaos, or pressing a claim. They DO NOT command the space (they are not the holder); they are a CLOCK and a COUNTERPARTY. Render them as a LIVE AGENT: leaving fresh signs, catchable mid-action, parley-able, sabotage-able, possibly about to seize or destroy the prize before the party arrives. NEVER inert figures stuck in a side room. The contender's specifics belong in the inhabitants field — name them with their current position and activity alongside the dungeon's other factions.\n\nANTI-LEAK: NEVER use the schema kind labels in prose. The rolled kind (rival_expedition, pursuing_force, claimant_heir, etc.) is the TYPE telling you what to render — it is not a name the GM reads. Render the contender as a concrete in-world figure or force ('the Sunken Cartel's vanguard,' 'the priestess Sólveig and her nine cultists,' 'the Compass Company crew') — not as 'a rival_expedition,' 'a pursuing_force,' or 'the dungeon's institutional_claim.'";
 
 // Per-kind GM-facing directive. Each describes one categorical
 // flavor of contender — who they are, how they show up, and the
@@ -659,7 +679,7 @@ export const CONTENDER_KIND_DIRECTIVES = {
   drawn_by_the_prize:
     "CONTENDER KIND: drawn_by_the_prize. A claimant the dungeon's prize summons, attracts, or generates. The rival exists BECAUSE of what's inside — touching the prize puts them on the road. Could be a being bound to the relic, a hunter who tracks this kind of artifact, a hereditary curse activated by contact, a soul-tied successor the prize calls home. GM cue: the moment the party engages the prize, this contender is in motion.",
   prior_failed_party:
-    "CONTENDER KIND: prior_failed_party. Adventurers who tried this dungeon before and are STILL HERE in some form — trapped alive, transformed, ghost-bound, gone mad, or fused into the place. They want out as much as the prize, know things the party doesn't, and may help or hinder depending on what they want from the party.",
+    "CONTENDER KIND: prior_failed_party. Adventurers who tried this dungeon before and are STILL HERE in some form — trapped alive, transformed, ghost-bound, gone mad, or fused into the place. Their KNOWLEDGE is SPECIFIC and was learned at COST — name the concrete intel (which mirror is safe, which rune disarms the trap, the boss's nightly weakness, the secret door they found and couldn't open) AND the cost they paid to learn it (the maimed hand, the swapped face, the half-stolen soul). When the dungeon's entry shows signs of a prior expedition (handprints, bodies, scratched markings, an abandoned camp), THIS prior_failed_party IS that expedition — tie the two together explicitly. They want out as much as the prize; name which (rescue, revenge, finish what they started).",
   negotiator_third_party:
     "CONTENDER KIND: negotiator_third_party. A contender who arrives to DEAL, not to fight. Wants a share, a concession, a side payment, or a piece left in place. Treats the prize as commerce. The conflict resolves via terms — the party can refuse, but refusal has costs.",
   avenger:
@@ -699,7 +719,7 @@ export const FUSION_PAIRS = {
   production:         ['single_apex', 'living_order'],
   inhabited_base:     ['single_apex', 'living_order', 'several_unrelated'],
   creature_territory: ['single_apex'],
-  formed:             ['hazard_no_ruler', 'single_apex'],
+  formed:             ['single_apex'],
 };
 
 // ---------------------------------------------------------------------
@@ -717,16 +737,62 @@ export const FUSION_PAIRS = {
 const ORGANIZING_LOGIC_OPEN_SLOT_RATE = 0.10;
 const ORGANIZING_LOGIC_COMPOSITE_RATE = 0.40;
 
-export function pickRandomOrganizingLogic(rng = Math.random) {
+/**
+ * Tier-weighting for organizing logics whose narrative scale doesn't
+ * fit low tiers cleanly. Weight 0 hard-bans at that tier; weights
+ * below 1.0 reduce probability; above 1.0 increase. Logics not listed
+ * are uniform across all tiers.
+ *
+ * `formed` (the place IS an ambient cosmic-shaped force — god-corpse,
+ * primordial-formed, geometric remnant) is hard-banned at tier 1-2
+ * because it's inherently cosmic-scale and pulls the entire dungeon
+ * cosmic regardless of how local the prose tries to be.
+ *
+ * `containment` (the place was built to bind something) trends higher
+ * tier — Tier 1 containment is a local jail (fine but rare); Tier 4-5
+ * containment is godcorpse-prison territory (load-bearing).
+ *
+ * `inhabited_base` (fortress / temple / monastic compound) trends
+ * low tier — these are mortal-scale by default; a tier-5 "fortress"
+ * has to do extra work to read planar.
+ */
+export const ORGANIZING_LOGIC_TIER_WEIGHTS = {
+  formed:         [0,    0,   1.0, 1.0, 1.0], // hard-ban T1-2
+  containment:    [0.5,  0.7, 1.0, 1.3, 1.5],
+  inhabited_base: [1.5,  1.3, 1.0, 0.8, 0.7],
+};
+
+function weightedPick(items, weights, rng) {
+  const total = weights.reduce((s, w) => s + w, 0);
+  if (total <= 0) {
+    // Defensive: if every weight is 0 (shouldn't happen with current
+    // data), fall back to uniform pick. Avoids returning undefined.
+    return items[Math.floor(rng() * items.length)];
+  }
+  let r = rng() * total;
+  for (let i = 0; i < items.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return items[i];
+  }
+  return items[items.length - 1];
+}
+
+export function pickRandomOrganizingLogic(rng = Math.random, { tier = null } = {}) {
   if (rng() < ORGANIZING_LOGIC_OPEN_SLOT_RATE) return ['invent'];
   const anchors = ORGANIZING_LOGICS.filter(v => v !== 'invent');
-  const first = anchors[Math.floor(rng() * anchors.length)];
+  const validTier = tier && DIFFICULTY_TIER_KEYS.includes(tier) ? tier : null;
+  const weights = anchors.map((a) => {
+    if (!validTier) return 1.0;
+    const tw = ORGANIZING_LOGIC_TIER_WEIGHTS[a];
+    return tw ? tw[validTier - 1] : 1.0;
+  });
+  const first = weightedPick(anchors, weights, rng);
   if (rng() >= ORGANIZING_LOGIC_COMPOSITE_RATE) return [first];
-  // composite: pick a distinct second anchor
+  // composite: pick a distinct second anchor using the same tier weights
   let second;
   let guard = 0;
   do {
-    second = anchors[Math.floor(rng() * anchors.length)];
+    second = weightedPick(anchors, weights, rng);
     guard++;
   } while (second === first && guard < 10);
   return second === first ? [first] : [first, second];
@@ -806,7 +872,17 @@ export const FORMED_NATURE_DIRECTIVES = {
     "If the remnant retains genuine present will AND a reachable locus, render it as an EMBODIED CREATURE — a body, a face, a place the party can reach and confront — not a passive trace. If diminished beyond reach, render the trace as a CHARACTERED hazard (the domain still acts; the entity does not). What it must NEVER be is the faceless ambient hum.",
 };
 
-export function pickRandomFormedNature(rng = Math.random) {
+// Filter formedNature by holder. When the holder is several_unrelated
+// (the dungeon hosts 2-3 unrelated powers), `phenomenon` would slot
+// in as a non-sentient "third power" that consistently reads as thin
+// scenery pretending to be a faction. Force `remnant` instead — a
+// named specific dead/sleeping entity with a domain and will, which
+// can credibly be one of the three powers.
+//
+// Other holders allow both natures (under single_apex, a phenomenon
+// reads as the apex's lingering effect on the space — fine).
+export function pickRandomFormedNature(rng = Math.random, { holder = null } = {}) {
+  if (holder === 'several_unrelated') return 'remnant';
   return FORMED_NATURES[Math.floor(rng() * FORMED_NATURES.length)];
 }
 
@@ -816,33 +892,106 @@ export function pickRandomFormedNature(rng = Math.random) {
  * Returns `{ present: false }` (most generations) or `{ present: true,
  * kind }` where `kind` is one of CONTENDER_KINDS, picked uniformly.
  *
- * Presence rates: 5% default, 20% for hazard_no_ruler holders (rival
- * expedition to an unclaimed ruin), 50% for the acquisition motive
- * (the rival-in-the-race is the motive's structural premise).
  */
-// Presence rates. Contender is rare flavor by default; the kind
-// enumeration carries the variety, the rate keeps it from showing up
-// every generation. Two boosters:
-//   - hazard_no_ruler holder: 4x default. An unclaimed ruin is the
-//     natural home for a rival expedition — bumped but still rare.
-//   - acquisition motive: 10x default. The rival-in-the-race is the
-//     motive's structural premise; halving it would gut the texture.
-const CONTENDER_PRESENCE_RATE_DEFAULT = 0.05;
-const CONTENDER_PRESENCE_RATE_LOW_RESISTANCE = 0.20;
-const CONTENDER_PRESENCE_RATE_ACQUISITION = 0.50;
-const LOW_RESISTANCE_HOLDERS = new Set(['hazard_no_ruler']);
+// =====================================================================
+// THIRD_PARTY: unified contender + contact axis
+// =====================================================================
+//
+// One non-controlling outsider per dungeon (never both an adversary
+// and an ally — the merged axis caps to one). Shape:
+//   { present: false }
+//   { present: true, type: 'adversary', kind: <CONTENDER_KINDS entry> }
+//   { present: true, type: 'ally',      kind: <CONTACT_KINDS entry> }
+//
+// Presence is near-saturating: ~95% default, ~98% under acquisition
+// motive (the rival-in-the-race is the motive's structural premise).
+// Third parties land as core content the GM uses to engage the
+// dungeon, not as flavor sometimes added.
+//
+// Type roll (adversary vs ally) is 50/50 by default, biased 75/25
+// toward adversary under acquisition (the motive's premise is the
+// rival, so the adversary type fits more often).
+//
+// SUPPRESS rule: rival-coded tensions already supply an adversary in
+// the tension itself (occupied-by-rivals, methodically-looted). When
+// these tensions are rolled AND type came up adversary, the picker
+// flips to ally — the dungeon's rival is already in the tension.
+//
+// HARD FILTERS gate kind eligibility by context (tension / tier) so
+// the rolled kind is always coherent with the rest of the dungeon's
+// foundation. Every remaining holder is an active power, so the
+// hazard_no_ruler holder filter has been retired — kinds that
+// require a holder are universally compatible.
+//   - KIND_REQUIRES_ESTABLISHED: dropped under freshly-occupied
+//   - KIND_REQUIRES_HIGH_TIER: dropped at tier 1-2
+// Defensive: if filters empty the pool, the unfiltered pool is used
+// as fallback (shouldn't happen with current data).
+const THIRD_PARTY_PRESENCE_RATE_DEFAULT = 0.95;
+const THIRD_PARTY_PRESENCE_RATE_ACQUISITION = 0.98;
+const THIRD_PARTY_ADVERSARY_RATE_DEFAULT = 0.50;
+const THIRD_PARTY_ADVERSARY_RATE_ACQUISITION = 0.75;
 
-export function pickRandomContender(rng = Math.random, { holder = null, motive = null } = {}) {
+// Kinds that REQUIRE the dungeon's NPC layer to have been established
+// for a while (prior expeditions, long-resident scholars or natives).
+// Drop under freshly-occupied (new occupiers just moved in; the older
+// inhabitants and would-be witnesses are mostly displaced or gone).
+export const KIND_REQUIRES_ESTABLISHED = new Set([
+  // adversary
+  'prior_failed_party',
+  'insider_already_inside',
+  // ally
+  'survivor',
+  'dungeon_native',
+  'scholar_in_residence',
+]);
+
+// Kinds that are inherently cosmic in scope. Drop at tier 1-2 — a
+// divine_stake at the village-graveyard tier doesn't make sense.
+export const KIND_REQUIRES_HIGH_TIER = new Set([
+  'divine_stake',
+  'time_displaced',
+]);
+
+function filterKindsForContext(kinds, { tension, tier }) {
+  return kinds.filter((k) => {
+    if (tension === 'freshly-occupied' && KIND_REQUIRES_ESTABLISHED.has(k)) return false;
+    if (tier && tier <= 2 && KIND_REQUIRES_HIGH_TIER.has(k)) return false;
+    return true;
+  });
+}
+
+function rollAdversary(rng, ctx) {
+  const filtered = filterKindsForContext(CONTENDER_KINDS, ctx);
+  const pool = filtered.length > 0 ? filtered : CONTENDER_KINDS;
+  const kind = pool[Math.floor(rng() * pool.length)];
+  return { present: true, type: 'adversary', kind };
+}
+
+function rollAlly(rng, ctx) {
+  const filtered = filterKindsForContext(CONTACT_KINDS, ctx);
+  const pool = filtered.length > 0 ? filtered : CONTACT_KINDS;
+  const kind = pool[Math.floor(rng() * pool.length)];
+  return { present: true, type: 'ally', kind };
+}
+
+export function pickRandomThirdParty(rng = Math.random, { holder = null, motive = null, tension = null, tier = null } = {}) {
   const presenceRate = motive === 'acquisition'
-    ? CONTENDER_PRESENCE_RATE_ACQUISITION
-    : LOW_RESISTANCE_HOLDERS.has(holder)
-      ? CONTENDER_PRESENCE_RATE_LOW_RESISTANCE
-      : CONTENDER_PRESENCE_RATE_DEFAULT;
+    ? THIRD_PARTY_PRESENCE_RATE_ACQUISITION
+    : THIRD_PARTY_PRESENCE_RATE_DEFAULT;
   if (rng() >= presenceRate) {
     return { present: false };
   }
-  const kind = CONTENDER_KINDS[Math.floor(rng() * CONTENDER_KINDS.length)];
-  return { present: true, kind };
+  const adversaryRate = motive === 'acquisition'
+    ? THIRD_PARTY_ADVERSARY_RATE_ACQUISITION
+    : THIRD_PARTY_ADVERSARY_RATE_DEFAULT;
+  const wantsAdversary = rng() < adversaryRate;
+  const ctx = { tension, tier };
+  // SUPPRESS: rival-coded tensions already carry their own adversary
+  // (the rival IS the tension). Flip to ally instead of doubling up.
+  if (wantsAdversary && RIVAL_TENSIONS.has(tension)) {
+    return rollAlly(rng, ctx);
+  }
+  return wantsAdversary ? rollAdversary(rng, ctx) : rollAlly(rng, ctx);
 }
 
 // ---------------------------------------------------------------------
@@ -886,20 +1035,12 @@ export const MODE_MENUS = {
     'exploit_standoff',   // use mutual surveillance as cover
     'invent',
   ],
-  living_order: [
-    'infiltrate', // pass inside by appearing to belong (see LIVING ORDER block)
-    'subvert',    // turn a member into a seam
-    'assault',    // break it openly (with sufficient backing/strength)
-    'evade',      // thread through without entering the order's awareness
-    'invent',
-  ],
-  hazard_no_ruler: [
-    'endure_navigate',  // cross with resistance, shelter, gear, patience
-    'outwit_pattern',   // read the cycle/trigger and move between activations
-    'race_the_clock',   // escalating hazard; reach + return before impassable
-    'avoid_triggering', // hazard currently quiet; move without waking it
-    'invent',
-  ],
+  // living_order intentionally has no mode menu — the LIVING ORDER
+  // POWER STRUCTURE block already specifies infiltration as the
+  // mandatory mode, and rolling a separate mode (subvert, evade,
+  // assault, etc.) produced no behavioral variation: the LLM anchored
+  // to infiltration regardless. pickRandomMode returns null for
+  // living_order, so no MODE block is injected for those generations.
 };
 
 /**
@@ -935,25 +1076,11 @@ export const MODE_DIRECTIVES = {
   exploit_standoff:
     "MODE: exploit-the-standoff-as-cover. The fact that the powers WATCH EACH OTHER (not the party) is the party's cover. They move through the dungeon under the shadow of mutual surveillance — the powers are too busy with each other to notice intruders. The win-condition is using the standoff's rules (watched chambers, neutral zones, observed corridors) as the party's safe passage. DEVIATION COST: disturbing the standoff — making any power feel threatened — collapses the cover and the powers may briefly unite against the disruptor.",
 
-  // --- living_order menu ---
-  infiltrate:
-    "MODE: infiltrate. The party passes INSIDE the order by appearing to belong. Already specified at length by the LIVING ORDER POWER STRUCTURE block (cover/credibility resource, customs to mimic, suspicion accrual, lethal force-disparity if cover breaks). The deviation cost — cover breaking flips infiltration to flight — is the same.",
-  subvert:
-    "MODE: subvert. The party doesn't infiltrate the order — they turn a MEMBER of it into a seam, then use that seam to do what the party needs. Find the disaffected one, the bribable one, the one with a personal grudge against the institution. The win-condition is engineering enough trust or leverage with the chosen member that the party's objective becomes the member's OWN move. DEVIATION COST: the member's exposure burns both — the party loses the seam AND the member becomes the order's reminder to its own ranks.",
-  assault:
-    "MODE: assault. The party breaks the order OPENLY — they have the strength or backing to fight through (a war-band, a powerful patron's sanction, a force at the gate). The win-condition is engagement on the party's terms, ideally room-by-room rather than letting the order fully mobilize. DEVIATION COST: time. The order coordinates faster than a small force can move; assault on borrowed time, or against a fully-mobilized order, is lethal.",
-  evade:
-    "MODE: evade. The party threads through without ever entering the order's AWARENESS. NO disguise (that's infiltrate), NO turncoat (that's subvert), NO fight (that's assault) — just movement through the order's blind times and spaces. The order's routines are the map; the party reads it and waits. DEVIATION COST: being seen once is being seen — the order does not forgive a sighting it cannot place.",
-
-  // --- hazard_no_ruler menu ---
-  endure_navigate:
-    "MODE: endure / navigate. The hazard CANNOT be defeated, only crossed. The party brings resistance, shelter, timing, gear, and patience — and accepts that some of what they brought will be spent or lost. The win-condition is reaching the objective with enough party intact to extract. DEVIATION COST: there is no 'fight back' deviation — but trying to MITIGATE the hazard (a counter-ritual, a binding, a fix) is the brute-force path; the hazard is over-strong against any attempt to stop it and bites back accordingly.",
-  outwit_pattern:
-    "MODE: outwit-the-hazard's-pattern. The hazard ACTS on a pattern — a cycle, a trigger, a condition. The party reads the pattern and crosses between activations, around triggers, against conditions. The win-condition is solving the puzzle of the pattern: when to move, what to carry, what to wear or not wear, what to say or not say. DEVIATION COST: misreading the pattern is the deadly path; trying to RACE the pattern rather than outwit it costs people.",
-  race_the_clock:
-    "MODE: race-the-clock. The hazard ESCALATES on a known timeline — the rot spreads, the rift widens, the temperature drops — and the party crosses BEFORE it becomes impassable. The win-condition is reaching the objective and returning before the clock runs out. Hazards become more lethal the deeper / later the party goes. DEVIATION COST: lingering, looting, side-quests are deadly — the hazard's escalation is the lethal path.",
-  avoid_triggering:
-    "MODE: avoid-triggering-it. The hazard is currently QUIET; touching it wakes it. The party moves through the DORMANT version, avoiding the tells that wake it (sound, light, weight, certain words, certain magics). The win-condition is leaving the hazard asleep behind them. DEVIATION COST: waking the hazard is the deadly path; the awake form is over-strong and persistent — it will follow until satisfied or until the party is out of range / dead.",
+  // living_order has no mode menu (see MODE_MENUS comment) — its
+  // infiltration framing is mandatory and lives in the LIVING ORDER
+  // POWER STRUCTURE directive, so a separate MODE block adds nothing.
+  // The four old living_order modes (infiltrate / subvert / assault /
+  // evade) were retired with the menu.
 
   // --- open slot (shared across menus) ---
   invent:
@@ -1008,7 +1135,8 @@ export const MOTIVE_DIRECTIVES = {
   recovery:
     "MOTIVE: recovery — the party comes to EXTRACT A TARGET held within the dungeon: a captive person, a stolen object, a kidnapped creature, a sequestered witness. The party must reach the target, free or recover them, and get them OUT (sometimes alive, sometimes intact). The clock is the TARGET'S CLOCK: failure = something befalls the target (they die, they're sold downstream, they're transformed, the object is destroyed or moved on). Render the target's situation NOW (where they're held, in what condition, what's queued for them next) and what specifically the party gives up if they're slow.",
   discovery:
-    "MOTIVE: discovery — the party comes to FIND, MAP, or ANSWER something. KNOWLEDGE is the prize: a buried truth, a vanishing record, a sealed history, a question only this place can answer. The dungeon HOLDS the answer and is actively LOSING it. The clock is the SLIPPAGE CLOCK: failure = the knowledge is destroyed, looted, taken away, or fades (a scriptorium collapses, a witness dies, a rival burns the archive, carvings weather past legibility). Render what's KNOWN about the answer from outside (the question that drove them here) and what's actively ERASING it inside.",
+    "MOTIVE: discovery — the party comes to FIND, MAP, or ANSWER something. KNOWLEDGE is the prize: a buried truth, a vanishing record, a sealed history, a question only this place can answer. The dungeon HOLDS the answer and is actively LOSING it. The clock is the SLIPPAGE CLOCK: failure = the knowledge is destroyed, looted, taken away, or fades (a scriptorium collapses, a witness dies, a rival burns the archive, carvings weather past legibility). Render what's KNOWN about the answer from outside (the question that drove them here) and what's actively ERASING it inside.\n\n" +
+    "WHY THIS KNOWLEDGE MATTERS TO THIS PARTY: discovery dungeons consistently fail to land because 'find the lost archive' reads as homework, not adventure. Name a SPECIFIC, CONCRETE stake that ties the knowledge to the party's situation. The stake can take any of these shapes — pick one the dungeon's contents naturally answer: a COMING THREAT only this knowledge counters (a binding-name for something about to be released elsewhere; the true name of the thing the party's town is fighting); a DEBT or OATH the party owes that the knowledge cancels (the answer pays the price); a PERSON the party needs to identify (who poisoned the well, who fathered the contested child, who signed the treaty in secret); a PLACE the knowledge LOCATES (the safe route through the next region, the grave of a missing kin, the lost outpost a sworn friend was sent to find); a CHOICE the party has to make and cannot make blind (which of two heirs is real, which of two rituals does what it claims). 'The party seeks the lost mappings of the Star-Compact' is homework; 'the mappings name the true crossing through the Bone Marsh, and the party's caravan was hired to escort a hundred refugees across it next week' is a delve — the party's situation is what the answer SERVES. Do NOT introduce a SECOND time-based deadline alongside the dungeon's slippage clock; the party-specific hook explains WHY the party answered the question, not WHEN they have to. SPECIFICALLY BANNED (clustered hard in production): the dying-patron-needs-succession-document hook — a patron dying without an heir, an oath-clause for appointing a successor, an intestate-bloodline crisis. Any variant of that shape. Use a different stake.",
   invent:
     "MOTIVE: open slot. The roll did not land on a listed anchor. Invent a delve REASON that genuinely answers 'why is the party going in?' — and that is NOT a closet reading of acquisition / prevention / recovery / discovery. The motive must drive a specific CLOCK (what happens if the party is slow) and a specific WIN-CONDITION (what success looks like). Stay generic-fantasy; no real-world or trademarked references.",
 };
@@ -1048,117 +1176,59 @@ export function pickRandomMotive(rng = Math.random) {
 }
 
 // ---------------------------------------------------------------------
-// Contact (in-dungeon NPC the party can potentially use)
+// Contact kinds (ally-disposed third-party NPCs)
 // ---------------------------------------------------------------------
+//
+// CONTACT is the ally-disposition half of THIRD_PARTY (see picker
+// below). When the dungeon's third_party rolls type='ally', the kind
+// is drawn from this enum — 10 categorically distinct ally shapes,
+// each carrying its own GM-facing behavior cue.
+//
+// Replaces the previous reliability × offers axis (10 × 3 = 30 cells
+// that mostly fell into "helpful defector"). The kind enum gives
+// more textural variety with less coordination cost.
 
-/**
- * Contact values for the fold:
- *   present:     boolean
- *   reliability: one of CONTACT_RELIABILITIES (only when present)
- *   offers:      one of CONTACT_OFFERS (only when present)
- *   openSlot:    true (only on the invent path; replaces reliability/offers)
- *
- * Orthogonal at roll time — no holder gating. The coherence pass in
- * the inference call reconciles against the rest (downgrades treacherous
- * under will-less holders, drops under no-survivors tension, etc.).
- *
- * present rolls slightly above 50% so the cohere pass can drop
- * incoherent contacts without depressing the effective rate too far.
- */
-export const CONTACT_RELIABILITIES = [
-  'genuine',
-  'transactional_fair',
-  'transactional_greedy',
-  'cowardly',
-  'mistaken',
-  'mad_but_honest',
-  'self_serving',
-  'desperate',
-  'hidden_motive',
-  'treacherous',
+export const CONTACT_KINDS = [
+  'informant',
+  'guide',
+  'defector',
+  'prisoner',
+  'scholar_in_residence',
+  'hired_specialist',
+  'survivor',
+  'dungeon_native',
+  'bound_servitor',
+  'witness_chronicler',
 ];
 
-export const CONTACT_OFFERS = ['information', 'access', 'force'];
-
 export const CONTACT_PRESENT_FRAMING =
-  "CONTACT (in-dungeon NPC the party can potentially USE): A node the party can plug into for help, on terms.\n\n" +
-  "CONSTRUCT ORDER (critical — the LLM's safe-default fails here):\n" +
-  "(a) START from the rolled RELIABILITY and OFFERS. These determine HOW the contact behaves and WHAT they provide — they WIN.\n" +
-  "(b) THEN color with holder-appropriate flavor (living_order or single_apex → a defector or held captive shape; hazard_no_ruler → a scavenger, parasite, or straggler; any holding faction → a captive). The flavor is the COSTUME; the reliability+offers is the ROLE. Do NOT lead with the costume and demote the rolled axes — that produces a 'helpful defector' for every living_order contact regardless of what was rolled.\n\n" +
-  "WHEN RELIABILITY AND THE HOLDER-FLAVOR PULL OPPOSITE WAYS: fuse them into ONE coherent figure. A treacherous reliability + a defector costume = a FALSE defector, a plant POSING as disillusioned. Surface the disposition to the GM as a SECRET TO KEEP (the betrayal lands when the GM judges the moment). Never soften the disposition into sympathy or 'they really meant well.' The reliability is what they ARE; the costume is what they APPEAR TO BE.\n\n" +
-  "Worked combinations for the unusual cases (these are the ones the LLM gets wrong):\n" +
-  "- treacherous + force under living_order = a 'defector' who fights alongside the party but is leading them to a room where the order ambushes them; their swordwork is real, their navigation is wrong.\n" +
-  "- treacherous + access under living_order = a 'guide' offering passwords and back-routes that all lead to restricted zones where the party is caught.\n" +
-  "- treacherous + information = an 'informant' feeding poisoned intel that gets the party into trouble.\n" +
-  "- hidden_motive + force = a captive who fights with the party once freed, while quietly steering toward an unrelated personal objective deeper in the dungeon.\n" +
-  "- self_serving + access = a scavenger who knows the back ways and trades them for the party getting them to a specific room first.\n\n" +
-  "LANDING: the contact appears as a NAMED entry in npc_list, and the contact IS the third NPC slot (the 'at least one other named NPC' requirement). The npc_list description MUST match the rolled reliability and offers — a treacherous contact reads as treacherous in its description; a force contact's combat role is named explicitly. The contact's current activity also belongs in the current_occupation or inhabitants fields.\n\n" +
-  "Render the BEING, not the field — never label them in prose as 'the contact.' Where a present contender is also rolled, you may render this contact as a survivor of that rival's prior effort.";
+  "CONTACT (in-dungeon ally the party can USE): An ally-disposed NPC the party can plug into for help on stated terms. NOT a free helper — they have a cost, a condition, or a relationship the party has to manage. Render them as a NAMED entry in npc_list whose description matches the rolled kind directive (what they bring, how they fit, what their terms are).\n\nThe contact's current activity belongs in the inhabitants field — name them with their current position and stated terms alongside the dungeon's other factions. Where the contact's backstory plausibly intersects the dungeon's history (a survivor of a prior expedition, a defector from the holder, a scholar who has been here for months), surface that link in the prose.\n\nANTI-LEAK: NEVER use the schema kind labels in prose. The rolled kind (informant, guide, defector, prisoner, scholar_in_residence, hired_specialist, survivor, dungeon_native, bound_servitor, witness_chronicler) is the TYPE telling you what to render — it is not a name the GM reads. 'A bound servitor called Loscán' is a schema leak; 'Loscán, a spent fire-elemental bound to a stone bowl' is the rendering. Likewise: never write 'the dungeon's scholar_in_residence' or 'a witness_chronicler named X.' Render the being concretely — what they ARE in-world (a fire-elemental, a sage, a survivor, a deserted apprentice), not what schema-bucket they came from.";
 
-/**
- * Absent-contact directive — when contact.present === false, the
- * prompt explicitly forbids manufacturing a helpful insider. The
- * way-in becomes environmental / structural instead. Without this
- * directive the LLM defaults to inventing a sympathetic hermit /
- * captive / defector to fill the helper role.
- */
-export const CONTACT_ABSENT_DIRECTIVE =
-  "CONTACT: absent. Introduce NO helpful insider in this dungeon — no captive who knows a secret way, no turnable faction member, no sympathetic hermit, no defected minion. The way-in is environmental or structural: a readable space the party can scout, the holder's own exploitable seams (a fracturing order, rival sub-factions, a sentry rotation with a known gap), the POV frame already carrying the intel, or a present contender to play against. An absent-contact dungeon is designed AROUND having no inside help — it is not a contact dungeon with the helper deleted. The npc_list contains only ANTAGONISTS and NEUTRALS (boss, miniboss, plus any other named figure who opposes the party or is indifferent to them) — no helper-shaped third NPC.";
-
-export const CONTACT_RELIABILITY_DIRECTIVES = {
-  genuine:
-    "RELIABILITY: genuine — helps sincerely, no catch. Whatever they offer is real; the cost is just the cost. No hidden barb. The party may distrust them on principle, but the GM knows the help is straight.",
-  transactional_fair:
-    "RELIABILITY: transactional, fair — helps for a fair price, deals straight. The terms are negotiable but not gouging; once a deal is struck, it holds. Useful for getting in or getting out; will not fight for free.",
-  transactional_greedy:
-    "RELIABILITY: transactional, greedy — helps, but gouges. The price is higher than the help is worth; the party either pays, haggles, or finds another way. Will not break a deal once made (they want the reputation) — but the deal is bad.",
-  cowardly:
-    "RELIABILITY: cowardly — means well, bolts under pressure. Genuinely helpful up to the first real threat; after that, vanishes, hides, or freezes. The party can rely on them until they can't, and the moment of break is unpredictable.",
-  mistaken:
-    "RELIABILITY: mistaken — sincerely helpful, but their information is wrong or stale. They are not lying; they believe what they say. The map is out of date, the password was changed last week, the safe room is no longer safe. Trust their intent, not their data.",
-  mad_but_honest:
-    "RELIABILITY: mad-but-honest — cryptic, unhinged, NOT deceptive; truth in fragments. Speaks in riddles, half-finished sentences, name-drops things they shouldn't know. The party must work to extract the actual answer; once extracted, it is true. Madness is the texture, not the deceit.",
-  self_serving:
-    "RELIABILITY: self-serving — using the party for an unrelated end of their own; not hostile, just instrumental. The help is real and reliable as long as the party's path serves their unrelated goal; the moment those paths diverge, the contact disengages without warning.",
-  desperate:
-    "RELIABILITY: desperate — help is real but frantic; may endanger the party to save itself. Their stake is survival, and they will spend the party's safety for theirs without quite meaning to. Not an enemy; drowning, and the party is the nearest thing to a rope.",
-  hidden_motive:
-    "RELIABILITY: hidden motive — conceals a goal whose alignment with the party is UNDETERMINED. This is an OPEN QUESTION, not a scripted reveal. Do NOT resolve it into a betrayal OR a heartfelt reveal — hand the GM an undisclosed goal and let it play either way at the table. The contact behaves helpfully; the GM holds the concealed goal in reserve, deploying it when the party's choices intersect with it. Critically: the goal MAY align with the party, MAY conflict with them, or MAY be orthogonal — leave all three possibilities live.",
-  treacherous:
-    "RELIABILITY: treacherous — a deliberate plant or trap. Trusting them goes badly.\n\n" +
-    "The contact's rendered description MUST SIGNAL trap-ness — a stated motive that doesn't quite hold up, an interest in something they shouldn't care about, a moment of steering against the party's interest, an inconsistency the GM can dangle. The npc_list entry MUST flag the trap for the GM (the descriptor names the surface role AND the actual one).\n\n" +
-    "Note the load-bearing distinction: a contact who genuinely helps is genuine (different reliability value). A contact who genuinely informs is genuine. The treacherous render starts from the trap and works backward — the surface appearance is a costume the GM and players are meant to see through. The safe-default for a defector under a living_order is the helpful version; the treacherous render exists to overcome that default explicitly.\n\n" +
-    "Plant breadcrumbs so the betrayal is earnable rather than purely scripted. The betrayal LANDS — that is the role's purpose — but the GM has the option to let attentive players see it coming.",
+// Per-kind GM-facing directive. Each describes one categorical flavor
+// of contact — who they are, what they bring, what their condition or
+// cost is. Phrased as positive specs (what the contact IS and DOES).
+export const CONTACT_KIND_DIRECTIVES = {
+  informant:
+    "CONTACT KIND: informant. Knows something SPECIFIC and load-bearing about the dungeon — name what they know in concrete terms (the cistern floods on a 12-hour cycle; the inner sanctum's password rotates with the watch; the third sentry sleeps; the locked door has a key under a specific flagstone). Trades the information for a SPECIFIC COST (coin, protection on a specific journey, a favor the party will owe later, silence about something the informant did). 'Knowledge for safe passage' is the failure mode — both halves of the trade must be specific and table-runnable. Doesn't fight; the value is the data.",
+  guide:
+    "CONTACT KIND: guide. Knows the way deeper into the dungeon. Will lead the party through specific terrain, around specific hazards. Trades safe passage for coin, protection, or a stake in whatever the party retrieves. May abandon the party at the edge of their expertise.",
+  defector:
+    "CONTACT KIND: defector. Formerly served the dominant power; has turned for personal reasons (a slight, a crisis of belief, a debt called in). Can name weaknesses, identify rivals inside the order, point to the order's blind spots. The order treats them as a traitor on sight.",
+  prisoner:
+    "CONTACT KIND: prisoner. Held by the dominant power for a reason that matters (a witness, a hostage, a heretic, a debtor). Will help if freed; may be a liability — slow, hurt, hunted. Freeing them is itself an action with consequences for the dungeon.",
+  scholar_in_residence:
+    "CONTACT KIND: scholar_in_residence. A sage, antiquarian, or researcher who has been studying the dungeon — by license, by permission, or by stealth. Their KNOWLEDGE is SPECIFIC to their study — name what they've actually learned (the script's translation, the burial pattern, the cult's calendar, the seal's binding-clause), NOT generic 'history and defenses.' They trade for SPECIFIC FINDS the party can bring back or sketch in place — name what the scholar wants (rubbings of three particular sigils, the head of a creature they've heard but never seen, a sample from the central chamber's residue). Refusal to deliver the find ends the trade; they will not advance credit.",
+  hired_specialist:
+    "CONTACT KIND: hired_specialist. A mercenary, lockpick, arcanist, or healer hired by the party (or available to be hired). Provides a specific capability on contract. Loyal until paid, and only while the contract holds; will walk if the work exceeds the agreed scope.",
+  survivor:
+    "CONTACT KIND: survivor. The last living member of a prior expedition that went wrong here. Broken in some specific way (a maimed limb, a haunted memory, a half-taken curse) but useful. Their KNOWLEDGE must be SPECIFIC and reflect what they LEARNED at cost — name the concrete intel (a hidden chamber the patrol misses, the boss's nightly ritual, which mirrors are safe, the trap that took their hand) and the COST of sharing it (every retelling makes the memory worse; the spirit follows their voice; their hand bleeds when they speak of it; they lose another fragment of who they were). When relevant, tie them to the dungeon's existing history — if the entry shows handprints, bodies, or recent signs of a prior expedition, the survivor is from THAT expedition. May want rescue, revenge, or to finish what their party started — name which.",
+  dungeon_native:
+    "CONTACT KIND: dungeon_native. Born or raised inside the dungeon — cult-born, beast-raised, accidentally-orphaned. Knows the dungeon's rhythms from lived experience, not from study. Name the SPECIFIC knowledge they carry: a patrol schedule learned by hiding from it; the cycle of a hazard they grew up timing; the safe corners; a back-route the holders don't know exists. Their HELP has a COST — they need something from the party first (rescue someone the natives left behind, retrieve a specific object that belongs to them, get them out past a threshold they cannot cross alone). Their loyalty is to the PLACE itself, not any faction — they may sabotage the party if the party threatens what they love about the dungeon.",
+  bound_servitor:
+    "CONTACT KIND: bound_servitor. A spirit, elemental, or construct bound to serve the party — by a found item, an inherited oath, a magical accident, a contractual transfer. Helps within the binding's terms; the binding has a specific scope and a specific exit condition the party may or may not know.",
+  witness_chronicler:
+    "CONTACT KIND: witness_chronicler. A bard, scribe, or sworn witness traveling with the party to document what happens here. Doesn't fight; their value is the public record that follows. Allied because the party's success is the story they're recording, but their account is independent of the party's preferences.",
 };
-
-export const CONTACT_OFFERS_DIRECTIVES = {
-  information:
-    "OFFERS: information — what they know that the party doesn't. A map, a password, a name, a schedule, a weakness, the location of a thing. Costs vary: a price, a favor, a confession, a risk. Information makes plans possible.",
-  access:
-    "OFFERS: access — opens a door (literal or social) the party couldn't open alone. A back way, a way past a sentry, an introduction, a key, a uniform. Access changes which rooms are reachable; the cost is usually time, exposure, or a debt.",
-  force:
-    "OFFERS: force — fights alongside the party.\n\n" +
-    "MUST RENDER COMBAT CAPABILITY CONCRETELY in the contact's description: what they wield, what they can do in a fight, the condition on their participation. The party should be able to read the npc_list entry and know what this contact contributes IN COMBAT — by weapon, by tactic, by the moment they enter or leave the fight.\n\n" +
-    "Note the load-bearing distinction: a contact who guides or opens doors is access (different offers value). A contact who shares knowledge is information. The force render starts from the SWORD ARM — the contact's primary value is what they bring to the fight, not what they tell the party or where they lead them.\n\n" +
-    "KEEP THE CONTRIBUTION MODEST OR CONDITIONAL — they do not trivialize the dungeon. They might fight one encounter then fall, fight defensively only, fight at long range, or fight on a condition (the party gets them to a specific room first). The party does not get a free extra PC.",
-};
-
-export const CONTACT_INVENT_DIRECTIVE =
-  "CONTACT: open slot. The roll did not land on a listed reliability/offers combination. Invent a contact shape that genuinely answers 'what in-dungeon NPC can the party use, on what terms?' — and that is NOT a default scripted helper. The contact is a usable NODE with terms and costs; their reliability has a SHAPE (not just 'might help, might not'). Stay generic-fantasy; no real-world or trademarked references.";
-
-/**
- * Coherence-pass directives for the inference prompt. The LLM applies
- * these to the pre-rolled contact, returning either the pre-roll
- * confirmed or an override per the specific rules below.
- */
-export const CONTACT_COHERENCE_DIRECTIVES =
-  "COHERENCE CHECK for the pre-rolled CONTACT:\n\n" +
-  "You have three valid moves on the pre-rolled contact:\n" +
-  "(a) CONFIRM the pre-roll as-is.\n" +
-  "(b) DOWNGRADE TREACHEROUS UNDER A WILL-LESS HOLDER. If the pre-rolled reliability is 'treacherous' AND the holder is hazard_no_ruler, there is no agency to plant a betrayer. Downgrade reliability to one of: 'self_serving', 'cowardly', 'hidden_motive' (your pick — whichever best fits the holder + tension). The harm becomes incidental (the contact's own panic or self-interest endangers the party) rather than a designed trap.\n" +
-  "(c) DROP UNDER A NO-SURVIVORS TENSION. If presence is rolled true but the tension implies no one could have survived in this dungeon long enough to be found, EITHER explain the survival (a hidden niche, a recent breach) OR set the contact to { present: false }. Do not invent a contact that wasn't rolled.\n\n" +
-  "You may also LINK the contact to a present contender where natural — render them as a survivor of the contender's prior expedition, tying the two layers instead of leaving them parallel.\n\n" +
-  "Do NOT override merely because the contact is unusual. An unusual but possible contact is FINE (a treacherous defector from a thriving living_order is unusual but coherent — KEEP it). Override only on the specific rules above.";
 
 // ---------------------------------------------------------------------
 // POV frames (delivery vehicle for the overview-as-hook)
@@ -1197,7 +1267,16 @@ export const POV_FRAME_DIRECTIVES = {
     "POV FRAME: SAGE'S RUMOR. The overview is a secondhand scholarly assertion — what is said about this place by people who have READ about it but not entered. Bias: theoretical certainty; reliability: low on specifics, high on cultural memory. Include the qualifier ('it is said', 'the old maps mark it as') that admits the secondhand chain.",
 
   recovered_notes:
-    "POV FRAME: RECOVERED NOTES. The overview is an excerpt from a journal, ledger, or marginalia recovered from a prior expedition. Bias: the writer was inside; reliability: high on what they personally saw, ending where their record ends (often mid-sentence, often where they died or fled). Include the artifactual frame (a torn page, a final entry, a smear of mud across a paragraph).",
+    "POV FRAME: RECOVERED NOTES. The overview is an excerpt from a journal, ledger, or marginalia recovered from a prior expedition. Bias: the writer was inside; reliability: high on what they personally saw, low on the bigger picture.\n\n" +
+    "NEVER an escape narrative. The default-failure mode is 'I crawled out / made it out / escaped through a crack.' Skip it. The journal's writer is more often DEAD than escaped — the entry stops because they ran out of ink, ran out of light, ran out of life, or were taken mid-word. Their words survived; they did not.\n\n" +
+    "PICK from these anchoring shapes (rotate; the escape-narrative is exhausted):\n" +
+    "- MID-SURVEY ENTRY: an observational note from the middle of the expedition — what the writer saw, weighed, decided NOT to do today; ends because the writer set the journal down to act.\n" +
+    "- EARLY ENTRY, CONFIDENT: written before the disaster, when the writer still thought they understood the place. Reads warmly until the LAST line, which carries dramatic irony the writer didn't.\n" +
+    "- FINAL ENTRY, CUT OFF: the writer is mid-thought when something interrupts. The journal was found on the body, in the chamber, in the jaws. No escape; just the page.\n" +
+    "- LEDGER LINE: a dry accounting record — inventory, daily count, item received — that lands ominously because of WHAT is being counted (skulls, hours since contact, the number still answering the bell).\n" +
+    "- MARGINALIA: a few words scribbled in the white space of an unrelated document (a tax roll, a religious text, a contract). The writer used what they had.\n" +
+    "- DISPATCH TO A SUPERIOR: the writer is reporting back — formal salutation, terse observations, the institutional voice that breaks down only at the end.\n\n" +
+    "Include the artifactual frame in one phrase (a torn page, a smear of mud, ink half-bled, a ledger column, the margin of an old testament) and pick a shape that does NOT use 'I crawled out / I made it out.'",
 
   glimpsed_room:
     "POV FRAME: GLIMPSED ROOM. The overview is ONE room or ONE chamber seen through a gap — a crack in a wall, a scrying, the moment of an open door before it shut. Bias: severe partial information; reliability: high on the glimpsed detail, zero on context. The detail is concrete and specific; what it MEANS is the question that draws the party in.",
@@ -1230,14 +1309,10 @@ export const POV_FRAME_DIRECTIVES = {
  * Coupling: which POV frames are nonsensical against which holder
  * values. Used by pickRandomPovFrame to filter the eligible set.
  *
- *   failed_negotiation / tribute_caravan — need a holder you can
- *     parley with or deliver to; incompatible with hazard_no_ruler
- *     (nothing receiving).
+ * Empty since hazard_no_ruler was retired — every remaining holder
+ * can be parleyed with, delivered to, escaped from, or witnessed.
  */
-export const POV_FRAME_INCOMPATIBLE_HOLDERS = {
-  failed_negotiation: ['hazard_no_ruler'],
-  tribute_caravan: ['hazard_no_ruler'],
-};
+export const POV_FRAME_INCOMPATIBLE_HOLDERS = {};
 
 /**
  * Coupling: which POV frames are nonsensical against which tension
@@ -1278,103 +1353,21 @@ export function pickRandomPovFrame(rng = Math.random, { holder = null, tension =
 }
 
 /**
- * Pick a contact shape — orthogonal at roll time (no holder gating).
- * The coherence pass in the inference call reconciles against the
- * rest of the dimensions.
- *
- *   ~10% openSlot → { present: true, openSlot: true }
- *   ~55% present  → { present: true, reliability, offers }
- *   ~35% absent   → { present: false }
- *
- * present rolls slightly above 50% so the cohere pass can drop
- * incoherent contacts without depressing the effective rate too far.
- * Reliability and offers are uniform within their pools.
- */
-const CONTACT_OPEN_SLOT_RATE = 0.10;
-// Contact is the more generally useful element — common default,
-// absence is the meaningful minority. ~62.5% lands the effective
-// present-rate around 60% after the cohere pass drops the rare
-// incoherent cases (e.g. living contact + scoured-of-all-life place).
-const CONTACT_PRESENCE_RATE = 0.625;
-
-export function pickRandomContact(rng = Math.random) {
-  if (rng() < CONTACT_OPEN_SLOT_RATE) {
-    return { present: true, openSlot: true };
-  }
-  if (rng() >= CONTACT_PRESENCE_RATE) {
-    return { present: false };
-  }
-  const reliability = CONTACT_RELIABILITIES[Math.floor(rng() * CONTACT_RELIABILITIES.length)];
-  const offers = CONTACT_OFFERS[Math.floor(rng() * CONTACT_OFFERS.length)];
-  return { present: true, reliability, offers };
-}
-
 // ---------------------------------------------------------------------
-// Roll-time legibility rules (contender + contact)
+// SUPPRESS rule (used by pickRandomThirdParty above)
 // ---------------------------------------------------------------------
 
 /**
- * Tensions whose premise IS a separately-rolled contender — a rival
- * party mid-extraction. Rolling a contender on top of these is a
- * redundant double; suppress contender.present to false.
+ * Tensions whose premise IS already an adversarial outsider in play
+ * (a rival party mid-extraction, occupiers in residence). When these
+ * tensions roll, third_party's adversary type would double up — so
+ * the picker flips adversary rolls to ally type instead, keeping the
+ * dungeon legible. Ally rolls pass through unchanged.
  */
 export const RIVAL_TENSIONS = new Set([
   'occupied-by-rivals',
   'methodically-looted',
 ]);
-
-/**
- * Conditions under which a dungeon already supplies a crowd or
- * multiple parties. Under these, the contender + contact pair is
- * capped to at most one present.
- */
-export const CROWDED_HOLDERS = new Set(['several_unrelated', 'living_order']);
-export const CROWDED_TENSIONS = new Set(['pilgrimage-route']);
-
-/**
- * Apply roll-time legibility rules to a (contender, contact) pair.
- *
- *   SUPPRESS — if tension is rival-coded (the rival IS the contender),
- *     force contender.present = false. Contact unaffected.
- *
- *   CAP — under crowded holder OR tension, at most one of
- *     contender.present / contact.present may be true. If both rolled
- *     present, drop one at random (50/50, preserves variety).
- *
- * Order: SUPPRESS first, then CAP. Composes cleanly — suppress often
- * makes the cap a no-op.
- *
- * Unaffected combinations (lean holders, non-listed tensions) pass
- * through unchanged.
- *
- * @returns {{contender, contact}} adjusted pair
- */
-export function applyLegibilityRules({ contender, contact, holder, tension, motive = null, rng = Math.random } = {}) {
-  let outContender = contender;
-  let outContact = contact;
-
-  // SUPPRESS: rival-tensions force contender absent.
-  if (RIVAL_TENSIONS.has(tension)) {
-    outContender = { present: false };
-  }
-
-  // CAP: under crowded conditions, drop one of the pair if both are present.
-  // Under acquisition motive, the contender is LOAD-BEARING (the rival
-  // in the race IS the structure) — drop contact, never contender.
-  // All other motives: drop one at random (preserves variety).
-  const crowded = CROWDED_HOLDERS.has(holder) || CROWDED_TENSIONS.has(tension);
-  if (crowded && outContender && outContender.present && outContact && outContact.present) {
-    if (motive === 'acquisition') {
-      outContact = { present: false };
-    } else if (rng() < 0.5) {
-      outContender = { present: false };
-    } else {
-      outContact = { present: false };
-    }
-  }
-
-  return { contender: outContender, contact: outContact };
-}
 
 /**
  * Dungeon-specific overused tropes — the LLM's go-to narrative frames
@@ -1389,13 +1382,15 @@ export function applyLegibilityRules({ contender, contact, holder, tension, moti
  * require a gold hoard — but the explicit ban reinforces.
  */
 export const OVERUSED_DUNGEON_TROPES = [
-  "ancient seal weakening: a magical seal or ward is failing and must be maintained, repaired, or replaced. (If using sealed-and-stirring tension, frame the binding differently — as a chain, a sleep, a contract, a geographic prison, NOT a maintained ritual seal.)",
+  "ancient seal weakening: a magical seal or ward is failing and must be maintained, repaired, or replaced — AND the physical-disguise versions of the same pattern (a tremor cracks an ancient stone lid, water erodes a stopper, roots split a sealed door, an earthquake breaks the binding-wall). The functional move is identical — a sealed thing was holding back a bad thing, and now it isn't. (If using sealed-and-stirring tension, frame the binding differently — as a chain, a sleep, a contract, a geographic prison, a body that holds something inside it, a hunger that has not yet noticed, NOT a maintained ritual seal OR a physical lid that just cracked.)",
   "lich seeking phylactery: a lich's phylactery is hidden here, threatened, or must be recovered. The party finds the lich's true source of power.",
   "cult preparing summoning ritual: a cult is mid-ritual to summon a demon, devil, elder god, or other entity. The party must interrupt before completion.",
   "dragon hoarding gold: a dragon sits on a massive treasure hoard. The hoard is visible, central, and the obvious objective.",
   "silent order: a monastic or religious order that has taken a vow of silence and lives in the dungeon, communicating via gesture, runes, or chant. The vow is the order's defining trait. (If you need a monastic / scholarly / cult-of-keepers group, give them a working VOICED life — they argue, recite, negotiate, deliver oaths aloud. The vow-of-silence framing reads as instant atmospheric padding.)",
   "cosmic feeder at the center: an unnameable entity at the dungeon's heart that consumes, drinks, drains, or feeds on souls / memories / dreams / minds / light / time / heat / sound. Often described as 'hungering,' 'gnawing,' 'devouring,' or 'pulsing.' (The dungeon's central presence should have a SPECIFIC IDENTITY with stated motivations the GM can roleplay — a named entity with goals, not a metaphor for entropy.)",
   "bell-and-password gate: a closed door / gate / sliding window where the party rings a bell, pulls a coded rope, knocks a pattern, or exchanges a password through a slot, and admission is granted or refused. (When a social order needs an admission ritual, pick a mechanic with more grip on character and history: BIRTH PROOF (genealogy or token of lineage), TRIAL (a demonstrable feat — fast for X days, recover a relic, kill a specific creature), SPONSORSHIP (an existing member must vouch in person; no walk-ins), BODY MARK (tattoo / scar / brand checked by sight or touch), KNOWLEDGE TEST (an oral question with a rank-specific answer that changes seasonally), SACRAMENTAL CONSUMPTION (an order-specific food / drink the body reacts to if you weren't initiated), OATH BINDING (a magically or sworn oath the order can verify, that breaks if violated), or INVITATION ONLY (no door to knock on — the order finds you).)",
+  "dying-patron-needs-succession-document — HARD BAN: a patron / magister / lord is dying and the dungeon holds the specific legal document (oath-clause, succession-deed, naming-tablet, intestate-binding clause) that lets them appoint an heir or transfer title; the party must recover it before the bloodline dies untitled / the clans fall to a war-of-succession / the seat falls vacant. Variants: 'the only oath-clause that lets a magister appoint a successor,' 'the Husk-Tablets that authenticate the patron's succession,' 'the lost ritual that extends a magister's life past their oath-binding.' This pattern has clustered hard — four consecutive discovery dungeons used it. The motive's stakes can take MANY shapes; the patron-succession-document one is off the table for this generation. Reach for a different stake the knowledge resolves: a coming threat the knowledge counters (a binding-name for something about to be released elsewhere), a sworn debt the party owes that the knowledge cancels, a person the party needs to identify (who poisoned the well, who fathered the contested child, who really signed the treaty), a place the knowledge LOCATES (the safe route through the next region, the location of a missing kin's grave). Anything but the dying patron and their succession document.",
+  "bells as central mechanic — BROAD BAN: bells in ANY load-bearing dungeon role are banned. This covers (a) bell-signal alarms (a brass bell rung when the party is spotted, bell-system for shift-changes / lockdowns / rank-summons), (b) bell-rhythm as MYSTICAL FUNCTION (a forge-bell cadence that keeps a sleeping power asleep, a tolling that maintains a seal, a ringing that sustains a binding), (c) bell-timed PASSWORDS or shift-codes (a password that changes 'with the toll of the great bell'), (d) bell-towers or bell-rooms as ARCHITECTURAL ANCHORS (the great bell at the dungeon's center). Bells are the model's go-to mystical-infrastructure default and cluster across generations regardless of context. If your dungeon's central mechanic, alarm, or rhythm 'naturally' uses bells, REPLACE it with one of these mechanics instead, chosen for grain with the dungeon's culture: RUNNERS, CANDLE-SIGNALS, WATCH-TALLIES, DOG-HANDLERS, WHISTLE-CODES, PROCESSIONAL-REROUTE, SUMMONING SIGILS, SHIFT-CALL, DRUM-CYCLES, ANTIPHONAL CHANTS, WATER-CLOCK DRIPS, BREATH-WORK CHANTS, BANNER-DROPS, KNOTTED-CORD TALLIES, CLOCK-HAND POSITION-CHECKS. A forge that needs rhythm uses hammer-cadence on anvil or chant-time, not bells. A seal that needs sustained sound uses voice or wind-organ or drumming. A timing system uses water-clocks or candle-marks. The ban is broad because the cluster is broad — bells are off the table entirely for this generation.",
 ];
 
 // ---------------------------------------------------------------------
@@ -1431,8 +1426,48 @@ export function pickRegisterPoolSubset(register, rng = Math.random, n = 6) {
  * (no LLM involvement for tension; code-random gives uniform
  * distribution across the 15 entries).
  */
-export function pickRandomTension(rng = Math.random) {
-  return DUNGEON_TENSIONS[Math.floor(rng() * DUNGEON_TENSIONS.length)];
+/**
+ * Tier-weighting for tensions whose narrative scale doesn't fit low
+ * tiers cleanly. Weights below 1.0 reduce probability at that tier;
+ * above 1.0 increase. Tensions not listed are uniform across tiers.
+ *
+ * The cosmic-coded tensions (sealed-and-stirring, awakening-
+ * architecture, prison-breaking, dormant-with-witness) drift cosmic
+ * even when the prose tries to scope local — sealed-and-stirring at
+ * Tier 1 reliably produces "an ancient god stirs" framing regardless
+ * of the tier directive. Down-weighting at low tiers + up-weighting
+ * mortal-scale tensions (occupied-by-rivals, methodically-looted,
+ * freshly-occupied) is the cascade fix.
+ *
+ * forgotten-knowledge is mildly cosmic-coded (lost arcane knowledge
+ * tends to be old-and-large); soft down-weight at low tiers.
+ *
+ * Indexed by tier (1-5).
+ */
+export const TENSION_TIER_WEIGHTS = {
+  'sealed-and-stirring':    [0.2,  0.5, 1.0, 1.3, 1.5],
+  'awakening-architecture': [0.2,  0.5, 1.0, 1.3, 1.5],
+  'prison-breaking':        [0.3,  0.6, 1.0, 1.3, 1.5],
+  'dormant-with-witness':   [0.3,  0.6, 1.0, 1.2, 1.4],
+  'forgotten-knowledge':    [0.5,  0.7, 1.0, 1.2, 1.3],
+  'freshly-occupied':       [1.5,  1.3, 1.0, 0.7, 0.5],
+  'methodically-looted':    [1.5,  1.3, 1.0, 0.7, 0.5],
+  'occupied-by-rivals':     [1.5,  1.3, 1.0, 0.7, 0.5],
+  'boss-decline':           [1.3,  1.2, 1.0, 0.9, 0.8],
+  'pilgrimage-route':       [1.3,  1.2, 1.0, 0.9, 0.8],
+  'harvesting-operation':   [1.2,  1.1, 1.0, 1.0, 1.0],
+};
+
+export function pickRandomTension(rng = Math.random, { tier = null } = {}) {
+  const validTier = tier && DIFFICULTY_TIER_KEYS.includes(tier) ? tier : null;
+  if (!validTier) {
+    return DUNGEON_TENSIONS[Math.floor(rng() * DUNGEON_TENSIONS.length)];
+  }
+  const weights = DUNGEON_TENSIONS.map((t) => {
+    const tw = TENSION_TIER_WEIGHTS[t];
+    return tw ? tw[validTier - 1] : 1.0;
+  });
+  return weightedPick(DUNGEON_TENSIONS, weights, rng);
 }
 
 /**
@@ -1475,13 +1510,33 @@ export function pickWeightedDungeonType(tier, rng = Math.random) {
 }
 
 /**
- * Pick a random power structure from POWER_STRUCTURES, uniform
- * distribution. Code-picked rather than LLM-inferred for the same
- * reason as tension: the LLM clusters; code-random gives uniform
- * coverage across the 5 structural shapes.
+ * Pick a random power structure from POWER_STRUCTURES, weighted.
+ * Code-picked rather than LLM-inferred for the same reason as tension:
+ * the LLM clusters; code-random gives controlled coverage across the
+ * structural shapes.
+ *
+ * Weights (sum to 1.0):
+ *   single_apex       0.42 — apex-led dungeons, the staple shape
+ *   several_unrelated 0.42 — multiple-power coexistence
+ *   living_order      0.16 — infiltrations, deliberately a minority
+ *                            (the shape is satisfying but needs
+ *                            contrast to feel fresh)
  */
+export const POWER_STRUCTURE_WEIGHTS = {
+  single_apex:       0.42,
+  several_unrelated: 0.42,
+  living_order:      0.16,
+};
+
 export function pickRandomPowerStructure(rng = Math.random) {
-  return POWER_STRUCTURES[Math.floor(rng() * POWER_STRUCTURES.length)];
+  const r = rng();
+  let cumulative = 0;
+  for (const ps of POWER_STRUCTURES) {
+    cumulative += POWER_STRUCTURE_WEIGHTS[ps] || 0;
+    if (r < cumulative) return ps;
+  }
+  // Defensive: floating-point edge case (r === 1.0). Fall through to last.
+  return POWER_STRUCTURES[POWER_STRUCTURES.length - 1];
 }
 
 /**
@@ -1551,7 +1606,7 @@ export const MONSTER_CREATURE_TYPES = [
   'undead',
   'construct',
   'beast',
-  'aberration',
+  'abyssal',
   'fey',
   'elemental',
   'ooze_or_swarm',
@@ -1571,7 +1626,7 @@ export const CREATURE_COGNITION = {
   undead:        'flexible',
   construct:     'mindless_bound',
   beast:         'animal',
-  aberration:    'alien_mindful',
+  abyssal:       'alien_mindful',
   fey:           'mindful',
   elemental:     'mindless_bound',
   ooze_or_swarm: 'mindless',

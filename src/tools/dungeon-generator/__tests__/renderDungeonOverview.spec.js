@@ -14,6 +14,7 @@ function newShape(overrides = {}) {
     name: 'Eikheim Barrow',
     title: 'Tomb of the Singing Bones',
     overview: 'A low mound of moss-furred stone.',
+    quest_hook: 'An Ash-Bearer factor pays 200gp for the Singing Bones before the next full moon.',
     relation_to_larger_setting: 'At the southern edge of the Iron Hills.',
     approach_and_threshold: 'A worn stone stair descends into a phosphorescent chamber.',
     history: 'Built three centuries ago.',
@@ -23,8 +24,12 @@ function newShape(overrides = {}) {
     hazards_and_dangers: 'Doors close on a slow rune-clock.',
     notable_hazard_facet: '',
     central_dynamic: 'Vetheras stirs more each cycle.',
-    current_occupation: 'Three cultists are conducting the seventh vigil.',
     present_state: 'The barrow hums faintly at midnight.',
+    resolution_paths: [
+      'Smash the central vault\'s phylactery-altar.',
+      'Bind Vetheras into a fresh dreamless sleep.',
+      'Seal the entrance and let the cult starve.',
+    ],
     difficulty_level: 'A Tier 1 dungeon for novice adventurers.',
     named_entities: ['Vetheras', 'Aldwyn'],
     ...overrides,
@@ -58,19 +63,28 @@ function legacyShape(overrides = {}) {
 describe('pickSectionMap', () => {
   it('picks NEW map when central_dynamic is present', () => {
     const map = pickSectionMap(newShape());
-    // New map has a 'Hazards' section; legacy doesn't.
-    expect(map.some(s => s.heading === 'Hazards')).toBe(true);
+    // New map has Resolution Paths; legacy doesn't.
+    expect(map.some(s => s.heading === 'Resolution Paths')).toBe(true);
   });
 
   it('picks LEGACY map when finding_the_dungeon is present and central_dynamic is not', () => {
     const map = pickSectionMap(legacyShape());
-    // Legacy map does NOT have a 'Hazards' section.
-    expect(map.some(s => s.heading === 'Hazards')).toBe(false);
+    // Legacy map does NOT have Resolution Paths.
+    expect(map.some(s => s.heading === 'Resolution Paths')).toBe(false);
   });
 
   it('defaults to NEW map for unknown shapes (no markers)', () => {
     const map = pickSectionMap({ name: 'x' });
-    expect(map.some(s => s.heading === 'Hazards')).toBe(true);
+    expect(map.some(s => s.heading === 'Resolution Paths')).toBe(true);
+  });
+
+  it('neither section map renders a Hazards section (hazards is downstream-only)', () => {
+    // hazards_and_dangers stays in the JSON schema for the room
+    // generator, but the GM-facing UI no longer renders a Hazards
+    // section — the field's content surfaces via POV / inhabitants /
+    // present_state consequences instead.
+    expect(pickSectionMap(newShape()).some(s => s.heading === 'Hazards')).toBe(false);
+    expect(pickSectionMap(legacyShape()).some(s => s.heading === 'Hazards')).toBe(false);
   });
 
   it('handles null / non-object input', () => {
@@ -83,11 +97,16 @@ describe('pickSectionMap', () => {
 describe('consolidateOverviewToMarkdown — new shape', () => {
   it('produces the expected section structure', () => {
     const md = consolidateOverviewToMarkdown(newShape());
+    expect(md).toContain('## Quest Hook');
     expect(md).toContain('## Approach');
     expect(md).toContain('## History');
     expect(md).toContain('## Inhabitants');
-    expect(md).toContain('## Hazards');
     expect(md).toContain('## Present State');
+    expect(md).toContain('## Resolution Paths');
+    // Hazards section was dropped from the UI render — the field is
+    // still generated, validated, and persisted, but surfaces to the
+    // GM via POV / inhabitants / present_state consequences.
+    expect(md).not.toContain('## Hazards');
     // Difficulty section was removed from the UI render — verify it's gone.
     expect(md).not.toContain('## Difficulty');
     // Region merged into Approach in the consolidation.
@@ -96,6 +115,45 @@ describe('consolidateOverviewToMarkdown — new shape', () => {
     expect(md).not.toContain('## Dominant Power');
     // Treasures section was dropped in design — verify it's gone.
     expect(md).not.toContain('## Treasures');
+  });
+
+  it('renders Quest Hook as a non-list section right after the lead', () => {
+    const md = consolidateOverviewToMarkdown(newShape());
+    const leadEnd = md.indexOf('## ');
+    expect(md.slice(leadEnd, leadEnd + 100)).toContain('## Quest Hook');
+    expect(md).toContain('An Ash-Bearer factor pays 200gp');
+  });
+
+  it('renders Resolution Paths with each path as its own paragraph', () => {
+    const md = consolidateOverviewToMarkdown(newShape({
+      resolution_paths: [
+        '**Fast/costly:** Smash the central vault\'s phylactery-altar.',
+        '**Slow/clean:** Bind Vetheras into a fresh dreamless sleep.',
+        '**Cheap/partial:** Seal the entrance and let the cult starve.',
+      ],
+    }));
+    const idx = md.indexOf('## Resolution Paths');
+    expect(idx).toBeGreaterThan(-1);
+    const section = md.slice(idx);
+    // Each path appears verbatim with its bold prefix and lives on
+    // its own paragraph (separated by blank lines from neighbors).
+    expect(section).toContain('**Fast/costly:** Smash the central vault\'s phylactery-altar.');
+    expect(section).toContain('**Slow/clean:** Bind Vetheras into a fresh dreamless sleep.');
+    expect(section).toContain('**Cheap/partial:** Seal the entrance and let the cult starve.');
+    // Paragraph break between paths (double newline).
+    expect(section).toMatch(/Fast\/costly:.*\n\n\*\*Slow\/clean:/s);
+  });
+
+  it('Resolution Paths section is skipped when resolution_paths is empty', () => {
+    const md = consolidateOverviewToMarkdown(newShape({ resolution_paths: [] }));
+    expect(md).not.toContain('## Resolution Paths');
+  });
+
+  it('Resolution Paths section is skipped when resolution_paths is missing', () => {
+    const overview = newShape();
+    delete overview.resolution_paths;
+    const md = consolidateOverviewToMarkdown(overview);
+    expect(md).not.toContain('## Resolution Paths');
   });
 
   it('lead has no heading', () => {
@@ -111,9 +169,11 @@ describe('consolidateOverviewToMarkdown — new shape', () => {
     expect(md).toContain('Skeleton wardens and a cultist vigil in the antechamber.');
     expect(md).toContain('The cultists have begun arguing among themselves.');
     // All three pieces should be under the merged Inhabitants section.
+    // The next section after Inhabitants is Present State (Hazards
+    // is no longer rendered in UI).
     const inhabitantsIndex = md.indexOf('## Inhabitants');
-    const hazardsIndex = md.indexOf('## Hazards');
-    const section = md.slice(inhabitantsIndex, hazardsIndex);
+    const presentStateIndex = md.indexOf('## Present State');
+    const section = md.slice(inhabitantsIndex, presentStateIndex);
     expect(section).toContain('Skeleton wardens');
     expect(section).toContain('arguing among themselves');
     // The dominant_power field is also under this section.
@@ -129,12 +189,11 @@ describe('consolidateOverviewToMarkdown — new shape', () => {
     expect(section).toContain('A worn stone stair descends');
   });
 
-  it('combines central_dynamic + current_occupation + present_state into one Present State section', () => {
+  it('combines central_dynamic + present_state into one Present State section', () => {
     const md = consolidateOverviewToMarkdown(newShape());
     const presentIndex = md.indexOf('## Present State');
     const section = md.slice(presentIndex);
     expect(section).toContain('Vetheras stirs more each cycle.');
-    expect(section).toContain('Three cultists are conducting the seventh vigil.');
     expect(section).toContain('The barrow hums faintly at midnight.');
   });
 
@@ -143,18 +202,21 @@ describe('consolidateOverviewToMarkdown — new shape', () => {
       notable_inhabitant_facet: '',
       notable_hazard_facet: '',
     }));
-    // Sections still present, just with one less field each.
+    // Inhabitants is still present (it has fields beyond the facet).
     expect(md).toContain('## Inhabitants');
-    expect(md).toContain('## Hazards');
+    // Hazards is not rendered in UI regardless of facet state.
+    expect(md).not.toContain('## Hazards');
   });
 
-  it('skips entire sections when all fields are blank', () => {
-    const overview = newShape({
-      hazards_and_dangers: '',
-      notable_hazard_facet: '',
-    });
-    const md = consolidateOverviewToMarkdown(overview);
+  it('hazards_and_dangers stays in JSON but never renders to UI', () => {
+    // Even with populated hazards content, the UI render skips it.
+    const md = consolidateOverviewToMarkdown(newShape({
+      hazards_and_dangers: 'A fully-populated hazards block with concrete threats.',
+      notable_hazard_facet: 'A facet detail.',
+    }));
     expect(md).not.toContain('## Hazards');
+    expect(md).not.toContain('A fully-populated hazards block');
+    expect(md).not.toContain('A facet detail');
   });
 });
 
@@ -209,7 +271,10 @@ describe('renderOverview', () => {
     const ast = renderOverview(newShape());
     expect(ast.lead).toBeTruthy();
     expect(ast.sections.length).toBeGreaterThan(0);
-    expect(ast.sections.some(s => s.heading === 'Hazards')).toBe(true);
+    // New shape has Resolution Paths (legacy doesn't).
+    expect(ast.sections.some(s => s.heading === 'Resolution Paths')).toBe(true);
+    // Hazards is dropped from UI render even in the new shape.
+    expect(ast.sections.some(s => s.heading === 'Hazards')).toBe(false);
   });
 
   it('returns parsed AST for legacy-shape overview', () => {

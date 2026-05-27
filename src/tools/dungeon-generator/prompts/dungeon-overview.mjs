@@ -15,7 +15,7 @@
  *     and PRESENT-TENSE. Dungeons are usually supernatural already;
  *     this rule guards against past-tense "the lich king once ruled here"
  *     framings that read as historical fiction.
- *   - Tension shapes the field framings (central_dynamic, current_occupation,
+ *   - Tension shapes the field framings (central_dynamic, inhabitants,
  *     present_state read through the tension's lens).
  *   - Difficulty modulates stake-scope of the prose throughout
  *     (Tier 1 = local, Tier 5 = cosmic) AND drives monster CR triplet.
@@ -41,12 +41,9 @@ import {
   ORGANIZING_LOGIC_DIRECTIVES,
   CONTENDER_PRESENT_FRAMING,
   CONTENDER_KIND_DIRECTIVES,
+  CONTACT_KIND_DIRECTIVES,
   POV_FRAME_DIRECTIVES,
   CONTACT_PRESENT_FRAMING,
-  CONTACT_ABSENT_DIRECTIVE,
-  CONTACT_RELIABILITY_DIRECTIVES,
-  CONTACT_OFFERS_DIRECTIVES,
-  CONTACT_INVENT_DIRECTIVE,
   MOTIVE_DIRECTIVES,
   MOTIVE_PRESENT_STATE_CLAUSES,
   MOTIVE_DIFFICULTY_CLAUSES,
@@ -77,11 +74,10 @@ const BASELINE_DOMINANT_POWER_FIELD_TEXT =
  * @param {string[]} [args.bannedTropes] - rotating ban subset from getBannedDungeonTropesForGeneration
  * @param {string|null} [args.powerStructure] - one of POWER_STRUCTURES (or null for legacy callers). Injects a POWER STRUCTURE constraint block near the CENTRAL TENSION block. For non-apex values, also replaces the dominant_power schema field instruction with a value-specific override that permits the field to describe a non-apex situation (multiple unrelated forces, a hazard, an institution, an absence).
  * @param {string[]|null} [args.organizingLogic] - array of 1 or 2 entries from ORGANIZING_LOGICS, or null for legacy callers. Injects organizing-logic forces block(s) describing what the place was built or shaped for. Composite (length 2) injects both directives.
- * @param {Object|null} [args.contender] - shape `{ present: boolean, kind? }`, or null for legacy callers. When `present: true`, injects CONTENDER_PRESENT_FRAMING + the per-kind directive from CONTENDER_KIND_DIRECTIVES (one of 19 categorically distinct contender shapes). When `present: false`, no contender block is injected.
+ * @param {Object|null} [args.thirdParty] - unified outsider shape `{ present: boolean, type?: 'adversary'|'ally', kind? }`, or null for legacy callers. When `present: true` + `type: 'adversary'`, injects CONTENDER_PRESENT_FRAMING + the per-kind directive from CONTENDER_KIND_DIRECTIVES (19 adversary shapes). When `present: true` + `type: 'ally'`, injects CONTACT_PRESENT_FRAMING + the per-kind directive from CONTACT_KIND_DIRECTIVES (10 ally shapes). When `present: false` or null, no block is injected.
  * @param {string|null} [args.povFrame] - one entry from POV_FRAMES (or null for legacy callers). When set, injects the POV FRAME block and rewrites the overview schema field instruction to invoke the rolled frame as a POV hook (the single carve-out from OPERATIONAL_VOICE_BLOCK).
  * @param {string|null} [args.placeType] - the place-type noun for the dungeon's title (Sepulcher, Hold, etc.), pre-rolled in code from the bucket gated on organizingLogic. When set, injected into the name-templates section as a HARD CONSTRAINT (overrides the free-list vocabulary). Null falls back to the free list.
  * @param {Object|null} [args.nameTemplate] - one entry from NAME_TEMPLATES `{id, shape, requiresRegister, examples}` (or null for legacy callers). When set, the prompt replaces the full template listing with the single rolled template + compound-adjective nudge for B/F. Null falls back to the full template list + bias warning.
- * @param {Object|null} [args.contact] - fold object `{ present: boolean, reliability?, offers?, openSlot? }`, or null for legacy callers. When `present: true`, injects the contact framing + reliability + offers directives (or the invent directive for the open slot). When `present: false`, no contact block is injected.
  * @param {string[]|null} [args.registerPool] - rotated subset of the rolled register's curated character pool (6 names). When non-empty, injected into the register section as SAMPLE NAMES the LLM derives from (does NOT copy). Null for catchall registers; descriptor-only fallback.
  * @param {string|null} [args.motive] - one of MOTIVES (acquisition / prevention / recovery / discovery / invent), or null for legacy callers. When set, injects the MOTIVE block and appends motive-aware clauses to present_state, difficulty_level, and central_dynamic schema field text.
  * @param {string|null} [args.formedNature] - one of FORMED_NATURES (phenomenon / remnant), only set when 'formed' is in organizingLogic. Null otherwise. When set, injects the FORMED_NATURE_FRAMING + per-value directive to force the ambient force out of cosmic-horror formlessness into either inert-physics or named-specific-remnant.
@@ -100,11 +96,10 @@ export function dungeonOverviewPrompt({
   bannedTropes = [],
   powerStructure = null,
   organizingLogic = null,
-  contender = null,
+  thirdParty = null,
   povFrame = null,
   placeType = null,
   nameTemplate = null,
-  contact = null,
   registerPool = null,
   motive = null,
   formedNature = null,
@@ -125,53 +120,40 @@ export function dungeonOverviewPrompt({
   const tensionDescription = DUNGEON_TENSION_DESCRIPTIONS[tension]
     || 'a central dramatic situation that gives this dungeon its shape and pacing.';
 
-  // Place-type vocabulary line — when placeType is pre-rolled from
-  // the organizing-logic bucket, inject as a hard constraint. When
-  // null (legacy callers, or 'invent' open-slot organizingLogic),
-  // fall back to the free list so the LLM picks contextually.
-  // Name-template section. When nameTemplate is pre-rolled, REPLACE the
-  // full template listing with the single rolled template (variety is
-  // enforced by the roller, not by prose guidance). When null, fall
-  // back to the full listing.
-  const compoundAdjectiveNudge = (nameTemplate && (nameTemplate.id === 'B' || nameTemplate.id === 'F'))
-    ? "\n\nFor the [English-adjective] slot, prefer a SINGLE-WORD adjective ('Hollow', 'Burnt', 'Silent', 'Cold', 'Iron', 'Sunken'). AVOID compound hyphenated adjectives like 'Bread-Warm', 'Monsoon-Carved', 'Shadow-Cindered' — they read as their own samey cluster across generations."
-    : '';
-
+  // Name template section. When nameTemplate is pre-rolled, REPLACE
+  // the full template listing with the single rolled template. When
+  // null, list all four shapes. All templates are register-agnostic
+  // and image-anchored: the load-bearing word is a concrete noun
+  // mined from the dungeon's body fields (which the LLM has already
+  // written by the time it reaches the name field at the end).
   const nameTemplatesBlock = nameTemplate
     ? `NAME TEMPLATE FOR THIS GENERATION (pre-rolled in code; do not substitute another shape):
 
   Template ${nameTemplate.id} — ${nameTemplate.shape}
     Examples: ${nameTemplate.examples.map(e => `"${e}"`).join('  ·  ')}
 
-Fill the slot(s) using the register (for register-flavored proper nouns) and the place-type noun specified below.${compoundAdjectiveNudge}`
-    : `NAME TEMPLATES — pick ONE per generation. Each template produces a different rhythm; rotating across templates is the variety mechanism. Match the template to the dungeon's type and tension rather than reaching for the same pattern every time.
+Fill the [image] slot per the IMAGE-FROM-CONTENT rule below. The place-type noun is specified below.`
+    : `NAME TEMPLATES — pick ONE per generation. Frames are free; the image is mandatory.
 
-  Template A — [Register-noun] [Place-type]
-    "Eikheim Barrow"  ·  "Vetha Crypt"  ·  "Drakhal Mine"  ·  "Slánú Hold"
+  Template A — [image] [place-type]
+    "Bone Hollow"  ·  "Mirror Tomb"  ·  "Salt Sepulcher"  ·  "Glass Warren"
 
-  Template B — [English-adjective] [Place-type]
-    "Hollow Vault"  ·  "Burnt Spire"  ·  "Silent Hold"  ·  "Drowned Catacombs"
+  Template B — [adjective] [image] [place-type]
+    "Frigid Bone Hollow"  ·  "Drowned Mirror Tomb"  ·  "Hollow Salt Sepulcher"
 
-  Template C — [Place-type] of [Register-noun]
-    "Crypt of Vetheras"  ·  "Tomb of Eikheim"  ·  "Vault of Halgrim"  ·  "Sepulcher of Slánú"
+  Template C — [place-type] of (the) [image]
+    "Garden of Bone"  ·  "Choir of Ash"  ·  "Cathedral of Salt"  ·  "Sanctum of Unfading Roses"  ·  "Nest of the Grik-torn"
 
-  Template D — [Place-type] of [English-noun phrase]
-    "Halls of Slow Light"  ·  "Sepulcher of Bones"  ·  "Tomb of the Last King"  ·  "Pit of Long Names"
+  Template D — [image]-[participle] [place-type]
+    "Moss-Buried Warren"  ·  "Grief-Sunk Hall"  ·  "Wax-Sealed Hold"
 
-  Template E — [Register-noun]'s [Place-type]
-    "Vetheras's Crypt"  ·  "Halgrim's Hold"  ·  "Brunhild's Sanctum"  ·  "Eikheim's Maze"
+  Template E — [name]'s [image] [place-type]
+    "Aethorix's Ash Mill"  ·  "Gwenfaer's Glass Compound"  ·  "Vetheras's Bone Crypt"
 
-  Template F — [English-adjective] [English-noun]
-    "Sunken Wreck"  ·  "Iron Sanctum"  ·  "Cold Citadel"  ·  "Bright Hollow"`;
+  Template F — The [image]
+    "The Maw"  ·  "The Cradle"  ·  "The Drowning"  ·  "The Witherward"  ·  "The Quiet Mile"  ·  "The Last Forge"`;
 
-  // The bias warning only fires when the templates listing is shown.
-  // With a pre-rolled template the rotation is mechanical and the
-  // warning isn't needed (would just confuse the LLM about a shape it
-  // wasn't given).
-  const templateBiasWarning = nameTemplate
-    ? ''
-    : `\n\nTEMPLATE-BIAS WARNING:
-Templates A, C, and E (the noun-modifier and of-/possessive shapes) are the LLM's grammatical safe-defaults. They will dominate without active rebalancing — every dungeon ending up "X Barrow" or "Crypt of X" is the failure mode. Treat them as ONE option among six, not the reflex. Templates B, D, and F (adjective-led and English-noun-phrase shapes) carry mood the others don't — reach for them when the dungeon's tension calls for atmosphere over a single proper noun. A session log of ten dungeons should show four or five different templates, not ten variants of one.`;
+  const templateBiasWarning = '';
 
   const placeTypeLine = placeType
     ? `Place-type noun for THIS generation: USE EXACTLY "${placeType}" — pre-rolled in code from the bucket gated on the rolled organizing logic. Do NOT substitute another noun (no "Sepulcher" for a containment place, no "Tomb" for a foundry, etc.). The template choice is yours; the noun is fixed.`
@@ -198,41 +180,33 @@ ${nameTemplatesBlock}
 
 ${placeTypeLine}${templateBiasWarning}
 
+IMAGE-FROM-CONTENT — THE LOAD-BEARING RULE:
+The name's [image] slot MUST be a concrete element mined from the dungeon you have ALREADY written above (history, dominant_power, inhabitants, hazards, central_dynamic, present_state, resolution_paths, the prize). Pick the dungeon's strangest TRUE detail. The image can take any of five forms — pick whichever the dungeon offers most strongly:
+
+(1) A THING — the signature creature, the central relic, the material that pervades the place. Mine from inhabitants / hazards / prize. Examples: "Bone Hollow," "Mirror Tomb," "Salt Sepulcher."
+
+(2) AN EVENT — something that HAPPENED that the dungeon still carries. Mine from history. The name encodes a micro-story; the verb is the load-bearer. Examples: "The Last Forge," "The Drowning," "The Sundered Vigil," "Vault of the Broken Oath."
+
+(3) AN OXYMORON — the dungeon's central contradiction, named directly. The uncanny pairing is the strongest intrigue device. Mine from the friction inside the dungeon's own premise — what is here that shouldn't be, what continues that ought to have ended. Examples: "Unfading Roses," "Weeping Forge," "Sunless Bloom," "Living Tomb," "Sanctum of the Unburied."
+
+(4) A NUMBER — a real count from the dungeon that becomes ominous through specificity. Instantly concrete, instantly strange. The number is mined: why seven? Because the dungeon literally has seven of the thing. Examples: "The Seven Rings," "The Thirteenth Hold," "House of Four Doors."
+
+(5) A CONSEQUENCE — what the place DOES to anyone who enters. A name as warning. Mine from hazards / inhabitants' effects on prior visitors. Examples: "The Witherward," "Marrowdrink," "The Quiet Mile," "Hollow Hall of the Forgetting."
+
+Frames are free — possessive, "of," adjective-noun, compound participle, image-led — all work IF the image is doing the load-bearing work. A SINGLE-WORD EVOCATIVE COMPOUND is also a valid name on its own (Ashfall, Gravenmoor, Coldreave) — these read as places on a real map and don't need a separate place-type when the compound fuses image and place. What does NOT work: an adjective or place-type alone with no concrete image. "Cold Hollow" is empty; "Bone Hollow" lives because Bone is mined from the dungeon. "Aethorix's Mill" is dead; "Aethorix's Ash Mill" lives because Ash carries the weight and Aethorix is flavor.
+
+The image must point to something already in your prose — a reader should be able to find it. If the image is an EVENT, the event is named in history. If an OXYMORON, both halves of the contradiction surface in the prose. If a NUMBER, the count is real and verifiable in the body fields. If a CONSEQUENCE, the effect is shown in hazards or inhabitants. If you cannot find an image in your prose, the prose itself is too generic; rewrite a field before naming the dungeon.
+
 HARD RULES (verify the chosen name before returning):
-- 2-5 English words total. Compact, scannable, sayable.
-- DO NOT begin the name with a leading article ("the", "a", "an"). The name STARTS with its first content word — a proper noun, adjective, or place-type. Examples: "Hollow Vault" not "the Hollow Vault"; "Halls of Slow Light" not "the Halls of Slow Light"; "Sunken Wreck" not "the Sunken Wreck". The article-led variant is the failure mode that makes a session log of ten dungeons read as ten names starting with "the".
-- AT MOST ONE word may be register-flavored (a 1-3 syllable proper noun like "Eikheim", "Vetha", "Slánú"). All other words are English.
-- NO foreign-language conjunctions, articles, or particles in the name ("an", "na", "ša", "el", "del", "tabal-ša"). If the register's natural naming uses these particles, that grammar stays inside the dungeon — on chambers, NPCs, items — NEVER in the dungeon's display name.
+- 2-5 English words total (1 word is fine when it's an evocative compound like "Ashfall"). Compact, scannable, sayable.
+- Leading "the" is allowed ONLY when the rolled template is F ("The [image]" — "The Maw," "The Cradle"). Every other template starts with its first content word, no article. Leading "a" / "an" is never allowed.
+- AT MOST ONE word may be register-flavored (a 1-3 syllable proper noun). All other words are English.
+- NO foreign-language conjunctions, articles, or particles in the name ("an", "na", "ša", "el", "del"). If the register's natural naming uses these particles, that grammar stays inside the dungeon — on chambers, NPCs, items — NEVER in the dungeon's display name.
 
 TRANSLATION HANDOFF — mirrors the item-generator translation rule.
 When the register is non-English (Norse, Welsh, Old-Irish, Mesopotamian, Yoruba, Quechua, etc.), the culturally-rooted original-language phrase (the kind a register's poets would actually use) does NOT go in the "name" field. It goes in the FIRST SENTENCE of the "overview" field with cultural framing — so the GM has an English handle for their session notes and the cultural specificity is established once, in prose, where it belongs.
 
-DON'T:
-  name: "Fuar-chroí an Slánú"
-  overview: "The barrow sits low..."
-
-DO:
-  name: "Slánú Barrow"
-  title: "Cold Heart of Salvation"
-  overview: "Known to the highland folk as Fuar-chroí an Slánú — the cold heart of salvation — the barrow sits low..."
-
-DON'T:
-  name: "Uaigheanna na nGaoth Fuar"
-  overview: "A wind-scoured tomb..."
-
-DO:
-  name: "Crypt of Cold Winds" (Template C with English noun-phrase) — OR — "Wind-Scoured Crypt" (Template B)
-  title: "Where the Gales Never Settle"
-  overview: "The folk who buried their dead here called this place Uaigheanna na nGaoth Fuar — the graves of cold winds. A wind-scoured tomb..."
-
-The English name is for usability at the table; the original-language phrase in the overview's first sentence is what makes the dungeon culturally rooted rather than culturally-flavored generic. Mention the original-language phrase ONCE in the overview — do not repeat it across other fields.
-
-FAIL examples (these have NO English name and put the foreign phrase in the name field):
-  name: "Uaigheanna na nGaoth Fuar"
-  name: "Túath an Bhanríon Marbh"
-  name: "Kírkjuvegr-jökulsbrú"
-  name: "Fuar-chroí an Slánú"
-  name: "Mausoleum tabal-ša-Esagila"
+Worked example of the handoff: a register's culturally-rooted original-language phrase is mentioned ONCE in the overview's first sentence — "Known to the highland folk as [phrase] — [English translation] — the barrow sits low..." — and the "name" field carries the English-readable name (image-anchored per the rule above). Don't repeat the original-language phrase across other fields.
 
 ${REGISTER_PROSE_DIRECTIVE}`
     : `LINGUISTIC REGISTER: none specified. ${
@@ -278,46 +252,32 @@ ${REGISTER_PROSE_DIRECTIVE}`
         .join('\n\n')}\n`
     : '';
 
-  // Contender (rival outsider racing the party) block. Built from
-  // the rolled fold: { present, position?, stance?, openSlot? }.
-  // Absent (present: false) injects no block at all.
-  let contenderBlock = '';
-  if (contender && contender.present) {
-    const kindPart = contender.kind && CONTENDER_KIND_DIRECTIVES[contender.kind]
-      ? `\n\n${CONTENDER_KIND_DIRECTIVES[contender.kind]}`
+  // Third-party block — the unified non-controlling outsider. ONE
+  // third party per dungeon (adversary OR ally, never both). When
+  // absent, no block is injected. When present, the framing + per-kind
+  // directive matches the rolled type/kind.
+  let thirdPartyBlock = '';
+  const tpPresent = thirdParty && thirdParty.present;
+  if (tpPresent && thirdParty.type === 'adversary') {
+    const kindPart = thirdParty.kind && CONTENDER_KIND_DIRECTIVES[thirdParty.kind]
+      ? `\n\n${CONTENDER_KIND_DIRECTIVES[thirdParty.kind]}`
       : '';
-    contenderBlock = `\n${CONTENDER_PRESENT_FRAMING}${kindPart}\n`;
+    thirdPartyBlock = `\n${CONTENDER_PRESENT_FRAMING}${kindPart}\n`;
+  } else if (tpPresent && thirdParty.type === 'ally') {
+    const kindPart = thirdParty.kind && CONTACT_KIND_DIRECTIVES[thirdParty.kind]
+      ? `\n\n${CONTACT_KIND_DIRECTIVES[thirdParty.kind]}`
+      : '';
+    thirdPartyBlock = `\n${CONTACT_PRESENT_FRAMING}${kindPart}\n`;
   }
 
-  // Contact block — mirror of contender, gated on contact.present.
-  // Present: framing + reliability + offers (or invent for open slot).
-  // Absent: explicit "no helpful insider" directive, so the LLM
-  //   doesn't manufacture a sympathetic helper to fill the gap.
-  let contactBlock = '';
-  if (contact && contact.present) {
-    if (contact.openSlot) {
-      contactBlock = `\n${CONTACT_INVENT_DIRECTIVE}\n`;
-    } else {
-      const reliabilityPart = contact.reliability && CONTACT_RELIABILITY_DIRECTIVES[contact.reliability]
-        ? `\n\n${CONTACT_RELIABILITY_DIRECTIVES[contact.reliability]}`
-        : '';
-      const offersPart = contact.offers && CONTACT_OFFERS_DIRECTIVES[contact.offers]
-        ? `\n\n${CONTACT_OFFERS_DIRECTIVES[contact.offers]}`
-        : '';
-      contactBlock = `\n${CONTACT_PRESENT_FRAMING}${reliabilityPart}${offersPart}\n`;
-    }
-  } else if (contact && contact.present === false) {
-    contactBlock = `\n${CONTACT_ABSENT_DIRECTIVE}\n`;
-  }
-
-  // npc_list third-NPC line — gated on contact presence. When contact
-  // is present, the contact IS the third NPC (don't manufacture
-  // another one). When absent, the third NPC is an antagonist or
-  // neutral (NEVER a helper-flavored captive / hermit / defector
-  // shape — that's what the absent contact directive forbids).
-  const thirdNpcLine = (contact && contact.present)
-    ? "3. The CONTACT (see CONTACT block above) — render them as the named third NPC with reliability and offers matching the rolled axes. Do NOT add a second helper-shaped NPC."
-    : "3. At least one other named NPC — an ANTAGONIST or NEUTRAL ONLY: a rival faction leader, a sub-boss the order has put in charge of a wing, a sentry-captain with a name, a neutral witness who refuses to take sides. NEVER a helper-shaped figure (no captive who knows a secret way, no turnable defector, no sympathetic hermit) — there is no contact in this dungeon by design.";
+  // npc_list third-NPC line — gated on ally-third-party presence.
+  // When an ally is present, that ally IS the third NPC. Otherwise
+  // the third NPC slot is an antagonist or neutral (no manufactured
+  // helper-shaped figure).
+  const tpIsAlly = tpPresent && thirdParty.type === 'ally';
+  const thirdNpcLine = tpIsAlly
+    ? "3. The ALLY third party (see CONTACT block above) — render them as the named third NPC with the kind directive's behavior reflected in their description. Do NOT add a second helper-shaped NPC."
+    : "3. At least one other named NPC — an ANTAGONIST or NEUTRAL ONLY: a rival faction leader, a sub-boss the order has put in charge of a wing, a sentry-captain with a name, a neutral witness who refuses to take sides. NEVER a helper-shaped figure (no captive who knows a secret way, no turnable defector, no sympathetic hermit) unless one was rolled as the ally third party.";
 
   // Motive block — the WHY of the delve. Injected alongside the
   // other rolled-dimension blocks. Null path skips injection.
@@ -363,17 +323,24 @@ ${REGISTER_PROSE_DIRECTIVE}`
     ? " Under the ACQUISITION motive, the central_dynamic MUST name the PRIZE concretely (what it is, why it's worth taking, where in the dungeon it sits) and render the RIVAL'S PROGRESS against the party's (who's ahead, how the party knows). The prize's PROPERTIES must be table-runnable: state what the prize DOES in play — what it grants, what it activates, what it changes, who it lets the holder bind, kill, or compel. 'A key to a god's mind' is not a property; 'speaks the true names of three named lords and binds them for one hour each' is. The GM must be able to adjudicate use without inventing the mechanic on the spot."
     : '';
 
-  // current_occupation schema field text — when a contender or contact
-  // is present, the field is one of their primary homes. Pulled into a
-  // variable so apostrophes don't fight nested template-literal parsing.
-  const contenderHomeNote = contender && contender.present
-    ? " A CONTENDER (rival outsider) has been pre-rolled for this generation (see CONTENDER block above) — this field is the contender's primary home; render their present activity consistent with the rolled CONTENDER KIND directive."
+  // Discovery coupling on central_dynamic: when motive=discovery, the
+  // central_dynamic must name a PARTY-SPECIFIC hook for why the
+  // knowledge matters. Without this, discovery dungeons read as
+  // homework — "go map the lost archive" with no stake the party
+  // would actually answer.
+  const discoveryQuestionNote = motive === 'discovery'
+    ? " Under the DISCOVERY motive, the central_dynamic MUST name a PARTY-SPECIFIC HOOK for why the knowledge matters — a coming threat only this knowledge counters, a debt or oath the answer cancels, a person the party needs to identify, a place the knowledge locates, a choice the party can't make blind. The knowledge must MATTER to who the party IS or what they're ABOUT TO FACE, not be a generic academic recovery. 'The party seeks the lost mappings' is homework; 'the mappings name the true crossing through the Bone Marsh, and the party's caravan was hired to escort a hundred refugees across it next week' is a delve. SPECIFICALLY BANNED: the dying-patron-needs-succession-document hook (a patron dying without an heir, an oath-clause for appointing a successor, an intestate-bloodline crisis). That pattern clustered hard in production — use a different stake shape. Also name the SLIPPAGE — what's actively erasing the knowledge inside, and the clock that ends it."
     : '';
-  const contactHomeNote = contact && contact.present
-    ? " A CONTACT (in-dungeon NPC the party can use) has been pre-rolled (see CONTACT block above) — their current activity belongs here, and the rendering MUST be consistent with the rolled reliability and offers (a treacherous contact reads as treacherous in this field; a force contact's combat role is named)."
+
+  // Inhabitants now absorbs current-position work (current_occupation
+  // was dropped). When a third party is pre-rolled, it counts as one
+  // of the field's factions — exactly one sentence, same format as
+  // the others.
+  const thirdPartyInhabitantsNote = tpPresent
+    ? (thirdParty.type === 'adversary'
+      ? " The pre-rolled THIRD PARTY (adversary; see CONTENDER block above) counts as ONE of the field's factions — exactly one sentence with zone, goal, and behavioral note, consistent with the rolled CONTENDER KIND directive."
+      : " The pre-rolled THIRD PARTY (ally; see CONTACT block above) counts as ONE of the field's factions — exactly one sentence with zone, goal, and behavioral note (their stated terms count as the behavioral note), consistent with the rolled CONTACT KIND directive.")
     : '';
-  const currentOccupationFieldText =
-    `WHO / WHAT IS IN THE DUNGEON RIGHT NOW and what they are doing. Concrete, named, immediate. Different from inhabitants (which is the social fabric generally) — current_occupation is THIS WEEK'S situation. Methodically-looted has a rival expedition mid-extraction or just-retreated; freshly-occupied has the new occupiers establishing; cult-ascendant has a ritual in preparation.${contenderHomeNote}${contactHomeNote} 2-3 sentences. Voice anchor: who is here right now and what they are DOING — name it, name the clock that ends what they are doing.`;
 
   // POV frame block + derived overview-field schema text. The overview
   // field is re-spec'd as a POV hook (the carve-out from
@@ -418,7 +385,7 @@ Monster CRs for the encounter palette: minion ~${monsterCRs.minion}, strong mini
 
 CENTRAL TENSION: ${tension}
 ${tensionDescription}
-${powerStructureBlock}${organizingLogicBlock}${formedNatureBlock}${contenderBlock}${contactBlock}${povFrameBlock}${motiveBlock}${modeBlock}
+${powerStructureBlock}${organizingLogicBlock}${formedNatureBlock}${thirdPartyBlock}${povFrameBlock}${motiveBlock}${modeBlock}
 DIFFICULTY MODULATES STAKE-SCOPE THROUGHOUT, NOT JUST MONSTER STATS. Tier 1 prose reads local — a bandit-king bound under a hilltop barrow, a village's missing children traced to a sewer-maze. Tier 5 prose reads cosmic — a primordial bound at the underworld's edge, a god-corpse whose dreams remake reality. Same tension SHAPE, different STAKES. Match the stake-scope to the tier in every field — history is local-history or god-scale-history; dominant_power is a local rival or a planar entity; treasures_and_resources are grave-goods or reality-altering artifacts. Do not bake high stakes into a Tier 1 dungeon's prose or local stakes into a Tier 5.
 
 User input description: "${safeDescription}"
@@ -485,23 +452,22 @@ NPCs — AT LEAST 3 in \`npc_list\`:
 ${thirdNpcLine}
 The \`npc_list\` can include more than 3 — add any other individuals the prose mentions by name.
 
-Return the description in JSON format with the following keys. Make sure \`named_entities\` includes EVERY personal name mentioned across all prose fields (these get first-mention bolding in the renderer). Keep descriptions concise:
+Return the description in JSON format with the following keys. Make sure \`named_entities\` includes EVERY personal name mentioned across all prose fields (these get first-mention bolding in the renderer). Keep descriptions concise. IMPORTANT: \`name\` and \`title\` appear LAST in the schema below — write the body fields first, then name the dungeon based on what you actually wrote. Don't name a dungeon you haven't built yet.
 
 {
-  "name": ${userName ? `"${userName}" (use this verbatim)` : '"the dungeon\'s proper noun, in English. Pick ONE of the six NAME TEMPLATES (A through F) defined above and fill it; rotate template choice across generations rather than defaulting to the same shape. 2-5 English words. At most one register-flavored proper noun. NO foreign-language articles or particles (an / na / ša / el / etc.). If the register has a culturally-rooted original-language phrase, it belongs in the FIRST SENTENCE of the overview field, not here — see TRANSLATION HANDOFF above."'},
-  "title": "A short evocative phrase (3-5 words, max 6) that pairs with the name as a subtitle. STRUCTURE: a phrase, not a sentence — NO 'where X does Y' clauses, NO conjugated verbs (no 'are', 'is', 'was', 'were', 'has', 'have', no '-ed' / '-ing' verb forms used as predicates). DO NOT begin with a leading article ('the', 'a', 'an') — the title starts with its first content word, same rule as the name. PASS: 'Tomb of the Singing Bones', 'Halls of Slow Light', 'Crypt of the Forgotten Vow'. FAIL: 'Where Oaths Are Knotted in Bone' (leading 'Where' + passive-voice conjugated 'Are Knotted' = clause, not phrase). FAIL: 'The Bones Sing in the Dark' (full sentence with subject + verb). SUGGEST the character qualities through imagery; do NOT use a character quality word as an adjective.",
   "overview": ${JSON.stringify(overviewFieldText)},
+  "quest_hook": "HOW THE PARTY GOT PULLED INTO THIS DELVE. 1-2 sentences. GM-facing, NOT in-character voice and NOT atmospheric prose — a fishhook the GM can paraphrase at the table. Name the IN-WORLD bait concretely: WHO delivers the hook (a named patron, a kinsman, a guild factor, a dying messenger, a dream that names a person), WHAT they say or pay (a sum, a debt called in, an oath, a written contract, a hereditary obligation), and WHAT the party stands to gain or lose. Motive-aware: under ACQUISITION name the prize a patron wants and what they pay; under PREVENTION name the doom and who carries the warning; under RECOVERY name the specific captive or object and who needs them back; under DISCOVERY name the question and who's paying for the answer. Tie the hook to elements already named in the dungeon's history or the surrounding region — the patron's name, the missing kin's identity, the augury's source should slot into the prose around it.",
   "relation_to_larger_setting": "WHERE this dungeon sits geographically. What region, what landmarks border it, what local powers know of it. 2-3 sentences. Provide a name for the larger region if natural. Voice anchor: the geography matters because it is a way IN, a way OUT, or a way to bring help — name those. Example: 'the only path in is a three-day climb that puts the party out of sleep-cycle by the time they arrive.'",
   "approach_and_threshold": "HOW the party reaches the dungeon and what the entrance experience is. The threshold scene — the door, the descent, the warded sigils, the first chamber's character. 2-3 sentences. This is the GM's first-room handout when the party arrives. Concrete and spatial. Voice anchor: every threshold detail is a decision-point the party will make at the table. Example: 'the door is barred from the inside; the bar has been chopped at recently — by whom, and is whoever did it still inside?'",
   "history": "A brief history of the dungeon — founding / creation / what it was built for, and one or two pivotal events. Scope-match the tier: local history for Tier 1, cosmic history for Tier 5. Plain prose. Every history beat must be LOAD-BEARING IN THE PRESENT: a beat earns its place if cutting it would change what the party adjudicates or what is currently happening in the dungeon. Cosmological backstory belongs here only when its mechanism is still operating now (a cinder still in a hearthstone, a pact still being honored or broken, an old grievance still moving). Voice anchor: lead with what the GM needs to ADJUDICATE in play — promises kept or broken, debts owed, names the party may hear.",
   "dominant_power": "${dominantPowerFieldText}",
-  "inhabitants": "WHO/WHAT LIVES OR WORKS INSIDE the dungeon — minions, mid-tier creatures, rival factions, prisoners, occasional residents (a captured NPC, a hermit, traders passing through). The social fabric of the dungeon's interior. Layered when the tension calls for it (succession-fracture has two factions; scoured-and-claimed has one dominant force + their direct servants; pilgrimage-route may include other expeditions). 2-3 sentences. Voice anchor: a RELATIONAL MAP, not a roster — who fears whom, who can be turned, who can be exploited. Every named faction or group MUST carry a knowable GOAL the GM can state in one line — what they want HERE, what they want NEXT, why this dungeon (not somewhere else). Players may never learn the goal; the GM always knows it, so the faction can respond to the party with intent rather than opacity. NATURE TWIST RULE: when a faction's NATURE has a non-obvious truth that reframes every interaction with them (these aren't jailers, they're worshippers; these aren't guards, they're hostages; these aren't allies, they're competitors), the twist belongs HERE, in inhabitants — NOT in present_state. The twist is part of who they ARE; present_state describes what they're DOING now. Burying the twist downstream makes the GM find the most load-bearing fact about the faction last.",
+  "inhabitants": "WHO/WHAT LIVES OR WORKS INSIDE the dungeon.\n\nHARD PROCEDURAL RULE — NO ENTITY APPEARS TWICE: Each named faction, group, or individual appears EXACTLY ONCE in this field. Before writing each sentence, CHECK: has this entity already been named in a previous sentence? If yes, STOP — move to the next entity or end the field. Do not write an expansive 'hierarchy / orientation' paragraph and then a separate 'one-sentence summary' of the same faction; that is the failure mode. The model has two voices it wants to satisfy here — the relational-map voice ('who they are, what they want') and the operational voice ('who's where, doing what right now'). Both voices write about the same faction, which doubles the field. ONLY the relational-map voice belongs here. The operational voice routes to present_state.\n\nSTRICT FORMAT: ONE SENTENCE per faction or group. Each sentence packs (1) ZONE — where they are in the dungeon at the broadest level, (2) GOAL — what they want here in one phrase, and (3) one BEHAVIORAL NOTE — a single concrete trait (their leader's name, whether they negotiate, the standout fact about them). 2-4 sentences total, one per faction. Start with the first faction's sentence — no preamble, no orientation paragraph.\n\nROUTE OPERATIONAL DETAILS OUT — explicit: current per-faction conditions, current activities, time-pressured action, what someone is doing RIGHT NOW (Kaelen subsists on lumen-moss for three days, his signet is Brass-rank, the foreman is on a whisper-line negotiating with a rival buyer) DO NOT belong in inhabitants. They go to present_state (if they're tied to the clock) or notable_inhabitant_facet (if they're the one standout detail). If you find yourself writing 'and right now they are...' or 'currently doing...' inside inhabitants, STOP — that clause is misrouted. PASS examples:\n- 'Twelve hired diggers camped in the false tomb chamber, working a breach toward the real vault — they want the stole and nothing else, and their leader Crauson Vex will deal if the price is right.'\n- 'Thirty to forty wax-constructs patrolling the upper and middle halls, maintaining the barrow's integrity by instinct — they do not negotiate and are becoming unpredictable as the song corrupts.'\n- 'Seven blood-claimants camped at the entrance pit, unarmed and frightened, demanding ritual access before any outsider touches the stole.'\n\nLayer factions when the tension calls for it (succession-fracture has two; scoured-and-claimed has one dominant + their direct servants; pilgrimage-route may include other expeditions). Time-pressured activity (a clock counting down, a deadline, an imminent breach) belongs in present_state — NOT here. The standout detail that earns special attention (a fresh effigy being sculpted, a wax seal that appeared overnight) belongs in notable_inhabitant_facet — NOT here. Every named faction MUST carry a knowable GOAL the GM can state in one line; the GM always knows it, players may never. NATURE TWIST RULE: when a faction's NATURE has a non-obvious truth that reframes every interaction (these aren't jailers, they're worshippers; these aren't guards, they're hostages), surface the twist in the one sentence — not deferred to present_state. SELF-CONSISTENCY RULE: every faction's stated role must be internally coherent. If you call a group X's predators, they cannot also be X's protectors (a 'predator that hunts what threatens X' is a protector — pick one). If a faction's actions seem to contradict their goal (smashing the source they're harvesting; defending what they came to destroy), the sentence MUST name the reason in one phrase (overshoot, miscalculation, escalation beyond control, a competing motive). COMMITMENT RULE: never hedge on faction behavior — no 'possibly doing a ritual,' no 'unknown purpose,' no 'may be planning.' Commit. The party may never learn the truth; the GM always knows. INDIVIDUATING-DETAILS RULE: when you name a faction's possessions, contents, or activities, those specifics must reveal who they are. A smuggler's cache of 'silk, harp-strings, and salt' tells nothing; 'forged temple-seals, harpooned eel-skins, three bound prisoners under a tarp' tells the GM something to play with.${thirdPartyInhabitantsNote}",
   "notable_inhabitant_facet": "OPTIONAL. One sentence about a current notable detail of the inhabitants. Plain prose. Empty string is acceptable.",
-  "hazards_and_dangers": "HAZARDS AND DANGERS — the physical, magical, environmental, and architectural threats of this place, regardless of who (if anyone) placed them. The source can be ANY of: defender-installed wards and traps (when an apex or institution rules), residual systems left running long after their makers are gone, the hazard process itself when nobody rules (rot, slippage, bloom, radiation), accumulated leftovers from history (old battles, broken experiments, contaminated chambers), or hazards intrinsic to the place's nature (a flooded crypt's drowning chambers, a god-corpse's spawning biology, a fey-grove's hostile geometry, a factory-ruin's unstable boilers). Tie the hazards to WHAT THIS PLACE IS — they should feel inevitable given the type, character, history, and power structure, not pasted on from a generic trap list. NOT just 'forces guarding it' (that's inhabitants). 2-3 sentences. Voice anchor: each threat is a LEVER the party can read, avoid, or disarm. Example: 'the cistern overflows on a known cycle; cross between cycles or get carried into the lower works.'",
+  "hazards_and_dangers": "HAZARDS AND DANGERS — the physical, magical, environmental threats of this place. THIS FIELD IS DOWNSTREAM ONLY (the GM-facing UI does NOT render a Hazards section); the field's content feeds the room generator for spatial hazard instantiation. 2-3 sentences. HARD CONSTRAINT: every hazard MUST DERIVE from a named force already in the dungeon — the dominant power's secretions, a faction's defensive behavior, the central tension's physical residue, the rolled hazard-process. NO generic architectural traps (no 'spike pits and arrow slits' that could belong to any dungeon of its type, no 'crumbling floors' without a named cause). The named force is the WHY of the hazard. Voice anchor: show each hazard through its EFFECT ON INHABITANTS and PRIOR VISITORS rather than as a stated mechanical threat — 'the Sirmus secrete wax that the original drones lit by accident; a torch waved near a fresh seal ignites the corridor and slumps the wall' (named force + visible consequence) is right; 'flammable wax seals on the walls' (mechanical threat without source) is wrong. Each hazard is a LEVER the party can read, avoid, or disarm — keep the lever named, not abstract.",
   "notable_hazard_facet": "OPTIONAL. One sentence about a current notable detail of the hazards. Empty string is acceptable.",
-  "central_dynamic": "HOW THE CENTRAL TENSION CURRENTLY MANIFESTS in the dungeon. Frame in the tension's terms — see the CENTRAL TENSION block above. This is the load-bearing field; it tells the GM what the dungeon is ACTIVELY DOING right now. 2-3 sentences. BELIEF COMMITMENT: when the central tension hinges on a faction's BELIEF about the dungeon's contents (a worshipped relic, a feared prison, a prophesied awakening, a venerated remnant), commit to whether the faction's belief is TRUE or MISTAKEN — and state which. 'They believe the shard will remake the continent' tells the GM nothing about adjudication; 'they believe the shard will remake the continent, and they are wrong — it is a sealed prison, and breaking it releases what was bound, not a prophecy' tells the GM what happens when the party acts. The GM must know which scenario they're running.${acquisitionPrizeNote}",
-  "current_occupation": ${JSON.stringify(currentOccupationFieldText)},
-  "present_state": "WHAT IS HAPPENING in the dungeon right now, what is CHANGING, and what is LOST if the party does nothing — read through the tension's lens (the tension's pacing sets the rate of change; the dungeon is in motion, not posed). 2-3 sentences. Voice anchor: the live situation and its CLOCK — what changes if the party does nothing for another day, week, or hour.${motivePresentStateClause}",
+  "central_dynamic": "HOW THE CENTRAL TENSION CURRENTLY MANIFESTS in the dungeon. Frame in the tension's terms — see the CENTRAL TENSION block above. This is the load-bearing field; it tells the GM what the dungeon is ACTIVELY DOING right now. 2-3 sentences. BELIEF COMMITMENT: when the central tension hinges on a faction's BELIEF about the dungeon's contents (a worshipped relic, a feared prison, a prophesied awakening, a venerated remnant), commit to whether the faction's belief is TRUE or MISTAKEN — and state which. 'They believe the shard will remake the continent' tells the GM nothing about adjudication; 'they believe the shard will remake the continent, and they are wrong — it is a sealed prison, and breaking it releases what was bound, not a prophecy' tells the GM what happens when the party acts. The GM must know which scenario they're running. ESCALATION-CAUSE COMMITMENT: when a faction in the dungeon CAUSED the situation they are now racing against (their operation woke the thing they're now harvesting; their containment is now leaking because of choices they made; the rival they invited has turned on them), commit to whether the faction KNOWS this. State it in one phrase: are they improvising in a crisis they recognize as their own, hiding it from their own membership, or in denial that anything is wrong? The GM must know whether the faction's leader is panicking, plotting cover-up, or oblivious — that determines every interaction the party has with them.${acquisitionPrizeNote}${discoveryQuestionNote}",
+  "present_state": "THE CLOCK and what's CHANGING. Only NEW information — do NOT re-introduce factions already named in inhabitants. Refer to factions by their existing names; do NOT re-describe their identity, position, or goals here (that work already happened above). 2 SENTENCES MAX. One sentence carries the time-pressure — what is counting down, on what timescale, and what gets LOST when it runs out. One sentence carries the most recent shift — what changed in the last day, week, or month that the party can READ ON ARRIVAL (a new tremor, a fresh body, a snuffed torch, a hum that wasn't there before).\n\nANTI-LABEL RULE: do NOT write schema-internal labels into the prose output. NEVER begin a sentence with 'The clock:', 'The most recent change:', 'The clock is', or any equivalent meta-label. Those are framing notes for HOW to compose the field, not text that appears in the field. Write the time-pressure and the recent shift as PROSE — 'Three hours until Elara Wex lifts the crown; when she does, the gemma vitae fires and the Sorrow's concentrated form floods the inner hall' is correct. 'The clock: three hours until Elara Wex...' is wrong. The reader should read prose, not a labeled spec sheet.\n\nMULTI-CLOCK RULE — ONE TIMER ONLY: this field contains exactly ONE time-pressure. Subsequent time references in the field must be CONSEQUENCES of that timer, not separate timers running in parallel. 'Three days until the cult exhumes the tablets; the water reaches the alcove by the fourth day; the gas pocket is dispersing now' is THREE timers — pick the binding one and frame the others as its consequences ('three days until the cult exhumes the tablets; the water has already begun seeping in and will erase the ink within hours of the breach; the gas pocket released by the morning's cave-in is the party's window'). If more than one independent timer is in play, name the SHORTEST one as THE clock — any longer timer either gets dropped OR must end in a DIFFERENT kind of loss the party still cares about (the patron survives the delve but loses their seat on the council). A 6-month patron deadline alongside a 4-week dungeon-collapse is broken — the collapse expires first, so the patron timeline is irrelevant. The GM must read this field and know which single timeline is actually ticking down the delve.${motivePresentStateClause}",
+  "resolution_paths": ["ARRAY OF EXACTLY 3 ONE-SENTENCE LEVERS that could end or significantly alter the dungeon's central threat. Each path names a SPECIFIC OBJECT or ACTION and leaves the HOW to the party. The GM knows what's possible; the players discover it.\n\nFORMAT: each entry MUST begin with the cost-label in bold markdown — '**Fast/costly:**', '**Slow/clean:**', '**Cheap/partial:**' — followed by the path's one sentence. Example entry verbatim: '**Fast/costly:** Smash Adon-barak's pillar in the central vault; the collapse buries the lower levels and kills any remaining occupants, but the cult's vials of refined essence still in the workshop can be pocketed on the way out.'\n\nHARD CONSTRAINT — DERIVE FROM NAMED ELEMENTS: every path MUST anchor on elements already named elsewhere in this overview (a named NPC, a named object/relic, a named faction, a named feature of the architecture, a named hazard). NO new objects, NO new NPCs, NO new factions. If a solution requires something not already in the dungeon, it belongs in inhabitants or hazards FIRST, then surfaces here.\n\nPROMISES MUST RESOLVE: when a path references a specific anchor (a sigil, a substance, a mechanic, a key, a gas, a ritual), the anchor MUST already be named in the prose elsewhere (history / inhabitants / hazards / present_state). The path's mention is not the introduction. A path that says 'grind consecrated salt into the breath-vent to weaken the Strânsoare gas' fails if 'Strânsoare gas' appears only in the paths — the gas needs to be named in hazards or central_dynamic FIRST, with what it is (origin + effect). If a path needs something the rest of the dungeon hasn't named, that something either gets added to the appropriate field first OR the path is rewritten to use what's already there.\n\nCONCRETE-ACTION RULE: each path must name a PHYSICAL ACTION a GM can adjudicate at the table — what the party DOES, with WHAT object, in WHAT chamber. Abstract or metaphorical actions ('hold tablets against the Sorrow's whisper,' 'commune with the binding,' 'witness the lament correctly') fail because the GM can't ask 'roll what?' against them. Replace with concrete physical moves: 'in the seventh chamber, place the tablets on the Sorrow's outer membrane and recite the warden-oath aloud,' 'pour the salt from the Vânători cache into the breath-vent in the fourth chamber.' The path's verb is a verb the GM can call for: smash, pour, recite, plant, pry, douse, brace, drag, light, seal. A noun the GM can locate. A place the GM can point to on the map.\n\nBIG-THREAT ENGAGEMENT: at least ONE path must engage the dungeon's named ANTAGONIST — the large_creature, the named boss, the named hazard-process, the holder. Confront it, divert it, exploit its behavior, or use a known weakness. A resolution roster where the big threat never appears means the threat is decorative and the paths don't actually resolve the dungeon's tension.\n\nPRIZE-PATH RULE: at least ONE path must REACH THE PRIZE where it actually is. Identify the prize's true location and holder from the dungeon's prose, then write a path that gets the party to it. If the prize sits on a hermit's neck at the entrance, a path engages the hermit; if it's in a sealed vault, a path opens or bypasses the vault; if it's held by a rival, a path takes it from them. A resolution roster that resolves the dungeon's threats but never reaches the prize the party came for has skipped the mission.\n\nCOST VARIATION: the three paths differ in cost, finality, and time-pressure.\n(a) **Fast/costly** is LOUD and DECISIVE; the cost is MEANINGFUL but the party LEAVES FUNCTIONAL — wounds, lost gear, burned bridges, the prize's full power compromised, a faction made into an enemy, collateral the patron won't love. ANTI-CATASTROPHE RULE: the fast path is NOT a dungeon-wide extinction event. Do NOT collapse the entire dungeon, kill every faction, bury everyone inside, or end with 'the party escapes with whatever they can carry from the rubble.' That pattern reads as 'and then everyone dies' and gives the GM nothing to run as consequence. The party walks out into the next session intact, carrying the cost into play — a missing limb, a debt to a worse patron, a rival faction with a grudge, the prize in damaged form. The COST is what the party brings BACK from the delve, not what they buried behind them.\n(b) **Slow/clean** is QUIET and COMPLETE; the cost is SETUP — time spent, multiple prerequisite actions, careful sequencing. Must include retrieving the prize.\n(c) **Cheap/partial** cuts the bleeding but doesn't end the threat permanently; the dungeon returns to play in a generation or the threat finds another outlet. Often results in partial prize-acquisition or alternate compensation."],
   "difficulty_level": "A short note (1-2 sentences) on the dungeon's difficulty — what kind of party should attempt this and what scope of consequences success or failure carries. Match ${tierEntry.name} explicitly. Voice anchor: WHO should attempt this and what is CONCRETELY at stake if they don't — scoped to the tier, grounded not cosmic.${motiveDifficultyClause}${modeDifficultyClause}",
   "named_entities": ["Every personal name (people only) mentioned in the prose fields above. Match VERBATIM, case-sensitive. EXCLUDE place names, faction names, deity names, role-words. EXCLUDE titles of offices ('the High Priest', 'the Warden'). Typically 3-6 entries."],
   "npc_list": [
@@ -529,7 +495,9 @@ Return the description in JSON format with the following keys. Make sure \`named
       "description": "1-2 sentences. The dungeon's solo apex. Bestial if it's the dominant power; otherwise a separate large threat. Never shares a name with any NPC.",
       "CR": "${monsterCRs.largeCreature}"
     }
-  ]
+  ],
+  "name": ${userName ? `"${userName}" (use this verbatim)` : '"the dungeon\'s proper noun, in English. Pick ONE of the NAME TEMPLATES above and fill the [image] slot with a concrete noun MINED FROM THE DUNGEON YOU JUST WROTE — the signature creature, the prize, the central material, the one striking object you already named in the body fields above. Per the IMAGE-FROM-CONTENT rule: a reader should be able to point to the prose and find the named thing. 2-5 English words. At most one register-flavored proper noun. NO foreign-language articles or particles. If the register has a culturally-rooted original-language phrase, it belongs in the FIRST SENTENCE of the overview field, not here."'},
+  "title": "A short evocative phrase (3-5 words, max 6) that pairs with the name as a subtitle. Like the name, the title's load-bearing word is a CONCRETE IMAGE mined from what you already wrote — point to a real thing in your prose. STRUCTURE: a phrase, not a sentence — NO 'where X does Y' clauses, NO conjugated verbs (no 'are', 'is', 'was', 'were', 'has', 'have', no '-ed' / '-ing' verb forms used as predicates). DO NOT begin with a leading article ('the', 'a', 'an') — the title starts with its first content word, same rule as the name. PASS: 'Tomb of the Singing Bones', 'Halls of Slow Light', 'Where the Geysers Sing What Was Lost'. FAIL: 'Where Oaths Are Knotted in Bone' (leading 'Where' + passive-voice conjugated 'Are Knotted' = clause, not phrase). SUGGEST the character qualities through imagery; do NOT use a character quality word as an adjective."
 }
 
 Return ONLY valid JSON with the fields above. No prose before or after, no markdown code fences, no commentary. Temperature: 0.9.`;
@@ -554,10 +522,11 @@ export function validateDungeonOverview(jsonString) {
   // Required string fields.
   const requiredStrings = [
     'name', 'title',
-    'overview', 'relation_to_larger_setting', 'approach_and_threshold',
+    'overview', 'quest_hook',
+    'relation_to_larger_setting', 'approach_and_threshold',
     'history', 'dominant_power', 'inhabitants',
     'hazards_and_dangers',
-    'central_dynamic', 'current_occupation', 'present_state',
+    'central_dynamic', 'present_state',
     'difficulty_level',
   ];
   for (const key of requiredStrings) {
@@ -574,6 +543,13 @@ export function validateDungeonOverview(jsonString) {
   for (const key of optionalStrings) {
     if (key in data && typeof data[key] !== 'string') return false;
   }
+
+  // resolution_paths: array of 2-4 non-empty strings (LLM target is
+  // exactly 3, but we accept 2 as a recoverable shortfall and up to
+  // 4 as slight overgeneration).
+  if (!Array.isArray(data.resolution_paths)) return false;
+  if (data.resolution_paths.length < 2 || data.resolution_paths.length > 4) return false;
+  if (!data.resolution_paths.every((p) => typeof p === 'string' && p.trim().length > 0)) return false;
 
   // named_entities: array of strings.
   if (!Array.isArray(data.named_entities)) return false;
