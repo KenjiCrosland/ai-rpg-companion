@@ -103,6 +103,9 @@ export function dungeonToMarkdown(dungeon) {
         // fallback if no detailedDescription
         addSection(addMarkdownSectionTitle(monster.name, 3));
         addSection(monster.description);
+        if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
+          addSection(`**Danger:** ${monster.danger.trim()}`);
+        }
 
         if (monster.statblock) {
           text +=
@@ -135,6 +138,10 @@ function monsterDetailsToMarkdown(monster) {
 
   if (monster.description && !monster.detailedDescription) {
     markdown += `**Description**:\n${monster.description}\n:\n\n`;
+  }
+
+  if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
+    markdown += `**Danger**:\n${monster.danger.trim()}\n:\n\n`;
   }
 
   return markdown;

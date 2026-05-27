@@ -224,6 +224,36 @@ describe('dungeonToHTML', () => {
     expect(result).toContain('<p>A ghostly figure that drains life.</p>');
   });
 
+  it('surfaces monster.danger as a labeled Danger paragraph', () => {
+    const dungeonWithDanger = {
+      ...basicDungeon,
+      monsters: [
+        {
+          name: 'Wraith',
+          description: 'A ghostly figure that drains life.',
+          danger: 'A hit drains 1 point of Constitution; restored only by Greater Restoration.',
+        },
+      ],
+    };
+    const result = dungeonToHTML(dungeonWithDanger);
+    expect(result).toContain('<strong>Danger:</strong>');
+    expect(result).toContain('Constitution');
+  });
+
+  it('omits the Danger paragraph when monster.danger is missing', () => {
+    const dungeonWithoutDanger = {
+      ...basicDungeon,
+      monsters: [
+        {
+          name: 'Wraith',
+          description: 'A ghostly figure that drains life.',
+        },
+      ],
+    };
+    const result = dungeonToHTML(dungeonWithoutDanger);
+    expect(result).not.toContain('Danger:');
+  });
+
   it('should handle dungeon with monsters (detailed description)', () => {
     const dungeonWithDetailedMonster = {
       ...basicDungeon,

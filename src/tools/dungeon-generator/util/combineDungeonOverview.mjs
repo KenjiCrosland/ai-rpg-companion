@@ -55,9 +55,9 @@ export function combineDungeonOverview(overview) {
           overview.main_problem, overview.potential_solutions,
           overview.conclusion,
         ],
-    // Resolution paths — new shape only; rendered as joined sentences
-    // so downstream prose-aggregating consumers see the levers.
-    [Array.isArray(overview.resolution_paths) ? overview.resolution_paths.join(' ') : null],
+    // Potential Outcomes — new shape only; free prose paragraph
+    // carrying the toolbox of approaches the party can take.
+    [overview.potential_outcomes],
     // Difficulty — same field name in both shapes.
     [overview.difficulty_level],
   ];

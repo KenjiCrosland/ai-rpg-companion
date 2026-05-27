@@ -58,6 +58,10 @@ import {
   resolveDifficulty,
   getBannedDungeonTropesForGeneration,
   generateCharacterCandidates,
+  tierBandForDifficulty,
+  pickRegisterCreatureForTier,
+  pickRegisterMaterials,
+  buildAdjudicatableDangerRule,
 } from '../util/dungeon-dimensions.mjs';
 
 import {
@@ -250,6 +254,14 @@ describe('OVERUSED_DUNGEON_TROPES', () => {
     expect(OVERUSED_DUNGEON_TROPES.some(t => t.includes('hoard'))).toBe(true);
     expect(OVERUSED_DUNGEON_TROPES.some(t => t.includes('silent order'))).toBe(true);
     expect(OVERUSED_DUNGEON_TROPES.some(t => t.includes('cosmic feeder'))).toBe(true);
+  });
+
+  it('carries a broad ban on bells as central mechanic', () => {
+    // Regression guard: bells were the model's go-to mystical-
+    // infrastructure default and got banned across all roles.
+    const bellBan = OVERUSED_DUNGEON_TROPES.find(t => t.includes('bells as central mechanic'));
+    expect(bellBan).toBeTruthy();
+    expect(bellBan).toContain('BROAD BAN');
   });
 });
 
@@ -1584,3 +1596,137 @@ function sequencedRng(seq) {
   let i = 0;
   return () => seq[i++ % seq.length];
 }
+
+describe('tierBandForDifficulty', () => {
+  it('maps T1 and T2 to complicating', () => {
+    expect(tierBandForDifficulty(1)).toBe('complicating');
+    expect(tierBandForDifficulty(2)).toBe('complicating');
+  });
+
+  it('maps T3 to significant', () => {
+    expect(tierBandForDifficulty(3)).toBe('significant');
+  });
+
+  it('maps T4 and T5 to scary', () => {
+    expect(tierBandForDifficulty(4)).toBe('scary');
+    expect(tierBandForDifficulty(5)).toBe('scary');
+  });
+
+  it('falls back to complicating for unknown / invalid input', () => {
+    expect(tierBandForDifficulty(0)).toBe('complicating');
+    expect(tierBandForDifficulty(99)).toBe('complicating');
+    expect(tierBandForDifficulty(null)).toBe('complicating');
+    expect(tierBandForDifficulty(undefined)).toBe('complicating');
+  });
+});
+
+describe('pickRegisterCreatureForTier', () => {
+  it('returns a creature from the Norse register at Tier 5 (scary bucket)', () => {
+    const result = pickRegisterCreatureForTier(
+      'Norse-inspired: harsh consonants, primal force',
+      5,
+      () => 0, // deterministic: always picks first
+    );
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it('returns a tier-appropriate creature: T1 picks from complicating, T5 picks from scary', () => {
+    // Deterministic rng → picks index 0 of each bucket. The buckets
+    // are distinct lists, so the same register at different tiers
+    // must return different creatures.
+    const t1 = pickRegisterCreatureForTier('Norse-inspired: ...', 1, () => 0);
+    const t5 = pickRegisterCreatureForTier('Norse-inspired: ...', 5, () => 0);
+    expect(t1).not.toEqual(t5);
+  });
+
+  it('returns null for protected registers (no creatureTraditionByTier)', () => {
+    const result = pickRegisterCreatureForTier(
+      'Japanese-inspired: clean syllables, natural imagery',
+      3,
+      () => 0,
+    );
+    expect(result).toBeNull();
+  });
+
+  it('returns null for null / empty register input', () => {
+    expect(pickRegisterCreatureForTier(null, 3)).toBeNull();
+    expect(pickRegisterCreatureForTier('', 3)).toBeNull();
+    expect(pickRegisterCreatureForTier(undefined, 3)).toBeNull();
+  });
+
+  it('honors injected rng for determinism', () => {
+    // rng() returning 0 always → first entry of the bucket.
+    const first = pickRegisterCreatureForTier('Norse-inspired: ...', 5, () => 0);
+    // rng() returning just-under-1 → last entry.
+    const last = pickRegisterCreatureForTier('Norse-inspired: ...', 5, () => 0.9999);
+    expect(first).not.toEqual(last);
+  });
+});
+
+describe('pickRegisterMaterials', () => {
+  it('returns the requested number of materials from the rolled register', () => {
+    const materials = pickRegisterMaterials(
+      'Norse-inspired: harsh consonants, primal force',
+      () => 0,
+      2,
+    );
+    expect(Array.isArray(materials)).toBe(true);
+    expect(materials).toHaveLength(2);
+    for (const m of materials) {
+      expect(typeof m).toBe('string');
+      expect(m.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('returns distinct materials when n > 1', () => {
+    const materials = pickRegisterMaterials('Norse-inspired: ...', () => 0.5, 3);
+    expect(new Set(materials).size).toBe(materials.length);
+  });
+
+  it('returns null for protected registers (no materialTradition)', () => {
+    const result = pickRegisterMaterials(
+      'Japanese-inspired: clean syllables, natural imagery',
+      () => 0,
+      1,
+    );
+    expect(result).toBeNull();
+  });
+
+  it('returns null for null / empty register input', () => {
+    expect(pickRegisterMaterials(null)).toBeNull();
+    expect(pickRegisterMaterials('')).toBeNull();
+  });
+});
+
+describe('buildAdjudicatableDangerRule', () => {
+  it('interpolates creature and material slots when both are provided', () => {
+    const rule = buildAdjudicatableDangerRule({
+      exampleCreature: 'draugr',
+      exampleMaterial: 'iron rust',
+      exampleMaterialAlt: 'bone ash',
+    });
+    expect(rule).toContain('draugr');
+    expect(rule).toContain('iron rust');
+    expect(rule).toContain('bone ash');
+  });
+
+  it('falls back to bracket placeholders when slots are null (protected register)', () => {
+    const rule = buildAdjudicatableDangerRule({
+      exampleCreature: null,
+      exampleMaterial: null,
+      exampleMaterialAlt: null,
+    });
+    expect(rule).toMatch(/\[a creature from this register/);
+    expect(rule).toMatch(/\[a material from this register/);
+  });
+
+  it('always includes the stable rule labels', () => {
+    // Labels survive any interpolation — they're the regression
+    // anchors for routing tests.
+    const rule = buildAdjudicatableDangerRule({ exampleCreature: 'x', exampleMaterial: 'y', exampleMaterialAlt: 'z' });
+    expect(rule).toContain('ADJUDICATABLE-DANGER RULE');
+    expect(rule).toContain('ATTRIBUTION CLAUSE');
+    expect(rule).toContain('INHABITANTS APPLICATION');
+  });
+});

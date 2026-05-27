@@ -25,6 +25,7 @@ import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-n
 import { sweepAuntUncleSiblingStubs } from './sweep-aunt-uncle-sibling-stubs.mjs';
 import { sweepStubNames } from './sweep-stub-names.mjs';
 import { seedCrossToolQuota } from './seed-cross-tool-quota.mjs';
+import { renameResolutionsToPotentialOutcomes } from './rename-resolutions-to-potential-outcomes.mjs';
 
 /**
  * List of all migrations to run.
@@ -73,6 +74,10 @@ import { seedCrossToolQuota } from './seed-cross-tool-quota.mjs';
  *      host so the cross-tool gate can safely use `recoverAtCount`.
  *      Async — signs via SubtleCrypto. Order-independent; placed at
  *      the end so it doesn't gate any earlier data work.
+ *  12. rename-resolutions-to-potential-outcomes — renames the dungeon
+ *      overview's `resolutions` field to `potential_outcomes` on every
+ *      saved dungeon. Order-independent; the field is structural data
+ *      on `dungeonOverview` and isn't touched by any earlier migration.
  *
  * Add new migrations to the end of this array.
  */
@@ -89,6 +94,7 @@ const migrations = [
   { name: 'sweep-aunt-uncle-sibling-stubs', run: sweepAuntUncleSiblingStubs },
   { name: 'sweep-stub-names', run: sweepStubNames },
   { name: 'seed-cross-tool-quota', run: seedCrossToolQuota },
+  { name: 'rename-resolutions-to-potential-outcomes', run: renameResolutionsToPotentialOutcomes },
 ];
 
 /**

@@ -193,6 +193,40 @@ describe('dungeonToMarkdown', () => {
     expect(result).toContain('A creature of pure darkness and malice.');
   });
 
+  it('surfaces monster.danger as a labeled Danger line (simple description path)', () => {
+    const dungeonWithDanger = {
+      ...basicDungeon,
+      monsters: [
+        {
+          name: 'Shadow Beast',
+          description: 'A creature of pure darkness and malice.',
+          danger: 'A hit target makes a DC 14 Constitution save or has their movement halved until cured.',
+        },
+      ],
+    };
+
+    const result = dungeonToMarkdown(dungeonWithDanger);
+    expect(result).toContain('**Danger:**');
+    expect(result).toContain('DC 14 Constitution save');
+  });
+
+  it('omits the Danger line when monster.danger is missing (saved data compatibility)', () => {
+    // Saved monsters from before the danger field existed don't have
+    // it. The renderer must not emit an empty "Danger:" line.
+    const dungeonWithoutDanger = {
+      ...basicDungeon,
+      monsters: [
+        {
+          name: 'Shadow Beast',
+          description: 'A creature of pure darkness and malice.',
+        },
+      ],
+    };
+
+    const result = dungeonToMarkdown(dungeonWithoutDanger);
+    expect(result).not.toContain('**Danger:**');
+  });
+
   it('should handle dungeon with monsters (detailed description)', () => {
     const dungeonWithDetailedMonster = {
       ...basicDungeon,

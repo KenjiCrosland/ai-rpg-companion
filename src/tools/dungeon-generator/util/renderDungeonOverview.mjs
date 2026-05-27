@@ -58,7 +58,7 @@ const DUNGEON_SECTION_MAP_NEW = [
   // standalone "Hazards" paragraph (which consistently produced the
   // weakest, most generic prose in the overview).
   { heading: 'Present State', fields: ['central_dynamic', 'present_state'] },
-  { heading: 'Resolution Paths', fields: ['resolution_paths'], isList: true },
+  { heading: 'Potential Outcomes', fields: ['potential_outcomes'] },
 ];
 
 const DUNGEON_SECTION_MAP_LEGACY = [

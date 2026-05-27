@@ -124,6 +124,13 @@ export const primordialCharacterEpithets = [
 export const primordialRegister = {
   prefix: 'Primordial',
   descriptor: "Primordial: pre-language phonology — names that sound rumbled, eroded, or weathered rather than spoken. Long open vowels (aa, oo, uu), apostrophes marking pauses in the breath, compound shapes pairing an elemental root (rumble, stone, brine, gust, ember, frost, mire) with a position or motion suffix. Derive fresh names from the phonology; do not copy from prior generations.",
+  creatureTradition: 'primordial dungeons run on the elemental ecology: elementals of fire / earth / water / air (the basic ranks), salamanders (fire-touched), mephits (air / fire / ice / mud / steam — the lesser elementals), genies (efreeti, djinn, dao, marid), invisible stalkers, archomentals (the named princes of elemental power), gargoyles of true elemental origin, fire snakes, magmin, water weirds. The dungeon often resembles a node, a junction, or a wound in the world where one element bleeds through.',
+  creatureTraditionByTier: {
+    complicating: ['mephits (air / fire / ice / mud / steam)', 'fire snakes', 'magmin', 'lesser water weirds'],
+    significant:  ['gargoyles of true elemental origin', 'salamanders', 'invisible stalkers', 'elemental swarms'],
+    scary:        ['elementals (fire / earth / water / air, major)', 'genies (efreeti / djinn / dao / marid)', 'archomentals (named princes of elemental power)'],
+  },
+  materialTradition: 'raw stone, raw fire, ice, brine, wind-shaped sand, mephit-residue, salt-crust, oil-pool, charcoal-rain',
   characterPool: primordialCharacterEpithets,
   characterPoolStrictness: 'preferred',
   thematic: true,

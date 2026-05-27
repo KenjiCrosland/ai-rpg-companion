@@ -233,6 +233,36 @@ describe('dungeonToPlainText', () => {
     expect(result).toContain('A giant arachnid with venomous fangs.');
   });
 
+  it('surfaces monster.danger as a labeled Danger line', () => {
+    const dungeonWithDanger = {
+      ...basicDungeon,
+      monsters: [
+        {
+          name: 'Cave Spider',
+          description: 'A giant arachnid with venomous fangs.',
+          danger: 'A bitten target makes a DC 12 Constitution save or is poisoned for one hour.',
+        },
+      ],
+    };
+    const result = dungeonToPlainText(dungeonWithDanger);
+    expect(result).toContain('Danger:');
+    expect(result).toContain('DC 12 Constitution save');
+  });
+
+  it('omits the Danger line when monster.danger is missing', () => {
+    const dungeonWithoutDanger = {
+      ...basicDungeon,
+      monsters: [
+        {
+          name: 'Cave Spider',
+          description: 'A giant arachnid with venomous fangs.',
+        },
+      ],
+    };
+    const result = dungeonToPlainText(dungeonWithoutDanger);
+    expect(result).not.toContain('Danger:');
+  });
+
   it('should handle dungeon with monsters (detailed description)', () => {
     const dungeonWithDetailedMonster = {
       ...basicDungeon,

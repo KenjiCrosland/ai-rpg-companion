@@ -50,6 +50,7 @@ import {
   generateCharacterCandidates,
 } from '../../setting-generator/utils/setting-dimensions.mjs';
 import { REGISTER_CHARACTER_WHITELISTS } from '@/shared/character-whitelist-registry.mjs';
+import { findRegisterByPrefix } from '@/shared/registers/index.mjs';
 
 /**
  * Dungeon types — SHAPE, SCALE, and FRAME ONLY. No purpose-coded
@@ -267,30 +268,40 @@ export const DIFFICULTY_TIERS = {
     monsterCRs: { minion: '1/4', strongMinion: '1', largeCreature: '3' },
     scopeOfStakes:
       "Local. Consequences fall on a village, a hilltop, a single hamlet or hold. Obstacles are simple traps and low-level enchantments. The party is establishing themselves; their reputation is local.",
+    dangerShelf:
+      "COMPLICATING. The danger makes the encounter HARDER, not catastrophic. The signature lands as HP damage paired with a position effect (knocked prone, grappled, restrained, knocked back into a hazard, dragged from formation), a short-duration condition cleared in the encounter or with a short rest (frightened, blinded, minor poison, mundane bleeding, grappled), or a single dose of nonmagical disease curable with treatment and downtime. The character is bruised, bloodied, and tired — nothing carries beyond the dungeon's exit. NO ability drain, NO petrification, NO limb loss, NO curses requiring high-tier magic at this tier.",
   },
   2: {
     name: 'Tier 2: Expert — an established local hero.',
     monsterCRs: { minion: '1/2', strongMinion: '2', largeCreature: '4' },
     scopeOfStakes:
       "Local-to-regional. Consequences ripple from a single community out to a town or small district. Obstacles include complex traps and dangerous magical wards. The party is known across a small region; word travels two or three days' ride.",
+    dangerShelf:
+      "COMPLICATING-TO-SIGNIFICANT. The danger still complicates the encounter, but traces start to LINGER beyond it. All Tier 1 shelf items remain — plus magical poison or disease (Lesser Restoration to clear), curse-tagged short-term conditions (Remove Curse), a level of exhaustion that costs a long rest, prolonged charm or fear lasting beyond the encounter, magical bleeding that resists nonmagical healing. Some consequences cross the session boundary but resolve within a few days of downtime. STILL NO ability drain, petrification, limb loss, or sheet-altering permanent effects.",
   },
   3: {
     name: 'Tier 3: Champion — a regional / kingdom hero.',
     monsterCRs: { minion: '2', strongMinion: '5', largeCreature: '7' },
     scopeOfStakes:
       "Regional / kingdom. Consequences fall on a kingdom, a duchy, a city, or a substantial province. Obstacles include deadly traps and ancient curses. The party is named in royal courts. Grounded — NOT cosmic.",
+    dangerShelf:
+      "SIGNIFICANT. The danger REALLY HURTS — the party feels it on the sheet for several sessions before mid-tier magic clears it. All Tier 2 shelf items remain — plus ongoing magical diseases requiring Lesser Restoration plus treatment, curses requiring Remove Curse or a specific ritual, temporary blindness / deafness lasting beyond combat, magical aging (1d4 years reversible with Greater Restoration), confusion or madness with multi-day duration, paralysis requiring a save chain. The character carries something into the next session but can have it resolved with mid-tier clerical magic.",
   },
   4: {
     name: 'Tier 4: Master — a hero of multiple realms.',
     monsterCRs: { minion: '5', strongMinion: '10', largeCreature: '13' },
     scopeOfStakes:
       "Multi-kingdom. Consequences affect several kingdoms, peoples, or a substantial continental region. Obstacles include reality-bending traps and civilization-ending magic. The party's name is woven into the politics and prophecy of more than one realm.",
+    dangerShelf:
+      "SIGNIFICANT-TO-SCARY. The danger crosses into REAL FEAR at the table — characters can suffer wounds the players feel they may never fully recover from. All Tier 3 shelf items remain — plus ability score damage (1-2 points; Greater Restoration to undo), permanent scarring or impairment producing disadvantage on a specific category of checks, lycanthropy or vampirism inception, indefinite madness, severed sense or partial blindness, soul-fragment loss, curses tier-equivalent to Bestow Curse cast at 9th-level. From this tier UP, register-flavor (memory-loss, name-eating, soul-corruption) MUST be paired with a sheet-altering mechanical consequence — flavor alone is insufficient.",
   },
   5: {
     name: 'Tier 5: Immortal — a hero of the realms.',
     monsterCRs: { minion: '10', strongMinion: '15', largeCreature: '20' },
     scopeOfStakes:
       "Continental and cosmic. Consequences affect a continent, the planes, the afterlife, the fabric of reality. Obstacles are beyond mortal comprehension. The party is moving among gods and primordials.",
+    dangerShelf:
+      "SCARY. Players should be genuinely afraid of what a single failed save means. The danger may functionally REMOVE the character from play without high-tier magical intervention. All Tier 4 shelf items remain — plus petrification (Greater Restoration or Stone to Flesh), ability score drain to ZERO (intellect-devourer-class effects; Wish or comparable to reverse), severed limbs or destroyed senses (regeneration-grade magic only), mummy-rot reducing maximum HP each day until cured, possession or soul-trap, polymorph-into-something-lesser, time-displacement, planar-banishment, curses requiring Wish or 9th-level remedies. Register-flavor wraps the mechanical consequence — the fenrisúlfr-line bite is a Constitution drain that doesn't heal naturally; the brine fog IS petrification, dressed as 'speaking in a dead language' — but the mechanical bite is always present and adjudicatable.",
   },
 };
 
@@ -342,7 +353,61 @@ export const SCHEMA_LEAK_DIRECTIVE =
   "(b) DIMENSION CATEGORY VALUES rolled for this generation (the tension's name, the power-structure's name, the organizing-logic's name, the pov-frame's name, the motive's name, the mode's name, the formed-nature's name). These are prompt-side classifiers.\n\n" +
   "The prose describes what these things ARE IN THE WORLD: a tension surfaces through what is happening to objects and creatures; the current occupation surfaces through named people doing named things; the dominant power surfaces through their concrete behaviors and consequences; the dungeon itself surfaces through concrete physical and social detail. The world's history runs on behaviors, rules, people, and consequences — never on routing labels or category names.\n\n" +
   "The directive blocks above (POWER STRUCTURE, ORGANIZING LOGIC, CONTACT, MODE, etc.) are framing words from prompt to you. They describe how to GENERATE the prose; they are not VOCABULARY for the prose itself. Translate every directive's intent into concrete world detail before it lands in a field.\n\n" +
-  "Voice example: \"the Order of the Tarnished Bell runs the crypt on shift-rotations and bell-signals; ten brothers and sisters, sworn to silence, hold the upper halls.\"";
+  "Voice example: \"the Order of the Riven Mark runs the crypt on shift-rotations and drum-cycles; ten brothers and sisters, two living elders and the rest sworn to writ, hold the upper halls.\"";
+
+/**
+ * Tier-invariant header for the ADJUDICATABLE-DANGER RULE. Pairs with
+ * `DIFFICULTY_TIERS[tier].dangerShelf` (the tier-keyed consequence list)
+ * to form the complete in-prompt rule block. Applies to creature
+ * signatures (minion / strong_minion / large_creature) and to the
+ * hazards_and_dangers field — anywhere the LLM names a threat.
+ *
+ * The rule was added to counter a production pattern: register-flavor
+ * (memory-eating, name-loss, soul-corruption) was getting written
+ * INSTEAD of mechanical consequence the GM can adjudicate. Tier 5 wolves
+ * "ate names" but had no Constitution drain. The rule pins the flavor
+ * as ACCOMPANIMENT, never replacement, of a tier-appropriate mechanical
+ * consequence the GM writes on the character sheet.
+ *
+ * The tier-keyed `dangerShelf` is what scales the rule across the 5
+ * tiers — Tier 1 is COMPLICATING (encounter-scoped tactical effects),
+ * Tier 2-3 is SIGNIFICANT (lingers past the encounter, recoverable with
+ * mid-tier magic), Tier 4-5 is SCARY (sheet-altering damage that may
+ * functionally remove the character from play). The shelf determines
+ * what consequences are in-scope at this tier; the header below states
+ * the rule's structural shape.
+ */
+/**
+ * Build the ADJUDICATABLE-DANGER RULE header. Examples interpolate from
+ * the rolled register's tier-appropriate creature + material data so
+ * the rule never bakes in a specific name. Without per-generation
+ * interpolation, the rule's worked examples cargo-cult specific names
+ * (Sirmus, wax) into LLM outputs; with interpolation, the example
+ * varies every generation and the rule teaches the SHAPE without
+ * teaching a specific NAME.
+ *
+ * `exampleCreature` and `exampleMaterial` come from the picker
+ * functions above; either may be null (protected catchall registers
+ * carry no creatureTraditionByTier / materialTradition). When either
+ * is null, a bracket placeholder is substituted — the rule still
+ * teaches the shape; the LLM fills in from the register's own
+ * CREATURE TRADITION / MATERIAL TRADITION blocks above.
+ */
+export function buildAdjudicatableDangerRule({ exampleCreature, exampleMaterial, exampleMaterialAlt }) {
+  const creatureSlot     = exampleCreature    || '[a creature from this register\'s tradition]';
+  const materialSlot     = exampleMaterial    || '[a material from this register\'s tradition]';
+  const materialAltSlot  = exampleMaterialAlt || '[another material from this register\'s tradition]';
+  return (
+    "ADJUDICATABLE-DANGER RULE — applies to every creature signature ability, every hazard, and every named threat in the body fields (inhabitants, present_state, dominant_power, hazards_and_dangers, potential_outcomes). Each named threat must specify a CONCRETE MECHANICAL CONSEQUENCE the GM can adjudicate at the table — drawn from the tier-appropriate consequence shelf below. Register-flavor (memory-eating, name-loss, soul-corruption, dream-corruption, the poetic-mythological wrapping) is ALLOWED ONLY AS ACCOMPANIMENT to a mechanical consequence; the flavor wraps the mechanical bite, never replaces it.\n\n" +
+    "ATTRIBUTION CLAUSE — every mechanical consequence belongs to a NAMED SOURCE. A creature, a hazard-process, a faction ritual, a sentient mineral, a binding-array, a specific spell. Free-floating environmental dangers without a named source are NOT allowed. A generic 'resonance zone Constitution drain in the shaft' is wrong; the drain must be attributed to a named source — e.g., 'the Voice-Stone's resonance reaches into the shaft and drains Constitution (DC 16; Greater Restoration to clear)' — and the prose must say so. When the SAME creature shows up in monsters[] (as the apex or minion), its mechanical bite stated inline in the body prose may echo the monsters[].danger field — that redundancy is INTENDED so the GM reading the overview sees the bite without bouncing to the monsters tab.\n\n" +
+    `INHABITANTS APPLICATION — when inhabitants names a creature THREAT (not a dialogue-capable NPC or ally), embed its mechanical bite inline as part of the description. 'The ${creatureSlot}, ${materialSlot}-veined hunters' is form-flavor without consequence. 'The ${creatureSlot}, ${materialSlot}-veined hunters whose ${materialAltSlot}-rimed bite drains 1d2 Constitution per hit (DC 16; Greater Restoration to clear)' is right — the form-flavor and the mechanical bite together. A creature is its DANGER plus its FLAVOR; describing it without the bite is describing it as scenery.\n\n` +
+    "WORKED EXAMPLES of the wrapper pattern (register-flavor + mechanical):\n" +
+    "- 'The fenrisúlfr-line wolf bites and the wound doesn\\'t heal naturally — Constitution drain, 1 point per failed save; Greater Restoration to clear.' NOT 'the wolf eats your name.'\n" +
+    "- 'The brine fog IS petrification (Constitution save vs. petrification; petrified targets speak in a dead language until Stone to Flesh).' NOT 'the brine fog crystallizes minds.'\n" +
+    "- 'The disir\\'s wrong-key reply drains Wisdom (1d2 Wis on a failed save; Greater Restoration only).' NOT 'the disir reveals an unbearable truth.'\n\n" +
+    "The fiction is what makes the consequence feel cosmic / mythological / register-coherent. The mechanical consequence is what the GM writes on the character sheet. The two together produce a danger that is BOTH evocative AND runnable."
+  );
+}
 
 export const DUNGEON_TRAVERSAL_INVARIANT =
   "DUNGEON TRAVERSAL INVARIANT (applies to every power structure): The output must describe a SPACE the party physically traverses against resistance — a delve, not a scene. The power structure changes the FLAVOR of the resistance, never WHETHER resistance exists. Do NOT generate a location that is ATTENDED (an audience, a court, a petition queue, a tribunal hearing, a ritual the party arrives to witness) rather than PENETRATED. The party enters at one end, navigates a sequence of rooms, and works toward something deeper; they do not arrive for a meeting. If the dominant power is social (a living order or institution of people), the society IS the obstacle layer distributed across the space — never a single figure the party walks up to and addresses.\n\n" +
@@ -449,7 +514,7 @@ export const NAME_TEMPLATES = [
     id: 'D',
     shape: '[image]-[participle] [place-type]',
     requiresRegister: false,
-    examples: ['Moss-Buried Warren', 'Grief-Sunk Hall', 'Wax-Sealed Hold'],
+    examples: ['Moss-Buried Warren', 'Grief-Sunk Hall', 'Pitch-Lined Hold'],
   },
   {
     id: 'E',
@@ -1273,7 +1338,7 @@ export const POV_FRAME_DIRECTIVES = {
     "- MID-SURVEY ENTRY: an observational note from the middle of the expedition — what the writer saw, weighed, decided NOT to do today; ends because the writer set the journal down to act.\n" +
     "- EARLY ENTRY, CONFIDENT: written before the disaster, when the writer still thought they understood the place. Reads warmly until the LAST line, which carries dramatic irony the writer didn't.\n" +
     "- FINAL ENTRY, CUT OFF: the writer is mid-thought when something interrupts. The journal was found on the body, in the chamber, in the jaws. No escape; just the page.\n" +
-    "- LEDGER LINE: a dry accounting record — inventory, daily count, item received — that lands ominously because of WHAT is being counted (skulls, hours since contact, the number still answering the bell).\n" +
+    "- LEDGER LINE: a dry accounting record — inventory, daily count, item received — that lands ominously because of WHAT is being counted (skulls, hours since contact, the number still answering at roll-call).\n" +
     "- MARGINALIA: a few words scribbled in the white space of an unrelated document (a tax roll, a religious text, a contract). The writer used what they had.\n" +
     "- DISPATCH TO A SUPERIOR: the writer is reporting back — formal salutation, terse observations, the institutional voice that breaks down only at the end.\n\n" +
     "Include the artifactual frame in one phrase (a torn page, a smear of mud, ink half-bled, a ledger column, the margin of an old testament) and pick a shape that does NOT use 'I crawled out / I made it out.'",
@@ -1418,6 +1483,74 @@ export function pickRegisterPoolSubset(register, rng = Math.random, n = 6) {
   const entry = REGISTER_CHARACTER_WHITELISTS[prefix];
   if (!entry || !Array.isArray(entry.pool) || entry.pool.length === 0) return null;
   const shuffled = [...entry.pool].sort(() => rng() - 0.5);
+  return shuffled.slice(0, Math.min(n, shuffled.length));
+}
+
+/**
+ * Map a difficulty tier (1-5) to its danger-shelf emotional category.
+ * T1 / T2 → 'complicating', T3 → 'significant', T4 / T5 → 'scary'.
+ * The category is the bucket key in each register's
+ * `creatureTraditionByTier` field. Invalid tiers fall back to
+ * 'complicating' (the safe low-threat default).
+ */
+export function tierBandForDifficulty(difficulty) {
+  if (difficulty === 4 || difficulty === 5) return 'scary';
+  if (difficulty === 3) return 'significant';
+  if (difficulty === 1 || difficulty === 2) return 'complicating';
+  return 'complicating';
+}
+
+/**
+ * Pick a tier-appropriate creature from the rolled register's
+ * `creatureTraditionByTier` field. Used to interpolate cargo-cult-
+ * resistant creatures into prompt worked examples — instead of a
+ * hard-coded 'Sirmus' in every example, the example pulls a creature
+ * from the THIS-generation register that scales correctly to the
+ * THIS-generation tier.
+ *
+ * Returns null when the register has no `creatureTraditionByTier`
+ * (protected registers don't carry one) or when the register
+ * descriptor can't be resolved. Callers should fall back to a
+ * bracket-placeholder shape in that case.
+ *
+ * @param {string|null} register - full register descriptor or null
+ * @param {number} difficulty - 1-5
+ * @param {() => number} [rng=Math.random]
+ * @returns {string|null}
+ */
+export function pickRegisterCreatureForTier(register, difficulty, rng = Math.random) {
+  const entry = findRegisterByPrefix(register);
+  if (!entry || !entry.creatureTraditionByTier) return null;
+  const band = tierBandForDifficulty(difficulty);
+  const bucket = entry.creatureTraditionByTier[band];
+  if (!Array.isArray(bucket) || bucket.length === 0) return null;
+  return bucket[Math.floor(rng() * bucket.length)];
+}
+
+/**
+ * Pick N materials from the rolled register's `materialTradition`
+ * (comma-separated string). Used to interpolate materials into
+ * prompt worked examples — replaces a hard-coded 'wax' in every
+ * example with a sample from the rolled register's tradition.
+ *
+ * Returns null when the register has no materialTradition (protected
+ * registers) or when the register descriptor can't be resolved.
+ * Callers should fall back to a bracket-placeholder shape.
+ *
+ * @param {string|null} register - full register descriptor or null
+ * @param {() => number} [rng=Math.random]
+ * @param {number} [n=1] - number of materials to sample
+ * @returns {string[]|null}
+ */
+export function pickRegisterMaterials(register, rng = Math.random, n = 1) {
+  const entry = findRegisterByPrefix(register);
+  if (!entry || typeof entry.materialTradition !== 'string') return null;
+  const items = entry.materialTradition
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (items.length === 0) return null;
+  const shuffled = [...items].sort(() => rng() - 0.5);
   return shuffled.slice(0, Math.min(n, shuffled.length));
 }
 

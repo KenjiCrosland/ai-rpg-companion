@@ -51,6 +51,12 @@
                   <p>{{ monster.detailedDescription.lore }}</p>
                 </div>
               </div>
+              <!-- Mechanical-consequence sentence from the overview
+                   generation. Rendered as a plain paragraph (no header
+                   label) so it flows after the description. Omitted
+                   gracefully when missing (saved monsters that pre-date
+                   the field). -->
+              <p v-if="monster.danger" class="monster-danger">{{ monster.danger }}</p>
               <MonsterDescriptionSkeleton v-if="dungeonStore.monsterLoadingStates[monster.id]?.description" />
 
               <!-- Edit Button -->

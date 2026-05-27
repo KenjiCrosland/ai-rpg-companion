@@ -16,6 +16,7 @@ import {
   DUNGEON_TENSION_DESCRIPTIONS,
   DIFFICULTY_TIERS,
   DUNGEON_TRAVERSAL_INVARIANT,
+  buildAdjudicatableDangerRule,
   OPERATIONAL_VOICE_BLOCK,
   SCHEMA_LEAK_DIRECTIVE,
   POWER_STRUCTURES,
@@ -60,11 +61,7 @@ function validResponse() {
     notable_hazard_facet: '',
     central_dynamic: 'Vetheras stirs more each cycle of the moon, and the cultists believe his waking is near.',
     present_state: 'The barrow hums faintly at midnight; the air around the central vault has thickened.',
-    resolution_paths: [
-      'Smash the central vault\'s phylactery-altar — Vetheras dissipates, the barrow collapses with him.',
-      'Bind Vetheras into a fresh dreamless sleep using the rune-clock\'s slow cycle.',
-      'Seal the entrance behind the rune-clock; the cult dies of starvation but Vetheras stirs on.',
-    ],
+    potential_outcomes: 'The rune-clock can be slowed by hammering the central altar out of tune, which stirs Vetheras more loudly but leaves the cultists behind their vigil. Vetheras can be re-bound into dreamless sleep if his true name is recited at the central vault — the antechamber sigils carry the name, and speaking it before the binding is set draws his attention to whoever spoke. Aldwyn fights when confronted, and his death scatters the cult; the rune-clock keeps ticking either way.',
     difficulty_level: 'A Tier 1 dungeon suited for novice adventurers with local stakes.',
     named_entities: ['Vetheras', 'Aldwyn'],
     npc_list: [
@@ -73,9 +70,9 @@ function validResponse() {
       { name: 'Brunhild', description: 'A defected cultist hiding nearby.' },
     ],
     monsters: [
-      { type: 'minion', name: 'skeleton warden', description: 'Bone-rattling foot soldier.', CR: '1/4' },
-      { type: 'strong_minion', name: 'wight captain', description: 'Tactical undead leader.', CR: '1' },
-      { type: 'large_creature', name: 'tomb-wyrm', description: 'A burrowing bone-serpent.', CR: '3' },
+      { type: 'minion', name: 'skeleton warden', description: 'Bone-rattling foot soldier.', danger: 'A hit target makes a DC 12 Strength save or is grappled; the warden drags grappled targets one space toward the reliquary on the start of its turn.', CR: '1/4' },
+      { type: 'strong_minion', name: 'wight captain', description: 'Tactical undead leader.', danger: 'A hit target loses 1 Hit Die from their next short rest; the wound feels cold and refuses to clot until magically healed.', CR: '1' },
+      { type: 'large_creature', name: 'tomb-wyrm', description: 'A burrowing bone-serpent.', danger: 'A bitten target makes a DC 14 Constitution save or has their movement speed halved by a chilling lesion until the end of their next long rest.', CR: '3' },
     ],
   };
 }
@@ -641,6 +638,33 @@ describe('validateDungeonOverview', () => {
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
+  it('rejects when a monster entry is missing the danger field', () => {
+    const r = validResponse();
+    delete r.monsters[0].danger;
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('rejects when a monster entry has empty-string danger', () => {
+    const r = validResponse();
+    r.monsters[1].danger = '';
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('rejects when a monster entry has wrong-type danger', () => {
+    const r = validResponse();
+    r.monsters[2].danger = ['save', 'effect'];
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
+  });
+
+  it('accepts a well-shaped monster array with danger populated', () => {
+    const r = validResponse();
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
+    for (const monster of r.monsters) {
+      expect(typeof monster.danger).toBe('string');
+      expect(monster.danger.length).toBeGreaterThan(0);
+    }
+  });
+
   // ---- quest_hook + resolution_paths ----
 
   it('rejects when quest_hook is missing', () => {
@@ -655,40 +679,29 @@ describe('validateDungeonOverview', () => {
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
-  it('rejects when resolution_paths is missing', () => {
+  it('rejects when potential_outcomes is missing', () => {
     const r = validResponse();
-    delete r.resolution_paths;
+    delete r.potential_outcomes;
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
-  it('rejects when resolution_paths is not an array', () => {
+  it('rejects when potential_outcomes is empty string', () => {
     const r = validResponse();
-    r.resolution_paths = 'one path, another path, a third path';
+    r.potential_outcomes = '';
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
-  it('rejects when resolution_paths has fewer than 2 entries', () => {
+  it('rejects when potential_outcomes is wrong type', () => {
     const r = validResponse();
-    r.resolution_paths = ['only one path'];
+    r.potential_outcomes = ['array', 'instead', 'of', 'prose'];
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
-  it('rejects when resolution_paths has more than 4 entries', () => {
-    const r = validResponse();
-    r.resolution_paths = ['a', 'b', 'c', 'd', 'e'];
-    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
-  });
-
-  it('rejects when a resolution_paths entry is empty', () => {
-    const r = validResponse();
-    r.resolution_paths = ['real path one.', '', 'real path three.'];
-    expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
-  });
-
-  it('accepts resolution_paths with exactly 3 entries', () => {
+  it('accepts a well-shaped potential_outcomes paragraph', () => {
     const r = validResponse();
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
-    expect(r.resolution_paths).toHaveLength(3);
+    expect(typeof r.potential_outcomes).toBe('string');
+    expect(r.potential_outcomes.length).toBeGreaterThan(0);
   });
 
 });
@@ -744,5 +757,353 @@ describe('dungeonOverviewPrompt — monsterPopulation routing', () => {
     // The block must communicate that the apex/large_creature is
     // free-pick, not constrained by the minion population.
     expect(prompt).toMatch(/large_creature slot is NOT constrained/i);
+  });
+});
+
+describe('dungeonOverviewPrompt — creature tradition routing', () => {
+  const baseArgs = {
+    type: 'chambered-complex',
+    character: ['ancient', 'haunted', 'moss-furred'],
+    userName: null,
+    tension: 'sealed-and-stirring',
+    difficulty: 1,
+    description: '',
+    lore: '',
+    bannedTropes: [],
+  };
+
+  it('injects the CREATURE TRADITION block when the rolled register has one', () => {
+    // Norse-inspired is a Western-canonical register and was given a
+    // creatureTradition in the 2026-05 register-injection work.
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Norse-inspired: harsh consonants, primal force',
+    });
+    expect(prompt).toContain('CREATURE TRADITION FOR THIS REGISTER');
+  });
+
+  it('emits a register-specific tradition (Dwarven vs Egyptian produce different content)', () => {
+    // Routing test: the block content must be sourced from the
+    // register entry, not a static hardcoded list. Different rolled
+    // registers must produce different creature-tradition content.
+    const dwarvenPrompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Dwarven: deep, hard-consonanted, mountain-rooted',
+    });
+    const egyptianPrompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Egyptian-inspired (pharaonic period only): ancient Egyptian register',
+    });
+    expect(dwarvenPrompt).toContain('CREATURE TRADITION FOR THIS REGISTER');
+    expect(egyptianPrompt).toContain('CREATURE TRADITION FOR THIS REGISTER');
+    // The two must be distinguishable — a register-specific creature
+    // (Dwarven: knockers / Egyptian: ammit) appears in one but not the
+    // other. This catches a regression where the block reverts to a
+    // static hardcoded list.
+    expect(dwarvenPrompt).toContain('knockers');
+    expect(dwarvenPrompt).not.toContain('ammit');
+    expect(egyptianPrompt).toContain('ammit');
+    expect(egyptianPrompt).not.toContain('knockers');
+  });
+
+  it('omits the CREATURE TRADITION block when the rolled register has none (protected catchall)', () => {
+    // Protected registers (Yoruba, Maori, Arabic, Japanese, etc.) were
+    // intentionally left without creatureTradition during the
+    // injection work, to avoid invoking sacred figures from living
+    // traditions. The block must omit cleanly in that case.
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Japanese-inspired: clean syllables, natural imagery',
+    });
+    expect(prompt).not.toContain('CREATURE TRADITION FOR THIS REGISTER');
+  });
+
+  it('omits the CREATURE TRADITION block when register is null', () => {
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, register: null });
+    expect(prompt).not.toContain('CREATURE TRADITION FOR THIS REGISTER');
+  });
+
+  it('does not re-introduce the legacy hardcoded creature table in FANTASY TEXTURE REQUIREMENT', () => {
+    // Regression guard: the old prompt had a hardcoded 5-line creature
+    // table (Norse → draugr, jötunn, fylgja, vættir; Celtic → sídhe,
+    // púca; etc.) inside FANTASY TEXTURE REQUIREMENT. That table was
+    // replaced by the dynamic CREATURE TRADITION block sourced from
+    // each register's entry. The bullet list (with the "→" arrow that
+    // characterized it) must not return.
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Norse-inspired: harsh consonants, primal force',
+    });
+    // The legacy block paired "Norse" with "fylgja" / "vættir" in a
+    // single arrow-mapped bullet line. The new block emits Norse
+    // creatures via the register's creatureTradition prose, not as a
+    // bullet table — the arrow form is the canary.
+    expect(prompt).not.toMatch(/Norse\s*→\s*draugr/);
+  });
+
+  it('injects the MATERIAL TRADITION block when the rolled register has one', () => {
+    // Parallel to the creatureTradition routing test. Norse-inspired
+    // is non-protected and was given a materialTradition in the
+    // 2026-05 material-injection work.
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Norse-inspired: harsh consonants, primal force',
+    });
+    expect(prompt).toContain('MATERIAL TRADITION FOR THIS REGISTER');
+    // The directive wording the user specified must be intact.
+    expect(prompt).toMatch(/draw from these materials before reaching for generic/);
+  });
+
+  it('emits a register-specific material tradition (Egyptian vs Norse produce different content)', () => {
+    // Routing test: the block content must be sourced from the register
+    // entry. Egyptian materials (natron, kohl) and Norse materials (ice,
+    // amber, frozen blood) should appear in their respective prompts
+    // and NOT cross-contaminate.
+    const norsePrompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Norse-inspired: harsh consonants, primal force',
+    });
+    const egyptianPrompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Egyptian-inspired (pharaonic period only): ancient Egyptian register',
+    });
+    expect(norsePrompt).toContain('frozen blood');
+    expect(norsePrompt).not.toContain('natron');
+    expect(egyptianPrompt).toContain('natron');
+    expect(egyptianPrompt).not.toContain('frozen blood');
+  });
+
+  it('omits the MATERIAL TRADITION block when the rolled register has none (protected catchall)', () => {
+    // Protected registers were intentionally left without
+    // materialTradition (parallel to creatureTradition). The block
+    // must omit cleanly in that case.
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      register: 'Japanese-inspired: clean syllables, natural imagery',
+    });
+    expect(prompt).not.toContain('MATERIAL TRADITION FOR THIS REGISTER');
+  });
+
+  it('omits the MATERIAL TRADITION block when register is null', () => {
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, register: null });
+    expect(prompt).not.toContain('MATERIAL TRADITION FOR THIS REGISTER');
+  });
+});
+
+describe('dungeonOverviewPrompt — adjudicatable-danger rule routing', () => {
+  const baseArgs = {
+    type: 'chambered-complex',
+    character: ['ancient', 'haunted', 'moss-furred'],
+    register: 'Old-Norse-inspired: ...',
+    userName: null,
+    tension: 'sealed-and-stirring',
+    description: '',
+    lore: '',
+    bannedTropes: [],
+  };
+
+  it('injects the ADJUDICATABLE-DANGER RULE header at every tier', () => {
+    // The rule header is now built per-generation with interpolated
+    // example creature + material slots. Stable subsections (the
+    // ATTRIBUTION CLAUSE label and the INHABITANTS APPLICATION label)
+    // are the regression anchors — they survive interpolation.
+    for (const tier of [1, 2, 3, 4, 5]) {
+      const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: tier });
+      expect(prompt).toContain('ADJUDICATABLE-DANGER RULE');
+      expect(prompt).toContain('ATTRIBUTION CLAUSE');
+      expect(prompt).toContain('INHABITANTS APPLICATION');
+    }
+  });
+
+  it('routes the Tier N danger shelf into the prompt for every tier', () => {
+    for (const tier of [1, 2, 3, 4, 5]) {
+      const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: tier });
+      expect(prompt).toContain(`TIER ${tier} DANGER SHELF`);
+      expect(prompt).toContain(DIFFICULTY_TIERS[tier].dangerShelf);
+    }
+  });
+
+  it('Tier 1 and Tier 5 shelves are different (emotional category differs)', () => {
+    // Sanity-check that the rule scales: Tier 1 must say COMPLICATING
+    // and Tier 5 must say SCARY. A regression where the shelves
+    // collapse to a single block would silently flatten all tiers.
+    const t1 = dungeonOverviewPrompt({ ...baseArgs, difficulty: 1 });
+    const t5 = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
+    expect(t1).toContain('COMPLICATING');
+    expect(t5).toContain('SCARY');
+    expect(t1).not.toContain(DIFFICULTY_TIERS[5].dangerShelf);
+    expect(t5).not.toContain(DIFFICULTY_TIERS[1].dangerShelf);
+  });
+
+  it('Tier 1 forbids high-tier sheet-altering consequences in its shelf', () => {
+    // The Tier 1 shelf has explicit NO clauses for ability drain,
+    // petrification, limb loss, and high-tier curses. Regression
+    // guard: those negations stay in the T1 shelf.
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 1 });
+    expect(prompt).toMatch(/NO ability drain/);
+    expect(prompt).toMatch(/NO petrification/);
+    expect(prompt).toMatch(/NO limb loss/);
+  });
+
+  it('Tier 5 includes the full canon of cosmic-tier mechanical consequences', () => {
+    // Petrification, ability-drain-to-zero, limb loss are the
+    // signatures of cosmic-tier D&D creatures (beholder, intellect
+    // devourer, vorpal-class weapons). Regression guard: they're in
+    // the T5 shelf.
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
+    expect(prompt).toContain('petrification');
+    expect(prompt).toContain('ability score drain to ZERO');
+    expect(prompt).toMatch(/limb|severed limbs/);
+  });
+
+  it('the rule reaches each monster description schema field', () => {
+    // Each of minion / strong_minion / large_creature must reference
+    // the rule so the LLM knows to apply it when filling those slots.
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 3 });
+    // The schema fields are emitted with their description text; the
+    // ADJUDICATABLE-DANGER name should appear at least three times
+    // (header + three monster slots + hazards_and_dangers reference).
+    const matches = prompt.match(/ADJUDICATABLE-DANGER/g) || [];
+    expect(matches.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('hazards_and_dangers schema field references the rule', () => {
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
+    // The hazards_and_dangers description includes a worked example
+    // contrasting the rule's failure mode ('the brine fog crystallizes
+    // minds') with the correct shape ('the brine fog IS petrification').
+    expect(prompt).toContain('hazards_and_dangers');
+    expect(prompt).toMatch(/ADJUDICATABLE-DANGER RULE APPLIES/);
+  });
+
+  it('falls back to Tier 1 shelf for an invalid difficulty', () => {
+    // Mirrors the existing 'falls back to Tier 1 CRs for an invalid
+    // difficulty' regression. The danger shelf must follow the same
+    // fallback path so the prompt is internally consistent.
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 99 });
+    expect(prompt).toContain('TIER 1 DANGER SHELF');
+    expect(prompt).toContain(DIFFICULTY_TIERS[1].dangerShelf);
+  });
+
+  it('interpolates a tier-appropriate creature into the rule header (Norse Tier 5 picks from scary bucket)', () => {
+    // The rule's INHABITANTS APPLICATION example used to bake in a
+    // specific creature name ("Sirmus"). Now it pulls from the rolled
+    // register's tier-bucketed list and varies per generation. A
+    // Norse Tier 5 prompt should contain at least one creature from
+    // the Norse scary bucket inside the rule header.
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      difficulty: 5,
+      register: 'Norse-inspired: harsh consonants, primal force',
+      rng: () => 0, // deterministic
+    });
+    // The rule header still has its stable labels.
+    expect(prompt).toContain('INHABITANTS APPLICATION');
+    // And contains at least one Norse-scary-bucket creature
+    // (whichever the deterministic rng picked).
+    expect(prompt).toMatch(/draugr|jötunn|lindworm|fenrisúlfr|trolls of the high country/i);
+  });
+
+  it('interpolates a register-appropriate material into the rule header', () => {
+    // Egyptian materialTradition includes natron. With a non-null
+    // register and at least one material, the rule header's
+    // INHABITANTS APPLICATION example contains a real material —
+    // not the bracket-placeholder fallback.
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      difficulty: 3,
+      register: 'Egyptian-inspired (pharaonic period only): ...',
+      rng: () => 0,
+    });
+    // At least one Egyptian-tradition material should appear in the rule header.
+    expect(prompt).toMatch(/natron|bitumen|linen|alabaster dust|kohl|faience/);
+  });
+
+  it('uses bracket-placeholder fallbacks for protected registers (no tradition data)', () => {
+    // Japanese-inspired is protected and carries no
+    // creatureTraditionByTier nor materialTradition. The rule
+    // header's example should fall back to bracket placeholders,
+    // not crash and not omit the example.
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      difficulty: 3,
+      register: 'Japanese-inspired: clean syllables, natural imagery',
+    });
+    expect(prompt).toMatch(/\[a creature from this register/);
+    expect(prompt).toMatch(/\[a material from this register/);
+  });
+
+  it('does not bake the legacy cargo-cult names into prompt examples', () => {
+    // Regression guard: "Sirmus" (creature) and "wax" (material)
+    // were cargo-culting through the prompt's worked examples.
+    // Neither should appear anywhere in the prompt — not the rule
+    // header, not the inhabitants schema field, not the hazards
+    // schema field, not the large_creature evidence example.
+    // (The bell ban entry references bells by name and is exempt.)
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      difficulty: 5,
+      register: 'Norse-inspired: ...',
+      rng: () => 0,
+    });
+    expect(prompt).not.toMatch(/\bSirmus\b/);
+    // The bells ban still references "wax" via the literal phrase
+    // "candle-marks" — guard tightly on the cargo-cult bigrams.
+    expect(prompt).not.toMatch(/wax-bodied|wax-constructs|wax-seal still warm|wax is melted|wax packed/);
+  });
+
+  it('interpolates character names from registerPool when provided', () => {
+    // The potential_outcomes worked example and Template E examples
+    // used invented NPC names (Sturmgeister / Loscán / Zenta /
+    // Aethorix / Gwenfaer / Vetheras). Now they pull from the rolled
+    // registerPool subset and vary per generation.
+    const fakePool = ['Veshir', 'Thramnik', 'Korbalin', 'Yolwen', 'Pravos', 'Murenna'];
+    const prompt = dungeonOverviewPrompt({
+      ...baseArgs,
+      difficulty: 3,
+      register: 'Norse-inspired: ...',
+      registerPool: fakePool,
+    });
+    // At least the first two names from the pool should appear in
+    // the prompt's interpolated worked examples.
+    expect(prompt).toContain('Veshir');
+    expect(prompt).toContain('Thramnik');
+    // And the legacy hardcoded names should be gone.
+    expect(prompt).not.toMatch(/\bSturmgeister\b/);
+    expect(prompt).not.toMatch(/\bLoscán\b/);
+    expect(prompt).not.toMatch(/\bAethorix\b/);
+    expect(prompt).not.toMatch(/\bGwenfaer\b/);
+    expect(prompt).not.toMatch(/\bVetheras\b/);
+  });
+
+  it('rule header carries the ATTRIBUTION clause (every danger names a source)', () => {
+    // Regression guard for the 2026-05 attribution fix. Free-floating
+    // environmental drains (a 'resonance zone' without a named cause)
+    // were leaking through; the rule now requires every mechanical
+    // consequence to belong to a named creature, hazard-process,
+    // ritual, or comparable source.
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
+    expect(prompt).toContain('ATTRIBUTION CLAUSE');
+    expect(prompt).toMatch(/Free-floating environmental dangers/);
+  });
+
+  it('rule header carries the INHABITANTS APPLICATION clause', () => {
+    // The inhabitants field must apply the rule when it names a
+    // creature threat. The rule header includes the application
+    // clause so the LLM sees it before reaching the inhabitants
+    // schema field instruction.
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
+    expect(prompt).toContain('INHABITANTS APPLICATION');
+    expect(prompt).toMatch(/CREATURE THREAT/);
+  });
+
+  it('inhabitants schema field invokes the CREATURE-THREAT BITE clause', () => {
+    // The inhabitants schema field carries a back-reference to the
+    // rule. Production showed body prose naming creatures (Sirmus,
+    // Voice-Stone) without their mechanical bite — the schema field
+    // now explicitly requires it.
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
+    expect(prompt).toContain('CREATURE-THREAT BITE');
+    expect(prompt).toMatch(/echo what appears in monsters\[\]\.danger/);
   });
 });

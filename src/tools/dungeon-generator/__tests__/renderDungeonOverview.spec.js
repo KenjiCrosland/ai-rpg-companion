@@ -25,11 +25,7 @@ function newShape(overrides = {}) {
     notable_hazard_facet: '',
     central_dynamic: 'Vetheras stirs more each cycle.',
     present_state: 'The barrow hums faintly at midnight.',
-    resolution_paths: [
-      'Smash the central vault\'s phylactery-altar.',
-      'Bind Vetheras into a fresh dreamless sleep.',
-      'Seal the entrance and let the cult starve.',
-    ],
+    potential_outcomes: 'The rune-clock can be slowed by hammering the central altar out of tune. Vetheras re-binds into dreamless sleep if his true name is recited at the vault. Aldwyn fights when confronted, and the cult scatters with him.',
     difficulty_level: 'A Tier 1 dungeon for novice adventurers.',
     named_entities: ['Vetheras', 'Aldwyn'],
     ...overrides,
@@ -63,19 +59,18 @@ function legacyShape(overrides = {}) {
 describe('pickSectionMap', () => {
   it('picks NEW map when central_dynamic is present', () => {
     const map = pickSectionMap(newShape());
-    // New map has Resolution Paths; legacy doesn't.
-    expect(map.some(s => s.heading === 'Resolution Paths')).toBe(true);
+    // New map has a Potential Outcomes section; legacy doesn't.
+    expect(map.some(s => s.heading === 'Potential Outcomes')).toBe(true);
   });
 
   it('picks LEGACY map when finding_the_dungeon is present and central_dynamic is not', () => {
     const map = pickSectionMap(legacyShape());
-    // Legacy map does NOT have Resolution Paths.
-    expect(map.some(s => s.heading === 'Resolution Paths')).toBe(false);
+    expect(map.some(s => s.heading === 'Potential Outcomes')).toBe(false);
   });
 
   it('defaults to NEW map for unknown shapes (no markers)', () => {
     const map = pickSectionMap({ name: 'x' });
-    expect(map.some(s => s.heading === 'Resolution Paths')).toBe(true);
+    expect(map.some(s => s.heading === 'Potential Outcomes')).toBe(true);
   });
 
   it('neither section map renders a Hazards section (hazards is downstream-only)', () => {
@@ -102,13 +97,20 @@ describe('consolidateOverviewToMarkdown — new shape', () => {
     expect(md).toContain('## History');
     expect(md).toContain('## Inhabitants');
     expect(md).toContain('## Present State');
-    expect(md).toContain('## Resolution Paths');
+    expect(md).toContain('## Potential Outcomes');
     // Hazards section was dropped from the UI render — the field is
     // still generated, validated, and persisted, but surfaces to the
     // GM via POV / inhabitants / present_state consequences.
     expect(md).not.toContain('## Hazards');
     // Difficulty section was removed from the UI render — verify it's gone.
     expect(md).not.toContain('## Difficulty');
+    // Potential Outcomes (originally "Resolutions") superseded both
+    // the original Resolution Paths and the brief Levers/Costs split —
+    // single prose section now.
+    expect(md).not.toContain('## Resolutions');
+    expect(md).not.toContain('## Resolution Paths');
+    expect(md).not.toContain('## Levers');
+    expect(md).not.toContain('## Costs');
     // Region merged into Approach in the consolidation.
     expect(md).not.toContain('## Region');
     // Dominant Power merged into Inhabitants in the consolidation.
@@ -124,36 +126,23 @@ describe('consolidateOverviewToMarkdown — new shape', () => {
     expect(md).toContain('An Ash-Bearer factor pays 200gp');
   });
 
-  it('renders Resolution Paths with each path as its own paragraph', () => {
-    const md = consolidateOverviewToMarkdown(newShape({
-      resolution_paths: [
-        '**Fast/costly:** Smash the central vault\'s phylactery-altar.',
-        '**Slow/clean:** Bind Vetheras into a fresh dreamless sleep.',
-        '**Cheap/partial:** Seal the entrance and let the cult starve.',
-      ],
-    }));
-    const idx = md.indexOf('## Resolution Paths');
+  it('renders Potential Outcomes as a prose paragraph (no list, no bullets)', () => {
+    const md = consolidateOverviewToMarkdown(newShape());
+    const idx = md.indexOf('## Potential Outcomes');
     expect(idx).toBeGreaterThan(-1);
     const section = md.slice(idx);
-    // Each path appears verbatim with its bold prefix and lives on
-    // its own paragraph (separated by blank lines from neighbors).
-    expect(section).toContain('**Fast/costly:** Smash the central vault\'s phylactery-altar.');
-    expect(section).toContain('**Slow/clean:** Bind Vetheras into a fresh dreamless sleep.');
-    expect(section).toContain('**Cheap/partial:** Seal the entrance and let the cult starve.');
-    // Paragraph break between paths (double newline).
-    expect(section).toMatch(/Fast\/costly:.*\n\n\*\*Slow\/clean:/s);
+    expect(section).toContain('rune-clock can be slowed');
+    expect(section).toContain('Vetheras re-binds');
+    expect(section).toContain('Aldwyn fights when confronted');
+    // No bullet markers.
+    expect(section).not.toMatch(/\n- /);
   });
 
-  it('Resolution Paths section is skipped when resolution_paths is empty', () => {
-    const md = consolidateOverviewToMarkdown(newShape({ resolution_paths: [] }));
-    expect(md).not.toContain('## Resolution Paths');
-  });
-
-  it('Resolution Paths section is skipped when resolution_paths is missing', () => {
+  it('Potential Outcomes section is skipped when potential_outcomes is missing', () => {
     const overview = newShape();
-    delete overview.resolution_paths;
+    delete overview.potential_outcomes;
     const md = consolidateOverviewToMarkdown(overview);
-    expect(md).not.toContain('## Resolution Paths');
+    expect(md).not.toContain('## Potential Outcomes');
   });
 
   it('lead has no heading', () => {
@@ -271,8 +260,8 @@ describe('renderOverview', () => {
     const ast = renderOverview(newShape());
     expect(ast.lead).toBeTruthy();
     expect(ast.sections.length).toBeGreaterThan(0);
-    // New shape has Resolution Paths (legacy doesn't).
-    expect(ast.sections.some(s => s.heading === 'Resolution Paths')).toBe(true);
+    // New shape has a Potential Outcomes section (legacy doesn't).
+    expect(ast.sections.some(s => s.heading === 'Potential Outcomes')).toBe(true);
     // Hazards is dropped from UI render even in the new shape.
     expect(ast.sections.some(s => s.heading === 'Hazards')).toBe(false);
   });

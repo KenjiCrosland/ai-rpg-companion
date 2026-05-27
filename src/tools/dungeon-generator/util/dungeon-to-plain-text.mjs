@@ -114,6 +114,9 @@ export function dungeonToPlainText(dungeon) {
       } else {
         // fallback to top-level description
         addSection(monster.description);
+        if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
+          addSection(`Danger: ${monster.danger.trim()}`);
+        }
       }
 
       // If monster has a statblock
@@ -203,6 +206,9 @@ function monsterDetailsToPlainText(monster) {
   }
   if (detail?.lore) {
     txt += `${detail.lore}\n\n`;
+  }
+  if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
+    txt += `Danger: ${monster.danger.trim()}\n\n`;
   }
 
   return txt;

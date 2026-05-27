@@ -42,7 +42,7 @@ export const currentDungeonOverviewString = computed(() => {
       [ov.hazards_and_dangers, ov.notable_hazard_facet].filter(Boolean).join(' '),
       ov.central_dynamic,
       ov.present_state,
-      Array.isArray(ov.resolution_paths) ? ov.resolution_paths.join(' ') : null,
+      ov.potential_outcomes,
     ].filter((p) => p && p.trim().length > 0).join('\n\n');
   }
 

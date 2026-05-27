@@ -96,6 +96,9 @@ function monsterDetailsToHTML(monster) {
   if (detail?.lore) {
     html += `<p>${detail.lore}</p>`;
   }
+  if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
+    html += `<p><strong>Danger:</strong> ${monster.danger.trim()}</p>`;
+  }
   return html;
 }
 
@@ -202,6 +205,9 @@ export function dungeonToHTML(dungeon) {
         // Fallback to top-level name & description
         html += addHTMLSectionTitle(monster.name, 3);
         addSection(monster.description);
+        if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
+          html += `<p><strong>Danger:</strong> ${monster.danger.trim()}</p>`;
+        }
       }
 
       // If it has a statblock, convert to HTML

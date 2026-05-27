@@ -43,6 +43,13 @@ export const goblinoidCharacterEpithets = [
 export const goblinoidRegister = {
   prefix: 'Goblin-inspired',
   descriptor: 'Goblin-inspired: sharp, crude, percussive phonology — hard consonants (k, g, t, p), short bitten syllables with no flow, apostrophes or hyphens marking glottal clicks (e.g. Krik-tak structure). Compound shapes pair a grub/grime/break/snatch verb-root with a body-or-tool noun. Derive fresh names from the phonology; do not copy from prior generations.',
+  creatureTradition: 'goblinoid dungeons run on the goblin warband: goblins (the schemers and scouts), hobgoblins (disciplined warriors with rank), bugbears (ambushers, larger and stealth-prone), worgs as mounts and hunters, goblin-rats and dire rats as the warren\'s pests, redcaps and small-violent fey-adjacent that share the burrows, kobolds opportunistically allied. Captive monsters chained for the menagerie (an ogre, a young troll, a drake stolen from elsewhere) read as goblinoid PRIDE pieces — the warband boasting through what it has tamed.',
+  creatureTraditionByTier: {
+    complicating: ['goblins', 'goblin-rats', 'dire rats', 'allied kobolds'],
+    significant:  ['hobgoblins', 'bugbears', 'worgs', 'redcaps'],
+    scary:        ['captive ogre trophy', 'chained young troll', 'stolen drake', 'goblin-king with bound monster-pets'],
+  },
+  materialTradition: 'bone grease, charcoal, dried blood, rust, packed earth, scavenged scrap, gnawed leather',
   characterPool: goblinoidCharacterEpithets,
   characterPoolStrictness: 'mandatory',
   fantasyRaceKey: 'Goblinoid',
