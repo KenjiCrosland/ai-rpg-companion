@@ -25,6 +25,7 @@ import { promoteNPCStatblockRefToNested } from './promote-npc-statblock-ref-to-n
 import { sweepAuntUncleSiblingStubs } from './sweep-aunt-uncle-sibling-stubs.mjs';
 import { sweepStubNames } from './sweep-stub-names.mjs';
 import { seedCrossToolQuota } from './seed-cross-tool-quota.mjs';
+import { seedMonsterQuotas } from './seed-monster-quotas.mjs';
 import { renameResolutionsToPotentialOutcomes } from './rename-resolutions-to-potential-outcomes.mjs';
 
 /**
@@ -78,6 +79,12 @@ import { renameResolutionsToPotentialOutcomes } from './rename-resolutions-to-po
  *      overview's `resolutions` field to `potential_outcomes` on every
  *      saved dungeon. Order-independent; the field is structural data
  *      on `dungeonOverview` and isn't touched by any earlier migration.
+ *  13. seed-monster-quotas — parallel to seed-cross-tool-quota for the
+ *      remaining three quota domains on the `monsters` host: `_q`
+ *      (statblock), `_qh` (quest-hook), `_lr` (lore). Creates the
+ *      baseline-present guarantee that lets each gate distinguish
+ *      "user never generated yet" from "user deleted the field
+ *      (tampering)." Async — signs via SubtleCrypto.
  *
  * Add new migrations to the end of this array.
  */
@@ -95,6 +102,7 @@ const migrations = [
   { name: 'sweep-stub-names', run: sweepStubNames },
   { name: 'seed-cross-tool-quota', run: seedCrossToolQuota },
   { name: 'rename-resolutions-to-potential-outcomes', run: renameResolutionsToPotentialOutcomes },
+  { name: 'seed-monster-quotas', run: seedMonsterQuotas },
 ];
 
 /**
