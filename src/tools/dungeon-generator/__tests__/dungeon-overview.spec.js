@@ -33,14 +33,11 @@ import {
   POV_FRAMES,
   POV_FRAME_DIRECTIVES,
   NAME_TEMPLATES,
-  MOTIVES,
-  MOTIVE_DIRECTIVES,
-  MOTIVE_PRESENT_STATE_CLAUSES,
+  DRIVE_TYPES,
+  DRIVE_TYPE_DIRECTIVES,
   FORMED_NATURES,
   FORMED_NATURE_FRAMING,
   FORMED_NATURE_DIRECTIVES,
-  MODE_MENUS,
-  MODE_DIRECTIVES,
 } from '../util/dungeon-dimensions.mjs';
 
 // Minimal valid response, used as the base shape for validator tests.
@@ -54,11 +51,15 @@ function validResponse() {
     approach_and_threshold: 'A worn stone stair descends into a chamber lit by phosphorescent lichen.',
     history: 'Built by the Ash-Bearers three centuries ago.',
     dominant_power: 'Vetheras, the lich-king, dreams in the central vault.',
-    inhabitants: 'A handful of skeleton wardens, plus a band of cultists camped in the antechamber.',
-    notable_inhabitant_facet: 'The cultists have begun arguing among themselves.',
+    inhabitants_home_faction: 'Aldwyn, the cult-leader, keeps vigil in the antechamber and refuses to let his cultists leave before the next full moon.',
+    inhabitants_second_faction: 'The skeleton wardens patrol the inner chambers; they took the last cultist who strayed past the vault threshold, dragging him into the dark and leaving only his cloak.',
+    inhabitants_contact: '',
     central_dynamic: 'Vetheras stirs more each cycle of the moon, and the cultists believe his waking is near.',
-    present_state: 'The barrow hums faintly at midnight; the air around the central vault has thickened.',
-    potential_outcomes: 'The rune-clock can be slowed by hammering the central altar out of tune, which stirs Vetheras more loudly but leaves the cultists behind their vigil. Vetheras can be re-bound into dreamless sleep if his true name is recited at the central vault — the antechamber sigils carry the name, and speaking it before the binding is set draws his attention to whoever spoke. Aldwyn fights when confronted, and his death scatters the cult; the rune-clock keeps ticking either way.',
+    present_state_clock: 'The rune-clock at the central altar will set within three days, sealing Vetheras into dreamless sleep again.',
+    present_state_recent_shift: 'Last night the antechamber sigils burned brighter than the vigil-candles for the first time in years.',
+    potential_outcomes_primary: 'The party hammers the central altar out of tune, breaking the rune-clock before it sets.',
+    potential_outcomes_secondary: 'The party bargains with Aldwyn for safe passage by offering the cult a token of the Ash-Bearers.',
+    potential_outcomes_tertiary: '',
     named_entities: ['Vetheras', 'Aldwyn'],
     npc_list: [
       { name: 'Vetheras', description: 'The dreaming lich-king.' },
@@ -318,20 +319,6 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
     expect(unknown).toContain(CONTACT_PRESENT_FRAMING);
   });
 
-  it('current_occupation field text references the third party only when present', () => {
-    const absent = dungeonOverviewPrompt({ ...baseArgs, thirdParty: { present: false } });
-    const adv = dungeonOverviewPrompt({
-      ...baseArgs,
-      thirdParty: { present: true, type: 'adversary', kind: 'rival_expedition' },
-    });
-    const ally = dungeonOverviewPrompt({
-      ...baseArgs,
-      thirdParty: { present: true, type: 'ally', kind: 'informant' },
-    });
-    expect(absent).not.toContain('THIRD PARTY');
-    expect(adv).toContain('THIRD PARTY (adversary');
-    expect(ally).toContain('THIRD PARTY (ally');
-  });
 
   // ---- OPERATIONAL_VOICE_BLOCK + POV overview carve-out ----
 
@@ -444,47 +431,19 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
     expect(titleSchemaIdx).toBeGreaterThan(nameSchemaIdx);
   });
 
-  // ---- motive routing ----
+  // ---- drive type routing ----
 
-  it('omits the MOTIVE block when motive is null', () => {
-    const prompt = dungeonOverviewPrompt({ ...baseArgs, motive: null });
-    for (const m of MOTIVES) {
-      expect(prompt).not.toContain(MOTIVE_DIRECTIVES[m]);
+  it('omits the DRIVE TYPE block when driveType is null', () => {
+    const prompt = dungeonOverviewPrompt({ ...baseArgs, driveType: null });
+    for (const dt of DRIVE_TYPES) {
+      expect(prompt).not.toContain(DRIVE_TYPE_DIRECTIVES[dt]);
     }
   });
 
-  it('routes each motive to its directive in the prompt', () => {
-    for (const m of MOTIVES) {
-      const prompt = dungeonOverviewPrompt({ ...baseArgs, motive: m });
-      expect(prompt).toContain(MOTIVE_DIRECTIVES[m]);
-    }
-  });
-
-  it('appends motive-aware clause to present_state when set', () => {
-    // difficulty_level field was dropped; only present_state still
-    // receives a motive-aware clause.
-    for (const m of ['acquisition', 'prevention', 'recovery', 'discovery']) {
-      const prompt = dungeonOverviewPrompt({ ...baseArgs, motive: m });
-      expect(prompt).toContain(MOTIVE_PRESENT_STATE_CLAUSES[m]);
-    }
-  });
-
-  it('omits motive-aware clauses when motive is null', () => {
-    const prompt = dungeonOverviewPrompt({ ...baseArgs, motive: null });
-    for (const m of ['acquisition', 'prevention', 'recovery', 'discovery']) {
-      expect(prompt).not.toContain(MOTIVE_PRESENT_STATE_CLAUSES[m]);
-    }
-  });
-
-  it('appends the prize-naming clause to central_dynamic ONLY for motive=acquisition', () => {
-    const prizeAnchor = 'central_dynamic MUST name the PRIZE';
-    for (const m of MOTIVES) {
-      const prompt = dungeonOverviewPrompt({ ...baseArgs, motive: m });
-      if (m === 'acquisition') {
-        expect(prompt).toContain(prizeAnchor);
-      } else {
-        expect(prompt).not.toContain(prizeAnchor);
-      }
+  it('routes each drive type to its directive in the prompt', () => {
+    for (const dt of DRIVE_TYPES) {
+      const prompt = dungeonOverviewPrompt({ ...baseArgs, driveType: dt });
+      expect(prompt).toContain(DRIVE_TYPE_DIRECTIVES[dt]);
     }
   });
 
@@ -506,47 +465,11 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
     }
   });
 
-  // ---- mode routing ----
-
-  it('omits the MODE block + difficulty clause when mode is null', () => {
-    const prompt = dungeonOverviewPrompt({ ...baseArgs, mode: null });
-    // No mode directive in the prompt.
-    for (const m of Object.keys(MODE_DIRECTIVES)) {
-      expect(prompt).not.toContain(MODE_DIRECTIVES[m]);
-    }
-    // No mode-conditional difficulty clause either.
-    expect(prompt).not.toContain('Mode-conditional rating');
-  });
-
-  it('routes each mode (across every menu) to its directive in the prompt', () => {
-    // Iterate every mode in every holder's menu — exhaustive dispatch test.
-    const allModes = new Set();
-    for (const menu of Object.values(MODE_MENUS)) {
-      for (const m of menu) allModes.add(m);
-    }
-    for (const m of allModes) {
-      const prompt = dungeonOverviewPrompt({ ...baseArgs, mode: m });
-      expect(prompt).toContain(MODE_DIRECTIVES[m]);
-    }
-  });
-
 });
 
 describe('validateDungeonOverview', () => {
   it('accepts a well-shaped response', () => {
     expect(validateDungeonOverview(JSON.stringify(validResponse()))).toBe(true);
-  });
-
-  it('accepts empty strings for the optional facet field', () => {
-    const r = validResponse();
-    r.notable_inhabitant_facet = '';
-    expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
-  });
-
-  it('accepts the response when the optional facet field is missing entirely', () => {
-    const r = validResponse();
-    delete r.notable_inhabitant_facet;
-    expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
   });
 
   it('rejects malformed JSON', () => {
@@ -667,29 +590,36 @@ describe('validateDungeonOverview', () => {
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
-  it('rejects when potential_outcomes is missing', () => {
+  it('rejects when potential_outcomes_primary is missing', () => {
     const r = validResponse();
-    delete r.potential_outcomes;
+    delete r.potential_outcomes_primary;
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
-  it('rejects when potential_outcomes is empty string', () => {
+  it('rejects when potential_outcomes_primary is empty string', () => {
     const r = validResponse();
-    r.potential_outcomes = '';
+    r.potential_outcomes_primary = '';
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
-  it('rejects when potential_outcomes is wrong type', () => {
+  it('rejects when potential_outcomes_primary is wrong type', () => {
     const r = validResponse();
-    r.potential_outcomes = ['array', 'instead', 'of', 'prose'];
+    r.potential_outcomes_primary = ['array', 'instead', 'of', 'prose'];
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(false);
   });
 
-  it('accepts a well-shaped potential_outcomes paragraph', () => {
+  it('accepts the split potential_outcomes subfields', () => {
     const r = validResponse();
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
-    expect(typeof r.potential_outcomes).toBe('string');
-    expect(r.potential_outcomes.length).toBeGreaterThan(0);
+    expect(typeof r.potential_outcomes_primary).toBe('string');
+    expect(typeof r.potential_outcomes_secondary).toBe('string');
+    expect(typeof r.potential_outcomes_tertiary).toBe('string');
+  });
+
+  it('accepts an empty potential_outcomes_tertiary (optional field)', () => {
+    const r = validResponse();
+    r.potential_outcomes_tertiary = '';
+    expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
   });
 
 });

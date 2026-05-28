@@ -64,6 +64,60 @@ describe('combineDungeonOverview', () => {
     });
   });
 
+  describe('split shape (post-structural-split)', () => {
+    const splitShape = {
+      overview: 'A low mound of moss-furred stone.',
+      relation_to_larger_setting: 'At the southern edge of the Iron Hills.',
+      approach_and_threshold: 'A stair descends into a phosphorescent chamber.',
+      history: 'Built three centuries ago.',
+      dominant_power: 'Vetheras, the lich-king, dreams in the central vault.',
+      inhabitants_home_faction: 'Aldwyn the cult-leader keeps vigil and refuses to let his cultists leave.',
+      inhabitants_second_faction: 'The skeleton wardens patrol the inner chambers; they took the last cultist who strayed past the threshold.',
+      inhabitants_contact: '',
+      central_dynamic: 'Vetheras stirs more each cycle.',
+      present_state_clock: 'The rune-clock at the central altar will set within three days.',
+      present_state_recent_shift: 'The antechamber sigils burned brighter than the vigil-candles last night.',
+      potential_outcomes_primary: 'The party hammers the central altar out of tune, breaking the rune-clock.',
+      potential_outcomes_secondary: 'The party bargains with Aldwyn for safe passage.',
+      potential_outcomes_tertiary: '',
+    };
+
+    it('uses split subfields when present', () => {
+      const result = combineDungeonOverview(splitShape);
+      expect(result).toContain('Aldwyn the cult-leader');
+      expect(result).toContain('skeleton wardens patrol');
+      expect(result).toContain('rune-clock at the central altar');
+      expect(result).toContain('burned brighter than the vigil-candles');
+      expect(result).toContain('hammers the central altar');
+      expect(result).toContain('bargains with Aldwyn');
+    });
+
+    it('skips empty optional subfields', () => {
+      const result = combineDungeonOverview(splitShape);
+      expect(result).not.toContain('  ');
+    });
+
+    it('prefers split subfields over flat inhabitants field if both present', () => {
+      const result = combineDungeonOverview({
+        ...splitShape,
+        inhabitants: 'FLAT INHABITANTS FIELD',
+      });
+      expect(result).toContain('Aldwyn the cult-leader');
+      expect(result).not.toContain('FLAT INHABITANTS FIELD');
+    });
+
+    it('falls back to flat inhabitants when no split subfields present', () => {
+      const result = combineDungeonOverview({
+        ...splitShape,
+        inhabitants_home_faction: undefined,
+        inhabitants_second_faction: undefined,
+        inhabitants_contact: undefined,
+        inhabitants: 'FLAT INHABITANTS FIELD',
+      });
+      expect(result).toContain('FLAT INHABITANTS FIELD');
+    });
+  });
+
   describe('legacy shape', () => {
     const legacyShape = {
       overview: 'A grim old place.',

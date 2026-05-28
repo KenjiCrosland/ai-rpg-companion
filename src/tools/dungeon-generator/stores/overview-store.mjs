@@ -29,19 +29,34 @@ export const currentDungeonOverviewString = computed(() => {
   const ov = currentDungeon.value?.dungeonOverview;
   if (!ov) return '';
 
-  // New shape: detected by central_dynamic presence.
+  // New shape: detected by central_dynamic presence. The inhabitants,
+  // present_state, and potential_outcomes fields exist in two sub-shapes
+  // — the SPLIT shape (subfields like inhabitants_home_faction) and the
+  // earlier FLAT shape (single string fields). Try split first, then
+  // fall back to flat for older saved dungeons.
   if (typeof ov.central_dynamic === 'string') {
+    const inhabitantsText =
+      [ov.inhabitants_home_faction, ov.inhabitants_second_faction, ov.inhabitants_contact].some(Boolean)
+        ? [ov.inhabitants_home_faction, ov.inhabitants_second_faction, ov.inhabitants_contact].filter(Boolean).join(' ')
+        : [ov.inhabitants, ov.notable_inhabitant_facet].filter(Boolean).join(' ');
+    const presentStateText =
+      [ov.present_state_clock, ov.present_state_recent_shift].some(Boolean)
+        ? [ov.present_state_clock, ov.present_state_recent_shift].filter(Boolean).join(' ')
+        : ov.present_state;
+    const potentialOutcomesText =
+      [ov.potential_outcomes_primary, ov.potential_outcomes_secondary, ov.potential_outcomes_tertiary].some(Boolean)
+        ? [ov.potential_outcomes_primary, ov.potential_outcomes_secondary, ov.potential_outcomes_tertiary].filter(Boolean).join('\n\n')
+        : ov.potential_outcomes;
     return [
       ov.overview,
       ov.quest_hook,
       [ov.relation_to_larger_setting, ov.approach_and_threshold].filter(Boolean).join(' '),
       ov.history,
       ov.dominant_power,
-      [ov.inhabitants, ov.notable_inhabitant_facet].filter(Boolean).join(' '),
-      [ov.treasures_and_resources, ov.notable_resource_facet].filter(Boolean).join(' '),
+      inhabitantsText,
       ov.central_dynamic,
-      ov.present_state,
-      ov.potential_outcomes,
+      presentStateText,
+      potentialOutcomesText,
     ].filter((p) => p && p.trim().length > 0).join('\n\n');
   }
 
@@ -108,9 +123,8 @@ export async function generateDungeonOverview() {
       povFrame: inferred.povFrame,
       placeType: inferred.placeType,
       nameTemplate: inferred.nameTemplate && inferred.nameTemplate.id,
-      motive: inferred.motive,
+      driveType: inferred.driveType,
       formedNature: inferred.formedNature,
-      mode: inferred.mode,
       monsterPopulation: inferred.monsterPopulation,
       bannedTropeCount: bannedTropes.length,
       descriptionLength: description.length,
@@ -132,9 +146,8 @@ export async function generateDungeonOverview() {
       placeType: inferred.placeType,
       nameTemplate: inferred.nameTemplate,
       registerPool: inferred.registerPool,
-      motive: inferred.motive,
+      driveType: inferred.driveType,
       formedNature: inferred.formedNature,
-      mode: inferred.mode,
       monsterPopulation: inferred.monsterPopulation,
       description,
       lore,
@@ -167,9 +180,8 @@ export async function generateDungeonOverview() {
         povFrame: inferred.povFrame,
         placeType: inferred.placeType,
         nameTemplate: inferred.nameTemplate && inferred.nameTemplate.id,
-        motive: inferred.motive,
+        driveType: inferred.driveType,
         formedNature: inferred.formedNature,
-        mode: inferred.mode,
         monsterPopulation: inferred.monsterPopulation,
       },
       rooms: null,

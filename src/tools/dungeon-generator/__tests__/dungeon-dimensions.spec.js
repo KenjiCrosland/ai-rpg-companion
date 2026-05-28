@@ -41,15 +41,10 @@ import {
   pickHolderForOrganizingLogic,
   pickPlaceTypeForLogic,
   pickRandomNameTemplate,
-  pickRandomMotive,
   pickRandomFormedNature,
-  pickRandomMode,
-  MODE_MENUS,
-  MODE_DIRECTIVES,
-  MOTIVES,
-  MOTIVE_DIRECTIVES,
-  MOTIVE_PRESENT_STATE_CLAUSES,
-  MOTIVE_DIFFICULTY_CLAUSES,
+  pickRandomDriveType,
+  DRIVE_TYPES,
+  DRIVE_TYPE_DIRECTIVES,
   FORMED_NATURES,
   FORMED_NATURE_FRAMING,
   FORMED_NATURE_DIRECTIVES,
@@ -682,7 +677,7 @@ describe('pickRandomThirdParty', () => {
 
   it('present path returns { present, type, kind } with a valid type', () => {
     for (let seed = 1; seed <= 200; seed++) {
-      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition' });
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'acquire_by_theft' });
       if (r.present) {
         expect(['adversary', 'ally']).toContain(r.type);
         if (r.type === 'adversary') {
@@ -700,23 +695,23 @@ describe('pickRandomThirdParty', () => {
     }
   });
 
-  it('acquisition motive biases type toward adversary', () => {
+  it('acquisition-style driveType biases type toward adversary', () => {
     let adversary = 0;
     let ally = 0;
     for (let seed = 1; seed <= 4000; seed++) {
-      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition' });
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'acquire_by_theft' });
       if (r.present && r.type === 'adversary') adversary++;
       if (r.present && r.type === 'ally') ally++;
     }
-    // Configured 75/25 adversary/ally under acquisition; allow wide band.
+    // Configured 75/25 adversary/ally under acquisition-style; allow wide band.
     expect(adversary).toBeGreaterThan(ally * 2);
   });
 
-  it('non-acquisition motive splits type ~50/50', () => {
+  it('non-acquisition driveType splits type ~50/50', () => {
     let adversary = 0;
     let ally = 0;
     for (let seed = 1; seed <= 4000; seed++) {
-      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'prevention' });
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'prevent_by_killing' });
       if (r.present && r.type === 'adversary') adversary++;
       if (r.present && r.type === 'ally') ally++;
     }
@@ -730,7 +725,20 @@ describe('pickRandomThirdParty', () => {
     // should never appear (the tension already supplies the rival).
     for (const tension of ['occupied-by-rivals', 'methodically-looted']) {
       for (let seed = 1; seed <= 2000; seed++) {
-        const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tension });
+        const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'acquire_by_theft', tension });
+        if (r.present) expect(r.type).not.toBe('adversary');
+      }
+    }
+  });
+
+  it('SUPPRESS: several_unrelated holder flips adversary rolls to ally (dimensional cap on 2 powers)', () => {
+    // several_unrelated is defined as exactly 2 home powers. Adding an
+    // adversary third party would violate the inhabitants HARD CAP of 2.
+    // Forced ally — contacts ride alongside the two home powers as a
+    // resource, not a third faction.
+    for (const driveType of ['acquire_by_theft', 'recover_by_force', 'prevent_by_killing']) {
+      for (let seed = 1; seed <= 2000; seed++) {
+        const r = pickRandomThirdParty(mulberry32(seed), { holder: 'several_unrelated', driveType });
         if (r.present) expect(r.type).not.toBe('adversary');
       }
     }
@@ -739,7 +747,7 @@ describe('pickRandomThirdParty', () => {
   it('SUPPRESS: non-rival-tension still allows adversary type', () => {
     let sawAdversary = false;
     for (let seed = 1; seed <= 2000; seed++) {
-      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tension: 'sealed-and-stirring' });
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'acquire_by_theft', tension: 'sealed-and-stirring' });
       if (r.present && r.type === 'adversary') { sawAdversary = true; break; }
     }
     expect(sawAdversary).toBe(true);
@@ -749,7 +757,7 @@ describe('pickRandomThirdParty', () => {
     let present = 0;
     const trials = 4000;
     for (let seed = 1; seed <= trials; seed++) {
-      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'prevention' });
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'prevent_by_killing' });
       if (r.present) present++;
     }
     const rate = present / trials;
@@ -776,7 +784,7 @@ describe('pickRandomThirdParty', () => {
 
   it('FILTER (tier): tier 1 never rolls divine_stake or time_displaced', () => {
     for (let seed = 1; seed <= 4000; seed++) {
-      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tier: 1 });
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'acquire_by_theft', tier: 1 });
       if (!r.present) continue;
       expect(r.kind).not.toBe('divine_stake');
       expect(r.kind).not.toBe('time_displaced');
@@ -785,7 +793,7 @@ describe('pickRandomThirdParty', () => {
 
   it('FILTER (tier): tier 2 never rolls divine_stake or time_displaced', () => {
     for (let seed = 1; seed <= 4000; seed++) {
-      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tier: 2 });
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'acquire_by_theft', tier: 2 });
       if (!r.present) continue;
       expect(r.kind).not.toBe('divine_stake');
       expect(r.kind).not.toBe('time_displaced');
@@ -795,7 +803,7 @@ describe('pickRandomThirdParty', () => {
   it('FILTER (tier): tier 5 allows the cosmic-coded kinds to roll', () => {
     let sawCosmic = false;
     for (let seed = 1; seed <= 4000; seed++) {
-      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', motive: 'acquisition', tier: 5 });
+      const r = pickRandomThirdParty(mulberry32(seed), { holder: 'single_apex', driveType: 'acquire_by_theft', tier: 5 });
       if (r.present && (r.kind === 'divine_stake' || r.kind === 'time_displaced')) {
         sawCosmic = true;
         break;
@@ -1089,64 +1097,6 @@ describe('pickRandomNameTemplate', () => {
   });
 });
 
-describe('MOTIVES', () => {
-  it('contains the 4 anchors plus the invent open slot', () => {
-    expect(MOTIVES).toEqual([
-      'acquisition',
-      'prevention',
-      'recovery',
-      'discovery',
-      'invent',
-    ]);
-  });
-
-  it('every value has a directive entry', () => {
-    for (const m of MOTIVES) {
-      expect(typeof MOTIVE_DIRECTIVES[m]).toBe('string');
-      expect(MOTIVE_DIRECTIVES[m].length).toBeGreaterThan(0);
-    }
-  });
-
-  it('every anchor has present-state and difficulty clauses (invent excluded)', () => {
-    for (const m of MOTIVES.filter(v => v !== 'invent')) {
-      expect(typeof MOTIVE_PRESENT_STATE_CLAUSES[m]).toBe('string');
-      expect(typeof MOTIVE_DIFFICULTY_CLAUSES[m]).toBe('string');
-    }
-  });
-
-  it('acquisition directive frames the prize as the WHY (regression guard)', () => {
-    // Routing-level anchor: the directive's load-bearing instruction
-    // must remain present. Strips would silently revert acquisition to
-    // a prevention-shaped render.
-    expect(MOTIVE_DIRECTIVES.acquisition).toContain('CLAIM A PRIZE');
-    expect(MOTIVE_DIRECTIVES.acquisition).toContain('RACE-CLOCK');
-  });
-});
-
-describe('pickRandomMotive', () => {
-  it('returns a value from MOTIVES', () => {
-    for (let seed = 1; seed <= 200; seed++) {
-      expect(MOTIVES).toContain(pickRandomMotive(mulberry32(seed)));
-    }
-  });
-
-  it('open slot is reachable', () => {
-    let sawInvent = false;
-    for (let seed = 1; seed <= 500; seed++) {
-      if (pickRandomMotive(mulberry32(seed)) === 'invent') { sawInvent = true; break; }
-    }
-    expect(sawInvent).toBe(true);
-  });
-
-  it('honors injected rng for determinism', () => {
-    // rng=0 → first call < 0.10 → 'invent'
-    expect(pickRandomMotive(() => 0)).toBe('invent');
-    // rng=0.5 → first call >= 0.10 → no open slot.
-    // anchors[Math.floor(0.5 * 4)] = anchors[2] = 'recovery'
-    expect(pickRandomMotive(() => 0.5)).toBe('recovery');
-  });
-});
-
 describe('FORMED_NATURES', () => {
   it('contains exactly the two documented values (no open slot)', () => {
     expect(FORMED_NATURES).toEqual(['phenomenon', 'remnant']);
@@ -1232,111 +1182,142 @@ describe('pickRandomFormedNature', () => {
   });
 });
 
-describe('MODE_MENUS', () => {
-  it('every powerStructure EXCEPT living_order has a non-empty menu', () => {
-    // living_order intentionally has no mode menu — its infiltration
-    // mode is mandatory and lives in the LIVING ORDER directive, so a
-    // separate MODE block adds nothing.
-    for (const ps of POWER_STRUCTURES) {
-      if (ps === 'living_order') {
-        expect(MODE_MENUS[ps]).toBeUndefined();
-      } else {
-        expect(Array.isArray(MODE_MENUS[ps])).toBe(true);
-        expect(MODE_MENUS[ps].length).toBeGreaterThan(0);
-      }
+describe('DRIVE_TYPES', () => {
+  it('every value is a non-empty string with no whitespace', () => {
+    for (const dt of DRIVE_TYPES) {
+      expect(typeof dt).toBe('string');
+      expect(dt.length).toBeGreaterThan(0);
+      expect(dt).not.toMatch(/\s/);
     }
   });
 
-  it("every menu carries the 'invent' open slot", () => {
-    for (const ps of POWER_STRUCTURES) {
-      if (ps === 'living_order') continue; // no menu by design
-      expect(MODE_MENUS[ps]).toContain('invent');
+  it('has no duplicate entries', () => {
+    expect(new Set(DRIVE_TYPES).size).toBe(DRIVE_TYPES.length);
+  });
+
+  it('every value has a directive entry', () => {
+    for (const dt of DRIVE_TYPES) {
+      expect(typeof DRIVE_TYPE_DIRECTIVES[dt]).toBe('string');
+      expect(DRIVE_TYPE_DIRECTIVES[dt].length).toBeGreaterThan(0);
     }
   });
 
-  it('menus are pairwise distinct (no cross-menu duplication except invent)', () => {
-    // 'outwit' and 'play_them_against' etc. live in only one menu each;
-    // the shared key is 'invent'. Verify no other value appears in two menus.
-    const counts = new Map();
-    for (const menu of Object.values(MODE_MENUS)) {
-      for (const mode of menu) {
-        counts.set(mode, (counts.get(mode) || 0) + 1);
-      }
-    }
-    for (const [mode, count] of counts) {
-      if (mode === 'invent') continue;
-      expect(count).toBe(1);
+  it('DRIVE_TYPE_DIRECTIVES has no orphan keys (every directive maps to a DRIVE_TYPE)', () => {
+    // Drift guard: a stale directive key without a corresponding DRIVE_TYPE
+    // entry means the picker can never route to it.
+    const driveSet = new Set(DRIVE_TYPES);
+    for (const key of Object.keys(DRIVE_TYPE_DIRECTIVES)) {
+      expect(driveSet.has(key)).toBe(true);
     }
   });
 
-  it('every non-invent mode in every menu has a directive', () => {
-    for (const menu of Object.values(MODE_MENUS)) {
-      for (const mode of menu) {
-        expect(typeof MODE_DIRECTIVES[mode]).toBe('string');
-        expect(MODE_DIRECTIVES[mode].length).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  it('every directive flags the deviation cost (regression guard)', () => {
-    // The mode-conditional rating only works if every directive
-    // states what the lethal deviation is. confront is the special
-    // case (it IS the brute-force baseline).
-    for (const [mode, directive] of Object.entries(MODE_DIRECTIVES)) {
-      if (mode === 'invent') continue;
-      expect(directive).toMatch(/DEVIATION COST|deviation cost|brute-force baseline/);
+  it('every directive opens with the DRIVE TYPE: routing anchor', () => {
+    // Regression guard: the prompt-side dispatcher locates each
+    // directive by its leading "DRIVE TYPE:" tag. Strips revert the
+    // field to ambient prose with no routing surface.
+    for (const dt of DRIVE_TYPES) {
+      expect(DRIVE_TYPE_DIRECTIVES[dt]).toMatch(/^DRIVE TYPE:/);
     }
   });
 });
 
-describe('pickRandomMode', () => {
-  it('returns null when holder has no menu', () => {
-    expect(pickRandomMode(mulberry32(1), { holder: 'nonexistent_holder' })).toBeNull();
-    expect(pickRandomMode(mulberry32(1), { holder: null })).toBeNull();
-  });
-
-  it("never returns a mode from a different holder's menu (no cross-menu leakage)", () => {
-    for (const holder of POWER_STRUCTURES) {
-      if (holder === 'living_order') {
-        // No menu: picker returns null.
-        for (let seed = 1; seed <= 100; seed++) {
-          expect(pickRandomMode(mulberry32(seed), { holder })).toBeNull();
-        }
-        continue;
-      }
-      const menu = new Set(MODE_MENUS[holder]);
-      for (let seed = 1; seed <= 500; seed++) {
-        const mode = pickRandomMode(mulberry32(seed), { holder });
-        expect(menu.has(mode)).toBe(true);
-      }
-    }
-  });
-
-  it('every mode in every menu is reachable over enough seeds', () => {
-    for (const holder of POWER_STRUCTURES) {
-      if (holder === 'living_order') continue; // no menu by design
-      const seen = new Set();
-      for (let seed = 1; seed <= 1000; seed++) {
-        seen.add(pickRandomMode(mulberry32(seed), { holder }));
-      }
-      for (const mode of MODE_MENUS[holder]) {
-        expect(seen.has(mode)).toBe(true);
-      }
-    }
-  });
-
-  it('open-slot rolls produce invent', () => {
-    // rng=0 → first call < 0.10 → 'invent'. living_order skipped (no menu).
-    for (const holder of POWER_STRUCTURES) {
-      if (holder === 'living_order') continue;
-      expect(pickRandomMode(() => 0, { holder })).toBe('invent');
-    }
-  });
-
-  it('living_order returns null (no mode rolled — infiltration is mandatory by directive)', () => {
+describe('pickRandomDriveType', () => {
+  it('returns a value from DRIVE_TYPES', () => {
     for (let seed = 1; seed <= 200; seed++) {
-      expect(pickRandomMode(mulberry32(seed), { holder: 'living_order' })).toBeNull();
+      expect(DRIVE_TYPES).toContain(pickRandomDriveType(mulberry32(seed)));
     }
+  });
+
+  it('every drive type is reachable over enough seeds (no zero-weighted lockout)', () => {
+    const seen = new Set();
+    for (let seed = 1; seed <= 4000; seed++) {
+      seen.add(pickRandomDriveType(mulberry32(seed)));
+    }
+    expect(seen.size).toBe(DRIVE_TYPES.length);
+  });
+
+  it('CASCADE: single_apex boosts prevent_by_killing above uniform baseline', () => {
+    let killCount = 0;
+    let baselineCount = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const apex = pickRandomDriveType(mulberry32(seed), { powerStructure: 'single_apex' });
+      const baseline = pickRandomDriveType(mulberry32(seed));
+      if (apex === 'prevent_by_killing') killCount++;
+      if (baseline === 'prevent_by_killing') baselineCount++;
+    }
+    // 1.6x multiplier should produce a clearly larger count.
+    expect(killCount).toBeGreaterThan(baselineCount);
+  });
+
+  it('CASCADE: several_unrelated boosts exploit_the_standoff above uniform baseline', () => {
+    let exploitCount = 0;
+    let baselineCount = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const several = pickRandomDriveType(mulberry32(seed), { powerStructure: 'several_unrelated' });
+      const baseline = pickRandomDriveType(mulberry32(seed));
+      if (several === 'exploit_the_standoff') exploitCount++;
+      if (baseline === 'exploit_the_standoff') baselineCount++;
+    }
+    // 1.8x multiplier — strongest single-axis bump.
+    expect(exploitCount).toBeGreaterThan(baselineCount);
+  });
+
+  it('CASCADE: scoured-and-claimed tension boosts survive_and_escape', () => {
+    let surviveCount = 0;
+    let baselineCount = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const scoured = pickRandomDriveType(mulberry32(seed), { tension: 'scoured-and-claimed' });
+      const baseline = pickRandomDriveType(mulberry32(seed));
+      if (scoured === 'survive_and_escape') surviveCount++;
+      if (baseline === 'survive_and_escape') baselineCount++;
+    }
+    expect(surviveCount).toBeGreaterThan(baselineCount);
+  });
+
+  it('CASCADE: inhabited_base organizingLogic boosts recover_by_stealth', () => {
+    let stealthCount = 0;
+    let baselineCount = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const inhabited = pickRandomDriveType(mulberry32(seed), { organizingLogic: ['inhabited_base'] });
+      const baseline = pickRandomDriveType(mulberry32(seed));
+      if (inhabited === 'recover_by_stealth') stealthCount++;
+      if (baseline === 'recover_by_stealth') baselineCount++;
+    }
+    expect(stealthCount).toBeGreaterThan(baselineCount);
+  });
+
+  it('CASCADE: bumps stack multiplicatively (single_apex + cult-ascendant compounds prevent_by_killing)', () => {
+    // single_apex (1.6x) × cult-ascendant (1.4x) = 2.24x. The combined
+    // context should produce a higher count than either alone.
+    let combined = 0;
+    let apexOnly = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const c = pickRandomDriveType(mulberry32(seed), { powerStructure: 'single_apex', tension: 'cult-ascendant' });
+      const a = pickRandomDriveType(mulberry32(seed), { powerStructure: 'single_apex' });
+      if (c === 'prevent_by_killing') combined++;
+      if (a === 'prevent_by_killing') apexOnly++;
+    }
+    expect(combined).toBeGreaterThan(apexOnly);
+  });
+
+  it('CASCADE: unknown context keys are ignored (no throw, uniform fallback)', () => {
+    // Robustness: any future caller that passes an unrecognized
+    // powerStructure / tension / organizingLogic must not break the picker.
+    for (let seed = 1; seed <= 100; seed++) {
+      const r = pickRandomDriveType(mulberry32(seed), {
+        powerStructure: 'made_up_holder',
+        tension: 'made_up_tension',
+        organizingLogic: ['made_up_logic'],
+      });
+      expect(DRIVE_TYPES).toContain(r);
+    }
+  });
+
+  it('honors injected rng for determinism', () => {
+    // rng=0 → first drive type by enumeration order.
+    expect(pickRandomDriveType(() => 0)).toBe(DRIVE_TYPES[0]);
+    // rng=0.9999 → last drive type.
+    expect(pickRandomDriveType(() => 0.9999)).toBe(DRIVE_TYPES[DRIVE_TYPES.length - 1]);
   });
 });
 

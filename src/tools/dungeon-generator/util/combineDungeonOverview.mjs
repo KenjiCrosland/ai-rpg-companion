@@ -37,25 +37,30 @@ export function combineDungeonOverview(overview) {
     overview.central_dynamic
       ? [overview.dominant_power]
       : [overview.dominant_power, overview.dominant_power_goals, overview.miniboss_description],
-    // Inhabitants — new field (with facet) or legacy dominant_power_minions.
+    // Inhabitants — split shape (subfields) > flat shape (single field)
+    // > legacy (dominant_power_minions).
     overview.central_dynamic
-      ? [overview.inhabitants, overview.notable_inhabitant_facet]
+      ? (overview.inhabitants_home_faction || overview.inhabitants_second_faction || overview.inhabitants_contact
+          ? [overview.inhabitants_home_faction, overview.inhabitants_second_faction, overview.inhabitants_contact]
+          : [overview.inhabitants, overview.notable_inhabitant_facet])
       : [overview.dominant_power_minions],
-    // Present State — new shape (central_dynamic + present_state)
-    // or legacy (the dramatic-arc tail: dominant_power_event +
-    // recent_event_consequences + secondary_* + main_problem +
-    // potential_solutions + conclusion).
+    // Present State — split shape (clock + recent_shift) > flat shape
+    // (central_dynamic + present_state) > legacy (dramatic-arc tail).
     overview.central_dynamic
-      ? [overview.central_dynamic, overview.present_state]
+      ? (overview.present_state_clock || overview.present_state_recent_shift
+          ? [overview.central_dynamic, overview.present_state_clock, overview.present_state_recent_shift]
+          : [overview.central_dynamic, overview.present_state])
       : [
           overview.dominant_power_event, overview.recent_event_consequences,
           overview.secondary_power, overview.secondary_power_event,
           overview.main_problem, overview.potential_solutions,
           overview.conclusion,
         ],
-    // Potential Outcomes — new shape only; free prose paragraph
-    // carrying the toolbox of approaches the party can take.
-    [overview.potential_outcomes],
+    // Potential Outcomes — split shape (primary + secondary + tertiary)
+    // > flat shape (single string).
+    overview.potential_outcomes_primary || overview.potential_outcomes_secondary || overview.potential_outcomes_tertiary
+      ? [overview.potential_outcomes_primary, overview.potential_outcomes_secondary, overview.potential_outcomes_tertiary]
+      : [overview.potential_outcomes],
   ];
 
   return sections

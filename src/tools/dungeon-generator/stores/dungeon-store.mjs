@@ -33,8 +33,6 @@ import {
   generateMonsterStatblock,
   generateAndSaveStatblock,
   updateStatblock,
-  generateMonsterDescription,
-  generateDescriptionAndStatblock,
   deleteMonster,
 } from './monster-store.mjs';
 
@@ -109,8 +107,6 @@ export const useDungeonStore = defineStore('dungeon', () => {
     createAndGenerateMonster,
     generateAndSaveStatblock,
     generateMonsterStatblock,
-    generateMonsterDescription,
-    generateDescriptionAndStatblock,
     deleteMonster,
     updateStatblock,
   };

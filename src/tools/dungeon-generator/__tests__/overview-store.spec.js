@@ -45,7 +45,6 @@ function validResponseBody() {
     history: 'Built by the Ash-Bearers three centuries ago.',
     dominant_power: 'Vetheras, the lich-king, dreams in the central vault.',
     inhabitants: 'A handful of skeleton wardens, plus a band of cultists in the antechamber.',
-    notable_inhabitant_facet: 'The cultists have begun arguing among themselves.',
     hazards_and_dangers: 'The doors close on a slow rune-clock.',
     notable_hazard_facet: '',
     central_dynamic: 'Vetheras stirs more each cycle of the moon.',
@@ -154,9 +153,8 @@ describe('generateDungeonOverview', () => {
       placeType: 'Sepulcher',
       nameTemplate: { id: 'A', shape: '[Register-noun] [Place-type]', requiresRegister: true, examples: ['Eikheim Barrow'] },
       thirdParty: { present: false },
-      motive: 'prevention',
+      driveType: 'prevent_by_killing',
       formedNature: null,
-      mode: 'confront',
     });
     overviewForm.value.description = 'a tomb called the Hollow Vault';
 
@@ -182,9 +180,8 @@ describe('generateDungeonOverview', () => {
       povFrame: 'recovered_notes',
       placeType: 'Foundry',
       nameTemplate: { id: 'C', shape: '[Place-type] of [Register-noun]', requiresRegister: true, examples: ['Crypt of Vetheras'] },
-      motive: 'acquisition',
+      driveType: 'acquire_by_theft',
       formedNature: null,
-      mode: 'subvert',
     });
 
     await generateDungeonOverview();
@@ -203,11 +200,9 @@ describe('generateDungeonOverview', () => {
       placeType: 'Foundry',
       // dimensions persists only the template id, not the full object.
       nameTemplate: 'C',
-      motive: 'acquisition',
+      driveType: 'acquire_by_theft',
       // formedNature is null when 'formed' is not in organizingLogic.
       formedNature: null,
-      // mode is drawn from the holder's menu — 'subvert' is valid for living_order.
-      mode: 'subvert',
     });
   });
 
@@ -326,6 +321,39 @@ describe('currentDungeonOverviewString', () => {
     expect(result).toContain(dungeon.dungeonOverview.central_dynamic);
     expect(result).toContain(dungeon.dungeonOverview.approach_and_threshold);
     expect(result).toContain(dungeon.dungeonOverview.present_state);
+  });
+
+  it('renders split-shape dungeons via the subfield-detected path', () => {
+    const dungeon = {
+      id: 'dng_split',
+      dungeonOverview: {
+        overview: 'A low mound of moss-furred stone.',
+        quest_hook: 'A factor of the Ash-Bearers offers payment.',
+        relation_to_larger_setting: 'At the southern edge of the Iron Hills.',
+        approach_and_threshold: 'A stair descends into a phosphorescent chamber.',
+        history: 'Built three centuries ago.',
+        dominant_power: 'Vetheras dreams in the central vault.',
+        inhabitants_home_faction: 'Aldwyn the cult-leader keeps vigil.',
+        inhabitants_second_faction: 'The skeleton wardens patrol the inner chambers.',
+        inhabitants_contact: '',
+        central_dynamic: 'Vetheras stirs more each cycle.',
+        present_state_clock: 'The rune-clock will set within three days.',
+        present_state_recent_shift: 'The antechamber sigils burned brighter last night.',
+        potential_outcomes_primary: 'The party hammers the central altar out of tune.',
+        potential_outcomes_secondary: 'The party bargains with Aldwyn for safe passage.',
+        potential_outcomes_tertiary: '',
+      },
+    };
+    dungeons.value = [dungeon];
+    currentDungeonId.value = 'dng_split';
+
+    const result = currentDungeonOverviewString.value;
+    expect(result).toContain('Aldwyn the cult-leader');
+    expect(result).toContain('skeleton wardens patrol');
+    expect(result).toContain('rune-clock will set');
+    expect(result).toContain('sigils burned brighter');
+    expect(result).toContain('hammers the central altar');
+    expect(result).toContain('bargains with Aldwyn');
   });
 
   it('renders legacy-shape dungeons via the fallback path', () => {

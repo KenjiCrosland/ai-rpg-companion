@@ -42,6 +42,16 @@ import {
   applyFirstMentionEmphasis,
 } from '@/util/renderSettingOverview.mjs';
 
+const DUNGEON_SECTION_MAP_SPLIT = [
+  { heading: null, fields: ['overview'], isLead: true },
+  { heading: 'Quest Hook', fields: ['quest_hook'] },
+  { heading: 'Approach', fields: ['relation_to_larger_setting', 'approach_and_threshold'] },
+  { heading: 'History', fields: ['history'] },
+  { heading: 'Inhabitants', fields: ['dominant_power', 'inhabitants_home_faction', 'inhabitants_second_faction', 'inhabitants_contact'] },
+  { heading: 'Present State', fields: ['central_dynamic', 'present_state_clock', 'present_state_recent_shift'] },
+  { heading: 'Potential Outcomes', fields: ['potential_outcomes_primary', 'potential_outcomes_secondary', 'potential_outcomes_tertiary'] },
+];
+
 const DUNGEON_SECTION_MAP_NEW = [
   { heading: null, fields: ['overview'], isLead: true },
   { heading: 'Quest Hook', fields: ['quest_hook'] },
@@ -78,14 +88,25 @@ const DUNGEON_SECTION_MAP_LEGACY = [
  * data), default to the new map — it will simply skip absent fields.
  */
 export function pickSectionMap(overview) {
-  if (!overview || typeof overview !== 'object') return DUNGEON_SECTION_MAP_NEW;
+  if (!overview || typeof overview !== 'object') return DUNGEON_SECTION_MAP_SPLIT;
+  // SPLIT shape: any of the new split subfields present.
+  if (
+    (typeof overview.inhabitants_home_faction === 'string' && overview.inhabitants_home_faction.trim()) ||
+    (typeof overview.present_state_clock === 'string' && overview.present_state_clock.trim()) ||
+    (typeof overview.potential_outcomes_primary === 'string' && overview.potential_outcomes_primary.trim())
+  ) {
+    return DUNGEON_SECTION_MAP_SPLIT;
+  }
+  // INTERMEDIATE shape: post-2026-05 flat fields (central_dynamic marker
+  // with flat inhabitants/present_state/potential_outcomes).
   if (typeof overview.central_dynamic === 'string' && overview.central_dynamic.trim()) {
     return DUNGEON_SECTION_MAP_NEW;
   }
+  // LEGACY shape: pre-2026-05 dramatic-arc fields.
   if (typeof overview.finding_the_dungeon === 'string' && overview.finding_the_dungeon.trim()) {
     return DUNGEON_SECTION_MAP_LEGACY;
   }
-  return DUNGEON_SECTION_MAP_NEW;
+  return DUNGEON_SECTION_MAP_SPLIT;
 }
 
 /**

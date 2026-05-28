@@ -57,10 +57,25 @@ function legacyShape(overrides = {}) {
 }
 
 describe('pickSectionMap', () => {
-  it('picks NEW map when central_dynamic is present', () => {
+  it('picks SPLIT map when any split subfield is present', () => {
+    // The SPLIT map exposes inhabitants_home_faction as one of its
+    // Inhabitants-section fields; the NEW (flat) map exposes the
+    // single `inhabitants` field instead.
+    const map = pickSectionMap({
+      ...newShape(),
+      inhabitants_home_faction: 'Aldwyn keeps vigil.',
+    });
+    const inhabitantsSection = map.find(s => s.heading === 'Inhabitants');
+    expect(inhabitantsSection.fields).toContain('inhabitants_home_faction');
+  });
+
+  it('picks NEW (flat) map when central_dynamic is present but no split subfields', () => {
     const map = pickSectionMap(newShape());
     // New map has a Potential Outcomes section; legacy doesn't.
     expect(map.some(s => s.heading === 'Potential Outcomes')).toBe(true);
+    const inhabitantsSection = map.find(s => s.heading === 'Inhabitants');
+    expect(inhabitantsSection.fields).toContain('inhabitants');
+    expect(inhabitantsSection.fields).not.toContain('inhabitants_home_faction');
   });
 
   it('picks LEGACY map when finding_the_dungeon is present and central_dynamic is not', () => {

@@ -343,7 +343,7 @@ export const OPERATIONAL_VOICE_BLOCK =
  * @/shared/register-list.mjs.
  */
 export const SCHEMA_LEAK_DIRECTIVE =
-  "ANTI-LABEL: schema field names, dimension category values (the tension's name, power-structure's name, organizing-logic's name, pov-frame's name, motive's name, mode's name, formed-nature's name), AND parenthetical role labels — (NPC), (miniboss), (apex), (large_creature), (contender), (third_party), (boss) — are prompt-side classifiers and do NOT appear in the prose. The role-routing tags tell you WHERE the entity belongs in the JSON; they are NOT annotations the GM reads. 'a construct called Velina (miniboss, NPC)' is the failure mode — the prose should say 'a construct called Velina who leads the feral Verlinea.' Translate every directive's intent into concrete in-world detail before it lands in a field.";
+  "ANTI-LABEL: schema field names, dimension category values (the tension's name, power-structure's name, organizing-logic's name, pov-frame's name, drive-type's name, formed-nature's name), AND parenthetical role labels — (NPC), (miniboss), (apex), (large_creature), (contender), (third_party), (boss) — are prompt-side classifiers and do NOT appear in the prose. The role-routing tags tell you WHERE the entity belongs in the JSON; they are NOT annotations the GM reads. 'a construct called Velina (miniboss, NPC)' is the failure mode — the prose should say 'a construct called Velina who leads the feral Verlinea.' Translate every directive's intent into concrete in-world detail before it lands in a field.";
 
 /**
  * Tier-invariant header for the ADJUDICATABLE-DANGER RULE. Pairs with
@@ -446,9 +446,9 @@ export const POWER_STRUCTURE_DIRECTIVES = {
     "POWER STRUCTURE: single apex — one entity rules this dungeon, with their authority unambiguous and structurally central. Whatever the tension demands (a stirring power, a declining boss, a contested heir, an installed cultist), it organizes around this one apex. The dominant_power field names them; the inhabitants are recognizably their servants, occupiers, or subjects.",
 
   several_unrelated:
-    "POWER STRUCTURE: several unrelated forces — 2 or 3 powers coexist here, each INCIDENTAL to the others. The defining property: each force is here for its OWN reasons, arrived at its OWN time, and pursues its OWN agenda regardless of the others' presence. The structural test: removing any one of them leaves the situations of the others UNCHANGED, because each force's relationship is with the PLACE and with ITSELF, not with the other forces.\n\n" +
-    "AGENT-ONLY RULE — HARD CONSTRAINT: every power named in this slot must be an AGENT with intent — a thinking faction, a sentient creature, a willful spirit, a bound will, a god's remnant, a beast with territory and habit. The minimum bar: each force can DECIDE something, can ESCALATE, can be ENGAGED on its own terms (talked to, fought, avoided, bargained with). Inert environmental processes — a geological sink, an ambient cold, a freezing breath, a hum that just hums, a rot that just spreads, a fire that just burns — are NOT powers. If your three forces include something process-shaped, render it as a SPIRIT or CREATURE that embodies the process (a frost-spirit, a hunger-bound beast, a binding-will), not as the process itself. A glacier is texture; the spirit OF the glacier is a power. A poisoned air is texture; the cult that breathes it is a power. Process-texture surfaces through what the powers do to the space (the central_dynamic, the present_state, the threshold) — never as a fourth power.\n\n" +
-    "Examples of the shape: a clan of squatter predators hunting in the upper halls + a hermit who arrived years ago and stayed + a sleeper-spirit who wakes on a slow cycle independent of either; or, a colony of fungal-creatures with a hive-mind + a passing scholar studying them + an animated guardian-construct still defending its original purpose. Each has its own reason for being here; none of them is the 'main' power. Route the secondary forces' specifics into inhabitants (with each one's current position and activity). The party can engage any of them on its own terms.",
+    "POWER STRUCTURE: several unrelated forces — EXACTLY 2 powers coexist here, each INCIDENTAL to the other. The defining property: each force is here for its OWN reasons, arrived at its OWN time, and pursues its OWN agenda regardless of the other's presence. The structural test: removing either of them leaves the other's situation UNCHANGED, because each force's relationship is with the PLACE and with ITSELF, not with the other force. HARD CAP: TWO POWERS. Not three. A third candidate is the failure mode — absorb it into one of the two (as a captured outsider, a recent arrival inside the home group's territory, a hostage) or drop it entirely. The third power is never preserved.\n\n" +
+    "AGENT-ONLY RULE — HARD CONSTRAINT: every power named in this slot must be an AGENT with intent — a thinking faction, a sentient creature, a willful spirit, a bound will, a god's remnant, a beast with territory and habit. The minimum bar: each force can DECIDE something, can ESCALATE, can be ENGAGED on its own terms (talked to, fought, avoided, bargained with). Inert environmental processes — a geological sink, an ambient cold, a freezing breath, a hum that just hums, a rot that just spreads, a fire that just burns — are NOT powers. If your two forces include something process-shaped, render it as a SPIRIT or CREATURE that embodies the process (a frost-spirit, a hunger-bound beast, a binding-will), not as the process itself. A glacier is texture; the spirit OF the glacier is a power. A poisoned air is texture; the cult that breathes it is a power. Process-texture surfaces through what the powers do to the space (the central_dynamic, the present_state, the threshold) — never as a third power.\n\n" +
+    "Examples of the shape: a clan of squatter predators hunting the upper halls + a sleeper-spirit who wakes on a slow cycle independent of them; or, a colony of fungal-creatures with a hive-mind + an animated guardian-construct still defending its original purpose. Each has its own reason for being here; neither is the 'main' power. Route both forces' specifics into inhabitants (with each one's current position and activity). The party can engage either on its own terms.",
 
   living_order:
     "POWER STRUCTURE: living order — a functioning institution of LIVING PEOPLE occupies and operates this place by procedure, rule, and routine: a monastic order, a guild, a magistracy, a guard company, a research conclave. RENDER AS AN INFILTRATION, NOT A COURT. Three mandatory properties:\n\n1. AN OBJECTIVE DEEPER IN THE SPACE. The party must reach, retrieve, or get past the order to do something — a sealed archive, a prisoner in a lower cell, a relic in the inner sanctum, a witness, a stolen item, a fugitive in protective custody. They penetrate toward this objective; they do not arrive for a meeting.\n\n2. ONE INFILTRATION VECTOR + ONE COMPLICATION. Pick exactly ONE plausible way someone outside the order could get inside, named concretely — a stolen vestment, a forged standing, a bribable doorman, a sponsoring member who vouches, the order's standing welcome to a similar-looking traveling sect, the once-a-week ritual day when outsiders are admitted. Then ONE complication that creates pressure once inside — a single observed gesture the party must perform at a chokepoint, a senior who returns at a specific hour and knows every face, a recently-changed sigil only the inner ranks carry. NOT a gauntlet of countersigns, rank-signets, geyser-cadences, bow-angles, and rotating passwords stacked on top of each other. ONE way in. ONE complication. The dungeon is an infiltration, not a checklist.\n\n3. COVER BREAKS → FLIGHT. The order vastly outmatches the party in open conflict, so subterfuge is mandatory. When the vector or complication breaks, the mode flips: the party becomes prey in a fully-mobilized space and must escape. That fail-state is what makes the cover matter. NO supernatural apex, NO undead figurehead, NO mind-controlled cultists. If a head of the institution exists, name them in npc_list as a normal NPC subject to the institution's rules.\n\n" +
@@ -1027,14 +1027,31 @@ function rollAlly(rng, ctx) {
   return { present: true, type: 'ally', kind };
 }
 
-export function pickRandomThirdParty(rng = Math.random, { holder = null, motive = null, tension = null, tier = null } = {}) {
-  const presenceRate = motive === 'acquisition'
+// Drive types that read as "claim a prize, rival in the race" — they
+// fill the structural niche the old `motive === 'acquisition'` filled,
+// so the third-party presence/adversary bumps key on these.
+const ACQUISITION_STYLE_DRIVE_TYPES = new Set([
+  'acquire_by_negotiation',
+  'acquire_by_theft',
+]);
+
+export function pickRandomThirdParty(rng = Math.random, { holder = null, driveType = null, tension = null, tier = null } = {}) {
+  const isAcquisitionStyle = ACQUISITION_STYLE_DRIVE_TYPES.has(driveType);
+  const presenceRate = isAcquisitionStyle
     ? THIRD_PARTY_PRESENCE_RATE_ACQUISITION
     : THIRD_PARTY_PRESENCE_RATE_DEFAULT;
   if (rng() >= presenceRate) {
     return { present: false };
   }
-  const adversaryRate = motive === 'acquisition'
+  // SEVERAL_UNRELATED SUPPRESS: the `several_unrelated` power structure
+  // is defined as exactly 2 home powers. Adding an adversary third party
+  // would make 3 factions and violate the inhabitants HARD CAP of 2.
+  // Force ally under several_unrelated — contacts ride alongside the
+  // two home powers as a resource, not a third faction.
+  if (holder === 'several_unrelated') {
+    return rollAlly(rng, { tension, tier });
+  }
+  const adversaryRate = isAcquisitionStyle
     ? THIRD_PARTY_ADVERSARY_RATE_ACQUISITION
     : THIRD_PARTY_ADVERSARY_RATE_DEFAULT;
   const wantsAdversary = rng() < adversaryRate;
@@ -1048,184 +1065,125 @@ export function pickRandomThirdParty(rng = Math.random, { holder = null, motive 
 }
 
 // ---------------------------------------------------------------------
-// Mode (the party's intended posture, conditioned on power structure)
+// Drive type — fused stake + method (replaces motive + mode)
 // ---------------------------------------------------------------------
+//
+// Motive (why the party is here) and mode (how they win) were rolled
+// separately as orthogonal axes. In practice they collapsed: the LLM
+// defaulted to whichever pattern was structurally familiar (prevention
+// → ritual regardless of mode; assassinate → lost when motive was
+// prevention). A single fused field — driveType — names the stake and
+// the method together, so the prompt has one directive to honor.
 
-/**
- * Mode — the intended verb of play, conditioned on the rolled holder.
- * Dungeons converge on a single mode (confront / navigate-and-overcome)
- * without this dimension. Each holder carries its OWN menu of sensible
- * postures (you can't infiltrate a mindless hazard, can't assassinate
- * a power with no single locus), so cohere never has to repair a
- * nonsense pairing — only postures that fit the power can roll.
- *
- * mode composes with motive (the goal) — they are ORTHOGONAL inputs
- * whose product is the mission's texture. recovery + assassinate =
- * reach and kill the holder quietly, extract the target. recovery +
- * avoid = slip the target out without rousing the holder. Same goal,
- * different mode, different dungeon.
- *
- * Mode is the INTENDED, rated posture. The party can always deviate;
- * the difficulty rating ASSUMES the appropriate mode and states the
- * deviation cost explicitly. avoid / assassinate / steal_past imply
- * an over-strong central power — beatable but not via brute force.
- */
-export const MODE_MENUS = {
-  single_apex: [
-    'confront',        // defeat it head-on; fair fight, central power at-or-below party weight
-    'assassinate',     // reach + strike covertly; central power over-strong, but one-shot-able
-    'avoid',           // navigate around; central power over-strong, objective reachable off-axis
-    'outwit',          // exploit a weakness or contract-loophole rather than fight
-    'serve_infiltrate',// join its ranks; achieve from inside its trust
-    'steal_past',      // take the objective without engaging it
-    'usurp',           // displace it by qualification (rite, oath, challenge)
-    'invent',
-  ],
-  several_unrelated: [
-    'play_them_against',  // engineer mutual conflict; powers exhaust each other
-    'ally_with_one',      // pick a side; use the alliance against the others
-    'thread_the_gaps',    // move through the spaces no power claims
-    'exploit_standoff',   // use mutual surveillance as cover
-    'invent',
-  ],
-  // living_order intentionally has no mode menu — the LIVING ORDER
-  // POWER STRUCTURE block already specifies infiltration as the
-  // mandatory mode, and rolling a separate mode (subvert, evade,
-  // assault, etc.) produced no behavioral variation: the LLM anchored
-  // to infiltration regardless. pickRandomMode returns null for
-  // living_order, so no MODE block is injected for those generations.
-};
-
-/**
- * Flat directives map — every mode across every menu has one entry.
- * 'invent' is shared across menus (the open-slot directive is the
- * same regardless of which menu it came from; the prompt has the
- * holder's MODE_MENUS context to ground the invention).
- */
-export const MODE_DIRECTIVES = {
-  // --- single_apex menu ---
-  confront:
-    "MODE: confront. The party approaches the central power HEAD-ON and overcomes it. The dominant_power's strength sits AT or BELOW party weight — this is a fair fight balanced for victory. Hazards and inhabitants are the road TO the confrontation; the confrontation itself is the climax. DEVIATION COST: there is no deviation cost — this mode IS the brute-force baseline.",
-  assassinate:
-    "MODE: assassinate. The party reaches the central power covertly and removes it BEFORE it can react. The dominant_power's strength sits ABOVE party weight — a fair fight is lethal — but it is BEATABLE if the party reaches it unseen and strikes first (one-shot, coup-de-grace, ambush). Hazards and inhabitants are detection-layers; the win-condition is reaching the locus without triggering it. DEVIATION COST: if the party is discovered before they strike, the dominant_power wakes/turns and the encounter flips to deadly stand-up combat at the over-strong rating — a likely party-wipe.",
-  avoid:
-    "MODE: avoid. The party navigates AROUND the central power without engaging it. The dominant_power's strength sits ABOVE party weight — a fair fight is lethal — and the objective is something the party can reach WITHOUT going through the central locus. Routes, distractions, the holder's blind spots and routines, and the architecture's gaps are the GM's tools. DEVIATION COST: forcing a head-on fight with the over-strong central power is lethal — a likely party-wipe.",
-  outwit:
-    "MODE: outwit. The party defeats the central power through TRICKERY, riddle, contract-loophole, or condition-manipulation rather than damage. The dominant_power's strength is irrelevant if its weakness is exploited — name the weakness concretely (a vow it cannot break, a name that binds it, a condition that ends its tenure). The win-condition is finding and triggering the exploit. DEVIATION COST: a head-on fight without the exploit is the over-strong path; the central power overpowers conventional combat.",
-  serve_infiltrate:
-    "MODE: serve / infiltrate-its-ranks. The party approaches the central power by JOINING or APPEARING to serve it; the objective is achieved from inside its trust. They earn a token, a role, an audience by appearing useful. Hazards and inhabitants are the institutional layer the party climbs through. DEVIATION COST: being exposed forces the entire structure to turn at once — the central power AND its ranks coordinate against the party.",
-  steal_past:
-    "MODE: steal-from-under-it. The party takes the objective WITHOUT engaging the central power at all. The objective is somewhere the central power doesn't currently watch — a vault forgotten, a relic miscatalogued, a treasure delegated to a minion. The win-condition is getting the objective out before the central power notices. DEVIATION COST: discovery wakes the over-strong central power AND triggers pursuit (carrying past the dungeon's exit).",
-  usurp:
-    "MODE: usurp. The party DISPLACES the central power by claiming its title, throne, or sanction — not by fighting, but by QUALIFYING themselves (a rite passed, an oath sworn, a contender's challenge accepted, a successor named). The central power steps aside, is bound by its own rules, or transforms once the party meets the qualification. DEVIATION COST: failing the qualification often binds the party to a worse fate than refusal would have — the rules cut both ways.",
-
-  // --- several_unrelated menu ---
-  play_them_against:
-    "MODE: play-them-against-each-other. None of the powers can be confronted head-on at full party strength — but each can be played against the others. The win-condition is engineering a conflict where the powers EXHAUST or DESTROY each other while the party slips through or seizes the prize. Hazards include the powers' mutual hostility (already simmering, easy to ignite) and the chaos when it ignites. DEVIATION COST: ALL powers converge on the party at once if the party becomes the common enemy.",
-  ally_with_one:
-    "MODE: ally-with-one-against-the-rest. The party picks a SIDE, makes terms with one of the powers, and uses that alliance to overcome the others. The chosen power becomes a temporary asset (its agents, its territory, its knowledge); the others remain hostile. The win-condition includes honoring or breaking the alliance at the right moment. DEVIATION COST: betrayal by the ally — or premature betrayal of the ally — puts the party in front of ALL the powers at once.",
-  thread_the_gaps:
-    "MODE: thread-between-the-gaps. The party moves through the spaces NO power claims — the contested edges, the abandoned middle, the routes everyone leaves alone because picking them up would mean conflict. The win-condition is reaching the objective without entering any single power's claimed territory. Hazards include the gaps' own dangers (left there because nobody maintains them). DEVIATION COST: crossing into any power's territory provokes that power AND alerts the others.",
-  exploit_standoff:
-    "MODE: exploit-the-standoff-as-cover. The fact that the powers WATCH EACH OTHER (not the party) is the party's cover. They move through the dungeon under the shadow of mutual surveillance — the powers are too busy with each other to notice intruders. The win-condition is using the standoff's rules (watched chambers, neutral zones, observed corridors) as the party's safe passage. DEVIATION COST: disturbing the standoff — making any power feel threatened — collapses the cover and the powers may briefly unite against the disruptor.",
-
-  // living_order has no mode menu (see MODE_MENUS comment) — its
-  // infiltration framing is mandatory and lives in the LIVING ORDER
-  // POWER STRUCTURE directive, so a separate MODE block adds nothing.
-  // The four old living_order modes (infiltrate / subvert / assault /
-  // evade) were retired with the menu.
-
-  // --- open slot (shared across menus) ---
-  invent:
-    "MODE: open slot. Invent a POSTURE that is genuinely on-axis for the rolled power structure and is NOT a closet reading of the menu's listed anchors. Stay generic-fantasy; no real-world or trademarked references. The mode must drive: (a) a VERB toward the dominant power, (b) a WIN-CONDITION consistent with that posture, (c) a DEVIATION COST — the brute-force path that is lethal if attempted. Name the central power's relative strength (at-or-below party weight, or over-strong) so the rating is interpretable.",
-};
-
-const MODE_OPEN_SLOT_RATE = 0.10;
-
-/**
- * Pick a mode from the rolled holder's menu. 10% open slot ('invent');
- * otherwise uniform over the menu's anchors. Returns null when holder
- * has no menu (legacy callers, future holders that don't define one).
- */
-export function pickRandomMode(rng = Math.random, { holder = null } = {}) {
-  const menu = MODE_MENUS[holder];
-  if (!Array.isArray(menu) || menu.length === 0) return null;
-  if (rng() < MODE_OPEN_SLOT_RATE) return 'invent';
-  const anchors = menu.filter(m => m !== 'invent');
-  if (anchors.length === 0) return 'invent';
-  return anchors[Math.floor(rng() * anchors.length)];
-}
-
-// ---------------------------------------------------------------------
-// Motive (the party's REASON TO DELVE)
-// ---------------------------------------------------------------------
-
-/**
- * Motive — the why of the delve. The tension axis was doing double
- * duty (situation + implied why), and the implied why was always
- * "stop the bad thing." This dimension takes the why off tension's
- * shoulders so acquisition / recovery / discovery can stand as
- * peers of prevention instead of being silently rendered as
- * prevention with a different label.
- *
- * Distribution: prevention DROPS from ~always to one peer (~22.5%);
- * acquisition (the missing one historically) becomes common (~22.5%).
- * Each anchor rolls uniformly; ~10% open slot.
- */
-export const MOTIVES = [
-  'acquisition',  // claim a prize; a rival wants it too
-  'prevention',   // stop a catastrophe (the old default — now a peer)
-  'recovery',     // extract a captive or stolen thing
-  'discovery',    // find / map / answer — knowledge is the prize
-  'invent',
+export const DRIVE_TYPES = [
+  'recover_by_force',
+  'recover_by_stealth',
+  'recover_by_substitution',
+  'escort_through',
+  'prevent_by_killing',
+  'prevent_by_ritual',
+  'prevent_by_sabotage',
+  'acquire_by_negotiation',
+  'acquire_by_theft',
+  'bear_a_message',
+  'expose_the_truth',
+  'usurp_authority',
+  'survive_and_escape',
+  'exploit_the_standoff',
 ];
 
-export const MOTIVE_DIRECTIVES = {
-  acquisition:
-    "MOTIVE: acquisition — the party comes to CLAIM A PRIZE. A desirable, named thing (an artifact, a hoard, a cache of knowledge, a relic, a captured creature, a key) is the WHY, and the dungeon revolves around it. A RIVAL wants it too: a competing party, an agent of a faction, a crew already inside. The clock is a RACE-CLOCK: failure = the PARTY LOSES the prize (the rival takes it, it's destroyed in the contest, it changes hands). Failure is NOT a catastrophe befalling the world; it is a loss TO THE PARTY. Render the prize CONCRETELY (what it is, why it's worth taking, where in the dungeon it sits) and render the RIVAL'S PROGRESS against the party's (who's ahead, how the party knows). When the tension supplies a threat (a stirring power, a brewing harvest), fuse the two clocks — the prize is guarded by the threat — do not let prevention swallow the acquisition.",
-  prevention:
-    "MOTIVE: prevention — the party comes to STOP A CATASTROPHE before a doom-clock runs out. The dungeon is the SOURCE of the threat or its access point. The clock is a DOOM-CLOCK: failure = the bad thing happens (the seal breaks, the cult completes the ritual, the harvest ships, the captive becomes the thing). Render what's ESCALATING and how the party MEASURES the clock (signs in the world, shipments leaving, rituals counting down). The catastrophe's scope MUST match the tier — local for T1, kingdom-scale for T3-4, cosmic for T5.",
-  recovery:
-    "MOTIVE: recovery — the party comes to EXTRACT A TARGET held within the dungeon: a captive person, a stolen object, a kidnapped creature, a sequestered witness. The party must reach the target, free or recover them, and get them OUT (sometimes alive, sometimes intact). The clock is the TARGET'S CLOCK: failure = something befalls the target (they die, they're sold downstream, they're transformed, the object is destroyed or moved on). Render the target's situation NOW (where they're held, in what condition, what's queued for them next) and what specifically the party gives up if they're slow.",
-  discovery:
-    "MOTIVE: discovery — the party comes to FIND, MAP, or ANSWER something. KNOWLEDGE is the prize: a buried truth, a vanishing record, a sealed history, a question only this place can answer. The dungeon HOLDS the answer and is actively LOSING it. The clock is the SLIPPAGE CLOCK: failure = the knowledge is destroyed, looted, taken away, or fades (a scriptorium collapses, a witness dies, a rival burns the archive, carvings weather past legibility). Render what's KNOWN about the answer from outside (the question that drove them here) and what's actively ERASING it inside.\n\n" +
-    "WHY THIS KNOWLEDGE MATTERS TO THIS PARTY: discovery dungeons consistently fail to land because 'find the lost archive' reads as homework, not adventure. Name a SPECIFIC, CONCRETE stake that ties the knowledge to the party's situation. The stake can take any of these shapes — pick one the dungeon's contents naturally answer: a COMING THREAT only this knowledge counters (a binding-name for something about to be released elsewhere; the true name of the thing the party's town is fighting); a DEBT or OATH the party owes that the knowledge cancels (the answer pays the price); a PERSON the party needs to identify (who poisoned the well, who fathered the contested child, who signed the treaty in secret); a PLACE the knowledge LOCATES (the safe route through the next region, the grave of a missing kin, the lost outpost a sworn friend was sent to find); a CHOICE the party has to make and cannot make blind (which of two heirs is real, which of two rituals does what it claims). 'The party seeks the lost mappings of the Star-Compact' is homework; 'the mappings name the true crossing through the Bone Marsh, and the party's caravan was hired to escort a hundred refugees across it next week' is a delve — the party's situation is what the answer SERVES. Do NOT introduce a SECOND time-based deadline alongside the dungeon's slippage clock; the party-specific hook explains WHY the party answered the question, not WHEN they have to. SPECIFICALLY BANNED (clustered hard in production): the dying-patron-needs-succession-document hook — a patron dying without an heir, an oath-clause for appointing a successor, an intestate-bloodline crisis. Any variant of that shape. Use a different stake.",
-  invent:
-    "MOTIVE: open slot. The roll did not land on a listed anchor. Invent a delve REASON that genuinely answers 'why is the party going in?' — and that is NOT a closet reading of acquisition / prevention / recovery / discovery. The motive must drive a specific CLOCK (what happens if the party is slow) and a specific WIN-CONDITION (what success looks like). Stay generic-fantasy; no real-world or trademarked references.",
+export const DRIVE_TYPE_DIRECTIVES = {
+  recover_by_force:
+    "DRIVE TYPE: recover_by_force. The party comes to EXTRACT a specific named object or person held inside the dungeon, and COMBAT is the primary path — they fight through to reach the target. Quest hook names what they're recovering and who's paying for its return. Potential outcomes' first path describes how the party reaches the target and brings it out under arms.",
+  recover_by_stealth:
+    "DRIVE TYPE: recover_by_stealth. The party comes to EXTRACT a specific named object or person, and INFILTRATION is the primary path — full alarm or mobilization makes the extraction impossible. Quest hook names the target and the patron. Potential outcomes' first path describes the stealth route in and out — guards bypassed, patrols slipped, the egress made before anyone notices the missing.",
+  recover_by_substitution:
+    "DRIVE TYPE: recover_by_substitution. The party comes to SWAP a decoy for the real target — the dungeon's guardian responds to ABSENCE, not THEFT, so leaving something convincing in the target's place buys the party time. Quest hook names what's being swapped, who provides the decoy, and how long the swap must hold. Potential outcomes' first path describes the swap window and what makes the decoy convincing enough to pass inspection.",
+  escort_through:
+    "DRIVE TYPE: escort_through. The party comes to extract a LIVING person from the dungeon — someone who can cooperate, resist, hesitate, or bargain. Quest hook names the captive (by name, where possible), why the patron values them alive over dead, and any condition on the extraction (intact, uncoerced, willing). Potential outcomes' first path describes the egress route AND the captive's reliability problem (do they walk, do they bolt, do they speak to the wrong faction). Costs include what the captive carries OUT (debts, knowledge, a grievance).",
+  prevent_by_killing:
+    "DRIVE TYPE: prevent_by_killing. The party comes to STOP something bad by ELIMINATING the cause — kill the cult leader, end the binding-keeper, take the head off the ritual before the act completes. Quest hook names what will happen if the cause acts and who's paying to stop it. Potential outcomes' first path describes how the party reaches and kills the cause — what wakes it, what makes the strike land, what happens if it sees them first.",
+  prevent_by_ritual:
+    "DRIVE TYPE: prevent_by_ritual. The party comes to STOP something bad through KNOWLEDGE and CEREMONY — recite the binding, perform the rite, seal the door with the correct words. Quest hook names what the ritual prevents and where the necessary knowledge lives in the dungeon. Potential outcomes' first path describes assembling the ritual (where the words are, what's required to speak them) and performing it before the doom-clock runs out.",
+  prevent_by_sabotage:
+    "DRIVE TYPE: prevent_by_sabotage. The party comes to STOP something bad by DESTROYING its mechanism — break the forge, sever the binding-chain, collapse the ritual chamber, poison the supply. Quest hook names the mechanism and what its destruction prevents. Potential outcomes' first path describes the specific destructive act — what gets broken, with what tool, what trace it leaves, what happens to the dungeon when the mechanism fails.",
+  acquire_by_negotiation:
+    "DRIVE TYPE: acquire_by_negotiation. The party comes to OBTAIN something through DEAL-MAKING with a named holder — buy it, bargain for it, swear an oath that gives them title. Quest hook names what's being acquired, who holds it, and what the patron offers as bargaining power. Potential outcomes' first path describes the negotiation — what the holder wants, what the party can offer, what the deal's price carries out of the dungeon.",
+  acquire_by_theft:
+    "DRIVE TYPE: acquire_by_theft. The party comes to TAKE something without the holder's knowledge — the holder must not know the object is missing when the party leaves. Quest hook names the target and the holder. Potential outcomes' first path describes how the theft is concealed — the route in, the route out, what masks the absence (a decoy is OK, but the primary frame is concealment of the theft itself, not its outcome).",
+  bear_a_message:
+    "DRIVE TYPE: bear_a_message. The party comes to DELIVER something INTO the dungeon — a writ, a warning, a truce, a sealed message, a binding-token — to a specific recipient inside. Quest hook names the recipient, what the message contains, and why it can't be delivered any other way. Potential outcomes' first path describes reaching the recipient AND ensuring the message lands (uninterrupted, witnessed by the right parties, understood).",
+  expose_the_truth:
+    "DRIVE TYPE: expose_the_truth. The party comes to DISCOVER specific knowledge and BRING IT BACK — a name, a route, a record, a sworn witness's account. Quest hook names the question being answered and what depends on the answer (a coming threat the knowledge counters, a debt it cancels, a person it identifies, a choice it informs). Potential outcomes' first path describes how the knowledge is secured (recorded, witnessed, carried out) and what's actively erasing it inside.",
+  usurp_authority:
+    "DRIVE TYPE: usurp_authority. The party comes to REPLACE or DESTABILIZE the dungeon's power structure — they leave with the title, the binding-key, the lineage-claim, or the recognized seat that the prior power held. Quest hook names what the party will claim and why their patron benefits from the displacement. Potential outcomes' first path describes the qualifying act (rite passed, oath sworn, challenge accepted, blood-claim proven) and what the dungeon does once the old power is displaced.",
+  survive_and_escape:
+    "DRIVE TYPE: survive_and_escape. The party is ALREADY INSIDE — sealed in, abandoned by a guide, dropped through a trap, woken from frozen sleep — and the goal is EGRESS. Quest hook frames how they got in (or notes they wake in media res) and what awaits them outside. Potential outcomes' first path describes the egress route, what blocks it, and the cost of the way out (a faction's anger, a debt, a piece of the party's gear left behind).",
+  exploit_the_standoff:
+    "DRIVE TYPE: exploit_the_standoff. The party comes with an objective that cannot be reached HEAD-ON — but the dungeon's factions are AT EACH OTHER'S THROATS, and that conflict is the party's cover. Quest hook names the objective and the standoff that opens the path. Potential outcomes' first path describes how the party leverages the standoff (igniting it further, slipping past while it consumes attention, allying with one side to overcome the others' guard).",
 };
 
 /**
- * Motive-aware clause appended to the present_state schema field text.
- * present_state's voice anchor was loss-aversion ('what changes if
- * the party does nothing'); under non-prevention motives, what changes
- * isn't necessarily a worsening catastrophe.
+ * Pick a drive type with cascade weighting based on the rolled
+ * (powerStructure, tension, organizingLogic) context. Per the user's
+ * design notes:
+ *   - prevent_by_killing weights higher under single_apex
+ *   - exploit_the_standoff weights higher under several_unrelated
+ *   - prevent_by_ritual weights higher with sealed-and-stirring / boss-decline tension
+ *   - recover_by_stealth weights higher with inhabited_base organizing logic
+ *   - survive_and_escape weights higher with scoured-and-claimed tension
+ *
+ * Multipliers stack multiplicatively. Returned value is a member of
+ * DRIVE_TYPES (never null — every roll lands on a drive type).
  */
-export const MOTIVE_PRESENT_STATE_CLAUSES = {
-  acquisition: "Motive-aware clock for THIS generation (acquisition): the clock is a RACE-CLOCK — a rival is closing on the prize. What changes if the party waits is the RIVAL'S PROGRESS (they reach it first, they get out with it, they trigger a defense the party would have avoided). The 'live situation' includes where the rival is right now relative to the prize.",
-  prevention: "Motive-aware clock for THIS generation (prevention): the clock is a DOOM-CLOCK — the threat escalates if the party waits. Render what's worsening (rituals counting down, seals thinning, harvests preparing to ship, captives nearing transformation).",
-  recovery: "Motive-aware clock for THIS generation (recovery): the clock is the TARGET'S CLOCK — what befalls the captive / object / witness if the party is slow. The 'live situation' includes the target's current state (where they are, in what condition, what's queued for them next).",
-  discovery: "Motive-aware clock for THIS generation (discovery): the clock is the SLIPPAGE CLOCK — the answer is actively being lost. Render what's erasing it (a rival looting the archive, a witness dying, weathering, fire, theft). The 'live situation' includes what's still legible and what isn't anymore.",
-};
+export function pickRandomDriveType(rng = Math.random, context = {}) {
+  const { powerStructure = null, tension = null, organizingLogic = null } = context;
+  const weights = {};
+  for (const dt of DRIVE_TYPES) weights[dt] = 1.0;
 
-/**
- * Motive-aware clause appended to the difficulty_level schema field text.
- * difficulty_level's voice anchor was 'what's CONCRETELY at stake if
- * they don't' — loss-aversion. Under non-prevention motives, what's at
- * stake is the prize / target / answer, not a world-shape catastrophe.
- */
-export const MOTIVE_DIFFICULTY_CLAUSES = {
-  acquisition: "Motive-aware stakes (acquisition): what's concretely at stake on failure is the PRIZE — the party loses it (the rival takes it, it's destroyed, it changes hands). NOT a catastrophe befalling the world.",
-  prevention: "Motive-aware stakes (prevention): what's concretely at stake on failure is the CATASTROPHE — what specific bad thing happens at the tier's scope (a village dies at T1, a kingdom falls at T3-4, planes shift at T5).",
-  recovery: "Motive-aware stakes (recovery): what's concretely at stake on failure is the TARGET — what specifically befalls them (death, sale, transformation, loss, irretrievable departure).",
-  discovery: "Motive-aware stakes (discovery): what's concretely at stake on failure is the ANSWER — the knowledge lost forever, the question unanswerable, the truth buried for good.",
-};
+  if (powerStructure === 'single_apex') {
+    weights.prevent_by_killing *= 1.6;
+    weights.usurp_authority *= 1.4;
+    weights.acquire_by_negotiation *= 1.2;
+  }
+  if (powerStructure === 'several_unrelated') {
+    weights.exploit_the_standoff *= 1.8;
+    weights.bear_a_message *= 1.2;
+  }
+  if (powerStructure === 'living_order') {
+    weights.recover_by_stealth *= 1.3;
+    weights.bear_a_message *= 1.3;
+    weights.acquire_by_negotiation *= 1.2;
+  }
+  if (tension === 'sealed-and-stirring' || tension === 'boss-decline') {
+    weights.prevent_by_ritual *= 1.5;
+    weights.prevent_by_sabotage *= 1.3;
+  }
+  if (tension === 'cult-ascendant' || tension === 'awakening-architecture') {
+    weights.prevent_by_killing *= 1.4;
+    weights.prevent_by_ritual *= 1.3;
+  }
+  if (tension === 'scoured-and-claimed') {
+    weights.survive_and_escape *= 1.6;
+  }
+  if (tension === 'freshly-occupied' || tension === 'occupied-by-rivals') {
+    weights.recover_by_force *= 1.3;
+    weights.recover_by_stealth *= 1.3;
+  }
+  if (Array.isArray(organizingLogic) && organizingLogic.includes('inhabited_base')) {
+    weights.recover_by_stealth *= 1.5;
+    weights.acquire_by_theft *= 1.3;
+    weights.bear_a_message *= 1.2;
+  }
 
-const MOTIVE_OPEN_SLOT_RATE = 0.10;
-
-export function pickRandomMotive(rng = Math.random) {
-  if (rng() < MOTIVE_OPEN_SLOT_RATE) return 'invent';
-  const anchors = MOTIVES.filter(m => m !== 'invent');
-  return anchors[Math.floor(rng() * anchors.length)];
+  const entries = Object.entries(weights);
+  const total = entries.reduce((s, [, w]) => s + w, 0);
+  let r = rng() * total;
+  for (const [key, w] of entries) {
+    r -= w;
+    if (r < 0) return key;
+  }
+  return entries[entries.length - 1][0];
 }
 
 // ---------------------------------------------------------------------

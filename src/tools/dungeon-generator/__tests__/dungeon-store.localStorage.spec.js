@@ -34,8 +34,6 @@ jest.mock('../stores/monster-store.mjs', () => ({
   generateMonsterStatblock: jest.fn(),
   generateAndSaveStatblock: jest.fn(),
   updateStatblock: jest.fn(),
-  generateMonsterDescription: jest.fn(),
-  generateDescriptionAndStatblock: jest.fn(),
   deleteMonster: jest.fn(),
 }));
 

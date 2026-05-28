@@ -7,7 +7,7 @@
  * unspecified dimensions, then the main generation call receives
  * fully-specified constraints rather than rolling on its own.
  *
- * Output shape: { type, character, register, userName, tension, difficulty, powerStructure, organizingLogic, thirdParty, povFrame, placeType, nameTemplate, registerPool, motive, formedNature, mode, monsterPopulation }
+ * Output shape: { type, character, register, userName, tension, difficulty, powerStructure, organizingLogic, thirdParty, povFrame, placeType, nameTemplate, registerPool, driveType, formedNature, monsterPopulation }
  *
  *   type — one entry from DUNGEON_TYPES. The LLM picks based on user
  *     input or rolls from the pool when no signal exists. The pool is
@@ -55,9 +55,9 @@
  *     `{ present: true, type: 'adversary' | 'ally', kind }`. Adversary
  *     picks from CONTENDER_KINDS (19 entries); ally picks from
  *     CONTACT_KINDS (10 entries). Presence + type split are
- *     code-rolled, with motive bumping presence and biasing toward
- *     adversary under acquisition. SUPPRESS rule flips adversary →
- *     ally under rival-coded tensions.
+ *     code-rolled, with driveType bumping presence and biasing toward
+ *     adversary under acquisition-style drives (acquire_by_*).
+ *     SUPPRESS rule flips adversary → ally under rival-coded tensions.
  *
  *   povFrame — one entry from POV_FRAMES, gated on holder + tension.
  *     Re-specs the overview field as a POV hook (a voice with bias and
@@ -108,11 +108,8 @@ import {
   pickPlaceTypeForLogic,
   pickRandomNameTemplate,
   pickRegisterPoolSubset,
-  pickRandomMotive,
-  MOTIVES,
   pickRandomFormedNature,
-  pickRandomMode,
-  MODE_MENUS,
+  pickRandomDriveType,
   pickWeightedDungeonType,
   resolveDifficulty,
   rollMonsterPopulation,
@@ -164,13 +161,7 @@ export function validateInferenceResponse(raw) {
     || parsed.organizingLogic === null
     || typeof parsed.organizingLogic === 'string'
     || (Array.isArray(parsed.organizingLogic) && parsed.organizingLogic.every(l => typeof l === 'string'));
-  // motive is optional in the response — if absent the resolver
-  // uses the pre-roll. When present, accepts a string.
-  const hasMotive =
-    parsed.motive === undefined
-    || parsed.motive === null
-    || typeof parsed.motive === 'string';
-  return hasType && hasCharacter && hasRegister && hasUserName && hasOrganizingLogic && hasMotive;
+  return hasType && hasCharacter && hasRegister && hasUserName && hasOrganizingLogic;
 }
 
 /**
@@ -179,7 +170,7 @@ export function validateInferenceResponse(raw) {
  * The type section always includes a tier hint so the LLM picks a
  * scale-appropriate type even when user input doesn't specify one.
  */
-function buildPrompt({ description, lore, characterCandidates, tier, preRolledOrganizingLogic, preRolledHolder, preRolledTension, preRolledMotive }) {
+function buildPrompt({ description, lore, characterCandidates, tier, preRolledOrganizingLogic, preRolledHolder, preRolledTension }) {
   const safeDescription = (description || '').replace(/"/g, '\\"');
   const safeLore = (lore || '').replace(/"/g, '\\"');
 
@@ -300,27 +291,6 @@ ${characterSection}
    What "structurally incoherent" does NOT mean: merely unusual. A cult ascendant inside an ancient tomb is unusual but coherent — KEEP it. An old foundry haunted by its makers is unusual but coherent — KEEP it. The bar is the dungeon could NOT BE BOTH AT ONCE, not "this is rare." Most pre-rolls should CONFIRM.
 
    If you override, your returned organizingLogic IS what gets persisted and what downstream coupling derives from. The pre-roll is discarded.
-
-6. "motive" (optional override): The party's REASON to delve. Pre-rolled: ${JSON.stringify(preRolledMotive)}.
-
-   The value MUST be one of:
-   - "acquisition" — claim a prize; a rival wants it too. The dungeon revolves around a desirable, named thing.
-   - "prevention" — stop a catastrophe before a doom-clock runs out.
-   - "recovery" — extract a target (captive person, stolen object, witness) held within.
-   - "discovery" — find, map, or answer something; knowledge is the prize.
-   - "invent" — user input establishes a motive that genuinely answers "why is the party going in?" but is NOT one of the above.
-
-   Examples of user-input → motive:
-   - "find the lost crown of [name]" → "recovery"
-   - "the rival faction wants the orb" → "acquisition"
-   - "stop the cult before they summon" → "prevention"
-   - "map the lower vaults; find out what the records mean" → "discovery"
-   - "claim the dragon's hoard" → "acquisition"
-   - "free the captured prince" → "recovery"
-
-   You may CONFIRM the pre-roll (return it as-is or omit the field) OR OVERRIDE based on user input. Default-bias toward acquisition / recovery / discovery when the user signal is ambiguous — production has historically over-rendered prevention.
-
-   Return the field UNSET (or null) to confirm the pre-roll as-is.
 
 Return ONLY valid JSON with the fields listed above. No prose before or after, no markdown code fences, no commentary.
 
@@ -448,9 +418,6 @@ export async function inferDungeonDimensions({
   // the chain is re-derived below using the LLM's value.
   const fallbackOrganizingLogic = pickRandomOrganizingLogic(rng, { tier: resolvedDifficulty });
   const fallbackPowerStructure = pickHolderForOrganizingLogic(fallbackOrganizingLogic, rng);
-  // Motive: pre-roll so the fallback emptyResult has it AND so
-  // pickRandomContender can bias presence under acquisition.
-  const fallbackMotive = pickRandomMotive(rng);
   // FormedNature: rolled ONLY when 'formed' is in organizingLogic.
   // Other logics don't have an ambient-force problem to solve, so
   // the field is null. Holder-gated: under several_unrelated the
@@ -459,19 +426,27 @@ export async function inferDungeonDimensions({
   const fallbackFormedNature = fallbackOrganizingLogic.includes('formed')
     ? pickRandomFormedNature(rng, { holder: fallbackPowerStructure })
     : null;
-  // Mode: rolled from the holder's menu (per-power-structure verbs).
-  // 10% open slot, else uniform over the menu's anchors. Null when
-  // holder has no menu (defensive).
-  const fallbackMode = pickRandomMode(rng, { holder: fallbackPowerStructure });
+  // Drive type: fused stake-and-method directive (replaces orthogonal
+  // motive + mode). Cascade-weighted on (powerStructure, tension,
+  // organizingLogic) per the user's design notes — prevent_by_killing
+  // up under single_apex, exploit_the_standoff up under
+  // several_unrelated, survive_and_escape up under scoured-and-claimed,
+  // etc.
+  const fallbackDriveType = pickRandomDriveType(rng, {
+    powerStructure: fallbackPowerStructure,
+    tension,
+    organizingLogic: fallbackOrganizingLogic,
+  });
   const fallbackPovFrame = pickRandomPovFrame(rng, { holder: fallbackPowerStructure, tension });
   const fallbackPlaceType = pickPlaceTypeForLogic(fallbackOrganizingLogic, rng);
   // Third-party: unified contender + contact axis. ONE third party per
-  // dungeon (adversary or ally, never both). Tension feeds the SUPPRESS
-  // rule (rival-coded tensions flip an adversary roll to ally so the
+  // dungeon (adversary or ally, never both). driveType feeds the
+  // acquisition-style presence bump; tension feeds the SUPPRESS rule
+  // (rival-coded tensions flip an adversary roll to ally so the
   // dungeon doesn't double up on rivals).
   const fallbackThirdParty = pickRandomThirdParty(rng, {
     holder: fallbackPowerStructure,
-    motive: fallbackMotive,
+    driveType: fallbackDriveType,
     tension,
     tier: resolvedDifficulty,
   });
@@ -490,7 +465,6 @@ export async function inferDungeonDimensions({
     preRolledOrganizingLogic: fallbackOrganizingLogic,
     preRolledHolder: fallbackPowerStructure,
     preRolledTension: tension,
-    preRolledMotive: fallbackMotive,
   });
 
   // Default result: code-fall-throughs for every dimension. Returned
@@ -531,9 +505,8 @@ export async function inferDungeonDimensions({
     placeType: fallbackPlaceType,
     nameTemplate: fallbackNameTemplate,
     registerPool: fallbackRegisterPool,
-    motive: fallbackMotive,
     formedNature: fallbackFormedNature,
-    mode: fallbackMode,
+    driveType: fallbackDriveType,
     monsterPopulation: fallbackMonsterPopulation,
   };
 
@@ -598,26 +571,25 @@ export async function inferDungeonDimensions({
     if (ORGANIZING_LOGICS.includes(v)) resolvedOrganizingLogic = [v];
   }
 
-  // Holder + contender: re-derive from the LLM-resolved organizing
-  // logic to keep the coupling and presence-gating coherent. If the
-  // LLM didn't move organizingLogic off the fallback, these rolls
-  // would diverge slightly from the pre-rolls (different rng state)
+  // Holder + driveType + thirdParty: re-derive from the LLM-resolved
+  // organizing logic to keep the coupling and presence-gating coherent.
+  // If the LLM didn't move organizingLogic off the fallback, these
+  // rolls diverge slightly from the pre-rolls (different rng state)
   // but the coupling invariants still hold.
-  // Motive: LLM pick if a valid string, else fall back to pre-roll.
-  // The picker pool is MOTIVES (incl. 'invent').
-  let resolvedMotive = fallbackMotive;
-  if (typeof parsed.motive === 'string') {
-    const candidate = parsed.motive.trim();
-    if (MOTIVES.includes(candidate)) resolvedMotive = candidate;
-  }
-
   const resolvedPowerStructure = pickHolderForOrganizingLogic(resolvedOrganizingLogic, rng);
-  // Third-party: re-roll against the LLM-resolved holder + motive so a
-  // user-input or coherence-pass override flows through to the
+  // Drive type re-rolls against the LLM-resolved (holder, tension,
+  // organizingLogic) so the cascade weighting tracks any LLM override.
+  const resolvedDriveType = pickRandomDriveType(rng, {
+    powerStructure: resolvedPowerStructure,
+    tension,
+    organizingLogic: resolvedOrganizingLogic,
+  });
+  // Third-party: re-roll against the LLM-resolved holder + driveType
+  // so a user-input or coherence-pass override flows through to the
   // presence rate, type split, and SUPPRESS rule.
   const resolvedThirdParty = pickRandomThirdParty(rng, {
     holder: resolvedPowerStructure,
-    motive: resolvedMotive,
+    driveType: resolvedDriveType,
     tension,
     tier: resolvedDifficulty,
   });
@@ -646,7 +618,6 @@ export async function inferDungeonDimensions({
     // Re-derive the pool subset from the LLM-resolved register so a
     // user-input register override flows through to the injected pool.
     registerPool: pickRegisterPoolSubset(resolvedRegister, rng),
-    motive: resolvedMotive,
     // Re-derive formedNature against the LLM-resolved organizingLogic
     // AND the resolved holder. If the LLM overrode the logic away from
     // 'formed', the field drops to null. If overrode INTO 'formed', a
@@ -655,11 +626,7 @@ export async function inferDungeonDimensions({
     formedNature: resolvedOrganizingLogic.includes('formed')
       ? (fallbackFormedNature || pickRandomFormedNature(rng, { holder: resolvedPowerStructure }))
       : null,
-    // Re-derive mode against the LLM-resolved holder so the menu
-    // tracks any holder override. If the holder didn't move, the
-    // pre-roll is still valid (we'd reroll the same menu); we re-pick
-    // for simplicity at the cost of one extra rng draw.
-    mode: pickRandomMode(rng, { holder: resolvedPowerStructure }),
+    driveType: resolvedDriveType,
     // Monster population is a fresh roll (creature_type + relation,
     // both dungeon-wide; the 3 encounter slots inherit them). No
     // coupling to LLM-resolved fields — pure code-roll.
