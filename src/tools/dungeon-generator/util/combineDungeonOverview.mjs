@@ -41,8 +41,6 @@ export function combineDungeonOverview(overview) {
     overview.central_dynamic
       ? [overview.inhabitants, overview.notable_inhabitant_facet]
       : [overview.dominant_power_minions],
-    // Hazards — new shape only.
-    [overview.hazards_and_dangers, overview.notable_hazard_facet],
     // Present State — new shape (central_dynamic + present_state)
     // or legacy (the dramatic-arc tail: dominant_power_event +
     // recent_event_consequences + secondary_* + main_problem +
@@ -58,8 +56,6 @@ export function combineDungeonOverview(overview) {
     // Potential Outcomes — new shape only; free prose paragraph
     // carrying the toolbox of approaches the party can take.
     [overview.potential_outcomes],
-    // Difficulty — same field name in both shapes.
-    [overview.difficulty_level],
   ];
 
   return sections

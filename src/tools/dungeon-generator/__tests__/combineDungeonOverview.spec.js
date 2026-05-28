@@ -20,11 +20,8 @@ describe('combineDungeonOverview', () => {
       dominant_power: 'Vetheras, the lich-king, dreams in the central vault.',
       inhabitants: 'Skeleton wardens and a cultist vigil.',
       notable_inhabitant_facet: 'The cultists have begun arguing.',
-      hazards_and_dangers: 'Doors close on a slow rune-clock.',
-      notable_hazard_facet: '',
       central_dynamic: 'Vetheras stirs more each cycle.',
       present_state: 'The barrow hums faintly at midnight.',
-      difficulty_level: 'A Tier 1 dungeon for novice adventurers.',
     };
 
     it('includes all primary fields as paragraphs', () => {
@@ -36,10 +33,8 @@ describe('combineDungeonOverview', () => {
       expect(result).toContain('Vetheras, the lich-king');
       expect(result).toContain('Skeleton wardens');
       expect(result).toContain('arguing');
-      expect(result).toContain('rune-clock');
       expect(result).toContain('stirs more each cycle');
       expect(result).toContain('hums faintly');
-      expect(result).toContain('Tier 1');
     });
 
     it('uses approach_and_threshold (not finding_the_dungeon) for new shape', () => {

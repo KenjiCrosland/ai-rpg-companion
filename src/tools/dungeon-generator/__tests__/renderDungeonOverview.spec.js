@@ -197,15 +197,17 @@ describe('consolidateOverviewToMarkdown — new shape', () => {
     expect(md).not.toContain('## Hazards');
   });
 
-  it('hazards_and_dangers stays in JSON but never renders to UI', () => {
-    // Even with populated hazards content, the UI render skips it.
+  it('ignores stale hazards fields from legacy dungeon data', () => {
+    // hazards_and_dangers was removed from the schema in 2026-05.
+    // Legacy dungeons may still carry it in localStorage; the
+    // renderer must not surface those stale fields.
     const md = consolidateOverviewToMarkdown(newShape({
-      hazards_and_dangers: 'A fully-populated hazards block with concrete threats.',
-      notable_hazard_facet: 'A facet detail.',
+      hazards_and_dangers: 'A legacy hazards block from before the field was dropped.',
+      notable_hazard_facet: 'A legacy facet detail.',
     }));
     expect(md).not.toContain('## Hazards');
-    expect(md).not.toContain('A fully-populated hazards block');
-    expect(md).not.toContain('A facet detail');
+    expect(md).not.toContain('A legacy hazards block');
+    expect(md).not.toContain('A legacy facet detail');
   });
 });
 

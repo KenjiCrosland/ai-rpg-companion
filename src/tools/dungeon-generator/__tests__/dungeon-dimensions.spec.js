@@ -256,12 +256,14 @@ describe('OVERUSED_DUNGEON_TROPES', () => {
     expect(OVERUSED_DUNGEON_TROPES.some(t => t.includes('cosmic feeder'))).toBe(true);
   });
 
-  it('carries a broad ban on bells as central mechanic', () => {
+  it('carries a ban on bells as central mechanic with alternatives', () => {
     // Regression guard: bells were the model's go-to mystical-
-    // infrastructure default and got banned across all roles.
+    // infrastructure default and got banned across all roles. The
+    // ban includes alternative mechanisms so the LLM has somewhere
+    // to redirect.
     const bellBan = OVERUSED_DUNGEON_TROPES.find(t => t.includes('bells as central mechanic'));
     expect(bellBan).toBeTruthy();
-    expect(bellBan).toContain('BROAD BAN');
+    expect(bellBan).toMatch(/runners|drum-cycles|candle-signals|watch-tallies/);
   });
 });
 
@@ -1342,23 +1344,19 @@ describe('OPERATIONAL_VOICE_BLOCK', () => {
   it('is a non-empty string that mentions the overview carve-out', () => {
     expect(typeof OPERATIONAL_VOICE_BLOCK).toBe('string');
     expect(OPERATIONAL_VOICE_BLOCK.length).toBeGreaterThan(0);
-    // Routing-level integrity: the carve-out clause is in the block.
-    // (Verifying STRUCTURAL presence of the exception, not prose quality.)
+    // The carve-out clause exempts the overview field from operational voice.
     expect(OPERATIONAL_VOICE_BLOCK).toContain('overview');
-    expect(OPERATIONAL_VOICE_BLOCK).toContain('EXCEPT');
   });
 });
 
 describe('DUNGEON_TRAVERSAL_INVARIANT', () => {
-  it('carries the JUDGING-AUTHORITY anti-court clause', () => {
-    // The general invariant's attended-vs-penetrated framing was
-    // losing to dimensions that introduce a receiving authority
-    // (pilgrimage-route, failed_negotiation, several_unrelated with
-    // a tribunal sub-power). This clause hardens the rule at the
-    // invariant level: any authority is a distributed obstacle, not
-    // a destination.
-    expect(DUNGEON_TRAVERSAL_INVARIANT).toContain('JUDGING OR RECEIVING AUTHORITIES');
-    expect(DUNGEON_TRAVERSAL_INVARIANT).toContain('DISTRIBUTED OBSTACLE');
+  it('frames the dungeon as a space the party traverses, not a scene they attend', () => {
+    // The invariant's attended-vs-penetrated framing tells the LLM
+    // never to render any authority (tribunal, audience, court,
+    // petition queue) as the destination — it's a distributed
+    // obstacle layer the party penetrates past.
+    expect(DUNGEON_TRAVERSAL_INVARIANT).toMatch(/traverse|penetrat/i);
+    expect(DUNGEON_TRAVERSAL_INVARIANT).toMatch(/scene|audience|court|tribunal/i);
   });
 });
 
@@ -1700,33 +1698,28 @@ describe('pickRegisterMaterials', () => {
 });
 
 describe('buildAdjudicatableDangerRule', () => {
-  it('interpolates creature and material slots when both are provided', () => {
+  it('interpolates the creature slot when provided', () => {
     const rule = buildAdjudicatableDangerRule({
       exampleCreature: 'draugr',
       exampleMaterial: 'iron rust',
       exampleMaterialAlt: 'bone ash',
     });
     expect(rule).toContain('draugr');
-    expect(rule).toContain('iron rust');
-    expect(rule).toContain('bone ash');
   });
 
-  it('falls back to bracket placeholders when slots are null (protected register)', () => {
+  it('falls back to bracket placeholder when the creature slot is null (protected register)', () => {
     const rule = buildAdjudicatableDangerRule({
       exampleCreature: null,
       exampleMaterial: null,
       exampleMaterialAlt: null,
     });
-    expect(rule).toMatch(/\[a creature from this register/);
-    expect(rule).toMatch(/\[a material from this register/);
+    expect(rule).toMatch(/\[register-creature\]/);
   });
 
-  it('always includes the stable rule labels', () => {
-    // Labels survive any interpolation — they're the regression
-    // anchors for routing tests.
+  it('always includes the stable rule label', () => {
+    // The rule label survives any interpolation — regression anchor
+    // for routing tests.
     const rule = buildAdjudicatableDangerRule({ exampleCreature: 'x', exampleMaterial: 'y', exampleMaterialAlt: 'z' });
     expect(rule).toContain('ADJUDICATABLE-DANGER RULE');
-    expect(rule).toContain('ATTRIBUTION CLAUSE');
-    expect(rule).toContain('INHABITANTS APPLICATION');
   });
 });

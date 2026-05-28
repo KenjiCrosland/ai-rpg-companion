@@ -25,18 +25,16 @@
  * Two section maps, picked by field-shape detection:
  *
 *   DUNGEON_SECTION_MAP_NEW — the post-2026-05 redesign shape.
- *     Approach (region + entrance/first-scene), History, Inhabitants
- *     (dominant_power + inhabitants + notable_inhabitant_facet),
- *     Hazards (+ notable_hazard_facet), Present State (central_dynamic
- *     + current_occupation + present_state), Difficulty. Region and
- *     Approach merge so the GM gets the "how you reach it" view in one
- *     section; Dominant Power and Inhabitants merge because the ruler
- *     IS the apex of the inhabitants when one exists.
+ *     Quest Hook, Approach (region + entrance/first-scene), History,
+ *     Inhabitants (dominant_power + inhabitants + notable_inhabitant_facet),
+ *     Present State (central_dynamic + present_state), Potential Outcomes.
+ *     Region and Approach merge so the GM gets the "how you reach it"
+ *     view in one section; Dominant Power and Inhabitants merge because
+ *     the ruler IS the apex of the inhabitants when one exists.
  *
  *   DUNGEON_SECTION_MAP_LEGACY — the pre-2026-05 shape. Same merged
  *     section vocabulary (Approach / History / Inhabitants / Present
- *     State / Difficulty), legacy field names underneath. Hazards
- *     doesn't have a legacy equivalent and is simply absent.
+ *     State), legacy field names underneath.
  */
 
 import {
@@ -50,13 +48,6 @@ const DUNGEON_SECTION_MAP_NEW = [
   { heading: 'Approach', fields: ['relation_to_larger_setting', 'approach_and_threshold'] },
   { heading: 'History', fields: ['history'] },
   { heading: 'Inhabitants', fields: ['dominant_power', 'inhabitants', 'notable_inhabitant_facet'] },
-  // Hazards intentionally NOT rendered to the GM-facing overview UI.
-  // The hazards_and_dangers field is still generated, validated, and
-  // persisted — the downstream room generator reads it for spatial
-  // hazard instantiation. The field's content surfaces to the GM via
-  // POV/inhabitants/present_state consequences rather than as a
-  // standalone "Hazards" paragraph (which consistently produced the
-  // weakest, most generic prose in the overview).
   { heading: 'Present State', fields: ['central_dynamic', 'present_state'] },
   { heading: 'Potential Outcomes', fields: ['potential_outcomes'] },
 ];

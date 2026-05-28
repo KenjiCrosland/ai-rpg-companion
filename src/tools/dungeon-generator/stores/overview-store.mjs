@@ -39,7 +39,6 @@ export const currentDungeonOverviewString = computed(() => {
       ov.dominant_power,
       [ov.inhabitants, ov.notable_inhabitant_facet].filter(Boolean).join(' '),
       [ov.treasures_and_resources, ov.notable_resource_facet].filter(Boolean).join(' '),
-      [ov.hazards_and_dangers, ov.notable_hazard_facet].filter(Boolean).join(' '),
       ov.central_dynamic,
       ov.present_state,
       ov.potential_outcomes,

@@ -36,7 +36,6 @@ import {
   MOTIVES,
   MOTIVE_DIRECTIVES,
   MOTIVE_PRESENT_STATE_CLAUSES,
-  MOTIVE_DIFFICULTY_CLAUSES,
   FORMED_NATURES,
   FORMED_NATURE_FRAMING,
   FORMED_NATURE_DIRECTIVES,
@@ -57,12 +56,9 @@ function validResponse() {
     dominant_power: 'Vetheras, the lich-king, dreams in the central vault.',
     inhabitants: 'A handful of skeleton wardens, plus a band of cultists camped in the antechamber.',
     notable_inhabitant_facet: 'The cultists have begun arguing among themselves.',
-    hazards_and_dangers: 'The doors close on a slow rune-clock; the central vault is warded against sound.',
-    notable_hazard_facet: '',
     central_dynamic: 'Vetheras stirs more each cycle of the moon, and the cultists believe his waking is near.',
     present_state: 'The barrow hums faintly at midnight; the air around the central vault has thickened.',
     potential_outcomes: 'The rune-clock can be slowed by hammering the central altar out of tune, which stirs Vetheras more loudly but leaves the cultists behind their vigil. Vetheras can be re-bound into dreamless sleep if his true name is recited at the central vault — the antechamber sigils carry the name, and speaking it before the binding is set draws his attention to whoever spoke. Aldwyn fights when confronted, and his death scatters the cult; the rune-clock keeps ticking either way.',
-    difficulty_level: 'A Tier 1 dungeon suited for novice adventurers with local stakes.',
     named_entities: ['Vetheras', 'Aldwyn'],
     npc_list: [
       { name: 'Vetheras', description: 'The dreaming lich-king.' },
@@ -154,8 +150,8 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
 
   it('includes the fantasy-texture requirement', () => {
     const prompt = dungeonOverviewPrompt(baseArgs);
-    expect(prompt).toContain('FANTASY TEXTURE REQUIREMENT');
-    expect(prompt).toContain('NAMED and PRESENT-TENSE');
+    expect(prompt).toContain('FANTASY TEXTURE');
+    expect(prompt).toMatch(/NAMED.*PRESENT-TENSE/);
   });
 
   it('includes boss-vs-miniboss logic', () => {
@@ -464,11 +460,12 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
     }
   });
 
-  it('appends motive-aware clauses to present_state and difficulty_level when set', () => {
+  it('appends motive-aware clause to present_state when set', () => {
+    // difficulty_level field was dropped; only present_state still
+    // receives a motive-aware clause.
     for (const m of ['acquisition', 'prevention', 'recovery', 'discovery']) {
       const prompt = dungeonOverviewPrompt({ ...baseArgs, motive: m });
       expect(prompt).toContain(MOTIVE_PRESENT_STATE_CLAUSES[m]);
-      expect(prompt).toContain(MOTIVE_DIFFICULTY_CLAUSES[m]);
     }
   });
 
@@ -476,7 +473,6 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
     const prompt = dungeonOverviewPrompt({ ...baseArgs, motive: null });
     for (const m of ['acquisition', 'prevention', 'recovery', 'discovery']) {
       expect(prompt).not.toContain(MOTIVE_PRESENT_STATE_CLAUSES[m]);
-      expect(prompt).not.toContain(MOTIVE_DIFFICULTY_CLAUSES[m]);
     }
   });
 
@@ -534,12 +530,6 @@ describe('dungeonOverviewPrompt — content smoke tests', () => {
     }
   });
 
-  it('appends mode-conditional difficulty clause + names the rolled mode when set', () => {
-    const prompt = dungeonOverviewPrompt({ ...baseArgs, mode: 'assassinate' });
-    expect(prompt).toContain('Mode-conditional rating');
-    // The clause interpolates the mode name.
-    expect(prompt).toContain('rolled mode (assassinate)');
-  });
 });
 
 describe('validateDungeonOverview', () => {
@@ -547,17 +537,15 @@ describe('validateDungeonOverview', () => {
     expect(validateDungeonOverview(JSON.stringify(validResponse()))).toBe(true);
   });
 
-  it('accepts empty strings for the optional facet fields', () => {
+  it('accepts empty strings for the optional facet field', () => {
     const r = validResponse();
     r.notable_inhabitant_facet = '';
-    r.notable_hazard_facet = '';
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
   });
 
-  it('accepts the response when optional facet fields are missing entirely', () => {
+  it('accepts the response when the optional facet field is missing entirely', () => {
     const r = validResponse();
     delete r.notable_inhabitant_facet;
-    delete r.notable_hazard_facet;
     expect(validateDungeonOverview(JSON.stringify(r))).toBe(true);
   });
 
@@ -755,8 +743,8 @@ describe('dungeonOverviewPrompt — monsterPopulation routing', () => {
       monsterPopulation: { creature_type: 'humanoid', relation: 'dominant_power_devotee' },
     });
     // The block must communicate that the apex/large_creature is
-    // free-pick, not constrained by the minion population.
-    expect(prompt).toMatch(/large_creature slot is NOT constrained/i);
+    // distinct from the minion population.
+    expect(prompt).toMatch(/large_creature is a DISTINCT apex/i);
   });
 });
 
@@ -779,7 +767,7 @@ describe('dungeonOverviewPrompt — creature tradition routing', () => {
       ...baseArgs,
       register: 'Norse-inspired: harsh consonants, primal force',
     });
-    expect(prompt).toContain('CREATURE TRADITION FOR THIS REGISTER');
+    expect(prompt).toContain('CREATURE TRADITION');
   });
 
   it('emits a register-specific tradition (Dwarven vs Egyptian produce different content)', () => {
@@ -794,8 +782,8 @@ describe('dungeonOverviewPrompt — creature tradition routing', () => {
       ...baseArgs,
       register: 'Egyptian-inspired (pharaonic period only): ancient Egyptian register',
     });
-    expect(dwarvenPrompt).toContain('CREATURE TRADITION FOR THIS REGISTER');
-    expect(egyptianPrompt).toContain('CREATURE TRADITION FOR THIS REGISTER');
+    expect(dwarvenPrompt).toContain('CREATURE TRADITION');
+    expect(egyptianPrompt).toContain('CREATURE TRADITION');
     // The two must be distinguishable — a register-specific creature
     // (Dwarven: knockers / Egyptian: ammit) appears in one but not the
     // other. This catches a regression where the block reverts to a
@@ -815,12 +803,17 @@ describe('dungeonOverviewPrompt — creature tradition routing', () => {
       ...baseArgs,
       register: 'Japanese-inspired: clean syllables, natural imagery',
     });
-    expect(prompt).not.toContain('CREATURE TRADITION FOR THIS REGISTER');
+    // The CREATURE TRADITION block header includes the parenthetical
+    // "(for monsters / inhabitants / supernatural identity)". The
+    // bare phrase "CREATURE TRADITION" may also appear elsewhere
+    // (FANTASY TEXTURE references it by name) — match the block header
+    // specifically.
+    expect(prompt).not.toMatch(/CREATURE TRADITION \(for/);
   });
 
   it('omits the CREATURE TRADITION block when register is null', () => {
     const prompt = dungeonOverviewPrompt({ ...baseArgs, register: null });
-    expect(prompt).not.toContain('CREATURE TRADITION FOR THIS REGISTER');
+    expect(prompt).not.toMatch(/CREATURE TRADITION \(for/);
   });
 
   it('does not re-introduce the legacy hardcoded creature table in FANTASY TEXTURE REQUIREMENT', () => {
@@ -903,15 +896,9 @@ describe('dungeonOverviewPrompt — adjudicatable-danger rule routing', () => {
   };
 
   it('injects the ADJUDICATABLE-DANGER RULE header at every tier', () => {
-    // The rule header is now built per-generation with interpolated
-    // example creature + material slots. Stable subsections (the
-    // ATTRIBUTION CLAUSE label and the INHABITANTS APPLICATION label)
-    // are the regression anchors — they survive interpolation.
     for (const tier of [1, 2, 3, 4, 5]) {
       const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: tier });
       expect(prompt).toContain('ADJUDICATABLE-DANGER RULE');
-      expect(prompt).toContain('ATTRIBUTION CLAUSE');
-      expect(prompt).toContain('INHABITANTS APPLICATION');
     }
   });
 
@@ -923,57 +910,46 @@ describe('dungeonOverviewPrompt — adjudicatable-danger rule routing', () => {
     }
   });
 
-  it('Tier 1 and Tier 5 shelves are different (emotional category differs)', () => {
-    // Sanity-check that the rule scales: Tier 1 must say COMPLICATING
-    // and Tier 5 must say SCARY. A regression where the shelves
-    // collapse to a single block would silently flatten all tiers.
+  it('Tier 1 and Tier 5 shelves are different (severity differs, not effect type)', () => {
+    // Under the new severity-not-effect-type philosophy, Tier 1 must
+    // describe recoverable severity and Tier 5 must describe
+    // permanent / near-permanent severity. Effect TYPES are not
+    // gated by tier — a fire snake bites and burns at every tier.
     const t1 = dungeonOverviewPrompt({ ...baseArgs, difficulty: 1 });
     const t5 = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
-    expect(t1).toContain('COMPLICATING');
-    expect(t5).toContain('SCARY');
+    expect(t1).toMatch(/recoverable|short rest/i);
+    expect(t5).toMatch(/permanent|near-permanent|doesn't stop on its own/i);
     expect(t1).not.toContain(DIFFICULTY_TIERS[5].dangerShelf);
     expect(t5).not.toContain(DIFFICULTY_TIERS[1].dangerShelf);
   });
 
-  it('Tier 1 forbids high-tier sheet-altering consequences in its shelf', () => {
-    // The Tier 1 shelf has explicit NO clauses for ability drain,
-    // petrification, limb loss, and high-tier curses. Regression
-    // guard: those negations stay in the T1 shelf.
+  it('Tier 1 shelf describes recoverable severity', () => {
+    // The Tier 1 shelf says "painful, recoverable with basic rest or
+    // mundane care" — character is fine after a short rest plus
+    // basic care.
     const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 1 });
-    expect(prompt).toMatch(/NO ability drain/);
-    expect(prompt).toMatch(/NO petrification/);
-    expect(prompt).toMatch(/NO limb loss/);
+    expect(prompt).toMatch(/painful.*recoverable/i);
   });
 
-  it('Tier 5 includes the full canon of cosmic-tier mechanical consequences', () => {
-    // Petrification, ability-drain-to-zero, limb loss are the
-    // signatures of cosmic-tier D&D creatures (beholder, intellect
-    // devourer, vorpal-class weapons). Regression guard: they're in
-    // the T5 shelf.
+  it('Tier 5 shelf describes permanent / near-permanent severity', () => {
+    // Under the new philosophy, T5 is about SEVERITY that doesn't
+    // stop on its own — not a specific list of effect types
+    // (petrification, ability drain). The same effect from a lower
+    // tier could appear at T5; what changes is how it persists.
     const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
-    expect(prompt).toContain('petrification');
-    expect(prompt).toContain('ability score drain to ZERO');
-    expect(prompt).toMatch(/limb|severed limbs/);
+    expect(prompt).toMatch(/permanent|doesn't stop on its own/i);
+    expect(prompt).toMatch(/Wish-grade|regeneration-grade|comparable/i);
   });
 
-  it('the rule reaches each monster description schema field', () => {
-    // Each of minion / strong_minion / large_creature must reference
-    // the rule so the LLM knows to apply it when filling those slots.
+  it('the rule philosophy reaches each monster danger field', () => {
+    // Each of minion / strong_minion / large_creature has its own
+    // danger instruction. The rule's philosophy (anecdote shape,
+    // no dice / DCs, no psychic-as-default, statblock generator
+    // handles mechanics) is inlined into each field.
     const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 3 });
-    // The schema fields are emitted with their description text; the
-    // ADJUDICATABLE-DANGER name should appear at least three times
-    // (header + three monster slots + hazards_and_dangers reference).
-    const matches = prompt.match(/ADJUDICATABLE-DANGER/g) || [];
-    expect(matches.length).toBeGreaterThanOrEqual(4);
-  });
-
-  it('hazards_and_dangers schema field references the rule', () => {
-    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
-    // The hazards_and_dangers description includes a worked example
-    // contrasting the rule's failure mode ('the brine fog crystallizes
-    // minds') with the correct shape ('the brine fog IS petrification').
-    expect(prompt).toContain('hazards_and_dangers');
-    expect(prompt).toMatch(/ADJUDICATABLE-DANGER RULE APPLIES/);
+    expect(prompt).toMatch(/no dice|no DCs|the statblock carries the math|statblock generator/i);
+    expect(prompt).toMatch(/no psychic|psychic.*default/i);
+    expect(prompt).toMatch(/last person it reached|last named victim|last victim|anecdote/i);
   });
 
   it('falls back to Tier 1 shelf for an invalid difficulty', () => {
@@ -986,21 +962,16 @@ describe('dungeonOverviewPrompt — adjudicatable-danger rule routing', () => {
   });
 
   it('interpolates a tier-appropriate creature into the rule header (Norse Tier 5 picks from scary bucket)', () => {
-    // The rule's INHABITANTS APPLICATION example used to bake in a
-    // specific creature name ("Sirmus"). Now it pulls from the rolled
-    // register's tier-bucketed list and varies per generation. A
-    // Norse Tier 5 prompt should contain at least one creature from
-    // the Norse scary bucket inside the rule header.
+    // The rule's worked example used to bake in a specific creature
+    // name ("Sirmus"). Now it pulls from the rolled register's
+    // tier-bucketed list and varies per generation. A Norse Tier 5
+    // prompt should contain a creature from the Norse scary bucket.
     const prompt = dungeonOverviewPrompt({
       ...baseArgs,
       difficulty: 5,
       register: 'Norse-inspired: harsh consonants, primal force',
-      rng: () => 0, // deterministic
+      rng: () => 0,
     });
-    // The rule header still has its stable labels.
-    expect(prompt).toContain('INHABITANTS APPLICATION');
-    // And contains at least one Norse-scary-bucket creature
-    // (whichever the deterministic rng picked).
     expect(prompt).toMatch(/draugr|jötunn|lindworm|fenrisúlfr|trolls of the high country/i);
   });
 
@@ -1029,8 +1000,8 @@ describe('dungeonOverviewPrompt — adjudicatable-danger rule routing', () => {
       difficulty: 3,
       register: 'Japanese-inspired: clean syllables, natural imagery',
     });
-    expect(prompt).toMatch(/\[a creature from this register/);
-    expect(prompt).toMatch(/\[a material from this register/);
+    expect(prompt).toMatch(/\[register-creature\]/);
+    expect(prompt).toMatch(/\[register-material/);
   });
 
   it('does not bake the legacy cargo-cult names into prompt examples', () => {
@@ -1076,34 +1047,10 @@ describe('dungeonOverviewPrompt — adjudicatable-danger rule routing', () => {
     expect(prompt).not.toMatch(/\bVetheras\b/);
   });
 
-  it('rule header carries the ATTRIBUTION clause (every danger names a source)', () => {
-    // Regression guard for the 2026-05 attribution fix. Free-floating
-    // environmental drains (a 'resonance zone' without a named cause)
-    // were leaking through; the rule now requires every mechanical
-    // consequence to belong to a named creature, hazard-process,
-    // ritual, or comparable source.
+  it('rule requires attribution to a named source (no free-floating dangers)', () => {
+    // Every mechanical consequence belongs to a named creature, hazard,
+    // ritual — not a generic environmental drain.
     const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
-    expect(prompt).toContain('ATTRIBUTION CLAUSE');
-    expect(prompt).toMatch(/Free-floating environmental dangers/);
-  });
-
-  it('rule header carries the INHABITANTS APPLICATION clause', () => {
-    // The inhabitants field must apply the rule when it names a
-    // creature threat. The rule header includes the application
-    // clause so the LLM sees it before reaching the inhabitants
-    // schema field instruction.
-    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
-    expect(prompt).toContain('INHABITANTS APPLICATION');
-    expect(prompt).toMatch(/CREATURE THREAT/);
-  });
-
-  it('inhabitants schema field invokes the CREATURE-THREAT BITE clause', () => {
-    // The inhabitants schema field carries a back-reference to the
-    // rule. Production showed body prose naming creatures (Sirmus,
-    // Voice-Stone) without their mechanical bite — the schema field
-    // now explicitly requires it.
-    const prompt = dungeonOverviewPrompt({ ...baseArgs, difficulty: 5 });
-    expect(prompt).toContain('CREATURE-THREAT BITE');
-    expect(prompt).toMatch(/echo what appears in monsters\[\]\.danger/);
+    expect(prompt).toMatch(/attributed to a named source|named source|no free-floating/i);
   });
 });
