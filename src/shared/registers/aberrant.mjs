@@ -123,7 +123,14 @@ export const aberrantCharacterEpithets = [
  */
 export const aberrantRegister = {
   prefix: 'Aberrant',
-  descriptor: "Aberrant: unpronounceable clusters, wrong-sounding (e.g., Xith'vaar, Qolenth, Uurm)",
+  descriptor: "Aberrant: unpronounceable clusters that resist natural articulation. Apostrophe-broken syllables marking glottal stops, multi-consonant onsets and codas (xth, qrn, vth, uum), vowel-poor frames; names feel pre-linguistic or post-linguistic rather than spoken — the mouth doesn't quite want to make them. Derive fresh names from the phonology; do not copy from prior generations.",
+  creatureTradition: 'aberrant dungeons run on the cosmic-horror bestiary: aboleths (memory-eaters in deep water), beholders (their floating eye-tyrant kin), mind flayers (illithids and their thralls), gibbering mouthers, gricks, otyughs in the lower passages, intellect devourers, neogi (slaver-spiders), choakers, grell, cloakers. The supernatural identity is usually one alien apex with a brood of lesser kin and dominated thralls; charmed humans and beasts read as victims, not minions.',
+  creatureTraditionByTier: {
+    complicating: ['chokers', 'grell scouts', 'lesser intellect devourers', 'dominated human thralls'],
+    significant:  ['gricks', 'otyughs', 'neogi slaver-spiders', 'gibbering mouthers (lesser brood)'],
+    scary:        ['aboleths', 'beholders', 'mind flayers', 'cloakers', 'unnamed alien apex'],
+  },
+  materialTradition: 'non-Euclidean glass, gibbering-flesh residue, eye-mucus, alien metal that resists tarnish, displacement-shimmer, void-darkened bone, mind-stained crystal',
   characterPool: aberrantCharacterEpithets,
   characterPoolStrictness: 'preferred',
   thematic: true,

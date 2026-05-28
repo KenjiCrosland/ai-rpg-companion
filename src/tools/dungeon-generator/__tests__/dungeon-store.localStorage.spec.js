@@ -34,8 +34,6 @@ jest.mock('../stores/monster-store.mjs', () => ({
   generateMonsterStatblock: jest.fn(),
   generateAndSaveStatblock: jest.fn(),
   updateStatblock: jest.fn(),
-  generateMonsterDescription: jest.fn(),
-  generateDescriptionAndStatblock: jest.fn(),
   deleteMonster: jest.fn(),
 }));
 
@@ -125,7 +123,7 @@ describe('Dungeon Store - Local Storage Data Layer (CRITICAL)', () => {
       // Verify dungeonOverview structure
       expect(firstDungeon.dungeonOverview).toHaveProperty('name');
       expect(firstDungeon.dungeonOverview).toHaveProperty('overview');
-      expect(firstDungeon.dungeonOverview).toHaveProperty('difficulty_level');
+      expect(firstDungeon.dungeonOverview).toHaveProperty('history');
     });
 
     it('should preserve NPCs with all their fields', () => {

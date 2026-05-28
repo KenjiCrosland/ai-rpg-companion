@@ -34,7 +34,9 @@ describe('dungeonToPlainText', () => {
     expect(result).toContain('Abandoned mines filled with danger.');
     expect(result).toContain('Once provided ore to the kingdom.');
     expect(result).toContain('Follow the mountain trail.');
-    expect(result).toContain('Difficulty Level: Tier 2: Expert');
+    // Difficulty section was removed from the shared section map —
+    // the rendered prose no longer carries a Difficulty heading.
+    expect(result).not.toMatch(/Difficulty\n-+/);
   });
 
   it('should create proper section dividers', () => {
@@ -231,6 +233,36 @@ describe('dungeonToPlainText', () => {
     expect(result).toContain('A giant arachnid with venomous fangs.');
   });
 
+  it('surfaces monster.danger as a labeled Danger line', () => {
+    const dungeonWithDanger = {
+      ...basicDungeon,
+      monsters: [
+        {
+          name: 'Cave Spider',
+          description: 'A giant arachnid with venomous fangs.',
+          danger: 'A bitten target makes a DC 12 Constitution save or is poisoned for one hour.',
+        },
+      ],
+    };
+    const result = dungeonToPlainText(dungeonWithDanger);
+    expect(result).toContain('Danger:');
+    expect(result).toContain('DC 12 Constitution save');
+  });
+
+  it('omits the Danger line when monster.danger is missing', () => {
+    const dungeonWithoutDanger = {
+      ...basicDungeon,
+      monsters: [
+        {
+          name: 'Cave Spider',
+          description: 'A giant arachnid with venomous fangs.',
+        },
+      ],
+    };
+    const result = dungeonToPlainText(dungeonWithoutDanger);
+    expect(result).not.toContain('Danger:');
+  });
+
   it('should handle dungeon with monsters (detailed description)', () => {
     const dungeonWithDetailedMonster = {
       ...basicDungeon,
@@ -400,12 +432,20 @@ describe('dungeonToPlainText', () => {
     expect(result).toContain('Known throughout the land for fair deals.');
   });
 
-  it('should combine array fields with spaces', () => {
+  it('should route legacy fields to their section paragraphs', () => {
     const result = dungeonToPlainText(basicDungeon);
 
-    // These fields should be combined into single paragraphs
-    expect(result).toContain('A black dragon has claimed it. Hoarding treasure and terrorizing locals.');
-    expect(result).toContain('Kobolds worship the dragon. Recently raided a nearby village.');
-    expect(result).toContain('The dragon must be defeated. Negotiate or fight.');
+    // Each field is its own paragraph under its mapped section rather
+    // than string-joined as in the legacy exporter. Content is
+    // preserved; structure is sectioned via the shared AST renderer.
+    // Dominant Power merged into Inhabitants in the consolidation.
+    expect(result).toContain('Inhabitants');
+    expect(result).toContain('A black dragon has claimed it.');
+    expect(result).toContain('Hoarding treasure and terrorizing locals.');
+    expect(result).toContain('Kobolds worship the dragon.');
+    expect(result).toContain('Present State');
+    expect(result).toContain('Recently raided a nearby village.');
+    expect(result).toContain('The dragon must be defeated.');
+    expect(result).toContain('Negotiate or fight.');
   });
 });

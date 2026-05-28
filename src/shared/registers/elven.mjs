@@ -98,7 +98,14 @@ export const elvenCharacterEpithets = [
 
 export const elvenRegister = {
   prefix: 'Elven',
-  descriptor: 'Elven: lyrical, vowel-rich (e.g., Aelindariel, Saereldreth, Glorwenneth)',
+  descriptor: 'Elven: lyrical and vowel-rich — open vowels (a, e, i), soft liquid consonants (l, r, n), flowing polysyllabic names with no hard stops. Characteristic compound endings around -wen, -iel, -ariel, -ndor; names carry meanings of light, leaf, song, star, river. Derive fresh names from the phonology; do not copy from prior generations.',
+  creatureTradition: 'elven dungeons lean fey-adjacent and ancient-arboreal: archfey (court-bound and capricious), treants and awakened trees, dryads, nymphs, will-o\'-wisps, displacer beasts (read as fey-beasts here), unicorns gone-wrong or corrupted, leucrottas, korred, blink-dogs as wardens, sprites and grigs as scouts, and the things that wake when an elven seal cracks. Long-lived ancients (banshees of old queens, the spirits of dead lorekeepers) and the cursed elven dead (yaggol-coded shades) are register-appropriate. Avoid orcs, demons, devils, and brute-force monsters as primary threats — those break the register.',
+  creatureTraditionByTier: {
+    complicating: ['sprites', 'grigs', 'pixies', 'blink-dog wardens', 'korred'],
+    significant:  ['dryads gone hostile', "will-o'-wisps", 'leucrottas', 'displacer fey-beasts', 'awakened-tree saplings'],
+    scary:        ['archfey of a corrupted court', 'ancient treants', 'unicorns gone-wrong', 'banshees of dead queens', 'yaggol-coded shades'],
+  },
+  materialTradition: 'moonsilver leaf, dew-glass, woven moss, song-thread, leaf-vellum, mithril dust, polished horn',
   characterPool: elvenCharacterEpithets,
   characterPoolStrictness: 'preferred',
   fantasyRaceKey: 'Elven',
