@@ -34,19 +34,11 @@ describe('dungeonToMarkdown', () => {
     const result = dungeonToMarkdown(basicDungeon);
 
     expect(result).toContain('# THE FORGOTTEN TEMPLE');
-    // Lead (no heading) renders before the first section.
     expect(result).toContain('An ancient temple lost to time.');
-    // Section headings (## Section) replace the legacy paragraph-only
-    // structure. Approach (region merged in) / History / Inhabitants
-    // (dominant_power merged in) / Present State / Difficulty surface
-    // for legacy shape via the legacy section map.
-    expect(result).toContain('## Approach');
     expect(result).toContain('It sits on the edge of the kingdom.');
     expect(result).toContain('Follow the old road through the forest.');
-    expect(result).toContain('## History');
     expect(result).toContain('Built centuries ago by a forgotten civilization.');
-    // Difficulty section was removed from the shared section map.
-    expect(result).not.toContain('## Difficulty');
+    expect(result).toContain('**Difficulty Level:** Tier 2: Expert');
   });
 
   it('should handle dungeon with NPCs (short description)', () => {
@@ -193,40 +185,6 @@ describe('dungeonToMarkdown', () => {
     expect(result).toContain('A creature of pure darkness and malice.');
   });
 
-  it('surfaces monster.danger as a labeled Danger line (simple description path)', () => {
-    const dungeonWithDanger = {
-      ...basicDungeon,
-      monsters: [
-        {
-          name: 'Shadow Beast',
-          description: 'A creature of pure darkness and malice.',
-          danger: 'A hit target makes a DC 14 Constitution save or has their movement halved until cured.',
-        },
-      ],
-    };
-
-    const result = dungeonToMarkdown(dungeonWithDanger);
-    expect(result).toContain('**Danger:**');
-    expect(result).toContain('DC 14 Constitution save');
-  });
-
-  it('omits the Danger line when monster.danger is missing (saved data compatibility)', () => {
-    // Saved monsters from before the danger field existed don't have
-    // it. The renderer must not emit an empty "Danger:" line.
-    const dungeonWithoutDanger = {
-      ...basicDungeon,
-      monsters: [
-        {
-          name: 'Shadow Beast',
-          description: 'A creature of pure darkness and malice.',
-        },
-      ],
-    };
-
-    const result = dungeonToMarkdown(dungeonWithoutDanger);
-    expect(result).not.toContain('**Danger:**');
-  });
-
   it('should handle dungeon with monsters (detailed description)', () => {
     const dungeonWithDetailedMonster = {
       ...basicDungeon,
@@ -321,7 +279,7 @@ describe('dungeonToMarkdown', () => {
 
     expect(result).toContain('# MINIMAL DUNGEON');
     expect(result).toContain('A simple place.');
-    expect(result).not.toContain('## Difficulty');
+    expect(result).toContain('**Difficulty Level:** Tier 1');
   });
 
   it('should handle complete dungeon with all elements', () => {

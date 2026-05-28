@@ -131,14 +131,7 @@ export const infernalCharacterEpithets = [
 
 export const infernalRegister = {
   prefix: 'Infernal',
-  descriptor: "Infernal: sharp, aggressive phonology — jagged consonant clusters (zr, kr, vth, gz, rth), apostrophes marking glottal stops, polysyllabic names that resolve into a hiss or a strike. Naming evokes legal-binding metaphors: oath-marks, contract-suffixes, sigil-roots. Derive fresh names from the phonology; do not copy from prior generations.",
-  creatureTradition: 'infernal dungeons run on the hierarchical devil ranks: pit fiend (the apex), erinyes, ice devil (gelugon), bone devil (osyluth), barbed devil (hamatula), bearded devil, chain devil, horned devil, lemure and imp (the lowest tiers), hellhound. Bound mortals (oath-broken cultists, soul-debtor servants) and contract-summoned beasts (nightmare steeds, infernal war-beasts) round the menagerie. Power here flows through contracts, ranks, and broken oaths — the dungeon often resembles a court or a tribunal in form.',
-  creatureTraditionByTier: {
-    complicating: ['imps', 'lemures', 'soul-debtor servants', 'oath-broken cultists'],
-    significant:  ['barbed devil (hamatula)', 'bearded devil', 'chain devil', 'hellhound pack', 'contract-summoned war-beast'],
-    scary:        ['pit fiend', 'erinyes', 'ice devil (gelugon)', 'bone devil (osyluth)', 'horned devil'],
-  },
-  materialTradition: 'contract-parchment, brimstone, brass plating, signet-wax sealed with blood, hellfire-glass, bound-iron, oath-ink',
+  descriptor: "Infernal: sharp, aggressive (e.g., Vex'tharion, Morkaal, Sazrith)",
   characterPool: infernalCharacterEpithets,
   characterPoolStrictness: 'preferred',
   thematic: true,

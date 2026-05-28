@@ -15,12 +15,11 @@ export const currentlyLoadingNPCs = ref({});
 // Statblocks loading states
 export const monsterLoadingStates = ref({});
 
-// Overview form. Two free-text fields + difficulty — mirrors the
-// setting generator's form. The user-supplied dungeon name (if any)
-// is extracted from the description prose by inferDungeonDimensions's
-// userName step, so there's no separate "place_name" field.
+// Overview form
 export const overviewForm = ref({
-  description: '',
+  adjective: '',
+  setting_type: '',
+  place_name: '',
   place_lore: '',
   difficulty: '',
 });

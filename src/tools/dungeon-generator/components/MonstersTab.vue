@@ -51,12 +51,6 @@
                   <p>{{ monster.detailedDescription.lore }}</p>
                 </div>
               </div>
-              <!-- Mechanical-consequence sentence from the overview
-                   generation. Rendered as a plain paragraph (no header
-                   label) so it flows after the description. Omitted
-                   gracefully when missing (saved monsters that pre-date
-                   the field). -->
-              <p v-if="monster.danger" class="monster-danger">{{ monster.danger }}</p>
               <MonsterDescriptionSkeleton v-if="dungeonStore.monsterLoadingStates[monster.id]?.description" />
 
               <!-- Edit Button -->
@@ -158,13 +152,30 @@
             <div class="monster-buttons">
               <ParActionButton
                 size="small"
-                @click="dungeonStore.generateMonsterStatblock(monster.id, premium)"
+                @click="dungeonStore.generateDescriptionAndStatblock(monster.id, premium)"
                 :disabled="dungeonStore.monsterLoadingStates[monster.id]?.generating">
                 {{
                   dungeonStore.monsterLoadingStates[monster.id]?.generating
                     ? 'Generating...'
-                    : (monster.statblock ? 'Regenerate Statblock' : 'Generate Statblock')
+                    : (monster.statblock
+                      ? 'Re-generate Description & Statblock'
+                      : 'Generate Description & Statblock')
                 }}
+              </ParActionButton>
+              <ParActionButton
+                v-if="monster.detailedDescription"
+                size="small"
+                @click="generateMonsterDescription(monster)"
+                :disabled="dungeonStore.monsterLoadingStates[monster.id]?.description">
+                Regenerate Description
+              </ParActionButton>
+              <ParActionButton
+                v-if="monster.statblock"
+                @click="dungeonStore.generateMonsterStatblock(monster.id, premium)"
+                size="small"
+                variant="secondary"
+                :disabled="dungeonStore.monsterLoadingStates[monster.id]?.generating">
+                Regenerate Statblock
               </ParActionButton>
             </div>
           </div>
@@ -329,6 +340,15 @@ function clearMonsterStatblockReference(monster) {
   delete monster.statblock_folder;
   monster.statblock = null;
   dungeonStore.saveDungeons();
+}
+
+// Regenerate only the monster's description
+async function generateMonsterDescription(monster) {
+  try {
+    await dungeonStore.generateMonsterDescription(monster);
+  } catch (error) {
+    console.error('Error generating monster description', error);
+  }
 }
 
 // Create a new monster with a statblock (via GPT or any generator)

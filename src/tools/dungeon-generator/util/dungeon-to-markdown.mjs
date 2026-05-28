@@ -1,6 +1,4 @@
 import { statblockToMarkdown } from './statblock-to-markdown.mjs';
-import { renderOverview } from './renderDungeonOverview.mjs';
-import { overviewAstToMarkdown } from '@/util/renderSettingOverview.mjs';
 
 export function dungeonToMarkdown(dungeon) {
   let text = '';
@@ -18,17 +16,33 @@ export function dungeonToMarkdown(dungeon) {
     return `${'#'.repeat(level)} ${title}`;
   }
 
-  // Dungeon Overview — render via the shared AST path so both new and
-  // legacy field shapes work. renderOverview picks the right section
-  // map by marker-field detection; overviewAstToMarkdown emits
-  // `## Section` headings + paragraphs that Homebrewery accepts.
-  // The dungeon's difficulty_level field is part of the section map
-  // (rendered under the "Difficulty" heading), so the separate
-  // **Difficulty Level:** line that the legacy exporter emitted is
-  // dropped — the section heading carries the same information.
-  text += `# ${(dungeon.dungeonOverview.name || '').toUpperCase()}\n\n`;
-  const ast = renderOverview(dungeon.dungeonOverview);
-  text += overviewAstToMarkdown(ast) + '\n\n';
+  // Dungeon Overview
+  text += `# ${dungeon.dungeonOverview.name.toUpperCase()}\n\n`;
+  text += `${dungeon.dungeonOverview.overview} ${dungeon.dungeonOverview.relation_to_larger_setting}\n:\n\n`;
+
+  addSection(dungeon.dungeonOverview.finding_the_dungeon);
+  addSection(dungeon.dungeonOverview.history);
+  addSection([
+    dungeon.dungeonOverview.dominant_power,
+    dungeon.dungeonOverview.dominant_power_goals,
+  ]);
+  addSection([
+    dungeon.dungeonOverview.dominant_power_minions,
+    dungeon.dungeonOverview.dominant_power_event,
+  ]);
+  addSection(dungeon.dungeonOverview.recent_event_consequences);
+  addSection(dungeon.dungeonOverview.secondary_power);
+  addSection(dungeon.dungeonOverview.secondary_power_event);
+  addSection([
+    dungeon.dungeonOverview.main_problem,
+    dungeon.dungeonOverview.potential_solutions,
+  ]);
+  addSection(dungeon.dungeonOverview.conclusion, 2);
+
+  // Difficulty Level
+  addSection(
+    `**Difficulty Level:** ${dungeon.dungeonOverview.difficulty_level}`,
+  );
 
   // NPCs
   // NPCs
@@ -103,9 +117,6 @@ export function dungeonToMarkdown(dungeon) {
         // fallback if no detailedDescription
         addSection(addMarkdownSectionTitle(monster.name, 3));
         addSection(monster.description);
-        if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
-          addSection(`**Danger:** ${monster.danger.trim()}`);
-        }
 
         if (monster.statblock) {
           text +=
@@ -138,10 +149,6 @@ function monsterDetailsToMarkdown(monster) {
 
   if (monster.description && !monster.detailedDescription) {
     markdown += `**Description**:\n${monster.description}\n:\n\n`;
-  }
-
-  if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
-    markdown += `**Danger**:\n${monster.danger.trim()}\n:\n\n`;
   }
 
   return markdown;

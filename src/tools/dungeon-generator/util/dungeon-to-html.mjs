@@ -1,6 +1,3 @@
-import { renderOverview } from './renderDungeonOverview.mjs';
-import { overviewAstToHtml } from '@/util/renderSettingOverview.mjs';
-
 // Example statblockToHTML. You can format your statblock however you wish.
 function statblockToHTML(statblock) {
   let html = `<div class="statblock">`;
@@ -96,9 +93,6 @@ function monsterDetailsToHTML(monster) {
   if (detail?.lore) {
     html += `<p>${detail.lore}</p>`;
   }
-  if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
-    html += `<p><strong>Danger:</strong> ${monster.danger.trim()}</p>`;
-  }
   return html;
 }
 
@@ -119,16 +113,34 @@ export function dungeonToHTML(dungeon) {
     return `<h${level}>${title}</h${level}>`;
   }
 
-  // Dungeon Overview — render via the shared AST path so both new and
-  // legacy field shapes work. overviewAstToHtml emits `<h3>Section</h3>`
-  // headings + `<p>` paragraphs + `<span class="par-entity">` for
-  // first-mention emphasis. The difficulty_level field is rendered as
-  // part of the "Difficulty" section heading, so the separate
-  // `Difficulty Level:` line that the legacy exporter emitted is
-  // dropped.
-  html += `<h1>${(dungeon.dungeonOverview.name || '').toUpperCase()}</h1>`;
-  const ast = renderOverview(dungeon.dungeonOverview);
-  html += overviewAstToHtml(ast);
+  // Dungeon Overview
+  html += `<h1>${dungeon.dungeonOverview.name.toUpperCase()}</h1>`;
+  html += `<p>${dungeon.dungeonOverview.overview} ${dungeon.dungeonOverview.relation_to_larger_setting}</p>`;
+
+  addSection(dungeon.dungeonOverview.finding_the_dungeon);
+  addSection(dungeon.dungeonOverview.history);
+  addSection([
+    dungeon.dungeonOverview.dominant_power,
+    dungeon.dungeonOverview.dominant_power_goals,
+  ]);
+  addSection([
+    dungeon.dungeonOverview.dominant_power_minions,
+    dungeon.dungeonOverview.dominant_power_event,
+  ]);
+  addSection(dungeon.dungeonOverview.recent_event_consequences);
+  addSection(dungeon.dungeonOverview.secondary_power);
+  addSection(dungeon.dungeonOverview.secondary_power_event);
+  addSection([
+    dungeon.dungeonOverview.main_problem,
+    dungeon.dungeonOverview.potential_solutions,
+  ]);
+  addSection(dungeon.dungeonOverview.conclusion, 'div');
+
+  // Difficulty Level
+  addSection(
+    `<strong>Difficulty Level:</strong> ${dungeon.dungeonOverview.difficulty_level}`,
+    'p',
+  );
 
   // NPCs
   if (dungeon.npcs && dungeon.npcs.length > 0) {
@@ -205,9 +217,6 @@ export function dungeonToHTML(dungeon) {
         // Fallback to top-level name & description
         html += addHTMLSectionTitle(monster.name, 3);
         addSection(monster.description);
-        if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
-          html += `<p><strong>Danger:</strong> ${monster.danger.trim()}</p>`;
-        }
       }
 
       // If it has a statblock, convert to HTML

@@ -1,6 +1,3 @@
-import { renderOverview } from './renderDungeonOverview.mjs';
-import { overviewAstToText } from '@/util/renderSettingOverview.mjs';
-
 export function dungeonToPlainText(dungeon) {
   let text = '';
 
@@ -28,17 +25,33 @@ export function dungeonToPlainText(dungeon) {
     return `${title}\n${dashes}`;
   }
 
-  // Dungeon Overview — render via the shared AST path so both new and
-  // legacy field shapes work. overviewAstToText emits section headings
-  // as underlined `Section\n-------` blocks + paragraphs. The
-  // difficulty_level field is rendered as part of the "Difficulty"
-  // section heading, so the separate `Difficulty Level:` line that the
-  // legacy exporter emitted is dropped.
+  // Dungeon Overview
   text += `${addDoubleDashedSectionTitle(
-    (dungeon.dungeonOverview.name || '').toUpperCase(),
+    dungeon.dungeonOverview.name.toUpperCase(),
   )}\n`;
-  const ast = renderOverview(dungeon.dungeonOverview);
-  text += overviewAstToText(ast) + '\n\n';
+  text += `${dungeon.dungeonOverview.overview} ${dungeon.dungeonOverview.relation_to_larger_setting}\n\n`;
+
+  addSection(dungeon.dungeonOverview.finding_the_dungeon);
+  addSection(dungeon.dungeonOverview.history);
+  addSection([
+    dungeon.dungeonOverview.dominant_power,
+    dungeon.dungeonOverview.dominant_power_goals,
+  ]);
+  addSection([
+    dungeon.dungeonOverview.dominant_power_minions,
+    dungeon.dungeonOverview.dominant_power_event,
+  ]);
+  addSection(dungeon.dungeonOverview.recent_event_consequences);
+  addSection(dungeon.dungeonOverview.secondary_power);
+  addSection(dungeon.dungeonOverview.secondary_power_event);
+  addSection([
+    dungeon.dungeonOverview.main_problem,
+    dungeon.dungeonOverview.potential_solutions,
+  ]);
+  addSection(dungeon.dungeonOverview.conclusion);
+
+  // Difficulty Level
+  addSection(`Difficulty Level: ${dungeon.dungeonOverview.difficulty_level}`);
 
   // NPCs
   if (dungeon.npcs && dungeon.npcs.length > 0) {
@@ -114,9 +127,6 @@ export function dungeonToPlainText(dungeon) {
       } else {
         // fallback to top-level description
         addSection(monster.description);
-        if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
-          addSection(`Danger: ${monster.danger.trim()}`);
-        }
       }
 
       // If monster has a statblock
@@ -206,9 +216,6 @@ function monsterDetailsToPlainText(monster) {
   }
   if (detail?.lore) {
     txt += `${detail.lore}\n\n`;
-  }
-  if (monster.danger && typeof monster.danger === 'string' && monster.danger.trim()) {
-    txt += `Danger: ${monster.danger.trim()}\n\n`;
   }
 
   return txt;

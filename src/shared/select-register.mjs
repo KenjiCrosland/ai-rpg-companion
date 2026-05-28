@@ -128,7 +128,6 @@ export const fantasyRaceConventionalRegisters = {
     'Finnish-inspired',          // Kalevala forest-magic/runic register; restored
   ],
   'Dwarven': [
-    'Dwarven',                      // primary fictional register
     'Old-Norse-inspired',
     'Anglo-Saxon-inspired',
     'Old-High-German-inspired',
