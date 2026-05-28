@@ -30,8 +30,24 @@ export function createStatblockPrompts(options) {
     caster,
   } = options;
 
-  // Prevent empty name from producing template example creature
-  // Instead, encourage a creative, unconventional creature
+  // Prevent empty name from producing template example creature.
+  // Preference order when name is empty:
+  //   1. Use the user's description as the concept (if provided) —
+  //      respects what the user actually asked for.
+  //   2. Otherwise pick a random unconventional concept from the
+  //      curated list (avoids the template's stock example creature).
+  // When the description is consumed as the concept, suppress the
+  // separate "special instructions" prompt block so the description
+  // doesn't double-apply (once as the concept, again as instructions
+  // inviting the LLM to attach mechanics to whatever word it finds —
+  // 'vicious' → over-engineered poison/bleed/reactive mockery).
+  let descriptionConsumedAsName = false;
+  if (!monsterName || monsterName.trim() === '') {
+    if (monsterDescription && monsterDescription.trim() !== '') {
+      monsterName = `a CR ${challengeRating} creature: ${monsterDescription.trim()}`;
+      descriptionConsumedAsName = true;
+    }
+  }
   if (!monsterName || monsterName.trim() === '') {
     const creativePrompts = [
       // Biological horror
@@ -256,8 +272,13 @@ export function createStatblockPrompts(options) {
 
   let monsterDescriptionPromptPart1 = '';
   let monsterDescriptionPromptPart2 = '';
-  if (monsterDescription.length > 0) {
-    monsterDescriptionPromptPart1 = `Finally, here are some final output instructions provided by the user via a form field. These instructions could include a description of the creature (example: the creature is very evasive) or output instructions (please output in a particular language) Do not modify stats based on the special instructions unless explicitly stated below. Also, as this creature will be generated in two parts, please ignore any details of the below special instructions that doesn't fit into the above data structure: 
+  // Skip the special-instructions block when the description was
+  // already consumed as the monster concept (above) — including it
+  // again would double-apply, inviting the LLM to attach mechanical
+  // complications (poison/bleed/reactive cantrips) to whatever
+  // descriptor word it finds.
+  if (monsterDescription.length > 0 && !descriptionConsumedAsName) {
+    monsterDescriptionPromptPart1 = `Finally, here are some final output instructions provided by the user via a form field. These instructions could include a description of the creature (example: the creature is very evasive) or output instructions (please output in a particular language) Do not modify stats based on the special instructions unless explicitly stated below. Also, as this creature will be generated in two parts, please ignore any details of the below special instructions that doesn't fit into the above data structure:
     ${monsterDescription}`;
     monsterDescriptionPromptPart2 = `Finally, please remember the final output instructions provided in the previous prompt: ${monsterDescription}. If any part of these special instructions can be applied to the actions or legendary actions (either mechanically or as flavor) please do so. Do not modify stats based on special instructions unless explcitly stated to do so.`;
   }
