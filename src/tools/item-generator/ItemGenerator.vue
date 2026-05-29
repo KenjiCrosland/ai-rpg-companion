@@ -200,6 +200,11 @@
             <RelatedSettingsSection v-if="!isEditing" :item="magicItemDescription" @update:item="handleUpdatedItem"
               @switch-to-lore-builder="activeTabIndex = 1" />
 
+            <!-- Related Dungeon — single dungeon per item; mode
+                 (forgotten / revered / carried / trial) is inferred
+                 from the item's lore by the dungeon generator. -->
+            <RelatedDungeonsSection v-if="!isEditing" :item="magicItemDescription" />
+
             <!-- Edit Mode -->
             <div v-else class="item-edit">
               <header class="item-edit__header">
@@ -317,6 +322,7 @@ import QuestHookTab from './components/QuestHookTab.vue';
 import LoreBuilderTab from './components/LoreBuilderTab.vue';
 import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import RelatedSettingsSection from './components/RelatedSettingsSection.vue';
+import RelatedDungeonsSection from './components/RelatedDungeonsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
 import { ParCardButton, ParActionButton, ParCallout, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
@@ -1641,6 +1647,40 @@ ITEM STRUCTURE TO COMPLETE:
 
       If the lore mentions no named places, return an empty array [].
     */
+  ],
+  "related_dungeons": [
+    /*
+      Add one stub for every NAMED DUNGEON-SHAPED LOCATION the lore anchors to a specific
+      bounded site — one structure, one cave system, one fortified building, one barrow.
+
+      DUNGEON-SHAPE vocabulary (signals): Sepulcher, Tomb, Crypt, Barrow, Mausoleum, Vault, Hall,
+      Reliquary, Compound, Hold, Watch, Garrison, Foundry, Forge, Works, Mine, Quarry, Lab, Cell,
+      Warren, Burrow, Maw, Pit, Sink, Hollow, Spire, Tower, Steading, Lair, Coil, Sty, Heap,
+      Cradle, Furnace. If the lore names a place with this kind of shape, add a stub.
+
+      DUNGEON vs SETTING — important distinction (use this to route stubs correctly):
+        - A dungeon is a SPECIFIC BOUNDED, DELVABLE place — the party can enter, delve, and exit.
+        - A setting is a REGION, SETTLEMENT, or BROADER GEOGRAPHY — kingdom, city, forest, frontier.
+        - "The Iron Hills" → setting. "The Hollow Vault in the Iron Hills" → dungeon. Both can
+          appear from the same lore as DIFFERENT STUBS in different arrays.
+        - "Carthal, the Free City" → setting. "The catacombs under Carthal" → dungeon.
+
+      NON-DUNGEONS — skip:
+        - A category-only reference with no proper name ("an old smithy", "a hidden vault"): SKIP.
+        - An organization / faction / cult / order / lineage: SKIP (those go in related_npcs).
+        - A place referenced ONLY by relationship to a named entity ("the king's hall"): SKIP.
+
+      Each stub:
+        - name: the place's proper name as it appears in the lore (verbatim).
+        - role_brief: ≤10 words describing the place's relationship to this item AND containing
+          the EXACT item name verbatim. Examples: "Tomb where ${itemName.value || '[item name]'} was sealed",
+          "Forge that produced ${itemName.value || '[item name]'}", "Vault that contains ${itemName.value || '[item name]'}".
+        - context: one sentence describing what the place is and how it relates to this item.
+          Structural / geographic character if useful.
+        - source_quote: the verbatim sentence(s) in the lore field where this place appears.
+
+      If the lore mentions no named dungeon-shaped places, return an empty array [].
+    */
   ]
 }
 
@@ -1708,6 +1748,7 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
     magicItemDescription.value.questHooks = [];
     magicItemDescription.value.related_npcs = normalizeRelatedNPCs(magicItemDescription.value.related_npcs);
     magicItemDescription.value.related_settings = normalizeRelatedSettings(magicItemDescription.value.related_settings);
+    magicItemDescription.value.related_dungeons = normalizeRelatedDungeons(magicItemDescription.value.related_dungeons);
     // Persist the selected register on the saved item so cross-tool
     // promotions (e.g., item → NPC) can inherit it without re-detecting
     // from the lore. Legacy items without this field fall back to
@@ -1819,6 +1860,15 @@ const itemValidation = (jsonString) => {
       );
       if (!ok) return false;
     }
+    // related_dungeons is optional too; same minimal shape requirement.
+    if ('related_dungeons' in jsonObj) {
+      if (!Array.isArray(jsonObj.related_dungeons)) return false;
+      const ok = jsonObj.related_dungeons.every(stub =>
+        stub && typeof stub === 'object'
+        && typeof stub.name === 'string'
+      );
+      if (!ok) return false;
+    }
     return true;
   } catch (error) {
     return false;
@@ -1870,6 +1920,31 @@ const normalizeRelatedSettings = (raw) => {
       context: (entry.context || '').toString().trim(),
       source_quote: (entry.source_quote || '').toString().trim(),
       setting_id: entry.setting_id || null,
+    });
+  }
+  return stubs;
+}
+
+// Normalize related_dungeons inline emissions from the main item
+// generation prompt. Same shape and dedupe rules as
+// normalizeRelatedSettings; the only difference is the promotion-link
+// field name (`dungeon_id` vs `setting_id`).
+const normalizeRelatedDungeons = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const stubs = [];
+  for (const entry of raw) {
+    const name = (entry?.name || '').toString().trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    stubs.push({
+      name,
+      role_brief: (entry.role_brief || '').toString().trim(),
+      context: (entry.context || '').toString().trim(),
+      source_quote: (entry.source_quote || '').toString().trim(),
+      dungeon_id: entry.dungeon_id || null,
     });
   }
   return stubs;

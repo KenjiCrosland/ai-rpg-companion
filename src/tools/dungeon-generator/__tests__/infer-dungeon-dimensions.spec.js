@@ -300,6 +300,153 @@ describe('inferDungeonDimensions', () => {
     expect(r1.difficulty).toBe(r2.difficulty);
   });
 
+  // ---- Dimensional presets (item → dungeon seeded flow) ----
+
+  it('PRESET: driveType wins over the LLM-resolved cascade roll', async () => {
+    generateGptResponse.mockResolvedValue(JSON.stringify({
+      type: 'chambered-complex',
+      character: ['ancient', 'haunted', 'moss-furred'],
+      register: 'norse',
+      userName: null,
+    }));
+    const result = await inferDungeonDimensions({
+      description: 'x',
+      presets: { driveType: 'prove_worthiness' },
+    });
+    expect(result.driveType).toBe('prove_worthiness');
+  });
+
+  it('PRESET: powerStructure wins over the holder-pick cascade', async () => {
+    generateGptResponse.mockResolvedValue(JSON.stringify({
+      type: 'chambered-complex',
+      character: ['ancient', 'haunted', 'moss-furred'],
+      register: 'norse',
+      userName: null,
+    }));
+    const result = await inferDungeonDimensions({
+      description: 'x',
+      presets: { powerStructure: 'single_apex' },
+    });
+    expect(result.powerStructure).toBe('single_apex');
+  });
+
+  it('PRESET: organizingLogic wins over the LLM extraction', async () => {
+    generateGptResponse.mockResolvedValue(JSON.stringify({
+      type: 'chambered-complex',
+      character: ['ancient', 'haunted', 'moss-furred'],
+      register: 'norse',
+      userName: null,
+      organizingLogic: ['inhabited_base'],  // LLM tries to override
+    }));
+    const result = await inferDungeonDimensions({
+      description: 'x',
+      presets: { organizingLogic: ['containment'] },
+    });
+    expect(result.organizingLogic).toEqual(['containment']);
+  });
+
+  it('PRESET: register wins over the LLM-resolved register', async () => {
+    generateGptResponse.mockResolvedValue(JSON.stringify({
+      type: 'chambered-complex',
+      character: ['ancient', 'haunted', 'moss-furred'],
+      register: 'norse',  // LLM picks Norse
+      userName: null,
+    }));
+    const result = await inferDungeonDimensions({
+      description: 'x',
+      presets: { register: 'Celtic-inspired: ...' },  // preset wins
+    });
+    expect(result.register).toBe('Celtic-inspired: ...');
+  });
+
+  it('PRESET: all four pre-sets compose for the trial mode lock', async () => {
+    generateGptResponse.mockResolvedValue(JSON.stringify({
+      type: 'chambered-complex',
+      character: ['ancient', 'haunted', 'moss-furred'],
+      register: 'norse',
+      userName: null,
+    }));
+    const result = await inferDungeonDimensions({
+      description: 'x',
+      presets: {
+        register: 'Greek-inspired: ...',
+        driveType: 'prove_worthiness',
+        powerStructure: 'single_apex',
+        organizingLogic: ['containment'],
+      },
+    });
+    expect(result.register).toBe('Greek-inspired: ...');
+    expect(result.driveType).toBe('prove_worthiness');
+    expect(result.powerStructure).toBe('single_apex');
+    expect(result.organizingLogic).toEqual(['containment']);
+  });
+
+  it('PRESET: invalid preset values are silently dropped (fallback rolls instead)', async () => {
+    generateGptResponse.mockResolvedValue(JSON.stringify({
+      type: 'chambered-complex',
+      character: ['ancient', 'haunted', 'moss-furred'],
+      register: 'norse',
+      userName: null,
+    }));
+    const result = await inferDungeonDimensions({
+      description: 'x',
+      presets: {
+        driveType: 'made_up_drive_type',
+        powerStructure: 'fictional_holder',
+        organizingLogic: ['nonsense_logic'],
+      },
+    });
+    // Invalid presets dropped → fallback rolls fire.
+    expect(['recover_by_force', 'recover_by_stealth', 'recover_by_substitution',
+            'escort_through', 'prevent_by_killing', 'prevent_by_ritual',
+            'prevent_by_sabotage', 'acquire_by_negotiation', 'acquire_by_theft',
+            'bear_a_message', 'expose_the_truth', 'usurp_authority',
+            'survive_and_escape', 'exploit_the_standoff', 'prove_worthiness'])
+      .toContain(result.driveType);
+    expect(result.driveType).not.toBe('made_up_drive_type');
+  });
+
+  it('PRESET: presets survive the LLM-failure fallback path', async () => {
+    generateGptResponse.mockRejectedValue(new Error('network down'));
+    const result = await inferDungeonDimensions({
+      description: 'x',
+      presets: {
+        driveType: 'prove_worthiness',
+        powerStructure: 'single_apex',
+        organizingLogic: ['containment'],
+        register: 'Egyptian-inspired: ...',
+      },
+    });
+    expect(result.driveType).toBe('prove_worthiness');
+    expect(result.powerStructure).toBe('single_apex');
+    expect(result.organizingLogic).toEqual(['containment']);
+    expect(result.register).toBe('Egyptian-inspired: ...');
+  });
+
+  it('PRESET: omitting presets leaves the existing roll/LLM pipeline untouched', async () => {
+    generateGptResponse.mockResolvedValue(JSON.stringify({
+      type: 'chambered-complex',
+      character: ['ancient', 'haunted', 'moss-furred'],
+      register: 'norse',
+      userName: 'Eikheim',
+    }));
+    // Run without presets — should match the unseeded baseline.
+    const r1 = await inferDungeonDimensions({
+      description: 'a Norse barrow',
+      rng: () => 0.5,
+    });
+    // Run with explicit empty presets — should match.
+    const r2 = await inferDungeonDimensions({
+      description: 'a Norse barrow',
+      presets: {},
+      rng: () => 0.5,
+    });
+    expect(r1.driveType).toBe(r2.driveType);
+    expect(r1.powerStructure).toBe(r2.powerStructure);
+    expect(r1.organizingLogic).toEqual(r2.organizingLogic);
+    expect(r1.register).toBe(r2.register);
+  });
+
   // ---- Coherence-check directive (Option 4) routing ----
 
   it('coherence-check directive anchor phrases are present in the inference prompt', async () => {

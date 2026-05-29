@@ -128,6 +128,7 @@ describe('generateDungeonOverview', () => {
       description: 'a forgotten crypt called the Hollow Vault',
       lore: 'A long history of buried kings.',
       difficulty: '2',
+      presets: {},
     });
   });
 
@@ -137,6 +138,7 @@ describe('generateDungeonOverview', () => {
       description: '',
       lore: '',
       difficulty: null,
+      presets: {},
     });
   });
 

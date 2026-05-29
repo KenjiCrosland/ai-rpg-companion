@@ -149,6 +149,9 @@ import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
 import { getNavigationParams } from '@/util/navigation.mjs';
+import { loadSeededInput } from '@/util/seeded-input.mjs';
+import { buildDungeonPrefillFromItem } from '@/prompts/item-dungeon-prompts.mjs';
+import { pendingSeed, overviewForm, currentDungeonId } from '../stores/dungeon-state.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 import { CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
@@ -217,9 +220,50 @@ function onTabChanged(index) {
 onMounted(() => {
   dungeonStore.loadDungeons();
 
-  // Handle deep linking from NPC Generator
   const params = getNavigationParams();
 
+  // Cross-tool seed: Item Generator → "Create Dungeon" from the item.
+  // Loads the seed and stashes it in module-level `pendingSeed`. The
+  // overview-store's generateDungeonOverview() inspects pendingSeed
+  // on its next call to run mode inference and apply mode-derived
+  // dimensional presets. Land the user on the overview tab so they
+  // can hit Generate immediately.
+  //
+  // Two seeded paths:
+  //   - STUB-BASED (entityName present): prefill the form's description
+  //     field with buildDungeonPrefillFromItem(seed) so the user sees
+  //     the per-stub seed text (place name + role + source quote) and
+  //     can review/edit before clicking Generate.
+  //   - WHOLE-ITEM FALLBACK (no entityName): leave the form blank;
+  //     overview-store synthesizes context from the item's lore on
+  //     the next generateDungeonOverview() call.
+  if (params.fromType === 'item' && params.fromId) {
+    const seed = loadSeededInput({
+      fromType: params.fromType,
+      fromId: params.fromId,
+      entityName: params.entityName,
+      destinationType: 'dungeon',
+    });
+    if (seed) {
+      pendingSeed.value = seed;
+      // Clear currentDungeonId so the OverviewTab renders the landing
+      // FORM, not whatever existing dungeon `loadDungeons` defaulted
+      // to (it falls back to dungeons[0] when no prior selection
+      // exists, which is the wrong landing state for a fresh seeded
+      // generation). The form's blank slate is what the user expects.
+      currentDungeonId.value = null;
+      if (params.entityName) {
+        const prefill = buildDungeonPrefillFromItem(seed);
+        if (prefill) {
+          overviewForm.value.description = prefill;
+        }
+      }
+      dungeonStore.activeTabIndex = 0;
+      return;
+    }
+  }
+
+  // Handle deep linking from NPC Generator
   if (params.source && params.tab === 'npcs') {
     // Find dungeon by name
     const dungeon = dungeonStore.dungeons.find(d =>

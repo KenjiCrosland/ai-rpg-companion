@@ -303,6 +303,141 @@ export function resetItemStubsForDeletedSetting(settingId) {
   return resetCount;
 }
 
+// ============================================================
+// Dungeon-side parallels — same shape and semantics as the
+// setting helpers above, but operating on `related_dungeons[]`
+// with `dungeon_id` as the promotion-link field.
+// ============================================================
+
+/**
+ * Find the matching related-dungeon stub on an item by case-insensitive
+ * name, and update its `dungeon_id`. Mirrors `linkSettingToItemStub`.
+ * No-op if the item doesn't exist, has no `related_dungeons`, or no
+ * stub name matches. Idempotent.
+ *
+ * @param {string} itemName
+ * @param {string} stubName
+ * @param {string} dungeonId
+ * @returns {boolean} true if a stub was updated, false otherwise
+ */
+export function linkDungeonToItemStub(itemName, stubName, dungeonId) {
+  if (!itemName || !stubName || !dungeonId) return false;
+
+  const items = getAllItems();
+  const item = items.find(i => i?.name === itemName);
+  if (!item || !Array.isArray(item.related_dungeons)) return false;
+
+  const target = stubName.trim().toLowerCase();
+  const stub = item.related_dungeons.find(
+    s => (s?.name || '').trim().toLowerCase() === target
+  );
+  if (!stub) return false;
+
+  stub.dungeon_id = dungeonId;
+  persistItems(items);
+  return true;
+}
+
+/**
+ * Add a dungeon stub to an item's related_dungeons. Used when the
+ * dungeon-side finalize hook needs to record a back-link but no
+ * existing stub matches by name — typically the whole-item fallback
+ * path (no `entityName` was passed; the dungeon's own generated name
+ * becomes the stub's name).
+ *
+ * Mirrors `addSettingStubToItem`'s two-pass:
+ *   1. Try linkDungeonToItemStub by name first.
+ *   2. Defensive id-match — no-op if a stub already points at this dungeon_id.
+ *   3. Otherwise push a fresh stub with no source_quote (signals
+ *      "didn't come from this item's own lore extraction").
+ *
+ * @param {string} itemName
+ * @param {Object} stub
+ * @param {string} stub.dungeonId
+ * @param {string} stub.dungeonName
+ * @param {string} [stub.roleBrief]
+ * @returns {boolean} true if a stub was added or updated
+ */
+export function addDungeonStubToItem(itemName, { dungeonId, dungeonName, roleBrief = '' } = {}) {
+  if (!itemName || !dungeonId || !dungeonName) return false;
+
+  if (linkDungeonToItemStub(itemName, dungeonName, dungeonId)) {
+    return true;
+  }
+
+  const items = getAllItems();
+  const item = items.find(i => i?.name === itemName);
+  if (!item) return false;
+
+  if (!Array.isArray(item.related_dungeons)) {
+    item.related_dungeons = [];
+  }
+
+  if (item.related_dungeons.some(s => s?.dungeon_id === dungeonId)) {
+    return false;
+  }
+
+  item.related_dungeons.push({
+    name: dungeonName,
+    dungeon_id: dungeonId,
+    role_brief: roleBrief,
+  });
+  persistItems(items);
+  return true;
+}
+
+/**
+ * Walk savedItems and find any items whose `related_dungeons` contain
+ * a stub pointing to the given dungeon id. Used during dungeon
+ * deletion to roll back item-side stub links so the source item's UI
+ * returns to "Create Dungeon".
+ *
+ * @param {string} dungeonId
+ * @returns {Array<{itemName: string, stubName: string}>}
+ */
+export function findItemStubsForDungeon(dungeonId) {
+  if (!dungeonId) return [];
+  const items = getAllItems();
+  const matches = [];
+  for (const item of items) {
+    if (!item?.name || !Array.isArray(item.related_dungeons)) continue;
+    for (const stub of item.related_dungeons) {
+      if (stub?.dungeon_id === dungeonId) {
+        matches.push({ itemName: item.name, stubName: stub.name });
+      }
+    }
+  }
+  return matches;
+}
+
+/**
+ * Reset any item stubs pointing to the given dungeon id back to the
+ * unpromoted state (`dungeon_id: null`). Mirrors
+ * `resetItemStubsForDeletedSetting`. Call when a dungeon is deleted
+ * so the source item's UI reverts to "Create Dungeon".
+ *
+ * @param {string} dungeonId
+ * @returns {number} count of stubs reset
+ */
+export function resetItemStubsForDeletedDungeon(dungeonId) {
+  if (!dungeonId) return 0;
+  const items = getAllItems();
+  let resetCount = 0;
+  for (const item of items) {
+    if (!Array.isArray(item?.related_dungeons)) continue;
+    for (const stub of item.related_dungeons) {
+      if (stub?.dungeon_id === dungeonId) {
+        stub.dungeon_id = null;
+        resetCount++;
+      }
+    }
+  }
+  if (resetCount > 0) {
+    persistItems(items);
+  }
+  return resetCount;
+}
+
 /**
  * Update the matching related-NPC stub on an item with the canonical NPC's id.
  * Called by the NPC Generator after a successful generation triggered from
@@ -610,14 +745,25 @@ export function buildSeededInputFromItem({ fromId, entityName, destinationType =
   const item = getItemFromStorage(fromId);
   if (!item) return null;
 
-  // Pick the stub list based on destination. Settings and dungeons both
-  // promote from related_settings (location stubs); only NPC promotion
-  // uses related_npcs.
-  const usesLocationStubs = destinationType === 'setting' || destinationType === 'dungeon';
-  const stubs = usesLocationStubs
-    ? (Array.isArray(item.related_settings) ? item.related_settings : [])
-    : (Array.isArray(item.related_npcs) ? item.related_npcs : []);
-  const entityType = usesLocationStubs ? 'location' : 'npc';
+  // Pick the stub list based on destination. Each destination type
+  // pulls from its own related-* array:
+  //   - NPC destination → related_npcs
+  //   - Setting destination → related_settings
+  //   - Dungeon destination → related_dungeons (separated from settings
+  //     in the post-dungeon-split architecture; dungeon-shape places
+  //     get their own stub list rather than sharing with settings).
+  let stubs;
+  let entityType;
+  if (destinationType === 'dungeon') {
+    stubs = Array.isArray(item.related_dungeons) ? item.related_dungeons : [];
+    entityType = 'location';
+  } else if (destinationType === 'setting') {
+    stubs = Array.isArray(item.related_settings) ? item.related_settings : [];
+    entityType = 'location';
+  } else {
+    stubs = Array.isArray(item.related_npcs) ? item.related_npcs : [];
+    entityType = 'npc';
+  }
 
   // Resolve which stubs go into entities[]:
   // - With entityName: the single matching stub. Null out if not found.
@@ -677,7 +823,7 @@ export function buildSeededInputFromItem({ fromId, entityName, destinationType =
 
   const realizedSettings = settingStubsAll
     .filter(s => s?.setting_id && (s.name || '').trim())
-    .filter(s => !(usesLocationStubs && (s.name || '').trim().toLowerCase() === promotingStubNameKey))
+    .filter(s => !(destinationType === 'setting' && (s.name || '').trim().toLowerCase() === promotingStubNameKey))
     .map(s => ({
       name: (s.name || '').trim(),
       role_brief: (s.role_brief || '').trim(),

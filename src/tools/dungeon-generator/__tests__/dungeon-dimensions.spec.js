@@ -1286,6 +1286,42 @@ describe('pickRandomDriveType', () => {
     expect(stealthCount).toBeGreaterThan(baselineCount);
   });
 
+  it('CASCADE: containment organizingLogic boosts prove_worthiness', () => {
+    let trialCount = 0;
+    let baselineCount = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const contained = pickRandomDriveType(mulberry32(seed), { organizingLogic: ['containment'] });
+      const baseline = pickRandomDriveType(mulberry32(seed));
+      if (contained === 'prove_worthiness') trialCount++;
+      if (baseline === 'prove_worthiness') baselineCount++;
+    }
+    expect(trialCount).toBeGreaterThan(baselineCount);
+  });
+
+  it('CASCADE: dormant-with-witness tension boosts prove_worthiness', () => {
+    let trialCount = 0;
+    let baselineCount = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const dormant = pickRandomDriveType(mulberry32(seed), { tension: 'dormant-with-witness' });
+      const baseline = pickRandomDriveType(mulberry32(seed));
+      if (dormant === 'prove_worthiness') trialCount++;
+      if (baseline === 'prove_worthiness') baselineCount++;
+    }
+    expect(trialCount).toBeGreaterThan(baselineCount);
+  });
+
+  it('CASCADE: single_apex boosts prove_worthiness (the trial-master shape)', () => {
+    let trialCount = 0;
+    let baselineCount = 0;
+    for (let seed = 1; seed <= 4000; seed++) {
+      const apex = pickRandomDriveType(mulberry32(seed), { powerStructure: 'single_apex' });
+      const baseline = pickRandomDriveType(mulberry32(seed));
+      if (apex === 'prove_worthiness') trialCount++;
+      if (baseline === 'prove_worthiness') baselineCount++;
+    }
+    expect(trialCount).toBeGreaterThan(baselineCount);
+  });
+
   it('CASCADE: bumps stack multiplicatively (single_apex + cult-ascendant compounds prevent_by_killing)', () => {
     // single_apex (1.6x) × cult-ascendant (1.4x) = 2.24x. The combined
     // context should produce a higher count than either alone.

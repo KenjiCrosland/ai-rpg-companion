@@ -98,6 +98,8 @@ import {
   TIER_WEIGHTED_TYPES,
   DIFFICULTY_TIERS,
   ORGANIZING_LOGICS,
+  POWER_STRUCTURES,
+  DRIVE_TYPES,
   generateCharacterCandidates,
   pickRandomTension,
   pickRandomDifficulty,
@@ -394,10 +396,38 @@ export async function inferDungeonDimensions({
   lore = '',
   difficulty = null,
   rng = Math.random,
+  // Optional dimensional pre-sets. Used by the item → dungeon flow:
+  // when an item seeds a dungeon, the chosen mode locks specific
+  // dimensions (e.g., trial → driveType='prove_worthiness',
+  // powerStructure='single_apex', organizingLogic=['containment']),
+  // and the item's register flows in directly. Each preset short-
+  // circuits both the fallback roll AND the post-LLM resolution for
+  // its dimension. Unspecified presets leave the existing roll/LLM
+  // pipeline untouched.
+  presets = {},
 } = {}) {
   const hasUserInput =
     (typeof description === 'string' && description.trim().length > 0)
     || (typeof lore === 'string' && lore.trim().length > 0);
+
+  // Validate presets against the dimensional enums. Invalid entries
+  // are silently dropped so the rest of the inference proceeds as if
+  // no preset was supplied for that dimension.
+  const presetOrganizingLogic = Array.isArray(presets.organizingLogic) && presets.organizingLogic.length > 0
+    ? presets.organizingLogic.filter(l => typeof l === 'string' && ORGANIZING_LOGICS.includes(l)).slice(0, 2)
+    : null;
+  const presetPowerStructure = typeof presets.powerStructure === 'string' && POWER_STRUCTURES.includes(presets.powerStructure)
+    ? presets.powerStructure
+    : null;
+  const presetDriveType = typeof presets.driveType === 'string' && DRIVE_TYPES.includes(presets.driveType)
+    ? presets.driveType
+    : null;
+  const presetRegister = typeof presets.register === 'string' && presets.register.trim().length > 0
+    ? presets.register
+    : null;
+  const presetUserName = typeof presets.userName === 'string' && presets.userName.trim().length > 0
+    ? presets.userName.trim()
+    : null;
 
   // Difficulty: caller-supplied first, then code-roll.
   const resolvedDifficulty = resolveDifficulty(difficulty) || pickRandomDifficulty(rng);
@@ -416,8 +446,10 @@ export async function inferDungeonDimensions({
   // cosmic-scale); `containment` leans high; `inhabited_base` leans
   // low. If the LLM call succeeds and provides an organizingLogic,
   // the chain is re-derived below using the LLM's value.
-  const fallbackOrganizingLogic = pickRandomOrganizingLogic(rng, { tier: resolvedDifficulty });
-  const fallbackPowerStructure = pickHolderForOrganizingLogic(fallbackOrganizingLogic, rng);
+  const fallbackOrganizingLogic = presetOrganizingLogic
+    || pickRandomOrganizingLogic(rng, { tier: resolvedDifficulty });
+  const fallbackPowerStructure = presetPowerStructure
+    || pickHolderForOrganizingLogic(fallbackOrganizingLogic, rng);
   // FormedNature: rolled ONLY when 'formed' is in organizingLogic.
   // Other logics don't have an ambient-force problem to solve, so
   // the field is null. Holder-gated: under several_unrelated the
@@ -432,7 +464,7 @@ export async function inferDungeonDimensions({
   // up under single_apex, exploit_the_standoff up under
   // several_unrelated, survive_and_escape up under scoured-and-claimed,
   // etc.
-  const fallbackDriveType = pickRandomDriveType(rng, {
+  const fallbackDriveType = presetDriveType || pickRandomDriveType(rng, {
     powerStructure: fallbackPowerStructure,
     tension,
     organizingLogic: fallbackOrganizingLogic,
@@ -474,7 +506,7 @@ export async function inferDungeonDimensions({
   // with the item generator. The empty-input branch goes via
   // resolveRegisterToken('fantasy_unspecified') for the comment trail;
   // both ultimately hit pickRegisterFromFullPool.
-  const fallbackRegister = pickRegisterFromFullPool(rng);
+  const fallbackRegister = presetRegister || pickRegisterFromFullPool(rng);
   // Pool injection: a rotated 6-name subset of the register's curated
   // character pool, for the LLM to derive from. Null when the register
   // is a catchall (no curated pool); the prompt falls back to
@@ -538,9 +570,12 @@ export async function inferDungeonDimensions({
     ? parsed.character.filter(c => typeof c === 'string' && c.trim().length > 0).map(c => c.trim())
     : (characterCandidates ? characterCandidates[0] : null);
 
-  // Register: same branching as setting's inference.
+  // Register: preset wins over LLM. Same branching as setting's
+  // inference when no preset is supplied.
   let resolvedRegister;
-  if (!hasUserInput) {
+  if (presetRegister) {
+    resolvedRegister = presetRegister;
+  } else if (!hasUserInput) {
     // Empty input: pick from the full register pool.
     resolvedRegister = resolveRegisterToken('fantasy_unspecified', rng);
   } else if (typeof parsed.register === 'string' && parsed.register.toLowerCase() === 'fantasy_unspecified') {
@@ -553,14 +588,18 @@ export async function inferDungeonDimensions({
     resolvedRegister = resolveRegisterToken(parsed.register, rng);
   }
 
-  const resolvedUserName = typeof parsed.userName === 'string' && parsed.userName.trim().length > 0
-    ? parsed.userName.trim()
-    : null;
+  const resolvedUserName = presetUserName
+    || (typeof parsed.userName === 'string' && parsed.userName.trim().length > 0
+      ? parsed.userName.trim()
+      : null);
 
-  // Organizing logic: LLM pick if valid (array or single string), else
-  // fall back to the pre-roll. Composite is capped at 2 values.
+  // Organizing logic: preset wins over LLM. Otherwise LLM pick if valid
+  // (array or single string), else fall back to the pre-roll. Composite
+  // is capped at 2 values.
   let resolvedOrganizingLogic = fallbackOrganizingLogic;
-  if (Array.isArray(parsed.organizingLogic) && parsed.organizingLogic.length > 0) {
+  if (presetOrganizingLogic) {
+    resolvedOrganizingLogic = presetOrganizingLogic;
+  } else if (Array.isArray(parsed.organizingLogic) && parsed.organizingLogic.length > 0) {
     const valid = parsed.organizingLogic
       .filter(l => typeof l === 'string')
       .map(l => l.trim())
@@ -576,10 +615,12 @@ export async function inferDungeonDimensions({
   // If the LLM didn't move organizingLogic off the fallback, these
   // rolls diverge slightly from the pre-rolls (different rng state)
   // but the coupling invariants still hold.
-  const resolvedPowerStructure = pickHolderForOrganizingLogic(resolvedOrganizingLogic, rng);
+  const resolvedPowerStructure = presetPowerStructure
+    || pickHolderForOrganizingLogic(resolvedOrganizingLogic, rng);
   // Drive type re-rolls against the LLM-resolved (holder, tension,
   // organizingLogic) so the cascade weighting tracks any LLM override.
-  const resolvedDriveType = pickRandomDriveType(rng, {
+  // Preset wins over the cascade roll.
+  const resolvedDriveType = presetDriveType || pickRandomDriveType(rng, {
     powerStructure: resolvedPowerStructure,
     tension,
     organizingLogic: resolvedOrganizingLogic,

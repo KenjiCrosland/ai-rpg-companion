@@ -2,6 +2,15 @@ import { ref, computed } from 'vue';
 
 export const dungeons = ref([]);
 export const currentDungeonId = ref(null);
+// Cross-tool seed: populated by the DungeonGenerator's mount handler
+// when the user navigated here from another tool (currently the Item
+// Generator). The generation flow inspects this to:
+//   - run the item-dungeon mode inference + apply mode-derived presets
+//     to inferDungeonDimensions (driveType, powerStructure, etc.)
+//   - inherit the item's register directly
+//   - write the inspired_by_item reference edge after generation
+// Cleared by finalizePendingSeed when the post-generation hook runs.
+export const pendingSeed = ref(null);
 export const selectedRoomId = ref(null);
 export const lastClickedRoomX = ref(null);
 export const isMapSidebarCollapsed = ref(true);

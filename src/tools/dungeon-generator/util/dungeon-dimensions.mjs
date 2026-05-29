@@ -1090,6 +1090,7 @@ export const DRIVE_TYPES = [
   'usurp_authority',
   'survive_and_escape',
   'exploit_the_standoff',
+  'prove_worthiness',
 ];
 
 export const DRIVE_TYPE_DIRECTIVES = {
@@ -1121,6 +1122,8 @@ export const DRIVE_TYPE_DIRECTIVES = {
     "DRIVE TYPE: survive_and_escape. The party is ALREADY INSIDE — sealed in, abandoned by a guide, dropped through a trap, woken from frozen sleep — and the goal is EGRESS. Quest hook frames how they got in (or notes they wake in media res) and what awaits them outside. Potential outcomes' first path describes the egress route, what blocks it, and the cost of the way out (a faction's anger, a debt, a piece of the party's gear left behind).",
   exploit_the_standoff:
     "DRIVE TYPE: exploit_the_standoff. The party comes with an objective that cannot be reached HEAD-ON — but the dungeon's factions are AT EACH OTHER'S THROATS, and that conflict is the party's cover. Quest hook names the objective and the standoff that opens the path. Potential outcomes' first path describes how the party leverages the standoff (igniting it further, slipping past while it consumes attention, allying with one side to overcome the others' guard).",
+  prove_worthiness:
+    "DRIVE TYPE: prove_worthiness. The dungeon IS a structured sequence of TRIALS administered by guardians who are not adversaries but ADJUDICATORS — the party demonstrates fitness through specific physical proofs at named stages, and the prize is granted by the dungeon's master at the end. Quest hook names the prize, who is testing the party (a trial-master, an order's sigil, a long-dead administrator's bound proxy, the dungeon itself acting through its mechanisms), and what the prior failed candidates left behind as warning. Potential outcomes' first path describes the QUALIFYING ACTS — concrete physical proofs the party performs at each named stage (a feat of carrying, an act of restraint, a relinquishing of a specific possession the party brought in, surviving a named hardship without resorting to the obvious solution). The complications come from MISREADING what the trial actually measures: a stage that looks like a fight rewards retreat; a stage that looks like a puzzle rewards a sacrifice; the test the party expects is not the test the master is grading. The guardians do not negotiate, do not pursue if the party leaves, and do not kill except as a consequence of the trial's own rules — failure at a stage typically returns the party to the entrance, not the grave.",
 };
 
 /**
@@ -1145,6 +1148,7 @@ export function pickRandomDriveType(rng = Math.random, context = {}) {
     weights.prevent_by_killing *= 1.6;
     weights.usurp_authority *= 1.4;
     weights.acquire_by_negotiation *= 1.2;
+    weights.prove_worthiness *= 1.3;
   }
   if (powerStructure === 'several_unrelated') {
     weights.exploit_the_standoff *= 1.8;
@@ -1154,6 +1158,7 @@ export function pickRandomDriveType(rng = Math.random, context = {}) {
     weights.recover_by_stealth *= 1.3;
     weights.bear_a_message *= 1.3;
     weights.acquire_by_negotiation *= 1.2;
+    weights.prove_worthiness *= 1.2;
   }
   if (tension === 'sealed-and-stirring' || tension === 'boss-decline') {
     weights.prevent_by_ritual *= 1.5;
@@ -1170,10 +1175,19 @@ export function pickRandomDriveType(rng = Math.random, context = {}) {
     weights.recover_by_force *= 1.3;
     weights.recover_by_stealth *= 1.3;
   }
+  if (tension === 'dormant-with-witness') {
+    weights.prove_worthiness *= 1.5;
+  }
   if (Array.isArray(organizingLogic) && organizingLogic.includes('inhabited_base')) {
     weights.recover_by_stealth *= 1.5;
     weights.acquire_by_theft *= 1.3;
     weights.bear_a_message *= 1.2;
+  }
+  if (Array.isArray(organizingLogic) && organizingLogic.includes('containment')) {
+    weights.prove_worthiness *= 1.4;
+  }
+  if (Array.isArray(organizingLogic) && organizingLogic.includes('funerary')) {
+    weights.prove_worthiness *= 1.2;
   }
 
   const entries = Object.entries(weights);
