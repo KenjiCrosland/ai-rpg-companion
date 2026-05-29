@@ -98,6 +98,36 @@ export function useRoomDescription() {
     return summaries.filter((room) => room.summary);
   }
 
+  // Build an authoritative "doorways in this room" string for the
+  // prompt. Unlike getConnectedRoomsSummaries (which filters out
+  // unsummarized rooms because its purpose is contextual prose),
+  // this returns EVERY doorway with its actual map-level door type
+  // so the prompt has ground truth for door states. Used to populate
+  // the door_preamble field and prevent the model from inventing
+  // locks/bars/DCs that contradict the map. Returns null when the
+  // room has no doorways.
+  function formatRoomDoorways(currentDungeon, room) {
+    if (!room.doorways || room.doorways.length === 0) return null;
+    const stateOf = (type) => {
+      const t = (type || '').toLowerCase();
+      if (t === 'locked-door') return 'locked door';
+      if (t === 'secret') return 'secret door (hidden from players)';
+      if (t === 'corridor') return 'open corridor (no door)';
+      return 'unlocked door';
+    };
+    const lines = room.doorways.map((doorway) => {
+      const connectedRoom = currentDungeon.rooms.find(
+        (r) => r.id === doorway.connectedRoomId,
+      );
+      const targetName = connectedRoom?.name
+        ? `area ${connectedRoom.id} (${connectedRoom.name})`
+        : `area ${doorway.connectedRoomId}`;
+      const dir = doorway.side || 'unknown direction';
+      return `- ${dir} to ${targetName}: ${stateOf(doorway.type)}`;
+    });
+    return lines.join('\n');
+  }
+
   // **Handler Functions**
 
   // Entrance Room Handler
@@ -105,9 +135,11 @@ export function useRoomDescription() {
     dungeonOverview,
     shortDescription,
     connectedRoomsInfo,
+    doorwayInfo = null,
     formRoomName = '',
     formRoomSummary = '',
     npcString = '',
+    difficulty = null,
   }) {
     const prompt = generateEntrancePrompt(
       dungeonOverview,
@@ -116,6 +148,8 @@ export function useRoomDescription() {
       formRoomName,
       formRoomSummary,
       npcString,
+      difficulty,
+      doorwayInfo,
     );
     //console.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -123,6 +157,14 @@ export function useRoomDescription() {
       validateEntranceResponse,
     );
     const roomDescription = JSON.parse(response);
+    // Entrance rooms are always named "Entrance" — the room number is
+    // the disambiguator ("1. Entrance"). The new 4-field entrance
+    // prompt deliberately does not have the model emit a `name` field
+    // (the 16-field version did) because every entrance has the same
+    // role-name; user-provided form room names override.
+    if (!roomDescription.name) {
+      roomDescription.name = formRoomName || 'Entrance';
+    }
     const contentArray = processEntranceResponse(roomDescription);
     return { roomDescription, contentArray };
   }
@@ -625,9 +667,17 @@ export function useRoomDescription() {
           dungeonOverview,
           shortDescription,
           connectedRoomsInfo,
+          // Authoritative door states from the map — separate from
+          // connectedRoomsInfo (which filters by summary). The model
+          // must read door_preamble states from THIS list, not invent
+          // locks/bars/DCs that contradict the map.
+          doorwayInfo: formatRoomDoorways(currentDungeon, room),
           formRoomName,
           formRoomSummary,
           npcString,
+          // Entrance prompt scales DCs and failure severity to tier;
+          // dimensions live on dungeon.dimensions, so pull from there.
+          difficulty: currentDungeon.dimensions?.difficulty || null,
         }));
       } else if (room.requiresKey) {
         ({ roomDescription, contentArray } = await handleObstacleRoom({

@@ -39,6 +39,15 @@ import {
 export const useDungeonStore = defineStore('dungeon', () => {
   function selectDungeon(dungeonId) {
     currentDungeonId.value = dungeonId;
+    // Reset Map-tab UI state when switching dungeons. Without these
+    // two resets, the sidebar stays open showing the previously-
+    // selected room from the OLD dungeon (or — if the new dungeon
+    // has a room with the same numeric id — the new dungeon's room
+    // at that index, which lands the user on a room they didn't pick).
+    // Both are confusing; the right behavior is "no room selected,
+    // sidebar collapsed, user clicks a room on the new map to dive in."
+    selectedRoomId.value = null;
+    isMapSidebarCollapsed.value = true;
   }
 
   function createNewDungeon() {

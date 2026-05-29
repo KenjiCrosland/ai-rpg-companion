@@ -7,6 +7,9 @@
     />
     <h3 class="room-title parchment">{{ roomName }}</h3>
     <div v-if="activeView === 'form'" class="room-form parchment">
+      <p class="room-form__intro">
+        All fields below are optional. Click <em>Generate Description</em> to create a room from the dungeon's existing context, or fill in any field to steer the generation.
+      </p>
       <ParInput v-model="roomFormName" label="Room Name" />
       <ParTextarea v-model="roomFormShortDescription" label="Short Description" :rows="3" />
       <ParSelect
@@ -521,6 +524,17 @@ onMounted(() => {
   margin: 0 0 1.2rem;
 }
 
+/* Print-typography convention: when paragraphs flow in sequence, the
+   first sits flush left and subsequent paragraphs get a first-line
+   indent (no blank line needed — the indent signals the break). The
+   adjacent-sibling combinator scopes this to runs of paragraphs, so a
+   paragraph that follows a non-paragraph (read-aloud box, header, or
+   the section start) stays flush left. */
+.room-paragraph + .room-paragraph {
+  text-indent: 1.5em;
+  margin-top: 0;
+}
+
 .room-paragraph :deep(strong) {
   /* Weight bump only — same color as body. Color emphasis on inline
      strong would compete with the room-title and read-aloud surface
@@ -662,6 +676,24 @@ onMounted(() => {
   border: 1px solid var(--par-color-border);
   border-radius: var(--par-radius-md);
   padding: 1.5rem;
+}
+
+/* Form intro: "all fields are optional" affordance. Sans serif at
+   muted color so it reads as helper text, not body content. The
+   <em>Generate Description</em> references the button label exactly
+   so users can match the prose to the affordance below. */
+.room-form__intro {
+  font-family: var(--par-font-sans);
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: var(--par-color-text-secondary);
+  margin: 0 0 0.5rem;
+}
+
+.room-form__intro em {
+  font-style: italic;
+  color: var(--par-color-title);
+  font-weight: 600;
 }
 
 .room-form__group {
