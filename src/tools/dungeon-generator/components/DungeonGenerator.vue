@@ -46,6 +46,26 @@
 
         <!-- ZONE 2: Form card -->
         <div class="form-card">
+          <!-- Cross-tool seed callout: shown when the user arrived from
+               the Item Generator (pendingSeed populated by the mount
+               handler). Tells the user explicitly that this generation
+               will be seeded from the item — register inherited, mode
+               inferred from lore, dimensional presets locked. The
+               callout removes the "is anything actually happening?"
+               ambiguity the empty form created. -->
+          <div v-if="seededFromItem" class="seeded-from-item-callout">
+            <p class="seeded-from-item-callout__lead">
+              Generating from item:
+              <strong class="seeded-from-item-callout__name">{{ seededFromItem.name }}</strong>
+            </p>
+            <p class="seeded-from-item-callout__detail">
+              The dungeon will inherit this item's register, and its mode
+              (forgotten / revered / carried / trial) will be inferred from
+              the item's lore.
+              <span v-if="seededFromItem.stubName">Centered on
+                <em>{{ seededFromItem.stubName }}</em>.</span>
+            </p>
+          </div>
           <form @submit.prevent="handleGenerateDungeon">
             <div class="form-row-description">
               <cdr-input id="dungeon_description" v-model="dungeonStore.overviewForm.description"
@@ -177,6 +197,27 @@ const toast = useToast();
 const showDataManagerModal = ref(false);
 const isGenerating = ref(false);
 
+/**
+ * Read pendingSeed and surface the item context to the template so the
+ * form-side callout knows what to display. `pendingSeed` is populated
+ * by the mount handler when navigating from the Item Generator; cleared
+ * by the post-generation finalize hook in overview-store.
+ *
+ * Returns null when no item seed is pending; otherwise an object with:
+ *   - name: the item's name
+ *   - stubName: the specific stub picked (entityName-based path), or
+ *               null if this is the whole-item fallback
+ */
+const seededFromItem = computed(() => {
+  const seed = pendingSeed.value;
+  if (!seed || seed.source?.type !== 'item') return null;
+  const stub = seed.entities?.[0];
+  return {
+    name: seed.source.name || seed.source.id || '',
+    stubName: stub?.name || null,
+  };
+});
+
 // Provide motionToggle for Cedar skeleton components
 const motionToggle = ref(true);
 provide('motionToggle', motionToggle);
@@ -221,6 +262,14 @@ onMounted(() => {
   dungeonStore.loadDungeons();
 
   const params = getNavigationParams();
+
+  // Deep-link: Item Generator → "View in Dungeon Generator" for a
+  // promoted stub. Select that dungeon by id. Mirrors the setting
+  // generator's `params.setting` branch.
+  if (params.dungeon) {
+    dungeonStore.selectDungeon(params.dungeon);
+    return;
+  }
 
   // Cross-tool seed: Item Generator → "Create Dungeon" from the item.
   // Loads the seed and stashes it in module-level `pendingSeed`. The
@@ -436,6 +485,37 @@ onMounted(() => {
   border-radius: 12px;
   padding: 3rem 2.5rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  .seeded-from-item-callout {
+    margin-bottom: 2rem;
+    padding: 1.5rem 1.75rem;
+    background: linear-gradient(135deg, rgba(122, 31, 31, 0.04), rgba(122, 31, 31, 0.08));
+    border-left: 3px solid #7a1f1f;
+    border-radius: 6px;
+
+    &__lead {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #4a4a4a;
+    }
+
+    &__name {
+      color: #7a1f1f;
+      font-weight: 600;
+    }
+
+    &__detail {
+      margin: 0.6rem 0 0;
+      font-size: 1.35rem;
+      color: #6b6b6b;
+      line-height: 1.5;
+
+      em {
+        color: #4a4a4a;
+        font-style: italic;
+      }
+    }
+  }
 
   .generator-fields {
     display: grid;

@@ -139,13 +139,31 @@ export async function generateDungeonOverview() {
           // When absent, the dungeon's register inference fires normally.
           ...(seedItem.register ? { register: seedItem.register } : {}),
         };
-        // Inject the item's name + lore as the inference call's context
-        // so the LLM's type / character / userName picks have signal.
-        // Empty form description takes the item's lore directly;
-        // otherwise concatenate so user input still leads.
-        const itemContext = `An item called "${seedItem.name || 'unknown'}" — ${seedItem.lore || seedItem.physical_description || ''}`;
-        if (!description.trim()) description = itemContext;
-        if (!lore.trim() && seedItem.lore) lore = seedItem.lore;
+        // Route the item's lore into the inference call's LORE field,
+        // NOT the description. The inference's userName extraction is
+        // tuned to "called X" patterns in the DESCRIPTION ("a tomb
+        // called the Hollow Vault" → userName: "the Hollow Vault");
+        // putting the item's name + lore in description triggers that
+        // extraction and the dungeon ends up named after the item.
+        //
+        // For the whole-item fallback we WANT the dungeon to invent
+        // its own name from the lore's atmosphere and content. Empty
+        // description + lore as background context = inference returns
+        // userName: null → dungeon overview prompt's name field tells
+        // the LLM to derive a fresh name from the rendered prose.
+        //
+        // The item's name may still appear inside the lore prose (a
+        // first-person voice referencing the wand by name, an
+        // inscribed warning, etc.), but without the "called" trigger
+        // phrase in description the inference layer won't promote it
+        // to userName, and the prompt's IMAGE-FROM-CONTENT rule pulls
+        // the dungeon's name from the strangest TRUE detail in the
+        // overview's own prose rather than from the seed.
+        const itemContext = seedItem.lore || seedItem.physical_description || '';
+        if (!lore.trim()) lore = itemContext;
+        // description intentionally left as the user typed it (or
+        // empty for whole-item fallback) so userName extraction
+        // doesn't fire on the item's name.
       }
     }
 

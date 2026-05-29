@@ -9,6 +9,12 @@
           <div class="dungeon-card-header-text">
             <h2 class="dungeon-card-name">{{ displayName }}</h2>
             <p v-if="displayEpithet" class="dungeon-card-epithet">{{ displayEpithet }}</p>
+            <p v-if="sourceInfo" class="dungeon-card-source">
+              Inspired by
+              <a v-if="!sourceMissing" href="#" class="dungeon-card-source-link" @click.prevent="navigateToSource">{{ sourceInfo.name }}</a>
+              <span v-else>{{ sourceInfo.name }}</span>
+              <span v-if="sourceMissing" class="dungeon-card-source-deleted"> (deleted)</span>
+            </p>
           </div>
           <div class="dungeon-card-header-actions">
             <ParCardButton size="small" @click="startEditing">Edit Overview</ParCardButton>
@@ -96,6 +102,8 @@ import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import OverviewSkeleton from './skeletons/OverviewSkeleton.vue';
 import { renderOverview, consolidateOverviewToMarkdown } from '../util/renderDungeonOverview.mjs';
 import { combineDungeonOverview } from '../util/combineDungeonOverview.mjs';
+import { sourceExists } from '@/util/seeded-input.mjs';
+import { navigateToTool } from '@/util/navigation.mjs';
 
 const props = defineProps({
   isLoading: {
@@ -154,6 +162,35 @@ const displayEpithet = computed(() => {
   if (title === name) return ''; // avoid duplicating the name as epithet
   return title;
 });
+
+// Source provenance — populated by overview-store's post-finalize hook
+// when this dungeon was generated from a cross-tool seed (currently
+// item only). Mirrors SettingGenerator.OverviewTab's sourceInfo pattern.
+// The denormalized sourceType/sourceId/sourceName/seedMode fields let
+// the header render "Inspired by [item]" + the seed mode badge without
+// walking tool-references.
+const sourceInfo = computed(() => {
+  const d = dungeonStore.currentDungeon;
+  if (!d?.sourceType || !d?.sourceId) return null;
+  return {
+    type: d.sourceType,
+    id: d.sourceId,
+    name: d.sourceName || d.sourceId,
+  };
+});
+
+const sourceMissing = computed(() => {
+  if (!sourceInfo.value) return false;
+  return !sourceExists(sourceInfo.value.type, sourceInfo.value.id);
+});
+
+function navigateToSource() {
+  const info = sourceInfo.value;
+  if (!info || sourceMissing.value) return;
+  if (info.type === 'item') {
+    navigateToTool('item-generator', { item: info.name });
+  }
+}
 
 // AST. renderOverview handles both new and legacy shapes via marker-
 // field detection and applies first-mention entity emphasis.
@@ -256,6 +293,38 @@ const confirmDelete = () => {
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);
   font-weight: 400;
+}
+
+/* Cross-tool source line — "Inspired by [Item] · mode: forgotten".
+   Same register as the setting OverviewTab's source line; sits below
+   the epithet, above the burgundy hairline that separates header from
+   content. Hairline color and weight intentionally muted so the source
+   attribution doesn't compete with the dungeon's name + epithet. */
+.dungeon-card-source {
+  margin: 0.4rem 0 0;
+  font-size: 1.3rem;
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-style: normal;
+}
+
+.dungeon-card-source-link {
+  color: var(--par-color-title, #7a1f1f);
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--par-color-title-deep, #58180d);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline-offset: 2px;
+  }
+}
+
+.dungeon-card-source-deleted {
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-style: italic;
 }
 
 .dungeon-card-header-actions {
