@@ -29,6 +29,7 @@ we iterate on the styling.
 - `ParSelect.vue` — native `<select>` with parchment styling. Custom dropdown caret via inline SVG.
 - `ParCheckbox.vue` — native checkbox with parchment styling and label-on-right.
 - `ParTooltip.vue` — wrapper-style tooltip. CSS-only show/hide via `:hover` and `:focus-within`. Use for ghost-styled affordances whose label answers "what" but not "when" (e.g. Re-scan Lore). Dark burgundy surface + cream text for fast read; not blended with the parchment palette by design.
+- `ParTabToggle.vue` — view-mode tab strip for content surfaces (e.g. Description/Form switcher on the dungeon-generator room panel). Burgundy underline + burgundy active text on a divider baseline — editorial register, intentionally NOT lapis. Lapis stays reserved for chrome action primitives (`ParActionButton`); the visual difference is the signal "this lives on a content surface" vs "this is a chrome control." Options-array prop API (`{value, label}[]`) plus `v-model` — single component, no parent/child Cedar-style nesting.
 - `index.mjs` — re-export entry. Consumers do `import { ParInput, ParCardButton } from '@/parchment';`.
 
 ## Conventions

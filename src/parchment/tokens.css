@@ -64,6 +64,32 @@
   --par-color-tooltip-text:    #2c2c2a;
   --par-color-tooltip-shadow:  rgba(60, 40, 20, 0.08);
 
+  /* Color: read-aloud — pale lapis content surface for boxed text
+     ("read this to the players"). Distinct from --par-color-callout-bg
+     (warm tan, for lore/history asides) and from the chrome lapis
+     action color: this is a *content surface* that signals "boxed
+     text" in the sourcebook register. Pale lapis sits on parchment
+     cream as a clear visual chunk without competing for primary
+     attention. Pair bg with `text` for the body and `text-strong` for
+     bolded keywords; bg-deep available for hover/active or a heavier
+     emphasis variant. */
+  --par-color-readaloud-bg:        #D8E3EF;
+  --par-color-readaloud-bg-deep:   #C5D4E5;
+  /* Text color is a soft near-black, NOT a deep lapis. The lapis
+     surface already carries the color identity; tinting the text
+     toward the same family pushes the whole box too cool and
+     reads as a "blue note." A neutral near-black lets the bg do
+     the registry work and keeps the body text feeling like text,
+     not a colored chunk. */
+  --par-color-readaloud-text:      #1a1a1a;
+  /* Side-rule color for the WotC-style boxed-text frame (vertical
+     bars on left/right only). Mid lapis, dark enough to read against
+     the pale bg without competing with the deeper text color. Pair
+     with --par-color-readaloud-text for the corner dots — same family,
+     two weights, lines lighter and dots darker so the corners feel
+     like end caps. */
+  --par-color-readaloud-rule:      #7A8FAA;
+
   /* Color: action interactions */
   --par-color-action-hover:    rgba(122, 31, 31, 0.06);
   --par-color-action-active:   rgba(122, 31, 31, 0.12);

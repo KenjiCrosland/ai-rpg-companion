@@ -62,15 +62,33 @@ const toggleIcon = computed(() => {
 }
 
 .sidebar-content {
-  padding: 20px;
+  /* Generous inner padding — sourcebook content needs breathing room
+     between the text and the column edge. Horizontal gutters at
+     3.5rem (the widest comfortable margin without starving the line
+     length) so body paragraphs and the read-aloud box read like
+     printed page spreads, not narrow webpage columns. */
+  padding: 2rem 3.5rem 2.5rem;
   overflow-y: auto;
 }
 
 /* Sidebar Styles */
 .map-sidebar {
   background-color: #fafaf6;
-  border-left: 1px solid #ccc;
-  width: 450px;
+  /* Divider rule matches the collapse-tab outline (faded slate) —
+     same lapis-family secondary chrome color, so the tab reads as
+     an affordance hanging off the divider rather than a foreign
+     element. The tab itself drops its own right border so the
+     sidebar's left border serves as the tab's right edge — single
+     continuous slate line. */
+  border-left: 1px solid var(--color-action-secondary-rest);
+  /* Sidebar holds the room description. Width tuned for sourcebook
+     line lengths: at 540px with 3.5rem horizontal gutters the body
+     column lands at ~428px, giving roughly 42-46 chars per line at
+     1.6rem Source Serif — closer to WotC printed adventures (which
+     run ~40-55 chars in their narrow columns) than to webpage body
+     widths. Fixed (not percentage) because the nested container
+     chain makes percentages resolve unpredictably. */
+  width: 540px;
   transition: width 0.3s ease;
   overflow: hidden;
   display: flex;
@@ -83,37 +101,63 @@ const toggleIcon = computed(() => {
   width: 20px;
 }
 
-/* Toggle Button Styles */
+/* Sidebar collapse tab — passive chrome affordance, styled as a
+   ParActionButton secondary variant: transparent surface, faded
+   slate outline, slate icon. The outlined treatment recedes against
+   the parchment surroundings instead of competing for attention.
+   Hover/active fill with progressively deeper slate tints, matching
+   the secondary action pattern used elsewhere in parchment chrome. */
 .toggle-button {
   position: absolute;
   width: 30px;
   height: 60px;
-  background-color: #ccc;
+  /* Solid parchment surface fill — the tab overhangs the map area
+     (where the map's #fafaf6 surface sits behind), so a transparent
+     bg would let map content bleed through and the outline-only
+     treatment would feel unanchored. Matching the sidebar's own
+     surface color keeps it visually attached to the sidebar edge. */
+  background-color: var(--par-color-surface);
+  border: 1px solid var(--color-action-secondary-rest);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--action-transition);
   z-index: 1001;
-  color: #777;
-  /* Ensure it's above the sidebar content */
+  color: var(--color-action-secondary-rest);
 }
 
-/* Toggle Icon Styling */
 .toggle-button span {
   font-size: 1.5rem;
-  /* Increased size for better visibility */
   line-height: 1;
 }
 
-/* Hover and Active States */
+/* Hover/active layer the slate tint OVER the cream surface using
+   background-image (which stacks above background-color) rather than
+   replacing background-color outright. Otherwise the rgba tint shows
+   the map through the button on interaction — the secondary action
+   pattern in ParActionButton works the same way when sitting on a
+   solid card surface; here we have to be explicit because the button
+   overhangs the map area. */
 .toggle-button:hover {
-  background-color: #bbb;
+  background-image: linear-gradient(
+    var(--color-action-secondary-hover-bg),
+    var(--color-action-secondary-hover-bg)
+  );
 }
 
 .toggle-button:active {
-  background-color: #aaa;
+  background-image: linear-gradient(
+    var(--color-action-secondary-active-bg),
+    var(--color-action-secondary-active-bg)
+  );
+}
+
+.toggle-button:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-action-secondary-focus-glow);
 }
 
 /* Desktop-specific Styles */
@@ -123,8 +167,13 @@ const toggleIcon = computed(() => {
     left: -30px;
     /* Fixed to the edge of the sidebar */
     transform: translateY(-50%);
+    /* Right side flush against the sidebar edge — squared off so the
+       sidebar's left border continues seamlessly as the tab's right
+       edge; only the left side is rounded into the tab shape. */
     border-radius: 5px 0 0 5px;
-    /* Tab shape */
+    /* Drop the right border; the sidebar's border-left fills that
+       role, giving a single continuous slate line down the column. */
+    border-right: none;
   }
 
   .toggle-button.expanded {
