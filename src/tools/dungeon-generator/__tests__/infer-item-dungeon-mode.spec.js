@@ -10,6 +10,8 @@
 import {
   MODES,
   MODE_TO_PRESETS,
+  RARITY_TO_TIERS,
+  pickTierForRarity,
   validateModeResponse,
   buildModeInferencePrompt,
   inferItemDungeonMode,
@@ -136,6 +138,92 @@ describe('buildModeInferencePrompt', () => {
     const prompt = buildModeInferencePrompt({ name: 'x' });
     for (const mode of MODES) {
       expect(prompt).toContain(`"${mode}"`);
+    }
+  });
+});
+
+describe('RARITY_TO_TIERS', () => {
+  it('locks the rarity → tier mapping', () => {
+    expect(RARITY_TO_TIERS).toEqual({
+      common: [1],
+      uncommon: [1, 2],
+      rare: [2, 3],
+      'very rare': [3, 4],
+      legendary: [4, 5],
+      artifact: [5],
+    });
+  });
+
+  it('every tier is in the valid 1-5 range', () => {
+    for (const tiers of Object.values(RARITY_TO_TIERS)) {
+      for (const t of tiers) {
+        expect(t).toBeGreaterThanOrEqual(1);
+        expect(t).toBeLessThanOrEqual(5);
+      }
+    }
+  });
+
+  it('adjacent rarities overlap by exactly one tier (or are single-tier endpoints)', () => {
+    // Common is single-tier (T1 only). Uncommon overlaps with Common at
+    // T1 and extends to T2. Rare overlaps with Uncommon at T2 and
+    // extends to T3. Etc. Artifact is single-tier (T5 only).
+    const order = ['common', 'uncommon', 'rare', 'very rare', 'legendary', 'artifact'];
+    for (let i = 0; i < order.length - 1; i++) {
+      const cur = RARITY_TO_TIERS[order[i]];
+      const next = RARITY_TO_TIERS[order[i + 1]];
+      const overlap = cur.filter(t => next.includes(t));
+      expect(overlap.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('pickTierForRarity', () => {
+  it('returns 1 for common (single-tier rarity)', () => {
+    expect(pickTierForRarity('common')).toBe(1);
+    expect(pickTierForRarity('COMMON')).toBe(1);
+    expect(pickTierForRarity('  Common  ')).toBe(1);
+  });
+
+  it('returns 5 for artifact (single-tier rarity)', () => {
+    expect(pickTierForRarity('artifact')).toBe(5);
+    expect(pickTierForRarity('Artifact')).toBe(5);
+  });
+
+  it('returns either tier in the overlap range for multi-tier rarities', () => {
+    const seen = new Set();
+    for (let i = 0; i < 200; i++) {
+      seen.add(pickTierForRarity('very rare'));
+    }
+    expect(seen).toEqual(new Set([3, 4]));
+  });
+
+  it('handles "very rare" with the space in the key', () => {
+    const t = pickTierForRarity('Very Rare');
+    expect([3, 4]).toContain(t);
+  });
+
+  it('returns null for unrecognized rarities', () => {
+    expect(pickTierForRarity('mythical')).toBeNull();
+    expect(pickTierForRarity('')).toBeNull();
+    expect(pickTierForRarity(null)).toBeNull();
+    expect(pickTierForRarity(undefined)).toBeNull();
+  });
+
+  it('honors injected rng for determinism', () => {
+    // rng=0 → first tier in array
+    expect(pickTierForRarity('rare', () => 0)).toBe(2);
+    // rng=0.9999 → last tier in array
+    expect(pickTierForRarity('rare', () => 0.9999)).toBe(3);
+  });
+
+  it('all multi-tier rarities produce both tiers over enough samples', () => {
+    const multi = ['uncommon', 'rare', 'very rare', 'legendary'];
+    for (const rarity of multi) {
+      const seen = new Set();
+      for (let i = 0; i < 200; i++) {
+        seen.add(pickTierForRarity(rarity));
+      }
+      expect(seen.size).toBe(2);
     }
   });
 });

@@ -34,6 +34,44 @@ import { generateGptResponse } from '@/util/ai-client.mjs';
 export const MODES = Object.freeze(['forgotten', 'revered', 'carried', 'trial']);
 
 /**
+ * Rarity → tier mapping for item-seeded dungeons.
+ *
+ * The dungeon's difficulty tier should track the item's narrative
+ * weight: a Common utility item shouldn't drive a T5 cosmic dungeon,
+ * and an Artifact shouldn't roll a T1 hilltop barrow. Overlapping
+ * tiers between adjacent rarities give a one-tier variance band so
+ * the same-rarity item doesn't always produce the same-scope dungeon.
+ *
+ * Common is the sole single-tier rarity (always T1) — the framing is
+ * tightest because common items rarely justify any escalation. The
+ * middle rarities overlap one tier with each neighbor; Artifact pins
+ * at T5 (cosmic-scale, hero of the realms).
+ */
+export const RARITY_TO_TIERS = Object.freeze({
+  common: Object.freeze([1]),
+  uncommon: Object.freeze([1, 2]),
+  rare: Object.freeze([2, 3]),
+  'very rare': Object.freeze([3, 4]),
+  legendary: Object.freeze([4, 5]),
+  artifact: Object.freeze([5]),
+});
+
+/**
+ * Pick a tier for the given rarity. Returns null when the rarity
+ * is unrecognized (so the caller falls back to the random-roll path).
+ *
+ * @param {string} rarity - The item's rarity string (case-insensitive)
+ * @param {Function} [rng=Math.random] - Optional RNG for determinism
+ * @returns {number|null} 1-5 or null
+ */
+export function pickTierForRarity(rarity, rng = Math.random) {
+  const key = (rarity || '').toString().trim().toLowerCase();
+  const tiers = RARITY_TO_TIERS[key];
+  if (!tiers || tiers.length === 0) return null;
+  return tiers[Math.floor(rng() * tiers.length)];
+}
+
+/**
  * Mode → dimensional pre-sets. The dungeon's main inference call
  * (`inferDungeonDimensions`) honors these pre-sets and rolls only
  * the dimensions not specified here.

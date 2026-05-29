@@ -9,6 +9,7 @@ import { getBannedDungeonTropesForGeneration } from '../util/dungeon-dimensions.
 import {
   inferItemDungeonMode,
   MODE_TO_PRESETS,
+  pickTierForRarity,
 } from '../util/infer-item-dungeon-mode.mjs';
 import { addReferenceForSeed } from '@/util/seeded-input.mjs';
 import {
@@ -111,6 +112,11 @@ export async function generateDungeonOverview() {
     let description = overviewForm.value.description || '';
     let lore = overviewForm.value.place_lore || '';
     const formDifficulty = overviewForm.value.difficulty || null;
+    // Difficulty resolution order (preserved through the seeded path
+    // below): form value (user override) → rarity-derived (item context,
+    // set below if seeded) → random roll (existing cold-start behavior
+    // inside inferDungeonDimensions when difficulty is null).
+    let effectiveDifficulty = formDifficulty;
 
     // Cross-tool seed: when the user navigated here from the Item
     // Generator (mount handler stashed `pendingSeed`), run the item-
@@ -139,6 +145,15 @@ export async function generateDungeonOverview() {
           // When absent, the dungeon's register inference fires normally.
           ...(seedItem.register ? { register: seedItem.register } : {}),
         };
+        // Rarity → tier: a Common item shouldn't drive a T5 cosmic
+        // dungeon and an Artifact shouldn't roll a T1 hilltop barrow.
+        // Only fires when the form difficulty is blank (user override
+        // still wins); falls through to the inference's random roll
+        // when the rarity is unrecognized.
+        if (!effectiveDifficulty) {
+          const rarityTier = pickTierForRarity(seedItem.rarity);
+          if (rarityTier !== null) effectiveDifficulty = rarityTier;
+        }
         // Route the item's lore into the inference call's LORE field,
         // NOT the description. The inference's userName extraction is
         // tuned to "called X" patterns in the DESCRIPTION ("a tomb
@@ -171,7 +186,7 @@ export async function generateDungeonOverview() {
     const inferred = await inferDungeonDimensions({
       description,
       lore,
-      difficulty: formDifficulty,
+      difficulty: effectiveDifficulty,
       presets,
     });
 
