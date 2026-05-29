@@ -256,6 +256,52 @@ describe('buildDungeonPrefillFromItem', () => {
     expect(text).toContain('The Helm');
   });
 
+  it('includes an explicit mission directive naming the item as the recovery target', () => {
+    const text = buildDungeonPrefillFromItem(sampleSeed);
+    // The directive must (a) name the item as the recovery target and
+    // (b) explicitly forbid the model from inventing a related artifact.
+    // Both are required to prevent the MacGuffin-shift failure mode
+    // where the dungeon centers on a brooch / scroll / ledger that the
+    // model invented instead of the seeded item.
+    expect(text).toMatch(/recover.*The Helm/);
+    expect(text).toMatch(/quest hook MUST/);
+    expect(text).toMatch(/do not invent a related artifact/);
+  });
+
+  it('frames the item itself as the reward', () => {
+    const text = buildDungeonPrefillFromItem(sampleSeed);
+    expect(text).toMatch(/IS the reward/);
+  });
+
+  it('redirects the quest hook to a source of information, away from commissioning NPCs', () => {
+    const text = buildDungeonPrefillFromItem(sampleSeed);
+    // The hook-shape directive must (a) positively name the
+    // source-of-information pattern with concrete examples (rumor,
+    // prophecy, survivor's tale, etc.), and (b) explicitly forbid
+    // the commissioning-NPC shape including a named-pattern ban.
+    // This is an attractor-redirect: the commissioning-NPC frame is
+    // a fantasy-genre default the model falls back to, so just
+    // banning specific reward types isn't enough — the model needs
+    // a positive alternate hook shape to gravitate toward.
+    expect(text).toMatch(/source of information/);
+    expect(text).toMatch(/rumor/);
+    expect(text).toMatch(/prophecy/);
+    expect(text).toMatch(/survivor's tale/);
+    expect(text).toMatch(/MUST NOT come from a commissioning NPC/);
+    expect(text).toMatch(/Do not write a hook in the shape/);
+  });
+
+  it('omits the mission directive when no item name is available', () => {
+    const text = buildDungeonPrefillFromItem({
+      source: { type: 'item', id: 'x', name: '' },  // empty item name
+      entities: [{ name: 'Place', role_or_description: '', context: '', source_quote: '' }],
+    });
+    expect(text).not.toMatch(/quest hook MUST/);
+    expect(text).not.toMatch(/recover/);
+    expect(text).not.toMatch(/IS the reward/);
+    expect(text).not.toMatch(/source of information/);
+  });
+
   it('includes the place context when present', () => {
     const text = buildDungeonPrefillFromItem(sampleSeed);
     expect(text).toContain('a barrow in the Iron Hills');

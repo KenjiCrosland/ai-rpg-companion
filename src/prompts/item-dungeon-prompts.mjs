@@ -195,13 +195,34 @@ export function buildDungeonPrefillFromItem(seededInput) {
 
   const itemName = (source.name || '').trim();
 
-  // Headline: name + role + source. The dungeon-overview's inference
-  // call reads this as the dungeon's `description` — it expects prose
-  // hints about the place, not a structured spec.
+  // Headline: name + role + mission directive. The dungeon-overview's
+  // inference call reads this as the dungeon's `description` — it
+  // expects prose hints about the place plus the load-bearing mission.
+  //
+  // Mission directive: when seeded from an item, the dungeon MUST
+  // (a) center on recovering that item itself (no related-artifact
+  // substitution), and (b) frame the quest hook as the party
+  // discovering the item through a SOURCE OF INFORMATION — not as
+  // a commissioning NPC offering a reward.
+  //
+  // Why drop the commissioning-NPC frame entirely: it's a fantasy-
+  // genre attractor — "[NPC] arrives at camp and offers [reward]"
+  // is the most familiar hook shape, so the model keeps falling
+  // back to it. Prior versions of this directive tried to constrain
+  // within the commission frame (ban minor payments, require
+  // proportional payment for legitimate stakes), but the model
+  // still produces incoherent reward economics: an NPC who
+  // commissions the party, pays them, AND lets them keep the item.
+  // Redirecting to a different hook shape (rumor / prophecy /
+  // survivor's tale / found document) is the same kind of
+  // attractor-redirect that worked for the MacGuffin substitution
+  // — give the model a positive alternate pattern, not just bans.
   const lines = [];
   if (stubName) lines.push(`The dungeon is called ${stubName}.`);
   if (roleBrief) lines.push(`Role in the item's history: ${roleBrief}.`);
-  if (itemName) lines.push(`Inspired by lore of the item "${itemName}".`);
+  if (itemName) {
+    lines.push(`The party's mission is to recover "${itemName}" from this dungeon. The quest hook MUST be about retrieving "${itemName}" itself — do not invent a related artifact (a ledger, a brooch, a scroll, a relic of a different name) as the recovery target. "${itemName}" IS the reward — the party keeps it after recovery. The quest hook MUST originate from a source of information — a rumor heard in a tavern, an old prophecy, a survivor's tale, a scholar's research, a found document, a witness's account, a cartographer's note. The hook MUST NOT come from a commissioning NPC who offers payment. Do not write a hook in the shape "[NPC] arrives at the party's camp and offers [reward] if they retrieve ${itemName}." The party seeks the item on their own initiative because the information revealed it; the item itself is the payoff.`);
+  }
   const headline = lines.join(' ');
 
   const sections = headline ? [headline] : [];

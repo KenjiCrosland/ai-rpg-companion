@@ -154,31 +154,45 @@ export async function generateDungeonOverview() {
           const rarityTier = pickTierForRarity(seedItem.rarity);
           if (rarityTier !== null) effectiveDifficulty = rarityTier;
         }
-        // Route the item's lore into the inference call's LORE field,
-        // NOT the description. The inference's userName extraction is
-        // tuned to "called X" patterns in the DESCRIPTION ("a tomb
-        // called the Hollow Vault" → userName: "the Hollow Vault");
-        // putting the item's name + lore in description triggers that
-        // extraction and the dungeon ends up named after the item.
-        //
-        // For the whole-item fallback we WANT the dungeon to invent
-        // its own name from the lore's atmosphere and content. Empty
-        // description + lore as background context = inference returns
-        // userName: null → dungeon overview prompt's name field tells
-        // the LLM to derive a fresh name from the rendered prose.
-        //
-        // The item's name may still appear inside the lore prose (a
-        // first-person voice referencing the wand by name, an
-        // inscribed warning, etc.), but without the "called" trigger
-        // phrase in description the inference layer won't promote it
-        // to userName, and the prompt's IMAGE-FROM-CONTENT rule pulls
-        // the dungeon's name from the strangest TRUE detail in the
-        // overview's own prose rather than from the seed.
+        // Route the item's lore into the inference call's LORE field
+        // (background context). The inference's userName extraction is
+        // tuned to "called X" patterns in the DESCRIPTION; putting the
+        // item's name + lore there triggers extraction and the dungeon
+        // ends up named after the item.
         const itemContext = seedItem.lore || seedItem.physical_description || '';
         if (!lore.trim()) lore = itemContext;
-        // description intentionally left as the user typed it (or
-        // empty for whole-item fallback) so userName extraction
-        // doesn't fire on the item's name.
+
+        // Mission directive: when seeded from an item, the dungeon
+        // MUST (a) center on recovering that item itself (no
+        // related-artifact substitution), and (b) frame the quest
+        // hook as the party discovering the item through a SOURCE
+        // OF INFORMATION — not as a commissioning NPC offering a
+        // reward.
+        //
+        // Why drop the commissioning-NPC frame entirely: it's a
+        // fantasy-genre attractor — "[NPC] arrives at camp and
+        // offers [reward]" is the most familiar hook shape, so the
+        // model keeps falling back to it. Prior versions of this
+        // directive tried to constrain within the commission frame
+        // (ban minor payments, require proportional payment for
+        // legitimate stakes), but the model still produces
+        // incoherent reward economics: an NPC who commissions the
+        // party, pays them, AND lets them keep the item.
+        // Redirecting to a different hook shape (rumor / prophecy
+        // / survivor's tale / found document) is the same kind of
+        // attractor-redirect that worked for the MacGuffin
+        // substitution — give the model a positive alternate
+        // pattern, not just bans.
+        //
+        // Phrased as a recovery framing (not a dungeon-naming
+        // pattern) so the inference's userName extraction stays
+        // inert — "recover the item 'X' from this dungeon" doesn't
+        // match the "called X" / "X, the Y of Z" shapes the
+        // extraction is tuned to.
+        const itemName = (seedItem.name || '').trim();
+        if (itemName && !description.trim()) {
+          description = `The party's mission is to recover the item "${itemName}" from this dungeon. The quest hook MUST be about retrieving "${itemName}" itself — do not invent a related artifact (a ledger, a brooch, a scroll, a relic of a different name) as the recovery target. "${itemName}" IS the reward — the party keeps it after recovery. The quest hook MUST originate from a source of information — a rumor heard in a tavern, an old prophecy, a survivor's tale, a scholar's research, a found document, a witness's account, a cartographer's note. The hook MUST NOT come from a commissioning NPC who offers payment. Do not write a hook in the shape "[NPC] arrives at the party's camp and offers [reward] if they retrieve ${itemName}." The party seeks the item on their own initiative because the information revealed it; the item itself is the payoff.`;
+        }
       }
     }
 
