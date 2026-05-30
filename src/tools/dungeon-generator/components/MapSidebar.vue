@@ -80,7 +80,7 @@ const toggleIcon = computed(() => {
      element. The tab itself drops its own right border so the
      sidebar's left border serves as the tab's right edge — single
      continuous slate line. */
-  border-left: 1px solid var(--color-action-secondary-rest);
+  border-left: 1px solid var(--color-action-secondary-rest, #5A7A9A);
   /* Sidebar holds the room description. Width tuned for sourcebook
      line lengths: at 540px with 3.5rem horizontal gutters the body
      column lands at ~428px, giving roughly 42-46 chars per line at
@@ -116,8 +116,8 @@ const toggleIcon = computed(() => {
      bg would let map content bleed through and the outline-only
      treatment would feel unanchored. Matching the sidebar's own
      surface color keeps it visually attached to the sidebar edge. */
-  background-color: var(--par-color-surface);
-  border: 1px solid var(--color-action-secondary-rest);
+  background-color: var(--par-color-surface, #FBF7F0);
+  border: 1px solid var(--color-action-secondary-rest, #5A7A9A);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -125,7 +125,7 @@ const toggleIcon = computed(() => {
   cursor: pointer;
   transition: var(--action-transition);
   z-index: 1001;
-  color: var(--color-action-secondary-rest);
+  color: var(--color-action-secondary-rest, #5A7A9A);
 }
 
 .toggle-button span {
@@ -142,22 +142,22 @@ const toggleIcon = computed(() => {
    overhangs the map area. */
 .toggle-button:hover {
   background-image: linear-gradient(
-    var(--color-action-secondary-hover-bg),
-    var(--color-action-secondary-hover-bg)
+    var(--color-action-secondary-hover-bg, rgba(90, 122, 154, 0.08)),
+    var(--color-action-secondary-hover-bg, rgba(90, 122, 154, 0.08))
   );
 }
 
 .toggle-button:active {
   background-image: linear-gradient(
-    var(--color-action-secondary-active-bg),
-    var(--color-action-secondary-active-bg)
+    var(--color-action-secondary-active-bg, rgba(90, 122, 154, 0.16)),
+    var(--color-action-secondary-active-bg, rgba(90, 122, 154, 0.16))
   );
 }
 
 .toggle-button:focus-visible {
-  outline: 2px solid var(--color-action-secondary-rest);
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px var(--color-action-secondary-focus-glow);
+  box-shadow: 0 0 0 4px var(--color-action-secondary-focus-glow, rgba(90, 122, 154, 0.3));
 }
 
 /* Desktop-specific Styles */

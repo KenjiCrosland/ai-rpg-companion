@@ -64,17 +64,17 @@ defineEmits(['update:modelValue']);
 .par-tab-toggle {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid var(--par-color-divider);
+  border-bottom: 1px solid var(--par-color-divider, #e2dccd);
   margin: 0 0 1.5rem;
 }
 
 .par-tab-toggle__btn {
-  font-family: var(--par-font-sans);
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-size: 1.15rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--par-color-text-muted);
+  color: var(--par-color-text-muted, #6b6b6b);
   background: transparent;
   border: none;
   padding: 0.7rem 1.5rem;
@@ -87,18 +87,18 @@ defineEmits(['update:modelValue']);
 }
 
 .par-tab-toggle__btn:hover {
-  color: var(--par-color-text);
+  color: var(--par-color-text, #222);
 }
 
 .par-tab-toggle__btn:focus-visible {
-  outline: 2px solid var(--par-color-title);
+  outline: 2px solid var(--par-color-title, #7a1f1f);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
 .par-tab-toggle__btn.is-active {
-  color: var(--par-color-title);
-  border-bottom-color: var(--par-color-title);
+  color: var(--par-color-title, #7a1f1f);
+  border-bottom-color: var(--par-color-title, #7a1f1f);
   font-weight: 600;
 }
 </style>

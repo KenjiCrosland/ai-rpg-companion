@@ -114,15 +114,18 @@ function onCancel() {
   z-index: 1000;
 }
 
-/* Full lapis chrome surface — pale lapis bg matches the read-aloud
-   palette family but applied to the modal frame itself. Deeper lapis
-   border draws a clean printed-frame edge with a thicker top accent;
-   deep-lapis title text and accent rules complete the chrome register.
-   Consumers can layer deeper variants (--par-color-readaloud-bg-deep)
-   for inner callouts so emphasis still reads against the surface. */
+/* Parchment surface with lapis chrome accents — cream bg matches the
+   parchment card register (consistent with how cards/forms feel
+   throughout the app), and lapis is reserved for the *chrome* layer:
+   border rules, title color, close-button hover, and any
+   consumer-provided callouts inside the body. The split keeps the
+   modal feeling like a parchment surface lifted off the page, not
+   a foreign lapis panel. Consumers can layer pale-lapis surfaces
+   (--par-color-readaloud-bg) for inner callouts that need to call
+   attention to themselves against the parchment ground. */
 .par-modal {
-  background-color: var(--par-color-readaloud-bg, #D8E3EF);
-  color: var(--par-color-readaloud-text, #1a1a1a);
+  background-color: var(--par-color-surface, #FBF7F0);
+  color: var(--par-color-text, #222);
   border: 2px solid var(--par-color-readaloud-rule, #7A8FAA);
   border-top-width: 4px;
   border-radius: 2px;
@@ -181,7 +184,7 @@ function onCancel() {
 .par-modal__body {
   padding: 1.5rem 1.75rem 0.5rem;
   overflow-y: auto;
-  color: var(--par-color-readaloud-text, #1a1a1a);
+  color: var(--par-color-text, #222);
 }
 
 .par-modal__footer {
