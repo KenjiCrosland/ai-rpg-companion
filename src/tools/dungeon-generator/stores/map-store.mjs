@@ -4,6 +4,8 @@ import { generateDungeon } from '../util/generate-dungeon.mjs';
 import { addDungeonDetails } from '../util/dungeon-details.mjs';
 import { createRoomDescriptions } from '../util/create-room-descriptions.mjs';
 import { assignLoreLocations } from '../util/assign-lore-locations.mjs';
+import { assignNPCs } from '../util/assign-npcs.mjs';
+import { assignMonsters } from '../util/assign-monsters.mjs';
 import { dungeonOverviewToString } from '../util/content-to-string.mjs';
 
 export async function generateMap() {
@@ -23,8 +25,10 @@ export async function generateMap() {
   currentDungeon.value.rooms = dungeonRoomArray;
   currentDungeon.value.roomDescriptions = roomDescriptions;
   // Clear stale assignments from a previous map (in case this is a
-  // re-generate); they'll be repopulated by the assignment call below.
+  // re-generate); they'll be repopulated by the assignment calls below.
   currentDungeon.value.loreAssignments = null;
+  currentDungeon.value.npcAssignments = null;
+  currentDungeon.value.monsterAssignments = null;
   saveDungeons();
 
   // Lore-location assignment: cross-reference layer that lets room
@@ -86,6 +90,132 @@ export async function generateMap() {
   } catch (err) {
     // Non-fatal: the dungeon still works without assignments.
     console.error('[lore-assignment] threw:', err);
+  }
+
+  // NPC assignment: places existing dungeon.npcs[] entries onto
+  // specific rooms based on their roles. Runs AFTER lore-assignment
+  // so the LLM can use lore-location placements as additional
+  // signal ("the Warden lives in the scriptorium, which is area 12").
+  // Non-fatal — if the call fails, room generation falls back to the
+  // manual-NPC-pick flow via the form.
+  try {
+    if (!Array.isArray(currentDungeon.value.npcs) || currentDungeon.value.npcs.length === 0) {
+      console.log('[npc-assignment] no NPCs to assign; skipping');
+      return;
+    }
+    const overviewString = dungeonOverviewToString(
+      currentDungeon.value.dungeonOverview,
+    );
+    console.log('[npc-assignment] starting...');
+    const npcAssignments = await assignNPCs({
+      dungeonOverview: overviewString,
+      rooms: dungeonRoomArray,
+      npcs: currentDungeon.value.npcs,
+      loreAssignments: currentDungeon.value.loreAssignments,
+    });
+
+    if (!npcAssignments) {
+      console.warn('[npc-assignment] returned null; rooms will only show NPCs when manually picked');
+      return;
+    }
+
+    currentDungeon.value.npcAssignments = npcAssignments;
+    saveDungeons();
+
+    const matched = Object.entries(npcAssignments.npc_id_to_room);
+    const unassignedNPCs = npcAssignments.unassigned || [];
+
+    console.log(
+      `[npc-assignment] complete: ${matched.length} placed, ${unassignedNPCs.length} unassigned`,
+    );
+
+    if (matched.length > 0) {
+      console.log('[npc-assignment] placed:');
+      // Build a name lookup for clearer log output (npc_ids alone
+      // aren't human-scannable).
+      const nameLookup = Object.fromEntries(
+        currentDungeon.value.npcs.map((n) => [n.npc_id, n.name]),
+      );
+      matched
+        .sort(([, a], [, b]) => a - b)
+        .forEach(([npcId, areaId]) => {
+          console.log(`  area ${areaId} ← ${nameLookup[npcId] || npcId}`);
+        });
+    }
+
+    if (unassignedNPCs.length > 0) {
+      console.log('[npc-assignment] unassigned (not present in the dungeon):');
+      unassignedNPCs.forEach((u) => {
+        console.log(`  "${u.npc_name || u.npc_id}" — ${u.reason}`);
+      });
+    }
+  } catch (err) {
+    console.error('[npc-assignment] threw:', err);
+  }
+
+  // Monster assignment: places dungeon.monsters[] populations onto
+  // specific rooms based on their tier (apex / strong_minion / minion).
+  // Runs AFTER NPC assignment so the LLM can avoid double-placing
+  // (no apex in a boss room that already has a named NPC; no hostile
+  // monsters where a captive NPC is hiding). Non-fatal — the dungeon
+  // still runs without monster placements; rooms just won't surface
+  // creature presence in their generation context.
+  try {
+    if (!Array.isArray(currentDungeon.value.monsters) || currentDungeon.value.monsters.length === 0) {
+      console.log('[monster-assignment] no monsters to assign; skipping');
+      return;
+    }
+    const overviewString = dungeonOverviewToString(
+      currentDungeon.value.dungeonOverview,
+    );
+    console.log('[monster-assignment] starting...');
+    const monsterAssignments = await assignMonsters({
+      dungeonOverview: overviewString,
+      rooms: dungeonRoomArray,
+      monsters: currentDungeon.value.monsters,
+      npcs: currentDungeon.value.npcs || [],
+      npcAssignments: currentDungeon.value.npcAssignments,
+      loreAssignments: currentDungeon.value.loreAssignments,
+    });
+
+    if (!monsterAssignments) {
+      console.warn('[monster-assignment] returned null; rooms will not surface monster populations');
+      return;
+    }
+
+    currentDungeon.value.monsterAssignments = monsterAssignments;
+    saveDungeons();
+
+    const matched = Object.entries(monsterAssignments.monster_id_to_rooms);
+    const unassignedMonsters = monsterAssignments.unassigned || [];
+
+    console.log(
+      `[monster-assignment] complete: ${matched.length} placed, ${unassignedMonsters.length} unassigned`,
+    );
+
+    if (matched.length > 0) {
+      console.log('[monster-assignment] placed:');
+      const nameLookup = Object.fromEntries(
+        currentDungeon.value.monsters.map(m => [m.id, m.name]),
+      );
+      const tierLookup = Object.fromEntries(
+        currentDungeon.value.monsters.map(m => [m.id, m.type]),
+      );
+      matched.forEach(([monsterId, areaIds]) => {
+        const name = nameLookup[monsterId] || monsterId;
+        const tier = tierLookup[monsterId] || 'unknown';
+        console.log(`  ${name} [${tier}] → areas [${areaIds.join(', ')}]`);
+      });
+    }
+
+    if (unassignedMonsters.length > 0) {
+      console.log('[monster-assignment] unassigned:');
+      unassignedMonsters.forEach((u) => {
+        console.log(`  "${u.monster_name || u.monster_id}" — ${u.reason}`);
+      });
+    }
+  } catch (err) {
+    console.error('[monster-assignment] threw:', err);
   }
 }
 

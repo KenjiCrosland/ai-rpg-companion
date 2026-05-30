@@ -10,7 +10,14 @@ import {
   getRoomLoreName,
   formatLoreLookupForPrompt,
 } from '../util/assign-lore-locations.mjs';
+import { formatRoomNPCsForPrompt } from '../util/assign-npcs.mjs';
+import { formatRoomMonstersForPrompt } from '../util/assign-monsters.mjs';
 // Import prompt, validation, and processing functions
+import {
+  generateLockObstaclePrompt,
+  validateLockObstacleResponse,
+  processLockObstacleResponse,
+} from '../prompts/lock-obstacle.mjs';
 import {
   generateEntrancePrompt,
   validateEntranceResponse,
@@ -214,6 +221,10 @@ export function useRoomDescription() {
     formRoomName = '',
     formRoomSummary = '',
     npcString = '',
+    difficulty = null,
+    doorwayInfo = null,
+    loreRole = null,
+    loreLookup = '',
   }) {
     const roomName = formRoomName || room.name || '';
     const roomSummary = formRoomSummary || room.oneSentenceSummary || '';
@@ -225,6 +236,10 @@ export function useRoomDescription() {
       roomName,
       roomSummary,
       npcString,
+      difficulty,
+      doorwayInfo,
+      loreRole,
+      loreLookup,
     );
     //console.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -316,20 +331,25 @@ export function useRoomDescription() {
     dungeonOverview,
     shortDescription,
     connectedRoomsInfo,
-    formRoomName = '',
-    formRoomSummary = '',
+    // formRoomName / formRoomSummary intentionally not destructured —
+    // the new locked-room prompt doesn't accept user-provided names
+    // (locked-room identity is content-driven). Dispatcher may still
+    // pass them; they're silently ignored.
     npcString = '',
+    difficulty = null,
+    doorwayInfo = null,
+    loreRole = null,
+    loreLookup = '',
   }) {
-    const roomName = formRoomName || room.name || '';
-    const roomSummary = formRoomSummary || room.oneSentenceSummary || '';
-
     const prompt = generateLockedRoomPrompt(
       dungeonOverview,
       shortDescription,
       connectedRoomsInfo,
-      roomName,
-      roomSummary,
       npcString,
+      difficulty,
+      doorwayInfo,
+      loreRole,
+      loreLookup,
     );
     //console.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -338,6 +358,65 @@ export function useRoomDescription() {
     );
     const roomDescription = JSON.parse(response);
     const contentArray = processLockedRoomResponse(roomDescription);
+
+    // Generate the lock obstacle now, while we have the room's
+    // freshly-generated contents to inform the obstacle's character.
+    // Stored on the room as `lockObstacleContent`. Preceding rooms
+    // surface this content via propagateLockObstacles when they
+    // (re)render. Backfills already-generated preceding rooms below.
+    const lockedRoomContentString = contentArrayToString(
+      contentArray.filter(item => item.format !== 'read_aloud'),
+    );
+    // Find any already-generated preceding room to pull its content
+    // for thematic context; the obstacle generation is one-shot per
+    // locked room, so any preceding room's content is fine for context.
+    const precedingRoom = currentDungeon.rooms.find((r) => {
+      if (r.id === room.id) return false;
+      if (r.roomType === 'locked') return false;
+      if (!Array.isArray(r.doorways)) return false;
+      return r.doorways.some(d => d.connectedRoomId === room.id);
+    });
+    const precedingContentString = precedingRoom?.contentArray
+      ? contentArrayToString(
+        precedingRoom.contentArray.filter(item => item.format !== 'read_aloud'),
+      )
+      : '';
+    // Temporarily stash the freshly-generated content on the room so
+    // the obstacle handler can read it (the dispatcher writes
+    // room.contentArray after this handler returns, so we make it
+    // available now).
+    room.contentArray = contentArray;
+    await handleLockObstacle({
+      lockedRoom: room,
+      precedingRoomContentString: precedingContentString,
+      currentDungeon,
+      dungeonOverview,
+    });
+    // Backfill any preceding rooms that already have contentArrays
+    // — append the new obstacle to them so their next render shows
+    // it without needing to be regenerated.
+    if (room.lockObstacleContent) {
+      for (const otherRoom of currentDungeon.rooms) {
+        if (otherRoom.id === room.id) continue;
+        if (otherRoom.roomType === 'locked') continue;
+        if (!Array.isArray(otherRoom.contentArray) || otherRoom.contentArray.length === 0) continue;
+        const connectsToThisLocked = (otherRoom.doorways || []).some(
+          d => d.connectedRoomId === room.id,
+        );
+        if (!connectsToThisLocked) continue;
+        // Avoid duplicating if it's already there (compare first
+        // paragraph string — sufficient since obstacle content is
+        // stable per locked room).
+        const firstObstaclePara = room.lockObstacleContent[0]?.content;
+        const alreadyPresent = otherRoom.contentArray.some(
+          item => item.format === 'paragraph' && item.content === firstObstaclePara,
+        );
+        if (!alreadyPresent) {
+          otherRoom.contentArray.push(...room.lockObstacleContent);
+        }
+      }
+    }
+
     return { roomDescription, contentArray };
   }
 
@@ -349,6 +428,10 @@ export function useRoomDescription() {
     shortDescription,
     connectedRoomsInfo,
     npcString = '',
+    difficulty = null,
+    doorwayInfo = null,
+    loreRole = null,
+    loreLookup = '',
   }) {
     const existingRooms = currentDungeon.roomNames.join(', ');
     const prompt = generateLivingRoomPrompt(
@@ -357,6 +440,10 @@ export function useRoomDescription() {
       existingRooms,
       connectedRoomsInfo,
       npcString,
+      difficulty,
+      doorwayInfo,
+      loreRole,
+      loreLookup,
     );
     //console.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -411,6 +498,10 @@ export function useRoomDescription() {
     shortDescription,
     connectedRoomsInfo,
     npcString = '',
+    difficulty = null,
+    doorwayInfo = null,
+    loreRole = null,
+    loreLookup = '',
   }) {
     const existingRooms = currentDungeon.roomNames.join(', ');
     const prompt = generatePurposeRoomPrompt(
@@ -419,6 +510,10 @@ export function useRoomDescription() {
       existingRooms,
       connectedRoomsInfo,
       npcString,
+      difficulty,
+      doorwayInfo,
+      loreRole,
+      loreLookup,
     );
     //console.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -428,6 +523,113 @@ export function useRoomDescription() {
     const roomDescription = JSON.parse(response);
     const contentArray = processPurposeRoomResponse(roomDescription);
     return { roomDescription, contentArray };
+  }
+
+  // **Handler for Lock Obstacles**
+  //
+  // Generates the **The [Obstacle Name].** sub-block describing how
+  // the party defeats the lock that gates a `locked`-type room. The
+  // result is stored on the LOCKED room as `lockObstacleContent` (an
+  // array of paragraph content items), then surfaced in any preceding
+  // room's contentArray via `propagateLockObstacles` whenever those
+  // preceding rooms render.
+  //
+  // Runs at most once per locked room — once `lockObstacleContent`
+  // is populated, the obstacle is reused for every preceding room
+  // that connects to this locked room.
+  async function handleLockObstacle({
+    lockedRoom,
+    precedingRoomContentString,
+    currentDungeon,
+    dungeonOverview,
+  }) {
+    if (lockedRoom.lockObstacleContent) {
+      return lockedRoom.lockObstacleContent;
+    }
+
+    const lockedRoomContentString = lockedRoom.contentArray
+      ? contentArrayToString(
+        lockedRoom.contentArray.filter(item => item.format !== 'read_aloud'),
+      )
+      : '';
+
+    const prompt = generateLockObstaclePrompt(
+      dungeonOverview,
+      precedingRoomContentString || '',
+      lockedRoomContentString,
+      lockedRoom.name || '',
+      currentDungeon.dimensions?.difficulty || null,
+      formatLoreLookupForPrompt(currentDungeon),
+    );
+
+    let response;
+    try {
+      response = await generateGptResponse(prompt, validateLockObstacleResponse);
+    } catch (err) {
+      console.error('Lock obstacle generation failed:', err);
+      return null;
+    }
+
+    if (!validateLockObstacleResponse(response)) {
+      console.error('Lock obstacle response validation failed');
+      return null;
+    }
+
+    const data = JSON.parse(response);
+    const obstacleContent = processLockObstacleResponse(data);
+    // Persist on the locked room so subsequent preceding-room
+    // renderings can pick it up without re-generating.
+    lockedRoom.lockObstacleContent = obstacleContent;
+    return obstacleContent;
+  }
+
+  /**
+   * Propagate lock-obstacle content from connected locked rooms into
+   * this room's contentArray. Called after a non-locked room is
+   * generated so that the party encounters the obstacle's mechanics
+   * in the room they're standing in, before crossing into the locked
+   * chamber.
+   *
+   * Mutates `contentArray` in place — appends one block of paragraph
+   * items per connected locked room with prepared `lockObstacleContent`.
+   * Skips locked rooms whose obstacles haven't been generated yet
+   * (they'll be backfilled when the locked room is generated).
+   */
+  async function propagateLockObstacles({
+    room,
+    currentDungeon,
+    dungeonOverview,
+    contentArray,
+  }) {
+    if (!room.doorways || room.doorways.length === 0) return;
+
+    for (const doorway of room.doorways) {
+      const connectedRoom = currentDungeon.rooms.find(
+        r => r.id === doorway.connectedRoomId,
+      );
+      if (!connectedRoom) continue;
+      if (connectedRoom.roomType !== 'locked') continue;
+
+      // Generate the obstacle on demand if it doesn't exist yet —
+      // this happens when the preceding room is being generated AFTER
+      // its locked neighbor (which would normally generate the
+      // obstacle first when locked room was made).
+      if (!connectedRoom.lockObstacleContent) {
+        const precedingContentString = contentArrayToString(
+          contentArray.filter(item => item.format !== 'read_aloud'),
+        );
+        await handleLockObstacle({
+          lockedRoom: connectedRoom,
+          precedingRoomContentString: precedingContentString,
+          currentDungeon,
+          dungeonOverview,
+        });
+      }
+
+      if (connectedRoom.lockObstacleContent) {
+        contentArray.push(...connectedRoom.lockObstacleContent);
+      }
+    }
   }
 
   // **Handler for Secret Doors**
@@ -679,7 +881,27 @@ export function useRoomDescription() {
       let contentArray = [];
       let npcString = '';
       if (npcData && npcData.npc_string) {
+        // Manually-selected NPC wins — the user explicitly picked
+        // this NPC for the room via the form.
         npcString = npcData.npc_string;
+      } else {
+        // No manual pick; fall back to auto-assigned NPCs from the
+        // post-map NPC assignment pass. Returns empty string when no
+        // NPCs are assigned to this room (rooms can validly have no
+        // NPCs — the model handles that case fine).
+        npcString = formatRoomNPCsForPrompt(currentDungeon, selectedRoomId);
+      }
+      // Append monster populations assigned to this room. Both NPCs
+      // and monsters flow through the same `npcString` channel — the
+      // room prompts treat the combined text as "inhabitants present
+      // in this room." Each room prompt already incorporates NPCs;
+      // monsters are formatted with explicit tier annotations so the
+      // model treats them as populations, not as a single creature.
+      const monsterString = formatRoomMonstersForPrompt(currentDungeon, selectedRoomId);
+      if (monsterString) {
+        npcString = npcString
+          ? `${npcString}\n\n${monsterString}`
+          : monsterString;
       }
 
       // **Step 3: Generate Prompt Based on Room Type and Inputs**
@@ -734,7 +956,12 @@ export function useRoomDescription() {
       } else if (
         ['setback', 'locked', 'boss', 'secret'].includes(room.roomType)
       ) {
-        // Use specific handler for these room types
+        // Use specific handler for these room types.
+        // difficulty + doorwayInfo + loreRole + loreLookup are passed
+        // through; handlers that haven't been updated to the new
+        // shape yet ignore them via destructuring (setback, locked
+        // still on the old prompt; boss and secret are on the new
+        // pattern and consume them).
         const handler = roomTypeHandlers[room.roomType];
         ({ roomDescription, contentArray } = await handler({
           room,
@@ -745,6 +972,10 @@ export function useRoomDescription() {
           formRoomName,
           formRoomSummary,
           npcString,
+          difficulty: currentDungeon.dimensions?.difficulty || null,
+          doorwayInfo: formatRoomDoorways(currentDungeon, room),
+          loreRole: getRoomLoreName(currentDungeon, room.id),
+          loreLookup: formatLoreLookupForPrompt(currentDungeon),
         }));
       } else if (formRoomName || formRoomSummary) {
         // Use custom room prompt
@@ -796,6 +1027,24 @@ export function useRoomDescription() {
           currentDungeon,
           dungeonOverview,
           connectedRoomsInfo,
+          contentArray,
+        });
+      }
+
+      // **Propagate Lock Obstacles**
+      // When this room connects to any `locked`-type rooms, surface
+      // the lock obstacle's mechanics (DC, bypass, failure consequence)
+      // in this room's contentArray. The party encounters the lock
+      // BEFORE entering the locked room, so the mechanics belong here
+      // — parallel to how Secret Door notes get appended to the room
+      // containing the secret doorway. Skipped when this IS the
+      // locked room (the obstacle belongs in preceding rooms, not in
+      // the chamber the party has already entered).
+      if (room.roomType !== 'locked') {
+        await propagateLockObstacles({
+          room,
+          currentDungeon,
+          dungeonOverview,
           contentArray,
         });
       }
