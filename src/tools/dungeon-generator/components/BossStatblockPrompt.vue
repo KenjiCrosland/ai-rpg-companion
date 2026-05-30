@@ -78,14 +78,14 @@ function onCancel() {
   font-size: 1.5rem;
   line-height: 1.55;
   margin: 0 0 1rem;
-  color: var(--par-color-readaloud-text);
+  color: var(--par-color-readaloud-text, #1a1a1a);
 }
 
 /* Inner fact callout — uses the DEEPER lapis surface so it stays
    distinguishable from ParModal's pale lapis bg. Rule lines a touch
    thicker to reinforce the "this is the important fact" register. */
 .boss-prompt__callout {
-  background-color: var(--par-color-readaloud-bg-deep);
+  background-color: var(--par-color-readaloud-bg-deep, #C5D4E5);
   border-left: 3px solid var(--color-action-hover);
   border-right: 3px solid var(--color-action-hover);
   padding: 1rem 1.25rem;
@@ -96,7 +96,7 @@ function onCancel() {
   font-size: 1.5rem;
   line-height: 1.5;
   margin: 0;
-  color: var(--par-color-readaloud-text);
+  color: var(--par-color-readaloud-text, #1a1a1a);
 }
 
 .boss-prompt__callout-text strong {
@@ -108,7 +108,7 @@ function onCancel() {
   font-size: 1.4rem;
   line-height: 1.5;
   margin: 0 0 1.25rem;
-  color: var(--par-color-readaloud-text);
+  color: var(--par-color-readaloud-text, #1a1a1a);
   opacity: 0.85;
 }
 

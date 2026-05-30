@@ -648,13 +648,13 @@ onMounted(() => {
    readability. Wrapper class so the typography only applies inside
    the rendered description (not the form/edit views). */
 .room-description-body {
-  font-family: var(--par-font-serif);
-  color: var(--par-color-text);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  color: var(--par-color-text, #222);
 }
 
 .room-paragraph {
-  font-family: var(--par-font-serif);
-  color: var(--par-color-text);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  color: var(--par-color-text, #222);
   /* 1.6rem (25.6px) — substantial sourcebook-reading size. The
      calculated chars-per-line approach (which suggested ~20px)
      undercounted the actual rendered column width, and the smaller
@@ -691,8 +691,8 @@ onMounted(() => {
    `parchment` class on the element exempts it from App.vue's global
    --font-sans !important override so the serif actually applies. */
 .room-title {
-  font-family: var(--par-font-serif);
-  color: var(--par-color-title);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  color: var(--par-color-title, #7a1f1f);
   font-variant-caps: small-caps;
   font-weight: 600;
   font-size: 2.5rem;
@@ -708,13 +708,13 @@ onMounted(() => {
    "boxed text" signaling, so bolding the base text would be
    redundant. Markdown <strong> stays bold for keyword emphasis. */
 .read-aloud-box {
-  background-color: var(--par-color-readaloud-bg);
-  color: var(--par-color-readaloud-text);
+  background-color: var(--par-color-readaloud-bg, #D8E3EF);
+  color: var(--par-color-readaloud-text, #1a1a1a);
   /* Side rules at 2px — at 1px they read as hairlines against the
      pale bg and the dot endcaps overpower them. 2px gives a confident
      printed-frame presence matching the WotC sourcebook reference. */
-  border-left: 2px solid var(--par-color-readaloud-rule);
-  border-right: 2px solid var(--par-color-readaloud-rule);
+  border-left: 2px solid var(--par-color-readaloud-rule, #7A8FAA);
+  border-right: 2px solid var(--par-color-readaloud-rule, #7A8FAA);
   padding: 1.75rem 2rem;
   margin: 1.25rem 0 1.5rem;
   position: relative;
@@ -734,8 +734,8 @@ onMounted(() => {
   height: 6px;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 3px 3px, var(--par-color-readaloud-text) 2.5px, transparent 3px),
-    radial-gradient(circle at calc(100% - 3px) 3px, var(--par-color-readaloud-text) 2.5px, transparent 3px);
+    radial-gradient(circle at 3px 3px, var(--par-color-readaloud-text, #1a1a1a) 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 3px) 3px, var(--par-color-readaloud-text, #1a1a1a) 2.5px, transparent 3px);
   background-repeat: no-repeat;
 }
 
@@ -748,7 +748,7 @@ onMounted(() => {
 }
 
 .read-aloud-box p {
-  font-family: var(--par-font-sans);
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   /* Slightly smaller than body (1.6rem) per WotC convention. The
      visual frame already marks this as boxed text; the size
      differential reinforces "supplementary chunk" without being so
@@ -757,7 +757,7 @@ onMounted(() => {
   font-weight: 400;
   line-height: 1.55;
   margin: 0;
-  color: var(--par-color-readaloud-text);
+  color: var(--par-color-readaloud-text, #1a1a1a);
 }
 
 .read-aloud-box :deep(strong) {
@@ -765,7 +765,7 @@ onMounted(() => {
      standard bold weight. Burgundy strong here would clash with the
      pale lapis surface. */
   font-weight: 700;
-  color: var(--par-color-readaloud-text);
+  color: var(--par-color-readaloud-text, #1a1a1a);
 }
 
 .generation-button {
@@ -782,12 +782,12 @@ onMounted(() => {
 .connecting-rooms {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--par-color-divider);
+  border-top: 1px solid var(--par-color-divider, #e2dccd);
 }
 
 .connecting-rooms__title {
-  font-family: var(--par-font-serif);
-  color: var(--par-color-title);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  color: var(--par-color-title, #7a1f1f);
   font-variant-caps: small-caps;
   font-weight: 600;
   font-size: 1.6rem;
@@ -812,9 +812,9 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  background: var(--par-color-callout-bg);
-  border: 1px solid var(--par-color-border);
-  border-radius: var(--par-radius-md);
+  background: var(--par-color-callout-bg, #f3ebda);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-radius: var(--par-radius-md, 4px);
   padding: 1.5rem;
 }
 
@@ -823,16 +823,16 @@ onMounted(() => {
    <em>Generate Description</em> references the button label exactly
    so users can match the prose to the affordance below. */
 .room-form__intro {
-  font-family: var(--par-font-sans);
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-size: 1.25rem;
   line-height: 1.5;
-  color: var(--par-color-text-secondary);
+  color: var(--par-color-text-secondary, #555);
   margin: 0 0 0.5rem;
 }
 
 .room-form__intro em {
   font-style: italic;
-  color: var(--par-color-title);
+  color: var(--par-color-title, #7a1f1f);
   font-weight: 600;
 }
 
@@ -843,10 +843,10 @@ onMounted(() => {
 }
 
 .room-form__group-label {
-  font-family: var(--par-font-sans);
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-size: 1.2rem;
   font-weight: 600;
-  color: var(--par-color-title);
+  color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.02em;
   margin-bottom: 0.25rem;
 }
@@ -857,8 +857,8 @@ onMounted(() => {
 }
 
 .edit-form__title {
-  font-family: var(--par-font-serif);
-  color: var(--par-color-title);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  color: var(--par-color-title, #7a1f1f);
   font-variant-caps: small-caps;
   font-weight: 600;
   font-size: 1.8rem;
@@ -881,23 +881,23 @@ onMounted(() => {
    Tinted callout surface + serif body so it feels like supplementary
    instruction baked into the form rather than chrome help text. */
 .markup-help {
-  font-family: var(--par-font-serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 1.25rem;
   line-height: 1.6;
-  color: var(--par-color-text-secondary);
-  background: var(--par-color-callout-bg);
-  border: 1px solid var(--par-color-border);
-  border-radius: var(--par-radius-md);
+  color: var(--par-color-text-secondary, #555);
+  background: var(--par-color-callout-bg, #f3ebda);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-radius: var(--par-radius-md, 4px);
   padding: 1rem 1.25rem;
   margin: -0.75rem 0 1.5rem;
 }
 
 .markup-help code {
-  background-color: var(--par-color-callout-bg-deep);
+  background-color: var(--par-color-callout-bg-deep, #ede2cb);
   padding: 0.15em 0.4em;
-  border-radius: var(--par-radius-sm);
+  border-radius: var(--par-radius-sm, 3px);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.95em;
-  color: var(--par-color-text);
+  color: var(--par-color-text, #222);
 }
 </style>

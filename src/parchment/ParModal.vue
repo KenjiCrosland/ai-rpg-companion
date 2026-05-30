@@ -121,9 +121,9 @@ function onCancel() {
    Consumers can layer deeper variants (--par-color-readaloud-bg-deep)
    for inner callouts so emphasis still reads against the surface. */
 .par-modal {
-  background-color: var(--par-color-readaloud-bg);
-  color: var(--par-color-readaloud-text);
-  border: 2px solid var(--par-color-readaloud-rule);
+  background-color: var(--par-color-readaloud-bg, #D8E3EF);
+  color: var(--par-color-readaloud-text, #1a1a1a);
+  border: 2px solid var(--par-color-readaloud-rule, #7A8FAA);
   border-top-width: 4px;
   border-radius: 2px;
   width: min(560px, 100%);
@@ -141,7 +141,7 @@ function onCancel() {
   align-items: flex-start;
   gap: 1rem;
   padding: 1.25rem 1.75rem 1rem;
-  border-bottom: 1px solid var(--par-color-readaloud-rule);
+  border-bottom: 1px solid var(--par-color-readaloud-rule, #7A8FAA);
 }
 
 .par-modal__title {
@@ -181,7 +181,7 @@ function onCancel() {
 .par-modal__body {
   padding: 1.5rem 1.75rem 0.5rem;
   overflow-y: auto;
-  color: var(--par-color-readaloud-text);
+  color: var(--par-color-readaloud-text, #1a1a1a);
 }
 
 .par-modal__footer {
@@ -190,7 +190,7 @@ function onCancel() {
   justify-content: flex-end;
   flex-wrap: wrap;
   padding: 1rem 1.75rem 1.5rem;
-  border-top: 1px solid var(--par-color-readaloud-rule);
+  border-top: 1px solid var(--par-color-readaloud-rule, #7A8FAA);
 }
 
 /* Open/close transition — quick fade and a slight rise. Restraint

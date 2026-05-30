@@ -256,7 +256,7 @@ const confirmDelete = () => {
   background: var(--par-color-surface, #fdfbf6);
   border: 1.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: 2px;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   overflow: hidden;
   margin-bottom: 1.5rem;
   font-size: 17px;
@@ -333,7 +333,7 @@ const confirmDelete = () => {
 
 /* Content — readable line length, centered. */
 .dungeon-card-content {
-  max-width: 65ch;
+  max-width: 75ch;
   margin-inline: auto;
   padding: 0 3rem 2.5rem;
 }
@@ -417,7 +417,7 @@ const confirmDelete = () => {
 /* Edit form — same register as setting's edit panel. */
 .dungeon-edit {
   padding: 0 3rem 2rem;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   display: flex;
   flex-direction: column;
   gap: 1.4rem;
@@ -429,7 +429,7 @@ const confirmDelete = () => {
 
 .dungeon-edit__title {
   margin: 0;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 1.85rem;
   font-weight: 600;
   color: var(--par-color-title, #7a1f1f);
