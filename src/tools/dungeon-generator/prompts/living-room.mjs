@@ -54,6 +54,22 @@
  * true. Stored on `dungeon.dimensions.difficulty`.
  */
 
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  DOOR_PREAMBLE_FIELD_DESC,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallenge,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
+
 export function generateLivingRoomPrompt(
   dungeonOverview,
   shortDescription,
@@ -64,6 +80,8 @@ export function generateLivingRoomPrompt(
   doorwayInfo = null,
   loreRole = null,
   loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated (inhabitants present + hostile), scale DCs and failure severity to this tier.`
@@ -102,7 +120,7 @@ ${dungeonOverview}
 
 LIVING ROOM INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${tierLine}${existingRoomsLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}${existingRoomsLine}
 ${npcSection}
 ## REGISTER FIDELITY — respect the dungeon's established context
 
@@ -147,6 +165,8 @@ When dm_notes (or any field) references other parts of the dungeon in a way the 
 
 The LORE-LOCATION LOOKUP is the source of truth. If empty, default to atmospheric-only for any lore-location named in the overview.
 
+${CROSS_ROOM_REFERENCES_SECTION}
+
 ## WHAT DOES NOT GO IN dm_notes
 
 Three categories are owned by other fields or sections:
@@ -166,9 +186,9 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 {
   "name": "A 1-4 word descriptive name reflecting the inhabitants and their use of the room (e.g., 'Drake-Kit Nest,' 'Spinners' Hearth,' 'Brothers' Refectory,' 'Warband Barracks'). The name should be specific to the inhabitants — not generic 'Kitchen' or 'Dormitory' if the inhabitants give it a character. Avoid archaic opaque terms (no scriptorium, narthex, pronaos).",
 
-  "door_preamble": "Terse DM-side preamble describing door states. Use ONLY the door states from the DOORWAYS IN THIS ROOM section above. Reference rooms by their connected-room numbers. OMIT this key (pass empty string) if every doorway is 'open corridor' OR all 'unlocked door' and don't need flagging. For locked or secret doors, follow these formats:\\n- Character holds key: 'The door to area Z is locked, and [character name] has the only key.'\\n- Key hidden in a room: 'The door to area Z is locked; the key is hidden in area W.'\\n- Key from a key-room: 'The door to area Z is locked; the means to open it lies in area W, which itself requires the party to [solve the key-room's challenge in 1 short clause].'\\n- Secret door: 'There is a hidden doorway to area Z; see the Secret Door notes below.' Do NOT include a Perception DC for secret doors — the Secret Door notes section owns that.",
+  "door_preamble": ${DOOR_PREAMBLE_FIELD_DESC},
 
-  "read_aloud_opening": "Boxed text the DM reads when the party enters. 40-80 words, present-tense, sensory. Describe the inhabited space — what the inhabitants have left behind, the room's daily-life character, atmosphere, light, sound, smell. Visible doorways/exits should be part of the scene; name directions naturally. If inhabitants ARE here at the moment of entry, describe them as part of the scene (what they're doing, where they are in the room). NO mechanics, NO DM hints, NO addressing the DM. Avoid generic material adjectives like 'wooden door' unless the material is genuinely notable.",
+  "read_aloud_opening": "Boxed text the DM reads when the party enters. 40-80 words, present-tense, sensory. Describe the inhabited space — what the inhabitants have left behind, the room's daily-life character, atmosphere, light, sound, smell. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} If inhabitants ARE here at the moment of entry, describe them as part of the scene. NO mechanics, NO DM hints, NO addressing the DM. Avoid generic material adjectives like 'wooden door' unless the material is genuinely notable.",
 
   "has_challenge": false,
 
@@ -176,10 +196,12 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "dm_notes": [
     "Array of strings. Each string is ONE paragraph. The first paragraph covers: dimensions, the inhabitants (CURRENT or FORMER — name them, give their daily-life details, what they do here), what the party will find of interest (objects, leavings, clues). If has_challenge: also covers the encounter mechanic (number of inhabitants present, behavior on detection, skills to sneak past or deceive, DCs scaled to tier, IMMEDIATE physical failure consequence — they raise the alarm, they attack, they call for kin). 80-150 words for the common case; 150-220 if the room has an active encounter to set up.",
-    "Subsequent paragraphs are OPTIONAL feature sub-blocks — for specific items, NPC interactions, or environmental elements that warrant their own block. Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**Brother Galen\\'s Lost Fingers.** Among the bedding on the third cot...', '**The Hearth-Pit.** The central fire is banked but not cold...', '**The Forge-Master\\'s Lockbox.** A small iron box on the workbench...'. Skip these if the first paragraph already covered everything."
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks — for specific items, NPC interactions, or environmental elements that warrant their own block. Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**Brother Galen\\'s Lost Fingers.** Among the bedding on the third cot...', '**The Hearth-Pit.** The central fire is banked but not cold...', '**The Forge-Master\\'s Lockbox.** A small iron box on the workbench...'. Skip these if the first paragraph already covered everything. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
   ],
 
-  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's function and inhabitants."
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's function and inhabitants.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
 ## DC SCALING (only if has_challenge)
@@ -203,50 +225,19 @@ Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole 
  * @returns {boolean}
  */
 export function validateLivingRoomResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const required = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'name',
       'read_aloud_opening',
       'has_challenge',
       'dm_notes',
       'one_sentence_summary',
-    ];
-    for (const key of required) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    if (typeof data.has_challenge !== 'boolean') {
-      console.error('has_challenge must be a boolean');
-      return false;
-    }
-    if (
-      data.has_challenge
-      && (typeof data.challenge_header !== 'string'
-        || !data.challenge_header.trim())
-    ) {
-      console.error('challenge_header required when has_challenge is true');
-      return false;
-    }
-    if (!Array.isArray(data.dm_notes) || data.dm_notes.length === 0) {
-      console.error('dm_notes must be a non-empty array of paragraph strings');
-      return false;
-    }
-    if (data.dm_notes.some(p => typeof p !== 'string' || !p.trim())) {
-      console.error('dm_notes entries must all be non-empty strings');
-      return false;
-    }
-    if (data.door_preamble !== undefined && typeof data.door_preamble !== 'string') {
-      console.error('door_preamble, when present, must be a string');
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallenge,
+    d => validateDmNotes(d, 1),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
 /**

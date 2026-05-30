@@ -48,6 +48,22 @@
  * or null. If null, DCs default to T2 (moderate).
  */
 
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  DOOR_PREAMBLE_FIELD_DESC,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallenge,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
+
 export function generateEntrancePrompt(
   dungeonOverview,
   shortDescription,
@@ -59,6 +75,8 @@ export function generateEntrancePrompt(
   doorwayInfo = null,
   loreRole = null,
   loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
@@ -104,7 +122,7 @@ ${dungeonOverview}
 
 ENTRANCE INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}
 ${roomNameSection}${roomSummarySection}${npcSection}
 ## REGISTER FIDELITY — respect the dungeon's established context
 
@@ -148,6 +166,8 @@ When dm_notes (or any field) references other parts of the dungeon in a way the 
 
 The LORE-LOCATION LOOKUP is the source of truth. If it's empty (no assignments were made), treat any lore-location named in the overview as atmospheric-only by default.
 
+${CROSS_ROOM_REFERENCES_SECTION}
+
 ## WHAT DOES NOT GO IN dm_notes
 
 Three categories are explicitly owned by OTHER fields or by separately-generated sections. Putting them in dm_notes duplicates or contradicts the canonical source:
@@ -165,19 +185,21 @@ If you're about to write something that fits one of the three categories above, 
 Return STRICT JSON (no prose, no commentary, no code fences):
 
 {
-  "door_preamble": "Terse DM-side preamble describing door states. Use ONLY the door states from the DOORWAYS IN THIS ROOM section above — do not invent locks, bars, DCs, force checks, or bypasses. Reference rooms by their connected-room numbers from the DOORWAYS list. OMIT this key (or pass empty string) ONLY if every doorway is 'open corridor' (no doors at all). For unlocked doors, just say 'The doors to areas X and Y are closed but unlocked.' For locked or secret doors, follow these formats: \\n- Character holds the key: 'The door to area Z is locked, and [character name] has the only key.'\\n- Key hidden in a specific room: 'The door to area Z is locked; the key is hidden in area W.'\\n- Key obtained from a key-room (a room whose purpose is to provide the means to overcome a specific locked door — the 'key' may be a literal key, a lever, an item, an ally, a spell, or any creative solution): 'The door to area Z is locked; the means to open it lies in area W, which itself requires the party to [solve the key-room's challenge in 1 short clause].' If you don't know which connected room is the key-room for a given locked door, just say 'the means to open it lies elsewhere in the dungeon.'\\n- Secret door: 'There is a hidden doorway to area Z; see the Secret Door notes below.' Do NOT include a Perception DC in the preamble — the Secret Door notes section owns the discovery mechanics for secret doors, and any DC here would either duplicate or contradict it. Do not list secret doors as visible exits in the read-aloud.\\nDo NOT describe the doors visually here — material/appearance belongs in the read-aloud (and only when notable).",
+  "door_preamble": ${DOOR_PREAMBLE_FIELD_DESC},
 
-  "read_aloud_opening": "Boxed text the DM reads when the party arrives. 60-100 words, present-tense, sensory. Describe BOTH the threshold from outside AND the first chamber visible past it — this is the only room where one read-aloud spans the outside-to-inside transition. Visible doorways/exits should be part of the scene (the players see them); name directions naturally as part of the visual description. NO mechanics, NO DM hints, NO addressing the DM. Just what the players see, hear, smell, feel. Avoid generic material adjectives like 'wooden door' or 'stone door' unless the material is genuinely notable (ember-glass, iron-bound, salt-crusted, etc.) — for ordinary doors, just say 'door' or 'doorway'.",
+  "read_aloud_opening": "Boxed text the DM reads when the party arrives. 60-100 words, present-tense, sensory. Describe BOTH the threshold from outside AND the first chamber visible past it — this is the only room where one read-aloud spans the outside-to-inside transition. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints, NO addressing the DM. Just what the players see, hear, smell, feel. Avoid generic material adjectives like 'wooden door' or 'stone door' unless the material is genuinely notable (ember-glass, iron-bound, salt-crusted, etc.) — for ordinary doors, just say 'door' or 'doorway'.",
 
   "has_challenge": true,
   "challenge_header": "≤8 word title for the challenge. Omit this key entirely if has_challenge is false.",
 
   "dm_notes": [
     "Array of strings. Each string is ONE paragraph. The first paragraph covers the room's content overview: what's in the first chamber, who's there (NPCs/inhabitants), precise dimensions, any features the DM needs to know about. If has_challenge, this paragraph also covers the mechanic (how it works, skills, DCs scaled to the dungeon's difficulty tier, IMMEDIATE physical failure consequence, optional bypass woven inline).",
-    "Subsequent paragraphs are OPTIONAL feature sub-blocks — distinct interactive elements that warrant their own block (e.g., a specific NPC encounter, a hidden cache, an environmental hazard the party can engage). Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**Tea with Granny Nightshade.** Characters who arrange a meeting...', '**The Drake-Kit in the Shadows.** The wounded juvenile can be approached...'. Skip these if the room has no specific sub-features beyond what the overview paragraph covered."
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks — distinct interactive elements that warrant their own block (e.g., a specific NPC encounter, a hidden cache, an environmental hazard the party can engage). Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**Tea with Granny Nightshade.** Characters who arrange a meeting...', '**The Drake-Kit in the Shadows.** The wounded juvenile can be approached...'. Skip these if the room has no specific sub-features beyond what the overview paragraph covered. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
   ],
 
-  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's purpose and what's there."
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's purpose and what's there.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
 ## DC SCALING (only if has_challenge)
@@ -205,49 +227,18 @@ Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole 
  * @returns {boolean}
  */
 export function validateEntranceResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const required = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'read_aloud_opening',
       'has_challenge',
       'dm_notes',
       'one_sentence_summary',
-    ];
-    for (const key of required) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    if (typeof data.has_challenge !== 'boolean') {
-      console.error('has_challenge must be a boolean');
-      return false;
-    }
-    if (
-      data.has_challenge
-      && (typeof data.challenge_header !== 'string'
-        || !data.challenge_header.trim())
-    ) {
-      console.error('challenge_header required when has_challenge is true');
-      return false;
-    }
-    if (!Array.isArray(data.dm_notes) || data.dm_notes.length === 0) {
-      console.error('dm_notes must be a non-empty array of paragraph strings');
-      return false;
-    }
-    if (data.dm_notes.some(p => typeof p !== 'string' || !p.trim())) {
-      console.error('dm_notes entries must all be non-empty strings');
-      return false;
-    }
-    if (data.door_preamble !== undefined && typeof data.door_preamble !== 'string') {
-      console.error('door_preamble, when present, must be a string');
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallenge,
+    d => validateDmNotes(d, 1),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
 /**

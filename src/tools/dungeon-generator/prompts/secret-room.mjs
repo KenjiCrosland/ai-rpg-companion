@@ -41,6 +41,21 @@
  * (trap chambers etc.). Stored on `dungeon.dimensions.difficulty`.
  */
 
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallenge,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
+
 export function generateSecretRoomPrompt(
   dungeonOverview,
   roomDescription,
@@ -53,6 +68,8 @@ export function generateSecretRoomPrompt(
   doorwayInfo = null,
   loreRole = null,
   loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
@@ -103,7 +120,7 @@ ${dungeonOverview}
 
 SECRET ROOM INFO:
 Short description (size, exits, map-side notes): ${roomDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${secretDoorSection}${loreLookup}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${secretDoorSection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}
 ${roomNameSection}${roomSummarySection}${npcSection}
 ## REGISTER FIDELITY — respect the dungeon's established context
 
@@ -158,6 +175,8 @@ When dm_notes (or any field) references other parts of the dungeon in a way the 
 
 The LORE-LOCATION LOOKUP is the source of truth. If it's empty (no assignments were made), treat any lore-location named in the overview as atmospheric-only by default.
 
+${CROSS_ROOM_REFERENCES_SECTION}
+
 ## WHAT DOES NOT GO IN dm_notes
 
 Three categories are explicitly owned by OTHER fields or by separately-generated sections. Putting them in dm_notes duplicates or contradicts the canonical source:
@@ -179,7 +198,7 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "door_preamble": "Usually empty/omitted for secret rooms — the secret door the party used is documented in the source room's notes, not here. Include door_preamble ONLY if this secret room has its OWN additional doorways onward, using the same format as other room prompts. Most secret rooms are dead-end chambers; for those, pass empty string or omit this key.",
 
-  "read_aloud_opening": "Boxed text the DM reads when the party steps through the secret door into this room. 40-80 words, present-tense, sensory. Describe what the party SEES — the chamber's character, its primary contents, the atmosphere. Visible doorways onward (if any) should be part of the scene. NO mechanics, NO DM hints, NO addressing the DM. Avoid generic material adjectives like 'wooden chest' unless the material is genuinely notable.",
+  "read_aloud_opening": "Boxed text the DM reads when the party steps through the secret door into this room. 40-80 words, present-tense, sensory. Describe what the party SEES — the chamber's character, its primary contents, the atmosphere. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints, NO addressing the DM. Avoid generic material adjectives like 'wooden chest' unless the material is genuinely notable.",
 
   "has_challenge": false,
 
@@ -187,10 +206,12 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "dm_notes": [
     "Array of strings. Each string is ONE paragraph. The first paragraph covers: dimensions, the room's PRIMARY contents (the reward — what the party finds), a brief lore note explaining WHY this is hidden (1-2 sentences, woven inline), and any inhabitants. For most secret rooms 80-150 words is right; for very simple caches 50-80 is fine; for rooms with complex inhabitants or ritual elements up to 200 is acceptable. If has_challenge: also covers the mechanic (how it works, skills, DCs scaled to tier, IMMEDIATE physical failure consequence, optional bypass woven inline).",
-    "Subsequent paragraphs are OPTIONAL feature sub-blocks — for specific interactive elements that warrant their own block (a locked chest, a strange apparatus, an inscription, an NPC interaction). Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**The Sealed Chest.** A character who picks the lock...', '**The Reliquary.** Removing the relic from its stand triggers...', '**Zallithrax\\'s Refuge.** The bedroll in the corner...'. Skip these if the first paragraph already covered everything."
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks — for specific interactive elements that warrant their own block (a locked chest, a strange apparatus, an inscription, an NPC interaction). Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**The Sealed Chest.** A character who picks the lock...', '**The Reliquary.** Removing the relic from its stand triggers...', '**Zallithrax\\'s Refuge.** The bedroll in the corner...'. Skip these if the first paragraph already covered everything. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
   ],
 
-  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's purpose and what's there."
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's purpose and what's there.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
 ## DC SCALING (only if has_challenge)
@@ -214,50 +235,19 @@ Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole 
  * @returns {boolean}
  */
 export function validateSecretRoomResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const required = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'name',
       'read_aloud_opening',
       'has_challenge',
       'dm_notes',
       'one_sentence_summary',
-    ];
-    for (const key of required) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    if (typeof data.has_challenge !== 'boolean') {
-      console.error('has_challenge must be a boolean');
-      return false;
-    }
-    if (
-      data.has_challenge
-      && (typeof data.challenge_header !== 'string'
-        || !data.challenge_header.trim())
-    ) {
-      console.error('challenge_header required when has_challenge is true');
-      return false;
-    }
-    if (!Array.isArray(data.dm_notes) || data.dm_notes.length === 0) {
-      console.error('dm_notes must be a non-empty array of paragraph strings');
-      return false;
-    }
-    if (data.dm_notes.some(p => typeof p !== 'string' || !p.trim())) {
-      console.error('dm_notes entries must all be non-empty strings');
-      return false;
-    }
-    if (data.door_preamble !== undefined && typeof data.door_preamble !== 'string') {
-      console.error('door_preamble, when present, must be a string');
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallenge,
+    d => validateDmNotes(d, 1),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
 /**

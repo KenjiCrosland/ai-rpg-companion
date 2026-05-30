@@ -125,6 +125,13 @@
         </li>
       </ul>
     </div>
+    <BossStatblockPrompt
+      :opened="showBossStatblockModal"
+      :apex-name="bossStatblockApexName"
+      @generate="onBossStatblockGenerate"
+      @skip="onBossStatblockSkip"
+      @cancel="onBossStatblockCancel"
+    />
   </div>
 </template>
 
@@ -145,11 +152,46 @@ const viewToggleOptions = [
   { value: 'form', label: 'Show Form' },
 ];
 import RoomSkeleton from './skeletons/RoomSkeleton.vue';
+import BossStatblockPrompt from './BossStatblockPrompt.vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useRoomDescription } from '../composables/useRoomDescription.js';
 
 const dungeonStore = useDungeonStore();
 const { generateRoomDescription } = useRoomDescription();
+
+const showBossStatblockModal = ref(false);
+const bossStatblockApexName = ref('');
+let bossStatblockResolver = null;
+
+// `dungeon-prefs:skipBossStatblockPrompt` is a per-dungeon "don't ask again"
+// flag. Stored as a Set of dungeon ids in localStorage so the preference
+// is durable but scoped — generating a new dungeon resurfaces the prompt.
+const SKIP_PROMPT_STORAGE_KEY = 'dungeon-prefs:skipBossStatblockPrompt';
+
+function shouldSkipBossStatblockPrompt(dungeonId) {
+  if (!dungeonId) return false;
+  try {
+    const raw = localStorage.getItem(SKIP_PROMPT_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.includes(dungeonId);
+  } catch {
+    return false;
+  }
+}
+
+function markSkipBossStatblockPrompt(dungeonId) {
+  if (!dungeonId) return;
+  try {
+    const raw = localStorage.getItem(SKIP_PROMPT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    const list = Array.isArray(parsed) ? parsed : [];
+    if (!list.includes(dungeonId)) list.push(dungeonId);
+    localStorage.setItem(SKIP_PROMPT_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    // localStorage write failed — non-fatal, user just sees the modal again
+  }
+}
 
 const contentArray = ref([]);
 const roomName = ref('');
@@ -197,9 +239,12 @@ const bossRoom = computed({
 });
 
 /**
- * Render the small subset of Markdown the room prompts emit (currently
- * just **bold**). HTML-escape first so any stray < / > / & from the AI
- * output renders as text, not markup; then promote **...** to <strong>.
+ * Render the small subset of Markdown the room prompts emit
+ * (**bold** and *italic*). HTML-escape first so any stray < / > / &
+ * from the AI output renders as text, not markup; then promote
+ * **...** to <strong> and *...* to <em>. Bold runs first so its
+ * paired asterisks are consumed before the italic pass sees them.
+ *
  * The output goes through v-html in the template — safe because the
  * input goes through this escape step before any tag is reintroduced.
  *
@@ -213,7 +258,9 @@ function renderMarkdown(text) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-  return escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  return escaped
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
 }
 
 // **Define getRoomName Method**
@@ -279,6 +326,74 @@ function loadRoomData(roomId) {
   }
 }
 
+// Resolve which apex monster (large_creature tier) is assigned to a
+// given room, returning the monster object or null. Used by the
+// boss-room statblock check to decide whether to surface the modal.
+function findApexInRoom(roomId) {
+  const dungeon = dungeonStore.currentDungeon;
+  const monsterIds
+    = dungeon?.monsterAssignments?.rooms_to_monster_ids?.[roomId] || [];
+  if (monsterIds.length === 0) return null;
+  if (!Array.isArray(dungeon?.monsters)) return null;
+  for (const id of monsterIds) {
+    const monster = dungeon.monsters.find(m => m.id === id);
+    if (monster?.type === 'large_creature') return monster;
+  }
+  return null;
+}
+
+// Generate the apex's statblock via the dungeon store. Awaits
+// completion; returns true on success, false on any failure (the
+// caller proceeds to room generation either way; statblock just
+// won't be available for context if generation failed).
+async function generateApexStatblock(apex) {
+  if (!apex) return false;
+  try {
+    await dungeonStore.generateMonsterStatblock(apex.id, dungeonStore.premium);
+    return Boolean(apex.statblock?.name);
+  } catch (err) {
+    console.error('[boss-statblock] generation failed:', err);
+    return false;
+  }
+}
+
+// Show the boss-statblock prompt modal and return a Promise that
+// resolves to 'generate' | 'skip' | 'cancel'. Stored callbacks are
+// invoked by the modal event handlers below.
+function promptForBossStatblock(apex) {
+  bossStatblockApexName.value = apex?.name || 'the apex monster';
+  showBossStatblockModal.value = true;
+  return new Promise((resolve) => {
+    bossStatblockResolver = resolve;
+  });
+}
+
+function onBossStatblockGenerate({ dontAskAgain }) {
+  showBossStatblockModal.value = false;
+  if (dontAskAgain) markSkipBossStatblockPrompt(dungeonStore.currentDungeon?.id);
+  if (bossStatblockResolver) {
+    bossStatblockResolver('generate');
+    bossStatblockResolver = null;
+  }
+}
+
+function onBossStatblockSkip({ dontAskAgain }) {
+  showBossStatblockModal.value = false;
+  if (dontAskAgain) markSkipBossStatblockPrompt(dungeonStore.currentDungeon?.id);
+  if (bossStatblockResolver) {
+    bossStatblockResolver('skip');
+    bossStatblockResolver = null;
+  }
+}
+
+function onBossStatblockCancel() {
+  showBossStatblockModal.value = false;
+  if (bossStatblockResolver) {
+    bossStatblockResolver('cancel');
+    bossStatblockResolver = null;
+  }
+}
+
 async function generateDescription() {
   const roomTypeOptions = {
     setback: setbackRoom.value,
@@ -287,6 +402,31 @@ async function generateDescription() {
   if (!dungeonStore.currentDungeon) {
     console.error('No current dungeon selected.');
     return;
+  }
+
+  // Boss-room statblock gate. If this is a boss room and an apex is
+  // assigned but lacks a statblock, surface the prompt (unless the user
+  // has opted out for this dungeon). The room description is much
+  // stronger when it can reference the actual abilities.
+  const currentRoom = dungeonStore.currentDungeon.rooms?.find(
+    r => r.id === dungeonStore.selectedRoomId,
+  );
+  if (currentRoom?.roomType === 'boss') {
+    const apex = findApexInRoom(dungeonStore.selectedRoomId);
+    const apexNeedsStatblock = apex && !apex.statblock?.name;
+    const skipPrompt = shouldSkipBossStatblockPrompt(
+      dungeonStore.currentDungeon.id,
+    );
+    if (apexNeedsStatblock && !skipPrompt) {
+      const choice = await promptForBossStatblock(apex);
+      if (choice === 'cancel') return;
+      if (choice === 'generate') {
+        activeView.value = 'loading';
+        await generateApexStatblock(apex);
+        // fall through to room generation regardless of statblock
+        // success — the room helper degrades gracefully if absent
+      }
+    }
   }
 
   if (selectedNPCName.value === 'None') {

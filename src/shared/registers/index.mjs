@@ -268,6 +268,23 @@ const minimalRegisters = [
       'the Silver-Footed One of the Pass',       // pre-Buddhist lunar/mountain
       'the Mountain-Cave Guardian',              // local protector spirits
     ],
+    // Creature tradition leans on Tarim mummies, oasis-culture
+    // ghosts, and caravan/jade-trade threats — secular and material-
+    // culture-grounded, not actively-venerated Buddhist figures.
+    // We do NOT use dharmapalas / specific bodhisattvas / Sanskrit
+    // demonology (vetala, preta, naga) even by description — those
+    // belong to a living tradition. Inventions instead draw from
+    // archaeological Tarim Basin: silk-wrapped mummies, lacquer
+    // funerary masks, cave-mural donor portraits, jade-and-silk
+    // caravan economy, mountain-pass offering customs, pre-Buddhist
+    // solar/lunar/mountain spirits (extinct local tradition).
+    creatureTradition: 'Tarim Basin oasis-culture threats: cave-complex hungry-shades (the desert-fasted dead whose vigil ended badly), lacquer-mask wearers (the silk-wrapped Tarim dead whose preserved features have learned to speak through the resin), painted-donor-figures stepped down from the cave-walls (portraits whose families left no descendants, mistaking visitors for their original patrons), wind-cured caravan-dead (jade-merchants slain on the desert trade way, returning to demand toll), pre-Buddhist sun-chariot riders gone vengeful, mountain-pass guardians gone hungry from broken offerings, serpent-form river-keepers under the cold jade-rivers, jade-thirst spirits (the unburied dead of failed quarry expeditions, drawn to any worked jade), cold-cave echo-things (sounds-given-form in abandoned grottos). Cave-complex and desert-trade-route framing — caravan-debt unpaid, vigil interrupted, jade-claim unsettled.',
+    creatureTraditionByTier: {
+      complicating: ['cave-complex hungry-shades', 'lesser caravan-dead', 'cold-cave echo-things'],
+      significant:  ['serpent-form river-keepers', 'mountain-pass guardians gone hungry', 'wind-cured caravan-dead (major)'],
+      scary:        ['lacquer-mask wearers', 'painted-donor-figures stepped from the cave-walls', 'pre-Buddhist sun-chariot riders gone vengeful'],
+    },
+    materialTradition: 'river-jade, raw silk, dyed silk, woolen felt, lapis lazuli, gold leaf, cinnabar pigment, indigo, saffron, palm-leaf manuscript, birchbark manuscript, painted wooden monastery-statuary, cave-mural plaster, copper coin, glazed pottery',
   },
 
   // Protected registers (catchall-tier — density rules apply, no curated pool)

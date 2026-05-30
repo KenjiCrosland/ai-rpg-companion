@@ -53,6 +53,21 @@
  * negotiable. Stored on `dungeon.dimensions.difficulty`.
  */
 
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallengeRequired,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
+
 export function generateBossRoomPrompt(
   dungeonOverview,
   shortDescription,
@@ -64,6 +79,9 @@ export function generateBossRoomPrompt(
   doorwayInfo = null,
   loreRole = null,
   loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
+  bossStatblock = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). Scale boss encounter DCs (saves, ability checks) and damage / failure severity to this tier.`
@@ -105,7 +123,7 @@ ${dungeonOverview}
 
 BOSS ROOM INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${bossStatblock}${tierLine}
 ${roomNameSection}${roomSummarySection}${npcSection}
 
 ## REGISTER FIDELITY — respect the dungeon's established context
@@ -139,6 +157,8 @@ DO NOT bold game mechanics keywords (DCs, skill names), action verbs, or generic
 
 When dm_notes references other parts of the dungeon (a route the boss escapes through, an item the party brought from another area), the references MUST resolve to area numbers via the LORE-LOCATION LOOKUP above. References to lore-locations not in the lookup are atmospheric only.
 
+${CROSS_ROOM_REFERENCES_SECTION}
+
 ## WHAT DOES NOT GO IN dm_notes
 
 Three categories are owned by other fields or sections:
@@ -158,7 +178,7 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "door_preamble": "Usually empty for boss rooms (they're typically dead-end terminals; the party arrives via one door and there's no onward path). Include door_preamble ONLY if this room genuinely has multiple doors with non-trivial states (a back-door escape route for the boss, a sealed passage to a secret chamber). For most boss rooms, pass empty string.",
 
-  "read_aloud_opening": "Boxed text the DM reads when the party enters. 50-100 words, present-tense, sensory. The boss is part of the scene — visible (sitting at a desk, suspended in a vortex, on a throne), audible (hummed song, dripping water, scratching pen), OR imminent (a closed inner door behind which something stirs). Describe the chamber's character, atmosphere, the boss's presence, and any environmental features. NO mechanics, NO DM hints, NO addressing the DM. Avoid generic material adjectives like 'wooden door' unless the material is genuinely notable.",
+  "read_aloud_opening": "Boxed text the DM reads when the party enters. 50-100 words, present-tense, sensory. The boss is part of the scene — visible (sitting at a desk, suspended in a vortex, on a throne), audible (hummed song, dripping water, scratching pen), OR imminent (a closed inner door behind which something stirs). Describe the chamber's character, atmosphere, the boss's presence, and any environmental features. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints, NO addressing the DM. Avoid generic material adjectives like 'wooden door' unless the material is genuinely notable.",
 
   "has_challenge": true,
 
@@ -166,13 +186,15 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "dm_notes": [
     "First paragraph (REQUIRED). 100-200 words. Covers: dimensions, ENVIRONMENTAL FEATURES the encounter uses (the vortex, the scriptorium's hanging chains, the locked codex on the desk), the boss's immediate behavior on entry (asleep, working, expectant, sensing the party), and the encounter at a high level (combat as default, parley/stealth as alternatives if applicable). Do NOT put the boss's full profile here — that goes in its own sub-block.",
-    "Second paragraph (REQUIRED). **[Boss Name].** Bolded inline title with the boss's name. Description follows. Cover: boss's appearance/presence in the encounter, motivation (from the overview), tactics in combat (preferred targets, signature ability, panic threshold), and a brief weakness or vulnerability the party can exploit (an Insight or History or Arcana check at a tier-scaled DC reveals it). 80-150 words.",
+    "Second paragraph (REQUIRED). **[Boss Name].** Bolded inline title with the boss's name. Description follows. Cover the boss's PRESENCE, BEHAVIOR, and TACTICAL APPROACH — informed by the statblock if one is provided (above), but do NOT reproduce any of its mechanical content. Specifically: presence and demeanor on entry; motivation (from the overview); how the boss USES its abilities tactically (which ability for which target/situation, preferred opener, what triggers the recharge/escalation ability, when it falls back); panic threshold described in narrative terms (\"once visibly wounded,\" \"after losing a third of its strength\" — NEVER a specific HP number); a brief exploitable weakness or vulnerability (an Insight/History/Arcana check at a tier-scaled DC reveals it). The statblock owns the numbers; this paragraph owns the strategy. ABSOLUTELY DO NOT WRITE in dm_notes: the boss's AC, HP, attack bonuses, damage dice, save DCs, recharge ranges (5-6), action economy mechanics, immunities-as-listing, resistances-as-listing, condition immunities, or any other statblock field — those live in the dungeon's monsters section and the DM reads them there. 80-150 words.",
     "Third paragraph (OPTIONAL — include when applicable). **The [thematic name].** Use this slot for a SECONDARY load-bearing element the encounter needs: an environmental hazard with its own mechanic, a secondary NPC (bound spirit, sleeping minion, lieutenant), or a ritual-in-progress the party can disrupt. Skip if the first two paragraphs cover everything. 60-100 words.",
     "Fourth paragraph (OPTIONAL). **Talking Through.** ONLY when the boss has a stake the party can affect, meaning negotiation/parley is a viable alternative to combat. Describe what the boss wants, what the party can offer, the DC for negotiation (tier-scaled Persuasion or Insight), and what success yields. Skip when combat is the only path. 50-100 words.",
     "Fifth paragraph (OPTIONAL). **Loot and Reward.** What the party gains on victory. Specific items, knowledge, or strategic benefits — not 'treasure appropriate to their level.' If the dungeon's quest hook named a specific objective (a folio, a relic), that objective is here or accessed from here. 40-80 words."
   ],
 
-  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's role and the boss encounter's character."
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's role and the boss encounter's character.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
 ## DC SCALING (boss encounters)
@@ -197,47 +219,20 @@ Failure consequences in boss encounters MUST be PHYSICAL and IMMEDIATE — the b
  * @returns {boolean}
  */
 export function validateBossRoomResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const required = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'name',
       'read_aloud_opening',
       'has_challenge',
       'challenge_header',
       'dm_notes',
       'one_sentence_summary',
-    ];
-    for (const key of required) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    if (data.has_challenge !== true) {
-      console.error('has_challenge must be true for boss rooms');
-      return false;
-    }
-    if (typeof data.challenge_header !== 'string' || !data.challenge_header.trim()) {
-      console.error('challenge_header must be a non-empty string');
-      return false;
-    }
-    if (!Array.isArray(data.dm_notes) || data.dm_notes.length < 2) {
-      console.error('dm_notes must be an array with at least 2 entries (overview + boss profile)');
-      return false;
-    }
-    if (data.dm_notes.some(p => typeof p !== 'string' || !p.trim())) {
-      console.error('dm_notes entries must all be non-empty strings');
-      return false;
-    }
-    if (data.door_preamble !== undefined && typeof data.door_preamble !== 'string') {
-      console.error('door_preamble, when present, must be a string');
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallengeRequired,
+    d => validateDmNotes(d, 2),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
 /**

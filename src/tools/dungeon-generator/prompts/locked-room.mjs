@@ -64,6 +64,21 @@
  * true. Stored on `dungeon.dimensions.difficulty`.
  */
 
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallenge,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
+
 export function generateLockedRoomPrompt(
   dungeonOverview,
   shortDescription,
@@ -73,6 +88,8 @@ export function generateLockedRoomPrompt(
   doorwayInfo = null,
   loreRole = null,
   loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
@@ -106,7 +123,7 @@ ${dungeonOverview}
 
 LOCKED ROOM INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}
 ${npcSection}
 
 ## THE "LOCK" IS A PICKABLE OBSTACLE — NOT ALWAYS A DOOR
@@ -185,6 +202,8 @@ Do NOT include the obstacle's DC, bypass options, or pick mechanics in THIS room
 
 Lingering evidence of the bypass is fine in the read-aloud (a clipped padlock on the floor, the still-smoking remains of vine-ash, the cooling water of a melted ice-wall) — but the MECHANIC of defeating it is not.
 
+${CROSS_ROOM_REFERENCES_SECTION}
+
 ## WHAT DOES NOT GO IN dm_notes
 
 1. EXIT INVENTORY. The read-aloud names visible directions; door_preamble handles door states. dm_notes never lists exits.
@@ -200,7 +219,7 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "door_preamble": "Terse DM-side preamble describing any ONWARD doors with their states (the door the party used to enter is owned by the connecting room's preamble). OMIT this key (pass empty string) if no onward doors need flagging, or if the room is a dead-end pocket behind the lock.",
 
-  "read_aloud_opening": "Boxed text the DM reads when the party enters AFTER UNLOCKING the gating door. 40-90 words, present-tense, sensory. Describe the room as it is — modest if mundane, atmospheric if quiet, alive if inhabited. Visible doorways/exits should be part of the scene. NO mechanics, NO DM hints. Avoid generic material adjectives.",
+  "read_aloud_opening": "Boxed text the DM reads when the party enters AFTER UNLOCKING the gating door. 40-90 words, present-tense, sensory. Describe the room as it is — modest if mundane, atmospheric if quiet, alive if inhabited. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints. Avoid generic material adjectives.",
 
   "has_challenge": false,
 
@@ -208,10 +227,12 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "dm_notes": [
     "First paragraph (REQUIRED). Covers: dimensions, the room's KIND (from the list above), WHY the owners locked it (the in-fiction reason — routine security, a deliberate sealing, a private space, containment of something specific), and the SPECIFIC contents the party finds. Contents can be modest (spare bedding, a few jars of dried herbs, an unfinished letter) — they don't have to justify the lock as a treasure. 60-150 words. Do NOT describe the obstacle's DC or pick mechanics — that lives in the preceding room.",
-    "Subsequent paragraphs are OPTIONAL feature sub-blocks for specific items, a guardian's profile if any, or secondary IN-ROOM mechanics (a chest within the room, a bound spirit, an unstable substance). Each begins with a bolded inline title: **Feature Name.** Description follows. Skip these if the first paragraph covered everything."
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks for specific items, a guardian's profile if any, or secondary IN-ROOM mechanics (a chest within the room, a bound spirit, an unstable substance). Each begins with a bolded inline title: **Feature Name.** Description follows. Skip these if the first paragraph covered everything. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
   ],
 
-  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of what kind of room this is and why it was locked."
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of what kind of room this is and why it was locked.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
 ## DC SCALING (only if has_challenge)
@@ -235,49 +256,19 @@ Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole 
  * @returns {boolean}
  */
 export function validateLockedRoomResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const required = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'name',
       'read_aloud_opening',
       'has_challenge',
       'dm_notes',
       'one_sentence_summary',
-    ];
-    for (const key of required) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    if (typeof data.has_challenge !== 'boolean') {
-      console.error('has_challenge must be a boolean');
-      return false;
-    }
-    if (
-      data.has_challenge
-      && (typeof data.challenge_header !== 'string' || !data.challenge_header.trim())
-    ) {
-      console.error('challenge_header required when has_challenge is true');
-      return false;
-    }
-    if (!Array.isArray(data.dm_notes) || data.dm_notes.length === 0) {
-      console.error('dm_notes must be a non-empty array of paragraph strings');
-      return false;
-    }
-    if (data.dm_notes.some(p => typeof p !== 'string' || !p.trim())) {
-      console.error('dm_notes entries must all be non-empty strings');
-      return false;
-    }
-    if (data.door_preamble !== undefined && typeof data.door_preamble !== 'string') {
-      console.error('door_preamble, when present, must be a string');
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallenge,
+    d => validateDmNotes(d, 1),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
 /**

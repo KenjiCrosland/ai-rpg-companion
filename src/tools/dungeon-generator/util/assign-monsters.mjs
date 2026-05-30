@@ -66,9 +66,18 @@ export function formatMonstersForPrompt(monsters) {
 }
 
 /**
- * Format the rooms list with their mechanical types and (when
- * available) their assigned lore and NPC, so the LLM can match
- * monsters against the room's full narrative context.
+ * Format the rooms list with their mechanical types, flags, and
+ * (when available) their assigned lore and NPC, so the LLM can match
+ * monsters against the room's full narrative AND structural context.
+ *
+ * Two flags worth surfacing to the LLM:
+ *   - `requiresKey: true` — this is the obstacle/divider room. The
+ *     party solves it by finding the key from elsewhere; placing an
+ *     apex here makes the obstacle into a combat-or-die encounter,
+ *     which is wrong pacing.
+ *   - `hasKeyForRoomId: <id>` — this is the key room for some other
+ *     obstacle. The party comes here to acquire the key; placing an
+ *     apex here forces a brutal fight at a mandatory pickup point.
  *
  * @param {Array} rooms
  * @param {object} loreAssignments
@@ -86,12 +95,16 @@ export function formatRoomsForMonsterPrompt(rooms, loreAssignments, npcAssignmen
   return rooms
     .map((room) => {
       const type = room.roomType || 'untyped';
+      const flags = [];
+      if (room.requiresKey) flags.push('REQUIRES-KEY (obstacle/divider — party solves by finding key)');
+      if (room.hasKeyForRoomId) flags.push(`HAS-KEY-FOR area ${room.hasKeyForRoomId}`);
+      const flagsLine = flags.length ? ` — flags: [${flags.join('; ')}]` : '';
       const lore = roomsToLore[room.id] ? ` — lore: "${roomsToLore[room.id]}"` : '';
       const npcsHere = roomsToNPCs[room.id] || [];
       const npcLine = npcsHere.length
         ? ` — NPCs: [${npcsHere.map(id => npcNameLookup[id] || id).join(', ')}]`
         : '';
-      return `- area ${room.id}: ${type}${lore}${npcLine}`;
+      return `- area ${room.id}: ${type}${flagsLine}${lore}${npcLine}`;
     })
     .join('\n');
 }
@@ -139,15 +152,37 @@ Tier-compatibility table:
 
 - LARGE_CREATURE (apex): typically ONE area, either:
   - the boss room (when no named-NPC boss occupies it), OR
-  - a setback room (when a named NPC IS the boss; the apex becomes a roaming threat mid-dungeon)
-- STRONG_MINION (lieutenant tier): typically 1-2 areas. Setback rooms, key rooms, locked rooms (as guards), or rooms adjacent to the boss area. Lieutenant-tier creatures organize and direct — they need a place to plant themselves.
+  - a SINGLE late-dungeon setback room (when a named NPC IS the boss; the apex becomes a roaming threat the party meets after they've earned the encounter)
+- STRONG_MINION (lieutenant tier): typically 1-2 areas. Setback rooms, locked rooms (as guards), rooms adjacent to the boss area. Lieutenant-tier creatures organize and direct — they need a place to plant themselves.
 - MINION (basic tier): typically 2-4 areas. Living rooms (their nest/warren), connecting rooms (patrol routes), setback rooms (ambush sites). Populations spread across multiple chambers.
 
-Avoidance rules:
+Apex placement is CRITICAL. The apex is the dungeon's load-bearing combat threat — it gets ONE ROOM TO ITSELF. No co-tenants:
+- No co-tenant NPCs in the apex's room (the apex IS the room's identity; sharing dilutes it)
+- No co-tenant minions or strong_minions in the apex's room (the apex is one encounter; layering minions on top is unfair pacing)
+
+The apex's correct positions, in priority order:
+1. The BOSS ROOM, when no named-NPC boss occupies it (the apex IS the boss).
+2. A HAS-KEY-FOR room (key room), when the key is something the apex guards or — more evocatively — when a part of the apex (a tooth, a horn, a scale, a shed feather, a venom-sac) IS the key. This is a strong design pattern: defeating the apex yields the means to bypass an obstacle elsewhere.
+3. A SETBACK ROOM, as a creature-ambush setback. (Note: trap or environmental hazard setbacks are PREFERRED for variety; the apex should go to a setback only when no boss/key-room placement fits, or when the dungeon's central conflict points the apex to a specific lair the party visits along the way.)
+4. A thematic LIVING or PURPOSE room ONLY when the dungeon's central conflict makes that room the apex's lair (a sleeping-dragon's hoard-chamber, a brood-mother's nest) AND no NPC or other monster is there.
+
+The apex must NOT appear:
+- At the ENTRANCE (the party hasn't earned it yet)
+- In a REQUIRES-KEY room (those are structural obstacle/divider rooms; the party solves them by finding the key elsewhere, not by fighting the apex; an apex here turns an obstacle into a die-here choke point)
+- In SECRET ROOMS (payoff chambers)
+- In LOCKED ROOMS (the pickable lock is the challenge; an apex behind it is overkill)
+- In CONNECTING ROOMS (transit space)
+
+In every case, the apex's room is the apex's room — no minion co-tenants, no strong_minion co-tenants.
+
+Avoidance rules for minions and strong_minions:
 - Do NOT place minions/strong_minions in the entrance area unless the dungeon overview specifically describes guards posted there.
 - Do NOT place monsters in secret rooms — those are payoff chambers.
-- When a named-NPC BOSS occupies the boss room (visible in the room table above), do NOT also place the apex monster there. The boss room is for the named NPC; the apex goes elsewhere as a roaming or sub-boss encounter.
+- Do NOT place minions or strong_minions in REQUIRES-KEY rooms. Those rooms already deliver an obstacle; adding hostile monsters on top compounds the challenge unfairly. (A single minion patrol may pass through, but the obstacle is the encounter.)
+- A HAS-KEY-FOR room (key room) MAY hold defenders proportional to its narrative role. A handful of minions guarding a hidden tool is fine. A strong_minion as lieutenant-guard is fine when the key justifies it. The apex CAN be the key-guarder (especially if a part of the apex IS the key — a tooth, scale, horn, venom-sac) — but if the apex is here, do NOT also place minions or strong_minions in that same room. The apex gets its room to itself even when the room is a key-room.
+- When a named-NPC BOSS occupies the boss room (visible in the room table above), do NOT also place the apex monster there. The boss room is for the named NPC; the apex goes elsewhere as a late-stage encounter.
 - When a non-hostile NPC is placed in a room (a refugee, prisoner, captive scribe), do NOT place hostile monsters there — that placement contradicts the NPC's situation.
+- Whichever area the APEX is assigned to, NO other monster (minion or strong_minion) is also assigned to that area. The apex gets its room to itself. This is a hard rule — check your assignments at the end and verify that the apex's area_id does not appear in any other monster's area_ids list.
 
 Faction coherence:
 - If the dungeon has TWO factions (home faction NPCs + monster population), keep the monsters in areas the home faction does NOT control. Example: the order's brothers occupy the living rooms; the sprites occupy the lower archive's nest and patrol the connecting tunnels.

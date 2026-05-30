@@ -48,6 +48,23 @@
  * true. Stored on `dungeon.dimensions.difficulty`.
  */
 
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  DM_NOTES_EXCLUSIONS_SECTION,
+  DOOR_PREAMBLE_FIELD_DESC,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+  DC_SCALING_SECTION,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallenge,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
+
 export function generateConnectingRoomPrompt(
   dungeonOverview,
   shortDescription,
@@ -58,6 +75,8 @@ export function generateConnectingRoomPrompt(
   doorwayInfo = null,
   loreRole = null,
   loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
@@ -99,7 +118,7 @@ ${dungeonOverview}
 
 CONNECTING ROOM INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${tierLine}${existingRoomsLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}${existingRoomsLine}
 ${npcSection}
 ## REGISTER FIDELITY — respect the dungeon's established context
 
@@ -164,17 +183,9 @@ When dm_notes (or any field) references other parts of the dungeon in a way the 
 
 The LORE-LOCATION LOOKUP is the source of truth. If it's empty (no assignments were made), treat any lore-location named in the overview as atmospheric-only by default.
 
-## WHAT DOES NOT GO IN dm_notes
+${CROSS_ROOM_REFERENCES_SECTION}
 
-Three categories are explicitly owned by OTHER fields or by separately-generated sections. Putting them in dm_notes duplicates or contradicts the canonical source:
-
-1. EXIT INVENTORY. Sentences like "exits to the west (area 5) and south (area 7) via open corridors, and an unlocked door to the east (area 8)." The read-aloud already names the visible directions; door_preamble handles the door states. dm_notes never lists exits.
-
-2. SECRET DOORS, HIDDEN PASSAGES, AND THEIR MECHANICS. Sentences like "a secret door in the north wall leads to area 10; pressing a tile triggers it." A separately-generated **Secret Door** notes section gets appended to this room with the canonical discovery/opening mechanics. dm_notes never mentions the secret door's location, finding mechanic, or opening mechanic — and NEVER creates a **Secret Door Trigger** or **Hidden Passage** feature sub-block. The door_preamble flagged its existence; that is the only mention dm_notes is allowed.
-
-3. DOOR MATERIAL. "Wooden door," "stone door," etc. Door material is for the read-aloud (and only when notable). dm_notes treats doors by area number only.
-
-If you're about to write something that fits one of the three categories above, STOP and remove it. The information belongs elsewhere.
+${DM_NOTES_EXCLUSIONS_SECTION}
 
 ## OUTPUT FORMAT
 
@@ -183,9 +194,9 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 {
   "name": "1-2 word functional room name (Hallway, Antechamber, Atrium, Gallery, Corridor, etc.). Simple and functional — not descriptive.",
 
-  "door_preamble": "Terse DM-side preamble describing door states. Use ONLY the door states from the DOORWAYS IN THIS ROOM section above. Reference rooms by their connected-room numbers. OMIT this key (pass empty string) if every doorway is 'open corridor' OR if all doors are 'unlocked door' and don't need flagging. For unlocked doors that you do flag: 'The doors to areas X and Y are closed but unlocked.' For locked or secret doors, follow these formats:\\n- Character holds key: 'The door to area Z is locked, and [character name] has the only key.'\\n- Key hidden in a room: 'The door to area Z is locked; the key is hidden in area W.'\\n- Key from a key-room: 'The door to area Z is locked; the means to open it lies in area W, which itself requires the party to [solve the key-room's challenge in 1 short clause].' If the key-room isn't yet known: 'the means to open it lies elsewhere in the dungeon.'\\n- Secret door: 'There is a hidden doorway to area Z; see the Secret Door notes below.' Do NOT include a Perception DC in the preamble — the Secret Door notes section owns the discovery mechanics for secret doors, and any DC here would either duplicate or contradict it.",
+  "door_preamble": ${DOOR_PREAMBLE_FIELD_DESC},
 
-  "read_aloud_opening": "Boxed text the DM reads when the party enters this room. 40-80 words, present-tense, sensory. Describe the passage — architecture, atmosphere, light, sound, smell. Visible doorways/exits should be part of the scene; name directions naturally as part of the visual description. NO mechanics, NO DM hints, NO addressing the DM. For plain corridors, terse is fine — a single short paragraph beats inflated prose. Avoid generic material adjectives like 'wooden door' or 'stone door' unless the material is genuinely notable (peat-warped, salt-crusted, iron-bound, etc.) — for ordinary doors, just say 'door' or 'doorway'.",
+  "read_aloud_opening": "Boxed text the DM reads when the party enters this room. 40-80 words, present-tense, sensory. Describe the passage — architecture, atmosphere, light, sound, smell. Connecting rooms are about navigation, so naming the direction(s) the passage continues or branches IS part of the read-aloud's job — that's how players orient themselves. ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints, NO addressing the DM. For plain corridors, terse is fine — a single short paragraph beats inflated prose. Avoid generic material adjectives like 'wooden door' or 'stone door' unless the material is genuinely notable (peat-warped, salt-crusted, iron-bound, etc.) — for ordinary doors, just say 'door' or 'doorway'.",
 
   "has_challenge": false,
 
@@ -193,21 +204,15 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "dm_notes": [
     "Array of strings. Each string is ONE paragraph. The first paragraph covers the room's content overview: precise dimensions, notable features the DM needs to know about, any inhabitants. If has_challenge: also covers the mechanic (how it works, skills, DCs scaled to tier, IMMEDIATE physical failure consequence, optional bypass woven inline). For plain corridors with no challenge or features, the first paragraph can be very short (30-60 words). For richer connecting rooms (a gallery with murals, an atrium with a fountain), 80-150 words is fine.",
-    "Subsequent paragraphs are OPTIONAL feature sub-blocks — only when the room has a specific interactive element that warrants its own block. Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**The Faded Mural.** Characters who study the wall...', '**The Discarded Helm.** Among the rubble lies...'. Skip these for plain corridors."
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks — only when the room has a specific interactive element that warrants its own block. Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**The Faded Mural.** Characters who study the wall...', '**The Discarded Helm.** Among the rubble lies...'. Skip these for plain corridors. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
   ],
 
-  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's purpose and what's there."
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's purpose and what's there.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
-## DC SCALING (only if has_challenge)
-
-- T1: DCs 10-12, failure → minor damage (1d4-1d6) or short setback
-- T2: DCs 12-14, failure → moderate damage (2d6) or temporary condition
-- T3: DCs 14-16, failure → real damage (3d6+) or persistent threat
-- T4: DCs 16-18, failure → severe damage (4d8+) or party-wide complication
-- T5: DCs 18-20, failure → lethal threat or major resource cost
-
-Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole table within seconds of the failed roll. Do NOT write failure consequences like "wait 12 hours" or other indirect/delayed effects.`;
+${DC_SCALING_SECTION}`;
 }
 
 /**
@@ -220,50 +225,19 @@ Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole 
  * @returns {boolean}
  */
 export function validateConnectingRoomResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const required = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'name',
       'read_aloud_opening',
       'has_challenge',
       'dm_notes',
       'one_sentence_summary',
-    ];
-    for (const key of required) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    if (typeof data.has_challenge !== 'boolean') {
-      console.error('has_challenge must be a boolean');
-      return false;
-    }
-    if (
-      data.has_challenge
-      && (typeof data.challenge_header !== 'string'
-        || !data.challenge_header.trim())
-    ) {
-      console.error('challenge_header required when has_challenge is true');
-      return false;
-    }
-    if (!Array.isArray(data.dm_notes) || data.dm_notes.length === 0) {
-      console.error('dm_notes must be a non-empty array of paragraph strings');
-      return false;
-    }
-    if (data.dm_notes.some(p => typeof p !== 'string' || !p.trim())) {
-      console.error('dm_notes entries must all be non-empty strings');
-      return false;
-    }
-    if (data.door_preamble !== undefined && typeof data.door_preamble !== 'string') {
-      console.error('door_preamble, when present, must be a string');
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallenge,
+    d => validateDmNotes(d, 1),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
 /**

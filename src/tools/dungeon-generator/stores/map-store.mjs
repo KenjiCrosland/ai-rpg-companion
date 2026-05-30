@@ -6,7 +6,10 @@ import { createRoomDescriptions } from '../util/create-room-descriptions.mjs';
 import { assignLoreLocations } from '../util/assign-lore-locations.mjs';
 import { assignNPCs } from '../util/assign-npcs.mjs';
 import { assignMonsters } from '../util/assign-monsters.mjs';
+import { assignItems } from '../util/assign-items.mjs';
 import { dungeonOverviewToString } from '../util/content-to-string.mjs';
+import { getReferencesForEntity } from '@/util/reference-storage.mjs';
+import { getAllItems } from '@/util/item-storage.mjs';
 
 export async function generateMap() {
   if (!currentDungeon.value) {
@@ -29,6 +32,7 @@ export async function generateMap() {
   currentDungeon.value.loreAssignments = null;
   currentDungeon.value.npcAssignments = null;
   currentDungeon.value.monsterAssignments = null;
+  currentDungeon.value.itemAssignments = null;
   saveDungeons();
 
   // Lore-location assignment: cross-reference layer that lets room
@@ -216,6 +220,80 @@ export async function generateMap() {
     }
   } catch (err) {
     console.error('[monster-assignment] threw:', err);
+  }
+
+  // Item assignment: places items linked to this dungeon via
+  // `inspired_by_item` edges in the cross-tool reference graph onto
+  // specific rooms. Runs LAST so the LLM can use all prior context
+  // (lore, NPCs, monsters) to pick a thematically-appropriate room.
+  // Non-fatal — without placements, room prompts simply don't surface
+  // the item, and the boss-room loot section may invent a generic prize.
+  try {
+    const dungeonId = currentDungeon.value.id;
+    const refs = dungeonId
+      ? getReferencesForEntity('dungeon', dungeonId).filter(
+        r => r.relationship === 'inspired_by_item',
+      )
+      : [];
+    if (refs.length === 0) {
+      console.log('[item-assignment] no inspired_by_item edges; skipping');
+      return;
+    }
+    const allItems = getAllItems();
+    const linkedItems = refs
+      .map((r) => {
+        const itemName = r.target_type === 'item' ? r.target_id : r.source_id;
+        return allItems.find(i => i?.name === itemName);
+      })
+      .filter(Boolean);
+    if (linkedItems.length === 0) {
+      console.log('[item-assignment] no resolvable items behind edges; skipping');
+      return;
+    }
+    const overviewString = dungeonOverviewToString(
+      currentDungeon.value.dungeonOverview,
+    );
+    if (!overviewString) {
+      console.log('[item-assignment] no overview prose available; skipping');
+      return;
+    }
+    console.log('[item-assignment] starting...');
+    const itemAssignments = await assignItems({
+      dungeonOverview: overviewString,
+      rooms: dungeonRoomArray,
+      items: linkedItems,
+    });
+
+    if (!itemAssignments) {
+      console.warn('[item-assignment] returned null; rooms will not surface featured items');
+      return;
+    }
+
+    currentDungeon.value.itemAssignments = itemAssignments;
+    saveDungeons();
+
+    const matched = Object.entries(itemAssignments.item_name_to_room);
+    const unassignedItems = itemAssignments.unassigned || [];
+
+    console.log(
+      `[item-assignment] complete: ${matched.length} placed, ${unassignedItems.length} unassigned`,
+    );
+
+    if (matched.length > 0) {
+      console.log('[item-assignment] placed:');
+      matched.forEach(([itemName, areaId]) => {
+        console.log(`  "${itemName}" → area ${areaId}`);
+      });
+    }
+
+    if (unassignedItems.length > 0) {
+      console.log('[item-assignment] unassigned:');
+      unassignedItems.forEach((u) => {
+        console.log(`  "${u.item_name}" — ${u.reason}`);
+      });
+    }
+  } catch (err) {
+    console.error('[item-assignment] threw:', err);
   }
 }
 
