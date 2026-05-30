@@ -1,4 +1,52 @@
-// connecting-room.js
+/**
+ * Connecting room prompt — generates corridors, hallways, atria,
+ * antechambers, galleries, and other transitional spaces between
+ * the dungeon's keyed rooms.
+ *
+ * Output shape (same 4-field pattern as the entrance, with one
+ * type-specific tightening: connecting rooms default has_challenge
+ * to FALSE — most connecting rooms are pure traversal):
+ *
+ *   name                 — 1-2 word functional name (Corridor,
+ *                          Antechamber, Atrium, etc.)
+ *   door_preamble        — terse DM door-state info; omit if all
+ *                          doors are unlocked. Same format as the
+ *                          entrance prompt.
+ *   read_aloud_opening   — 40-80 word boxed text describing the
+ *                          passage. Shorter budget than entrance
+ *                          (which has to set threshold + first
+ *                          chamber); connecting rooms only describe
+ *                          the space itself.
+ *   has_challenge        — boolean. Defaults to FALSE for most
+ *                          connecting rooms (they are paced traversal,
+ *                          not encounter rooms). True only when the
+ *                          dungeon context demands it (a trap, posted
+ *                          guards, an obstacle in the passage, or an
+ *                          NPC encounter).
+ *   challenge_header     — ≤8 word title, only when has_challenge.
+ *   dm_notes             — array of paragraph strings. First paragraph
+ *                          covers dimensions / features / atmosphere
+ *                          (30-100 words; very short for plain
+ *                          corridors). Optional subsequent paragraphs
+ *                          are feature sub-blocks with bolded inline
+ *                          titles.
+ *   one_sentence_summary — sidebar summary, ≤20 words.
+ *
+ * Why this shape (vs. the old 9-field structure):
+ *   The old prompt mandated `interactive_element_header` +
+ *   `interactive_element_lore` + `interactive_element_details` as
+ *   three required slots. This forced the model to invent an
+ *   "interactive element" in EVERY corridor — a feature on the wall,
+ *   a lever, a statue with a hidden compartment — even when the
+ *   passage was meant to be plain. Published adventures handle
+ *   plain corridors in a single sentence ("A 20-foot hallway runs
+ *   east, lined with cracked statues."); the new prompt's optional
+ *   feature sub-blocks let the model do that without inventing
+ *   anything.
+ *
+ * Difficulty tier (1-5) scales DCs/severity if has_challenge is
+ * true. Stored on `dungeon.dimensions.difficulty`.
+ */
 
 export function generateConnectingRoomPrompt(
   dungeonOverview,
@@ -6,204 +54,210 @@ export function generateConnectingRoomPrompt(
   existingRooms = 'none',
   connectedRoomsInfo = 'none',
   npcString = '',
+  difficulty = null,
+  doorwayInfo = null,
+  loreRole = null,
+  loreLookup = '',
 ) {
-  // Conditionally include NPC Information section
+  const tierLine = difficulty
+    ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
+    : `Dungeon difficulty tier: not specified — default to T2 (DCs 12-14) if generating a challenge.`;
+
+  const connectedSection = connectedRoomsInfo && connectedRoomsInfo !== 'none'
+    ? `Connected rooms (rooms reachable from this one): ${connectedRoomsInfo}\n`
+    : '';
+
+  const doorwaySection = doorwayInfo
+    ? `\nDOORWAYS IN THIS ROOM — authoritative door states from the map. The door_preamble field MUST report states EXACTLY as listed here. Do NOT invent locks, bars, DCs, force checks, or alternate bypasses for doors marked "unlocked door." Do NOT add visual or material details here — those belong in the read-aloud:
+${doorwayInfo}
+`
+    : '';
+
   const npcSection = npcString
-    ? `**NPC Present in the Room:**
+    ? `NPC present in the room — incorporate them into the read-aloud and dm_notes. If this NPC is the dungeon's boss or a powerful entity unlikely to be in a connecting room, present them as a weakened version, projection, illusion, or avatar (a "final boss preview"), not the full encounter.
+
+NPC details:
 ${npcString}
-
-The NPC is currently in the room. Include them in the room description, detailing what they are doing and how they might interact with players. Consider their personality, goals, and any relationships they have.
-
 `
     : '';
 
-  // Conditionally include NPC Integration guidelines
-  const npcGuidelines = npcString
-    ? `- **NPC Integration:**
-  - Include the NPC in the room description, considering their characteristics and role.
-  - Describe what the NPC is doing in the room.
-  - Consider how the NPC might interact with the players.
-  - Do not reveal any secrets or hidden motives unless the players can perceive them.
-
-`
+  const existingRoomsLine = existingRooms && existingRooms !== 'none'
+    ? `\nEXISTING ROOMS in this dungeon (do NOT reuse these room-type names — pick a different one): ${existingRooms}\n`
     : '';
 
-  return `
-Using the dungeon overview and the short room description below, create a detailed description of a connecting room within the dungeon. This room should serve as a transitional space that leads to more specialized rooms, fitting within the context of the dungeon's lore and theme.
+  // LORE ROLE: when this room was assigned a named place from the
+  // overview by the lore-assignment pass, tell the model so the room
+  // generates with that identity.
+  const loreRoleSection = loreRole
+    ? `\nLORE ROLE: This room corresponds to "${loreRole}" from the dungeon's overview prose. The room generates AS that named place — its name, character, contents, and the player-facing payoff align with what the overview says about "${loreRole}". The connecting-room name field should reflect this lore identity.\n`
+    : '';
 
-**Dungeon Overview:**
+  return `You are writing a CONNECTING room — a corridor, hallway, gallery, atrium, antechamber, foyer, or other transitional space between rooms in a D&D 5e dungeon.
+
+DUNGEON OVERVIEW:
 ${dungeonOverview}
 
-**Short Room Description (includes size, exits, and any notable features):**
-${shortDescription}
-No need to use the room's shape in the description if it's not relevant to the room's function. Just use the shape to inform other details. For example, if the room is long, you could describe it as a corridor lined with statues or tapestries.
+CONNECTING ROOM INFO:
+Short description (size, exits, map-side notes): ${shortDescription}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${tierLine}${existingRoomsLine}
+${npcSection}
+## REGISTER FIDELITY — respect the dungeon's established context
 
-${
-  connectedRoomsInfo !== ''
-    ? `**Connected Rooms:** 
-  This room is connected to the following rooms: ${connectedRoomsInfo}`
-    : ''
-}
+The dungeon overview establishes the dungeon's material, lighting, inhabitants, and construction register. Individual rooms INHERIT that register and must not contradict it:
 
-${npcSection}**Guidelines:**
+- LIGHTING: if the overview describes ambient/natural light (ember-glass veins, lava heat, daylight from holes, bioluminescent fungus, etc.), do NOT invent torches, sconces, braziers, lanterns, or other installed lighting infrastructure in individual rooms. The dungeon's natural light is what lights this room too.
 
-- **Room Type:**
-  - The room could be a corridor, hallway, gallery, atrium, antechamber, grand foyer, or any multi-purpose space that connects other rooms.
-  - Choose a specific type of connecting room that makes sense within the dungeon's context.
-  - Use the room size and shape to determine the appropriate type:
-    - **Long:** Could be a corridor or gallery. If the word "long" is not in the short description, don't say that it's a corridor.
-    - **Small:** Could be a salon, antechamber, or small foyer.
-    - **Large:** Could be a grand hall, atrium, or common room.
+- CONSTRUCTION: if the dungeon was excavated or grown by non-tool-using inhabitants (drakes, oozes, fungi, worms), do NOT invent carpentry, masonry, brick courses, ironmongery, or other tool-marks. Their walls are claw-scored, melted, gnawed, or shaped by what shaped them.
 
-- **Purpose and Features:**
-  - Reflect the function of the room as a connecting space.
-  - Include architectural or decorative elements that hint at the dungeon's history and inhabitants.
-  - The room may contain objects or features that contribute to the dungeon's atmosphere but are not the main focus.
+- FURNITURE AND OBJECTS: if the overview names the inhabitants, only invent objects the inhabitants would plausibly have placed. A drake-kin burrow has bones, scorch marks, gnawed remains, ember-glass shards — NOT tapestries, sconces, candleholders, or chests of drawers. A wizard's tower has scrolls, alembics, sigils — NOT pickaxes and ore-buckets. Match the inhabitants.
 
-${npcGuidelines}- **Integration with Dungeon Lore:**
-  - Ensure the description aligns with the dungeon's theme and story.
-  - Incorporate elements from the dungeon overview to enhance immersion.
+- "WE KNOW THERE'S LIGHTS BUT NO FURNITURE" — if the dungeon overview implies the chamber has only natural light and the creatures don't furnish, describe an empty stone (or whatever-the-material-is) chamber. Do not invent.
 
-- **Avoid Specific Game Mechanics:**
-  - Focus on narrative descriptions without referencing specific game rules or mechanics.
+If you're about to write a sentence that describes infrastructure or furnishing, check: is this consistent with the dungeon's established register? If not, cut it.
 
-**Read Aloud Description Guidelines:**
+## EMPTY ROOMS ARE ALLOWED TO BE EMPTY
 
-Compose the **read_aloud_description** using the following sentence-by-sentence structure:
+Most connecting rooms in a real dungeon are empty. They exist to give the party room to walk, talk, and breathe. An empty antechamber is a perfectly fine room — describe the architecture and the atmosphere derived from the dungeon's register, and stop.
 
-1. **Sentence 1: Room-Specific Description**
-   - **Guideline:** Describe the specific type and characteristics of the room within the dungeon. Include details about its size, purpose, and distinctive features to set the scene for what the players are encountering.
-   - **Examples:**
-     - "The corridor stretches before you, its walls adorned with ancient murals depicting forgotten battles."
-     - "You enter a grand atrium, the ceiling soaring above with intricate carvings of celestial bodies."
-     - "A narrow passageway winds ahead, the air growing colder with each step."
+For an empty room:
+- read_aloud_opening can be 30-50 words. Architecture + atmosphere only. No invented objects.
+- dm_notes can be a single short paragraph (20-40 words): dimensions, "unoccupied and devoid of features," and any one detail the DM might care about. That's the whole entry.
 
-2. **Sentence 2: Atmospheric Details**
-   - **Guideline:** Focus on sensory experiences specific to the room. Describe smells, lighting, sounds, or any atmospheric elements that add depth to the room’s character.
-   - **Examples:**
-     - "Flickering torchlight casts eerie shadows that dance along the stone floor."
-     - "A faint draft carries the scent of damp earth and distant decay."
-     - "The sound of dripping water echoes softly, breaking the silence."
+Do NOT pad an empty room with invented furniture, invented sounds, invented atmospheric set-pieces, or invented historical residue ("scorch marks are consistent with..."). Empty is fine.
 
-3. **Sentence 3: Unique Features**
-   - **Guideline:** Highlight unique, non-interactive elements that make the room special. These can be architectural, artistic, or natural details that contribute to the ambiance without being directly usable by the players.
-   - **Examples:**
-     - "Columns carved to resemble intertwined serpents line the hallway."
-     - "Stained glass windows depict scenes of an ancient ritual, colors muted by dust."
-     - "An ornate chandelier hangs precariously, its crystals reflecting fragments of light."
+## CHALLENGE DECISION — do this first
 
-4. **Sentence 4: Interactive Element${npcString ? ' or NPC' : ''}**
-   - **Guideline:** Introduce one feature in the room that players can interact with${
-     npcString ? ' or the NPC if one is present' : ''
-   }. This will be expanded upon further in the interactive element${
-    npcString ? ' or NPC' : ''
-  } descriptions. **DO NOT MENTION TRAPS OR ANYTHING HIDDEN TO PLAYERS.**
-   - **Examples:**
-     - "A heavy wooden door stands ajar at the far end, intricate runes etched into its frame."
-     - "An old, weathered map is mounted on the wall, its details faded but still discernible."
-     - "A series of levers protrude from a panel beside the passageway, their purpose unclear."
-     ${
-       npcString
-         ? '- "A cloaked figure stands silently by a pillar, their gaze following your movements."'
-         : ''
-     }
-     ${
-       npcString
-         ? '- "An armored guard patrols the area, his footsteps echoing in the vast space."'
-         : ''
-     }
+Most connecting rooms have NO challenge. They are pure traversal — they pace the dungeon and give the party room to talk, plan, and breathe between keyed rooms. has_challenge should be FALSE by default.
 
-**Return the description in JSON format with the following keys:**
+Set has_challenge = TRUE only when the dungeon's context specifically demands danger in this passage:
+- A trap that the dungeon's inhabitants would plausibly have placed here
+- Guards or sentries posted at a chokepoint
+- An obstacle (rubble, collapsed section, environmental hazard) that requires resolution
+- An NPC encounter happens here
 
-- **name**: A short, appropriate name for the room (e.g., "Grand Hallway", "Foyer", "Antechamber", "Gallery", "Atrium", "Corridor"). This name should be 1-2 words and should be simple, indicating the function of the room. Don't use overly descriptive names. It should be a common room type.
-- **one_sentence_summary**: A brief summary of the room's function or purpose within the dungeon.
-- **lore_description**: For the Dungeon Master's eyes only. Describe the room's history, purpose, and how it fits into the dungeon's lore.
-- **features_and_contents**: For the Dungeon Master's eyes only. Describe notable features, items, or information present in the room that may be of interest to the players.
-- **interactive_element_header**: A brief header for the interactive element in the room${
-    npcString ? " or the NPC's name if present" : ''
-  } (e.g., "The Etched Door", "The Faded Map", "The Lever Panel"${
-    npcString ? ', "Mysterious Figure", "Armored Guard"' : ''
-  }).
-- **interactive_element_lore**: For the Dungeon Master's eyes only. Provide additional lore or context about the interactive element${
-    npcString ? ' or NPC' : ''
-  }. Why is it here? What is its significance?
-- **interactive_element_details**: For the Dungeon Master's eyes only. Describe the interactive element${
-    npcString ? ' or NPC' : ''
-  } in more detail, including its appearance, behavior, and any effects it may have on the players.${
-    npcString
-      ? ' Include how the NPC might react to player interactions. What might the NPC say or do if the players approach?'
-      : ''
-  }
-- **read_aloud_description**: A vivid description to read aloud when players enter the room, following the sentence-by-sentence guidelines above. Remember to take the following short description into account, particularly when it comes to room size: ${shortDescription}
-- **additional_notes**: For the Dungeon Master's eyes only. Include any other relevant information or secrets about the room${
-    npcString ? ' or NPC' : ''
-  }.
+Do NOT default to "every room must have something to do." A boring hallway is a fine hallway. The five-room-dungeon-formula's "every room has a challenge" assumption does not apply.
 
-**Example JSON Format:**
+## ROOM TYPE — match the room's size and shape
 
-\`\`\`json
+- Long: corridor or gallery (only call it a corridor if "long" is in the short description)
+- Small: salon, antechamber, small foyer
+- Large: grand hall, atrium, common room
+- Otherwise: any 1-2 word transitional space name
+
+Pick a SIMPLE 1-2 word functional name — Grand Hallway, Foyer, Atrium, Antechamber, Gallery, Corridor. Not "The Whispering Grand Foyer of the Faithful." The name is functional; the room's character comes from the description.
+
+## BOLDING RULES
+
+Use **markdown bold** ONLY for these three things — nothing else:
+1. Creature names when first introduced in a paragraph (e.g., **goblin sentry**)
+2. Character names when first introduced in a paragraph (e.g., **Velina**)
+3. Feature sub-block titles at the START of an optional dm_notes paragraph, formatted as: **Feature Name.** followed by description
+
+DO NOT bold game mechanics keywords (Puzzle, Skill Checks, Consequences of Failure, etc.), DCs ("DC 12 Investigation"), action verbs, or generic phrases. Plain text carries those.
+
+## CROSS-REFERENCE FIDELITY — use the LORE-LOCATION LOOKUP
+
+When dm_notes (or any field) references other parts of the dungeon in a way the party can act on (a route, a destination, a bypass), the references MUST resolve to actual area numbers on the map.
+
+- If a lore-location appears in the LORE-LOCATION LOOKUP above, USE the listed area number when referencing it ("a passage leading to area 7" — or "a passage to the bone-pile chamber, area 7"). These references are actionable.
+- If a lore-location is NOT in the lookup, treat it as ATMOSPHERIC only ("the air still tastes of the bog-water outside") — do not promise navigation to it. The DM has no way to fulfill the promise.
+
+The LORE-LOCATION LOOKUP is the source of truth. If it's empty (no assignments were made), treat any lore-location named in the overview as atmospheric-only by default.
+
+## WHAT DOES NOT GO IN dm_notes
+
+Three categories are explicitly owned by OTHER fields or by separately-generated sections. Putting them in dm_notes duplicates or contradicts the canonical source:
+
+1. EXIT INVENTORY. Sentences like "exits to the west (area 5) and south (area 7) via open corridors, and an unlocked door to the east (area 8)." The read-aloud already names the visible directions; door_preamble handles the door states. dm_notes never lists exits.
+
+2. SECRET DOORS, HIDDEN PASSAGES, AND THEIR MECHANICS. Sentences like "a secret door in the north wall leads to area 10; pressing a tile triggers it." A separately-generated **Secret Door** notes section gets appended to this room with the canonical discovery/opening mechanics. dm_notes never mentions the secret door's location, finding mechanic, or opening mechanic — and NEVER creates a **Secret Door Trigger** or **Hidden Passage** feature sub-block. The door_preamble flagged its existence; that is the only mention dm_notes is allowed.
+
+3. DOOR MATERIAL. "Wooden door," "stone door," etc. Door material is for the read-aloud (and only when notable). dm_notes treats doors by area number only.
+
+If you're about to write something that fits one of the three categories above, STOP and remove it. The information belongs elsewhere.
+
+## OUTPUT FORMAT
+
+Return STRICT JSON (no prose, no commentary, no code fences):
+
 {
-  "name": "Grand Hallway",
-  "one_sentence_summary": "A long corridor connecting various parts of the dungeon, adorned with historical murals.",
-  "lore_description": "This hallway was the main artery of the temple, used by priests and acolytes to move between sacred chambers. The murals tell the story of the deity worshipped here, depicting key events and rituals.",
-  "features_and_contents": "The floor is made of polished marble, now cracked and worn. Niches along the walls hold statues of forgotten heroes. Sconces for torches are empty, but faint magical light still illuminates the path.",
-  "interactive_element_header": ${
-    npcString ? '"Mysterious Figure"' : '"The Faded Map"'
-  },
-  "interactive_element_lore": ${
-    npcString
-      ? '"A rogue agent of the Shadow Guild, stationed here to monitor dungeon activity."'
-      : '"The map was created by the original architects, showing secret passages and hidden rooms intended for only the most trusted members."'
-  },
-  "interactive_element_details": ${
-    npcString
-      ? '"The figure is cloaked, obscuring their features. If approached, they may offer cryptic warnings or bartering opportunities. Interacting with them could lead to valuable information or potential conflict, depending on the players\' actions."'
-      : '"The map is etched into a metal plate mounted on the wall. Players who examine it closely can make an Investigation check to uncover hidden routes. Success reveals a secret door in this hallway or provides advantage on navigating the dungeon."'
-  },
-  "read_aloud_description": "The corridor stretches before you, its walls adorned with ancient murals depicting forgotten battles. Flickering torchlight casts eerie shadows that dance along the stone floor. Columns carved to resemble intertwined serpents line the hallway. ${
-    npcString
-      ? 'A cloaked figure stands silently by a pillar, their gaze following your movements.'
-      : 'An old, weathered map is mounted on the wall, its details faded but still discernible.'
-  }",
-  "additional_notes": "Some of the statues may hold clues or keys needed elsewhere in the dungeon. The magical light is sustained by ancient enchantments that could be disrupted."
-}
-\`\`\`
+  "name": "1-2 word functional room name (Hallway, Antechamber, Atrium, Gallery, Corridor, etc.). Simple and functional — not descriptive.",
 
-The dungeon already has the following rooms: ${existingRooms}
+  "door_preamble": "Terse DM-side preamble describing door states. Use ONLY the door states from the DOORWAYS IN THIS ROOM section above. Reference rooms by their connected-room numbers. OMIT this key (pass empty string) if every doorway is 'open corridor' OR if all doors are 'unlocked door' and don't need flagging. For unlocked doors that you do flag: 'The doors to areas X and Y are closed but unlocked.' For locked or secret doors, follow these formats:\\n- Character holds key: 'The door to area Z is locked, and [character name] has the only key.'\\n- Key hidden in a room: 'The door to area Z is locked; the key is hidden in area W.'\\n- Key from a key-room: 'The door to area Z is locked; the means to open it lies in area W, which itself requires the party to [solve the key-room's challenge in 1 short clause].' If the key-room isn't yet known: 'the means to open it lies elsewhere in the dungeon.'\\n- Secret door: 'There is a hidden doorway to area Z; see the Secret Door notes below.' Do NOT include a Perception DC in the preamble — the Secret Door notes section owns the discovery mechanics for secret doors, and any DC here would either duplicate or contradict it.",
 
-Do not reuse any of these room types. Ensure that the room description is unique and adds depth to the dungeon's narrative.
+  "read_aloud_opening": "Boxed text the DM reads when the party enters this room. 40-80 words, present-tense, sensory. Describe the passage — architecture, atmosphere, light, sound, smell. Visible doorways/exits should be part of the scene; name directions naturally as part of the visual description. NO mechanics, NO DM hints, NO addressing the DM. For plain corridors, terse is fine — a single short paragraph beats inflated prose. Avoid generic material adjectives like 'wooden door' or 'stone door' unless the material is genuinely notable (peat-warped, salt-crusted, iron-bound, etc.) — for ordinary doors, just say 'door' or 'doorway'.",
 
-If they aren't in the list, you can use the following room types: corridor, hallway, gallery, atrium, antechamber, grand foyer, or any multi-purpose space that connects other rooms. Focus on spaces that serve as transitions between areas.
+  "has_challenge": false,
 
-Room size and shape should determine the type of room you choose. For example:
+  "challenge_header": "≤8 word title for the challenge. Omit this key entirely if has_challenge is false.",
 
-- A **long** room could be a corridor or gallery.
-- A **small** room could be a salon, antechamber, or small foyer.
-- A **large** room could be a grand hall, atrium, or common room.
+  "dm_notes": [
+    "Array of strings. Each string is ONE paragraph. The first paragraph covers the room's content overview: precise dimensions, notable features the DM needs to know about, any inhabitants. If has_challenge: also covers the mechanic (how it works, skills, DCs scaled to tier, IMMEDIATE physical failure consequence, optional bypass woven inline). For plain corridors with no challenge or features, the first paragraph can be very short (30-60 words). For richer connecting rooms (a gallery with murals, an atrium with a fountain), 80-150 words is fine.",
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks — only when the room has a specific interactive element that warrants its own block. Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**The Faded Mural.** Characters who study the wall...', '**The Discarded Helm.** Among the rubble lies...'. Skip these for plain corridors."
+  ],
 
-**Please provide the response in this JSON format.**
-`;
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's purpose and what's there."
 }
 
+## DC SCALING (only if has_challenge)
+
+- T1: DCs 10-12, failure → minor damage (1d4-1d6) or short setback
+- T2: DCs 12-14, failure → moderate damage (2d6) or temporary condition
+- T3: DCs 14-16, failure → real damage (3d6+) or persistent threat
+- T4: DCs 16-18, failure → severe damage (4d8+) or party-wide complication
+- T5: DCs 18-20, failure → lethal threat or major resource cost
+
+Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole table within seconds of the failed roll. Do NOT write failure consequences like "wait 12 hours" or other indirect/delayed effects.`;
+}
+
+/**
+ * Validate the connecting room response. Same shape as the entrance
+ * response — `name` and `dm_notes` (array) required; `has_challenge`
+ * boolean; `challenge_header` required only when has_challenge is true;
+ * `door_preamble` optional.
+ *
+ * @param {string} jsonString
+ * @returns {boolean}
+ */
 export function validateConnectingRoomResponse(jsonString) {
   try {
     const data = JSON.parse(jsonString);
-    const requiredKeys = [
+    const required = [
       'name',
+      'read_aloud_opening',
+      'has_challenge',
+      'dm_notes',
       'one_sentence_summary',
-      'read_aloud_description',
-      'lore_description',
-      'features_and_contents',
-      'interactive_element_header',
-      'interactive_element_lore',
-      'interactive_element_details',
-      'additional_notes',
     ];
-    for (const key of requiredKeys) {
+    for (const key of required) {
       if (!(key in data)) {
         console.error(`Missing required key: ${key}`);
         return false;
       }
+    }
+    if (typeof data.has_challenge !== 'boolean') {
+      console.error('has_challenge must be a boolean');
+      return false;
+    }
+    if (
+      data.has_challenge
+      && (typeof data.challenge_header !== 'string'
+        || !data.challenge_header.trim())
+    ) {
+      console.error('challenge_header required when has_challenge is true');
+      return false;
+    }
+    if (!Array.isArray(data.dm_notes) || data.dm_notes.length === 0) {
+      console.error('dm_notes must be a non-empty array of paragraph strings');
+      return false;
+    }
+    if (data.dm_notes.some(p => typeof p !== 'string' || !p.trim())) {
+      console.error('dm_notes entries must all be non-empty strings');
+      return false;
+    }
+    if (data.door_preamble !== undefined && typeof data.door_preamble !== 'string') {
+      console.error('door_preamble, when present, must be a string');
+      return false;
     }
     return true;
   } catch (e) {
@@ -212,21 +266,37 @@ export function validateConnectingRoomResponse(jsonString) {
   }
 }
 
+/**
+ * Build the contentArray that the RoomDescription component renders.
+ *
+ * Order:
+ *   1. door_preamble (paragraph)            — only when non-empty
+ *   2. read_aloud_opening (boxed)
+ *   3. challenge_header (header)            — only when has_challenge
+ *   4. dm_notes[0..n] (paragraph each)      — one entry per paragraph
+ *
+ * The header is preserved in the array (when present) for forward
+ * compatibility with future edit-form round-trips; the
+ * RoomDescription template currently doesn't render the header slot
+ * (the room number/name h3 is the heading).
+ *
+ * @param {object} data parsed connecting room response
+ * @returns {Array<{format: string, content: string}>}
+ */
 export function processConnectingRoomResponse(data) {
   const content = [];
+  if (data.door_preamble && data.door_preamble.trim()) {
+    content.push({ format: 'paragraph', content: data.door_preamble.trim() });
+  }
   content.push({
     format: 'read_aloud',
-    content: data.read_aloud_description,
+    content: data.read_aloud_opening,
   });
-  content.push({ format: 'paragraph', content: data.lore_description });
-  content.push({ format: 'paragraph', content: data.features_and_contents });
-  content.push({ format: 'paragraph', content: data.additional_notes });
-  content.push({ format: 'header', content: data.interactive_element_header });
-  content.push({ format: 'paragraph', content: data.interactive_element_lore });
-  content.push({
-    format: 'paragraph',
-    content: data.interactive_element_details,
-  });
-
+  if (data.has_challenge && data.challenge_header) {
+    content.push({ format: 'header', content: data.challenge_header });
+  }
+  for (const paragraph of data.dm_notes) {
+    content.push({ format: 'paragraph', content: paragraph });
+  }
   return content;
 }

@@ -6,6 +6,10 @@ import {
   contentArrayToString,
   dungeonOverviewToString,
 } from '../util/content-to-string.mjs';
+import {
+  getRoomLoreName,
+  formatLoreLookupForPrompt,
+} from '../util/assign-lore-locations.mjs';
 // Import prompt, validation, and processing functions
 import {
   generateEntrancePrompt,
@@ -140,6 +144,8 @@ export function useRoomDescription() {
     formRoomSummary = '',
     npcString = '',
     difficulty = null,
+    loreRole = null,
+    loreLookup = '',
   }) {
     const prompt = generateEntrancePrompt(
       dungeonOverview,
@@ -150,6 +156,8 @@ export function useRoomDescription() {
       npcString,
       difficulty,
       doorwayInfo,
+      loreRole,
+      loreLookup,
     );
     //console.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -286,6 +294,10 @@ export function useRoomDescription() {
       roomName,
       roomSummary,
       npcString,
+      currentDungeon.dimensions?.difficulty || null,
+      formatRoomDoorways(currentDungeon, room),
+      getRoomLoreName(currentDungeon, room.id),
+      formatLoreLookupForPrompt(currentDungeon),
     );
     //console.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -364,6 +376,10 @@ export function useRoomDescription() {
     shortDescription,
     connectedRoomsInfo,
     npcString = '',
+    difficulty = null,
+    doorwayInfo = null,
+    loreRole = null,
+    loreLookup = '',
   }) {
     const existingRooms = currentDungeon.roomNames.join(', ');
     const prompt = generateConnectingRoomPrompt(
@@ -372,6 +388,10 @@ export function useRoomDescription() {
       existingRooms,
       connectedRoomsInfo,
       npcString,
+      difficulty,
+      doorwayInfo,
+      loreRole,
+      loreLookup,
     );
     //console.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -463,6 +483,10 @@ export function useRoomDescription() {
       secretRoomSummary,
       currentRoomContentString,
       secretRoomContentString,
+      // Discovery DC scales to tier (always hard relative to tier);
+      // dimensions live on dungeon.dimensions.
+      currentDungeon.dimensions?.difficulty || null,
+      formatLoreLookupForPrompt(currentDungeon),
     );
 
     //console.log('Secret Door Prompt:', prompt);
@@ -678,6 +702,12 @@ export function useRoomDescription() {
           // Entrance prompt scales DCs and failure severity to tier;
           // dimensions live on dungeon.dimensions, so pull from there.
           difficulty: currentDungeon.dimensions?.difficulty || null,
+          // Lore assignments from the post-map coherence pass. The
+          // entrance prompt uses loreRole to lean into the room's
+          // named identity (if any) and loreLookup to resolve
+          // navigation references to other named places.
+          loreRole: getRoomLoreName(currentDungeon, room.id),
+          loreLookup: formatLoreLookupForPrompt(currentDungeon),
         }));
       } else if (room.requiresKey) {
         ({ roomDescription, contentArray } = await handleObstacleRoom({
@@ -727,7 +757,11 @@ export function useRoomDescription() {
           npcString,
         }));
       } else if (['purpose', 'living', 'connecting'].includes(room.roomType)) {
-        // Use specific handlers for these room types without form inputs
+        // Use specific handlers for these room types without form inputs.
+        // difficulty + doorwayInfo + loreRole + loreLookup are passed for
+        // the connecting handler (and will be used by purpose/living when
+        // those prompts are converted to the new shape — for now they
+        // ignore extra args via destructuring).
         const handler = roomTypeHandlers[room.roomType];
         ({ roomDescription, contentArray } = await handler({
           room,
@@ -736,6 +770,10 @@ export function useRoomDescription() {
           shortDescription,
           connectedRoomsInfo,
           npcString,
+          difficulty: currentDungeon.dimensions?.difficulty || null,
+          doorwayInfo: formatRoomDoorways(currentDungeon, room),
+          loreRole: getRoomLoreName(currentDungeon, room.id),
+          loreLookup: formatLoreLookupForPrompt(currentDungeon),
         }));
       } else {
         console.error('Unknown room type:', room.roomType);

@@ -57,6 +57,8 @@ export function generateEntrancePrompt(
   npcString = '',
   difficulty = null,
   doorwayInfo = null,
+  loreRole = null,
+  loreLookup = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
@@ -72,6 +74,13 @@ export function generateEntrancePrompt(
 
   const connectedSection = connectedRoomsInfo
     ? `Connected rooms (rooms reachable from this one): ${connectedRoomsInfo}\n`
+    : '';
+
+  // LORE ROLE: when this room was assigned a named place from the
+  // overview by the lore-assignment pass, tell the model so the room
+  // generates with that identity.
+  const loreRoleSection = loreRole
+    ? `\nLORE ROLE: This room corresponds to "${loreRole}" from the dungeon's overview prose. The entrance generates AS that named place — its character, contents, and the player-facing payoff align with whatever the overview says about "${loreRole}".\n`
     : '';
 
   const doorwaySection = doorwayInfo
@@ -95,8 +104,20 @@ ${dungeonOverview}
 
 ENTRANCE INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${doorwaySection}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${tierLine}
 ${roomNameSection}${roomSummarySection}${npcSection}
+## REGISTER FIDELITY — respect the dungeon's established context
+
+The dungeon overview establishes the dungeon's material, lighting, inhabitants, and construction register. The entrance and first chamber INHERIT that register and must not contradict it:
+
+- LIGHTING: if the overview describes ambient/natural light (ember-glass veins, lava heat, daylight from holes, bioluminescent fungus, etc.), do NOT invent torches, sconces, braziers, lanterns, or other installed lighting infrastructure in this room. The dungeon's natural light is what lights this room too.
+
+- CONSTRUCTION: if the dungeon was excavated or grown by non-tool-using inhabitants (drakes, oozes, fungi, worms), do NOT invent carpentry, masonry, brick courses, ironmongery, or other tool-marks. Their walls are claw-scored, melted, gnawed, or shaped by what shaped them.
+
+- FURNITURE AND OBJECTS: if the overview names the inhabitants, only invent objects the inhabitants would plausibly have placed. A drake-kin burrow has bones, scorch marks, gnawed remains, ember-glass shards — NOT tapestries, sconces, candleholders, or chests of drawers. Match the inhabitants.
+
+If you're about to write a sentence that describes infrastructure or furnishing, check: is this consistent with the dungeon's established register? If not, cut it.
+
 ## CHALLENGE DECISION — do this first
 
 Read the dungeon overview's APPROACH or threshold prose. Then decide whether the entrance ITSELF has a challenge:
@@ -118,12 +139,33 @@ Use **markdown bold** ONLY for these three things — nothing else:
 
 DO NOT bold game mechanics keywords (Puzzle, Skill Checks, Consequences of Failure, etc.), DCs ("DC 12 Investigation"), action verbs, or generic phrases. Plain text carries those — the layout already distinguishes them. The above three categories are the ONLY exception to plain-text body.
 
+## CROSS-REFERENCE FIDELITY — use the LORE-LOCATION LOOKUP
+
+When dm_notes (or any field) references other parts of the dungeon in a way the party can act on (a route, a destination, a bypass), the references MUST resolve to actual area numbers on the map.
+
+- If a lore-location appears in the LORE-LOCATION LOOKUP above, USE the listed area number when referencing it ("a passage leading to area 7" — or "a passage to the bone-pile chamber, area 7"). These references are actionable.
+- If a lore-location is NOT in the lookup, treat it as ATMOSPHERIC only ("the air still tastes of the bog-water outside") — do not promise navigation to it. The DM has no way to fulfill the promise.
+
+The LORE-LOCATION LOOKUP is the source of truth. If it's empty (no assignments were made), treat any lore-location named in the overview as atmospheric-only by default.
+
+## WHAT DOES NOT GO IN dm_notes
+
+Three categories are explicitly owned by OTHER fields or by separately-generated sections. Putting them in dm_notes duplicates or contradicts the canonical source:
+
+1. EXIT INVENTORY. Sentences like "exits to the west (area 5) and south (area 7) via open corridors, and an unlocked door to the east (area 8)." The read-aloud already names the visible directions; door_preamble handles the door states. dm_notes never lists exits.
+
+2. SECRET DOORS, HIDDEN PASSAGES, AND THEIR MECHANICS. Sentences like "a secret door in the north wall leads to area 10; pressing a tile triggers it." A separately-generated **Secret Door** notes section gets appended to this room with the canonical discovery/opening mechanics. dm_notes never mentions the secret door's location, finding mechanic, or opening mechanic — and NEVER creates a **Secret Door Trigger** or **Hidden Passage** feature sub-block. The door_preamble flagged its existence; that is the only mention dm_notes is allowed.
+
+3. DOOR MATERIAL. "Wooden door," "stone door," etc. Door material is for the read-aloud (and only when notable). dm_notes treats doors by area number only.
+
+If you're about to write something that fits one of the three categories above, STOP and remove it. The information belongs elsewhere.
+
 ## OUTPUT FORMAT
 
 Return STRICT JSON (no prose, no commentary, no code fences):
 
 {
-  "door_preamble": "Terse DM-side preamble describing door states. Use ONLY the door states from the DOORWAYS IN THIS ROOM section above — do not invent locks, bars, DCs, force checks, or bypasses. Reference rooms by their connected-room numbers from the DOORWAYS list. OMIT this key (or pass empty string) ONLY if every doorway is 'open corridor' (no doors at all). For unlocked doors, just say 'The doors to areas X and Y are closed but unlocked.' For locked or secret doors, follow these formats: \\n- Character holds the key: 'The door to area Z is locked, and [character name] has the only key.'\\n- Key hidden in a specific room: 'The door to area Z is locked; the key is hidden in area W.'\\n- Key obtained from a key-room (a room whose purpose is to provide the means to overcome a specific locked door — the 'key' may be a literal key, a lever, an item, an ally, a spell, or any creative solution): 'The door to area Z is locked; the means to open it lies in area W, which itself requires the party to [solve the key-room's challenge in 1 short clause].' If you don't know which connected room is the key-room for a given locked door, just say 'the means to open it lies elsewhere in the dungeon.'\\n- Secret door: 'The doorway to area Z is hidden; characters notice it on a DC [tier-appropriate] Perception check.' Do not list secret doors as visible exits in the read-aloud.\\nDo NOT describe the doors visually here — material/appearance belongs in the read-aloud (and only when notable).",
+  "door_preamble": "Terse DM-side preamble describing door states. Use ONLY the door states from the DOORWAYS IN THIS ROOM section above — do not invent locks, bars, DCs, force checks, or bypasses. Reference rooms by their connected-room numbers from the DOORWAYS list. OMIT this key (or pass empty string) ONLY if every doorway is 'open corridor' (no doors at all). For unlocked doors, just say 'The doors to areas X and Y are closed but unlocked.' For locked or secret doors, follow these formats: \\n- Character holds the key: 'The door to area Z is locked, and [character name] has the only key.'\\n- Key hidden in a specific room: 'The door to area Z is locked; the key is hidden in area W.'\\n- Key obtained from a key-room (a room whose purpose is to provide the means to overcome a specific locked door — the 'key' may be a literal key, a lever, an item, an ally, a spell, or any creative solution): 'The door to area Z is locked; the means to open it lies in area W, which itself requires the party to [solve the key-room's challenge in 1 short clause].' If you don't know which connected room is the key-room for a given locked door, just say 'the means to open it lies elsewhere in the dungeon.'\\n- Secret door: 'There is a hidden doorway to area Z; see the Secret Door notes below.' Do NOT include a Perception DC in the preamble — the Secret Door notes section owns the discovery mechanics for secret doors, and any DC here would either duplicate or contradict it. Do not list secret doors as visible exits in the read-aloud.\\nDo NOT describe the doors visually here — material/appearance belongs in the read-aloud (and only when notable).",
 
   "read_aloud_opening": "Boxed text the DM reads when the party arrives. 60-100 words, present-tense, sensory. Describe BOTH the threshold from outside AND the first chamber visible past it — this is the only room where one read-aloud spans the outside-to-inside transition. Visible doorways/exits should be part of the scene (the players see them); name directions naturally as part of the visual description. NO mechanics, NO DM hints, NO addressing the DM. Just what the players see, hear, smell, feel. Avoid generic material adjectives like 'wooden door' or 'stone door' unless the material is genuinely notable (ember-glass, iron-bound, salt-crusted, etc.) — for ordinary doors, just say 'door' or 'doorway'.",
 
