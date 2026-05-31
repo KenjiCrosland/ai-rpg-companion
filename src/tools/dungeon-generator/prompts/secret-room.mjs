@@ -92,7 +92,7 @@ ${secretDoorDetails}
     : '';
 
   const npcSection = npcString
-    ? `NPC present in the room — incorporate them into the read-aloud and dm_notes. If this NPC is the dungeon's boss or a powerful entity, present them as a weakened version, projection, illusion, or avatar (a "final boss preview") rather than the full encounter.
+    ? `NPC present in the room — the user explicitly picked this NPC. They MUST appear by name in the read_aloud_opening or dm_notes; do NOT silently omit them. If this NPC is the dungeon's BOSS or a powerful entity, present them as a weakened version, projection, illusion, or avatar (a "final boss preview") rather than the full encounter — but they MUST still appear. If this NPC reads as someone from OUTSIDE the dungeon (a questgiver, a townsperson, a relative the party was sent to investigate, an NPC whose context lives in the surrounding setting rather than this dungeon), incorporate them diegetically — a vision in the steam, a voice carried on a draft, a written note left here in their hand, a memory-echo touched in the cold, a sketched portrait on the wall, a sleeping form half-glimpsed in shadow — but they MUST still appear by name. Neither exception is a license to skip them.
 
 NPC details:
 ${npcString}
@@ -275,6 +275,7 @@ export function processSecretRoomResponse(data) {
     content.push({ format: 'header', content: data.challenge_header });
   }
   for (const paragraph of data.dm_notes) {
+    if (typeof paragraph !== 'string' || !paragraph.trim()) continue;
     content.push({ format: 'paragraph', content: paragraph });
   }
   return content;

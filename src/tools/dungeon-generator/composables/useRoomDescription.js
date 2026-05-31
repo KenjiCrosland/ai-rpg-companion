@@ -1108,7 +1108,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
         return;
       }
 
-      const room = currentDungeon.rooms.find(
+      let room = currentDungeon.rooms.find(
         (room) => room.id === selectedRoomId,
       );
 
@@ -1147,10 +1147,37 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       let roomDescription = {};
       let contentArray = [];
       let npcString = '';
-      if (npcData && npcData.npc_string) {
-        // Manually-selected NPC wins — the user explicitly picked
-        // this NPC for the room via the form.
-        npcString = npcData.npc_string;
+      if (npcData && npcData.name) {
+        // Manually-selected NPC. Prefer `npc_string` (the canonical
+        // formatted summary built by buildNPCString during full
+        // generation) when present, but build from whatever fields
+        // exist when it's not. Auto-generation was removed from the
+        // room flow, so stub NPCs no longer get `npc_string`
+        // populated automatically; some legacy "complete" NPCs may
+        // also lack it. The same builder shape (newline-joined
+        // sections) is what buildNPCString uses internally — keeping
+        // this branch standalone avoids cross-module coupling.
+        if (npcData.npc_string) {
+          npcString = npcData.npc_string;
+        } else {
+          const parts = [npcData.name];
+          if (npcData.short_description) {
+            parts.push(npcData.short_description);
+          }
+          if (npcData.description_of_position) {
+            parts.push(npcData.description_of_position);
+          }
+          if (npcData.current_location) {
+            parts.push(npcData.current_location);
+          }
+          if (npcData.distinctive_features_or_mannerisms) {
+            parts.push(npcData.distinctive_features_or_mannerisms);
+          }
+          if (npcData.character_secret) {
+            parts.push(npcData.character_secret);
+          }
+          npcString = parts.join('\n');
+        }
       } else {
         // No manual pick; fall back to auto-assigned NPCs from the
         // post-map NPC assignment pass. Returns empty string when no
@@ -1306,9 +1333,25 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       }
 
       // **Update Room Details**
-      room.oneSentenceSummary = roomDescription.one_sentence_summary || '';
-      room.name = roomDescription.name || `Room ${selectedRoomId}`;
-      room.contentArray = contentArray;
+      // Re-find the room from the live `currentDungeon.rooms` array
+      // before mutating. The `room` captured at the top of this
+      // function (line ~1111) is the reference as-of-then; if anything
+      // during the await chain (NPC generation, statblock generation,
+      // post-map assignments) caused a fresh `dungeons.value` parse
+      // — or any other replacement of the rooms array — the original
+      // `room` is now detached from the live state. Mutating it would
+      // succeed in memory but be invisible to saveDungeons, which
+      // serializes the live `dungeons.value`. Falling back to the
+      // original `room` reference preserves prior behavior when the
+      // re-find can't locate the id (shouldn't happen, but defensive).
+      const liveRoom = currentDungeon.rooms.find(r => r.id === selectedRoomId) || room;
+      liveRoom.oneSentenceSummary = roomDescription.one_sentence_summary || '';
+      liveRoom.name = roomDescription.name || `Room ${selectedRoomId}`;
+      liveRoom.contentArray = contentArray;
+      // Keep the local `room` pointing at the live object too so the
+      // downstream propagation/secret-door/lock-obstacle code below
+      // operates on the same reference.
+      room = liveRoom;
 
       // **Propagate Room Mentions**
       // When a room establishes specific facts about adjacent rooms

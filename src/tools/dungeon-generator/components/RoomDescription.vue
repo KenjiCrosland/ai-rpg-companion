@@ -199,10 +199,33 @@ const roomFormName = ref('');
 const roomFormShortDescription = ref('');
 const selectedNPCName = ref(null);
 const npcOptions = computed(() => {
-  if (dungeonStore.currentDungeon && dungeonStore.currentDungeon.npcs) {
-    return ['None', ...dungeonStore.currentDungeon.npcs.map((npc) => npc.name)];
+  const dungeon = dungeonStore.currentDungeon;
+  if (!dungeon?.npcs) return [{ value: 'None', label: 'None' }];
+  // Annotate dropdown options for NPCs already committed (via room
+  // generation) to a DIFFERENT room. Reads from room-side state
+  // (`room.includedNpcIds`, set when a description is generated),
+  // so reassignments before generation stay free. Plural because
+  // the LLM can place multiple NPCs in one room.
+  const currentRoomId = dungeonStore.selectedRoomId;
+  const committedRoomByNpcId = {};
+  for (const room of (dungeon.rooms || [])) {
+    const ids = room.includedNpcIds
+      || (room.includedNpcId ? [room.includedNpcId] : []);
+    for (const id of ids) {
+      committedRoomByNpcId[id] = room.id;
+    }
   }
-  return ['None'];
+  return [
+    { value: 'None', label: 'None' },
+    ...dungeon.npcs.map((npc) => {
+      const committedRoomId = committedRoomByNpcId[npc.npc_id];
+      const isElsewhere = committedRoomId && committedRoomId !== currentRoomId;
+      return {
+        value: npc.name,
+        label: isElsewhere ? `${npc.name} (in area ${committedRoomId})` : npc.name,
+      };
+    }),
+  ];
 });
 const room = ref(null);
 const activeView = ref('description');
@@ -277,10 +300,23 @@ function selectConnectedRoom(roomId) {
   dungeonStore.selectedRoomId = roomId;
 }
 
+// Mid-generation guard. While true, both watchers below skip their
+// loadRoomData calls. Without this, generateDungeonNPC's reactive
+// mutations (npcs splice, then saveDungeons) re-evaluate the
+// `currentDungeon` computed mid-flow and the watcher fires
+// loadRoomData with the room's still-old contentArray (length 1),
+// flipping activeView from 'loading' to 'form'. The subsequent room
+// generation succeeds and writes the new contentArray, but the
+// local `contentArray` ref is now pointing at the wrong state and
+// the new content never paints. Flipped on at the top of
+// generateDescription and off in the finally block.
+const isGenerating = ref(false);
+
 // Watch for changes in selectedRoomId or currentDungeon
 watch(
   () => dungeonStore.selectedRoomId,
   (newVal) => {
+    if (isGenerating.value) return;
     if (dungeonStore.currentDungeon && newVal !== null) {
       loadRoomData(newVal);
     } else {
@@ -293,6 +329,7 @@ watch(
 watch(
   () => dungeonStore.currentDungeon,
   (newVal) => {
+    if (isGenerating.value) return;
     if (newVal && dungeonStore.selectedRoomId !== null) {
       loadRoomData(dungeonStore.selectedRoomId);
     } else {
@@ -395,14 +432,24 @@ function onBossStatblockCancel() {
 }
 
 async function generateDescription() {
-  const roomTypeOptions = {
-    setback: setbackRoom.value,
-    boss: bossRoom.value,
-  };
   if (!dungeonStore.currentDungeon) {
     console.error('No current dungeon selected.');
     return;
   }
+
+  isGenerating.value = true;
+  try {
+    await runGenerateDescription();
+  } finally {
+    isGenerating.value = false;
+  }
+}
+
+async function runGenerateDescription() {
+  const roomTypeOptions = {
+    setback: setbackRoom.value,
+    boss: bossRoom.value,
+  };
 
   // Boss-room statblock gate. If this is a boss room and an apex is
   // assigned but lacks a statblock, surface the prompt (unless the user
@@ -432,30 +479,52 @@ async function generateDescription() {
   if (selectedNPCName.value === 'None') {
     selectedNPCName.value = null;
   }
+
+  // NPC reassignment gate. If the user picked an NPC that's already
+  // baked into another room's description, confirm they want to move
+  // it. Reads from the committed-room state (`room.includedNpcIds`),
+  // not the planning `npcAssignments`. Plural because the LLM can
+  // place multiple NPCs in one room.
+  let movedFromRoomId = null;
+  let movedNpcId = null;
+  if (selectedNPCName.value) {
+    const dungeon = dungeonStore.currentDungeon;
+    const pickedNpc = dungeon.npcs.find(n => n.name === selectedNPCName.value);
+    if (pickedNpc) {
+      const currentRoomId = dungeonStore.selectedRoomId;
+      const committedElsewhere = (dungeon.rooms || []).find((r) => {
+        if (r.id === currentRoomId) return false;
+        const ids = r.includedNpcIds
+          || (r.includedNpcId ? [r.includedNpcId] : []);
+        return ids.includes(pickedNpc.npc_id);
+      });
+      if (committedElsewhere) {
+        const move = window.confirm(
+          `${pickedNpc.name} is currently in area ${committedElsewhere.id}. `
+          + `Move ${pickedNpc.name} to this room?`,
+        );
+        if (!move) return; // form stays open, generation aborts
+        movedFromRoomId = committedElsewhere.id;
+        movedNpcId = pickedNpc.npc_id;
+      }
+    }
+  }
+
   activeView.value = 'loading';
 
-  // Handle NPC logic here
+  // NPC handling. When the user picks an NPC, pass that NPC's
+  // current data (stub or fully-described) through to room
+  // generation. No auto-generation — if the user wants a richer
+  // NPC, they go to the NPCs tab and generate the description
+  // there explicitly. Pre-assigned NPCs flow through via
+  // formatRoomNPCsForPrompt at their stub level.
   let npcData = null;
   if (selectedNPCName.value) {
-    // Find the NPC in the dungeon's NPC list
     const npcIndex = dungeonStore.currentDungeon.npcs.findIndex(
       (npc) => npc.name === selectedNPCName.value
     );
     if (npcIndex !== -1) {
-      const npc = dungeonStore.currentDungeon.npcs[npcIndex];
-
-      // Check if the NPC has a full description
-      if (!npc.complete) {
-        // Generate the NPC's full description
-        await dungeonStore.generateDungeonNPC(npcIndex);
-      }
-
-      // Now retrieve the updated NPC data
       npcData = dungeonStore.currentDungeon.npcs[npcIndex];
-      // Ensure npcData has npc_string
-      if (!npcData.npc_string) {
-        console.error('npc_string not found on npcData');
-      }
     }
   }
 
@@ -468,6 +537,51 @@ async function generateDescription() {
     npcData,
     roomTypeOptions
   );
+
+  // Persist NPC commitment on the room. The dropdown reads this
+  // (`room.includedNpcIds`) to annotate "(in area N)" for NPCs baked
+  // into another room's narrative.
+  //   - Manual pick: commit just the picked NPC for this room.
+  //   - No manual pick: commit any LLM-assigned NPCs for this room
+  //     (from `npcAssignments.rooms_to_npc_ids`) — those were the
+  //     ones that flowed into formatRoomNPCsForPrompt.
+  // On a confirmed move, remove the moved NPC from the previous
+  // room's includedNpcIds so it doesn't claim them in two places.
+  const dungeon = dungeonStore.currentDungeon;
+  const generatedRoom = dungeon.rooms.find(
+    r => r.id === dungeonStore.selectedRoomId,
+  );
+  if (generatedRoom) {
+    let committedIds = [];
+    if (selectedNPCName.value) {
+      const pickedNpc = dungeon.npcs.find(n => n.name === selectedNPCName.value);
+      if (pickedNpc) committedIds = [pickedNpc.npc_id];
+    } else {
+      const assigned = dungeon.npcAssignments?.rooms_to_npc_ids?.[generatedRoom.id]
+        || [];
+      committedIds = [...assigned];
+    }
+    if (committedIds.length > 0) {
+      generatedRoom.includedNpcIds = committedIds;
+    } else {
+      delete generatedRoom.includedNpcIds;
+    }
+    delete generatedRoom.includedNpcId;
+  }
+  if (movedFromRoomId && movedNpcId) {
+    const oldRoom = dungeon.rooms.find(r => r.id === movedFromRoomId);
+    if (oldRoom) {
+      const remaining = (oldRoom.includedNpcIds || []).filter(
+        id => id !== movedNpcId,
+      );
+      if (remaining.length > 0) {
+        oldRoom.includedNpcIds = remaining;
+      } else {
+        delete oldRoom.includedNpcIds;
+      }
+      delete oldRoom.includedNpcId;
+    }
+  }
 
   activeView.value = 'description';
   dungeonStore.saveDungeons();

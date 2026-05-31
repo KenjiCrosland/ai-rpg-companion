@@ -254,6 +254,7 @@ export function processCustomRoomResponse(data) {
     content.push({ format: 'header', content: data.challenge_header });
   }
   for (const paragraph of data.dm_notes) {
+    if (typeof paragraph !== 'string' || !paragraph.trim()) continue;
     content.push({ format: 'paragraph', content: paragraph });
   }
   return content;

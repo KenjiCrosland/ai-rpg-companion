@@ -48,14 +48,22 @@ export function validateHasChallengeRequired(data) {
 }
 
 export function validateDmNotes(data, minEntries = 1) {
-  if (!Array.isArray(data.dm_notes) || data.dm_notes.length < minEntries) {
-    console.error(
-      `dm_notes must be an array with at least ${minEntries} non-empty entries`,
-    );
+  if (!Array.isArray(data.dm_notes)) {
+    console.error('dm_notes must be an array');
     return false;
   }
-  if (data.dm_notes.some(p => typeof p !== 'string' || !p.trim())) {
-    console.error('dm_notes entries must all be non-empty strings');
+  // Filter empty/whitespace strings in-place. The LLM occasionally
+  // emits a stray empty entry (often as a trailing element); failing
+  // the whole response over a harmless empty string wastes a retry
+  // budget. Process functions iterate this array directly, so
+  // mutating here also keeps the rendered contentArray clean.
+  data.dm_notes = data.dm_notes.filter(
+    p => typeof p === 'string' && p.trim(),
+  );
+  if (data.dm_notes.length < minEntries) {
+    console.error(
+      `dm_notes must have at least ${minEntries} non-empty entries (got ${data.dm_notes.length})`,
+    );
     return false;
   }
   return true;
