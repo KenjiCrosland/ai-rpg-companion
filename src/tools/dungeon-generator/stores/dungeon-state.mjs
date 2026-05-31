@@ -21,6 +21,17 @@ export const npcName = ref('');
 export const npcShortDescription = ref('');
 export const currentlyLoadingNPCs = ref({});
 
+// Map-context assignment in flight. Set true at the start of
+// `generateMap` and false in its finally; covers the four sequential
+// assignment calls (lore-location → NPC → monster → item placements)
+// that the map renderer doesn't visually depend on, but that the
+// room-prompt pipeline downstream does. The MapTab uses this to
+// overlay a blocking skeleton so the user can't click into rooms
+// before the cross-reference layer is ready (rooms generated mid-
+// assignment would miss placements and the GM would have to retrofit
+// at the table).
+export const isAssigningMapContext = ref(false);
+
 // Statblocks loading states
 export const monsterLoadingStates = ref({});
 

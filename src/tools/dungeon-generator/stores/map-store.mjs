@@ -1,4 +1,4 @@
-import { currentDungeon } from './dungeon-state.mjs';
+import { currentDungeon, isAssigningMapContext } from './dungeon-state.mjs';
 import { saveDungeons } from './dungeon-utils.mjs';
 import { generateDungeon } from '../util/generate-dungeon.mjs';
 import { addDungeonDetails } from '../util/dungeon-details.mjs';
@@ -17,6 +17,15 @@ export async function generateMap() {
     logger.error('No dungeon selected');
     return;
   }
+
+  // Mark the assignment phase as in-flight so the UI can overlay a
+  // blocking skeleton over the map. Cleared in `finally` below so an
+  // early-return (skip log) or throw from any of the four assignment
+  // blocks still drops the flag. The synchronous map generation just
+  // above runs fast enough that the overlay reads as "post-render
+  // background work" rather than a stand-in for the map itself.
+  isAssigningMapContext.value = true;
+  try {
 
   let dungeonRoomArray = generateDungeon();
   addDungeonDetails(dungeonRoomArray);
@@ -295,6 +304,10 @@ export async function generateMap() {
     }
   } catch (err) {
     logger.error('[item-assignment] threw:', err);
+  }
+
+  } finally {
+    isAssigningMapContext.value = false;
   }
 }
 

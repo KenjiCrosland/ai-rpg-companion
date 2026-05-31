@@ -5,10 +5,28 @@
         <h4 style="text-align: center">
           Map of {{ dungeonStore.currentDungeon.dungeonOverview.name }}
         </h4>
-        <div v-if="dungeonStore.currentDungeon.rooms">
+        <div v-if="dungeonStore.currentDungeon.rooms" class="dungeon-map-positioner">
           <DungeonMap :rooms="dungeonStore.currentDungeon.rooms" @roomClicked="handleRoomClick" ref="dungeonMap"
             :dungeonName="dungeonStore.currentDungeon.dungeonOverview.name" @mapClicked="handleMapClick"
             :focusedRoomId="dungeonStore.isMapSidebarCollapsed ? null : dungeonStore.selectedRoomId" />
+          <!--
+            Assignment-phase overlay. The map renders immediately when
+            generateMap() lands, but the cross-reference layer (lore /
+            NPC / monster / item placements) fires after — and room
+            generation downstream relies on those placements being
+            present. Block interaction while they're in flight so the
+            user can't open a room mid-assignment and end up with an
+            unattributed room.
+          -->
+          <div v-if="dungeonStore.isAssigningMapContext" class="map-assignment-overlay" aria-live="polite">
+            <div class="map-assignment-overlay__inner">
+              <div class="map-assignment-overlay__spinner" role="status" aria-label="Loading"></div>
+              <p class="map-assignment-overlay__status">Placing inhabitants…</p>
+              <p class="map-assignment-overlay__hint">
+                Cross-referencing the overview against the map so rooms can name their occupants. This takes a moment.
+              </p>
+            </div>
+          </div>
         </div>
         <!-- Map legend -->
         <div v-if="mapExists" class="map-legend">
@@ -54,10 +72,12 @@
           Click a room number to add details
         </p>
         <div class="generate-button-container">
-          <ParActionButton @click="handleGenerateMapClick" size="small">
+          <ParActionButton @click="handleGenerateMapClick" size="small"
+            :disabled="dungeonStore.isAssigningMapContext">
             {{ dungeonStore.currentDungeon && dungeonStore.currentDungeon.rooms ? 'Re-generate Map' : 'Generate Map' }}
           </ParActionButton>
-          <ParActionButton v-if="mapExists" @click="handleDownloadMapClick" size="small">
+          <ParActionButton v-if="mapExists" @click="handleDownloadMapClick" size="small"
+            :disabled="dungeonStore.isAssigningMapContext">
             Download Map
           </ParActionButton>
         </div>
@@ -168,6 +188,85 @@ onMounted(() => {
 .dungeon-map-container {
   width: max-content;
   margin: 0 auto;
+}
+
+/* Positioner: the overlay needs an absolute-positioned parent so it
+   can stack on top of the map without leaking out of the container. */
+.dungeon-map-positioner {
+  position: relative;
+}
+
+/* Assignment overlay: parchment-tinted scrim over the map. Blocks
+   pointer events on the rooms below (so clicks don't fire room
+   selection mid-assignment) and provides a clear "background work
+   in flight" signal — see dungeon-state.mjs `isAssigningMapContext`
+   for the underlying flag. */
+.map-assignment-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(253, 251, 246, 0.78);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  cursor: progress;
+}
+
+.map-assignment-overlay__inner {
+  text-align: center;
+  max-width: 340px;
+  padding: 1.75rem 2rem;
+  background: var(--par-color-surface, #fdfbf6);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-sm, 3px);
+  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+/* Lapis-ring spinner. Faint full ring + solid arc on top; spinning the
+   whole thing reads as a chrome-action loading indicator (lapis is
+   reserved for that register — see parchment/CLAUDE.md). Sits above
+   the burgundy "Placing inhabitants…" title so the two color cues
+   read as "chrome work" + "editorial label." */
+.map-assignment-overlay__spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 1.1rem;
+  border-radius: 50%;
+  border: 3px solid rgba(42, 77, 112, 0.15);
+  border-top-color: var(--par-color-action-primary, #2A4D70);
+  animation: map-assignment-spin 0.9s linear infinite;
+}
+
+/* Reduced-motion users still need a "loading" signal, but not a
+   spinning one. Pause the animation; the partial ring still reads as
+   placeholder content next to the live-region status text below. */
+@media (prefers-reduced-motion: reduce) {
+  .map-assignment-overlay__spinner {
+    animation: none;
+  }
+}
+
+@keyframes map-assignment-spin {
+  to { transform: rotate(360deg); }
+}
+
+.map-assignment-overlay__status {
+  margin: 0 0 0.75rem;
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.02em;
+}
+
+.map-assignment-overlay__hint {
+  margin: 0;
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  line-height: 1.5;
 }
 
 .generate-button-container {

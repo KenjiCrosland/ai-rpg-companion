@@ -12,6 +12,7 @@ import {
   overviewForm,
   monsterLoadingStates,
   currentDungeon,
+  isAssigningMapContext,
 } from './dungeon-state.mjs';
 
 import { saveDungeons, loadDungeons } from './dungeon-utils.mjs';
@@ -96,6 +97,7 @@ export const useDungeonStore = defineStore('dungeon', () => {
     overviewForm,
     monsterLoadingStates,
     currentDungeon,
+    isAssigningMapContext,
     currentDungeonOverviewString,
 
     // Actions
