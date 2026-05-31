@@ -1,6 +1,6 @@
 <template>
   <div>
-    <OverviewSkeleton v-if="props.isLoading" />
+    <DungeonOverviewCardSkeleton v-if="props.isLoading" />
     <div v-if="!props.isLoading && dungeonStore.currentDungeon?.dungeonOverview" class="dungeon-card parchment">
       <!-- View Mode -->
       <template v-if="!isEditing">
@@ -99,7 +99,7 @@
 import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
 import { ref, computed, h } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
-import OverviewSkeleton from './skeletons/OverviewSkeleton.vue';
+import DungeonOverviewCardSkeleton from './skeletons/DungeonOverviewCardSkeleton.vue';
 import { renderOverview, consolidateOverviewToMarkdown } from '../util/renderDungeonOverview.mjs';
 import { combineDungeonOverview } from '../util/combineDungeonOverview.mjs';
 import { sourceExists } from '@/util/seeded-input.mjs';
@@ -400,8 +400,15 @@ const confirmDelete = () => {
 }
 
 /* Named-entity first-mention emphasis. Weight 600, body color — the
-   anchor without fading. */
-.par-entity {
+   anchor without fading. Wrapped in `:deep()` because the entity span
+   is rendered by DungeonInline (a separate inline render-function
+   component), so its DOM nodes don't inherit this file's scoped
+   `data-v-*` attribute. A bare `.par-entity` rule (or a plain
+   descendant selector) would still get a `[data-v-*]` appended by
+   Vue's scoped compiler and silently fail to match the span. `:deep()`
+   strips the scope attribute from the inner selector while leaving
+   the outer scope intact, which is exactly what we want. */
+:deep(.par-entity) {
   font-weight: 600;
 }
 

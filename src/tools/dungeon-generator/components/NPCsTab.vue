@@ -1,108 +1,225 @@
 <template>
-  <div>
-    <h2>Notable NPCs</h2>
-    <p class="npc-tab-note">
-      NPCs with full descriptions are automatically saved to your <strong>NPC Generator</strong>.
-      Click "View in NPC Generator" at the bottom of any NPC card to see them there.
-      Statblocks are also saved and linked automatically.
-    </p>
-    <cdr-accordion-group v-if="enrichedNPCs.length > 0">
-      <cdr-accordion v-for="(npc, index) in enrichedNPCs" :key="npc.npc_id || index" :id="'npc-' + index"
-        :opened="npc.opened" @accordion-toggle="dungeonStore.currentDungeon.npcs[index].opened = !dungeonStore.currentDungeon.npcs[index].opened" level="2">
-        <template #label>
-          {{ npc.name }}
-        </template>
+  <div class="dungeon-npcs-section parchment">
+    <div class="dungeon-npcs-header">
+      <h3 class="dungeon-npcs-title">Notable NPCs</h3>
+      <p class="dungeon-npcs-subtitle">
+        People found in this dungeon — extracted from its overview or
+        <button
+          type="button"
+          class="dungeon-npcs-subtitle-link"
+          @click="openAddForm"
+        >added manually</button>. Generated NPCs are saved to the NPC Generator, and their statblocks to the Statblock Generator.
+      </p>
+    </div>
 
-        <!-- NPC content -->
-        <div>
-          <!-- Skeleton if loading -->
-          <div v-if="dungeonStore.currentlyLoadingNPCs[index]">
+    <!-- Add a new NPC: collapsed button that expands into a form -->
+    <div class="add-npc">
+      <ParAddNewButton
+        v-if="!addFormExpanded"
+        @click="addFormExpanded = true"
+      >
+        + Add an NPC
+      </ParAddNewButton>
+
+      <form
+        v-else
+        class="add-npc-form"
+        @submit.prevent="submitAddNPC"
+      >
+        <div class="add-npc-row">
+          <label class="add-npc-label">
+            <span class="add-npc-label-text">Name <span class="add-npc-optional">(optional)</span></span>
+            <input
+              ref="addFormNameInput"
+              v-model="addFormName"
+              type="text"
+              class="add-npc-input"
+              placeholder="Leave blank, or e.g., Brother Aldric"
+              @keydown.enter.prevent="submitAddNPC"
+            />
+          </label>
+        </div>
+
+        <div class="add-npc-row">
+          <label class="add-npc-label">
+            <span class="add-npc-label-text">Short description</span>
+            <input
+              v-model="addFormDescription"
+              type="text"
+              class="add-npc-input"
+              placeholder="A trapped explorer seeking help"
+              @keydown.enter.prevent="submitAddNPC"
+            />
+          </label>
+        </div>
+
+        <p v-if="addFormError" class="add-npc-error">{{ addFormError }}</p>
+
+        <p class="add-npc-helper">
+          A short description seeds the AI's full NPC generation. Leave the name blank to let the AI invent one.
+        </p>
+
+        <div class="add-npc-actions">
+          <ParActionButton
+            variant="primary-outline"
+            :disabled="dungeonStore.currentlyLoadingNPC"
+            @click="submitAddNPC"
+          >
+            Create NPC
+          </ParActionButton>
+          <button type="button" class="add-npc-cancel" @click="resetAddForm">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <p v-if="enrichedNPCs.length === 0" class="dungeon-npc-empty">
+      No NPCs yet. Use the form above to add one, or generate this dungeon's overview — named people from its prose appear here automatically.
+    </p>
+
+    <ul v-if="enrichedNPCs.length > 0" class="dungeon-npc-list">
+      <li
+        v-for="entry in npcEntries"
+        :key="rowKey(entry)"
+        class="dungeon-npc-item"
+      >
+        <Transition :css="!reducedMotion" name="npc-swap" mode="out-in">
+          <!-- Skeleton: in-flight new-NPC generation -->
+          <div v-if="dungeonStore.currentlyLoadingNPCs[entry.index]" key="loading">
             <NPCSkeleton />
           </div>
 
-          <!-- NPC Details -->
-          <div v-else>
-            <!-- Full NPC with NPCCard -->
-            <div v-if="npc.description_of_position || npc.combined_details">
-              <NPCCard
-                :npc="normalizeDungeonNPC(npc)"
-                :origin="dungeonStore.currentDungeon.dungeonOverview?.name"
-                :source-type="'dungeon'"
-                :display-type="'dungeon'"
-                :is-editing="editingNPCIndex === index"
-                :show-relationship-generator="true"
-                :is-generating-relationship="loadingNewRelationship && loadingRelationshipForIndex === index"
-                :has-statblock="!!npc.statblock || !!npc.statblock_name"
-                :statblock-url="getStatblockGeneratorUrl(npc.statblock_name, npc.statblock_folder)"
-                :editable="true"
-                :show-delete="true"
-                @start-edit="startEditingNPC(index)"
-                @save-edit="handleSaveEdit(index, $event)"
-                @cancel-edit="cancelEditNPC"
-                @delete="dungeonStore.deleteNPC(index)"
-                @generate-relationship="handleGenerateRelationship(index, $event)"
-              />
+          <!-- Stub: name + short description, with inline Generate Full NPC + X delete -->
+          <div
+            v-else-if="!isExpanded(entry) && isStub(entry.npc)"
+            key="stub"
+            class="npc-stub-row"
+          >
+            <div class="npc-collapsed-info">
+              <strong class="npc-collapsed-name">{{ entry.npc.name || 'Unnamed NPC' }}</strong>
+              <span v-if="entry.npc.short_description" class="npc-collapsed-desc">
+                {{ entry.npc.short_description }}
+              </span>
             </div>
+            <div class="npc-stub-actions">
+              <ParCardButton
+                size="small"
+                :disabled="dungeonStore.currentlyLoadingNPCs[entry.index]"
+                @click="dungeonStore.generateDungeonNPC(entry.index)"
+              >
+                Generate Full NPC
+              </ParCardButton>
+              <button
+                type="button"
+                class="npc-stub-delete"
+                :aria-label="`Delete ${entry.npc.name || 'NPC'}`"
+                @click="dungeonStore.deleteNPC(entry.index)"
+              >
+                <svg viewBox="0 0 12 12" width="18" height="18" aria-hidden="true">
+                  <line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  <line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
-            <!-- Stub NPC (no full description yet) -->
-            <div v-else>
-              <h2>{{ npc.name }}</h2>
-              <p>{{ npc.short_description }}</p>
-              <div style="display: flex; gap: 0.5rem;">
-                <ParActionButton @click="dungeonStore.generateDungeonNPC(index)"
-                  :disabled="dungeonStore.currentlyLoadingNPCs[index]">
-                  Generate Full Description
-                </ParActionButton>
-                <ParActionButton @click="dungeonStore.deleteNPC(index)" variant="secondary" size="small">
-                  Delete
-                </ParActionButton>
-              </div>
+          <!-- Collapsed: full NPC, click to expand -->
+          <div
+            v-else-if="!isExpanded(entry)"
+            key="collapsed"
+            class="npc-collapsed-row"
+            role="button"
+            tabindex="0"
+            :aria-expanded="false"
+            :aria-label="`Expand ${entry.npc.name || 'NPC'}`"
+            @click="toggleExpand(entry)"
+            @keydown.enter.prevent="toggleExpand(entry)"
+            @keydown.space.prevent="toggleExpand(entry)"
+          >
+            <div class="npc-collapsed-info">
+              <strong class="npc-collapsed-name">{{ entry.npc.name || 'Unnamed NPC' }}</strong>
+              <span v-if="oneLineDescription(entry.npc)" class="npc-collapsed-desc">
+                {{ oneLineDescription(entry.npc) }}
+              </span>
             </div>
+            <span class="npc-collapsed-chevron" aria-hidden="true">
+              <svg viewBox="0 0 12 12" width="18" height="18">
+                <polyline
+                  points="2,4 6,8 10,4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+          </div>
+
+          <!-- Expanded: NPCCard + statblock section -->
+          <div v-else key="expanded">
+            <NPCCard
+              :npc="normalizeDungeonNPC(entry.npc)"
+              :origin="dungeonStore.currentDungeon.dungeonOverview?.name"
+              :source-type="'dungeon'"
+              :display-type="'dungeon'"
+              :is-editing="editingNPCIndex === entry.index"
+              :show-relationship-generator="true"
+              :is-generating-relationship="loadingNewRelationship && loadingRelationshipForIndex === entry.index"
+              :has-statblock="!!entry.npc.statblock || !!entry.npc.statblock_name"
+              :statblock-url="getStatblockGeneratorUrl(entry.npc.statblock_name, entry.npc.statblock_folder)"
+              :editable="true"
+              :show-delete="true"
+              :collapsible="true"
+              :is-collapsed="false"
+              @start-edit="startEditingNPC(entry.index)"
+              @save-edit="handleSaveEdit(entry.index, $event)"
+              @cancel-edit="cancelEditNPC"
+              @delete="dungeonStore.deleteNPC(entry.index)"
+              @generate-relationship="handleGenerateRelationship(entry.index, $event)"
+              @toggle-collapse="toggleExpand(entry)"
+            />
 
             <!-- NPC Statblock Section -->
-            <div v-if="npc.description_of_position"
+            <div v-if="entry.npc.description_of_position"
               style="margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 1rem;">
               <h3>NPC Statblock</h3>
               <!-- If npc has a statblock or is generating one, display it -->
               <div v-if="
-                npc.statblock ||
-                dungeonStore.npcStatblockLoadingStates[index]?.part1 ||
-                dungeonStore.npcStatblockLoadingStates[index]?.part2
+                entry.npc.statblock ||
+                dungeonStore.npcStatblockLoadingStates[entry.index]?.part1 ||
+                dungeonStore.npcStatblockLoadingStates[entry.index]?.part2
               " style="margin-top: 1rem;">
-                <Statblock :monster="npc.statblock" :premium="premium" :readonly="true"
-                  :loadingPart1="dungeonStore.npcStatblockLoadingStates[index]?.part1 || false"
-                  :loadingPart2="dungeonStore.npcStatblockLoadingStates[index]?.part2 || false"
-                  @update-monster="updateNpcStatblock(index, $event)" />
+                <Statblock :monster="entry.npc.statblock" :premium="premium" :readonly="true"
+                  :loadingPart1="dungeonStore.npcStatblockLoadingStates[entry.index]?.part1 || false"
+                  :loadingPart2="dungeonStore.npcStatblockLoadingStates[entry.index]?.part2 || false"
+                  @update-monster="updateNpcStatblock(entry.index, $event)" />
 
                 <!-- Statblock Saved Message -->
-                <div v-if="npc.statblock && npc.statblock_name" class="statblock-saved-message">
+                <div v-if="entry.npc.statblock && entry.npc.statblock_name" class="statblock-saved-message">
                   <p>
                     Edit this statblock in the
-                    <a :href="getStatblockGeneratorUrl(npc.statblock_name, npc.statblock_folder)" target="_blank">Statblock Generator</a>
+                    <a :href="getStatblockGeneratorUrl(entry.npc.statblock_name, entry.npc.statblock_folder)" target="_blank">Statblock Generator</a>
                   </p>
                 </div>
               </div>
 
               <!-- Statblock Not Found Warning -->
-              <div v-if="npc.statblock_name && !npc.statblock && !dungeonStore.npcStatblockLoadingStates[index]?.part1 && !dungeonStore.npcStatblockLoadingStates[index]?.part2" class="statblock-not-found-message">
+              <div v-if="entry.npc.statblock_name && !entry.npc.statblock && !dungeonStore.npcStatblockLoadingStates[entry.index]?.part1 && !dungeonStore.npcStatblockLoadingStates[entry.index]?.part2" class="statblock-not-found-message">
                 <p><strong>Statblock not found</strong></p>
-                <p>The statblock "{{ npc.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
+                <p>The statblock "{{ entry.npc.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
                 <div class="button-group">
-                  <ParActionButton @click="generateNpcStatblock(index, premium)" size="small">Regenerate Statblock</ParActionButton>
-                  <ParActionButton @click="clearNpcStatblockReference(index)" variant="secondary" size="small">Clear Reference</ParActionButton>
+                  <ParActionButton @click="generateNpcStatblock(entry.index, premium)" size="small">Regenerate Statblock</ParActionButton>
+                  <ParActionButton @click="clearNpcStatblockReference(entry.index)" variant="secondary" size="small">Clear Reference</ParActionButton>
                 </div>
               </div>
 
               <!-- Statblock Limit Message -->
-              <div v-if="dungeonStore.npcStatblockLoadingStates[index]?.limitReached"
+              <div v-if="dungeonStore.npcStatblockLoadingStates[entry.index]?.limitReached"
                 class="statblock-limit-message">
                 <p><strong>Statblock generation limit reached</strong></p>
                 <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
-                <!-- Inline limit-reached: pass empty body and aside slots
-                     to suppress those paragraphs entirely. The surrounding
-                     "Statblock generation limit reached" heading already
-                     does the framing; the callout strips down to PREMIUM
-                     label → expandable → button. -->
                 <PatreonCallout :patreon-url="patreonLoginUrl">
                   <template #body></template>
                   <template #aside></template>
@@ -117,25 +234,25 @@
               </div>
 
               <!-- Simple form to generate a new statblock for the NPC -->
-              <form v-if="npc.description_of_position" @submit.prevent="generateNpcStatblock(index, premium)"
+              <form @submit.prevent="generateNpcStatblock(entry.index, premium)"
                 class="npc-statblock-form">
                 <div class="form-row-top">
-                  <cdr-select v-model="npcStatblockData[index].CR" label="CR" :options="crOptions" prompt="Select CR" />
-                  <cdr-select v-model="npcStatblockData[index].monsterType" label="Type"
+                  <cdr-select v-model="npcStatblockData[entry.index].CR" label="CR" :options="crOptions" prompt="Select CR" />
+                  <cdr-select v-model="npcStatblockData[entry.index].monsterType" label="Type"
                     :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']"
                     prompt="Select Monster Type" />
 
                 </div>
-                <cdr-checkbox v-model="npcStatblockData[index].isSpellcaster" style="margin-top: 2rem;">
+                <cdr-checkbox v-model="npcStatblockData[entry.index].isSpellcaster" style="margin-top: 2rem;">
                   Creature is a spellcaster
                 </cdr-checkbox>
                 <!-- Submit button -->
                 <ParActionButton class="monster-form-button" type="submit" style="margin-top: 1rem;"
-                  :disabled="dungeonStore.npcStatblockLoadingStates[index]?.generating">
+                  :disabled="dungeonStore.npcStatblockLoadingStates[entry.index]?.generating">
                   {{
-                    dungeonStore.npcStatblockLoadingStates[index]?.generating
+                    dungeonStore.npcStatblockLoadingStates[entry.index]?.generating
                       ? 'Generating...'
-                      : (npc.statblock
+                      : (entry.npc.statblock
                         ? 'Re-generate Statblock'
                         : 'Generate Statblock')
                   }}
@@ -143,29 +260,16 @@
               </form>
             </div>
           </div>
-        </div>
-      </cdr-accordion>
-    </cdr-accordion-group>
+        </Transition>
+      </li>
+    </ul>
 
-    <!-- Add a new NPC -->
-    <h3 style="margin-top: 3rem; margin-bottom: 1rem">Add a New NPC</h3>
-    <cdr-form-group :error="modelError">
-      <cdr-input v-model="dungeonStore.npcName" label="NPC Name" :required="true" />
-      <cdr-input v-model="dungeonStore.npcShortDescription" label="NPC Short Description" :required="true">
-        <template #helper-text-bottom>
-          Examples: "A trapped explorer seeking help", "A ghost haunting the corridors", "A lost child"
-        </template>
-      </cdr-input>
-      <ParActionButton style="margin-top: 2rem" @click="createNPC" :disabled="dungeonStore.currentlyLoadingNPC">
-        Add NPC
-      </ParActionButton>
-    </cdr-form-group>
   </div>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
-import { ref, reactive, computed, onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
+import { ParActionButton, ParCardButton, ParAddNewButton } from "@/parchment";
+import { ref, reactive, computed, nextTick, onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
 import Statblock from '@/components/Statblock.vue';
@@ -178,10 +282,6 @@ import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { generateSingleRelationshipPrompt, validateSingleRelationshipResponse } from '../prompts/dungeon-npcs.mjs';
 import {
-  CdrFormGroup,
-  CdrInput,
-  CdrAccordionGroup,
-  CdrAccordion,
   CdrSelect,
   CdrCheckbox,
 } from '@rei/cedar';
@@ -189,7 +289,41 @@ import crList from '../data/cr-list.json';
 const props = defineProps({ premium: { type: Boolean, default: false } });
 const dungeonStore = useDungeonStore();
 const toast = useToast();
-const modelError = ref(null);
+
+// ---- Add-NPC form state (collapsed-button → expanded-form pattern) ----
+const addFormExpanded = ref(false);
+const addFormName = ref('');
+const addFormDescription = ref('');
+const addFormError = ref('');
+const addFormNameInput = ref(null);
+
+function openAddForm() {
+  addFormExpanded.value = true;
+  // Focus the first field once the form renders, so users tabbed in
+  // from the subtitle link land where they can start typing.
+  nextTick(() => addFormNameInput.value?.focus());
+}
+
+function submitAddNPC() {
+  const desc = addFormDescription.value.trim();
+  if (!desc) {
+    addFormError.value = 'Please enter a short description.';
+    return;
+  }
+  // Drive the existing store flow: addNPC reads from store refs, pushes
+  // a stub, then kicks off generation.
+  dungeonStore.npcName = addFormName.value.trim() || 'Unnamed NPC';
+  dungeonStore.npcShortDescription = desc;
+  dungeonStore.addNPC();
+  resetAddForm();
+}
+
+function resetAddForm() {
+  addFormExpanded.value = false;
+  addFormName.value = '';
+  addFormDescription.value = '';
+  addFormError.value = '';
+}
 
 // Reactive trigger for localStorage changes
 const storageVersion = ref(0);
@@ -249,6 +383,51 @@ const enrichedNPCs = computed(() => {
     return dungeonNPC;
   });
 });
+
+// Entry rows preserve the original index so delete/generate handlers
+// stay aligned with dungeonStore.currentDungeon.npcs.
+const npcEntries = computed(() =>
+  enrichedNPCs.value.map((npc, index) => ({ npc, index }))
+);
+
+function rowKey({ npc, index }) {
+  return npc?.npc_id || `stub-${index}`;
+}
+
+// Stub = no generated description fields yet. Matches the setting-generator
+// definition (read_aloud_description is the part-1 generation tell), with
+// description_of_position as a belt-and-suspenders fallback for shared-storage
+// NPCs that may not have read_aloud_description set.
+function isStub(npc) {
+  return !npc?.read_aloud_description && !npc?.description_of_position;
+}
+
+function oneLineDescription(npc) {
+  if (isStub(npc)) {
+    return (npc?.short_description || '').trim();
+  }
+  return (npc?.description_of_position || npc?.short_description || '').trim();
+}
+
+// Single-open expansion: only one NPC may be expanded at a time. Tracked
+// by a single ref of the row key (null when nothing is expanded).
+const expandedKey = ref(null);
+
+function isExpanded(entry) {
+  return expandedKey.value === rowKey(entry);
+}
+
+function toggleExpand(entry) {
+  const key = rowKey(entry);
+  expandedKey.value = expandedKey.value === key ? null : key;
+}
+
+// Respect prefers-reduced-motion so Transition swaps don't animate
+// when users have asked the system to minimize motion.
+const reducedMotion = ref(
+  typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+);
 
 // Patreon OAuth URL
 const patreonLoginUrl = computed(() => {
@@ -360,16 +539,6 @@ onUnmounted(() => {
 
 // Whenever the NPC list changes, make sure our form data is in sync
 //ensureNpcStatblockData();
-
-function createNPC() {
-  if (!dungeonStore.npcName || !dungeonStore.npcShortDescription) {
-    modelError.value = 'Please fill out all fields.';
-    return false;
-  }
-  dungeonStore.addNPC();
-  modelError.value = null;
-  return true;
-}
 
 // Update the NPC's statblock once GPT finishes
 function updateNpcStatblock(index, updatedStatblock) {
@@ -564,6 +733,254 @@ function clearNpcStatblockReference(index) {
   font-style: italic;
 }
 
+/* ---- NPC list (mirrors setting-generator's RelatedNPCsSection) ---- */
+.dungeon-npc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.dungeon-npc-item {
+  list-style: none;
+}
+
+.dungeon-npc-empty {
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  margin: 1rem 0 2rem 0;
+}
+
+.npc-collapsed-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.6rem 3rem;
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-sm, 3px);
+  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+.npc-collapsed-row:hover {
+  background: #f8f3e8;
+  border-color: var(--par-color-title, #7a1f1f);
+}
+
+.npc-collapsed-row:focus-visible {
+  outline: 2px solid var(--par-color-action-primary, #2A4D70);
+  outline-offset: 2px;
+}
+
+.npc-stub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.6rem 3rem;
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-sm, 3px);
+  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+.npc-stub-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.npc-collapsed-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.npc-collapsed-name {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: var(--par-color-text, #222);
+  line-height: 1.3;
+}
+
+.npc-collapsed-desc {
+  font-family: var(--par-font-sans, sans-serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.npc-collapsed-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.75rem;
+  color: var(--par-color-action-muted, #5A7A9A);
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+  background: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.npc-collapsed-chevron svg { display: block; }
+
+.npc-collapsed-row:hover .npc-collapsed-chevron {
+  color: var(--par-color-title, #7a1f1f);
+  border-color: var(--par-color-title, #7a1f1f);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.npc-stub-delete {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.75rem;
+  color: var(--par-color-action-muted, #5A7A9A);
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+  background: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.npc-stub-delete svg { display: block; }
+
+.npc-stub-delete:hover,
+.npc-stub-delete:focus-visible {
+  color: var(--par-color-title, #7a1f1f);
+  border-color: var(--par-color-title, #7a1f1f);
+  background: rgba(255, 255, 255, 0.85);
+  outline: none;
+}
+
+/* Transition: cross-fade between stub/collapsed/expanded states. */
+.npc-swap-enter-active,
+.npc-swap-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.npc-swap-enter-from,
+.npc-swap-leave-to {
+  opacity: 0;
+}
+
+/* ---- Add-NPC form (mirrors setting-generator's AddNPCForm) ---- */
+.add-npc {
+  margin: 0 0 1.5rem 0;
+}
+
+.add-npc-form {
+  padding: 1.25rem;
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+  background: var(--par-color-surface, #fdfbf6);
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+}
+
+.add-npc-row {
+  margin-bottom: 0.9rem;
+}
+
+.add-npc-row:last-of-type {
+  margin-bottom: 1.1rem;
+}
+
+.add-npc-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.add-npc-label-text {
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--par-color-action-primary, #2A4D70);
+}
+
+.add-npc-optional {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+.add-npc-input {
+  font-family: inherit;
+  font-size: 1.5rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--par-color-divider, #c8bfac);
+  border-radius: var(--par-radius-sm, 3px);
+  background: #fff;
+  color: var(--par-color-text, #222);
+}
+
+.add-npc-input:focus {
+  outline: none;
+  border-color: var(--par-color-title, #7a1f1f);
+  box-shadow: 0 0 0 2px rgba(122, 31, 31, 0.12);
+}
+
+.add-npc-helper {
+  margin: 0 0 1rem 0;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  line-height: 1.5;
+}
+
+.add-npc-error {
+  margin: 0 0 0.8rem 0;
+  font-family: var(--par-font-sans, sans-serif);
+  font-size: 1.3rem;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+.add-npc-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.add-npc-cancel {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  font-family: inherit;
+  font-size: 1.4rem;
+  color: var(--par-color-text-muted, #6b6b6b);
+  cursor: pointer;
+}
+
+.add-npc-cancel:hover {
+  color: var(--par-color-title, #7a1f1f);
+}
+
 /* Reuse your .form-row-top, .form-row-mid, etc. classes. Example: */
 .form-row-top {
   display: grid;
@@ -679,14 +1096,61 @@ function clearNpcStatblockReference(index) {
   color: #22c55e;
 }
 
-.npc-tab-note {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 1.5rem;
-  padding: 0.75rem 1rem;
-  background: #f5f5f5;
-  border-left: 3px solid #4a90e2;
-  border-radius: 3px;
+/* ---- Header (mirrors setting-generator's RelatedNPCsSection) ----
+   The section wrapper sets the serif baseline so descendants (title,
+   collapsed rows, inputs that opt-in via font-family: inherit) all
+   resolve to Source Serif 4 / Georgia via the fallback chain. Without
+   this, the h3's own class rule still applies its font-family, but
+   Cedar's body Graphik inheritance can win when scoped specificity
+   doesn't land cleanly — wrapping makes the serif baseline structural,
+   not selector-dependent. */
+.dungeon-npcs-section {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+.dungeon-npcs-header {
+  margin-bottom: 1.25rem;
+}
+
+.dungeon-npcs-title {
+  margin: 0 0 0.25rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--par-color-action-primary, #2A4D70);
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.dungeon-npcs-subtitle {
+  margin: 0;
+  font-family: var(--par-font-sans, sans-serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--par-color-text-muted, #6b6b6b);
+  line-height: 1.5;
+}
+
+.dungeon-npcs-subtitle-link {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--par-color-action-primary, #2A4D70);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.dungeon-npcs-subtitle-link:hover,
+.dungeon-npcs-subtitle-link:focus-visible {
+  color: var(--par-color-action-primary, #2A4D70);
+  text-decoration-thickness: 2px;
+  outline: none;
 }
 
 .statblock-not-found-message {
