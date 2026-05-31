@@ -24,6 +24,7 @@ import {
   leadingWordMatch,
   findItemStubMatchingName,
   addSettingStubToItem,
+  reconcileNPCStubsAgainstItem,
 } from './item-storage.mjs';
 
 class LocalStorageMock {
@@ -1093,6 +1094,131 @@ describe('item-storage', () => {
       // Stub stays (the name and role survive deletion), but setting_id clears.
       expect(stub).toBeTruthy();
       expect(stub.setting_id).toBeFalsy();
+    });
+  });
+
+  describe('reconcileNPCStubsAgainstItem', () => {
+    // Helper: a minimal item with the given NPC-stub names.
+    function itemWith(name, npcStubNames) {
+      return {
+        name,
+        related_npcs: npcStubNames.map(n => ({ name: n })),
+      };
+    }
+
+    it('stamps seeded_from on a destination stub whose name matches an item stub', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric', 'Sigrun']));
+      const destStubs = [
+        { npc_id: 'npc_1', name: 'Brother Aldric', short_description: 'monastic recorder' },
+        { npc_id: 'npc_2', name: 'Kara', short_description: 'town reeve' },
+      ];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      expect(result[0].seeded_from).toEqual({
+        source_type: 'item',
+        source_id: 'Vardlokkur',
+        source_name: 'Vardlokkur',
+        stub_name: 'Brother Aldric',
+      });
+      // Non-matching stub is untouched.
+      expect(result[1].seeded_from).toBeUndefined();
+      expect(result[1].name).toBe('Kara');
+    });
+
+    it('matches case-insensitively after trim', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+      const destStubs = [
+        { npc_id: 'npc_1', name: '  BROTHER ALDRIC  ', short_description: '...' },
+      ];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      // The match fires, and the back-pointer's stub_name preserves the
+      // item-side casing (the canonical anchor) — not the destination's
+      // raw input. Promotion flows look the source up by stub_name.
+      expect(result[0].seeded_from?.stub_name).toBe('Brother Aldric');
+    });
+
+    it('preserves an existing seeded_from rather than overwriting it', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+      const priorProvenance = {
+        source_type: 'item',
+        source_id: 'OtherItem',
+        source_name: 'OtherItem',
+        stub_name: 'Brother Aldric (other)',
+      };
+      const destStubs = [
+        { npc_id: 'npc_1', name: 'Brother Aldric', seeded_from: priorProvenance },
+      ];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      // Caller already stamped provenance — that wins. Reconcile must
+      // not silently rewrite the source pointer.
+      expect(result[0].seeded_from).toEqual(priorProvenance);
+    });
+
+    it('returns the input array unchanged when the item is missing', () => {
+      // No item saved at all.
+      const destStubs = [{ npc_id: 'npc_1', name: 'Brother Aldric' }];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'NoSuchItem');
+
+      expect(result).toBe(destStubs);
+    });
+
+    it('returns the input array unchanged when the item has no related_npcs', () => {
+      saveItemToStorage({ name: 'Vardlokkur' });
+      const destStubs = [{ npc_id: 'npc_1', name: 'Brother Aldric' }];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      expect(result).toBe(destStubs);
+    });
+
+    it('returns the input array unchanged when no destination names match', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+      const destStubs = [
+        { npc_id: 'npc_1', name: 'Kara' },
+        { npc_id: 'npc_2', name: 'Magnus' },
+      ];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      // Result is a new array (map always returns a new one), but every
+      // entry is === to its source — no stamping happened.
+      for (let i = 0; i < destStubs.length; i++) {
+        expect(result[i]).toBe(destStubs[i]);
+      }
+    });
+
+    it('does not mutate the input stubs', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+      const original = { npc_id: 'npc_1', name: 'Brother Aldric' };
+      const destStubs = [original];
+
+      reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      // Original instance is untouched — reconcile must return a new
+      // array of new stub objects.
+      expect(original.seeded_from).toBeUndefined();
+    });
+
+    it('handles empty / non-array input gracefully', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+
+      expect(reconcileNPCStubsAgainstItem([], 'Vardlokkur')).toEqual([]);
+      expect(reconcileNPCStubsAgainstItem(null, 'Vardlokkur')).toEqual([]);
+      expect(reconcileNPCStubsAgainstItem(undefined, 'Vardlokkur')).toEqual([]);
+    });
+
+    it('no-ops when itemName is missing', () => {
+      const destStubs = [{ npc_id: 'npc_1', name: 'Brother Aldric' }];
+
+      expect(reconcileNPCStubsAgainstItem(destStubs, '')).toBe(destStubs);
+      expect(reconcileNPCStubsAgainstItem(destStubs, null)).toBe(destStubs);
+      expect(reconcileNPCStubsAgainstItem(destStubs, undefined)).toBe(destStubs);
     });
   });
 });

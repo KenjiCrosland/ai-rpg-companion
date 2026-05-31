@@ -208,6 +208,7 @@ import {
   resetItemStubsForDeletedSetting,
   findItemStubMatchingName,
   addSettingStubToItem,
+  reconcileNPCStubsAgainstItem,
 } from '@/util/item-storage.mjs';
 import { getSettingById, mergeRelatedPlaces, auntUncleNamesFor } from '@/util/setting-storage.mjs';
 import { consolidateOverviewToMarkdown } from '@/util/renderSettingOverview.mjs';
@@ -1769,6 +1770,19 @@ async function handleGenerateSetting({ operationIndex, parentId, prompt, subloca
         npc_id: `npc_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
         ...npc
       }));
+
+      // Cross-tool stub dedup: when this setting is item-seeded, stamp
+      // `seeded_from` on any stub whose name matches one of the source
+      // item's `related_npcs`. The substrate's writeBack chain treats
+      // both ends as the same character on promotion. See
+      // reconcileNPCStubsAgainstItem in item-storage.mjs. No-op for
+      // sublocations and non-item seeds.
+      if (!isSublocation && pendingSeed.value?.source?.type === 'item') {
+        settings.value[operationIndex].npcs = reconcileNPCStubsAgainstItem(
+          settings.value[operationIndex].npcs,
+          pendingSeed.value.source.id
+        );
+      }
       settings.value[operationIndex].loadingsettingOverview = false;
       currentlyLoading.value = false;
       // Cross-tool finalize: when this generation ran for a top-level

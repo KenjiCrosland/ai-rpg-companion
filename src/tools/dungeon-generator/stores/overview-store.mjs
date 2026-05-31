@@ -16,6 +16,7 @@ import {
   getItemFromStorage,
   linkDungeonToItemStub,
   addDungeonStubToItem,
+  reconcileNPCStubsAgainstItem,
 } from '@/util/item-storage.mjs';
 import {
   dungeons,
@@ -294,6 +295,19 @@ export async function generateDungeonOverview() {
         short_description: npc.description,
         opened: false,
       }));
+
+      // Cross-tool stub dedup: when this dungeon is item-seeded, stamp
+      // `seeded_from` on any stub whose name matches one of the source
+      // item's `related_npcs`. The substrate's writeBack chain treats
+      // both ends as the same character on promotion, so promoting
+      // either side dedups across containers. See
+      // reconcileNPCStubsAgainstItem in item-storage.mjs.
+      if (pendingSeed.value && seedItem && pendingSeed.value.source?.type === 'item') {
+        newDungeon.npcs = reconcileNPCStubsAgainstItem(
+          newDungeon.npcs,
+          pendingSeed.value.source.id
+        );
+      }
     }
 
     if (overview.monsters && Array.isArray(overview.monsters)) {

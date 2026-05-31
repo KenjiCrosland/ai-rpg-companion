@@ -890,3 +890,66 @@ export function resetItemStubsForDeletedNPC(npcId) {
   }
   return resetCount;
 }
+
+/**
+ * Cross-tool stub dedup at generation time. When a dungeon or setting is
+ * generated from an item seed, the LLM invents its own NPC list from
+ * scratch. If any of those names collide (case-insensitive, trimmed) with
+ * stubs already on the source item's `related_npcs`, stamp `seeded_from`
+ * pointing back to the item stub. That back-pointer lets the substrate's
+ * `addReferenceForSeed` / `writeBackPromotedNPC` chain treat both ends
+ * as the same character — promoting either side dedups via the existing
+ * writeBack symmetry.
+ *
+ * Strict name match (case-insensitive trim, no leading-word fallback):
+ * both sides come from a single seed flow, so any synonym drift
+ * ("Aldric" vs "Brother Aldric") is the user's call to make, not
+ * something we should silently assume. Existing `seeded_from` is
+ * preserved — caller may have already stamped it from a more specific
+ * path (e.g., the seed's entities[].seeded_from chain).
+ *
+ * Pure: returns a new array; does not touch the input stubs or the
+ * item. Caller decides what to do with the result (typically: drop it
+ * into the dungeon/setting record before saving).
+ *
+ * @param {Array} stubs - destination NPC stubs (typically from overview.npc_list, post-id assignment)
+ * @param {string} itemName - source item's name (its id in the savedItems list)
+ * @returns {Array} new array; matched entries get `seeded_from` stamped
+ */
+export function reconcileNPCStubsAgainstItem(stubs, itemName) {
+  if (!Array.isArray(stubs) || stubs.length === 0) return Array.isArray(stubs) ? stubs : [];
+  if (!itemName || typeof itemName !== 'string') return stubs;
+  const item = getItemFromStorage(itemName);
+  if (!item || !Array.isArray(item.related_npcs)) return stubs;
+
+  // Index item stubs by normalized name → original (case-preserved) stub
+  // name. First-wins on collisions: rare, and either match resolves the
+  // dedup intent equally.
+  const itemStubNameByKey = new Map();
+  for (const itemStub of item.related_npcs) {
+    if (!itemStub?.name || typeof itemStub.name !== 'string') continue;
+    const key = itemStub.name.trim().toLowerCase();
+    if (!key) continue;
+    if (!itemStubNameByKey.has(key)) {
+      itemStubNameByKey.set(key, itemStub.name);
+    }
+  }
+  if (itemStubNameByKey.size === 0) return stubs;
+
+  return stubs.map((stub) => {
+    if (!stub?.name || typeof stub.name !== 'string') return stub;
+    if (stub.seeded_from) return stub;  // preserve any caller-provided provenance
+    const key = stub.name.trim().toLowerCase();
+    const matchedStubName = itemStubNameByKey.get(key);
+    if (!matchedStubName) return stub;
+    return {
+      ...stub,
+      seeded_from: {
+        source_type: 'item',
+        source_id: itemName,
+        source_name: itemName,
+        stub_name: matchedStubName,
+      },
+    };
+  });
+}
