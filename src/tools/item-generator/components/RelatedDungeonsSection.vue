@@ -52,7 +52,7 @@
         class="related-dungeon-row"
       >
         <div class="related-dungeon-info">
-          <strong class="related-dungeon-name">{{ stub.name }}</strong>
+          <strong class="related-dungeon-name">{{ displayNameFor(stub) }}</strong>
           <span v-if="stub.role_brief" class="related-dungeon-role">{{ stub.role_brief }}</span>
         </div>
 
@@ -72,8 +72,8 @@
           <button
             type="button"
             class="related-dungeon-remove"
-            :title="`Remove ${stub.name}`"
-            :aria-label="`Remove ${stub.name}`"
+            :title="`Remove ${displayNameFor(stub)}`"
+            :aria-label="`Remove ${displayNameFor(stub)}`"
             @click="onRemove(idx)"
           >
             ✕
@@ -98,6 +98,7 @@ import { computed, ref } from 'vue';
 import { ParCardButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { extractRelatedDungeons, mergeStubs } from '@/tools/item-generator/utils/extract-related-dungeons.mjs';
+import { getDungeonDisplayName } from '@/util/dungeon-storage.mjs';
 import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
@@ -122,6 +123,23 @@ const visibleStubs = computed(() =>
     ? stubs.value.slice(0, COLLAPSE_THRESHOLD)
     : stubs.value
 );
+
+// Display name resolves LIVE from dungeon storage when a stub has been
+// promoted (`dungeon_id` is set). Matches the substrate's design
+// principle: dungeons are identified by id, so a rename in
+// `OverviewTab.saveEdit` propagates to every renderer that resolves
+// through this function — no rename-fanout helper required, no stale
+// stub names persisted across stores.
+//
+// Falls back to the stub's stored name when the dungeon is missing
+// (deleted, or the stub hasn't been promoted yet).
+function displayNameFor(stub) {
+  if (stub?.dungeon_id) {
+    const live = getDungeonDisplayName(stub.dungeon_id);
+    if (live) return live;
+  }
+  return stub?.name || '';
+}
 
 async function rescan() {
   if (loading.value) return;

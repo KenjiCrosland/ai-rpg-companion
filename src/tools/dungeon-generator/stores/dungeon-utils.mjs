@@ -2,6 +2,7 @@ import { dungeons } from './dungeon-state.mjs';
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { saveNPCToStorage, dungeonNPCToCanonical } from '@/util/npc-storage.mjs';
 import { addReference, getReferencesForEntity } from '@/util/reference-storage.mjs';
+import { logger } from '@/util/logger.mjs';
 
 export function saveDungeons() {
   // Prepare dungeons for save by stripping resolved statblocks
@@ -46,7 +47,7 @@ export function loadDungeons(currentDungeonId) {
         saveDungeons();
       }
     } catch (error) {
-      console.warn('Failed to load dungeons from localStorage, corrupted data:', error);
+      logger.warn('Failed to load dungeons from localStorage, corrupted data:', error);
       dungeons.value = [];
     }
   }
@@ -103,11 +104,11 @@ function resolveDungeonStatblocks(dungeon) {
         if (monster.statblock) {
           resolvedMonsters++;
           // if (hadNested) {
-          //   console.log(`  → Resolved monster "${monster.statblock_name}" from shared storage (replaced nested)`);
+          //   logger.log(`  → Resolved monster "${monster.statblock_name}" from shared storage (replaced nested)`);
           // }
         } else {
           missingMonsters++;
-          // console.warn(`  ⚠ Monster "${monster.statblock_name}" not found in shared storage!`);
+          // logger.warn(`  ⚠ Monster "${monster.statblock_name}" not found in shared storage!`);
         }
       }
       // else if (monster.statblock) → keep legacy nested statblock as fallback
@@ -128,11 +129,11 @@ function resolveDungeonStatblocks(dungeon) {
         if (npc.statblock) {
           resolvedNPCs++;
           // if (hadNested) {
-          //   console.log(`  → Resolved NPC "${npc.statblock_name}" from shared storage (replaced nested)`);
+          //   logger.log(`  → Resolved NPC "${npc.statblock_name}" from shared storage (replaced nested)`);
           // }
         } else {
           missingNPCs++;
-          // console.warn(`  ⚠ NPC "${npc.statblock_name}" not found in shared storage!`);
+          // logger.warn(`  ⚠ NPC "${npc.statblock_name}" not found in shared storage!`);
         }
       }
       // else if (npc.statblock) → keep legacy nested statblock as fallback
@@ -140,10 +141,10 @@ function resolveDungeonStatblocks(dungeon) {
   }
 
   // if (resolvedMonsters + resolvedNPCs > 0) {
-  //   console.log(`[DUNGEON RESOLVE] Resolved ${resolvedMonsters} monsters and ${resolvedNPCs} NPCs from shared storage`);
+  //   logger.log(`[DUNGEON RESOLVE] Resolved ${resolvedMonsters} monsters and ${resolvedNPCs} NPCs from shared storage`);
   // }
   // if (missingMonsters + missingNPCs > 0) {
-  //   console.warn(`[DUNGEON RESOLVE] ${missingMonsters} monsters and ${missingNPCs} NPCs not found in shared storage`);
+  //   logger.warn(`[DUNGEON RESOLVE] ${missingMonsters} monsters and ${missingNPCs} NPCs not found in shared storage`);
   // }
 }
 
@@ -153,12 +154,12 @@ function migrateDungeonStatblocks(dungeon) {
   let monsterCount = 0;
   let npcCount = 0;
 
-  // console.log(`[DUNGEON MIGRATION] Starting migration for "${dungeon.dungeonOverview?.name || 'Unknown Dungeon'}"`);
+  // logger.log(`[DUNGEON MIGRATION] Starting migration for "${dungeon.dungeonOverview?.name || 'Unknown Dungeon'}"`);
 
   if (dungeon.monsters) {
     dungeon.monsters.forEach(monster => {
       if (monster.statblock && monster.statblock.name && !monster.statblock_name) {
-        // console.log(`  → Migrating monster: "${monster.statblock.name}" to folder "${folderName}"`);
+        // logger.log(`  → Migrating monster: "${monster.statblock.name}" to folder "${folderName}"`);
         saveStatblockToStorage(monster.statblock, folderName);
         monster.statblock_name = monster.statblock.name;
         monster.statblock_folder = folderName;
@@ -171,7 +172,7 @@ function migrateDungeonStatblocks(dungeon) {
   if (dungeon.npcs) {
     dungeon.npcs.forEach(npc => {
       if (npc.statblock && npc.statblock.name && !npc.statblock_name) {
-        // console.log(`  → Migrating NPC: "${npc.statblock.name}" to folder "${folderName}"`);
+        // logger.log(`  → Migrating NPC: "${npc.statblock.name}" to folder "${folderName}"`);
         saveStatblockToStorage(npc.statblock, folderName);
         npc.statblock_name = npc.statblock.name;
         npc.statblock_folder = folderName;
@@ -182,9 +183,9 @@ function migrateDungeonStatblocks(dungeon) {
   }
 
   // if (migrated) {
-  //   console.log(`[DUNGEON MIGRATION] ✓ Migrated ${monsterCount} monsters and ${npcCount} NPCs to shared storage`);
+  //   logger.log(`[DUNGEON MIGRATION] ✓ Migrated ${monsterCount} monsters and ${npcCount} NPCs to shared storage`);
   // } else {
-  //   console.log(`[DUNGEON MIGRATION] No migration needed (already has references or no statblocks)`);
+  //   logger.log(`[DUNGEON MIGRATION] No migration needed (already has references or no statblocks)`);
   // }
 
   return migrated; // Return true if migration happened
@@ -303,7 +304,7 @@ function migrateDungeonNPCStatblockReferences(dungeon) {
     });
 
     if (referencesCreated > 0) {
-      console.log(`[DUNGEON MIGRATION] Created ${referencesCreated} NPC statblock references for "${dungeonTitle}"`);
+      logger.log(`[DUNGEON MIGRATION] Created ${referencesCreated} NPC statblock references for "${dungeonTitle}"`);
     }
   }
 

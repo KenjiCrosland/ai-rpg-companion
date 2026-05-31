@@ -5,6 +5,7 @@ import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
 import { generateStatblockForCreature } from '../util/statblock-generator.mjs';
 import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
+import { logger } from '@/util/logger.mjs';
 
 function sbValidationPart1(jsonString) {
   try {
@@ -43,7 +44,7 @@ export async function createAndGenerateMonster({
   premium,
 }) {
   if (!currentDungeon.value) {
-    console.error('No dungeon selected');
+    logger.error('No dungeon selected');
     return null;
   }
 
@@ -75,7 +76,7 @@ export async function createAndGenerateMonster({
   try {
     await generateMonsterStatblock(newMonsterId, premium);
   } catch (error) {
-    console.error('Error generating monster statblock:', error);
+    logger.error('Error generating monster statblock:', error);
   }
 
   return newMonster;
@@ -86,7 +87,7 @@ export async function generateMonsterStatblock(monsterId, premium) {
 
   const monster = findMonsterById(currentDungeon, monsterId);
   if (!monster) {
-    console.error('Monster not found');
+    logger.error('Monster not found');
     return;
   }
 
@@ -180,7 +181,7 @@ export async function generateMonsterStatblock(monsterId, premium) {
     // Success - save once at the end
     saveDungeons();
   } catch (error) {
-    console.error('Error generating monster statblock:', error);
+    logger.error('Error generating monster statblock:', error);
     if (part1Data && !part2Data) {
       // If we got part1 but failed to get part2, clear the partial data
       monster.statblock = undefined;
@@ -208,7 +209,7 @@ export async function updateStatblock(monsterId, statblock) {
 
   const monster = findMonsterById(currentDungeon, monsterId);
   if (!monster) {
-    console.error('Monster not found');
+    logger.error('Monster not found');
     return;
   }
 
@@ -231,7 +232,7 @@ export async function generateAndSaveStatblock({
   monsterType,
 }) {
   if (!currentDungeon.value) {
-    console.error('No dungeon selected');
+    logger.error('No dungeon selected');
     return;
   }
 
@@ -263,7 +264,7 @@ export async function generateAndSaveStatblock({
 
     return statblock;
   } catch (error) {
-    console.error('Error generating statblock:', error);
+    logger.error('Error generating statblock:', error);
     throw error;
   }
 }

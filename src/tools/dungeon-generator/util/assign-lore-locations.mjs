@@ -62,6 +62,7 @@
  */
 
 import { generateGptResponse } from '@/util/ai-client.mjs';
+import { logger } from '@/util/logger.mjs';
 
 /**
  * Build a compact representation of the map for prompt injection.
@@ -174,11 +175,11 @@ export function validateLoreAssignmentResponse(jsonString) {
   try {
     const data = JSON.parse(jsonString);
     if (!Array.isArray(data.assignments)) {
-      console.error('assignments must be an array');
+      logger.error('assignments must be an array');
       return false;
     }
     if (!Array.isArray(data.unassigned)) {
-      console.error('unassigned must be an array');
+      logger.error('unassigned must be an array');
       return false;
     }
     for (const a of data.assignments) {
@@ -192,7 +193,7 @@ export function validateLoreAssignmentResponse(jsonString) {
     }
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }
@@ -222,7 +223,7 @@ export async function assignLoreLocations({ dungeonOverview, rooms }) {
   try {
     response = await generateGptResponse(prompt, validateLoreAssignmentResponse);
   } catch (err) {
-    console.error('Lore assignment call failed:', err);
+    logger.error('Lore assignment call failed:', err);
     return null;
   }
 
@@ -230,7 +231,7 @@ export async function assignLoreLocations({ dungeonOverview, rooms }) {
   try {
     parsed = JSON.parse(response);
   } catch (err) {
-    console.error('Lore assignment response was unparseable:', err);
+    logger.error('Lore assignment response was unparseable:', err);
     return null;
   }
 
@@ -241,14 +242,14 @@ export async function assignLoreLocations({ dungeonOverview, rooms }) {
   for (const assignment of parsed.assignments) {
     // Defense: skip assignments to area IDs that aren't in the actual map.
     if (!validAreaIds.has(assignment.area_id)) {
-      console.warn(
+      logger.warn(
         `Lore-assignment for "${assignment.lore_name}" pointed at non-existent area ${assignment.area_id}; dropping`,
       );
       continue;
     }
     // Defense: skip if the area is already taken (each area gets one).
     if (rooms_to_lore[assignment.area_id]) {
-      console.warn(
+      logger.warn(
         `Area ${assignment.area_id} already assigned to "${rooms_to_lore[assignment.area_id]}"; dropping duplicate for "${assignment.lore_name}"`,
       );
       continue;

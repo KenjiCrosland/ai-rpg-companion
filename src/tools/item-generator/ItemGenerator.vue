@@ -315,6 +315,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CdrInput, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
+import { logger } from "@/util/logger.mjs";
 import { convertItemToMarkdown } from '@/util/convertToMarkdown.mjs';
 import determineFeaturesAndBonuses from '@/util/determine-features-and-bonuses.mjs';
 import ItemSkeleton from '@/components/skeletons/ItemSkeleton.vue';
@@ -1734,7 +1735,7 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
     // item, we just need to fill in the one missing creative slot.
     const generatedName = (magicItemDescription.value.name || '').toString().trim();
     if (!generatedName) {
-      console.warn('Item generation: name missing from primary response — running focused fallback call');
+      logger.warn('Item generation: name missing from primary response — running focused fallback call');
       const fallbackName = await generateNameFallback(magicItemDescription.value);
       if (!fallbackName) {
         throw new Error('Failed to generate item name — both primary and fallback calls dropped the name field');
@@ -1761,7 +1762,7 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
     activeTabIndex.value = 0;
     toast.success('Magic item generated and saved.');
   } catch (error) {
-    console.error("Error generating magic item:", error);
+    logger.error("Error generating magic item:", error);
     toast.error('Failed to generate magic item. Please try again.');
     loadingItem.value = false;
   }
@@ -1806,7 +1807,7 @@ Output ONLY the name (3-6 words). No quotes, no explanation, no JSON, no markdow
       .trim();
     return cleaned || null;
   } catch (error) {
-    console.error('Name fallback generation failed:', error);
+    logger.error('Name fallback generation failed:', error);
     return null;
   }
 };
@@ -2320,7 +2321,7 @@ The feature should:
     }
     feature.description = generatedFeature.description;
   } catch (error) {
-    console.error('Error generating feature:', error);
+    logger.error('Error generating feature:', error);
     toast.error('Failed to generate feature. Please try again.');
   } finally {
     feature.generating = false;

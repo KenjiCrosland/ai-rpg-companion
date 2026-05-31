@@ -27,6 +27,7 @@ import {
   pendingSeed,
 } from './dungeon-state.mjs';
 import { saveDungeons } from './dungeon-utils.mjs';
+import { logger } from '@/util/logger.mjs';
 
 /**
  * Aggregate the dungeon's overview prose into a single string for
@@ -207,7 +208,7 @@ export async function generateDungeonOverview() {
 
     const bannedTropes = getBannedDungeonTropesForGeneration();
 
-    console.log('[dungeon-gen]', {
+    logger.log('[dungeon-gen]', {
       type: inferred.type,
       character: inferred.character,
       register: inferred.register,
@@ -376,7 +377,7 @@ export async function generateDungeonOverview() {
 
     saveDungeons();
   } catch (error) {
-    console.error('Error generating dungeon overview:', error);
+    logger.error('Error generating dungeon overview:', error);
     alert(`Failed to generate dungeon overview: ${error.message}\n\nPlease try again.`);
     throw error;
   }

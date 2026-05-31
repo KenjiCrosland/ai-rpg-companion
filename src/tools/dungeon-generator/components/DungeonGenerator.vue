@@ -161,6 +161,7 @@ import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { loadSeededInput } from '@/util/seeded-input.mjs';
+import { canGenerateCrossTool } from '@/util/can-generate-cross-tool.mjs';
 import { buildDungeonPrefillFromItem } from '@/prompts/item-dungeon-prompts.mjs';
 import { pendingSeed, overviewForm, currentDungeonId } from '../stores/dungeon-state.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
@@ -219,6 +220,19 @@ const patreonLoginUrl = computed(() => {
 
 // Handle dungeon generation with local loading state
 async function handleGenerateDungeon() {
+  // Cross-tool gate: when this generation is item-seeded, count it
+  // against the shared cross-tool quota (5/day total across all gated
+  // combos — shares the counter with item→setting). Free, non-seeded
+  // generations short-circuit the gate inside `canGenerateCrossTool`.
+  // The gate surfaces its own toast on block; we just bail without
+  // flipping the loading state so the user can come back tomorrow or
+  // upgrade.
+  const seedSourceType = pendingSeed.value?.source?.type;
+  if (seedSourceType) {
+    const canGenerate = await canGenerateCrossTool(seedSourceType, 'dungeon', props.premium);
+    if (!canGenerate) return;
+  }
+
   isGenerating.value = true;
   try {
     await dungeonStore.generateDungeonOverview();

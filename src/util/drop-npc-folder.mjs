@@ -24,6 +24,8 @@
  *   - savedItems[*].related_npcs[*]
  */
 
+import { logger } from './logger.mjs';
+
 const STORES = [
   { key: 'gameSettings', stubArrays: (parsed) => parsed.map(s => s?.npcs).filter(Array.isArray) },
   { key: 'dungeons',     stubArrays: (parsed) => parsed.map(d => d?.npcs).filter(Array.isArray) },
@@ -36,7 +38,7 @@ export function dropNPCFolder() {
     try {
       raw = localStorage.getItem(key);
     } catch (error) {
-      console.warn(`drop-npc-folder: failed to read ${key}:`, error);
+      logger.warn(`drop-npc-folder: failed to read ${key}:`, error);
       continue;
     }
     if (!raw) continue;
@@ -45,7 +47,7 @@ export function dropNPCFolder() {
     try {
       parsed = JSON.parse(raw);
     } catch (error) {
-      console.warn(`drop-npc-folder: failed to parse ${key}, skipping:`, error);
+      logger.warn(`drop-npc-folder: failed to parse ${key}, skipping:`, error);
       continue;
     }
     if (!Array.isArray(parsed)) continue;
@@ -64,7 +66,7 @@ export function dropNPCFolder() {
       try {
         localStorage.setItem(key, JSON.stringify(parsed));
       } catch (error) {
-        console.warn(`drop-npc-folder: failed to write ${key}:`, error);
+        logger.warn(`drop-npc-folder: failed to write ${key}:`, error);
       }
     }
   }

@@ -47,6 +47,8 @@
  *   T5: DC 22-24
  */
 
+import { logger } from '@/util/logger.mjs';
+
 export function generateSecretDoorPrompt(
   dungeonOverview,
   currentRoomDescription,
@@ -182,21 +184,21 @@ export function validateSecretDoorResponse(jsonString) {
   try {
     const data = JSON.parse(jsonString);
     if (!Array.isArray(data.secret_door_paragraphs)) {
-      console.error('secret_door_paragraphs must be an array');
+      logger.error('secret_door_paragraphs must be an array');
       return false;
     }
     if (data.secret_door_paragraphs.length < 1
       || data.secret_door_paragraphs.length > 2) {
-      console.error('secret_door_paragraphs must have 1 or 2 entries');
+      logger.error('secret_door_paragraphs must have 1 or 2 entries');
       return false;
     }
     if (data.secret_door_paragraphs.some(p => typeof p !== 'string' || !p.trim())) {
-      console.error('secret_door_paragraphs entries must all be non-empty strings');
+      logger.error('secret_door_paragraphs entries must all be non-empty strings');
       return false;
     }
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }

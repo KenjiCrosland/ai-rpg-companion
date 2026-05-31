@@ -8,6 +8,7 @@ import {
   linkNPCToDungeonStubsBySeed,
   findDungeonStubsForNPC,
   resetDungeonStubsForDeletedNPC,
+  getDungeonDisplayName,
 } from '../dungeon-storage.mjs';
 
 describe('dungeon-storage', () => {
@@ -214,6 +215,65 @@ describe('dungeon-storage', () => {
       expect(stub.npcDescriptionPart1).toBeUndefined();
       expect(stub.statblock_name).toBeUndefined();
       expect(stub.statblock_folder).toBeUndefined();
+    });
+  });
+
+  describe('getDungeonDisplayName', () => {
+    it('returns the live dungeonOverview.name for a known dungeon id', () => {
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_abc',
+        dungeonOverview: { name: 'The Cursed Tomb' },
+      }]));
+
+      expect(getDungeonDisplayName('dng_abc')).toBe('The Cursed Tomb');
+    });
+
+    it('reflects a rename — a fresh read after the name changes returns the new name', () => {
+      // The stale-stub bug we're fixing: stubs cached the dungeon's name
+      // at promotion time and never updated. This assertion proves the
+      // helper resolves live each call, so the next render in the item
+      // tool picks up the rename without any propagation step.
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_abc',
+        dungeonOverview: { name: 'The Cursed Tomb' },
+      }]));
+      expect(getDungeonDisplayName('dng_abc')).toBe('The Cursed Tomb');
+
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_abc',
+        dungeonOverview: { name: 'The Cursed Tomb of Eikheim' },
+      }]));
+      expect(getDungeonDisplayName('dng_abc')).toBe('The Cursed Tomb of Eikheim');
+    });
+
+    it('falls back through dungeonOverview.title when name is missing', () => {
+      // Legacy / partial records may carry title but not name. The
+      // private getDungeonName helper already handles this; the public
+      // wrapper inherits the fallback chain.
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_abc',
+        dungeonOverview: { title: 'Tomb of the Singing Bones' },
+      }]));
+
+      expect(getDungeonDisplayName('dng_abc')).toBe('Tomb of the Singing Bones');
+    });
+
+    it('returns null when the dungeon id does not match anything in storage', () => {
+      // Deleted-dungeon case: caller is meant to fall back to its own
+      // stored stub.name. Returning null is the explicit signal for that
+      // fallback path; '' would also work but null is unambiguous.
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_other',
+        dungeonOverview: { name: 'Some Other Place' },
+      }]));
+
+      expect(getDungeonDisplayName('dng_missing')).toBeNull();
+    });
+
+    it('returns null for an empty / falsy id', () => {
+      expect(getDungeonDisplayName('')).toBeNull();
+      expect(getDungeonDisplayName(null)).toBeNull();
+      expect(getDungeonDisplayName(undefined)).toBeNull();
     });
   });
 });

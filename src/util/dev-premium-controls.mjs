@@ -19,6 +19,8 @@
  *   devPremium.help()      // help text
  */
 
+import { logger } from './logger.mjs';
+
 const STORAGE_KEY = 'dev-premium-override';
 
 function isProduction() {
@@ -62,22 +64,22 @@ export function initDevPremiumControls() {
   window.devPremium = {
     enable() {
       localStorage.setItem(STORAGE_KEY, 'true');
-      console.log('✅ Premium override ENABLED. Reload the page to apply.');
+      logger.log('✅ Premium override ENABLED. Reload the page to apply.');
     },
 
     disable() {
       localStorage.removeItem(STORAGE_KEY);
-      console.log('🔄 Premium override DISABLED. Reload the page to apply.');
+      logger.log('🔄 Premium override DISABLED. Reload the page to apply.');
     },
 
     status() {
       const on = overrideActive();
-      console.log(on ? '✅ Premium override ENABLED' : '⚪ Premium override DISABLED');
+      logger.log(on ? '✅ Premium override ENABLED' : '⚪ Premium override DISABLED');
       return on;
     },
 
     help() {
-      console.log(`
+      logger.log(`
 💎 Premium Override (dev only)
 ===============================
 
@@ -100,7 +102,7 @@ Reload the page after changing state.
   };
 
   const on = overrideActive();
-  console.log(
+  logger.log(
     '💎 Premium override loaded%s. Type devPremium.help() for commands.',
     on ? ' (currently ENABLED — all tools render as premium)' : '',
   );

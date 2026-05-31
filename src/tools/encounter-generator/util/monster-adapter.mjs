@@ -4,6 +4,7 @@
  */
 
 import crToXP from '@/data/cr-to-xp.json';
+import { logger } from '@/util/logger.mjs';
 
 /**
  * Extract numeric CR value from a CR string like "5 (1,800 XP)"
@@ -223,7 +224,7 @@ export function loadCustomMonsters() {
 
     return monsters;
   } catch (error) {
-    console.error('Failed to load custom monsters from localStorage:', error);
+    logger.error('Failed to load custom monsters from localStorage:', error);
     return [];
   }
 }
@@ -238,7 +239,7 @@ export async function loadSRDMonsters() {
     const monsters = srdData.default || [];
     return monsters.map(normalizeSRDMonster);
   } catch (error) {
-    console.info('SRD monster data not available. Add srd-monsters.json to enable.');
+    logger.info('SRD monster data not available. Add srd-monsters.json to enable.');
     return [];
   }
 }

@@ -10,6 +10,7 @@ import {
   resetSettingStubsForDeletedNPC,
   resetSettingSourceForDeletedEntity,
   getSettingById,
+  getSettingDisplayName,
   getSettingBrief,
   getChildSettings,
   getSiblingSettings,
@@ -397,6 +398,62 @@ describe('setting-storage', () => {
       localStorage.setItem('gameSettings', JSON.stringify([{ id: 'set_a' }]));
       expect(getSettingById('set_missing')).toBeNull();
       expect(getSettingById(null)).toBeNull();
+    });
+  });
+
+  describe('getSettingDisplayName', () => {
+    it('returns place_name for a known setting id', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'Hjallmark' },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBe('Hjallmark');
+    });
+
+    it('reflects a rename — a fresh read after the name changes returns the new name', () => {
+      // Same fix shape as dungeon: the stub in the item card resolves
+      // live through this helper, so a rename in the setting tool
+      // propagates without a fanout-on-save step.
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'Hjallmark' },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBe('Hjallmark');
+
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'Hjallmark, the Iron Vale' },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBe('Hjallmark, the Iron Vale');
+    });
+
+    it('falls back to setting_overview.name when place_name is missing', () => {
+      // Legacy / partial records may carry the name on the overview
+      // sub-object only. Matches the documented resolution order.
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', setting_overview: { name: 'Hjallmark via overview' } },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBe('Hjallmark via overview');
+    });
+
+    it('returns null when the id does not match anything', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_other', place_name: 'Elsewhere' },
+      ]));
+      expect(getSettingDisplayName('set_missing')).toBeNull();
+    });
+
+    it('returns null for an empty / falsy id', () => {
+      expect(getSettingDisplayName('')).toBeNull();
+      expect(getSettingDisplayName(null)).toBeNull();
+      expect(getSettingDisplayName(undefined)).toBeNull();
+    });
+
+    it('returns null when the matched setting has neither place_name nor overview name', () => {
+      // No string to surface — caller falls back to the stub's stored
+      // name. (place_name being a whitespace-only string is treated the
+      // same as missing.)
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: '   ' },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBeNull();
     });
   });
 

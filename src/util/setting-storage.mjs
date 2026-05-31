@@ -220,6 +220,31 @@ export function getSettingById(settingId) {
 }
 
 /**
+ * Display name for a setting, resolved live from storage by id.
+ *
+ * Returns null when no setting matches (caller falls back to whatever
+ * stale string it has stored on the stub). Used by cross-tool stub
+ * renderers so a setting rename flows through to the item-side stub at
+ * the next render — parallel to `getDungeonDisplayName` in
+ * `dungeon-storage.mjs`; same "identity is the id, display reads live"
+ * principle.
+ *
+ * Resolution order matches the substrate's existing conventions:
+ *   1. `place_name` — the canonical user-edit field
+ *   2. `setting_overview.name` — fallback for legacy or partial records
+ *
+ * @param {string} settingId
+ * @returns {string|null}
+ */
+export function getSettingDisplayName(settingId) {
+  if (!settingId) return null;
+  const setting = getSettingById(settingId);
+  if (!setting) return null;
+  const name = (setting.place_name || setting.setting_overview?.name || '').trim();
+  return name || null;
+}
+
+/**
  * All settings whose parentId matches the given id. Top-level settings
  * are reachable by passing `null`. Returns an empty array when nothing
  * matches.

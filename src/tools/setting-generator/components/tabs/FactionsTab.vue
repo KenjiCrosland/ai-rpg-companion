@@ -161,6 +161,7 @@
 
 <script setup>
 import { ParActionButton } from "@/parchment";
+import { logger } from "@/util/logger.mjs";
 import { ref, computed, watch, reactive } from 'vue';
 import {
   CdrButton,
@@ -435,13 +436,13 @@ async function generateFactions() {
           if (assigned) newNpcs[i] = { ...newNpcs[i], faction: assigned };
         }
       } catch (err) {
-        console.warn('NPC-to-faction classification failed; NPCs stay Unaffiliated:', err);
+        logger.warn('NPC-to-faction classification failed; NPCs stay Unaffiliated:', err);
       }
     }
 
     emitUpdated({ factions, npcs: newNpcs });
   } catch (error) {
-    console.error('Error generating factions:', error);
+    logger.error('Error generating factions:', error);
   } finally {
     loadingFactions.value = false;
   }
@@ -468,7 +469,7 @@ async function generateDetailedFaction(index) {
     });
     emitUpdated({ factions: updatedFactions });
   } catch (error) {
-    console.error('Error generating detailed faction:', error);
+    logger.error('Error generating detailed faction:', error);
   } finally {
     loadingFactionIndex.value = null;
   }
@@ -509,7 +510,7 @@ async function addNewFaction() {
     newFactionName.value = '';
     newFactionDescription.value = '';
   } catch (error) {
-    console.error('Error adding new faction:', error);
+    logger.error('Error adding new faction:', error);
   } finally {
     loadingNewFaction.value = false;
   }

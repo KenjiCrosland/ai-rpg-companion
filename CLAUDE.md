@@ -108,6 +108,26 @@ import { bar } from '@/util/bar.mjs';
 - More readable and maintainable code
 - Works in both source code and Jest tests
 
+### Logging
+
+Use `logger` from `@/util/logger.mjs` instead of `console.*` in production code. The wrapper applies a gating split that the bare `console` does not:
+
+- `logger.log` / `logger.info` / `logger.debug` — **dev only**. No-op in production. Use for narrative output: "started X", "got Y", "skipping Z."
+- `logger.warn` / `logger.error` — **always fire**. Production errors must surface in browser dev tools (and any future error-tracking pipeline); silencing them makes user-side fatal states invisible.
+
+```javascript
+import { logger } from '@/util/logger.mjs';
+
+logger.log('skipping orphan ref', refId);   // dev only
+logger.error('failed to parse response', err); // always
+```
+
+`process.env.NODE_ENV` is the dev/prod signal — Vite inlines it at build time. The check runs at call time (not import time), so test mocks that mutate `process.env.NODE_ENV` or `console.*` work without module-cache gymnastics.
+
+**Why a wrapper at all** (vs. a `// no-console` lint rule that allows `console.error`): if we later route errors through an error-tracker, pointing every site at `logger` now means that swap is a one-file change.
+
+**Migration status:** ~85% of pre-existing `console.*` calls migrated. The remaining tail (mostly 1–2 calls per file, plus the legacy dungeon generator) gets migrated incrementally as those files are touched. New code should use `logger` from day one.
+
 ### AI Integration
 
 The application supports multiple AI providers with automatic provider selection and model normalization.

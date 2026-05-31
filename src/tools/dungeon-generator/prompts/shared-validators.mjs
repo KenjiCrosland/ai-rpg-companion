@@ -8,10 +8,12 @@
 // orchestrate these to express their specific required-key list and
 // minimum dm_notes count.
 
+import { logger } from '@/util/logger.mjs';
+
 export function validateRequiredKeys(data, required) {
   for (const key of required) {
     if (!(key in data)) {
-      console.error(`Missing required key: ${key}`);
+      logger.error(`Missing required key: ${key}`);
       return false;
     }
   }
@@ -20,14 +22,14 @@ export function validateRequiredKeys(data, required) {
 
 export function validateHasChallenge(data) {
   if (typeof data.has_challenge !== 'boolean') {
-    console.error('has_challenge must be a boolean');
+    logger.error('has_challenge must be a boolean');
     return false;
   }
   if (
     data.has_challenge
     && (typeof data.challenge_header !== 'string' || !data.challenge_header.trim())
   ) {
-    console.error('challenge_header required when has_challenge is true');
+    logger.error('challenge_header required when has_challenge is true');
     return false;
   }
   return true;
@@ -37,11 +39,11 @@ export function validateHasChallenge(data) {
 // Requires has_challenge to be true AND challenge_header to be a non-empty string.
 export function validateHasChallengeRequired(data) {
   if (data.has_challenge !== true) {
-    console.error('has_challenge must be true for this room type');
+    logger.error('has_challenge must be true for this room type');
     return false;
   }
   if (typeof data.challenge_header !== 'string' || !data.challenge_header.trim()) {
-    console.error('challenge_header must be a non-empty string');
+    logger.error('challenge_header must be a non-empty string');
     return false;
   }
   return true;
@@ -49,7 +51,7 @@ export function validateHasChallengeRequired(data) {
 
 export function validateDmNotes(data, minEntries = 1) {
   if (!Array.isArray(data.dm_notes)) {
-    console.error('dm_notes must be an array');
+    logger.error('dm_notes must be an array');
     return false;
   }
   // Filter empty/whitespace strings in-place. The LLM occasionally
@@ -61,7 +63,7 @@ export function validateDmNotes(data, minEntries = 1) {
     p => typeof p === 'string' && p.trim(),
   );
   if (data.dm_notes.length < minEntries) {
-    console.error(
+    logger.error(
       `dm_notes must have at least ${minEntries} non-empty entries (got ${data.dm_notes.length})`,
     );
     return false;
@@ -71,7 +73,7 @@ export function validateDmNotes(data, minEntries = 1) {
 
 export function validateOptionalDoorPreamble(data) {
   if (data.door_preamble !== undefined && typeof data.door_preamble !== 'string') {
-    console.error('door_preamble, when present, must be a string');
+    logger.error('door_preamble, when present, must be a string');
     return false;
   }
   return true;
@@ -80,7 +82,7 @@ export function validateOptionalDoorPreamble(data) {
 export function validateOptionalRoomMentions(data) {
   if (data.room_mentions === undefined) return true;
   if (!Array.isArray(data.room_mentions)) {
-    console.error('room_mentions, when present, must be an array');
+    logger.error('room_mentions, when present, must be an array');
     return false;
   }
   const invalid = data.room_mentions.some(
@@ -91,7 +93,7 @@ export function validateOptionalRoomMentions(data) {
       || !m.mention.trim(),
   );
   if (invalid) {
-    console.error('room_mentions entries must be {area_id: number, mention: string}');
+    logger.error('room_mentions entries must be {area_id: number, mention: string}');
     return false;
   }
   return true;
@@ -105,7 +107,7 @@ export function parseAndValidateRoom(jsonString, checks) {
     }
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }

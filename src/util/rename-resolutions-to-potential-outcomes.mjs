@@ -19,12 +19,14 @@
  * dungeons used a different overview shape entirely.
  */
 
+import { logger } from './logger.mjs';
+
 export function renameResolutionsToPotentialOutcomes() {
   let raw;
   try {
     raw = localStorage.getItem('dungeons');
   } catch (error) {
-    console.warn('rename-resolutions-to-potential-outcomes: failed to read dungeons:', error);
+    logger.warn('rename-resolutions-to-potential-outcomes: failed to read dungeons:', error);
     return;
   }
   if (!raw) return;
@@ -33,7 +35,7 @@ export function renameResolutionsToPotentialOutcomes() {
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    console.warn('rename-resolutions-to-potential-outcomes: failed to parse dungeons, skipping:', error);
+    logger.warn('rename-resolutions-to-potential-outcomes: failed to parse dungeons, skipping:', error);
     return;
   }
   if (!Array.isArray(parsed)) return;
@@ -54,7 +56,7 @@ export function renameResolutionsToPotentialOutcomes() {
     try {
       localStorage.setItem('dungeons', JSON.stringify(parsed));
     } catch (error) {
-      console.warn('rename-resolutions-to-potential-outcomes: failed to write dungeons:', error);
+      logger.warn('rename-resolutions-to-potential-outcomes: failed to write dungeons:', error);
     }
   }
 }

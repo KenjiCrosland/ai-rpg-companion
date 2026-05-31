@@ -10,10 +10,11 @@ import { assignItems } from '../util/assign-items.mjs';
 import { dungeonOverviewToString } from '../util/content-to-string.mjs';
 import { getReferencesForEntity } from '@/util/reference-storage.mjs';
 import { getAllItems } from '@/util/item-storage.mjs';
+import { logger } from '@/util/logger.mjs';
 
 export async function generateMap() {
   if (!currentDungeon.value) {
-    console.error('No dungeon selected');
+    logger.error('No dungeon selected');
     return;
   }
 
@@ -46,17 +47,17 @@ export async function generateMap() {
       currentDungeon.value.dungeonOverview,
     );
     if (!overviewString) {
-      console.log('[lore-assignment] no overview prose available; skipping');
+      logger.log('[lore-assignment] no overview prose available; skipping');
       return;
     }
-    console.log('[lore-assignment] starting...');
+    logger.log('[lore-assignment] starting...');
     const assignments = await assignLoreLocations({
       dungeonOverview: overviewString,
       rooms: dungeonRoomArray,
     });
 
     if (!assignments) {
-      console.warn(
+      logger.warn(
         '[lore-assignment] returned null; falling back to prompt-side cross-reference rule',
       );
       return;
@@ -72,28 +73,28 @@ export async function generateMap() {
     const matched = Object.entries(assignments.lore_to_rooms);
     const unassigned = assignments.unassigned || [];
 
-    console.log(
+    logger.log(
       `[lore-assignment] complete: ${matched.length} matched, ${unassigned.length} unassigned`,
     );
 
     if (matched.length > 0) {
-      console.log('[lore-assignment] matched:');
+      logger.log('[lore-assignment] matched:');
       matched
         .sort(([, a], [, b]) => a - b)
         .forEach(([loreName, areaId]) => {
-          console.log(`  area ${areaId} ← "${loreName}"`);
+          logger.log(`  area ${areaId} ← "${loreName}"`);
         });
     }
 
     if (unassigned.length > 0) {
-      console.log('[lore-assignment] unassigned (no compatible area):');
+      logger.log('[lore-assignment] unassigned (no compatible area):');
       unassigned.forEach((u) => {
-        console.log(`  "${u.lore_name}" — ${u.reason}`);
+        logger.log(`  "${u.lore_name}" — ${u.reason}`);
       });
     }
   } catch (err) {
     // Non-fatal: the dungeon still works without assignments.
-    console.error('[lore-assignment] threw:', err);
+    logger.error('[lore-assignment] threw:', err);
   }
 
   // NPC assignment: places existing dungeon.npcs[] entries onto
@@ -104,13 +105,13 @@ export async function generateMap() {
   // manual-NPC-pick flow via the form.
   try {
     if (!Array.isArray(currentDungeon.value.npcs) || currentDungeon.value.npcs.length === 0) {
-      console.log('[npc-assignment] no NPCs to assign; skipping');
+      logger.log('[npc-assignment] no NPCs to assign; skipping');
       return;
     }
     const overviewString = dungeonOverviewToString(
       currentDungeon.value.dungeonOverview,
     );
-    console.log('[npc-assignment] starting...');
+    logger.log('[npc-assignment] starting...');
     const npcAssignments = await assignNPCs({
       dungeonOverview: overviewString,
       rooms: dungeonRoomArray,
@@ -119,7 +120,7 @@ export async function generateMap() {
     });
 
     if (!npcAssignments) {
-      console.warn('[npc-assignment] returned null; rooms will only show NPCs when manually picked');
+      logger.warn('[npc-assignment] returned null; rooms will only show NPCs when manually picked');
       return;
     }
 
@@ -129,12 +130,12 @@ export async function generateMap() {
     const matched = Object.entries(npcAssignments.npc_id_to_room);
     const unassignedNPCs = npcAssignments.unassigned || [];
 
-    console.log(
+    logger.log(
       `[npc-assignment] complete: ${matched.length} placed, ${unassignedNPCs.length} unassigned`,
     );
 
     if (matched.length > 0) {
-      console.log('[npc-assignment] placed:');
+      logger.log('[npc-assignment] placed:');
       // Build a name lookup for clearer log output (npc_ids alone
       // aren't human-scannable).
       const nameLookup = Object.fromEntries(
@@ -143,18 +144,18 @@ export async function generateMap() {
       matched
         .sort(([, a], [, b]) => a - b)
         .forEach(([npcId, areaId]) => {
-          console.log(`  area ${areaId} ← ${nameLookup[npcId] || npcId}`);
+          logger.log(`  area ${areaId} ← ${nameLookup[npcId] || npcId}`);
         });
     }
 
     if (unassignedNPCs.length > 0) {
-      console.log('[npc-assignment] unassigned (not present in the dungeon):');
+      logger.log('[npc-assignment] unassigned (not present in the dungeon):');
       unassignedNPCs.forEach((u) => {
-        console.log(`  "${u.npc_name || u.npc_id}" — ${u.reason}`);
+        logger.log(`  "${u.npc_name || u.npc_id}" — ${u.reason}`);
       });
     }
   } catch (err) {
-    console.error('[npc-assignment] threw:', err);
+    logger.error('[npc-assignment] threw:', err);
   }
 
   // Monster assignment: places dungeon.monsters[] populations onto
@@ -166,13 +167,13 @@ export async function generateMap() {
   // creature presence in their generation context.
   try {
     if (!Array.isArray(currentDungeon.value.monsters) || currentDungeon.value.monsters.length === 0) {
-      console.log('[monster-assignment] no monsters to assign; skipping');
+      logger.log('[monster-assignment] no monsters to assign; skipping');
       return;
     }
     const overviewString = dungeonOverviewToString(
       currentDungeon.value.dungeonOverview,
     );
-    console.log('[monster-assignment] starting...');
+    logger.log('[monster-assignment] starting...');
     const monsterAssignments = await assignMonsters({
       dungeonOverview: overviewString,
       rooms: dungeonRoomArray,
@@ -183,7 +184,7 @@ export async function generateMap() {
     });
 
     if (!monsterAssignments) {
-      console.warn('[monster-assignment] returned null; rooms will not surface monster populations');
+      logger.warn('[monster-assignment] returned null; rooms will not surface monster populations');
       return;
     }
 
@@ -193,12 +194,12 @@ export async function generateMap() {
     const matched = Object.entries(monsterAssignments.monster_id_to_rooms);
     const unassignedMonsters = monsterAssignments.unassigned || [];
 
-    console.log(
+    logger.log(
       `[monster-assignment] complete: ${matched.length} placed, ${unassignedMonsters.length} unassigned`,
     );
 
     if (matched.length > 0) {
-      console.log('[monster-assignment] placed:');
+      logger.log('[monster-assignment] placed:');
       const nameLookup = Object.fromEntries(
         currentDungeon.value.monsters.map(m => [m.id, m.name]),
       );
@@ -208,18 +209,18 @@ export async function generateMap() {
       matched.forEach(([monsterId, areaIds]) => {
         const name = nameLookup[monsterId] || monsterId;
         const tier = tierLookup[monsterId] || 'unknown';
-        console.log(`  ${name} [${tier}] → areas [${areaIds.join(', ')}]`);
+        logger.log(`  ${name} [${tier}] → areas [${areaIds.join(', ')}]`);
       });
     }
 
     if (unassignedMonsters.length > 0) {
-      console.log('[monster-assignment] unassigned:');
+      logger.log('[monster-assignment] unassigned:');
       unassignedMonsters.forEach((u) => {
-        console.log(`  "${u.monster_name || u.monster_id}" — ${u.reason}`);
+        logger.log(`  "${u.monster_name || u.monster_id}" — ${u.reason}`);
       });
     }
   } catch (err) {
-    console.error('[monster-assignment] threw:', err);
+    logger.error('[monster-assignment] threw:', err);
   }
 
   // Item assignment: places items linked to this dungeon via
@@ -236,7 +237,7 @@ export async function generateMap() {
       )
       : [];
     if (refs.length === 0) {
-      console.log('[item-assignment] no inspired_by_item edges; skipping');
+      logger.log('[item-assignment] no inspired_by_item edges; skipping');
       return;
     }
     const allItems = getAllItems();
@@ -247,17 +248,17 @@ export async function generateMap() {
       })
       .filter(Boolean);
     if (linkedItems.length === 0) {
-      console.log('[item-assignment] no resolvable items behind edges; skipping');
+      logger.log('[item-assignment] no resolvable items behind edges; skipping');
       return;
     }
     const overviewString = dungeonOverviewToString(
       currentDungeon.value.dungeonOverview,
     );
     if (!overviewString) {
-      console.log('[item-assignment] no overview prose available; skipping');
+      logger.log('[item-assignment] no overview prose available; skipping');
       return;
     }
-    console.log('[item-assignment] starting...');
+    logger.log('[item-assignment] starting...');
     const itemAssignments = await assignItems({
       dungeonOverview: overviewString,
       rooms: dungeonRoomArray,
@@ -265,7 +266,7 @@ export async function generateMap() {
     });
 
     if (!itemAssignments) {
-      console.warn('[item-assignment] returned null; rooms will not surface featured items');
+      logger.warn('[item-assignment] returned null; rooms will not surface featured items');
       return;
     }
 
@@ -275,25 +276,25 @@ export async function generateMap() {
     const matched = Object.entries(itemAssignments.item_name_to_room);
     const unassignedItems = itemAssignments.unassigned || [];
 
-    console.log(
+    logger.log(
       `[item-assignment] complete: ${matched.length} placed, ${unassignedItems.length} unassigned`,
     );
 
     if (matched.length > 0) {
-      console.log('[item-assignment] placed:');
+      logger.log('[item-assignment] placed:');
       matched.forEach(([itemName, areaId]) => {
-        console.log(`  "${itemName}" → area ${areaId}`);
+        logger.log(`  "${itemName}" → area ${areaId}`);
       });
     }
 
     if (unassignedItems.length > 0) {
-      console.log('[item-assignment] unassigned:');
+      logger.log('[item-assignment] unassigned:');
       unassignedItems.forEach((u) => {
-        console.log(`  "${u.item_name}" — ${u.reason}`);
+        logger.log(`  "${u.item_name}" — ${u.reason}`);
       });
     }
   } catch (err) {
-    console.error('[item-assignment] threw:', err);
+    logger.error('[item-assignment] threw:', err);
   }
 }
 
@@ -308,6 +309,6 @@ export function handleUpdateRoomDescription({ roomId, contentArray, name }) {
       currentDungeon.value.rooms.map((r) => r.name).filter(Boolean) || [];
     saveDungeons();
   } else {
-    console.error(`Room with ID ${roomId} not found`);
+    logger.error(`Room with ID ${roomId} not found`);
   }
 }

@@ -290,6 +290,7 @@
 
 <script setup>
 import { ParActionButton } from "@/parchment";
+import { logger } from "@/util/logger.mjs";
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';
 import CRtoXP from '../data/cr-to-xp.json';
@@ -567,7 +568,7 @@ async function regenerateAbility(index) {
         const newAbility = JSON.parse(newAbilityObject);
         editedAbilities.value[index] = newAbility;
     } catch (e) {
-        console.error('Error regenerating ability:', e);
+        logger.error('Error regenerating ability:', e);
         alert('Failed to regenerate ability. Please try again.');
     } finally {
         loadingAbilityIndices.value.delete(index);
@@ -587,7 +588,7 @@ async function regenerateAction(index) {
         const newAction = JSON.parse(newActionObject);
         editedActions.value[index] = newAction;
     } catch (e) {
-        console.error('Error regenerating action:', e);
+        logger.error('Error regenerating action:', e);
         alert('Failed to regenerate action. Please try again.');
     } finally {
         loadingActionIndices.value.delete(index);
@@ -607,7 +608,7 @@ async function regenerateLegendaryAction(index) {
         const newAction = JSON.parse(newActionObject);
         editedLegendaryActions.value[index] = newAction;
     } catch (e) {
-        console.error('Error regenerating legendary action:', e);
+        logger.error('Error regenerating legendary action:', e);
         alert('Failed to regenerate legendary action. Please try again.');
     } finally {
         loadingLegendaryActionIndices.value.delete(index);

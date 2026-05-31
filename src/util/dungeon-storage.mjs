@@ -243,3 +243,24 @@ export function resetDungeonStubsForDeletedNPC(npcId) {
   }
   return resetCount;
 }
+
+/**
+ * Display name for a dungeon, resolved live from storage by id.
+ *
+ * Returns null when no dungeon matches (caller falls back to whatever
+ * stale string it has stored on the stub). Used by cross-tool stub
+ * renderers so a dungeon rename in `OverviewTab.saveEdit` flows through
+ * to the item-side stub at the next render — the substrate's design
+ * principle "dungeons/settings: identity is the id, display reads live"
+ * made concrete.
+ *
+ * @param {string} dungeonId
+ * @returns {string|null}
+ */
+export function getDungeonDisplayName(dungeonId) {
+  if (!dungeonId) return null;
+  const dungeons = readDungeons();
+  const dungeon = dungeons.find(d => String(d?.id) === String(dungeonId));
+  if (!dungeon) return null;
+  return getDungeonName(dungeon);
+}

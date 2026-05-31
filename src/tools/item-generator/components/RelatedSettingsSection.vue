@@ -40,7 +40,7 @@
         class="related-setting-row"
       >
         <div class="related-setting-info">
-          <strong class="related-setting-name">{{ stub.name }}</strong>
+          <strong class="related-setting-name">{{ displayNameFor(stub) }}</strong>
           <span v-if="stub.role_brief" class="related-setting-role">{{ stub.role_brief }}</span>
         </div>
 
@@ -60,8 +60,8 @@
           <button
             type="button"
             class="related-setting-remove"
-            :title="`Remove ${stub.name}`"
-            :aria-label="`Remove ${stub.name}`"
+            :title="`Remove ${displayNameFor(stub)}`"
+            :aria-label="`Remove ${displayNameFor(stub)}`"
             @click="onRemove(idx)"
           >
             ✕
@@ -86,6 +86,7 @@ import { computed, ref } from 'vue';
 import { ParCardButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { extractRelatedSettings, mergeStubs } from '@/tools/item-generator/utils/extract-related-settings.mjs';
+import { getSettingDisplayName } from '@/util/setting-storage.mjs';
 import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
@@ -110,6 +111,23 @@ const visibleStubs = computed(() =>
     ? stubs.value.slice(0, COLLAPSE_THRESHOLD)
     : stubs.value
 );
+
+// Display name resolves LIVE from setting storage when a stub has been
+// promoted (`setting_id` is set). Same shape as RelatedDungeonsSection's
+// `displayNameFor`: substrate's "identity is the id, display reads live"
+// principle made concrete on the consumer side, so renames in the
+// setting tool propagate through to the item card at the next render
+// without a fanout-on-save helper.
+//
+// Falls back to the stub's stored name when the setting is missing
+// (deleted, or the stub hasn't been promoted yet).
+function displayNameFor(stub) {
+  if (stub?.setting_id) {
+    const live = getSettingDisplayName(stub.setting_id);
+    if (live) return live;
+  }
+  return stub?.name || '';
+}
 
 async function rescan() {
   if (loading.value) return;

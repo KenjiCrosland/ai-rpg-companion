@@ -1,5 +1,7 @@
 // dungeon-room-prompt.mjs
 
+import { logger } from '@/util/logger.mjs';
+
 export function dungeonRoomPrompt(
   dungeonOverview,
   room,
@@ -142,49 +144,49 @@ export function validateRoomDescription(jsonString) {
     // Check for required keys
     for (const key of requiredKeys) {
       if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
+        logger.error(`Missing required key: ${key}`);
         return false;
       }
     }
 
     // Validate data types
     if (typeof data.room_id !== 'string') {
-      console.error('room_id must be a string');
+      logger.error('room_id must be a string');
       return false;
     }
     if (typeof data.name !== 'string') {
-      console.error('name must be a string');
+      logger.error('name must be a string');
       return false;
     }
     if (typeof data.description !== 'string') {
-      console.error('description must be a string');
+      logger.error('description must be a string');
       return false;
     }
     if (typeof data.contents !== 'string') {
-      console.error('contents must be a string');
+      logger.error('contents must be a string');
       return false;
     }
     if (typeof data.hazards !== 'string') {
-      console.error('hazards must be a string');
+      logger.error('hazards must be a string');
       return false;
     }
     if (typeof data.connections !== 'string') {
-      console.error('connections must be a string');
+      logger.error('connections must be a string');
       return false;
     }
     if (typeof data.secrets !== 'string') {
-      console.error('secrets must be a string');
+      logger.error('secrets must be a string');
       return false;
     }
 
     // Validate 'npcs' array
     if (!Array.isArray(data.npcs)) {
-      console.error('npcs must be an array');
+      logger.error('npcs must be an array');
       return false;
     }
     for (const npc of data.npcs) {
       if (typeof npc.name !== 'string' || typeof npc.description !== 'string') {
-        console.error(
+        logger.error(
           'Each NPC must have a name and description of type string',
         );
         return false;
@@ -197,12 +199,12 @@ export function validateRoomDescription(jsonString) {
         !Array.isArray(data.clues_for_key_door) ||
         data.clues_for_key_door.length !== 3
       ) {
-        console.error('clues_for_key_door must be an array of three strings');
+        logger.error('clues_for_key_door must be an array of three strings');
         return false;
       }
       for (const clue of data.clues_for_key_door) {
         if (typeof clue !== 'string') {
-          console.error('Each clue in clues_for_key_door must be a string');
+          logger.error('Each clue in clues_for_key_door must be a string');
           return false;
         }
       }
@@ -211,7 +213,7 @@ export function validateRoomDescription(jsonString) {
     // Conditional validation for 'key_description'
     if ('key_description' in data) {
       if (typeof data.key_description !== 'string') {
-        console.error('key_description must be a string');
+        logger.error('key_description must be a string');
         return false;
       }
     }
@@ -219,7 +221,7 @@ export function validateRoomDescription(jsonString) {
     // All validations passed
     return true;
   } catch (e) {
-    console.error('Invalid JSON format:', e.message);
+    logger.error('Invalid JSON format:', e.message);
     return false;
   }
 }

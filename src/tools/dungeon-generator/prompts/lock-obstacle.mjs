@@ -45,6 +45,8 @@
  * passage or rotting timber.
  */
 
+import { logger } from '@/util/logger.mjs';
+
 export function generateLockObstaclePrompt(
   dungeonOverview,
   precedingRoomDescription,
@@ -150,20 +152,20 @@ export function validateLockObstacleResponse(jsonString) {
   try {
     const data = JSON.parse(jsonString);
     if (!Array.isArray(data.obstacle_paragraphs)) {
-      console.error('obstacle_paragraphs must be an array');
+      logger.error('obstacle_paragraphs must be an array');
       return false;
     }
     if (data.obstacle_paragraphs.length < 1 || data.obstacle_paragraphs.length > 2) {
-      console.error('obstacle_paragraphs must have 1 or 2 entries');
+      logger.error('obstacle_paragraphs must have 1 or 2 entries');
       return false;
     }
     if (data.obstacle_paragraphs.some(p => typeof p !== 'string' || !p.trim())) {
-      console.error('obstacle_paragraphs entries must all be non-empty strings');
+      logger.error('obstacle_paragraphs entries must all be non-empty strings');
       return false;
     }
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }

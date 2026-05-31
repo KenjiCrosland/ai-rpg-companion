@@ -168,6 +168,7 @@
 
 <script setup>
 import { ParActionButton, ParCallout } from "@/parchment";
+import { logger } from "@/util/logger.mjs";
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -286,7 +287,7 @@ const linkedNPCs = computed(() => {
   try {
     npcGeneratorNPCs = JSON.parse(localStorage.getItem('npcGeneratorNPCs') || '{}');
   } catch (error) {
-    console.warn('Failed to parse npcGeneratorNPCs from localStorage:', error);
+    logger.warn('Failed to parse npcGeneratorNPCs from localStorage:', error);
     // Default to empty object - linked NPCs will show "Uncategorized" folder
   }
 
@@ -636,7 +637,7 @@ async function deleteStatblock() {
     const { deleteEnrichment } = await import('@/util/statblock-enrichment.mjs');
     deleteEnrichment(deletedName);
   } catch (error) {
-    console.warn(`[ENRICHMENT] Failed to delete intelligence for ${deletedName}:`, error);
+    logger.warn(`[ENRICHMENT] Failed to delete intelligence for ${deletedName}:`, error);
   }
 }
 
@@ -739,7 +740,7 @@ async function generateStatblock() {
     const enrichment = await enrichCustomStatblock(finalMonster);
     saveEnrichment(finalMonster.name, enrichment);
   } catch (error) {
-    console.warn(`[ENRICHMENT] Failed to enrich ${finalMonster.name}:`, error);
+    logger.warn(`[ENRICHMENT] Failed to enrich ${finalMonster.name}:`, error);
     // Non-fatal: statblock still works, just won't have intelligence data for encounters
   }
 }

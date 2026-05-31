@@ -8,6 +8,8 @@
  * Supports localStorage override for development testing
  */
 
+import { logger } from './logger.mjs';
+
 const PROVIDERS = {
   DEEPSEEK: 'deepseek-v3',
   OPENAI: 'gpt-4o-mini', // Deprecated fallback
@@ -81,7 +83,7 @@ export function setProviderOverride(provider) {
 
   if (typeof window !== 'undefined') {
     localStorage.setItem(STORAGE_KEY, provider);
-    console.log(`✅ AI provider override set to: ${PROVIDER_CONFIGS[provider].name}`);
+    logger.log(`✅ AI provider override set to: ${PROVIDER_CONFIGS[provider].name}`);
   }
 }
 
@@ -91,7 +93,7 @@ export function setProviderOverride(provider) {
 export function clearProviderOverride() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('✅ AI provider override cleared');
+    logger.log('✅ AI provider override cleared');
   }
 }
 

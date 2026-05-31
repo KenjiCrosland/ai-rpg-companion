@@ -30,7 +30,7 @@ const RESET_WINDOW_MS = 86400000; // 24h
 // user shouldn't be rate-limited on character work.
 const GATED_COMBOS = new Set([
   'item→setting',
-  // 'item→dungeon' will land here when that flow ships.
+  'item→dungeon',
 ]);
 
 function comboKey(sourceType, destType) {

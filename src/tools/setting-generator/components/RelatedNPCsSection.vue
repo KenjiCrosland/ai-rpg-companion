@@ -161,9 +161,8 @@
         >
           <Transition
             :css="!reducedMotion"
+            name="npc-swap"
             mode="out-in"
-            @enter="onEnter"
-            @leave="onLeave"
           >
             <div
               v-if="!isExpanded(entry) && isStub(entry.npc)"

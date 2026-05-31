@@ -49,6 +49,7 @@
  */
 
 import { generateGptResponse } from '@/util/ai-client.mjs';
+import { logger } from '@/util/logger.mjs';
 
 /**
  * Format the monsters list for the prompt. Each monster gets its
@@ -247,7 +248,7 @@ export function validateMonsterAssignmentResponse(jsonString) {
     }
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }
@@ -288,7 +289,7 @@ export async function assignMonsters({
   try {
     response = await generateGptResponse(prompt, validateMonsterAssignmentResponse);
   } catch (err) {
-    console.error('Monster assignment call failed:', err);
+    logger.error('Monster assignment call failed:', err);
     return null;
   }
 
@@ -296,7 +297,7 @@ export async function assignMonsters({
   try {
     parsed = JSON.parse(response);
   } catch (err) {
-    console.error('Monster assignment response was unparseable:', err);
+    logger.error('Monster assignment response was unparseable:', err);
     return null;
   }
 
@@ -307,12 +308,12 @@ export async function assignMonsters({
 
   for (const a of parsed.assignments) {
     if (!validMonsterIds.has(a.monster_id)) {
-      console.warn(`Monster-assignment for ${a.monster_id} references unknown monster; dropping`);
+      logger.warn(`Monster-assignment for ${a.monster_id} references unknown monster; dropping`);
       continue;
     }
     const validAreas = a.area_ids.filter(id => validAreaIds.has(id));
     if (validAreas.length === 0) {
-      console.warn(`Monster-assignment for ${a.monster_id} pointed at no valid areas; dropping`);
+      logger.warn(`Monster-assignment for ${a.monster_id} pointed at no valid areas; dropping`);
       continue;
     }
     monster_id_to_rooms[a.monster_id] = validAreas;

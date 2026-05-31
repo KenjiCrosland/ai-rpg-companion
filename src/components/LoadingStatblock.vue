@@ -142,7 +142,6 @@ const copyAsMarkdown = () => {
 
     const markdownContent = statblockToMarkdown(monster.value, columns.value);
 
-console.log(columns.value);
     if (markdownContent) {
         const textarea = document.createElement('textarea');
         textarea.textContent = markdownContent;

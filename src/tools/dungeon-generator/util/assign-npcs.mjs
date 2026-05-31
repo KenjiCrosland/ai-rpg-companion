@@ -61,6 +61,7 @@
  */
 
 import { generateGptResponse } from '@/util/ai-client.mjs';
+import { logger } from '@/util/logger.mjs';
 
 /**
  * Format the NPCs list for the prompt.
@@ -197,7 +198,7 @@ export function validateNPCAssignmentResponse(jsonString) {
     }
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }
@@ -231,7 +232,7 @@ export async function assignNPCs({
   try {
     response = await generateGptResponse(prompt, validateNPCAssignmentResponse);
   } catch (err) {
-    console.error('NPC assignment call failed:', err);
+    logger.error('NPC assignment call failed:', err);
     return null;
   }
 
@@ -239,7 +240,7 @@ export async function assignNPCs({
   try {
     parsed = JSON.parse(response);
   } catch (err) {
-    console.error('NPC assignment response was unparseable:', err);
+    logger.error('NPC assignment response was unparseable:', err);
     return null;
   }
 
@@ -250,15 +251,15 @@ export async function assignNPCs({
 
   for (const a of parsed.assignments) {
     if (!validAreaIds.has(a.area_id)) {
-      console.warn(`NPC-assignment for ${a.npc_id} pointed at non-existent area ${a.area_id}; dropping`);
+      logger.warn(`NPC-assignment for ${a.npc_id} pointed at non-existent area ${a.area_id}; dropping`);
       continue;
     }
     if (!validNPCIds.has(a.npc_id)) {
-      console.warn(`NPC-assignment for ${a.npc_id} references unknown npc; dropping`);
+      logger.warn(`NPC-assignment for ${a.npc_id} references unknown npc; dropping`);
       continue;
     }
     if (npc_id_to_room[a.npc_id]) {
-      console.warn(`NPC ${a.npc_id} already assigned to area ${npc_id_to_room[a.npc_id]}; dropping duplicate`);
+      logger.warn(`NPC ${a.npc_id} already assigned to area ${npc_id_to_room[a.npc_id]}; dropping duplicate`);
       continue;
     }
     if (!rooms_to_npc_ids[a.area_id]) rooms_to_npc_ids[a.area_id] = [];

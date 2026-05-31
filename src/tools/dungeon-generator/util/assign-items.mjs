@@ -53,6 +53,7 @@
  */
 
 import { generateGptResponse } from '@/util/ai-client.mjs';
+import { logger } from '@/util/logger.mjs';
 
 /**
  * Format an item summary for the placement prompt. Just enough for the
@@ -193,7 +194,7 @@ export function validateItemAssignmentResponse(jsonString) {
     }
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }
@@ -217,7 +218,7 @@ export async function assignItems({ dungeonOverview, rooms, items }) {
   try {
     response = await generateGptResponse(prompt, validateItemAssignmentResponse);
   } catch (err) {
-    console.error('Item assignment call failed:', err);
+    logger.error('Item assignment call failed:', err);
     return null;
   }
 
@@ -225,7 +226,7 @@ export async function assignItems({ dungeonOverview, rooms, items }) {
   try {
     parsed = JSON.parse(response);
   } catch (err) {
-    console.error('Item assignment response was unparseable:', err);
+    logger.error('Item assignment response was unparseable:', err);
     return null;
   }
 
@@ -236,11 +237,11 @@ export async function assignItems({ dungeonOverview, rooms, items }) {
 
   for (const a of parsed.assignments) {
     if (!validItemNames.has(a.item_name)) {
-      console.warn(`Item-assignment for "${a.item_name}" references unknown item; dropping`);
+      logger.warn(`Item-assignment for "${a.item_name}" references unknown item; dropping`);
       continue;
     }
     if (!validAreaIds.has(a.area_id)) {
-      console.warn(`Item-assignment for "${a.item_name}" pointed at invalid area ${a.area_id}; dropping`);
+      logger.warn(`Item-assignment for "${a.item_name}" pointed at invalid area ${a.area_id}; dropping`);
       continue;
     }
     item_name_to_room[a.item_name] = a.area_id;

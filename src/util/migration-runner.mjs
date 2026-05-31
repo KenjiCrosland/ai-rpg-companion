@@ -26,6 +26,7 @@ import { sweepAuntUncleSiblingStubs } from './sweep-aunt-uncle-sibling-stubs.mjs
 import { sweepStubNames } from './sweep-stub-names.mjs';
 import { seedCrossToolQuota } from './seed-cross-tool-quota.mjs';
 import { seedMonsterQuotas } from './seed-monster-quotas.mjs';
+import { logger } from './logger.mjs';
 import { renameResolutionsToPotentialOutcomes } from './rename-resolutions-to-potential-outcomes.mjs';
 
 /**
@@ -121,20 +122,20 @@ export async function runPendingMigrations() {
   try {
     completed = JSON.parse(localStorage.getItem('migrations-completed') || '[]');
   } catch (error) {
-    console.warn('Failed to parse migrations-completed, starting fresh:', error);
+    logger.warn('Failed to parse migrations-completed, starting fresh:', error);
     completed = [];
   }
 
   for (const migration of migrations) {
     if (!completed.includes(migration.name)) {
       try {
-        console.log(`Running migration: ${migration.name}...`);
+        logger.log(`Running migration: ${migration.name}...`);
         await migration.run();
         completed.push(migration.name);
         localStorage.setItem('migrations-completed', JSON.stringify(completed));
-        console.log(`Migration complete: ${migration.name}`);
+        logger.log(`Migration complete: ${migration.name}`);
       } catch (error) {
-        console.error(`Migration failed: ${migration.name}`, error);
+        logger.error(`Migration failed: ${migration.name}`, error);
         // Don't add to completed - will retry next load
       }
     }
@@ -152,7 +153,7 @@ export function registerMigration(name, run) {
   // Check if migration with this name already exists
   const existing = migrations.find(m => m.name === name);
   if (existing) {
-    console.warn(`Migration '${name}' is already registered`);
+    logger.warn(`Migration '${name}' is already registered`);
     return;
   }
 

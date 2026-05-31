@@ -198,6 +198,7 @@ import {
 import SettingOverviewCardSkeleton from "./components/SettingOverviewCardSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import SeededFromBanner from '@/components/SeededFromBanner.vue';
+import { logger } from '@/util/logger.mjs';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Tabs from '@/components/tabs/Tabs.vue';
@@ -880,7 +881,7 @@ function loadSettingsFromLocalStorage() {
       // Idempotent: when parentId already matches, this is a no-op.
       healParentPromotionLinks();
     } catch (error) {
-      console.error("Failed to parse settings from local storage:", error);
+      logger.error("Failed to parse settings from local storage:", error);
     }
   }
 }
@@ -1048,7 +1049,7 @@ function migrateSettingNPCs(setting) {
   }
 
   // if (migrated) {
-  //   console.log(`[MIGRATION] Extracted NPCs from setting "${settingName}" to shared NPC storage and synced IDs`);
+  //   logger.log(`[MIGRATION] Extracted NPCs from setting "${settingName}" to shared NPC storage and synced IDs`);
   // }
 }
 
@@ -1104,7 +1105,7 @@ async function processQueue() {
       await handleGenerateSetting(data);
       break;
     default:
-      console.error("Unknown request type:", type);
+      logger.error("Unknown request type:", type);
   }
 
   isProcessing.value = false;
@@ -1228,7 +1229,7 @@ async function generateSetting(payload = {}) {
     // Diagnostic: log dimensions being sent to the main prompt so
     // distribution can be checked empirically across a batch of
     // generations. Remove once verified.
-    console.log('[setting-gen][sublocation]', {
+    logger.log('[setting-gen][sublocation]', {
       type: setting_type || null,
       character,
       register,
@@ -1308,7 +1309,7 @@ async function generateSetting(payload = {}) {
   try {
     inferred = await inferSettingDimensions({ description, lore });
   } catch (e) {
-    console.error('Setting dimension inference failed:', e);
+    logger.error('Setting dimension inference failed:', e);
     inferred = { type: null, character: null, register: null, userName: null, tension: null };
   }
 
@@ -1366,7 +1367,7 @@ async function generateSetting(payload = {}) {
 
   const bannedTropes = getBannedTropesForGeneration();
 
-  console.log('[setting-gen][top-level]', {
+  logger.log('[setting-gen][top-level]', {
     type: inferred.type,
     character: inferred.character,
     register: inferred.register,
@@ -1534,7 +1535,7 @@ async function onPromoteRelatedPlace({ stub, kind }) {
   try {
     inferred = await inferSettingDimensions({ description: inferenceInput, lore: '' });
   } catch (e) {
-    console.warn('[setting-gen][promote] dimension inference failed:', e);
+    logger.warn('[setting-gen][promote] dimension inference failed:', e);
   }
 
   // Sibling pool for inheritance fallback when inference doesn't fire.
@@ -1704,7 +1705,7 @@ async function onPromoteRelatedPlace({ stub, kind }) {
     });
   }
 
-  console.log('[setting-gen][promote]', {
+  logger.log('[setting-gen][promote]', {
     kind,
     stubName: stub.name,
     inferredRegister: inferred.register,
@@ -1832,7 +1833,7 @@ async function handleGenerateSetting({ operationIndex, parentId, prompt, subloca
       runRelatedPlacesExtraction(operationIndex);
     }
   } catch (error) {
-    console.error("Error generating kingdom description:", error);
+    logger.error("Error generating kingdom description:", error);
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].loadingsettingOverview = false;
       currentlyLoading.value = false;
@@ -2032,7 +2033,7 @@ async function runRelatedPlacesExtraction(operationIndex) {
       allSettings: settings.value,
     });
   } catch (err) {
-    console.warn('[setting-gen] related-places extraction failed:', err);
+    logger.warn('[setting-gen] related-places extraction failed:', err);
     return;
   }
 

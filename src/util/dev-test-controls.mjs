@@ -14,6 +14,7 @@
  */
 
 import { TEST_SEED, TEST_SEED_CHECKLIST } from './dev-test-data.mjs';
+import { logger } from './logger.mjs';
 
 // localStorage keys this seed writes. Listed explicitly so `clear()`
 // only wipes the application's keys (leaves things like `dev-current-page`,
@@ -97,11 +98,11 @@ export function initDevTestControls() {
         'Run devTestData.export() first if you want a copy of your current data.'
       );
       if (!ok) {
-        console.log('Seed cancelled.');
+        logger.log('Seed cancelled.');
         return;
       }
       writeSeedToLocalStorage(TEST_SEED);
-      console.log('🌱 Test seed written. Reloading page so migrations + UI pick up the new state…');
+      logger.log('🌱 Test seed written. Reloading page so migrations + UI pick up the new state…');
       setTimeout(() => window.location.reload(), 50);
     },
 
@@ -118,11 +119,11 @@ export function initDevTestControls() {
         'and the reference graph. Cannot be undone.'
       );
       if (!ok) {
-        console.log('Clear cancelled.');
+        logger.log('Clear cancelled.');
         return;
       }
       wipeLocalStorage();
-      console.log('🧹 App data wiped. Reloading…');
+      logger.log('🧹 App data wiped. Reloading…');
       setTimeout(() => window.location.reload(), 50);
     },
 
@@ -132,8 +133,8 @@ export function initDevTestControls() {
      */
     export() {
       const state = exportLocalStorage();
-      console.log('📦 Current app state:', state);
-      console.log('(returned value also available — assign with: const snap = devTestData.export())');
+      logger.log('📦 Current app state:', state);
+      logger.log('(returned value also available — assign with: const snap = devTestData.export())');
       return state;
     },
 
@@ -142,20 +143,20 @@ export function initDevTestControls() {
      * running app to verify edge-case rendering before release.
      */
     checklist() {
-      console.log('🧪 Manual test checklist after seeding:');
-      console.log('');
+      logger.log('🧪 Manual test checklist after seeding:');
+      logger.log('');
       TEST_SEED_CHECKLIST.forEach((item, idx) => {
-        console.log(`  ${String(idx + 1).padStart(2)}. ${item}`);
+        logger.log(`  ${String(idx + 1).padStart(2)}. ${item}`);
       });
-      console.log('');
-      console.log(`Total: ${TEST_SEED_CHECKLIST.length} scenarios.`);
+      logger.log('');
+      logger.log(`Total: ${TEST_SEED_CHECKLIST.length} scenarios.`);
     },
 
     /**
      * Show help.
      */
     help() {
-      console.log(`
+      logger.log(`
 🌱 Test Data Controls
 ======================
 
@@ -176,5 +177,5 @@ Typical workflow before release:
     },
   };
 
-  console.log('🌱 Test Data Controls loaded. Type devTestData.help() for commands.');
+  logger.log('🌱 Test Data Controls loaded. Type devTestData.help() for commands.');
 }

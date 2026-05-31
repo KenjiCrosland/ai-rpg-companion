@@ -14,6 +14,7 @@ import {
   GROUP_FRAMEWORKS,
 } from '@/data/tactical-frameworks.mjs';
 import creatureIntelligenceData from '@/data/creature-intelligence.json';
+import { logger } from '@/util/logger.mjs';
 
 // ─── CREATURE INTELLIGENCE HELPERS ────────────────────────────────────────
 
@@ -36,7 +37,7 @@ export async function getCreatureIntelligence(encounterCreatures) {
       customIntelligence = JSON.parse(stored);
     }
   } catch (error) {
-    console.warn('[CREATURE INTELLIGENCE] Failed to load custom intelligence from localStorage:', error);
+    logger.warn('[CREATURE INTELLIGENCE] Failed to load custom intelligence from localStorage:', error);
   }
 
   for (const creature of encounterCreatures) {
@@ -66,11 +67,11 @@ export async function getCreatureIntelligence(encounterCreatures) {
         saveEnrichment(creature.name, enrichment);
         result[creature.name] = enrichment;
       } catch (error) {
-        console.warn(`[CREATURE INTELLIGENCE] Lazy enrichment failed for ${creature.name}:`, error);
+        logger.warn(`[CREATURE INTELLIGENCE] Lazy enrichment failed for ${creature.name}:`, error);
         // Continue without intelligence data - encounter will be more generic
       }
     } else {
-      console.warn(`[CREATURE INTELLIGENCE] No intelligence data found for ${creature.name} and no statblock data to enrich`);
+      logger.warn(`[CREATURE INTELLIGENCE] No intelligence data found for ${creature.name} and no statblock data to enrich`);
     }
   }
 
@@ -1226,7 +1227,7 @@ export function validateCall1Structure(jsonString) {
       const lower = obj.disguised_as.toLowerCase();
       for (const word of forbidden) {
         if (lower.includes(word)) {
-          console.warn(`Validation failed: disguised_as contains forbidden word "${word}": ${obj.disguised_as}`);
+          logger.warn(`Validation failed: disguised_as contains forbidden word "${word}": ${obj.disguised_as}`);
           return false;
         }
       }

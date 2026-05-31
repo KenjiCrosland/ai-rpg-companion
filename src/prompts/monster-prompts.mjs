@@ -1,5 +1,6 @@
 import creatureTemplates from '../data/creatureTemplates.json';
 import challengeRatingObjects from '../data/challengeRatings.json';
+import { logger } from '../util/logger.mjs';
 
 const baseCreatureTemplate = {
   name: 'CREATURE_NAME',
@@ -206,7 +207,7 @@ export function createStatblockPrompts(options) {
   if (templateArray.length === 0) {
     templateArray = creatureTemplates[challengeRating];
   }
-  //console.log(templateArray);
+  //logger.log(templateArray);
   template = templateArray[Math.floor(Math.random() * templateArray.length)];
   let challengeRatingObj = challengeRatingObjects[challengeRating];
 
@@ -270,9 +271,9 @@ export function createStatblockPrompts(options) {
     });
     legendaryResistancePrompt = `Be sure to include legendary resistances in the abilities array for this creature`;
   }
-  console.log(parseInt(challengeRating));
+  logger.log(parseInt(challengeRating));
   if (template.actions.length <= 3 && parseInt(challengeRating) > 1) {
-    console.log('In another action');
+    logger.log('In another action');
     template.actions.push({
       name: 'Another Action',
       description:

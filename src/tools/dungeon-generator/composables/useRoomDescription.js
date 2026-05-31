@@ -2,6 +2,7 @@
 
 import { ref } from 'vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
+import { logger } from '@/util/logger.mjs';
 import {
   contentArrayToString,
   dungeonOverviewToString,
@@ -216,7 +217,7 @@ HOW TO HANDLE FEATURED ITEMS:
     try {
       statblockText = statblockToPlainText(apex.statblock);
     } catch (err) {
-      console.warn('[boss-statblock] failed to render statblock:', err);
+      logger.warn('[boss-statblock] failed to render statblock:', err);
       return '';
     }
     return `\nBOSS STATBLOCK — for strategy reference only. The numbers below INFORM the room's tactics paragraph but MUST NOT be reproduced in dm_notes. The statblock lives in the dungeon's monsters section; players read it there.
@@ -338,7 +339,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
       prompt,
       validateEntranceResponse,
@@ -385,7 +386,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const customRoomResponse = await generateGptResponse(
       prompt,
       validateCustomRoomResponse,
@@ -431,7 +432,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       featuredItems,
       bossStatblock,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
       prompt,
       validateBossRoomResponse,
@@ -475,7 +476,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
       prompt,
       validateSetbackRoomResponse,
@@ -520,7 +521,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
       prompt,
       validateSecretRoomResponse,
@@ -561,7 +562,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
       prompt,
       validateLockedRoomResponse,
@@ -659,7 +660,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
       prompt,
       validateLivingRoomResponse,
@@ -698,7 +699,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
       prompt,
       validateConnectingRoomResponse,
@@ -737,7 +738,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Prompt:', prompt);
+    //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
       prompt,
       validatePurposeRoomResponse,
@@ -788,12 +789,12 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
     try {
       response = await generateGptResponse(prompt, validateLockObstacleResponse);
     } catch (err) {
-      console.error('Lock obstacle generation failed:', err);
+      logger.error('Lock obstacle generation failed:', err);
       return null;
     }
 
     if (!validateLockObstacleResponse(response)) {
-      console.error('Lock obstacle response validation failed');
+      logger.error('Lock obstacle response validation failed');
       return null;
     }
 
@@ -933,7 +934,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       formatLoreLookupForPrompt(currentDungeon),
     );
 
-    //console.log('Secret Door Prompt:', prompt);
+    //logger.log('Secret Door Prompt:', prompt);
 
     // Get the response for the secret door generation
     const secretDoorResponse = await generateGptResponse(
@@ -947,7 +948,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       const secretDoorContent = processSecretDoorResponse(secretDoorData);
       contentArray.push(...secretDoorContent);
     } else {
-      console.error('Secret door response validation failed.');
+      logger.error('Secret door response validation failed.');
     }
   }
 
@@ -979,7 +980,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       keyRoomDescriptionString = contentArrayToString(keyRoom.contentArray);
     } else {
       // Key room has not been generated or has no content
-      //console.log('Key room content not found, proceeding without it');
+      //logger.log('Key room content not found, proceeding without it');
       // Proceed without the key room description
     }
 
@@ -1000,7 +1001,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Obstacle Prompt:', obstaclePrompt);
+    //logger.log('Obstacle Prompt:', obstaclePrompt);
 
     // Get the response and process it
     const obstacleResponse = await generateGptResponse(
@@ -1036,7 +1037,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
     );
 
     if (!obstacleRoom) {
-      console.error('Obstacle room not found');
+      logger.error('Obstacle room not found');
       return;
     }
 
@@ -1048,7 +1049,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       obstacleString = contentArrayToString(obstacleRoom.contentArray);
     } else {
       // Obstacle room does not have content
-      //console.log('Obstacle room content not found, proceeding without it');
+      //logger.log('Obstacle room content not found, proceeding without it');
       // We can proceed without the obstacle description
     }
 
@@ -1068,7 +1069,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       incomingMentions,
       featuredItems,
     );
-    //console.log('Key Room Prompt:', keyPrompt);
+    //logger.log('Key Room Prompt:', keyPrompt);
 
     const keyRoomResponse = await generateGptResponse(
       keyPrompt,
@@ -1104,7 +1105,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
   ) {
     try {
       if (!currentDungeon || selectedRoomId === null) {
-        console.error('No room selected');
+        logger.error('No room selected');
         return;
       }
 
@@ -1113,7 +1114,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       );
 
       if (!room) {
-        console.error('Selected room not found');
+        logger.error('Selected room not found');
         return;
       }
 
@@ -1328,7 +1329,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
           featuredItems: formatRoomItemsForPrompt(currentDungeon, room.id),
         }));
       } else {
-        console.error('Unknown room type:', room.roomType);
+        logger.error('Unknown room type:', room.roomType);
         return;
       }
 
@@ -1400,7 +1401,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       currentDungeon.roomNames =
         currentDungeon.rooms.map((room) => room.name).filter(Boolean) || [];
     } catch (error) {
-      console.error('Error generating room description:', error);
+      logger.error('Error generating room description:', error);
     }
   }
 

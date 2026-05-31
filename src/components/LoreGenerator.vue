@@ -179,6 +179,7 @@ import {
   CdrList
 } from "@rei/cedar";
 import { ParActionButton } from "@/parchment";
+import { logger } from "@/util/logger.mjs";
 import "@rei/cedar/dist/cdr-fonts.css";
 import "@rei/cedar/dist/reset.css";
 import "@rei/cedar/dist/style/cdr-accordion.css";
@@ -407,17 +408,17 @@ export default {
           }
           Note: Provide 3 distinct events in the events array.
         `;
-        //console.log(prompt);
+        //logger.log(prompt);
         const response = await generateGptResponse(
           prompt,
           timelineObjectValidation
         );
         const eventData = JSON.parse(response);
 
-        //console.log(eventData);
+        //logger.log(eventData);
         // const eventYear = (currentYearNumber.value - yearsAgo.value).toString();
         // const eventYearString = yearReckoning.value.replace('THE_YEAR', eventYear);
-        //console.log("Event year string:", eventYearString.value);
+        //logger.log("Event year string:", eventYearString.value);
         const suggestedEvents = eventData.events.map((event) => ({
           title: event.event_title,
           eventYear: eventYearString.value,
@@ -428,7 +429,7 @@ export default {
         loadingEvents.value = false;
         saveToLocalStorage();
       } catch (error) {
-        console.error("Error generating timeline events:", error);
+        logger.error("Error generating timeline events:", error);
       }
     };
 
@@ -458,30 +459,30 @@ export default {
       }`;
 
       const prompt = summaryIntroduction + eventsList + conclusion;
-      //console.log('summary promprt', prompt);
+      //logger.log('summary promprt', prompt);
       try {
         loadingSummary.value = true;
         const summary = await generateGptResponse(prompt, summaryObjectValidation);
         loadingSummary.value = false;
         const summaryData = JSON.parse(summary);
-        //console.log(summaryData);
+        //logger.log(summaryData);
         timelineSummary.value = summaryData.timeline_summary;
         currentState.value = summaryData.current_state;
         saveToLocalStorage();
       } catch (error) {
-        console.error("Error generating timeline summary:", error);
+        logger.error("Error generating timeline summary:", error);
       }
     }
 
     const validateYear = () => {
       //TODO: This needs to be separated into two methods
-      //console.log("currentYear.value:", currentYear.value);
+      //logger.log("currentYear.value:", currentYear.value);
       const matches = currentYear.value.match(/\d+/g);
       if (matches && matches.length === 1) {
         yearError.value = false;
         yearErrorMessage.value = "";
-        //console.log(currentYearNumber.value);
-        //console.log(yearReckoning.value);
+        //logger.log(currentYearNumber.value);
+        //logger.log(yearReckoning.value);
         return;
       }
       yearError.value = true;
@@ -532,7 +533,7 @@ export default {
           // ... (load other saved data as necessary)
 
         } catch (error) {
-          console.error("Failed to load from local storage:", error);
+          logger.error("Failed to load from local storage:", error);
         }
       }
 
@@ -558,7 +559,7 @@ export default {
 
       markdown += `# Full Historic Timeline of ${subject.value}\n\n`;
 
-      //console.log(timelineEvents.value);
+      //logger.log(timelineEvents.value);
       if (timelineEvents.value.length > 0) {
         timelineEvents.value.forEach(timelineEvent => {
           markdown += `### ${timelineEvent.title}\n\n`;
@@ -578,7 +579,7 @@ export default {
 
       plaintext += `Full Historic Timeline of ${subject.value}\n\n`;
 
-      //console.log(timelineEvents.value);
+      //logger.log(timelineEvents.value);
       if (timelineEvents.value.length > 0) {
         timelineEvents.value.forEach(timelineEvent => {
           plaintext += `${timelineEvent.title}\n\n`;
