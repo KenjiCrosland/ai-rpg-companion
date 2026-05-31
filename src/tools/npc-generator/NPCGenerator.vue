@@ -72,6 +72,10 @@
 
                 <!-- ZONE 2: Form card -->
                 <div class="form-card">
+                    <SeededFromBanner
+                        :source-type="seedSourceType"
+                        :source-name="seedSourceName"
+                    />
                     <form @submit.prevent="handleGenerateNPC">
                         <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
                             label="Give me an NPC Description For:" :optional="true">
@@ -347,6 +351,7 @@ import PatreonCallout from '@/components/PatreonCallout.vue';
 import Statblock from '@/components/Statblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
+import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";

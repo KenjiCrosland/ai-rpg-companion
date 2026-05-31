@@ -52,12 +52,10 @@
                ambiguity the empty form created. Kept terse — backend
                processes (register inheritance, mode inference,
                dimensional presets) intentionally not surfaced. -->
-          <div v-if="seededFromItem" class="seeded-from-item-callout">
-            <p class="seeded-from-item-callout__lead">
-              Generating from item:
-              <strong class="seeded-from-item-callout__name">{{ seededFromItem.name }}</strong>
-            </p>
-          </div>
+          <SeededFromBanner
+            :source-type="seededFromItem ? 'item' : ''"
+            :source-name="seededFromItem?.name || ''"
+          />
           <form @submit.prevent="handleGenerateDungeon">
             <div class="form-row-description">
               <cdr-input id="dungeon_description" v-model="dungeonStore.overviewForm.description"
@@ -157,6 +155,7 @@
 
 <script setup>
 import { ParActionButton, ParCallout } from "@/parchment";
+import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
@@ -475,25 +474,6 @@ onMounted(() => {
   border-radius: 12px;
   padding: 3rem 2.5rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-
-  .seeded-from-item-callout {
-    margin-bottom: 2rem;
-    padding: 1.25rem 1.75rem;
-    background: linear-gradient(135deg, rgba(122, 31, 31, 0.04), rgba(122, 31, 31, 0.08));
-    border-left: 3px solid #7a1f1f;
-    border-radius: 6px;
-
-    &__lead {
-      margin: 0;
-      font-size: 1.5rem;
-      color: #4a4a4a;
-    }
-
-    &__name {
-      color: #7a1f1f;
-      font-weight: 600;
-    }
-  }
 
   .generator-fields {
     display: grid;

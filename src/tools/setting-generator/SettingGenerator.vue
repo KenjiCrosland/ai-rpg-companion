@@ -64,6 +64,10 @@
 
         <!-- ZONE 2: Form card -->
         <div class="form-card">
+          <SeededFromBanner
+            :source-type="seededSourceType"
+            :source-name="seededSourceName"
+          />
           <form @submit.prevent="generateSetting" class="setting-form">
             <div class="form-row-description">
               <cdr-input id="setting_description" v-model="currentSetting.setting_description" background="secondary"
@@ -193,6 +197,7 @@ import {
 } from "./prompts/index.mjs";
 import SettingOverviewCardSkeleton from "./components/SettingOverviewCardSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
+import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Tabs from '@/components/tabs/Tabs.vue';
@@ -361,6 +366,15 @@ const currentSetting = computed(() => settings.value[currentSettingIndex.value] 
 // action). Held from mount until the post-generation finalize writes
 // the back-link onto the source-tool's stub.
 const pendingSeed = ref(null);
+
+// Seeded-from affordances for the form-card banner. Mirror the dungeon
+// generator's `seededFromItem` shape so SeededFromBanner can render the
+// same "Generating from item: [name]" affirmation above the form fields.
+// Banner self-hides when either field is empty, so no extra v-if needed.
+const seededSourceType = computed(() => pendingSeed.value?.source?.type || '');
+const seededSourceName = computed(
+  () => pendingSeed.value?.source?.name || pendingSeed.value?.source?.id || ''
+);
 
 onMounted(async () => {
   // Reset to a clean state before loading. Defends against test-time
