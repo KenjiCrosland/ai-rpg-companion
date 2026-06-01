@@ -17,6 +17,7 @@ import {
 
 import { saveDungeons, loadDungeons } from './dungeon-utils.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
+import { resetItemStubsForDeletedDungeon } from '@/util/item-storage.mjs';
 import {
   generateDungeonOverview,
   currentDungeonOverviewString,
@@ -73,6 +74,12 @@ export const useDungeonStore = defineStore('dungeon', () => {
           : null;
       }
       removeReferencesForEntity('dungeon', dungeonId);
+      // Item-side stub cleanup: clear `dungeon_id` on every item's
+      // related_dungeons[i] stub that pointed at this dungeon. Without
+      // this, the item card keeps rendering "View in Dungeon Generator"
+      // for the stub and the link 404s. Symmetric to the setting flow's
+      // `resetItemStubsForDeletedSetting` call in SettingGenerator.
+      resetItemStubsForDeletedDungeon(dungeonId);
       saveDungeons();
     }
   }

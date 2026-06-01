@@ -54,12 +54,26 @@
         <div class="hero-header">
           <div class="brand-line">
             <span class="brand-name">Kenji's Setting Generator</span>
-            <span v-if="!premium" class="version-pill">Free</span>
-            <span v-else class="version-pill premium">Premium</span>
+            <!-- Version pill is fresh-visit framing — suppressed during
+                 seeded flows where the user is mid-task. Mirrors the
+                 NPC and dungeon generators. -->
+            <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
+            <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
           </div>
-          <h1>Generate Rich RPG Settings with Factions, NPCs &amp; Quests</h1>
-          <p class="value-prop">From a single name to a fully detailed kingdom, town or empire with nested
-            locations, political factions, and quest hooks.</p>
+          <template v-if="isSeededFlow">
+            <h1>
+              Create Setting<template v-if="seedStubName">: {{ seedStubName }}</template>
+            </h1>
+            <p class="value-prop">
+              From your {{ seededSourceType }}
+              <a href="#" class="seed-source-link" @click.prevent="navigateBackToSeedSource">{{ seededSourceName }}</a>
+            </p>
+          </template>
+          <template v-else>
+            <h1>Generate Rich RPG Settings with Factions, NPCs &amp; Quests</h1>
+            <p class="value-prop">From a single name to a fully detailed kingdom, town or empire with nested
+              locations, political factions, and quest hooks.</p>
+          </template>
         </div>
 
         <!-- ZONE 2: Form card -->
@@ -206,7 +220,7 @@ import TabPanel from '@/components/tabs/TabPanel.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
-import { getNavigationParams } from '@/util/navigation.mjs';
+import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
 import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
 import {
@@ -376,6 +390,25 @@ const seededSourceType = computed(() => pendingSeed.value?.source?.type || '');
 const seededSourceName = computed(
   () => pendingSeed.value?.source?.name || pendingSeed.value?.source?.id || ''
 );
+
+// Seeded landing-page heading. Fires whenever a SeededInput exists,
+// matching the dungeon generator's gate. The current item-side UI only
+// surfaces stub-based "Create Setting" navigation (so entities[0].name
+// is always populated here), but relaxing the gate keeps the behavior
+// symmetric with the dungeon flow and future-proof if a "Generate a
+// Setting from this Item" whole-item path is added later. The h1
+// conditionally includes the stub name when present.
+const isSeededFlow = computed(() => !!pendingSeed.value?.source);
+const seedStubName = computed(() => pendingSeed.value?.entities?.[0]?.name || '');
+
+function navigateBackToSeedSource() {
+  const source = pendingSeed.value?.source;
+  if (!source) return;
+  if (source.type === 'item') {
+    navigateToTool('item-generator', { item: source.id });
+  }
+  // Setting/dungeon back-navigation can be added when those source flows ship.
+}
 
 onMounted(async () => {
   // Reset to a clean state before loading. Defends against test-time
@@ -2346,6 +2379,26 @@ $transition-speed: 0.3s;
     color: $cdr-color-text-secondary;
     margin: 0;
     line-height: 1.5;
+  }
+
+  /* Seeded-flow back-link to the source entity. Mirrors NPCGenerator's
+     .seed-source-link: burgundy parchment accent, quiet by default,
+     underline emerges on hover/focus. */
+  .seed-source-link {
+    color: var(--par-color-title, #7a1f1f);
+    font-weight: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--par-color-title-deep, #58180d);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--par-color-title, #7a1f1f);
+      outline-offset: 2px;
+    }
   }
 }
 

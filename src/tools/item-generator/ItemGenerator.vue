@@ -333,6 +333,7 @@ import TabPanel from '@/components/tabs/TabPanel.vue';
 import { useToast } from '@/composables/useToast';
 import { renameItemReferences, removeReferencesForItem } from '@/util/item-storage.mjs';
 import { resetSettingSourceForDeletedEntity } from '@/util/setting-storage.mjs';
+import { resetDungeonSourceForDeletedEntity } from '@/util/dungeon-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { detectFromUserInput } from './utils/detect-user-input.mjs';
 import { detectRegisterFromInput } from '@/shared/detect-register-from-input.mjs';
@@ -2137,11 +2138,12 @@ const deleteItem = () => {
       localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
       if (deletedName) {
         removeReferencesForItem(deletedName);
-        // Settings that record this item as their inspiration source
-        // need their denormalized fields cleared too — the reference
-        // graph alone wouldn't stop the setting card from rendering
-        // "Inspired by [Item]" as a live link.
+        // Settings and dungeons that record this item as their
+        // inspiration source need their denormalized fields cleared
+        // too — the reference graph alone wouldn't stop the cards
+        // from rendering "Inspired by [Item]" as a live link.
         resetSettingSourceForDeletedEntity('item', deletedName);
+        resetDungeonSourceForDeletedEntity('item', deletedName);
       }
       activeItemIndex.value = null;
       magicItemDescription.value = null;

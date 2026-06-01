@@ -36,12 +36,26 @@
         <div class="hero-header">
           <div class="brand-line">
             <span class="brand-name">Kenji's Dungeon Generator</span>
-            <span v-if="!premium" class="version-pill">Free</span>
-            <span v-else class="version-pill premium">Premium</span>
+            <!-- Version pill is fresh-visit framing — suppressed during
+                 seeded flows where the user is mid-task. Mirrors the
+                 NPC generator's pattern. -->
+            <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
+            <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
           </div>
-          <h1>Create Complete D&D 5e Dungeons in Minutes</h1>
-          <p class="value-prop">Generate dungeon maps, NPCs, monsters with full statblocks, and export-ready content.
-          </p>
+          <template v-if="isSeededFlow">
+            <h1>
+              Create Dungeon<template v-if="seedStubName">: {{ seedStubName }}</template>
+            </h1>
+            <p class="value-prop">
+              From your {{ seedSourceType }}
+              <a href="#" class="seed-source-link" @click.prevent="navigateBackToSeedSource">{{ seedSourceName }}</a>
+            </p>
+          </template>
+          <template v-else>
+            <h1>Create Complete D&D 5e Dungeons in Minutes</h1>
+            <p class="value-prop">Generate dungeon maps, NPCs, monsters with full statblocks, and export-ready content.
+            </p>
+          </template>
         </div>
 
         <!-- ZONE 2: Form card -->
@@ -159,7 +173,7 @@ import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
-import { getNavigationParams } from '@/util/navigation.mjs';
+import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { loadSeededInput } from '@/util/seeded-input.mjs';
 import { canGenerateCrossTool } from '@/util/can-generate-cross-tool.mjs';
 import { buildDungeonPrefillFromItem } from '@/prompts/item-dungeon-prompts.mjs';
@@ -207,6 +221,30 @@ const seededFromItem = computed(() => {
     name: seed.source.name || seed.source.id || '',
   };
 });
+
+// Seeded landing-page heading. Fires whenever a SeededInput exists,
+// regardless of whether the seed names a specific destination entity:
+// the dungeon generator has both a stub-based flow ("Create Dungeon"
+// on a specific related_dungeons stub) AND a whole-item flow
+// ("Generate a Dungeon from this Item"). The latter has no
+// entities[0].name, so a stub-name-gated swap (NPCGenerator's
+// pattern) leaves the whole-item case stranded with the generic
+// header. Reading from source.type alone matches the SeededFromBanner's
+// gate and ensures the hero swap fires in both cases. The h1 then
+// conditionally includes the stub name when present.
+const isSeededFlow = computed(() => !!pendingSeed.value?.source);
+const seedStubName = computed(() => pendingSeed.value?.entities?.[0]?.name || '');
+const seedSourceName = computed(() => pendingSeed.value?.source?.name || '');
+const seedSourceType = computed(() => pendingSeed.value?.source?.type || '');
+
+function navigateBackToSeedSource() {
+  const source = pendingSeed.value?.source;
+  if (!source) return;
+  if (source.type === 'item') {
+    navigateToTool('item-generator', { item: source.id });
+  }
+  // Setting/dungeon back-navigation can be added when those source flows ship.
+}
 
 // Provide motionToggle for Cedar skeleton components
 const motionToggle = ref(true);
@@ -478,6 +516,26 @@ onMounted(() => {
     color: #6c757d;
     margin: 0;
     line-height: 1.5;
+  }
+
+  /* Seeded-flow back-link to the source entity. Mirrors NPCGenerator's
+     .seed-source-link: burgundy parchment accent, quiet by default
+     (no underline), underline emerges on hover/focus. */
+  .seed-source-link {
+    color: var(--par-color-title, #7a1f1f);
+    font-weight: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--par-color-title-deep, #58180d);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--par-color-title, #7a1f1f);
+      outline-offset: 2px;
+    }
   }
 }
 
