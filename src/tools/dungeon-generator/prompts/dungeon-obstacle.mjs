@@ -106,6 +106,7 @@ export function generateObstaclePrompt(
   loreLookup = '',
   incomingMentions = '',
   featuredItems = '',
+  incomingContentSeeds = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). Scale the obstacle's failure DCs and damage to this tier.`
@@ -152,7 +153,7 @@ ${dungeonOverview}
 
 OBSTACLE ROOM INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${keyRoomSection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${keyRoomSection}${loreLookup}${incomingMentions}${incomingContentSeeds}${featuredItems}${tierLine}
 ${roomNameSection}${roomSummarySection}${npcSection}
 
 ## THE OBSTACLE IS STRUCTURAL — NOT A COMBAT-OR-DIE ENCOUNTER
@@ -216,6 +217,16 @@ Three categories are owned by other fields or sections:
 
 3. DOOR MATERIAL. "Wooden door," "stone door" belong in the read-aloud (when notable). dm_notes treats doors by area number only.
 
+## NO STATBLOCK NOTATION IN dm_notes
+
+Statblock-row syntax belongs in the creature's statblock, not in prose. Specifically banned in dm_notes:
+
+- Attack-roll syntax: "+7 to hit", "melee spell attack +N", "ranged weapon attack", "Hit: 22 (4d8+2)"
+- Hit-die damage notation in parentheses: "(4d8+2)", "(NdN+M)"
+- Statblock action-line format: "Action: …", "Reaction: …", "Multiattack."
+
+DCs and damage NUMBERS are allowed when they're failure consequences the GM rolls inline ("DC 14 Strength save or take 18 cold damage", "the ward strikes for 12 force damage"). What's banned is COPYING THE CREATURE'S STATBLOCK ROW into the prose. If a guardian attacks, describe the EFFECT ("a spectral arm hauls the target underwater and pins them"), state the save DC and damage tier as plain GM-readable values ("DC 15 Strength save to break free; 22 cold damage on a fail"), and trust the statblock to carry the dice math.
+
 ## OUTPUT FORMAT
 
 Return STRICT JSON (no prose, no commentary, no code fences):
@@ -234,7 +245,7 @@ Return STRICT JSON (no prose, no commentary, no code fences):
   "dm_notes": [
     "First paragraph (REQUIRED). 80-150 words. Covers: dimensions, the obstacle's TYPE (from the list above), the room's environmental setup, any inhabitants here (if a guardian is part of the obstacle, briefly note them; full profile goes in the **The [Obstacle Name].** sub-block). Atmospheric details that hint at the obstacle's character. Do NOT yet describe the mechanic in detail — that's the next paragraph.",
     "Second paragraph (REQUIRED). **The [Obstacle Name].** Bolded inline title. Description follows. Cover: WHAT the obstacle is (its physical presence and behavior), HOW it prevents passage (the mechanic — the ward fires when crossed; the guardian demands a tribute; the wall blocks all but a specific tool), what happens if the party attempts to FORCE past it (the IMMEDIATE physical failure consequence — damage, condition, repulsion, summon reinforcements). Make clear the obstacle is structural — combat alone does not defeat it. 80-150 words.",
-    "Third paragraph (REQUIRED). **The Key.** Bolded inline title. Description follows. Cover: WHAT the key is (the specific solution — a name, an item, a chant, a tooth) and WHERE in the dungeon it is (area ${solutionRoomId}). Briefly describe how the party uses the key to remove the obstacle (presenting it to the guardian, placing it in a slot, speaking it before crossing). Do NOT re-describe HOW the party acquires the key — that's the key room's job. 40-80 words.",
+    "Third paragraph (REQUIRED). **The Key.** Bolded inline title. Description follows. STRICTLY 25-45 words — this paragraph IDENTIFIES the key and POINTS at it, nothing more. Cover ONLY: WHAT the key is (one short noun phrase — 'the carved bone-tablet', 'the Sister's old name', 'a drake-tooth'), WHERE it is (area ${solutionRoomId}), and HOW the party uses it AT THE OBSTACLE (one verb — present, place, speak, anoint). Do NOT describe what's in area ${solutionRoomId}, who else is there, the key's appearance beyond a one-noun-phrase identifier, its history, what the party must do to acquire it, or any guardian or puzzle around it — area ${solutionRoomId}'s prompt owns all of that and will produce its own description. Restating it here is the redundancy this prompt is built to avoid.",
     "Fourth paragraph (OPTIONAL). **Bypassing.** Bolded inline title. Description follows. ONLY include when a clever alternative bypass exists that doesn't go through the key room: a high-DC magical workaround, an environmental approach (collapsing the ceiling, going around through another passage), a deception path (impersonating the key without it). Each bypass should have a clear DC and a notable risk (alerts the dungeon, fails partially, etc.). Skip when no genuine alternative bypass exists. 50-100 words.",
     "Fifth paragraph (OPTIONAL). **Aftermath.** Bolded inline title. Description follows. ONLY include when removing the obstacle has ongoing consequences (the guardian reforms after an hour and the party can no longer use the same trick; the ward leaves a lingering curse; the path opens but alerts something nearby). Skip when the obstacle resolves cleanly. 40-80 words."
   ],

@@ -70,6 +70,7 @@ export function generateSecretRoomPrompt(
   loreLookup = '',
   incomingMentions = '',
   featuredItems = '',
+  incomingContentSeeds = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
@@ -120,7 +121,7 @@ ${dungeonOverview}
 
 SECRET ROOM INFO:
 Short description (size, exits, map-side notes): ${roomDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${secretDoorSection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${secretDoorSection}${loreLookup}${incomingMentions}${incomingContentSeeds}${featuredItems}${tierLine}
 ${roomNameSection}${roomSummarySection}${npcSection}
 ## REGISTER FIDELITY — respect the dungeon's established context
 

@@ -78,6 +78,7 @@ export function generatePurposeRoomPrompt(
   loreLookup = '',
   incomingMentions = '',
   featuredItems = '',
+  incomingContentSeeds = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
@@ -116,7 +117,7 @@ ${dungeonOverview}
 
 PURPOSE ROOM INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}${existingRoomsLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${incomingContentSeeds}${featuredItems}${tierLine}${existingRoomsLine}
 ${npcSection}
 ## REGISTER FIDELITY — respect the dungeon's established context
 

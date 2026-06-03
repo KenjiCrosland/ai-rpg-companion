@@ -90,6 +90,7 @@ export function generateLockedRoomPrompt(
   loreLookup = '',
   incomingMentions = '',
   featuredItems = '',
+  incomingContentSeeds = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
@@ -123,7 +124,7 @@ ${dungeonOverview}
 
 LOCKED ROOM INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${incomingContentSeeds}${featuredItems}${tierLine}
 ${npcSection}
 
 ## THE "LOCK" IS A PICKABLE OBSTACLE — NOT ALWAYS A DOOR

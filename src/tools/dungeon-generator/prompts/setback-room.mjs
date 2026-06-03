@@ -91,6 +91,7 @@ export function generateSetbackRoomPrompt(
   loreLookup = '',
   incomingMentions = '',
   featuredItems = '',
+  incomingContentSeeds = '',
 ) {
   const tierLine = difficulty
     ? `Dungeon difficulty tier: ${difficulty} (1-5). Scale the setback's DCs, damage, and the severity of physical consequences to this tier.`
@@ -131,7 +132,7 @@ ${dungeonOverview}
 
 SETBACK ROOM INFO:
 Short description (size, exits, map-side notes): ${shortDescription}
-${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${incomingContentSeeds}${featuredItems}${tierLine}
 ${roomNameSection}${roomSummarySection}${npcSection}
 
 ## SETBACK TYPES — pick one that fits the dungeon

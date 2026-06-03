@@ -12,6 +12,8 @@ import {
   formatLoreLookupForPrompt,
 } from '../util/assign-lore-locations.mjs';
 import { formatRoomNPCsForPrompt } from '../util/assign-npcs.mjs';
+import { assignContentSeeds, consumePendingContentSeeds } from '../util/assign-content-seeds.mjs';
+import { formatIncomingContentSeedsBlock } from '../prompts/shared-fragments.mjs';
 import { formatRoomMonstersForPrompt } from '../util/assign-monsters.mjs';
 import { getRoomItemNames } from '../util/assign-items.mjs';
 import { getAllItems } from '@/util/item-storage.mjs';
@@ -359,6 +361,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
 
   // Custom Room Handler
   async function handleCustomRoom({
+    room,
     dungeonOverview,
     shortDescription,
     connectedRoomsInfo,
@@ -372,6 +375,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
     incomingMentions = '',
     featuredItems = '',
   }) {
+    const seedBlock = formatIncomingContentSeedsBlock(consumePendingContentSeeds(room));
     const prompt = generateCustomRoomPrompt(
       dungeonOverview,
       shortDescription,
@@ -385,6 +389,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       loreLookup,
       incomingMentions,
       featuredItems,
+      seedBlock,
     );
     //logger.log('Prompt:', prompt);
     const customRoomResponse = await generateGptResponse(
@@ -461,6 +466,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
   }) {
     const roomName = formRoomName || room.name || '';
     const roomSummary = formRoomSummary || room.oneSentenceSummary || '';
+    const seedBlock = formatIncomingContentSeedsBlock(consumePendingContentSeeds(room));
 
     const prompt = generateSetbackRoomPrompt(
       dungeonOverview,
@@ -475,6 +481,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       loreLookup,
       incomingMentions,
       featuredItems,
+      seedBlock,
     );
     //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -501,6 +508,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
   }) {
     const roomName = formRoomName || room.name || '';
     const roomSummary = formRoomSummary || room.oneSentenceSummary || '';
+    const seedBlock = formatIncomingContentSeedsBlock(consumePendingContentSeeds(room));
 
     const connectedRoomSummary =
       currentDungeon.rooms.find(
@@ -520,6 +528,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       formatLoreLookupForPrompt(currentDungeon),
       incomingMentions,
       featuredItems,
+      seedBlock,
     );
     //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -550,6 +559,9 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
     incomingMentions = '',
     featuredItems = '',
   }) {
+    // Locked rooms (pickable locks) can also receive clue seeds —
+    // they're in the eligible host set per assign-content-seeds.mjs.
+    const seedBlock = formatIncomingContentSeedsBlock(consumePendingContentSeeds(room));
     const prompt = generateLockedRoomPrompt(
       dungeonOverview,
       shortDescription,
@@ -561,6 +573,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       loreLookup,
       incomingMentions,
       featuredItems,
+      seedBlock,
     );
     //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -647,6 +660,12 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
     featuredItems = '',
   }) {
     const existingRooms = currentDungeon.roomNames.join(', ');
+    // Pop any pending content seeds (currently only Three Clue Rule
+    // distribution from key rooms — see assign-content-seeds.mjs).
+    // consume clears the array so a re-generation of the same room
+    // won't re-inject the same seed. Block is empty string when no
+    // seeds are pending.
+    const seedBlock = formatIncomingContentSeedsBlock(consumePendingContentSeeds(room));
     const prompt = generateLivingRoomPrompt(
       dungeonOverview,
       shortDescription,
@@ -659,6 +678,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       loreLookup,
       incomingMentions,
       featuredItems,
+      seedBlock,
     );
     //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -725,6 +745,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
     featuredItems = '',
   }) {
     const existingRooms = currentDungeon.roomNames.join(', ');
+    const seedBlock = formatIncomingContentSeedsBlock(consumePendingContentSeeds(room));
     const prompt = generatePurposeRoomPrompt(
       dungeonOverview,
       shortDescription,
@@ -737,6 +758,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       loreLookup,
       incomingMentions,
       featuredItems,
+      seedBlock,
     );
     //logger.log('Prompt:', prompt);
     const response = await generateGptResponse(
@@ -984,6 +1006,12 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       // Proceed without the key room description
     }
 
+    // Obstacle rooms are the natural home for clue seeds about their
+    // paired key — the party reading the obstacle is exactly the
+    // audience that needs a hint about where the key lives. Consume
+    // any seeds that the key-room flow planted here.
+    const seedBlock = formatIncomingContentSeedsBlock(consumePendingContentSeeds(room));
+
     // Generate the obstacle prompt for the room
     const obstaclePrompt = generateObstaclePrompt(
       dungeonOverview,
@@ -1000,6 +1028,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       loreLookup,
       incomingMentions,
       featuredItems,
+      seedBlock,
     );
     //logger.log('Obstacle Prompt:', obstaclePrompt);
 
@@ -1077,6 +1106,34 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
     );
     const roomDescription = JSON.parse(keyRoomResponse);
     const contentArray = processKeyRoomResponse(roomDescription);
+
+    // External clue seeds (Three Clue Rule distribution): when the
+    // key room judged the key non-obvious AND chose to distribute
+    // some clues to other rooms, place each seed onto an eligible
+    // host room via the substrate. The host room's prompt will read
+    // pendingContentSeeds the next time it generates and weave each
+    // clue in as a natural scene detail. Graceful fallback: if no
+    // eligible host exists, the seeds quietly stay unplaced — the
+    // key room's local clues remain the full Three Clue Rule
+    // expression. See assign-content-seeds.mjs for eligibility.
+    const externalSeeds = Array.isArray(roomDescription.external_clue_seeds)
+      ? roomDescription.external_clue_seeds
+      : [];
+    if (externalSeeds.length > 0) {
+      // Bias the first seed toward the paired obstacle room — that's
+      // the natural reading audience for a clue about the key, since
+      // the party hits the obstacle and asks "where do I find the
+      // solution to this?" The substrate falls back to ascending-area-id
+      // ordering when the obstacle room is missing or ineligible
+      // (already generated, has an assignment, etc.).
+      assignContentSeeds(
+        currentDungeon,
+        externalSeeds,
+        room.id,
+        'clue',
+        { preferredRoomIds: obstacleRoom ? [obstacleRoom.id] : [] },
+      );
+    }
 
     // Return the key room's description and content array
     return { roomDescription, contentArray };
@@ -1295,6 +1352,7 @@ Do NOT write in the room's dm_notes: AC, HP, attack bonuses, damage dice, save D
       } else if (formRoomName || formRoomSummary) {
         // Use custom room prompt
         ({ roomDescription, contentArray } = await handleCustomRoom({
+          room,
           dungeonOverview,
           shortDescription,
           connectedRoomsInfo,

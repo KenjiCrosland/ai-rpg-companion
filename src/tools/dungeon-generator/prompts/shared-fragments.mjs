@@ -22,6 +22,62 @@ If a room is referenced in the ESTABLISHED FACTS ABOUT THIS ROOM section (above 
 // side of a JSON key with no extra quotes.
 export const ROOM_MENTIONS_FIELD_DESC = `"Array of cross-room references this room makes. Empty array [] is valid. Each entry has {area_id: <number>, mention: <string>}. The mention should be a single short sentence describing the SPECIFIC fact this room establishes about the target area (a creature/NPC seen, an event in progress, a notable feature). The system propagates each mention to the target room so its generation honors what you established. Examples: [{\\"area_id\\": 4, \\"mention\\": \\"A Chittering-Feast pack patrols here.\\"}, {\\"area_id\\": 7, \\"mention\\": \\"Brother Galen is at the forge.\\"}]. Do NOT add mentions for vague/atmospheric perceptions that don't commit to specifics about the target room."`;
 
+/**
+ * Format pending content seeds on a room into a prompt block.
+ *
+ * Two kinds currently supported, both consumed through the same
+ * substrate (`pendingContentSeeds` storage, `consumePendingContentSeeds`
+ * hook, the per-room handler's prompt parameter):
+ *
+ *   - 'clue' — produced by key-room.mjs when a non-obvious key
+ *     distributes a clue to another room (Three Clue Rule). The
+ *     clue must resolve to the key's specific answer.
+ *   - 'leaf_payoff' — produced by dungeon-details.mjs for dead-end
+ *     leaf rooms. A random discovery seed so the leaf rewards
+ *     exploration with something specific instead of reading as
+ *     atmospheric padding.
+ *
+ * Two kinds, two block framings — clue seeds say "another room set
+ * this up, integrate consistently," leaf payoff seeds say "the party
+ * who explores here earns a small specific discovery." When both
+ * happen to be present on the same room, both blocks render.
+ *
+ * Returns the empty string when there are no usable seeds, so
+ * callers can unconditionally concatenate into their prompt scaffold.
+ *
+ * @param {Array<{content: string, originRoomId: number|string|null, kind: string}>} seeds
+ * @returns {string}
+ */
+export function formatIncomingContentSeedsBlock(seeds) {
+  if (!Array.isArray(seeds) || seeds.length === 0) return '';
+
+  const valid = seeds.filter(
+    (s) => s && typeof s.content === 'string' && s.content.trim(),
+  );
+  const clueSeeds = valid.filter((s) => s.kind === 'clue');
+  const payoffSeeds = valid.filter((s) => s.kind === 'leaf_payoff');
+
+  if (clueSeeds.length === 0 && payoffSeeds.length === 0) return '';
+
+  let block = '';
+
+  if (clueSeeds.length > 0) {
+    const bullets = clueSeeds.map((s) => `- ${s.content.trim()}`).join('\n');
+    block += `\nINCOMING CLUE SEEDS — another room's prompt requested that these clues be planted in this room as natural scene details. Each clue is a specific observation a party member might make while exploring this chamber. Weave each into the read-aloud or dm_notes as an ORGANIC detail of the scene (an item on a workbench, a carved mark on a wall, a fragment in an open book) — do NOT add a "**Clues.**" or "**Clue from Area X.**" feature sub-block; the seeded detail should feel like part of this room, not an annotation from elsewhere. The cluesː
+${bullets}
+`;
+  }
+
+  if (payoffSeeds.length > 0) {
+    const bullets = payoffSeeds.map((s) => `- ${s.content.trim()}`).join('\n');
+    block += `\nLEAF-ROOM PAYOFF SEED — this room is a dead-end pocket off the main dungeon path. The party who explores here deserves a small specific discovery as a reward for investigation, not just atmosphere. Use the seed below as the SHAPE of the discovery and dress it specifically to the dungeon's overview (its register, inhabitants, history). Weave the payoff organically into the read-aloud or as a brief feature sub-block in dm_notes — modest scale, specific contents, no major mechanical reward, no plot-critical revelation. The point is to reward exploration, not to gate progression. Seed:
+${bullets}
+`;
+  }
+
+  return block;
+}
+
 // The "WHAT DOES NOT GO IN dm_notes" section. Used by connecting-room
 // (only file currently using the canonical shared form). Other room
 // prompts have bespoke variations inline — extract them here if a

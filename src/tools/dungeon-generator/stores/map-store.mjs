@@ -27,12 +27,47 @@ export async function generateMap() {
   isAssigningMapContext.value = true;
   try {
 
-  let dungeonRoomArray = generateDungeon();
-  addDungeonDetails(dungeonRoomArray);
+  // The obstacle/key pair is a design invariant — the boss should
+  // always be on the far side of an obstacle the party must solve.
+  // Some procedural layouts can't accommodate it (tight branching,
+  // every viable key candidate sits behind a different locked door),
+  // so retry up to MAX_PROCGEN_ATTEMPTS times: re-roll the layout
+  // entirely. After the final attempt, accept whatever came back —
+  // an obstacle-less dungeon is still playable, and we don't want an
+  // infinite loop on genuinely impossible map shapes.
+  const MAX_PROCGEN_ATTEMPTS = 3;
+  let dungeonRoomArray;
+  let pairEstablished = false;
+  for (let attempt = 1; attempt <= MAX_PROCGEN_ATTEMPTS; attempt++) {
+    dungeonRoomArray = generateDungeon();
+    const result = addDungeonDetails(dungeonRoomArray);
+    pairEstablished = !!result?.obstacleKeyPairEstablished;
+    if (pairEstablished) {
+      if (attempt > 1) {
+        logger.log(`[procgen] obstacle/key pair established on attempt ${attempt}`);
+      }
+      break;
+    }
+    if (attempt < MAX_PROCGEN_ATTEMPTS) {
+      logger.log(`[procgen] obstacle/key pair failed on attempt ${attempt}; regenerating`);
+    } else {
+      logger.warn(
+        `[procgen] obstacle/key pair could not be established after ${MAX_PROCGEN_ATTEMPTS} attempts; accepting last layout`,
+      );
+    }
+  }
 
   const roomDescriptions = createRoomDescriptions(dungeonRoomArray);
-  dungeonRoomArray.forEach((room, index) => {
-    room.shortDescription = roomDescriptions[index + 1];
+  // Key by room.id, not by array index. `createRoomDescriptions`
+  // returns a `{ [roomId]: description }` object; indexing it by
+  // array position is only correct when ids happen to be 1..N
+  // matching array order — which is the current procgen invariant
+  // but a fragile coupling. If a future change produces non-
+  // sequential ids (deletion, manual edit, partial regenerate),
+  // index-based lookup silently mis-assigns descriptions to wrong
+  // rooms; id-based lookup stays correct regardless.
+  dungeonRoomArray.forEach((room) => {
+    room.shortDescription = roomDescriptions[room.id];
   });
 
   currentDungeon.value.rooms = dungeonRoomArray;

@@ -206,6 +206,48 @@ Three categories are owned by other fields or sections:
 
 3. DOOR MATERIAL. "Wooden door," "stone door" belong in the read-aloud (when notable). dm_notes treats doors by area number only.
 
+## NO STATBLOCK NOTATION IN dm_notes
+
+Statblock-row syntax belongs in the creature's statblock, not in prose. Specifically banned in dm_notes:
+
+- Attack-roll syntax: "+7 to hit", "melee spell attack +N", "ranged weapon attack", "Hit: 22 (4d8+2)"
+- Hit-die damage notation in parentheses: "(4d8+2)", "(NdN+M)"
+- Statblock action-line format: "Action: …", "Reaction: …", "Multiattack."
+
+DCs and damage NUMBERS are allowed when they're failure consequences the GM rolls inline ("DC 14 Strength save or take 18 cold damage", "the ward strikes for 12 force damage"). What's banned is COPYING THE CREATURE'S STATBLOCK ROW into the prose. If a guardian attacks, describe the EFFECT and the GM-readable outcome, and trust the statblock to carry the dice math.
+
+## THREE CLUE RULE — when the key's solution is non-obvious
+
+If acquiring or using the key requires INFERENCE (figuring out a name to speak, identifying which of several objects is the actual key, knowing a hidden mechanism, decoding a glyph), seed THREE clues with descending difficulty so a party that misses one or two still has a path to the answer.
+
+You may keep all three clues IN THIS ROOM (always a safe choice — the room stays self-contained) OR distribute 1-2 of them to OTHER rooms in the dungeon via the optional 'external_clue_seeds' output field. The substrate picks appropriate host rooms automatically — you provide the clue content; the assignment finds an eligible neutral room (one without lore role / NPC / monster / item already assigned) and plants it there. You do NOT name target areas.
+
+The RULE: at minimum ONE clue (the fallback) must stay in THIS room — that's the "don't get stuck" valve and it must always be available. The other two can be local or distributed.
+
+A key is OBVIOUS when:
+- It's a literal key sitting in a chest, on an altar, or in plain view
+- It's the apex's body part — defeat the apex, the key drops
+- It's an NPC openly offering it on satisfaction of a stated condition
+- A nearby plaque, tablet, or NPC plainly names what to do
+
+A key is NON-OBVIOUS when:
+- The party must speak a specific NAME they don't yet know
+- The key is one of several similar objects and inference picks which
+- The mechanism is hidden behind a feature the party must discover
+- The key requires solving a riddle, decoding a glyph, or assembling pieces
+
+When NON-OBVIOUS, design three concrete observable clues, ordered hardest → easiest, ALL pointing to the same answer:
+
+- CLUE 1 (subtle — the "feel smart" clue): rewards careful investigation, high passive Perception, or a deliberate Investigate / History / Arcana check. Example: a faint runic name scratched into a beam behind the altar that requires a DC 16 Perception or Investigate to spot, and DC 14 Arcana / History / Religion to read.
+- CLUE 2 (medium — the natural-discovery clue): visible to anyone who searches methodically, or surfaces in a routine examination of an obvious feature. Example: a labeled portrait on the wall the party sees when they look at the wall.
+- CLUE 3 (the fallback — the "don't get stuck" clue): plainly available without a check. Example: an NPC who eventually says it after some prodding, or a clearly inscribed name on the key-object itself once it's picked up. Catch this one without rolling.
+
+Placement decision: at least ONE clue (the fallback) stays in THIS room — include it in the **Clues.** sub-block. The other two are at your discretion: either include them in the **Clues.** sub-block (local) OR move them to 'external_clue_seeds' (distributed to another room by the substrate). Distributing tends to feel more like a real adventure — the party picks up a clue mid-exploration and connects the dots when they reach this room — but distributing too much risks losing the trail. ALL CLUES IN THIS ROOM is always safe; distributing 1-2 is the more textured option.
+
+The three must independently lead to the same answer. The design intent: the party who spots clue 1 feels clever; the party who finds clue 2 feels competent; the party who needs clue 3 still gets past the gate.
+
+Skip both **Clues.** and 'external_clue_seeds' when the key is OBVIOUS — the Three Clue Rule is for investigation gates, not for keys that are simply guarded.
+
 ## OUTPUT FORMAT
 
 Return STRICT JSON (no prose, no commentary, no code fences):
@@ -215,19 +257,22 @@ Return STRICT JSON (no prose, no commentary, no code fences):
 
   "door_preamble": ${DOOR_PREAMBLE_FIELD_DESC},
 
-  "read_aloud_opening": "Boxed text the DM reads when the party enters. 40-90 words, present-tense, sensory. Describe the room's character and atmosphere. Foreshadow the key's presence (a shape on a pedestal, a creature pacing, an NPC waiting, a glow from a far alcove) WITHOUT explicitly identifying it as 'the key' — let the players discover its purpose through investigation. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints. Avoid generic material adjectives unless notable.",
+  "read_aloud_opening": "Boxed text the DM reads when the party enters. 40-90 words, present-tense, sensory. Describe THIS CHAMBER's character and atmosphere — its visible features, its function-evoking details, what catches the eye. Foreshadow the key's presence (a shape on a pedestal, a creature pacing, an NPC waiting, a glow from a far alcove) WITHOUT explicitly identifying it as 'the key' — let the players discover its purpose through investigation. CRITICAL: this is NOT the obstacle room — do not describe the obstacle, its guardian, or its scene. The key room and the obstacle room are SEPARATE chambers. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints. Avoid generic material adjectives unless notable.",
 
   "has_challenge": true,
 
   "challenge_header": "≤8 word title naming the key acquisition's character (e.g., 'The Drake's Tooth,' 'The Riddle of the Glyph,' 'Bargain with the Spirit'). Omit this key entirely if has_challenge is false.",
 
   "dm_notes": [
-    "First paragraph (REQUIRED). 60-150 words. Covers: dimensions, the room's character (function/feel), the key's TYPE (from the list above), where in the room the key is located, and how the room relates to the obstacle this key opens. Mention any visible inhabitants here (the apex pacing, the NPC waiting, the bound spirit). Do NOT put the key's full identity in this paragraph — that goes in the **The [Key Name].** sub-block.",
+    "First paragraph (REQUIRED). 60-150 words. THIS PARAGRAPH IS ABOUT THIS CHAMBER, NOT THE OBSTACLE ROOM. Covers: dimensions, the room's character (function/feel — workshop, vault, shrine, granary, scriptorium), the key's TYPE (from the list above), where in THIS room the key is located, and what this chamber's role in the dungeon is (a tribute-pot kiln, a relic vault, the apex's lair). Mention any visible inhabitants here. The obstacle the key opens has ALREADY BEEN DESCRIBED in its own room (the obstacle context above is for thematic pairing only — it is NOT for retelling). Do NOT re-describe the obstacle's guardian, the obstacle's mechanic, the obstacle's chamber, or any scene from the obstacle room — saying 'the seal in area X' is fine, restating what the seal does is not. Do NOT put the key's full identity in this paragraph — that goes in the **The [Key Name].** sub-block.",
     "Second paragraph (REQUIRED). **The [Key Name].** Bolded inline title with a specific key name (e.g., **The Drake-Tooth.**, **The Iron Lever.**, **Brother Galen's Promise.**, **The Burning-Phrase.**). Description follows. Cover: WHAT the key is (its specific identity), HOW the party acquires it (combat tactic, skill check at tier-scaled DC, parley terms, puzzle solution), and the IMMEDIATE physical failure consequence if the attempt fails. 60-150 words.",
-    "Subsequent paragraphs are OPTIONAL feature sub-blocks for specific items, guardian profiles if not covered above, secondary obstacles in the room, or NPC interactions. Each begins with a bolded inline title: **Feature Name.** Skip these if the first two paragraphs covered everything. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
+    "Third paragraph (CONDITIONAL — REQUIRED when the key is NON-OBVIOUS per the Three Clue Rule section above; OMIT when the key is OBVIOUS). **Clues.** Bolded inline title. Description follows. List ONLY the LOCAL clues — 1, 2, or 3 of them — in descending difficulty order. The fallback clue (clue 3 in the rule above) MUST always be listed here as the last item. Any additional local clues precede it. Distributed clues go in the 'external_clue_seeds' field below and DO NOT appear in this sub-block. Format: '(1) [the subtle clue — what it is, where in the room, and the DC or check to surface it]; (N) [the fallback clue — plainly available without a roll].' Each clue must be SPECIFIC (a carved name, a sketched portrait, a song-fragment in a tablet, a labeled diagram), NOT vague atmosphere ('the room feels ancient'). 40-100 words depending on how many local clues you list.",
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks for specific items, guardian profiles if not covered above, secondary obstacles in the room, or NPC interactions. Each begins with a bolded inline title: **Feature Name.** Skip these if the prior paragraphs covered everything. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
   ],
 
   "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's character and the key it holds.",
+
+  "external_clue_seeds": "OPTIONAL. Array of 0-2 clue objects to be planted in OTHER rooms across the dungeon. Use this only when the key is NON-OBVIOUS and you've chosen to distribute 1-2 clues per the Three Clue Rule above. Shape: [{\"content\": \"<one specific observable clue — what the players see in that room, written as a complete sentence the GM can read>\"}]. Example: [{\"content\": \"A scorched ledger entry naming 'Ealhswith, Sister of the Reed' lies open on a workbench.\"}]. Each entry must be a CONCRETE detail (a labeled portrait, a scratched name, a sketched diagram) — NOT a vague hint. Do NOT name target areas; the substrate picks an appropriate eligible room. OMIT this field (or return []) when the key is OBVIOUS, when you've chosen to keep all clues local, or when no clues are needed.",
 
   "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
