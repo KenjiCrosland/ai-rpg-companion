@@ -13,6 +13,7 @@ import {
   getToolForSourceType,
   addMembershipReferenceForCanonical,
   sourceExists,
+  dropStaleSourceFields,
 } from '../seeded-input.mjs';
 
 describe('seeded-input', () => {
@@ -190,6 +191,71 @@ describe('seeded-input', () => {
         && r.source_id === 'dng_xyz'
       );
       expect(created).toBeTruthy();
+    });
+
+    it('item → dungeon round-trip: cross-store shape coherent after a complete promotion', () => {
+      // Mirrors the sequence in overview-store.mjs's finalize hook
+      // (the part triggered by `if (pendingSeed.value && seedItem)`)
+      // at the storage layer — no Pinia/Vue scaffolding required.
+      // Verifies all three artifacts that must agree after a stub-based
+      // promotion lands:
+      //   (a) `tool-references` carries the `inspired_by_item` edge
+      //   (b) the item's matching stub has its `dungeon_id` stamped
+      //   (c) the dungeon record has sourceType/sourceId/sourceName
+      // Without this triad coherent, the dungeon's "Inspired by [Item]"
+      // link and the item's "Dungeons inspired by this item" list both
+      // misrender or fail their existence checks.
+      const { saveItemToStorage, getItemFromStorage, linkDungeonToItemStub } =
+        // eslint-disable-next-line global-require
+        require('../item-storage.mjs');
+
+      // 1. Item exists with a related_dungeons stub.
+      saveItemToStorage({
+        name: 'Hearthstaff',
+        related_dungeons: [
+          { name: 'The Hollow Vault', role_brief: 'Tomb where it was sealed', dungeon_id: null },
+        ],
+      });
+
+      // 2. The promotion produces a dungeon with these provenance
+      //    fields stamped (lines 348-350 of overview-store.mjs).
+      const newDungeon = {
+        id: 'dng_abc',
+        dungeonOverview: { name: 'The Hollow Vault' },
+        sourceType: 'item',
+        sourceId: 'Hearthstaff',
+        sourceName: 'Hearthstaff',
+      };
+      localStorage.setItem('dungeons', JSON.stringify([newDungeon]));
+
+      // 3. Finalize-hook substrate calls.
+      const seed = {
+        source: { type: 'item', id: 'Hearthstaff', name: 'Hearthstaff' },
+        entities: [{ type: 'dungeon', name: 'The Hollow Vault' }],
+      };
+      addReferenceForSeed(seed, { type: 'dungeon', id: newDungeon.id, name: newDungeon.dungeonOverview.name });
+      linkDungeonToItemStub('Hearthstaff', 'The Hollow Vault', newDungeon.id);
+
+      // (a) Reference edge exists.
+      const refs = Object.values(JSON.parse(localStorage.getItem('tool-references')));
+      const edge = refs.find(r =>
+        r.relationship === 'inspired_by_item'
+        && r.source_type === 'dungeon'
+        && r.source_id === 'dng_abc'
+        && r.target_type === 'item'
+        && r.target_id === 'Hearthstaff'
+      );
+      expect(edge).toBeTruthy();
+
+      // (b) Item stub got its dungeon_id stamped.
+      const itemAfter = getItemFromStorage('Hearthstaff');
+      expect(itemAfter.related_dungeons[0].dungeon_id).toBe('dng_abc');
+
+      // (c) Dungeon source provenance round-trips.
+      const dungeonAfter = JSON.parse(localStorage.getItem('dungeons'))[0];
+      expect(dungeonAfter.sourceType).toBe('item');
+      expect(dungeonAfter.sourceId).toBe('Hearthstaff');
+      expect(dungeonAfter.sourceName).toBe('Hearthstaff');
     });
 
     it('writes appears_in_setting for a setting → npc seed', () => {
@@ -664,6 +730,58 @@ describe('seeded-input', () => {
     it('handles malformed localStorage gracefully', () => {
       localStorage.setItem('savedItems', 'not-json');
       expect(sourceExists('item', 'X')).toBe(false);
+    });
+  });
+
+  describe('dropStaleSourceFields', () => {
+    it('drops sourceType/Id/Name when the source no longer resolves', () => {
+      // No savedItems → 'Hearthstaff' doesn't exist as an item.
+      const dungeon = {
+        id: 'dng_a',
+        sourceType: 'item',
+        sourceId: 'Hearthstaff',
+        sourceName: 'Hearthstaff',
+        seedMode: 'forgotten',
+      };
+      const dropped = dropStaleSourceFields(dungeon);
+      expect(dropped).toBe(true);
+      expect(dungeon.sourceType).toBeUndefined();
+      expect(dungeon.sourceId).toBeUndefined();
+      expect(dungeon.sourceName).toBeUndefined();
+      expect(dungeon.seedMode).toBeUndefined();
+    });
+
+    it('preserves sourceType/Id/Name when the source still resolves', () => {
+      localStorage.setItem('savedItems', JSON.stringify([{ name: 'Hearthstaff' }]));
+      const dungeon = {
+        id: 'dng_a',
+        sourceType: 'item',
+        sourceId: 'Hearthstaff',
+        sourceName: 'Hearthstaff',
+        seedMode: 'forgotten',
+      };
+      const dropped = dropStaleSourceFields(dungeon);
+      expect(dropped).toBe(false);
+      expect(dungeon.sourceType).toBe('item');
+      expect(dungeon.sourceId).toBe('Hearthstaff');
+      expect(dungeon.sourceName).toBe('Hearthstaff');
+      expect(dungeon.seedMode).toBe('forgotten');
+    });
+
+    it('returns false silently when the entity has no source fields', () => {
+      const dungeon = { id: 'dng_a' };
+      expect(dropStaleSourceFields(dungeon)).toBe(false);
+      // No leakage of undefined props.
+      expect(Object.keys(dungeon)).toEqual(['id']);
+    });
+
+    it('handles legacy records with sourceType but no sourceId/Name', () => {
+      // Older NPC records had sourceType set without sourceId — the
+      // NPC save pattern preserves these explicitly. The helper should
+      // not flag them as stale either (no id to validate).
+      const npc = { npc_id: 'npc_1', sourceType: 'dungeon' };
+      expect(dropStaleSourceFields(npc)).toBe(false);
+      expect(npc.sourceType).toBe('dungeon');
     });
   });
 });

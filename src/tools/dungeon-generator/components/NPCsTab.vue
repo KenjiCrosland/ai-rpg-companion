@@ -106,7 +106,7 @@
               <ParCardButton
                 size="small"
                 :disabled="dungeonStore.currentlyLoadingNPCs[entry.index]"
-                @click="dungeonStore.generateDungeonNPC(entry.index)"
+                @click="handleGenerateFullNPC(entry)"
               >
                 Generate Full NPC
               </ParCardButton>
@@ -311,10 +311,15 @@ function submitAddNPC() {
     return;
   }
   // Drive the existing store flow: addNPC reads from store refs, pushes
-  // a stub, then kicks off generation.
+  // a stub, then kicks off generation. Returns the new npc_id so we can
+  // auto-expand the row immediately — without this the user has to scroll
+  // down and click into the newly-added card.
   dungeonStore.npcName = addFormName.value.trim() || 'Unnamed NPC';
   dungeonStore.npcShortDescription = desc;
-  dungeonStore.addNPC();
+  const newNpcId = dungeonStore.addNPC();
+  if (newNpcId) {
+    expandedKey.value = newNpcId;
+  }
   resetAddForm();
 }
 
@@ -420,6 +425,24 @@ function isExpanded(entry) {
 function toggleExpand(entry) {
   const key = rowKey(entry);
   expandedKey.value = expandedKey.value === key ? null : key;
+}
+
+// Auto-expand on stub → full-NPC promotion. Set the expansion BEFORE
+// kicking off generation so the loading skeleton renders in the
+// expanded slot (the user clicked "Generate Full NPC" — they implicitly
+// asked to see this NPC). The rowKey is stable across the promotion:
+// `ensureNPCHasId` inside generateDungeonNPC stamps the npc_id early,
+// and even if the entry started as a `stub-N` key, the row keeps that
+// key until the next reactive recomputation — by then we've already
+// updated expandedKey to the new npc_id via the storage listener tick.
+function handleGenerateFullNPC(entry) {
+  const npc = entry?.npc;
+  if (npc?.npc_id) {
+    expandedKey.value = npc.npc_id;
+  } else {
+    expandedKey.value = `stub-${entry.index}`;
+  }
+  dungeonStore.generateDungeonNPC(entry.index);
 }
 
 // Respect prefers-reduced-motion so Transition swaps don't animate

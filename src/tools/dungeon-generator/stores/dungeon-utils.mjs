@@ -2,6 +2,7 @@ import { dungeons } from './dungeon-state.mjs';
 import { saveStatblockToStorage, getStatblockFromStorage } from '@/util/statblock-storage.mjs';
 import { saveNPCToStorage, dungeonNPCToCanonical } from '@/util/npc-storage.mjs';
 import { addReference, getReferencesForEntity } from '@/util/reference-storage.mjs';
+import { dropStaleSourceFields } from '@/util/seeded-input.mjs';
 import { logger } from '@/util/logger.mjs';
 
 export function saveDungeons() {
@@ -61,6 +62,16 @@ export function findMonsterById(currentDungeon, monsterId) {
 
 function prepareDungeonForSave(dungeon) {
   const clone = JSON.parse(JSON.stringify(dungeon));
+
+  // Deferred source-cleanup: if the dungeon's `sourceType/Id/Name`
+  // points at an entity that no longer resolves (e.g., the user
+  // deleted the inspiration item earlier), drop the stale fields
+  // now. Render-time `sourceExists` showed the "(deleted)" marker
+  // on the first view after deletion; this persist-time prune
+  // completes the cleanup so the marker eventually goes away
+  // instead of lingering forever. Mirrors the NPC pattern in
+  // `saveCurrentNPCToList`.
+  dropStaleSourceFields(clone);
 
   // TEMPORARY: Keep both nested statblocks AND references for safety during migration period
   // TODO: Later, uncomment the code below to strip nested statblocks and only keep references

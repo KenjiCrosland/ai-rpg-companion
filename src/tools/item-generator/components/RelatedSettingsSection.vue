@@ -57,7 +57,16 @@
           >
             View in Setting Generator
           </ParCardButton>
+          <!--
+            Only show ✕ for UNPROMOTED stubs. See RelatedDungeonsSection
+            for the rationale: removing a promoted stub from this list
+            doesn't delete the setting, doesn't clear its sourceType
+            back-pointer, and doesn't drop the inspired_by_item edge —
+            it just half-breaks the relationship. Force users to the
+            Setting Generator to do a real delete.
+          -->
           <button
+            v-if="!stub.setting_id"
             type="button"
             class="related-setting-remove"
             :title="`Remove ${displayNameFor(stub)}`"

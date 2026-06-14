@@ -521,6 +521,32 @@ export function sourceExists(type, id) {
  * @returns {string|null}       The new reference id, or null if dedup'd
  *                              or the relationship can't be looked up.
  */
+/**
+ * Mutate an entity in place to drop stale `sourceType/sourceId/sourceName`
+ * (and optionally `seedMode`) fields when the recorded source no longer
+ * resolves. Used by the dungeon/setting save paths as a deferred cleanup:
+ * when the user deletes an item that was a dungeon's inspiration source,
+ * we intentionally keep the source fields so the OverviewTab can render
+ * `Inspired by [Item] (deleted)` on the next view. The persistent cleanup
+ * then happens on the next save of that dungeon/setting — exactly the
+ * pattern NPCCard uses in `saveCurrentNPCToList`.
+ *
+ * @param {Object} entity
+ * @returns {boolean} true if any field was dropped (caller can short-
+ *                    circuit the unchanged case).
+ */
+export function dropStaleSourceFields(entity) {
+  if (!entity || !entity.sourceType) return false;
+  const id = entity.sourceId || entity.sourceName;
+  if (!id) return false;
+  if (sourceExists(entity.sourceType, id)) return false;
+  delete entity.sourceType;
+  delete entity.sourceId;
+  delete entity.sourceName;
+  if ('seedMode' in entity) delete entity.seedMode;
+  return true;
+}
+
 export function addMembershipReferenceForCanonical(member, container) {
   if (!member?.id || !container?.id) return null;
   const memberType = member.type || 'npc';

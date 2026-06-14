@@ -332,8 +332,6 @@ import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
 import { useToast } from '@/composables/useToast';
 import { renameItemReferences, removeReferencesForItem } from '@/util/item-storage.mjs';
-import { resetSettingSourceForDeletedEntity } from '@/util/setting-storage.mjs';
-import { resetDungeonSourceForDeletedEntity } from '@/util/dungeon-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
 import { detectFromUserInput } from './utils/detect-user-input.mjs';
 import { detectRegisterFromInput } from '@/shared/detect-register-from-input.mjs';
@@ -2138,12 +2136,15 @@ const deleteItem = () => {
       localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
       if (deletedName) {
         removeReferencesForItem(deletedName);
-        // Settings and dungeons that record this item as their
-        // inspiration source need their denormalized fields cleared
-        // too — the reference graph alone wouldn't stop the cards
-        // from rendering "Inspired by [Item]" as a live link.
-        resetSettingSourceForDeletedEntity('item', deletedName);
-        resetDungeonSourceForDeletedEntity('item', deletedName);
+        // We intentionally do NOT clear the denormalized
+        // sourceType/sourceId/sourceName fields on settings or
+        // dungeons that point at this item. Those fields drive the
+        // render-time "(deleted)" marker via `sourceExists` — if we
+        // dropped them eagerly, the entire "Inspired by" line would
+        // vanish from the card and the user would have no signal
+        // that the source was once present. Persistent cleanup
+        // belongs on a subsequent save of the dungeon/setting (not
+        // here), so the user sees the marker first.
       }
       activeItemIndex.value = null;
       magicItemDescription.value = null;

@@ -309,6 +309,30 @@ describe('item-storage', () => {
       expect(after[0].seeded_from.source_name).toBe('NewName');
     });
 
+    it('updates dungeon-level sourceType/Id/Name when the dungeon was promoted from the renamed item', () => {
+      // Mirrors the setting-level case above. The dungeon's own
+      // sourceType/sourceId/sourceName fields are written by the
+      // Item → Dungeon finalize hook (overview-store.mjs) when the
+      // dungeon is promoted from an item stub. OverviewTab reads
+      // them directly to render the "Inspired by [Item]" link; without
+      // this propagation the link goes stale and sourceExists fails
+      // (item with old name no longer resolves), so the dungeon
+      // erroneously renders as `(deleted)` on a benign rename.
+      localStorage.setItem('dungeons', JSON.stringify([
+        { id: 'dng_a', dungeonOverview: { name: 'A' }, sourceType: 'item', sourceId: 'OldName', sourceName: 'OldName' },
+        { id: 'dng_b', dungeonOverview: { name: 'B' }, sourceType: 'item', sourceId: 'OtherItem', sourceName: 'OtherItem' },
+        { id: 'dng_c', dungeonOverview: { name: 'C' }, sourceType: 'setting', sourceId: 'OldName', sourceName: 'OldName' }, // wrong source type, must not touch
+      ]));
+
+      renameItemReferences('OldName', 'NewName');
+
+      const after = JSON.parse(localStorage.getItem('dungeons'));
+      expect(after[0].sourceId).toBe('NewName');
+      expect(after[0].sourceName).toBe('NewName');
+      expect(after[1].sourceId).toBe('OtherItem');  // untouched
+      expect(after[2].sourceId).toBe('OldName');    // setting-typed, untouched
+    });
+
     it('is a no-op when oldName === newName', () => {
       addNPCMentionedInItemReference({ npcId: 'npc_1', npcName: 'A', itemName: 'Same' });
       const result = renameItemReferences('Same', 'Same');

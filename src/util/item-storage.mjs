@@ -620,15 +620,28 @@ export function renameItemReferences(oldName, newName) {
     if (Array.isArray(dungeons)) {
       let changed = false;
       for (const dungeon of dungeons) {
-        if (!Array.isArray(dungeon?.npcs)) continue;
-        for (const stub of dungeon.npcs) {
-          const from = stub?.seeded_from;
-          if (from?.source_type === 'item' && from.source_id === oldName) {
-            from.source_id = newName;
-            from.source_name = newName;
-            totalUpdated++;
-            changed = true;
+        if (Array.isArray(dungeon?.npcs)) {
+          for (const stub of dungeon.npcs) {
+            const from = stub?.seeded_from;
+            if (from?.source_type === 'item' && from.source_id === oldName) {
+              from.source_id = newName;
+              from.source_name = newName;
+              totalUpdated++;
+              changed = true;
+            }
           }
+        }
+        // Dungeon-level source provenance written by the Item → Dungeon
+        // finalize hook (overview-store.mjs). Mirrors the setting-level
+        // pass above; without it, the OverviewTab "Inspired by [Item]"
+        // link would render the old item name AND sourceExists would
+        // fail (item with the old name no longer exists), so the
+        // dungeon would render as `(deleted)` after a benign rename.
+        if (dungeon?.sourceType === 'item' && dungeon.sourceId === oldName) {
+          dungeon.sourceId = newName;
+          dungeon.sourceName = newName;
+          totalUpdated++;
+          changed = true;
         }
       }
       if (changed) {

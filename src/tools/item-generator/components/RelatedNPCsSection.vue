@@ -68,7 +68,16 @@
           >
             View in NPC Generator
           </ParCardButton>
+          <!--
+            Only show ✕ for UNPROMOTED stubs. See RelatedDungeonsSection
+            for the rationale: removing a promoted stub from this list
+            doesn't delete the NPC, doesn't clear its sourceType back-
+            pointer, and doesn't drop the mentioned_in_item edge — it
+            just half-breaks the relationship. Force users to the NPC
+            Generator to do a real delete.
+          -->
           <button
+            v-if="!stub.npc_id"
             type="button"
             class="related-npc-remove"
             :title="`Remove ${stub.name}`"

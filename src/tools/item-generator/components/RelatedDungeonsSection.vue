@@ -69,7 +69,20 @@
           >
             View in Dungeon Generator
           </ParCardButton>
+          <!--
+            Only show the ✕ for UNPROMOTED stubs. Once a stub has a
+            dungeon_id, clicking ✕ only severs the item's stored
+            reference to the dungeon — the dungeon itself, its
+            sourceType pointing back at this item, and the
+            inspired_by_item edge in tool-references all survive.
+            That's a half-broken cleanup that gives the user the
+            impression they "deleted" something. To remove a promoted
+            stub, users go to the destination tool and delete the
+            actual entity (which cascades back here via the existing
+            stub-reset path).
+          -->
           <button
+            v-if="!stub.dungeon_id"
             type="button"
             class="related-dungeon-remove"
             :title="`Remove ${displayNameFor(stub)}`"

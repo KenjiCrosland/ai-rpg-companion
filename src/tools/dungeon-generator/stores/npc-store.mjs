@@ -406,6 +406,9 @@ export function addNPC() {
 
   generateDungeonNPC(currentDungeon.value.npcs.length - 1);
   saveDungeons();
+  // Returned so the caller (the NPCsTab add-form submit handler) can
+  // auto-expand the newly-added row before the user has to hunt for it.
+  return npcId;
 }
 
 // Handle storage changes from other tabs to sync statblock generation limits
