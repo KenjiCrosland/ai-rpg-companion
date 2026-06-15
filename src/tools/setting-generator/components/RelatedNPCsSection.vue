@@ -439,7 +439,7 @@ watch(() => props.setting, () => {
    Font stacks include the same fallback chain tokens.css defines so
    the serif still resolves correctly when the CSS variable hasn't
    loaded yet (matches the convention used by ParButton,
-   ParCallout, ParTextarea, etc.). */
+   ParCallout, ParCardTextarea, etc.). */
 .related-npcs-section {
   background: transparent;
   padding: 2rem;

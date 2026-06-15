@@ -10,9 +10,9 @@
       <p class="room-form__intro">
         All fields below are optional. Click <em>Generate Description</em> to create a room from the dungeon's existing context, or fill in any field to steer the generation.
       </p>
-      <ParInput v-model="roomFormName" label="Room Name" />
-      <ParTextarea v-model="roomFormShortDescription" label="Short Description" :rows="3" />
-      <ParSelect
+      <ParCardInput v-model="roomFormName" label="Room Name" />
+      <ParCardTextarea v-model="roomFormShortDescription" label="Short Description" :rows="3" />
+      <ParCardSelect
         v-model="selectedNPCName"
         label="Include NPC in Room"
         :options="npcOptions"
@@ -81,14 +81,14 @@
       <div v-else class="edit-form parchment">
         <h3 class="edit-form__title">Edit Room Description</h3>
 
-        <ParInput
+        <ParCardInput
           v-model="roomEditForm.name"
           label="Room Name"
           hint="The name of the room (without the room number)"
           class="edit-field"
         />
 
-        <ParTextarea
+        <ParCardTextarea
           v-model="roomEditForm.content"
           label="Room Content (Markup Format)"
           :rows="20"
@@ -140,10 +140,10 @@ import {
   ParButton,
   ParCardButton,
   ParCheckbox,
-  ParInput,
-  ParSelect,
+  ParCardInput,
+  ParCardSelect,
   ParTabToggle,
-  ParTextarea,
+  ParCardTextarea,
 } from "@/parchment";
 import { ref, watch, onMounted, computed } from 'vue';
 

@@ -211,12 +211,12 @@
                 <h2 class="item-edit__title">Edit Magic Item</h2>
               </header>
 
-              <ParInput v-model="editForm.name" label="Name" class="item-edit__field" />
+              <ParCardInput v-model="editForm.name" label="Name" class="item-edit__field" />
 
               <div class="item-edit__row">
-                <ParSelect v-model="editForm.item_type" label="Type" :options="concreteItemTypeOptions"
+                <ParCardSelect v-model="editForm.item_type" label="Type" :options="concreteItemTypeOptions"
                   class="item-edit__field item-edit__field--inline" />
-                <ParSelect v-model="editForm.rarity" label="Rarity" :options="rarityOptions"
+                <ParCardSelect v-model="editForm.rarity" label="Rarity" :options="rarityOptions"
                   class="item-edit__field item-edit__field--inline" />
               </div>
 
@@ -224,25 +224,25 @@
                 <ParCheckbox v-model="editForm.requires_attunement" class="item-edit__attunement-toggle">
                   Requires attunement
                 </ParCheckbox>
-                <ParInput v-if="editForm.requires_attunement" v-model="editForm.attunement_restriction"
+                <ParCardInput v-if="editForm.requires_attunement" v-model="editForm.attunement_restriction"
                   label="Restriction (optional)"
                   hint="Leave blank for any character. Example: &quot;by a paladin&quot; or &quot;by a creature of evil alignment&quot;."
                   placeholder="by a paladin" class="item-edit__field item-edit__attunement-restriction" />
               </fieldset>
 
-              <ParInput v-model="editForm.modifier_sentence" label="Modifier sentence (optional)"
+              <ParCardInput v-model="editForm.modifier_sentence" label="Modifier sentence (optional)"
                 hint='Example: "You have a +1 bonus to attack and damage rolls made with this weapon."'
                 class="item-edit__field" />
 
-              <ParTextarea v-model="editForm.physical_description" label="Physical description" :rows="4"
+              <ParCardTextarea v-model="editForm.physical_description" label="Physical description" :rows="4"
                 class="item-edit__field" />
 
               <section class="item-edit__features">
                 <h3 class="item-edit__section-title">Features</h3>
                 <div v-for="(feature, index) in editForm.featuresArray" :key="index" class="item-edit__feature-row">
-                  <ParInput v-model="feature.name" label="Feature name" hint="Leave blank to auto-generate a name."
+                  <ParCardInput v-model="feature.name" label="Feature name" hint="Leave blank to auto-generate a name."
                     class="item-edit__feature-name" />
-                  <ParTextarea v-model="feature.description" label="Description" :rows="3"
+                  <ParCardTextarea v-model="feature.description" label="Description" :rows="3"
                     class="item-edit__feature-desc" />
                   <div class="item-edit__feature-actions">
                     <ParCardButton size="small" @click="generateFeature(index)" :disabled="feature.generating">
@@ -258,7 +258,7 @@
                 </ParCardButton>
               </section>
 
-              <ParTextarea v-model="editForm.lore" label="Lore" :rows="5" class="item-edit__field" />
+              <ParCardTextarea v-model="editForm.lore" label="Lore" :rows="5" class="item-edit__field" />
 
               <footer class="item-edit__footer">
                 <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
@@ -325,7 +325,7 @@ import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import RelatedSettingsSection from './components/RelatedSettingsSection.vue';
 import RelatedDungeonsSection from './components/RelatedDungeonsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParCardButton, ParButton, ParCallout, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
+import { ParCardButton, ParButton, ParCallout, ParCardInput, ParCardTextarea, ParCardSelect, ParCheckbox } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';

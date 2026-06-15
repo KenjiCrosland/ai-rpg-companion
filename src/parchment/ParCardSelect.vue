@@ -1,10 +1,10 @@
 <template>
-  <label class="par-select">
-    <span v-if="label" class="par-select__label">{{ label }}</span>
+  <label class="par-card-select">
+    <span v-if="label" class="par-card-select__label">{{ label }}</span>
     <select
       :value="modelValue"
       :disabled="disabled"
-      class="par-select__field"
+      class="par-card-select__field"
       @change="$emit('update:modelValue', $event.target.value)"
     >
       <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
@@ -12,13 +12,13 @@
         {{ opt.label }}
       </option>
     </select>
-    <span v-if="hint" class="par-select__hint">{{ hint }}</span>
+    <span v-if="hint" class="par-card-select__hint">{{ hint }}</span>
   </label>
 </template>
 
 <script setup>
 /**
- * ParSelect — native <select> wrapped in a label. Accepts options as
+ * ParCardSelect — native <select> wrapped in a label. Accepts options as
  * an array of strings or {value, label} pairs.
  *
  * Native <select> styling differs across platforms; we restyle the
@@ -48,21 +48,21 @@ const normalizedOptions = computed(() =>
 </script>
 
 <style scoped>
-.par-select {
+.par-card-select {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
 }
 
-.par-select__label {
+.par-card-select__label {
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.02em;
 }
 
-.par-select__field {
+.par-card-select__field {
   appearance: none;
   -webkit-appearance: none;
   margin: 0;
@@ -78,23 +78,23 @@ const normalizedOptions = computed(() =>
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.par-select__field:hover:not(:disabled) {
+.par-card-select__field:hover:not(:disabled) {
   border-color: var(--par-color-title, #7a1f1f);
 }
 
-.par-select__field:focus,
-.par-select__field:focus-visible {
+.par-card-select__field:focus,
+.par-card-select__field:focus-visible {
   outline: none;
   border-color: var(--par-color-title, #7a1f1f);
   box-shadow: 0 0 0 2px var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
 }
 
-.par-select__field:disabled {
+.par-card-select__field:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.par-select__hint {
+.par-card-select__hint {
   font-size: 1.1rem;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);

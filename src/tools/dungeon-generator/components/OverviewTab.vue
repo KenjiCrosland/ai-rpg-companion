@@ -64,21 +64,21 @@
           <h2 class="dungeon-edit__title">Edit Dungeon Overview</h2>
         </header>
 
-        <ParInput
+        <ParCardInput
           v-model="editForm.name"
           label="Name"
           hint='The bare dungeon name (e.g., "Eikheim Barrow").'
           class="dungeon-edit__field"
         />
 
-        <ParInput
+        <ParCardInput
           v-model="editForm.title"
           label="Subtitle"
           hint='A short evocative phrase that pairs with the name (e.g., "Tomb of the Singing Bones").'
           class="dungeon-edit__field"
         />
 
-        <ParTextarea
+        <ParCardTextarea
           v-model="editForm.content"
           label="Overview Content"
           :rows="18"
@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
+import { ParCardButton, ParCardInput, ParCardTextarea } from '@/parchment';
 import { ref, computed, h } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import DungeonOverviewCardSkeleton from './skeletons/DungeonOverviewCardSkeleton.vue';

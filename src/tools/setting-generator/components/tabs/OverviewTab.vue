@@ -67,21 +67,21 @@
         <h2 class="setting-edit__title">Edit Setting Overview</h2>
       </header>
 
-      <ParInput
+      <ParCardInput
         v-model="editForm.name"
         label="Name"
         hint='The bare place name (e.g., "Hjallmark").'
         class="setting-edit__field"
       />
 
-      <ParInput
+      <ParCardInput
         v-model="editForm.title"
         label="Subtitle"
         hint='A short evocative phrase that pairs with the name (e.g., "Village of the Drawn Blade").'
         class="setting-edit__field"
       />
 
-      <ParTextarea
+      <ParCardTextarea
         v-model="editForm.content"
         label="Overview Content"
         :rows="18"
@@ -99,7 +99,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
+import { ParCardButton, ParCardInput, ParCardTextarea } from '@/parchment';
 import { combineSettingOverview } from '@/util/combineSettingOverview.mjs';
 import {
   renderOverview,

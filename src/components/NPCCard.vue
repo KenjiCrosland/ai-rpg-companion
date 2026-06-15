@@ -168,15 +168,15 @@
         <h2 class="npc-edit__title">Edit NPC</h2>
       </header>
 
-      <ParInput v-model="editForm.name" label="Name" class="npc-edit__field" />
+      <ParCardInput v-model="editForm.name" label="Name" class="npc-edit__field" />
 
-      <ParTextarea v-model="editForm.read_aloud_description"
+      <ParCardTextarea v-model="editForm.read_aloud_description"
         label="Read-aloud description"
         :rows="4"
         hint="The initial description when the NPC is first encountered."
         class="npc-edit__field" />
 
-      <ParTextarea v-model="editForm.combined_details"
+      <ParCardTextarea v-model="editForm.combined_details"
         label="Details"
         :rows="10"
         hint="Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for paragraphs."
@@ -191,8 +191,8 @@
 
         <div v-for="(relationship, relIndex) in editForm.relationshipsArray" :key="relIndex"
           class="npc-edit__relationship-row">
-          <ParInput v-model="relationship.name" label="Name" />
-          <ParTextarea v-model="relationship.description"
+          <ParCardInput v-model="relationship.name" label="Name" />
+          <ParCardTextarea v-model="relationship.description"
             label="Description"
             :rows="2" />
           <div class="npc-edit__relationship-actions">
@@ -219,11 +219,11 @@
           </CdrSkeleton>
         </div>
 
-        <ParInput v-model="relationshipForm.name"
+        <ParCardInput v-model="relationshipForm.name"
           label="Name"
           hint="The name of the related NPC." />
 
-        <ParTextarea v-model="relationshipForm.description"
+        <ParCardTextarea v-model="relationshipForm.description"
           label="Short description"
           :rows="2"
           hint='Brief description of their relationship (e.g., "the wizard&apos;s familiar", "his estranged sister").' />
@@ -267,7 +267,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
-import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
+import { ParCardButton, ParCardInput, ParCardTextarea } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { sourceExists } from '@/util/seeded-input.mjs';
 
