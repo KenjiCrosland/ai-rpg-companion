@@ -54,6 +54,12 @@
      callout. Pair with --par-color-border-deep for a heavier surface. */
   --par-color-callout-bg-deep: #ede2cb;
   --par-color-callout-text:    #2c2c2a;
+  /* Color: form field — tinted interior for the form-input family
+     (ParInput / ParSelect / ParTextarea). The callout cream at 50%
+     opacity so fields read as quieter "containers" against the cream
+     form surface (the "magic UI" register). Kept semi-transparent on
+     purpose so it tints whatever surface it sits on. */
+  --par-color-field-bg:        rgba(243, 235, 218, 0.5);
 
   /* Color: tooltip — slightly LIGHTER than the card surface to read as
      elevated paper (a sticky note above the card), with a warm tan

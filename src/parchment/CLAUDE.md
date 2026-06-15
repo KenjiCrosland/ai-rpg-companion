@@ -24,9 +24,17 @@ we iterate on the styling.
 - `ParButton.vue` — chrome-level primary action button, lapis palette (form CTAs, page-level actions). First component in the migration off Cedar primary buttons. Sibling to `ParCardButton`, not a variant — different palette, different role, different surface context. Variants: `primary` (serif solid lapis, prominent CTAs), `primary-outline` (sans compact lapis outline, inline data-row actions like Create Setting per card), `secondary` (faded slate outline, Cancel-beside-Generate), `luminous` (cabochon gradient, rare special moments).
 - `ParAddNewButton.vue` — full-width dashed-outline "+ Add new X" affordance, lapis palette. One step below primary-outline because it signals "create new" rather than "act on existing." Dashed-to-solid border transition on hover commits visually as the user prepares to click. Used by Related Places' add-place affordance; will expand to "Add NPC," "Add Faction," "Add Quest Hook" across the tool.
 - `ParCallout.vue` — tinted parchment surface primitive. Wraps slot content in a warm-tan rounded card with serif typography. Extracted when premium-status blocks needed the same surface treatment as PatreonCallout — second use case justified extraction. PatreonCallout still owns its surface inline (tighter coupling to its internal structure); both stay visually identical via shared `--par-color-callout-*` tokens.
+**Card-input family** — burgundy, self-labelling inputs for *inline editing inside rendered cards*. Each carries a built-in `label`/`hint` prop:
 - `ParCardInput.vue` — single-line text input (also handles `type="number"`).
 - `ParCardTextarea.vue` — multi-line input. Body text uses serif to match card prose.
 - `ParCardSelect.vue` — native `<select>` with parchment styling. Custom dropdown caret via inline SVG.
+
+**Form-input family** — lapis "magic UI" inputs for *tool input forms* across all generators. No built-in label; pair with `ParField`. Tinted field interiors (`--par-color-field-bg`, callout cream at 50%) read as quieter containers against the cream form surface. This is the default input family; the `ParCard*` set above is the card-context variant.
+- `ParField.vue` — field wrapper: lapis uppercase label + optional `— optional` marker + editorial `hint` (prop or `#hint` slot). Renders a `<label>` around the slotted control for implicit association.
+- `ParInput.vue` — single-line form text input (also handles `type="number"`).
+- `ParTextarea.vue` — multi-line form input. Serif body; `min-height` fallback when `rows` is omitted.
+- `ParSelect.vue` — native `<select>` with lapis caret. Options as strings/numbers or `{value, label}` pairs.
+
 - `ParCheckbox.vue` — native checkbox with parchment styling and label-on-right.
 - `ParTooltip.vue` — wrapper-style tooltip. CSS-only show/hide via `:hover` and `:focus-within`. Use for ghost-styled affordances whose label answers "what" but not "when" (e.g. Re-scan Lore). Dark burgundy surface + cream text for fast read; not blended with the parchment palette by design.
 - `ParTabToggle.vue` — view-mode tab strip for content surfaces (e.g. Description/Form switcher on the dungeon-generator room panel). Burgundy underline + burgundy active text on a divider baseline — editorial register, intentionally NOT lapis. Lapis stays reserved for chrome action primitives (`ParButton`); the visual difference is the signal "this lives on a content surface" vs "this is a chrome control." Options-array prop API (`{value, label}[]`) plus `v-model` — single component, no parent/child Cedar-style nesting.
