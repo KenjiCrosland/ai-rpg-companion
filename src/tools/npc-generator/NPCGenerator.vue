@@ -72,6 +72,10 @@
 
                 <!-- ZONE 2: Form card -->
                 <div class="form-card">
+                    <SeededFromBanner
+                        :source-type="seedSourceType"
+                        :source-name="seedSourceName"
+                    />
                     <form @submit.prevent="handleGenerateNPC">
                         <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
                             label="Give me an NPC Description For:" :optional="true">
@@ -347,6 +351,8 @@ import PatreonCallout from '@/components/PatreonCallout.vue';
 import Statblock from '@/components/Statblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
+import SeededFromBanner from '@/components/SeededFromBanner.vue';
+import { logger } from '@/util/logger.mjs';
 import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
@@ -774,7 +780,7 @@ function migrateNPCStorage() {
             npcs.value = parsed;
         }
     } catch (error) {
-        console.error('Failed to migrate NPCs from local storage:', error);
+        logger.error('Failed to migrate NPCs from local storage:', error);
         // Initialize with empty folder structure if migration fails
         npcs.value = { 'Uncategorized': [] };
     }
@@ -804,31 +810,31 @@ function loadNPCsFromLocalStorage() {
             // Migrate dungeon NPCs to shared storage (for old data compatibility)
             const dungeonMigratedCount = migrateDungeonNPCsToSharedStorage();
             if (dungeonMigratedCount > 0) {
-                console.log(`Migrated ${dungeonMigratedCount} dungeon NPCs to shared NPC storage`);
+                logger.log(`Migrated ${dungeonMigratedCount} dungeon NPCs to shared NPC storage`);
             }
 
             // Migrate setting NPCs to shared storage (for old data compatibility)
             const settingMigratedCount = migrateSettingNPCsToSharedStorage();
             if (settingMigratedCount > 0) {
-                console.log(`Migrated ${settingMigratedCount} setting NPCs to shared NPC storage`);
+                logger.log(`Migrated ${settingMigratedCount} setting NPCs to shared NPC storage`);
             }
 
             // Migrate NPCs without IDs
             const migratedCount = migrateNPCIds();
             if (migratedCount > 0) {
-                console.log(`Migrated ${migratedCount} NPCs to include unique IDs`);
+                logger.log(`Migrated ${migratedCount} NPCs to include unique IDs`);
             }
 
             // Migrate sourceType based on typeOfPlace (for NPCs created by dungeon/setting generators)
             const sourceTypeMigratedCount = migrateSourceTypeFromTypeOfPlace();
             if (sourceTypeMigratedCount > 0) {
-                console.log(`Migrated ${sourceTypeMigratedCount} NPCs to include sourceType based on typeOfPlace`);
+                logger.log(`Migrated ${sourceTypeMigratedCount} NPCs to include sourceType based on typeOfPlace`);
             }
 
             // Migrate NPC statblock references (create references for NPCs with statblocks)
             const referencesMigratedCount = migrateNPCStatblockReferences();
             if (referencesMigratedCount > 0) {
-                console.log(`Created ${referencesMigratedCount} references for existing NPC statblocks`);
+                logger.log(`Created ${referencesMigratedCount} references for existing NPC statblocks`);
             }
 
             // Cleanup: shorten typeOfPlace for NPCs saved with the long
@@ -843,7 +849,7 @@ function loadNPCsFromLocalStorage() {
                 }
             }
         } catch (error) {
-            console.error('Failed to parse NPCs from local storage:', error);
+            logger.error('Failed to parse NPCs from local storage:', error);
             npcs.value = { 'Uncategorized': [] };
         }
     } else {
@@ -942,7 +948,7 @@ function cleanupItemPrefilledTypeOfPlace() {
 
     if (cleaned > 0) {
         saveNPCsToLocalStorage();
-        console.log(`Cleaned up ${cleaned} NPC subtitle${cleaned === 1 ? '' : 's'} from item-prefilled context.`);
+        logger.log(`Cleaned up ${cleaned} NPC subtitle${cleaned === 1 ? '' : 's'} from item-prefilled context.`);
     }
 
     return cleaned;
@@ -1588,7 +1594,7 @@ function finalizePendingSeed() {
 }
 
 function handleError(message) {
-    console.error(message);
+    logger.error(message);
     loadingPart1.value = false;
     loadingPart2.value = false;
     errorMessage.value = message || null;
@@ -1857,7 +1863,7 @@ ROLEPLAYING TIPS: ${npcDescriptionPart1.value.roleplaying_tips || 'None'}
 
         toast.success(`Relationship with ${generatedRelationship.name} added!`);
     } catch (error) {
-        console.error('Error generating relationship:', error);
+        logger.error('Error generating relationship:', error);
         toast.error('Failed to generate relationship. Please try again.');
     } finally {
         loadingNewRelationship.value = false;

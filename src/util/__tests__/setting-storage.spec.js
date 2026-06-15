@@ -10,6 +10,7 @@ import {
   resetSettingStubsForDeletedNPC,
   resetSettingSourceForDeletedEntity,
   getSettingById,
+  getSettingDisplayName,
   getSettingBrief,
   getChildSettings,
   getSiblingSettings,
@@ -333,6 +334,12 @@ describe('setting-storage', () => {
 
   describe('resetSettingSourceForDeletedEntity', () => {
     it('clears sourceType/sourceId/sourceName on every matching setting', () => {
+      // savedItems must include 'OtherItem' so the persistSettings
+      // deferred cleanup doesn't drop it as stale (we're only testing
+      // resetSettingSourceForDeletedEntity here, not the deferred path).
+      // 'Whispering Crown' is intentionally absent — that's the
+      // function-under-test's target.
+      localStorage.setItem('savedItems', JSON.stringify([{ name: 'OtherItem' }]));
       localStorage.setItem('gameSettings', JSON.stringify([
         { id: 'set_a', place_name: 'A', sourceType: 'item', sourceId: 'Whispering Crown', sourceName: 'Whispering Crown' },
         { id: 'set_b', place_name: 'B', sourceType: 'item', sourceId: 'OtherItem', sourceName: 'OtherItem' },
@@ -397,6 +404,62 @@ describe('setting-storage', () => {
       localStorage.setItem('gameSettings', JSON.stringify([{ id: 'set_a' }]));
       expect(getSettingById('set_missing')).toBeNull();
       expect(getSettingById(null)).toBeNull();
+    });
+  });
+
+  describe('getSettingDisplayName', () => {
+    it('returns place_name for a known setting id', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'Hjallmark' },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBe('Hjallmark');
+    });
+
+    it('reflects a rename — a fresh read after the name changes returns the new name', () => {
+      // Same fix shape as dungeon: the stub in the item card resolves
+      // live through this helper, so a rename in the setting tool
+      // propagates without a fanout-on-save step.
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'Hjallmark' },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBe('Hjallmark');
+
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: 'Hjallmark, the Iron Vale' },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBe('Hjallmark, the Iron Vale');
+    });
+
+    it('falls back to setting_overview.name when place_name is missing', () => {
+      // Legacy / partial records may carry the name on the overview
+      // sub-object only. Matches the documented resolution order.
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', setting_overview: { name: 'Hjallmark via overview' } },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBe('Hjallmark via overview');
+    });
+
+    it('returns null when the id does not match anything', () => {
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_other', place_name: 'Elsewhere' },
+      ]));
+      expect(getSettingDisplayName('set_missing')).toBeNull();
+    });
+
+    it('returns null for an empty / falsy id', () => {
+      expect(getSettingDisplayName('')).toBeNull();
+      expect(getSettingDisplayName(null)).toBeNull();
+      expect(getSettingDisplayName(undefined)).toBeNull();
+    });
+
+    it('returns null when the matched setting has neither place_name nor overview name', () => {
+      // No string to surface — caller falls back to the stub's stored
+      // name. (place_name being a whitespace-only string is treated the
+      // same as missing.)
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_a', place_name: '   ' },
+      ]));
+      expect(getSettingDisplayName('set_a')).toBeNull();
     });
   });
 
@@ -590,6 +653,54 @@ describe('setting-storage', () => {
         { id: 'set_b', parentId: 'set_a' },
       ]));
       expect(() => wouldCreateCycle('set_c_new', 'set_a')).not.toThrow();
+    });
+  });
+
+  describe('persistSettings deferred source-cleanup', () => {
+    it('drops sourceType/Id/Name on settings whose item source no longer resolves', () => {
+      // Set up two settings: one inspired by a deleted item, one by
+      // a live item. localStorage has only the live item.
+      localStorage.setItem('savedItems', JSON.stringify([{ name: 'LiveItem' }]));
+      localStorage.setItem('gameSettings', JSON.stringify([
+        // Use a non-null parentId so the reparent → null is a real move
+        // (reparent skips persist when the new parent equals the old).
+        { id: 'set_parent', place_name: 'P', parentId: null },
+        { id: 'set_dead', place_name: 'A', parentId: 'set_parent', sourceType: 'item', sourceId: 'DeletedItem', sourceName: 'DeletedItem' },
+        { id: 'set_live', place_name: 'B', parentId: null, sourceType: 'item', sourceId: 'LiveItem', sourceName: 'LiveItem' },
+      ]));
+
+      // Trigger a real persist (parent change forces the write).
+      const result = reparentSetting('set_dead', null);
+      expect(result.ok).toBe(true);
+
+      const after = JSON.parse(localStorage.getItem('gameSettings'));
+      const dead = after.find(s => s.id === 'set_dead');
+      const live = after.find(s => s.id === 'set_live');
+
+      // Stale source dropped on persist.
+      expect(dead.sourceType).toBeUndefined();
+      expect(dead.sourceId).toBeUndefined();
+      expect(dead.sourceName).toBeUndefined();
+
+      // Live source preserved.
+      expect(live.sourceType).toBe('item');
+      expect(live.sourceId).toBe('LiveItem');
+      expect(live.sourceName).toBe('LiveItem');
+    });
+
+    it('does not touch settings whose sourceType is not item (unknown types preserved)', () => {
+      // Only handles item — dungeon-type sources are preserved to
+      // avoid spurious drops while non-item promotion flows ship.
+      localStorage.setItem('gameSettings', JSON.stringify([
+        { id: 'set_parent', place_name: 'P', parentId: null },
+        { id: 'set_a', place_name: 'A', parentId: 'set_parent', sourceType: 'dungeon', sourceId: 'dng_xyz', sourceName: 'X' },
+      ]));
+
+      reparentSetting('set_a', null);
+
+      const after = JSON.parse(localStorage.getItem('gameSettings')).find(s => s.id === 'set_a');
+      expect(after.sourceType).toBe('dungeon');
+      expect(after.sourceId).toBe('dng_xyz');
     });
   });
 

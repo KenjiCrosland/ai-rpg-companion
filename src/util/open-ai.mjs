@@ -1,6 +1,8 @@
 // SECURITY: This file must NEVER contain or reference API keys.
 // Keys are injected server-side by Vite proxy (dev) or WordPress proxy (production).
 
+import { logger } from './logger.mjs';
+
 export async function generateGptResponse(
   prompt,
   validateJSONKeys = null,
@@ -77,13 +79,13 @@ export async function generateGptResponse(
       if (!validateJSONKeys) {
         return responseContent;
       }
-      //console.log(responseData.choices[0].message.content);
+      //logger.log(responseData.choices[0].message.content);
       validJsonString = extractJSONFromString(
         responseData.choices[0].message.content,
       );
-      //console.log("valid: " + validJsonString);
+      //logger.log("valid: " + validJsonString);
       if (!validJsonString) {
-        //console.log(previousJSONString);
+        //logger.log(previousJSONString);
         previousJSONString = responseContent;
         attempts++;
         continue;
@@ -95,7 +97,7 @@ export async function generateGptResponse(
         validJson = true;
       }
     } catch (error) {
-      console.error('Error generating response:', error);
+      logger.error('Error generating response:', error);
       errorThrown = true;
     }
     attempts++;

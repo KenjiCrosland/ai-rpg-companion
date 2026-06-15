@@ -4,6 +4,7 @@
 
 import { getProviderConfig, getAIProvider, normalizeModel, PROVIDERS } from './ai-config.mjs';
 import { getAdapter } from './ai-adapters.mjs';
+import { logger } from './logger.mjs';
 
 // Vite statically replaces `process.env.NODE_ENV` at build time, so
 // this resolves to a literal boolean in production bundles. Previously
@@ -42,7 +43,7 @@ function checkCircuitBreaker() {
     circuitBreaker.isOpen = false;
     circuitBreaker.consecutiveFailures = 0;
     circuitBreaker.openedAt = null;
-    console.log('🔄 Circuit breaker reset - trying primary provider again');
+    logger.log('🔄 Circuit breaker reset - trying primary provider again');
     return false;
   }
 
@@ -58,7 +59,7 @@ function recordFailure(providerName) {
   if (circuitBreaker.consecutiveFailures >= circuitBreaker.FAILURE_THRESHOLD && !circuitBreaker.isOpen) {
     circuitBreaker.isOpen = true;
     circuitBreaker.openedAt = Date.now();
-    console.warn(`⚠️ Circuit breaker opened for ${providerName} - switching to fallback provider for ${circuitBreaker.COOLDOWN_MS / 60000} minutes`);
+    logger.warn(`⚠️ Circuit breaker opened for ${providerName} - switching to fallback provider for ${circuitBreaker.COOLDOWN_MS / 60000} minutes`);
   }
 }
 
@@ -143,7 +144,7 @@ export async function generateGptResponse(
         type: 'openai',
       };
       usingFallback = true;
-      console.warn(`⚠️ Using fallback provider: ${providerConfig.name}`);
+      logger.warn(`⚠️ Using fallback provider: ${providerConfig.name}`);
     } else {
       // No fallback available, use primary
       providerConfig = getProviderConfig();
@@ -159,9 +160,9 @@ export async function generateGptResponse(
 
   // Log provider in dev mode
   if (__DEV__) {
-    console.log(`🤖 Using AI provider: ${providerConfig.name} (${modelToUse})`);
+    logger.log(`🤖 Using AI provider: ${providerConfig.name} (${modelToUse})`);
     if (usingFallback) {
-      console.log(`   ⚠️ Using fallback due to circuit breaker`);
+      logger.log(`   ⚠️ Using fallback due to circuit breaker`);
     }
   }
 
@@ -276,7 +277,7 @@ export async function generateGptResponse(
         validJson = true;
       }
     } catch (error) {
-      console.error('Error generating response:', error);
+      logger.error('Error generating response:', error);
       // If it's a provider error, we already recorded it and set providerError
       // If it's some other error (network, etc), record it
       if (!providerError) {

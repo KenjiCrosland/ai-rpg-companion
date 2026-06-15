@@ -28,7 +28,43 @@ function readSettings() {
   return Array.isArray(parsed) ? parsed : [];
 }
 
+// Inline source-existence check used by the deferred cleanup below.
+// We intentionally avoid importing `sourceExists` from seeded-input.mjs
+// to dodge the circular dependency (`seeded-input.mjs` already imports
+// from this file). Only checks the source types a setting could
+// realistically carry — `'item'` is the only flow that stamps a setting
+// with sourceType today; expand here if a setting → setting promotion
+// ships.
+function sourceStillResolves(sourceType, id) {
+  if (!sourceType || !id) return false;
+  if (sourceType !== 'item') return true; // unknown type — preserve fields
+  const itemsRaw = localStorage.getItem('savedItems');
+  if (!itemsRaw) return false;
+  let items;
+  try { items = JSON.parse(itemsRaw); } catch { return false; }
+  return Array.isArray(items) && items.some(i => i?.name === id);
+}
+
 function persistSettings(settings) {
+  // Deferred source-cleanup: drop stale `sourceType/Id/Name` on any
+  // setting whose recorded source no longer resolves. Render-time
+  // `sourceExists` in OverviewTab already showed the "(deleted)"
+  // marker on the first view after deletion; this persist-time prune
+  // completes the cleanup so the marker eventually goes away instead
+  // of lingering forever. Mirrors the NPC pattern in
+  // `saveCurrentNPCToList`.
+  if (Array.isArray(settings)) {
+    for (const setting of settings) {
+      if (!setting?.sourceType) continue;
+      const id = setting.sourceId || setting.sourceName;
+      if (!id) continue;
+      if (!sourceStillResolves(setting.sourceType, id)) {
+        delete setting.sourceType;
+        delete setting.sourceId;
+        delete setting.sourceName;
+      }
+    }
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
@@ -217,6 +253,31 @@ export function getSettingById(settingId) {
   if (!settingId) return null;
   const settings = readSettings();
   return settings.find(s => s?.id === settingId) || null;
+}
+
+/**
+ * Display name for a setting, resolved live from storage by id.
+ *
+ * Returns null when no setting matches (caller falls back to whatever
+ * stale string it has stored on the stub). Used by cross-tool stub
+ * renderers so a setting rename flows through to the item-side stub at
+ * the next render — parallel to `getDungeonDisplayName` in
+ * `dungeon-storage.mjs`; same "identity is the id, display reads live"
+ * principle.
+ *
+ * Resolution order matches the substrate's existing conventions:
+ *   1. `place_name` — the canonical user-edit field
+ *   2. `setting_overview.name` — fallback for legacy or partial records
+ *
+ * @param {string} settingId
+ * @returns {string|null}
+ */
+export function getSettingDisplayName(settingId) {
+  if (!settingId) return null;
+  const setting = getSettingById(settingId);
+  if (!setting) return null;
+  const name = (setting.place_name || setting.setting_overview?.name || '').trim();
+  return name || null;
 }
 
 /**

@@ -56,7 +56,40 @@
               mode="out-in"
             >
               <div
-                v-if="!isExpanded(entry)"
+                v-if="!isExpanded(entry) && isStub(entry.npc)"
+                key="stub"
+                class="npc-stub-row"
+              >
+                <div class="npc-collapsed-info">
+                  <strong class="npc-collapsed-name">{{ entry.npc.name || 'Unnamed NPC' }}</strong>
+                  <span v-if="oneLineDescription(entry.npc)" class="npc-collapsed-desc">
+                    {{ oneLineDescription(entry.npc) }}
+                  </span>
+                </div>
+                <div class="npc-stub-actions">
+                  <ParCardButton
+                    size="small"
+                    :disabled="loadingNpcIndex === entry.index"
+                    @click="$emit('generate-detailed-description', { npcIndex: entry.index })"
+                  >
+                    {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate Full NPC' }}
+                  </ParCardButton>
+                  <button
+                    type="button"
+                    class="npc-stub-delete"
+                    :aria-label="`Delete ${entry.npc.name || 'NPC'}`"
+                    @click="$emit('delete-npc', { npcIndex: entry.index })"
+                  >
+                    <svg viewBox="0 0 12 12" width="18" height="18" aria-hidden="true">
+                      <line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      <line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div
+                v-else-if="!isExpanded(entry)"
                 key="collapsed"
                 class="npc-collapsed-row"
                 role="button"
@@ -128,12 +161,44 @@
         >
           <Transition
             :css="!reducedMotion"
+            name="npc-swap"
             mode="out-in"
-            @enter="onEnter"
-            @leave="onLeave"
           >
             <div
-              v-if="!isExpanded(entry)"
+              v-if="!isExpanded(entry) && isStub(entry.npc)"
+              key="stub"
+              class="npc-stub-row"
+            >
+              <div class="npc-collapsed-info">
+                <strong class="npc-collapsed-name">{{ entry.npc.name || 'Unnamed NPC' }}</strong>
+                <span v-if="oneLineDescription(entry.npc)" class="npc-collapsed-desc">
+                  {{ oneLineDescription(entry.npc) }}
+                </span>
+              </div>
+              <div class="npc-stub-actions">
+                <ParCardButton
+                  size="small"
+                  :disabled="loadingNpcIndex === entry.index"
+                  @click="$emit('generate-detailed-description', { npcIndex: entry.index })"
+                >
+                  {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate Full NPC' }}
+                </ParCardButton>
+                <button
+                  type="button"
+                  class="npc-stub-delete"
+                  :aria-label="`Delete ${entry.npc.name || 'NPC'}`"
+                  @click="$emit('delete-npc', { npcIndex: entry.index })"
+                >
+                  <svg viewBox="0 0 12 12" width="18" height="18" aria-hidden="true">
+                    <line x1="3" y1="3" x2="9" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    <line x1="9" y1="3" x2="3" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div
+              v-else-if="!isExpanded(entry)"
               key="collapsed"
               class="npc-collapsed-row"
               role="button"
@@ -200,6 +265,7 @@
 import { computed, ref, watch } from 'vue';
 import AddNPCForm from './AddNPCForm.vue';
 import NPCCard from '@/components/NPCCard.vue';
+import { ParCardButton } from '@/parchment';
 import { normalizeSettingNPC } from '@/util/npc-storage.mjs';
 
 const props = defineProps({
@@ -492,6 +558,31 @@ watch(() => props.setting, () => {
   }
 }
 
+/* Stub row — same parchment surface as the collapsed row, but no
+   expand affordance (chevron gone, cursor default, no hover-as-button
+   feedback). Inline actions sit on the right: Generate Full NPC
+   promotes the stub, Delete removes it. Stubs are not expandable
+   because there's nothing to expand — the user's short blurb is all
+   the stub has. The two actions cover both intents directly. */
+.npc-stub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.6rem 3rem;
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-sm, 3px);
+  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+.npc-stub-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
 .npc-collapsed-info {
   display: flex;
   flex-direction: column;
@@ -548,6 +639,36 @@ watch(() => props.setting, () => {
   color: var(--par-color-title, #7a1f1f);
   border-color: var(--par-color-title, #7a1f1f);
   background: rgba(255, 255, 255, 0.85);
+}
+
+/* Stub-row delete — bordered box mirroring the collapsed-row chevron
+   (same size, same chrome), so the affordance lines up visually with
+   the click-to-expand chevron on non-stub rows. Faded slate at rest,
+   burgundy on hover/focus — the chevron's destructive sibling. */
+.npc-stub-delete {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.75rem;
+  color: var(--par-color-action-muted, #5A7A9A);
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+  background: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+
+  svg { display: block; }
+
+  &:hover,
+  &:focus-visible {
+    color: var(--par-color-title, #7a1f1f);
+    border-color: var(--par-color-title, #7a1f1f);
+    background: rgba(255, 255, 255, 0.85);
+    outline: none;
+  }
 }
 
 /* ---- New-NPC loading row ----

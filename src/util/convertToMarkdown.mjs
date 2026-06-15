@@ -7,7 +7,6 @@ export function convertLoreToMarkdown(loreObj) {
 
   markdown += `# Full Historic Timeline of ${loreObj.subject}\n\n`;
 
-  console.log(loreObj.timelineEvents);
   if (loreObj.timelineEvents > 0) {
     loreObj.timelineEvents.forEach((timelineEvent) => {
       markdown += `### ${timelineEvent.title}\n\n`;

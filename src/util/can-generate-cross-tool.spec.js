@@ -62,6 +62,10 @@ describe('isGatedCrossToolCombo', () => {
     expect(isGatedCrossToolCombo('item', 'setting')).toBe(true);
   });
 
+  it('returns true for item → dungeon (gated, same counter as item → setting)', () => {
+    expect(isGatedCrossToolCombo('item', 'dungeon')).toBe(true);
+  });
+
   it('returns false for item → npc (free)', () => {
     expect(isGatedCrossToolCombo('item', 'npc')).toBe(false);
   });
@@ -172,19 +176,24 @@ describe('canGenerateCrossTool — rate limit & premium gate', () => {
   });
 
   describe('Shared counter across gated combos', () => {
-    it('item → setting and a future gated combo share the same quota', async () => {
-      // Documents the "5/day total across all gated combos" semantic.
-      // Run five item→setting generations, then the sixth attempt
-      // (even from a different gated combo) should hit the cap.
-      for (let i = 0; i < 5; i++) {
-        await canGenerateCrossTool('item', 'setting', false);
-      }
+    it('item → setting and item → dungeon increment the same quota', async () => {
+      // The user-facing semantic: "5 cross-tool generations per 24h
+      // total." Interleave the two gated combos and assert the counter
+      // climbs as one — not one bucket per combo.
+      await canGenerateCrossTool('item', 'setting', false);
+      await canGenerateCrossTool('item', 'dungeon', false);
+      await canGenerateCrossTool('item', 'setting', false);
+      await canGenerateCrossTool('item', 'dungeon', false);
+      await canGenerateCrossTool('item', 'setting', false);
+
       const q = await readQuota('cross-tool');
       expect(q.count).toBe(5);
 
-      // The cap is now in force; another item→setting fails.
+      // The cap is now in force from EITHER combo's perspective — a
+      // sixth item→dungeon should be blocked even though only 2 of the
+      // 5 prior calls were item→dungeon.
       mockToast.warning.mockClear();
-      const result = await canGenerateCrossTool('item', 'setting', false);
+      const result = await canGenerateCrossTool('item', 'dungeon', false);
       expect(result).toBe(false);
       expect(mockToast.warning).toHaveBeenCalledWith(
         expect.stringContaining('daily limit'),

@@ -18,6 +18,8 @@
  * - Locations: indexed by position in array (no ID field)
  */
 
+import { logger } from './logger.mjs';
+
 const STORAGE_KEY = 'tool-references';
 
 /**
@@ -53,7 +55,7 @@ function getReferences() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
   } catch (error) {
-    console.warn('Failed to parse tool-references, starting fresh:', error);
+    logger.warn('Failed to parse tool-references, starting fresh:', error);
     return {};
   }
 }
@@ -92,7 +94,7 @@ export function addReference({
 }) {
   // Check if this exact reference already exists
   if (referenceExists(source_type, source_id, target_type, target_id, relationship)) {
-    console.log('Reference already exists, skipping:', { source_id, target_id, relationship });
+    logger.log('Reference already exists, skipping:', { source_id, target_id, relationship });
     return null;
   }
 

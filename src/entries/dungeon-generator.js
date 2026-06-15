@@ -4,6 +4,12 @@ import AppToast from '../components/AppToast.vue';
 import { registerToast } from '../composables/useToast';
 import DungeonGenerator from '../tools/dungeon-generator/components/DungeonGenerator.vue';
 
+// Parchment design tokens — required for the room description's
+// lapis/cream/burgundy palette (RoomDescription.vue references --par-*
+// custom properties; without these, var() falls back to unset and the
+// read-aloud box renders unstyled.)
+import '@/parchment/tokens.css';
+
 // Cedar design system CSS — loaded once, shared by all tools
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';

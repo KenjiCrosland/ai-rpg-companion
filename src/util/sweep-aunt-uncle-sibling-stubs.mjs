@@ -28,6 +28,7 @@
  */
 
 import { auntUncleNamesFor } from './setting-storage.mjs';
+import { logger } from './logger.mjs';
 
 const SETTINGS_KEY = 'gameSettings';
 
@@ -69,7 +70,7 @@ export function sweepAuntUncleSiblingStubs() {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }
 
-  console.log(
+  logger.log(
     `sweep-aunt-uncle-sibling-stubs: dropped ${dropped} scale-mismatched sibling stub(s)`,
   );
 }

@@ -1,5 +1,7 @@
 // dungeon-npc-prompts.js
 
+import { logger } from '@/util/logger.mjs';
+
 export function createDungeonNPCPrompt(
   npcName,
   dungeonOverview,
@@ -72,13 +74,13 @@ export function validateDungeonNPCResponse(jsonString) {
     ];
     for (const key of requiredKeys) {
       if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
+        logger.error(`Missing required key: ${key}`);
         return false;
       }
     }
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }
@@ -92,7 +94,7 @@ export function validateDungeonNPCRelationshipsResponse(jsonString) {
     // Optionally validate the structure of relationships
     return true;
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }
@@ -156,7 +158,7 @@ export function validateSingleRelationshipResponse(jsonString) {
     const requiredKeys = ['name', 'relationship'];
     return requiredKeys.every(key => key in data);
   } catch (e) {
-    console.error('Invalid JSON:', e);
+    logger.error('Invalid JSON:', e);
     return false;
   }
 }

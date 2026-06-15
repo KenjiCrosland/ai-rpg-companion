@@ -23,6 +23,8 @@
  * finds no records still carrying `itemName`.
  */
 
+import { logger } from './logger.mjs';
+
 const NPCS_KEY = 'npcGeneratorNPCs';
 
 function safeParse(raw, fallback) {
@@ -80,7 +82,7 @@ export function renameNPCItemFields() {
     localStorage.setItem(NPCS_KEY, JSON.stringify(npcs));
   }
 
-  console.log(
+  logger.log(
     `rename-npc-item-fields: migrated ${migrated}, skipped ${skipped}`
   );
 }

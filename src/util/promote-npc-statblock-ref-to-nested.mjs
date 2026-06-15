@@ -33,6 +33,8 @@
  * as running it once.
  */
 
+import { logger } from './logger.mjs';
+
 const STORE_KEY = 'npcGeneratorNPCs';
 
 export function promoteNPCStatblockRefToNested() {
@@ -40,7 +42,7 @@ export function promoteNPCStatblockRefToNested() {
   try {
     raw = localStorage.getItem(STORE_KEY);
   } catch (error) {
-    console.warn('promote-npc-statblock-ref-to-nested: failed to read store:', error);
+    logger.warn('promote-npc-statblock-ref-to-nested: failed to read store:', error);
     return;
   }
   if (!raw) return;
@@ -49,7 +51,7 @@ export function promoteNPCStatblockRefToNested() {
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    console.warn('promote-npc-statblock-ref-to-nested: failed to parse store:', error);
+    logger.warn('promote-npc-statblock-ref-to-nested: failed to parse store:', error);
     return;
   }
   if (!parsed || typeof parsed !== 'object') return;
@@ -96,7 +98,7 @@ export function promoteNPCStatblockRefToNested() {
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
     } catch (error) {
-      console.warn('promote-npc-statblock-ref-to-nested: failed to write store:', error);
+      logger.warn('promote-npc-statblock-ref-to-nested: failed to write store:', error);
     }
   }
 }

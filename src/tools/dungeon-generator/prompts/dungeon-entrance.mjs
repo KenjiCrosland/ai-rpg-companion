@@ -1,4 +1,68 @@
-// entrance-room.js
+/**
+ * Entrance room prompt — generates the threshold room.
+ *
+ * Output shape (3 fields, parallel to the published-adventure room
+ * structure — short boxed text, optional challenge title, one DM
+ * notes paragraph):
+ *
+ *   read_aloud_opening — 60-100 word boxed text. Sets BOTH the
+ *                        threshold (outside) and the first chamber
+ *                        (inside) in one block, since the entrance
+ *                        is the only room where one read-aloud
+ *                        spans the outside-to-inside transition.
+ *
+ *   has_challenge      — boolean. Inferred from the dungeon
+ *                        overview's APPROACH/threshold text. Only
+ *                        true when the entrance ITSELF poses a
+ *                        challenge (sealed door, guarded threshold,
+ *                        ward, etc.) — NOT when the route there is
+ *                        dangerous (that danger lived in getting
+ *                        there, the entrance is "you've arrived").
+ *
+ *   challenge_header   — ≤8 word title, present only if has_challenge
+ *                        is true.
+ *
+ *   dm_notes           — one paragraph DM-side reference. 60-150
+ *                        words for no-challenge entrances (what's
+ *                        in the chamber, who's there, dimensions);
+ *                        100-200 words for entrances with a
+ *                        challenge (same + mechanics, DCs scaled
+ *                        to difficulty, immediate failure
+ *                        consequence, optional bypass). Inline
+ *                        markdown bold for scannable DM keywords.
+ *
+ *   one_sentence_summary — sidebar-list summary, ≤20 words.
+ *
+ * Why this shape (vs. the previous 16-slot structure):
+ *   The old prompt mandated challenge_explanation +
+ *   challenge_mechanics + failure_scenario + challenge_circumvention
+ *   as four separate slots. The model couldn't help duplicating
+ *   content across them. The old prompt also baked in the
+ *   five-room-dungeon-formula assumption that every entrance must
+ *   have a guardian/puzzle/lock. Many real dungeons have open
+ *   thresholds. The conditional `has_challenge` lets the model say
+ *   "no, the danger was the route in" when the overview supports it.
+ *
+ * Difficulty tier (1-5) scales DCs and failure severity. Stored on
+ * `dungeon.dimensions.difficulty`; passed through here as a number
+ * or null. If null, DCs default to T2 (moderate).
+ */
+
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  DOOR_PREAMBLE_FIELD_DESC,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallenge,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
 
 export function generateEntrancePrompt(
   dungeonOverview,
@@ -7,204 +71,209 @@ export function generateEntrancePrompt(
   formRoomName = '',
   formRoomSummary = '',
   npcString = '',
+  difficulty = null,
+  doorwayInfo = null,
+  loreRole = null,
+  loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
 ) {
-  // Conditionall include formRoomName
+  const tierLine = difficulty
+    ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
+    : `Dungeon difficulty tier: not specified — default to T2 (DCs 12-14) if generating a challenge.`;
+
   const roomNameSection = formRoomName
-    ? `**Room Name:**
-${formRoomName}
-
-`
+    ? `User-provided room name (use this verbatim): ${formRoomName}\n`
     : '';
 
-  // Conditionally include NPC Information section
-  const npcSection = npcString
-    ? `**NPC Present at the Entrance:**
-${npcString}
-
-The NPC is currently at the dungeon entrance. Include them in the entrance description, detailing what they are doing and how they might interact with players. Consider their personality, goals, and any relationships they have.
-
-If the NPC described is the dungeon's boss or a powerful being unlikely to be at the entrance, present them as a **weakened version, projection, illusion, or avatar** as part of a **"final boss preview"**. This encounter should foreshadow the ultimate challenge without revealing all their abilities or secrets.
-
-`
-    : '';
-
-  // Conditionally include NPC Integration guidelines
-  const npcGuidelines = npcString
-    ? `- **NPC Integration:**
-    - Include the NPC in the entrance description, considering their characteristics and role.
-    - If the NPC is the dungeon's boss or a powerful entity unlikely to be at the entrance, present them in a way that serves as a "final boss preview" (e.g., a weakened form, projection, or illusion).
-    - Create a memorable encounter that foreshadows the ultimate challenge.
-    - Do not reveal all the boss's abilities or secrets; provide hints about their power and intentions.
-    - The NPC may taunt the players, set conditions, or test their resolve.
-    - Ensure the interaction fits within the chosen challenge type (e.g., roleplaying, magic, puzzle).
-    - Do not reveal any secrets or hidden motives unless the players can perceive them.
-
-`
-    : '';
-
-  // Conditionally include Form Room Summary
   const roomSummarySection = formRoomSummary
-    ? `**Short Description of the Entrance Room:**
-${formRoomSummary}
+    ? `User-provided summary (incorporate into the room): ${formRoomSummary}\n`
+    : '';
 
+  const connectedSection = connectedRoomsInfo
+    ? `Connected rooms (rooms reachable from this one): ${connectedRoomsInfo}\n`
+    : '';
+
+  // LORE ROLE: when this room was assigned a named place from the
+  // overview by the lore-assignment pass, tell the model so the room
+  // generates with that identity.
+  const loreRoleSection = loreRole
+    ? `\nLORE ROLE: This room corresponds to "${loreRole}" from the dungeon's overview prose. The entrance generates AS that named place — its character, contents, and the player-facing payoff align with whatever the overview says about "${loreRole}".\n`
+    : '';
+
+  const doorwaySection = doorwayInfo
+    ? `\nDOORWAYS IN THIS ROOM — authoritative door states from the map. The door_preamble field MUST report states EXACTLY as listed here. Do NOT invent locks, bars, DCs, force checks, or alternate bypasses for doors marked "unlocked door." Do NOT add visual or material details here — those belong in the read-aloud:
+${doorwayInfo}
 `
     : '';
 
-  return `
-Using the dungeon overview below, describe the entrance to the dungeon in detail. Be sure to address the following:
+  const npcSection = npcString
+    ? `NPC present at the entrance — the user explicitly picked this NPC. They MUST appear by name in the read_aloud_opening or dm_notes; do NOT silently omit them. If this NPC is the dungeon's BOSS or a powerful entity, present them as a weakened version, projection, illusion, or avatar (a "final boss preview") rather than the full encounter — but they MUST still appear. If this NPC reads as someone from OUTSIDE the dungeon (a questgiver, a townsperson, a relative the party was sent to investigate, an NPC whose context lives in the surrounding setting rather than this dungeon), incorporate them diegetically — a vision in the steam, a voice carried on a draft, a written note left here in their hand, a memory-echo touched in the cold, a sketched portrait on the wall, a sleeping form half-glimpsed in shadow — but they MUST still appear by name. Neither exception is a license to skip them.
 
-${roomNameSection}
+NPC details:
+${npcString}
+`
+    : '';
 
-**Dungeon Overview:**
+  return `You are writing the ENTRANCE room of a D&D 5e dungeon. The entrance is where the party crosses the threshold into the dungeon proper.
+
+DUNGEON OVERVIEW (read the APPROACH/threshold section carefully — it tells you whether the entrance itself poses a challenge):
 ${dungeonOverview}
 
-**Short Room Description (includes size, exits, and any notable features):**
-${shortDescription}
+ENTRANCE INFO:
+Short description (size, exits, map-side notes): ${shortDescription}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${featuredItems}${tierLine}
+${roomNameSection}${roomSummarySection}${npcSection}
+## REGISTER FIDELITY — respect the dungeon's established context
 
-${
-  connectedRoomsInfo !== ''
-    ? `**Connected Rooms:** 
-  This room is connected to the following rooms: ${connectedRoomsInfo}`
-    : ''
-}
-${npcSection}${roomSummarySection}Please consider the following challenge types when creating the entrance challenge:
-- **Hidden entrance**: Is the entrance remote, magically disguised, or hidden?
-- **Guards**: Perhaps the dominant faction has set up guards or traps to protect the entrance or alert certain individuals of intruders while they pursue their goals inside the dungeon.
-- **Monster**: A creature or group of creatures that must be defeated or bypassed to enter the dungeon.
-- **Roleplaying**: A challenge that requires the players to interact with NPCs or the environment in a specific way to gain entrance.
-- **Puzzle**: A non-combat challenge that requires the players to solve a riddle, decipher a code, or manipulate objects to gain entrance.
-- **Magic**: A magical barrier, ward, or enchantment that must be dispelled or bypassed to enter the dungeon.
-- **Offering**: A challenge that requires the players to provide an offering, perform a ritual, or fulfill a specific condition to gain entrance.
+The dungeon overview establishes the dungeon's material, lighting, inhabitants, and construction register. The entrance and first chamber INHERIT that register and must not contradict it:
 
-Please only choose **one** challenge type for the entrance challenge.
+- LIGHTING: if the overview describes ambient/natural light (ember-glass veins, lava heat, daylight from holes, bioluminescent fungus, etc.), do NOT invent torches, sconces, braziers, lanterns, or other installed lighting infrastructure in this room. The dungeon's natural light is what lights this room too.
 
-${npcGuidelines}**Guidelines for the Read Aloud Description:**
+- CONSTRUCTION: if the dungeon was excavated or grown by non-tool-using inhabitants (drakes, oozes, fungi, worms), do NOT invent carpentry, masonry, brick courses, ironmongery, or other tool-marks. Their walls are claw-scored, melted, gnawed, or shaped by what shaped them.
 
-Compose the **read_aloud_overview**, **read_aloud_first_detail**, **read_aloud_second_detail**, and **read_aloud_third_detail** using the following guidelines:
+- FURNITURE AND OBJECTS: if the overview names the inhabitants, only invent objects the inhabitants would plausibly have placed. A drake-kin burrow has bones, scorch marks, gnawed remains, ember-glass shards — NOT tapestries, sconces, candleholders, or chests of drawers. Match the inhabitants.
 
-- **read_aloud_overview**: A 1-sentence description of the dungeon entrance, setting the scene for the challenge. It should describe a transition from the outside world to the dungeon. It should be evocative and engaging but not describe the challenge itself.
-  - **Examples:**
-    - "As you rappel down the cliffside, the air grows colder and the sound of the forest fades away."
-    - "Emerging from the dense forest, the clearing before you is shrouded in an eerie mist."
-    - "Deep in the murky darkness of the underwater tunnel, the faint glow of bioluminescent algae beckons you forward."
+If you're about to write a sentence that describes infrastructure or furnishing, check: is this consistent with the dungeon's established register? If not, cut it.
 
-- **read_aloud_first_detail**: A 1-sentence description of the first detail of the challenge that awaits the players. This could be a visual cue, a sound, a smell, or a feeling that hints at the nature of the challenge.
-  - **Examples:**
-    - "At the bottom of the cliff, you see thousands of bones scattered across the ground."
-    - "The mist swirls around you, forming ghostly shapes that whisper in an unknown language."
-    - "The bioluminescent algae flickers, revealing the silhouettes of strange aquatic creatures."
+## CHALLENGE DECISION — do this first
 
-- **read_aloud_second_detail**: A 1-sentence description providing more information about the challenge, hinting at obstacles they will face.
-  - **Examples:**
-    - "Among the bones, you notice a glint of metal reflecting the faint light."
-    - "The ghostly shapes coalesce into humanoid figures, their eyes glowing with otherworldly light."
-    - "The aquatic creatures swim closer, revealing sharp teeth and glowing eyes."
+Read the dungeon overview's APPROACH or threshold prose. Then decide whether the entrance ITSELF has a challenge:
 
-- **read_aloud_third_detail**: A 1-sentence detail that prepares them for the challenge ahead.
-  - **Examples:**
-    - "As you approach the metal, you see that it is a rusted sword embedded in the ground."
-    - "The humanoid figures reach out to you, their hands passing through your body like smoke."
-    - "The creatures bare their teeth and let out a low, menacing growl."
+- The route to the dungeon is described as DIFFICULT or DANGEROUS (treacherous terrain, hostile climate, guarded approach, lengthy journey) → has_challenge = FALSE. The danger lived in getting here. The entrance is "you've arrived" — describe the threshold and the first chamber the party sees past it.
 
-**Guidelines for the Interactive Element upon Entering the Dungeon:**
+- The route is benign, but the threshold itself is SEALED, BARRED, WARDED, or DEFENDED (a locked door, a riddle, a guardian on the doorstep) → has_challenge = TRUE.
 
-- Introduce unusual objects, guardians, characters, or features in the room that players can interact with.
-- These should provoke action, conversation, or decision-making.
-- **Do not mention traps or anything hidden to players.**
-- **Do not include chests or treasure.**
-- **Examples:**
-  - "A kobold has been chained to the wall, its eyes wide with fear and pain."
-  - "There appears to be a sleeping face carved into the stone wall, its expression serene and peaceful."
-  - "A rusty automaton stands in the corner, its gears grinding and whirring as it moves."
-  ${
-    npcString
-      ? '- "A spectral figure resembling the dungeon\'s master materializes before you, its eyes burning with a sinister glow."'
-      : ''
-  }
+- Neither — the route was uneventful and the door is open or trivially passable → has_challenge = FALSE.
 
-**Return the description in JSON format with the following keys:**
+Do NOT default to "every entrance has a guardian/puzzle/lock." Many published-adventure entrances are open thresholds. The five-room-dungeon formula does not apply here.
+
+## BOLDING RULES
+
+Use **markdown bold** ONLY for these three things — nothing else:
+1. Creature names when first introduced in a paragraph (e.g., **Granny Nightshade**, **drake-kit**)
+2. Character names when first introduced in a paragraph (e.g., **Velina**, **Zallithrax**)
+3. Feature sub-block titles at the START of an optional dm_notes paragraph, formatted as: **Feature Name.** followed by description
+
+DO NOT bold game mechanics keywords (Puzzle, Skill Checks, Consequences of Failure, etc.), DCs ("DC 12 Investigation"), action verbs, or generic phrases. Plain text carries those — the layout already distinguishes them. The above three categories are the ONLY exception to plain-text body.
+
+## CROSS-REFERENCE FIDELITY — use the LORE-LOCATION LOOKUP
+
+When dm_notes (or any field) references other parts of the dungeon in a way the party can act on (a route, a destination, a bypass), the references MUST resolve to actual area numbers on the map.
+
+- If a lore-location appears in the LORE-LOCATION LOOKUP above, USE the listed area number when referencing it ("a passage leading to area 7" — or "a passage to the bone-pile chamber, area 7"). These references are actionable.
+- If a lore-location is NOT in the lookup, treat it as ATMOSPHERIC only ("the air still tastes of the bog-water outside") — do not promise navigation to it. The DM has no way to fulfill the promise.
+
+The LORE-LOCATION LOOKUP is the source of truth. If it's empty (no assignments were made), treat any lore-location named in the overview as atmospheric-only by default.
+
+${CROSS_ROOM_REFERENCES_SECTION}
+
+## WHAT DOES NOT GO IN dm_notes
+
+Three categories are explicitly owned by OTHER fields or by separately-generated sections. Putting them in dm_notes duplicates or contradicts the canonical source:
+
+1. EXIT INVENTORY. Sentences like "exits to the west (area 5) and south (area 7) via open corridors, and an unlocked door to the east (area 8)." The read-aloud already names the visible directions; door_preamble handles the door states. dm_notes never lists exits.
+
+2. SECRET DOORS, HIDDEN PASSAGES, AND THEIR MECHANICS. Sentences like "a secret door in the north wall leads to area 10; pressing a tile triggers it." A separately-generated **Secret Door** notes section gets appended to this room with the canonical discovery/opening mechanics. dm_notes never mentions the secret door's location, finding mechanic, or opening mechanic — and NEVER creates a **Secret Door Trigger** or **Hidden Passage** feature sub-block. The door_preamble flagged its existence; that is the only mention dm_notes is allowed.
+
+3. DOOR MATERIAL. "Wooden door," "stone door," etc. Door material is for the read-aloud (and only when notable). dm_notes treats doors by area number only.
+
+If you're about to write something that fits one of the three categories above, STOP and remove it. The information belongs elsewhere.
+
+## OUTPUT FORMAT
+
+Return STRICT JSON (no prose, no commentary, no code fences):
 
 {
-  "name": "Entrance",
-  "read_aloud_overview": "A brief description of the dungeon entrance, setting the scene for the challenge.",
-  "read_aloud_first_detail": "A brief description of the first detail of the challenge that awaits the players.",
-  "read_aloud_second_detail": "A brief description of the second detail of the challenge that players encounter.",
-  "read_aloud_third_detail": "A brief description of the third detail of the challenge that players encounter.",
-  "descriptive_header": "A descriptive header for the entrance challenge. This could be a title or a summary of the challenge. Example: 'The Boneyard and the Cursed Blade'",
-  "challenge_explanation": "For the Dungeon Master's eyes only. Explain what the players are facing, including the lore of the challenge. What is its history, purpose, and connection to the dungeon?",
-  "challenge_mechanics": "For the Dungeon Master's eyes only. Explain how the challenge works mechanically. Include rules, consequences of failure, and rewards for success. Include skill checks, combat encounters, or other mechanics.",
-  "failure_scenario": "For the Dungeon Master's eyes only. Explain what happens if the players fail the challenge. What are the consequences, and how does it affect the players and the dungeon? The most common negative outcome will be combat (e.g., a guardian emerges and attacks the players). If the players overcome the failure scenario, they can still proceed.",
-  "challenge_circumvention": "Ways to circumvent the challenge. Include alternative solutions, bypassing the obstacle, or using specific items or abilities. This should not be obvious and should require thought or investigation.",
-  "challenge_completion_dm": "A short sentence indicating when to read the following aloud, e.g., 'Once the puzzle is solved, read the following aloud.'",
-  "read_aloud_challenge_completion": "A brief description of what the players see or experience when they successfully complete the challenge. Applicable to succeeding the first time or after overcoming a failure scenario.",
-  "read_aloud_entry": "A brief description of the players entering the dungeon after completing the challenge. Set the scene for the next part of the adventure.",
-  "read_aloud_entrance_room_dimensions": "A brief description of the dimensions of the entrance room, including size, shape, and any notable features.",
-  "read_aloud_entrance_room_interesting_feature": "1 sentence describing a single interesting or unusual feature that has no mechanical effect. Further investigation may reveal lore about the dungeon.",
-  "interesting_feature_lore": "For the Dungeon Master's eyes only. Provide additional lore or information about the interesting feature. Ensure it makes sense for the entrance to the dungeon.",
-  "one_sentence_summary": "A concise summary of the purpose and function of the room."
-}
-`;
+  "door_preamble": ${DOOR_PREAMBLE_FIELD_DESC},
+
+  "read_aloud_opening": "Boxed text the DM reads when the party arrives. 60-100 words, present-tense, sensory. Describe BOTH the threshold from outside AND the first chamber visible past it — this is the only room where one read-aloud spans the outside-to-inside transition. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints, NO addressing the DM. Just what the players see, hear, smell, feel. Avoid generic material adjectives like 'wooden door' or 'stone door' unless the material is genuinely notable (ember-glass, iron-bound, salt-crusted, etc.) — for ordinary doors, just say 'door' or 'doorway'.",
+
+  "has_challenge": true,
+  "challenge_header": "≤8 word title for the challenge. Omit this key entirely if has_challenge is false.",
+
+  "dm_notes": [
+    "Array of strings. Each string is ONE paragraph. The first paragraph covers the room's content overview: what's in the first chamber, who's there (NPCs/inhabitants), precise dimensions, any features the DM needs to know about. If has_challenge, this paragraph also covers the mechanic (how it works, skills, DCs scaled to the dungeon's difficulty tier, IMMEDIATE physical failure consequence, optional bypass woven inline).",
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks — distinct interactive elements that warrant their own block (e.g., a specific NPC encounter, a hidden cache, an environmental hazard the party can engage). Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**Tea with Granny Nightshade.** Characters who arrange a meeting...', '**The Drake-Kit in the Shadows.** The wounded juvenile can be approached...'. Skip these if the room has no specific sub-features beyond what the overview paragraph covered. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
+  ],
+
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's purpose and what's there.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
+## DC SCALING (only if has_challenge)
+
+- T1: DCs 10-12, failure → minor damage (1d4-1d6) or short setback
+- T2: DCs 12-14, failure → moderate damage (2d6) or temporary condition
+- T3: DCs 14-16, failure → real damage (3d6+) or persistent threat
+- T4: DCs 16-18, failure → severe damage (4d8+) or party-wide complication
+- T5: DCs 18-20, failure → lethal threat or major resource cost
+
+Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole table within seconds of the failed roll. Do NOT write failure consequences like "wait 12 hours" or "the dungeon shifts memory" or other indirect/delayed effects. A failed roll at the entrance should cause something the players see, feel, or take damage from right now.`;
+}
+
+/**
+ * Validate the entrance response.
+ *
+ *   read_aloud_opening    — required string
+ *   has_challenge         — required boolean
+ *   challenge_header      — required string when has_challenge=true
+ *   door_preamble         — optional string (may be omitted or empty)
+ *   dm_notes              — required array of non-empty strings
+ *   one_sentence_summary  — required string
+ *
+ * @param {string} jsonString
+ * @returns {boolean}
+ */
 export function validateEntranceResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const requiredKeys = [
-      'read_aloud_overview',
-      'read_aloud_first_detail',
-      'read_aloud_second_detail',
-      'read_aloud_third_detail',
-      'descriptive_header',
-      'challenge_explanation',
-      'challenge_mechanics',
-      'failure_scenario',
-      'challenge_circumvention',
-      'challenge_completion_dm',
-      'read_aloud_challenge_completion',
-      'read_aloud_entry',
-      'read_aloud_entrance_room_dimensions',
-      'read_aloud_entrance_room_interesting_feature',
-      'interesting_feature_lore',
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
+      'read_aloud_opening',
+      'has_challenge',
+      'dm_notes',
       'one_sentence_summary',
-    ];
-    for (const key of requiredKeys) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallenge,
+    d => validateDmNotes(d, 1),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
+/**
+ * Build the contentArray that the RoomDescription component renders.
+ *
+ * Order:
+ *   1. door_preamble (paragraph)            — only when non-empty
+ *   2. read_aloud_opening (boxed)
+ *   3. challenge_header (header)            — only when has_challenge
+ *   4. dm_notes[0..n] (paragraph each)      — one entry per paragraph
+ *
+ * The header item is included in the array when has_challenge is true
+ * so the edit-form markup round-trip works; the RoomDescription
+ * template no longer renders the header slot (the room's h3
+ * "1. Entrance" is the heading; the challenge title was redundant).
+ * It is preserved in storage for forward compatibility.
+ *
+ * @param {object} data parsed entrance response
+ * @returns {Array<{format: string, content: string}>}
+ */
 export function processEntranceResponse(data) {
   const content = [];
+  if (data.door_preamble && data.door_preamble.trim()) {
+    content.push({ format: 'paragraph', content: data.door_preamble.trim() });
+  }
   content.push({
     format: 'read_aloud',
-    content: `${data.read_aloud_overview} ${data.read_aloud_first_detail} ${data.read_aloud_second_detail} ${data.read_aloud_third_detail}`,
+    content: data.read_aloud_opening,
   });
-  content.push({ format: 'header', content: data.descriptive_header });
-  content.push({ format: 'paragraph', content: data.challenge_explanation });
-  content.push({ format: 'paragraph', content: data.challenge_mechanics });
-  content.push({ format: 'paragraph', content: data.failure_scenario });
-  content.push({ format: 'paragraph', content: data.challenge_circumvention });
-  content.push({
-    format: 'paragraph',
-    content: data.challenge_completion_dm,
-  });
-  content.push({
-    format: 'read_aloud',
-    content: `${data.read_aloud_challenge_completion}
-
-${data.read_aloud_entry} ${data.read_aloud_entrance_room_dimensions} ${data.read_aloud_entrance_room_interesting_feature}`,
-  });
-  content.push({
-    format: 'paragraph',
-    content: data.interesting_feature_lore,
-  });
-
+  if (data.has_challenge && data.challenge_header) {
+    content.push({ format: 'header', content: data.challenge_header });
+  }
+  for (const paragraph of data.dm_notes) {
+    if (typeof paragraph !== 'string' || !paragraph.trim()) continue;
+    content.push({ format: 'paragraph', content: paragraph });
+  }
   return content;
 }

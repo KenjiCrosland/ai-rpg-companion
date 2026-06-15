@@ -162,16 +162,30 @@ export const dwarvenCharacterEpithets = [
 ];
 
 /**
- * Dwarven is an origin-only pool — it has no register descriptor of its
- * own (dwarves canonically pair with Old-Norse-inspired / Anglo-Saxon-
- * inspired / Germanic-inspired registers). The hybrid object below
- * carries only `fantasyRaceKey` + pool data so the unified registry can
- * route ORIGIN_CHARACTER_WHITELISTS['Dwarven'] through the same shape
- * as the other race pools. No `prefix` / `descriptor` — Dwarven won't
- * appear in `registerList`.
+ * Dwarven register. Originally origin-only (dwarves were paired with
+ * Old-Norse / Anglo-Saxon / Germanic registers for naming). Promoted
+ * with its own `descriptor` so the dungeon and item generators can roll
+ * dwarven-flavored dungeons / items directly without routing through a
+ * Germanic-family register first.
+ *
+ * The descriptor is distinct from Norse / Germanic — dwarven naming is
+ * harder, denser, more stone-and-forge anchored than Norse (which leans
+ * dramatic and open-voweled).
+ *
+ * `fantasyRaceKey` is retained so ORIGIN_CHARACTER_WHITELISTS['Dwarven']
+ * keeps routing through this pool for tools that have an Origin axis.
  */
 export const dwarvenRegister = {
-  fantasyRaceKey: 'Dwarven',
+  prefix: 'Dwarven',
+  descriptor: 'Dwarven: deep, hard-consonanted, mountain-rooted — closed syllables with hard stops (k, t, g, kh, gr), heavy doubled-consonant clusters, dense compound names anchored to stone, iron, forge, vault, lineage, oath. Characteristic endings around -grim, -thar, -bek, -kar, -din; compounds tied to mountain / smith / honor imagery. Derive fresh names from the phonology; do not copy from prior generations.',
+  creatureTradition: 'dwarven mythological threats lean to creatures of stone, deep places, and stolen craft: kobolds (the Germanic mine-spirits, not the reptilian kind), gråberg (mountain-giants who watch from peaks), bergsrå (the ladies of the mountain), knockers (small malicious miners), nachzehrer (gnawing dead in forgotten vaults), wights (barrow-bound dead claiming hoarded gold), dwarven revenants who refuse to abandon their forge-debts, blood-curses tied to broken oaths, and the deep things that wake when miners dig too far. Stone golems and animated forge-constructs fit; cosmic horrors and demons do not (this register is earth-bound, not outer-planar).',
+  creatureTraditionByTier: {
+    complicating: ['knockers', 'mine-kobolds', 'rock-rats', 'glow-fungus swarms'],
+    significant:  ['nachzehrer', 'bergsrå', 'dwarven wights', 'forge-revenants', 'shaft-trolls'],
+    scary:        ['gråberg mountain-giants', 'stone golems', 'animated forge-constructs', 'deep-things from below the lowest shaft'],
+  },
+  materialTradition: 'forge-iron, granite, gold ingot, runic-engraved bronze, hammer-soot, beard-tar, mountain-mortar, coal',
   characterPool: dwarvenCharacterEpithets,
   characterPoolStrictness: 'preferred',
+  fantasyRaceKey: 'Dwarven',
 };

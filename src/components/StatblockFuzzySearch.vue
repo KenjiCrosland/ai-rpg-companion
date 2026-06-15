@@ -85,6 +85,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { CdrInput } from '@rei/cedar';
+import { logger } from '@/util/logger.mjs';
 
 const props = defineProps({
   modelValue: {
@@ -228,7 +229,7 @@ async function loadStatblocks() {
           });
         }
       } catch (error) {
-        console.error('Failed to load SRD monster index:', error);
+        logger.error('Failed to load SRD monster index:', error);
       }
     }
 
@@ -236,7 +237,7 @@ async function loadStatblocks() {
     statblockList.sort((a, b) => a.name.localeCompare(b.name));
     allStatblocks.value = statblockList;
   } catch (error) {
-    console.error('Failed to load statblocks:', error);
+    logger.error('Failed to load statblocks:', error);
     allStatblocks.value = [];
   }
 }
@@ -305,7 +306,7 @@ async function selectStatblock(item) {
         };
       }
     } catch (error) {
-      console.error('Failed to load full SRD statblock:', error);
+      logger.error('Failed to load full SRD statblock:', error);
     }
   }
 

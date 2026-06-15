@@ -13,6 +13,7 @@ import {
   getProviderConfig,
   PROVIDERS,
 } from './ai-config.mjs';
+import { logger } from './logger.mjs';
 
 /**
  * Initialize dev controls (only in development)
@@ -30,11 +31,11 @@ export function initDevControls() {
     setProvider(provider) {
       try {
         setProviderOverride(provider);
-        console.log(`✅ AI provider switched to: ${provider}`);
-        console.log('🔄 Refresh the page to use the new provider');
+        logger.log(`✅ AI provider switched to: ${provider}`);
+        logger.log('🔄 Refresh the page to use the new provider');
       } catch (error) {
-        console.error('❌ Error setting provider:', error.message);
-        console.log('Available providers:', this.listProviders());
+        logger.error('❌ Error setting provider:', error.message);
+        logger.log('Available providers:', this.listProviders());
       }
     },
 
@@ -44,7 +45,7 @@ export function initDevControls() {
     getProvider() {
       const currentProvider = getAIProvider();
       const config = getProviderConfig();
-      console.log(`🤖 Current provider: ${config.name} (${currentProvider})`);
+      logger.log(`🤖 Current provider: ${config.name} (${currentProvider})`);
       return currentProvider;
     },
 
@@ -53,7 +54,7 @@ export function initDevControls() {
      */
     clearOverride() {
       clearProviderOverride();
-      console.log('🔄 Refresh the page to use the default provider');
+      logger.log('🔄 Refresh the page to use the default provider');
     },
 
     /**
@@ -61,9 +62,9 @@ export function initDevControls() {
      */
     listProviders() {
       const providers = getAvailableProviders();
-      console.log('📋 Available providers:');
+      logger.log('📋 Available providers:');
       providers.forEach(p => {
-        console.log(`  - ${p.key}: ${p.name} (${p.model})`);
+        logger.log(`  - ${p.key}: ${p.name} (${p.model})`);
       });
       return providers;
     },
@@ -83,7 +84,7 @@ export function initDevControls() {
      * Show help
      */
     help() {
-      console.log(`
+      logger.log(`
 🤖 AI Provider Controls
 ========================
 
@@ -107,6 +108,6 @@ Example:
   };
 
   // Show help message on load
-  console.log('🤖 AI Provider Controls loaded. Type aiControls.help() for commands.');
-  console.log(`   Current provider: ${getProviderConfig().name}`);
+  logger.log('🤖 AI Provider Controls loaded. Type aiControls.help() for commands.');
+  logger.log(`   Current provider: ${getProviderConfig().name}`);
 }

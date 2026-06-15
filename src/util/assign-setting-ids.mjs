@@ -24,6 +24,7 @@
  */
 
 import { addReference, referenceExists } from './reference-storage.mjs';
+import { logger } from './logger.mjs';
 
 const SETTINGS_KEY = 'gameSettings';
 const REFS_KEY = 'tool-references';
@@ -123,7 +124,7 @@ export function assignSettingIds() {
     }
   }
 
-  console.log(
+  logger.log(
     `assign-setting-ids: assigned ${assignedCount} new IDs, rewrote ${rewriteCount} legacy refs, backfilled ${createdCount} appears_in_setting refs`
   );
 }

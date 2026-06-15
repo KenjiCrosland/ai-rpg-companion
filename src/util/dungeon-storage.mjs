@@ -243,3 +243,65 @@ export function resetDungeonStubsForDeletedNPC(npcId) {
   }
   return resetCount;
 }
+
+/**
+ * Display name for a dungeon, resolved live from storage by id.
+ *
+ * Returns null when no dungeon matches (caller falls back to whatever
+ * stale string it has stored on the stub). Used by cross-tool stub
+ * renderers so a dungeon rename in `OverviewTab.saveEdit` flows through
+ * to the item-side stub at the next render — the substrate's design
+ * principle "dungeons/settings: identity is the id, display reads live"
+ * made concrete.
+ *
+ * @param {string} dungeonId
+ * @returns {string|null}
+ */
+export function getDungeonDisplayName(dungeonId) {
+  if (!dungeonId) return null;
+  const dungeons = readDungeons();
+  const dungeon = dungeons.find(d => String(d?.id) === String(dungeonId));
+  if (!dungeon) return null;
+  return getDungeonName(dungeon);
+}
+
+/**
+ * Clear the denormalized source-provenance fields on every dungeon
+ * whose `sourceType` / `sourceId` points at the given source entity.
+ * Called when the source entity is deleted (e.g., an item is removed
+ * in the Item Generator) so the dungeon card's "Inspired by [X]" link
+ * doesn't keep referring to a gone-source on the persisted record.
+ *
+ * Render-time check in OverviewTab.vue (`sourceMissing` via
+ * `sourceExists`) already suppresses the link and renders a "(deleted)"
+ * marker — this helper makes the cleanup persistent, so a subsequent
+ * save doesn't have to drop the stale fields on its own. Mirrors
+ * `resetSettingSourceForDeletedEntity` in `setting-storage.mjs`.
+ *
+ * Tool-references graph cleanup is handled separately by
+ * `removeReferencesForEntity` — this only touches denormalized fields.
+ *
+ * @param {string} sourceType - 'item' | 'dungeon' | 'setting' | …
+ * @param {string} sourceId
+ * @returns {number} count of dungeons cleared
+ */
+export function resetDungeonSourceForDeletedEntity(sourceType, sourceId) {
+  if (!sourceType || !sourceId) return 0;
+  const dungeons = readDungeons();
+  let resetCount = 0;
+  for (const dungeon of dungeons) {
+    if (dungeon?.sourceType !== sourceType) continue;
+    if (dungeon.sourceId !== sourceId) continue;
+    delete dungeon.sourceType;
+    delete dungeon.sourceId;
+    delete dungeon.sourceName;
+    // `seedMode` is part of the same provenance group on item-seeded
+    // dungeons; drop it too so we don't leave orphan metadata.
+    delete dungeon.seedMode;
+    resetCount++;
+  }
+  if (resetCount > 0) {
+    persistDungeons(dungeons);
+  }
+  return resetCount;
+}

@@ -8,6 +8,8 @@ import {
   linkNPCToDungeonStubsBySeed,
   findDungeonStubsForNPC,
   resetDungeonStubsForDeletedNPC,
+  getDungeonDisplayName,
+  resetDungeonSourceForDeletedEntity,
 } from '../dungeon-storage.mjs';
 
 describe('dungeon-storage', () => {
@@ -214,6 +216,170 @@ describe('dungeon-storage', () => {
       expect(stub.npcDescriptionPart1).toBeUndefined();
       expect(stub.statblock_name).toBeUndefined();
       expect(stub.statblock_folder).toBeUndefined();
+    });
+  });
+
+  describe('getDungeonDisplayName', () => {
+    it('returns the live dungeonOverview.name for a known dungeon id', () => {
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_abc',
+        dungeonOverview: { name: 'The Cursed Tomb' },
+      }]));
+
+      expect(getDungeonDisplayName('dng_abc')).toBe('The Cursed Tomb');
+    });
+
+    it('reflects a rename — a fresh read after the name changes returns the new name', () => {
+      // The stale-stub bug we're fixing: stubs cached the dungeon's name
+      // at promotion time and never updated. This assertion proves the
+      // helper resolves live each call, so the next render in the item
+      // tool picks up the rename without any propagation step.
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_abc',
+        dungeonOverview: { name: 'The Cursed Tomb' },
+      }]));
+      expect(getDungeonDisplayName('dng_abc')).toBe('The Cursed Tomb');
+
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_abc',
+        dungeonOverview: { name: 'The Cursed Tomb of Eikheim' },
+      }]));
+      expect(getDungeonDisplayName('dng_abc')).toBe('The Cursed Tomb of Eikheim');
+    });
+
+    it('falls back through dungeonOverview.title when name is missing', () => {
+      // Legacy / partial records may carry title but not name. The
+      // private getDungeonName helper already handles this; the public
+      // wrapper inherits the fallback chain.
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_abc',
+        dungeonOverview: { title: 'Tomb of the Singing Bones' },
+      }]));
+
+      expect(getDungeonDisplayName('dng_abc')).toBe('Tomb of the Singing Bones');
+    });
+
+    it('returns null when the dungeon id does not match anything in storage', () => {
+      // Deleted-dungeon case: caller is meant to fall back to its own
+      // stored stub.name. Returning null is the explicit signal for that
+      // fallback path; '' would also work but null is unambiguous.
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_other',
+        dungeonOverview: { name: 'Some Other Place' },
+      }]));
+
+      expect(getDungeonDisplayName('dng_missing')).toBeNull();
+    });
+
+    it('returns null for an empty / falsy id', () => {
+      expect(getDungeonDisplayName('')).toBeNull();
+      expect(getDungeonDisplayName(null)).toBeNull();
+      expect(getDungeonDisplayName(undefined)).toBeNull();
+    });
+  });
+
+  describe('resetDungeonSourceForDeletedEntity', () => {
+    it('clears source provenance on every dungeon pointing at the matched (type, id)', () => {
+      localStorage.setItem('dungeons', JSON.stringify([
+        {
+          id: 'dng_a',
+          sourceType: 'item',
+          sourceId: 'Vardlokkur',
+          sourceName: 'Vardlokkur',
+          seedMode: 'forgotten',
+        },
+        {
+          id: 'dng_b',
+          sourceType: 'item',
+          sourceId: 'Vardlokkur',
+          sourceName: 'Vardlokkur',
+          seedMode: 'revered',
+        },
+        // Unrelated dungeon — different sourceId, must not be touched.
+        {
+          id: 'dng_c',
+          sourceType: 'item',
+          sourceId: 'OtherItem',
+          sourceName: 'OtherItem',
+        },
+      ]));
+
+      const cleared = resetDungeonSourceForDeletedEntity('item', 'Vardlokkur');
+
+      expect(cleared).toBe(2);
+      const dungeons = JSON.parse(localStorage.getItem('dungeons'));
+      // Matched dungeons drop the full provenance group.
+      expect(dungeons[0].sourceType).toBeUndefined();
+      expect(dungeons[0].sourceId).toBeUndefined();
+      expect(dungeons[0].sourceName).toBeUndefined();
+      expect(dungeons[0].seedMode).toBeUndefined();
+      expect(dungeons[1].sourceType).toBeUndefined();
+      expect(dungeons[1].seedMode).toBeUndefined();
+      // Unrelated dungeon untouched.
+      expect(dungeons[2].sourceType).toBe('item');
+      expect(dungeons[2].sourceId).toBe('OtherItem');
+    });
+
+    it('preserves non-provenance fields on the matched dungeon', () => {
+      // The cleanup is targeted: clearing source pointers must not
+      // disturb the dungeon's name, overview, rooms, NPCs, etc.
+      localStorage.setItem('dungeons', JSON.stringify([{
+        id: 'dng_a',
+        dungeonOverview: { name: 'The Tomb' },
+        rooms: [{ id: 'r1' }],
+        npcs: [{ npc_id: 'npc_1', name: 'Aldric' }],
+        sourceType: 'item',
+        sourceId: 'Vardlokkur',
+        sourceName: 'Vardlokkur',
+      }]));
+
+      resetDungeonSourceForDeletedEntity('item', 'Vardlokkur');
+
+      const dungeons = JSON.parse(localStorage.getItem('dungeons'));
+      expect(dungeons[0].dungeonOverview.name).toBe('The Tomb');
+      expect(dungeons[0].rooms).toHaveLength(1);
+      expect(dungeons[0].npcs[0].name).toBe('Aldric');
+    });
+
+    it('does not persist when no dungeon matches', () => {
+      localStorage.setItem('dungeons', JSON.stringify([
+        { id: 'dng_a', sourceType: 'item', sourceId: 'OtherItem' },
+      ]));
+      const before = localStorage.getItem('dungeons');
+
+      const cleared = resetDungeonSourceForDeletedEntity('item', 'NoMatch');
+
+      expect(cleared).toBe(0);
+      // Storage untouched — pure no-op when nothing matches.
+      expect(localStorage.getItem('dungeons')).toBe(before);
+    });
+
+    it('no-ops on missing or falsy args', () => {
+      localStorage.setItem('dungeons', JSON.stringify([
+        { id: 'dng_a', sourceType: 'item', sourceId: 'Vardlokkur' },
+      ]));
+
+      expect(resetDungeonSourceForDeletedEntity('', 'Vardlokkur')).toBe(0);
+      expect(resetDungeonSourceForDeletedEntity('item', '')).toBe(0);
+      expect(resetDungeonSourceForDeletedEntity(null, null)).toBe(0);
+      // Confirm nothing was modified despite the falsy calls.
+      const dungeons = JSON.parse(localStorage.getItem('dungeons'));
+      expect(dungeons[0].sourceType).toBe('item');
+    });
+
+    it('matches strictly on (sourceType, sourceId) — a name-collision under a different type does not clear', () => {
+      // Hypothetical: a dungeon inspired by a setting that happens to
+      // share a name with an item being deleted. The setting-sourced
+      // dungeon must NOT be cleared.
+      localStorage.setItem('dungeons', JSON.stringify([
+        { id: 'dng_a', sourceType: 'setting', sourceId: 'Vardlokkur' },
+      ]));
+
+      const cleared = resetDungeonSourceForDeletedEntity('item', 'Vardlokkur');
+
+      expect(cleared).toBe(0);
+      const dungeons = JSON.parse(localStorage.getItem('dungeons'));
+      expect(dungeons[0].sourceType).toBe('setting');
     });
   });
 });

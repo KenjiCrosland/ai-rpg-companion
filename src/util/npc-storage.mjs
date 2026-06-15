@@ -10,6 +10,8 @@
  * Also includes adapter functions to normalize NPC data for NPCCard.vue component.
  */
 
+import { logger } from './logger.mjs';
+
 /**
  * Find an NPC in `npcGeneratorNPCs` by `npc_id`, walking every folder.
  *
@@ -49,7 +51,7 @@ export function saveNPCToStorage(npc, folderName = 'Uncategorized') {
     );
   } catch (error) {
     // If localStorage is corrupted, start fresh
-    console.warn('Corrupted NPC storage detected, starting fresh:', error);
+    logger.warn('Corrupted NPC storage detected, starting fresh:', error);
     stored = { 'Uncategorized': [] };
   }
 
@@ -408,7 +410,7 @@ export function saveNPCToDungeon(canonicalNPC, dungeonName) {
     const dungeonIndex = dungeons.findIndex(d => d.dungeonOverview?.name === dungeonName);
 
     if (dungeonIndex === -1) {
-      console.warn(`Dungeon "${dungeonName}" not found`);
+      logger.warn(`Dungeon "${dungeonName}" not found`);
       return false;
     }
 
@@ -447,7 +449,7 @@ export function saveNPCToDungeon(canonicalNPC, dungeonName) {
 
     return true;
   } catch (error) {
-    console.error('Error saving NPC to dungeon:', error);
+    logger.error('Error saving NPC to dungeon:', error);
     return false;
   }
 }
@@ -510,7 +512,7 @@ export function findNPCLocations(npcId) {
       }
     }
   } catch (error) {
-    console.error('Error finding NPC locations:', error);
+    logger.error('Error finding NPC locations:', error);
   }
 
   return locations;
@@ -560,7 +562,7 @@ export function deleteNPCFromAllLocations(npcId) {
       detail: { npcId, action: 'delete', results }
     }));
   } catch (error) {
-    console.error('Error deleting NPC from canonical storage:', error);
+    logger.error('Error deleting NPC from canonical storage:', error);
   }
 
   return results;
@@ -657,12 +659,12 @@ export function migrateDungeonNPCsToSharedStorage() {
     }
 
     if (migratedCount > 0) {
-      console.log(`Migrated ${migratedCount} dungeon NPCs to shared storage`);
+      logger.log(`Migrated ${migratedCount} dungeon NPCs to shared storage`);
     }
 
     return migratedCount;
   } catch (error) {
-    console.error('Error migrating dungeon NPCs:', error);
+    logger.error('Error migrating dungeon NPCs:', error);
     return 0;
   }
 }
@@ -713,12 +715,12 @@ export function migrateSettingNPCsToSharedStorage() {
     }
 
     if (migratedCount > 0) {
-      console.log(`Migrated ${migratedCount} setting NPCs to shared storage`);
+      logger.log(`Migrated ${migratedCount} setting NPCs to shared storage`);
     }
 
     return migratedCount;
   } catch (error) {
-    console.error('Error migrating setting NPCs:', error);
+    logger.error('Error migrating setting NPCs:', error);
     return 0;
   }
 }

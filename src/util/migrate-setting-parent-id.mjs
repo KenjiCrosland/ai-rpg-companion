@@ -29,6 +29,8 @@
  * is left alone; same for stubs that already have promoted_setting_id.
  */
 
+import { logger } from './logger.mjs';
+
 const SETTINGS_KEY = 'gameSettings';
 
 function safeParse(raw, fallback) {
@@ -107,7 +109,7 @@ export function migrateSettingParentId() {
 
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 
-  console.log(
+  logger.log(
     `migrate-setting-parent-id: assigned ${parentIdAssigned} parentId / ${promotedIdAssigned} promoted_setting_id; dropped ${parentIndexDropped} parentIndex / ${mainIndexDropped} main_index fields`
   );
 }

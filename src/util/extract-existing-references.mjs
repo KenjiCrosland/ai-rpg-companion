@@ -14,6 +14,7 @@
 
 import { addReference, referenceExists } from './reference-storage.mjs';
 import { getStatblockFromStorage } from './statblock-storage.mjs';
+import { logger } from './logger.mjs';
 
 /**
  * Extract references from NPCs that have associated statblocks.
@@ -41,7 +42,7 @@ function extractNPCStatblockReferences() {
         // Verify the statblock actually exists in shared storage
         const statblock = getStatblockFromStorage(statblockName, statblockFolder);
         if (!statblock) {
-          console.log(`Skipping NPC reference - statblock not found: ${statblockName}`);
+          logger.log(`Skipping NPC reference - statblock not found: ${statblockName}`);
           continue;
         }
 
@@ -65,7 +66,7 @@ function extractNPCStatblockReferences() {
       }
     }
   } catch (error) {
-    console.error('Error extracting NPC statblock references:', error);
+    logger.error('Error extracting NPC statblock references:', error);
   }
 
   return count;
@@ -125,7 +126,7 @@ function extractDungeonNPCReferences() {
       }
     }
   } catch (error) {
-    console.error('Error extracting dungeon NPC references:', error);
+    logger.error('Error extracting dungeon NPC references:', error);
   }
 
   return count;
@@ -176,7 +177,7 @@ function extractDungeonMonsterReferences() {
       }
     }
   } catch (error) {
-    console.error('Error extracting dungeon monster references:', error);
+    logger.error('Error extracting dungeon monster references:', error);
   }
 
   return count;
@@ -236,7 +237,7 @@ function extractSettingNPCReferences() {
       }
     }
   } catch (error) {
-    console.error('Error extracting setting NPC references:', error);
+    logger.error('Error extracting setting NPC references:', error);
   }
 
   return count;
@@ -311,7 +312,7 @@ function extractEncounterStatblockReferences() {
       }
     }
   } catch (error) {
-    console.error('Error extracting encounter statblock references:', error);
+    logger.error('Error extracting encounter statblock references:', error);
   }
 
   return count;
@@ -358,7 +359,7 @@ function extractItemNPCReferences() {
       }
     }
   } catch (error) {
-    console.error('Error extracting item NPC references:', error);
+    logger.error('Error extracting item NPC references:', error);
   }
 
   return count;
@@ -368,33 +369,33 @@ function extractItemNPCReferences() {
  * Main migration function that runs all extraction steps.
  */
 export function extractExistingReferences() {
-  console.log('Starting reference extraction migration...');
+  logger.log('Starting reference extraction migration...');
 
   let totalCount = 0;
 
   const npcStatblocks = extractNPCStatblockReferences();
   totalCount += npcStatblocks;
-  console.log(`- Extracted ${npcStatblocks} NPC → statblock references`);
+  logger.log(`- Extracted ${npcStatblocks} NPC → statblock references`);
 
   const dungeonNPCs = extractDungeonNPCReferences();
   totalCount += dungeonNPCs;
-  console.log(`- Extracted ${dungeonNPCs} NPC → dungeon references`);
+  logger.log(`- Extracted ${dungeonNPCs} NPC → dungeon references`);
 
   const dungeonMonsters = extractDungeonMonsterReferences();
   totalCount += dungeonMonsters;
-  console.log(`- Extracted ${dungeonMonsters} statblock → dungeon references`);
+  logger.log(`- Extracted ${dungeonMonsters} statblock → dungeon references`);
 
   const settingNPCs = extractSettingNPCReferences();
   totalCount += settingNPCs;
-  console.log(`- Extracted ${settingNPCs} NPC → setting references`);
+  logger.log(`- Extracted ${settingNPCs} NPC → setting references`);
 
   const encounterStatblocks = extractEncounterStatblockReferences();
   totalCount += encounterStatblocks;
-  console.log(`- Extracted ${encounterStatblocks} statblock → encounter references`);
+  logger.log(`- Extracted ${encounterStatblocks} statblock → encounter references`);
 
   const itemNPCs = extractItemNPCReferences();
   totalCount += itemNPCs;
-  console.log(`- Extracted ${itemNPCs} NPC → item references`);
+  logger.log(`- Extracted ${itemNPCs} NPC → item references`);
 
-  console.log(`✓ Reference extraction complete: ${totalCount} references created`);
+  logger.log(`✓ Reference extraction complete: ${totalCount} references created`);
 }

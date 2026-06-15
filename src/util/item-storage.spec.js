@@ -10,6 +10,10 @@ import {
   linkSettingToItemStub,
   findItemStubsForSetting,
   resetItemStubsForDeletedSetting,
+  linkDungeonToItemStub,
+  findItemStubsForDungeon,
+  resetItemStubsForDeletedDungeon,
+  addDungeonStubToItem,
   renameItemReferences,
   addNPCMentionedInItemReference,
   removeReferencesForItem,
@@ -20,6 +24,7 @@ import {
   leadingWordMatch,
   findItemStubMatchingName,
   addSettingStubToItem,
+  reconcileNPCStubsAgainstItem,
 } from './item-storage.mjs';
 
 class LocalStorageMock {
@@ -304,6 +309,30 @@ describe('item-storage', () => {
       expect(after[0].seeded_from.source_name).toBe('NewName');
     });
 
+    it('updates dungeon-level sourceType/Id/Name when the dungeon was promoted from the renamed item', () => {
+      // Mirrors the setting-level case above. The dungeon's own
+      // sourceType/sourceId/sourceName fields are written by the
+      // Item → Dungeon finalize hook (overview-store.mjs) when the
+      // dungeon is promoted from an item stub. OverviewTab reads
+      // them directly to render the "Inspired by [Item]" link; without
+      // this propagation the link goes stale and sourceExists fails
+      // (item with old name no longer resolves), so the dungeon
+      // erroneously renders as `(deleted)` on a benign rename.
+      localStorage.setItem('dungeons', JSON.stringify([
+        { id: 'dng_a', dungeonOverview: { name: 'A' }, sourceType: 'item', sourceId: 'OldName', sourceName: 'OldName' },
+        { id: 'dng_b', dungeonOverview: { name: 'B' }, sourceType: 'item', sourceId: 'OtherItem', sourceName: 'OtherItem' },
+        { id: 'dng_c', dungeonOverview: { name: 'C' }, sourceType: 'setting', sourceId: 'OldName', sourceName: 'OldName' }, // wrong source type, must not touch
+      ]));
+
+      renameItemReferences('OldName', 'NewName');
+
+      const after = JSON.parse(localStorage.getItem('dungeons'));
+      expect(after[0].sourceId).toBe('NewName');
+      expect(after[0].sourceName).toBe('NewName');
+      expect(after[1].sourceId).toBe('OtherItem');  // untouched
+      expect(after[2].sourceId).toBe('OldName');    // setting-typed, untouched
+    });
+
     it('is a no-op when oldName === newName', () => {
       addNPCMentionedInItemReference({ npcId: 'npc_1', npcName: 'A', itemName: 'Same' });
       const result = renameItemReferences('Same', 'Same');
@@ -430,6 +459,145 @@ describe('item-storage', () => {
     });
   });
 
+  describe('linkDungeonToItemStub / findItemStubsForDungeon / resetItemStubsForDeletedDungeon', () => {
+    const itemWithDungeonStubs = {
+      name: 'The Helm of Eikheim',
+      related_dungeons: [
+        { name: 'The Hollow Vault', role_brief: 'Tomb where the Helm was sealed', context: '', source_quote: '', dungeon_id: null },
+        { name: 'Forge of Vorn', role_brief: 'Forge that produced the Helm', context: '', source_quote: '', dungeon_id: null },
+      ],
+    };
+
+    it('linkDungeonToItemStub stamps dungeon_id on the matching stub (case-insensitive name match)', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      const ok = linkDungeonToItemStub('The Helm of Eikheim', 'the hollow vault', 'dng_abc123');
+      expect(ok).toBe(true);
+      const stored = getItemFromStorage('The Helm of Eikheim');
+      expect(stored.related_dungeons[0].dungeon_id).toBe('dng_abc123');
+      expect(stored.related_dungeons[1].dungeon_id).toBeNull();
+    });
+
+    it('linkDungeonToItemStub returns false when item or stub does not exist', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      expect(linkDungeonToItemStub('Wrong Item', 'The Hollow Vault', 'dng_abc')).toBe(false);
+      expect(linkDungeonToItemStub('The Helm of Eikheim', 'Nowhere Real', 'dng_abc')).toBe(false);
+    });
+
+    it('linkDungeonToItemStub is a no-op when any required arg is missing', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      expect(linkDungeonToItemStub(null, 'x', 'dng_abc')).toBe(false);
+      expect(linkDungeonToItemStub('The Helm of Eikheim', null, 'dng_abc')).toBe(false);
+      expect(linkDungeonToItemStub('The Helm of Eikheim', 'x', null)).toBe(false);
+    });
+
+    it('findItemStubsForDungeon walks all items and returns matches', () => {
+      saveItemToStorage({
+        name: 'Item A',
+        related_dungeons: [
+          { name: 'Vault', dungeon_id: 'dng_xyz' },
+          { name: 'Tomb', dungeon_id: 'dng_unrelated' },
+        ],
+      });
+      saveItemToStorage({
+        name: 'Item B',
+        related_dungeons: [{ name: 'Vault', dungeon_id: 'dng_xyz' }],
+      });
+      saveItemToStorage({ name: 'Item C', related_dungeons: [] });
+
+      const matches = findItemStubsForDungeon('dng_xyz');
+      expect(matches).toEqual([
+        { itemName: 'Item A', stubName: 'Vault' },
+        { itemName: 'Item B', stubName: 'Vault' },
+      ]);
+    });
+
+    it('findItemStubsForDungeon returns empty array when nothing matches', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      expect(findItemStubsForDungeon('dng_does_not_exist')).toEqual([]);
+      expect(findItemStubsForDungeon(null)).toEqual([]);
+    });
+
+    it('resetItemStubsForDeletedDungeon clears dungeon_id on every matching stub', () => {
+      saveItemToStorage({
+        name: 'Item A',
+        related_dungeons: [
+          { name: 'Vault', dungeon_id: 'dng_xyz' },
+          { name: 'Tomb', dungeon_id: 'dng_unrelated' },
+        ],
+      });
+      saveItemToStorage({
+        name: 'Item B',
+        related_dungeons: [{ name: 'Vault', dungeon_id: 'dng_xyz' }],
+      });
+
+      const count = resetItemStubsForDeletedDungeon('dng_xyz');
+      expect(count).toBe(2);
+
+      const itemA = getItemFromStorage('Item A');
+      expect(itemA.related_dungeons[0].dungeon_id).toBeNull();
+      expect(itemA.related_dungeons[1].dungeon_id).toBe('dng_unrelated'); // untouched
+      const itemB = getItemFromStorage('Item B');
+      expect(itemB.related_dungeons[0].dungeon_id).toBeNull();
+    });
+
+    it('resetItemStubsForDeletedDungeon returns 0 when nothing matches', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      expect(resetItemStubsForDeletedDungeon('dng_nope')).toBe(0);
+      expect(resetItemStubsForDeletedDungeon(null)).toBe(0);
+    });
+
+    it('addDungeonStubToItem links by name when a matching stub exists', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      const ok = addDungeonStubToItem('The Helm of Eikheim', {
+        dungeonId: 'dng_link',
+        dungeonName: 'The Hollow Vault',
+        roleBrief: 'Linked',
+      });
+      expect(ok).toBe(true);
+      const stored = getItemFromStorage('The Helm of Eikheim');
+      expect(stored.related_dungeons[0].dungeon_id).toBe('dng_link');
+      // Should not push a duplicate stub.
+      expect(stored.related_dungeons).toHaveLength(2);
+    });
+
+    it('addDungeonStubToItem pushes a fresh stub when no name match', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      const ok = addDungeonStubToItem('The Helm of Eikheim', {
+        dungeonId: 'dng_fresh',
+        dungeonName: 'The Iron Sink',
+        roleBrief: 'Whole-item generation',
+      });
+      expect(ok).toBe(true);
+      const stored = getItemFromStorage('The Helm of Eikheim');
+      expect(stored.related_dungeons).toHaveLength(3);
+      const fresh = stored.related_dungeons[2];
+      expect(fresh.name).toBe('The Iron Sink');
+      expect(fresh.dungeon_id).toBe('dng_fresh');
+    });
+
+    it('addDungeonStubToItem is idempotent against re-fire (id-match defensive check)', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      addDungeonStubToItem('The Helm of Eikheim', {
+        dungeonId: 'dng_fresh',
+        dungeonName: 'The Iron Sink',
+      });
+      const ok = addDungeonStubToItem('The Helm of Eikheim', {
+        dungeonId: 'dng_fresh',
+        dungeonName: 'The Iron Sink (Renamed)',  // different name, same id
+      });
+      expect(ok).toBe(false);  // id-match defensive no-op
+      const stored = getItemFromStorage('The Helm of Eikheim');
+      expect(stored.related_dungeons).toHaveLength(3);  // no duplicate
+    });
+
+    it('addDungeonStubToItem returns false when required args are missing', () => {
+      saveItemToStorage(itemWithDungeonStubs);
+      expect(addDungeonStubToItem(null, { dungeonId: 'x', dungeonName: 'y' })).toBe(false);
+      expect(addDungeonStubToItem('The Helm of Eikheim', { dungeonName: 'y' })).toBe(false);
+      expect(addDungeonStubToItem('The Helm of Eikheim', { dungeonId: 'x' })).toBe(false);
+    });
+  });
+
   describe('buildSeededInputFromItem — destinationType', () => {
     const item = {
       name: 'Heart of the Sunless Wood',
@@ -466,14 +634,34 @@ describe('item-storage', () => {
       expect(seed.entities.map(e => e.name)).toEqual(['The Whispering Glade', 'Tower of Vorn']);
     });
 
-    it('pulls from related_settings when destinationType is "dungeon" (treats dungeons as locations too)', () => {
-      saveItemToStorage(item);
+    it('pulls from related_dungeons when destinationType is "dungeon" (post-split: dungeons have their own stub list)', () => {
+      // Augment the fixture with a related_dungeons array so we can
+      // verify the dispatch reads from there, not from related_settings.
+      saveItemToStorage({
+        ...item,
+        related_dungeons: [
+          { name: 'The Hollow Vault', role_brief: 'Tomb where the Heart was sealed', context: '', source_quote: '', dungeon_id: null },
+          { name: 'Forge of Vorn', role_brief: 'Forge that produced the Heart', context: '', source_quote: '', dungeon_id: null },
+        ],
+      });
       const seed = buildSeededInputFromItem({
         fromId: 'Heart of the Sunless Wood',
         destinationType: 'dungeon',
       });
       expect(seed.entities[0].type).toBe('location');
-      expect(seed.entities.map(e => e.name)).toEqual(['The Whispering Glade', 'Tower of Vorn']);
+      expect(seed.entities.map(e => e.name)).toEqual(['The Hollow Vault', 'Forge of Vorn']);
+    });
+
+    it('returns empty entities for destinationType="dungeon" when related_dungeons is absent (whole-item mode)', () => {
+      // Item has related_settings but NO related_dungeons. The dispatch
+      // should NOT spill over and pull from related_settings — the user
+      // wants a dungeon from scratch in that case.
+      saveItemToStorage(item);
+      const seed = buildSeededInputFromItem({
+        fromId: 'Heart of the Sunless Wood',
+        destinationType: 'dungeon',
+      });
+      expect(seed.entities).toEqual([]);
     });
 
     it('with entityName + destinationType=setting, returns the single matching location stub', () => {
@@ -930,6 +1118,131 @@ describe('item-storage', () => {
       // Stub stays (the name and role survive deletion), but setting_id clears.
       expect(stub).toBeTruthy();
       expect(stub.setting_id).toBeFalsy();
+    });
+  });
+
+  describe('reconcileNPCStubsAgainstItem', () => {
+    // Helper: a minimal item with the given NPC-stub names.
+    function itemWith(name, npcStubNames) {
+      return {
+        name,
+        related_npcs: npcStubNames.map(n => ({ name: n })),
+      };
+    }
+
+    it('stamps seeded_from on a destination stub whose name matches an item stub', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric', 'Sigrun']));
+      const destStubs = [
+        { npc_id: 'npc_1', name: 'Brother Aldric', short_description: 'monastic recorder' },
+        { npc_id: 'npc_2', name: 'Kara', short_description: 'town reeve' },
+      ];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      expect(result[0].seeded_from).toEqual({
+        source_type: 'item',
+        source_id: 'Vardlokkur',
+        source_name: 'Vardlokkur',
+        stub_name: 'Brother Aldric',
+      });
+      // Non-matching stub is untouched.
+      expect(result[1].seeded_from).toBeUndefined();
+      expect(result[1].name).toBe('Kara');
+    });
+
+    it('matches case-insensitively after trim', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+      const destStubs = [
+        { npc_id: 'npc_1', name: '  BROTHER ALDRIC  ', short_description: '...' },
+      ];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      // The match fires, and the back-pointer's stub_name preserves the
+      // item-side casing (the canonical anchor) — not the destination's
+      // raw input. Promotion flows look the source up by stub_name.
+      expect(result[0].seeded_from?.stub_name).toBe('Brother Aldric');
+    });
+
+    it('preserves an existing seeded_from rather than overwriting it', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+      const priorProvenance = {
+        source_type: 'item',
+        source_id: 'OtherItem',
+        source_name: 'OtherItem',
+        stub_name: 'Brother Aldric (other)',
+      };
+      const destStubs = [
+        { npc_id: 'npc_1', name: 'Brother Aldric', seeded_from: priorProvenance },
+      ];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      // Caller already stamped provenance — that wins. Reconcile must
+      // not silently rewrite the source pointer.
+      expect(result[0].seeded_from).toEqual(priorProvenance);
+    });
+
+    it('returns the input array unchanged when the item is missing', () => {
+      // No item saved at all.
+      const destStubs = [{ npc_id: 'npc_1', name: 'Brother Aldric' }];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'NoSuchItem');
+
+      expect(result).toBe(destStubs);
+    });
+
+    it('returns the input array unchanged when the item has no related_npcs', () => {
+      saveItemToStorage({ name: 'Vardlokkur' });
+      const destStubs = [{ npc_id: 'npc_1', name: 'Brother Aldric' }];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      expect(result).toBe(destStubs);
+    });
+
+    it('returns the input array unchanged when no destination names match', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+      const destStubs = [
+        { npc_id: 'npc_1', name: 'Kara' },
+        { npc_id: 'npc_2', name: 'Magnus' },
+      ];
+
+      const result = reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      // Result is a new array (map always returns a new one), but every
+      // entry is === to its source — no stamping happened.
+      for (let i = 0; i < destStubs.length; i++) {
+        expect(result[i]).toBe(destStubs[i]);
+      }
+    });
+
+    it('does not mutate the input stubs', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+      const original = { npc_id: 'npc_1', name: 'Brother Aldric' };
+      const destStubs = [original];
+
+      reconcileNPCStubsAgainstItem(destStubs, 'Vardlokkur');
+
+      // Original instance is untouched — reconcile must return a new
+      // array of new stub objects.
+      expect(original.seeded_from).toBeUndefined();
+    });
+
+    it('handles empty / non-array input gracefully', () => {
+      saveItemToStorage(itemWith('Vardlokkur', ['Brother Aldric']));
+
+      expect(reconcileNPCStubsAgainstItem([], 'Vardlokkur')).toEqual([]);
+      expect(reconcileNPCStubsAgainstItem(null, 'Vardlokkur')).toEqual([]);
+      expect(reconcileNPCStubsAgainstItem(undefined, 'Vardlokkur')).toEqual([]);
+    });
+
+    it('no-ops when itemName is missing', () => {
+      const destStubs = [{ npc_id: 'npc_1', name: 'Brother Aldric' }];
+
+      expect(reconcileNPCStubsAgainstItem(destStubs, '')).toBe(destStubs);
+      expect(reconcileNPCStubsAgainstItem(destStubs, null)).toBe(destStubs);
+      expect(reconcileNPCStubsAgainstItem(destStubs, undefined)).toBe(destStubs);
     });
   });
 });

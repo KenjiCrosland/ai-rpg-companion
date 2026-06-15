@@ -39,6 +39,7 @@ import {
 } from '../utils/setting-dimensions.mjs';
 import { buildDeityModeBlock } from '@/shared/deity-mode-block.mjs';
 import { findRegisterByPrefix } from '@/shared/registers/index.mjs';
+import { REGISTER_PROSE_DIRECTIVE } from '@/shared/register-list.mjs';
 
 const FORBIDDEN_NPC_NAMES =
   'Seraphina, Alistair, Kael, Elara, Thalia, Blackthorn, Nightshade, Lyra, Varian, Selene, Lyria, Isolde';
@@ -275,7 +276,9 @@ function buildSettingConstraints({
   const registerStr = register
     ? `${register}
 
-All proper nouns (place names, character names, faction names, organizational names) MUST match this register's phonological style and cultural texture.`
+All proper nouns (place names, character names, faction names, organizational names) MUST match this register's phonological style and cultural texture.
+
+${REGISTER_PROSE_DIRECTIVE}`
     : 'No specific linguistic register is set. Use generic fantasy naming with creative variety.';
 
   const nameInstruction = userName
@@ -528,7 +531,9 @@ export function sublocationOverviewPrompt({
   const registerStr = register
     ? `${register}
 
-All proper nouns MUST match this register. This sub-location inherits the parent setting's register so names stay coherent with the larger setting.`
+All proper nouns MUST match this register. This sub-location inherits the parent setting's register so names stay coherent with the larger setting.
+
+${REGISTER_PROSE_DIRECTIVE}`
     : 'No specific linguistic register is set. Use the naming style established in the parent setting description.';
 
   const nameInstruction = userName

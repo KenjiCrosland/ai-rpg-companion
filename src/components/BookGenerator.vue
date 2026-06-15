@@ -86,6 +86,7 @@ import { ref } from 'vue';
 import BookSkeleton from './BookSkeleton.vue';
 import { CdrInput, CdrList, CdrText, CdrAccordionGroup, CdrAccordion, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 import { ParActionButton } from "@/parchment";
+import { logger } from "@/util/logger.mjs";
 import "@rei/cedar/dist/cdr-fonts.css";
 import "@rei/cedar/dist/reset.css";
 import "@rei/cedar/dist/style/cdr-input.css";
@@ -138,11 +139,11 @@ export default {
         loadingTitles.value = true;
 
         const response = await generateGptResponse(prompt);
-        console.log(response);
+        logger.log(response);
         bookTitles.value = response.split('\n');
         loadingTitles.value = false;
       } catch (error) {
-        console.error("Error generating book titles:", error);
+        logger.error("Error generating book titles:", error);
       }
     };
 
@@ -186,11 +187,11 @@ export default {
       try {
         loadingDescriptions.value[index] = true;
         const response = await generateGptResponse(prompt, validateBookJSON);
-        console.log(response);
+        logger.log(response);
         bookDescriptions.value[index] = JSON.parse(response);
         loadingDescriptions.value[index] = false;
       } catch (error) {
-        console.error("Error generating book titles:", error);
+        logger.error("Error generating book titles:", error);
       }
     }
 

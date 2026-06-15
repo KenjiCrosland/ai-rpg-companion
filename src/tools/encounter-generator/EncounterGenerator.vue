@@ -325,6 +325,7 @@
 
 <script setup>
 import { ParActionButton, ParCallout } from "@/parchment";
+import { logger } from "@/util/logger.mjs";
 import { ref, computed, onMounted, watch } from 'vue';
 import { CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -589,7 +590,7 @@ function loadEncounters() {
       savedEncounters.value = { 'Uncategorized': [] };
     }
   } catch (error) {
-    console.error('Failed to load encounters from localStorage:', error);
+    logger.error('Failed to load encounters from localStorage:', error);
     savedEncounters.value = { 'Uncategorized': [] };
   }
 }
@@ -598,7 +599,7 @@ function saveToLocalStorage() {
   try {
     localStorage.setItem('encounters', JSON.stringify(savedEncounters.value));
   } catch (error) {
-    console.error('Failed to save encounters to localStorage:', error);
+    logger.error('Failed to save encounters to localStorage:', error);
   }
 }
 
@@ -613,7 +614,7 @@ function loadPartyConfig() {
       }
     }
   } catch (error) {
-    console.error('Failed to load party config:', error);
+    logger.error('Failed to load party config:', error);
   }
 }
 
@@ -621,7 +622,7 @@ function savePartyConfig() {
   try {
     localStorage.setItem('partyConfig', JSON.stringify(partyGroups.value));
   } catch (error) {
-    console.error('Failed to save party config:', error);
+    logger.error('Failed to save party config:', error);
   }
 }
 
@@ -828,7 +829,7 @@ async function generateEncounter() {
     // Save
     saveNewEncounter();
   } catch (error) {
-    console.error('Error generating encounter:', error);
+    logger.error('Error generating encounter:', error);
     toast.error('Failed to generate encounter. Please try again.');
     generatedEncounter.value = null;
   } finally {
@@ -1012,7 +1013,7 @@ async function generateStatblock(index) {
       loadingStatblock: false
     };
   } catch (error) {
-    console.error('Error generating statblock:', error);
+    logger.error('Error generating statblock:', error);
     encounterMonsters.value[index] = {
       ...encounterMonsters.value[index],
       loadingStatblock: false
@@ -1391,7 +1392,7 @@ onMounted(async () => {
         }
       }
     } catch (error) {
-      console.error('Failed to load monster from query param:', error);
+      logger.error('Failed to load monster from query param:', error);
     }
   }
 
@@ -1401,7 +1402,7 @@ onMounted(async () => {
     migrateOldEnrichmentFormat();
     cleanupOrphanedIntelligence();
   } catch (error) {
-    console.warn('[ENRICHMENT] Failed to run migration/cleanup:', error);
+    logger.warn('[ENRICHMENT] Failed to run migration/cleanup:', error);
   }
 });
 </script>

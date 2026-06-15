@@ -46,7 +46,14 @@ export const orcishCharacterEpithets = [
 
 export const orcishRegister = {
   prefix: 'Orcish',
-  descriptor: "Orcish: brutal, guttural (e.g., Grokthash, Uzgark, Dra'mok)",
+  descriptor: "Orcish: guttural and bitten phonology — hard back-of-throat consonants (k, g, kh), short two-or-three-syllable warrior-names of a force-verb-root (grok-, uz-, dra-, krag-, mok-) plus a body-or-weapon noun (-thash, -gark, -tooth, -fang, -gore). Apostrophes mark a glottal break. Derive fresh names from the phonology; do not copy from prior generations.",
+  creatureTradition: 'orcish dungeons run on the warband and its martial allies: orcs (the rank-and-file), half-orcs, ogres, ogre magi or oni (the ogre-mage tradition), war-bred trolls, war-tribe giants, dire boars and dire wolves trained by the band, half-tamed manticores and chimeras taken as totems. The supernatural identity (when present) is usually an ancestral war-spirit, a blood-totem, or a shaman-bound spirit — not a demon or a planar power (those break the register).',
+  creatureTraditionByTier: {
+    complicating: ['orc rank-and-file', 'half-orc skirmishers', 'dire boars'],
+    significant:  ['ogres', 'dire wolves', 'half-tamed manticores', 'orc shaman with bound spirits'],
+    scary:        ['ogre magi or oni', 'war-bred trolls', 'war-tribe giants', 'totem-chimera', 'ancestral war-spirit incarnate'],
+  },
+  materialTradition: 'bone grease, charcoal, dried blood, rust, packed earth, smoke-cured hide, war-paint pigment',
   characterPool: orcishCharacterEpithets,
   characterPoolStrictness: 'mandatory',
   fantasyRaceKey: 'Orcish',

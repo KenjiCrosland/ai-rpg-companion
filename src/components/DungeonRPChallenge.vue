@@ -37,6 +37,7 @@ import { ref } from 'vue';
 import { dungeonFormatGuidelines } from "../prompts/prompts.mjs";
 import { CdrInput, CdrText, CdrSelect } from "@rei/cedar";
 import { ParActionButton } from "@/parchment";
+import { logger } from "@/util/logger.mjs";
 import StatblockBase from './StatblockBase.vue';
 import _ from 'lodash';
 import "@rei/cedar/dist/cdr-fonts.css";
@@ -137,15 +138,15 @@ export default {
         loadingPart1.value = false;
         monster.value = monsterPart1;
         if (errorPart1) {
-          console.error('Error in Part 1:', errorPart1);
+          logger.error('Error in Part 1:', errorPart1);
           return;
         }
 
         const { monsterPart2, errorMessage: errorPart2 } = await completeStatblock(monsterPart1, monsterPrompts);
         loadingPart2.value = false;
-        //console.log('Complete Monster', completeMonster);
+        //logger.log('Complete Monster', completeMonster);
         if (errorPart2) {
-          console.error('Error in Part 2:', errorPart2);
+          logger.error('Error in Part 2:', errorPart2);
           return;
         }
 
@@ -155,7 +156,7 @@ export default {
             ...monsterPart2
           };
           monster.value = combined;
-          console.log("MONSTERVALUE", combined);
+          logger.log("MONSTERVALUE", combined);
         }
       }
     };
@@ -188,10 +189,10 @@ export default {
         const response = await generateGptResponse(prompt, validateDungeonJSON);
         dungeon_details.value = JSON.parse(response);
         await generateMonster();
-        console.log("Monster Value", monster.value);
+        logger.log("Monster Value", monster.value);
         loading_dungeon.value = false;
       } catch (error) {
-        console.error("Error generating dungeon description:", error);
+        logger.error("Error generating dungeon description:", error);
       }
     }
 

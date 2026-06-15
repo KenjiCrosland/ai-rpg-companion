@@ -1,4 +1,64 @@
-// custom-room-prompt.mjs
+/**
+ * Custom room prompt — generates a room from user-provided form
+ * input (name + summary). This handler runs when the user has
+ * supplied custom name/summary fields but the room doesn't fit a
+ * specific procedural type (entrance/boss/setback/locked/secret/etc.).
+ *
+ * The user's input is the PRIMARY signal — the room should be
+ * whatever the user described. The prompt provides shape (read-
+ * aloud, dm_notes, sub-blocks) but defers to user intent on what
+ * the room actually is.
+ *
+ * Output shape (same 4-field pattern as the other audited room
+ * types):
+ *
+ *   name                 — user-provided name verbatim when given;
+ *                          otherwise a model-generated name fitting
+ *                          the user's summary
+ *   door_preamble        — terse door states; omit when all unlocked
+ *   read_aloud_opening   — 40-90 word boxed text; reflects the
+ *                          user's intent
+ *   has_challenge        — boolean. TRUE when user's input implies
+ *                          a challenge (a guardian, a trap, a
+ *                          puzzle). FALSE when the room is purely
+ *                          descriptive (a chamber the user wants
+ *                          described).
+ *   challenge_header     — ≤8 word title, only when has_challenge
+ *   dm_notes             — array of paragraph strings. First
+ *                          paragraph covers room overview + the
+ *                          user's intent. Optional feature sub-blocks.
+ *   one_sentence_summary — sidebar summary, ≤20 words.
+ *
+ * Why this shape (vs. the old 9-field structure):
+ *   The old prompt mandated lore_description +
+ *   features_and_contents + additional_notes +
+ *   interactive_element_header + interactive_element_lore +
+ *   interactive_element_details — six overlapping DM slots and a
+ *   forced interactive element. For custom rooms (where the user
+ *   has already decided what's there), this often produced content
+ *   that contradicted the user's stated room idea. The new shape
+ *   uses the user's input as the primary driver and lets the model
+ *   produce only what's needed.
+ *
+ * Difficulty tier (1-5) scales DCs/severity when has_challenge is
+ * true. Stored on `dungeon.dimensions.difficulty`.
+ */
+
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  DOOR_PREAMBLE_FIELD_DESC,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallenge,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
 
 export function generateCustomRoomPrompt(
   dungeonOverview,
@@ -7,226 +67,196 @@ export function generateCustomRoomPrompt(
   formRoomName = '',
   formRoomSummary = '',
   npcString = '',
+  difficulty = null,
+  doorwayInfo = null,
+  loreRole = null,
+  loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
+  incomingContentSeeds = '',
 ) {
-  // Conditionally include Room Name and Room Summary sections
-  const roomNameSection = formRoomName
-    ? `**Room Name:**
-${formRoomName}
+  const tierLine = difficulty
+    ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated, scale DCs and failure severity to this tier.`
+    : `Dungeon difficulty tier: not specified — default to T2 (DCs 12-14) if generating a challenge.`;
 
+  const connectedSection = connectedRoomsInfo && connectedRoomsInfo !== ''
+    ? `Connected rooms (rooms reachable from this one): ${connectedRoomsInfo}\n`
+    : '';
+
+  const doorwaySection = doorwayInfo
+    ? `\nDOORWAYS IN THIS ROOM — authoritative door states from the map. The door_preamble field MUST report states EXACTLY as listed here. Do NOT invent locks, bars, DCs, force checks, or alternate bypasses for doors marked "unlocked door":
+${doorwayInfo}
 `
     : '';
 
-  const roomSummarySection = formRoomSummary
-    ? `**Room Summary:**
-${formRoomSummary}
-
-`
-    : '';
-
-  // Conditionally include NPC Information section
   const npcSection = npcString
-    ? `**NPC Present in the Room:**
+    ? `INHABITANTS PRESENT IN THE ROOM — incorporate them. If an NPC is present, use the NPC's identity from the overview. If MONSTER POPULATIONS are listed, USE THEM as-is.
+
 ${npcString}
-
-The NPC is currently in the room. Include them in the room description, detailing what they are doing and how they might interact with players. Consider their personality, goals, and any relationships they have.
-
 `
     : '';
 
-  // Conditionally include NPC Integration guidelines
-  const npcGuidelines = npcString
-    ? `- **NPC Integration:**
-  - Include the NPC in the room description, considering their characteristics and role.
-  - Describe what the NPC is doing in the room.
-  - Consider how the NPC might interact with the players.
-  - Do not reveal any secrets or hidden motives unless the players can perceive them.
-
-`
+  const loreRoleSection = loreRole
+    ? `\nLORE ROLE: This room corresponds to "${loreRole}" from the dungeon's overview prose. The room generates AS that named place — its name, character, contents, and the player-facing payoff align with what the overview says about "${loreRole}".\n`
     : '';
 
-  return `
-Using the dungeon overview and the short room description below, create a detailed description of a specialized room within the dungeon. The room's name and summary will determine its specific type and characteristics.
+  // The user input is the PRIMARY driver. If the user provided a name
+  // and/or summary, those describe what they want the room to be.
+  const userInputSection = (formRoomName || formRoomSummary)
+    ? `\n## USER INTENT (primary driver of this room)
 
-**Dungeon Overview:**
+${formRoomName ? `Room name: ${formRoomName}` : ''}
+${formRoomSummary ? `Room summary: ${formRoomSummary}` : ''}
+
+The user has explicitly named and/or described this room. Their input is the PRIMARY signal — generate a room that matches their stated intent. Do NOT override the user's vision with a different room type or contradict their summary. If they say "a quiet reading nook," do not generate a fortified armory. If they say "the alchemy lab where Galen mixes poisons," include Galen and the alchemy lab character.
+
+`
+    : `\n## NO USER INPUT
+
+The user did not provide a name or summary. Generate a room that fits the dungeon overview's character and the short description above. Pick a room TYPE (e.g., living, purpose, specialized) that makes sense given the dungeon's context and what's already nearby. Avoid generic "chamber" or "room"; give it a specific function.
+
+`;
+
+  return `You are writing a CUSTOM room in a D&D 5e dungeon. The user may have provided a specific name and/or summary describing what they want the room to be — if so, their intent is the primary driver and the room should match it. Otherwise, infer a fitting room from the dungeon's context.
+
+DUNGEON OVERVIEW:
 ${dungeonOverview}
 
-**Short Room Description (includes size, exits, and any notable features):**
-${shortDescription}
+CUSTOM ROOM INFO:
+Short description (size, exits, map-side notes): ${shortDescription}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${incomingContentSeeds}${featuredItems}${tierLine}
+${userInputSection}${npcSection}
 
-${
-  connectedRoomsInfo !== ''
-    ? `**Connected Rooms:** 
-  This room is connected to the following rooms: ${connectedRoomsInfo}`
-    : ''
-}
-${roomNameSection}${roomSummarySection}${npcSection}**Guidelines:**
+## REGISTER FIDELITY — respect the dungeon's established context
 
-- **Room Type Determination:**
-  - Use the room's name and summary to identify its type (e.g., "Alchemy Lab" suggests a laboratory).
-  - Ensure the room type aligns with the dungeon's lore and theme.
+The dungeon overview establishes material, lighting, inhabitants, construction. The custom room INHERITS that register:
 
-- **Atmosphere and Tone:**
-  - Reflect the room's purpose through sensory details.
-  - Maintain consistency with the dungeon's overall atmosphere.
+- LIGHTING: ambient/natural where the overview establishes it. Do not invent installed lighting that contradicts the dungeon's makers.
+- CONSTRUCTION: matches the dungeon's makers — claw-scored stone in a drake-burrow, fitted ashlar in a wizard's tower, layered moss-and-timber in a fen ruin.
+- FURNITURE AND OBJECTS: match BOTH the user's stated intent (when given) AND the inhabitants. If the user says "alchemy lab," the lab tools should match the dungeon's alchemists.
 
-- **Integration with Dungeon Lore:**
-  - Incorporate elements from the dungeon overview to enhance immersion.
-  - Highlight any historical or magical significance based on the room's summary.
+## CHALLENGE DECISION
 
-${npcGuidelines}- **Avoid Specific Game Mechanics:**
-  - Focus on narrative descriptions without referencing specific game rules or mechanics.
+has_challenge is conditional:
+- TRUE when the user's input implies an in-room challenge (a guarded item, a trap, a creature, a puzzle, a moral dilemma)
+- TRUE when the room context (assigned monsters, hostile NPC) demands one
+- FALSE when the room is purely descriptive (a quiet chamber the user wants painted in), a quiet inhabited space, or an empty room
 
-**Read Aloud Description Guidelines:**
+The user's intent wins. If they say "the empty bedroom where the warden used to sleep," it's empty — has_challenge = FALSE. Don't fight their vision.
 
-Compose the **read_aloud_description** using the following sentence-by-sentence structure:
+## BOLDING RULES
 
-1. **Sentence 1: Room-Specific Description**
-   - **Guideline:** Describe the specific type and characteristics of the room within the dungeon. Include details about its size, purpose, and distinctive features to set the scene for what the players are encountering.
-   - **Examples:**
-     - "You enter the Alchemy Lab, a spacious room filled with bubbling potions and intricate apparatuses."
-     - "The Sanctum is a serene chapel, its high ceilings adorned with stained glass windows depicting celestial scenes."
-     - "This Armory is a well-organized space, with racks of weapons and armor neatly arranged along the walls."
+Use **markdown bold** ONLY for:
+1. Creature names when first introduced (e.g., **drake-kit**)
+2. Character names when first introduced (e.g., **Brother Galen**)
+3. Feature sub-block titles at the START of an optional dm_notes paragraph, formatted as: **Feature Name.** followed by description
 
-2. **Sentence 2: Atmospheric Details**
-   - **Guideline:** Focus on sensory experiences specific to the room. Describe smells, lighting, sounds, or any atmospheric elements that add depth to the room’s character.
-   - **Examples:**
-     - "The air is thick with the scent of herbs and the faint aroma of burning candles."
-     - "Dim, flickering light from enchanted lanterns casts long shadows across the stone floor."
-     - "A gentle hum of magical energy resonates throughout the chamber, creating an otherworldly ambiance."
+DO NOT bold game mechanics keywords (DCs, skill names), action verbs, or generic phrases.
 
-3. **Sentence 3: Unique Features**
-   - **Guideline:** Highlight unique, non-interactive elements that make the room special. These can be architectural, artistic, or natural details that contribute to the ambiance without being directly usable by the players.
-   - **Examples:**
-     - "An ornate chandelier hangs from the ceiling, its crystals shimmering with a faint magical glow."
-     - "Intricate mosaics depicting ancient symbols cover the walls, their colors vibrant despite the room's age."
-     - "A large, enchanted mirror stands against one wall, reflecting not just the room but glimpses of other realms."
+## CROSS-REFERENCE FIDELITY — use the LORE-LOCATION LOOKUP
 
-4. **Sentence 4: Interactive Element${npcString ? ' or NPC' : ''}**
-   - **Guideline:** Introduce one feature in the room that players can interact with${
-     npcString ? ' or the NPC if one is present' : ''
-   }. These should provoke action, conversation, or decision-making. This will be expanded upon further in the interactive element${
-    npcString ? ' or NPC' : ''
-  } descriptions. **DO NOT MENTION TRAPS OR ANYTHING HIDDEN TO PLAYERS.**
-   - **Examples:**
-     - "A large, ancient tome rests open on a pedestal, its pages filled with indecipherable symbols."
-     - "A mystical orb floats in the center of the room, pulsating with vibrant light."
-     ${
-       npcString
-         ? '- "A figure clad in dark robes stands near the altar, their gaze fixed upon you."'
-         : ''
-     }
-     ${
-       npcString
-         ? '- "An elderly dwarf hums softly as he meticulously polishes a set of armor."'
-         : ''
-     }
+When dm_notes references other parts of the dungeon, references MUST resolve to area numbers via the LORE-LOCATION LOOKUP above. Lore-locations not in the lookup are atmospheric only.
 
-**Return the description in JSON format with the following keys:**
+${CROSS_ROOM_REFERENCES_SECTION}
 
-- **name**: A short, appropriate name for the room (e.g., "Alchemy Lab", "Sanctum", "Armory"). This name should be 1-2 words and should be simple, indicating the function of the room.
-- **one_sentence_summary**: A brief summary of the room's function or purpose within the dungeon.
-- **lore_description**: For the Dungeon Master's eyes only. Describe the room's history, purpose, and how it fits into the dungeon's lore. Who uses or used this room, and for what specific activities?
-- **features_and_contents**: For the Dungeon Master's eyes only. Describe notable features, items, or information present in the room that may be of interest to the players.
-- **interactive_element_header**: A brief header for the interactive element in the room. ${
-    npcString ? "If an NPC is present, this should be the NPC's name." : ''
-  }
-- **interactive_element_lore**: For the Dungeon Master's eyes only. Provide additional lore or context about the interactive element${
-    npcString ? ' or NPC' : ''
-  }. Why is it here? What is its significance?
-- **interactive_element_details**: For the Dungeon Master's eyes only. Describe the interactive element${
-    npcString ? ' or NPC' : ''
-  } in more detail, including appearance, behavior, and any effects it may have on the players. ${
-    npcString
-      ? 'Include how the NPC might react to player interactions. What might the NPC say if the players approached?'
-      : ''
-  }
-- **read_aloud_description**: A vivid description to read aloud when players enter the room, following the sentence-by-sentence guidelines above. Remember to take the following short description into account, particularly regarding room size: ${shortDescription}
-- **additional_notes**: For the Dungeon Master's eyes only. Include any other relevant information or secrets about the room${
-    npcString ? ' or NPC' : ''
-  }.
+## WHAT DOES NOT GO IN dm_notes
 
-**Example JSON Format:**
+Three categories are owned by other fields or sections:
 
-\`\`\`json
+1. EXIT INVENTORY. The read-aloud names visible directions; door_preamble handles door states. dm_notes never lists exits.
+
+2. SECRET DOORS AND THEIR MECHANICS. A separately-generated **Secret Door** notes section gets appended with canonical discovery/opening mechanics. dm_notes never mentions secret doors and NEVER creates a **Secret Door Trigger** or **Hidden Passage** feature sub-block.
+
+3. DOOR MATERIAL. "Wooden door," "stone door" belong in the read-aloud (when notable). dm_notes treats doors by area number only.
+
+## OUTPUT FORMAT
+
+Return STRICT JSON (no prose, no commentary, no code fences):
+
 {
-  "name": "Alchemy Lab",
-  "one_sentence_summary": "A spacious lab where alchemists concoct potions and perform magical experiments.",
-  "lore_description": "This Alchemy Lab was established by the temple's resident alchemists to create potions, elixirs, and perform complex magical experiments. It played a crucial role in maintaining the temple's defenses and healing capabilities.",
-  "features_and_contents": "The lab is filled with bubbling potions, intricate apparatuses, and shelves stocked with rare ingredients. A large cauldron sits at the center, surrounded by various alchemical tools and manuscripts detailing advanced potion recipes.",
-  "interactive_element_header": ${
-    npcString ? '"Elaria Shadowsong"' : '"The Ancient Tome"'
-  },
-  "interactive_element_lore": ${
-    npcString
-      ? '"Elaria Shadowsong is a skilled assassin who uses the lab to craft poisons and antidotes. She is secretly plotting against the dungeon\'s overlord."'
-      : '"The tome contains secret alchemical recipes and knowledge passed down through generations of alchemists. It is guarded by magical wards to prevent unauthorized access."'
-  },
-  "interactive_element_details": ${
-    npcString
-      ? '"Elaria is present in the lab, cloaked and moving silently as she works on her concoctions. She may be wary of intruders but could offer valuable information if approached carefully. Interacting with her might require persuasion or stealth, and she could become an ally or adversary depending on the players\' actions."'
-      : '"The tome rests open on a pedestal, its pages glowing with an ethereal light. Players can attempt to read the tome, requiring an Intelligence (Arcana) check to decipher its contents. Successfully reading it may grant access to a powerful potion recipe or reveal a hidden mechanism within the lab."'
-  },
-  "read_aloud_description": "You enter the Alchemy Lab, a spacious room filled with bubbling potions and intricate apparatuses. The air is thick with the scent of herbs and the faint aroma of burning candles. An ornate chandelier hangs from the ceiling, its crystals shimmering with a faint magical glow. ${
-    npcString
-      ? 'A figure clad in dark robes stands near a workbench, her gaze briefly meeting yours before she returns to her tasks.'
-      : 'A large, ancient tome rests open on a pedestal, its pages filled with indecipherable symbols.'
-  }",
-  "additional_notes": ${
-    npcString
-      ? '"Elaria may have quests for the players or information about the dungeon\'s secrets. She values discretion and may react negatively to aggressive behavior."'
-      : '"Some of the potions are rare and could be valuable if found, while the manuscripts might hold secrets that could aid or hinder the players in their quest."'
-  }
-}
-\`\`\`
-`;
+  "name": "${formRoomName ? formRoomName + ' (use VERBATIM)' : 'A 1-4 word descriptive name reflecting the room\'s function. Avoid generic \"Chamber\" or \"Room\" alone. Avoid archaic opaque terms.'}",
+
+  "door_preamble": ${DOOR_PREAMBLE_FIELD_DESC},
+
+  "read_aloud_opening": "Boxed text the DM reads when the party enters. 40-90 words, present-tense, sensory. Describe the room as it is, reflecting the user's stated intent (when given). ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints, NO addressing the DM. Avoid generic material adjectives like 'wooden door' unless the material is genuinely notable.",
+
+  "has_challenge": false,
+
+  "challenge_header": "≤8 word title for the in-room challenge. Omit this key entirely if has_challenge is false.",
+
+  "dm_notes": [
+    "First paragraph (REQUIRED). Covers: dimensions, the room's TYPE/CHARACTER (from the user's intent or inferred from context), the SPECIFIC contents or inhabitants the party finds, and any noteworthy features. If has_challenge: also covers the mechanic at high level (DC, immediate failure consequence). Content should be specific (named items, named NPCs, named objects), not generic ('various items,' 'strange apparatuses'). 60-150 words for the common case.",
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks for specific items, NPC interactions, or environmental elements. Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Skip these if the first paragraph already covered everything. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
+  ],
+
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's character and contents.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
-// custom-room-prompt.mjs
+## DC SCALING (only if has_challenge)
 
+- T1: DCs 10-12, failure → minor damage (1d4-1d6) or short setback
+- T2: DCs 12-14, failure → moderate damage (2d6) or temporary condition
+- T3: DCs 14-16, failure → real damage (3d6+) or persistent threat
+- T4: DCs 16-18, failure → severe damage (4d8+) or party-wide complication
+- T5: DCs 18-20, failure → lethal threat or major resource cost
+
+Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole table within seconds of the failed roll.`;
+}
+
+/**
+ * Validate the custom room response. Same shape as the other room
+ * prompts — `name`, `read_aloud_opening`, `has_challenge`, `dm_notes`
+ * (array), `one_sentence_summary` required; `challenge_header`
+ * required only when has_challenge; `door_preamble` optional.
+ *
+ * @param {string} jsonString
+ * @returns {boolean}
+ */
 export function validateCustomRoomResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const requiredKeys = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'name',
+      'read_aloud_opening',
+      'has_challenge',
+      'dm_notes',
       'one_sentence_summary',
-      'read_aloud_description',
-      'lore_description',
-      'features_and_contents',
-      'interactive_element_header',
-      'interactive_element_lore',
-      'interactive_element_details',
-      'additional_notes',
-    ];
-    for (const key of requiredKeys) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallenge,
+    d => validateDmNotes(d, 1),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
-// custom-room-prompt.mjs
-
+/**
+ * Build the contentArray that the RoomDescription component renders.
+ *
+ * Order:
+ *   1. door_preamble (paragraph)            — only when non-empty
+ *   2. read_aloud_opening (boxed)
+ *   3. challenge_header (header)            — only when has_challenge
+ *   4. dm_notes[0..n] (paragraph each)      — one entry per paragraph
+ *
+ * @param {object} data parsed custom room response
+ * @returns {Array<{format: string, content: string}>}
+ */
 export function processCustomRoomResponse(data) {
   const content = [];
+  if (data.door_preamble && data.door_preamble.trim()) {
+    content.push({ format: 'paragraph', content: data.door_preamble.trim() });
+  }
   content.push({
     format: 'read_aloud',
-    content: data.read_aloud_description,
+    content: data.read_aloud_opening,
   });
-  content.push({ format: 'paragraph', content: data.lore_description });
-  content.push({ format: 'paragraph', content: data.features_and_contents });
-  content.push({ format: 'paragraph', content: data.additional_notes });
-  content.push({ format: 'header', content: data.interactive_element_header });
-  content.push({ format: 'paragraph', content: data.interactive_element_lore });
-  content.push({
-    format: 'paragraph',
-    content: data.interactive_element_details,
-  });
-
+  if (data.has_challenge && data.challenge_header) {
+    content.push({ format: 'header', content: data.challenge_header });
+  }
+  for (const paragraph of data.dm_notes) {
+    if (typeof paragraph !== 'string' || !paragraph.trim()) continue;
+    content.push({ format: 'paragraph', content: paragraph });
+  }
   return content;
 }

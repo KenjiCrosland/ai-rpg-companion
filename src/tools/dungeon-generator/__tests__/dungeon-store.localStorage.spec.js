@@ -34,8 +34,6 @@ jest.mock('../stores/monster-store.mjs', () => ({
   generateMonsterStatblock: jest.fn(),
   generateAndSaveStatblock: jest.fn(),
   updateStatblock: jest.fn(),
-  generateMonsterDescription: jest.fn(),
-  generateDescriptionAndStatblock: jest.fn(),
   deleteMonster: jest.fn(),
 }));
 
@@ -125,7 +123,7 @@ describe('Dungeon Store - Local Storage Data Layer (CRITICAL)', () => {
       // Verify dungeonOverview structure
       expect(firstDungeon.dungeonOverview).toHaveProperty('name');
       expect(firstDungeon.dungeonOverview).toHaveProperty('overview');
-      expect(firstDungeon.dungeonOverview).toHaveProperty('difficulty_level');
+      expect(firstDungeon.dungeonOverview).toHaveProperty('history');
     });
 
     it('should preserve NPCs with all their fields', () => {
@@ -334,6 +332,36 @@ describe('Dungeon Store - Local Storage Data Layer (CRITICAL)', () => {
       store.deleteDungeon('dungeon-1');
 
       expect(store.activeTabIndex).toBe(0);
+    });
+
+    it('should clear `dungeon_id` on every item-side stub pointing at the deleted dungeon', () => {
+      // Set up: an item with a related_dungeons stub that links to
+      // dungeon-1. Without the cleanup, the item card would keep
+      // showing "View in Dungeon Generator" for the stub and clicking
+      // it would 404. Mirrors the setting flow's
+      // resetItemStubsForDeletedSetting cleanup.
+      localStorage.setItem('savedItems', JSON.stringify([
+        {
+          name: 'Vardlokkur',
+          related_dungeons: [
+            { name: 'The Tomb', dungeon_id: 'dungeon-1', role_brief: 'final resting place' },
+            { name: 'Other Dungeon', dungeon_id: 'dungeon-2', role_brief: 'foreshadowed' },
+          ],
+        },
+      ]));
+
+      store.deleteDungeon('dungeon-1');
+
+      const items = JSON.parse(localStorage.getItem('savedItems'));
+      const stub1 = items[0].related_dungeons.find(s => s.name === 'The Tomb');
+      const stub2 = items[0].related_dungeons.find(s => s.name === 'Other Dungeon');
+      // Stub for the deleted dungeon: id cleared, stub itself preserved
+      // (the user can still see it and re-create from it).
+      expect(stub1.dungeon_id).toBeFalsy();
+      expect(stub1.name).toBe('The Tomb');
+      expect(stub1.role_brief).toBe('final resting place');
+      // Unrelated stub untouched.
+      expect(stub2.dungeon_id).toBe('dungeon-2');
     });
   });
 

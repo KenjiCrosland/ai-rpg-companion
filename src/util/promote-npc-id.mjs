@@ -30,6 +30,8 @@
  * name on the NPC just changed, not the id string itself.
  */
 
+import { logger } from './logger.mjs';
+
 const NPCS_KEY = 'npcGeneratorNPCs';
 const DUNGEONS_KEY = 'dungeons';
 const SETTINGS_KEY = 'gameSettings';
@@ -147,6 +149,6 @@ export function promoteNPCIds() {
 
   if (promotedCount > 0 || droppedCount > 0) {
     // eslint-disable-next-line no-console
-    console.log(`promote-npc-id: promoted ${promotedCount} legacy ids, dropped ${droppedCount} duplicate id fields.`);
+    logger.log(`promote-npc-id: promoted ${promotedCount} legacy ids, dropped ${droppedCount} duplicate id fields.`);
   }
 }

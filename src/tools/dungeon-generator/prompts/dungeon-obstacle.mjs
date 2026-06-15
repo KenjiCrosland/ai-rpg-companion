@@ -1,4 +1,95 @@
-// obstacle.js
+/**
+ * Obstacle room prompt (`requiresKey` flow) — generates a room
+ * dominated by a STRUCTURAL OBSTACLE that the party cannot defeat
+ * through combat alone. The obstacle gates further progress through
+ * the dungeon and is solved by retrieving the "key" from a separate
+ * key room.
+ *
+ * This is DIFFERENT from the `locked` type:
+ *   - `locked` rooms have PICKABLE obstacles (DC-based skill check)
+ *   - `requires-key` (this prompt) has STRUCTURAL obstacles that
+ *     require a specific solution from elsewhere in the dungeon
+ *
+ * The obstacle is NOT a combat-or-die encounter. The party cannot
+ * grind through it with hit points; they must find the key. Combat
+ * alternatives may exist for very creative play, but the design
+ * assumes the party retrieves the solution and returns.
+ *
+ * Output shape (same 4-field pattern as the other audited room
+ * types, with one type-specific tightening: has_challenge is ALWAYS
+ * true — the obstacle IS the room):
+ *
+ *   name                 — descriptive room name reflecting the
+ *                          obstacle or the room's role (e.g.,
+ *                          "Hunger Ward," "The Vortex Hall,"
+ *                          "Threshold of Names")
+ *   door_preamble        — terse door states; omit when all unlocked
+ *   read_aloud_opening   — 40-90 word boxed text; the obstacle is
+ *                          part of the scene (visible, audible, or
+ *                          imminent on approach)
+ *   has_challenge        — ALWAYS true
+ *   challenge_header     — ≤8 word title naming the obstacle's
+ *                          character ("The Dust-Warden," "The
+ *                          Hunger-Hum Ward," "The Ironbound Wall")
+ *   dm_notes             — array of paragraph strings. First
+ *                          paragraph covers the room overview + the
+ *                          obstacle's setup. Required sub-blocks:
+ *                          **The [Obstacle Name].**, **The Key.**
+ *                          Optional: **Bypassing.**, **Aftermath.**
+ *   one_sentence_summary — sidebar summary, ≤20 words.
+ *
+ * Why this shape (vs. the old 14-field structure):
+ *   The old prompt mandated lore_description + features_and_contents
+ *   + additional_notes + obstacle_explanation + obstacle_mechanics
+ *   + failure_scenario + obstacle_solution + obstacle_circumvention
+ *   + obstacle_completion_dm + TWO read-aloud blocks. The model
+ *   produced ~10 DM paragraphs per room — a wall of unbolded prose
+ *   where the GM couldn't find the load-bearing pieces. The new
+ *   shape uses standard sub-block titles so a scanning GM can find:
+ *   the obstacle, the key, the bypass, the aftermath.
+ *
+ * OBSTACLE TYPES (use to ground the model's choice):
+ *
+ *   1. WARDED GUARDIAN — a creature/construct that demands a specific
+ *      tribute (a name, an item, a gesture, a memory). Not killable
+ *      by force; only the tribute satisfies it.
+ *   2. MAGICAL BARRIER — an energy field, anti-magic zone, or sigil-
+ *      ward requiring a specific counter (a counter-artifact, a
+ *      learned phrase, a sympathetic substance).
+ *   3. PHYSICAL BARRIER — collapsed passage, flooded chamber, wall
+ *      of thorns requiring a specific tool or condition from
+ *      elsewhere.
+ *   4. PUZZLE / RIDDLE — a sequence, pattern, or question requiring
+ *      information from elsewhere in the dungeon to solve.
+ *   5. SEALED LOCK — a structural lock requiring a specific physical
+ *      key (literal key, etched plate, sympathy-binding object).
+ *   6. ELEMENTAL CONDITION — extreme heat, cold, dark, silence, or
+ *      vacuum that prevents passage; requires a counter-element from
+ *      elsewhere (a heat-stone, a cold-iron lever, a song-of-light).
+ *   7. CURSED THRESHOLD — the passage is cursed; crossing it inflicts
+ *      a condition that must be cleansed before crossing safely.
+ *   8. BOUND SPIRIT / SUPPLICANT — a being awaits acknowledgment of
+ *      a specific debt or fulfillment of an old promise.
+ *
+ * Difficulty tier (1-5) scales DCs/damage if the obstacle's failure
+ * is mechanical. Stored on `dungeon.dimensions.difficulty`.
+ */
+
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  DOOR_PREAMBLE_FIELD_DESC,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallengeRequired,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
 
 export function generateObstaclePrompt(
   dungeonOverview,
@@ -9,300 +100,226 @@ export function generateObstaclePrompt(
   formRoomName = '',
   formRoomSummary = '',
   npcString = '',
+  difficulty = null,
+  doorwayInfo = null,
+  loreRole = null,
+  loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
+  incomingContentSeeds = '',
 ) {
-  // Define arrays of possible obstacle types and solutions
-  const obstacleTypes = [
-    'a physical barrier (e.g., a flooded chamber, a wall of thorns, a chasm)',
-    'a magical illusion (e.g., a never-ending hallway, shifting walls)',
-    "an impassable guardian that's very difficult to defeat (not the boss of the dungeon)",
-    'a magical barrier (e.g., an energy field, a time distortion)',
-    'an environmental hazard (e.g., toxic gas filling the room, extreme heat)',
-    'a trap that must be disarmed or avoided',
-    'a puzzle or riddle that requires information or items from another room',
-    'an enchantment that binds the players or prevents movement',
-    'a cursed area that drains abilities or health',
-    'a time loop that resets the room until a condition is met',
-    'a moral dilemma that requires making a difficult choice',
-    'an anti-magic zone that disables spells',
-    'a labyrinth or maze with shifting paths',
-    'an area of darkness or silence that impedes senses',
-    'a series of complex mechanisms that need synchronization',
-  ];
+  const tierLine = difficulty
+    ? `Dungeon difficulty tier: ${difficulty} (1-5). Scale the obstacle's failure DCs and damage to this tier.`
+    : `Dungeon difficulty tier: not specified — default to T2 (DCs 12-14, 2d6 damage).`;
 
-  const solutions = [
-    'acquiring a specific item from another room (e.g., a key, artifact, or component)',
-    'learning a password or incantation',
-    'defeating an enemy whose defeat removes the obstacle',
-    'activating a mechanism or pulling a switch elsewhere in the dungeon',
-    'performing a ritual or using a spell',
-    'allying with an NPC who can assist',
-    'solving a secondary puzzle that provides clues',
-    'retrieving a magical essence or energy source',
-    'completing a test of character or virtue',
-    'restoring balance to an element or force',
-    'collecting scattered fragments or pieces',
-    'breaking a curse by fulfilling a condition',
-    'manipulating environmental features creatively',
-    'deciphering ancient texts or symbols',
-    'using a combination of skills or abilities',
-  ];
+  const connectedSection = connectedRoomsInfo && connectedRoomsInfo !== ''
+    ? `Connected rooms (rooms reachable from this one): ${connectedRoomsInfo}\n`
+    : '';
 
-  // Randomly select an obstacle type and solution
-  const randomObstacleType =
-    obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
-  const randomSolution =
-    solutions[Math.floor(Math.random() * solutions.length)];
+  const doorwaySection = doorwayInfo
+    ? `\nDOORWAYS IN THIS ROOM — authoritative door states from the map. The door_preamble field MUST report states EXACTLY as listed here. Do NOT invent locks, bars, DCs, force checks, or alternate bypasses for doors marked "unlocked door":
+${doorwayInfo}
+`
+    : '';
 
-  // Conditionally include Key Room Description
   const keyRoomSection = keyRoomDescription
-    ? `**Key Room Description:**
+    ? `\nTHE KEY ROOM (area ${solutionRoomId}) — what the party will find when they go to acquire the key. The obstacle in THIS room must be solvable by what the key room provides. Use this to inform the obstacle's character:
 ${keyRoomDescription}
-
 `
-    : '';
+    : `\nTHE KEY IS IN AREA ${solutionRoomId} — that room hasn't been generated yet. Pick an obstacle that fits the dungeon's register; when the key room is generated, its key will be the counter to this obstacle. Reference the key as "the means to overcome this obstacle (area ${solutionRoomId})."\n`;
 
-  // Conditionally include Room Name and Room Summary sections
-  const roomNameSection = formRoomName
-    ? `**Room Name:**
-${formRoomName}
-
-`
-    : '';
-
-  const roomSummarySection = formRoomSummary
-    ? `**Room Summary:**
-${formRoomSummary}
-
-`
-    : '';
-
-  // Conditionally include NPC Information section
   const npcSection = npcString
-    ? `**NPC Present in the Room:**
+    ? `INHABITANTS PRESENT IN THE ROOM — incorporate them. If the obstacle is a WARDED GUARDIAN or BOUND SPIRIT, the assigned NPC may BE the guardian (use their identity from the overview). If MONSTER POPULATIONS are listed, use them as-is — but remember the obstacle is STRUCTURAL: combat alone does not defeat it.
+
 ${npcString}
-
-The NPC is currently in the room. Include them in the room description, detailing what they are doing and how they might interact with players. Consider their personality, goals, and any relationships they have.
-
 `
     : '';
 
-  // Conditionally include NPC Integration guidelines
-  const npcGuidelines = npcString
-    ? `- **NPC Integration:**
-  - Include the NPC in the room description, considering their characteristics and role.
-  - Describe what the NPC is doing in the room.
-  - Consider how the NPC might interact with the players.
-  - Do not reveal any secrets or hidden motives unless the players can perceive them.
-
-`
+  const loreRoleSection = loreRole
+    ? `\nLORE ROLE: This room corresponds to "${loreRole}" from the dungeon's overview prose. The room generates AS that named place — its name, character, contents, and the player-facing payoff align with what the overview says about "${loreRole}".\n`
     : '';
 
-  // Precompute conditional strings for use in the prompt
-  const keyRoomReference = keyRoomDescription
-    ? 'Using the key room description, '
+  const roomNameSection = formRoomName
+    ? `User-provided room name (use verbatim): ${formRoomName}\n`
     : '';
-  const obstacleSolutionReference = keyRoomDescription
-    ? 'the players will need to use information or items from the key room'
-    : 'the players will need to acquire something or perform an action elsewhere in the dungeon';
+  const roomSummarySection = formRoomSummary
+    ? `User-provided summary (incorporate into the room): ${formRoomSummary}\n`
+    : '';
 
-  const obstacleConnection = keyRoomDescription
-    ? 'Explain how the key room and its contents relate to overcoming the obstacle.'
-    : 'Indicate that the solution involves another room in the dungeon (Room ID: ' +
-      solutionRoomId +
-      ').';
+  return `You are writing an OBSTACLE ROOM — a chamber in a D&D 5e dungeon dominated by a STRUCTURAL OBSTACLE that the party cannot defeat through combat alone. The obstacle gates further progress and is solved by retrieving the "key" from a separate key room.
 
-  const obstacleExamples = keyRoomDescription
-    ? '- "A swirling vortex of arcane energy blocks the passage ahead, echoing the magic you sensed earlier."'
-    : '- "A swirling vortex of arcane energy blocks the passage ahead."';
-
-  const additionalNotesReference = npcString ? ' or NPC' : '';
-
-  return `
-Using the dungeon overview${
-    keyRoomDescription ? ', key room description,' : ''
-  } and the short room description below, create a detailed description of an **obstacle-focused room** within the dungeon. The room's name and summary will determine its specific type and characteristics. The obstacle should be **${randomObstacleType}**. To overcome this obstacle, ${obstacleSolutionReference}. ${keyRoomReference}If the "key" is not an actual key, don't use the word "key" in the description—describe what it actually is.
-
-**Dungeon Overview:**
+DUNGEON OVERVIEW:
 ${dungeonOverview}
 
-${keyRoomSection}**Short Room Description (includes size, exits, and any notable features):**
-${shortDescription}
+OBSTACLE ROOM INFO:
+Short description (size, exits, map-side notes): ${shortDescription}
+${connectedSection}${loreRoleSection}${doorwaySection}${keyRoomSection}${loreLookup}${incomingMentions}${incomingContentSeeds}${featuredItems}${tierLine}
+${roomNameSection}${roomSummarySection}${npcSection}
 
-${
-  connectedRoomsInfo !== ''
-    ? `**Connected Rooms:** 
-This room is connected to the following rooms: ${connectedRoomsInfo}
+## THE OBSTACLE IS STRUCTURAL — NOT A COMBAT-OR-DIE ENCOUNTER
 
-`
-    : ''
-}${roomNameSection}${roomSummarySection}${npcSection}**Guidelines:**
+The party cannot grind through this obstacle with hit points. It is NOT a combat encounter that high damage solves. It is a STRUCTURAL gate: the party retrieves the key from area ${solutionRoomId} and returns to apply it.
 
-- **Room Type Determination:**
-  - Use the room's name and summary to identify its type (e.g., "Barrier Chamber" suggests a room designed to halt intruders).
-  - Ensure the room type aligns with the dungeon's lore and theme.
+The obstacle may have a combat dimension (a warded guardian that attacks when the party tries to force past, a cursed threshold that drains hit points), but combat by itself does NOT remove the obstacle. The guardian reforms; the curse re-applies; the wall stays.
 
-- **Obstacle Integration:**
-  - The obstacle is central to the room and should significantly impact its description.
-  - The obstacle should be **${randomObstacleType}**.
-  - ${obstacleConnection}
+Do NOT design the obstacle so it can be cheesed by raw damage. The KEY is the canonical solution.
 
-- **Atmosphere and Tone:**
-  - Reflect the room's purpose and the obstacle through sensory details.
-  - Maintain consistency with the dungeon's overall atmosphere.
+## OBSTACLE TYPES — pick one that fits the dungeon
 
-- **Integration with Dungeon Lore:**
-  - Incorporate elements from the dungeon overview to enhance immersion.
-  - Highlight any historical or magical significance based on the room's summary.
+Vary the type — do NOT default to "a magical barrier" or "a guardian construct" every time. Pick the type whose character matches the dungeon's makers AND the kind of key the key room (area ${solutionRoomId}) will hold:
 
-${npcGuidelines}- **Avoid Specific Game Mechanics:**
-  - Focus on narrative descriptions without referencing specific game rules or mechanics.
+1. WARDED GUARDIAN — a creature/construct that demands a specific tribute (a name, an item, a gesture, a memory). Not killable by force; only the tribute satisfies it.
+2. MAGICAL BARRIER — an energy field, anti-magic zone, or sigil-ward requiring a specific counter (a counter-artifact, a learned phrase, a sympathetic substance).
+3. PHYSICAL BARRIER — collapsed passage, flooded chamber, wall of thorns requiring a specific tool or condition from elsewhere.
+4. PUZZLE / RIDDLE — a sequence, pattern, or question requiring information from elsewhere in the dungeon to solve.
+5. SEALED LOCK — a structural lock requiring a specific physical key (literal key, etched plate, sympathy-binding object) from elsewhere.
+6. ELEMENTAL CONDITION — extreme heat, cold, dark, silence, or vacuum that prevents passage; requires a counter-element from elsewhere.
+7. CURSED THRESHOLD — the passage is cursed; crossing it inflicts a condition that must be cleansed before crossing safely.
+8. BOUND SPIRIT / SUPPLICANT — a being awaits acknowledgment of a specific debt or fulfillment of an old promise.
 
-**Read Aloud Description Guidelines:**
+The OBSTACLE'S CHARACTER must pair with the KEY in area ${solutionRoomId}. A WARDED GUARDIAN demanding a name pairs with a key room holding the inscribed name. A SEALED LOCK pairs with a literal key. A FLOODED PASSAGE pairs with a drainage lever.
 
-Compose the **read_aloud_description** using the following sentence-by-sentence structure:
+## REGISTER FIDELITY — respect the dungeon's established context
 
-1. **Sentence 1: Room-Specific Description**
-   - **Guideline:** Describe the specific type and characteristics of the room within the dungeon. Include details about its size, purpose, and distinctive features to set the scene for what the players are encountering.
-   - **Examples:**
-     - "You step into the Barrier Chamber, a vast hall dominated by an eerie energy field blocking the far exit."
-     - "The Enigma Room unfolds before you, walls adorned with shifting symbols that seem to defy comprehension."
-     - "This Guardian's Lair is a grand cavern, its ceiling lost in darkness, with a towering figure standing vigil."
+The dungeon overview establishes material, lighting, inhabitants, construction. The obstacle room INHERITS that register:
 
-2. **Sentence 2: Atmospheric Details**
-   - **Guideline:** Focus on sensory experiences specific to the room and the obstacle. Describe smells, lighting, sounds, or any atmospheric elements that add depth.
-   - **Examples:**
-     - "A palpable tension fills the air, and the hairs on the back of your neck stand up."
-     - "Whispers echo softly around you, though no source can be seen."
-     - "An oppressive heat emanates from the glowing runes etched into the floor."
+- LIGHTING: ambient/natural where the overview establishes it.
+- CONSTRUCTION: the obstacle's MAKERS match the dungeon's makers. A drake-burrow's obstacle is shaped from stone, bone, and curse, not from arcane sigils. A wizard's lab's obstacle is sigils and bound spirits. A monastic order's obstacle is heavy-warded plate or oath-bound spirit.
 
-3. **Sentence 3: Unique Features**
-   - **Guideline:** Highlight unique, non-interactive elements that make the room special. These can be architectural, artistic, or natural details.
-   - **Examples:**
-     - "Statuettes line the walls, each depicting a different creature frozen in fear."
-     - "The ceiling is a mosaic of mirrored fragments, reflecting distorted images of the room."
-     - "Columns of ancient stone rise unevenly from the floor, some broken and leaning."
+## CHALLENGE — always present
 
-4. **Sentence 4: The Obstacle${npcString ? ' or NPC' : ''}**
-   - **Guideline:** Introduce the obstacle${
-     npcString ? ' or NPC if one is present' : ''
-   } in the room that prevents progress. **Do not reveal any hidden solutions or secrets.**
-   - **Examples:**
-     ${obstacleExamples}
-     ${
-       npcString
-         ? '- "A formidable guardian stands before the exit, its eyes glowing with an otherworldly light."'
-         : ''
-     }
-     ${
-       npcString
-         ? '- "A spectral figure hovers near the doorway, its gaze fixed upon you with silent intensity."'
-         : ''
-     }
+has_challenge is ALWAYS true for obstacle rooms. The obstacle IS the room.
 
-**Return the description in JSON format with the following keys:**
+## BOLDING RULES
 
-- **name**: A short, appropriate name for the room (e.g., "Barrier Chamber", "Enigma Room", "Guardian's Lair"). This name should be 1-2 words and should be simple, indicating the function of the room.
-- **one_sentence_summary**: A brief summary of the room's function or purpose within the dungeon.
-- **lore_description**: For the Dungeon Master's eyes only. Describe the room's history, purpose, and how it fits into the dungeon's lore. Who created the obstacle, and why is it here?
-- **features_and_contents**: For the Dungeon Master's eyes only. Describe notable features, items, or information present in the room that may be of interest to the players.
-- **obstacle_header**: A brief header for the obstacle in the room.
-- **obstacle_explanation**: For the Dungeon Master's eyes only. Explain what the obstacle is (type: ${randomObstacleType}), its history, and its connection to the dungeon.
-- **obstacle_mechanics**: For the Dungeon Master's eyes only. Explain how the obstacle works mechanically, including any challenges the players may face.
-- **failure_scenario**: For the Dungeon Master's eyes only. Explain what happens if the players fail to overcome the obstacle, including consequences or additional challenges.
-- **obstacle_solution**: For the Dungeon Master's eyes only. Explain how the players can overcome the obstacle by **${randomSolution}**. ${obstacleConnection}
-- **obstacle_circumvention**: For the Dungeon Master's eyes only. Describe ways players might bypass the obstacle without fulfilling the intended requirement, requiring creative thinking or investigation.
-- **obstacle_completion_dm**: A short sentence like 'Once the players fulfill X condition, read the following aloud.'
-- **read_aloud_obstacle_completion**: A description to read aloud when players successfully overcome the obstacle.
-- **read_aloud_description**: A vivid description to read aloud when players enter the room, following the sentence-by-sentence guidelines above. Remember to take the following short description into account, particularly regarding room size: ${shortDescription}
-- **additional_notes**: For the Dungeon Master's eyes only. Include any other relevant information or secrets about the room${additionalNotesReference}.
+Use **markdown bold** ONLY for:
+1. Creature names when first introduced (e.g., **dust-warden**, **bound efreet**)
+2. Character names when first introduced (e.g., **King Vth'uum**)
+3. Feature sub-block titles at the START of an optional dm_notes paragraph, formatted as: **Feature Name.** followed by description
 
-**Guidelines:**
-- Be creative and ensure the obstacle fits within the context of the dungeon overview${
-    keyRoomDescription
-      ? ' and connects logically to the key room description'
-      : ''
-  }.
-- Do not include hidden information in the 'read_aloud_description' or 'read_aloud_obstacle_completion'.
-- Keep the descriptions engaging and evocative.
+DO NOT bold game mechanics keywords (DCs, skill names), action verbs, or generic phrases. Plain text carries those.
 
-**Example JSON Format:**
+The bolded sub-block titles in dm_notes are CRITICAL for this room type — a scanning GM uses them to find the obstacle, the key, the bypass, the aftermath. Without them, the obstacle room reads as a wall of text and the GM can't navigate.
 
-\`\`\`json
+## CROSS-REFERENCE FIDELITY — use the LORE-LOCATION LOOKUP
+
+When dm_notes references other parts of the dungeon (where the key is, where the obstacle's makers can be found), references MUST resolve to area numbers via the LORE-LOCATION LOOKUP above. The KEY is specifically in area ${solutionRoomId} — reference it by that area number.
+
+${CROSS_ROOM_REFERENCES_SECTION}
+
+## WHAT DOES NOT GO IN dm_notes
+
+Three categories are owned by other fields or sections:
+
+1. EXIT INVENTORY. The read-aloud names visible directions; door_preamble handles door states. dm_notes never lists exits.
+
+2. SECRET DOORS AND THEIR MECHANICS. A separately-generated **Secret Door** notes section gets appended with canonical discovery/opening mechanics. dm_notes never mentions secret doors and NEVER creates a **Secret Door Trigger** or **Hidden Passage** feature sub-block.
+
+3. DOOR MATERIAL. "Wooden door," "stone door" belong in the read-aloud (when notable). dm_notes treats doors by area number only.
+
+## NO STATBLOCK NOTATION IN dm_notes
+
+Statblock-row syntax belongs in the creature's statblock, not in prose. Specifically banned in dm_notes:
+
+- Attack-roll syntax: "+7 to hit", "melee spell attack +N", "ranged weapon attack", "Hit: 22 (4d8+2)"
+- Hit-die damage notation in parentheses: "(4d8+2)", "(NdN+M)"
+- Statblock action-line format: "Action: …", "Reaction: …", "Multiattack."
+
+DCs and damage NUMBERS are allowed when they're failure consequences the GM rolls inline ("DC 14 Strength save or take 18 cold damage", "the ward strikes for 12 force damage"). What's banned is COPYING THE CREATURE'S STATBLOCK ROW into the prose. If a guardian attacks, describe the EFFECT ("a spectral arm hauls the target underwater and pins them"), state the save DC and damage tier as plain GM-readable values ("DC 15 Strength save to break free; 22 cold damage on a fail"), and trust the statblock to carry the dice math.
+
+## OUTPUT FORMAT
+
+Return STRICT JSON (no prose, no commentary, no code fences):
+
 {
-  "name": "Barrier Chamber",
-  "one_sentence_summary": "A vast hall containing a magical barrier that blocks further passage.",
-  "lore_description": "The Barrier Chamber was constructed by the ancient mages to protect the inner sanctum. The magical barrier has kept intruders at bay for centuries, powered by a crystal in Room ID: ${solutionRoomId}.",
-  "features_and_contents": "The room is adorned with statues of past guardians, and the walls are inscribed with ancient runes that glow faintly.",
-  "obstacle_header": "Arcane Energy Field",
-  "obstacle_explanation": "An impenetrable energy field spans from floor to ceiling, shimmering with arcane light. It was created as a last line of defense.",
-  "obstacle_mechanics": "The barrier cannot be dispelled by conventional means. Attempts to touch it result in a forceful repulsion. Players must deactivate it by acquiring the crystal from Room ID: ${solutionRoomId}.",
-  "failure_scenario": "If players attempt to force through the barrier, they are thrown back and take damage. Prolonged contact may trigger an alarm or summon guardians.",
-  "obstacle_solution": "Players must retrieve the crystal from Room ID: ${solutionRoomId}, which, when brought close to the barrier, causes it to deactivate.",
-  "obstacle_circumvention": "Creative use of teleportation magic or finding hidden passages could allow bypassing the barrier.",
-  "obstacle_completion_dm": "Once the players bring the crystal near the barrier, read the following aloud.",
-  "read_aloud_obstacle_completion": "As you present the crystal, the barrier flickers and then dissipates, leaving the passage ahead clear.",
-  "read_aloud_description": "You step into the Barrier Chamber, a vast hall dominated by an eerie energy field blocking the far exit. A palpable tension fills the air, and the hairs on the back of your neck stand up. Statuettes line the walls, each depicting a different creature frozen in fear. A swirling vortex of arcane energy blocks the passage ahead.",
-  "additional_notes": "The statues might provide clues about the barrier. An NPC mage could be present, studying the barrier and offering assistance or requesting help."
-}
-\`\`\`
-`;
+  "name": "A 1-4 word descriptive name reflecting the obstacle (e.g., 'Hunger Ward,' 'The Vortex Hall,' 'Threshold of Names,' 'The Iron-Bound Pass'). Avoid generic 'Obstacle Room.' Avoid archaic opaque terms.",
+
+  "door_preamble": ${DOOR_PREAMBLE_FIELD_DESC},
+
+  "read_aloud_opening": "Boxed text the DM reads when the party enters. 50-100 words, present-tense, sensory. The obstacle is part of the scene — visible (a guardian standing before a door, a shimmering ward across a passage, a flooded depression, a wall of carved names), audible (a low hum, a grinding voice, dripping water), OR imminent (a chill that grows as you approach). Describe the chamber's character, atmosphere, and the obstacle's presence. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} NO mechanics, NO DM hints. Avoid generic material adjectives unless the material is genuinely notable.",
+
+  "has_challenge": true,
+
+  "challenge_header": "≤8 word title naming the obstacle's character (e.g., 'The Dust-Warden,' 'The Vortex Ward,' 'The Hunger-Hum,' 'The Iron Threshold').",
+
+  "dm_notes": [
+    "First paragraph (REQUIRED). 80-150 words. Covers: dimensions, the obstacle's TYPE (from the list above), the room's environmental setup, any inhabitants here (if a guardian is part of the obstacle, briefly note them; full profile goes in the **The [Obstacle Name].** sub-block). Atmospheric details that hint at the obstacle's character. Do NOT yet describe the mechanic in detail — that's the next paragraph.",
+    "Second paragraph (REQUIRED). **The [Obstacle Name].** Bolded inline title. Description follows. Cover: WHAT the obstacle is (its physical presence and behavior), HOW it prevents passage (the mechanic — the ward fires when crossed; the guardian demands a tribute; the wall blocks all but a specific tool), what happens if the party attempts to FORCE past it (the IMMEDIATE physical failure consequence — damage, condition, repulsion, summon reinforcements). Make clear the obstacle is structural — combat alone does not defeat it. 80-150 words.",
+    "Third paragraph (REQUIRED). **The Key.** Bolded inline title. Description follows. STRICTLY 25-45 words — this paragraph IDENTIFIES the key and POINTS at it, nothing more. Cover ONLY: WHAT the key is (one short noun phrase — 'the carved bone-tablet', 'the Sister's old name', 'a drake-tooth'), WHERE it is (area ${solutionRoomId}), and HOW the party uses it AT THE OBSTACLE (one verb — present, place, speak, anoint). Do NOT describe what's in area ${solutionRoomId}, who else is there, the key's appearance beyond a one-noun-phrase identifier, its history, what the party must do to acquire it, or any guardian or puzzle around it — area ${solutionRoomId}'s prompt owns all of that and will produce its own description. Restating it here is the redundancy this prompt is built to avoid.",
+    "Fourth paragraph (OPTIONAL). **Bypassing.** Bolded inline title. Description follows. ONLY include when a clever alternative bypass exists that doesn't go through the key room: a high-DC magical workaround, an environmental approach (collapsing the ceiling, going around through another passage), a deception path (impersonating the key without it). Each bypass should have a clear DC and a notable risk (alerts the dungeon, fails partially, etc.). Skip when no genuine alternative bypass exists. 50-100 words.",
+    "Fifth paragraph (OPTIONAL). **Aftermath.** Bolded inline title. Description follows. ONLY include when removing the obstacle has ongoing consequences (the guardian reforms after an hour and the party can no longer use the same trick; the ward leaves a lingering curse; the path opens but alerts something nearby). Skip when the obstacle resolves cleanly. 40-80 words."
+  ],
+
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the obstacle's character and the key required.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
 
+## DC AND DAMAGE SCALING
+
+When the obstacle has a mechanical failure (damage from attempting to force past, save DC for the ward triggering, DC for the bypass alternatives):
+
+- T1: DCs 10-12, saves DC 11-12, damage 1d4-2d6
+- T2: DCs 12-14, saves DC 13-14, damage 2d6-3d8
+- T3: DCs 14-16, saves DC 14-16, damage 3d8-5d8
+- T4: DCs 16-18, saves DC 16-18, damage 5d8-8d10
+- T5: DCs 18-20, saves DC 18-20, damage 8d10+
+
+Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole table within seconds of the failed roll. The guardian's dust drains for damage; the ward repels with force; the cursed threshold inflicts a tier-appropriate condition. NOT "the party feels uneasy" or "memory of the room becomes hazy."`;
+}
+
+/**
+ * Validate the obstacle response. Same shape as the other room
+ * prompts — `name`, `read_aloud_opening`, `has_challenge` (always
+ * true), `challenge_header` (always required), `dm_notes` (array
+ * with at least 3 entries: overview + obstacle + key), `one_sentence_summary`
+ * required; `door_preamble` optional.
+ *
+ * @param {string} jsonString
+ * @returns {boolean}
+ */
 export function validateObstacleResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const requiredKeys = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'name',
+      'read_aloud_opening',
+      'has_challenge',
+      'challenge_header',
+      'dm_notes',
       'one_sentence_summary',
-      'lore_description',
-      'features_and_contents',
-      'obstacle_header',
-      'obstacle_explanation',
-      'obstacle_mechanics',
-      'failure_scenario',
-      'obstacle_solution',
-      'obstacle_circumvention',
-      'obstacle_completion_dm',
-      'read_aloud_obstacle_completion',
-      'read_aloud_description',
-      'additional_notes',
-    ];
-    for (const key of requiredKeys) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallengeRequired,
+    d => validateDmNotes(d, 3),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
+/**
+ * Build the contentArray that the RoomDescription component renders.
+ *
+ * Order:
+ *   1. door_preamble (paragraph)            — only when non-empty
+ *   2. read_aloud_opening (boxed)
+ *   3. challenge_header (header)
+ *   4. dm_notes[0..n] (paragraph each)      — one entry per paragraph
+ *
+ * @param {object} data parsed obstacle response
+ * @returns {Array<{format: string, content: string}>}
+ */
 export function processObstacleResponse(data) {
   const content = [];
+  if (data.door_preamble && data.door_preamble.trim()) {
+    content.push({ format: 'paragraph', content: data.door_preamble.trim() });
+  }
   content.push({
     format: 'read_aloud',
-    content: data.read_aloud_description,
+    content: data.read_aloud_opening,
   });
-  content.push({ format: 'paragraph', content: data.lore_description });
-  content.push({ format: 'paragraph', content: data.features_and_contents });
-  content.push({ format: 'paragraph', content: data.additional_notes });
-  content.push({ format: 'header', content: data.obstacle_header });
-  content.push({ format: 'paragraph', content: data.obstacle_explanation });
-  content.push({ format: 'paragraph', content: data.obstacle_mechanics });
-  content.push({ format: 'paragraph', content: data.failure_scenario });
-  content.push({ format: 'paragraph', content: data.obstacle_solution });
-  content.push({ format: 'paragraph', content: data.obstacle_circumvention });
-  content.push({
-    format: 'paragraph',
-    content: data.obstacle_completion_dm,
-  });
-  content.push({
-    format: 'read_aloud',
-    content: data.read_aloud_obstacle_completion,
-  });
-
+  content.push({ format: 'header', content: data.challenge_header });
+  for (const paragraph of data.dm_notes) {
+    if (typeof paragraph !== 'string' || !paragraph.trim()) continue;
+    content.push({ format: 'paragraph', content: paragraph });
+  }
   return content;
 }

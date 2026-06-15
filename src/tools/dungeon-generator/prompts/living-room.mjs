@@ -1,156 +1,273 @@
-// living-room.js
+/**
+ * Living room prompt — generates dormitories, kitchens, common
+ * rooms, sleeping warrens, campsites, mess halls, and other spaces
+ * where the dungeon's inhabitants (current or former) eat, sleep,
+ * gather, or otherwise live.
+ *
+ * Output shape (same 4-field pattern as entrance / connecting /
+ * secret room, with one type-specific tightening: has_challenge is
+ * conditional on inhabitants being PRESENT and HOSTILE in this
+ * specific room, not merely on inhabitants existing in the dungeon):
+ *
+ *   name                 — descriptive room name (Drake-Kit Nest,
+ *                          Spinners' Hearth, Brothers' Refectory)
+ *   door_preamble        — terse door states; omit if all unlocked
+ *   read_aloud_opening   — 40-80 word boxed text; the room reads as
+ *                          inhabited even when empty (their leavings
+ *                          tell the story)
+ *   has_challenge        — boolean. TRUE when inhabitants are
+ *                          PRESENT and HOSTILE in this specific room
+ *                          (the party will fight or be detected on
+ *                          entry). FALSE when the room is empty
+ *                          (inhabitants away, asleep elsewhere, dead,
+ *                          long-departed), or when inhabitants are
+ *                          present but non-hostile (refugees,
+ *                          prisoners, children, kin).
+ *   challenge_header     — ≤8 word title, only when has_challenge
+ *   dm_notes             — array of paragraph strings. First
+ *                          paragraph covers contents, dimensions,
+ *                          inhabitants (current or former), and what
+ *                          they do here. Optional subsequent
+ *                          paragraphs are feature sub-blocks for
+ *                          specific items, NPC interactions, or
+ *                          environmental elements.
+ *   one_sentence_summary — sidebar summary, ≤20 words.
+ *
+ * Why this shape (vs. the old 9-field structure):
+ *   The old prompt mandated lore_description + features_and_contents
+ *   + interactive_element_lore + interactive_element_details +
+ *   additional_notes as five separate DM-side paragraphs, plus an
+ *   interactive_element_header. The model padded every living room
+ *   with an invented "interactive element" (a glowing tome, a
+ *   conspicuously ornate chest) even when the room's actual point
+ *   was the inhabitants' daily life. The new shape lets the
+ *   inhabitants carry the room and uses optional feature sub-blocks
+ *   for genuine interactive elements when warranted.
+ *
+ * The old name guidance also said "1-2 words, simple, almost dull"
+ * — that was wrong; it stripped life from rooms that should feel
+ * specific to their inhabitants. The new guidance encourages
+ * evocative inhabitant-centric names: "Spinners' Hearth," "Drake-Kit
+ * Nest," "Brothers' Refectory" — not just "Kitchen" or "Bedroom."
+ *
+ * Difficulty tier (1-5) scales DCs/severity when has_challenge is
+ * true. Stored on `dungeon.dimensions.difficulty`.
+ */
+
+import {
+  CROSS_ROOM_REFERENCES_SECTION,
+  DOOR_PREAMBLE_FIELD_DESC,
+  READ_ALOUD_NO_DOORWAY_INVENTORY_RULE,
+  READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE,
+  ROOM_MENTIONS_FIELD_DESC,
+} from './shared-fragments.mjs';
+import {
+  parseAndValidateRoom,
+  validateRequiredKeys,
+  validateHasChallenge,
+  validateDmNotes,
+  validateOptionalDoorPreamble,
+  validateOptionalRoomMentions,
+} from './shared-validators.mjs';
 
 export function generateLivingRoomPrompt(
   dungeonOverview,
   shortDescription,
   existingRooms = 'none',
-  connectedRoomsInfo,
+  connectedRoomsInfo = '',
+  npcString = '',
+  difficulty = null,
+  doorwayInfo = null,
+  loreRole = null,
+  loreLookup = '',
+  incomingMentions = '',
+  featuredItems = '',
+  incomingContentSeeds = '',
 ) {
-  return `
-Using the dungeon overview and the short room description below, create a detailed description of a daily use type room within the dungeon. This room should provide a slice of life for the current or former residents, fitting within the context of the dungeon's lore and theme.
+  const tierLine = difficulty
+    ? `Dungeon difficulty tier: ${difficulty} (1-5). If a challenge is generated (inhabitants present + hostile), scale DCs and failure severity to this tier.`
+    : `Dungeon difficulty tier: not specified — default to T2 (DCs 12-14) if generating a challenge.`;
 
-**Dungeon Overview:**
+  const connectedSection = connectedRoomsInfo && connectedRoomsInfo !== ''
+    ? `Connected rooms (rooms reachable from this one): ${connectedRoomsInfo}\n`
+    : '';
+
+  const doorwaySection = doorwayInfo
+    ? `\nDOORWAYS IN THIS ROOM — authoritative door states from the map. The door_preamble field MUST report states EXACTLY as listed here. Do NOT invent locks, bars, DCs, force checks, or alternate bypasses for doors marked "unlocked door":
+${doorwayInfo}
+`
+    : '';
+
+  const npcSection = npcString
+    ? `NPC present in the room — the user explicitly picked this NPC. They MUST appear by name in the read_aloud_opening or dm_notes; do NOT silently omit them. If this NPC is the dungeon's BOSS or a powerful entity unlikely to be in a living quarters, present them as a weakened version, projection, illusion, or avatar (a "final boss preview"), not the full encounter — but they MUST still appear. If this NPC reads as someone from OUTSIDE the dungeon (a questgiver, a townsperson, a relative the party was sent to investigate, an NPC whose context lives in the surrounding setting rather than this dungeon), incorporate them diegetically — a vision in the steam, a voice carried on a draft, a written note left here in their hand, a memory-echo touched in the cold, a sketched portrait on the wall, a sleeping form half-glimpsed in shadow — but they MUST still appear by name. Neither exception is a license to skip them.
+
+NPC details:
+${npcString}
+`
+    : '';
+
+  const existingRoomsLine = existingRooms && existingRooms !== 'none'
+    ? `\nEXISTING ROOMS in this dungeon (do NOT reuse these specific room names — pick a different one): ${existingRooms}\n`
+    : '';
+
+  const loreRoleSection = loreRole
+    ? `\nLORE ROLE: This room corresponds to "${loreRole}" from the dungeon's overview prose. The room generates AS that named place — its name, character, contents, and the player-facing payoff align with what the overview says about "${loreRole}".\n`
+    : '';
+
+  return `You are writing a LIVING room — a space in a D&D 5e dungeon where the inhabitants (current or former) sleep, eat, gather, or otherwise live. Dormitories, kitchens, refectories, common rooms, sleeping warrens, hearth-halls, campsites, mess halls, parlors — any space organized around daily life rather than ritual, defense, or function.
+
+DUNGEON OVERVIEW:
 ${dungeonOverview}
 
-**Short Room Description (includes size, exits, and any notable features):**
-${shortDescription}
-No need to use the room's shape in the description if it's not relevant to the room's function. Just use the shape to inform other details. For example if the room is long, you could say that there are many beds lined up against the walls.
+LIVING ROOM INFO:
+Short description (size, exits, map-side notes): ${shortDescription}
+${connectedSection}${loreRoleSection}${doorwaySection}${loreLookup}${incomingMentions}${incomingContentSeeds}${featuredItems}${tierLine}${existingRoomsLine}
+${npcSection}
+## REGISTER FIDELITY — respect the dungeon's established context
 
-${
-  connectedRoomsInfo !== ''
-    ? `**Connected Rooms:** 
-  This room is connected to the following rooms: ${connectedRoomsInfo}`
-    : ''
-}
+The dungeon overview establishes the dungeon's material, lighting, inhabitants, and construction register. The living room INHERITS that register and must not contradict it:
 
-**Guidelines:**
+- LIGHTING: if the overview describes ambient/natural light (ember-glass veins, lava heat, daylight from holes, bioluminescent fungus), do NOT invent torches, sconces, braziers, or other installed lighting infrastructure unless the inhabitants are tool-users who would have installed them and the room's lore explains why.
+- CONSTRUCTION: if the dungeon was excavated or grown by non-tool-using inhabitants (drakes, oozes, fungi, worms), do NOT invent carpentry, masonry, or other tool-marks. Their living spaces are nests, hollows, scrapes, beds of moss or fur — not bunks and tables.
+- FURNITURE AND OBJECTS: match the inhabitants. A drake-kin nest has piled hides, gnawed bones, and clutch-warmth — NOT cots and lockers. A monastic refectory has long benches, wooden bowls, and a single candle — NOT thrones and tapestries. A goblin warren has heaps of stolen cloth and chittering young — NOT writing desks.
 
-- **Room Type:**
-  - The room could be a dormitory, bedroom, kitchen, dining room, drawing room, campsite, warren, or any space where inhabitants live or spend leisure time.
-  - Choose a specific type of living room that makes sense within the dungeon's context.
+## ROOM-IS-INHABITED-EVEN-WHEN-EMPTY
 
-- **Current or Former Residents:**
-  - Reflect the lifestyle and characteristics of the current or former inhabitants.
-  - Include details that hint at who uses or used the room (e.g., furniture, personal items, decorations).
+A living room reads as inhabited even when no creature is currently in it. The inhabitants' LEAVINGS tell the story: rumpled bedding, food half-eaten, a tool dropped mid-use, a sketched plan unfinished, a child's toy on a hearthstone, a spitted carcass cooling. The read-aloud should make the inhabitants felt without naming them on the page — the DM can decide whether they're here, asleep, away, or dead.
 
-- **Integration with Dungeon Lore:**
-  - Ensure the description aligns with the dungeon's theme and story.
-  - Incorporate elements from the dungeon overview to enhance immersion.
+When the room IS occupied at the moment of entry (NPC string above, or the dungeon's central activity puts them here), describe the inhabitants in the read-aloud as part of the scene and set has_challenge = TRUE if they would react hostilely.
 
-- **Avoid Specific Game Mechanics:**
-  - Focus on narrative descriptions without referencing specific game rules or mechanics.
+## CHALLENGE DECISION — do this first
 
-**Read Aloud Description Guidelines:**
+has_challenge = TRUE when, at the moment the party enters, inhabitants are PRESENT and HOSTILE — meaning the party will either fight, be detected, or have to immediately negotiate to avoid combat. The challenge is the encounter itself (skill check to sneak past, social roll to deceive, combat).
 
-Compose the **read_aloud_description** using the following sentence-by-sentence structure:
+has_challenge = FALSE when:
+- The room is empty (inhabitants away, asleep elsewhere, on rotation in another area, recently dead)
+- Inhabitants are present but non-hostile (refugees, prisoners, kin who won't fight, children, the dying)
+- Former inhabitants (long-departed, the room is now ruined or quiet)
 
-1. **Sentence 1: Room-Specific Description**
-   - **Guideline:** Describe the specific type and characteristics of the room within the dungeon. Include details about its size, purpose, and distinctive features to set the scene for what the players are encountering.
-   - **Examples:**
-     - "The Guardroom is cramped and dimly lit, with rusted weapons and shields adorning its walls."
-     - "The Alchemist's Lab is cluttered with bubbling potions and strange apparatuses, the air heavy with the scent of chemicals."
-     - "The Treasure Chamber gleams with gold and jewels, but its opulence is overshadowed by the ominous statues guarding every corner."
+Do NOT default to "every inhabited room has a fight." Many living spaces in real dungeons are empty during play — the inhabitants are working elsewhere, on patrol, asleep at a different hour. An empty barracks with rumpled bedding is more atmospheric and useful than an arbitrary combat encounter.
 
-2. **Sentence 2: Atmospheric Details**
-   - **Guideline:** Focus on sensory experiences specific to the room. Describe smells, lighting, sounds, or any atmospheric element that adds depth to the room’s character.
-   - **Examples:**
-     - "A musty odor permeates the air, mingling with a faint, metallic scent of old battles."
-     - "Faint, eerie lights from various flasks cast unsettling shadows on the stone walls."
-     - "The clink of shifting coins echoes softly, disturbed by a barely perceptible draft."
+## BOLDING RULES
 
-3. **Sentence 3: Unique Features**
-   - **Guideline:** Highlight unique, non-interactive elements that make the room special. These can be architectural, artistic, or natural details that contribute to the ambiance without being directly usable by the players.
-   - **Examples:**
-     - "An ancient tapestry, threadbare and faded, depicts a long-forgotten battle, hanging precariously on one wall."
-     - "Shelves lined with oddly colored fungi emit a faint luminescence, providing the only light in the chamber."
-     - "Intricate mosaics on the floor, partially covered by dust, show celestial patterns and unknown symbols."
+Use **markdown bold** ONLY for:
+1. Creature names when first introduced in a paragraph (e.g., **goblin sentry**, **drake-kit**)
+2. Character names when first introduced in a paragraph (e.g., **Brother Calanthir**)
+3. Feature sub-block titles at the START of an optional dm_notes paragraph, formatted as: **Feature Name.** followed by description
 
-4. **Sentence 4: Interactive Element**
-   - **Guideline:** Introduce one feature in the room that players can interact with. These should be elements that can provoke action, conversation, or decision-making. This will be expanded upon further in interactive_element_description **DO NOT MENTION TRAPS OR ANYTHING HIDDEN TO PLAYERS.**
-   - **Examples:**
-     - "A ghostly figure, clad in ancient armor, paces restlessly, murmuring about a lost battle and a betrayed king."
-     - "Among the clutter, a prominently placed tome radiates a subtle, magical aura, seemingly beckoning for a closer look."
-     - "A conspicuously ornate chest sits in the center, its lock glinting ominously under the flickering torchlight."
+DO NOT bold game mechanics keywords (DCs, skill names), action verbs, or generic phrases. Plain text carries those.
 
-**Return the description in JSON format with the following keys:**
+## CROSS-REFERENCE FIDELITY — use the LORE-LOCATION LOOKUP
 
-- **name**: A short, appropriate name for the room (e.g., "Barracks", "Kitchen", "Goblin Camp", "Parlor", "Bedroom"). This name should be 1-2 words and should be simple, almost dull. The interesting stuff is in the description not the name. Just give us the function of the room.
-- **one_sentence_summary**: A brief summary of the room's function or purpose within the dungeon.
-- **lore_description**: For the Dungeon Master's eyes only. Describe the room's function or purpose within the dungeon. Who spends or spent time here? What activities take place or took place here? Were all inhabitants allowed in this room or just a select few?
-- **features_and_contents**: For the Dungeon Master's eyes only. Describe notable features, items, or information present in the room that may be of interest to the players.
-- **interactive_element_header**: A brief header for the interactive element in the room (e.g., "The Ghostly Figure", "The Enchanted Tome", "The Ornate Chest").
-- **interactive_element_lore**: For the Dungeon Master's eyes only. Provide additional lore or context about the interactive element. Why is it here? What is its significance?
-- **interactive_element_details**: For the Dungeon Master's eyes only. Describe the interactive element in more detail, including its appearance, behavior, and any effects it may have on the players. Are there any skill checks or actions required to interact with it? What benefits or consequences might arise from interacting with it?
-- **read_aloud_description**: A vivid description to read aloud when players enter the room, following the sentence-by-sentence guidelines above. Remember to take the following short description into account, particularly when it comes to room size: ${shortDescription}
-- **additional_notes**: For the Dungeon Master's eyes only. Include any other relevant information or secrets about the room.
+When dm_notes (or any field) references other parts of the dungeon in a way the party can act on (a route, a destination, a guide's directions), the references MUST resolve to actual area numbers on the map.
 
-**Example JSON Format:**
+- If a lore-location appears in the LORE-LOCATION LOOKUP above, USE the listed area number when referencing it ("the brothers go to area 12 at dawn-song" or "the brothers go to the scriptorium, area 12, at dawn-song"). Actionable.
+- If a lore-location is NOT in the lookup, treat it as atmospheric only ("the air carries the bog-smell from outside"). Do not promise navigation to it.
 
-\`\`\`json
+The LORE-LOCATION LOOKUP is the source of truth. If empty, default to atmospheric-only for any lore-location named in the overview.
+
+${CROSS_ROOM_REFERENCES_SECTION}
+
+## WHAT DOES NOT GO IN dm_notes
+
+Three categories are owned by other fields or sections:
+
+1. EXIT INVENTORY. The read-aloud already names visible directions; door_preamble handles door states. dm_notes never lists exits.
+
+2. SECRET DOORS AND THEIR MECHANICS. A separately-generated **Secret Door** notes section gets appended to this room with the canonical discovery/opening mechanics. dm_notes never mentions the secret door's location, finding mechanic, or opening mechanic — and NEVER creates a **Secret Door Trigger** or **Hidden Passage** feature sub-block. The door_preamble flagged its existence; that is the only mention dm_notes is allowed.
+
+3. DOOR MATERIAL. "Wooden door," "stone door," etc. belong in the read-aloud (when notable). dm_notes treats doors by area number only.
+
+If you're about to write something in one of these categories, STOP and remove it.
+
+## OUTPUT FORMAT
+
+Return STRICT JSON (no prose, no commentary, no code fences):
+
 {
-  "name": "Cultist Dormitory",
-  "one_sentence_summary": "A room where cultists once slept and meditated.",
-  "lore_description": "This room served as the sleeping quarters for the cultists who once inhabited the dungeon. They would gather here for rest and meditation between their dark rituals.",
-  "features_and_contents": "The cots are neatly made, with small personal belongings tucked under each pillow. A faded tapestry depicting a hooded figure hangs above the entrance.",
-  "interactive_element_header": "The Hooded Figure",
-  "interactive_element_lore": "The tapestry depicts the cult's mysterious leader, known only as the Shadowed One. His face is obscured by shadows, and his eyes seem to follow your every move.",
-  "interactive_element_details": "The tapestry radiates a faint magical aura, and a soft whispering voice can be heard when standing near it. Players who examine the tapestry may make a knowledge check to decipher the the symbolism embedded in the design. The symbolism will provide a clue to a future challenge or hidden treasure.",
-  "read_aloud_description": "The room is cramped and dimly lit, with rows of simple cots lining the walls. The air is heavy with the scent of incense, and faint whispers echo through the chamber. A faded tapestry depicting a hooded figure hangs above the entrance.",
-  "additional_notes": "The cultists' personal belongings are mundane but well cared for, suggesting a sense of order and discipline among the group."
+  "name": "A 1-4 word descriptive name reflecting the inhabitants and their use of the room (e.g., 'Drake-Kit Nest,' 'Spinners' Hearth,' 'Brothers' Refectory,' 'Warband Barracks'). The name should be specific to the inhabitants — not generic 'Kitchen' or 'Dormitory' if the inhabitants give it a character. Avoid archaic opaque terms (no scriptorium, narthex, pronaos).",
+
+  "door_preamble": ${DOOR_PREAMBLE_FIELD_DESC},
+
+  "read_aloud_opening": "Boxed text the DM reads when the party enters. 40-80 words, present-tense, sensory. Describe the inhabited space — what the inhabitants have left behind, the room's daily-life character, atmosphere, light, sound, smell. ${READ_ALOUD_NO_DOORWAY_INVENTORY_RULE} ${READ_ALOUD_SHOW_DONT_TELL_DIMENSIONS_RULE} If inhabitants ARE here at the moment of entry, describe them as part of the scene. NO mechanics, NO DM hints, NO addressing the DM. Avoid generic material adjectives like 'wooden door' unless the material is genuinely notable.",
+
+  "has_challenge": false,
+
+  "challenge_header": "≤8 word title for the challenge (e.g., 'The Sleeping Patrol,' 'The Hearth-Bound Warband'). Omit this key entirely if has_challenge is false.",
+
+  "dm_notes": [
+    "Array of strings. Each string is ONE paragraph. The first paragraph covers: dimensions, the inhabitants (CURRENT or FORMER — name them, give their daily-life details, what they do here), what the party will find of interest (objects, leavings, clues). If has_challenge: also covers the encounter mechanic (number of inhabitants present, behavior on detection, skills to sneak past or deceive, DCs scaled to tier, IMMEDIATE physical failure consequence — they raise the alarm, they attack, they call for kin). 80-150 words for the common case; 150-220 if the room has an active encounter to set up.",
+    "Subsequent paragraphs are OPTIONAL feature sub-blocks — for specific items, NPC interactions, or environmental elements that warrant their own block. Each begins with a bolded inline title: **Feature Name.** Description follows in regular text. Examples: '**Brother Galen\\'s Lost Fingers.** Among the bedding on the third cot...', '**The Hearth-Pit.** The central fire is banked but not cold...', '**The Forge-Master\\'s Lockbox.** A small iron box on the workbench...'. Skip these if the first paragraph already covered everything. EACH FEATURE SUB-BLOCK MUST HAVE A UNIQUE TITLE within dm_notes — do not emit the same **Title.** twice. If you find yourself writing the same sub-block title a second time, consolidate the content into a single paragraph instead."
+  ],
+
+  "one_sentence_summary": "Brief sidebar-list summary (≤20 words) of the room's function and inhabitants.",
+
+  "room_mentions": ${ROOM_MENTIONS_FIELD_DESC}
 }
-\`\`\`
 
-The dungeon already has the following rooms: ${existingRooms}
+## DC SCALING (only if has_challenge)
 
-Do not reuse any of these room types. Ensure that the room description is unique and adds depth to the dungeon's narrative.
-If they aren't in the list, you can use the following room types: dormitory, bedroom, kitchen, dining room, drawing room, campsite, warren, or any space where inhabitants live or spend leisure time. Focus on eating, sleeping, or socializing spaces first before moving on to more specialized rooms.
-Room size should determine the type of room you choose. For example, a large room could be a dining room or dormitory, while a small room could be a kitchen or bedroom.
-**Please provide the response in this JSON format.**
-`;
+- T1: DCs 10-12, failure → minor damage (1d4-1d6) or short setback
+- T2: DCs 12-14, failure → moderate damage (2d6) or temporary condition
+- T3: DCs 14-16, failure → real damage (3d6+) or persistent threat
+- T4: DCs 16-18, failure → severe damage (4d8+) or party-wide complication
+- T5: DCs 18-20, failure → lethal threat or major resource cost
+
+Failure consequences MUST be PHYSICAL and IMMEDIATE — observable to the whole table within seconds of the failed roll. "The patrol raises the alarm and three guards close on the party" is right. "The party is now hunted for the rest of the dungeon" is also right (immediate state change). "The order's reputation suffers" is wrong (abstract, not observable).`;
 }
 
+/**
+ * Validate the living room response. Same shape as the other room
+ * prompts — `name`, `read_aloud_opening`, `has_challenge`, `dm_notes`
+ * (array), `one_sentence_summary` required; `challenge_header`
+ * required only when has_challenge; `door_preamble` optional.
+ *
+ * @param {string} jsonString
+ * @returns {boolean}
+ */
 export function validateLivingRoomResponse(jsonString) {
-  try {
-    const data = JSON.parse(jsonString);
-    const requiredKeys = [
+  return parseAndValidateRoom(jsonString, [
+    d => validateRequiredKeys(d, [
       'name',
+      'read_aloud_opening',
+      'has_challenge',
+      'dm_notes',
       'one_sentence_summary',
-      'read_aloud_description',
-      'lore_description',
-      'features_and_contents',
-      'interactive_element_header',
-      'interactive_element_lore',
-      'interactive_element_details',
-      'additional_notes',
-    ];
-    for (const key of requiredKeys) {
-      if (!(key in data)) {
-        console.error(`Missing required key: ${key}`);
-        return false;
-      }
-    }
-    return true;
-  } catch (e) {
-    console.error('Invalid JSON:', e);
-    return false;
-  }
+    ]),
+    validateHasChallenge,
+    d => validateDmNotes(d, 1),
+    validateOptionalDoorPreamble,
+    validateOptionalRoomMentions,
+  ]);
 }
 
+/**
+ * Build the contentArray that the RoomDescription component renders.
+ *
+ * Order:
+ *   1. door_preamble (paragraph)            — only when non-empty
+ *   2. read_aloud_opening (boxed)
+ *   3. challenge_header (header)            — only when has_challenge
+ *   4. dm_notes[0..n] (paragraph each)      — one entry per paragraph
+ *
+ * @param {object} data parsed living room response
+ * @returns {Array<{format: string, content: string}>}
+ */
 export function processLivingRoomResponse(data) {
   const content = [];
+  if (data.door_preamble && data.door_preamble.trim()) {
+    content.push({ format: 'paragraph', content: data.door_preamble.trim() });
+  }
   content.push({
     format: 'read_aloud',
-    content: data.read_aloud_description,
+    content: data.read_aloud_opening,
   });
-  content.push({ format: 'paragraph', content: data.lore_description });
-  content.push({ format: 'paragraph', content: data.features_and_contents });
-  content.push({ format: 'paragraph', content: data.additional_notes });
-  content.push({ format: 'header', content: data.interactive_element_header });
-  content.push({ format: 'paragraph', content: data.interactive_element_lore });
-  content.push({
-    format: 'paragraph',
-    content: data.interactive_element_details,
-  });
-
+  if (data.has_challenge && data.challenge_header) {
+    content.push({ format: 'header', content: data.challenge_header });
+  }
+  for (const paragraph of data.dm_notes) {
+    if (typeof paragraph !== 'string' || !paragraph.trim()) continue;
+    content.push({ format: 'paragraph', content: paragraph });
+  }
   return content;
 }

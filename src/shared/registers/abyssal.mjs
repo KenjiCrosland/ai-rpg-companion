@@ -128,7 +128,14 @@ export const abyssalCharacterEpithets = [
 
 export const abyssalRegister = {
   prefix: 'Abyssal',
-  descriptor: "Abyssal: guttural, chaotic (e.g., Ghar'zuul, Rotmaw, Vilesung)",
+  descriptor: "Abyssal: guttural, throat-rough phonology; jagged consonant clusters (ghr, zhr, vth), harsh fricatives, syllables that resolve into accusation or threat. Apostrophes mark glottal breaks. Compound names commonly pair a violence-verb or decay-noun (rot-, vile-, gore-, maw-) with a body-part or anatomical noun (-zuul, -sung, -tooth, -spine). Derive fresh names from the phonology; do not copy from prior generations.",
+  creatureTradition: 'abyssal dungeons run on the teeming demonic horde: balor (the apex), marilith, hezrou, glabrezu, vrock, succubus and incubus (the corruptors), dretch and manes (the swarm), quasits, abyssal larvae, chasme. Demonic-summoned beasts (nightmares, shadow demons, abyssal chickens of the lower depths) round the menagerie. The hierarchy reads as bloody-and-chaotic — power flows from raw violence and predation, not contracts.',
+  creatureTraditionByTier: {
+    complicating: ['dretch', 'manes', 'quasits', 'abyssal larvae'],
+    significant:  ['vrock', 'hezrou', 'succubus or incubus', 'chasme'],
+    scary:        ['balor', 'marilith', 'glabrezu', 'shadow demon major', 'nightmare-steed of an ascended demon'],
+  },
+  materialTradition: 'ichor, obsidian dust, scorched bone, sulfur crust, congealed shadow, larvae-slime, fly-husk',
   characterPool: abyssalCharacterEpithets,
   characterPoolStrictness: 'preferred',
   thematic: true,

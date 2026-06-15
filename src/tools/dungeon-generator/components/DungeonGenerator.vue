@@ -36,24 +36,46 @@
         <div class="hero-header">
           <div class="brand-line">
             <span class="brand-name">Kenji's Dungeon Generator</span>
-            <span v-if="!premium" class="version-pill">Free</span>
-            <span v-else class="version-pill premium">Premium</span>
+            <!-- Version pill is fresh-visit framing — suppressed during
+                 seeded flows where the user is mid-task. Mirrors the
+                 NPC generator's pattern. -->
+            <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
+            <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
           </div>
-          <h1>Create Complete D&D 5e Dungeons in Minutes</h1>
-          <p class="value-prop">Generate dungeon maps, NPCs, monsters with full statblocks, and export-ready content.
-          </p>
+          <template v-if="isSeededFlow">
+            <h1>
+              Create Dungeon<template v-if="seedStubName">: {{ seedStubName }}</template>
+            </h1>
+            <p class="value-prop">
+              From your {{ seedSourceType }}
+              <a href="#" class="seed-source-link" @click.prevent="navigateBackToSeedSource">{{ seedSourceName }}</a>
+            </p>
+          </template>
+          <template v-else>
+            <h1>Create Complete D&D 5e Dungeons in Minutes</h1>
+            <p class="value-prop">Generate dungeon maps, NPCs, monsters with full statblocks, and export-ready content.
+            </p>
+          </template>
         </div>
 
         <!-- ZONE 2: Form card -->
         <div class="form-card">
+          <!-- Cross-tool seed callout: shown when the user arrived from
+               the Item Generator (pendingSeed populated by the mount
+               handler). Removes the "is anything actually happening?"
+               ambiguity the empty form created. Kept terse — backend
+               processes (register inheritance, mode inference,
+               dimensional presets) intentionally not surfaced. -->
+          <SeededFromBanner
+            :source-type="seededFromItem ? 'item' : ''"
+            :source-name="seededFromItem?.name || ''"
+          />
           <form @submit.prevent="handleGenerateDungeon">
-            <div class="generator-fields">
-              <cdr-input id="adjective" v-model="dungeonStore.overviewForm.adjective" background="secondary"
-                label="Adjective (optional)" placeholder="e.g. Forgotten, Decaying, Sunken" />
-              <cdr-input id="setting_type" v-model="dungeonStore.overviewForm.setting_type" background="secondary"
-                label="Type of Dungeon (optional)" placeholder="e.g. Temple, Fortress, Outpost" />
-              <cdr-input id="place_name" v-model="dungeonStore.overviewForm.place_name" background="secondary"
-                label="Place Name (optional)" placeholder="e.g. Grimhold, Farwatch Outpost" />
+            <div class="form-row-description">
+              <cdr-input id="dungeon_description" v-model="dungeonStore.overviewForm.description"
+                background="secondary"
+                label="Describe your dungeon (optional)"
+                placeholder="e.g. A sunken Mesopotamian ziggurat called Edutu — or leave blank for a surprise." />
             </div>
             <cdr-select class="generator-field-select" id="difficulty" v-model="dungeonStore.overviewForm.difficulty"
               background="secondary" label="Dungeon Difficulty" :options="difficultyOptions"
@@ -64,7 +86,7 @@
             </cdr-select>
             <div class="lore-field-input">
               <cdr-input :rows="5" tag="textarea" v-model="dungeonStore.overviewForm.place_lore" background="secondary"
-                label="Dungeon Lore (optional)" placeholder="Enter additional details">
+                label="Dungeon Lore (optional)" placeholder="Paste in existing lore, or describe deeper history — optional.">
                 <template #helper-text-bottom>
                   Need help with lore? Use the
                   <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link>.
@@ -147,10 +169,15 @@
 
 <script setup>
 import { ParActionButton, ParCallout } from "@/parchment";
+import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { useToast } from '@/composables/useToast';
-import { getNavigationParams } from '@/util/navigation.mjs';
+import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
+import { loadSeededInput } from '@/util/seeded-input.mjs';
+import { canGenerateCrossTool } from '@/util/can-generate-cross-tool.mjs';
+import { buildDungeonPrefillFromItem } from '@/prompts/item-dungeon-prompts.mjs';
+import { pendingSeed, overviewForm, currentDungeonId } from '../stores/dungeon-state.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 import { CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
@@ -176,6 +203,49 @@ const toast = useToast();
 const showDataManagerModal = ref(false);
 const isGenerating = ref(false);
 
+/**
+ * Read pendingSeed and surface the item name to the template so the
+ * form-side callout knows what to display. `pendingSeed` is populated
+ * by the mount handler when navigating from the Item Generator;
+ * cleared by the post-generation finalize hook in overview-store.
+ *
+ * Returns null when no item seed is pending; otherwise { name }.
+ * Backend details (selected stub, register, inferred mode, dimensional
+ * presets) are intentionally not surfaced here — the callout is just
+ * a "yes, this is happening" affirmation.
+ */
+const seededFromItem = computed(() => {
+  const seed = pendingSeed.value;
+  if (!seed || seed.source?.type !== 'item') return null;
+  return {
+    name: seed.source.name || seed.source.id || '',
+  };
+});
+
+// Seeded landing-page heading. Fires whenever a SeededInput exists,
+// regardless of whether the seed names a specific destination entity:
+// the dungeon generator has both a stub-based flow ("Create Dungeon"
+// on a specific related_dungeons stub) AND a whole-item flow
+// ("Generate a Dungeon from this Item"). The latter has no
+// entities[0].name, so a stub-name-gated swap (NPCGenerator's
+// pattern) leaves the whole-item case stranded with the generic
+// header. Reading from source.type alone matches the SeededFromBanner's
+// gate and ensures the hero swap fires in both cases. The h1 then
+// conditionally includes the stub name when present.
+const isSeededFlow = computed(() => !!pendingSeed.value?.source);
+const seedStubName = computed(() => pendingSeed.value?.entities?.[0]?.name || '');
+const seedSourceName = computed(() => pendingSeed.value?.source?.name || '');
+const seedSourceType = computed(() => pendingSeed.value?.source?.type || '');
+
+function navigateBackToSeedSource() {
+  const source = pendingSeed.value?.source;
+  if (!source) return;
+  if (source.type === 'item') {
+    navigateToTool('item-generator', { item: source.id });
+  }
+  // Setting/dungeon back-navigation can be added when those source flows ship.
+}
+
 // Provide motionToggle for Cedar skeleton components
 const motionToggle = ref(true);
 provide('motionToggle', motionToggle);
@@ -188,6 +258,19 @@ const patreonLoginUrl = computed(() => {
 
 // Handle dungeon generation with local loading state
 async function handleGenerateDungeon() {
+  // Cross-tool gate: when this generation is item-seeded, count it
+  // against the shared cross-tool quota (5/day total across all gated
+  // combos — shares the counter with item→setting). Free, non-seeded
+  // generations short-circuit the gate inside `canGenerateCrossTool`.
+  // The gate surfaces its own toast on block; we just bail without
+  // flipping the loading state so the user can come back tomorrow or
+  // upgrade.
+  const seedSourceType = pendingSeed.value?.source?.type;
+  if (seedSourceType) {
+    const canGenerate = await canGenerateCrossTool(seedSourceType, 'dungeon', props.premium);
+    if (!canGenerate) return;
+  }
+
   isGenerating.value = true;
   try {
     await dungeonStore.generateDungeonOverview();
@@ -219,9 +302,58 @@ function onTabChanged(index) {
 onMounted(() => {
   dungeonStore.loadDungeons();
 
-  // Handle deep linking from NPC Generator
   const params = getNavigationParams();
 
+  // Deep-link: Item Generator → "View in Dungeon Generator" for a
+  // promoted stub. Select that dungeon by id. Mirrors the setting
+  // generator's `params.setting` branch.
+  if (params.dungeon) {
+    dungeonStore.selectDungeon(params.dungeon);
+    return;
+  }
+
+  // Cross-tool seed: Item Generator → "Create Dungeon" from the item.
+  // Loads the seed and stashes it in module-level `pendingSeed`. The
+  // overview-store's generateDungeonOverview() inspects pendingSeed
+  // on its next call to run mode inference and apply mode-derived
+  // dimensional presets. Land the user on the overview tab so they
+  // can hit Generate immediately.
+  //
+  // Two seeded paths:
+  //   - STUB-BASED (entityName present): prefill the form's description
+  //     field with buildDungeonPrefillFromItem(seed) so the user sees
+  //     the per-stub seed text (place name + role + source quote) and
+  //     can review/edit before clicking Generate.
+  //   - WHOLE-ITEM FALLBACK (no entityName): leave the form blank;
+  //     overview-store synthesizes context from the item's lore on
+  //     the next generateDungeonOverview() call.
+  if (params.fromType === 'item' && params.fromId) {
+    const seed = loadSeededInput({
+      fromType: params.fromType,
+      fromId: params.fromId,
+      entityName: params.entityName,
+      destinationType: 'dungeon',
+    });
+    if (seed) {
+      pendingSeed.value = seed;
+      // Clear currentDungeonId so the OverviewTab renders the landing
+      // FORM, not whatever existing dungeon `loadDungeons` defaulted
+      // to (it falls back to dungeons[0] when no prior selection
+      // exists, which is the wrong landing state for a fresh seeded
+      // generation). The form's blank slate is what the user expects.
+      currentDungeonId.value = null;
+      if (params.entityName) {
+        const prefill = buildDungeonPrefillFromItem(seed);
+        if (prefill) {
+          overviewForm.value.description = prefill;
+        }
+      }
+      dungeonStore.activeTabIndex = 0;
+      return;
+    }
+  }
+
+  // Handle deep linking from NPC Generator
   if (params.source && params.tab === 'npcs') {
     // Find dungeon by name
     const dungeon = dungeonStore.dungeons.find(d =>
@@ -384,6 +516,26 @@ onMounted(() => {
     color: #6c757d;
     margin: 0;
     line-height: 1.5;
+  }
+
+  /* Seeded-flow back-link to the source entity. Mirrors NPCGenerator's
+     .seed-source-link: burgundy parchment accent, quiet by default
+     (no underline), underline emerges on hover/focus. */
+  .seed-source-link {
+    color: var(--par-color-title, #7a1f1f);
+    font-weight: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--par-color-title-deep, #58180d);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--par-color-title, #7a1f1f);
+      outline-offset: 2px;
+    }
   }
 }
 

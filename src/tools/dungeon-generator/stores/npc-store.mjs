@@ -13,6 +13,7 @@ import {
 } from '../prompts/dungeon-npcs.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
+import { logger } from '@/util/logger.mjs';
 import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
 import { ref } from 'vue';
 import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
@@ -81,7 +82,7 @@ export async function generateNPCStatblock(
   if (!currentDungeon.value) return;
   const npc = currentDungeon.value.npcs[index];
   if (!npc) {
-    console.error('NPC not found at index', index);
+    logger.error('NPC not found at index', index);
     return;
   }
 
@@ -189,7 +190,7 @@ export async function generateNPCStatblock(
     // Success - save once at the end
     saveDungeons();
   } catch (error) {
-    console.error('Error generating NPC statblock:', error);
+    logger.error('Error generating NPC statblock:', error);
   } finally {
     npcStatblockLoadingStates.value[index] = {
       part1: false,
@@ -225,7 +226,7 @@ function buildNPCString(npc) {
 
 export async function generateDungeonNPC(npcIndex) {
   if (!currentDungeon.value) {
-    console.error('No dungeon selected');
+    logger.error('No dungeon selected');
     return;
   }
 
@@ -233,7 +234,7 @@ export async function generateDungeonNPC(npcIndex) {
     currentlyLoadingNPCs.value[npcIndex] = true;
     const npc = currentDungeon.value.npcs[npcIndex];
     if (!npc) {
-      console.error('NPC not found');
+      logger.error('NPC not found');
       currentlyLoadingNPCs.value[npcIndex] = false;
       return;
     }
@@ -291,7 +292,7 @@ export async function generateDungeonNPC(npcIndex) {
     // Save once at the very end after all modifications complete
     saveDungeons();
   } catch (error) {
-    console.error('Error generating dungeon NPC:', error);
+    logger.error('Error generating dungeon NPC:', error);
     currentlyLoadingNPCs.value[npcIndex] = false;
   }
 }
@@ -379,14 +380,14 @@ export function deleteNPC(npcIndex) {
 
 export function addNPC() {
   if (!currentDungeon.value) {
-    console.error('No dungeon selected');
+    logger.error('No dungeon selected');
     return;
   }
 
   const nameVal = npcName.value || 'Unnamed NPC';
   const shortDesc = npcShortDescription.value;
   if (!shortDesc) {
-    console.error('NPC short description is required');
+    logger.error('NPC short description is required');
     return;
   }
 
@@ -405,6 +406,9 @@ export function addNPC() {
 
   generateDungeonNPC(currentDungeon.value.npcs.length - 1);
   saveDungeons();
+  // Returned so the caller (the NPCsTab add-form submit handler) can
+  // auto-expand the newly-added row before the user has to hunt for it.
+  return npcId;
 }
 
 // Handle storage changes from other tabs to sync statblock generation limits

@@ -372,6 +372,7 @@ import {
   CdrLink
 } from '@rei/cedar';
 import { ParActionButton } from '@/parchment';
+import { logger } from '@/util/logger.mjs';
 import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
@@ -765,7 +766,7 @@ const generateFirstEvent = async () => {
     viewMode.value = 'preview';
 
   } catch (error) {
-    console.error('Error generating event:', error);
+    logger.error('Error generating event:', error);
     toast.error('Failed to generate event. Please try again.');
   } finally {
     loadingEvents.value = false;
@@ -864,7 +865,7 @@ const generateEvent = async () => {
     viewMode.value = 'preview';
 
   } catch (error) {
-    console.error('Error generating event:', error);
+    logger.error('Error generating event:', error);
     toast.error('Failed to generate event. Please try again.');
   } finally {
     loadingEvents.value = false;
@@ -1016,7 +1017,7 @@ const generateSummary = async () => {
     updateItem();
 
   } catch (error) {
-    console.error('Error generating summary:', error);
+    logger.error('Error generating summary:', error);
     toast.error('Failed to generate historical summary. Please try again.');
   } finally {
     loadingSummary.value = false;

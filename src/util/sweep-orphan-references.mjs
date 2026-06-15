@@ -17,6 +17,7 @@
  */
 
 import { removeReference } from './reference-storage.mjs';
+import { logger } from './logger.mjs';
 
 const REFS_KEY = 'tool-references';
 
@@ -121,5 +122,5 @@ export function sweepOrphanReferences() {
     }
   }
 
-  console.log(`sweep-orphan-references: removed ${removed} orphan refs`);
+  logger.log(`sweep-orphan-references: removed ${removed} orphan refs`);
 }

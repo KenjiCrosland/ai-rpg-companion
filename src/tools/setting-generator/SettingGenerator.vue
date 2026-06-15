@@ -54,16 +54,34 @@
         <div class="hero-header">
           <div class="brand-line">
             <span class="brand-name">Kenji's Setting Generator</span>
-            <span v-if="!premium" class="version-pill">Free</span>
-            <span v-else class="version-pill premium">Premium</span>
+            <!-- Version pill is fresh-visit framing — suppressed during
+                 seeded flows where the user is mid-task. Mirrors the
+                 NPC and dungeon generators. -->
+            <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
+            <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
           </div>
-          <h1>Generate Rich RPG Settings with Factions, NPCs &amp; Quests</h1>
-          <p class="value-prop">From a single name to a fully detailed kingdom, town or empire with nested
-            locations, political factions, and quest hooks.</p>
+          <template v-if="isSeededFlow">
+            <h1>
+              Create Setting<template v-if="seedStubName">: {{ seedStubName }}</template>
+            </h1>
+            <p class="value-prop">
+              From your {{ seededSourceType }}
+              <a href="#" class="seed-source-link" @click.prevent="navigateBackToSeedSource">{{ seededSourceName }}</a>
+            </p>
+          </template>
+          <template v-else>
+            <h1>Generate Rich RPG Settings with Factions, NPCs &amp; Quests</h1>
+            <p class="value-prop">From a single name to a fully detailed kingdom, town or empire with nested
+              locations, political factions, and quest hooks.</p>
+          </template>
         </div>
 
         <!-- ZONE 2: Form card -->
         <div class="form-card">
+          <SeededFromBanner
+            :source-type="seededSourceType"
+            :source-name="seededSourceName"
+          />
           <form @submit.prevent="generateSetting" class="setting-form">
             <div class="form-row-description">
               <cdr-input id="setting_description" v-model="currentSetting.setting_description" background="secondary"
@@ -193,6 +211,8 @@ import {
 } from "./prompts/index.mjs";
 import SettingOverviewCardSkeleton from "./components/SettingOverviewCardSkeleton.vue";
 import DataManagerModal from '@/components/DataManagerModal.vue';
+import SeededFromBanner from '@/components/SeededFromBanner.vue';
+import { logger } from '@/util/logger.mjs';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import Tabs from '@/components/tabs/Tabs.vue';
@@ -200,7 +220,7 @@ import TabPanel from '@/components/tabs/TabPanel.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
-import { getNavigationParams } from '@/util/navigation.mjs';
+import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
 import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
 import {
@@ -208,6 +228,7 @@ import {
   resetItemStubsForDeletedSetting,
   findItemStubMatchingName,
   addSettingStubToItem,
+  reconcileNPCStubsAgainstItem,
 } from '@/util/item-storage.mjs';
 import { getSettingById, mergeRelatedPlaces, auntUncleNamesFor } from '@/util/setting-storage.mjs';
 import { consolidateOverviewToMarkdown } from '@/util/renderSettingOverview.mjs';
@@ -360,6 +381,34 @@ const currentSetting = computed(() => settings.value[currentSettingIndex.value] 
 // action). Held from mount until the post-generation finalize writes
 // the back-link onto the source-tool's stub.
 const pendingSeed = ref(null);
+
+// Seeded-from affordances for the form-card banner. Mirror the dungeon
+// generator's `seededFromItem` shape so SeededFromBanner can render the
+// same "Generating from item: [name]" affirmation above the form fields.
+// Banner self-hides when either field is empty, so no extra v-if needed.
+const seededSourceType = computed(() => pendingSeed.value?.source?.type || '');
+const seededSourceName = computed(
+  () => pendingSeed.value?.source?.name || pendingSeed.value?.source?.id || ''
+);
+
+// Seeded landing-page heading. Fires whenever a SeededInput exists,
+// matching the dungeon generator's gate. The current item-side UI only
+// surfaces stub-based "Create Setting" navigation (so entities[0].name
+// is always populated here), but relaxing the gate keeps the behavior
+// symmetric with the dungeon flow and future-proof if a "Generate a
+// Setting from this Item" whole-item path is added later. The h1
+// conditionally includes the stub name when present.
+const isSeededFlow = computed(() => !!pendingSeed.value?.source);
+const seedStubName = computed(() => pendingSeed.value?.entities?.[0]?.name || '');
+
+function navigateBackToSeedSource() {
+  const source = pendingSeed.value?.source;
+  if (!source) return;
+  if (source.type === 'item') {
+    navigateToTool('item-generator', { item: source.id });
+  }
+  // Setting/dungeon back-navigation can be added when those source flows ship.
+}
 
 onMounted(async () => {
   // Reset to a clean state before loading. Defends against test-time
@@ -865,7 +914,7 @@ function loadSettingsFromLocalStorage() {
       // Idempotent: when parentId already matches, this is a no-op.
       healParentPromotionLinks();
     } catch (error) {
-      console.error("Failed to parse settings from local storage:", error);
+      logger.error("Failed to parse settings from local storage:", error);
     }
   }
 }
@@ -1033,7 +1082,7 @@ function migrateSettingNPCs(setting) {
   }
 
   // if (migrated) {
-  //   console.log(`[MIGRATION] Extracted NPCs from setting "${settingName}" to shared NPC storage and synced IDs`);
+  //   logger.log(`[MIGRATION] Extracted NPCs from setting "${settingName}" to shared NPC storage and synced IDs`);
   // }
 }
 
@@ -1089,7 +1138,7 @@ async function processQueue() {
       await handleGenerateSetting(data);
       break;
     default:
-      console.error("Unknown request type:", type);
+      logger.error("Unknown request type:", type);
   }
 
   isProcessing.value = false;
@@ -1213,7 +1262,7 @@ async function generateSetting(payload = {}) {
     // Diagnostic: log dimensions being sent to the main prompt so
     // distribution can be checked empirically across a batch of
     // generations. Remove once verified.
-    console.log('[setting-gen][sublocation]', {
+    logger.log('[setting-gen][sublocation]', {
       type: setting_type || null,
       character,
       register,
@@ -1293,7 +1342,7 @@ async function generateSetting(payload = {}) {
   try {
     inferred = await inferSettingDimensions({ description, lore });
   } catch (e) {
-    console.error('Setting dimension inference failed:', e);
+    logger.error('Setting dimension inference failed:', e);
     inferred = { type: null, character: null, register: null, userName: null, tension: null };
   }
 
@@ -1351,7 +1400,7 @@ async function generateSetting(payload = {}) {
 
   const bannedTropes = getBannedTropesForGeneration();
 
-  console.log('[setting-gen][top-level]', {
+  logger.log('[setting-gen][top-level]', {
     type: inferred.type,
     character: inferred.character,
     register: inferred.register,
@@ -1519,7 +1568,7 @@ async function onPromoteRelatedPlace({ stub, kind }) {
   try {
     inferred = await inferSettingDimensions({ description: inferenceInput, lore: '' });
   } catch (e) {
-    console.warn('[setting-gen][promote] dimension inference failed:', e);
+    logger.warn('[setting-gen][promote] dimension inference failed:', e);
   }
 
   // Sibling pool for inheritance fallback when inference doesn't fire.
@@ -1689,7 +1738,7 @@ async function onPromoteRelatedPlace({ stub, kind }) {
     });
   }
 
-  console.log('[setting-gen][promote]', {
+  logger.log('[setting-gen][promote]', {
     kind,
     stubName: stub.name,
     inferredRegister: inferred.register,
@@ -1769,6 +1818,19 @@ async function handleGenerateSetting({ operationIndex, parentId, prompt, subloca
         npc_id: `npc_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`,
         ...npc
       }));
+
+      // Cross-tool stub dedup: when this setting is item-seeded, stamp
+      // `seeded_from` on any stub whose name matches one of the source
+      // item's `related_npcs`. The substrate's writeBack chain treats
+      // both ends as the same character on promotion. See
+      // reconcileNPCStubsAgainstItem in item-storage.mjs. No-op for
+      // sublocations and non-item seeds.
+      if (!isSublocation && pendingSeed.value?.source?.type === 'item') {
+        settings.value[operationIndex].npcs = reconcileNPCStubsAgainstItem(
+          settings.value[operationIndex].npcs,
+          pendingSeed.value.source.id
+        );
+      }
       settings.value[operationIndex].loadingsettingOverview = false;
       currentlyLoading.value = false;
       // Cross-tool finalize: when this generation ran for a top-level
@@ -1804,7 +1866,7 @@ async function handleGenerateSetting({ operationIndex, parentId, prompt, subloca
       runRelatedPlacesExtraction(operationIndex);
     }
   } catch (error) {
-    console.error("Error generating kingdom description:", error);
+    logger.error("Error generating kingdom description:", error);
     if (settings.value[operationIndex]) {
       settings.value[operationIndex].loadingsettingOverview = false;
       currentlyLoading.value = false;
@@ -2004,7 +2066,7 @@ async function runRelatedPlacesExtraction(operationIndex) {
       allSettings: settings.value,
     });
   } catch (err) {
-    console.warn('[setting-gen] related-places extraction failed:', err);
+    logger.warn('[setting-gen] related-places extraction failed:', err);
     return;
   }
 
@@ -2317,6 +2379,26 @@ $transition-speed: 0.3s;
     color: $cdr-color-text-secondary;
     margin: 0;
     line-height: 1.5;
+  }
+
+  /* Seeded-flow back-link to the source entity. Mirrors NPCGenerator's
+     .seed-source-link: burgundy parchment accent, quiet by default,
+     underline emerges on hover/focus. */
+  .seed-source-link {
+    color: var(--par-color-title, #7a1f1f);
+    font-weight: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--par-color-title-deep, #58180d);
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--par-color-title, #7a1f1f);
+      outline-offset: 2px;
+    }
   }
 }
 

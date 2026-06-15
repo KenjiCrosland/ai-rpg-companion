@@ -6,6 +6,7 @@
  */
 
 import { generateGptResponse } from "@/util/ai-client.mjs";
+import { logger } from "./logger.mjs";
 
 /**
  * Build the enrichment prompt for a custom statblock.
@@ -252,7 +253,7 @@ export function validateEnrichmentOutput(jsonString) {
 
     for (const tone of obj.preferred_tones) {
       if (!validTones.includes(tone)) {
-        console.warn(`Invalid tone: ${tone}`);
+        logger.warn(`Invalid tone: ${tone}`);
         return false;
       }
     }
@@ -302,7 +303,7 @@ export function saveEnrichment(creatureName, enrichmentData) {
     // Save back to localStorage
     localStorage.setItem('creature-intelligence', JSON.stringify(allIntelligence));
   } catch (error) {
-    console.error(`[ENRICHMENT] Failed to save intelligence for ${creatureName}:`, error);
+    logger.error(`[ENRICHMENT] Failed to save intelligence for ${creatureName}:`, error);
   }
 }
 
@@ -326,7 +327,7 @@ export function loadEnrichment(creatureName) {
 
     return null;
   } catch (error) {
-    console.error(`[ENRICHMENT] Failed to load intelligence for ${creatureName}:`, error);
+    logger.error(`[ENRICHMENT] Failed to load intelligence for ${creatureName}:`, error);
     return null;
   }
 }
@@ -346,7 +347,7 @@ export function deleteEnrichment(creatureName) {
 
     localStorage.setItem('creature-intelligence', JSON.stringify(allIntelligence));
   } catch (error) {
-    console.error(`[ENRICHMENT] Failed to delete intelligence for ${creatureName}:`, error);
+    logger.error(`[ENRICHMENT] Failed to delete intelligence for ${creatureName}:`, error);
   }
 }
 
@@ -372,7 +373,7 @@ export function renameEnrichment(oldName, newName) {
       localStorage.setItem('creature-intelligence', JSON.stringify(allIntelligence));
     }
   } catch (error) {
-    console.error(`[ENRICHMENT] Failed to rename intelligence:`, error);
+    logger.error(`[ENRICHMENT] Failed to rename intelligence:`, error);
   }
 }
 
@@ -389,7 +390,7 @@ export function getEnrichedCreatureNames() {
     const allIntelligence = JSON.parse(stored);
     return Object.keys(allIntelligence);
   } catch (error) {
-    console.error(`[ENRICHMENT] Failed to get enriched creature names:`, error);
+    logger.error(`[ENRICHMENT] Failed to get enriched creature names:`, error);
     return [];
   }
 }
@@ -439,7 +440,7 @@ export function cleanupOrphanedIntelligence() {
 
     return orphaned;
   } catch (error) {
-    console.error(`[ENRICHMENT] Failed to cleanup orphaned intelligence:`, error);
+    logger.error(`[ENRICHMENT] Failed to cleanup orphaned intelligence:`, error);
     return [];
   }
 }
@@ -480,7 +481,7 @@ export function migrateOldEnrichmentFormat() {
           migrated++;
         }
       } catch (error) {
-        console.warn(`[ENRICHMENT] Failed to migrate ${key}:`, error);
+        logger.warn(`[ENRICHMENT] Failed to migrate ${key}:`, error);
       }
     });
 
@@ -494,7 +495,7 @@ export function migrateOldEnrichmentFormat() {
 
     return migrated;
   } catch (error) {
-    console.error('[ENRICHMENT] Failed to migrate old format:', error);
+    logger.error('[ENRICHMENT] Failed to migrate old format:', error);
     return 0;
   }
 }

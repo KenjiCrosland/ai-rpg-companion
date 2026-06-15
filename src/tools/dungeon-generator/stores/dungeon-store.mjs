@@ -12,10 +12,12 @@ import {
   overviewForm,
   monsterLoadingStates,
   currentDungeon,
+  isAssigningMapContext,
 } from './dungeon-state.mjs';
 
 import { saveDungeons, loadDungeons } from './dungeon-utils.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
+import { resetItemStubsForDeletedDungeon } from '@/util/item-storage.mjs';
 import {
   generateDungeonOverview,
   currentDungeonOverviewString,
@@ -33,14 +35,21 @@ import {
   generateMonsterStatblock,
   generateAndSaveStatblock,
   updateStatblock,
-  generateMonsterDescription,
-  generateDescriptionAndStatblock,
   deleteMonster,
 } from './monster-store.mjs';
 
 export const useDungeonStore = defineStore('dungeon', () => {
   function selectDungeon(dungeonId) {
     currentDungeonId.value = dungeonId;
+    // Reset Map-tab UI state when switching dungeons. Without these
+    // two resets, the sidebar stays open showing the previously-
+    // selected room from the OLD dungeon (or — if the new dungeon
+    // has a room with the same numeric id — the new dungeon's room
+    // at that index, which lands the user on a room they didn't pick).
+    // Both are confusing; the right behavior is "no room selected,
+    // sidebar collapsed, user clicks a room on the new map to dive in."
+    selectedRoomId.value = null;
+    isMapSidebarCollapsed.value = true;
   }
 
   function createNewDungeon() {
@@ -65,6 +74,12 @@ export const useDungeonStore = defineStore('dungeon', () => {
           : null;
       }
       removeReferencesForEntity('dungeon', dungeonId);
+      // Item-side stub cleanup: clear `dungeon_id` on every item's
+      // related_dungeons[i] stub that pointed at this dungeon. Without
+      // this, the item card keeps rendering "View in Dungeon Generator"
+      // for the stub and the link 404s. Symmetric to the setting flow's
+      // `resetItemStubsForDeletedSetting` call in SettingGenerator.
+      resetItemStubsForDeletedDungeon(dungeonId);
       saveDungeons();
     }
   }
@@ -89,6 +104,7 @@ export const useDungeonStore = defineStore('dungeon', () => {
     overviewForm,
     monsterLoadingStates,
     currentDungeon,
+    isAssigningMapContext,
     currentDungeonOverviewString,
 
     // Actions
@@ -109,8 +125,6 @@ export const useDungeonStore = defineStore('dungeon', () => {
     createAndGenerateMonster,
     generateAndSaveStatblock,
     generateMonsterStatblock,
-    generateMonsterDescription,
-    generateDescriptionAndStatblock,
     deleteMonster,
     updateStatblock,
   };

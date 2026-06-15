@@ -118,7 +118,14 @@ export const draconicCharacterEpithets = [
 
 export const draconicRegister = {
   prefix: 'Draconic',
-  descriptor: 'Draconic: harsh sibilants, ancient weight (e.g., Szarthrax, Vyrmokk, Kaelsithur)',
+  descriptor: 'Draconic: sibilant-heavy phonology (z, s, sz, sh, kh); long polysyllabic names with deep open vowels (a, o, u) carrying weight. Compound endings around -rax, -mokk, -thur, -ith, -drex convey age and territorial claim; names sound ancient, slow, sovereign. Derive fresh names from the phonology; do not copy from prior generations.',
+  creatureTradition: 'draconic dungeons center on the dragon ecology: a true dragon of some color/age (the apex), with drakes, wyverns, wyrmlings, half-dragons, dragonkin honor-guards, kobolds (the reptilian dragon-worshipping kind, not the Germanic mine-spirits), pseudodragons, dragonnels, and dracoliches if undeath is in play. Charmed or dominated creatures broken to the dragon\'s will are register-appropriate (giants, ogres, beasts) — but the dragon and its kin are the SIGNATURE. The supernatural identity field should almost always name the dragon directly.',
+  creatureTraditionByTier: {
+    complicating: ['pseudodragons', 'dragon-worshipping kobolds', 'fledgling drake-kits'],
+    significant:  ['drakes', 'wyrmlings', 'half-dragons', 'dragonkin honor-guards', 'young wyverns'],
+    scary:        ['true dragon of color and age', 'adult wyverns', 'dracoliches', 'dragonnels', 'ancient hoard-dragons'],
+  },
+  materialTradition: 'dragon-scale shed, hoard-coin verdigris, charred stone, ember-glass, dragon-bone, sulfur crust, scorched gold',
   characterPool: draconicCharacterEpithets,
   characterPoolStrictness: 'preferred',
 };

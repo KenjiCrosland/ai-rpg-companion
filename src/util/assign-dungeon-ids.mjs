@@ -14,6 +14,8 @@
  * alone.
  */
 
+import { logger } from './logger.mjs';
+
 const DUNGEONS_KEY = 'dungeons';
 const REFS_KEY = 'tool-references';
 
@@ -82,7 +84,7 @@ export function assignDungeonIds() {
     localStorage.setItem(REFS_KEY, JSON.stringify(references));
   }
 
-  console.log(
+  logger.log(
     `assign-dungeon-ids: converted ${convertedCount} legacy ids, rewrote ${rewriteCount} refs`
   );
 }

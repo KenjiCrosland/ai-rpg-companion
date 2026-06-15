@@ -5,6 +5,8 @@
  * Statblocks are organized by folder for easy organization and cross-tool access.
  */
 
+import { logger } from './logger.mjs';
+
 /**
  * Save a statblock to shared storage
  * @param {Object} statblock - The statblock object to save
@@ -120,7 +122,7 @@ function autoFixStatblockReference(statblockName, oldFolder, newFolder, context)
       }
     }
   } catch (error) {
-    console.warn('Failed to update reference store:', error);
+    logger.warn('Failed to update reference store:', error);
   }
 }
 
@@ -179,7 +181,7 @@ export function renameStatblockReferences(oldName, newName) {
       localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcGeneratorNPCs));
     }
   } catch (error) {
-    console.warn('Failed to update NPC statblock references during rename:', error);
+    logger.warn('Failed to update NPC statblock references during rename:', error);
   }
 
   // Dungeons (monsters + NPCs, both flat and part1-nested shapes)
@@ -215,7 +217,7 @@ export function renameStatblockReferences(oldName, newName) {
       localStorage.setItem('dungeons', JSON.stringify(dungeons));
     }
   } catch (error) {
-    console.warn('Failed to update dungeon statblock references during rename:', error);
+    logger.warn('Failed to update dungeon statblock references during rename:', error);
   }
 
   // Settings
@@ -236,7 +238,7 @@ export function renameStatblockReferences(oldName, newName) {
       localStorage.setItem('gameSettings', JSON.stringify(settings));
     }
   } catch (error) {
-    console.warn('Failed to update setting statblock references during rename:', error);
+    logger.warn('Failed to update setting statblock references during rename:', error);
   }
 
   // tool-references graph: rewrite the name segment of every statblock id.
@@ -270,7 +272,7 @@ export function renameStatblockReferences(oldName, newName) {
       }
     }
   } catch (error) {
-    console.warn('Failed to update tool-references during statblock rename:', error);
+    logger.warn('Failed to update tool-references during statblock rename:', error);
   }
 
   results.totalUpdated =
@@ -456,7 +458,7 @@ export function moveStatblockToNewFolder(statblockName, oldFolder, newFolder) {
       localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcGeneratorNPCs));
     }
   } catch (error) {
-    console.warn('Failed to update NPC statblock references during folder move:', error);
+    logger.warn('Failed to update NPC statblock references during folder move:', error);
   }
 
   // Dungeons
@@ -494,7 +496,7 @@ export function moveStatblockToNewFolder(statblockName, oldFolder, newFolder) {
       localStorage.setItem('dungeons', JSON.stringify(dungeons));
     }
   } catch (error) {
-    console.warn('Failed to update dungeon statblock references during folder move:', error);
+    logger.warn('Failed to update dungeon statblock references during folder move:', error);
   }
 
   // Settings
@@ -516,7 +518,7 @@ export function moveStatblockToNewFolder(statblockName, oldFolder, newFolder) {
       localStorage.setItem('gameSettings', JSON.stringify(settings));
     }
   } catch (error) {
-    console.warn('Failed to update setting statblock references during folder move:', error);
+    logger.warn('Failed to update setting statblock references during folder move:', error);
   }
 
   // tool-references graph (target side and source side, defensive).
@@ -545,7 +547,7 @@ export function moveStatblockToNewFolder(statblockName, oldFolder, newFolder) {
       }
     }
   } catch (error) {
-    console.warn('Failed to update tool-references during statblock folder move:', error);
+    logger.warn('Failed to update tool-references during statblock folder move:', error);
   }
 
   results.totalUpdated =

@@ -25,6 +25,8 @@
  * data, it doesn't affect user-facing behavior.
  */
 
+import { logger } from './logger.mjs';
+
 const SETTINGS_KEY = 'gameSettings';
 const ITEMS_KEY = 'savedItems';
 
@@ -96,7 +98,7 @@ export function sweepStubNames() {
     }
   }
 
-  console.log(
+  logger.log(
     `sweep-stub-names: aligned ${settingStubsUpdated} related-places stub(s) and ${itemStubsUpdated} item-side stub(s) to current setting names`,
   );
 }

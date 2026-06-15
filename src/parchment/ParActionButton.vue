@@ -96,7 +96,11 @@ const props = defineProps({
   size: {
     type: String,
     default: 'medium',
-    validator: v => ['small', 'medium', 'large'].includes(v),
+    // 'xsmall' — compact chrome action for dense, in-content button
+    //            rows (room generation/edit buttons, etc.) where
+    //            'small' still feels heavy against the surrounding
+    //            body copy.
+    validator: v => ['xsmall', 'small', 'medium', 'large'].includes(v),
   },
   fullWidth: {
     type: Boolean,
@@ -234,7 +238,23 @@ function handleClick(event) {
 
 /* Sizes — calibrated to match Cedar's small/medium/large so swapping
    cdr-button for par-action-button during migration doesn't reflow
-   surrounding layouts. The codebase is 10px-base (1rem = 10px). */
+   surrounding layouts. The codebase is 10px-base (1rem = 10px).
+
+   xsmall sits below Cedar's range — a parchment-native compact size
+   for in-content button rows that should recede into the surrounding
+   sourcebook copy rather than declare themselves as page chrome.
+   Deliberately uses sans-serif (overriding the base serif): at this
+   compact size the chrome register reads more honestly than a serif
+   CTA, which at 12px starts to look like body type rather than a
+   button. */
+.par-action--xsmall {
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 0.45rem 1rem;
+}
+
 .par-action--small {
   font-size: 1.4rem;
   padding: 0.6rem 1.2rem;
