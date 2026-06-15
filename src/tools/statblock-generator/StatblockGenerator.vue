@@ -64,9 +64,9 @@
               <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
             </div>
 
-            <ParActionButton :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
+            <ParButton :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
               {{ activeMonsterIndex !== null ? 'Regenerate Monster' : 'Generate Monster' }}
-            </ParActionButton>
+            </ParButton>
           </form>
         </div>
 
@@ -90,9 +90,9 @@
                above. -->
           <ParCallout v-else>
             <p>Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.</p>
-            <ParActionButton @click="showDataManagerModal = true">
+            <ParButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </ParActionButton>
+            </ParButton>
           </ParCallout>
         </div>
       </div>
@@ -125,9 +125,9 @@
             :options="folderMoveOptions" />
           <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolder" label="New folder name"
             background="secondary" />
-          <ParActionButton @click="handleFolderMove" :disabled="!canMove">
+          <ParButton @click="handleFolderMove" :disabled="!canMove">
             Move
-          </ParActionButton>
+          </ParButton>
         </div>
       </div>
 
@@ -154,9 +154,9 @@
              as a coherent block, matching the upsell callout above. -->
         <ParCallout v-else>
           <p>Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.</p>
-          <ParActionButton @click="showDataManagerModal = true">
+          <ParButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </ParActionButton>
+          </ParButton>
         </ParCallout>
       </div>
     </div>
@@ -167,7 +167,7 @@
 </template>
 
 <script setup>
-import { ParActionButton, ParCallout } from "@/parchment";
+import { ParButton, ParCallout } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';

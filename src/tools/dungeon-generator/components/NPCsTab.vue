@@ -60,13 +60,13 @@
         </p>
 
         <div class="add-npc-actions">
-          <ParActionButton
+          <ParButton
             variant="primary-outline"
             :disabled="dungeonStore.currentlyLoadingNPC"
             @click="submitAddNPC"
           >
             Create NPC
-          </ParActionButton>
+          </ParButton>
           <button type="button" class="add-npc-cancel" @click="resetAddForm">
             Cancel
           </button>
@@ -210,8 +210,8 @@
                 <p><strong>Statblock not found</strong></p>
                 <p>The statblock "{{ entry.npc.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
                 <div class="button-group">
-                  <ParActionButton @click="generateNpcStatblock(entry.index, premium)" size="small">Regenerate Statblock</ParActionButton>
-                  <ParActionButton @click="clearNpcStatblockReference(entry.index)" variant="secondary" size="small">Clear Reference</ParActionButton>
+                  <ParButton @click="generateNpcStatblock(entry.index, premium)" size="small">Regenerate Statblock</ParButton>
+                  <ParButton @click="clearNpcStatblockReference(entry.index)" variant="secondary" size="small">Clear Reference</ParButton>
                 </div>
               </div>
 
@@ -247,7 +247,7 @@
                   Creature is a spellcaster
                 </cdr-checkbox>
                 <!-- Submit button -->
-                <ParActionButton class="monster-form-button" type="submit" style="margin-top: 1rem;"
+                <ParButton class="monster-form-button" type="submit" style="margin-top: 1rem;"
                   :disabled="dungeonStore.npcStatblockLoadingStates[entry.index]?.generating">
                   {{
                     dungeonStore.npcStatblockLoadingStates[entry.index]?.generating
@@ -256,7 +256,7 @@
                         ? 'Re-generate Statblock'
                         : 'Generate Statblock')
                   }}
-                </ParActionButton>
+                </ParButton>
               </form>
             </div>
           </div>
@@ -268,7 +268,7 @@
 </template>
 
 <script setup>
-import { ParActionButton, ParCardButton, ParAddNewButton } from "@/parchment";
+import { ParButton, ParCardButton, ParAddNewButton } from "@/parchment";
 import { ref, reactive, computed, nextTick, onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';

@@ -4,15 +4,15 @@
     <section class="operations-group">
       <h4 class="operations-group-title">Export</h4>
       <div class="export-buttons">
-        <ParActionButton @click="copyAsMarkdown" variant="secondary">
+        <ParButton @click="copyAsMarkdown" variant="secondary">
           Copy as Homebrewery Markdown
-        </ParActionButton>
-        <ParActionButton @click="copyAsHtml" variant="secondary">
+        </ParButton>
+        <ParButton @click="copyAsHtml" variant="secondary">
           Copy as HTML
-        </ParActionButton>
-        <ParActionButton @click="copyAsPlainText" variant="secondary">
+        </ParButton>
+        <ParButton @click="copyAsPlainText" variant="secondary">
           Copy as Plain Text
-        </ParActionButton>
+        </ParButton>
       </div>
 
       <cdr-accordion-group class="export-help">
@@ -38,16 +38,16 @@
         This action can't be undone.
       </p>
       <div class="operations-danger-actions">
-        <ParActionButton variant="secondary" @click="$emit('delete-setting')">
+        <ParButton variant="secondary" @click="$emit('delete-setting')">
           Delete Setting
-        </ParActionButton>
+        </ParButton>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import { ref } from 'vue';
 import { CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { formatSettingAsMarkdown } from '@/util/formatSettingAsMarkdown.mjs';

@@ -160,7 +160,7 @@
       <li>Enjoy the beautifully formatted content!</li>
     </cdr-list>
     <div class="markdown-button">
-      <ParActionButton @click="copyAsMarkdown">Copy as Markdown</ParActionButton>
+      <ParButton @click="copyAsMarkdown">Copy as Markdown</ParButton>
     </div>
   </div>
 </template>
@@ -168,7 +168,7 @@
 <script>
 import { ref, reactive, nextTick, computed, onMounted } from 'vue';
 import { CdrButton, CdrText, CdrList, CdrLink, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrInput, CdrSkeleton, CdrSkeletonBone, IconXSm } from '@rei/cedar';
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import LocationForm from '@/tools/location-generator/LocationForm.vue';
 import NPCGenerationButton from '@/tools/npc-generator/components/NPCGenerationButton.vue';
 import NPCForm from '@/tools/npc-generator/components/NPCForm.vue';
@@ -197,7 +197,7 @@ export default {
     CdrButton,
     CdrTooltip,
     IconXSm,
-    ParActionButton,
+    ParButton,
     LocationForm,
     NPCForm,
     NPCGenerationButton,

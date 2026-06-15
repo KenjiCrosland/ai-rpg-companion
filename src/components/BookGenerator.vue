@@ -21,8 +21,8 @@
           comma.
         </template>
       </cdr-input>
-      <ParActionButton class="generate-button" type="submit" :disabled="!setting || !location || loadingTitles">Generate Book
-        Titles</ParActionButton>
+      <ParButton class="generate-button" type="submit" :disabled="!setting || !location || loadingTitles">Generate Book
+        Titles</ParButton>
     </form>
     <cdr-accordion-group v-if="loadingTitles">
       <cdr-accordion class="accordion" level="2" v-for="n in 7" :key="n" id="loading-location">
@@ -41,12 +41,12 @@
         </template>
         <div>
           <form v-if="!bookDescriptions[index]" @submit.prevent="generateBookDescription(title, index)">
-            <ParActionButton class="generate-button" variant="secondary" :disabled="loadingDescriptions[index]"
-              :full-width="true" type="submit">Generate Full Description</ParActionButton>
+            <ParButton class="generate-button" variant="secondary" :disabled="loadingDescriptions[index]"
+              :full-width="true" type="submit">Generate Full Description</ParButton>
           </form>
           <form v-if="bookDescriptions[index]" @submit.prevent="generateBookDescription(title, index)">
-            <ParActionButton class="generate-button" variant="secondary" :disabled="loadingDescriptions[index]"
-              :full-width="true" type="submit">Re-Generate Full Description</ParActionButton>
+            <ParButton class="generate-button" variant="secondary" :disabled="loadingDescriptions[index]"
+              :full-width="true" type="submit">Re-Generate Full Description</ParButton>
           </form>
           <div v-if="bookDescriptions[index] && !loadingDescriptions[index]">
             <h2>{{ bookDescriptions[index].book_title }}</h2>
@@ -85,7 +85,7 @@
 import { ref } from 'vue';
 import BookSkeleton from './BookSkeleton.vue';
 import { CdrInput, CdrList, CdrText, CdrAccordionGroup, CdrAccordion, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import "@rei/cedar/dist/cdr-fonts.css";
 import "@rei/cedar/dist/reset.css";
@@ -103,7 +103,7 @@ export default {
   components: {
     BookSkeleton,
     CdrInput,
-    ParActionButton,
+    ParButton,
     CdrList,
     CdrText,
     CdrAccordionGroup,

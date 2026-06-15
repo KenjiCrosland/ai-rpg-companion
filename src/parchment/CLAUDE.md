@@ -21,7 +21,7 @@ we iterate on the styling.
 - `tokens.css` — `:root` design tokens. Loaded once in `src/entries/base.js`
   so every tool inherits them.
 - `ParCardButton.vue` — editorial card-context button, burgundy palette (header / footer card actions).
-- `ParActionButton.vue` — chrome-level primary action button, lapis palette (form CTAs, page-level actions). First component in the migration off Cedar primary buttons. Sibling to `ParCardButton`, not a variant — different palette, different role, different surface context. Variants: `primary` (serif solid lapis, prominent CTAs), `primary-outline` (sans compact lapis outline, inline data-row actions like Create Setting per card), `secondary` (faded slate outline, Cancel-beside-Generate), `luminous` (cabochon gradient, rare special moments).
+- `ParButton.vue` — chrome-level primary action button, lapis palette (form CTAs, page-level actions). First component in the migration off Cedar primary buttons. Sibling to `ParCardButton`, not a variant — different palette, different role, different surface context. Variants: `primary` (serif solid lapis, prominent CTAs), `primary-outline` (sans compact lapis outline, inline data-row actions like Create Setting per card), `secondary` (faded slate outline, Cancel-beside-Generate), `luminous` (cabochon gradient, rare special moments).
 - `ParAddNewButton.vue` — full-width dashed-outline "+ Add new X" affordance, lapis palette. One step below primary-outline because it signals "create new" rather than "act on existing." Dashed-to-solid border transition on hover commits visually as the user prepares to click. Used by Related Places' add-place affordance; will expand to "Add NPC," "Add Faction," "Add Quest Hook" across the tool.
 - `ParCallout.vue` — tinted parchment surface primitive. Wraps slot content in a warm-tan rounded card with serif typography. Extracted when premium-status blocks needed the same surface treatment as PatreonCallout — second use case justified extraction. PatreonCallout still owns its surface inline (tighter coupling to its internal structure); both stay visually identical via shared `--par-color-callout-*` tokens.
 - `ParInput.vue` — single-line text input (also handles `type="number"`).
@@ -29,8 +29,8 @@ we iterate on the styling.
 - `ParSelect.vue` — native `<select>` with parchment styling. Custom dropdown caret via inline SVG.
 - `ParCheckbox.vue` — native checkbox with parchment styling and label-on-right.
 - `ParTooltip.vue` — wrapper-style tooltip. CSS-only show/hide via `:hover` and `:focus-within`. Use for ghost-styled affordances whose label answers "what" but not "when" (e.g. Re-scan Lore). Dark burgundy surface + cream text for fast read; not blended with the parchment palette by design.
-- `ParTabToggle.vue` — view-mode tab strip for content surfaces (e.g. Description/Form switcher on the dungeon-generator room panel). Burgundy underline + burgundy active text on a divider baseline — editorial register, intentionally NOT lapis. Lapis stays reserved for chrome action primitives (`ParActionButton`); the visual difference is the signal "this lives on a content surface" vs "this is a chrome control." Options-array prop API (`{value, label}[]`) plus `v-model` — single component, no parent/child Cedar-style nesting.
-- `ParModal.vue` — modal dialog primitive. Parchment surface with lapis chrome accents: cream background (`--par-color-surface`), deeper lapis borders + deep-lapis serif small-caps title + lapis close-button hover. Inner callouts (consumer-provided) typically use pale lapis (`--par-color-readaloud-bg-deep`) so emphasis reads against the cream ground. Teleports to body, renders a cool-toned backdrop. Props: `opened` (v-model-style boolean), `title` (required string), `dismissible`/`closeOnBackdrop`/`closeOnEscape` (all default true), `closeLabel`. Slots: default for body content, `footer` for actions (typically two `ParActionButton`s — primary lapis + secondary slate). Emits `cancel` from the × button, ESC, or backdrop. Focus is moved to the dialog on open and the ESC listener attaches per-instance. The first carve-out from "Cedar handles modals" — earned the primitive once a second use case appeared.
+- `ParTabToggle.vue` — view-mode tab strip for content surfaces (e.g. Description/Form switcher on the dungeon-generator room panel). Burgundy underline + burgundy active text on a divider baseline — editorial register, intentionally NOT lapis. Lapis stays reserved for chrome action primitives (`ParButton`); the visual difference is the signal "this lives on a content surface" vs "this is a chrome control." Options-array prop API (`{value, label}[]`) plus `v-model` — single component, no parent/child Cedar-style nesting.
+- `ParModal.vue` — modal dialog primitive. Parchment surface with lapis chrome accents: cream background (`--par-color-surface`), deeper lapis borders + deep-lapis serif small-caps title + lapis close-button hover. Inner callouts (consumer-provided) typically use pale lapis (`--par-color-readaloud-bg-deep`) so emphasis reads against the cream ground. Teleports to body, renders a cool-toned backdrop. Props: `opened` (v-model-style boolean), `title` (required string), `dismissible`/`closeOnBackdrop`/`closeOnEscape` (all default true), `closeLabel`. Slots: default for body content, `footer` for actions (typically two `ParButton`s — primary lapis + secondary slate). Emits `cancel` from the × button, ESC, or backdrop. Focus is moved to the dialog on open and the ESC listener attaches per-instance. The first carve-out from "Cedar handles modals" — earned the primitive once a second use case appeared.
 - `index.mjs` — re-export entry. Consumers do `import { ParInput, ParCardButton } from '@/parchment';`.
 
 ## Conventions
@@ -55,7 +55,7 @@ we iterate on the styling.
 
 ## What's deferred — Cedar carve-outs
 
-ParActionButton's three variants (`primary`, `secondary`, `luminous`)
+ParButton's three variants (`primary`, `secondary`, `luminous`)
 cover the **action button** family — primary CTAs, supporting alternatives,
 and rare special-importance moments. They don't yet cover two patterns
 that intentionally live at different visual registers, and those sites
@@ -65,7 +65,7 @@ that intentionally live at different visual registers, and those sites
 
 Cedar's `<cdr-button :icon-only="true" :with-background="true">` pattern
 — a small **round** button with a subtle background, used inline next to
-list items for ✕ delete or ⓘ info actions. ParActionButton's `iconOnly` +
+list items for ✕ delete or ⓘ info actions. ParButton's `iconOnly` +
 `variant="secondary"` produces a **square** slate-outlined button, which
 reads as too heavy for inline placement against a list row. The square
 treatment competes with the row content; the round-with-background
@@ -83,7 +83,7 @@ icon-button primitive exists — provisional name `ParIconButton`):
 
 Cedar's `<cdr-button modifier="link">` — text-only, underlined, no
 background. Used inline within prose for "go to X" navigation cues.
-ParActionButton's `variant="secondary"` is outlined-and-padded, which
+ParButton's `variant="secondary"` is outlined-and-padded, which
 treats inline text-flow navigation as a heavy interactive element.
 Different role, different visual register.
 

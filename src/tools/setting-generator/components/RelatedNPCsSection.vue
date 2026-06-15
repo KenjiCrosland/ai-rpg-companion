@@ -438,7 +438,7 @@ watch(() => props.setting, () => {
 /* Workspace surface — same parchment register as RelatedPlacesSection.
    Font stacks include the same fallback chain tokens.css defines so
    the serif still resolves correctly when the CSS variable hasn't
-   loaded yet (matches the convention used by ParActionButton,
+   loaded yet (matches the convention used by ParButton,
    ParCallout, ParTextarea, etc.). */
 .related-npcs-section {
   background: transparent;

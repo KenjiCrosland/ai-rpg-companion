@@ -19,8 +19,8 @@ import RelatedPlacesSection from '../RelatedPlacesSection.vue';
 // double-fire because the parent's listener lands twice (once via
 // fallthrough, once via the explicit $emit).
 jest.mock('@/parchment', () => ({
-  ParActionButton: {
-    name: 'ParActionButton',
+  ParButton: {
+    name: 'ParButton',
     template: '<button type="button"><slot></slot></button>',
     props: ['variant', 'disabled'],
   },

@@ -54,12 +54,12 @@
       </p>
 
       <div class="add-related-place-actions">
-        <ParActionButton
+        <ParButton
           variant="primary-outline"
           @click="onSubmit"
         >
           Create Setting
-        </ParActionButton>
+        </ParButton>
         <button type="button" class="add-related-place-cancel" @click="reset">
           Cancel
         </button>
@@ -70,7 +70,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { ParActionButton, ParAddNewButton } from '@/parchment';
+import { ParButton, ParAddNewButton } from '@/parchment';
 
 // `computed` retained for the dynamic placeholders below — submit
 // validation isn't needed anymore now that name + description are

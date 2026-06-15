@@ -40,22 +40,22 @@
       </p>
 
       <div class="buttons-container">
-        <ParActionButton variant="secondary" @click="triggerFileSelect">
+        <ParButton variant="secondary" @click="triggerFileSelect">
           Upload JSON
-        </ParActionButton>
+        </ParButton>
         <input ref="fileInput" type="file" accept="application/json" style="display: none;"
           @change="handleFileChange" />
 
-        <ParActionButton @click="downloadData" :disabled="!hasAnyData">
+        <ParButton @click="downloadData" :disabled="!hasAnyData">
           Download JSON
-        </ParActionButton>
+        </ParButton>
       </div>
     </div>
   </cdr-modal>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { ref, computed } from 'vue';
 import {
   CdrModal,

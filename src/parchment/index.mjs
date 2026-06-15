@@ -13,7 +13,7 @@
  */
 
 export { default as ParCardButton } from './ParCardButton.vue';
-export { default as ParActionButton } from './ParActionButton.vue';
+export { default as ParButton } from './ParButton.vue';
 export { default as ParAddNewButton } from './ParAddNewButton.vue';
 export { default as ParCallout } from './ParCallout.vue';
 export { default as ParInput } from './ParInput.vue';

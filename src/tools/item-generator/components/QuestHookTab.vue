@@ -5,9 +5,9 @@
 
     <div class="quest-generator">
       <cdr-select v-model="questType" label="Quest Type" prompt="Choose a quest type" :options="questTypes" />
-      <ParActionButton @click="generateQuestHook" :full-width="true" style="margin-top: 2rem;">
+      <ParButton @click="generateQuestHook" :full-width="true" style="margin-top: 2rem;">
         Generate Quest Hook
-      </ParActionButton>
+      </ParButton>
       <p v-if="!premium" class="generation-info">
         {{ remainingGenerations }} quest hook{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
       </p>
@@ -34,14 +34,14 @@
               <div v-for="(objective, i) in editForm.objectives" :key="'obj-' + i" class="array-item-row">
                 <cdr-input v-model="editForm.objectives[i]" background="secondary" class="array-item-input" :rows="2"
                   :label="`Objective ${i + 1}`" />
-                <ParActionButton size="small" variant="secondary" @click="removeObjective(i)"
+                <ParButton size="small" variant="secondary" @click="removeObjective(i)"
                   v-if="editForm.objectives.length > 1" class="remove-button">
                   Remove
-                </ParActionButton>
+                </ParButton>
               </div>
-              <ParActionButton size="small" @click="addObjective">
+              <ParButton size="small" @click="addObjective">
                 + Add Objective
-              </ParActionButton>
+              </ParButton>
             </div>
 
             <div class="challenges-edit edit-field">
@@ -49,14 +49,14 @@
               <div v-for="(challenge, i) in editForm.challenges" :key="'chal-' + i" class="array-item-row">
                 <cdr-input v-model="editForm.challenges[i]" background="secondary" class="array-item-input" :rows="2"
                   :label="`Challenge ${i + 1}`" />
-                <ParActionButton size="small" variant="secondary" @click="removeChallenge(i)"
+                <ParButton size="small" variant="secondary" @click="removeChallenge(i)"
                   v-if="editForm.challenges.length > 1" class="remove-button">
                   Remove
-                </ParActionButton>
+                </ParButton>
               </div>
-              <ParActionButton size="small" @click="addChallenge">
+              <ParButton size="small" @click="addChallenge">
                 + Add Challenge
-              </ParActionButton>
+              </ParButton>
             </div>
 
             <cdr-input v-model="editForm.reward" label="Reward" background="secondary" :rows="3" tag="textarea"
@@ -66,8 +66,8 @@
               tag="textarea" class="edit-field" />
 
             <div class="button-group">
-              <ParActionButton @click="saveEdit">Save Changes</ParActionButton>
-              <ParActionButton @click="cancelEdit" variant="secondary">Cancel</ParActionButton>
+              <ParButton @click="saveEdit">Save Changes</ParButton>
+              <ParButton @click="cancelEdit" variant="secondary">Cancel</ParButton>
             </div>
           </div>
 
@@ -95,20 +95,20 @@
             </div>
 
             <div class="button-group">
-              <ParActionButton @click="startEdit(index)" variant="secondary">Edit Quest Hook</ParActionButton>
-              <ParActionButton @click="deleteHook(index)">Delete Quest Hook</ParActionButton>
+              <ParButton @click="startEdit(index)" variant="secondary">Edit Quest Hook</ParButton>
+              <ParButton @click="deleteHook(index)">Delete Quest Hook</ParButton>
             </div>
 
             <!-- Export Section for this quest hook -->
             <div class="quest-export-section">
               <h4>Export This Quest</h4>
               <div class="export-options">
-                <ParActionButton @click="exportQuestAsMarkdown(hook)" variant="secondary" size="small">
+                <ParButton @click="exportQuestAsMarkdown(hook)" variant="secondary" size="small">
                   Copy as Markdown
-                </ParActionButton>
-                <ParActionButton @click="exportQuestAsPlainText(hook)" variant="secondary" size="small">
+                </ParButton>
+                <ParButton @click="exportQuestAsPlainText(hook)" variant="secondary" size="small">
                   Copy as Plain Text
-                </ParActionButton>
+                </ParButton>
               </div>
               <p class="export-tip">
                 Use markdown with <cdr-link href="https://homebrewery.naturalcrit.com/new"
@@ -138,12 +138,12 @@
         <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>.
       </template>
       <template #buttons>
-        <ParActionButton @click="exportAllQuestsAsMarkdown" variant="secondary">
+        <ParButton @click="exportAllQuestsAsMarkdown" variant="secondary">
           Copy All as Markdown
-        </ParActionButton>
-        <ParActionButton @click="exportAllQuestsAsPlainText" variant="secondary">
+        </ParButton>
+        <ParButton @click="exportAllQuestsAsPlainText" variant="secondary">
           Copy All as Plain Text
-        </ParActionButton>
+        </ParButton>
       </template>
     </ItemExportsSection>
   </div>
@@ -162,7 +162,7 @@ import {
   CdrSkeleton,
   CdrSkeletonBone
 } from '@rei/cedar';
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
 import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";

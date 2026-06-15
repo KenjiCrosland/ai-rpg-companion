@@ -31,19 +31,19 @@
     />
 
     <template #footer>
-      <ParActionButton variant="secondary" @click="onSkip">
+      <ParButton variant="secondary" @click="onSkip">
         Skip and generate without
-      </ParActionButton>
-      <ParActionButton variant="primary" @click="onGenerate">
+      </ParButton>
+      <ParButton variant="primary" @click="onGenerate">
         Generate statblock first
-      </ParActionButton>
+      </ParButton>
     </template>
   </ParModal>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue';
-import { ParActionButton, ParCheckbox, ParModal } from '@/parchment';
+import { ParButton, ParCheckbox, ParModal } from '@/parchment';
 
 const props = defineProps({
   opened: { type: Boolean, default: false },

@@ -53,12 +53,12 @@
       </p>
 
       <div class="add-npc-actions">
-        <ParActionButton
+        <ParButton
           variant="primary-outline"
           @click="onSubmit"
         >
           Create NPC
-        </ParActionButton>
+        </ParButton>
         <button type="button" class="add-npc-cancel" @click="reset">
           Cancel
         </button>
@@ -69,7 +69,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { ParActionButton, ParAddNewButton } from '@/parchment';
+import { ParButton, ParAddNewButton } from '@/parchment';
 
 const props = defineProps({
   factions: {

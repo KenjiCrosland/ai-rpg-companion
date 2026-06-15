@@ -65,13 +65,13 @@
             </div>
 
             <div class="button-group">
-              <ParActionButton @click="startEditingFaction(index)" variant="secondary">Edit Faction</ParActionButton>
-              <ParActionButton
+              <ParButton @click="startEditingFaction(index)" variant="secondary">Edit Faction</ParButton>
+              <ParButton
                 v-if="!faction.history && !faction.combined_content"
                 @click="generateDetailedFaction(index)"
               >
                 Generate Full Description
-              </ParActionButton>
+              </ParButton>
             </div>
           </div>
 
@@ -106,8 +106,8 @@
             </cdr-input>
 
             <div class="button-group">
-              <ParActionButton @click="saveEditFaction">Save Changes</ParActionButton>
-              <ParActionButton @click="cancelEditFaction" variant="secondary">Cancel</ParActionButton>
+              <ParButton @click="saveEditFaction">Save Changes</ParButton>
+              <ParButton @click="cancelEditFaction" variant="secondary">Cancel</ParButton>
             </div>
           </div>
         </cdr-accordion>
@@ -122,7 +122,7 @@
           <h3>Create New Faction</h3>
           <cdr-input id="faction-name" v-model="newFactionName" label="Faction Name" />
           <cdr-input :rows="4" id="faction-description" v-model="newFactionDescription" label="Faction Description" />
-          <ParActionButton style="margin-top: 2rem;" @click="addNewFaction" variant="secondary">Add Faction</ParActionButton>
+          <ParButton style="margin-top: 2rem;" @click="addNewFaction" variant="secondary">Add Faction</ParButton>
         </div>
         <hr style="margin-top: 2rem">
       </cdr-accordion-group>
@@ -136,22 +136,22 @@
       </p>
     </div>
 
-    <ParActionButton
+    <ParButton
       v-if="setting.factions.length <= 0 && !loadingFactions"
       @click="generateFactions"
       modifier="dark"
     >
       Generate Factions for {{ setting.place_name }}
-    </ParActionButton>
+    </ParButton>
 
-    <ParActionButton
+    <ParButton
       style="margin-top: 2rem"
       v-if="setting.factions.length > 0 && !loadingFactions"
       @click="generateFactions"
       modifier="dark"
     >
       Re-Generate Factions for {{ setting.place_name }}
-    </ParActionButton>
+    </ParButton>
 
     <div v-if="loadingFactions">
       <BlockSkeleton />
@@ -160,7 +160,7 @@
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, computed, watch, reactive } from 'vue';
 import {

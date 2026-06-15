@@ -62,9 +62,9 @@
               <!-- Edit Button -->
               <div v-if="monster.detailedDescription || monster.combined_description" class="button-group"
                 style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
-                <ParActionButton @click="startEditingMonster(monster)" variant="secondary" size="small">
+                <ParButton @click="startEditingMonster(monster)" variant="secondary" size="small">
                   Edit Description
-                </ParActionButton>
+                </ParButton>
               </div>
             </div>
 
@@ -83,8 +83,8 @@
               </cdr-input>
 
               <div class="button-group">
-                <ParActionButton @click="saveEditMonster" size="small">Save Changes</ParActionButton>
-                <ParActionButton @click="cancelEditMonster" variant="secondary" size="small">Cancel</ParActionButton>
+                <ParButton @click="saveEditMonster" size="small">Save Changes</ParButton>
+                <ParButton @click="cancelEditMonster" variant="secondary" size="small">Cancel</ParButton>
               </div>
             </div>
 
@@ -93,8 +93,8 @@
               <p><strong>Statblock not found</strong></p>
               <p>The statblock "{{ monster.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
               <div class="button-group">
-                <ParActionButton @click="dungeonStore.generateMonsterStatblock(monster.id, premium)" size="small">Regenerate Statblock</ParActionButton>
-                <ParActionButton @click="clearMonsterStatblockReference(monster)" variant="secondary" size="small">Clear Reference</ParActionButton>
+                <ParButton @click="dungeonStore.generateMonsterStatblock(monster.id, premium)" size="small">Regenerate Statblock</ParButton>
+                <ParButton @click="clearMonsterStatblockReference(monster)" variant="secondary" size="small">Clear Reference</ParButton>
               </div>
             </div>
 
@@ -156,7 +156,7 @@
             </div>
 
             <div class="monster-buttons">
-              <ParActionButton
+              <ParButton
                 size="small"
                 @click="dungeonStore.generateMonsterStatblock(monster.id, premium)"
                 :disabled="dungeonStore.monsterLoadingStates[monster.id]?.generating">
@@ -165,7 +165,7 @@
                     ? 'Generating...'
                     : (monster.statblock ? 'Regenerate Statblock' : 'Generate Statblock')
                 }}
-              </ParActionButton>
+              </ParButton>
             </div>
           </div>
         </cdr-accordion>
@@ -210,16 +210,16 @@
         </div>
 
         <!-- Submit button -->
-        <ParActionButton class="monster-form-button" type="submit" :disabled="generatingStatblock">
+        <ParButton class="monster-form-button" type="submit" :disabled="generatingStatblock">
           {{ generatingStatblock ? 'Generating...' : 'Create Monster' }}
-        </ParActionButton>
+        </ParButton>
       </cdr-form-group>
     </form>
   </div>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { ref, computed, onMounted } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import Statblock from '@/components/Statblock.vue';

@@ -76,8 +76,8 @@
               </p>
             </fieldset>
             <!-- END TEST-REGISTER-OVERRIDE -->
-            <ParActionButton class="generate-button" type="submit" :full-width="true">Generate Magic Item
-            </ParActionButton>
+            <ParButton class="generate-button" type="submit" :full-width="true">Generate Magic Item
+            </ParButton>
           </form>
         </div>
 
@@ -104,9 +104,9 @@
                matching the upsell callout's surface above. -->
           <ParCallout v-else>
             <p>All features unlimited. Item data is saved on this browser. Export to a file to use on another device.</p>
-            <ParActionButton @click="showDataManagerModal = true">
+            <ParButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </ParActionButton>
+            </ParButton>
           </ParCallout>
         </div>
       </div>
@@ -175,12 +175,12 @@
                 for creating beautifully formatted D&D handouts.
               </template>
               <template #buttons>
-                <ParActionButton @click="copyAsMarkdown" variant="secondary">
+                <ParButton @click="copyAsMarkdown" variant="secondary">
                   Copy as Markdown
-                </ParActionButton>
-                <ParActionButton @click="copyAsPlainText" variant="secondary">
+                </ParButton>
+                <ParButton @click="copyAsPlainText" variant="secondary">
                   Copy as Plain Text
-                </ParActionButton>
+                </ParButton>
               </template>
               <template #tip>
                 <strong>Quick tip:</strong> After copying as markdown, visit
@@ -297,9 +297,9 @@
              callout's surface above. -->
         <ParCallout v-else>
           <p>All features unlimited. Item data is saved on this browser. Export to a file to use on another device.</p>
-          <ParActionButton @click="showDataManagerModal = true">
+          <ParButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </ParActionButton>
+          </ParButton>
         </ParCallout>
       </div>
 
@@ -325,7 +325,7 @@ import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import RelatedSettingsSection from './components/RelatedSettingsSection.vue';
 import RelatedDungeonsSection from './components/RelatedDungeonsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParCardButton, ParActionButton, ParCallout, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
+import { ParCardButton, ParButton, ParCallout, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import Tabs from '@/components/tabs/Tabs.vue';

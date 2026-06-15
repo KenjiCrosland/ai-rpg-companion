@@ -19,26 +19,26 @@
 
       <!-- Add Timeline Button -->
       <div v-if="!showTimelineCards && timelineEvents.length === 0" class="add-timeline-prompt">
-        <ParActionButton @click="startTimeline" variant="secondary" size="large">
+        <ParButton @click="startTimeline" variant="secondary" size="large">
           + Create Historical Timeline
-        </ParActionButton>
+        </ParButton>
       </div>
 
       <!-- Timeline Controls -->
       <div v-if="showTimelineCards || timelineEvents.length > 0" class="timeline-controls">
-        <ParActionButton @click="showAddButtons = !showAddButtons" variant="secondary" size="small">
+        <ParButton @click="showAddButtons = !showAddButtons" variant="secondary" size="small">
           {{ showAddButtons ? 'Hide Add Buttons' : 'Add Events to Timeline' }}
-        </ParActionButton>
+        </ParButton>
         <p v-if="!premium" class="generation-info">
           {{ remainingGenerations }} lore generation{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
         </p>
       </div>
 
       <div v-if="showTimelineCards || timelineEvents.length > 0" class="filmstrip-container">
-        <ParActionButton v-if="showLeftArrow" @click="scrollFilmstrip('left')" variant="secondary" size="small"
+        <ParButton v-if="showLeftArrow" @click="scrollFilmstrip('left')" variant="secondary" size="small"
           class="filmstrip-arrow filmstrip-arrow-left">
           ←
-        </ParActionButton>
+        </ParButton>
 
         <div class="filmstrip" ref="filmstrip" @scroll="checkScroll">
           <!-- If no events and showing cards, show the first event form directly -->
@@ -68,16 +68,16 @@
                   background="secondary" size="small" />
 
                 <div v-if="!pendingEvent" class="button-row">
-                  <ParActionButton @click="generateFirstEvent"
+                  <ParButton @click="generateFirstEvent"
                     :disabled="!firstEventType || !firstTimePeriod || loadingEvents" size="small" :full-width="true">
                     {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                  </ParActionButton>
+                  </ParButton>
                 </div>
 
                 <div v-else class="button-row">
-                  <ParActionButton @click="regenerateFirstEvent" variant="secondary" size="small" :full-width="true">
+                  <ParButton @click="regenerateFirstEvent" variant="secondary" size="small" :full-width="true">
                     Regenerate
-                  </ParActionButton>
+                  </ParButton>
                 </div>
               </div>
 
@@ -91,12 +91,12 @@
                   <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                   <div class="button-row compact-buttons">
-                    <ParActionButton @click="confirmFirstEvent" size="small">
+                    <ParButton @click="confirmFirstEvent" size="small">
                       Add
-                    </ParActionButton>
-                    <ParActionButton @click="regenerateFirstEvent" variant="secondary" size="small">
+                    </ParButton>
+                    <ParButton @click="regenerateFirstEvent" variant="secondary" size="small">
                       Regen
-                    </ParActionButton>
+                    </ParButton>
                   </div>
                 </div>
               </div>
@@ -106,9 +106,9 @@
           <!-- Regular add button for subsequent events -->
           <div v-else-if="showAddButtons && generatingPosition !== 0 && timelineEvents.length > 0"
             class="timeline-card add-card compact">
-            <ParActionButton @click="startGeneratingEvent(0)" variant="secondary" size="small" class="add-event-button">
+            <ParButton @click="startGeneratingEvent(0)" variant="secondary" size="small" class="add-event-button">
               <span class="button-text">+ Add</span>
-            </ParActionButton>
+            </ParButton>
           </div>
 
           <!-- Generating card at position 0 -->
@@ -138,19 +138,19 @@
                   background="secondary" size="small" />
 
                 <div v-if="!pendingEvent" class="button-row">
-                  <ParActionButton @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents" size="small"
+                  <ParButton @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents" size="small"
                     :full-width="true">
                     {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                  </ParActionButton>
-                  <ParActionButton @click="cancelGeneration" variant="secondary" size="small" :full-width="true">
+                  </ParButton>
+                  <ParButton @click="cancelGeneration" variant="secondary" size="small" :full-width="true">
                     Cancel
-                  </ParActionButton>
+                  </ParButton>
                 </div>
 
                 <div v-else class="button-row">
-                  <ParActionButton @click="regenerateEvent" variant="secondary" size="small" :full-width="true">
+                  <ParButton @click="regenerateEvent" variant="secondary" size="small" :full-width="true">
                     Regenerate
-                  </ParActionButton>
+                  </ParButton>
                 </div>
               </div>
 
@@ -164,15 +164,15 @@
                   <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                   <div class="button-row compact-buttons">
-                    <ParActionButton @click="confirmAddEvent" size="small">
+                    <ParButton @click="confirmAddEvent" size="small">
                       Add
-                    </ParActionButton>
-                    <ParActionButton @click="regenerateEvent" variant="secondary" size="small">
+                    </ParButton>
+                    <ParButton @click="regenerateEvent" variant="secondary" size="small">
                       Regen
-                    </ParActionButton>
-                    <ParActionButton @click="cancelGeneration" size="small">
+                    </ParButton>
+                    <ParButton @click="cancelGeneration" size="small">
                       Cancel
-                    </ParActionButton>
+                    </ParButton>
                   </div>
                 </div>
               </div>
@@ -188,12 +188,12 @@
                   <p class="time-period">{{ event.eventYear }}</p>
                   <p class="event-text" v-html="formatMarkdown(event.description)"></p>
                   <div class="button-row-bottom">
-                    <ParActionButton variant="secondary" size="small" @click="startEditingEvent(index)">
+                    <ParButton variant="secondary" size="small" @click="startEditingEvent(index)">
                       Edit
-                    </ParActionButton>
-                    <ParActionButton size="small" @click="removeFromTimeline(index)">
+                    </ParButton>
+                    <ParButton size="small" @click="removeFromTimeline(index)">
                       Remove
-                    </ParActionButton>
+                    </ParButton>
                   </div>
                 </div>
 
@@ -208,12 +208,12 @@
                     background="secondary" size="small" />
 
                   <div class="button-row-bottom">
-                    <ParActionButton size="small" @click="saveEventEdit(index)">
+                    <ParButton size="small" @click="saveEventEdit(index)">
                       Save
-                    </ParActionButton>
-                    <ParActionButton variant="secondary" size="small" @click="cancelEventEdit">
+                    </ParButton>
+                    <ParButton variant="secondary" size="small" @click="cancelEventEdit">
                       Cancel
-                    </ParActionButton>
+                    </ParButton>
                   </div>
                 </div>
               </div>
@@ -221,10 +221,10 @@
 
             <!-- Add event after card (only show when showAddButtons is true) -->
             <div v-if="showAddButtons && generatingPosition !== index + 1" class="timeline-card add-card compact">
-              <ParActionButton @click="startGeneratingEvent(index + 1)" variant="secondary" size="small"
+              <ParButton @click="startGeneratingEvent(index + 1)" variant="secondary" size="small"
                 class="add-event-button">
                 <span class="button-text">+ Add</span>
-              </ParActionButton>
+              </ParButton>
             </div>
 
             <!-- Generating card at this position -->
@@ -254,19 +254,19 @@
                     background="secondary" size="small" />
 
                   <div v-if="!pendingEvent" class="button-row">
-                    <ParActionButton @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents"
+                    <ParButton @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents"
                       size="small" :full-width="true">
                       {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                    </ParActionButton>
-                    <ParActionButton @click="cancelGeneration" variant="secondary" size="small" :full-width="true">
+                    </ParButton>
+                    <ParButton @click="cancelGeneration" variant="secondary" size="small" :full-width="true">
                       Cancel
-                    </ParActionButton>
+                    </ParButton>
                   </div>
 
                   <div v-else class="button-row">
-                    <ParActionButton @click="regenerateEvent" variant="secondary" size="small" :full-width="true">
+                    <ParButton @click="regenerateEvent" variant="secondary" size="small" :full-width="true">
                       Regenerate
-                    </ParActionButton>
+                    </ParButton>
                   </div>
                 </div>
 
@@ -280,15 +280,15 @@
                     <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
 
                     <div class="button-row compact-buttons">
-                      <ParActionButton @click="confirmAddEvent" size="small">
+                      <ParButton @click="confirmAddEvent" size="small">
                         Add
-                      </ParActionButton>
-                      <ParActionButton @click="regenerateEvent" variant="secondary" size="small">
+                      </ParButton>
+                      <ParButton @click="regenerateEvent" variant="secondary" size="small">
                         Regen
-                      </ParActionButton>
-                      <ParActionButton @click="cancelGeneration" size="small">
+                      </ParButton>
+                      <ParButton @click="cancelGeneration" size="small">
                         Cancel
-                      </ParActionButton>
+                      </ParButton>
                     </div>
                   </div>
                 </div>
@@ -297,10 +297,10 @@
           </template>
         </div>
 
-        <ParActionButton v-if="showRightArrow" @click="scrollFilmstrip('right')" variant="secondary" size="small"
+        <ParButton v-if="showRightArrow" @click="scrollFilmstrip('right')" variant="secondary" size="small"
           class="filmstrip-arrow filmstrip-arrow-right">
           →
-        </ParActionButton>
+        </ParButton>
       </div>
     </div>
 
@@ -325,15 +325,15 @@
       </div>
 
       <div class="summary-buttons">
-        <ParActionButton v-if="timelineEvents.length >= 2" @click="generateSummary" :disabled="loadingSummary"
+        <ParButton v-if="timelineEvents.length >= 2" @click="generateSummary" :disabled="loadingSummary"
           variant="secondary">
           {{ historicalSummary ? 'Regenerate' : 'Generate' }} Historical Summary
-        </ParActionButton>
+        </ParButton>
 
-        <ParActionButton v-if="historicalSummary && itemLegacy" @click="updateItemLore"
+        <ParButton v-if="historicalSummary && itemLegacy" @click="updateItemLore"
           title="Replace the item's current lore with the generated historical summary">
           Update Item Lore
-        </ParActionButton>
+        </ParButton>
       </div>
     </div>
 
@@ -345,12 +345,12 @@
         for creating beautifully formatted D&D handouts.
       </template>
       <template #buttons>
-        <ParActionButton @click="exportToMarkdown" variant="secondary">
+        <ParButton @click="exportToMarkdown" variant="secondary">
           Copy History as Markdown
-        </ParActionButton>
-        <ParActionButton @click="exportToPlainText" variant="secondary">
+        </ParButton>
+        <ParButton @click="exportToPlainText" variant="secondary">
           Copy History as Plain Text
-        </ParActionButton>
+        </ParButton>
       </template>
       <template #tip>
         <strong>Quick tip:</strong> After copying as markdown, visit
@@ -371,7 +371,7 @@ import {
   CdrInput,
   CdrLink
 } from '@rei/cedar';
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import { logger } from '@/util/logger.mjs';
 import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";

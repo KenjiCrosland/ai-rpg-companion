@@ -102,7 +102,7 @@ const toggleIcon = computed(() => {
 }
 
 /* Sidebar collapse tab — passive chrome affordance, styled as a
-   ParActionButton secondary variant: transparent surface, faded
+   ParButton secondary variant: transparent surface, faded
    slate outline, slate icon. The outlined treatment recedes against
    the parchment surroundings instead of competing for attention.
    Hover/active fill with progressively deeper slate tints, matching
@@ -137,7 +137,7 @@ const toggleIcon = computed(() => {
    background-image (which stacks above background-color) rather than
    replacing background-color outright. Otherwise the rgba tint shows
    the map through the button on interaction — the secondary action
-   pattern in ParActionButton works the same way when sitting on a
+   pattern in ParButton works the same way when sitting on a
    solid card surface; here we have to be explicit because the button
    overhangs the map area. */
 .toggle-button:hover {

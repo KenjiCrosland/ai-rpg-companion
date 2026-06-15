@@ -28,9 +28,9 @@
         </ParCheckbox>
       </div>
       <div class="generation-button">
-        <ParActionButton size="xsmall" @click="generateDescription">
+        <ParButton size="xsmall" @click="generateDescription">
           Generate Description
-        </ParActionButton>
+        </ParButton>
       </div>
     </div>
     <div v-if="activeView === 'loading'">
@@ -68,12 +68,12 @@
           </template>
         </div>
         <div class="generation-button">
-          <ParActionButton size="xsmall" @click="generateDescription">
+          <ParButton size="xsmall" @click="generateDescription">
             Re-Generate Description
-          </ParActionButton>
-          <ParActionButton size="xsmall" variant="secondary" @click="startEditingRoom">
+          </ParButton>
+          <ParButton size="xsmall" variant="secondary" @click="startEditingRoom">
             Edit Room
-          </ParActionButton>
+          </ParButton>
         </div>
       </div>
 
@@ -103,8 +103,8 @@
         </div>
 
         <div class="button-group">
-          <ParActionButton size="xsmall" @click="saveEditRoom">Save Changes</ParActionButton>
-          <ParActionButton size="xsmall" variant="secondary" @click="cancelEditRoom">Cancel</ParActionButton>
+          <ParButton size="xsmall" @click="saveEditRoom">Save Changes</ParButton>
+          <ParButton size="xsmall" variant="secondary" @click="cancelEditRoom">Cancel</ParButton>
         </div>
       </div>
     </div>
@@ -137,7 +137,7 @@
 
 <script setup>
 import {
-  ParActionButton,
+  ParButton,
   ParCardButton,
   ParCheckbox,
   ParInput,

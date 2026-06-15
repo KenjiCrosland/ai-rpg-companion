@@ -12,11 +12,11 @@
 
     <cdr-input class="new-folder" label="Or Create New Folder:" type="text" v-model="newFolder" id="new-folder-input" placeholder="New Folder Name" />
   </div>
-  <ParActionButton class="save-button" :full-width="true" @click="saveMonster">Save Statblock</ParActionButton>
+  <ParButton class="save-button" :full-width="true" @click="saveMonster">Save Statblock</ParButton>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { computed, ref } from 'vue';
 import { CdrInput, CdrSelect, CdrLink } from '@rei/cedar';
 

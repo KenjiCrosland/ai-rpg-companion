@@ -21,17 +21,17 @@ describe('PatreonCallout', () => {
 
     it('passes patreonUrl through to the action button href', () => {
       // The bullet list now also contains an <a> (membership link), so we
-      // target the action button by its par-action class to avoid matching
+      // target the action button by its par-button class to avoid matching
       // the wrong anchor.
       const wrapper = makeWrapper();
-      const action = wrapper.find('.par-action');
+      const action = wrapper.find('.par-button');
       expect(action.attributes('href')).toBe(PATREON_URL);
     });
 
     it('renders the action button as <a>, not <button>', () => {
-      // tag="a" on the ParActionButton — required for navigation.
+      // tag="a" on the ParButton — required for navigation.
       const wrapper = makeWrapper();
-      const action = wrapper.find('.par-action');
+      const action = wrapper.find('.par-button');
       expect(action.exists()).toBe(true);
       expect(action.element.tagName).toBe('A');
       expect(action.text()).toContain('Support on Patreon');
@@ -39,8 +39,8 @@ describe('PatreonCallout', () => {
 
     it('renders the action button in the luminous variant', () => {
       const wrapper = makeWrapper();
-      const action = wrapper.find('.par-action');
-      expect(action.classes()).toContain('par-action--variant-luminous');
+      const action = wrapper.find('.par-button');
+      expect(action.classes()).toContain('par-button--variant-luminous');
     });
   });
 

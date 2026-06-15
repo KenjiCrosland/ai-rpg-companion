@@ -114,15 +114,15 @@
     </div>
     <div class="copy-statblock-buttons" v-if="copyButtons && !loadingPart1 && !loadingPart2 && monster">
         <strong>Export:</strong>
-        <ParActionButton variant="secondary" size="small" @click="copyAsMarkdown">Homebrewery Markdown</ParActionButton>
-        <ParActionButton variant="secondary" size="small" @click="copyAsVTT">Foundry VTT</ParActionButton>
-        <ParActionButton variant="secondary" size="small" @click="copyAsImprovedInitiative">Improved Initiative</ParActionButton>
+        <ParButton variant="secondary" size="small" @click="copyAsMarkdown">Homebrewery Markdown</ParButton>
+        <ParButton variant="secondary" size="small" @click="copyAsVTT">Foundry VTT</ParButton>
+        <ParButton variant="secondary" size="small" @click="copyAsImprovedInitiative">Improved Initiative</ParButton>
     </div>
 </div>
 </template>
   
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
 import { ref, computed, defineProps, onMounted, onBeforeUnmount } from 'vue';

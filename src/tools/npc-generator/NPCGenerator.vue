@@ -29,10 +29,10 @@
                 </div>
 
                 <div class="sidebar-buttons">
-                    <ParActionButton @click="deleteAllNPCs" v-if="Object.keys(npcs).length > 0 && !loadingPart1"
+                    <ParButton @click="deleteAllNPCs" v-if="Object.keys(npcs).length > 0 && !loadingPart1"
                         modifier="secondary" style="width: 100%;">
                         Delete All NPCs
-                    </ParActionButton>
+                    </ParButton>
                 </div>
             </div>
         </template>
@@ -109,8 +109,8 @@
                         </fieldset>
                         <!-- END TEST-REGISTER-OVERRIDE -->
 
-                        <ParActionButton type="submit" :disabled="loadingPart1" class="generate-button">Generate
-                            NPC</ParActionButton>
+                        <ParButton type="submit" :disabled="loadingPart1" class="generate-button">Generate
+                            NPC</ParButton>
                     </form>
                 </div>
 
@@ -145,9 +145,9 @@
                         <p v-if="!isSeededFlow">All features unlimited. NPC data is saved on this browser. Export to a
                             file to
                             use on another device.</p>
-                        <ParActionButton @click="showDataManagerModal = true">
+                        <ParButton @click="showDataManagerModal = true">
                             Save/Load Data from a File
-                        </ParActionButton>
+                        </ParButton>
                     </ParCallout>
                 </div>
             </div>
@@ -188,15 +188,15 @@
                             background="secondary" style="margin-bottom: 1rem;" />
 
                         <div class="button-group" style="margin-top: 1rem;">
-                            <ParActionButton @click="handleFolderMove"
+                            <ParButton @click="handleFolderMove"
                                 :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
                                 Move NPC
-                            </ParActionButton>
-                            <ParActionButton
+                            </ParButton>
+                            <ParButton
                                 @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';"
                                 variant="secondary">
                                 Cancel
-                            </ParActionButton>
+                            </ParButton>
                         </div>
                     </div>
 
@@ -209,12 +209,12 @@
                             for handouts.
                         </template>
                         <template #buttons>
-                            <ParActionButton @click="copyNPCAsPlainText" variant="secondary">
+                            <ParButton @click="copyNPCAsPlainText" variant="secondary">
                                 Copy as Plain Text
-                            </ParActionButton>
-                            <ParActionButton @click="copyNPCAsMarkdown">
+                            </ParButton>
+                            <ParButton @click="copyNPCAsMarkdown">
                                 Copy as Homebrewery Markdown
-                            </ParActionButton>
+                            </ParButton>
                         </template>
                     </ItemExportsSection>
 
@@ -243,10 +243,10 @@
                             </div>
 
                             <div style="display: flex; gap: 0.5rem;">
-                                <ParActionButton @click="generateStatblock()">Generate Statblock</ParActionButton>
-                                <ParActionButton variant="secondary" @click="showAttachStatblockModal = true">Attach
+                                <ParButton @click="generateStatblock()">Generate Statblock</ParButton>
+                                <ParButton variant="secondary" @click="showAttachStatblockModal = true">Attach
                                     Statblock
-                                </ParActionButton>
+                                </ParButton>
                             </div>
                         </div>
 
@@ -256,11 +256,11 @@
                                 label="Select a Statblock to Attach" placeholder="Search for a statblock..."
                                 :optional="false" />
                             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                <ParActionButton @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">
+                                <ParButton @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">
                                     Attach
-                                </ParActionButton>
-                                <ParActionButton variant="secondary" @click="cancelAttachStatblock">Cancel
-                                </ParActionButton>
+                                </ParButton>
+                                <ParButton variant="secondary" @click="cancelAttachStatblock">Cancel
+                                </ParButton>
                             </div>
                         </div>
 
@@ -272,11 +272,11 @@
                                 deleted
                                 or renamed in the Statblock Generator.</p>
                             <div class="button-group">
-                                <ParActionButton @click="generateStatblock()" size="small">Regenerate Statblock
-                                </ParActionButton>
-                                <ParActionButton @click="clearStatblockReference()" variant="secondary" size="small">
+                                <ParButton @click="generateStatblock()" size="small">Regenerate Statblock
+                                </ParButton>
+                                <ParButton @click="clearStatblockReference()" variant="secondary" size="small">
                                     Clear
-                                    Reference</ParActionButton>
+                                    Reference</ParButton>
                             </div>
                         </div>
 
@@ -331,9 +331,9 @@
                 <ParCallout v-else>
                     <p>All features unlimited. NPC data is saved on this browser. Export to a file to use on another
                         device.</p>
-                    <ParActionButton @click="showDataManagerModal = true">
+                    <ParButton @click="showDataManagerModal = true">
                         Save/Load Data from a File
-                    </ParActionButton>
+                    </ParButton>
                 </ParCallout>
             </div>
         </div>
@@ -341,7 +341,7 @@
 </template>
 
 <script setup>
-import { ParActionButton, ParCallout } from "@/parchment";
+import { ParButton, ParCallout } from "@/parchment";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';

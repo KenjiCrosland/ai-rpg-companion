@@ -20,8 +20,8 @@
         </div>
 
         <div class="sidebar-footer">
-          <ParActionButton @click="deleteAllDungeons" variant="secondary" :full-width="true">Delete All
-            Dungeons</ParActionButton>
+          <ParButton @click="deleteAllDungeons" variant="secondary" :full-width="true">Delete All
+            Dungeons</ParButton>
         </div>
 
         <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
@@ -93,7 +93,7 @@
                 </template>
               </cdr-input>
             </div>
-            <ParActionButton style="margin-top: 2rem" type="submit" :full-width="true">Generate Dungeon</ParActionButton>
+            <ParButton style="margin-top: 2rem" type="submit" :full-width="true">Generate Dungeon</ParButton>
           </form>
         </div>
 
@@ -113,9 +113,9 @@
           </PatreonCallout>
           <ParCallout v-else>
             <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
-            <ParActionButton @click="showDataManagerModal = true">
+            <ParButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </ParActionButton>
+            </ParButton>
           </ParCallout>
         </div>
       </div>
@@ -158,9 +158,9 @@
         </PatreonCallout>
         <ParCallout v-else>
           <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
-          <ParActionButton @click="showDataManagerModal = true">
+          <ParButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </ParActionButton>
+          </ParButton>
         </ParCallout>
       </div>
     </div>
@@ -168,7 +168,7 @@
 </template>
 
 <script setup>
-import { ParActionButton, ParCallout } from "@/parchment";
+import { ParButton, ParCallout } from "@/parchment";
 import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';

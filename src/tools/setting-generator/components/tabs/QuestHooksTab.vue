@@ -68,7 +68,7 @@
               <p>{{ hook.twist }}</p>
 
               <div class="button-group" style="margin-top: 2rem;">
-                <ParActionButton @click="startEditingQuestHook(index)" variant="secondary">Edit Quest Hook</ParActionButton>
+                <ParButton @click="startEditingQuestHook(index)" variant="secondary">Edit Quest Hook</ParButton>
               </div>
             </div>
 
@@ -93,28 +93,28 @@
               <div v-for="(objective, objIndex) in questHookEditForm.objectives" :key="objIndex"
                 style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
                 <cdr-input v-model="questHookEditForm.objectives[objIndex]" label="Objective" background="secondary" />
-                <ParActionButton size="small" @click="removeQuestObjective(objIndex)"
-                  style="margin-top: 0.5rem;">Remove</ParActionButton>
+                <ParButton size="small" @click="removeQuestObjective(objIndex)"
+                  style="margin-top: 0.5rem;">Remove</ParButton>
               </div>
-              <ParActionButton @click="addQuestObjective" variant="secondary" size="small">Add Objective</ParActionButton>
+              <ParButton @click="addQuestObjective" variant="secondary" size="small">Add Objective</ParButton>
 
               <h3 style="margin-top: 2rem;">Challenges</h3>
               <div v-for="(challenge, chalIndex) in questHookEditForm.challenges" :key="chalIndex"
                 style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
                 <cdr-input v-model="questHookEditForm.challenges[chalIndex]" label="Challenge" background="secondary" />
-                <ParActionButton size="small" @click="removeQuestChallenge(chalIndex)"
-                  style="margin-top: 0.5rem;">Remove</ParActionButton>
+                <ParButton size="small" @click="removeQuestChallenge(chalIndex)"
+                  style="margin-top: 0.5rem;">Remove</ParButton>
               </div>
-              <ParActionButton @click="addQuestChallenge" variant="secondary" size="small">Add Challenge</ParActionButton>
+              <ParButton @click="addQuestChallenge" variant="secondary" size="small">Add Challenge</ParButton>
 
               <h3 style="margin-top: 2rem;">Rewards</h3>
               <div v-for="(reward, rewIndex) in questHookEditForm.rewards" :key="rewIndex"
                 style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
                 <cdr-input v-model="questHookEditForm.rewards[rewIndex]" label="Reward" background="secondary" />
-                <ParActionButton size="small" @click="removeQuestReward(rewIndex)"
-                  style="margin-top: 0.5rem;">Remove</ParActionButton>
+                <ParButton size="small" @click="removeQuestReward(rewIndex)"
+                  style="margin-top: 0.5rem;">Remove</ParButton>
               </div>
-              <ParActionButton @click="addQuestReward" variant="secondary" size="small">Add Reward</ParActionButton>
+              <ParButton @click="addQuestReward" variant="secondary" size="small">Add Reward</ParButton>
 
               <cdr-input v-model="questHookEditForm.twist" label="Twist" background="secondary" :rows="3"
                 tag="textarea" class="edit-field" style="margin-top: 2rem;">
@@ -124,8 +124,8 @@
               </cdr-input>
 
               <div class="button-group">
-                <ParActionButton @click="saveEditQuestHook">Save Changes</ParActionButton>
-                <ParActionButton @click="cancelEditQuestHook" variant="secondary">Cancel</ParActionButton>
+                <ParButton @click="saveEditQuestHook">Save Changes</ParButton>
+                <ParButton @click="cancelEditQuestHook" variant="secondary">Cancel</ParButton>
               </div>
             </div>
           </div>
@@ -186,15 +186,15 @@
         style="margin-bottom: 1rem;"
       />
 
-      <ParActionButton @click="generateQuestHookFromTab" :full-width="true" :disabled="selectedQuestGiverIndex === null">
+      <ParButton @click="generateQuestHookFromTab" :full-width="true" :disabled="selectedQuestGiverIndex === null">
         Generate Quest Hook
-      </ParActionButton>
+      </ParButton>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { ref, computed, watch } from 'vue';
 import {
   CdrButton,

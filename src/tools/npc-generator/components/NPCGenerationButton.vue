@@ -1,9 +1,9 @@
 <template>
-    <ParActionButton size="small" :disabled="disabledButton" @click="handleRequestNPCDescription()">{{ buttonText }}</ParActionButton>
+    <ParButton size="small" :disabled="disabledButton" @click="handleRequestNPCDescription()">{{ buttonText }}</ParButton>
 </template>
 
 <script>
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import { requestNPCDescription } from "../utils/request-npc-description.mjs";
 export default {
     props: {
@@ -23,7 +23,7 @@ export default {
         },
     },
     components: {
-        ParActionButton,
+        ParButton,
     },
     methods: {
         async handleRequestNPCDescription() {

@@ -106,16 +106,16 @@
                     <input class="party-number-input" type="number" min="1" max="20" :value="group.level || ''"
                       placeholder="5" @input="updateGroupLevel(index, $event.target.value)" />
                   </div>
-                  <ParActionButton v-if="partyGroups.length > 1" size="small" icon-only @click="removePartyGroup(index)">
+                  <ParButton v-if="partyGroups.length > 1" size="small" icon-only @click="removePartyGroup(index)">
                     <template #icon>
                       <icon-x-sm />
                     </template>
-                  </ParActionButton>
+                  </ParButton>
                 </div>
 
-                <ParActionButton size="small" variant="secondary" @click="addPartyGroup">
+                <ParButton size="small" variant="secondary" @click="addPartyGroup">
                   + Add Group
-                </ParActionButton>
+                </ParButton>
               </div>
 
               <EncounterMonsterList :monsters="encounterMonsters" :party-size="totalPartySize"
@@ -129,17 +129,17 @@
           </section>
 
           <!-- Generate Button -->
-          <ParActionButton class="generate-button" :full-width="true" @click="generateEncounter" :disabled="loading">
+          <ParButton class="generate-button" :full-width="true" @click="generateEncounter" :disabled="loading">
             {{ loading ? 'Generating...' : 'Generate Encounter' }}
-          </ParActionButton>
+          </ParButton>
         </div>
       </div>
 
       <!-- ZONE 3: Navigation button (outside card) -->
       <div v-if="generatedEncounter && !loading" class="output-navigation">
-        <ParActionButton @click="resetEncounter" variant="secondary">
+        <ParButton @click="resetEncounter" variant="secondary">
           ← Create New Encounter
-        </ParActionButton>
+        </ParButton>
       </div>
 
       <!-- Output card (separate from form) -->
@@ -152,10 +152,10 @@
         </div>
         <div v-else-if="generatedEncounter && generatedEncounter.place_name" class="encounter-header">
           <h3>{{ generatedEncounter.place_name }}</h3>
-          <ParActionButton v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" variant="secondary"
+          <ParButton v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" variant="secondary"
             size="small" @click="startEditingEncounter">
             Edit
-          </ParActionButton>
+          </ParButton>
         </div>
 
         <!-- Skeleton for read-aloud while Call 1 loads -->
@@ -210,8 +210,8 @@
           </cdr-input>
 
           <div class="button-group">
-            <ParActionButton size="small" @click="saveEditEncounter">Save Changes</ParActionButton>
-            <ParActionButton size="small" @click="cancelEditEncounter" variant="secondary">Cancel</ParActionButton>
+            <ParButton size="small" @click="saveEditEncounter">Save Changes</ParButton>
+            <ParButton size="small" @click="cancelEditEncounter" variant="secondary">Cancel</ParButton>
           </div>
         </div>
 
@@ -238,9 +238,9 @@
 
             <div v-else class="generate-statblock-section">
               <p>Statblock not available for this monster.</p>
-              <ParActionButton v-if="!monster.loadingStatblock" @click="generateStatblock(index)" variant="secondary">
+              <ParButton v-if="!monster.loadingStatblock" @click="generateStatblock(index)" variant="secondary">
                 Generate Statblock
-              </ParActionButton>
+              </ParButton>
               <div v-else class="loading-statblock">
                 Generating statblock...
               </div>
@@ -255,30 +255,30 @@
               :options="folderMoveOptions" />
             <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name"
               background="secondary" />
-            <ParActionButton @click="handleFolderMove" :disabled="!canMoveEncounter">
+            <ParButton @click="handleFolderMove" :disabled="!canMoveEncounter">
               Move
-            </ParActionButton>
+            </ParButton>
           </div>
         </div>
 
         <!-- Actions inside card -->
         <div class="output-actions" v-if="!loading && !generatedEncounter.loading_details">
           <div class="management-actions">
-            <ParActionButton variant="secondary" size="small" @click="showFolderMover = !showFolderMover">
+            <ParButton variant="secondary" size="small" @click="showFolderMover = !showFolderMover">
               {{ showFolderMover ? 'Cancel' : 'Move to Folder' }}
-            </ParActionButton>
-            <ParActionButton variant="secondary" size="small" @click="deleteEncounter">
+            </ParButton>
+            <ParButton variant="secondary" size="small" @click="deleteEncounter">
               Delete
-            </ParActionButton>
+            </ParButton>
           </div>
           <div class="export-actions-wrapper">
             <div class="export-actions">
-              <ParActionButton @click="exportAsPlainText" variant="secondary">
+              <ParButton @click="exportAsPlainText" variant="secondary">
                 Copy as Plain Text
-              </ParActionButton>
-              <ParActionButton @click="exportToMarkdown">
+              </ParButton>
+              <ParButton @click="exportToMarkdown">
                 Copy as Homebrewery Markdown
-              </ParActionButton>
+              </ParButton>
             </div>
 
             <!-- Homebrewery link shown after copying markdown -->
@@ -314,9 +314,9 @@
              as a coherent block, matching the upsell callout above. -->
         <ParCallout v-else>
           <p>Encounter data is saved on this browser. Export to a file to use on another device.</p>
-          <ParActionButton @click="showDataManagerModal = true">
+          <ParButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </ParActionButton>
+          </ParButton>
         </ParCallout>
       </div>
     </div>
@@ -324,7 +324,7 @@
 </template>
 
 <script setup>
-import { ParActionButton, ParCallout } from "@/parchment";
+import { ParButton, ParCallout } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, computed, onMounted, watch } from 'vue';
 import { CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';

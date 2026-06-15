@@ -40,7 +40,7 @@
           <!-- Export buttons moved to <SettingExports> below the main
                content area. Only Delete All stays in the sidebar
                because it's destructive cleanup, not an export. -->
-          <ParActionButton @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</ParActionButton>
+          <ParButton @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</ParButton>
         </div>
       </div>
 
@@ -99,9 +99,9 @@
                 </template>
               </cdr-input>
             </div>
-            <ParActionButton type="submit" :full-width="true">
+            <ParButton type="submit" :full-width="true">
               Generate Setting
-            </ParActionButton>
+            </ParButton>
           </form>
         </div>
 
@@ -120,9 +120,9 @@
           </PatreonCallout>
           <ParCallout v-else>
             <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
-            <ParActionButton @click="showDataManagerModal = true">
+            <ParButton @click="showDataManagerModal = true">
               Save/Load Data from a File
-            </ParActionButton>
+            </ParButton>
           </ParCallout>
         </div>
       </div>
@@ -170,9 +170,9 @@
         </PatreonCallout>
         <ParCallout v-else>
           <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
-          <ParActionButton @click="showDataManagerModal = true">
+          <ParButton @click="showDataManagerModal = true">
             Save/Load Data from a File
-          </ParActionButton>
+          </ParButton>
         </ParCallout>
       </div>
 
@@ -198,7 +198,7 @@
 </template>
 
 <script setup>
-import { ParActionButton, ParCallout } from "@/parchment";
+import { ParButton, ParCallout } from "@/parchment";
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrLink } from "@rei/cedar";
 import {
@@ -2524,7 +2524,7 @@ $transition-speed: 0.3s;
 
 /* Setting-level destructive action — right-aligned in its own row so
    it pairs with the trailing edge of the tab area instead of floating
-   orphaned. Uses ParActionButton secondary variant (faded slate ghost)
+   orphaned. Uses ParButton secondary variant (faded slate ghost)
    so a permanent action doesn't compete for attention. */
 .delete-setting-row {
   width: 100%;

@@ -39,13 +39,13 @@
             <span v-if="stub.role_brief" class="related-place-role">{{ stub.role_brief }}</span>
           </div>
           <div class="related-place-actions">
-            <ParActionButton v-if="!stub.promoted_setting_id" variant="primary-outline"
+            <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline"
               @click="onPromote(stub, 'parent')">
               Create Setting
-            </ParActionButton>
-            <ParActionButton v-else variant="primary-outline" @click="onView(stub)">
+            </ParButton>
+            <ParButton v-else variant="primary-outline" @click="onView(stub)">
               View in Setting Generator
-            </ParActionButton>
+            </ParButton>
             <button type="button" class="related-place-remove" :title="`Remove ${stub.name}`"
               :aria-label="`Remove ${stub.name}`" @click="onRemove(stub)">✕</button>
           </div>
@@ -63,13 +63,13 @@
             <span v-if="stub.role_brief" class="related-place-role">{{ stub.role_brief }}</span>
           </div>
           <div class="related-place-actions">
-            <ParActionButton v-if="!stub.promoted_setting_id" variant="primary-outline"
+            <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline"
               @click="onPromote(stub, 'sibling')">
               Create Setting
-            </ParActionButton>
-            <ParActionButton v-else variant="primary-outline" @click="onView(stub)">
+            </ParButton>
+            <ParButton v-else variant="primary-outline" @click="onView(stub)">
               View in Setting Generator
-            </ParActionButton>
+            </ParButton>
             <button type="button" class="related-place-remove" :title="`Remove ${stub.name}`"
               :aria-label="`Remove ${stub.name}`" @click="onRemove(stub)">✕</button>
           </div>
@@ -87,13 +87,13 @@
             <span v-if="stub.role_brief" class="related-place-role">{{ stub.role_brief }}</span>
           </div>
           <div class="related-place-actions">
-            <ParActionButton v-if="!stub.promoted_setting_id" variant="primary-outline"
+            <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline"
               @click="onPromote(stub, 'sublocation')">
               Create Setting
-            </ParActionButton>
-            <ParActionButton v-else variant="primary-outline" @click="onView(stub)">
+            </ParButton>
+            <ParButton v-else variant="primary-outline" @click="onView(stub)">
               View in Setting Generator
-            </ParActionButton>
+            </ParButton>
             <button type="button" class="related-place-remove" :title="`Remove ${stub.name}`"
               :aria-label="`Remove ${stub.name}`" @click="onRemove(stub)">✕</button>
           </div>
@@ -112,7 +112,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import AddRelatedPlaceForm from './AddRelatedPlaceForm.vue';
 

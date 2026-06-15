@@ -72,14 +72,14 @@
           Click a room number to add details
         </p>
         <div class="generate-button-container">
-          <ParActionButton @click="handleGenerateMapClick" size="small"
+          <ParButton @click="handleGenerateMapClick" size="small"
             :disabled="dungeonStore.isAssigningMapContext">
             {{ dungeonStore.currentDungeon && dungeonStore.currentDungeon.rooms ? 'Re-generate Map' : 'Generate Map' }}
-          </ParActionButton>
-          <ParActionButton v-if="mapExists" @click="handleDownloadMapClick" size="small"
+          </ParButton>
+          <ParButton v-if="mapExists" @click="handleDownloadMapClick" size="small"
             :disabled="dungeonStore.isAssigningMapContext">
             Download Map
-          </ParActionButton>
+          </ParButton>
         </div>
       </div>
     </div>
@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import DungeonMap from './DungeonMap.vue';

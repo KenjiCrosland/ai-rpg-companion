@@ -91,7 +91,7 @@
     </div>
 
     <div class="patreon-callout__actions">
-      <ParActionButton
+      <ParButton
         variant="luminous"
         tag="a"
         :href="patreonUrl"
@@ -103,7 +103,7 @@
           </svg>
         </template>
         Support on Patreon
-      </ParActionButton>
+      </ParButton>
     </div>
   </div>
 </template>
@@ -130,7 +130,7 @@
  */
 
 import { ref } from 'vue';
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 defineProps({

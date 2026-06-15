@@ -152,7 +152,7 @@
 
      Conceptually distinct from the parchment burgundy above: parchment
      is the *editorial* layer (cards, source-book content, ParCardButton),
-     lapis is the *chrome* layer (form CTAs, ParActionButton). The two
+     lapis is the *chrome* layer (form CTAs, ParButton). The two
      palettes are deliberately different so the user reads "this is a
      card surface" vs "this is a tool form" without having to think
      about it.
@@ -186,7 +186,7 @@
      special-importance moments (premium upsell, future high-significance
      CTAs). Three rest stops + one extra stop for the hover gradient.
      The four stops are independent values (not derivations of secondary
-     slate); reserved for ParActionButton's variant="luminous". Don't
+     slate); reserved for ParButton's variant="luminous". Don't
      proliferate — the variant earns its complexity through scarcity.
 
      Gradient direction is consumer-defined (typically 165deg top-left

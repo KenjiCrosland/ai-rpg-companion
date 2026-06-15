@@ -3,15 +3,15 @@
     <h3 class="exports-heading">Export Your Statblock</h3>
 
     <div class="export-buttons">
-      <ParActionButton @click="copyAsMarkdown" variant="secondary">
+      <ParButton @click="copyAsMarkdown" variant="secondary">
         Copy as Markdown
-      </ParActionButton>
-      <ParActionButton @click="copyAsVTT" variant="secondary">
+      </ParButton>
+      <ParButton @click="copyAsVTT" variant="secondary">
         Copy for Foundry VTT
-      </ParActionButton>
-      <ParActionButton @click="copyAsImprovedInitiative" variant="secondary">
+      </ParButton>
+      <ParButton @click="copyAsImprovedInitiative" variant="secondary">
         Copy for Improved Initiative
-      </ParActionButton>
+      </ParButton>
     </div>
 
     <div class="roll20-callout">
@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { ref } from 'vue';
 import { CdrAccordion, CdrAccordionGroup } from "@rei/cedar";
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';

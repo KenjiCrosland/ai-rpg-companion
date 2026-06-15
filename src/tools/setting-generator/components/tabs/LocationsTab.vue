@@ -40,15 +40,15 @@
               <p v-if="location.setting_scale">{{ location.setting_scale }}</p>
 
               <div class="button-group">
-                <ParActionButton @click="startEditingLocation(index)" variant="secondary">Edit Location</ParActionButton>
-                <ParActionButton @click="$emit('generate-sublocation', {
+                <ParButton @click="startEditingLocation(index)" variant="secondary">Edit Location</ParButton>
+                <ParButton @click="$emit('generate-sublocation', {
                   sublocationIndex: index,
                   subLocationName: location.name,
                   subLocationDescription: location.description,
                   setting_type: location.setting_type,
                 })">
                   Generate Full Description
-                </ParActionButton>
+                </ParButton>
               </div>
             </div>
 
@@ -69,8 +69,8 @@
               </cdr-input>
 
               <div class="button-group">
-                <ParActionButton @click="saveEditLocation">Save Changes</ParActionButton>
-                <ParActionButton @click="cancelEditLocation" variant="secondary">Cancel</ParActionButton>
+                <ParButton @click="saveEditLocation">Save Changes</ParButton>
+                <ParButton @click="cancelEditLocation" variant="secondary">Cancel</ParButton>
               </div>
             </div>
           </div>
@@ -131,7 +131,7 @@
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { ref, computed, watch } from 'vue';
 import {
   CdrButton,

@@ -11,8 +11,8 @@ import { mount } from '@vue/test-utils';
 import AddRelatedPlaceForm from '../AddRelatedPlaceForm.vue';
 
 jest.mock('@/parchment', () => ({
-  ParActionButton: {
-    name: 'ParActionButton',
+  ParButton: {
+    name: 'ParButton',
     template: '<button type="button" :disabled="disabled"><slot></slot></button>',
     props: ['variant', 'disabled'],
   },
