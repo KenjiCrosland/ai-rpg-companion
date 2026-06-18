@@ -24,16 +24,20 @@
 
   /* Color: surfaces */
   --par-color-surface:         #FBF7F0;
-  /* Page surface — transitional value, very close to pure white so
-     the parchment zone has no visible seam against surrounding Cedar
-     white chrome (sidebar, modals, etc.). The lift between cards and
-     page is currently carried by the card border + shadow rather than
-     surface contrast.
-       Migration path: when the global Cedar→parchment migration ships,
-       bump this token toward #F5EFE2 (or wherever the form page lands)
-       to restore strong cream-on-cream surface contrast. Cards stay at
-       --par-color-surface the whole time; only this token shifts. */
-  --par-color-surface-page:    #FBF8F1;
+  /* Page surface — cool, lightly lapis-tinted ground (the "desk"). The
+     warm cream content surfaces (--par-color-surface / -surface-card)
+     lift off it through warm-on-cool contrast rather than brightness, so
+     cards read as warm paper on a cool desk. Sits in the lapis chrome
+     register; the warm card tones stay the editorial register. */
+  --par-color-surface-page:    #EAEEF2;
+  /* Lifted content surface — for form cards, sidebar, output cards, and
+     any surface that should read as a distinct content region floating
+     above the page background. Brighter than --par-color-surface so the
+     lift comes from the surface itself, not just the border. Preserves
+     the warm parchment character. Pair with --par-color-border-strong at
+     0.5px–1px for the card edge. (--par-color-surface stays the editorial
+     card-family paper tone: item card, NPC card, field interiors.) */
+  --par-color-surface-card:    #FEFBF4;
   --par-color-border:          #e8e2d4;
   --par-color-border-strong:   #c9b99a;
   /* Border: deep tan — emphasized/hover state for callouts, focused
@@ -48,12 +52,18 @@
      used in feature descriptions so the callout reads as primary
      content (just sitting in a different surface), not de-emphasized. */
   --par-color-callout-bg:      #f3ebda;
+  /* Color: callout (light) — a softer tint between the lifted surface and
+     the full callout tan. For chrome "content metadata" surfaces that
+     need more containment than a lifted card but should stay quieter than
+     a full editorial callout (e.g. the Related-section item cards). */
+  --par-color-callout-bg-light: #F8F2E3;
   /* Color: surface tinted — deeper variant of --par-color-callout-bg.
      Used for hover/active states on tinted callout blocks, or as an
      emphasized callout when a block needs more weight than the standard
      callout. Pair with --par-color-border-deep for a heavier surface. */
   --par-color-callout-bg-deep: #ede2cb;
   --par-color-callout-text:    #2c2c2a;
+
   /* Color: form field — tinted interior for the form-input family
      (ParInput / ParSelect / ParTextarea). The callout cream at 50%
      opacity so fields read as quieter "containers" against the cream

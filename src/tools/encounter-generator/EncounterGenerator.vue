@@ -1,7 +1,7 @@
 <template>
   <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
     <template #sidebar>
-      <div class="sidebar-content">
+      <div class="sidebar-content parchment">
         <div class="sidebar-scroll">
           <cdr-accordion-group>
             <cdr-accordion level="3" v-for="(folder, folderName) in filteredEncounters" :key="folderName"
@@ -1426,6 +1426,19 @@ onMounted(async () => {
 }
 
 /* ─── Sidebar ───────────────────────────────────────────────────────────── */
+.sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
 .saved-encounters {
   list-style: none;
   padding: 0;

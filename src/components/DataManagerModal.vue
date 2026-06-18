@@ -1,30 +1,33 @@
 <template>
-  <cdr-modal label="Save/Load Data" :opened="opened" aria-describedby="dataManagerModalDescription"
-    @closed="closeModal">
-    <template #title>
-      <cdr-text tag="h3" class="title-header">
-        Save/Load Data
-      </cdr-text>
-    </template>
-
+  <ParModal
+    :opened="opened"
+    title="Backup / Restore library"
+    @cancel="closeModal"
+  >
     <!-- Free tier upsell -->
     <div v-if="!premium">
-      <cdr-text id="dataManagerModalDescription" tag="p" style="margin-bottom: 1rem;">
+      <p class="dm-text">
         Downloading and uploading app data is reserved for the premium version of this app.
         Please access the premium version here:
-      </cdr-text>
+      </p>
 
-      <cdr-link v-if="matchedApp?.premiumLink" :href="matchedApp.premiumLink" target="_blank">
+      <a
+        v-if="matchedApp?.premiumLink"
+        class="dm-link"
+        :href="matchedApp.premiumLink"
+        target="_blank"
+        rel="noopener"
+      >
         {{ matchedApp?.appName }} - Premium Version
-      </cdr-link>
+      </a>
     </div>
 
     <!-- Premium: single bundled download/upload -->
-    <div v-else>
-      <cdr-text id="dataManagerModalDescription" tag="p" style="margin-bottom: 1rem;">
+    <template v-else>
+      <p class="dm-text">
         Save your data to a file you can back up, share, or move to another device. Upload a saved file to restore your
         work.
-      </cdr-text>
+      </p>
 
       <div v-if="hasAnyData" class="summary">
         <p class="summary-heading">Currently in your browser:</p>
@@ -35,40 +38,31 @@
         </ul>
         <p class="summary-footer">Connections between your items, NPCs, and other tools are preserved automatically.</p>
       </div>
-      <p v-else style="margin: 0.75rem 0;">
+      <p v-else class="dm-empty">
         No saved data found in this browser. Upload a previous export to restore your work.
       </p>
 
-      <div class="buttons-container">
-        <ParButton variant="secondary" @click="triggerFileSelect">
-          Upload JSON
-        </ParButton>
-        <input ref="fileInput" type="file" accept="application/json" style="display: none;"
-          @change="handleFileChange" />
+      <input ref="fileInput" type="file" accept="application/json" style="display: none;"
+        @change="handleFileChange" />
+    </template>
 
-        <ParButton @click="downloadData" :disabled="!hasAnyData">
-          Download JSON
-        </ParButton>
-      </div>
-    </div>
-  </cdr-modal>
+    <template v-if="premium" #footer>
+      <ParButton variant="secondary" @click="triggerFileSelect">
+        Upload JSON
+      </ParButton>
+      <ParButton @click="downloadData" :disabled="!hasAnyData">
+        Download JSON
+      </ParButton>
+    </template>
+  </ParModal>
 </template>
 
 <script setup>
-import { ParButton } from "@/parchment";
+import { ParButton, ParModal } from "@/parchment";
 import { ref, computed } from 'vue';
-import {
-  CdrModal,
-  CdrText,
-  CdrLink
-} from '@rei/cedar';
+import { logger } from '@/util/logger.mjs';
 import { QUOTA_FIELDS, seedFreshQuotas } from '@/util/quota-storage.mjs';
 import { runPendingMigrations } from '@/util/migration-runner.mjs';
-
-// Cedar CSS
-import '@rei/cedar/dist/style/cdr-modal.css';
-import '@rei/cedar/dist/style/cdr-text.css';
-import '@rei/cedar/dist/style/cdr-link.css';
 
 const props = defineProps({
   opened: {
@@ -333,7 +327,7 @@ function handleFileChange(event) {
       // will also call it on next mount — migrations are gated by
       // migrations-completed and skip work already done.
       runPendingMigrations().catch((err) => {
-        console.error('Post-import migrations failed:', err);
+        logger.error('Post-import migrations failed:', err);
       });
 
       // After importing `monsters`, seed fresh quota fields so the
@@ -362,17 +356,40 @@ function handleFileChange(event) {
 </script>
 
 <style scoped>
+.dm-text {
+  margin: 0 0 1rem;
+  color: var(--par-color-text, #222);
+  line-height: 1.5;
+}
+
+/* Lapis chrome link — reads as a chrome action against the cream
+   modal ground, matching the modal's lapis accents. */
+.dm-link {
+  color: var(--color-action-rest, #365A85);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.dm-link:hover,
+.dm-link:focus-visible {
+  color: var(--color-action-hover, #2A4D70);
+}
+
+/* Inner callout in the pale-lapis chrome register so the summary
+   reads as emphasis against the cream parchment surface (per ParModal
+   convention), not as a second parchment card. */
 .summary {
   margin: 0.75rem 0 1rem;
   padding: 0.75rem 1rem;
-  background: #f4f0e8;
-  border: 1px solid #c9b99a;
+  background: var(--par-color-readaloud-bg-deep, #C5D4E5);
+  border: 1px solid var(--par-color-readaloud-rule, #7A8FAA);
   border-radius: 4px;
 }
 
 .summary-heading {
   margin: 0 0 0.5rem;
   font-weight: 600;
+  color: var(--color-action-hover, #2A4D70);
 }
 
 .summary-list {
@@ -389,13 +406,11 @@ function handleFileChange(event) {
   margin: 0.6rem 0 0;
   font-size: 0.85em;
   font-style: italic;
-  color: #6b6356;
+  color: var(--par-color-text-secondary, #555);
 }
 
-.buttons-container {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-  justify-content: flex-end;
+.dm-empty {
+  margin: 0.75rem 0;
+  color: var(--par-color-text-secondary, #555);
 }
 </style>

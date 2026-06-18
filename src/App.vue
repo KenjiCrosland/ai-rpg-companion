@@ -353,6 +353,13 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Parchment page surface — warm cream behind every tool instead of stark
+   white, so cards/sidebars read as surfaces on a toned ground. Global:
+   applies to all tools. */
+body {
+  background-color: var(--par-color-surface-page, #EAEEF2);
+}
+
 /* Make form controls inherit too */
 body,
 button,

@@ -1,10 +1,12 @@
 <template>
+  <!-- `parchment` opts out of App.vue's global font-family !important
+       override so the serif (incl. placeholder) is honored anywhere. -->
   <input
     :type="type"
     :value="modelValue"
     :placeholder="placeholder"
     :disabled="disabled"
-    class="par-input"
+    class="par-input parchment"
     @input="$emit('update:modelValue', $event.target.value)"
   />
 </template>

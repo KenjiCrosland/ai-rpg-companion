@@ -1,7 +1,7 @@
 <template>
   <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
     <template #sidebar>
-      <div class="sidebar-content">
+      <div class="sidebar-content parchment">
         <ul class="settings-tabs">
           <!-- Collapsible tree: every node renders at its depth as a
                (chevron-or-spacer) + label row. Branches stay collapsed
@@ -2156,10 +2156,10 @@ function collectRelatedSettingNames(setting) {
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 // Sidebar-specific styles
-$active-color: #ffffff;
-$hover-background-color: #f0f0f0;
-$default-background-color: #e0e0e0;
-$active-border-color: #007BFF;
+$active-color: var(--par-color-callout-bg-deep, #ede2cb);
+$hover-background-color: var(--par-color-callout-bg, #f3ebda);
+$default-background-color: transparent;
+$active-border-color: var(--color-action-rest, #365A85);
 $transition-speed: 0.3s;
 
 .sidebar-content {

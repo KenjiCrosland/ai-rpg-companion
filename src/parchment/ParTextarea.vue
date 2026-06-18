@@ -1,10 +1,12 @@
 <template>
+  <!-- `parchment` opts out of App.vue's global font-family !important
+       override so the serif (incl. placeholder) is honored anywhere. -->
   <textarea
     :value="modelValue"
     :placeholder="placeholder"
     :rows="rows"
     :disabled="disabled"
-    class="par-textarea"
+    class="par-textarea parchment"
     @input="$emit('update:modelValue', $event.target.value)"
   />
 </template>

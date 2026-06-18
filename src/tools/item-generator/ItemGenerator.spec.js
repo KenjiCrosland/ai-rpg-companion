@@ -122,18 +122,6 @@ jest.mock('@rei/cedar', () => ({
 }));
 
 // Mock Tabs components
-jest.mock('@/components/tabs/Tabs.vue', () => ({
-  name: 'Tabs',
-  template: '<div><slot></slot></div>',
-  props: ['activeIndex']
-}));
-
-jest.mock('@/components/tabs/TabPanel.vue', () => ({
-  name: 'TabPanel',
-  template: '<div><slot></slot></div>',
-  props: ['label']
-}));
-
 // Mock toast composable
 jest.mock('@/composables/useToast', () => ({
   useToast: () => ({
@@ -211,7 +199,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       });
 
       // Set user-provided name via the input element
-      const nameInput = wrapper.find('input#item-name');
+      const nameInput = wrapper.find('.par-input');
       await nameInput.setValue('Flamebrand Aegis');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
@@ -227,6 +215,23 @@ describe('ItemGenerator - Prompt Generation', () => {
       expect(prompt).toContain('Flamebrand Aegis');
       expect(prompt).toContain('This name is FINAL and MUST appear exactly as written');
       expect(prompt).toContain('Do NOT rename, alter, translate, or "improve" it');
+    });
+
+    it('"surprise me" ignores typed field values and generates an unconstrained item', async () => {
+      wrapper = mount(ItemGenerator, {
+        props: { premium: true }
+      });
+
+      // Type a name, then use the random affordance — it must be ignored.
+      await wrapper.find('.par-input').setValue('Flamebrand Aegis');
+      await wrapper.find('.form-subhead__random').trigger('click');
+      await flushPromises();
+
+      expect(openAi.generateGptResponse).toHaveBeenCalled();
+      const prompt = openAi.generateGptResponse.mock.calls[0][0];
+      // The typed name was cleared, so no USER-PROVIDED NAME protection block.
+      expect(prompt).not.toContain('Flamebrand Aegis');
+      expect(prompt).not.toContain('USER-PROVIDED NAME — DO NOT CHANGE');
     });
 
     it('should include naming style guidance when user does NOT provide a name', async () => {
@@ -251,10 +256,8 @@ describe('ItemGenerator - Prompt Generation', () => {
         props: { premium: true }
       });
 
-      // Find and set the lore textarea (it's an input rendered by CdrInput)
-      const allInputs = wrapper.findAll('input');
-      // The last input should be the lore textarea (based on form order)
-      const loreInput = allInputs[allInputs.length - 1];
+      // Lore is the ParTextarea ("Notes for the scribe") in the form.
+      const loreInput = wrapper.find('.par-textarea');
       await loreInput.setValue('Forged by the legendary smith Gorath');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
@@ -273,7 +276,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       });
 
       // Set user-provided name, no explicit origin
-      const nameInput = wrapper.find('input#item-name');
+      const nameInput = wrapper.find('.par-input');
       await nameInput.setValue('Flamebrand Aegis');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
@@ -300,7 +303,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       const originSelect = selects[2]; // Third select is origin
       await originSelect.setValue('Draconic');
 
-      const nameInput = wrapper.find('input#item-name');
+      const nameInput = wrapper.find('.par-input');
       await nameInput.setValue('Flamebrand Aegis');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
@@ -317,7 +320,7 @@ describe('ItemGenerator - Prompt Generation', () => {
         props: { premium: true }
       });
 
-      const nameInput = wrapper.find('input#item-name');
+      const nameInput = wrapper.find('.par-input');
       await nameInput.setValue('Test Item');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
@@ -490,11 +493,8 @@ describe('ItemGenerator - Prompt Generation', () => {
 
       const originSelect = wrapper.findAll('select')[2];
       await originSelect.setValue('Necromantic');
-      // Lore textarea is the last cdr-input rendered as a regular input
-      // by the test mock (matches the pattern used in the existing
-      // USER-PROVIDED LORE test).
-      const allInputs = wrapper.findAll('input');
-      const loreInput = allInputs[allInputs.length - 1];
+      // Lore is the ParTextarea ("Notes for the scribe") in the form.
+      const loreInput = wrapper.find('.par-textarea');
       await loreInput.setValue('An ancient orcish battleaxe');
       await wrapper.find('form').trigger('submit');
       await flushPromises();
@@ -830,7 +830,7 @@ describe('ItemGenerator - Prompt Generation', () => {
       // derives theme from input) → material selection should pull
       // from allMaterials, not any specific origin pool.
       wrapper = mount(ItemGenerator, { props: { premium: true } });
-      const nameInput = wrapper.find('input#item-name');
+      const nameInput = wrapper.find('.par-input');
       await nameInput.setValue('Curious Lantern');
       await wrapper.find('form').trigger('submit');
       await flushPromises();

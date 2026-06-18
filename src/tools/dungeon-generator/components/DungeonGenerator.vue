@@ -1,7 +1,7 @@
 <template>
   <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
     <template #sidebar>
-      <div class="sidebar-content">
+      <div class="sidebar-content parchment">
         <div class="sidebar-scroll">
           <ul class="saved-dungeons">
             <li v-for="(dungeon) in dungeonStore.dungeons" :key="dungeon.id"
@@ -395,8 +395,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border-top: 1px solid #dee2e6;
-  background-color: #f9f9f9;
+  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
+  background-color: transparent;
 }
 
 .saved-dungeons {
@@ -408,8 +408,9 @@ onMounted(() => {
     margin-bottom: 8px;
 
     &.active .dungeon-button {
-      background-color: #ffffff;
-      border-left-color: #007BFF;
+      background-color: var(--par-color-callout-bg-deep, #ede2cb);
+      border-left-color: var(--color-action-rest, #365A85);
+      color: var(--color-action-hover, #2A4D70);
       font-weight: 600;
     }
   }
@@ -419,29 +420,31 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: 0.7rem 1rem;
     font-size: 1.4rem;
     text-align: left;
-    background-color: #e9ecef;
+    background-color: transparent;
     border: none;
-    border-left: 3px solid transparent;
-    color: #212529;
+    border-left: 4px solid transparent;
+    color: var(--par-color-text, #212529);
     cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: 4px;
+    transition: background-color 0.15s ease, border-left-color 0.15s ease, color 0.15s ease;
+    border-radius: var(--par-radius-sm, 3px);
 
     &:hover {
-      background-color: #dee2e6;
+      background-color: var(--par-color-callout-bg, #f3ebda);
     }
 
-    &:focus {
-      outline: 2px solid #007BFF;
-      outline-offset: 2px;
+    &:focus-visible {
+      outline: none;
+      border-left-color: var(--color-action-rest, #365A85);
+      background-color: var(--par-color-callout-bg, #f3ebda);
     }
 
     &.active {
-      background-color: #ffffff;
-      border-left-color: #007BFF;
+      background-color: var(--par-color-callout-bg-deep, #ede2cb);
+      border-left-color: var(--color-action-rest, #365A85);
+      color: var(--color-action-hover, #2A4D70);
       font-weight: 600;
     }
   }

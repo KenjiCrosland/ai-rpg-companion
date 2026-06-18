@@ -1,5 +1,8 @@
 <template>
-  <label class="par-field">
+  <!-- `parchment` opts this subtree out of App.vue's global font-family
+       !important override (which forces --font-sans on non-parchment
+       elements). Covers the slotted control too, as its descendant. -->
+  <label class="par-field parchment">
     <span class="par-field__label">
       {{ label }}<span v-if="optional" class="par-field__optional"> — optional</span>
     </span>

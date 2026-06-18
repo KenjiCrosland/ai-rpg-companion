@@ -1,5 +1,5 @@
 <template>
-  <div class="related-npcs-section">
+  <div class="related-npcs-section parchment">
     <!-- Header is the same in both states: heading on the left, ghost
          Re-scan button on the right. Ghost styling makes the button
          quieter than the per-stub action buttons (Create NPC / View),
@@ -11,14 +11,14 @@
       <ParTooltip
         text="Scans this item's lore and timeline events for named characters and adds them here. Re-run after editing the lore or adding events."
       >
-        <ParCardButton
-          variant="ghost"
-          size="small"
+        <button
+          type="button"
+          class="related-npcs-rescan"
           :disabled="loading"
           @click="rescan"
         >
           {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
-        </ParCardButton>
+        </button>
       </ParTooltip>
     </div>
 
@@ -32,15 +32,17 @@
            Lore Builder is the path to richer lore that names someone.
          Lead with re-scan (helps the bulk case immediately); offer the
          Lore Builder as the conditional fallback for the new-user case. -->
-    <p v-if="!hasStubs" class="related-npcs-empty">
-      No related NPCs yet. Click Re-scan Lore above to find named characters in this item's lore. If the lore doesn't mention any,
-      <a
-        href="#"
-        class="related-npcs-empty-link"
-        @click.prevent="$emit('switch-to-lore-builder')"
-      >use the Lore Builder</a>
-      to add more lore content.
-    </p>
+    <div v-if="!hasStubs" class="related-npcs-empty">
+      <p class="related-npcs-empty-copy">
+        No related NPCs yet. Click Re-scan Lore above to find named characters in this item's lore. If the lore doesn't mention any,
+        <a
+          href="#"
+          class="related-npcs-empty-link"
+          @click.prevent="$emit('switch-to-lore-builder')"
+        >use the Lore Builder</a>
+        to add more lore content.
+      </p>
+    </div>
 
     <!-- Populated state: list only. No helper text — once stubs exist,
          the user doesn't need an explanation of how to get more. -->
@@ -56,18 +58,22 @@
         </div>
 
         <div class="related-npc-actions">
-          <ParCardButton
+          <ParButton
             v-if="!stub.npc_id"
+            variant="secondary"
+            size="small"
             @click="onCreate(stub)"
           >
             Create NPC
-          </ParCardButton>
-          <ParCardButton
+          </ParButton>
+          <ParButton
             v-else
+            variant="secondary"
+            size="small"
             @click="onView(stub)"
           >
             View in NPC Generator
-          </ParCardButton>
+          </ParButton>
           <!--
             Only show ✕ for UNPROMOTED stubs. See RelatedDungeonsSection
             for the rationale: removing a promoted stub from this list
@@ -103,7 +109,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ParCardButton, ParTooltip } from '@/parchment';
+import { ParButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { extractRelatedNPCs, mergeStubs } from '@/tools/item-generator/utils/extract-related-npcs.mjs';
 import { useToast } from '@/composables/useToast';
@@ -182,9 +188,9 @@ function onRemove(idx) {
    a chrome region grafted below.
    ============================================ */
 .related-npcs-section {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--par-color-divider, #e2dccd);
+  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
 }
 
@@ -196,42 +202,93 @@ function onRemove(idx) {
   margin-bottom: 0.75rem;
 }
 
-/* Heading: matches `.item-feature-name` so it reads as a continuation
-   of the item card's heading hierarchy, not a new UI region. */
+/* Heading: dark lapis. The Related sections are chrome (cross-tool
+   navigation metadata), so they sit in the lapis register; burgundy is
+   reserved for the artifact (item card) above. */
 .related-npcs-title {
   margin: 0;
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 600;
-  color: var(--par-color-title, #7a1f1f);
+  color: var(--color-action-hover, #2A4D70);
   letter-spacing: 0.02em;
   line-height: 1.3;
 }
 
+/* Re-scan Lore: lifted-lapis text link with a thin lapis underline —
+   a tool action affordance, not a burgundy editorial cue. */
+.related-npcs-rescan {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0 0 1px;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  color: var(--color-action-rest, #365A85);
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--color-action-rest, #365A85);
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    color: var(--color-action-hover, #2A4D70);
+    border-color: var(--color-action-hover, #2A4D70);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
 /* Empty state: the section's content when there are no stubs. Combines
    "we found nothing" with guidance toward the Lore Builder + Re-scan
-   button. The italic muted treatment matches the lore body's "this is
-   supplementary text" register. */
+   button. The copy sits in a warm-tan contained surface so it reads as
+   a contained "section is empty" region rather than text floating on
+   the page — parallel to a populated stub row. The italic treatment
+   keeps the "supplementary text" register. Heading + Re-scan stay
+   outside on the page register. */
 .related-npcs-empty {
   margin: 0.75rem 0 0;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
+  border-radius: 0.8rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.related-npcs-empty-copy {
+  margin: 0;
   font-size: 1.5rem;
   font-style: italic;
-  color: var(--par-color-text-muted, #6b6b6b);
+  color: var(--par-color-text-secondary, #555);
   line-height: 1.6;
 }
 
 .related-npcs-empty-link {
-  color: var(--par-color-title, #7a1f1f);
-  text-decoration: underline;
+  color: var(--color-action-rest, #365A85);
+  text-decoration: none;
+  border-bottom: 0.5px solid var(--color-action-rest, #365A85);
   cursor: pointer;
   font-style: normal;
+  transition: color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    color: var(--par-color-title-deep, #58180d);
+    color: var(--color-action-hover, #2A4D70);
+    border-color: var(--color-action-hover, #2A4D70);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }
@@ -258,9 +315,13 @@ function onRemove(idx) {
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
-  padding: 1.35rem 1.25rem;
-  background: rgba(0, 0, 0, 0.025);
-  border-radius: var(--par-radius-sm, 3px);
+  padding: 0.95rem 1.25rem;
+  /* Deeper warm tint with a 1px tan border — reads as contained content
+     metadata, a step toward callout territory without being a full
+     editorial callout. */
+  background: var(--par-color-callout-bg-light, #F8F2E3);
+  border: 1px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: 0.8rem;
 }
 
 .related-npc-info {
@@ -316,18 +377,17 @@ function onRemove(idx) {
   transition: color 0.15s ease, background-color 0.15s ease;
 
   &:hover {
-    color: var(--par-color-title, #7a1f1f);
-    background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
+    color: var(--par-color-text, #222);
+    background: rgba(0, 0, 0, 0.04);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }
 
-/* Show all / Show fewer: text link in the parchment palette, not the
-   browser default purple/blue. */
+/* Show all / Show fewer: lapis text link (chrome action). */
 .related-npcs-toggle {
   appearance: none;
   -webkit-appearance: none;
@@ -337,16 +397,16 @@ function onRemove(idx) {
   padding: 0.5rem 0;
   font-family: inherit;
   font-size: 1.4rem;
-  color: var(--par-color-title, #7a1f1f);
+  color: var(--color-action-rest, #365A85);
   cursor: pointer;
   text-decoration: underline;
 
   &:hover {
-    color: var(--par-color-title-deep, #58180d);
+    color: var(--color-action-hover, #2A4D70);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }

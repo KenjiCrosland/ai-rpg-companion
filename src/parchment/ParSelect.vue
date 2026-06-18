@@ -1,5 +1,8 @@
 <template>
-  <div class="par-select-wrapper">
+  <!-- `parchment` opts out of App.vue's global font-family !important
+       override so the serif is honored anywhere (covers the <select> as
+       a descendant). -->
+  <div class="par-select-wrapper parchment">
     <select
       class="par-select"
       :value="modelValue"

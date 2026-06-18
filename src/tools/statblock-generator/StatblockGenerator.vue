@@ -1,7 +1,7 @@
 <template>
   <GeneratorLayout :premium="premium">
     <template #sidebar>
-      <div class="sidebar-content">
+      <div class="sidebar-content parchment">
         <div class="sidebar-scroll">
           <cdr-accordion-group>
             <cdr-accordion level="3" v-for="(folder, folderName) in filteredMonsters" :key="folderName" :id="folderName"
@@ -751,11 +751,11 @@ async function generateStatblock() {
 
 
 .sidebar-content {
-  $background-color: #f4f4f4;
-  $active-color: #ffffff;
-  $hover-background-color: #f0f0f0;
-  $default-background-color: #e0e0e0;
-  $active-border-color: #007BFF;
+  $background-color: transparent;
+  $active-color: var(--par-color-callout-bg-deep, #ede2cb);
+  $hover-background-color: var(--par-color-callout-bg, #f3ebda);
+  $default-background-color: transparent;
+  $active-border-color: var(--color-action-rest, #365A85);
   $indentation-step: 20px;
   $transition-speed: 0.3s;
 

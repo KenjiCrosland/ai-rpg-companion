@@ -1,7 +1,7 @@
 <template>
     <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
         <template #sidebar>
-            <div class="sidebar-content">
+            <div class="sidebar-content parchment">
                 <div class="sidebar-scroll">
                     <cdr-accordion-group>
                         <cdr-accordion level="3" v-for="(folder, folderName) in npcs" :key="folderName" :id="folderName"
@@ -1943,11 +1943,11 @@ function clearStatblockReference() {
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 $sidebar-width: 350px;
-$background-color: #f4f4f4;
-$active-color: #ffffff;
-$hover-background-color: #f0f0f0;
-$default-background-color: #e0e0e0;
-$active-border-color: #007BFF;
+$background-color: transparent;
+$active-color: var(--par-color-callout-bg-deep, #ede2cb);
+$hover-background-color: var(--par-color-callout-bg, #f3ebda);
+$default-background-color: transparent;
+$active-border-color: var(--color-action-rest, #365A85);
 
 .sidebar-content {
     flex: 1;

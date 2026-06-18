@@ -1,20 +1,72 @@
 <template>
   <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
     <template #sidebar>
-      <div class="sidebar-content">
-        <ul class="saved-items">
-          <li v-for="(item, index) in savedItems" :key="index" :class="{ 'active': activeItemIndex === index }">
-            <button class="item-button" @click="selectItem(index)">
-              <span>{{ item.name }}</span>
-              <span>{{ item.rarity }}</span>
+      <div class="sidebar-content parchment">
+        <div class="sidebar-scroll">
+          <ul class="saved-items">
+            <li
+              v-for="(item, index) in savedItems"
+              :key="index"
+              class="sidebar-item"
+              :class="{ 'sidebar-item--active': activeItemIndex === index }"
+            >
+              <button class="sidebar-item__button" @click="selectItem(index)">
+                <span class="sidebar-item__name">{{ item.name }}</span>
+                <span class="sidebar-item__rarity">{{ item.rarity }}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-footer">
+          <ParButton variant="primary" :full-width="true" @click="newItem">
+            + New magic item
+          </ParButton>
+
+          <div class="sidebar-footer__divider"></div>
+
+          <div class="sidebar-data-options">
+            <button
+              class="sidebar-data-options__toggle"
+              @click="dataOptionsExpanded = !dataOptionsExpanded"
+              :aria-expanded="dataOptionsExpanded"
+              aria-controls="sidebar-data-options-panel"
+            >
+              <span>Data options</span>
+              <svg
+                class="sidebar-data-options__icon"
+                :class="{ 'is-expanded': dataOptionsExpanded }"
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
             </button>
-          </li>
-          <li>
-            <button class="item-button" @click="newItem" :class="{ 'active': activeItemIndex === null }">
-              + New Magic Item
-            </button>
-          </li>
-        </ul>
+
+            <div
+              v-if="dataOptionsExpanded"
+              id="sidebar-data-options-panel"
+              class="sidebar-data-options__panel"
+            >
+              <p class="sidebar-data-options__description">
+                Save your library to a file or restore from a backup. Your data stays on your device.
+              </p>
+
+              <button class="sidebar-data-options__action" @click="showDataManagerModal = true">
+                Backup / Restore library
+              </button>
+
+              <button
+                class="sidebar-data-options__action sidebar-data-options__action--danger"
+                @click="confirmDeleteAll"
+              >
+                Delete all items
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -22,43 +74,73 @@
       <!-- DataManagerModal component -->
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
         currentApp="savedItems" />
+
+      <!-- Delete-all confirmation -->
+      <ParModal
+        :opened="showDeleteConfirmation"
+        title="Delete all magic items?"
+        @cancel="showDeleteConfirmation = false"
+      >
+        <p class="delete-all-modal__body">
+          This will permanently delete all magic items in your library. This action cannot be undone.
+        </p>
+        <p class="delete-all-modal__suggestion">
+          Consider backing up your library first if you might want to restore these items later.
+        </p>
+        <template #footer>
+          <ParButton variant="secondary" @click="showDeleteConfirmation = false">Cancel</ParButton>
+          <button class="delete-all-modal__confirm" @click="deleteAllItems">Delete all items</button>
+        </template>
+      </ParModal>
       <!-- LANDING STATE: Three-zone layout -->
       <div class="landing-wrapper" v-if="!magicItemDescription && !loadingItem">
 
         <!-- ZONE 1: Hero header -->
-        <div class="hero-header">
+        <div class="hero-header parchment">
           <div class="brand-line">
             <span class="brand-name">Kenji's Item Generator</span>
             <span v-if="!premium" class="version-pill">Free</span>
             <span v-else class="version-pill premium">Premium</span>
           </div>
-          <h1>Craft Unique D&D 5e Magic Items in Seconds</h1>
-          <p class="value-prop">Generate balanced magic items with lore, quest hooks, and Homebrewery export — powered
-            by
-            AI.</p>
+          <h1 class="page-heading__title">Craft unique D&D 5e magic items</h1>
+          <p class="page-heading__tagline">Mechanics, lore, and quest hooks for your campaign.</p>
         </div>
 
         <!-- ZONE 2: Form card -->
-        <div class="form-card">
+        <!-- `parchment` opts the card out of App.vue's global font-family
+             !important override so the serif heading/subhead are honored
+             (the form primitives self-mark, but the raw h2/p need this). -->
+        <div class="form-card parchment">
+          <h2 class="form-heading">Generate a magic item</h2>
+          <p class="form-subhead">
+            Specify what you want, or
+            <button type="button" class="form-subhead__random" @click="generateRandom">surprise me with something
+              random</button>.
+          </p>
           <form class="item-form" @submit.prevent="generateMagicItem">
-            <cdr-input class="form-input" id="item-name" v-model="itemName" background="secondary"
-              label="Magic Item Name (optional):">
-              <template #helper-text-bottom>
-                Example: "Goblet of the Firmament". Leave blank for a random name.
-              </template>
-            </cdr-input>
+            <ParField label="Item name">
+              <ParInput v-model="itemName"
+                placeholder="Goblet of the Firmament, or leave blank for a random name" />
+            </ParField>
 
-            <cdr-select v-model="rarity" label="Rarity Level (optional)" prompt="Choose a rarity level"
-              :options="rarityOptions" />
-            <cdr-select v-model="itemType" label="Item Type (optional)" prompt="Random" :options="itemTypeOptions" />
-            <cdr-select v-model="itemOrigin" label="Item Origin (optional)" prompt="Random" :options="originOptions">
-              <template #helper-text-bottom>
-                Influences theme, aesthetics, and naming. Auto-selected when name and lore are blank.
-              </template>
-            </cdr-select>
-            <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore (optional)"
-              placeholder="Enter any details about the item lore" class="item-lore-details">
-            </cdr-input>
+            <div class="form-grid">
+              <ParField label="Rarity">
+                <ParSelect v-model="rarity" :options="rarityOptions" placeholder="Any rarity" />
+              </ParField>
+              <ParField label="Type">
+                <ParSelect v-model="itemType" :options="itemTypeOptions" placeholder="Random" />
+              </ParField>
+            </div>
+
+            <ParField label="Origin"
+              hint="Colors the item's theme, look, and name — chosen for you when you leave the name and notes blank.">
+              <ParSelect v-model="itemOrigin" :options="originOptions" placeholder="Random" />
+            </ParField>
+
+            <ParField label="Notes for the scribe" :optional="true">
+              <ParTextarea v-model="itemLore" :rows="3"
+                placeholder="A fallen empire, a coastal cult, a lost language…" />
+            </ParField>
             <!-- TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE -->
             <fieldset v-if="isDev" class="test-register-override">
               <legend>TEST: Register Override (dev only)</legend>
@@ -76,7 +158,7 @@
               </p>
             </fieldset>
             <!-- END TEST-REGISTER-OVERRIDE -->
-            <ParButton class="generate-button" type="submit" :full-width="true">Generate Magic Item
+            <ParButton class="generate-button" type="submit" :full-width="true">Generate magic item
             </ParButton>
           </form>
         </div>
@@ -98,23 +180,19 @@
               </li>
             </template>
           </PatreonCallout>
-
-          <!-- Premium users: Show save/load button on a parchment surface
-               so the active premium status reads as a coherent block,
-               matching the upsell callout's surface above. -->
-          <ParCallout v-else>
-            <p>All features unlimited. Item data is saved on this browser. Export to a file to use on another device.</p>
-            <ParButton @click="showDataManagerModal = true">
-              Save/Load Data from a File
-            </ParButton>
-          </ParCallout>
         </div>
       </div>
 
-      <!-- Tabbed Content for Generated Item -->
-      <div v-if="magicItemDescription && !loadingItem" class="form-container">
-        <Tabs :activeIndex="activeTabIndex" @tabChange="activeTabIndex = $event">
-          <TabPanel label="Item Details">
+      <!-- Tabbed Content for Generated Item — Pattern A: the tab strip
+           floats on the page background; each panel owns its own lifted
+           content surface (no outer card-within-card wrapper). -->
+      <div v-if="magicItemDescription && !loadingItem" class="item-view">
+        <div class="item-view__tabs">
+          <ParTabs :tabs="itemTabs" v-model:active-id="activeTabId" />
+        </div>
+        <div :id="`par-tabs-panel-${activeTabId}`" role="tabpanel"
+          :aria-labelledby="`par-tabs-tab-${activeTabId}`" tabindex="0" class="item-view__panel">
+          <template v-if="activeTabId === 'item-details'">
             <!-- View Mode -->
             <div v-if="!isEditing" class="item-card parchment">
               <header class="item-card-header">
@@ -192,13 +270,13 @@
 
             <!-- Related NPCs (its own section, sibling to the card) -->
             <RelatedNPCsSection v-if="!isEditing" :item="magicItemDescription" @update:item="handleUpdatedItem"
-              @switch-to-lore-builder="activeTabIndex = 1" />
+              @switch-to-lore-builder="activeTabId = 'lore-builder'" />
 
             <!-- Related Settings — sits below NPCs as a parallel
                  cross-tool stub list. Same parchment surface, same
                  row styling. -->
             <RelatedSettingsSection v-if="!isEditing" :item="magicItemDescription" @update:item="handleUpdatedItem"
-              @switch-to-lore-builder="activeTabIndex = 1" />
+              @switch-to-lore-builder="activeTabId = 'lore-builder'" />
 
             <!-- Related Dungeon — single dungeon per item; mode
                  (forgotten / revered / carried / trial) is inferred
@@ -265,16 +343,14 @@
                 <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
               </footer>
             </div>
-          </TabPanel>
+          </template>
 
-          <TabPanel label="Lore Builder">
-            <LoreBuilderTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
-          </TabPanel>
+          <LoreBuilderTab v-if="activeTabId === 'lore-builder'" :item="magicItemDescription"
+            @updated-item="handleUpdatedItem" :premium="premium" />
 
-          <TabPanel label="Quest Hooks">
-            <QuestHookTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
-          </TabPanel>
-        </Tabs>
+          <QuestHookTab v-if="activeTabId === 'quest-hooks'" :item="magicItemDescription"
+            @updated-item="handleUpdatedItem" :premium="premium" />
+        </div>
       </div>
 
       <!-- Footer below item content (separate card) -->
@@ -291,16 +367,6 @@
             </li>
           </template>
         </PatreonCallout>
-
-        <!-- Premium users: parchment surface so the active premium
-             status reads as a coherent block, matching the upsell
-             callout's surface above. -->
-        <ParCallout v-else>
-          <p>All features unlimited. Item data is saved on this browser. Export to a file to use on another device.</p>
-          <ParButton @click="showDataManagerModal = true">
-            Save/Load Data from a File
-          </ParButton>
-        </ParCallout>
       </div>
 
       <div v-if="loadingItem" class="form-container">
@@ -325,11 +391,9 @@ import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import RelatedSettingsSection from './components/RelatedSettingsSection.vue';
 import RelatedDungeonsSection from './components/RelatedDungeonsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParCardButton, ParButton, ParCallout, ParCardInput, ParCardTextarea, ParCardSelect, ParCheckbox } from '@/parchment';
+import { ParCardButton, ParButton, ParModal, ParCardInput, ParCardTextarea, ParCardSelect, ParCheckbox, ParField, ParInput, ParSelect, ParTextarea, ParTabs } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
-import Tabs from '@/components/tabs/Tabs.vue';
-import TabPanel from '@/components/tabs/TabPanel.vue';
 import { useToast } from '@/composables/useToast';
 import { renameItemReferences, removeReferencesForItem } from '@/util/item-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
@@ -393,7 +457,14 @@ const loadingItem = ref(false);
 const savedItems = ref([]);
 const activeItemIndex = ref(null);
 const showDataManagerModal = ref(false);
-const activeTabIndex = ref(0);
+const dataOptionsExpanded = ref(false);
+const showDeleteConfirmation = ref(false);
+const activeTabId = ref('item-details');
+const itemTabs = [
+  { id: 'item-details', label: 'Item Details' },
+  { id: 'lore-builder', label: 'Lore Builder' },
+  { id: 'quest-hooks', label: 'Quest Hooks' },
+];
 const isEditing = ref(false);
 const showExport = ref(false);
 const editForm = ref({
@@ -466,6 +537,18 @@ const rarityGuidelines = {
   'Very Rare': 'Either a +3 bonus (possibly with minor feature) OR +2 with powerful feature OR +1 with very powerful feature. Save DC: 17.',
   'Legendary': '+3 with multiple features OR +2 with legendary features OR multiple legendary features. Very rarely +4. Save DC: 19+',
   'Artifact': 'Campaign-defining relics with +3 bonus and 5-6 legendary effects. MUST include major drawbacks, curses, or dangerous side effects. Save DC: 20+. Examples: Eye of Vecna, Book of Vile Darkness, Wand of Orcus.'
+};
+
+// "Surprise me" affordance: ignore any in-progress field values and
+// generate a fully unconstrained item. Clearing every field lets
+// generateMagicItem's random fallbacks fire for rarity, type, and origin.
+const generateRandom = () => {
+  itemName.value = '';
+  itemLore.value = '';
+  itemOrigin.value = '';
+  rarity.value = '';
+  itemType.value = '';
+  generateMagicItem();
 };
 
 const generateMagicItem = async () => {
@@ -1758,7 +1841,7 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
     saveItem(magicItemDescription.value);
     const index = savedItems.value.findIndex((item) => item.name === magicItemDescription.value.name);
     selectItem(index);
-    activeTabIndex.value = 0;
+    activeTabId.value = 'item-details';
     toast.success('Magic item generated and saved.');
   } catch (error) {
     logger.error("Error generating magic item:", error);
@@ -2124,7 +2207,7 @@ const selectItem = (index) => {
   rarity.value = magicItemDescription.value.rarity;
   itemType.value = magicItemDescription.value.item_type;
   itemLore.value = magicItemDescription.value.lore || '';
-  activeTabIndex.value = 0;
+  activeTabId.value = 'item-details';
   showExport.value = false;
 };
 
@@ -2167,6 +2250,26 @@ const newItem = () => {
   itemLore.value = '';
   isEditing.value = false;
 };
+
+function confirmDeleteAll() {
+  showDeleteConfirmation.value = true;
+}
+
+function deleteAllItems() {
+  // Drop each item's cross-tool references before clearing the library,
+  // mirroring the single-item delete path (removeReferencesForItem). The
+  // canonical entities in other stores (NPCs, settings, dungeons) are left
+  // intact — deleting items does not cascade.
+  for (const item of savedItems.value) {
+    if (item?.name) removeReferencesForItem(item.name);
+  }
+  savedItems.value = [];
+  localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
+  newItem();
+  showDeleteConfirmation.value = false;
+  dataOptionsExpanded.value = false;
+  toast.success('All magic items deleted.');
+}
 
 const startEditing = () => {
   const featuresArray = Object.entries(magicItemDescription.value.features || {}).map(([name, description]) => ({
@@ -2398,7 +2501,9 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
-/* ZONE 1: Hero header */
+/* ZONE 1: Hero header — page heading zone (H1 + tagline) above the form
+   card. H1 carries SEO/marketing/impact; the form card's H2 does
+   editorial form-orientation. */
 .hero-header {
   text-align: center;
   padding: 2rem 1rem 2.5rem;
@@ -2408,53 +2513,139 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .page-heading__title {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 3.6rem;
+    font-weight: 600;
+    color: var(--color-action-hover, #2A4D70); /* dark lapis */
+    margin: 0 0 0.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+  }
+
+  .page-heading__tagline {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.6rem;
+    color: var(--par-color-text-secondary, #555);
+    font-style: italic;
+    margin: 0;
+    line-height: 1.6;
   }
 
   .brand-name {
-    font-size: 1.4rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.3rem;
     font-weight: 500;
-    color: $cdr-color-text-secondary;
-    letter-spacing: 0.02em;
+    color: var(--color-action-secondary-rest, #5A7A9A); /* muted lapis */
+    letter-spacing: 0.04em;
   }
 
   .version-pill {
     display: inline-block;
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 0.2rem 0.8rem;
-    border-radius: 100px;
-    background-color: #ededed;
-    color: $cdr-color-text-secondary;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.05rem;
+    font-weight: 500;
+    font-style: italic;
+    padding: 0.1rem 0.6rem;
+    border-radius: var(--par-radius-sm, 3px);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    background: transparent;
+    color: var(--par-color-text-muted, #6b6b6b);
+    letter-spacing: 0.02em;
 
     &.premium {
-      background-color: #fdf3e0;
+      border-color: #c8a24a;
+      background: rgba(253, 243, 224, 0.5);
       color: #9c6a0a;
     }
   }
+}
 
-  h1 {
-    font-size: 3.2rem;
-    line-height: 1.15;
-    margin: 0 0 0.75rem;
-    color: $cdr-color-text-primary;
+/* Page H1 scales down on narrow viewports so it doesn't wrap awkwardly. */
+@media (max-width: 600px) {
+  .hero-header .page-heading__title {
+    font-size: 2.8rem;
+    line-height: 1.2;
   }
 
-  .value-prop {
-    font-size: 1.6rem;
-    font-weight: 400;
-    color: $cdr-color-text-secondary;
-    margin: 0;
+  .hero-header .page-heading__tagline {
+    font-size: 1.5rem;
   }
 }
 
-/* ZONE 2: Form card */
+/* ZONE 2: Form card — lifted content surface, lapis "magic UI" register */
 .form-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e2e2;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  padding: 2.5rem 3rem;
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 2.25rem 2.25rem 2rem;
+}
+
+.form-heading {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2A4D70); /* dark lapis */
+  text-align: center;
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.form-subhead {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  color: var(--par-color-text-secondary, #555);
+  text-align: center;
+  font-style: italic;
+  margin: 0 0 1.75rem;
+  line-height: 1.6;
+}
+
+.form-subhead__random {
+  display: inline;
+  background: transparent;
+  border: none;
+  padding: 0 0 1px;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: italic; /* explicit — buttons don't inherit italic */
+  color: var(--color-action-hover, #2A4D70);
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--color-action-hover, #2A4D70);
+  vertical-align: baseline;
+  line-height: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.form-subhead__random:hover {
+  color: var(--color-action-active, #1F3A5C);
+  border-color: var(--color-action-active, #1F3A5C);
+}
+
+.form-subhead__random:focus {
+  outline: none;
+}
+
+.form-subhead__random:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 0 0 1.25rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ZONE 3: Footer meta */
@@ -2559,12 +2750,39 @@ onUnmounted(() => {
    POST-GENERATION: Tabbed content card
    ======================================== */
 
+/* Pattern A item view: layout only. The container, tab strip, and
+   related sections all span the full main-container width; only the
+   item card (and its edit form) is centered at the prior ~700px content
+   width within it. */
+/* Tab strip extends ~12px beyond the card on each side so it reads as
+   navigation sitting above the card (book-chapter tabs), distinct from
+   the content surface. ParTabs supplies the 1.25rem breathing room below
+   via its own margin-bottom. On narrow viewports the extension is
+   dropped so the strip can't overflow. */
+.item-view__tabs {
+  margin-left: -12px;
+  margin-right: -12px;
+}
+
+@media (max-width: 600px) {
+  .item-view__tabs {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+.item-view__panel:focus {
+  outline: none;
+}
+
+/* Loading skeleton wrapper (transient). */
 .form-container {
   color: $cdr-color-text-primary;
   padding: 2rem 3rem;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  box-shadow: 0 1px 3px rgba(60, 50, 30, 0.06);
 }
 
 .rarity {
@@ -2573,10 +2791,8 @@ onUnmounted(() => {
 }
 
 .item-form {
+  /* No flex gap — ParField owns vertical rhythm via its own margins. */
   margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
 }
 
 .generate-button {
@@ -2649,10 +2865,11 @@ onUnmounted(() => {
    ============================================ */
 .item-edit {
   background: var(--par-color-surface, #fdfbf6);
-  border: 1px solid var(--par-color-border, #e8e2d4);
+  border: 0.5px solid var(--par-color-border, #e8e2d4);
   border-top: 2px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
-  padding: 2rem 2.5rem;
+  /* Full-width card; form content centered to a ~700px column. */
+  padding: 2rem max(2.5rem, calc((100% - 700px) / 2));
   margin-bottom: 1.5rem;
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   display: flex;
@@ -2756,60 +2973,255 @@ onUnmounted(() => {
 }
 
 .sidebar-content {
-  $background-color: #f4f4f4;
-  $active-color: #ffffff;
-  $hover-background-color: #f0f0f0;
-  $default-background-color: #e0e0e0;
-  $active-border-color: #007BFF;
-  $transition-speed: 0.3s;
-
   flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+
+  /* Scrollable item list. The pinned footer below never scrolls away. */
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-top: 0.5rem;
+  }
 
   .saved-items {
     list-style: none;
     padding: 0;
     margin: 0;
+  }
 
-    li {
-      margin-bottom: 4px;
+  /* Each entry is a designed object: editorial name + small-caps rarity tag.
+     Typography is the sole treatment — no rarity color marker, by design
+     (per-rarity bars read as categorical noise when items group up). */
+  .sidebar-item {
+    transition: background-color 0.15s ease;
 
-      &.active {
-        .item-button {
-          background-color: $active-color;
-          border-left-color: $active-border-color;
-          font-weight: bold;
-        }
-      }
-
-      .item-button {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 20px;
-        font-size: 1.5rem;
-        text-align: left;
-        background-color: $default-background-color;
-        border: none;
-        color: inherit;
-        cursor: pointer;
-        border-left: 5px solid transparent;
-        transition: background-color $transition-speed, border-left-color $transition-speed;
-
-        &:hover {
-          background-color: $hover-background-color;
-        }
-
-        &:focus {
-          outline: none;
-          border-left-color: $active-border-color;
-        }
-      }
+    &:hover {
+      background-color: rgba(243, 235, 218, 0.4); /* subtle warm tint */
     }
   }
+
+  .sidebar-item__button {
+    width: 100%;
+    /* Single-line row: name left, rarity tag right. baseline keeps the
+       15px name and 11px rarity tag sharing a typographic baseline. */
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    text-align: left;
+    background: transparent;
+    border: none;
+    /* Symmetric padding — no marker to account for on the left */
+    padding: 10px 16px;
+    font-family: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+      outline-offset: -2px;
+    }
+  }
+
+  .sidebar-item__name {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--par-color-text, #222);
+    line-height: 1.3;
+    /* long names wrap to a second line; rarity tag stays right on line one */
+  }
+
+  .sidebar-item__rarity {
+    font-size: 1.1rem;
+    color: var(--par-color-text-secondary, #555);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap; /* never wrap the rarity tag itself */
+    flex-shrink: 0;      /* and never let it get squeezed */
+  }
+
+  /* Active: warm tan bg + lapis name. */
+  .sidebar-item--active {
+    background-color: var(--par-color-callout-bg, #f3ebda);
+
+    &:hover {
+      background-color: var(--par-color-callout-bg, #f3ebda);
+    }
+
+    .sidebar-item__name {
+      color: var(--color-action-hover, #2A4D70);
+      font-weight: 600;
+    }
+
+    .sidebar-item__rarity {
+      color: var(--par-color-text-secondary, #555);
+    }
+  }
+
+  /* Pinned footer: holds the new-item action, separated from the scrollable
+     list by a thin divider so it always stays at the sidebar bottom
+     regardless of library size. Mirrors the statblock/dungeon structure. */
+  .sidebar-footer {
+    flex-shrink: 0;
+    padding: 12px 16px;
+  }
+
+  /* Thin tan divider between the primary new-item button and the quiet
+     Data options affordance below it. */
+  .sidebar-footer__divider {
+    height: 0;
+    border-top: 0.5px solid var(--par-color-border, #e8e2d4);
+    margin: 0.75rem 0;
+  }
+
+  /* Quiet expandable affordance for library data operations — lifted-lapis
+     label + gear, expanding into a warm-tan panel of slate-ghost actions. */
+  .sidebar-data-options__toggle {
+    /* Full-bleed row: negative margins cancel the footer's 16px side padding
+       so the hover tint spans the sidebar edge-to-edge, matching the item
+       rows above. Label + gear centered as a group with a small gap. */
+    margin: 0 -16px;
+    padding: 12px 16px;
+    width: calc(100% + 32px);
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.4rem;
+    color: var(--color-action-rest, #365A85);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background-color: rgba(243, 235, 218, 0.4);
+      color: var(--color-action-hover, #2A4D70);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+      outline-offset: -2px;
+    }
+  }
+
+  .sidebar-data-options__icon {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    color: currentColor;
+    transition: transform 0.2s ease;
+
+    &.is-expanded {
+      transform: rotate(30deg);
+    }
+  }
+
+  .sidebar-data-options__panel {
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--par-color-callout-bg, #f3ebda);
+    border-radius: 8px;
+  }
+
+  .sidebar-data-options__description {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--par-color-text-secondary, #555);
+    line-height: 1.5;
+    margin: 0 0 0.75rem;
+  }
+
+  .sidebar-data-options__action {
+    width: 100%;
+    padding: 7px 12px;
+    background: transparent;
+    color: var(--color-action-secondary-rest, #5A7A9A);
+    border: 0.5px solid var(--color-action-secondary-rest, #5A7A9A);
+    border-radius: 6px;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.2rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    margin-bottom: 0.4rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      background-color: var(--color-action-secondary-hover-bg, rgba(90, 122, 154, 0.08));
+      color: var(--color-action-rest, #365A85);
+      border-color: var(--color-action-rest, #365A85);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+      outline-offset: 2px;
+    }
+  }
+
+  /* Destructive action — burgundy text (brief Option A): subtle caution
+     signal; slate border retained until hover deepens it to burgundy. */
+  .sidebar-data-options__action--danger {
+    color: var(--par-color-title, #7a1f1f);
+
+    &:hover {
+      background-color: rgba(122, 31, 31, 0.05);
+      color: var(--par-color-title, #7a1f1f);
+      border-color: var(--par-color-title, #7a1f1f);
+    }
+  }
+}
+
+/* Delete-all confirmation modal body (ParModal provides the surface/chrome) */
+.delete-all-modal__body {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  line-height: 1.6;
+  color: var(--par-color-text, #222);
+  margin: 0 0 0.75rem;
+}
+
+.delete-all-modal__suggestion {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  line-height: 1.6;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  margin: 0;
+}
+
+/* Solid-burgundy destructive confirm. Parchment has no solid-destructive
+   button primitive yet (ParCardButton danger is a quiet text action, too
+   low-emphasis for a modal's primary destructive CTA), so this is a local
+   treatment built from the burgundy title tokens. */
+.delete-all-modal__confirm {
+  padding: 8px 18px;
+  background-color: var(--par-color-title, #7a1f1f);
+  color: var(--par-color-surface, #FBF7F0);
+  border: none;
+  border-radius: 6px;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.delete-all-modal__confirm:hover {
+  background-color: var(--par-color-title-deep, #58180d);
+}
+
+.delete-all-modal__confirm:focus-visible {
+  outline: 2px solid var(--par-color-title, #7a1f1f);
+  outline-offset: 2px;
 }
 
 // Responsive
@@ -2820,15 +3232,11 @@ onUnmounted(() => {
 
   .hero-header {
     padding: 1.5rem 0.5rem 2rem;
-
-    h1 {
-      font-size: 2.4rem;
-    }
   }
 
   .form-card {
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--par-radius-lg, 12px);
   }
 
   .form-container {
@@ -2864,11 +3272,14 @@ onUnmounted(() => {
    sweep — both cards now render against the same paper tone. */
 .item-card {
   background: var(--par-color-surface, #fdfbf6);
-  border: 1px solid var(--par-color-border, #e8e2d4);
+  border: 0.5px solid var(--par-color-border, #e8e2d4);
   border-top: 2px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
   margin-bottom: 1.5rem;
-  padding: 2rem 2.5rem;
+  /* Full-width card surface (cohesive with the related sections); the
+     content is centered to a ~700px readable column via symmetric
+     padding that grows on wider cards and falls back on narrow ones. */
+  padding: 2rem max(2.5rem, calc((100% - 700px) / 2));
   /* Card root carries the `parchment` marker class (see App.vue) which
      opts the card and its descendants out of the project-wide sans-serif
      override, so this declaration applies normally and inherits down. */

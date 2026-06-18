@@ -1,5 +1,5 @@
 <template>
-  <div class="related-settings-section">
+  <div class="related-settings-section parchment">
     <!-- Header mirrors RelatedNPCsSection: title + ghost re-scan button.
          Tooltip explains when re-scan is useful so the affordance label
          can stay short ("Re-scan Lore"). -->
@@ -8,14 +8,14 @@
       <ParTooltip
         text="Scans this item's lore and timeline events for named locations and adds them here. Re-run after editing the lore or adding events."
       >
-        <ParCardButton
-          variant="ghost"
-          size="small"
+        <button
+          type="button"
+          class="related-settings-rescan"
           :disabled="loading"
           @click="rescan"
         >
           {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
-        </ParCardButton>
+        </button>
       </ParTooltip>
     </div>
 
@@ -23,15 +23,17 @@
          existing items pre-date the related_settings field; new items
          get scanned during generation. The Lore Builder fallback link
          opens the path to richer lore that names places. -->
-    <p v-if="!hasStubs" class="related-settings-empty">
-      No related settings yet. Click Re-scan Lore above to find named locations in this item's lore. If the lore doesn't mention any,
-      <a
-        href="#"
-        class="related-settings-empty-link"
-        @click.prevent="$emit('switch-to-lore-builder')"
-      >use the Lore Builder</a>
-      to add more lore content.
-    </p>
+    <div v-if="!hasStubs" class="related-settings-empty">
+      <p class="related-settings-empty-copy">
+        No related settings yet. Click Re-scan Lore above to find named locations in this item's lore. If the lore doesn't mention any,
+        <a
+          href="#"
+          class="related-settings-empty-link"
+          @click.prevent="$emit('switch-to-lore-builder')"
+        >use the Lore Builder</a>
+        to add more lore content.
+      </p>
+    </div>
 
     <ul v-if="hasStubs" class="related-settings-list">
       <li
@@ -45,18 +47,22 @@
         </div>
 
         <div class="related-setting-actions">
-          <ParCardButton
+          <ParButton
             v-if="!stub.setting_id"
+            variant="secondary"
+            size="small"
             @click="onCreate(stub)"
           >
             Create Setting
-          </ParCardButton>
-          <ParCardButton
+          </ParButton>
+          <ParButton
             v-else
+            variant="secondary"
+            size="small"
             @click="onView(stub)"
           >
             View in Setting Generator
-          </ParCardButton>
+          </ParButton>
           <!--
             Only show ✕ for UNPROMOTED stubs. See RelatedDungeonsSection
             for the rationale: removing a promoted stub from this list
@@ -92,7 +98,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ParCardButton, ParTooltip } from '@/parchment';
+import { ParButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { extractRelatedSettings, mergeStubs } from '@/tools/item-generator/utils/extract-related-settings.mjs';
 import { getSettingDisplayName } from '@/util/setting-storage.mjs';
@@ -190,9 +196,9 @@ function onRemove(idx) {
    entities" pair under a single item.
    ============================================ */
 .related-settings-section {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--par-color-divider, #e2dccd);
+  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
 }
 
@@ -207,33 +213,81 @@ function onRemove(idx) {
 .related-settings-title {
   margin: 0;
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 600;
-  color: var(--par-color-title, #7a1f1f);
+  color: var(--color-action-hover, #2A4D70);
   letter-spacing: 0.02em;
   line-height: 1.3;
 }
 
+.related-settings-rescan {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0 0 1px;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  color: var(--color-action-rest, #365A85);
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--color-action-rest, #365A85);
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    color: var(--color-action-hover, #2A4D70);
+    border-color: var(--color-action-hover, #2A4D70);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/* Empty state: warm-tan contained surface so the copy reads as a
+   contained "section is empty" region, parallel to a populated stub
+   row. Heading + Re-scan stay outside on the page register. */
 .related-settings-empty {
   margin: 0.75rem 0 0;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
+  border-radius: 0.8rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.related-settings-empty-copy {
+  margin: 0;
   font-size: 1.5rem;
   font-style: italic;
-  color: var(--par-color-text-muted, #6b6b6b);
+  color: var(--par-color-text-secondary, #555);
   line-height: 1.6;
 }
 
 .related-settings-empty-link {
-  color: var(--par-color-title, #7a1f1f);
-  text-decoration: underline;
+  color: var(--color-action-rest, #365A85);
+  text-decoration: none;
+  border-bottom: 0.5px solid var(--color-action-rest, #365A85);
   cursor: pointer;
   font-style: normal;
+  transition: color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    color: var(--par-color-title-deep, #58180d);
+    color: var(--color-action-hover, #2A4D70);
+    border-color: var(--color-action-hover, #2A4D70);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }
@@ -252,9 +306,10 @@ function onRemove(idx) {
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
-  padding: 1.35rem 1.25rem;
-  background: rgba(0, 0, 0, 0.025);
-  border-radius: var(--par-radius-sm, 3px);
+  padding: 0.95rem 1.25rem;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
+  border: 1px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: 0.8rem;
 }
 
 .related-setting-info {
@@ -304,12 +359,12 @@ function onRemove(idx) {
   transition: color 0.15s ease, background-color 0.15s ease;
 
   &:hover {
-    color: var(--par-color-title, #7a1f1f);
-    background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
+    color: var(--par-color-text, #222);
+    background: rgba(0, 0, 0, 0.04);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }
@@ -323,16 +378,16 @@ function onRemove(idx) {
   padding: 0.5rem 0;
   font-family: inherit;
   font-size: 1.4rem;
-  color: var(--par-color-title, #7a1f1f);
+  color: var(--color-action-rest, #365A85);
   cursor: pointer;
   text-decoration: underline;
 
   &:hover {
-    color: var(--par-color-title-deep, #58180d);
+    color: var(--color-action-hover, #2A4D70);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }
