@@ -1,343 +1,297 @@
 <template>
-  <div class="lore-builder-container">
-    <!-- Current Year Input -->
-    <div class="year-input-section">
-      <cdr-input v-model="currentYear" label="Current Year in Your World" background="secondary"
-        placeholder="e.g., 1492 DR, Year 3024, 5th Age" :error="yearError" @blur="validateYear">
-        <template #helper-text-bottom>
-          Set your world's current year to calculate historical dates
-        </template>
-        <template #error>
-          <span>{{ yearErrorMessage }}</span>
-        </template>
-      </cdr-input>
+  <div class="lore-builder parchment">
+    <!-- ── Header: title · subtitle · world-year badge · hairline ─────────── -->
+    <header class="lore-header">
+      <div class="lore-header__titles">
+        <h2 class="lore-header__title">{{ item.name }}</h2>
+        <p class="lore-header__subtitle">{{ subtitle }}</p>
+      </div>
+      <div class="lore-header__year">
+        <input
+          v-model="currentYear"
+          class="lore-header__year-input"
+          :class="{ 'is-error': yearError }"
+          placeholder="Set year"
+          aria-label="Current year in your world"
+          @blur="validateYear"
+        />
+      </div>
+    </header>
+    <p v-if="yearError" class="lore-header__year-error">{{ yearErrorMessage }}</p>
+    <p v-else class="lore-header__year-hint">
+      Set your world's current year — historical dates derive from it.
+    </p>
+
+    <!-- ── Empty state: no timeline yet ──────────────────────────────────── -->
+    <div v-if="!hasStarted && timelineEvents.length === 0" class="lore-empty">
+      <p class="lore-empty__lede">This item has no recorded history.</p>
+      <ParCardButton variant="create" @click="startTimeline">
+        + Create Historical Timeline
+      </ParCardButton>
     </div>
 
-    <!-- Timeline Section -->
-    <div class="timeline-section">
-      <h3>Historical Timeline of {{ item.name }}</h3>
+    <!-- ── The spine ─────────────────────────────────────────────────────── -->
+    <div v-else class="spine">
+      <!-- First event: empty timeline that has been started -->
+      <template v-if="timelineEvents.length === 0">
+        <div class="spine-row spine-row--summon">
+          <div class="spine-year"></div>
+          <div class="spine-marker"><span class="spine-dot spine-dot--pending"></span></div>
+          <div class="spine-body">
+            <div class="summon-card">
+              <h3 class="summon-card__heading">Summon the first event</h3>
 
-      <!-- Add Timeline Button -->
-      <div v-if="!showTimelineCards && timelineEvents.length === 0" class="add-timeline-prompt">
-        <ParButton @click="startTimeline" variant="secondary" size="large">
-          + Create Historical Timeline
-        </ParButton>
-      </div>
-
-      <!-- Timeline Controls -->
-      <div v-if="showTimelineCards || timelineEvents.length > 0" class="timeline-controls">
-        <ParButton @click="showAddButtons = !showAddButtons" variant="secondary" size="small">
-          {{ showAddButtons ? 'Hide Add Buttons' : 'Add Events to Timeline' }}
-        </ParButton>
-        <p v-if="!premium" class="generation-info">
-          {{ remainingGenerations }} lore generation{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
-        </p>
-      </div>
-
-      <div v-if="showTimelineCards || timelineEvents.length > 0" class="filmstrip-container">
-        <ParButton v-if="showLeftArrow" @click="scrollFilmstrip('left')" variant="secondary" size="small"
-          class="filmstrip-arrow filmstrip-arrow-left">
-          ←
-        </ParButton>
-
-        <div class="filmstrip" ref="filmstrip" @scroll="checkScroll">
-          <!-- If no events and showing cards, show the first event form directly -->
-          <div v-if="timelineEvents.length === 0 && showTimelineCards" class="timeline-card generating-card">
-            <div class="generating-content">
-              <h4>Create First Event</h4>
-
-              <!-- Custom compact toggle when we have a pending event -->
-              <div v-if="pendingEvent" class="custom-toggle">
-                <button :class="['toggle-btn', { active: viewMode === 'form' }]" @click="viewMode = 'form'">
-                  Event Form
-                </button>
-                <button :class="['toggle-btn', { active: viewMode === 'preview' }]" @click="viewMode = 'preview'">
-                  Preview
-                </button>
+              <div v-if="loadingEvents && !pendingEvent" class="lore-skeleton">
+                <span v-for="n in 3" :key="n" class="lore-skeleton__line"></span>
               </div>
 
-              <!-- Form View -->
-              <div v-show="!pendingEvent || viewMode === 'form'" class="form-view">
-                <cdr-select v-model="firstEventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
-                  size="small" />
-
-                <cdr-select v-model="firstTimePeriod" label="Time Period" prompt="Choose when"
-                  :options="getAvailablePeriodsForPosition(0)" size="small" />
-
-                <cdr-input v-model="firstAdditionalContext" label="Context (optional)" tag="textarea" :rows="2"
-                  background="secondary" size="small" />
-
-                <div v-if="!pendingEvent" class="button-row">
-                  <ParButton @click="generateFirstEvent"
-                    :disabled="!firstEventType || !firstTimePeriod || loadingEvents" size="small" :full-width="true">
-                    {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                  </ParButton>
+              <template v-else-if="!pendingEvent">
+                <div class="summon-card__fields">
+                  <ParField label="Event type">
+                    <ParSelect v-model="firstEventType" :options="eventTypeOptions" placeholder="Choose type" />
+                  </ParField>
+                  <ParField label="Time period">
+                    <ParSelect v-model="firstTimePeriod" :options="getAvailablePeriodsForPosition(0)"
+                      placeholder="Choose when" />
+                  </ParField>
                 </div>
+                <ParField label="Context" optional>
+                  <ParTextarea v-model="firstAdditionalContext" :rows="2"
+                    placeholder="Anything to weave in (optional)" />
+                </ParField>
+                <div class="summon-card__actions">
+                  <ParCardButton variant="create" :disabled="!firstEventType || !firstTimePeriod || loadingEvents"
+                    @click="generateFirstEvent">
+                    {{ loadingEvents ? 'Summoning…' : 'Generate' }}
+                  </ParCardButton>
+                </div>
+              </template>
 
-                <div v-else class="button-row">
-                  <ParButton @click="regenerateFirstEvent" variant="secondary" size="small" :full-width="true">
-                    Regenerate
-                  </ParButton>
+              <div v-else class="summon-preview">
+                <h4 class="summon-preview__title">{{ pendingEvent.title }}</h4>
+                <p class="summon-preview__year">{{ pendingEvent.eventYear }}</p>
+                <p class="summon-preview__text" v-html="formatMarkdown(pendingEvent.description)"></p>
+                <div class="summon-card__actions">
+                  <ParCardButton variant="primary" @click="confirmFirstEvent">Add</ParCardButton>
+                  <ParCardButton variant="affirmative" @click="regenerateFirstEvent">Regenerate</ParCardButton>
                 </div>
               </div>
 
-              <!-- Preview View -->
-              <div v-show="pendingEvent && viewMode === 'preview'" class="preview-view">
-                <div class="event-result compact">
-                  <div class="result-header">
-                    <h4>{{ pendingEvent?.title }}</h4>
-                    <p class="result-year">{{ pendingEvent?.eventYear }}</p>
-                  </div>
-                  <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
+              <p v-if="!premium && !pendingEvent" class="summon-card__quota">
+                {{ remainingGenerations }} lore generation{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
+              </p>
+            </div>
+          </div>
+        </div>
+      </template>
 
-                  <div class="button-row compact-buttons">
-                    <ParButton @click="confirmFirstEvent" size="small">
-                      Add
-                    </ParButton>
-                    <ParButton @click="regenerateFirstEvent" variant="secondary" size="small">
-                      Regen
-                    </ParButton>
-                  </div>
+      <!-- Existing events, oldest → newest -->
+      <template v-for="(event, index) in sortedTimelineEvents" :key="`event-${index}`">
+        <!-- Gap / insert slot BEFORE this node (chronological position = index) -->
+        <div v-if="generatingPosition === index" class="spine-row spine-row--summon">
+          <div class="spine-year"></div>
+          <div class="spine-marker"><span class="spine-dot spine-dot--pending"></span></div>
+          <div class="spine-body">
+            <div class="summon-card">
+              <h3 class="summon-card__heading">Summon a new event</h3>
+
+              <div v-if="loadingEvents && !pendingEvent" class="lore-skeleton">
+                <span v-for="n in 3" :key="n" class="lore-skeleton__line"></span>
+              </div>
+
+              <template v-else-if="!pendingEvent">
+                <div class="summon-card__fields">
+                  <ParField label="Event type">
+                    <ParSelect v-model="eventType" :options="eventTypeOptions" placeholder="Choose type" />
+                  </ParField>
+                  <ParField label="Time period">
+                    <ParSelect v-model="timePeriod" :options="getAvailablePeriodsForPosition(index)"
+                      placeholder="Choose when" />
+                  </ParField>
+                </div>
+                <ParField label="Context" optional>
+                  <ParTextarea v-model="additionalContext" :rows="2"
+                    placeholder="Anything to weave in (optional)" />
+                </ParField>
+                <div class="summon-card__actions">
+                  <ParCardButton variant="create" :disabled="!eventType || !timePeriod || loadingEvents"
+                    @click="generateEvent">
+                    {{ loadingEvents ? 'Summoning…' : 'Generate' }}
+                  </ParCardButton>
+                  <ParCardButton variant="muted" @click="cancelGeneration">Cancel</ParCardButton>
+                </div>
+              </template>
+
+              <div v-else class="summon-preview">
+                <h4 class="summon-preview__title">{{ pendingEvent.title }}</h4>
+                <p class="summon-preview__year">{{ pendingEvent.eventYear }}</p>
+                <p class="summon-preview__text" v-html="formatMarkdown(pendingEvent.description)"></p>
+                <div class="summon-card__actions">
+                  <ParCardButton variant="primary" @click="confirmAddEvent">Add</ParCardButton>
+                  <ParCardButton variant="affirmative" @click="regenerateEvent">Regenerate</ParCardButton>
+                  <ParCardButton variant="muted" @click="cancelGeneration">Cancel</ParCardButton>
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- Regular add button for subsequent events -->
-          <div v-else-if="showAddButtons && generatingPosition !== 0 && timelineEvents.length > 0"
-            class="timeline-card add-card compact">
-            <ParButton @click="startGeneratingEvent(0)" variant="secondary" size="small" class="add-event-button">
-              <span class="button-text">+ Add</span>
-            </ParButton>
-          </div>
-
-          <!-- Generating card at position 0 -->
-          <div v-if="generatingPosition === 0" class="timeline-card generating-card">
-            <div class="generating-content">
-              <h4>Generate New Event</h4>
-
-              <!-- Custom compact toggle when we have a pending event -->
-              <div v-if="pendingEvent" class="custom-toggle">
-                <button :class="['toggle-btn', { active: viewMode === 'form' }]" @click="viewMode = 'form'">
-                  Event Form
-                </button>
-                <button :class="['toggle-btn', { active: viewMode === 'preview' }]" @click="viewMode = 'preview'">
-                  Preview
-                </button>
-              </div>
-
-              <!-- Form View -->
-              <div v-show="!pendingEvent || viewMode === 'form'" class="form-view">
-                <cdr-select v-model="eventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
-                  size="small" />
-
-                <cdr-select v-model="timePeriod" label="Time Period" prompt="Choose when"
-                  :options="getAvailablePeriodsForPosition(0)" size="small" />
-
-                <cdr-input v-model="additionalContext" label="Context (optional)" tag="textarea" :rows="2"
-                  background="secondary" size="small" />
-
-                <div v-if="!pendingEvent" class="button-row">
-                  <ParButton @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents" size="small"
-                    :full-width="true">
-                    {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                  </ParButton>
-                  <ParButton @click="cancelGeneration" variant="secondary" size="small" :full-width="true">
-                    Cancel
-                  </ParButton>
-                </div>
-
-                <div v-else class="button-row">
-                  <ParButton @click="regenerateEvent" variant="secondary" size="small" :full-width="true">
-                    Regenerate
-                  </ParButton>
-                </div>
-              </div>
-
-              <!-- Preview View -->
-              <div v-show="pendingEvent && viewMode === 'preview'" class="preview-view">
-                <div class="event-result compact">
-                  <div class="result-header">
-                    <h4>{{ pendingEvent?.title }}</h4>
-                    <p class="result-year">{{ pendingEvent?.eventYear }}</p>
-                  </div>
-                  <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
-
-                  <div class="button-row compact-buttons">
-                    <ParButton @click="confirmAddEvent" size="small">
-                      Add
-                    </ParButton>
-                    <ParButton @click="regenerateEvent" variant="secondary" size="small">
-                      Regen
-                    </ParButton>
-                    <ParButton @click="cancelGeneration" size="small">
-                      Cancel
-                    </ParButton>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <template v-for="(event, index) in sortedTimelineEvents" :key="`event-${index}`">
-            <!-- Existing event card -->
-            <cdr-card class="timeline-card event-card">
-              <div class="card-content">
-                <div v-if="editingEventIndex !== index">
-                  <h4>{{ event.title }}</h4>
-                  <p class="time-period">{{ event.eventYear }}</p>
-                  <p class="event-text" v-html="formatMarkdown(event.description)"></p>
-                  <div class="button-row-bottom">
-                    <ParButton variant="secondary" size="small" @click="startEditingEvent(index)">
-                      Edit
-                    </ParButton>
-                    <ParButton size="small" @click="removeFromTimeline(index)">
-                      Remove
-                    </ParButton>
-                  </div>
-                </div>
-
-                <!-- Edit mode for this event -->
-                <div v-else class="event-edit-form">
-                  <cdr-input v-model="editingEvent.title" label="Event Title" background="secondary" size="small" />
-
-                  <cdr-input v-model="editingEvent.eventYear" label="Event Year" background="secondary" size="small"
-                    placeholder="e.g., 1462 DR" />
-
-                  <cdr-input v-model="editingEvent.description" label="Description" tag="textarea" :rows="5"
-                    background="secondary" size="small" />
-
-                  <div class="button-row-bottom">
-                    <ParButton size="small" @click="saveEventEdit(index)">
-                      Save
-                    </ParButton>
-                    <ParButton variant="secondary" size="small" @click="cancelEventEdit">
-                      Cancel
-                    </ParButton>
-                  </div>
-                </div>
-              </div>
-            </cdr-card>
-
-            <!-- Add event after card (only show when showAddButtons is true) -->
-            <div v-if="showAddButtons && generatingPosition !== index + 1" class="timeline-card add-card compact">
-              <ParButton @click="startGeneratingEvent(index + 1)" variant="secondary" size="small"
-                class="add-event-button">
-                <span class="button-text">+ Add</span>
-              </ParButton>
-            </div>
-
-            <!-- Generating card at this position -->
-            <div v-if="generatingPosition === index + 1" class="timeline-card generating-card">
-              <div class="generating-content">
-                <h4>Generate New Event</h4>
-
-                <!-- Custom compact toggle when we have a pending event -->
-                <div v-if="pendingEvent" class="custom-toggle">
-                  <button :class="['toggle-btn', { active: viewMode === 'form' }]" @click="viewMode = 'form'">
-                    Event Form
-                  </button>
-                  <button :class="['toggle-btn', { active: viewMode === 'preview' }]" @click="viewMode = 'preview'">
-                    Preview
-                  </button>
-                </div>
-
-                <!-- Form View -->
-                <div v-show="!pendingEvent || viewMode === 'form'" class="form-view">
-                  <cdr-select v-model="eventType" label="Event Type" prompt="Choose type" :options="eventTypeOptions"
-                    size="small" />
-
-                  <cdr-select v-model="timePeriod" label="Time Period" prompt="Choose when"
-                    :options="getAvailablePeriodsForPosition(index + 1)" size="small" />
-
-                  <cdr-input v-model="additionalContext" label="Context (optional)" tag="textarea" :rows="2"
-                    background="secondary" size="small" />
-
-                  <div v-if="!pendingEvent" class="button-row">
-                    <ParButton @click="generateEvent" :disabled="!eventType || !timePeriod || loadingEvents"
-                      size="small" :full-width="true">
-                      {{ loadingEvents ? 'Generating...' : 'Generate' }}
-                    </ParButton>
-                    <ParButton @click="cancelGeneration" variant="secondary" size="small" :full-width="true">
-                      Cancel
-                    </ParButton>
-                  </div>
-
-                  <div v-else class="button-row">
-                    <ParButton @click="regenerateEvent" variant="secondary" size="small" :full-width="true">
-                      Regenerate
-                    </ParButton>
-                  </div>
-                </div>
-
-                <!-- Preview View -->
-                <div v-show="pendingEvent && viewMode === 'preview'" class="preview-view">
-                  <div class="event-result compact">
-                    <div class="result-header">
-                      <h4>{{ pendingEvent?.title }}</h4>
-                      <p class="result-year">{{ pendingEvent?.eventYear }}</p>
-                    </div>
-                    <p class="result-text" v-html="formatMarkdown(pendingEvent?.description)"></p>
-
-                    <div class="button-row compact-buttons">
-                      <ParButton @click="confirmAddEvent" size="small">
-                        Add
-                      </ParButton>
-                      <ParButton @click="regenerateEvent" variant="secondary" size="small">
-                        Regen
-                      </ParButton>
-                      <ParButton @click="cancelGeneration" size="small">
-                        Cancel
-                      </ParButton>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
         </div>
 
-        <ParButton v-if="showRightArrow" @click="scrollFilmstrip('right')" variant="secondary" size="small"
-          class="filmstrip-arrow filmstrip-arrow-right">
-          →
-        </ParButton>
+        <!-- Time-gap row: only between two nodes, when nothing is summoning here -->
+        <div v-else-if="index > 0 && !pendingEvent" class="spine-gap">
+          <div class="spine-year"></div>
+          <div class="spine-marker"></div>
+          <div class="spine-gap__body">
+            <span class="spine-gap__rule"></span>
+            <span v-if="gapYears(index) !== null" class="spine-gap__text">
+              ≈ {{ gapYears(index) }} year{{ gapYears(index) === 1 ? '' : 's' }} pass
+            </span>
+            <ParCardButton variant="create" size="small" @click="startGeneratingEvent(index)">
+              + insert
+            </ParCardButton>
+          </div>
+        </div>
+
+        <!-- Event node -->
+        <div class="spine-row spine-row--event" :class="{ 'is-expanded': expandedIndex === index }">
+          <div class="spine-year">{{ event.eventYear }}</div>
+          <div class="spine-marker"><span class="spine-dot spine-dot--committed"></span></div>
+          <div class="spine-body">
+            <!-- Collapsed: title + one-line teaser, no chrome -->
+            <button
+              v-if="expandedIndex !== index"
+              type="button"
+              class="node-collapsed"
+              @click="expandedIndex = index"
+            >
+              <span class="node-collapsed__title">{{ event.title }}</span>
+              <span class="node-collapsed__teaser">{{ teaser(event.description) }}</span>
+            </button>
+
+            <!-- Expanded: full prose + chrome -->
+            <div v-else class="node-expanded">
+              <template v-if="editingEventIndex !== index">
+                <h3 class="node-expanded__title" @click="expandedIndex = null">{{ event.title }}</h3>
+                <p class="node-expanded__text" v-html="formatMarkdown(event.description)"></p>
+                <div class="node-expanded__actions">
+                  <ParCardButton variant="affirmative" size="small" @click="startEditingEvent(index)">
+                    Edit
+                  </ParCardButton>
+                  <ParCardButton variant="muted" size="small" @click="removeFromTimeline(index)">
+                    Remove
+                  </ParCardButton>
+                </div>
+              </template>
+
+              <!-- Inline edit -->
+              <div v-else class="node-edit">
+                <ParCardInput v-model="editingEvent.title" label="Event Title" />
+                <ParCardInput v-model="editingEvent.eventYear" label="Event Year" placeholder="e.g., 1462 DR" />
+                <ParCardTextarea v-model="editingEvent.description" label="Description" :rows="5" />
+                <div class="node-expanded__actions">
+                  <ParCardButton variant="primary" size="small" @click="saveEventEdit(index)">Save</ParCardButton>
+                  <ParCardButton variant="muted" size="small" @click="cancelEventEdit">Cancel</ParCardButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- End summon card: appends after the last node (chronological position = length) -->
+      <div
+        v-if="timelineEvents.length > 0 && generatingPosition === timelineEvents.length"
+        class="spine-row spine-row--summon spine-row--end"
+      >
+        <div class="spine-year"></div>
+        <div class="spine-marker"><span class="spine-dot spine-dot--pending"></span></div>
+        <div class="spine-body">
+          <div class="summon-card">
+            <h3 class="summon-card__heading">Summon a new event</h3>
+
+            <div v-if="loadingEvents && !pendingEvent" class="lore-skeleton">
+              <span v-for="n in 3" :key="n" class="lore-skeleton__line"></span>
+            </div>
+
+            <template v-else-if="!pendingEvent">
+              <div class="summon-card__fields">
+                <ParField label="Event type">
+                  <ParSelect v-model="eventType" :options="eventTypeOptions" placeholder="Choose type" />
+                </ParField>
+                <ParField label="Time period">
+                  <ParSelect v-model="timePeriod" :options="getAvailablePeriodsForPosition(timelineEvents.length)"
+                    placeholder="Choose when" />
+                </ParField>
+              </div>
+              <ParField label="Context" optional>
+                <ParTextarea v-model="additionalContext" :rows="2"
+                  placeholder="Anything to weave in (optional)" />
+              </ParField>
+              <div class="summon-card__actions">
+                <ParCardButton variant="create" :disabled="!eventType || !timePeriod || loadingEvents"
+                  @click="generateEvent">
+                  {{ loadingEvents ? 'Summoning…' : 'Generate' }}
+                </ParCardButton>
+              </div>
+            </template>
+
+            <div v-else class="summon-preview">
+              <h4 class="summon-preview__title">{{ pendingEvent.title }}</h4>
+              <p class="summon-preview__year">{{ pendingEvent.eventYear }}</p>
+              <p class="summon-preview__text" v-html="formatMarkdown(pendingEvent.description)"></p>
+              <div class="summon-card__actions">
+                <ParCardButton variant="primary" @click="confirmAddEvent">Add</ParCardButton>
+                <ParCardButton variant="affirmative" @click="regenerateEvent">Regenerate</ParCardButton>
+                <ParCardButton variant="muted" @click="cancelGeneration">Cancel</ParCardButton>
+              </div>
+            </div>
+
+            <p v-if="!premium && !pendingEvent" class="summon-card__quota">
+              {{ remainingGenerations }} lore generation{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Historical Summary -->
-    <div class="summary-section" v-if="timelineEvents.length > 0">
-      <h3>Historical Summary</h3>
-
-      <div v-if="loadingSummary" class="loading-container">
-        <cdr-skeleton>
-          <cdr-skeleton-bone type="line" style="width:100%" />
-          <cdr-skeleton-bone type="line" style="width:95%" />
-          <cdr-skeleton-bone type="line" style="width:90%" />
-          <cdr-skeleton-bone type="line" style="width:85%" />
-        </cdr-skeleton>
+    <!-- ── Terminus: the spine distils into the historical summary ───────── -->
+    <div v-if="timelineEvents.length > 0" class="lore-terminus">
+      <div class="lore-terminus__divider">
+        <span class="lore-terminus__label">distilled into</span>
       </div>
 
-      <div v-else-if="historicalSummary">
-        <p class="summary-text" v-html="formatMarkdown(historicalSummary)"></p>
-        <p class="legacy-text" v-if="itemLegacy">
-          <strong>Legacy & Significance:</strong> <span v-html="formatMarkdown(itemLegacy)"></span>
+      <div class="summary-card">
+        <h3 class="summary-card__heading">Historical Summary</h3>
+
+        <div v-if="loadingSummary" class="lore-skeleton">
+          <span v-for="n in 4" :key="n" class="lore-skeleton__line"></span>
+        </div>
+
+        <div v-else-if="historicalSummary" class="summary-card__body">
+          <p class="summary-card__text" v-html="formatMarkdown(historicalSummary)"></p>
+          <p class="summary-card__legacy" v-if="itemLegacy">
+            <span class="summary-card__legacy-label">Legacy</span>
+            <span v-html="formatMarkdown(itemLegacy)"></span>
+          </p>
+        </div>
+
+        <p v-else class="summary-card__empty">
+          Add two or more events, then distil them into a single history.
         </p>
-      </div>
 
-      <div class="summary-buttons">
-        <ParButton v-if="timelineEvents.length >= 2" @click="generateSummary" :disabled="loadingSummary"
-          variant="secondary">
-          {{ historicalSummary ? 'Regenerate' : 'Generate' }} Historical Summary
-        </ParButton>
-
-        <ParButton v-if="historicalSummary && itemLegacy" @click="updateItemLore"
-          title="Replace the item's current lore with the generated historical summary">
-          Update Item Lore
-        </ParButton>
+        <div class="summary-card__actions">
+          <ParCardButton v-if="timelineEvents.length >= 2" variant="affirmative" :disabled="loadingSummary"
+            @click="generateSummary">
+            {{ historicalSummary ? 'Regenerate' : 'Generate' }}
+          </ParCardButton>
+          <ParCardButton v-if="historicalSummary && itemLegacy" variant="primary" @click="updateItemLore"
+            title="Replace the item's current lore with the generated historical summary">
+            Update Item Lore
+          </ParCardButton>
+        </div>
       </div>
     </div>
 
-    <!-- Export Section (shared format) -->
+    <!-- ── Export (shared format) ────────────────────────────────────────── -->
     <ItemExportsSection v-if="timelineEvents.length > 0" heading="Export Item History">
       <template #description>
         Export your item's historical timeline in different formats. The markdown format works perfectly with
@@ -345,12 +299,12 @@
         for creating beautifully formatted D&D handouts.
       </template>
       <template #buttons>
-        <ParButton @click="exportToMarkdown" variant="secondary">
+        <ParCardButton variant="affirmative" @click="exportToMarkdown">
           Copy History as Markdown
-        </ParButton>
-        <ParButton @click="exportToPlainText" variant="secondary">
+        </ParCardButton>
+        <ParCardButton variant="affirmative" @click="exportToPlainText">
           Copy History as Plain Text
-        </ParButton>
+        </ParCardButton>
       </template>
       <template #tip>
         <strong>Quick tip:</strong> After copying as markdown, visit
@@ -362,16 +316,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { CdrLink } from '@rei/cedar';
 import {
-  CdrCard,
-  CdrSkeleton,
-  CdrSkeletonBone,
-  CdrSelect,
-  CdrInput,
-  CdrLink
-} from '@rei/cedar';
-import { ParButton } from '@/parchment';
+  ParCardButton,
+  ParField,
+  ParSelect,
+  ParTextarea,
+  ParCardInput,
+  ParCardTextarea,
+} from '@/parchment';
 import { logger } from '@/util/logger.mjs';
 import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
@@ -383,6 +337,13 @@ import {
   validateEventJson,
   validateSummaryJson
 } from '@/prompts/loreBuilderPrompts.mjs';
+import {
+  deriveEventYear,
+  yearsAgoFromEventYear,
+  sortByYearsAgo,
+  availablePeriodsForPosition,
+  yearsAgoFromSelection,
+} from '../utils/lore-timeline.mjs';
 import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
@@ -415,19 +376,17 @@ const historicalSummary = ref(props.item.historicalSummary || '');
 const itemLegacy = ref(props.item.itemLegacy || '');
 const loadingEvents = ref(false);
 const loadingSummary = ref(false);
+// Which chronological slot the summon card occupies. Defaults to the end
+// (timelineEvents.length) so the "Summon a new event" card rests at the
+// spine's tail; a mid-spine "+ insert" relocates it to that gap. null only
+// before a timeline has been started.
 const generatingPosition = ref(null);
 const pendingEvent = ref(null);
-const showTimelineCards = ref(false);
-const showAddButtons = ref(false); // Toggle for add buttons
+const hasStarted = ref(false);
 const remainingGenerations = ref(0); // Track remaining generations for non-premium
-const editingEventIndex = ref(null); // Track which event is being edited
+const editingEventIndex = ref(null); // Track which event is being edited (display row)
 const editingEvent = ref({}); // Store the event being edited
-const viewMode = ref('form'); // Toggle between 'form' and 'preview' for generated events
-
-// Filmstrip navigation
-const filmstrip = ref(null);
-const showLeftArrow = ref(false);
-const showRightArrow = ref(false);
+const expandedIndex = ref(null); // Which node is expanded (one open at a time)
 
 // Event type options
 const eventTypeOptions = [
@@ -450,10 +409,45 @@ const eventTypeOptions = [
   'Prophetic Use'
 ];
 
-// Compute sorted timeline events (oldest to newest)
-const sortedTimelineEvents = computed(() => {
-  return [...timelineEvents.value].sort((a, b) => b.yearsAgo - a.yearsAgo);
+// Editorial subtitle beneath the item name — derived from the item's own
+// classification so the header reads like a chronicle's frontispiece.
+const subtitle = computed(() => {
+  const parts = [props.item.rarity, props.item.item_type].filter(Boolean).join(' ');
+  return parts ? `A chronicle of the ${parts.toLowerCase()}` : 'A chronicle of ages';
 });
+
+// Compute sorted timeline events (oldest to newest). The display year is
+// DERIVED here from the canonical `yearsAgo` + the world's current year, so
+// changing the current year cascades to every event instead of leaving a
+// stale stored snapshot. Events never persist `eventYear`.
+const sortedTimelineEvents = computed(() => {
+  return sortByYearsAgo(timelineEvents.value).map((event) => ({
+    ...event,
+    eventYear: deriveEventYear(currentYear.value, event.yearsAgo),
+  }));
+});
+
+// Years elapsed across the gap BEFORE the node at `nodeIndex` (i.e. between
+// the older neighbour at nodeIndex-1 and this node). Null for the first node
+// (no older neighbour to measure from).
+const gapYears = (nodeIndex) => {
+  const events = sortedTimelineEvents.value;
+  const older = events[nodeIndex - 1];
+  const younger = events[nodeIndex];
+  if (!older || !younger) return null;
+  return older.yearsAgo - younger.yearsAgo;
+};
+
+// One-line teaser for a collapsed node: strip light markdown, collapse
+// whitespace, truncate on a word boundary.
+const teaser = (text) => {
+  if (!text) return '';
+  const plain = text.replace(/[*_#>`]/g, '').replace(/\s+/g, ' ').trim();
+  if (plain.length <= 110) return plain;
+  const cut = plain.slice(0, 110);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
+};
 
 // Format markdown in text
 const formatMarkdown = (text) => {
@@ -478,53 +472,10 @@ const formatMarkdown = (text) => {
   return text;
 };
 
-// Get available periods for a specific position
-const getAvailablePeriodsForPosition = (position) => {
-  const sortedEvents = sortedTimelineEvents.value;
-
-  // Get the event after this position (the one that would be more recent)
-  const eventAfter = position < sortedEvents.length ? sortedEvents[position] : null;
-
-  // If adding before the first event, we need to be older than it
-  // If adding after the last event, we need to be more recent than it
-  const eventBefore = position > 0 ? sortedEvents[position - 1] : null;
-
-  let minYears = 1;
-  let maxYears = 10000;
-
-  // If there's an event after, we must be older than it
-  if (eventAfter) {
-    minYears = eventAfter.yearsAgo + 1;
-  }
-
-  // If there's an event before, we must be more recent than it
-  if (eventBefore) {
-    maxYears = eventBefore.yearsAgo - 1;
-  }
-
-  // Generate appropriate options
-  const options = [];
-  const yearRanges = [
-    { label: 'Recent (1-5 years ago)', min: 1, max: 5 },
-    { label: 'Several years ago (5-15 years)', min: 5, max: 15 },
-    { label: 'A generation ago (20-40 years)', min: 20, max: 40 },
-    { label: 'Two generations ago (40-80 years)', min: 40, max: 80 },
-    { label: 'A century ago (80-120 years)', min: 80, max: 120 },
-    { label: 'Several centuries ago (200-400 years)', min: 200, max: 400 },
-    { label: 'Many centuries ago (400-800 years)', min: 400, max: 800 },
-    { label: 'An age ago (800-1500 years)', min: 800, max: 1500 },
-    { label: 'Ancient times (1500-3000 years)', min: 1500, max: 3000 },
-    { label: 'Time immemorial (3000+ years)', min: 3000, max: 5000 }
-  ];
-
-  yearRanges.forEach(range => {
-    if (range.min <= maxYears && range.max >= minYears) {
-      options.push(range.label);
-    }
-  });
-
-  return options;
-};
+// Get available periods for a specific position (delegates to the pure
+// helper; sorted events carry the canonical yearsAgo the constraint reads).
+const getAvailablePeriodsForPosition = (position) =>
+  availablePeriodsForPosition(sortedTimelineEvents.value, position);
 
 // Validate year format
 const validateYear = () => {
@@ -545,51 +496,18 @@ const validateYear = () => {
   return true;
 };
 
-// Helper function to get random year from selected option
-const getYearFromSelection = (selection, position) => {
-  const yearRanges = {
-    'Recent (1-5 years ago)': [1, 5],
-    'Several years ago (5-15 years)': [5, 15],
-    'A generation ago (20-40 years)': [20, 40],
-    'Two generations ago (40-80 years)': [40, 80],
-    'A century ago (80-120 years)': [80, 120],
-    'Several centuries ago (200-400 years)': [200, 400],
-    'Many centuries ago (400-800 years)': [400, 800],
-    'An age ago (800-1500 years)': [800, 1500],
-    'Ancient times (1500-3000 years)': [1500, 3000],
-    'Time immemorial (3000+ years)': [3000, 5000]
-  };
+// `yearsAgoFromSelection` (pick a concrete yearsAgo inside the selected
+// bucket, clamped between neighbours) and `deriveEventYear` (render the
+// display year from the world year) both live in ../utils/lore-timeline.mjs
+// — the single source of truth shared with the unit tests. `yearsAgo` is
+// the canonical axis; the display year is always derived, never stored.
 
-  const range = yearRanges[selection];
-  if (!range) return 100;
-
-  // Apply constraints based on position
-  const sortedEvents = sortedTimelineEvents.value;
-  const eventBefore = position > 0 ? sortedEvents[position - 1] : null;
-  const eventAfter = position < sortedEvents.length ? sortedEvents[position] : null;
-
-  let min = range[0];
-  let max = range[1];
-
-  if (eventAfter) min = Math.max(min, eventAfter.yearsAgo + 1);
-  if (eventBefore) max = Math.min(max, eventBefore.yearsAgo - 1);
-
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-// Calculate event year string
-const calculateEventYear = (yearsAgo) => {
-  if (!currentYear.value) return `${yearsAgo} years ago`;
-
-  const matches = currentYear.value.match(/\d+/g);
-  if (!matches || matches.length !== 1) {
-    return `${yearsAgo} years ago`;
-  }
-
-  const currentYearNum = parseInt(matches[0], 10);
-  const eventYearNum = currentYearNum - yearsAgo;
-  return currentYear.value.replace(/\d+/, eventYearNum.toString());
-};
+// Resolve the actual stored event object for a display-row index. The
+// derived `sortedTimelineEvents` maps to NEW objects (to attach eventYear),
+// so its elements are NOT reference-equal to anything in `timelineEvents`.
+// `sortByYearsAgo` sorts WITHOUT mapping, preserving references, so this
+// gives the real stored object the edit/remove handlers can locate.
+const storedEventAtRow = (index) => sortByYearsAgo(timelineEvents.value)[index];
 
 const MAX_GENERATIONS = 5;
 const RESET_WINDOW_MS = 86400000;
@@ -661,62 +579,22 @@ const startTimeline = () => {
   }
 
   // No premium check here - allow everyone to start a timeline
-  showTimelineCards.value = true;
-  showAddButtons.value = true; // Show add buttons immediately
+  hasStarted.value = true;
+  generatingPosition.value = 0; // First-event summon card
 };
 
-// Start generating an event at a specific position
+// Relocate the summon card to a mid-spine gap at `position`.
 const startGeneratingEvent = (position) => {
   if (!currentYear.value) {
     toast.warning('Please set the current year in your world before adding events.');
     return;
   }
 
-  // No premium check here - generation limits are handled by canGenerateEvent()
-
   generatingPosition.value = position;
   pendingEvent.value = null;
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
-  viewMode.value = 'form'; // Reset to form view
-
-  // Suggest creation/forging for first event
-  if (position === 0 && timelineEvents.value.length === 0) {
-    eventType.value = 'Creation/Forging';
-  }
-
-  // Scroll to the generating card with better positioning
-  nextTick(() => {
-    const generatingCard = document.querySelector('.generating-card');
-    if (generatingCard) {
-      // Scroll horizontally within filmstrip (keep this behavior)
-      generatingCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-
-      // Then adjust vertical scroll if needed to ensure card is visible
-      setTimeout(() => {
-        const rect = generatingCard.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        const cardHeight = rect.height;
-
-        // Check if card is too close to top or bottom of viewport
-        if (rect.top < 100) { // Too close to top
-          window.scrollBy({
-            top: rect.top - 150, // Give some padding from top
-            behavior: 'smooth'
-          });
-        } else if (rect.bottom > viewportHeight - 50) { // Too close to bottom
-          window.scrollBy({
-            top: rect.bottom - viewportHeight + 100, // Give some padding from bottom
-            behavior: 'smooth'
-          });
-        }
-        // If card is reasonably visible, don't scroll vertically at all
-      }, 100);
-    }
-    // Check scroll after position change
-    setTimeout(checkScroll, 100);
-  });
 };
 
 // Generate first event
@@ -731,8 +609,8 @@ const generateFirstEvent = async () => {
   // Only clear pending event after we know we can generate
   pendingEvent.value = null;
 
-  const yearsAgo = getYearFromSelection(firstTimePeriod.value, 0);
-  const eventYear = calculateEventYear(yearsAgo);
+  const yearsAgo = yearsAgoFromSelection(firstTimePeriod.value, sortedTimelineEvents.value, 0);
+  const eventYear = deriveEventYear(currentYear.value, yearsAgo);
 
   try {
     const prompt = generateEventPrompt({
@@ -762,9 +640,6 @@ const generateFirstEvent = async () => {
       yearsAgo: yearsAgo
     };
 
-    // Switch to preview mode to show the generated event
-    viewMode.value = 'preview';
-
   } catch (error) {
     logger.error('Error generating event:', error);
     toast.error('Failed to generate event. Please try again.');
@@ -776,7 +651,6 @@ const generateFirstEvent = async () => {
 // Regenerate first event
 const regenerateFirstEvent = () => {
   // Don't clear pendingEvent - keep it visible while regenerating
-  viewMode.value = 'form'; // Go back to form when regenerating
   generateFirstEvent();
 };
 
@@ -784,29 +658,24 @@ const regenerateFirstEvent = () => {
 const confirmFirstEvent = () => {
   if (!pendingEvent.value) return;
 
-  timelineEvents.value.push(pendingEvent.value);
+  // Persist only the canonical shape — eventYear is derived at render, never
+  // stored (pendingEvent carries it for the transient preview only).
+  const e = pendingEvent.value;
+  timelineEvents.value.push({
+    title: e.title,
+    description: e.description,
+    timePeriod: e.timePeriod,
+    yearsAgo: e.yearsAgo,
+  });
 
-  // Clear state
+  // Clear state; rest the summon card at the spine's end.
   pendingEvent.value = null;
   firstEventType.value = 'Creation/Forging';
   firstTimePeriod.value = '';
   firstAdditionalContext.value = '';
-
-  // Hide add buttons to show clean timeline
-  showAddButtons.value = false;
+  generatingPosition.value = timelineEvents.value.length;
 
   updateItem();
-
-  // Scroll to show the new event
-  nextTick(() => {
-    if (filmstrip.value) {
-      filmstrip.value.scrollTo({
-        left: 0,
-        behavior: 'smooth'
-      });
-    }
-    setTimeout(checkScroll, 500);
-  });
 };
 
 // Generate event
@@ -822,8 +691,8 @@ const generateEvent = async () => {
   pendingEvent.value = null;
 
   const position = generatingPosition.value;
-  const yearsAgo = getYearFromSelection(timePeriod.value, position);
-  const eventYear = calculateEventYear(yearsAgo);
+  const yearsAgo = yearsAgoFromSelection(timePeriod.value, sortedTimelineEvents.value, position);
+  const eventYear = deriveEventYear(currentYear.value, yearsAgo);
 
   // Get context from adjacent events
   const sortedEvents = sortedTimelineEvents.value;
@@ -861,9 +730,6 @@ const generateEvent = async () => {
       yearsAgo: yearsAgo
     };
 
-    // Switch to preview mode to show the generated event
-    viewMode.value = 'preview';
-
   } catch (error) {
     logger.error('Error generating event:', error);
     toast.error('Failed to generate event. Please try again.');
@@ -875,7 +741,6 @@ const generateEvent = async () => {
 // Regenerate event
 const regenerateEvent = () => {
   // Don't clear pendingEvent - keep it visible while regenerating
-  viewMode.value = 'form'; // Go back to form when regenerating
   generateEvent();
 };
 
@@ -883,40 +748,33 @@ const regenerateEvent = () => {
 const confirmAddEvent = () => {
   if (!pendingEvent.value) return;
 
-  timelineEvents.value.push(pendingEvent.value);
+  // Persist only the canonical shape — eventYear is derived at render, never
+  // stored (pendingEvent carries it for the transient preview only).
+  const e = pendingEvent.value;
+  timelineEvents.value.push({
+    title: e.title,
+    description: e.description,
+    timePeriod: e.timePeriod,
+    yearsAgo: e.yearsAgo,
+  });
 
-  // Clear generation state
-  generatingPosition.value = null;
+  // Clear generation state; rest the summon card at the spine's end.
   pendingEvent.value = null;
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
-  viewMode.value = 'form'; // Reset view mode
-
-  // Hide add buttons after adding an event so user sees the complete timeline
-  showAddButtons.value = false;
+  generatingPosition.value = timelineEvents.value.length;
 
   updateItem();
-
-  // Just check scroll, no automatic scrolling
-  nextTick(() => {
-    checkScroll();
-  });
 };
 
-// Cancel generation
+// Cancel generation — return the summon card to the spine's end.
 const cancelGeneration = () => {
-  generatingPosition.value = null;
   pendingEvent.value = null;
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
-  viewMode.value = 'form'; // Reset view mode
-
-  // Also hide add buttons on cancel for consistency
-  if (timelineEvents.value.length > 0) {
-    showAddButtons.value = false;
-  }
+  generatingPosition.value = timelineEvents.value.length;
 };
 
 // Start editing an event
@@ -936,41 +794,34 @@ const startEditingEvent = (index) => {
 
 // Save event edit
 const saveEventEdit = (index) => {
-  const sortedEvents = sortedTimelineEvents.value;
-  const originalEvent = sortedEvents[index];
-  const originalIndex = timelineEvents.value.findIndex(e => e === originalEvent);
+  const stored = storedEventAtRow(index);
+  const originalIndex = timelineEvents.value.indexOf(stored);
+  if (originalIndex === -1) return;
 
-  if (originalIndex !== -1) {
-    // Calculate years ago from the event year if it was changed
-    let updatedYearsAgo = editingEvent.value.yearsAgo;
-
-    // If user edited the year, try to calculate new yearsAgo
-    if (editingEvent.value.eventYear !== originalEvent.eventYear && currentYear.value) {
-      const eventYearMatch = editingEvent.value.eventYear.match(/\d+/g);
-      const currentYearMatch = currentYear.value.match(/\d+/g);
-
-      if (eventYearMatch && eventYearMatch.length === 1 && currentYearMatch && currentYearMatch.length === 1) {
-        const eventYearNum = parseInt(eventYearMatch[0], 10);
-        const currentYearNum = parseInt(currentYearMatch[0], 10);
-        updatedYearsAgo = currentYearNum - eventYearNum;
-      }
-    }
-
-    // Update the event
-    timelineEvents.value[originalIndex] = {
-      ...originalEvent,
-      title: editingEvent.value.title,
-      eventYear: editingEvent.value.eventYear,
-      description: editingEvent.value.description,
-      yearsAgo: updatedYearsAgo
-    };
-
-    // Clear edit state
-    editingEventIndex.value = null;
-    editingEvent.value = {};
-
-    updateItem();
+  // If the user edited the display year, invert it back to the canonical
+  // yearsAgo. Keep the old value when the edit can't be parsed unambiguously.
+  let updatedYearsAgo = editingEvent.value.yearsAgo;
+  const originalDisplayYear = deriveEventYear(currentYear.value, stored.yearsAgo);
+  if (editingEvent.value.eventYear !== originalDisplayYear) {
+    const derived = yearsAgoFromEventYear(editingEvent.value.eventYear, currentYear.value);
+    if (derived !== null) updatedYearsAgo = derived;
   }
+
+  // Persist the canonical shape; never store the derived display year.
+  const updated = {
+    ...stored,
+    title: editingEvent.value.title,
+    description: editingEvent.value.description,
+    yearsAgo: updatedYearsAgo,
+  };
+  delete updated.eventYear;
+  timelineEvents.value[originalIndex] = updated;
+
+  // Clear edit state
+  editingEventIndex.value = null;
+  editingEvent.value = {};
+
+  updateItem();
 };
 
 // Cancel event edit
@@ -981,12 +832,17 @@ const cancelEventEdit = () => {
 
 // Remove event from timeline
 const removeFromTimeline = (index) => {
-  const sortedEvents = sortedTimelineEvents.value;
-  const eventToRemove = sortedEvents[index];
-  const originalIndex = timelineEvents.value.findIndex(e => e === eventToRemove);
+  const stored = storedEventAtRow(index);
+  const originalIndex = timelineEvents.value.indexOf(stored);
 
   if (originalIndex !== -1) {
     timelineEvents.value.splice(originalIndex, 1);
+    if (expandedIndex.value === index) expandedIndex.value = null;
+    if (editingEventIndex.value === index) editingEventIndex.value = null;
+    // Keep the resting summon position pinned to the (new) end of the spine.
+    if (generatingPosition.value !== null && generatingPosition.value > timelineEvents.value.length) {
+      generatingPosition.value = timelineEvents.value.length;
+    }
     updateItem();
   }
 };
@@ -1065,35 +921,6 @@ const updateItemLore = () => {
   toast.success('Item lore has been updated with the historical summary!');
 };
 
-// Filmstrip navigation
-const scrollFilmstrip = (direction) => {
-  if (!filmstrip.value) return;
-
-  const scrollAmount = 400;
-  const currentScroll = filmstrip.value.scrollLeft;
-
-  if (direction === 'left') {
-    filmstrip.value.scrollTo({
-      left: Math.max(0, currentScroll - scrollAmount),
-      behavior: 'smooth'
-    });
-  } else {
-    filmstrip.value.scrollTo({
-      left: currentScroll + scrollAmount,
-      behavior: 'smooth'
-    });
-  }
-};
-
-const checkScroll = () => {
-  if (!filmstrip.value) return;
-
-  showLeftArrow.value = filmstrip.value.scrollLeft > 0;
-  showRightArrow.value =
-    filmstrip.value.scrollLeft <
-    filmstrip.value.scrollWidth - filmstrip.value.clientWidth - 10;
-};
-
 // Export functions
 const exportToMarkdown = () => {
   let markdown = `## Historical Timeline of ${props.item.name}\n\n`;
@@ -1140,20 +967,18 @@ const exportToPlainText = () => {
 onMounted(() => {
   loadTimelineData();
   updateRemainingGenerations(); // Check generation limits on mount
-
-  nextTick(() => {
-    checkScroll();
-  });
 });
 
 // Load timeline data from item
 const loadTimelineData = () => {
   if (props.item.timelineEvents && props.item.timelineEvents.length > 0) {
     timelineEvents.value = [...props.item.timelineEvents];
-    showTimelineCards.value = true;
+    hasStarted.value = true;
+    generatingPosition.value = timelineEvents.value.length; // Summon rests at the end
   } else {
     timelineEvents.value = [];
-    showTimelineCards.value = false;
+    hasStarted.value = false;
+    generatingPosition.value = null;
   }
 
   if (props.item.historicalSummary) {
@@ -1175,486 +1000,496 @@ const loadTimelineData = () => {
     currentYear.value = ''; // Always start blank for new items
   }
 
-  // Reset form state when loading new item
-  generatingPosition.value = null;
+  // Reset transient form state when loading a new item
   pendingEvent.value = null;
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
-  showAddButtons.value = false;
-  viewMode.value = 'form'; // Reset view mode
+  expandedIndex.value = null;
+  editingEventIndex.value = null;
 };
 
 // Watch for prop changes (when switching items)
 watch(() => props.item, () => {
   loadTimelineData();
-  nextTick(() => {
-    checkScroll();
-  });
 }, { deep: true });
-
-// Watch for add buttons toggle
-watch(showAddButtons, (newValue) => {
-  nextTick(() => {
-    checkScroll();
-    // If showing add buttons, scroll to the end to see the most recent events
-    if (newValue && filmstrip.value) {
-      setTimeout(() => {
-        filmstrip.value.scrollTo({
-          left: filmstrip.value.scrollWidth,
-          behavior: 'smooth'
-        });
-        // Double-check scroll arrows after animation
-        setTimeout(checkScroll, 300);
-      }, 100);
-    }
-  });
-});
-
-// Watch for generating position changes
-watch(generatingPosition, () => {
-  nextTick(() => {
-    checkScroll();
-    setTimeout(checkScroll, 100);
-  });
-});
 
 // Watch for current year changes (but don't save to localStorage)
 watch(currentYear, () => {
   validateYear();
 });
-watch(() => timelineEvents.value.length, async () => {
-  await nextTick();
-  checkScroll();
-  // Double-check after animations
-  setTimeout(checkScroll, 300);
-});
 </script>
 
 <style scoped lang="scss">
-@import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
+/* ──────────────────────────────────────────────────────────────────────────
+   Lore Builder — vertical timeline "spine".
 
-.lore-builder-container {
-  padding: 1rem 0;
+   Editorial parchment surface: ink prose, burgundy headers, a quiet burgundy
+   spine, year marginalia in the left rail. The only chrome is the buttons
+   (ParCardButton semantic variants) and the lapis "create" affordances; they
+   sit at action points and stay latent at rest. Colors go through --par-*
+   tokens, never hex (parchment house rule).
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Shared rail geometry so every row's year column, marker dot, and spine
+   line align to the same vertical. */
+$rail-year: 5.5rem;   /* year-rail (marginalia) column width */
+$rail-marker: 2rem;   /* marker column width */
+$line-x: 6.5rem;      /* $rail-year + half of $rail-marker → dot/line centre */
+
+.lore-builder {
+  padding: 2.5rem 2rem 1rem;
+  background: var(--par-color-surface-card, #FEFBF4);
+  border-radius: var(--par-radius-lg, 12px);
+  color: var(--par-color-text, #222);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
 }
 
-.year-input-section {
-  margin-bottom: 2rem;
-  max-width: 400px;
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.lore-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
 }
 
-.timeline-section {
-  margin-bottom: 2rem;
-
-  h3 {
-    margin-bottom: 1rem;
-  }
-
-  .add-timeline-prompt {
-    text-align: center;
-    padding: 3rem 1rem;
-    background-color: $cdr-color-background-secondary;
-    border-radius: 8px;
-
-    .generation-info {
-      margin-top: 1rem;
-      margin-bottom: 0;
-      font-size: 0.875rem;
-      color: $cdr-color-text-secondary;
-    }
-  }
-
-  .timeline-controls {
-    margin-bottom: 1rem;
-    text-align: center;
-  }
-
-  .generation-info {
-    margin-top: 0.75rem;
-    margin-bottom: 0;
-    font-size: 0.875rem;
-    color: $cdr-color-text-secondary;
-    text-align: center;
-  }
-
-  .filmstrip-container {
-    position: relative;
-
-    .filmstrip-arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 2;
-      min-width: 40px;
-
-      &-left {
-        left: -45px;
-      }
-
-      &-right {
-        right: -45px;
-      }
-    }
-
-    .filmstrip {
-      display: flex;
-      gap: 1rem;
-      overflow-x: auto;
-      scroll-behavior: smooth;
-      padding: 1rem 0.5rem;
-
-      &::-webkit-scrollbar {
-        height: 8px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: $cdr-color-background-secondary;
-        border-radius: 4px;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background: $cdr-color-text-secondary;
-        border-radius: 4px;
-
-        &:hover {
-          background: $cdr-color-text-primary;
-        }
-      }
-    }
-  }
-
-  .timeline-card {
-    flex: 0 0 320px;
-    min-height: 280px;
-
-    &.add-card {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px dashed $cdr-color-text-secondary;
-      background-color: $cdr-color-background-secondary;
-      border-radius: 8px;
-
-      &.compact {
-        flex: 0 0 80px;
-        min-height: 120px;
-        border: 1px dashed rgba($cdr-color-text-secondary, 0.5);
-        background-color: rgba($cdr-color-background-secondary, 0.7);
-
-        .add-event-button {
-          padding: 0.5rem;
-          background: transparent;
-          border: none;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          .button-text {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            font-size: 0.9rem;
-          }
-
-          &:hover {
-            background-color: rgba($cdr-color-background-primary, 0.8);
-          }
-        }
-      }
-
-      &:not(.compact) {
-        .add-event-button {
-          padding: 2rem 1rem;
-          background: transparent;
-          border: none;
-          width: 100%;
-          height: 100%;
-
-          &:hover {
-            background-color: $cdr-color-background-primary;
-          }
-        }
-      }
-    }
-
-    &.generating-card {
-      background-color: white;
-      border: 2px solid $cdr-color-text-brand;
-      border-radius: 8px;
-      padding: 1rem;
-
-      .generating-content {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-
-        h4 {
-          margin: 0 0 0.5rem 0;
-          font-size: 1.6rem;
-        }
-
-        .event-preview {
-          background-color: $cdr-color-background-secondary;
-          padding: 0.75rem;
-          border-radius: 4px;
-          margin-top: 0.5rem;
-
-          h5 {
-            margin: 0 0 0.25rem 0;
-            font-size: 1rem;
-          }
-
-          .preview-year {
-            font-style: italic;
-            color: $cdr-color-text-secondary;
-            font-size: 0.85rem;
-            margin: 0 0 0.5rem 0;
-          }
-
-          .preview-text {
-            font-size: 0.9rem;
-            line-height: 1.4;
-            margin: 0 0 0.75rem 0;
-          }
-        }
-
-        .event-result {
-          background: linear-gradient(135deg,
-              rgba($cdr-color-text-brand, 0.05) 0%,
-              rgba($cdr-color-background-secondary, 1) 100%);
-          border: 1px solid rgba($cdr-color-text-brand, 0.2);
-          padding: 1rem;
-          border-radius: 6px;
-          margin-top: 0.75rem;
-
-          &.compact {
-            padding: 0.75rem;
-            margin-top: 0.5rem;
-          }
-
-          .result-header {
-            border-bottom: 1px solid $cdr-color-background-secondary;
-            padding-bottom: 0.5rem;
-            margin-bottom: 0.75rem;
-
-            h5 {
-              margin: 0 0 0.25rem 0;
-              font-size: 1.1rem;
-              color: $cdr-color-text-primary;
-              font-weight: 600;
-            }
-
-            .result-year {
-              font-style: italic;
-              color: $cdr-color-text-secondary;
-              font-size: 0.9rem;
-              margin: 0;
-            }
-          }
-
-          .result-text {
-            font-size: 0.95rem;
-            line-height: 1.5;
-            margin: 0 0 1rem 0;
-            color: $cdr-color-text-primary;
-          }
-
-          &.compact .result-text {
-            font-size: 1.4rem;
-            line-height: 1.6;
-          }
-        }
-
-        .custom-toggle {
-          display: flex;
-          gap: 0.25rem;
-          background-color: $cdr-color-background-secondary;
-          padding: 0.25rem;
-          border-radius: 4px;
-          margin-bottom: 0.5rem;
-
-          .toggle-btn {
-            flex: 1;
-            padding: 0.35rem 0.5rem;
-            border: none;
-            background: transparent;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: $cdr-color-text-secondary;
-            transition: all 0.2s ease;
-
-            &:hover {
-              background-color: rgba($cdr-color-text-primary, 0.05);
-              color: $cdr-color-text-primary;
-            }
-
-            &.active {
-              background-color: white;
-              color: $cdr-color-text-brand;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            }
-          }
-        }
-
-        .button-row {
-          display: flex;
-          gap: 0.25rem;
-          margin-top: 0.5rem;
-
-          &.compact-buttons {
-            gap: 0.35rem;
-            margin-top: 0.75rem;
-
-            button {
-              font-size: 1rem;
-              padding: 0.4rem 0.6rem;
-            }
-          }
-
-          button {
-            flex: 1;
-          }
-        }
-      }
-    }
-
-    &.event-card {
-      .card-content {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        padding: 1rem;
-
-        >div {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-        }
-
-        h4 {
-          margin-top: 0;
-          margin-bottom: 0.5rem;
-          color: $cdr-color-text-primary;
-        }
-
-        .time-period {
-          font-style: italic;
-          color: $cdr-color-text-secondary;
-          margin-bottom: 1rem;
-          font-size: 0.9rem;
-        }
-
-        .event-text {
-          flex: 1;
-          line-height: 1.5;
-          margin-bottom: 1rem;
-        }
-
-        .button-row-bottom {
-          display: flex;
-          gap: 0.5rem;
-          margin-top: auto;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-
-          button {
-            flex: 1;
-          }
-        }
-
-        .event-edit-form {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          height: 100%;
-
-          .button-row-bottom {
-            margin-top: auto;
-            padding-top: 0.5rem;
-            opacity: 1; // Always visible in edit mode
-          }
-        }
-      }
-
-      // Show buttons on hover or focus
-      &:hover .card-content .button-row-bottom,
-      &:focus-within .card-content .button-row-bottom {
-        opacity: 1;
-      }
-
-      // Always show buttons on touch devices
-      @media (hover: none) and (pointer: coarse) {
-        .card-content .button-row-bottom {
-          opacity: 1;
-        }
-      }
-
-      // Also always show on smaller screens
-      @media (max-width: 768px) {
-        .card-content .button-row-bottom {
-          opacity: 1;
-        }
-      }
-    }
-  }
+.lore-header__title {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 2.6rem;
+  font-weight: 600;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  color: var(--par-color-title, #7a1f1f);
 }
 
-.summary-section {
-  background-color: $cdr-color-background-primary;
-  padding: 1.5rem;
-  border-left: 4px solid $cdr-color-text-brand;
-  margin-bottom: 2rem;
-
-  h3 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-  }
-
-  .summary-text {
-    display: block;
-    line-height: 1.6;
-    margin-bottom: 1rem;
-  }
-
-  .legacy-text {
-    display: block;
-    line-height: 1.6;
-    padding-top: 1rem;
-    border-top: 1px solid $cdr-color-background-secondary;
-  }
-
-  .summary-buttons {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
-
-    @media (max-width: 768px) {
-      flex-direction: column;
-
-      button {
-        width: 100%;
-      }
-    }
-  }
+.lore-header__subtitle {
+  margin: 0.3rem 0 0;
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
 }
 
-.loading-container {
-  padding: 2rem;
+.lore-header__year-input {
+  width: 9rem;
+  box-sizing: border-box;
+  padding: 0.5rem 0.9rem;
+  text-align: center;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.5rem;
+  color: var(--par-color-title, #7a1f1f);
+  background: transparent;
+  border: 1px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-sm, 3px);
+  outline: none;
+  transition: border-color 0.15s ease;
 }
 
-@media (max-width: 768px) {
-  .filmstrip-container {
-    .filmstrip-arrow {
-      display: none;
-    }
-  }
+.lore-header__year-input::placeholder {
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-style: italic;
+}
 
-  .timeline-card {
-    flex: 0 0 280px;
-  }
+.lore-header__year-input:focus {
+  border-color: var(--par-color-title, #7a1f1f);
+}
+
+.lore-header__year-input.is-error {
+  border-color: var(--par-color-title, #7a1f1f);
+}
+
+.lore-header__year-error,
+.lore-header__year-hint {
+  margin: 0.5rem 0 0;
+  font-size: 1.25rem;
+  font-style: italic;
+  text-align: right;
+}
+
+.lore-header__year-error {
+  color: var(--par-color-title, #7a1f1f);
+}
+
+.lore-header__year-hint {
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+/* Hairline rule beneath the header. */
+.lore-header__year-hint,
+.lore-header__year-error {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--par-color-divider, #e2dccd);
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.lore-empty {
+  margin-top: 2.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-radius: var(--par-radius-lg, 12px);
+}
+
+.lore-empty__lede {
+  margin: 0 0 1.25rem;
+  font-size: 1.6rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+}
+
+/* ── Spine ──────────────────────────────────────────────────────────────── */
+.spine {
+  position: relative;
+  margin-top: 2rem;
+}
+
+/* The continuous vertical rule. Runs the full height of the spine; the
+   terminus divider below picks the line up and converges it into the
+   summary. */
+.spine::before {
+  content: '';
+  position: absolute;
+  top: 0.6rem;
+  bottom: 0;
+  left: $line-x;
+  width: 2px;
+  background: var(--par-color-title, #7a1f1f);
+  opacity: 0.55;
+}
+
+/* Every row shares the same three-column rail so years, dots, and bodies
+   line up vertically down the spine. */
+.spine-row,
+.spine-gap {
+  display: grid;
+  grid-template-columns: $rail-year $rail-marker 1fr;
+  align-items: start;
+}
+
+.spine-year {
+  padding-top: 0.35rem;
+  padding-right: 0.9rem;
+  text-align: right;
+  font-size: 1.35rem;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.04em;
+  color: var(--par-color-title, #7a1f1f);
+  white-space: nowrap;
+}
+
+.spine-marker {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+/* Node / pending markers sit on top of the line, masked by a ring the colour
+   of the surface so the rule reads as passing behind them. */
+.spine-dot {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px var(--par-color-surface-card, #FEFBF4);
+}
+
+.spine-dot--committed {
+  background: var(--par-color-title, #7a1f1f);
+}
+
+.spine-dot--pending {
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 1.5px dashed var(--par-color-border-deep, #b8a685);
+}
+
+/* ── Event node ─────────────────────────────────────────────────────────── */
+.spine-row--event {
+  padding-bottom: 1.4rem;
+}
+
+/* Collapsed: title + teaser, no chrome. The whole row is the affordance. */
+.node-collapsed {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.2rem 0.6rem 0.2rem 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--par-radius-sm, 3px);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.node-collapsed__title {
+  display: block;
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  line-height: 1.25;
+}
+
+.node-collapsed__teaser {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.45rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.4;
+}
+
+.node-collapsed:hover .node-collapsed__title,
+.node-collapsed:focus-visible .node-collapsed__title {
+  color: var(--par-color-title-deep, #58180d);
+}
+
+.node-collapsed:focus-visible {
+  outline: 2px solid var(--par-color-title, #7a1f1f);
+  outline-offset: 2px;
+}
+
+/* Expanded: the card with full prose + its chrome. */
+.node-expanded {
+  padding: 1.4rem 1.6rem;
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-radius: var(--par-radius-md, 4px);
+  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
+}
+
+.node-expanded__title {
+  margin: 0 0 0.6rem;
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  cursor: pointer;
+}
+
+.node-expanded__text {
+  margin: 0 0 1rem;
+  font-size: 1.55rem;
+  line-height: 1.65;
+  color: var(--par-color-text, #222);
+}
+
+.node-expanded__text :deep(strong) { font-weight: 600; }
+
+.node-expanded__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.node-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── Time-gap row ───────────────────────────────────────────────────────── */
+.spine-gap {
+  padding: 0.4rem 0 1rem;
+}
+
+.spine-gap__body {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.4rem;
+}
+
+.spine-gap__rule {
+  width: 2rem;
+  height: 1px;
+  background: var(--par-color-border-strong, #c9b99a);
+  flex-shrink: 0;
+}
+
+.spine-gap__text {
+  font-size: 1.35rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  white-space: nowrap;
+}
+
+/* ── Summon card ────────────────────────────────────────────────────────── */
+.spine-row--summon {
+  padding-bottom: 1.6rem;
+}
+
+.summon-card {
+  padding: 1.6rem 1.8rem;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-radius: var(--par-radius-md, 4px);
+}
+
+.summon-card__heading {
+  margin: 0 0 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.08em;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+.summon-card__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+@media (max-width: 560px) {
+  .summon-card__fields { grid-template-columns: 1fr; }
+}
+
+.summon-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 0.4rem;
+}
+
+.summon-card__quota {
+  margin: 1rem 0 0;
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+/* Pending-event preview inside the summon card. */
+.summon-preview__title {
+  margin: 0 0 0.2rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+.summon-preview__year {
+  margin: 0 0 0.8rem;
+  font-size: 1.35rem;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.04em;
+  color: var(--par-color-text-secondary, #555);
+}
+
+.summon-preview__text {
+  margin: 0 0 1.2rem;
+  font-size: 1.55rem;
+  line-height: 1.65;
+  color: var(--par-color-text, #222);
+}
+
+.summon-preview__text :deep(strong) { font-weight: 600; }
+
+/* ── Skeleton (generating state) ────────────────────────────────────────── */
+.lore-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 0.4rem 0;
+}
+
+.lore-skeleton__line {
+  height: 1.2rem;
+  border-radius: var(--par-radius-sm, 3px);
+  background: linear-gradient(
+    90deg,
+    var(--par-color-callout-bg, #f3ebda) 25%,
+    var(--par-color-callout-bg-deep, #ede2cb) 50%,
+    var(--par-color-callout-bg, #f3ebda) 75%
+  );
+  background-size: 200% 100%;
+  animation: lore-shimmer 1.4s ease-in-out infinite;
+}
+
+.lore-skeleton__line:nth-child(1) { width: 100%; }
+.lore-skeleton__line:nth-child(2) { width: 92%; }
+.lore-skeleton__line:nth-child(3) { width: 84%; }
+.lore-skeleton__line:nth-child(4) { width: 70%; }
+
+@keyframes lore-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Terminus: spine converges into the historical summary ──────────────── */
+.lore-terminus {
+  margin-top: 0.5rem;
+}
+
+.lore-terminus__divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.4rem;
+}
+
+.lore-terminus__label {
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  white-space: nowrap;
+}
+
+.lore-terminus__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--par-color-divider, #e2dccd);
+}
+
+.summary-card {
+  position: relative;
+  padding: 1.8rem 2rem;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-left: 3px solid var(--par-color-title, #7a1f1f);
+  border-radius: var(--par-radius-md, 4px);
+}
+
+.summary-card__heading {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+.summary-card__text {
+  margin: 0 0 1rem;
+  font-size: 1.6rem;
+  line-height: 1.7;
+  color: var(--par-color-callout-text, #2c2c2a);
+}
+
+.summary-card__text :deep(strong) { font-weight: 600; }
+
+.summary-card__legacy {
+  margin: 0 0 1.2rem;
+  font-size: 1.45rem;
+  line-height: 1.6;
+  color: var(--par-color-text-secondary, #555);
+}
+
+.summary-card__legacy-label {
+  font-variant-caps: small-caps;
+  letter-spacing: 0.06em;
+  color: var(--par-color-title, #7a1f1f);
+  margin-right: 0.5rem;
+}
+
+.summary-card__empty {
+  margin: 0 0 1.2rem;
+  font-size: 1.45rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+.summary-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
 }
 </style>

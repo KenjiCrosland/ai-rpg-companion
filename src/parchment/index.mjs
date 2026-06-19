@@ -28,3 +28,4 @@ export { default as ParTooltip } from './ParTooltip.vue';
 export { default as ParTabToggle } from './ParTabToggle.vue';
 export { default as ParTabs } from './ParTabs.vue';
 export { default as ParModal } from './ParModal.vue';
+export { default as ParConfirm } from './ParConfirm.vue';

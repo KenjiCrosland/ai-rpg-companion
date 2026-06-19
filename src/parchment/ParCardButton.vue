@@ -38,15 +38,30 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'default',
-    // 'default' — outlined primary action (Save Changes, etc.)
-    // 'ghost'   — quiet section affordance, no border, hover-tinted only
-    //             (refresh / re-scan / "do this again" actions). Visually
-    //             lighter than the action buttons that sit alongside it.
-    // 'link'    — text-only treatment, no border, no background. For
-    //             demoted secondary actions that shouldn't compete with
-    //             the card's primary content (Edit item, etc.).
-    // 'danger'  — destructive (Delete item).
-    validator: v => ['default', 'ghost', 'link', 'danger'].includes(v),
+    // Semantic variants (the canonical set — color carries meaning):
+    // 'create'      — lapis. "Make something new": insert / generate /
+    //                 "+ Add Event". The only place lapis enters the
+    //                 card register (see note below).
+    // 'affirmative' — burgundy outline. Act on what already exists in a
+    //                 reversible way: Edit / Regenerate.
+    // 'primary'     — burgundy, filled/emphasized. The committing action:
+    //                 Keep / Save / Update Item Lore.
+    // 'muted'       — recessive gray. Cancel / Remove. Quiet, not invisible.
+    //
+    // Legacy variants (kept for existing item-card / NPC-card consumers):
+    // 'default' — outlined burgundy action (≈ 'affirmative').
+    // 'ghost'   — quiet section affordance, no border, hover-tinted only.
+    // 'link'    — text-only, no border/background. Demoted secondary action.
+    // 'danger'  — destructive; gray at rest, warms to burgundy on hover.
+    //
+    // NOTE — lapis on a card button. The parchment system otherwise
+    // reserves lapis for the chrome layer (ParButton) and keeps the card
+    // register burgundy. The 'create' variant is a deliberate exception:
+    // lapis is the suite-level "create / generate" semantic, so it reads
+    // the same whether it sits on chrome or on a content surface.
+    validator: v =>
+      ['create', 'affirmative', 'primary', 'muted',
+       'default', 'ghost', 'link', 'danger'].includes(v),
   },
   size: {
     type: String,
@@ -66,6 +81,10 @@ const props = defineProps({
 defineEmits(['click']);
 
 const classes = computed(() => ({
+  'par-card-button--create': props.variant === 'create',
+  'par-card-button--affirmative': props.variant === 'affirmative',
+  'par-card-button--primary': props.variant === 'primary',
+  'par-card-button--muted': props.variant === 'muted',
   'par-card-button--danger': props.variant === 'danger',
   'par-card-button--ghost': props.variant === 'ghost',
   'par-card-button--link': props.variant === 'link',
@@ -140,6 +159,82 @@ const classes = computed(() => ({
 .par-card-button--small {
   font-size: 1.3rem;
   padding: 0.5rem 1rem;
+}
+
+/* ------------------------------------------------------------------
+   Semantic variants. Each declares its OWN text color explicitly
+   rather than inheriting the base burgundy — a global control style
+   was washing the colors out, so color is pinned per variant.
+   ------------------------------------------------------------------ */
+
+/* create — lapis. The "make something new" affordance. Lapis text +
+   outline at rest; fills with a light lapis wash on hover. */
+.par-card-button--create {
+  color: var(--color-action-rest, #365A85);
+  border-color: var(--color-action-rest, #365A85);
+}
+
+.par-card-button--create:hover:not(:disabled) {
+  color: var(--color-action-hover, #2A4D70);
+  border-color: var(--color-action-hover, #2A4D70);
+  background: var(--par-color-action-primary-hover-bg, rgba(42, 77, 112, 0.08));
+}
+
+.par-card-button--create:active:not(:disabled) {
+  background: var(--color-action-secondary-active-bg, rgba(90, 122, 154, 0.16));
+}
+
+.par-card-button--create:focus-visible {
+  outline-color: var(--color-action-rest, #365A85);
+}
+
+/* affirmative — burgundy outline. Reversible action on existing content
+   (Edit / Regenerate). Matches the base outline treatment but pins the
+   color so it never inherits from a washed-out parent. */
+.par-card-button--affirmative {
+  color: var(--par-color-title, #7a1f1f);
+  border-color: var(--par-color-border, #e8e2d4);
+}
+
+.par-card-button--affirmative:hover:not(:disabled) {
+  color: var(--par-color-title, #7a1f1f);
+  border-color: var(--par-color-title, #7a1f1f);
+  background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
+}
+
+/* primary — filled burgundy. The committing action (Keep / Save /
+   Update Item Lore). Cream text on a solid burgundy ground. */
+.par-card-button--primary {
+  color: var(--par-color-surface, #FBF7F0);
+  background: var(--par-color-title, #7a1f1f);
+  border-color: var(--par-color-title, #7a1f1f);
+}
+
+.par-card-button--primary:hover:not(:disabled) {
+  color: var(--par-color-surface, #FBF7F0);
+  background: var(--par-color-title-deep, #58180d);
+  border-color: var(--par-color-title-deep, #58180d);
+}
+
+.par-card-button--primary:active:not(:disabled) {
+  background: var(--par-color-title-deep, #58180d);
+}
+
+/* muted — recessive gray. Quiet, not invisible (Cancel / Remove). Stays
+   above the contrast line at rest; firms to a darker gray on hover. */
+.par-card-button--muted {
+  color: var(--par-color-text-muted, #6b6b6b);
+  border-color: var(--par-color-border, #e8e2d4);
+}
+
+.par-card-button--muted:hover:not(:disabled) {
+  color: var(--par-color-text, #222);
+  border-color: var(--par-color-text-muted, #6b6b6b);
+  background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
+}
+
+.par-card-button--muted:focus-visible {
+  outline-color: var(--par-color-text-muted, #6b6b6b);
 }
 
 /* Ghost variant: quiet section affordance. No visible border so it doesn't
