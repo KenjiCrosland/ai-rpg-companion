@@ -209,8 +209,14 @@
       </div>
     </div>
 
-    <!-- ── Export (shared format) ────────────────────────────────────────── -->
-    <ItemExportsSection v-if="timelineEvents.length > 0" heading="Export Item History">
+    <!-- ── Export (toggleable, matching the Item Details tab) ────────────── -->
+    <div v-if="timelineEvents.length > 0" class="lore-export-toggle">
+      <ParCardButton @click="showExport = !showExport">
+        {{ showExport ? 'Hide export' : 'Export' }}
+      </ParCardButton>
+    </div>
+
+    <ItemExportsSection v-if="timelineEvents.length > 0 && showExport" heading="Export Item History">
       <template #description>
         Export your item's historical timeline in different formats. The markdown format works perfectly with
         <cdr-link href="https://homebrewery.naturalcrit.com" target="_blank">Homebrewery</cdr-link>
@@ -315,6 +321,7 @@ const editingEventIndex = ref(null); // Track which event is being edited (displ
 const editingEvent = ref({}); // Store the event being edited
 const expandedIndex = ref(null); // Which node is expanded (one open at a time)
 const showLoreConfirm = ref(false); // "Replace item lore?" confirm dialog
+const showExport = ref(false); // Toggleable export panel (matches Item Details)
 // End-of-spine summon form: expanded by default only when the timeline is
 // empty (the form is the entry point). With events present it rests collapsed
 // to a lapis affordance and the user opens it; it auto-collapses after a keep
@@ -1292,6 +1299,12 @@ $line-x: 8.5rem;      /* $rail-year + half of $rail-marker → dot/line centre *
   display: flex;
   flex-wrap: wrap;
   gap: 0.7rem;
+}
+
+/* Toggleable export affordance — mirrors the Item Details tab's Export
+   button; the shared ItemExportsSection panel reveals below it. */
+.lore-export-toggle {
+  margin-top: 2rem;
 }
 
 /* Update Item Lore overwrites hand-written lore — a real commitment — but it
