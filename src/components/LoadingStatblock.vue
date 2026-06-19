@@ -1,8 +1,8 @@
 <template>
-    <cdr-toggle-group v-model="columns" style="max-width: 25rem">
-        <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
-        <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
-    </cdr-toggle-group>
+    <ParToggleGroup v-model="columns" aria-label="Statblock column layout" class="column-toggle">
+        <ParToggleButton toggleValue="one_column">1 Column</ParToggleButton>
+        <ParToggleButton toggleValue="two_columns">2 Columns</ParToggleButton>
+    </ParToggleGroup>
 
     <div v-if="loading" :class="`container ${columns}`">
 
@@ -111,10 +111,9 @@
   
 <script setup>
 import { ref, computed, defineProps } from 'vue';
-import { CdrToggleButton, CdrToggleGroup, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
+import { CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
+import { ParToggleGroup, ParToggleButton } from "@/parchment";
 import { statblockToMarkdown } from '../util/convertToMarkdown.mjs';
-import "@rei/cedar/dist/style/cdr-toggle-group.css";
-import "@rei/cedar/dist/style/cdr-toggle-button.css";
 import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 // Props
@@ -163,6 +162,12 @@ const copyAsMarkdown = () => {
 
   
 <style lang="scss" scoped>
+.column-toggle {
+    display: flex;
+    justify-content: center;
+    margin: 1rem auto;
+}
+
 .container {
     display: grid;
 

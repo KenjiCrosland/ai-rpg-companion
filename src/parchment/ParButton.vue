@@ -87,11 +87,17 @@ const props = defineProps({
     //                     alternative beside a primary CTA (Cancel
     //                     beside Generate). Same family as primary,
     //                     lower visual volume.
+    // 'secondary-filled'— CREAM fill, lapis text + outline, serif. The
+    //                     solid (non-transparent) counterpart to
+    //                     'secondary', for Cancel/Edit pairs that must
+    //                     read as real buttons against a busy surface
+    //                     rather than washed outlines. Lower volume than
+    //                     primary's saturated lapis fill.
     // 'luminous'        — cabochon gradient. Reserved for rare special-
     //                     importance moments (premium upsell, etc.).
     //                     Don't proliferate — the variant earns its
     //                     complexity through scarcity.
-    validator: v => ['primary', 'primary-outline', 'secondary', 'luminous'].includes(v),
+    validator: v => ['primary', 'primary-outline', 'secondary', 'secondary-filled', 'luminous'].includes(v),
   },
   size: {
     type: String,
@@ -136,6 +142,7 @@ const classes = computed(() => [
     // base .par-button styles already are the primary treatment.
     'par-button--variant-primary-outline': props.variant === 'primary-outline',
     'par-button--variant-secondary': props.variant === 'secondary',
+    'par-button--variant-secondary-filled': props.variant === 'secondary-filled',
     'par-button--variant-luminous': props.variant === 'luminous',
     'par-button--full-width': props.fullWidth && !props.iconOnly,
     'par-button--icon-only': props.iconOnly,
@@ -405,6 +412,45 @@ function handleClick(event) {
   color: var(--color-action-secondary-disabled, rgba(90, 122, 154, 0.35));
   fill: var(--color-action-secondary-disabled, rgba(90, 122, 154, 0.35));
   border-color: var(--color-action-secondary-disabled, rgba(90, 122, 154, 0.35));
+  cursor: not-allowed;
+}
+
+/* -----------------------------------------------------------------------
+   Secondary-filled variant — CREAM fill, lapis text + outline. The solid,
+   non-transparent counterpart to `secondary`: a real cream fill so the
+   button reads as a button against a busy/parchment surface instead of a
+   washed transparent outline, but lower volume than primary's saturated
+   lapis fill. Hover firms the lapis and warms the fill.
+   ----------------------------------------------------------------------- */
+.par-button--variant-secondary-filled {
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  color: var(--color-action-hover, #2A4D70);
+  fill: var(--color-action-hover, #2A4D70);
+  border: 1px solid var(--color-action-rest, #365A85);
+}
+
+.par-button--variant-secondary-filled:hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-surface, #FBF7F0);
+  border-color: var(--color-action-hover, #2A4D70);
+}
+
+.par-button--variant-secondary-filled:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-callout-bg, #f3ebda);
+  border-color: var(--color-action-active, #1F3A5C);
+}
+
+.par-button--variant-secondary-filled:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-action-secondary-focus-glow, rgba(90, 122, 154, 0.3));
+}
+
+.par-button--variant-secondary-filled:disabled,
+.par-button--variant-secondary-filled[aria-disabled="true"] {
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  border-color: var(--color-action-disabled, #9DAFC1);
+  color: var(--color-action-disabled, #9DAFC1);
+  fill: var(--color-action-disabled, #9DAFC1);
   cursor: not-allowed;
 }
 

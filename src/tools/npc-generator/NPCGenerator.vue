@@ -353,6 +353,7 @@ import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
 import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import { logger } from '@/util/logger.mjs';
+import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
@@ -1276,6 +1277,9 @@ function deleteAllNPCs() {
         npcs.value = { 'Uncategorized': [] };
         createNewNPC();
         saveNPCsToLocalStorage();
+        // Drop cross-tool edges pointing at the now-deleted NPCs. Runs after
+        // the store is saved so the sweep sees them as gone.
+        sweepOrphanReferences();
         toast.success('All NPCs deleted.');
     }
 }

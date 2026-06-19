@@ -152,11 +152,11 @@
             </ul>
 
             <div class="edit-save-buttons" v-if="!readonly">
-                <ParButton size="small" variant="secondary" v-if="showEditButton && !isEditing"
+                <ParButton size="small" variant="secondary-filled" v-if="showEditButton && !isEditing"
                     @click="enterEditMode">Edit</ParButton>
-                <ParButton style="margin-right: 1rem" size="small" variant="secondary" v-if="isEditing"
+                <ParButton size="small" variant="primary" v-if="isEditing"
                     @click="saveChanges">Save</ParButton>
-                <ParButton style="margin-right: 1.5rem" size="small" variant="secondary" v-if="isEditing"
+                <ParButton size="small" variant="secondary-filled" v-if="isEditing"
                     @click="cancelChanges">Cancel</ParButton>
             </div>
         </div>
@@ -690,11 +690,12 @@ textarea {
     position: absolute;
     top: 10px;
     right: 10px;
+    gap: 0.6rem;
 }
 
 
 .container:hover .edit-save-buttons {
-    display: inline-block;
+    display: flex;
 }
 
 .statblock {

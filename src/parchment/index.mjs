@@ -29,3 +29,7 @@ export { default as ParTabToggle } from './ParTabToggle.vue';
 export { default as ParTabs } from './ParTabs.vue';
 export { default as ParModal } from './ParModal.vue';
 export { default as ParConfirm } from './ParConfirm.vue';
+export { default as ParAccordion } from './ParAccordion.vue';
+export { default as ParAccordionGroup } from './ParAccordionGroup.vue';
+export { default as ParToggleGroup } from './ParToggleGroup.vue';
+export { default as ParToggleButton } from './ParToggleButton.vue';

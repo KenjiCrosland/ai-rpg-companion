@@ -220,6 +220,7 @@ import TabPanel from '@/components/tabs/TabPanel.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
+import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
 import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
@@ -335,6 +336,9 @@ function deleteAllSettings() {
     settings.value = [reactive(freshDefaultSetting())];
     currentSettingIndex.value = 0;
     saveSettingsToLocalStorage();
+    // Drop cross-tool edges pointing at the now-deleted settings. Runs after
+    // the store is saved so the sweep sees them as gone.
+    sweepOrphanReferences();
   }
 }
 

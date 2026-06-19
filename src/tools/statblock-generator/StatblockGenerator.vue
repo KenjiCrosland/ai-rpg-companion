@@ -3,76 +3,151 @@
     <template #sidebar>
       <div class="sidebar-content parchment">
         <div class="sidebar-scroll">
-          <cdr-accordion-group>
-            <cdr-accordion level="3" v-for="(folder, folderName) in filteredMonsters" :key="folderName" :id="folderName"
-              :opened="openedFolders[folderName]"
-              @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
-              <template #label>
-                {{ folderName }}
-              </template>
-              <ul class="saved-statblocks">
-                <li v-for="(monsterItem, index) in folder" :key="index"
-                  :class="{ 'active': activeMonsterIndex === index && activeFolder === folderName }">
-                  <button class="monster-button" @click="selectMonster(folderName, index)" tabindex="0">
-                    <span>{{ monsterItem.name }}</span>
-                    <span>CR {{ getFirstNumber(monsterItem.challenge_rating) }}</span>
+          <ParAccordionGroup>
+            <ParAccordion
+              v-for="(folder, folderName) in filteredMonsters"
+              :key="folderName"
+              :id="`sb-folder-${folderName}`"
+              :label="folderName"
+              :count="folder.length"
+              :level="3"
+              :content-spacing="false"
+              :opened="!!openedFolders[folderName]"
+              @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]"
+            >
+              <ul class="statblock-list">
+                <li
+                  v-for="(monsterItem, index) in folder"
+                  :key="index"
+                  class="statblock-row"
+                  :class="{ 'statblock-row--active': activeMonsterIndex === index && activeFolder === folderName }"
+                >
+                  <button class="statblock-row__button" @click="selectMonster(folderName, index)">
+                    <span class="statblock-row__name">{{ monsterItem.name }}</span>
+                    <span class="statblock-row__cr">
+                      <span class="statblock-row__cr-label">CR</span> {{ getFirstNumber(monsterItem.challenge_rating) }}
+                    </span>
                   </button>
                 </li>
-                <li>
-                  <button class="monster-button" @click="newMonster(folderName)"
-                    :class="{ 'active': activeMonsterIndex === null && activeFolder === folderName }">
-                    + New Monster Statblock</button>
+                <li class="statblock-row statblock-row--new">
+                  <button
+                    class="statblock-row__button statblock-row__new"
+                    :class="{ 'statblock-row__new--active': activeMonsterIndex === null && activeFolder === folderName }"
+                    @click="newMonster(folderName)"
+                  >
+                    + New monster statblock
+                  </button>
                 </li>
               </ul>
-            </cdr-accordion>
-          </cdr-accordion-group>
+            </ParAccordion>
+          </ParAccordionGroup>
+        </div>
+
+        <div class="sidebar-footer">
+          <ParButton variant="primary" :full-width="true" @click="newMonster(activeFolder)">
+            + New monster statblock
+          </ParButton>
+
+          <div class="sidebar-footer__divider"></div>
+
+          <div class="sidebar-data-options">
+            <button
+              class="sidebar-data-options__toggle"
+              @click="dataOptionsExpanded = !dataOptionsExpanded"
+              :aria-expanded="dataOptionsExpanded"
+              aria-controls="sidebar-data-options-panel"
+            >
+              <span>Data options</span>
+              <svg
+                class="sidebar-data-options__icon"
+                :class="{ 'is-expanded': dataOptionsExpanded }"
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </button>
+
+            <div
+              v-if="dataOptionsExpanded"
+              id="sidebar-data-options-panel"
+              class="sidebar-data-options__panel"
+            >
+              <p class="sidebar-data-options__description">
+                Save your library to a file or restore from a backup. Your data stays on your device.
+              </p>
+
+              <button class="sidebar-data-options__action" @click="showDataManagerModal = true">
+                Backup / Restore library
+              </button>
+
+              <button
+                class="sidebar-data-options__action sidebar-data-options__action--danger"
+                @click="confirmDeleteAll"
+              >
+                Delete all statblocks
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </template>
 
     <div class="generator-container">
       <div class="landing-wrapper" v-if="!monster && !loadingPart1 && !loadingPart2">
-        <!-- ZONE 1: Brand + Headline (lives outside the card) -->
-        <div class="hero-header">
+        <!-- ZONE 1: Hero header (lapis editorial register, matches the Item
+             Generator) -->
+        <div class="hero-header parchment">
           <div class="brand-line">
             <span class="brand-name">Kenji's Statblock Generator</span>
             <span v-if="!premium" class="version-pill">Free</span>
             <span v-else class="version-pill premium">Premium</span>
           </div>
-          <h1>Build Custom D&D 5e Monsters in Seconds</h1>
-          <p class="value-prop">Create balanced, export-ready 5e statblocks — no math required.</p>
-          <p class="export-formats">Exports to Roll20, Homebrewery, Foundry VTT, and Improved Initiative</p>
+          <h1 class="page-heading__title">Build custom D&D 5e monsters in seconds</h1>
+          <p class="page-heading__tagline">Create balanced, export-ready 5e statblocks — no math required.</p>
+          <p class="page-heading__formats">Exports to Roll20, Homebrewery, Foundry VTT, and Improved Initiative</p>
         </div>
 
-        <!-- ZONE 2: The form card -->
-        <div class="form-card">
+        <!-- ZONE 2: Form card — lifted cream surface, lapis "magic UI" -->
+        <div class="form-card parchment">
+          <h2 class="form-heading">Generate a monster statblock</h2>
           <form @submit.prevent="generateStatblock" class="monster-form">
-            <div class="form-row-top">
-              <cdr-input id="monsterName" v-model="monsterName" background="secondary"
-                :label="'Monster Name (Example: Headless Horseman)'" />
-              <cdr-select v-model="monsterType" label="type"
-                :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
-              <cdr-select v-model="selectedChallengeRating" label="CR" prompt="CR"
-                :options="challengeRatingData.fullArray" />
-            </div>
-            <div class="form-row-mid">
-              <cdr-input v-model="monsterDescription" :optional="true" label='Description / Special Instructions'
-                placeholder='E.g. "Flying speed of 60ft", "Can turn invisible once per day", "Output statblock in German"'
-                :rows="4" />
-            </div>
-            <div class="form-row-end">
-              <cdr-checkbox v-model="caster">Creature is a spellcaster</cdr-checkbox>
+            <ParField label="Monster name" :optional="true">
+              <ParInput id="monsterName" v-model="monsterName"
+                placeholder="Headless Horseman, or leave blank for a random monster" />
+            </ParField>
+
+            <div class="form-grid">
+              <ParField label="Build">
+                <ParSelect v-model="monsterType"
+                  :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
+              </ParField>
+              <ParField label="Challenge rating">
+                <ParSelect v-model="selectedChallengeRating" :options="challengeRatingData.fullArray" placeholder="CR" />
+              </ParField>
             </div>
 
-            <ParButton :disabled="loadingPart1 || loadingPart2" class="monster-form-button" type="submit">
-              {{ activeMonsterIndex !== null ? 'Regenerate Monster' : 'Generate Monster' }}
+            <ParField label="Description / special instructions" :optional="true">
+              <ParTextarea v-model="monsterDescription" :rows="4"
+                placeholder='E.g. "Flying speed of 60ft", "Can turn invisible once per day", "Output statblock in German"' />
+            </ParField>
+
+            <ParCheckbox v-model="caster" class="monster-form__caster">Creature is a spellcaster</ParCheckbox>
+
+            <ParButton class="generate-button" type="submit" :full-width="true"
+              :disabled="loadingPart1 || loadingPart2">
+              {{ activeMonsterIndex !== null ? 'Regenerate monster' : 'Generate monster' }}
             </ParButton>
           </form>
         </div>
 
-        <!-- ZONE 3: Secondary info (below the card, low-key) -->
-        <div class="footer-meta">
-          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+        <!-- ZONE 3: Secondary info (below the card, low-key). Free users see
+             the upsell; premium users no longer need a save/load callout —
+             the sidebar footer's Data options covers backup/restore. -->
+        <div class="footer-meta" v-if="!premium">
+          <PatreonCallout :patreon-url="patreonLoginUrl">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
             </template>
@@ -84,24 +159,18 @@
               </li>
             </template>
           </PatreonCallout>
-
-          <!-- Premium users: parchment surface so the active status
-               reads as a coherent block, matching the upsell callout
-               above. -->
-          <ParCallout v-else>
-            <p>Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.</p>
-            <ParButton @click="showDataManagerModal = true">
-              Save/Load Data from a File
-            </ParButton>
-          </ParCallout>
         </div>
       </div>
 
-      <cdr-toggle-group v-if="shouldDisplayInterface && canSwitchColumns && (monster || loadingPart1 || loadingPart2)"
-        v-model="userColumnsPreference" style="margin: 2cap;auto">
-        <cdr-toggle-button toggleValue="one_column">1 Column</cdr-toggle-button>
-        <cdr-toggle-button toggleValue="two_columns">2 Columns</cdr-toggle-button>
-      </cdr-toggle-group>
+      <ParToggleGroup
+        v-if="shouldDisplayInterface && canSwitchColumns && (monster || loadingPart1 || loadingPart2)"
+        v-model="userColumnsPreference"
+        aria-label="Statblock column layout"
+        class="column-toggle"
+      >
+        <ParToggleButton toggleValue="one_column">1 Column</ParToggleButton>
+        <ParToggleButton toggleValue="two_columns">2 Columns</ParToggleButton>
+      </ParToggleGroup>
       <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
         :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
         :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
@@ -119,13 +188,15 @@
       </div>
 
       <!-- Inline folder mover (appears when toggled) -->
-      <div class="folder-mover" v-if="showFolderMover && monster && !loadingPart2">
+      <div class="folder-mover parchment" v-if="showFolderMover && monster && !loadingPart2">
         <div class="folder-mover-inner">
-          <cdr-select v-model="folderMoveTarget" label="Destination folder" prompt="Select a folder"
-            :options="folderMoveOptions" />
-          <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolder" label="New folder name"
-            background="secondary" />
-          <ParButton @click="handleFolderMove" :disabled="!canMove">
+          <ParField label="Destination folder" class="folder-mover__field">
+            <ParSelect v-model="folderMoveTarget" :options="folderMoveOptions" placeholder="Select a folder" />
+          </ParField>
+          <ParField v-if="folderMoveTarget === '__new__'" label="New folder name" class="folder-mover__field">
+            <ParInput v-model="newFolder" placeholder="e.g., Undead" />
+          </ParField>
+          <ParButton class="folder-mover__move" variant="primary" @click="handleFolderMove" :disabled="!canMove">
             Move
           </ParButton>
         </div>
@@ -135,9 +206,10 @@
       <StatblockExports v-if="showExports && monster && !loadingPart2" :monster="monster"
         :loading="loadingPart1 || loadingPart2" :columns="userColumnsPreference" />
 
-      <!-- Footer below monster content -->
-      <div class="footer-meta" v-if="monster && !loadingPart2">
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+      <!-- Footer below monster content (free users only — premium's
+           backup/restore lives in the sidebar footer's Data options). -->
+      <div class="footer-meta" v-if="monster && !loadingPart2 && !premium">
+        <PatreonCallout :patreon-url="patreonLoginUrl">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
           </template>
@@ -149,25 +221,34 @@
             </li>
           </template>
         </PatreonCallout>
-
-        <!-- Premium users: parchment surface so the active status reads
-             as a coherent block, matching the upsell callout above. -->
-        <ParCallout v-else>
-          <p>Unlimited generations. Statblock data is saved on this browser. Export to a file to use on another device.</p>
-          <ParButton @click="showDataManagerModal = true">
-            Save/Load Data from a File
-          </ParButton>
-        </ParCallout>
       </div>
     </div>
 
     <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
       currentApp="monsters" />
+
+    <!-- Delete-all confirmation (mirrors the Item Generator) -->
+    <ParModal
+      :opened="showDeleteConfirmation"
+      title="Delete all statblocks?"
+      @cancel="showDeleteConfirmation = false"
+    >
+      <p class="delete-all-modal__body">
+        This will permanently delete every saved statblock in your library. This action cannot be undone.
+      </p>
+      <p class="delete-all-modal__suggestion">
+        Consider backing up your library first if you might want to restore these later.
+      </p>
+      <template #footer>
+        <ParButton variant="secondary" @click="showDeleteConfirmation = false">Cancel</ParButton>
+        <button class="delete-all-modal__confirm" @click="deleteAllMonsters">Delete all statblocks</button>
+      </template>
+    </ParModal>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParButton, ParCallout } from "@/parchment";
+import { ParButton, ParModal, ParAccordion, ParAccordionGroup, ParToggleGroup, ParToggleButton, ParField, ParInput, ParSelect, ParTextarea, ParCheckbox } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
@@ -175,15 +256,11 @@ import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
-import { CdrInput, CdrLink, CdrCheckbox, CdrSelect, CdrToggleButton, CdrToggleGroup, CdrAccordion, CdrAccordionGroup, CdrList, IconDownload, IconUpload } from "@rei/cedar";
-import "@rei/cedar/dist/style/cdr-input.css";
+import { CdrLink, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-list.css";
-import "@rei/cedar/dist/style/cdr-checkbox.css";
-import "@rei/cedar/dist/style/cdr-select.css";
-import "@rei/cedar/dist/style/cdr-toggle-group.css";
-import "@rei/cedar/dist/style/cdr-toggle-button.css";
 import StatblockExports from './components/StatblockExports.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
+import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import challengeRatingData from '@/data/challengeRatings.json';
 import creatureTemplates from '@/data/creatureTemplates.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
@@ -237,6 +314,28 @@ const filteredMonsters = computed(() => {
   return filtered;
 });
 const showDataManagerModal = ref(false);
+// Sidebar footer: data-options disclosure + delete-all confirmation
+// (mirrors the Item Generator's sidebar footer).
+const dataOptionsExpanded = ref(false);
+const showDeleteConfirmation = ref(false);
+
+function confirmDeleteAll() {
+  showDeleteConfirmation.value = true;
+}
+
+function deleteAllMonsters() {
+  monsters.value = {};
+  localStorage.setItem('monsters', JSON.stringify({}));
+  // Reconcile the cross-tool reference graph: any edge pointing at a
+  // now-deleted statblock is dropped. Runs after the store is cleared so the
+  // sweep sees the statblocks as gone.
+  sweepOrphanReferences();
+  monster.value = null;
+  activeMonsterIndex.value = null;
+  activeFolder.value = 'Uncategorized';
+  showDeleteConfirmation.value = false;
+  showDataManagerModal.value = false;
+}
 const showFolderMover = ref(false);
 const showExports = ref(false);
 const folderMoveTarget = ref('');
@@ -245,8 +344,8 @@ const folderMoveOptions = computed(() => {
   const current = activeFolder.value;
   const folders = folderNames.value
     .filter(name => name !== current)
-    .map(name => ({ text: name, value: name }));
-  folders.push({ text: '＋ Create new folder...', value: '__new__' });
+    .map(name => ({ label: name, value: name }));
+  folders.push({ label: '＋ Create new folder...', value: '__new__' });
   return folders;
 });
 
@@ -751,72 +850,237 @@ async function generateStatblock() {
 
 
 .sidebar-content {
-  $background-color: transparent;
-  $active-color: var(--par-color-callout-bg-deep, #ede2cb);
-  $hover-background-color: var(--par-color-callout-bg, #f3ebda);
-  $default-background-color: transparent;
-  $active-border-color: var(--color-action-rest, #365A85);
-  $indentation-step: 20px;
-  $transition-speed: 0.3s;
-
   flex: 1;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 
   .sidebar-scroll {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
+  }
+}
+
+/* ---- Statblock rows inside a ParAccordion folder ---- */
+.statblock-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.statblock-row__button {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.3rem 1.6rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--par-color-divider, #e2dccd);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.statblock-row__button:hover {
+  background-color: rgba(243, 235, 218, 0.4);
+}
+
+.statblock-row__button:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: -2px;
+}
+
+.statblock-row__name {
+  font-size: 1.6rem;
+  color: var(--par-color-text, #222);
+  line-height: 1.3;
+}
+
+.statblock-row__cr {
+  font-size: 1.3rem;
+  color: var(--par-color-text-secondary, #555);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statblock-row__cr-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--par-color-text-muted, #6b6b6b);
+  margin-right: 0.15rem;
+}
+
+.statblock-row--active .statblock-row__button {
+  background-color: var(--par-color-callout-bg, #f3ebda);
+}
+
+.statblock-row--active .statblock-row__name {
+  color: var(--color-action-hover, #2A4D70);
+  font-weight: 600;
+}
+
+/* Per-folder "create new" affordance — lapis (create register), quieter than
+   a monster row, no CR. */
+.statblock-row__new {
+  display: block;
+  font-size: 1.35rem;
+  color: var(--color-action-rest, #365A85);
+}
+
+.statblock-row__new:hover {
+  color: var(--color-action-hover, #2A4D70);
+}
+
+.statblock-row__new--active {
+  background-color: var(--par-color-callout-bg, #f3ebda);
+  color: var(--color-action-hover, #2A4D70);
+  font-weight: 600;
+}
+
+/* ---- Pinned sidebar footer (ported from the Item Generator) ---- */
+.sidebar-footer {
+  flex-shrink: 0;
+  padding: 12px 16px;
+}
+
+.sidebar-footer__divider {
+  height: 0;
+  border-top: 0.5px solid var(--par-color-border, #e8e2d4);
+  margin: 0.75rem 0;
+}
+
+.sidebar-data-options__toggle {
+  margin: 0 -16px;
+  padding: 12px 16px;
+  width: calc(100% + 32px);
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  color: var(--color-action-rest, #365A85);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-data-options__toggle:hover {
+  background-color: rgba(243, 235, 218, 0.4);
+  color: var(--color-action-hover, #2A4D70);
+}
+
+.sidebar-data-options__toggle:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: -2px;
+}
+
+.sidebar-data-options__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  transition: transform 0.2s ease;
+
+  &.is-expanded {
+    transform: rotate(30deg);
+  }
+}
+
+.sidebar-data-options__panel {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-radius: 8px;
+}
+
+.sidebar-data-options__description {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.sidebar-data-options__action {
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--color-action-secondary-rest, #5A7A9A);
+  border: 0.5px solid var(--color-action-secondary-rest, #5A7A9A);
+  border-radius: 6px;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  margin-bottom: 0.4rem;
+
+  &:last-child {
+    margin-bottom: 0;
   }
 
-  .saved-statblocks {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-
-    li {
-      margin-bottom: 4px;
-
-      &.active {
-        .monster-button {
-          background-color: $active-color;
-          border-left-color: $active-border-color;
-          font-weight: bold;
-        }
-      }
-
-      .monster-button {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 20px;
-        font-size: 1.5rem;
-        text-align: left;
-        background-color: $default-background-color;
-        border: none;
-        color: inherit;
-        cursor: pointer;
-        border-left: 5px solid transparent;
-        transition: background-color $transition-speed, border-left-color $transition-speed;
-
-        &:hover {
-          background-color: $hover-background-color;
-        }
-
-        &:focus {
-          outline: none;
-          border-left-color: $active-border-color;
-        }
-
-        &.active {
-          background-color: $active-color;
-          border-color: $active-border-color;
-          font-weight: bold;
-        }
-      }
-    }
+  &:hover {
+    background-color: var(--color-action-secondary-hover-bg, rgba(90, 122, 154, 0.08));
+    color: var(--color-action-rest, #365A85);
+    border-color: var(--color-action-rest, #365A85);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+    outline-offset: 2px;
+  }
+}
+
+.sidebar-data-options__action--danger {
+  color: var(--par-color-title, #7a1f1f);
+
+  &:hover {
+    background-color: rgba(122, 31, 31, 0.05);
+    color: var(--par-color-title, #7a1f1f);
+    border-color: var(--par-color-title, #7a1f1f);
+  }
+}
+
+/* Delete-all confirmation modal (ParModal provides the surface/chrome) */
+.delete-all-modal__body {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  line-height: 1.6;
+  color: var(--par-color-text, #222);
+  margin: 0 0 0.75rem;
+}
+
+.delete-all-modal__suggestion {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  line-height: 1.6;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  margin: 0;
+}
+
+.delete-all-modal__confirm {
+  padding: 8px 18px;
+  background-color: var(--par-color-title, #7a1f1f);
+  color: var(--par-color-surface, #FBF7F0);
+  border: none;
+  border-radius: var(--par-radius-sm, 3px);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.delete-all-modal__confirm:hover {
+  background-color: var(--par-color-title-deep, #58180d);
 }
 
 /* ========================================
@@ -828,7 +1092,7 @@ async function generateStatblock() {
   margin: 0 auto;
 }
 
-/* ZONE 1: Hero header — brand, headline, value prop */
+/* ZONE 1: Hero header — lapis editorial register (matches the Item Generator) */
 .hero-header {
   text-align: center;
   padding: 2rem 1rem 2.5rem;
@@ -838,60 +1102,88 @@ async function generateStatblock() {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
 
   .brand-name {
-    font-size: 1.4rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.3rem;
     font-weight: 500;
-    color: $cdr-color-text-secondary;
-    letter-spacing: 0.02em;
+    color: var(--color-action-secondary-rest, #5A7A9A); /* muted lapis */
+    letter-spacing: 0.04em;
   }
 
   .version-pill {
     display: inline-block;
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 0.2rem 0.8rem;
-    border-radius: 100px;
-    background-color: #ededed;
-    color: $cdr-color-text-secondary;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.05rem;
+    font-weight: 500;
+    font-style: italic;
+    padding: 0.1rem 0.6rem;
+    border-radius: var(--par-radius-sm, 3px);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    background: transparent;
+    color: var(--par-color-text-muted, #6b6b6b);
+    letter-spacing: 0.02em;
 
     &.premium {
-      background-color: #fdf3e0;
+      border-color: #c8a24a;
+      background: rgba(253, 243, 224, 0.5);
       color: #9c6a0a;
     }
   }
 
-  h1 {
-    font-size: 3.2rem;
-    line-height: 1.15;
+  .page-heading__title {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 3.6rem;
+    font-weight: 600;
+    color: var(--color-action-hover, #2A4D70); /* dark lapis */
     margin: 0 0 0.75rem;
-    color: $cdr-color-text-primary;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
   }
 
-  .value-prop {
+  .page-heading__tagline {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
     font-size: 1.6rem;
-    font-weight: 400;
-    color: $cdr-color-text-secondary;
+    color: var(--par-color-text-secondary, #555);
+    font-style: italic;
     margin: 0;
+    line-height: 1.6;
   }
 
-  .export-formats {
+  .page-heading__formats {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
     font-size: 1.3rem;
-    font-weight: 500;
-    color: #666;
-    margin: 0.75rem 0 0 0;
+    color: var(--par-color-text-muted, #6b6b6b);
+    margin: 0.75rem 0 0;
   }
 }
 
-/* ZONE 2: Form card — elevated, clearly interactive */
+@media (max-width: 600px) {
+  .hero-header .page-heading__title {
+    font-size: 2.8rem;
+    line-height: 1.2;
+  }
+}
+
+/* ZONE 2: Form card — lifted cream surface, lapis "magic UI" register */
 .form-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e2e2;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  padding: 2.5rem 3rem;
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 2.25rem 2.25rem 2rem;
+}
+
+.form-heading {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2A4D70); /* dark lapis */
+  text-align: center;
+  margin: 0 0 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 /* ZONE 3: Footer meta — limit info, upsell */
@@ -972,33 +1264,28 @@ async function generateStatblock() {
    FORM INTERNALS
    ======================================== */
 
-.form-row-top {
+/* Two-up row for Build + CR, collapsing to one column on narrow screens
+   (matches the Item Generator's .form-grid). */
+.form-grid {
   display: grid;
-  grid-template-columns: 4fr 1.5fr .5fr;
-  gap: 2rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
 }
 
-@media screen and (max-width: 1300px) {
-  .form-row-top {
+@media (max-width: 560px) {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.form-row-mid {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
+.monster-form__caster {
+  margin: 0.25rem 0 0.5rem;
 }
 
-.form-row-end {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-}
-
-#monsterType {
-  width: 580px;
+.column-toggle {
+  display: flex;
+  margin: 1.5rem auto;
+  justify-content: center;
 }
 
 .generator-container {
@@ -1015,11 +1302,11 @@ async function generateStatblock() {
 .monster-form {
   display: flex;
   flex-direction: column;
+  gap: 1.25rem;
+}
 
-  button {
-    align-self: flex-start;
-    margin-top: 1.5rem;
-  }
+.monster-form .generate-button {
+  margin-top: 0.75rem;
 }
 
 .intro-container {
@@ -1041,13 +1328,11 @@ async function generateStatblock() {
 
 .folder-mover {
   max-width: 850px;
-  margin-bottom: 2rem;
-  background-color: #ffffff;
-  border: 1px solid #e2e2e2;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  margin: auto;
+  margin: 0 auto 2rem;
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 1.75rem 2rem;
 }
 
 .folder-mover-inner {
@@ -1055,6 +1340,18 @@ async function generateStatblock() {
   align-items: flex-end;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+/* Override ParField's default bottom margin so its control aligns with the
+   Move button, and let the fields grow to share the row. */
+.folder-mover .folder-mover__field {
+  flex: 1 1 220px;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.folder-mover__move {
+  flex-shrink: 0;
 }
 
 .linked-npcs {
