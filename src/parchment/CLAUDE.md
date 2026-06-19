@@ -30,7 +30,7 @@ we iterate on the styling.
 - `ParCardSelect.vue` — native `<select>` with parchment styling. Custom dropdown caret via inline SVG.
 
 **Form-input family** — lapis "magic UI" inputs for *tool input forms* across all generators. No built-in label; pair with `ParField`. Tinted field interiors (`--par-color-field-bg`, callout cream at 50%) read as quieter containers against the cream form surface. This is the default input family; the `ParCard*` set above is the card-context variant. Each root self-marks with `class="parchment"` to opt out of App.vue's global `font-family: var(--font-sans) !important` override (same pattern as `ParCallout`/`ParTabToggle`) — so the serif is honored in any form context without the consumer wrapping. Raw heading/subhead elements a consumer adds around these still need their own `parchment` ancestor.
-- `ParField.vue` — field wrapper: lapis uppercase label + optional `— optional` marker + editorial `hint` (prop or `#hint` slot). Renders a `<label>` around the slotted control for implicit association.
+- `ParField.vue` — field wrapper: lapis uppercase label + optional `— optional` marker (or a lapis `*` `required` marker; optional wins if both set) + editorial `hint` (prop or `#hint` slot). Renders a `<label>` around the slotted control for implicit association.
 - `ParInput.vue` — single-line form text input (also handles `type="number"`).
 - `ParTextarea.vue` — multi-line form input. Serif body; `min-height` fallback when `rows` is omitted.
 - `ParSelect.vue` — native `<select>` with lapis caret. Options as strings/numbers or `{value, label}` pairs.

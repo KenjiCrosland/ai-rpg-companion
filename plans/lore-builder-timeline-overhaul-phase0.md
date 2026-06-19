@@ -126,4 +126,19 @@ Gate was green (Phase 0 §6: no external `eventYear` readers). `yearsAgo` is now
 - **Tests:** [`lore-timeline.spec.js`](../src/tools/item-generator/utils/lore-timeline.spec.js) — 21 tests across the two proposed categories (A: derivation & cascade; B: insertion constraints), behavior/return-value style per the test preference. Full suite **2441/96 green**.
 - **Untracked** (awaiting user's own commit): `lore-timeline.mjs`, `lore-timeline.spec.js`, and the `LoreBuilderTab.vue` data-layer edits.
 
-**Next session starts at Phase 3** (timeline restructure): replace the filmstrip with the vertical spine consuming Phase 1 primitives + Phase 2 clean data. Filmstrip/`cdr-*`/`viewMode` remnants are all still present — that's the churn surface. Carry over `getAvailablePeriodsForPosition`, generation/regeneration card logic, and the export section unchanged; do NOT move the integration seams (Phase 0 §7).
+---
+
+## Phase 3 — done (committed `bb58beb "Timeline overhaul"`)
+
+Filmstrip → vertical spine. The horizontal `filmstrip` / scroll-arrows / `viewMode` toggle / Cedar `cdr-input`/`cdr-select`/`cdr-card` are all gone, replaced by the editorial spine: header (item name small-caps + derived subtitle + world-year input), left year-rail marginalia, a continuous burgundy rule, collapsed nodes (title + teaser, expand-on-select, one open at a time), time-gap rows (`≈ N years pass` + lapis `+ insert`), summon cards, and the "distilled into" terminus that converges into the Historical Summary. Integration seams untouched (AI calls, quota, prompt builders, `emit('updated-item')`, period constraints, export). All colors via `--par-*` tokens.
+
+## Phase 4 — done (2026-06-19)
+
+- **Confirm modal:** native `confirm()` in Update Item Lore replaced with `ParConfirm` (`destructive`, "Replace lore" / "Keep current lore"). `updateItemLore` split into `requestUpdateItemLore` (opens) + `confirmUpdateItemLore` (commits on `@confirm`); `showLoreConfirm` ref.
+- **Year-gating:** "+ Create Historical Timeline" disabled via `canStartTimeline` computed (`currentYear` set && no `yearError`) with an inline gate hint; the toast-on-click guards dropped from `startTimeline` and `startGeneratingEvent`.
+- **Unify:** the parallel first-event path is gone — `firstEventType`/`firstTimePeriod`/`firstAdditionalContext` refs and `generateFirstEvent`/`regenerateFirstEvent`/`confirmFirstEvent` deleted. Everything runs through the position-aware `generateEvent`/`confirmAddEvent`/`regenerateEvent` driven by `generatingPosition`. The triplicated summon markup is now one local component, [`LoreSummonCard.vue`](../src/tools/item-generator/components/LoreSummonCard.vue), placed at the mid-insert slot and the resting end/first slot (end-block guard relaxed to `generatingPosition === timelineEvents.length`, which also covers the empty-but-started case). Kept local per the promotion scope — not promoted to parchment.
+- **"Add" → "Keep":** the commit button in the preview now reads "Keep".
+- **Shared helper:** `formatMarkdown` extracted to [`utils/format-markdown.mjs`](../src/tools/item-generator/utils/format-markdown.mjs) (used by both the tab and the summon card).
+- Full suite **2441/96 green**; `vite build` clean.
+
+**The overhaul is complete.** All changes are uncommitted (awaiting the user's own commit). New files: `LoreSummonCard.vue`, `utils/format-markdown.mjs` (plus Phase 2's `utils/lore-timeline.mjs` + spec). This file can be deleted once the work is committed.

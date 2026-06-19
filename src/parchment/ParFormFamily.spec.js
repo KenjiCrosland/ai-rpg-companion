@@ -16,6 +16,22 @@ describe('ParField', () => {
     expect(wrapper.find('.par-field__optional').text()).toContain('optional');
   });
 
+  it('renders the required marker when required, and omits it by default', () => {
+    const plain = mount(ParField, { props: { label: 'Event type' } });
+    expect(plain.find('.par-field__required').exists()).toBe(false);
+
+    const wrapper = mount(ParField, { props: { label: 'Event type', required: true } });
+    expect(wrapper.find('.par-field__required').exists()).toBe(true);
+  });
+
+  it('lets optional win over required so a field is never marked both', () => {
+    const wrapper = mount(ParField, {
+      props: { label: 'Context', optional: true, required: true },
+    });
+    expect(wrapper.find('.par-field__optional').exists()).toBe(true);
+    expect(wrapper.find('.par-field__required').exists()).toBe(false);
+  });
+
   it('renders hint from the prop and lets the #hint slot override it', () => {
     const fromProp = mount(ParField, { props: { label: 'Origin', hint: 'Shapes the theme' } });
     expect(fromProp.find('.par-field__hint').text()).toBe('Shapes the theme');

@@ -4,7 +4,8 @@
        elements). Covers the slotted control too, as its descendant. -->
   <label class="par-field parchment">
     <span class="par-field__label">
-      {{ label }}<span v-if="optional" class="par-field__optional"> — optional</span>
+      {{ label }}<span v-if="optional" class="par-field__optional"> — optional</span><span
+        v-else-if="required" class="par-field__required" aria-hidden="true">*</span>
     </span>
     <slot />
     <span v-if="hint || $slots.hint" class="par-field__hint">
@@ -32,6 +33,9 @@ defineProps({
   label: { type: String, required: true },
   // Appends a small italic gray "— optional" after the label.
   optional: { type: Boolean, default: false },
+  // Appends a lapis "*" after the label to mark the field as required.
+  // Ignored when `optional` is set (a field can't be both).
+  required: { type: Boolean, default: false },
   // Helper text below the control. Prefer the prop; use the #hint slot
   // for rich content.
   hint: { type: String, default: '' },
@@ -61,6 +65,12 @@ defineProps({
   color: var(--par-color-text-muted, #6b6b6b);
   font-style: italic;
   font-weight: 400;
+}
+
+.par-field__required {
+  margin-left: 0.25em;
+  color: var(--color-action-rest, #365A85); /* lapis — matches the label */
+  font-weight: 600;
 }
 
 .par-field__hint {

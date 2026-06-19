@@ -25,114 +25,40 @@
     <!-- ── Empty state: no timeline yet ──────────────────────────────────── -->
     <div v-if="!hasStarted && timelineEvents.length === 0" class="lore-empty">
       <p class="lore-empty__lede">This item has no recorded history.</p>
-      <ParCardButton variant="create" @click="startTimeline">
+      <ParCardButton variant="create" :disabled="!canStartTimeline" @click="startTimeline">
         + Create Historical Timeline
       </ParCardButton>
+      <p v-if="!canStartTimeline" class="lore-empty__gate">
+        Set your world's current year above to begin.
+      </p>
     </div>
 
     <!-- ── The spine ─────────────────────────────────────────────────────── -->
     <div v-else class="spine">
-      <!-- First event: empty timeline that has been started -->
-      <template v-if="timelineEvents.length === 0">
-        <div class="spine-row spine-row--summon">
-          <div class="spine-year"></div>
-          <div class="spine-marker"><span class="spine-dot spine-dot--pending"></span></div>
-          <div class="spine-body">
-            <div class="summon-card">
-              <h3 class="summon-card__heading">Summon the first event</h3>
-
-              <div v-if="loadingEvents && !pendingEvent" class="lore-skeleton">
-                <span v-for="n in 3" :key="n" class="lore-skeleton__line"></span>
-              </div>
-
-              <template v-else-if="!pendingEvent">
-                <div class="summon-card__fields">
-                  <ParField label="Event type">
-                    <ParSelect v-model="firstEventType" :options="eventTypeOptions" placeholder="Choose type" />
-                  </ParField>
-                  <ParField label="Time period">
-                    <ParSelect v-model="firstTimePeriod" :options="getAvailablePeriodsForPosition(0)"
-                      placeholder="Choose when" />
-                  </ParField>
-                </div>
-                <ParField label="Context" optional>
-                  <ParTextarea v-model="firstAdditionalContext" :rows="2"
-                    placeholder="Anything to weave in (optional)" />
-                </ParField>
-                <div class="summon-card__actions">
-                  <ParCardButton variant="create" :disabled="!firstEventType || !firstTimePeriod || loadingEvents"
-                    @click="generateFirstEvent">
-                    {{ loadingEvents ? 'Summoning…' : 'Generate' }}
-                  </ParCardButton>
-                </div>
-              </template>
-
-              <div v-else class="summon-preview">
-                <h4 class="summon-preview__title">{{ pendingEvent.title }}</h4>
-                <p class="summon-preview__year">{{ pendingEvent.eventYear }}</p>
-                <p class="summon-preview__text" v-html="formatMarkdown(pendingEvent.description)"></p>
-                <div class="summon-card__actions">
-                  <ParCardButton variant="primary" @click="confirmFirstEvent">Add</ParCardButton>
-                  <ParCardButton variant="affirmative" @click="regenerateFirstEvent">Regenerate</ParCardButton>
-                </div>
-              </div>
-
-              <p v-if="!premium && !pendingEvent" class="summon-card__quota">
-                {{ remainingGenerations }} lore generation{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
-              </p>
-            </div>
-          </div>
-        </div>
-      </template>
-
       <!-- Existing events, oldest → newest -->
       <template v-for="(event, index) in sortedTimelineEvents" :key="`event-${index}`">
-        <!-- Gap / insert slot BEFORE this node (chronological position = index) -->
+        <!-- Mid-spine insert slot BEFORE this node (chronological position = index) -->
         <div v-if="generatingPosition === index" class="spine-row spine-row--summon">
           <div class="spine-year"></div>
           <div class="spine-marker"><span class="spine-dot spine-dot--pending"></span></div>
           <div class="spine-body">
-            <div class="summon-card">
-              <h3 class="summon-card__heading">Summon a new event</h3>
-
-              <div v-if="loadingEvents && !pendingEvent" class="lore-skeleton">
-                <span v-for="n in 3" :key="n" class="lore-skeleton__line"></span>
-              </div>
-
-              <template v-else-if="!pendingEvent">
-                <div class="summon-card__fields">
-                  <ParField label="Event type">
-                    <ParSelect v-model="eventType" :options="eventTypeOptions" placeholder="Choose type" />
-                  </ParField>
-                  <ParField label="Time period">
-                    <ParSelect v-model="timePeriod" :options="getAvailablePeriodsForPosition(index)"
-                      placeholder="Choose when" />
-                  </ParField>
-                </div>
-                <ParField label="Context" optional>
-                  <ParTextarea v-model="additionalContext" :rows="2"
-                    placeholder="Anything to weave in (optional)" />
-                </ParField>
-                <div class="summon-card__actions">
-                  <ParCardButton variant="create" :disabled="!eventType || !timePeriod || loadingEvents"
-                    @click="generateEvent">
-                    {{ loadingEvents ? 'Summoning…' : 'Generate' }}
-                  </ParCardButton>
-                  <ParCardButton variant="muted" @click="cancelGeneration">Cancel</ParCardButton>
-                </div>
-              </template>
-
-              <div v-else class="summon-preview">
-                <h4 class="summon-preview__title">{{ pendingEvent.title }}</h4>
-                <p class="summon-preview__year">{{ pendingEvent.eventYear }}</p>
-                <p class="summon-preview__text" v-html="formatMarkdown(pendingEvent.description)"></p>
-                <div class="summon-card__actions">
-                  <ParCardButton variant="primary" @click="confirmAddEvent">Add</ParCardButton>
-                  <ParCardButton variant="affirmative" @click="regenerateEvent">Regenerate</ParCardButton>
-                  <ParCardButton variant="muted" @click="cancelGeneration">Cancel</ParCardButton>
-                </div>
-              </div>
-            </div>
+            <LoreSummonCard
+              heading="Summon a new event"
+              v-model:event-type="eventType"
+              v-model:time-period="timePeriod"
+              v-model:additional-context="additionalContext"
+              :event-type-options="eventTypeOptions"
+              :period-options="getAvailablePeriodsForPosition(index)"
+              :loading="loadingEvents"
+              :pending-event="pendingEvent"
+              :premium="premium"
+              :remaining="remainingGenerations"
+              :can-cancel="true"
+              @generate="generateEvent"
+              @keep="confirmAddEvent"
+              @regenerate="regenerateEvent"
+              @cancel="cancelGeneration"
+            />
           </div>
         </div>
 
@@ -197,58 +123,49 @@
         </div>
       </template>
 
-      <!-- End summon card: appends after the last node (chronological position = length) -->
+      <!-- Resting summon slot: the first event (empty timeline) or an append
+           after the last node — both are chronological position = length. The
+           dashed marker stays visible so the spine reads as extending into
+           possibility; with events present the form collapses to a quiet
+           lapis affordance and expands inline on click, keeping the reading
+           flow (events → summary) uninterrupted. -->
       <div
-        v-if="timelineEvents.length > 0 && generatingPosition === timelineEvents.length"
+        v-if="generatingPosition === timelineEvents.length"
         class="spine-row spine-row--summon spine-row--end"
+        :class="{ 'spine-row--collapsed': isSummonCollapsed }"
       >
         <div class="spine-year"></div>
         <div class="spine-marker"><span class="spine-dot spine-dot--pending"></span></div>
         <div class="spine-body">
-          <div class="summon-card">
-            <h3 class="summon-card__heading">Summon a new event</h3>
-
-            <div v-if="loadingEvents && !pendingEvent" class="lore-skeleton">
-              <span v-for="n in 3" :key="n" class="lore-skeleton__line"></span>
-            </div>
-
-            <template v-else-if="!pendingEvent">
-              <div class="summon-card__fields">
-                <ParField label="Event type">
-                  <ParSelect v-model="eventType" :options="eventTypeOptions" placeholder="Choose type" />
-                </ParField>
-                <ParField label="Time period">
-                  <ParSelect v-model="timePeriod" :options="getAvailablePeriodsForPosition(timelineEvents.length)"
-                    placeholder="Choose when" />
-                </ParField>
-              </div>
-              <ParField label="Context" optional>
-                <ParTextarea v-model="additionalContext" :rows="2"
-                  placeholder="Anything to weave in (optional)" />
-              </ParField>
-              <div class="summon-card__actions">
-                <ParCardButton variant="create" :disabled="!eventType || !timePeriod || loadingEvents"
-                  @click="generateEvent">
-                  {{ loadingEvents ? 'Summoning…' : 'Generate' }}
-                </ParCardButton>
-              </div>
-            </template>
-
-            <div v-else class="summon-preview">
-              <h4 class="summon-preview__title">{{ pendingEvent.title }}</h4>
-              <p class="summon-preview__year">{{ pendingEvent.eventYear }}</p>
-              <p class="summon-preview__text" v-html="formatMarkdown(pendingEvent.description)"></p>
-              <div class="summon-card__actions">
-                <ParCardButton variant="primary" @click="confirmAddEvent">Add</ParCardButton>
-                <ParCardButton variant="affirmative" @click="regenerateEvent">Regenerate</ParCardButton>
-                <ParCardButton variant="muted" @click="cancelGeneration">Cancel</ParCardButton>
-              </div>
-            </div>
-
-            <p v-if="!premium && !pendingEvent" class="summon-card__quota">
-              {{ remainingGenerations }} lore generation{{ remainingGenerations !== 1 ? 's' : '' }} remaining today
-            </p>
+          <!-- Collapsed: events exist, form not open, nothing pending -->
+          <div
+            v-if="isSummonCollapsed"
+            class="summon-trigger"
+          >
+            <ParCardButton variant="create" size="small" @click="summonFormExpanded = true">
+              + Add event
+            </ParCardButton>
           </div>
+
+          <!-- Expanded: full form (always shown for the first event) -->
+          <LoreSummonCard
+            v-else
+            :heading="timelineEvents.length === 0 ? 'Summon the first event' : 'Summon a new event'"
+            v-model:event-type="eventType"
+            v-model:time-period="timePeriod"
+            v-model:additional-context="additionalContext"
+            :event-type-options="eventTypeOptions"
+            :period-options="getAvailablePeriodsForPosition(timelineEvents.length)"
+            :loading="loadingEvents"
+            :pending-event="pendingEvent"
+            :premium="premium"
+            :remaining="remainingGenerations"
+            :can-cancel="timelineEvents.length > 0"
+            @generate="generateEvent"
+            @keep="confirmAddEvent"
+            @regenerate="regenerateEvent"
+            @cancel="cancelGeneration"
+          />
         </div>
       </div>
     </div>
@@ -283,7 +200,8 @@
             @click="generateSummary">
             {{ historicalSummary ? 'Regenerate' : 'Generate' }}
           </ParCardButton>
-          <ParCardButton v-if="historicalSummary && itemLegacy" variant="primary" @click="updateItemLore"
+          <ParCardButton v-if="historicalSummary && itemLegacy" variant="affirmative" class="summary-card__commit"
+            @click="requestUpdateItemLore"
             title="Replace the item's current lore with the generated historical summary">
             Update Item Lore
           </ParCardButton>
@@ -312,6 +230,18 @@
         paste your content on the left side, and watch it transform into a beautiful D&D-styled document!
       </template>
     </ItemExportsSection>
+
+    <!-- Confirm before overwriting the item's hand-written lore. -->
+    <ParConfirm
+      :opened="showLoreConfirm"
+      title="Replace item lore?"
+      message="This replaces the item's current lore with the generated historical summary and legacy. The original lore is lost unless you've saved it elsewhere."
+      confirm-label="Replace lore"
+      cancel-label="Keep current lore"
+      destructive
+      @confirm="confirmUpdateItemLore"
+      @cancel="showLoreConfirm = false"
+    />
   </div>
 </template>
 
@@ -320,14 +250,14 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { CdrLink } from '@rei/cedar';
 import {
   ParCardButton,
-  ParField,
-  ParSelect,
-  ParTextarea,
   ParCardInput,
   ParCardTextarea,
+  ParConfirm,
 } from '@/parchment';
 import { logger } from '@/util/logger.mjs';
 import ItemExportsSection from './ItemExportsSection.vue';
+import LoreSummonCard from './LoreSummonCard.vue';
+import { formatMarkdown } from '../utils/format-markdown.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
 import { readQuota, writeQuota, remainingFromQuota, ensureQuotaSeeded } from '@/util/quota-storage.mjs';
@@ -368,9 +298,6 @@ const yearErrorMessage = ref('');
 const eventType = ref('');
 const timePeriod = ref('');
 const additionalContext = ref('');
-const firstEventType = ref('Creation/Forging'); // Default for first event
-const firstTimePeriod = ref('');
-const firstAdditionalContext = ref('');
 const timelineEvents = ref(props.item.timelineEvents || []);
 const historicalSummary = ref(props.item.historicalSummary || '');
 const itemLegacy = ref(props.item.itemLegacy || '');
@@ -387,6 +314,13 @@ const remainingGenerations = ref(0); // Track remaining generations for non-prem
 const editingEventIndex = ref(null); // Track which event is being edited (display row)
 const editingEvent = ref({}); // Store the event being edited
 const expandedIndex = ref(null); // Which node is expanded (one open at a time)
+const showLoreConfirm = ref(false); // "Replace item lore?" confirm dialog
+// End-of-spine summon form: expanded by default only when the timeline is
+// empty (the form is the entry point). With events present it rests collapsed
+// to a lapis affordance and the user opens it; it auto-collapses after a keep
+// or cancel. No watcher — the template derives the empty-state form from
+// `timelineEvents.length`, so this only governs the populated case.
+const summonFormExpanded = ref(false);
 
 // Event type options
 const eventTypeOptions = [
@@ -449,28 +383,16 @@ const teaser = (text) => {
   return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
 };
 
-// Format markdown in text
-const formatMarkdown = (text) => {
-  if (!text) return text;
+// The world-year gates timeline creation: derived dates are meaningless
+// without it, so the "Create Timeline" affordance stays disabled until a
+// valid single-number year is set (gate, not a toast-on-click).
+const canStartTimeline = computed(() => !!currentYear.value && !yearError.value);
 
-  // Escape HTML to prevent XSS
-  const escapeHtml = (str) => {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  };
-
-  // Escape any existing HTML first
-  text = escapeHtml(text);
-
-  // Then apply markdown formatting (now safe because we escaped first)
-  // Bold first (double asterisks)
-  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Then italic (single asterisks)
-  text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-  return text;
-};
+// The end-of-spine summon rests as a collapsed "+ Add event" affordance when
+// events already exist, the form isn't open, and nothing is mid-preview.
+const isSummonCollapsed = computed(
+  () => timelineEvents.value.length > 0 && !summonFormExpanded.value && !pendingEvent.value,
+);
 
 // Get available periods for a specific position (delegates to the pure
 // helper; sorted events carry the canonical yearsAgo the constraint reads).
@@ -571,111 +493,26 @@ const updateRemainingGenerations = async () => {
   remainingGenerations.value = remainingFromQuota(quota, MAX_GENERATIONS, RESET_WINDOW_MS);
 };
 
-// Start the timeline
+// Start the timeline. Gated by canStartTimeline (the button is disabled
+// until the world-year is set), so no toast-on-click here. Seeds the first
+// event type with the natural opener; the summon card rests at position 0.
 const startTimeline = () => {
-  if (!currentYear.value) {
-    toast.warning('Please set the current year in your world before creating a timeline.');
-    return;
-  }
+  if (!canStartTimeline.value) return;
 
-  // No premium check here - allow everyone to start a timeline
   hasStarted.value = true;
-  generatingPosition.value = 0; // First-event summon card
+  eventType.value = 'Creation/Forging';
+  timePeriod.value = '';
+  additionalContext.value = '';
+  generatingPosition.value = 0;
 };
 
 // Relocate the summon card to a mid-spine gap at `position`.
 const startGeneratingEvent = (position) => {
-  if (!currentYear.value) {
-    toast.warning('Please set the current year in your world before adding events.');
-    return;
-  }
-
   generatingPosition.value = position;
   pendingEvent.value = null;
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
-};
-
-// Generate first event
-const generateFirstEvent = async () => {
-  if (!firstEventType.value || !firstTimePeriod.value) return;
-
-  // Check generation limit for non-premium users
-  const canGenerate = await canGenerateEvent();
-  if (!canGenerate) return;
-
-  loadingEvents.value = true;
-  // Only clear pending event after we know we can generate
-  pendingEvent.value = null;
-
-  const yearsAgo = yearsAgoFromSelection(firstTimePeriod.value, sortedTimelineEvents.value, 0);
-  const eventYear = deriveEventYear(currentYear.value, yearsAgo);
-
-  try {
-    const prompt = generateEventPrompt({
-      itemName: props.item.name,
-      itemType: props.item.item_type,
-      rarity: props.item.rarity,
-      features: props.item.features,
-      physicalDescription: props.item.physical_description,
-      itemLore: props.item.lore,
-      eventBefore: null,
-      eventAfter: null,
-      eventType: firstEventType.value,
-      eventYear,
-      yearsAgo,
-      additionalContext: firstAdditionalContext.value,
-      recentEvents: []
-    });
-
-    const response = await generateGptResponse(prompt, validateEventJson, 3);
-    const data = JSON.parse(response);
-
-    pendingEvent.value = {
-      title: data.title,
-      description: data.description,
-      timePeriod: firstTimePeriod.value,
-      eventYear: eventYear,
-      yearsAgo: yearsAgo
-    };
-
-  } catch (error) {
-    logger.error('Error generating event:', error);
-    toast.error('Failed to generate event. Please try again.');
-  } finally {
-    loadingEvents.value = false;
-  }
-};
-
-// Regenerate first event
-const regenerateFirstEvent = () => {
-  // Don't clear pendingEvent - keep it visible while regenerating
-  generateFirstEvent();
-};
-
-// Confirm first event
-const confirmFirstEvent = () => {
-  if (!pendingEvent.value) return;
-
-  // Persist only the canonical shape — eventYear is derived at render, never
-  // stored (pendingEvent carries it for the transient preview only).
-  const e = pendingEvent.value;
-  timelineEvents.value.push({
-    title: e.title,
-    description: e.description,
-    timePeriod: e.timePeriod,
-    yearsAgo: e.yearsAgo,
-  });
-
-  // Clear state; rest the summon card at the spine's end.
-  pendingEvent.value = null;
-  firstEventType.value = 'Creation/Forging';
-  firstTimePeriod.value = '';
-  firstAdditionalContext.value = '';
-  generatingPosition.value = timelineEvents.value.length;
-
-  updateItem();
 };
 
 // Generate event
@@ -758,23 +595,25 @@ const confirmAddEvent = () => {
     yearsAgo: e.yearsAgo,
   });
 
-  // Clear generation state; rest the summon card at the spine's end.
+  // Clear generation state; rest the summon card collapsed at the spine's end.
   pendingEvent.value = null;
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
   generatingPosition.value = timelineEvents.value.length;
+  summonFormExpanded.value = false;
 
   updateItem();
 };
 
-// Cancel generation — return the summon card to the spine's end.
+// Cancel generation — collapse the summon form back to the spine's end.
 const cancelGeneration = () => {
   pendingEvent.value = null;
   eventType.value = '';
   timePeriod.value = '';
   additionalContext.value = '';
   generatingPosition.value = timelineEvents.value.length;
+  summonFormExpanded.value = false;
 };
 
 // Start editing an event
@@ -892,18 +731,18 @@ const updateItem = () => {
   emit('updated-item', updatedItem);
 };
 
-// Update item lore with historical summary
-const updateItemLore = () => {
+// Update item lore with the historical summary. This overwrites hand-written
+// lore, so it's gated behind the parchment confirm dialog rather than the
+// native confirm().
+const requestUpdateItemLore = () => {
+  showLoreConfirm.value = true;
+};
+
+const confirmUpdateItemLore = () => {
+  showLoreConfirm.value = false;
+
   // Combine the historical summary and legacy into a comprehensive lore text
   const newLore = `${historicalSummary.value}${itemLegacy.value ? `\n\n${itemLegacy.value}` : ''}`;
-
-  // Confirm with user since this will replace existing lore
-  const confirmed = confirm(
-    'This will replace the item\'s current lore with the generated historical summary and legacy. ' +
-    'The original lore will be lost unless you\'ve saved it elsewhere. Continue?'
-  );
-
-  if (!confirmed) return;
 
   // Update the item with the new lore
   const updatedItem = {
@@ -917,7 +756,6 @@ const updateItemLore = () => {
 
   emit('updated-item', updatedItem);
 
-  // Show success message
   toast.success('Item lore has been updated with the historical summary!');
 };
 
@@ -1007,6 +845,7 @@ const loadTimelineData = () => {
   additionalContext.value = '';
   expandedIndex.value = null;
   editingEventIndex.value = null;
+  summonFormExpanded.value = false;
 };
 
 // Watch for prop changes (when switching items)
@@ -1032,10 +871,12 @@ watch(currentYear, () => {
    ────────────────────────────────────────────────────────────────────────── */
 
 /* Shared rail geometry so every row's year column, marker dot, and spine
-   line align to the same vertical. */
-$rail-year: 5.5rem;   /* year-rail (marginalia) column width */
+   line align to the same vertical. The year column is wide enough to hold a
+   short reckoning ("815 DR") on one line; longer ones ("38 Before the
+   Cataclysm") wrap within it rather than overflowing onto the title. */
+$rail-year: 7.5rem;   /* year-rail (marginalia) column width */
 $rail-marker: 2rem;   /* marker column width */
-$line-x: 6.5rem;      /* $rail-year + half of $rail-marker → dot/line centre */
+$line-x: 8.5rem;      /* $rail-year + half of $rail-marker → dot/line centre */
 
 .lore-builder {
   padding: 2.5rem 2rem 1rem;
@@ -1139,6 +980,13 @@ $line-x: 6.5rem;      /* $rail-year + half of $rail-marker → dot/line centre *
   color: var(--par-color-text-secondary, #555);
 }
 
+.lore-empty__gate {
+  margin: 1.25rem 0 0;
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
 /* ── Spine ──────────────────────────────────────────────────────────────── */
 .spine {
   position: relative;
@@ -1175,8 +1023,11 @@ $line-x: 6.5rem;      /* $rail-year + half of $rail-marker → dot/line centre *
   font-size: 1.35rem;
   font-variant-caps: small-caps;
   letter-spacing: 0.04em;
+  line-height: 1.25;
   color: var(--par-color-title, #7a1f1f);
-  white-space: nowrap;
+  /* Long reckonings wrap within the rail instead of bleeding onto the title;
+     break a single over-long word as a last resort so nothing overflows. */
+  overflow-wrap: break-word;
 }
 
 .spine-marker {
@@ -1314,76 +1165,26 @@ $line-x: 6.5rem;      /* $rail-year + half of $rail-marker → dot/line centre *
 }
 
 /* ── Summon card ────────────────────────────────────────────────────────── */
+/* The card itself lives in LoreSummonCard.vue; here we only own the spine
+   row that wraps it (year-rail / marker / body grid) and the collapsed
+   "+ Add event" affordance that rests in its place when events exist. */
 .spine-row--summon {
   padding-bottom: 1.6rem;
 }
 
-.summon-card {
-  padding: 1.6rem 1.8rem;
-  background: var(--par-color-callout-bg-light, #F8F2E3);
-  border: 1px solid var(--par-color-border, #e8e2d4);
-  border-radius: var(--par-radius-md, 4px);
+/* Collapsed affordance: give the resting row extra breathing room below the
+   last event so "+ Add event" sits a little further down the spine, and drop
+   the pending dot to the button's vertical centre (the affordance is shorter
+   than an event node, so the default top-aligned dot reads as misaligned). */
+.spine-row--collapsed {
+  padding-top: 0.9rem;
 }
 
-.summon-card__heading {
-  margin: 0 0 1.2rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  font-variant-caps: small-caps;
-  letter-spacing: 0.08em;
-  color: var(--par-color-title, #7a1f1f);
+.spine-row--collapsed .spine-dot {
+  margin-top: 1rem;
 }
 
-.summon-card__fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.2rem;
-}
-
-@media (max-width: 560px) {
-  .summon-card__fields { grid-template-columns: 1fr; }
-}
-
-.summon-card__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  margin-top: 0.4rem;
-}
-
-.summon-card__quota {
-  margin: 1rem 0 0;
-  font-size: 1.25rem;
-  font-style: italic;
-  color: var(--par-color-text-muted, #6b6b6b);
-}
-
-/* Pending-event preview inside the summon card. */
-.summon-preview__title {
-  margin: 0 0 0.2rem;
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--par-color-title, #7a1f1f);
-}
-
-.summon-preview__year {
-  margin: 0 0 0.8rem;
-  font-size: 1.35rem;
-  font-variant-caps: small-caps;
-  letter-spacing: 0.04em;
-  color: var(--par-color-text-secondary, #555);
-}
-
-.summon-preview__text {
-  margin: 0 0 1.2rem;
-  font-size: 1.55rem;
-  line-height: 1.65;
-  color: var(--par-color-text, #222);
-}
-
-.summon-preview__text :deep(strong) { font-weight: 600; }
-
-/* ── Skeleton (generating state) ────────────────────────────────────────── */
+/* ── Skeleton (generating state) — summary terminus loading ─────────────── */
 .lore-skeleton {
   display: flex;
   flex-direction: column;
@@ -1491,5 +1292,17 @@ $line-x: 6.5rem;      /* $rail-year + half of $rail-marker → dot/line centre *
   display: flex;
   flex-wrap: wrap;
   gap: 0.7rem;
+}
+
+/* Update Item Lore overwrites hand-written lore — a real commitment — but it
+   sits beneath the summary it distils. A burgundy ghost (thin burgundy
+   outline, semibold) keeps the summary prose primary and lets the action read
+   as a considered commitment rather than a filled button competing with the
+   reading flow. Overrides the affirmative variant's tan rest-border + 400
+   weight; its transparent ground and burgundy hover tint carry through. */
+.summary-card__actions :deep(.summary-card__commit) {
+  border-width: 0.5px;
+  border-color: var(--par-color-title, #7a1f1f);
+  font-weight: 600;
 }
 </style>
