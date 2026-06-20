@@ -4,22 +4,25 @@
     title="Backup / Restore library"
     @cancel="closeModal"
   >
-    <!-- Free tier upsell -->
-    <div v-if="!premium">
+    <!-- Free tier upsell — mirrors the PatreonCallout: serif body + luminous
+         Support-on-Patreon CTA. -->
+    <div v-if="!premium" class="dm-upsell">
       <p class="dm-text">
-        Downloading and uploading app data is reserved for the premium version of this app.
-        Please access the premium version here:
+        Backing up and restoring your library to a file is a patron perk. Become a $5 patron to save your data to a
+        file, move it between devices, and unlock unlimited generation across every tool.
       </p>
 
-      <a
-        v-if="matchedApp?.premiumLink"
-        class="dm-link"
-        :href="matchedApp.premiumLink"
-        target="_blank"
-        rel="noopener"
-      >
-        {{ matchedApp?.appName }} - Premium Version
-      </a>
+      <div class="dm-upsell__actions">
+        <ParButton variant="luminous" tag="a" :href="patreonTiersUrl" target="_blank" rel="noopener">
+          <template #icon-left>
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <circle cx="9" cy="7" r="4" fill="currentColor" />
+              <rect x="2" y="3" width="2" height="8" fill="currentColor" />
+            </svg>
+          </template>
+          Support on Patreon
+        </ParButton>
+      </div>
     </div>
 
     <!-- Premium: single bundled download/upload -->
@@ -61,6 +64,7 @@
 import { ParButton, ParModal } from "@/parchment";
 import { ref, computed } from 'vue';
 import { logger } from '@/util/logger.mjs';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { QUOTA_FIELDS, seedFreshQuotas } from '@/util/quota-storage.mjs';
 import { runPendingMigrations } from '@/util/migration-runner.mjs';
 
@@ -105,23 +109,6 @@ const EXPORT_KEYS = [
   'tool-references',
   'rpgTimelineState',
 ];
-
-/**
- * Per-tool display info. Used only for the free-tier upsell link
- * (matched against `currentApp`) — single-bundle exports don't need
- * the per-tool checkbox UI anymore.
- */
-const APP_INFO = {
-  monsters:         { appName: 'Statblock Generator',     premiumLink: 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/' },
-  savedItems:       { appName: 'Magic Item Generator',    premiumLink: 'https://cros.land/dnd-5e-magic-item-generator-premium-version/' },
-  npcGeneratorNPCs: { appName: 'NPC Generator',           premiumLink: 'https://cros.land/npc-generator-premium-version/' },
-  rpgTimelineState: { appName: 'Timeline Generator',      premiumLink: null },
-  gameSettings:     { appName: 'Worldbuilding Dashboard', premiumLink: 'https://cros.land/rpg-setting-generator-and-world-building-tool-premium-version/' },
-  dungeons:         { appName: 'Dungeon Generator',       premiumLink: 'https://cros.land/dungeon-generator-2-0-premium-version/' },
-  encounters:       { appName: 'Encounter Generator',     premiumLink: 'https://cros.land/dnd-5e-encounter-generator/' },
-};
-
-const matchedApp = computed(() => APP_INFO[props.currentApp] || null);
 
 function safeParse(raw) {
   if (!raw) return null;
@@ -358,21 +345,19 @@ function handleFileChange(event) {
 <style scoped>
 .dm-text {
   margin: 0 0 1rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 16px;
   color: var(--par-color-text, #222);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-/* Lapis chrome link — reads as a chrome action against the cream
-   modal ground, matching the modal's lapis accents. */
-.dm-link {
-  color: var(--color-action-rest, #365A85);
-  font-weight: 600;
-  text-decoration: underline;
-}
-
-.dm-link:hover,
-.dm-link:focus-visible {
-  color: var(--color-action-hover, #2A4D70);
+/* Upsell CTA row — mirrors the PatreonCallout's luminous Support button. */
+.dm-upsell__actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
 }
 
 /* Inner callout in the pale-lapis chrome register so the summary
@@ -380,7 +365,8 @@ function handleFileChange(event) {
    convention), not as a second parchment card. */
 .summary {
   margin: 0.75rem 0 1rem;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   background: var(--par-color-readaloud-bg-deep, #C5D4E5);
   border: 1px solid var(--par-color-readaloud-rule, #7A8FAA);
   border-radius: 4px;
@@ -411,6 +397,7 @@ function handleFileChange(event) {
 
 .dm-empty {
   margin: 0.75rem 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   color: var(--par-color-text-secondary, #555);
 }
 </style>

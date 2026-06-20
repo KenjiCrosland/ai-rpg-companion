@@ -1,17 +1,18 @@
 <template>
-  <div class="statblock-fuzzy-search">
-    <div class="input-wrapper" :class="{ 'statblock-field-highlight': shouldHighlight }" ref="inputWrapperRef">
-      <!-- Using CdrInput for consistency with the main form field -->
-      <cdr-input :id="inputId" v-model="displayValue" :label="label" :optional="optional" background="secondary" :placeholder="placeholder"
-        autocomplete="off" :readonly="!!selectedStatblock" @focus="handleFocus" @blur="handleBlur" @input="handleInput">
-      </cdr-input>
+  <div class="statblock-fuzzy-search parchment">
+    <ParField :label="label" :optional="optional" class="sfs-field">
+      <div class="input-wrapper" :class="{ 'statblock-field-highlight': shouldHighlight }" ref="inputWrapperRef">
+        <ParInput :id="inputId" v-model="displayValue" :placeholder="placeholder"
+          :readonly="!!selectedStatblock" autocomplete="off" @focus="handleFocus" @blur="handleBlur"
+          @input="handleInput" />
 
-      <!-- Clear button - positioned inside the input -->
-      <button v-if="selectedStatblock" type="button" class="clear-button" @click="clearSelection"
-        title="Clear selection" aria-label="Clear selection">
-        ×
-      </button>
-    </div>
+        <!-- Clear button - positioned inside the input -->
+        <button v-if="selectedStatblock" type="button" class="clear-button" @click="clearSelection"
+          title="Clear selection" aria-label="Clear selection">
+          ×
+        </button>
+      </div>
+    </ParField>
 
     <!-- Dropdown results - absolute positioned overlay -->
     <div v-if="showDropdown && !selectedStatblock"
@@ -84,7 +85,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
-import { CdrInput } from '@rei/cedar';
+import { ParField, ParInput } from '@/parchment';
 import { logger } from '@/util/logger.mjs';
 
 const props = defineProps({
@@ -357,6 +358,13 @@ function handleBlur() {
 .statblock-fuzzy-search {
   position: relative;
   margin-bottom: 1.5rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+/* ParField default bottom margin removed so the dropdown sits directly under
+   the input. */
+.sfs-field {
+  margin-bottom: 0;
 }
 
 /* Input wrapper for positioning clear button */
@@ -364,31 +372,28 @@ function handleBlur() {
   position: relative;
 }
 
-/* Add padding to Cedar's input element to make room for clear button */
-.input-wrapper :deep(.cdr-input__input) {
-  padding-right: 2.5rem;
+/* Room for the clear button on the right edge of the input. */
+.input-wrapper :deep(.par-input) {
+  padding-right: 3rem;
 }
 
-/* Folder text inside the input - muted */
-.input-wrapper :deep(.cdr-input__input[readonly]) {
+.input-wrapper :deep(.par-input[readonly]) {
   cursor: default;
-  color: #333;
 }
 
 /* Clear button - positioned inside the input field */
 .clear-button {
   position: absolute;
-  right: 0.75rem;
-  bottom: -.1rem;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
-  font-size: 1.75rem;
-  color: #999;
+  font-size: 2rem;
+  color: var(--par-color-text-muted, #6b6b6b);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   line-height: 1;
-  min-width: 44px;
-  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -396,55 +401,54 @@ function handleBlur() {
 }
 
 .clear-button:hover {
-  color: #333;
+  color: var(--par-color-title, #7a1f1f);
 }
 
-/* Dropdown results - absolute overlay with shadow */
+/* Dropdown results - absolute overlay, parchment cream surface */
 .search-results {
   position: absolute;
   top: calc(100% + 0.25rem);
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
   z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 14px rgba(60, 40, 20, 0.12);
   display: flex;
   flex-direction: column;
-  max-height: 300px;
+  max-height: 340px;
 }
 
 /* Source filter tabs */
 .source-filter-tabs {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 8px 12px 0 12px;
-  background: white;
-  border-radius: 4px 4px 0 0;
+  border-bottom: 1px solid var(--par-color-divider, #e2dccd);
+  padding: 0.6rem 1.2rem 0;
   flex-shrink: 0;
 }
 
 .source-tab {
   background: none;
   border: none;
-  padding: 6px 12px;
+  padding: 0.6rem 1.1rem;
   cursor: pointer;
-  font-size: 0.875rem;
-  color: #9ca3af;
+  font-family: inherit;
+  font-size: 1.35rem;
+  color: var(--par-color-text-muted, #6b6b6b);
   border-bottom: 2px solid transparent;
   transition: color 0.15s ease, border-color 0.15s ease;
   margin-bottom: -1px;
 }
 
 .source-tab:hover:not(:disabled) {
-  color: #6b7280;
+  color: var(--par-color-text, #222);
 }
 
 .source-tab.active {
-  color: #7c2d12;
-  border-bottom-color: #7c2d12;
+  color: var(--par-color-title, #7a1f1f);
+  border-bottom-color: var(--par-color-title, #7a1f1f);
 }
 
 .source-tab:disabled {
@@ -459,96 +463,93 @@ function handleBlur() {
   min-height: 0;
 }
 
-/* Result items - compact spacing */
+/* Result items */
 .search-result-item {
   width: 100%;
-  padding: 8px 12px;
+  padding: 1rem 1.4rem;
   border: none;
+  border-bottom: 1px solid var(--par-color-divider, #e2dccd);
   background: none;
   text-align: left;
   cursor: pointer;
   display: flex;
   align-items: baseline;
+  gap: 0.4rem;
+  font-family: inherit;
   transition: background-color 0.15s ease;
 }
 
 .search-result-item:hover {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.search-result-item:active {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(243, 235, 218, 0.5);
 }
 
 .result-name {
-  font-size: 1rem;
-  color: #333;
+  font-size: 1.6rem;
+  color: var(--par-color-text, #222);
+  line-height: 1.3;
 }
 
 .result-meta {
-  font-size: 0.85rem;
-  color: #6b7280;
+  font-size: 1.3rem;
+  color: var(--par-color-text-muted, #6b6b6b);
 }
 
 /* See More button */
 .see-more-button {
   width: 100%;
-  padding: 10px 12px;
+  padding: 1rem 1.2rem;
   border: none;
-  background: #f9fafb;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
   text-align: center;
   cursor: pointer;
-  font-size: 0.875rem;
-  color: #6b7280;
-  border-top: 1px solid #e5e7eb;
+  font-family: inherit;
+  font-size: 1.35rem;
+  color: var(--color-action-rest, #365A85);
+  border-top: 1px solid var(--par-color-divider, #e2dccd);
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .see-more-button:hover {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.see-more-button:active {
-  background: #e5e7eb;
+  background: var(--par-color-callout-bg, #f3ebda);
+  color: var(--color-action-hover, #2A4D70);
 }
 
 /* No results / empty state message */
 .no-results {
-  padding: 1rem;
+  padding: 1.25rem;
   text-align: center;
-  color: #9ca3af;
-  font-size: 0.9rem;
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-size: 1.4rem;
 }
 
 .no-results.empty-state {
-  padding: 1.5rem 1rem;
+  padding: 1.75rem 1.25rem;
 }
 
 .no-results.empty-state p {
   margin: 0 0 0.75rem 0;
-  color: #6b7280;
+  color: var(--par-color-text-secondary, #555);
 }
 
 .empty-state-link {
   display: inline-block;
-  color: #7c2d12;
+  color: var(--color-action-rest, #365A85);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   transition: color 0.15s ease;
 }
 
 .empty-state-link:hover {
-  color: #991b1b;
+  color: var(--color-action-hover, #2A4D70);
   text-decoration: underline;
 }
 
 /* Loading message */
 .loading-message {
-  padding: 1rem;
+  padding: 1.25rem;
   text-align: center;
-  color: #6b7280;
-  font-size: 0.9rem;
+  color: var(--par-color-text-secondary, #555);
+  font-size: 1.4rem;
   font-style: italic;
 }
 
@@ -556,29 +557,24 @@ function handleBlur() {
 @media (max-width: 768px) {
   .search-result-item {
     min-height: 44px;
-    padding: 12px;
-  }
-
-  .clear-button {
-    min-width: 44px;
-    min-height: 44px;
   }
 }
 
-/* Highlight animation for deep link pre-population */
+/* Highlight animation for deep link pre-population (lapis). */
 @keyframes field-highlight {
   0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3);
+    box-shadow: 0 0 0 0 rgba(54, 90, 133, 0.35);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1);
+    box-shadow: 0 0 0 6px rgba(54, 90, 133, 0.12);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+    box-shadow: 0 0 0 0 rgba(54, 90, 133, 0);
   }
 }
 
 .statblock-field-highlight {
+  border-radius: var(--par-radius-md, 4px);
   animation: field-highlight 1.5s ease-out;
 }
 </style>

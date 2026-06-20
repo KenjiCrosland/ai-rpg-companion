@@ -51,8 +51,7 @@
         <div class="hero-header">
           <div class="brand-line">
             <span class="brand-name">Kenji's Encounter Generator</span>
-            <span v-if="!premium" class="version-pill">Free</span>
-            <span v-else class="version-pill premium">Premium</span>
+            <VersionBadge :premium="premium" />
           </div>
           <h1>Generate Encounters Your Players Will Actually Remember</h1>
           <p class="value-prop">Pick monsters, set the scene, and generate read-aloud text, hazards, objectives, and
@@ -329,6 +328,7 @@ import { logger } from "@/util/logger.mjs";
 import { ref, computed, onMounted, watch } from 'vue';
 import { CdrInput, CdrSelect, CdrAccordionGroup, CdrAccordion, CdrTooltip, IconXSm, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import VersionBadge from '@/components/VersionBadge.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';

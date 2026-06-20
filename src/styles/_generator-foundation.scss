@@ -120,20 +120,8 @@ $sidebar-transition: 0.15s;
     letter-spacing: 0.02em;
   }
 
-  .version-pill {
-    display: inline-block;
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 0.2rem 0.8rem;
-    border-radius: 100px;
-    background-color: #ededed;
-    color: $cdr-color-text-secondary;
-
-    &.premium {
-      background-color: #fdf3e0;
-      color: #9c6a0a;
-    }
-  }
+  /* The Free/Premium badge is now the shared VersionBadge component
+     (src/components/VersionBadge.vue) — no per-foundation pill style. */
 
   h1 {
     font-size: 3.2rem;

@@ -9,7 +9,7 @@
       >
         <div
           ref="dialogEl"
-          class="par-modal"
+          class="par-modal parchment"
           role="dialog"
           aria-modal="true"
           :aria-labelledby="titleId"
@@ -135,7 +135,7 @@ function onCancel() {
   flex-direction: column;
   box-shadow: 0 12px 32px rgba(20, 30, 50, 0.35),
               0 4px 8px rgba(20, 30, 50, 0.2);
-  font-family: var(--par-font-sans);
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   outline: none;
 }
 
@@ -143,16 +143,16 @@ function onCancel() {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  padding: 1.25rem 1.75rem 1rem;
+  padding: 1.5rem 2.25rem 1.25rem;
   border-bottom: 1px solid var(--par-color-readaloud-rule, #7A8FAA);
 }
 
 .par-modal__title {
-  font-family: var(--par-font-serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   /* Deep lapis title — the chrome-action-hover value (deeper than
      primary-rest) reads as authoritative at small-caps weight against
      the pale lapis surface. */
-  color: var(--color-action-hover);
+  color: var(--color-action-hover, #2A4D70);
   font-variant-caps: small-caps;
   font-weight: 600;
   font-size: 1.9rem;
@@ -182,7 +182,7 @@ function onCancel() {
 }
 
 .par-modal__body {
-  padding: 1.5rem 1.75rem 0.5rem;
+  padding: 1.75rem 2.25rem 1rem;
   overflow-y: auto;
   color: var(--par-color-text, #222);
 }
@@ -192,7 +192,7 @@ function onCancel() {
   gap: 0.75rem;
   justify-content: flex-end;
   flex-wrap: wrap;
-  padding: 1rem 1.75rem 1.5rem;
+  padding: 1.25rem 2.25rem 1.75rem;
   border-top: 1px solid var(--par-color-readaloud-rule, #7A8FAA);
 }
 

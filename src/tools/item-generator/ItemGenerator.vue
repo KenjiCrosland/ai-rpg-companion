@@ -99,8 +99,7 @@
         <div class="hero-header parchment">
           <div class="brand-line">
             <span class="brand-name">Kenji's Item Generator</span>
-            <span v-if="!premium" class="version-pill">Free</span>
-            <span v-else class="version-pill premium">Premium</span>
+            <VersionBadge :premium="premium" />
           </div>
           <h1 class="page-heading__title">Craft unique D&D 5e magic items</h1>
           <p class="page-heading__tagline">Mechanics, lore, and quest hooks for your campaign.</p>
@@ -380,6 +379,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CdrInput, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import VersionBadge from '@/components/VersionBadge.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { logger } from "@/util/logger.mjs";
 import { convertItemToMarkdown } from '@/util/convertToMarkdown.mjs';
@@ -2543,25 +2543,6 @@ onUnmounted(() => {
     letter-spacing: 0.04em;
   }
 
-  .version-pill {
-    display: inline-block;
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-    font-size: 1.05rem;
-    font-weight: 500;
-    font-style: italic;
-    padding: 0.1rem 0.6rem;
-    border-radius: var(--par-radius-sm, 3px);
-    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
-    background: transparent;
-    color: var(--par-color-text-muted, #6b6b6b);
-    letter-spacing: 0.02em;
-
-    &.premium {
-      border-color: #c8a24a;
-      background: rgba(253, 243, 224, 0.5);
-      color: #9c6a0a;
-    }
-  }
 }
 
 /* Page H1 scales down on narrow viewports so it doesn't wrap awkwardly. */

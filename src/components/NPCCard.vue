@@ -236,8 +236,8 @@
       </section>
 
       <footer class="npc-edit__footer">
-        <ParCardButton variant="danger" @click="$emit('cancel-edit')">Cancel</ParCardButton>
-        <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+        <ParCardButton variant="primary" @click="saveEdit">Save Changes</ParCardButton>
+        <ParCardButton variant="muted" @click="$emit('cancel-edit')">Cancel</ParCardButton>
       </footer>
     </div>
 

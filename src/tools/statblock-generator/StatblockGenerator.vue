@@ -102,8 +102,7 @@
         <div class="hero-header parchment">
           <div class="brand-line">
             <span class="brand-name">Kenji's Statblock Generator</span>
-            <span v-if="!premium" class="version-pill">Free</span>
-            <span v-else class="version-pill premium">Premium</span>
+            <VersionBadge :premium="premium" />
           </div>
           <h1 class="page-heading__title">Build custom D&D 5e monsters in seconds</h1>
           <p class="page-heading__tagline">Create balanced, export-ready 5e statblocks — no math required.</p>
@@ -253,6 +252,7 @@ import { logger } from "@/util/logger.mjs";
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import VersionBadge from '@/components/VersionBadge.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
@@ -1111,26 +1111,6 @@ async function generateStatblock() {
     font-weight: 500;
     color: var(--color-action-secondary-rest, #5A7A9A); /* muted lapis */
     letter-spacing: 0.04em;
-  }
-
-  .version-pill {
-    display: inline-block;
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-    font-size: 1.05rem;
-    font-weight: 500;
-    font-style: italic;
-    padding: 0.1rem 0.6rem;
-    border-radius: var(--par-radius-sm, 3px);
-    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
-    background: transparent;
-    color: var(--par-color-text-muted, #6b6b6b);
-    letter-spacing: 0.02em;
-
-    &.premium {
-      border-color: #c8a24a;
-      background: rgba(253, 243, 224, 0.5);
-      color: #9c6a0a;
-    }
   }
 
   .page-heading__title {

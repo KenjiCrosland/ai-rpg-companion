@@ -57,8 +57,7 @@
             <!-- Version pill is fresh-visit framing — suppressed during
                  seeded flows where the user is mid-task. Mirrors the
                  NPC and dungeon generators. -->
-            <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
-            <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
+            <VersionBadge v-if="!isSeededFlow" :premium="premium" />
           </div>
           <template v-if="isSeededFlow">
             <h1>
@@ -261,6 +260,7 @@ import { canGenerateCrossTool } from '@/util/can-generate-cross-tool.mjs';
 import LocationsTab from './components/tabs/LocationsTab.vue';
 import NPCsTab from './components/tabs/NPCsTab.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import VersionBadge from '@/components/VersionBadge.vue';
 
 const props = defineProps({
   premium: {
@@ -2353,21 +2353,6 @@ $transition-speed: 0.3s;
     font-weight: 500;
     color: $cdr-color-text-secondary;
     letter-spacing: 0.02em;
-  }
-
-  .version-pill {
-    display: inline-block;
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 0.2rem 0.8rem;
-    border-radius: 100px;
-    background-color: #ededed;
-    color: $cdr-color-text-secondary;
-
-    &.premium {
-      background-color: #fdf3e0;
-      color: #9c6a0a;
-    }
   }
 
   h1 {

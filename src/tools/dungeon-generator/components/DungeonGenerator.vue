@@ -39,8 +39,7 @@
             <!-- Version pill is fresh-visit framing — suppressed during
                  seeded flows where the user is mid-task. Mirrors the
                  NPC generator's pattern. -->
-            <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
-            <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
+            <VersionBadge v-if="!isSeededFlow" :premium="premium" />
           </div>
           <template v-if="isSeededFlow">
             <h1>
@@ -182,6 +181,7 @@ import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
 import { CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import VersionBadge from '@/components/VersionBadge.vue';
 import Tabs from '@/components/tabs/Tabs.vue';
 import TabPanel from '@/components/tabs/TabPanel.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
@@ -488,22 +488,6 @@ onMounted(() => {
       letter-spacing: 0.5px;
     }
 
-    .version-pill {
-      display: inline-block;
-      padding: 0.3rem 1rem;
-      background-color: #e9ecef;
-      color: #495057;
-      font-size: 1.2rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      border-radius: 12px;
-
-      &.premium {
-        background-color: #ffc107;
-        color: #212529;
-      }
-    }
   }
 
   h1 {
