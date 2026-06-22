@@ -710,9 +710,11 @@ Generate a D&D 5e quest hook for the following magic item:
 }
 
 .quest-hooks-heading__title {
+  /* 2.8rem — the shared tab-header standard, matched across the setting
+     generator's tabs for cross-tool consistency. */
   margin: 0 0 0.5rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
-  font-size: 2.4rem;
+  font-size: 2.8rem;
   font-weight: 600;
   color: var(--color-action-hover, #2A4D70);
   line-height: 1.2;

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="npcs-tab parchment">
     <RelatedNPCsSection
       :setting="setting"
       :loading-new-npc="loadingNewNPC"
@@ -360,3 +360,13 @@ onUnmounted(() => {
   window.removeEventListener('npc-storage-updated', handleNPCStorageUpdate);
 });
 </script>
+
+<style scoped>
+/* Lighter/cooler cream surface panel (no border) — the quiet ground that
+   warmer-toned stub cards lift off of (matches the Locations / Factions tabs). */
+.npcs-tab {
+  background: var(--par-color-surface-card, #FEFBF4);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 1.75rem 2rem;
+}
+</style>

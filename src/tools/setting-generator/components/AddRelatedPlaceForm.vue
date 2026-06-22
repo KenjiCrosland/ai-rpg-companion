@@ -144,7 +144,7 @@ defineExpose({
      the surrounding Related Places section — same surface-contrast
      pattern the row cards use. */
   background: var(--par-color-surface, #fdfbf6);
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .add-related-place-row {
@@ -201,7 +201,7 @@ defineExpose({
 
 .add-related-place-helper {
   margin: 0 0 1rem 0;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 1.3rem;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);

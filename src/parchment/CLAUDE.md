@@ -39,7 +39,7 @@ we iterate on the styling.
 - `ParTooltip.vue` — wrapper-style tooltip. CSS-only show/hide via `:hover` and `:focus-within`. Use for ghost-styled affordances whose label answers "what" but not "when" (e.g. Re-scan Lore). Dark burgundy surface + cream text for fast read; not blended with the parchment palette by design.
 - `ParTabToggle.vue` — view-mode tab strip for content surfaces (e.g. Description/Form switcher on the dungeon-generator room panel). Burgundy underline + burgundy active text on a divider baseline — editorial register, intentionally NOT lapis. Lapis stays reserved for chrome action primitives (`ParButton`); the visual difference is the signal "this lives on a content surface" vs "this is a chrome control." Options-array prop API (`{value, label}[]`) plus `v-model` — single component, no parent/child Cedar-style nesting.
 - `ParModal.vue` — modal dialog primitive. Parchment surface with lapis chrome accents: cream background (`--par-color-surface`), deeper lapis borders + deep-lapis serif small-caps title + lapis close-button hover. Inner callouts (consumer-provided) typically use pale lapis (`--par-color-readaloud-bg-deep`) so emphasis reads against the cream ground. Teleports to body, renders a cool-toned backdrop. Props: `opened` (v-model-style boolean), `title` (required string), `dismissible`/`closeOnBackdrop`/`closeOnEscape` (all default true), `closeLabel`. Slots: default for body content, `footer` for actions (typically two `ParButton`s — primary lapis + secondary slate). Emits `cancel` from the × button, ESC, or backdrop. Focus is moved to the dialog on open and the ESC listener attaches per-instance. The first carve-out from "Cedar handles modals" — earned the primitive once a second use case appeared.
-- `ParAccordion.vue` / `ParAccordionGroup.vue` — parchment expandable sections, ported from Cedar's `CdrAccordion`/`CdrAccordionGroup` for accessibility + API parity: heading-wrapped button with `aria-expanded`/`aria-controls`, content region with matching id + `aria-hidden`, controlled `opened` + `accordion-toggle` contract, and the same animated max-height open/close (settles to `none` on transitionend so content never clips). The group provides roving keyboard nav (Home/End/ArrowUp/Down) over `.js-par-accordion-button` markers. ParAccordion adds a `count` pill prop and a `variant` (`burgundy` default / `lapis` future-allowance for chrome-register use), and `contentSpacing` (default true; set false for full-bleed list content). Cedar's responsive `unwrap` is intentionally not ported (no consumer yet). First consumer: the statblock generator sidebar (burgundy folders). Multi-open by default.
+- `ParAccordion.vue` / `ParAccordionGroup.vue` — parchment expandable sections, ported from Cedar's `CdrAccordion`/`CdrAccordionGroup` for accessibility + API parity: heading-wrapped button with `aria-expanded`/`aria-controls`, content region with matching id + `aria-hidden`, controlled `opened` + `accordion-toggle` contract, and the same animated max-height open/close (settles to `none` on transitionend so content never clips). The group provides roving keyboard nav (Home/End/ArrowUp/Down) over `.js-par-accordion-button` markers. ParAccordion adds a `count` pill prop and a `variant` (`burgundy` default / `lapis` / `understated`), and `contentSpacing` (default true; set false for full-bleed list content). `burgundy` and `lapis` are bold uppercase section-header treatments (sidebar folders); `understated` is a quiet slate-lapis, sentence-case label for secondary disclosures (e.g. export "how-to" help) that shouldn't read as loud headers. Cedar's responsive `unwrap` is intentionally not ported (no consumer yet). First consumer: the statblock generator sidebar (burgundy folders). Multi-open by default.
 - `ParToggleGroup.vue` / `ParToggleButton.vue` — parchment **segmented switcher** in the lapis chrome register, ported from Cedar's `CdrToggleGroup`/`CdrToggleButton` for a11y + API parity: `role="radiogroup"` of `role="radio"` segments, `v-model` selected value, Left/Right roving focus (no wrap, matching Cedar), selected value shared via a private injection key (`par-toggle-key.mjs`). Filled-lapis active segment on a tinted pill. Distinct from `ParTabToggle` (burgundy underline tabs for content surfaces) — this is a filled pill for chrome view-switches (e.g. 1-column/2-column statblock layout). Props: `modelValue`, `size` (small/medium/large), `ariaLabel`. First consumers: the statblock generator's column switcher (StatblockGenerator / LoadingStatblock / StatblockBase).
 - `index.mjs` — re-export entry. Consumers do `import { ParCardInput, ParCardButton } from '@/parchment';`.
 
@@ -81,13 +81,18 @@ reads as too heavy for inline placement against a list row. The square
 treatment competes with the row content; the round-with-background
 treatment recedes the way it should.
 
-**Sites currently held on Cedar** (8 instances, will migrate when a ghost
+**Sites currently held on Cedar** (5 instances, will migrate when a ghost
 icon-button primitive exists — provisional name `ParIconButton`):
 - `src/tools/dungeon-generator/components/MonstersTab.vue` — delete monster
 - `src/tools/setting-generator/components/tabs/LocationsTab.vue` — delete sublocation (×2)
-- `src/tools/setting-generator/components/tabs/QuestHooksTab.vue` — delete quest hook
-- `src/tools/setting-generator/components/tabs/FactionsTab.vue` — delete faction, info icon (×2)
 - `src/components/DashboardPlus.vue` — delete location, delete NPC (×2)
+
+The FactionsTab's editorial refresh retired its two Cedar carve-outs: the
+absolute ✕ delete is now a burgundy ghost "Delete faction" button gated by a
+`ParConfirm` modal, and the influence-level `cdr-popover` info icon is a small
+parchment "ⓘ" glyph with a native `title` tooltip. The QuestHooksTab's parchment
+pass likewise retired its ✕ delete — now a "Delete" `ParCardButton` in the
+expanded card's action row, gated by `ParConfirm`.
 
 ### Inline link-style navigation
 

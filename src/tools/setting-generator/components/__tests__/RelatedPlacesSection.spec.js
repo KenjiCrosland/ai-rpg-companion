@@ -250,7 +250,7 @@ describe('RelatedPlacesSection — remove', () => {
     const setting = makeSetting([stub]);
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
 
-    const removeBtn = wrapper.find('.related-place-remove');
+    const removeBtn = wrapper.find('.related-stub__remove');
     await removeBtn.trigger('click');
 
     const events = wrapper.emitted('remove-related-place');

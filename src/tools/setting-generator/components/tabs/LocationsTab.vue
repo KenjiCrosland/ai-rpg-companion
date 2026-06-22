@@ -1,122 +1,47 @@
 <template>
-  <div>
+  <div class="locations-tab parchment">
     <!-- Legacy: importantLocations[] was populated by the old bulk
          subLocationsPrompt flow (5-6 invented sublocation stubs at
          once). That entry point is gone; this block remains only to
          render existing data for users who already had it. New
          sublocations now come through Related Places (extraction or
          the manual add-place form). -->
-    <div v-if="setting.importantLocations && setting.importantLocations.length > 0">
-      <cdr-accordion-group>
-        <cdr-accordion
+    <!-- Legacy importantLocations rendered as "Contains" stub cards, matching
+         the Related Places presentation. The old per-location accordion (with
+         inline overview + inline edit) is gone; each location's description
+         shows as the card brief and is carried into the full setting when
+         promoted via Create Setting. -->
+    <div v-if="setting.importantLocations && setting.importantLocations.length > 0" class="related-places-group">
+      <h4 class="related-places-group-title">Contains</h4>
+      <ul class="related-places-list">
+        <RelatedStubRow
           v-for="(location, index) in setting.importantLocations"
           :key="location.name"
-          :id="location.name"
-          level="2"
-          :opened="location.open"
-          @accordion-toggle="location.open = !location.open"
+          :name="location.name"
+          :brief="location.description"
+          @remove="location.promoted_setting_id
+            ? $emit('delete-sublocation-setting', location.promoted_setting_id)
+            : deleteSublocation(index)"
         >
-          <template #label>{{ location.name }}</template>
-
-          <!-- Simple (no full description yet) -->
-          <div v-if="!location.promoted_setting_id && !location.loading">
-            <cdr-tooltip id="tooltip-location-delete" position="left" class="delete-button">
-              <template #trigger>
-                <cdr-button size="small" :icon-only="true" :with-background="true"
-                  @click.stop="deleteSublocation(index)">
-                  <template #icon><icon-x-sm /></template>
-                </cdr-button>
-              </template>
-              <div>Delete Sub-Location</div>
-            </cdr-tooltip>
-
-            <!-- View Mode -->
-            <div v-if="editingLocationIndex !== index">
-              <div class="location-title-block">
-                <h2 class="location-name">{{ location.name }}</h2>
-                <p v-if="location.title" class="location-epithet">{{ location.title }}</p>
-              </div>
-              <p>{{ location.description }}</p>
-              <p v-if="location.setting_scale">{{ location.setting_scale }}</p>
-
-              <div class="button-group">
-                <ParButton @click="startEditingLocation(index)" variant="secondary">Edit Location</ParButton>
-                <ParButton @click="$emit('generate-sublocation', {
-                  sublocationIndex: index,
-                  subLocationName: location.name,
-                  subLocationDescription: location.description,
-                  setting_type: location.setting_type,
-                })">
-                  Generate Full Description
-                </ParButton>
-              </div>
-            </div>
-
-            <!-- Edit Mode -->
-            <div v-else class="edit-form">
-              <h2>Edit Location</h2>
-
-              <cdr-input v-model="locationEditForm.name" label="Location Name" background="secondary" class="edit-field" />
-
-              <cdr-input v-model="locationEditForm.description" label="Location Description"
-                background="secondary" :rows="5" tag="textarea" class="edit-field" />
-
-              <cdr-input v-model="locationEditForm.setting_scale" label="Setting Scale (optional)"
-                background="secondary" class="edit-field">
-                <template #helper-text-bottom>
-                  Additional context about the scale or scope of this location
-                </template>
-              </cdr-input>
-
-              <div class="button-group">
-                <ParButton @click="saveEditLocation">Save Changes</ParButton>
-                <ParButton @click="cancelEditLocation" variant="secondary">Cancel</ParButton>
-              </div>
-            </div>
-          </div>
-
-          <!-- Has a full setting attached -->
-          <div v-if="location.has_detailed_description && !location.loading">
-            <cdr-tooltip id="tooltip-setting-delete" position="left" class="delete-button">
-              <template #trigger>
-                <cdr-button size="small" :icon-only="true" :with-background="true"
-                  @click.stop="$emit('delete-sublocation-setting', location.promoted_setting_id)">
-                  <template #icon><icon-x-sm /></template>
-                </cdr-button>
-              </template>
-              <div>Delete Sub-Location</div>
-            </cdr-tooltip>
-            <div class="location-title-block">
-              <h2 class="location-name">{{ location.name }}</h2>
-              <p v-if="settingsById.get(location.promoted_setting_id)?.setting_overview?.title" class="location-epithet">
-                {{ settingsById.get(location.promoted_setting_id).setting_overview.title }}
-              </p>
-            </div>
-            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.overview }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.relation_to_larger_setting }}</p>
-            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.history }}</p>
-            <p>
-              {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.current_ruler_sentence }}
-              {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.recent_event_current_ruler }}
-              {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.recent_event_consequences }}
-            </p>
-            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.social_history }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.recent_event_social }}</p>
-            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.economic_history }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.impactful_economic_event }}</p>
-            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.military_history }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.recent_event_military }}</p>
-            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.main_problem }} {{ settingsById.get(location.promoted_setting_id)?.setting_overview?.potential_solutions }}</p>
-            <p>{{ settingsById.get(location.promoted_setting_id)?.setting_overview?.conclusion }}</p>
-
-            <div class="info-message"
-              style="margin-top: 2rem; padding: 1rem; background-color: #f4f2ed; border-radius: 4px;">
-              <p style="margin: 0;"><strong>Note:</strong> To edit this location's details, select "{{ location.name }}" from the sidebar to open its full setting page.</p>
-            </div>
-          </div>
-
-          <!-- Loading skeleton for individual location -->
-          <div v-if="!location.has_detailed_description && location.loading">
-            <CdrSkeleton><OverviewSkeleton /></CdrSkeleton>
-          </div>
-        </cdr-accordion>
-      </cdr-accordion-group>
+          <template #actions>
+            <span v-if="location.loading" class="related-place-loading">Generating…</span>
+            <template v-else>
+              <ParButton v-if="location.promoted_setting_id" variant="primary-outline"
+                @click="viewPromotedLocation(location.promoted_setting_id)">
+                View in Setting Generator
+              </ParButton>
+              <ParButton v-else variant="primary-outline" @click="$emit('generate-sublocation', {
+                sublocationIndex: index,
+                subLocationName: location.name,
+                subLocationDescription: location.description,
+                setting_type: location.setting_type,
+              })">
+                Create Setting
+              </ParButton>
+            </template>
+          </template>
+        </RelatedStubRow>
+      </ul>
     </div>
 
     <!-- Related Places: extracted from this setting's prose, or added
@@ -132,18 +57,10 @@
 
 <script setup>
 import { ParButton } from "@/parchment";
-import { ref, computed, watch } from 'vue';
-import {
-  CdrButton,
-  CdrInput,
-  CdrAccordionGroup,
-  CdrAccordion,
-  CdrTooltip,
-  CdrSkeleton,
-  IconXSm,
-} from '@rei/cedar';
-import OverviewSkeleton from '@/components/skeletons/OverviewSkeleton.vue';
+import { computed } from 'vue';
+import { navigateToTool } from '@/util/navigation.mjs';
 import RelatedPlacesSection from '../RelatedPlacesSection.vue';
+import RelatedStubRow from '../RelatedStubRow.vue';
 
 const props = defineProps({
   setting: {
@@ -189,43 +106,11 @@ const settingsById = computed(() => {
   return map;
 });
 
-// Edit state for the legacy importantLocations entries that still
-// render. New sublocations come through Related Places now, but
-// existing importantLocations remain editable in place.
-const editingLocationIndex = ref(null);
-const locationEditForm = ref({
-  name: '',
-  description: '',
-  setting_scale: '',
-});
-
-const startEditingLocation = (index) => {
-  const location = props.setting.importantLocations[index];
-  locationEditForm.value = {
-    name: location.name || '',
-    description: location.description || '',
-    setting_scale: location.setting_scale || '',
-  };
-  editingLocationIndex.value = index;
-};
-
-const cancelEditLocation = () => {
-  editingLocationIndex.value = null;
-};
-
-const saveEditLocation = () => {
-  if (editingLocationIndex.value === null) return;
-  const updatedLocations = props.setting.importantLocations.map((loc, i) => {
-    if (i !== editingLocationIndex.value) return loc;
-    return {
-      ...loc,
-      name: locationEditForm.value.name,
-      description: locationEditForm.value.description,
-      setting_scale: locationEditForm.value.setting_scale,
-    };
-  });
-  emit('updated-setting', { ...props.setting, importantLocations: updatedLocations });
-  editingLocationIndex.value = null;
+// Navigate to a promoted legacy location's full setting (same in-tool
+// navigation the Related Places "View in Setting Generator" uses).
+const viewPromotedLocation = (promotedSettingId) => {
+  if (!promotedSettingId) return;
+  navigateToTool('setting-generator', { setting: promotedSettingId });
 };
 
 const deleteSublocation = (index) => {
@@ -233,61 +118,47 @@ const deleteSublocation = (index) => {
   updated.splice(index, 1);
   emit('updated-setting', { ...props.setting, importantLocations: updated });
 };
-
-// Reset edit state when parent switches to a different setting
-watch(
-  () => props.setting,
-  (newSetting, oldSetting) => {
-    if (newSetting !== oldSetting) {
-      editingLocationIndex.value = null;
-    }
-  },
-);
 </script>
 
 <style scoped>
-.location-title-block {
-  margin-bottom: 1rem;
+/* Lighter/cooler cream surface panel (no border). Stub cards float on it as
+   warmer-toned cards, so the panel reads as the quiet ground and the stubs lift
+   off it by tone. */
+.locations-tab {
+  background: var(--par-color-surface-card, #FEFBF4);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 1.75rem 2rem;
 }
 
-.location-name {
-  margin: 0 0 0.25rem 0;
-  line-height: 1.15;
+/* "Contains" stub list for the legacy importantLocations — rendered with the
+   shared RelatedStubRow so legacy entries match the new related-place cards. */
+.related-places-group {
+  margin: 0 0 1.5rem;
 }
 
-.location-epithet {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.4rem;
-  font-style: italic;
-  font-weight: 400;
-  color: #6b7280;
-  line-height: 1.3;
+.related-places-group-title {
+  margin: 0 0 0.6rem 0;
+  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--color-action-hover, #2A4D70);
 }
 
-.delete-button {
-  position: absolute;
-  top: 65px;
-  right: 15px;
-  z-index: 1;
-}
-
-.edit-form .edit-field {
-  margin-bottom: 1.5rem;
-}
-
-.button-group {
+.related-places-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-@media (max-width: 768px) {
-  .button-group {
-    flex-direction: column;
-  }
-
-  .button-group button {
-    width: 100%;
-  }
+.related-place-loading {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
 }
 </style>

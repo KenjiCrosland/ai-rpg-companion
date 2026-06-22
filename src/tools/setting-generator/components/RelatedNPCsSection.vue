@@ -451,9 +451,11 @@ watch(() => props.setting, () => {
 }
 
 .related-npcs-title {
-  margin: 0 0 0.25rem;
+  /* Large 2.8rem — the shared tab-header standard across Locations /
+     Factions / NPCs / Quest Hooks. */
+  margin: 0 0 0.3rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 2rem;
+  font-size: 2.8rem;
   font-weight: 600;
   color: var(--par-color-action-primary, #2A4D70);
   letter-spacing: 0;
@@ -461,13 +463,15 @@ watch(() => props.setting, () => {
 }
 
 .related-npcs-subtitle {
+  /* Standard tab description: regular-weight serif body text (matches the
+     Locations tab, the canonical reference). */
   margin: 0;
-  font-family: var(--par-font-sans, sans-serif);
-  font-size: 1.3rem;
-  font-style: italic;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: normal;
   font-weight: 400;
-  color: var(--par-color-text-muted, #6b6b6b);
-  line-height: 1.5;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.55;
 }
 
 .related-npcs-subtitle-link {
@@ -493,8 +497,8 @@ watch(() => props.setting, () => {
 
 .related-npcs-empty {
   margin: 0.75rem 0 0;
-  font-family: var(--par-font-sans, sans-serif);
-  font-size: 1.3rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);
   line-height: 1.6;
@@ -505,13 +509,13 @@ watch(() => props.setting, () => {
 }
 
 .related-npcs-group-title {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.6rem 0;
   font-family: var(--par-font-sans, sans-serif);
-  font-size: 1.1rem;
-  font-weight: 500;
+  font-size: 1.2rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--par-color-action-primary, #2A4D70);
+  letter-spacing: 0.16em;
+  color: var(--color-action-hover, #2A4D70);
 }
 
 .related-npcs-list {

@@ -62,9 +62,11 @@
  *   level         — heading level for the wrapping tag (h2…h6). Default 3.
  *   label         — header text (or use the #label slot for rich content).
  *   count         — optional trailing count pill (e.g. items in a folder).
- *   variant       — 'burgundy' (default) | 'lapis'. Lapis is the future
- *                   allowance for chrome-register accordions; the sidebar
- *                   ships burgundy.
+ *   variant       — 'burgundy' (default) | 'lapis' | 'understated'. Burgundy
+ *                   and lapis are bold uppercase section-header treatments
+ *                   (sidebar folders). 'understated' is a quiet slate-lapis,
+ *                   sentence-case label for secondary disclosures (export
+ *                   "how-to" help) that shouldn't read as loud headers.
  *   contentSpacing — pad the content region (default true). Set false for
  *                   full-bleed list content (e.g. a sidebar folder of rows).
  *
@@ -81,7 +83,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'burgundy',
-    validator: (v) => ['burgundy', 'lapis'].includes(v),
+    validator: (v) => ['burgundy', 'lapis', 'understated'].includes(v),
   },
   contentSpacing: { type: Boolean, default: true },
 });
@@ -96,6 +98,7 @@ const headingTag = computed(() => `h${props.level}`);
 const hasCount = computed(() => props.count !== null && props.count !== '');
 const rootClasses = computed(() => ({
   'par-accordion--lapis': props.variant === 'lapis',
+  'par-accordion--understated': props.variant === 'understated',
   'par-accordion--no-spacing': !props.contentSpacing,
 }));
 
@@ -182,6 +185,21 @@ onBeforeUnmount(() => {
   color: var(--color-action-hover, #2A4D70);
 }
 
+/* Understated: quiet slate-lapis, sentence case, normal weight — for
+   secondary disclosures (export "how-to" help) that shouldn't read as loud
+   section headers. */
+.par-accordion--understated .par-accordion__label {
+  color: var(--color-action-secondary-rest, #5A7A9A);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  font-size: 1.5rem;
+}
+
+.par-accordion--understated .par-accordion__button:hover .par-accordion__label {
+  color: var(--color-action-rest, #365A85);
+}
+
 .par-accordion__meta {
   display: flex;
   align-items: center;
@@ -214,6 +232,10 @@ onBeforeUnmount(() => {
 
 .par-accordion--lapis .par-accordion__caret {
   color: var(--color-action-muted, #5A7A9A);
+}
+
+.par-accordion--understated .par-accordion__caret {
+  color: var(--color-action-secondary-rest, #5A7A9A);
 }
 
 .par-accordion__content-container {

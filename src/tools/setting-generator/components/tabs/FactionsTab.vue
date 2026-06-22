@@ -1,180 +1,239 @@
 <template>
-  <div>
-    <h2>Factions</h2>
-
-    <div v-if="setting.factions && setting.factions.length > 0">
-      <cdr-accordion-group class="factions-accordion">
-        <cdr-accordion
-          v-for="(faction, index) in setting.factions"
-          :key="faction.name"
-          level="2"
-          :id="'faction-' + index"
-          :opened="faction.open"
-          @accordion-toggle="faction.open = !faction.open"
-        >
-          <template #label>{{ faction.name }}</template>
-
-          <cdr-tooltip id="tooltip-faction-delete" position="left" class="delete-button">
-            <template #trigger>
-              <cdr-button size="small" :icon-only="true" :with-background="true"
-                @click.stop="deleteFaction(index)">
-                <template #icon><icon-x-sm /></template>
-              </cdr-button>
-            </template>
-            <div>Delete Faction</div>
-          </cdr-tooltip>
-
-          <!-- View Mode -->
-          <div v-if="editingFactionIndex !== index">
-            <h3 class="faction-header">{{ faction.name }}</h3>
-
-            <div class="influence-level">
-              <strong>Influence Level:</strong> {{ factionPowerLevels[faction.influence_level - 1] }}
-              <cdr-popover id="popover-faction" position="right">
-                <template #trigger>
-                  <cdr-button :icon-only="true" :with-background="true">
-                    <template #icon><icon-information-stroke /></template>
-                  </cdr-button>
-                </template>
-                <div>{{ factionPowerDescriptions[faction.influence_level - 1] }}</div>
-              </cdr-popover>
-            </div>
-
-            <div class="focus-text">
-              <p><strong>Faction Leader, {{ faction.faction_leader }}:</strong> {{ faction.faction_leader_description }}</p>
-              <p><strong>Key Strengths: </strong> {{ faction.key_resources_and_assets }}</p>
-              <p><strong>Motto: </strong>"{{ faction.motto }}"</p>
-            </div>
-
-            <div style="margin-top: 2rem" v-if="loadingFactionIndex === index">
-              <CdrSkeleton><OverviewSkeleton /></CdrSkeleton>
-            </div>
-
-            <div class="faction-description" v-if="faction.combined_content || faction.history">
-              <div v-if="faction.combined_content">
-                <p v-for="(paragraph, pIndex) in faction.combined_content.split('\n\n')" :key="pIndex">
-                  {{ paragraph }}
-                </p>
-              </div>
-              <div v-else>
-                <p>{{ faction.history }}</p>
-                <p>{{ faction.recent_event }} {{ faction.current_situation }}</p>
-                <p>{{ faction.rites_and_ceremonies }} {{ faction.recent_ceremony }}</p>
-                <p>{{ faction.challenge_to_power }} {{ faction.challenge_event }}</p>
-              </div>
-            </div>
-
-            <div class="button-group">
-              <ParButton @click="startEditingFaction(index)" variant="secondary">Edit Faction</ParButton>
-              <ParButton
-                v-if="!faction.history && !faction.combined_content"
-                @click="generateDetailedFaction(index)"
-              >
-                Generate Full Description
-              </ParButton>
-            </div>
-          </div>
-
-          <!-- Edit Mode -->
-          <div v-else class="edit-form">
-            <h2>Edit Faction</h2>
-
-            <cdr-input v-model="factionEditForm.name" label="Faction Name" background="secondary" class="edit-field" />
-
-            <cdr-select v-model.number="factionEditForm.influence_level" label="Influence Level"
-              :options="influenceLevelOptions" class="edit-field">
-              <template #helper-text-bottom>
-                {{ factionPowerLevels[factionEditForm.influence_level - 1] }}: {{ factionPowerDescriptions[factionEditForm.influence_level - 1] }}
-              </template>
-            </cdr-select>
-
-            <cdr-input v-model="factionEditForm.faction_leader" label="Faction Leader" background="secondary" class="edit-field" />
-
-            <cdr-input v-model="factionEditForm.faction_leader_description" label="Faction Leader Description"
-              background="secondary" :rows="3" tag="textarea" class="edit-field" />
-
-            <cdr-input v-model="factionEditForm.key_resources_and_assets" label="Key Strengths/Resources"
-              background="secondary" :rows="3" tag="textarea" class="edit-field" />
-
-            <cdr-input v-model="factionEditForm.motto" label="Faction Motto" background="secondary" class="edit-field" />
-
-            <cdr-input v-model="factionEditForm.detailed_content" label="Detailed Description"
-              background="secondary" :rows="12" tag="textarea" class="edit-field">
-              <template #helper-text-bottom>
-                The full history and details of the faction. Use double line breaks for paragraphs.
-              </template>
-            </cdr-input>
-
-            <div class="button-group">
-              <ParButton @click="saveEditFaction">Save Changes</ParButton>
-              <ParButton @click="cancelEditFaction" variant="secondary">Cancel</ParButton>
-            </div>
-          </div>
-        </cdr-accordion>
-
-        <!-- Loading skeleton for new faction being added -->
-        <cdr-accordion v-if="loadingNewFaction" :level="2" id="new-faction-accordion" :opened="true">
-          <template #label>{{ newFactionName }}</template>
-          <CdrSkeleton><FactionSkeleton /></CdrSkeleton>
-        </cdr-accordion>
-
-        <div style="padding: 2rem">
-          <h3>Create New Faction</h3>
-          <cdr-input id="faction-name" v-model="newFactionName" label="Faction Name" />
-          <cdr-input :rows="4" id="faction-description" v-model="newFactionDescription" label="Faction Description" />
-          <ParButton style="margin-top: 2rem;" @click="addNewFaction" variant="secondary">Add Faction</ParButton>
-        </div>
-        <hr style="margin-top: 2rem">
-      </cdr-accordion-group>
-    </div>
-
-    <div v-if="!(setting.factions.length > 0) && !loadingFactions">
-      <p>Factions are any group of people gathered together to pursue a certain goal or to maintain or increase
-        their power. They can range in influence from the dominant power in the setting (like a royal family) to a
-        group of downtrodden commoners who have informally banded together to voice their grievances. They can also
-        be smaller entities like merchant guilds, religious cults, or criminal organizations.
+  <div class="factions-tab parchment">
+    <div class="factions-heading">
+      <h3 class="factions-heading__title">Factions</h3>
+      <p class="factions-heading__tagline">
+        Any group gathered to pursue a goal or hold onto power — from the
+        ruling family down to a guild, cult, or band of malcontents.
       </p>
     </div>
 
-    <ParButton
-      v-if="setting.factions.length <= 0 && !loadingFactions"
-      @click="generateFactions"
-      modifier="dark"
-    >
-      Generate Factions for {{ setting.place_name }}
-    </ParButton>
+    <div v-if="setting.factions && setting.factions.length > 0">
+      <ul class="faction-list">
+        <li v-for="(faction, index) in setting.factions" :key="faction.name" class="faction-list-item">
+          <!-- Collapsed -->
+          <div
+            v-if="!faction.open"
+            class="faction-card faction-card--collapsed"
+            role="button"
+            tabindex="0"
+            :aria-expanded="false"
+            :aria-label="`Expand ${faction.name}`"
+            @click="faction.open = true"
+            @keydown.enter.prevent="faction.open = true"
+            @keydown.space.prevent="faction.open = true"
+          >
+            <div class="faction-card__header-text">
+              <h4 class="faction-card__title">{{ faction.name }}</h4>
+              <p class="faction-card__teaser">
+                Influence: {{ levelWord(faction) }}<template v-if="factionTeaser(faction)"> — {{ factionTeaser(faction) }}</template>
+              </p>
+            </div>
+            <span class="faction-card__caret" aria-hidden="true">
+              <svg viewBox="0 0 12 12" width="14" height="14">
+                <polyline points="4,2 8,6 4,10" fill="none" stroke="currentColor"
+                  stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </div>
 
-    <ParButton
-      style="margin-top: 2rem"
-      v-if="setting.factions.length > 0 && !loadingFactions"
-      @click="generateFactions"
-      modifier="dark"
-    >
-      Re-Generate Factions for {{ setting.place_name }}
-    </ParButton>
+          <!-- Expanded -->
+          <div v-else class="faction-card faction-card--expanded">
+            <!-- View Mode -->
+            <template v-if="editingFactionIndex !== index">
+              <div
+                class="faction-card__header"
+                role="button"
+                tabindex="0"
+                :aria-expanded="true"
+                :aria-label="`Collapse ${faction.name}`"
+                @click="faction.open = false"
+                @keydown.enter.prevent="faction.open = false"
+                @keydown.space.prevent="faction.open = false"
+              >
+                <h4 class="faction-card__title">{{ faction.name }}</h4>
+                <span class="faction-card__caret faction-card__caret--open" aria-hidden="true">
+                  <svg viewBox="0 0 12 12" width="14" height="14">
+                    <polyline points="4,2 8,6 4,10" fill="none" stroke="currentColor"
+                      stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+              </div>
+
+              <div class="faction-card__metadata">
+                <span class="faction-card__metadata-label">Influence Level</span>
+                <span class="faction-card__metadata-value">{{ levelWord(faction) }}</span>
+                <ParTooltip :text="levelDef(faction)" placement="top">
+                  <span class="faction-card__metadata-info" tabindex="0" aria-label="What this influence level means">i</span>
+                </ParTooltip>
+              </div>
+
+              <div class="faction-card__section">
+                <p class="faction-card__section-label">Faction Leader</p>
+                <p class="faction-card__section-body">
+                  <span class="faction-card__leader-name">{{ faction.faction_leader }}.</span>
+                  {{ faction.faction_leader_description }}
+                </p>
+              </div>
+
+              <div class="faction-card__section">
+                <p class="faction-card__section-label">Key Strengths</p>
+                <p class="faction-card__section-body">{{ faction.key_resources_and_assets }}</p>
+              </div>
+
+              <div v-if="detailParagraphs(faction).length" class="faction-card__section">
+                <p class="faction-card__section-label">Details</p>
+                <div class="faction-card__section-body faction-card__section-body--prose">
+                  <p v-for="(paragraph, pIndex) in detailParagraphs(faction)" :key="pIndex">
+                    {{ paragraph }}
+                  </p>
+                </div>
+              </div>
+
+              <div v-if="loadingFactionIndex === index" class="faction-card__loading">
+                <CdrSkeleton><OverviewSkeleton /></CdrSkeleton>
+              </div>
+
+              <p v-if="faction.motto" class="faction-card__quote">"{{ faction.motto }}"</p>
+
+              <div class="faction-card__actions">
+                <div class="faction-card__actions-primary">
+                  <button type="button" class="faction-ghost faction-ghost--slate"
+                    @click="startEditingFaction(index)">Edit faction</button>
+                  <button
+                    v-if="!faction.history && !faction.combined_content"
+                    type="button"
+                    class="faction-ghost faction-ghost--lapis"
+                    :disabled="loadingFactionIndex === index"
+                    @click="generateDetailedFaction(index)"
+                  >Generate full description</button>
+                </div>
+                <button type="button" class="faction-ghost faction-ghost--burgundy"
+                  @click="confirmDelete(index)">Delete faction</button>
+              </div>
+            </template>
+
+            <!-- Edit Mode -->
+            <form v-else class="edit-form" @submit.prevent="saveEditFaction">
+              <h4 class="edit-form-title">Edit faction</h4>
+
+              <ParField label="Faction Name">
+                <ParInput v-model="factionEditForm.name" />
+              </ParField>
+
+              <ParField label="Influence Level">
+                <ParSelect v-model="factionEditForm.influence_level" :options="influenceLevelOptions" />
+                <template #hint>
+                  {{ factionPowerLevels[factionEditForm.influence_level - 1] }}: {{ factionPowerDescriptions[factionEditForm.influence_level - 1] }}
+                </template>
+              </ParField>
+
+              <ParField label="Faction Leader">
+                <ParInput v-model="factionEditForm.faction_leader" />
+              </ParField>
+
+              <ParField label="Faction Leader Description">
+                <ParTextarea v-model="factionEditForm.faction_leader_description" :rows="3" />
+              </ParField>
+
+              <ParField label="Key Strengths / Resources">
+                <ParTextarea v-model="factionEditForm.key_resources_and_assets" :rows="3" />
+              </ParField>
+
+              <ParField label="Faction Motto">
+                <ParInput v-model="factionEditForm.motto" />
+              </ParField>
+
+              <ParField label="Detailed Description">
+                <ParTextarea v-model="factionEditForm.detailed_content" :rows="12" />
+                <template #hint>
+                  The full history and details of the faction. Use double line breaks for paragraphs.
+                </template>
+              </ParField>
+
+              <div class="button-group">
+                <ParButton type="submit">Save changes</ParButton>
+                <ParButton type="button" @click="cancelEditFaction" variant="secondary-filled">Cancel</ParButton>
+              </div>
+            </form>
+          </div>
+        </li>
+
+        <!-- Loading skeleton for a new faction being added -->
+        <li v-if="loadingNewFaction" class="faction-list-item">
+          <div class="faction-card faction-card--expanded">
+            <h4 class="faction-card__title">{{ newFactionName }}</h4>
+            <div class="faction-card__loading">
+              <CdrSkeleton><FactionSkeleton /></CdrSkeleton>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Create new faction -->
+      <form class="create-faction-form" @submit.prevent="addNewFaction">
+        <h3 class="create-faction-form__title">Create new faction</h3>
+        <ParField label="Faction name">
+          <ParInput id="faction-name" v-model="newFactionName" placeholder="e.g., The Ashen Concord" />
+        </ParField>
+        <ParField label="Faction description" :optional="true">
+          <ParTextarea id="faction-description" v-model="newFactionDescription" :rows="3"
+            placeholder="A sentence or two on who they are and what they want — or leave blank." />
+        </ParField>
+        <ParButton type="submit" variant="primary" :disabled="!newFactionName">Add faction</ParButton>
+      </form>
+
+      <!-- Tab-level re-generate -->
+      <div class="factions-tab__regenerate">
+        <button type="button" class="faction-ghost faction-ghost--lapis" @click="generateFactions">
+          Re-generate factions for {{ setting.place_name }}
+        </button>
+      </div>
+    </div>
+
+    <template v-else-if="!loadingFactions">
+      <p class="factions-empty">
+        No factions yet. Generate a starting roster from this setting's overview,
+        then refine, regenerate, or add your own.
+      </p>
+      <ParButton @click="generateFactions">
+        Generate factions for {{ setting.place_name }}
+      </ParButton>
+    </template>
 
     <div v-if="loadingFactions">
       <BlockSkeleton />
     </div>
+
+    <!-- Delete confirmation -->
+    <ParConfirm
+      :opened="deleteConfirmIndex !== null"
+      title="Delete this faction?"
+      confirm-label="Delete faction"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performDelete"
+      @cancel="deleteConfirmIndex = null"
+    >
+      Deleting <strong>{{ deleteConfirmName }}</strong> removes it from this
+      setting. This can't be undone.
+    </ParConfirm>
   </div>
 </template>
 
 <script setup>
-import { ParButton } from "@/parchment";
-import { logger } from "@/util/logger.mjs";
-import { ref, computed, watch, reactive } from 'vue';
 import {
-  CdrButton,
-  CdrInput,
-  CdrSelect,
-  CdrAccordionGroup,
-  CdrAccordion,
-  CdrTooltip,
-  CdrPopover,
-  CdrSkeleton,
-  IconXSm,
-  IconInformationStroke,
-} from '@rei/cedar';
+  ParButton,
+  ParField,
+  ParInput,
+  ParTextarea,
+  ParSelect,
+  ParConfirm,
+  ParTooltip,
+} from "@/parchment";
+import { logger } from "@/util/logger.mjs";
+import { ref, computed, watch } from 'vue';
+import { CdrSkeleton } from '@rei/cedar';
 import FactionSkeleton from '@/components/skeletons/FactionSkeleton.vue';
 import OverviewSkeleton from '@/components/skeletons/OverviewSkeleton.vue';
 import BlockSkeleton from '@/components/skeletons/BlockSkeleton.vue';
@@ -222,11 +281,59 @@ const factionPowerDescriptions = [
 ];
 
 // -------------------------
+// Display helpers (map flat faction fields onto the card's display register)
+// -------------------------
+// Influence level: numeric 1-10 → descriptive word + its definition.
+const levelWord = (faction) => factionPowerLevels[faction.influence_level - 1] || '—';
+const levelDef = (faction) => factionPowerDescriptions[faction.influence_level - 1] || '';
+
+// One-line teaser for the collapsed card. The LLM produces prose, not a
+// dedicated teaser field, so we derive it from the first sentence of the
+// richest available text, falling back to the leader/strengths blurb.
+function factionTeaser(faction) {
+  const source = faction.combined_content
+    || faction.history
+    || faction.faction_leader_description
+    || faction.key_resources_and_assets
+    || '';
+  if (!source) return '';
+  const firstSentence = source.split(/(?<=[.!?])\s/)[0] || source;
+  return firstSentence.trim();
+}
+
+// Full-description paragraphs for the expanded card's Details section.
+// Prefer the combined_content (the canonical full description); fall back to
+// the legacy discrete fields for factions saved before combined_content.
+function detailParagraphs(faction) {
+  if (faction.combined_content) {
+    return faction.combined_content.split('\n\n').map(p => p.trim()).filter(Boolean);
+  }
+  if (faction.history) {
+    return [
+      faction.history,
+      [faction.recent_event, faction.current_situation].filter(Boolean).join(' '),
+      [faction.rites_and_ceremonies, faction.recent_ceremony].filter(Boolean).join(' '),
+      [faction.challenge_to_power, faction.challenge_event].filter(Boolean).join(' '),
+    ].map(p => p.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+// -------------------------
 // Local state
 // -------------------------
 const loadingFactions = ref(false);
 const loadingNewFaction = ref(false);
 const loadingFactionIndex = ref(null);
+
+// Delete confirmation (ParConfirm modal) — index of the faction pending
+// deletion, or null when the modal is closed.
+const deleteConfirmIndex = ref(null);
+const deleteConfirmName = computed(() =>
+  deleteConfirmIndex.value === null
+    ? ''
+    : (props.setting.factions?.[deleteConfirmIndex.value]?.name || 'this faction'),
+);
 
 const editingFactionIndex = ref(null);
 const factionEditForm = ref({
@@ -247,7 +354,7 @@ const newFactionDescription = ref('');
 // -------------------------
 const influenceLevelOptions = computed(() => {
   return factionPowerLevels.map((level, index) => ({
-    text: `${index + 1} - ${level}`,
+    label: `${index + 1} - ${level}`,
     value: index + 1,
   }));
 });
@@ -326,10 +433,19 @@ function emitUpdated(patch) {
 // -------------------------
 // Delete
 // -------------------------
-const deleteFaction = (index) => {
+// Open the ParConfirm modal for the faction at `index`.
+const confirmDelete = (index) => {
+  deleteConfirmIndex.value = index;
+};
+
+// Commit the pending deletion once confirmed.
+const performDelete = () => {
+  const index = deleteConfirmIndex.value;
+  if (index === null) return;
   const updatedFactions = [...props.setting.factions];
   updatedFactions.splice(index, 1);
   emitUpdated({ factions: updatedFactions });
+  deleteConfirmIndex.value = null;
 };
 
 // -------------------------
@@ -360,7 +476,9 @@ const saveEditFaction = () => {
     return {
       ...faction,
       name: factionEditForm.value.name,
-      influence_level: factionEditForm.value.influence_level,
+      // ParSelect emits the native string value; store it back as a number
+      // so influence-level math (sorting, level lookups) stays numeric.
+      influence_level: Number(factionEditForm.value.influence_level),
       faction_leader: factionEditForm.value.faction_leader,
       faction_leader_description: factionEditForm.value.faction_leader_description,
       key_resources_and_assets: factionEditForm.value.key_resources_and_assets,
@@ -528,31 +646,373 @@ watch(
 </script>
 
 <style scoped>
-.delete-button {
-  position: absolute;
-  top: 65px;
-  right: 15px;
-  z-index: 1;
+/* Lighter/cooler cream surface panel (no border) — the quiet ground that
+   warmer-toned faction cards lift off of (matches the Locations tab). The
+   Locations/NPCs tabs nest their content in a section with its own 2rem
+   padding on top of the tab's 1.75rem/2rem; Factions renders content directly,
+   so the inset is rolled into the tab padding here to match that breathing. */
+.factions-tab {
+  background: var(--par-color-surface-card, #FEFBF4);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 3.75rem 4rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
-.influence-level {
+/* ── Heading — shared tab-header standard (matches Locations / NPCs / Quest
+   Hooks): large serif 2.8rem/600 lapis title + regular-weight serif
+   description. ──────────────────────────────────────────────────────────── */
+.factions-heading {
+  margin-bottom: 1.5rem;
+}
+
+.factions-heading__title {
+  margin: 0 0 0.3rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.8rem;
+  font-weight: 600;
+  color: var(--par-color-action-primary, #2A4D70);
+  line-height: 1.2;
+}
+
+.factions-heading__tagline {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.55;
+}
+
+.factions-empty {
+  margin: 0.75rem 0 1.5rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  line-height: 1.6;
+}
+
+/* ── Faction list ──────────────────────────────────────────────────────── */
+.faction-list {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+.faction-list-item {
+  margin: 0;
+}
+
+/* Warm-tan card — real contrast against the cream tab container, no border
+   (the fill carries the weight). */
+.faction-card {
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-radius: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
+.faction-card--collapsed {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
 }
 
-.edit-form .edit-field {
+.faction-card--collapsed:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: -2px;
+}
+
+.faction-card--expanded {
+  padding: 1.25rem 1.5rem;
+}
+
+/* Title — substantial serif display, NOT small-caps. Reads as the name of a
+   thing, distinct from the small-caps label register inside the card. */
+.faction-card__title {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  line-height: 1.3;
+}
+
+.faction-card__header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.faction-card__teaser {
+  margin: 0.15rem 0 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.faction-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.faction-card__header:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: -2px;
+}
+
+.faction-card__caret {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--par-color-title, #7a1f1f);
+  transition: transform 0.2s ease;
+}
+
+.faction-card__caret--open {
+  transform: rotate(90deg);
+}
+
+/* Metadata row — structured "Influence Level: Dominant ⓘ" with a tan rule. */
+.faction-card__metadata {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 0.5px solid var(--par-color-border, #e8e2d4);
+}
+
+.faction-card__metadata-label {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.faction-card__metadata-value {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--par-color-text, #222);
+}
+
+.faction-card__metadata-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 0.5px solid var(--par-color-text-secondary, #555);
+  border-radius: 50%;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  cursor: help;
+}
+
+/* Labelled body sections ──────────────────────────────────────────────── */
+.faction-card__section {
+  margin-bottom: 1.25rem;
+}
+
+.faction-card__section-label {
+  margin: 0 0 0.5rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.faction-card__section-body {
+  margin: 0;
+  max-width: 62rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  line-height: 1.7;
+  color: var(--par-color-text, #222);
+}
+
+.faction-card__section-body p {
+  margin: 0 0 1rem;
+}
+
+.faction-card__section-body p:last-child {
+  margin-bottom: 0;
+}
+
+.faction-card__leader-name {
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+/* Long-form Details prose: a readability pass. Long lines are the main cause
+   of the "wall of text" read, so the measure is constrained to a comfortable
+   ~70-character line; leading opens up and paragraph spacing carries the
+   rhythm so each block reads as a distinct beat rather than an undivided slab. */
+.faction-card__section-body--prose {
+  max-width: 62rem;
+  line-height: 1.8;
+}
+
+.faction-card__section-body--prose p {
+  margin: 0 0 1.25rem;
+}
+
+.faction-card__section-body--prose p:last-child {
+  margin-bottom: 0;
+}
+
+/* Quote — editorial pull-quote with a tan left rule. */
+.faction-card__quote {
+  max-width: 62rem;
+  margin: 0 0 1.5rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--par-color-border, #e8e2d4);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.6;
+}
+
+.faction-card__loading {
+  margin: 1.25rem 0;
+}
+
+/* Action row — three ghost buttons, delete pushed right by space-between. */
+.faction-card__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 0.5px solid var(--par-color-border, #e8e2d4);
+}
+
+.faction-card__actions-primary {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* ── Ghost buttons (slate / lapis / burgundy) ──────────────────────────── */
+.faction-ghost {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0.5px solid currentColor;
+  border-radius: 0.6rem;
+  padding: 0.8rem 1.6rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.faction-ghost:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.faction-ghost:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.faction-ghost--slate {
+  color: var(--color-action-secondary-rest, #5A7A9A);
+}
+
+.faction-ghost--slate:hover:not(:disabled) {
+  background: rgba(90, 122, 154, 0.08);
+}
+
+.faction-ghost--lapis {
+  color: var(--color-action-rest, #365A85);
+}
+
+.faction-ghost--lapis:hover:not(:disabled) {
+  background: rgba(54, 90, 133, 0.08);
+}
+
+.faction-ghost--burgundy {
+  color: var(--par-color-title, #7a1f1f);
+}
+
+.faction-ghost--burgundy:hover:not(:disabled) {
+  background: rgba(122, 31, 31, 0.06);
+}
+
+/* ── Edit form (inside expanded card) ──────────────────────────────────── */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.edit-form-title {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+/* ── Create-new form — its own card on the panel, lapis (chrome) title ──── */
+.create-faction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 0.5px solid var(--par-color-border, #e8e2d4);
   margin-bottom: 1.5rem;
+}
+
+.create-faction-form__title {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2A4D70);
+}
+
+/* ── Tab-level re-generate — lapis ghost on its own ruled row ───────────── */
+.factions-tab__regenerate {
+  padding-top: 1rem;
+  border-top: 0.5px solid var(--par-color-border, #e8e2d4);
 }
 
 .button-group {
   display: flex;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 768px) {
+  .faction-card__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .faction-card__actions-primary {
+    flex-direction: column;
+  }
+
   .button-group {
     flex-direction: column;
   }

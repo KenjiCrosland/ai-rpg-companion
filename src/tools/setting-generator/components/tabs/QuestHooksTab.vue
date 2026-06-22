@@ -1,213 +1,220 @@
 <template>
-  <div>
-    <h2>Quest Hooks</h2>
-    <p style="margin-bottom: 2rem; color: #666; font-style: italic;">
-      Quest hooks can be generated from any NPC, but fully generated NPCs (with complete descriptions and
-      relationships)
-      will produce richer, more detailed quests than basic NPCs.
-    </p>
+  <div class="quest-hooks parchment">
+    <!-- Generation form (heading + tagline share this surface) -->
+    <div class="quest-hooks-form">
+      <div class="quest-hooks-heading">
+        <h3 class="quest-hooks-heading__title">Quest Hooks</h3>
+        <p class="quest-hooks-heading__tagline">
+          Quest hooks can be generated from any NPC, but fully generated NPCs — with complete
+          descriptions and relationships — produce richer, more detailed quests than basic ones.
+        </p>
+      </div>
 
-    <div v-if="setting.questHooks?.length > 0">
-      <cdr-accordion-group>
-        <cdr-accordion
-          v-for="(hook, index) in setting.questHooks"
-          :key="index"
-          :id="'hook-' + index"
-          level="2"
-          :opened="hook.open"
-          @accordion-toggle="hook.open = !hook.open"
+      <p v-if="!setting.npcs || setting.npcs.length === 0" class="quest-hooks-form__empty">
+        You need at least one NPC before you can create quest hooks. Visit the NPCs tab to
+        generate some first.
+      </p>
+      <template v-else>
+        <ParField label="Quest giver" required>
+          <ParSelect v-model="selectedQuestGiverIndex" :options="questGiverOptions" placeholder="Select an NPC" />
+          <template #hint>Fully generated NPCs produce more detailed quests.</template>
+        </ParField>
+        <ParField label="Quest type">
+          <ParSelect v-model="questType" :options="questTypes" placeholder="Select a quest type" />
+        </ParField>
+        <ParButton
+          variant="primary"
+          :full-width="true"
+          :disabled="selectedQuestGiverIndex === null || loadingQuestHooks"
+          @click="generateQuestHookFromTab"
         >
-          <template #label>
-            {{ hook.quest_title }}
-          </template>
-          <div>
-            <cdr-tooltip id="tooltip-example" position="left" class="delete-button">
-              <template #trigger>
-                <cdr-button size="small" :icon-only="true" :with-background="true"
-                  @click.stop="deleteQuestHook(index)">
-                  <template #icon>
-                    <icon-x-sm />
-                  </template>
-                </cdr-button>
-              </template>
-              <div>Delete Quest Hook</div>
-            </cdr-tooltip>
+          {{ loadingQuestHooks ? 'Generating…' : 'Generate quest hook' }}
+        </ParButton>
+      </template>
+    </div>
 
-            <!-- View Mode -->
-            <div v-if="editingQuestHookIndex !== index">
-              <h2>{{ hook.quest_title }}</h2>
-              <p><strong>Quest Giver:</strong> {{ hook.quest_giver_name }}</p>
+    <!-- Quest hook list (swap-style cards) -->
+    <ul v-if="setting.questHooks?.length > 0 || loadingQuestHooks" class="quest-hook-list">
+      <li v-for="(hook, index) in setting.questHooks" :key="index" class="quest-hook-item">
+        <Transition :css="!reducedMotion" name="hook-swap" mode="out-in">
+          <!-- Collapsed -->
+          <div
+            v-if="!isExpanded(index)"
+            key="collapsed"
+            class="quest-hook-collapsed"
+            role="button"
+            tabindex="0"
+            :aria-expanded="false"
+            :aria-label="`Expand ${hook.quest_title}`"
+            @click="toggleExpand(index)"
+            @keydown.enter.prevent="toggleExpand(index)"
+            @keydown.space.prevent="toggleExpand(index)"
+          >
+            <div class="quest-hook-collapsed__info">
+              <strong class="quest-hook-collapsed__title">{{ hook.quest_title }}</strong>
+              <span v-if="getTeaser(hook)" class="quest-hook-collapsed__teaser">{{ getTeaser(hook) }}</span>
+            </div>
+            <span class="quest-hook-collapsed__chevron" aria-hidden="true">
+              <svg viewBox="0 0 12 12" width="18" height="18">
+                <polyline points="2,4 6,8 10,4" fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </div>
 
-              <div v-if="hook.combined_giver_and_quest">
-                <p v-for="(paragraph, pIndex) in hook.combined_giver_and_quest.split('\n\n')" :key="pIndex">
-                  {{ paragraph }}
-                </p>
+          <!-- Expanded -->
+          <div v-else key="expanded" class="quest-card">
+            <!-- Inline edit -->
+            <div v-if="editingQuestHookIndex === index" class="quest-edit">
+              <ParCardInput v-model="questHookEditForm.quest_title" label="Title" />
+              <ParCardInput v-model="questHookEditForm.quest_giver_name" label="Quest Giver" />
+              <ParCardTextarea v-model="questHookEditForm.combined_giver_and_quest"
+                label="Quest Giver & Details" :rows="8" />
+
+              <div class="quest-edit__array">
+                <span class="quest-hook__label">Objectives</span>
+                <div v-for="(objective, i) in questHookEditForm.objectives" :key="'obj-' + i" class="quest-edit__row">
+                  <ParCardInput v-model="questHookEditForm.objectives[i]" :label="`Objective ${i + 1}`" />
+                  <ParCardButton variant="muted" size="small" @click="removeQuestObjective(i)">Remove</ParCardButton>
+                </div>
+                <ParCardButton variant="create" size="small" @click="addQuestObjective">+ Add objective</ParCardButton>
               </div>
-              <div v-else>
-                <p>{{ hook.quest_giver_background }}</p>
-                <p>{{ hook.quest_giver_encounter }}</p>
-                <p>{{ hook.quest_details }}</p>
+
+              <div class="quest-edit__array">
+                <span class="quest-hook__label">Challenges</span>
+                <div v-for="(challenge, i) in questHookEditForm.challenges" :key="'chal-' + i" class="quest-edit__row">
+                  <ParCardInput v-model="questHookEditForm.challenges[i]" :label="`Challenge ${i + 1}`" />
+                  <ParCardButton variant="muted" size="small" @click="removeQuestChallenge(i)">Remove</ParCardButton>
+                </div>
+                <ParCardButton variant="create" size="small" @click="addQuestChallenge">+ Add challenge</ParCardButton>
               </div>
 
-              <h3>Objectives</h3>
-              <cdr-list v-for="(objective, objIndex) in hook.objectives" modifier="unordered" :key="objIndex">
-                <li>{{ objective }}</li>
-              </cdr-list>
+              <div class="quest-edit__array">
+                <span class="quest-hook__label">Rewards</span>
+                <div v-for="(reward, i) in questHookEditForm.rewards" :key="'rew-' + i" class="quest-edit__row">
+                  <ParCardInput v-model="questHookEditForm.rewards[i]" :label="`Reward ${i + 1}`" />
+                  <ParCardButton variant="muted" size="small" @click="removeQuestReward(i)">Remove</ParCardButton>
+                </div>
+                <ParCardButton variant="create" size="small" @click="addQuestReward">+ Add reward</ParCardButton>
+              </div>
 
-              <h3>Challenges</h3>
-              <cdr-list v-for="(challenge, chalIndex) in hook.challenges" modifier="unordered" :key="chalIndex">
-                <li>{{ challenge }}</li>
-              </cdr-list>
+              <ParCardTextarea v-model="questHookEditForm.twist" label="Twist (optional)" :rows="3" />
 
-              <h3>Rewards</h3>
-              <cdr-list v-for="(reward, rewIndex) in hook.rewards" modifier="unordered" :key="rewIndex">
-                <li>{{ reward }}</li>
-              </cdr-list>
-
-              <h3>Twist</h3>
-              <p>{{ hook.twist }}</p>
-
-              <div class="button-group" style="margin-top: 2rem;">
-                <ParButton @click="startEditingQuestHook(index)" variant="secondary">Edit Quest Hook</ParButton>
+              <div class="quest-card__actions">
+                <ParCardButton variant="primary" @click="saveEditQuestHook">Save changes</ParCardButton>
+                <ParCardButton variant="muted" @click="cancelEditQuestHook">Cancel</ParCardButton>
               </div>
             </div>
 
-            <!-- Edit Mode -->
-            <div v-else class="edit-form">
-              <h2>Edit Quest Hook</h2>
+            <!-- View -->
+            <div v-else>
+              <div
+                class="quest-hook-expanded__header"
+                role="button"
+                tabindex="0"
+                :aria-expanded="true"
+                :aria-label="`Collapse ${hook.quest_title}`"
+                @click="toggleExpand(index)"
+                @keydown.enter.prevent="toggleExpand(index)"
+                @keydown.space.prevent="toggleExpand(index)"
+              >
+                <h4 class="quest-hook-expanded__title">{{ hook.quest_title }}</h4>
+                <span class="quest-hook-expanded__chevron" aria-hidden="true">
+                  <svg viewBox="0 0 12 12" width="18" height="18">
+                    <polyline points="2,8 6,4 10,8" fill="none" stroke="currentColor" stroke-width="1.6"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+              </div>
 
-              <cdr-input v-model="questHookEditForm.quest_title" label="Quest Title" background="secondary"
-                class="edit-field" />
+              <p class="quest-hook__quest-giver">
+                <span class="quest-hook__inline-label">Quest Giver:</span>
+                {{ hook.quest_giver_name }}
+              </p>
 
-              <cdr-input v-model="questHookEditForm.quest_giver_name" label="Quest Giver Name"
-                background="secondary" class="edit-field" />
-
-              <cdr-input v-model="questHookEditForm.combined_giver_and_quest" label="Quest Giver & Quest Details"
-                background="secondary" :rows="10" tag="textarea" class="edit-field">
-                <template #helper-text-bottom>
-                  Giver background, encounter description, and quest details. Use double line breaks for paragraphs.
+              <div class="quest-hook__prose">
+                <template v-if="hook.combined_giver_and_quest">
+                  <p v-for="(paragraph, pIndex) in hook.combined_giver_and_quest.split('\n\n')" :key="pIndex">
+                    {{ paragraph }}
+                  </p>
                 </template>
-              </cdr-input>
-
-              <h3>Objectives</h3>
-              <div v-for="(objective, objIndex) in questHookEditForm.objectives" :key="objIndex"
-                style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
-                <cdr-input v-model="questHookEditForm.objectives[objIndex]" label="Objective" background="secondary" />
-                <ParButton size="small" @click="removeQuestObjective(objIndex)"
-                  style="margin-top: 0.5rem;">Remove</ParButton>
-              </div>
-              <ParButton @click="addQuestObjective" variant="secondary" size="small">Add Objective</ParButton>
-
-              <h3 style="margin-top: 2rem;">Challenges</h3>
-              <div v-for="(challenge, chalIndex) in questHookEditForm.challenges" :key="chalIndex"
-                style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
-                <cdr-input v-model="questHookEditForm.challenges[chalIndex]" label="Challenge" background="secondary" />
-                <ParButton size="small" @click="removeQuestChallenge(chalIndex)"
-                  style="margin-top: 0.5rem;">Remove</ParButton>
-              </div>
-              <ParButton @click="addQuestChallenge" variant="secondary" size="small">Add Challenge</ParButton>
-
-              <h3 style="margin-top: 2rem;">Rewards</h3>
-              <div v-for="(reward, rewIndex) in questHookEditForm.rewards" :key="rewIndex"
-                style="margin-bottom: 1rem; padding: 1rem; background: #f4f2ed; border-radius: 4px;">
-                <cdr-input v-model="questHookEditForm.rewards[rewIndex]" label="Reward" background="secondary" />
-                <ParButton size="small" @click="removeQuestReward(rewIndex)"
-                  style="margin-top: 0.5rem;">Remove</ParButton>
-              </div>
-              <ParButton @click="addQuestReward" variant="secondary" size="small">Add Reward</ParButton>
-
-              <cdr-input v-model="questHookEditForm.twist" label="Twist" background="secondary" :rows="3"
-                tag="textarea" class="edit-field" style="margin-top: 2rem;">
-                <template #helper-text-bottom>
-                  An unexpected element that adds complexity to the quest
+                <template v-else>
+                  <p v-if="hook.quest_giver_background">{{ hook.quest_giver_background }}</p>
+                  <p v-if="hook.quest_giver_encounter">{{ hook.quest_giver_encounter }}</p>
+                  <p v-if="hook.quest_details">{{ hook.quest_details }}</p>
                 </template>
-              </cdr-input>
+              </div>
 
-              <div class="button-group">
-                <ParButton @click="saveEditQuestHook">Save Changes</ParButton>
-                <ParButton @click="cancelEditQuestHook" variant="secondary">Cancel</ParButton>
+              <template v-if="hook.objectives?.length">
+                <p class="quest-hook__label">Objectives</p>
+                <ul class="quest-hook__list">
+                  <li v-for="(objective, i) in hook.objectives" :key="i">{{ objective }}</li>
+                </ul>
+              </template>
+
+              <template v-if="hook.challenges?.length">
+                <p class="quest-hook__label">Challenges</p>
+                <ul class="quest-hook__list">
+                  <li v-for="(challenge, i) in hook.challenges" :key="i">{{ challenge }}</li>
+                </ul>
+              </template>
+
+              <template v-if="hook.rewards?.length">
+                <p class="quest-hook__label">Rewards</p>
+                <ul class="quest-hook__list">
+                  <li v-for="(reward, i) in hook.rewards" :key="i">{{ reward }}</li>
+                </ul>
+              </template>
+
+              <div v-if="hook.twist" class="quest-hook__twist">
+                <p class="quest-hook__twist-label">Potential Twist</p>
+                <p class="quest-hook__twist-body">{{ hook.twist }}</p>
+              </div>
+
+              <div class="quest-card__actions">
+                <ParCardButton variant="affirmative" size="small" @click="startEditingQuestHook(index)">Edit</ParCardButton>
+                <ParCardButton variant="muted" size="small" @click="confirmDelete(index)">Delete</ParCardButton>
               </div>
             </div>
           </div>
-        </cdr-accordion>
+        </Transition>
+      </li>
 
-        <cdr-accordion class="accordion" level="2" id="loading-quest-hook" v-if="loadingQuestHooks">
-          <template #label>
-            <CdrSkeleton>
-              <CdrSkeletonBone type="line" style="width:150px" />
-            </CdrSkeleton>
-          </template>
-        </cdr-accordion>
-      </cdr-accordion-group>
-    </div>
+      <!-- In-flight generation skeleton -->
+      <li v-if="loadingQuestHooks" class="quest-hook-item">
+        <div class="quest-card"><quest-hook-skeleton /></div>
+      </li>
+    </ul>
 
-    <div v-if="!(setting.questHooks?.length > 0) && !loadingQuestHooks">
-      <p>Generate quest hooks using NPCs from your setting as quest givers.</p>
-    </div>
-    <div v-if="!(setting.questHooks?.length > 0) && loadingQuestHooks">
-      <cdr-accordion-group>
-        <cdr-accordion class="accordion" level="2" id="loading-quest-hook-empty">
-          <template #label>
-            <CdrSkeleton>
-              <CdrSkeletonBone type="line" style="width:150px" />
-            </CdrSkeleton>
-          </template>
-        </cdr-accordion>
-      </cdr-accordion-group>
-    </div>
-
-    <hr style="margin: 2rem 0;">
-
-    <h3>Generate New Quest Hook</h3>
-    <p v-if="!setting.npcs || setting.npcs.length === 0" style="font-style: italic; color: #666;">
-      You need to have NPCs generated before you can create quest hooks. Visit the NPCs tab to generate some NPCs
-      first.
-    </p>
-    <div v-else>
-      <cdr-select
-        v-model="selectedQuestGiverIndex"
-        label="Quest Giver"
-        :options="questGiverOptions"
-        placeholder="Select an NPC"
-        background="secondary"
-        style="margin-bottom: 1rem;"
-      >
-        <template #helper-text-bottom>
-          Fully generated NPCs will produce more detailed quests
-        </template>
-      </cdr-select>
-
-      <cdr-select
-        label="Quest Type"
-        v-model="questType"
-        :options="questTypes"
-        placeholder="Select a Quest Type"
-        background="secondary"
-        style="margin-bottom: 1rem;"
-      />
-
-      <ParButton @click="generateQuestHookFromTab" :full-width="true" :disabled="selectedQuestGiverIndex === null">
-        Generate Quest Hook
-      </ParButton>
-    </div>
+    <!-- Delete confirmation -->
+    <ParConfirm
+      :opened="deleteConfirmIndex !== null"
+      title="Delete this quest hook?"
+      confirm-label="Delete quest hook"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performDelete"
+      @cancel="deleteConfirmIndex = null"
+    >
+      Deleting <strong>{{ deleteConfirmTitle }}</strong> removes it from this setting.
+      This can't be undone.
+    </ParConfirm>
   </div>
 </template>
 
 <script setup>
-import { ParButton } from "@/parchment";
-import { ref, computed, watch } from 'vue';
 import {
-  CdrButton,
-  CdrInput,
-  CdrSelect,
-  CdrList,
-  CdrAccordionGroup,
-  CdrAccordion,
-  CdrTooltip,
-  CdrSkeleton,
-  CdrSkeletonBone,
-  IconXSm,
-} from '@rei/cedar';
+  ParButton,
+  ParField,
+  ParSelect,
+  ParCardButton,
+  ParCardInput,
+  ParCardTextarea,
+  ParConfirm,
+} from "@/parchment";
+import { ref, computed, watch } from 'vue';
+import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
+import { logger } from "@/util/logger.mjs";
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createQuestHookPrompt } from '../../prompts/index.mjs';
 
@@ -292,9 +299,48 @@ const questGiverOptions = computed(() => {
     const label = isFullyGenerated
       ? `${npc.name} (Fully Generated)`
       : `${npc.name} (Basic)`;
-    return { text: label, value: index };
+    return { label, value: index };
   });
 });
+
+// ── Collapsed ↔ expanded swap (single hook open at a time, local state) ──
+const expandedKey = ref(null);
+const isExpanded = (index) => expandedKey.value === index;
+const toggleExpand = (index) => {
+  expandedKey.value = expandedKey.value === index ? null : index;
+  // Leaving an editing row cancels its edit.
+  if (editingQuestHookIndex.value !== null && editingQuestHookIndex.value !== index) {
+    cancelEditQuestHook();
+  }
+};
+
+// Respect prefers-reduced-motion so the swap doesn't cross-fade.
+const reducedMotion = ref(
+  typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+);
+
+// One-line teaser for a collapsed card: first sentence of the quest narrative.
+const getTeaser = (hook) => {
+  const text = (hook.combined_giver_and_quest
+    || hook.quest_details
+    || hook.quest_giver_background
+    || '').replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  const firstSentence = text.match(/^.*?[.!?](\s|$)/)?.[0]?.trim() || text;
+  if (firstSentence.length <= 120) return firstSentence;
+  const cut = firstSentence.slice(0, 120);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
+};
+
+// ── Delete confirmation (ParConfirm modal) ──
+const deleteConfirmIndex = ref(null);
+const deleteConfirmTitle = computed(() =>
+  deleteConfirmIndex.value === null
+    ? ''
+    : (props.setting.questHooks?.[deleteConfirmIndex.value]?.quest_title || 'this quest hook'),
+);
 
 // -------------------------
 // Helper functions
@@ -411,10 +457,25 @@ function emitUpdatedSetting(updatedQuestHooks) {
 // -------------------------
 // Delete
 // -------------------------
-const deleteQuestHook = (index) => {
+// Open the ParConfirm modal for the quest hook at `index`.
+const confirmDelete = (index) => {
+  deleteConfirmIndex.value = index;
+};
+
+// Commit the pending deletion once confirmed.
+const performDelete = () => {
+  const index = deleteConfirmIndex.value;
+  if (index === null) return;
   const updated = [...props.setting.questHooks];
   updated.splice(index, 1);
+  // Keep the single-open pointer aligned with the shifted indices.
+  if (expandedKey.value === index) {
+    expandedKey.value = null;
+  } else if (expandedKey.value !== null && expandedKey.value > index) {
+    expandedKey.value -= 1;
+  }
   emitUpdatedSetting(updated);
+  deleteConfirmIndex.value = null;
 };
 
 // -------------------------
@@ -473,6 +534,7 @@ watch(
   (newSetting, oldSetting) => {
     if (newSetting !== oldSetting) {
       editingQuestHookIndex.value = null;
+      expandedKey.value = null;
     }
   }
 );
@@ -483,7 +545,8 @@ watch(
 const generateQuestHookFromTab = async () => {
   if (selectedQuestGiverIndex.value === null) return;
 
-  const npc = props.setting.npcs[selectedQuestGiverIndex.value];
+  // ParSelect emits the native string value; index back into the NPC array.
+  const npc = props.setting.npcs[Number(selectedQuestGiverIndex.value)];
   const overviewText = getOverviewText(props.setting.setting_overview);
   const npcText = getFullNPCDescription(npc);
 
@@ -503,7 +566,7 @@ const generateQuestHookFromTab = async () => {
     const updated = [...(props.setting.questHooks || []), questHook];
     emitUpdatedSetting(updated);
   } catch (error) {
-    console.error('Error generating quest hook:', error);
+    logger.error('Error generating quest hook:', error);
   } finally {
     loadingQuestHooks.value = false;
   }
@@ -511,30 +574,316 @@ const generateQuestHookFromTab = async () => {
 </script>
 
 <style scoped>
-.delete-button {
-  position: absolute;
-  top: 65px;
-  right: 15px;
-  z-index: 1;
+/* Setting Quest Hooks — parchment swap-card design, mirroring the Item
+   Generator's Quest Hooks tab. Wrapped in the same lighter/cooler cream panel
+   (and matching 3.75rem/4rem inset) as the Locations / Factions / NPCs tabs so
+   the tab chrome stays uniform across the setting generator. */
+.quest-hooks {
+  background: var(--par-color-surface-card, #FEFBF4);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 3.75rem 4rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
-.edit-form .edit-field {
-  margin-bottom: 1.5rem;
+/* ── Heading — shared tab-header standard (2.8rem lapis title + regular
+   serif description), consistent with the other setting tabs. Sits inside the
+   form surface; the form's flex gap provides the spacing below it. ───────── */
+.quest-hooks-heading {
+  margin-bottom: 0;
 }
 
-.button-group {
+.quest-hooks-heading__title {
+  margin: 0 0 0.3rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.8rem;
+  font-weight: 600;
+  color: var(--par-color-action-primary, #2A4D70);
+  line-height: 1.2;
+}
+
+.quest-hooks-heading__tagline {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.55;
+}
+
+/* ── Generation form — sits flat on the tab panel (no inner card), matching
+   the NPCs / Locations tabs where the heading + controls share the panel
+   surface. ──────────────────────────────────────────────────────────────── */
+.quest-hooks-form {
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-@media (max-width: 768px) {
-  .button-group {
-    flex-direction: column;
-  }
+.quest-hooks-form__empty {
+  margin: 0;
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  line-height: 1.6;
+}
 
-  .button-group button {
-    width: 100%;
-  }
+/* ── Quest hook list (swap-style cards) ─────────────────────────────────── */
+.quest-hook-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.quest-hook-item {
+  list-style: none;
+}
+
+.quest-hook-collapsed {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.6rem 2rem;
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-sm, 3px);
+  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.quest-hook-collapsed:hover {
+  background: #f8f3e8;
+  border-color: var(--par-color-title, #7a1f1f);
+}
+
+.quest-hook-collapsed:focus-visible {
+  outline: 2px solid var(--par-color-action-primary, #2A4D70);
+  outline-offset: 2px;
+}
+
+.quest-hook-collapsed__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.quest-hook-collapsed__title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  line-height: 1.3;
+}
+
+.quest-hook-collapsed__teaser {
+  font-size: 1.4rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quest-hook-collapsed__chevron,
+.quest-hook-expanded__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.75rem;
+  color: var(--par-color-action-muted, #5A7A9A);
+  border: 1px solid var(--par-color-divider, #e2dccd);
+  border-radius: var(--par-radius-sm, 3px);
+  background: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.quest-hook-collapsed__chevron svg,
+.quest-hook-expanded__chevron svg { display: block; }
+
+.quest-hook-collapsed:hover .quest-hook-collapsed__chevron,
+.quest-hook-expanded__header:hover .quest-hook-expanded__chevron {
+  color: var(--par-color-title, #7a1f1f);
+  border-color: var(--par-color-title, #7a1f1f);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* Cross-fade between collapsed and expanded states. */
+.hook-swap-enter-active,
+.hook-swap-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.hook-swap-enter-from,
+.hook-swap-leave-to {
+  opacity: 0;
+}
+
+/* ── Expanded card (also wraps the loading skeleton) ────────────────────── */
+.quest-card {
+  padding: 1.6rem 2rem;
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-sm, 3px);
+  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
+}
+
+.quest-hook-expanded__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.quest-hook-expanded__header:focus-visible {
+  outline: 2px solid var(--par-color-action-primary, #2A4D70);
+  outline-offset: 2px;
+  border-radius: var(--par-radius-sm, 3px);
+}
+
+.quest-hook-expanded__title {
+  margin: 0;
+  font-size: 1.95rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  line-height: 1.2;
+}
+
+.quest-hook-expanded__header:hover .quest-hook-expanded__title {
+  color: var(--par-color-title-deep, #58180d);
+}
+
+/* Quest Giver — inline burgundy label + serif body. */
+.quest-hook__quest-giver {
+  margin: 0 0 1rem;
+  font-size: 1.55rem;
+  line-height: 1.65;
+  color: var(--par-color-text, #222);
+}
+
+.quest-hook__inline-label {
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  margin-right: 0.4rem;
+}
+
+/* Narrative prose — constrained measure + open leading for readability. */
+.quest-hook__prose {
+  max-width: 62rem;
+  margin: 0 0 0.5rem;
+  font-size: 1.55rem;
+  line-height: 1.7;
+  color: var(--par-color-text, #222);
+}
+
+.quest-hook__prose p {
+  margin: 0 0 1rem;
+}
+
+.quest-hook__prose p:last-child {
+  margin-bottom: 0;
+}
+
+/* Section labels — burgundy small-caps. */
+.quest-hook__label {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quest-hook__list {
+  max-width: 62rem;
+  margin: 0 0 1rem;
+  padding-left: 1.6rem;
+  font-size: 1.55rem;
+  line-height: 1.65;
+  color: var(--par-color-text, #222);
+}
+
+.quest-hook__list li {
+  margin-bottom: 0.5rem;
+}
+
+.quest-hook__list li::marker {
+  color: var(--par-color-title, #7a1f1f);
+}
+
+/* Potential Twist — warm-tan callout with burgundy left-rule. */
+.quest-hook__twist {
+  max-width: 62rem;
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.25rem;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-left: 3px solid var(--par-color-title, #7a1f1f);
+  border-radius: 0 var(--par-radius-md, 4px) var(--par-radius-md, 4px) 0;
+}
+
+.quest-hook__twist-label {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quest-hook__twist-body {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.65;
+  color: var(--par-color-text, #222);
+}
+
+/* Card action row (view + edit). */
+.quest-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+/* ── Inline edit form ───────────────────────────────────────────────────── */
+.quest-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.quest-edit__array {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quest-edit__array .quest-hook__label {
+  margin: 0;
+}
+
+.quest-edit__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.7rem;
+}
+
+.quest-edit__row > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .quest-card__actions { flex-direction: column; align-items: stretch; }
+  .quest-edit__row { flex-direction: column; align-items: stretch; }
 }
 </style>
