@@ -200,7 +200,8 @@
                 <div v-if="entry.npc.statblock && entry.npc.statblock_name" class="statblock-saved-message">
                   <p>
                     Edit this statblock in the
-                    <a :href="getStatblockGeneratorUrl(entry.npc.statblock_name, entry.npc.statblock_folder)" target="_blank">Statblock Generator</a>
+                    <a :href="getStatblockGeneratorUrl(entry.npc.statblock_name, entry.npc.statblock_folder)" target="_blank"
+                      @click="openStatblockGenerator($event, entry.npc.statblock_name, entry.npc.statblock_folder)">Statblock Generator</a>
                   </p>
                 </div>
               </div>
@@ -271,6 +272,7 @@
 import { ParButton, ParCardButton, ParAddNewButton } from "@/parchment";
 import { ref, reactive, computed, nextTick, onBeforeMount, onMounted, onUnmounted, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
+import { navigateToTool } from '@/util/navigation.mjs';
 import NPCSkeleton from './skeletons/NPCSkeleton.vue';
 import Statblock from '@/components/Statblock.vue';
 import NPCCard from '@/components/NPCCard.vue';
@@ -458,7 +460,8 @@ const patreonLoginUrl = computed(() => {
   return `https://cros.land/patreon-flow/?patreon-login=yes&patreon-final-redirect=${returnUrl}`;
 });
 
-// Statblock Generator URL with query params
+// Statblock Generator URL with query params (the href used in production,
+// where the link opens the cros.land page in a new tab).
 function getStatblockGeneratorUrl(monsterName, folderName) {
   const base = 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/';
   const params = new URLSearchParams();
@@ -466,6 +469,17 @@ function getStatblockGeneratorUrl(monsterName, folderName) {
   if (folderName) params.set('folder', folderName);
   const qs = params.toString();
   return qs ? `${base}?${qs}` : base;
+}
+
+// Dev has no per-tool URL (tools route via sessionStorage + '/'), so the
+// production href above 404s in dev. Intercept the click in dev and route
+// through the dev/prod-aware navigateToTool instead; in prod, fall through
+// so the href + target="_blank" opens the page in a new tab.
+function openStatblockGenerator(event, monsterName, folderName) {
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (!isDev) return;
+  event.preventDefault();
+  navigateToTool('statblock-generator', { monster: monsterName, folder: folderName });
 }
 
 // The CR dropdown data
@@ -1095,28 +1109,29 @@ function clearNpcStatblockReference(index) {
   transform: translateY(0);
 }
 
+/* Parchment callout — matches the NPC generator / MonstersTab. */
 .statblock-saved-message {
   margin-top: 1.5rem;
   padding: 1rem 1.5rem;
-  background: #f0fdf4;
-  border: 1px solid #22c55e;
-  border-radius: 6px;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
 }
 
 .statblock-saved-message p {
   margin: 0;
-  color: #14532d;
+  color: var(--par-color-text, #222);
   font-size: 1.6rem;
 }
 
 .statblock-saved-message a {
-  color: #16a34a;
+  color: var(--color-action-hover, #2A4D70);
   font-weight: 600;
   text-decoration: underline;
 }
 
 .statblock-saved-message a:hover {
-  color: #22c55e;
+  color: var(--color-action-active, #1F3A5C);
 }
 
 /* ---- Header (mirrors setting-generator's RelatedNPCsSection) ----
@@ -1128,31 +1143,31 @@ function clearNpcStatblockReference(index) {
    doesn't land cleanly — wrapping makes the serif baseline structural,
    not selector-dependent. */
 .dungeon-npcs-section {
+  padding: 1rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .dungeon-npcs-header {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .dungeon-npcs-title {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.3rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 2rem;
+  font-size: 2.8rem;
   font-weight: 600;
   color: var(--par-color-action-primary, #2A4D70);
-  letter-spacing: 0;
   line-height: 1.2;
 }
 
 .dungeon-npcs-subtitle {
   margin: 0;
-  font-family: var(--par-font-sans, sans-serif);
-  font-size: 1.3rem;
-  font-style: italic;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: normal;
   font-weight: 400;
-  color: var(--par-color-text-muted, #6b6b6b);
-  line-height: 1.5;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.55;
 }
 
 .dungeon-npcs-subtitle-link {

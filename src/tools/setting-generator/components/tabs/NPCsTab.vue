@@ -364,9 +364,10 @@ onUnmounted(() => {
 <style scoped>
 /* Lighter/cooler cream surface panel (no border) — the quiet ground that
    warmer-toned stub cards lift off of (matches the Locations / Factions tabs). */
+/* Bare — the shared .setting-tabs container provides the cream surface and
+   padding now (the tab strip and content share one card). */
 .npcs-tab {
-  background: var(--par-color-surface-card, #FEFBF4);
-  border-radius: var(--par-radius-lg, 12px);
-  padding: 1.75rem 2rem;
+  background: transparent;
+  padding: 0;
 }
 </style>

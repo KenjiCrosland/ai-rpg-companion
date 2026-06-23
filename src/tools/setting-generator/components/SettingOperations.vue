@@ -87,25 +87,19 @@ function copyAsPlainText() {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
-/* Footer action row — Export on the left, Delete trailing right. */
+/* Footer action row — Export + Delete centered. Centered (not Delete-trailing)
+   so the buttons don't shift when the export panel toggles and widens the block. */
 .setting-ops__actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.7rem;
-}
-
-.setting-ops__delete {
-  margin-left: auto;
 }
 
 @media (max-width: 600px) {
   .setting-ops__actions {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .setting-ops__delete {
-    margin-left: 0;
   }
 }
 </style>

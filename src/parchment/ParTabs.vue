@@ -27,9 +27,10 @@
  * own panels and match panel IDs to `par-tabs-panel-${tab.id}` (plus
  * role="tabpanel", aria-labelledby="par-tabs-tab-${tab.id}", tabindex="0").
  *
- * Active tab: dark-lapis text + lapis underline — the active state lives
- * fully in the chrome (lapis) register. Inactive: muted gray, hover
- * deepens to body text.
+ * Pill tabs: active tab is burgundy text on a warm-tan pill (editorial
+ * register); inactive tabs are muted gray with no pill until hover, when a
+ * lighter pill fades in and the text deepens. Labels are uppercase + tracked.
+ * A hairline divider sits beneath the strip.
  *
  * Roving tabindex: active tab is the only tab stop; Arrow Left/Right cycle,
  * Home/End jump to ends.
@@ -64,27 +65,31 @@ function handleKeydown(event) {
 <style scoped>
 .par-tabs {
   display: flex;
-  gap: 2rem;
-  padding: 0 0.5rem;
-  margin-bottom: 1.25rem;
-  border-bottom: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  gap: 0.5rem;
+  padding: 0 0.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+  /* Rule matches the active pill's warm-tan fill. */
+  border-bottom: 2px solid var(--par-color-callout-bg, #f3ebda);
 }
 
 .par-tabs__tab {
   background: transparent;
   border: none;
-  padding: 0.5rem 0;
+  padding: 0.6rem 1.4rem;
+  border-radius: var(--par-radius-md, 8px);
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 1.8rem;
-  font-weight: 400;
-  color: var(--par-color-text-secondary, #555);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--par-color-text-muted, #6b6b6b);
   cursor: pointer;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -1px; /* aligns active underline with the strip's bottom border */
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+/* Inactive tabs reveal a quiet pill on hover; the text deepens to body ink. */
 .par-tabs__tab:hover {
+  background: var(--par-color-callout-bg-light, #F8F2E3);
   color: var(--par-color-text, #222);
 }
 
@@ -95,12 +100,13 @@ function handleKeydown(event) {
 .par-tabs__tab:focus-visible {
   outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
-.par-tabs__tab--active {
-  color: var(--color-action-hover, #2A4D70); /* dark lapis */
+/* Active: burgundy on a warm-tan pill (editorial register). */
+.par-tabs__tab--active,
+.par-tabs__tab--active:hover {
+  background: var(--par-color-callout-bg, #f3ebda);
+  color: var(--par-color-title, #7a1f1f);
   font-weight: 600;
-  border-bottom-color: var(--color-action-hover, #2A4D70); /* lapis underline — unifies the active state in the chrome register */
 }
 </style>

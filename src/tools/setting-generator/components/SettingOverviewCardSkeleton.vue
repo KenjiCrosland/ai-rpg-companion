@@ -121,7 +121,9 @@ const skeletonSections = [
 }
 
 .setting-card-content {
-  max-width: 65ch;
+  /* Matches OverviewTab: cap widened by the 6rem of side gutters so the
+     measure stays at 65ch and the skeleton doesn't jump on load. */
+  max-width: calc(65ch + 6rem);
   margin-inline: auto;
   padding: 0 3rem 2.5rem;
 }

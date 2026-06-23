@@ -712,7 +712,7 @@ Generate a D&D 5e quest hook for the following magic item:
 .quest-hooks-heading__title {
   /* 2.8rem — the shared tab-header standard, matched across the setting
      generator's tabs for cross-tool consistency. */
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.3rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   font-size: 2.8rem;
   font-weight: 600;
@@ -724,17 +724,14 @@ Generate a D&D 5e quest hook for the following magic item:
   margin: 0;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   font-size: 1.5rem;
-  font-style: italic;
+  font-style: normal;
   color: var(--par-color-text-secondary, #555);
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
-/* ── Generation form (cream surface card) ───────────────────────────────── */
+/* ── Generation form — flat (no inner card). The shell's .item-view cream
+   container provides the surface now; a boxed form here would double up. ──── */
 .quest-hooks-form {
-  background: var(--par-color-surface, #FBF7F0);
-  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
-  border-radius: var(--par-radius-lg, 12px);
-  padding: 1.75rem 2rem;
   margin-bottom: 2rem;
 }
 

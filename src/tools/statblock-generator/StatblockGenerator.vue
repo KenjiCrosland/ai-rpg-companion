@@ -1279,6 +1279,12 @@ async function generateStatblock() {
   padding: 2rem;
 }
 
+@media (max-width: 2080px) {
+  .generator-container {
+    margin-top: 3rem;
+  }
+}
+
 .monster-form {
   display: flex;
   flex-direction: column;

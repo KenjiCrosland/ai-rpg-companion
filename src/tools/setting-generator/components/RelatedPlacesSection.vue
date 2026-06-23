@@ -198,7 +198,7 @@ function onAddAndPromote({ kind, name, role_brief, suggested_setting_type }) {
          background: var(--par-color-surface-page);
        and the workspace will read as a continuous tinted zone again. */
   background: transparent;
-  padding: 2rem;
+  padding: 1rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 

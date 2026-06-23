@@ -1,10 +1,11 @@
 <template>
   <div class="map-and-sidebar-container" ref="mapContainer">
     <div class="dungeon-map-wrapper" ref="mapWrapper">
+      <div class="dungeon-map-heading parchment">
+        <h3 class="dungeon-map-heading__title">Map</h3>
+        <p class="dungeon-map-heading__tagline">Click a room to view and generate its description.</p>
+      </div>
       <div v-if="dungeonStore.currentDungeon" class="dungeon-map-container" ref="mapInnerContainer">
-        <h4 style="text-align: center">
-          Map of {{ dungeonStore.currentDungeon.dungeonOverview.name }}
-        </h4>
         <div v-if="dungeonStore.currentDungeon.rooms" class="dungeon-map-positioner">
           <DungeonMap :rooms="dungeonStore.currentDungeon.rooms" @roomClicked="handleRoomClick" ref="dungeonMap"
             :dungeonName="dungeonStore.currentDungeon.dungeonOverview.name" @mapClicked="handleMapClick"
@@ -171,6 +172,30 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Tab header — shared 2.8rem standard (matches the other dungeon/setting tabs). */
+.dungeon-map-heading {
+  margin-bottom: 1.5rem;
+}
+
+.dungeon-map-heading__title {
+  margin: 0 0 0.3rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.8rem;
+  font-weight: 600;
+  color: var(--par-color-action-primary, #2A4D70);
+  line-height: 1.2;
+}
+
+.dungeon-map-heading__tagline {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.55;
+}
+
 .map-and-sidebar-container {
   display: flex;
   flex-direction: row;
@@ -180,7 +205,6 @@ onMounted(() => {
 }
 
 .dungeon-map-wrapper {
-  background-color: #fafaf6;
   overflow: auto;
   flex: 1 1 auto;
 }

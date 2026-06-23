@@ -2496,15 +2496,27 @@ $transition-speed: 0.3s;
   margin: 3rem auto;
   max-width: 940px;
 
-  /* ParTabs strip + bare panel — no card surface around the content
-     (the tab components own their own cards, matching the Item Generator). */
+  /* Content container — cream surface-card panel (same as the dungeon
+     generator's .content-container). Extends up over the ParTabs strip so the
+     tabs and the active panel share one card; the per-tab components no longer
+     carry their own surface (they render bare inside this container). */
   .setting-tabs {
     width: 100%;
+    box-sizing: border-box;
+    background-color: var(--par-color-surface-card, #FEFBF4);
+    border-radius: 8px;
+    padding: 2.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 2080px) {
+    .setting-tabs {
+      margin-top: 3rem;
+    }
   }
 
   .setting-tab-panel {
-    padding-top: 1.5rem;
-
     &:focus {
       outline: none;
     }

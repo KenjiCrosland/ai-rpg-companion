@@ -578,10 +578,11 @@ const generateQuestHookFromTab = async () => {
    Generator's Quest Hooks tab. Wrapped in the same lighter/cooler cream panel
    (and matching 3.75rem/4rem inset) as the Locations / Factions / NPCs tabs so
    the tab chrome stays uniform across the setting generator. */
+/* Bare — the shared .setting-tabs container provides the cream surface and
+   padding now (the tab strip and content share one card). */
 .quest-hooks {
-  background: var(--par-color-surface-card, #FEFBF4);
-  border-radius: var(--par-radius-lg, 12px);
-  padding: 3.75rem 4rem;
+  background: transparent;
+  padding: 1rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 

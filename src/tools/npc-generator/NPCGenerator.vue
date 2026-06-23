@@ -2387,6 +2387,12 @@ $active-border-color: var(--color-action-rest, #365A85);
     box-sizing: border-box;
 }
 
+@media (max-width: 2080px) {
+    #npc-content-area {
+        margin-top: 3rem;
+    }
+}
+
 hr {
     border: 1px solid $cdr-color-border-secondary;
     width: 80%;

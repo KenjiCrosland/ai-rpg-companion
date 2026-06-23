@@ -50,12 +50,6 @@
             </p>
           </section>
         </div>
-
-        <!-- Below-content actions: destructive Delete separated from
-             the editorial card by a hairline + standalone action row. -->
-        <div class="dungeon-card-actions">
-          <ParCardButton variant="danger" @click="confirmDelete">Delete Current Dungeon</ParCardButton>
-        </div>
       </template>
 
       <!-- Edit Mode -->
@@ -236,16 +230,6 @@ const saveEdit = () => {
   dungeonStore.saveDungeons();
   isEditing.value = false;
 };
-
-const confirmDelete = () => {
-  const dungeonName = dungeonStore.currentDungeon?.dungeonOverview?.name
-    || dungeonStore.currentDungeon?.dungeonOverview?.title
-    || 'this dungeon';
-  const confirmed = window.confirm(`Are you sure you want to delete "${dungeonName}"? This action cannot be undone.`);
-  if (confirmed) {
-    dungeonStore.deleteDungeon(dungeonStore.currentDungeonId);
-  }
-};
 </script>
 
 <style scoped>
@@ -254,7 +238,7 @@ const confirmDelete = () => {
    siblings. */
 .dungeon-card {
   background: var(--par-color-surface, #fdfbf6);
-  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border: 1px solid var(--par-color-border, #e8e2d4);
   border-radius: 2px;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   overflow: hidden;
@@ -414,13 +398,6 @@ const confirmDelete = () => {
 
 /* Below-content destructive action — hairline separator + right-
    aligned button. */
-.dungeon-card-actions {
-  padding: 1rem 3rem 2rem;
-  border-top: 1px solid var(--par-color-divider, #e2dccd);
-  display: flex;
-  justify-content: flex-end;
-}
-
 /* Edit form — same register as setting's edit panel. */
 .dungeon-edit {
   padding: 0 3rem 2rem;
@@ -455,7 +432,6 @@ const confirmDelete = () => {
 @media (max-width: 600px) {
   .dungeon-card-header,
   .dungeon-card-content,
-  .dungeon-card-actions,
   .dungeon-edit {
     padding-left: 1.5rem;
     padding-right: 1.5rem;

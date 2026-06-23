@@ -3,8 +3,15 @@
     <div class="toggle-button" :class="{ 'mobile': isMobile, 'expanded': !props.isCollapsed && isMobile }"
       @click="toggleSidebar" :aria-expanded="!props.isCollapsed" aria-label="Toggle sidebar" role="button" tabindex="0"
       @keydown.enter.space="toggleSidebar">
-      <!-- Toggle icon changes based on the state and viewport -->
-      <span>{{ toggleIcon }}</span>
+      <!-- Inline SVG (not a Unicode triangle): WordPress's emoji conversion
+           substitutes glyphs like ▶ with an s.w.org emoji image in prod, so
+           a text triangle renders as a blue play-button. The SVG rotates to
+           point the right way for the current state/viewport. -->
+      <span class="toggle-button__icon" :style="{ transform: `rotate(${iconRotation}deg)` }">
+        <svg viewBox="0 0 12 12" width="18" height="18" aria-hidden="true">
+          <polygon points="4,2 9,6 4,10" fill="currentColor" />
+        </svg>
+      </span>
     </div>
     <div class="map-sidebar" :class="{ 'is-collapsed': props.isCollapsed }">
       <div class="sidebar-content">
@@ -46,13 +53,12 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkIsMobile);
 });
 
-// Computed property to determine the toggle icon
-const toggleIcon = computed(() => {
-  if (isMobile.value) {
-    return props.isCollapsed ? '▲' : '▼'; // Up and Down triangles for mobile
-  } else {
-    return props.isCollapsed ? '◀' : '▶'; // Left and Right triangles for desktop
-  }
+// Rotation (deg) for the SVG triangle, which points right (▶) at 0°.
+// Desktop: collapsed → left (◀, 180°), expanded → right (▶, 0°).
+// Mobile: collapsed → up (▲, -90°), expanded → down (▼, 90°).
+const iconRotation = computed(() => {
+  if (isMobile.value) return props.isCollapsed ? -90 : 90;
+  return props.isCollapsed ? 180 : 0;
 });
 </script>
 
@@ -62,18 +68,16 @@ const toggleIcon = computed(() => {
 }
 
 .sidebar-content {
-  /* Generous inner padding — sourcebook content needs breathing room
-     between the text and the column edge. Horizontal gutters at
-     3.5rem (the widest comfortable margin without starving the line
-     length) so body paragraphs and the read-aloud box read like
-     printed page spreads, not narrow webpage columns. */
-  padding: 2rem 3.5rem 2.5rem;
+  /* Generous horizontal gutters (3.5rem) so body paragraphs and the
+     read-aloud box read like printed page spreads. Top padding is 0 so the
+     tab strip sits level with the flush top of the map alongside it. */
+  padding: 0 3.5rem 2.5rem;
   overflow-y: auto;
 }
 
 /* Sidebar Styles */
 .map-sidebar {
-  background-color: #fafaf6;
+  background-color: var(--par-color-surface-card, #FEFBF4);
   /* Divider rule matches the collapse-tab outline (faded slate) —
      same lapis-family secondary chrome color, so the tab reads as
      an affordance hanging off the divider rather than a foreign
@@ -128,9 +132,15 @@ const toggleIcon = computed(() => {
   color: var(--color-action-secondary-rest, #5A7A9A);
 }
 
-.toggle-button span {
-  font-size: 1.5rem;
-  line-height: 1;
+.toggle-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.toggle-button__icon svg {
+  display: block;
 }
 
 /* Hover/active layer the slate tint OVER the cream surface using

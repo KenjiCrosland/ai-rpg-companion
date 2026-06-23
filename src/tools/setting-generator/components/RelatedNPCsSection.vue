@@ -442,7 +442,7 @@ watch(() => props.setting, () => {
    ParCallout, ParCardTextarea, etc.). */
 .related-npcs-section {
   background: transparent;
-  padding: 2rem;
+  padding: 1rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 

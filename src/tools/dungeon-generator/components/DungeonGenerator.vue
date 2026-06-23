@@ -10,22 +10,80 @@
                 <span>{{ dungeon.dungeonOverview.name }}</span>
               </button>
             </li>
-            <li>
-              <button class="dungeon-button" @click="dungeonStore.createNewDungeon"
-                :class="{ active: dungeonStore.currentDungeonId === null }">
-                + New Dungeon
-              </button>
-            </li>
           </ul>
         </div>
 
         <div class="sidebar-footer">
-          <ParButton @click="deleteAllDungeons" variant="secondary" :full-width="true">Delete All
-            Dungeons</ParButton>
+          <ParButton variant="primary" :full-width="true" @click="dungeonStore.createNewDungeon">
+            + New Dungeon
+          </ParButton>
+
+          <div class="sidebar-footer__divider"></div>
+
+          <div class="sidebar-data-options">
+            <button
+              class="sidebar-data-options__toggle"
+              @click="dataOptionsExpanded = !dataOptionsExpanded"
+              :aria-expanded="dataOptionsExpanded"
+              aria-controls="dungeon-data-options-panel"
+            >
+              <span>Data options</span>
+              <svg
+                class="sidebar-data-options__icon"
+                :class="{ 'is-expanded': dataOptionsExpanded }"
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </button>
+
+            <div
+              v-if="dataOptionsExpanded"
+              id="dungeon-data-options-panel"
+              class="sidebar-data-options__panel"
+            >
+              <p class="sidebar-data-options__description">
+                Save your dungeons to a file or restore from a backup. Your data stays on your device.
+              </p>
+
+              <button class="sidebar-data-options__action" @click="showDataManagerModal = true">
+                Backup / Restore dungeons
+              </button>
+
+              <button
+                v-if="dungeonStore.dungeons.length > 0"
+                class="sidebar-data-options__action sidebar-data-options__action--danger"
+                @click="showDeleteAllConfirmation = true"
+              >
+                Delete all dungeons
+              </button>
+            </div>
+          </div>
         </div>
 
         <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
           :premium="premium" currentApp="dungeons" />
+
+        <!-- Delete-all confirmation (mirrors the NPC / Setting / Item generators) -->
+        <ParModal
+          :opened="showDeleteAllConfirmation"
+          title="Delete all dungeons?"
+          @cancel="showDeleteAllConfirmation = false"
+        >
+          <p class="delete-all-modal__body">
+            This will permanently delete every saved dungeon in your library. This action cannot be undone.
+          </p>
+          <p class="delete-all-modal__suggestion">
+            Consider backing up your dungeons first if you might want to restore these later.
+          </p>
+          <template #footer>
+            <ParButton variant="secondary" @click="showDeleteAllConfirmation = false">Cancel</ParButton>
+            <button class="delete-all-modal__confirm" @click="deleteAllDungeons">Delete all dungeons</button>
+          </template>
+        </ParModal>
       </div>
     </template>
 
@@ -33,7 +91,7 @@
     <div class="generator-container">
       <div v-if="!dungeonStore.currentDungeon && !isGenerating" class="landing-wrapper">
         <!-- ZONE 1: Hero header -->
-        <div class="hero-header">
+        <div class="hero-header parchment">
           <div class="brand-line">
             <span class="brand-name">Kenji's Dungeon Generator</span>
             <!-- Version pill is fresh-visit framing — suppressed during
@@ -42,7 +100,7 @@
             <VersionBadge v-if="!isSeededFlow" :premium="premium" />
           </div>
           <template v-if="isSeededFlow">
-            <h1>
+            <h1 class="page-heading__title">
               Create Dungeon<template v-if="seedStubName">: {{ seedStubName }}</template>
             </h1>
             <p class="value-prop">
@@ -51,14 +109,14 @@
             </p>
           </template>
           <template v-else>
-            <h1>Create Complete D&D 5e Dungeons in Minutes</h1>
+            <h1 class="page-heading__title">Create Complete D&D 5e Dungeons in Minutes</h1>
             <p class="value-prop">Generate dungeon maps, NPCs, monsters with full statblocks, and export-ready content.
             </p>
           </template>
         </div>
 
         <!-- ZONE 2: Form card -->
-        <div class="form-card">
+        <div class="form-card parchment">
           <!-- Cross-tool seed callout: shown when the user arrived from
                the Item Generator (pendingSeed populated by the mount
                handler). Removes the "is anything actually happening?"
@@ -69,36 +127,31 @@
             :source-type="seededFromItem ? 'item' : ''"
             :source-name="seededFromItem?.name || ''"
           />
-          <form @submit.prevent="handleGenerateDungeon">
-            <div class="form-row-description">
-              <cdr-input id="dungeon_description" v-model="dungeonStore.overviewForm.description"
-                background="secondary"
-                label="Describe your dungeon (optional)"
+          <form class="dungeon-form" @submit.prevent="handleGenerateDungeon">
+            <ParField label="Describe your dungeon" :optional="true">
+              <ParInput id="dungeon_description" v-model="dungeonStore.overviewForm.description"
                 placeholder="e.g. A sunken Mesopotamian ziggurat called Edutu — or leave blank for a surprise." />
-            </div>
-            <cdr-select class="generator-field-select" id="difficulty" v-model="dungeonStore.overviewForm.difficulty"
-              background="secondary" label="Dungeon Difficulty" :options="difficultyOptions"
-              :placeholder="'Select Difficulty'">
-              <template #helper-text-bottom>
-                Select the desired difficulty tier for the dungeon.
+            </ParField>
+            <ParField label="Dungeon difficulty">
+              <ParSelect id="difficulty" v-model="dungeonStore.overviewForm.difficulty"
+                :options="difficultyOptions" placeholder="Select difficulty" />
+              <template #hint>Select the desired difficulty tier for the dungeon.</template>
+            </ParField>
+            <ParField label="Dungeon lore" :optional="true">
+              <ParTextarea :rows="5" v-model="dungeonStore.overviewForm.place_lore"
+                placeholder="Paste in existing lore, or describe deeper history — optional." />
+              <template #hint>
+                Need help with lore? Use the
+                <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link>.
               </template>
-            </cdr-select>
-            <div class="lore-field-input">
-              <cdr-input :rows="5" tag="textarea" v-model="dungeonStore.overviewForm.place_lore" background="secondary"
-                label="Dungeon Lore (optional)" placeholder="Paste in existing lore, or describe deeper history — optional.">
-                <template #helper-text-bottom>
-                  Need help with lore? Use the
-                  <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link>.
-                </template>
-              </cdr-input>
-            </div>
-            <ParButton style="margin-top: 2rem" type="submit" :full-width="true">Generate Dungeon</ParButton>
+            </ParField>
+            <ParButton type="submit" :full-width="true">Generate Dungeon</ParButton>
           </form>
         </div>
 
         <!-- ZONE 3: Footer with save/load or upgrade prompt -->
-        <div class="dungeon-footer">
-          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+        <div v-if="!premium" class="dungeon-footer">
+          <PatreonCallout :patreon-url="patreonLoginUrl">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited monster statblock generation within your dungeons.</p>
             </template>
@@ -110,40 +163,50 @@
               </li>
             </template>
           </PatreonCallout>
-          <ParCallout v-else>
-            <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
-            <ParButton @click="showDataManagerModal = true">
-              Save/Load Data from a File
-            </ParButton>
-          </ParCallout>
         </div>
       </div>
       <div v-if="dungeonStore.currentDungeon || isGenerating" class="content-container">
-        <Tabs :activeIndex="dungeonStore.activeTabIndex" @tab-changed="onTabChanged" class="tabs">
-          <TabPanel label="Overview">
-            <OverviewTab :is-loading="isGenerating" />
-          </TabPanel>
+        <ParTabs :tabs="dungeonTabs" v-model:active-id="activeTabId" />
 
-          <TabPanel label="Map">
-            <MapTab />
-          </TabPanel>
-
-          <TabPanel label="NPCs">
-            <NPCsTab :premium="premium" />
-          </TabPanel>
-
-          <TabPanel label="Monsters">
-            <MonstersTab :premium="premium" />
-          </TabPanel>
-        </Tabs>
-
-        <!-- Export Section - only show when dungeon exists -->
-        <DungeonExports v-if="dungeonStore.currentDungeon" :dungeon="dungeonStore.currentDungeon" />
+        <!-- Panels use v-show (not v-if) so all four tabs stay mounted —
+             preserving the Map's render and each tab's local UI state across
+             switches, matching the previous Tabs/TabPanel behavior. -->
+        <div v-show="activeTabId === 'overview'" id="par-tabs-panel-overview" role="tabpanel"
+          aria-labelledby="par-tabs-tab-overview" tabindex="0" class="dungeon-tab-panel">
+          <OverviewTab :is-loading="isGenerating" />
+        </div>
+        <div v-show="activeTabId === 'map'" id="par-tabs-panel-map" role="tabpanel"
+          aria-labelledby="par-tabs-tab-map" tabindex="0" class="dungeon-tab-panel">
+          <MapTab />
+        </div>
+        <div v-show="activeTabId === 'npcs'" id="par-tabs-panel-npcs" role="tabpanel"
+          aria-labelledby="par-tabs-tab-npcs" tabindex="0" class="dungeon-tab-panel">
+          <NPCsTab :premium="premium" />
+        </div>
+        <div v-show="activeTabId === 'monsters'" id="par-tabs-panel-monsters" role="tabpanel"
+          aria-labelledby="par-tabs-tab-monsters" tabindex="0" class="dungeon-tab-panel">
+          <MonstersTab :premium="premium" />
+        </div>
       </div>
 
-      <!-- Footer below content -->
-      <div v-if="dungeonStore.currentDungeon || isGenerating" class="dungeon-footer">
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+      <!-- Operations footer: Export toggles the panel below; Delete trails
+           right (mirrors the Setting Generator's SettingOperations). -->
+      <div v-if="dungeonStore.currentDungeon" class="dungeon-ops parchment">
+        <div class="dungeon-ops__actions">
+          <ParCardButton @click="showExport = !showExport">
+            {{ showExport ? 'Hide export' : 'Export' }}
+          </ParCardButton>
+          <ParCardButton variant="danger" class="dungeon-ops__delete" @click="deleteCurrentDungeon">
+            Delete dungeon
+          </ParCardButton>
+        </div>
+
+        <DungeonExports v-if="showExport" :dungeon="dungeonStore.currentDungeon" />
+      </div>
+
+      <!-- Footer below content (free tier only — the upgrade prompt) -->
+      <div v-if="!premium && (dungeonStore.currentDungeon || isGenerating)" class="dungeon-footer">
+        <PatreonCallout :patreon-url="patreonLoginUrl">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited monster statblock generation within your dungeons.</p>
           </template>
@@ -155,19 +218,13 @@
             </li>
           </template>
         </PatreonCallout>
-        <ParCallout v-else>
-          <p>Dungeon data is saved on this browser. Export to a file to use on another device. Premium: Unlimited statblocks.</p>
-          <ParButton @click="showDataManagerModal = true">
-            Save/Load Data from a File
-          </ParButton>
-        </ParCallout>
       </div>
     </div>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParButton, ParCallout } from "@/parchment";
+import { ParButton, ParModal, ParCardButton, ParField, ParInput, ParSelect, ParTextarea, ParTabs } from "@/parchment";
 import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import { ref, computed, onMounted, provide } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
@@ -179,11 +236,9 @@ import { buildDungeonPrefillFromItem } from '@/prompts/item-dungeon-prompts.mjs'
 import { pendingSeed, overviewForm, currentDungeonId } from '../stores/dungeon-state.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 
-import { CdrLink, CdrInput, CdrSelect } from '@rei/cedar';
+import { CdrLink } from '@rei/cedar';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
-import Tabs from '@/components/tabs/Tabs.vue';
-import TabPanel from '@/components/tabs/TabPanel.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 
@@ -201,6 +256,9 @@ const props = defineProps({
 const dungeonStore = useDungeonStore();
 const toast = useToast();
 const showDataManagerModal = ref(false);
+const dataOptionsExpanded = ref(false);
+const showExport = ref(false);
+const showDeleteAllConfirmation = ref(false);
 const isGenerating = ref(false);
 
 /**
@@ -288,16 +346,36 @@ const difficultyOptions = [
 ];
 
 function deleteAllDungeons() {
-  const confirmed = window.confirm('Are you sure you want to delete all dungeons?');
-  if (confirmed) {
-    dungeonStore.deleteAllDungeons();
-    toast.success('All dungeons deleted successfully');
-  }
+  dungeonStore.deleteAllDungeons();
+  showDeleteAllConfirmation.value = false;
+  toast.success('All dungeons deleted successfully');
 }
 
-function onTabChanged(index) {
-  dungeonStore.activeTabIndex = index;
+function deleteCurrentDungeon() {
+  const id = dungeonStore.currentDungeonId;
+  if (!id) return;
+  if (!window.confirm('Are you sure you want to delete this dungeon?')) return;
+  dungeonStore.deleteDungeon(id);
+  showExport.value = false;
+  toast.success('Dungeon deleted');
 }
+
+// ParTabs uses string ids; the store tracks a numeric activeTabIndex.
+// Bridge the two with a writable computed so the tab strip and the store
+// stay in sync (deep-links that set activeTabIndex still reflect here).
+const dungeonTabs = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'map', label: 'Map' },
+  { id: 'npcs', label: 'NPCs' },
+  { id: 'monsters', label: 'Monsters' },
+];
+const activeTabId = computed({
+  get: () => dungeonTabs[dungeonStore.activeTabIndex]?.id || 'overview',
+  set: (id) => {
+    const idx = dungeonTabs.findIndex((t) => t.id === id);
+    if (idx !== -1) dungeonStore.activeTabIndex = idx;
+  },
+});
 
 onMounted(() => {
   dungeonStore.loadDungeons();
@@ -382,70 +460,196 @@ onMounted(() => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  /* `.parchment` only opts out of the global sans override; the serif still
+     has to be declared so descendants (rows use font-family: inherit) get it. */
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .sidebar-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
 }
 
+/* Footer — primary "+ New Dungeon" + Data options disclosure. Mirrors the
+   NPC / Setting generators' sidebar footer. */
 .sidebar-footer {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
-  background-color: transparent;
+  flex-shrink: 0;
+  padding: 12px 16px;
 }
 
+.sidebar-footer__divider {
+  height: 0;
+  border-top: 0.5px solid var(--par-color-border, #e8e2d4);
+  margin: 0.75rem 0;
+}
+
+.sidebar-data-options__toggle {
+  margin: 0 -16px;
+  padding: 12px 16px;
+  width: calc(100% + 32px);
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  color: var(--color-action-rest, #365A85);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(243, 235, 218, 0.4);
+    color: var(--color-action-hover, #2A4D70);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+    outline-offset: -2px;
+  }
+}
+
+.sidebar-data-options__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  transition: transform 0.2s ease;
+
+  &.is-expanded {
+    transform: rotate(30deg);
+  }
+}
+
+.sidebar-data-options__panel {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-radius: 8px;
+}
+
+.sidebar-data-options__description {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.sidebar-data-options__action {
+  width: 100%;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--color-action-secondary-rest, #5A7A9A);
+  border: 0.5px solid var(--color-action-secondary-rest, #5A7A9A);
+  border-radius: 6px;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  margin-bottom: 0.4rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:hover {
+    background-color: rgba(90, 122, 154, 0.08);
+    color: var(--color-action-rest, #365A85);
+    border-color: var(--color-action-rest, #365A85);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+    outline-offset: 2px;
+  }
+}
+
+.sidebar-data-options__action--danger {
+  color: var(--par-color-title, #7a1f1f);
+
+  &:hover {
+    background-color: rgba(122, 31, 31, 0.05);
+    color: var(--par-color-title, #7a1f1f);
+    border-color: var(--par-color-title, #7a1f1f);
+  }
+}
+
+/* Delete-all confirmation modal (mirrors the NPC / Setting / Item generators). */
+.delete-all-modal__body {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  line-height: 1.6;
+  color: var(--par-color-text, #222);
+  margin: 0 0 0.75rem;
+}
+
+.delete-all-modal__suggestion {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  line-height: 1.6;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  margin: 0;
+}
+
+.delete-all-modal__confirm {
+  padding: 8px 18px;
+  background-color: var(--par-color-title, #7a1f1f);
+  color: var(--par-color-surface, #FBF7F0);
+  border: none;
+  border-radius: var(--par-radius-sm, 3px);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--par-color-title-deep, #58180d);
+  }
+}
+
+/* Flat list of saved dungeons — same row treatment as the setting
+   generator's sidebar tree (just without the nesting): full-width rows,
+   callout-bg fill + lapis label on active, quiet warm hover, ellipsis. */
 .saved-dungeons {
   list-style: none;
   padding: 0;
   margin: 0;
 
-  li {
-    margin-bottom: 8px;
-
-    &.active .dungeon-button {
-      background-color: var(--par-color-callout-bg-deep, #ede2cb);
-      border-left-color: var(--color-action-rest, #365A85);
-      color: var(--color-action-hover, #2A4D70);
-      font-weight: 600;
-    }
+  li.active .dungeon-button {
+    background-color: var(--par-color-callout-bg, #f3ebda);
+    color: var(--color-action-hover, #2A4D70);
+    font-weight: 600;
   }
 
   .dungeon-button {
     width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.7rem 1rem;
-    font-size: 1.4rem;
+    display: block;
+    padding: 1.1rem 1.6rem;
+    font-family: inherit;
+    font-size: 1.6rem;
     text-align: left;
     background-color: transparent;
     border: none;
-    border-left: 4px solid transparent;
-    color: var(--par-color-text, #212529);
+    color: var(--par-color-text, #222);
     cursor: pointer;
-    transition: background-color 0.15s ease, border-left-color 0.15s ease, color 0.15s ease;
-    border-radius: var(--par-radius-sm, 3px);
+    transition: background-color 0.15s ease, color 0.15s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     &:hover {
-      background-color: var(--par-color-callout-bg, #f3ebda);
+      background-color: rgba(243, 235, 218, 0.4);
     }
 
     &:focus-visible {
-      outline: none;
-      border-left-color: var(--color-action-rest, #365A85);
-      background-color: var(--par-color-callout-bg, #f3ebda);
-    }
-
-    &.active {
-      background-color: var(--par-color-callout-bg-deep, #ede2cb);
-      border-left-color: var(--color-action-rest, #365A85);
-      color: var(--color-action-hover, #2A4D70);
-      font-weight: 600;
+      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+      outline-offset: -2px;
     }
   }
 }
@@ -478,29 +682,35 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.2rem;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
 
     .brand-name {
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: #6c757d;
-      letter-spacing: 0.5px;
+      font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: var(--color-action-secondary-rest, #5A7A9A);
+      letter-spacing: 0.04em;
     }
 
   }
 
-  h1 {
+  /* Lapis serif title — the setting generator's page-heading register. */
+  .page-heading__title {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
     font-size: 3.6rem;
-    font-weight: 700;
-    color: #212529;
+    font-weight: 600;
+    color: var(--color-action-hover, #2A4D70);
     margin: 0 0 1rem;
     line-height: 1.2;
   }
 
   .value-prop {
-    font-size: 1.8rem;
-    color: #6c757d;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.6rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--par-color-text-secondary, #555);
     margin: 0;
     line-height: 1.5;
   }
@@ -526,25 +736,18 @@ onMounted(() => {
   }
 }
 
-/* ZONE 2: Form card */
+/* ZONE 2: Form card — cream parchment surface (matches the setting generator). */
 .form-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e2e2;
-  border-radius: 12px;
-  padding: 3rem 2.5rem;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 2.25rem 2.25rem 2rem;
+}
 
-  .generator-fields {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .generator-field-select,
-  .lore-field-input {
-    margin-bottom: 2rem;
-  }
+.dungeon-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 /* ZONE 3: Dungeon Footer (below form and content) */
@@ -613,11 +816,38 @@ onMounted(() => {
    CONTENT CONTAINER (when dungeon exists)
    ======================================== */
 .content-container {
-  background-color: #ffffff;
+  background-color: var(--par-color-surface-card, #FEFBF4);
   border-radius: 8px;
   padding: 2.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   margin-bottom: 2rem;
+}
+
+@media (max-width: 2080px) {
+  .content-container {
+    margin-top: 3rem;
+  }
+}
+
+/* Operations footer — Export toggle + Delete, centered below the content
+   (mirrors the Setting Generator's SettingOperations). */
+.dungeon-ops {
+  margin: 2rem 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+.dungeon-ops__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+@media screen and (max-width: 600px) {
+  .dungeon-ops__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* ========================================
@@ -631,7 +861,7 @@ onMounted(() => {
   .hero-header {
     padding: 1.5rem 0.5rem 2rem;
 
-    h1 {
+    .page-heading__title {
       font-size: 2.8rem;
     }
 
@@ -645,16 +875,8 @@ onMounted(() => {
     border-radius: 8px;
   }
 
-  .generator-fields {
-    grid-template-columns: 1fr;
-  }
-
   .content-container {
     padding: 1.5rem;
-  }
-
-  .tabs {
-    width: 100%;
   }
 }
 </style>

@@ -651,10 +651,11 @@ watch(
    Locations/NPCs tabs nest their content in a section with its own 2rem
    padding on top of the tab's 1.75rem/2rem; Factions renders content directly,
    so the inset is rolled into the tab padding here to match that breathing. */
+/* Bare — the shared .setting-tabs container provides the cream surface and
+   padding now (the tab strip and content share one card). */
 .factions-tab {
-  background: var(--par-color-surface-card, #FEFBF4);
-  border-radius: var(--par-radius-lg, 12px);
-  padding: 3.75rem 4rem;
+  background: transparent;
+  padding: 1rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 

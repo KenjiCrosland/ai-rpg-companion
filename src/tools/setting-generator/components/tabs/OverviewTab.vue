@@ -232,7 +232,7 @@ watch(
    card already carries the structural emphasis at the top edge. */
 .setting-card {
   background: var(--par-color-surface, #fdfbf6);
-  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  border: 1px solid var(--par-color-border, #e8e2d4);
   border-radius: 2px;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   overflow: hidden;
@@ -303,9 +303,13 @@ watch(
   flex-shrink: 0;
 }
 
-/* Content wrapper centers prose at readable line length */
+/* Content wrapper centers prose at readable line length. The 3rem side
+   gutters sit *inside* the box, so the cap is widened by 6rem to keep the
+   actual line measure at 65ch — matching the NPC card, whose 65ch wrapper
+   carries no padding. (Without the compensation the measure was 65ch − 6rem,
+   reading noticeably narrower than the NPC card at the same nominal 65ch.) */
 .setting-card-content {
-  max-width: 65ch;
+  max-width: calc(65ch + 6rem);
   margin-inline: auto;
   padding: 0 3rem 2.5rem;
 }

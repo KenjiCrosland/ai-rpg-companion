@@ -124,10 +124,11 @@ const deleteSublocation = (index) => {
 /* Lighter/cooler cream surface panel (no border). Stub cards float on it as
    warmer-toned cards, so the panel reads as the quiet ground and the stubs lift
    off it by tone. */
+/* Bare — the shared .setting-tabs container provides the cream surface and
+   padding now (the tab strip and content share one card). */
 .locations-tab {
-  background: var(--par-color-surface-card, #FEFBF4);
-  border-radius: var(--par-radius-lg, 12px);
-  padding: 1.75rem 2rem;
+  background: transparent;
+  padding: 0;
 }
 
 /* "Contains" stub list for the legacy importantLocations — rendered with the

@@ -885,10 +885,10 @@ $rail-year: 7.5rem;   /* year-rail (marginalia) column width */
 $rail-marker: 2rem;   /* marker column width */
 $line-x: 8.5rem;      /* $rail-year + half of $rail-marker → dot/line centre */
 
+/* Bare — the shell's .item-view cream container provides the surface and
+   padding now; a cream panel here would double up. */
 .lore-builder {
-  padding: 2.5rem 2rem 1rem;
-  background: var(--par-color-surface-card, #FEFBF4);
-  border-radius: var(--par-radius-lg, 12px);
+  padding: 0 0 1rem;
   color: var(--par-color-text, #222);
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
 }

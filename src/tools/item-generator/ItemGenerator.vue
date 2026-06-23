@@ -2735,20 +2735,21 @@ onUnmounted(() => {
    related sections all span the full main-container width; only the
    item card (and its edit form) is centered at the prior ~700px content
    width within it. */
-/* Tab strip extends ~12px beyond the card on each side so it reads as
-   navigation sitting above the card (book-chapter tabs), distinct from
-   the content surface. ParTabs supplies the 1.25rem breathing room below
-   via its own margin-bottom. On narrow viewports the extension is
-   dropped so the strip can't overflow. */
-.item-view__tabs {
-  margin-left: -12px;
-  margin-right: -12px;
+/* Content container — cream surface-card panel (same as the dungeon
+   generator's .content-container). Extends up over the ParTabs strip so the
+   tabs and the active panel share one card. */
+.item-view {
+  box-sizing: border-box;
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  border-radius: 8px;
+  padding: 2.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 2rem;
 }
 
-@media (max-width: 600px) {
-  .item-view__tabs {
-    margin-left: 0;
-    margin-right: 0;
+@media (max-width: 2080px) {
+  .item-view {
+    margin-top: 3rem;
   }
 }
 
