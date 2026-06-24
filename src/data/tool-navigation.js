@@ -9,7 +9,6 @@ export const tools = [
   // Patron exclusive
   { name: 'Bookshelf Generator', slug: 'book-generator', url: 'https://cros.land/ai-powered-bookshelf-generator/', patronOnly: true },
   { name: 'Lore & Timeline Generator', slug: 'lore-generator', url: 'https://cros.land/ai-powered-lore-and-timeline-generator/', patronOnly: true },
-  { name: 'Town Generator', slug: 'gm-dashboard', url: 'https://cros.land/ai-powered-game-master-dashboard/', patronOnly: true },
 ];
 
 export const mainTools = tools.filter(t => !t.patronOnly);

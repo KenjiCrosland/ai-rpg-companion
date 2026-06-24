@@ -18,7 +18,7 @@
             @update:model-value="$emit('update:eventType', $event)"
           />
         </ParField>
-        <ParField label="Time period" required>
+        <ParField label="Time period" :required="!allowSpecificYear">
           <ParSelect
             :model-value="timePeriod"
             :options="periodOptions"
@@ -27,6 +27,14 @@
           />
         </ParField>
       </div>
+      <ParField v-if="allowSpecificYear" label="Specific year" optional>
+        <ParInput
+          :model-value="specificYear"
+          placeholder="e.g., 1462 DR"
+          @update:model-value="$emit('update:specificYear', $event)"
+        />
+        <template #hint>Set an exact year to override the time period above.</template>
+      </ParField>
       <ParField label="Context" optional>
         <ParTextarea
           :model-value="additionalContext"
@@ -36,7 +44,7 @@
         />
       </ParField>
       <div class="summon-card__actions">
-        <ParButton variant="primary" :disabled="!eventType || !timePeriod || loading"
+        <ParButton variant="primary" :disabled="!eventType || (!timePeriod && !specificYear) || loading"
           @click="$emit('generate')">
           {{ loading ? 'Summoning…' : 'Generate' }}
         </ParButton>
@@ -77,7 +85,7 @@
  * generation logic reads. Actions emit; the parent decides what they mean at
  * the current position.
  */
-import { ParButton, ParCardButton, ParField, ParSelect, ParTextarea } from '@/parchment';
+import { ParButton, ParCardButton, ParField, ParInput, ParSelect, ParTextarea } from '@/parchment';
 import { formatMarkdown } from '../utils/format-markdown.mjs';
 
 defineProps({
@@ -94,6 +102,11 @@ defineProps({
   // Show the form-view Cancel button — true for a mid-spine insert that can
   // collapse back to rest, false for the resting first/end summon.
   canCancel: { type: Boolean, default: false },
+  // Offer an optional exact-year input alongside the period bucket. Off by
+  // default so the item Lore Builder is unchanged; the standalone timeline
+  // tool opts in. When the user sets a year it overrides the bucket.
+  allowSpecificYear: { type: Boolean, default: false },
+  specificYear: { type: String, default: '' },
 });
 
 defineEmits([
@@ -104,6 +117,7 @@ defineEmits([
   'update:eventType',
   'update:timePeriod',
   'update:additionalContext',
+  'update:specificYear',
 ]);
 </script>
 

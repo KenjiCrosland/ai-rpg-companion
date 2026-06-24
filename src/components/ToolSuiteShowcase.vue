@@ -128,7 +128,6 @@ const tools = [
   // Patron-exclusive apps
   { name: 'Bookshelf Generator', shortName: 'Books', description: 'Generate libraries full of books with titles and contents', url: 'https://cros.land/ai-powered-bookshelf-generator/', icon: 'menu_book', iconColor: '#5d4037', patronOnly: true },
   { name: 'Lore & Timeline Generator', shortName: 'Lore', description: 'Create detailed histories and timelines for your world', url: 'https://cros.land/ai-powered-lore-and-timeline-generator/', icon: 'history', iconColor: '#6a1b9a', patronOnly: true },
-  { name: 'Town Generator', shortName: 'Town', description: 'Create detailed towns and kingdoms with location descriptions', url: 'https://cros.land/ai-powered-game-master-dashboard/', icon: 'dashboard', iconColor: '#1565c0', patronOnly: true },
 ];
 
 const currentTools = computed(() => tools);
