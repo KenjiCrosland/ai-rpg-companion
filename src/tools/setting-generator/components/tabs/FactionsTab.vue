@@ -98,8 +98,8 @@
 
               <div class="faction-card__actions">
                 <div class="faction-card__actions-primary">
-                  <button type="button" class="faction-ghost faction-ghost--slate"
-                    @click="startEditingFaction(index)">Edit faction</button>
+                  <ParCardButton variant="affirmative" size="small"
+                    @click="startEditingFaction(index)">Edit faction</ParCardButton>
                   <button
                     v-if="!faction.history && !faction.combined_content"
                     type="button"
@@ -108,8 +108,8 @@
                     @click="generateDetailedFaction(index)"
                   >Generate full description</button>
                 </div>
-                <button type="button" class="faction-ghost faction-ghost--burgundy"
-                  @click="confirmDelete(index)">Delete faction</button>
+                <ParCardButton variant="danger" size="small"
+                  @click="confirmDelete(index)">Delete faction</ParCardButton>
               </div>
             </template>
 
@@ -224,6 +224,7 @@
 <script setup>
 import {
   ParButton,
+  ParCardButton,
   ParField,
   ParInput,
   ParTextarea,
@@ -939,29 +940,12 @@ watch(
   cursor: default;
 }
 
-.faction-ghost--slate {
-  color: var(--color-action-secondary-rest, #5A7A9A);
-}
-
-.faction-ghost--slate:hover:not(:disabled) {
-  background: rgba(90, 122, 154, 0.08);
-}
-
 .faction-ghost--lapis {
   color: var(--color-action-rest, #365A85);
 }
 
 .faction-ghost--lapis:hover:not(:disabled) {
   background: rgba(54, 90, 133, 0.08);
-}
-
-/* Delete faction — destructive register (red, not editorial burgundy). */
-.faction-ghost--burgundy {
-  color: var(--par-color-destructive, #A03333);
-}
-
-.faction-ghost--burgundy:hover:not(:disabled) {
-  background: var(--par-color-destructive-bg-hover, rgba(160, 51, 51, 0.06));
 }
 
 /* ── Edit form (inside expanded card) ──────────────────────────────────── */

@@ -150,7 +150,7 @@
                       ''
                       }})</span></p>
                 </div>
-                <ParCardButton variant="link" @click="startEditing">Edit item</ParCardButton>
+                <ParCardButton variant="affirmative" @click="startEditing">Edit item</ParCardButton>
               </header>
 
               <!-- Description: italic, no box, sits in the flow. -->

@@ -152,8 +152,8 @@
             </ul>
 
             <div class="edit-save-buttons" v-if="!readonly">
-                <ParButton size="small" variant="secondary-filled" v-if="showEditButton && !isEditing"
-                    @click="enterEditMode">Edit</ParButton>
+                <ParCardButton size="small" variant="affirmative" v-if="showEditButton && !isEditing"
+                    @click="enterEditMode">Edit</ParCardButton>
                 <ParButton size="small" variant="primary" v-if="isEditing"
                     @click="saveChanges">Save</ParButton>
                 <ParButton size="small" variant="secondary-filled" v-if="isEditing"
@@ -289,7 +289,7 @@
 </template>
 
 <script setup>
-import { ParButton } from "@/parchment";
+import { ParButton, ParCardButton } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';

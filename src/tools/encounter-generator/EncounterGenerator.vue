@@ -159,10 +159,10 @@
               <span class="encounter-metadata__value">{{ partySummary }}</span>
             </div>
           </div>
-          <ParButton v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" variant="secondary"
-            size="small" @click="startEditingEncounter">
+          <ParCardButton variant="affirmative" size="small"
+            v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" @click="startEditingEncounter">
             Edit
-          </ParButton>
+          </ParCardButton>
         </div>
 
         <!-- Skeleton for read-aloud while Call 1 loads -->
@@ -275,9 +275,9 @@
           <ParButton variant="secondary" size="small" @click="showExport = !showExport">
             {{ showExport ? 'Hide export' : 'Export' }}
           </ParButton>
-          <ParButton variant="secondary" size="small" @click="deleteEncounter">
+          <ParCardButton variant="danger" size="small" @click="deleteEncounter">
             Delete
-          </ParButton>
+          </ParCardButton>
         </div>
 
         <!-- Export panel — toggled, same look as the item / setting exports. -->
@@ -320,7 +320,7 @@
 </template>
 
 <script setup>
-import { ParButton, ParField, ParInput, ParSelect, ParTextarea, ParTooltip, ParAddNewButton, ParReadAloud, ParAccordion, ParAccordionGroup } from "@/parchment";
+import { ParButton, ParCardButton, ParField, ParInput, ParSelect, ParTextarea, ParTooltip, ParAddNewButton, ParReadAloud, ParAccordion, ParAccordionGroup } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, computed, onMounted, watch } from 'vue';
 import { CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';

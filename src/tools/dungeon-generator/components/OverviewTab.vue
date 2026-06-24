@@ -17,7 +17,7 @@
             </p>
           </div>
           <div class="dungeon-card-header-actions">
-            <ParCardButton size="small" @click="startEditing">Edit overview</ParCardButton>
+            <ParCardButton variant="affirmative" size="small" @click="startEditing">Edit overview</ParCardButton>
           </div>
         </div>
 

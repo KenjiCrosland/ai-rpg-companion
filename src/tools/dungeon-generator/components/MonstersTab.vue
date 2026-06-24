@@ -157,18 +157,18 @@
                       : (monster.statblock ? 'Regenerate statblock' : 'Generate statblock')
                   }}
                 </button>
-                <button
+                <ParCardButton
                   v-if="monster.detailedDescription || monster.combined_description"
-                  type="button"
-                  class="monster-ghost monster-ghost--slate"
+                  variant="affirmative"
+                  size="small"
                   @click="startEditingMonster(monster)"
                 >
                   Edit description
-                </button>
+                </ParCardButton>
               </div>
-              <button type="button" class="monster-ghost monster-ghost--burgundy" @click="confirmDelete(monster)">
+              <ParCardButton variant="danger" size="small" @click="confirmDelete(monster)">
                 Delete monster
-              </button>
+              </ParCardButton>
             </div>
           </template>
 
@@ -245,7 +245,7 @@
 </template>
 
 <script setup>
-import { ParButton, ParField, ParInput, ParTextarea, ParSelect, ParCheckbox, ParConfirm } from "@/parchment";
+import { ParButton, ParCardButton, ParField, ParInput, ParTextarea, ParSelect, ParCheckbox, ParConfirm } from "@/parchment";
 import { ref, computed, onMounted } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
@@ -685,28 +685,11 @@ function saveEditMonster() {
   }
 }
 
-.monster-ghost--slate {
-  color: var(--color-action-secondary-rest, #5A7A9A);
-
-  &:hover:not(:disabled) {
-    background: rgba(90, 122, 154, 0.08);
-  }
-}
-
 .monster-ghost--lapis {
   color: var(--color-action-rest, #365A85);
 
   &:hover:not(:disabled) {
     background: rgba(54, 90, 133, 0.08);
-  }
-}
-
-/* Delete monster — destructive register (red, not editorial burgundy). */
-.monster-ghost--burgundy {
-  color: var(--par-color-destructive, #A03333);
-
-  &:hover:not(:disabled) {
-    background: var(--par-color-destructive-bg-hover, rgba(160, 51, 51, 0.06));
   }
 }
 

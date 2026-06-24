@@ -71,9 +71,9 @@
           <ParButton size="xsmall" @click="generateDescription">
             Re-Generate Description
           </ParButton>
-          <ParButton size="xsmall" variant="secondary" @click="startEditingRoom">
+          <ParCardButton size="small" variant="affirmative" @click="startEditingRoom">
             Edit Room
-          </ParButton>
+          </ParCardButton>
         </div>
       </div>
 

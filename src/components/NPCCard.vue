@@ -29,6 +29,7 @@
       <div style="display: flex; gap: 0.5rem; align-items: center;">
         <ParCardButton
           v-if="editable && !isEditing && !loadingDescription && !bodyHidden && !stubMode"
+          variant="affirmative"
           size="small"
           @click="$emit('start-edit')"
         >

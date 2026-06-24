@@ -135,7 +135,7 @@
 
               <div class="quest-card__actions">
                 <ParCardButton variant="affirmative" size="small" @click="startEdit(index)">Edit</ParCardButton>
-                <ParCardButton variant="muted" size="small" @click="deleteHook(index)">Delete</ParCardButton>
+                <ParCardButton variant="danger" size="small" @click="deleteHook(index)">Delete</ParCardButton>
               </div>
 
               <!-- Per-hook export -->

@@ -223,7 +223,9 @@ Two primitives, two registers:
 
 **`ParConfirm`** — confirm dialog: `ParCardButton muted` (Cancel) + `danger`/`primary` (confirm). The right tool for destructive confirmation — though the per-tool delete-all modals don't use it yet ([§9 H4](#high--same-semantic-different-treatment)).
 
-The conceptual-action mapping is consistent for **Generate** (`ParButton primary`) and **sidebar "+ New X"** (`ParButton primary`). It has drifted for **Edit / Delete / Cancel / cross-tool Create** — documented in [§9](#9-known-inconsistencies), not yet reconciled.
+**Which register? The surface decides — inside vs outside cream.** A button that sits **inside a cream editorial surface** (a content card, an overview card, a rendered statblock, an output card) is editorial → **`ParCardButton`**. A button in **chrome** (a form page, the sidebar, a page-level toolbar, a modal) is → **`ParButton`** (lapis). The verb doesn't decide; the surface does. If a button's register and its position disagree, the fix is usually to **move the button**, not just recolor it.
+
+Worked through for Edit/Delete: every Edit/Delete in the suite sits inside a cream surface, so they're all editorial — **Edit → `ParCardButton affirmative`, Delete → `ParCardButton danger`**, suite-wide (this is why the raw `*-ghost` Edit/Delete buttons were retired). The "legit lapis" actions are the genuinely-chrome ones: **Generate**, **+ New X**, **Create/View** (cross-tool data rows), **Export**, **Backup** — all `ParButton`.
 
 ### Forms
 One editorial form treatment across all tools: warm-tan input backgrounds (`--par-color-field-bg`), burgundy/lapis small-caps labels via `ParField`, lapis `primary` submit. Within dense forms, thin tan rules between logical sections provide structural breaks. (There is no separate "workspace form" surface — see §1.)
@@ -284,6 +286,7 @@ The decisions that shouldn't be casually violated:
 6. **Sentence case** for user-readable text; small-caps (uppercase via CSS) for structural labels.
 7. **Active editorial tab = warm-tan pill** (`#f3ebda`, `--par-radius-md`/4px, burgundy small-caps). Never a lapis underline for tabs inside editorial containers.
 8. **Preserve semantic differentiation** ([§7](#7-semantic-differentiation-load-bearing-rule)) — difficulty/rarity/read-aloud are intentionally distinct.
+9. **Button register follows the surface, not the verb: inside a cream editorial surface → `ParCardButton` (editorial); chrome → `ParButton` (lapis).** If register and position disagree, move the button rather than recolor it. (Edit/Delete are all editorial because they all sit on content; Generate/+New/Create/Export/Backup are chrome.)
 
 ---
 
@@ -292,8 +295,8 @@ The decisions that shouldn't be casually violated:
 > **Preserve or reconcile case-by-case.** This is honest record, not a backlog with a deadline. Most of these aren't breaking anything; the system can carry them. Resolve by judgment, incrementally, when something feels wrong in production. Several pure-hygiene items were already fixed while writing this document (noted ✅).
 
 ### High — same semantic, different treatment
-- **H1 — "Edit" has ~6 treatments.** `ParCardButton link`/`affirmative`/`default`, `ParButton secondary-filled`/`secondary`, and raw slate ghosts (dungeon monster, setting faction). The vocabulary defines one: `ParCardButton affirmative`.
-- **H2 — "Delete single entity" has ~5 treatments.** `ParCardButton danger` (canonical for cards), `ParButton secondary` (encounter, lore), `ParCardButton muted` (quest hooks), raw burgundy ghosts (dungeon monster, setting faction), `CardFooterAction danger`+emoji (statblock).
+- **H1 — ✅ Fixed.** Every Edit trigger is now `ParCardButton variant="affirmative"` (item/NPC/overview/quest were variant swaps; faction/monster retired their raw slate ghosts; encounter/room/statblock moved off chrome `ParButton` since they sit inside cream). Resolved via the inside/outside-cream rule (rule 9, [§5](#buttons)).
+- **H2 — ✅ Fixed (one exception).** Every single-entity Delete is now `ParCardButton variant="danger"` (red): faction/monster raw ghosts retired, quest-hook `muted`→`danger`, encounter `secondary`→`danger`, lore `secondary`→`danger`; item/setting/dungeon/NPC were already `danger`. **Exception:** the statblock generator's footer **Delete** is still `CardFooterAction` (a non-parchment footer action bar with emoji icons) — left for whenever that footer bar is itself migrated.
 - **H3 — partially fixed.** ✅ The bug part is resolved: Setting/Dungeon Overview tabs no longer use `ParCardButton danger` for Cancel (now `muted`). The broader spread of Cancel treatments (`secondary` / `secondary-filled` / `muted` across contexts) is still open — left as known state; resolve by context if it bothers you.
 - **H4 — ✅ Fixed.** Added `ParButton variant="destructive"` (solid burgundy) and routed delete-all through the new shared `SidebarFooter` (one modal, one button) — the raw `.delete-all-modal__confirm` duplicated across 7 tools is gone.
 - **H5 — ✅ Fixed.** Item generator's cross-tool promote/view buttons switched from `secondary` (slate) to `primary-outline` (lapis), matching the setting generator and the documented repeated-row register.

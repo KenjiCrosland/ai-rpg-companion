@@ -173,7 +173,7 @@
 
               <div class="quest-card__actions">
                 <ParCardButton variant="affirmative" size="small" @click="startEditingQuestHook(index)">Edit</ParCardButton>
-                <ParCardButton variant="muted" size="small" @click="confirmDelete(index)">Delete</ParCardButton>
+                <ParCardButton variant="danger" size="small" @click="confirmDelete(index)">Delete</ParCardButton>
               </div>
             </div>
           </div>

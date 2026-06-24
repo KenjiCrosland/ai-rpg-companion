@@ -276,9 +276,9 @@
 
       <!-- Per-timeline delete -->
       <div v-if="activeIndex !== null" class="timeline-footer">
-        <ParButton variant="secondary" :full-width="true" type="button" @click="deleteCurrentTimeline">
+        <ParCardButton variant="danger" type="button" @click="deleteCurrentTimeline">
           Delete this timeline
-        </ParButton>
+        </ParCardButton>
       </div>
     </div>
   </GeneratorLayout>
