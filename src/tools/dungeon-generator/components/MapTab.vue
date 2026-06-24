@@ -242,7 +242,7 @@ onMounted(() => {
   text-align: center;
   max-width: 340px;
   padding: 1.75rem 2rem;
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 1.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-sm, 3px);
   box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));

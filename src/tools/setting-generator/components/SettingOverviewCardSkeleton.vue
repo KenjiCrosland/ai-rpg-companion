@@ -82,7 +82,7 @@ const skeletonSections = [
    don't cross component boundaries; the skeleton owns its own visual
    shell so the loading state renders complete on its own. */
 .setting-card {
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 1.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: 2px;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);

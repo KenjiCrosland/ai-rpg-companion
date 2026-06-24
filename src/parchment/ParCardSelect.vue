@@ -67,7 +67,7 @@ const normalizedOptions = computed(() =>
   -webkit-appearance: none;
   margin: 0;
   padding: 0.55rem 2.4rem 0.55rem 0.8rem;
-  background: var(--par-color-surface, #fdfbf6) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M0 0l6 8 6-8z' fill='%237a1f1f'/></svg>") no-repeat right 0.8rem center / 0.7rem 0.5rem;
+  background: var(--par-color-surface, #FBF7F0) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M0 0l6 8 6-8z' fill='%237a1f1f'/></svg>") no-repeat right 0.8rem center / 0.7rem 0.5rem;
   border: 1px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-sm, 3px);
   color: var(--par-color-text, #222);

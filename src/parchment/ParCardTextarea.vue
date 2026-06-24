@@ -51,7 +51,7 @@ defineEmits(['update:modelValue']);
   -webkit-appearance: none;
   margin: 0;
   padding: 0.6rem 0.8rem;
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 1px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-sm, 3px);
   color: var(--par-color-text, #222);

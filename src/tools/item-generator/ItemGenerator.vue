@@ -2846,7 +2846,7 @@ onUnmounted(() => {
    rather than a separate form.
    ============================================ */
 .item-edit {
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 0.5px solid var(--par-color-border, #e8e2d4);
   border-top: 2px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
@@ -3254,7 +3254,7 @@ onUnmounted(() => {
    the parchment system over time. NPCCard.vue went through the same
    sweep — both cards now render against the same paper tone. */
 .item-card {
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 0.5px solid var(--par-color-border, #e8e2d4);
   border-top: 2px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;

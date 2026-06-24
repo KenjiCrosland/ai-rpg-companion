@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Design system
+
+For design system decisions — color, typography, surfaces, components, voice — see [`parchment.md`](parchment.md) at the repo root. **Read it before making styling decisions on any cros.land surface.** It's a descriptive map of the system as it exists (with notes on intent and known drift), and `src/parchment/CLAUDE.md` is the component-level catalog.
+
 ## Check `plans/` before starting feature work
 
 Before implementing anything substantive, **scan `plans/README.md`** and read any plan whose trigger matches the work you're about to do. Plans in that folder document deferred fixes, latent issues, and design decisions whose context would otherwise be lost between sessions. They're written assuming you have no prior conversation history. If a relevant plan exists, follow it instead of re-deriving the approach from scratch.

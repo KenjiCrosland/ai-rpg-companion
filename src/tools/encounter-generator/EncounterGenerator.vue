@@ -1556,46 +1556,10 @@ onMounted(async () => {
   }
 }
 
-/* ─── Difficulty badges ───────────────────────────────────────────────────── */
-.difficulty-badge {
-  padding: 0.1875rem 0.625rem;
-  font-weight: 700;
-  font-size: 1rem;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex-shrink: 0;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-}
-
-.difficulty-none {
-  background: #f5f5f5;
-  color: #9e9e9e;
-}
-
-.difficulty-trivial {
-  background: #e0e0e0;
-  color: #757575;
-}
-
-.difficulty-easy {
-  background: #c8e6c9;
-  color: #2e7d32;
-}
-
-.difficulty-medium {
-  background: #fff9c4;
-  color: #f57f17;
-}
-
-.difficulty-hard {
-  background: #ffccbc;
-  color: #d84315;
-}
-
-.difficulty-deadly {
-  background: #ffcdd2;
-  color: #c62828;
-}
+/* Difficulty badges: the live, desaturated parchment palette is defined in the
+   Phase-2 overrides block below (search ".difficulty-badge"). The original
+   "candy" palette that used to live here was fully shadowed by it and has been
+   removed. */
 
 /* ─── Form sections ─────────────────────────────────────────────────────── */
 .form-section {
@@ -1751,15 +1715,8 @@ onMounted(async () => {
 }
 
 /* ─── Encounter Output ──────────────────────────────────────────────────── */
-.output-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e2e2;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  padding: 2.5rem 3rem;
-  margin-top: 2rem;
-}
-
+/* The .output-card surface is defined in the Phase-2 parchment overrides block
+   below (cream surface-card + tan border). */
 .output-card h3 {
   margin-bottom: 0.5rem;
 }
@@ -2225,6 +2182,7 @@ onMounted(async () => {
   border-radius: var(--par-radius-lg, 12px);
   box-shadow: none;
   padding: 2rem 2.25rem;
+  margin-top: 2rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 

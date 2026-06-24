@@ -143,7 +143,7 @@ defineExpose({
   /* Cleanest cream so the form lifts off the page-surface tint of
      the surrounding Related Places section — same surface-contrast
      pattern the row cards use. */
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 

@@ -237,7 +237,7 @@ const saveEdit = () => {
    .setting-card so the two tools' overview cards read as visual
    siblings. */
 .dungeon-card {
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 1px solid var(--par-color-border, #e8e2d4);
   border-radius: 2px;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);

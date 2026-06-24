@@ -928,7 +928,7 @@ function clearNpcStatblockReference(index) {
   padding: 1.25rem;
   border: 1px solid var(--par-color-divider, #e2dccd);
   border-radius: var(--par-radius-sm, 3px);
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
 }
 

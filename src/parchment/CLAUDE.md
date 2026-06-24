@@ -82,18 +82,27 @@ reads as too heavy for inline placement against a list row. The square
 treatment competes with the row content; the round-with-background
 treatment recedes the way it should.
 
-**Sites currently held on Cedar** (5 instances, will migrate when a ghost
-icon-button primitive exists — provisional name `ParIconButton`):
-- `src/tools/dungeon-generator/components/MonstersTab.vue` — delete monster
-- `src/tools/setting-generator/components/tabs/LocationsTab.vue` — delete sublocation (×2)
+**Sites currently held on Cedar** (2 `<cdr-button>` instances remain, will
+migrate when a ghost icon-button primitive exists — provisional name
+`ParIconButton`):
 - `src/components/DashboardPlus.vue` — delete location, delete NPC (×2)
 
-The FactionsTab's editorial refresh retired its two Cedar carve-outs: the
+These were migrated since this list was first written and no longer hold a
+`<cdr-button>`: the dungeon `MonstersTab` delete-monster (now a raw burgundy
+ghost gated by `ParConfirm`) and the setting `LocationsTab` delete-sublocation
+(×2). The FactionsTab's editorial refresh retired its two Cedar carve-outs: the
 absolute ✕ delete is now a burgundy ghost "Delete faction" button gated by a
 `ParConfirm` modal, and the influence-level `cdr-popover` info icon is a small
 parchment "ⓘ" glyph with a native `title` tooltip. The QuestHooksTab's parchment
 pass likewise retired its ✕ delete — now a "Delete" `ParCardButton` in the
 expanded card's action row, gated by `ParConfirm`.
+
+A second source of duplicated need for `ParIconButton` has also appeared: the
+hand-rolled ✕ stub-remove buttons across the related-entity sections
+(`RelatedNPCsSection`/`RelatedDungeonsSection`/`RelatedSettingsSection`, the
+setting/dungeon NPC stubs, and the encounter party-group remove). When the
+primitive is built, those raw `.related-*-remove` / `.npc-stub-delete` buttons
+are its natural first consumers alongside the two `DashboardPlus` sites.
 
 ### Inline link-style navigation
 
@@ -103,14 +112,17 @@ ParButton's `variant="secondary"` is outlined-and-padded, which
 treats inline text-flow navigation as a heavy interactive element.
 Different role, different visual register.
 
-**Sites currently held on Cedar** (1 instance, will migrate when a link
-primitive exists — provisional name `ParLink`):
-- `src/tools/dungeon-generator/components/RoomDescription.vue:102` — "go to connected room" inline navigation
+**Sites currently held on Cedar** (0 — already migrated): the original
+"go to connected room" inline navigation in
+`src/tools/dungeon-generator/components/RoomDescription.vue` now uses
+`ParCardButton variant="link"`. No `<cdr-button modifier="link">` remains in
+the active tools. Keep this section as the rationale for a future `ParLink`
+should inline text-flow navigation recur.
 
 ### When to build these primitives
 
 When a second use case for either pattern appears, build the primitive
 then. Same principle as the rest of this document: extractions earn
 their existence through real duplicated need, not speculative scaffolding.
-For now, the 9 Cedar sites listed above are the carve-out, and they're
-intentional, not technical debt.
+For now, the only live Cedar carve-out is the 2 `DashboardPlus` icon-delete
+buttons above; they're intentional, not technical debt.

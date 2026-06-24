@@ -644,7 +644,7 @@ function navigateToNPCGenerator() {
 <style scoped>
 /* Card surface uses the parchment palette directly — no local --npc-*
    vars. The previous local palette ran slightly warmer than the rest of
-   the parchment system (var(--par-color-surface, #fdfbf6) surface, var(--par-color-text, #222) body); converged to the
+   the parchment system (var(--par-color-surface, #FBF7F0) surface, var(--par-color-text, #222) body); converged to the
    parchment tokens so the NPC card renders in the same paper tone as the
    item card and any future card surface. If the NPC card needs to
    diverge visually for a real reason, swap specific tokens at the
@@ -652,7 +652,7 @@ function navigateToNPCGenerator() {
 
 /* Card container */
 .npc-card {
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 1.5px solid var(--par-color-border-strong, #c9b99a);
   border-top: 3px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
@@ -1021,7 +1021,7 @@ function navigateToNPCGenerator() {
 .npc-card-relationship-generator {
   border-top: 1px solid var(--par-color-border-strong, #c9b99a);
   padding: 1rem 2rem 1.25rem;
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
 }
 
 /* Footer bar for card actions */
