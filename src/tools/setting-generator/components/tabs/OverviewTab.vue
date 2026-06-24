@@ -258,7 +258,7 @@ watch(
 .setting-card-name {
   margin: 0 0 0.125rem;
   font-size: 2.8rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.02em;
   line-height: 1.15;

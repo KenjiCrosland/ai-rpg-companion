@@ -106,10 +106,18 @@ Color temperature rises with editorial emphasis: cool page → warm cream contai
 |---|---|---|---|---|---|
 | Page H1 | 36px (→28px ≤600px) | 600 | lapis `#2A4D70` | none | `.page-heading__title` (item, dungeon) |
 | Form section H2 | 24px | 600 | lapis `#2A4D70` | none | `.form-heading` |
-| Editorial entity title | 25–29px | **400–600 (varies, see below)** | burgundy | varies | item/NPC/dungeon names, room/lore titles |
+| Entity title — **header** | 28px | 600 | burgundy | none | NPC/dungeon/setting names (`.*-card-name`) |
+| Entity title — **display** | 29px | **400** | burgundy | none | item card name (`.item-card-name`) |
+| Sub-entity title (within a document) | 25–26px | 600 | burgundy | small-caps 0.02–0.04em | room title, lore/timeline subject |
 | Section eyebrow | 11px | 600 | burgundy | uppercase 0.18em | `.dungeon-section-heading` |
 
-**Entity-title variation is documented, not normalized.** Top-level entity names sit ~28–29px burgundy but vary in weight (item 400, NPC/dungeon 500); sub-entity titles within a document (room, lore subject) use 600 + small-caps, which is defensible — they sit a hierarchy level *down*, reading more like large section labels than primary headers. This is left as-is by choice. If a specific title feels wrong in production, fix that one; don't sweep.
+**Entity titles have two registers — the difference is layout density, and it's intentional:**
+
+- **Header title (28px / 600):** NPC, dungeon, and setting names. These titles live in **busy, tabbed, multi-section views** — the name is one of several competing elements (subtitle, metadata, tab bar above), so it carries a little weight to anchor the layout. Normalized to 28px / 600 / no-caps.
+- **Display title (29px / 400):** the **item card name only**. The item view is a **single-entity focused "hero"** — the name is the sole large element, sitting in generous whitespace above an italic muted type/rarity line. A large, *light* burgundy serif reads as an elegant illuminated display title there; bumping it to 600 makes it a chunky header that competes with nothing and loses the understatement. The lightness is doing the work. **This is a deliberate special case, not drift** — it was tried at 600 and reverted because understated read better in the hero context.
+- **Sub-entity title (25–26px / 600 / small-caps):** a dungeon room, a timeline's subject — sections *within* a document. Small-caps marks "this is a section inside a document," not "this is the document."
+
+The takeaway for new surfaces: a title's weight follows its **context density**, not a single global rule. Focused hero view → light display; busy multi-section view → 600 header.
 
 ### Small-caps structural label — the canonical micro-pattern
 
@@ -281,7 +289,7 @@ The decisions that shouldn't be casually violated:
 - **M3 — ✅ Fixed.** The `#fdfbf6` fallback (≠ the real `#FBF7F0` token) was normalized across ~20 sites.
 - **M4 — Raw cream literals on secondary surfaces** with matching tokens: `#fdf8ef` (banners), `#f8f3e8` (≈`callout-bg-light`), `#f4f2ed` (cool-grey dashboard/relationship surfaces), `#fafaf6`, `#fefdf9` (statblock inputs). Map each to its nearest token when touched.
 - **M5 — Expandable-card divergence:** three toggle treatments and a border-weight split (lore nodes 1px `--par-color-border` vs others 1.5px `--par-color-border-strong`). Converge when extracting `ParExpandableCard`.
-- **M6 — Entity-title weight drift** (400/500/600 at ~28px). Documented as partly intentional ([§2](#heading-patterns)); leave unless a specific title feels wrong.
+- **M6 — ✅ Resolved.** NPC/dungeon/setting names normalized to the 28px / 600 header register; the item card name kept as the 29px / 400 **display** register (focused hero context — understated reads better there). Two intentional registers, see [§2](#heading-patterns). Sub-entity small-caps titles (room, lore subject) unchanged.
 
 ### Low — local / hygiene
 - **L1 — ✅ Fixed.** Dead `#ffffff` `.output-card` rule removed from the encounter generator (live cream rule preserved).

@@ -759,9 +759,10 @@ function navigateToNPCGenerator() {
   margin: 0 0 0.125rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 2.8rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.02em;
+  line-height: 1.15;
 }
 
 .npc-card-subtitle {
