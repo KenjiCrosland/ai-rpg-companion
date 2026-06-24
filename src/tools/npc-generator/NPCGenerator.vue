@@ -328,11 +328,23 @@
                 </PatreonCallout>
             </div>
         </div>
+
+        <ParConfirm
+            :opened="pendingNPCDelete !== null"
+            title="Delete this NPC?"
+            confirm-label="Delete NPC"
+            cancel-label="Cancel"
+            :destructive="true"
+            @confirm="performNPCDelete"
+            @cancel="pendingNPCDelete = null"
+        >
+            <span style="white-space: pre-line;">{{ pendingNPCDelete?.message }}</span>
+        </ParConfirm>
     </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParButton, ParAccordion, ParAccordionGroup, ParField, ParInput, ParSelect, ParCheckbox } from "@/parchment";
+import { ParButton, ParAccordion, ParAccordionGroup, ParField, ParInput, ParSelect, ParCheckbox, ParConfirm } from "@/parchment";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { CdrLink, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
@@ -1179,6 +1191,13 @@ function selectNPC(folderName, index) {
     loadNPCIntoView(folderName, index);
 }
 
+// Delete confirmation (ParConfirm modal — replaces native confirm()).
+// deleteCurrentNPC builds the context + message and opens the modal;
+// performNPCDelete (on @confirm) runs the original delete work. The modal
+// blocks interaction while open, so the live `currentNPCIndex` reads in the
+// perform step behave as the original blocking confirm() did.
+const pendingNPCDelete = ref(null);
+
 function deleteCurrentNPC() {
     const folderName = activeFolder.value || 'Uncategorized';
     const npcToDelete = npcs.value[folderName]?.[currentNPCIndex.value];
@@ -1187,20 +1206,13 @@ function deleteCurrentNPC() {
 
     if (!npcId) {
         // Fallback for NPCs without IDs (shouldn't happen after migration, but just in case)
-        if (confirm(`Are you sure you want to delete ${npcName}?`)) {
-            if (npcs.value[folderName] && currentNPCIndex.value < npcs.value[folderName].length) {
-                npcs.value[folderName].splice(currentNPCIndex.value, 1);
-                saveNPCsToLocalStorage();
-                toast.success('NPC deleted.');
-
-                if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
-                    const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
-                    loadNPCIntoView(activeFolder.value, newIndex);
-                } else {
-                    createNewNPC();
-                }
-            }
-        }
+        pendingNPCDelete.value = {
+            npcId: null,
+            npcName,
+            folderName,
+            isFallback: true,
+            message: `Are you sure you want to delete ${npcName}?`,
+        };
         return;
     }
 
@@ -1212,10 +1224,7 @@ function deleteCurrentNPC() {
     let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
     confirmMessage += 'This NPC will be deleted from:\n';
 
-    const deleteLocations = [];
-
     if (locations.npcGenerator.length > 0) {
-        deleteLocations.push('NPC Generator');
         if (locations.npcGenerator.length === 1) {
             confirmMessage += `- NPC Generator (${locations.npcGenerator[0]})\n`;
         } else {
@@ -1233,40 +1242,63 @@ function deleteCurrentNPC() {
         }
     }
 
-    if (confirm(confirmMessage)) {
-        // Reset any source-tool stubs pointing to this NPC back to the
-        // unpromoted state. Do this BEFORE removing references so the
-        // source-of-truth links survive long enough to be inspected if
-        // needed.
-        const stubsReset = resetStubsForDeletedNPC(npcId);
+    pendingNPCDelete.value = { npcId, npcName, folderName, isFallback: false, message: confirmMessage };
+}
 
-        // Remove references for this NPC
-        removeReferencesForEntity('npc', npcId);
+function performNPCDelete() {
+    const pending = pendingNPCDelete.value;
+    pendingNPCDelete.value = null;
+    if (!pending) return;
+    const { npcId, npcName, folderName, isFallback } = pending;
 
-        // Delete from all locations
-        const results = deleteNPCFromAllLocations(npcId);
-
-        // Reload NPCs from localStorage to sync the UI
-        loadNPCsFromLocalStorage();
-
-        // Show success message
-        const deletedFrom = [];
-        if (results.npcGenerator > 0) deletedFrom.push('NPC Generator');
-        if (stubsReset > 0) deletedFrom.push(`${stubsReset} source stub${stubsReset === 1 ? '' : 's'} reset`);
-
-        if (deletedFrom.length > 0) {
-            toast.success(`"${npcName}" deleted from ${deletedFrom.join(', ')}.`);
-        } else {
+    if (isFallback) {
+        if (npcs.value[folderName] && currentNPCIndex.value < npcs.value[folderName].length) {
+            npcs.value[folderName].splice(currentNPCIndex.value, 1);
+            saveNPCsToLocalStorage();
             toast.success('NPC deleted.');
-        }
 
-        // Load next NPC or create new one
-        if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
-            const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
-            loadNPCIntoView(activeFolder.value, newIndex);
-        } else {
-            createNewNPC();
+            if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
+                const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
+                loadNPCIntoView(activeFolder.value, newIndex);
+            } else {
+                createNewNPC();
+            }
         }
+        return;
+    }
+
+    // Reset any source-tool stubs pointing to this NPC back to the
+    // unpromoted state. Do this BEFORE removing references so the
+    // source-of-truth links survive long enough to be inspected if
+    // needed.
+    const stubsReset = resetStubsForDeletedNPC(npcId);
+
+    // Remove references for this NPC
+    removeReferencesForEntity('npc', npcId);
+
+    // Delete from all locations
+    const results = deleteNPCFromAllLocations(npcId);
+
+    // Reload NPCs from localStorage to sync the UI
+    loadNPCsFromLocalStorage();
+
+    // Show success message
+    const deletedFrom = [];
+    if (results.npcGenerator > 0) deletedFrom.push('NPC Generator');
+    if (stubsReset > 0) deletedFrom.push(`${stubsReset} source stub${stubsReset === 1 ? '' : 's'} reset`);
+
+    if (deletedFrom.length > 0) {
+        toast.success(`"${npcName}" deleted from ${deletedFrom.join(', ')}.`);
+    } else {
+        toast.success('NPC deleted.');
+    }
+
+    // Load next NPC or create new one
+    if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
+        const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
+        loadNPCIntoView(activeFolder.value, newIndex);
+    } else {
+        createNewNPC();
     }
 }
 

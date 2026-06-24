@@ -316,11 +316,23 @@
         </PatreonCallout>
       </div>
     </div>
+
+    <ParConfirm
+      :opened="pendingEncounterDelete !== null"
+      title="Delete this encounter?"
+      confirm-label="Delete encounter"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performEncounterDelete"
+      @cancel="pendingEncounterDelete = null"
+    >
+      Deleting <strong>{{ pendingEncounterDelete?.name }}</strong> can't be undone.
+    </ParConfirm>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParButton, ParCardButton, ParField, ParInput, ParSelect, ParTextarea, ParTooltip, ParAddNewButton, ParReadAloud, ParAccordion, ParAccordionGroup } from "@/parchment";
+import { ParButton, ParCardButton, ParField, ParInput, ParSelect, ParTextarea, ParTooltip, ParAddNewButton, ParReadAloud, ParAccordion, ParAccordionGroup, ParConfirm } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, computed, onMounted, watch } from 'vue';
 import { CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
@@ -923,12 +935,20 @@ function handleFolderMove() {
 }
 
 // ─── Data Manager ────────────────────────────────────────────────────────────
+// Delete confirmation (ParConfirm modal — replaces native confirm()).
+// The modal blocks interaction while open, so performDelete reads the live
+// active-index/folder refs the way the original handler did.
+const pendingEncounterDelete = ref(null);
+
 function deleteEncounter() {
   if (activeEncounterIndex.value === null) return;
-
   const encounterName = savedEncounters.value[activeFolder.value]?.[activeEncounterIndex.value]?.name || 'this encounter';
+  pendingEncounterDelete.value = { name: encounterName };
+}
 
-  if (!confirm(`Delete "${encounterName}"? This cannot be undone.`)) return;
+function performEncounterDelete() {
+  pendingEncounterDelete.value = null;
+  if (activeEncounterIndex.value === null) return;
 
   const folderName = activeFolder.value || 'Uncategorized';
   const deletedIndex = activeEncounterIndex.value;

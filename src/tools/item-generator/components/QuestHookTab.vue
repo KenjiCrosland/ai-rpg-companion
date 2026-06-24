@@ -182,6 +182,18 @@
         </ParButton>
       </template>
     </ItemExportsSection>
+
+    <ParConfirm
+      :opened="pendingDeleteIndex !== null"
+      title="Delete this quest hook?"
+      confirm-label="Delete quest hook"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performDeleteHook"
+      @cancel="pendingDeleteIndex = null"
+    >
+      Deleting this quest hook removes it from this item. This can't be undone.
+    </ParConfirm>
   </div>
 </template>
 
@@ -195,6 +207,7 @@ import {
   ParCardButton,
   ParCardInput,
   ParCardTextarea,
+  ParConfirm,
 } from '@/parchment';
 import { formatMarkdown } from '../utils/format-markdown.mjs';
 import QuestHookSkeleton from '@/components/skeletons/QuestHookSkeleton.vue';
@@ -546,17 +559,25 @@ const getTeaser = (hook) => {
   return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
 };
 
+// Delete confirmation (ParConfirm modal — replaces native confirm()).
+const pendingDeleteIndex = ref(null);
+
 const deleteHook = (index) => {
-  if (confirm('Are you sure you want to delete this quest hook?')) {
-    hooks.value.splice(index, 1);
-    // Keep the single-open pointer aligned with the shifted indices.
-    if (expandedKey.value === index) {
-      expandedKey.value = null;
-    } else if (expandedKey.value !== null && expandedKey.value > index) {
-      expandedKey.value -= 1;
-    }
-    emitUpdatedItem();
+  pendingDeleteIndex.value = index;
+};
+
+const performDeleteHook = () => {
+  const index = pendingDeleteIndex.value;
+  pendingDeleteIndex.value = null;
+  if (index === null) return;
+  hooks.value.splice(index, 1);
+  // Keep the single-open pointer aligned with the shifted indices.
+  if (expandedKey.value === index) {
+    expandedKey.value = null;
+  } else if (expandedKey.value !== null && expandedKey.value > index) {
+    expandedKey.value -= 1;
   }
+  emitUpdatedItem();
 };
 
 const startEdit = (index) => {

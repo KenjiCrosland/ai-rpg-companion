@@ -875,10 +875,10 @@ describe('EncounterGenerator', () => {
       wrapper.vm.activeFolder = 'Uncategorized';
       wrapper.vm.activeEncounterIndex = 0;
 
-      // Mock window.confirm
-      global.confirm = jest.fn(() => true);
-
+      // Delete now goes through a ParConfirm modal: deleteEncounter() opens it,
+      // performEncounterDelete() runs on @confirm.
       wrapper.vm.deleteEncounter();
+      wrapper.vm.performEncounterDelete();
 
       expect(wrapper.vm.savedEncounters['Uncategorized'].length).toBe(1);
       expect(wrapper.vm.savedEncounters['Uncategorized'][0].name).toBe('Encounter 2');
