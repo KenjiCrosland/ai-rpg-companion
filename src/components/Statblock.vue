@@ -154,10 +154,10 @@
             <div class="edit-save-buttons" v-if="!readonly">
                 <ParCardButton size="small" variant="affirmative" v-if="showEditButton && !isEditing"
                     @click="enterEditMode">Edit</ParCardButton>
-                <ParButton size="small" variant="primary" v-if="isEditing"
-                    @click="saveChanges">Save</ParButton>
-                <ParButton size="small" variant="secondary-filled" v-if="isEditing"
-                    @click="cancelChanges">Cancel</ParButton>
+                <ParCardButton size="small" variant="primary" v-if="isEditing"
+                    @click="saveChanges">Save</ParCardButton>
+                <ParCardButton size="small" variant="muted" v-if="isEditing"
+                    @click="cancelChanges">Cancel</ParCardButton>
             </div>
         </div>
 

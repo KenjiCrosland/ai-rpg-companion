@@ -285,8 +285,8 @@
               <ParCardTextarea v-model="editForm.lore" label="Lore" :rows="5" class="item-edit__field" />
 
               <footer class="item-edit__footer">
-                <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
-                <ParCardButton @click="saveEdit">Save changes</ParCardButton>
+                <ParCardButton variant="muted" @click="cancelEdit">Cancel</ParCardButton>
+                <ParCardButton variant="primary" @click="saveEdit">Save changes</ParCardButton>
               </footer>
             </div>
           </template>

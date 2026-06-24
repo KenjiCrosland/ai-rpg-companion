@@ -103,8 +103,8 @@
         </div>
 
         <div class="button-group">
-          <ParButton size="xsmall" @click="saveEditRoom">Save changes</ParButton>
-          <ParButton size="xsmall" variant="secondary" @click="cancelEditRoom">Cancel</ParButton>
+          <ParCardButton size="small" variant="primary" @click="saveEditRoom">Save changes</ParCardButton>
+          <ParCardButton size="small" variant="muted" @click="cancelEditRoom">Cancel</ParCardButton>
         </div>
       </div>
     </div>

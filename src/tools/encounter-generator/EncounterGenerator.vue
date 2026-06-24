@@ -214,8 +214,8 @@
           </ParField>
 
           <div class="button-group">
-            <ParButton @click="saveEditEncounter">Save changes</ParButton>
-            <ParButton @click="cancelEditEncounter" variant="secondary-filled">Cancel</ParButton>
+            <ParCardButton variant="primary" @click="saveEditEncounter">Save changes</ParCardButton>
+            <ParCardButton variant="muted" @click="cancelEditEncounter">Cancel</ParCardButton>
           </div>
         </div>
 

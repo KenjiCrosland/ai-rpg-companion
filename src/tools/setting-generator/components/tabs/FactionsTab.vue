@@ -152,8 +152,8 @@
               </ParField>
 
               <div class="button-group">
-                <ParButton type="submit">Save changes</ParButton>
-                <ParButton type="button" @click="cancelEditFaction" variant="secondary-filled">Cancel</ParButton>
+                <ParCardButton type="submit" variant="primary">Save changes</ParCardButton>
+                <ParCardButton type="button" variant="muted" @click="cancelEditFaction">Cancel</ParCardButton>
               </div>
             </form>
           </div>
