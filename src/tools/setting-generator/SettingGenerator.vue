@@ -2271,6 +2271,7 @@ $transition-speed: 0.3s;
     align-items: stretch;
     min-width: 0;
     background-color: transparent;
+    border-bottom: 1px solid var(--par-color-divider, #e2dccd);
     transition: background-color 0.15s ease;
 
     &:hover {
@@ -2320,7 +2321,7 @@ $transition-speed: 0.3s;
   .setting-tree-label {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 1.1rem 1.6rem 1.1rem 0.4rem;
+    padding: 1.3rem 1.6rem 1.3rem 0.4rem;
     font-family: inherit;
     font-size: 1.6rem;
     text-align: left;

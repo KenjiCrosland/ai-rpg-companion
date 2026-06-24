@@ -630,12 +630,13 @@ onMounted(() => {
   .dungeon-button {
     width: 100%;
     display: block;
-    padding: 1.1rem 1.6rem;
+    padding: 1.3rem 1.6rem;
     font-family: inherit;
     font-size: 1.6rem;
     text-align: left;
     background-color: transparent;
     border: none;
+    border-bottom: 1px solid var(--par-color-divider, #e2dccd);
     color: var(--par-color-text, #222);
     cursor: pointer;
     transition: background-color 0.15s ease, color 0.15s ease;

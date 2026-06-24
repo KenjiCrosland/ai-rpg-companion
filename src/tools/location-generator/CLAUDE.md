@@ -95,12 +95,13 @@ Generates a complete location in structured JSON format with strict sentence-by-
 
 ### Example Suggestions
 
-Pre-populated examples demonstrate the tool's versatility across different RPG settings:
-- "The captain's quarters on a spelljammer ship" (D&D Spelljammer)
-- "A tavern in Neverwinter that serves as a front for the local chapter of the Zhentarim" (D&D Forgotten Realms)
-- "A tea house where the Emerald Champion Doji Satsume often frequents in the Land of Rokugan" (Legend of the Five Rings)
-- "A gnome's workshop and home deep in the feywild who makes sentient puppets" (D&D Feywild)
-- "An upscale ripperdoc establishment in Night City" (Cyberpunk)
+Pre-populated examples demonstrate the tool's versatility across genres. They
+use original (non-trademarked) framing rather than named IP settings:
+- "The captain's quarters aboard a star-galleon sailing the astral void" (spacefaring fantasy)
+- "A tavern in a rain-soaked harbor city that fronts for a shadowy thieves' guild" (gritty fantasy)
+- "A tea house favored by a renowned duelist in a land of feuding samurai clans" (eastern fantasy)
+- "A gnome's workshop deep in a fae forest, where she crafts sentient puppets" (whimsical fey)
+- "An upscale back-alley cyber-clinic in a neon-drenched megacity" (cyberpunk)
 
 Users can click any example to auto-fill the input field.
 

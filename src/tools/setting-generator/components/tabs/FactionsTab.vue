@@ -707,10 +707,14 @@ watch(
 
 /* Warm-tan card — real contrast against the cream tab container, no border
    (the fill carries the weight). */
+/* Lighter swap-card convention (matches the dungeon Monsters cards): near-white
+   cream + a tan border + soft shadow, rather than the heavier callout-bg tan. */
 .faction-card {
-  background: var(--par-color-callout-bg, #f3ebda);
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: 0.8rem;
-  margin-bottom: 0.6rem;
+  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
+  margin-bottom: 0.8rem;
 }
 
 .faction-card--collapsed {

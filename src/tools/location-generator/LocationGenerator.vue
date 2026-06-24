@@ -4,25 +4,23 @@
 
     <div class="app-container">
     <div class="main-container">
-      <div class="form-container">
-        <h1>Kenji's RPG Location Description Generator</h1>
+      <div class="form-container parchment">
+        <div class="location-heading">
+          <span class="location-heading__tag">Kenji's Location Generator</span>
+          <h1 class="location-heading__title">Describe a location for your players</h1>
+          <p class="location-heading__tagline">
+            Atmospheric, four-sentence descriptions for any place your party walks into.
+          </p>
+        </div>
 
-        <cdr-text class="intro">
-          Welcome to the RPG Location Description Generator! This app instantly generates engaging
-          descriptions of locations for your players.
-        </cdr-text>
-
-        <cdr-text class="intro">
-          Try one of these:
-        </cdr-text>
-
-        <cdr-list class="suggestions" modifier="unordered">
+        <p class="location-suggestions__label">Try one of these:</p>
+        <ul class="location-suggestions">
           <li v-for="example in examples" :key="example">
-            <cdr-link modifier="standalone" @click="setInputValue(example)">
+            <button type="button" class="location-suggestion-link" @click="setInputValue(example)">
               {{ example }}
-            </cdr-link>
+            </button>
           </li>
-        </cdr-list>
+        </ul>
 
         <LocationForm ref="locationFormRef" @set-loading-state="loading = $event"
           @location-description-generated="gptResponse = $event" @location-description-error="handleError" />
@@ -40,8 +38,8 @@
 
         <!-- Result -->
         <div v-if="gptResponse && !loading" class="result-card">
-          <h2>{{ gptResponse.locationName }}</h2>
-          <p class="body-text">{{ gptResponse.locationDescription }}</p>
+          <h2 class="result-card__name">{{ gptResponse.locationName }}</h2>
+          <p class="result-card__body">{{ gptResponse.locationDescription }}</p>
         </div>
       </div>
     </div>
@@ -84,7 +82,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { CdrText, CdrList, CdrLink, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+import { CdrLink, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import LocationForm from './LocationForm.vue';
 import ToolNavigation from '@/components/ToolNavigation.vue';
 import { mainTools, patronTools, getCurrentSlug, navigate as navigateToTool } from '@/data/tool-navigation.js';
@@ -96,11 +94,11 @@ const locationFormRef = ref(null);
 const currentSlug = computed(() => getCurrentSlug());
 
 const examples = [
-  "The captain's quarters on a spelljammer ship",
-  "A tavern in Neverwinter that serves as a front for the local chapter of the Zhentarim",
-  "A tea house where the Emerald Champion Doji Satsume often frequents in the Land of Rokugan",
-  "A gnome's workshop and home deep in the feywild who makes sentient puppets",
-  "An upscale ripperdoc establishment in Night City",
+  "The captain's quarters aboard a star-galleon sailing the astral void",
+  "A tavern in a rain-soaked harbor city that fronts for a shadowy thieves' guild",
+  "A tea house favored by a renowned duelist in a land of feuding samurai clans",
+  "A gnome's workshop deep in a fae forest, where she crafts sentient puppets",
+  "An upscale back-alley cyber-clinic in a neon-drenched megacity",
 ];
 
 const setInputValue = (value) => {
@@ -138,34 +136,114 @@ function navigate(slug) {
 }
 
 .form-container {
-  color: $cdr-color-text-primary;
-  padding: 2rem 3rem;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2.25rem 2.5rem 2rem;
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
-.intro {
-  margin-top: 1rem;
+/* ── Editorial heading ─────────────────────────────────────────────────── */
+.location-heading {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.location-heading__tag {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--color-action-secondary-rest, #5A7A9A);
+  letter-spacing: 0.04em;
+}
+
+.location-heading__title {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 3rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2A4D70);
+  margin: 0.4rem 0 0.5rem;
+  line-height: 1.15;
+}
+
+.location-heading__tagline {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  margin: 0;
   line-height: 1.5;
 }
 
-.suggestions {
-  margin-top: 1rem;
-  margin-left: 1.25rem;
-  padding: 0.75rem 0;
+/* ── Suggestions ───────────────────────────────────────────────────────── */
+.location-suggestions__label {
+  margin: 0 0 0.5rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
+.location-suggestions {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.location-suggestion-link {
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--color-action-rest, #365A85);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-color: var(--par-color-border-strong, #c9b99a);
+}
+
+.location-suggestion-link:hover,
+.location-suggestion-link:focus-visible {
+  color: var(--color-action-hover, #2A4D70);
+  text-decoration-color: currentColor;
+  outline: none;
+}
+
+/* ── Result card — cream surface, burgundy serif name + serif body. ──────── */
 .result-card {
   margin-top: 2rem;
-  padding: 1.25rem 1.5rem;
-  background-color: $cdr-color-background-secondary;
-  border-radius: 8px;
+  padding: 1.5rem 1.75rem;
+  background-color: var(--par-color-callout-bg-light, #F8F2E3);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
 }
 
-.body-text {
+.result-card__name {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  line-height: 1.2;
+}
+
+.result-card__body {
   margin-top: 0.75rem;
-  line-height: 1.6;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.6rem;
+  line-height: 1.7;
+  color: var(--par-color-text, #222);
 }
 
 div[class^="cdr-skeleton-bone"] {

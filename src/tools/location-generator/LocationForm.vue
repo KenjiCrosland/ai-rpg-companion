@@ -1,8 +1,11 @@
 <template>
-    <div>
+    <div class="location-form parchment">
         <form v-if="!formContent" @submit.prevent="generateLocationDescription">
-            <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" :label="formLabel" required />
-            <ParButton class="location-form-button" type="submit" :disabled="disabledButton">{{ buttonText }}</ParButton>
+            <ParField :label="formLabel">
+                <ParInput id="typeOfPlace" v-model="typeOfPlace"
+                    placeholder="e.g., a tavern, a wizard's tower, a smuggler's cove…" />
+            </ParField>
+            <ParButton class="location-form-button" type="submit" :full-width="true" :disabled="disabledButton">{{ buttonText }}</ParButton>
         </form>
         <ParButton :size="buttonSize" v-else @click="generateLocationDescription" :disabled="disabledButton">
             {{ buttonText }}
@@ -14,9 +17,7 @@
 import { startCase } from 'lodash';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { PROVIDERS } from "@/util/ai-config.mjs";
-import { CdrInput } from "@rei/cedar";
-import { ParButton } from "@/parchment";
-import "@rei/cedar/dist/style/cdr-input.css";
+import { ParButton, ParField, ParInput } from "@/parchment";
 import { createLocationPrompt } from "./location-prompts.mjs";
 
 export default {
@@ -26,8 +27,9 @@ export default {
         };
     },
     components: {
-        CdrInput,
         ParButton,
+        ParField,
+        ParInput,
     },
     props: {
         buttonSize: {
@@ -36,7 +38,7 @@ export default {
         },
         formLabel: {
             type: String,
-            default: 'Type of Location:'
+            default: 'Type of location'
         },
         parentLocation: {
             type: Object,

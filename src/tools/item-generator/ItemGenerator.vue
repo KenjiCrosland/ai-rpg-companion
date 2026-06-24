@@ -2989,7 +2989,7 @@ onUnmounted(() => {
   .sidebar-item__button {
     width: 100%;
     /* Single-line row: name left, rarity tag right. baseline keeps the
-       15px name and 11px rarity tag sharing a typographic baseline. */
+       name and rarity tag sharing a typographic baseline. */
     display: flex;
     justify-content: space-between;
     align-items: baseline;
@@ -2997,8 +2997,9 @@ onUnmounted(() => {
     text-align: left;
     background: transparent;
     border: none;
-    /* Symmetric padding — no marker to account for on the left */
-    padding: 10px 16px;
+    /* Roomier rows with a hairline divider — matches the statblock sidebar. */
+    border-bottom: 1px solid var(--par-color-divider, #e2dccd);
+    padding: 1.3rem 1.6rem;
     font-family: inherit;
     cursor: pointer;
 
@@ -3009,7 +3010,7 @@ onUnmounted(() => {
   }
 
   .sidebar-item__name {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 500;
     color: var(--par-color-text, #222);
     line-height: 1.3;
@@ -3017,9 +3018,9 @@ onUnmounted(() => {
   }
 
   .sidebar-item__rarity {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     color: var(--par-color-text-secondary, #555);
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     white-space: nowrap; /* never wrap the rarity tag itself */
     flex-shrink: 0;      /* and never let it get squeezed */
