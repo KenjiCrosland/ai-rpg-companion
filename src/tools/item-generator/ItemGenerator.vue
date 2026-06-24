@@ -150,7 +150,7 @@
                       ''
                       }})</span></p>
                 </div>
-                <ParCardButton variant="affirmative" @click="startEditing">Edit item</ParCardButton>
+                <ParCardButton variant="affirmative" @click="startEditing" data-testid="edit-item">Edit item</ParCardButton>
               </header>
 
               <!-- Description: italic, no box, sits in the flow. -->
@@ -184,7 +184,7 @@
                 <ParCardButton @click="showExport = !showExport">
                   {{ showExport ? 'Hide export' : 'Export' }}
                 </ParCardButton>
-                <ParCardButton variant="danger" class="item-card-footer__trail" @click="deleteItem">
+                <ParCardButton variant="danger" class="item-card-footer__trail" @click="deleteItem" data-testid="delete-item">
                   Delete item
                 </ParCardButton>
               </footer>
@@ -319,6 +319,40 @@
         <item-skeleton />
       </div>
     </div>
+
+    <ParConfirm
+      :opened="pendingItemDelete"
+      title="Delete this item?"
+      confirm-label="Delete item"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performItemDelete"
+      @cancel="pendingItemDelete = false"
+    >
+      Deleting this magic item removes it from your library. This can't be undone.
+    </ParConfirm>
+
+    <ParConfirm
+      :opened="pendingSwitchIndex !== null"
+      title="Discard unsaved changes?"
+      confirm-label="Discard and switch"
+      cancel-label="Keep editing"
+      @confirm="performSwitchItem"
+      @cancel="pendingSwitchIndex = null"
+    >
+      You have unsaved changes to this item. Switching will discard them.
+    </ParConfirm>
+
+    <ParConfirm
+      :opened="pendingFeatureRegen !== null"
+      title="Regenerate this feature?"
+      confirm-label="Regenerate"
+      cancel-label="Cancel"
+      @confirm="performFeatureRegen"
+      @cancel="pendingFeatureRegen = null"
+    >
+      This erases the feature's current content and regenerates it from the feature name.
+    </ParConfirm>
   </GeneratorLayout>
 </template>
 
@@ -339,7 +373,7 @@ import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import RelatedSettingsSection from './components/RelatedSettingsSection.vue';
 import RelatedDungeonsSection from './components/RelatedDungeonsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParCardButton, ParButton, ParCardInput, ParCardTextarea, ParCardSelect, ParCheckbox, ParField, ParInput, ParSelect, ParTextarea, ParTabs } from '@/parchment';
+import { ParCardButton, ParButton, ParCardInput, ParCardTextarea, ParCardSelect, ParCheckbox, ParField, ParInput, ParSelect, ParTextarea, ParTabs, ParConfirm } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import { useToast } from '@/composables/useToast';
@@ -2137,13 +2171,24 @@ const detectEditChanges = () => {
   return false;
 };
 
+// Native confirm()s replaced by ParConfirm modals. Each gate uses a re-entrant
+// guard: the trigger opens the modal (stores the pending target) and returns;
+// the modal's @confirm re-invokes the trigger with that target already pending,
+// so the guard falls through to the real work.
+const pendingSwitchIndex = ref(null);
+const pendingItemDelete = ref(false);
+const pendingFeatureRegen = ref(null);
+
+const performSwitchItem = () => {
+  if (pendingSwitchIndex.value !== null) selectItem(pendingSwitchIndex.value);
+};
+
 const selectItem = (index) => {
-  if (isEditing.value && detectEditChanges()) {
-    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch items without saving?');
-    if (!confirmed) {
-      return;
-    }
+  if (isEditing.value && detectEditChanges() && pendingSwitchIndex.value !== index) {
+    pendingSwitchIndex.value = index; // open the discard-changes modal
+    return;
   }
+  pendingSwitchIndex.value = null;
 
   isEditing.value = false;
 
@@ -2158,7 +2203,12 @@ const selectItem = (index) => {
 };
 
 const deleteItem = () => {
-  if (confirm('Are you sure you want to delete this item?')) {
+  pendingItemDelete.value = true;
+};
+
+const performItemDelete = () => {
+  pendingItemDelete.value = false;
+  {
     if (activeItemIndex.value !== null) {
       const deletedName = savedItems.value[activeItemIndex.value]?.name;
       savedItems.value.splice(activeItemIndex.value, 1);
@@ -2295,16 +2345,20 @@ const removeFeature = (index) => {
   editForm.value.featuresArray.splice(index, 1);
 };
 
+const performFeatureRegen = () => {
+  if (pendingFeatureRegen.value !== null) generateFeature(pendingFeatureRegen.value);
+};
+
 const generateFeature = async (index) => {
   const feature = editForm.value.featuresArray[index];
 
-  if (feature.description && feature.description.trim()) {
-    const featureName = feature.name.trim() || 'Unnamed Feature';
-    const confirmed = confirm(`This will erase and regenerate this feature based on the feature name "${featureName}". Proceed?`);
-    if (!confirmed) {
-      return;
-    }
+  // Regenerating a feature that already has content is destructive — gate it
+  // behind a ParConfirm (re-entrant guard; see selectItem above).
+  if (feature.description && feature.description.trim() && pendingFeatureRegen.value !== index) {
+    pendingFeatureRegen.value = index;
+    return;
   }
+  pendingFeatureRegen.value = null;
 
   feature.generating = true;
 

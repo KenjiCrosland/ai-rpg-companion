@@ -141,7 +141,7 @@
           <ParCardButton @click="showExport = !showExport">
             {{ showExport ? 'Hide export' : 'Export' }}
           </ParCardButton>
-          <ParCardButton variant="danger" class="dungeon-ops__delete" @click="deleteCurrentDungeon">
+          <ParCardButton variant="danger" class="dungeon-ops__delete" @click="deleteCurrentDungeon" data-testid="delete-dungeon">
             Delete dungeon
           </ParCardButton>
         </div>
@@ -165,11 +165,22 @@
         </PatreonCallout>
       </div>
     </div>
+    <ParConfirm
+      :opened="pendingDungeonDelete !== null"
+      title="Delete this dungeon?"
+      confirm-label="Delete dungeon"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performDungeonDelete"
+      @cancel="pendingDungeonDelete = null"
+    >
+      Deleting this dungeon and its rooms, NPCs, and monsters can't be undone.
+    </ParConfirm>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParButton, ParCardButton, ParField, ParInput, ParSelect, ParTextarea, ParTabs } from "@/parchment";
+import { ParButton, ParCardButton, ParField, ParInput, ParSelect, ParTextarea, ParTabs, ParConfirm } from "@/parchment";
 import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import { ref, computed, onMounted, provide } from 'vue';
@@ -294,10 +305,18 @@ function deleteAllDungeons() {
   toast.success('All dungeons deleted successfully');
 }
 
+const pendingDungeonDelete = ref(null);
+
 function deleteCurrentDungeon() {
   const id = dungeonStore.currentDungeonId;
   if (!id) return;
-  if (!window.confirm('Are you sure you want to delete this dungeon?')) return;
+  pendingDungeonDelete.value = { id };
+}
+
+function performDungeonDelete() {
+  pendingDungeonDelete.value = null;
+  const id = dungeonStore.currentDungeonId;
+  if (!id) return;
   dungeonStore.deleteDungeon(id);
   showExport.value = false;
   toast.success('Dungeon deleted');

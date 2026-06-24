@@ -1189,7 +1189,9 @@ describe('ItemGenerator - Related NPCs Integration', () => {
       const buttons = wrapper.findAll('button');
       const deleteBtn = buttons.find(b => b.text().includes('Delete item'));
       expect(deleteBtn).toBeTruthy();
+      // Clicking opens the ParConfirm modal; performItemDelete runs on @confirm.
       await deleteBtn.trigger('click');
+      wrapper.vm.performItemDelete();
       await nextTick();
       expect(itemStorage.removeReferencesForItem).toHaveBeenCalledWith('Doomed Item');
     } finally {

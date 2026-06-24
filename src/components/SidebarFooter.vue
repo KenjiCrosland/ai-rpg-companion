@@ -21,6 +21,7 @@
         @click="expanded = !expanded"
         :aria-expanded="expanded"
         aria-controls="sidebar-data-options-panel"
+        data-testid="data-options-toggle"
       >
         <span>Data options</span>
         <svg
@@ -49,6 +50,7 @@
         <button
           class="sidebar-data-options__action sidebar-data-options__action--danger"
           @click="showDeleteConfirmation = true"
+          data-testid="data-options-delete-all"
         >
           {{ deleteAllLabel }}
         </button>

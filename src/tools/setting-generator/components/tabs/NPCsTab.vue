@@ -14,6 +14,18 @@
       @delete-npc="onDeleteNPC"
       @generate-relationship="onGenerateRelationship"
     />
+
+    <ParConfirm
+      :opened="pendingNPCDelete !== null"
+      title="Delete this NPC?"
+      confirm-label="Delete NPC"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performNPCDelete"
+      @cancel="pendingNPCDelete = null"
+    >
+      <span style="white-space: pre-line;">{{ pendingNPCDelete?.message }}</span>
+    </ParConfirm>
   </div>
 </template>
 
@@ -31,6 +43,7 @@ import {
   settingNPCToCanonical,
 } from '@/util/npc-storage.mjs';
 import { useToast } from '@/composables/useToast.js';
+import { ParConfirm } from '@/parchment';
 
 const props = defineProps({
   setting: { type: Object, required: true },
@@ -238,20 +251,30 @@ function onSaveEdit({ npcIndex, edited }) {
   editingNPCIndex.value = null;
 }
 
+// Delete confirmation (ParConfirm modal — replaces native confirm()).
+// onDeleteNPC builds the context + message and opens the modal;
+// performNPCDelete (on @confirm) runs the original delete work. The async
+// location lookup needed to build the multi-location message happens at
+// trigger time; the actual deletion is deferred to performNPCDelete.
+const pendingNPCDelete = ref(null);
+
 async function onDeleteNPC({ npcIndex }) {
   const npc = props.setting.npcs?.[npcIndex];
   const npcId = npc?.npc_id;
   const npcName = npc?.name || 'this NPC';
 
   if (!npcId) {
-    if (confirm(`Are you sure you want to delete ${npcName}?`)) {
-      const updatedNPCs = (props.setting.npcs || []).filter((_, i) => i !== npcIndex);
-      emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
-    }
+    pendingNPCDelete.value = {
+      isFallback: true,
+      npcIndex,
+      npcId: null,
+      npcName,
+      message: `Are you sure you want to delete ${npcName}?`,
+    };
     return;
   }
 
-  const { findNPCLocations, deleteNPCFromAllLocations } = await import('@/util/npc-storage.mjs');
+  const { findNPCLocations } = await import('@/util/npc-storage.mjs');
   const locations = findNPCLocations(npcId);
 
   let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
@@ -276,17 +299,37 @@ async function onDeleteNPC({ npcIndex }) {
       : `- Dungeon Generator (${locations.dungeons.length} dungeons)\n`;
   }
 
-  if (confirm(confirmMessage)) {
-    const { removeReferencesForEntity } = await import('@/util/reference-storage.mjs');
-    removeReferencesForEntity('npc', npcId);
-    const { resetStubsForDeletedNPC } = await import('@/util/seeded-input.mjs');
-    resetStubsForDeletedNPC(npcId);
-    deleteNPCFromAllLocations(npcId);
+  pendingNPCDelete.value = {
+    isFallback: false,
+    npcIndex,
+    npcId,
+    npcName,
+    message: confirmMessage,
+  };
+}
 
+async function performNPCDelete() {
+  const pending = pendingNPCDelete.value;
+  pendingNPCDelete.value = null;
+  if (!pending) return;
+  const { isFallback, npcIndex, npcId, npcName } = pending;
+
+  if (isFallback) {
     const updatedNPCs = (props.setting.npcs || []).filter((_, i) => i !== npcIndex);
     emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
-    toast.success(`${npcName} deleted from all locations`);
+    return;
   }
+
+  const { deleteNPCFromAllLocations } = await import('@/util/npc-storage.mjs');
+  const { removeReferencesForEntity } = await import('@/util/reference-storage.mjs');
+  removeReferencesForEntity('npc', npcId);
+  const { resetStubsForDeletedNPC } = await import('@/util/seeded-input.mjs');
+  resetStubsForDeletedNPC(npcId);
+  deleteNPCFromAllLocations(npcId);
+
+  const updatedNPCs = (props.setting.npcs || []).filter((_, i) => i !== npcIndex);
+  emit('updated-setting', { ...props.setting, npcs: updatedNPCs });
+  toast.success(`${npcName} deleted from all locations`);
 }
 
 async function onGenerateRelationship({ npcIndex, payload }) {

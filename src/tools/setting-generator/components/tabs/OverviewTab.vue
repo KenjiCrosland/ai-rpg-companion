@@ -15,7 +15,7 @@
           </p>
         </div>
         <div class="setting-card-header-actions">
-          <ParCardButton variant="affirmative" size="small" @click="startEditing">Edit overview</ParCardButton>
+          <ParCardButton variant="affirmative" size="small" @click="startEditing" data-testid="edit-setting">Edit overview</ParCardButton>
         </div>
       </div>
 
@@ -72,6 +72,7 @@
         label="Name"
         hint='The bare place name (e.g., "Hjallmark").'
         class="setting-edit__field"
+        data-testid="setting-edit-name"
       />
 
       <ParCardInput

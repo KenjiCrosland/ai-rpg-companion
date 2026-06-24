@@ -54,34 +54,51 @@ inline editing + the few *real* modals (below).
   options" → "Backup / Restore").
 - **`ParModal`** — the generic primitive; check per-site if a flow uses it.
 
-### C. Single-entity delete — now uniformly `ParConfirm` where confirmed
+### C. Native `confirm()` → `ParConfirm` migration — status
 
-The native-`confirm()` → `ParConfirm` standardization **has landed** (2026-06-24,
-swap-only — NPC, encounter, item quest-hook). So every confirmed delete is now a
-DOM modal; the only remaining native `confirm()` in the app is the
-`DataManagerModal` *restore* flow (Phase 4), not a delete.
+The earlier reality-check agent BADLY undercounted native `confirm()` (it only
+looked at template `@click`s, not handler bodies). The real inventory was ~12
+sites. Migration status (2026-06-24):
 
-| Tool / entity | Delete confirm mechanism | Test approach |
-|---|---|---|
-| Item (single) | **none** — direct `deleteItem()` | assert removal only |
-| NPC (single) | **`ParConfirm`** (`deleteCurrentNPC` opens, `performNPCDelete` on @confirm) | confirm-label "Delete NPC" |
-| Encounter (single) | **`ParConfirm`** (`deleteEncounter` opens, `performEncounterDelete`) | confirm-label "Delete encounter" |
-| Setting overview | no delete here — sidebar/parent only | (skip at overview) |
-| Dungeon overview | no delete here — sidebar/parent only | (skip at overview) |
-| Setting factions / quest-hooks | **`ParConfirm`** | confirm-label + click |
-| Dungeon monsters | **`ParConfirm`** | confirm-label "Delete monster" |
-| Item quest hooks | **`ParConfirm`** (`deleteHook` opens, `performDeleteHook`) | confirm-label "Delete quest hook" |
-| Item lore events | **none** (direct remove) | assert removal only |
-| Setting locations | **none** (direct `deleteSublocation`) | assert removal only |
+**DONE — migrated to `ParConfirm` DOM modals:**
+- NPC delete, encounter delete, item quest-hook delete (first pass)
+- Item: delete, unsaved-switch, regenerate-feature (re-entrant guard pattern)
+- Setting delete, statblock delete, dungeon delete
+- Factions regenerate, setting-NPC delete (two-confirm), dungeon monsters, setting factions/quest-hooks (pre-existing)
+
+**DEFERRED — architecturally hard, NOT yet done (still native `confirm()`):**
+- **Dungeon NPC delete** (`dungeon-generator/stores/npc-store.mjs:309,348`) — the
+  confirm lives in a **Pinia store** which can't render a modal. Needs a
+  store→component refactor: store returns pending context, the NPCs tab component
+  shows `ParConfirm` and calls a store `performDelete`. Two-confirm (fallback +
+  multi-location), like NPCGenerator. Tests touching it need `page.on('dialog')`.
+- **RoomDescription move** (`RoomDescription.vue:502`) — a **blocking confirm
+  mid-generation-pipeline** ("move NPC to this room?"). Converting to an
+  event-driven modal means restructuring the async generation flow (promise-gated
+  modal or split the pipeline). Higher risk.
+
+**EXCLUDED (out of the parchment generator scope):**
+- Chase Tracker (`Token.vue`, `Zone.vue`, `ZoneDetailSheet.vue`, `MapControls.vue`)
+  — separate Options-API tool, not parchment-refreshed.
+- `dev-test-controls.mjs` — dev-only, never user-facing.
+- `DataManagerModal.vue:284` restore confirm — a confirm *inside* a modal; nesting
+  `ParConfirm` is fiddly. The lone remaining user-facing native confirm in the
+  generator suite; revisit with Phase 4 (backup/restore).
 
 **Pattern (all `ParConfirm` sites):** a `pending*` ref opens the modal; the real
-delete runs in a `perform*` on `@confirm`. In a test: trigger the delete button,
-then click the modal's confirm button (by its `confirm-label` text, or a testid
-the test phase adds). The cancel path: click Cancel and assert the entity
-survives. Only the `DataManagerModal` restore still needs a
-`page.on('dialog', d => d.accept())` handler. **Adds were deliberately NOT made**
-to the currently-unconfirmed deletes (item single, lore events, setting
-locations) — they stay direct.
+work runs in a `perform*` on `@confirm`. For the in-place flow confirms (item
+switch/regen) a **re-entrant guard** is used: the trigger stores the pending
+target and returns; `@confirm` re-invokes the trigger with that target already
+pending, falling through to the work. In a test: click the trigger, then click
+the modal's confirm button — by `confirm-label` text, or `getByRole('dialog')
+.getByRole('button', { name })` when the trigger and confirm share a label (item,
+setting, dungeon all have trigger text == confirm-label). Cancel path: click
+Cancel, assert the entity survives.
+
+**Tests that drive these (Jest):** any unit test that mocked `window.confirm` and
+called the trigger expecting synchronous deletion must now call the `perform*`
+method too (updated: NPCGenerator, EncounterGenerator, ItemGenerator,
+StatblockGenerator.linkedNPCs specs).
 
 ### D. Sub-entity "add" is almost all GENERATION (AI call), not manual forms
 
@@ -118,8 +135,15 @@ full bundle, restore imports whatever keys are present (MERGE, not replace).
 Effort tiers: **S** = ready now, testids + maybe dialog handler; **M** = needs a
 new fixture or helper; **L** = needs fixture investment or behavior investigation.
 
-### Phase 1 — Per-tool lifecycle (create → INLINE edit → delete) — S/M
-6 specs (`lifecycle/*.spec.js`), one per tool. Edit step is **inline** (click
+### Phase 1 — Per-tool lifecycle (create → INLINE edit → delete) — ✅ DONE (2026-06-24)
+13 specs in `tests/lifecycle/` (item, encounter, npc, setting, dungeon, statblock),
+each a create→edit→delete + a delete-cancel case. **Lore lifecycle deferred** (needs
+a `lore` fixture + SEQUENCES entry — `validateEventJson`/`validateSummaryJson`).
+Testids added: `edit-{item,encounter,npc,setting,dungeon}`,
+`delete-{item,encounter,npc,setting,dungeon,statblock}`,
+`{npc,setting,dungeon}-edit-name`. All green.
+
+Original notes (kept for reference): 6 specs (`lifecycle/*.spec.js`), one per tool. Edit step is **inline** (click
 "Edit"/"Edit X" → fields appear → change → "Save changes" → assert view +
 sidebar updated; also a Cancel-discards case). Delete step per table C.
 - item: delete = direct (no confirm). statblock: gate on `localStorage.monsters`
@@ -167,12 +191,15 @@ wrong rather than forcing a "should-be" failure.
   `data-options-backup/restore/delete-all` naming → match to the 2 real actions
   in DataManagerModal + delete-all in SidebarFooter.)
 
-### Phase 5 — Delete-all — S
-3 specs (`data-options/*.spec.js`). DOM modal in SidebarFooter. Seed two tools'
-content, delete-all in one, assert it clears + other intact; cancel-preserves;
-reversible-by-restore (chains Phase 4).
-- **Testids:** `data-options-delete-all`, and the SidebarFooter confirm modal's
-  confirm/cancel buttons (`delete-all-confirm`, `delete-all-cancel`).
+### Phase 5 — Delete-all — ✅ DONE (2026-06-24)
+2 specs in `tests/data-options/delete-all.spec.js`: clears-this-tool-only (seed
+items + encounters, delete-all in item, assert items gone + encounters intact via
+readStorage) and cancel-preserves-then-confirm-clears. Testids added on
+SidebarFooter (shared, covers all tools): `data-options-toggle`,
+`data-options-delete-all`. The confirm modal is a `ParModal` (role=dialog); its
+confirm button shares the danger-row label, so scope with `getByRole('dialog')`.
+The disclosure is a *toggle* — only expand if not already open. **Deferred:**
+reversible-by-restore (chains Phase 4 backup/restore).
 
 ### Phase 6 — Modal behavior — REWRITE — S/M
 The original 5 modal-edit specs are invalid (no edit modals). Replace with:
@@ -188,13 +215,12 @@ The original 5 modal-edit specs are invalid (no edit modals). Replace with:
 - **Drop testids:** `edit-modal`, `modal-save`, `modal-cancel`. **Keep:** modal
   container + confirm/cancel testids only for the real DOM modals.
 
-### Phase 7 — Tab switching — S
-3 specs (`ui/tab-*.spec.js`). Generate parent, click each tab, assert content
-renders + persists across switches.
-- **Testids:** `tab-item-details|lore-builder|quest-hooks` (item);
-  `tab-overview|locations|factions|npcs|quest-hooks` (setting);
-  `tab-overview|map|npcs|monsters` (dungeon). (ParTabs renders tabs — verify
-  whether existing tab markup already has stable ids before adding.)
+### Phase 7 — Tab switching — ✅ DONE (2026-06-24)
+3 specs in `tests/ui/tab-switching.spec.js` (item, setting, dungeon). **No testids
+needed** — `ParTabs` renders `role="tab"` buttons with `aria-selected`, so tabs are
+targeted by `getByRole('tab', { name })` and activation asserted via
+`aria-selected="true"`. Each test switches through every tab, asserts the output
+container persists, and returns to the first tab with content intact.
 
 ### Phase 8 — Form validation — S/M
 3 specs (`ui/form-validation-*.spec.js`). Note: faction add is generation, so
@@ -209,15 +235,19 @@ delay each fulfill (`await new Promise(r => setTimeout(r, delayMs))` inside the
 route handler). Tests: loading appears then clears; error path via existing
 `failLLM` (assert error UI + button re-enabled); loading clears on cross-tool nav.
 
-### Phase 10 — Cross-session persistence — S
-1 spec (`persistence/cross-session-storage.spec.js`). `context.storageState()`
-→ new context with that state → `gotoTool` → assert sidebars populated. No new
-infra.
+### Phase 10 — Cross-session persistence — ✅ DONE (2026-06-24)
+1 spec in `tests/persistence/cross-session.spec.js`. Generate an item in context
+A, `ctxA.storageState()`, open context B with `browser.newContext({ storageState })`,
+assert the item is in the sidebar and reopens. storageState carries localStorage
+but NOT sessionStorage, so gotoTool's page-set guard re-runs cleanly in B.
 
-### Phase 11 — Additional cross-tool — S
-3-4 specs (`cross-tool/*.spec.js`). faction-persists-across-navigation,
-sidebar-isolation-on-tool-switch, dev-page-survives-reload. quota-is-per-tool
-likely already covered by Phase-1 quota test — check before duplicating.
+### Phase 11 — Additional cross-tool — ✅ MOSTLY DONE (2026-06-24)
+2 specs in `tests/cross-tool/isolation.spec.js`: each-tool-shows-only-its-own-library
+(+ no cross-contamination on tool switch) and active-tool-survives-reload
+(dev-current-page). To switch tools mid-context, set `dev-current-page` directly
+and reload (gotoTool's one-shot guard already fired). quota-is-per-tool is covered
+by the Phase-1 quota test. **Deferred:** faction-persists-across-navigation (adding
+a faction is generation — needs a faction fixture, Phase 2).
 
 ## New helpers / fixtures this expansion introduces
 

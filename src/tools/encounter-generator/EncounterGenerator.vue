@@ -159,7 +159,7 @@
               <span class="encounter-metadata__value">{{ partySummary }}</span>
             </div>
           </div>
-          <ParCardButton variant="affirmative" size="small"
+          <ParCardButton variant="affirmative" size="small" data-testid="edit-encounter"
             v-if="!isEditingEncounter && !loading && !generatedEncounter.loading_details" @click="startEditingEncounter">
             Edit
           </ParCardButton>
@@ -275,7 +275,7 @@
           <ParButton variant="secondary" size="small" @click="showExport = !showExport">
             {{ showExport ? 'Hide export' : 'Export' }}
           </ParButton>
-          <ParCardButton variant="danger" size="small" @click="deleteEncounter">
+          <ParCardButton variant="danger" size="small" @click="deleteEncounter" data-testid="delete-encounter">
             Delete
           </ParCardButton>
         </div>

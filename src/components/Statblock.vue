@@ -285,7 +285,7 @@
                 </CardFooterAction>
             </div>
 
-            <CardFooterAction @click="$emit('delete')" variant="danger">
+            <CardFooterAction @click="$emit('delete')" variant="danger" data-testid="delete-statblock">
                 <template #icon>🗑️</template>
                 Delete
             </CardFooterAction>

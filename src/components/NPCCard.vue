@@ -31,6 +31,7 @@
           v-if="editable && !isEditing && !loadingDescription && !bodyHidden && !stubMode"
           variant="affirmative"
           size="small"
+          data-testid="edit-npc"
           @click="$emit('start-edit')"
         >
           Edit NPC
@@ -169,7 +170,7 @@
         <h2 class="npc-edit__title">Edit NPC</h2>
       </header>
 
-      <ParCardInput v-model="editForm.name" label="Name" class="npc-edit__field" />
+      <ParCardInput v-model="editForm.name" label="Name" class="npc-edit__field" data-testid="npc-edit-name" />
 
       <ParCardTextarea v-model="editForm.read_aloud_description"
         label="Read-aloud description"
@@ -258,7 +259,7 @@
         </ParCardButton>
       </div>
 
-      <ParCardButton v-if="showDelete" variant="danger" @click="$emit('delete')">
+      <ParCardButton v-if="showDelete" variant="danger" @click="$emit('delete')" data-testid="delete-npc">
         Delete
       </ParCardButton>
     </div>

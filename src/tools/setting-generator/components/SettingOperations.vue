@@ -6,7 +6,7 @@
       <ParCardButton @click="showExport = !showExport">
         {{ showExport ? 'Hide export' : 'Export' }}
       </ParCardButton>
-      <ParCardButton variant="danger" class="setting-ops__delete" @click="$emit('delete-setting')">
+      <ParCardButton variant="danger" class="setting-ops__delete" @click="$emit('delete-setting')" data-testid="delete-setting">
         Delete setting
       </ParCardButton>
     </div>

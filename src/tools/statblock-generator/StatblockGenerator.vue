@@ -220,11 +220,23 @@
 
     <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
       currentApp="monsters" />
+
+    <ParConfirm
+      :opened="pendingStatblockDelete !== null"
+      title="Delete this statblock?"
+      confirm-label="Delete statblock"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performStatblockDelete"
+      @cancel="pendingStatblockDelete = null"
+    >
+      Deleting <strong>{{ pendingStatblockDelete?.name }}</strong> can't be undone.
+    </ParConfirm>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParButton, ParAccordion, ParAccordionGroup, ParToggleGroup, ParToggleButton, ParField, ParInput, ParSelect, ParTextarea, ParCheckbox } from "@/parchment";
+import { ParButton, ParAccordion, ParAccordionGroup, ParToggleGroup, ParToggleButton, ParField, ParInput, ParSelect, ParTextarea, ParCheckbox, ParConfirm } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import Statblock from '@/components/Statblock.vue';
@@ -666,8 +678,15 @@ function navigateToLinkedNPC(npcFolder, npcName) {
   });
 }
 
-async function deleteStatblock() {
-  if (!confirm(`Delete "${monster.value.name}"? This cannot be undone.`)) return;
+const pendingStatblockDelete = ref(null);
+
+function deleteStatblock() {
+  if (!monster.value) return;
+  pendingStatblockDelete.value = { name: monster.value.name };
+}
+
+async function performStatblockDelete() {
+  pendingStatblockDelete.value = null;
 
   const deletedName = monster.value.name;
   const folderName = activeFolder.value || 'Uncategorized';

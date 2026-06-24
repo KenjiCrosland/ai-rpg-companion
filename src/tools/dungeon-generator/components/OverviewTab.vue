@@ -17,7 +17,7 @@
             </p>
           </div>
           <div class="dungeon-card-header-actions">
-            <ParCardButton variant="affirmative" size="small" @click="startEditing">Edit overview</ParCardButton>
+            <ParCardButton variant="affirmative" size="small" @click="startEditing" data-testid="edit-dungeon">Edit overview</ParCardButton>
           </div>
         </div>
 
@@ -63,6 +63,7 @@
           label="Name"
           hint='The bare dungeon name (e.g., "Eikheim Barrow").'
           class="dungeon-edit__field"
+          data-testid="dungeon-edit-name"
         />
 
         <ParCardInput

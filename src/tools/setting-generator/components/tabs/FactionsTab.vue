@@ -218,6 +218,20 @@
       Deleting <strong>{{ deleteConfirmName }}</strong> removes it from this
       setting. This can't be undone.
     </ParConfirm>
+
+    <!-- Regenerate all confirmation -->
+    <ParConfirm
+      :opened="pendingFactionsRegen"
+      title="Regenerate all factions?"
+      confirm-label="Regenerate factions"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performFactionsRegen"
+      @cancel="pendingFactionsRegen = false"
+    >
+      This erases all existing factions and removes every NPC's faction
+      association. This can't be undone.
+    </ParConfirm>
   </div>
 </template>
 
@@ -335,6 +349,9 @@ const deleteConfirmName = computed(() =>
     ? ''
     : (props.setting.factions?.[deleteConfirmIndex.value]?.name || 'this faction'),
 );
+
+// Regenerate-all confirmation (ParConfirm modal) — true while the modal is open.
+const pendingFactionsRegen = ref(false);
 
 const editingFactionIndex = ref(null);
 const factionEditForm = ref({
@@ -495,12 +512,22 @@ const saveEditFaction = () => {
 // Generate bulk factions
 // -------------------------
 async function generateFactions() {
-  let currentFactions = props.setting.factions;
+  const currentFactions = props.setting.factions;
   if (currentFactions.length > 0) {
-    if (!confirm('Are you sure you want to regenerate factions? This will erase all existing factions and will remove all npcs associated with a faction.')) return;
-    currentFactions = [];
+    pendingFactionsRegen.value = true;
+    return;
   }
 
+  await runGenerateFactions();
+}
+
+// Commit the pending regeneration once confirmed.
+async function performFactionsRegen() {
+  pendingFactionsRegen.value = false;
+  await runGenerateFactions();
+}
+
+async function runGenerateFactions() {
   const overviewText = getOverviewText(props.setting.setting_overview);
   const prompt = factionListPrompt(overviewText);
 

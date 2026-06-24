@@ -174,11 +174,23 @@
       </div>
 
     </div>
+
+    <ParConfirm
+      :opened="pendingSettingDelete !== null"
+      title="Delete this setting?"
+      confirm-label="Delete setting"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performSettingDelete"
+      @cancel="pendingSettingDelete = null"
+    >
+      Deleting this setting removes it and re-parents its children. This can't be undone.
+    </ParConfirm>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParButton, ParField, ParInput, ParTextarea, ParTabs } from "@/parchment";
+import { ParButton, ParField, ParInput, ParTextarea, ParTabs, ParConfirm } from "@/parchment";
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrLink } from "@rei/cedar";
@@ -689,9 +701,16 @@ const updateOriginalIndices = () => {
   });
 };
 
+const pendingSettingDelete = ref(null);
+
 const deleteSetting = (idToDelete) => {
-  //confirm deletion
-  if (!confirm("Are you sure you want to delete this setting?")) return;
+  if (!idToDelete) return;
+  pendingSettingDelete.value = idToDelete;
+};
+
+const performSettingDelete = () => {
+  const idToDelete = pendingSettingDelete.value;
+  pendingSettingDelete.value = null;
   if (!idToDelete) return;
   const indexToDelete = settings.value.findIndex(s => s?.id === idToDelete);
   if (indexToDelete < 0) return;
