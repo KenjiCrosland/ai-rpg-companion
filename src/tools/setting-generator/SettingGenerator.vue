@@ -2583,7 +2583,7 @@ $transition-speed: 0.3s;
 }
 
 .relationship-buttons {
-  background-color: #f4f2ed;
+  background-color: var(--par-color-surface, #FBF7F0);
   border-radius: 8px;
   padding: 1rem 1rem 4rem 1rem;
   margin: 1rem auto;

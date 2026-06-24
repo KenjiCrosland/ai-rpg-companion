@@ -648,7 +648,7 @@ input,
 textarea,
 select {
     border: 1px solid #cbab77;
-    background-color: #fefdf9;
+    background-color: var(--par-color-surface-card, #FEFBF4);
     padding: .75rem;
     font-size: 14px;
 
@@ -778,7 +778,7 @@ textarea {
 .remove-button,
 .add-button,
 .regenerate-button-small {
-    background-color: #fefdf9;
+    background-color: var(--par-color-surface-card, #FEFBF4);
     color: #8d7349;
     font-weight: bold;
     border: 1px solid #cbab77;
@@ -788,7 +788,7 @@ textarea {
 
     &:hover {
         background-color: #cbab77;
-        color: #fefdf9;
+        color: var(--par-color-surface-card, #FEFBF4);
         transition: .3s, color .3s;
     }
 

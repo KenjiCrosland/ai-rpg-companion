@@ -765,7 +765,7 @@ function clearNpcStatblockReference(index) {
 
 <style scoped>
 .read-aloud-box {
-  background-color: #fafaf6;
+  background-color: var(--par-color-surface-card, #FEFBF4);
   padding: 1rem 2rem;
   font-style: italic;
 }

@@ -127,7 +127,7 @@ defineExpose({ show, dismiss });
   }
 
   &.warning {
-    background-color: #fdf8ef;
+    background-color: var(--par-color-surface, #FBF7F0);
     border: 1px solid #f0e4cc;
     color: #7c5a10;
 

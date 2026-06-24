@@ -2149,7 +2149,7 @@ $active-border-color: var(--color-action-rest, #365A85);
 .premium-banner {
     font-size: 1.2rem;
     color: $cdr-color-text-secondary;
-    background-color: #fdf8ef;
+    background-color: var(--par-color-surface, #FBF7F0);
     border: 1px solid #f0e4cc;
     border-radius: 6px;
     padding: 0.75rem 1rem;
@@ -2174,11 +2174,41 @@ $active-border-color: var(--color-action-rest, #365A85);
 /* The NPC content area no longer carries its own white card — the NPCCard
    (and the rendered statblock) bring their own parchment surfaces, so this is
    just a transparent layout wrapper. */
+/* Editorial container for the generated NPC (M2): frames the output on a
+   cream stage instead of leaving the NPC card bare on the cool desk. Matched
+   to the other tools' containers (.item-view / .setting-tabs /
+   .content-container): #FEFBF4, 8px radius, 2.5rem padding, 2rem bottom
+   margin, soft shadow, no border (so it doesn't double-border the card). */
 .location-description {
     @include cdr-text-body-500();
     margin-top: 20px;
+    margin-bottom: 2rem;
     width: 100%;
     box-sizing: border-box;
+    background-color: var(--par-color-surface-card, #FEFBF4);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 2.5rem;
+}
+
+/* Drop the trailing card margin so the cream stage's bottom padding isn't
+   doubled when the NPC card is the last child. */
+.location-description > :last-child {
+    margin-bottom: 0;
+}
+
+/* The NPCCard carries generous horizontal padding (3rem) sized for
+   standalone/WordPress use. Inside the stage that stacks with the stage's
+   2.5rem, pushing content too far in and out of rhythm with the other tools.
+   Trim the card's section padding to 2rem here (scoped to the NPC generator —
+   the card's read-only use in dungeon/setting/encounter is untouched) so the
+   content inset reads consistently. */
+.location-description :deep(.npc-card-header),
+.location-description :deep(.npc-card-content),
+.location-description :deep(.npc-card-stub-body),
+.location-description :deep(.npc-edit) {
+    padding-left: 2rem;
+    padding-right: 2rem;
 }
 
 @media (max-width: 2080px) {
@@ -2358,7 +2388,7 @@ div[class^="cdr-skeleton-bone"] {
     text-align: center;
     margin-top: 1.5rem;
     padding: 1.5rem;
-    background: #fdf8ef;
+    background: var(--par-color-surface, #FBF7F0);
     border: 1px solid #f0e4cc;
     border-radius: 6px;
 
@@ -2476,52 +2506,13 @@ div[class^="cdr-skeleton-bone"] {
     }
 }
 
-/* NPC Card Skeleton Styles */
-.npc-card {
-    background: #faf8f3;
-    border: 1.5px solid #c9b99a;
-    border-top: 3px solid #7b2d26;
-    border-radius: 2px;
-    font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-
-.npc-card-header {
-    padding: 1.25rem 1.5rem 0.75rem;
-}
-
-.npc-card-read-aloud {
-    border-top: 1px solid #c9b99a;
-    border-bottom: 1px solid #c9b99a;
-    margin: 0 1.5rem;
-    padding: 1rem 0;
-}
-
-.npc-card-body {
-    padding: 0.75rem 1.5rem 1rem;
-    color: #3d3d3d;
-    font-size: 15px;
-    line-height: 1.6;
-}
-
-.npc-flourish {
-    width: 60%;
-    height: 12px;
-    display: block;
-    margin: 1rem auto;
-}
-
-.npc-card-relationships {
-    padding: 0.75rem 1.5rem 1rem;
-}
-
-.npc-relationship-card {
-    background: #f4f0e8;
-    border-radius: 3px;
-    padding: 0.625rem 0.75rem;
-    margin-bottom: 0.75rem;
-}
+/* (Removed stale "NPC Card Skeleton Styles": a legacy duplicate of the
+   NPCCard's own `.npc-card*` rules with hardcoded pre-token hexes. Because a
+   child component's root element inherits the parent's scope attribute, the
+   bare `.npc-card` rule here was overriding NPCCard.vue's tokenized styling on
+   the real card — making edits there appear to do nothing. NPCGenerator
+   renders the <NPCCard> component, not its own `.npc-card` markup, so these
+   were pure leakage and are gone. NPCCard owns its styling.) */
 
 /* Responsive */
 @media (max-width: 768px) {

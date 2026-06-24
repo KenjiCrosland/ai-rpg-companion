@@ -654,7 +654,10 @@ function navigateToNPCGenerator() {
 /* Card container */
 .npc-card {
   background: var(--par-color-surface, #FBF7F0);
-  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  /* Soft frame — a light 1px tan edge + the original 3px burgundy top accent.
+     Lighter than the previous 1.5px border-strong all-around (too heavy on a
+     cream stage), but 1px (not 0.5px) so the card keeps enough definition. */
+  border: 1px solid var(--par-color-border, #e8e2d4);
   border-top: 3px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
   /* Card root carries the `parchment` marker class (see App.vue) which
@@ -795,8 +798,6 @@ function navigateToNPCGenerator() {
   /* Priority 5: Increase horizontal padding */
   padding: 0.5rem 2rem;
   background: var(--par-color-callout-bg, #f3ebda);
-  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
-  border-bottom: 1px solid var(--par-color-border-strong, #c9b99a);
   margin: 0 0 0.75rem;
 }
 
@@ -807,13 +808,12 @@ function navigateToNPCGenerator() {
   font-style: italic;
 }
 
-/* Read-aloud */
+/* Read-aloud — burgundy left bar marks the player-facing opener (the
+   read-aloud convention). The top/bottom tan hairlines were dropped: they
+   read as a heavy box now that the card sits on a cream stage, and the left
+   bar alone matches the lighter setting/item read-aloud treatment. */
 .npc-card-read-aloud {
-  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
-  border-bottom: 1px solid var(--par-color-border-strong, #c9b99a);
-  /* Priority 6: Add left border accent for quick scanning */
   border-left: 3px solid var(--par-color-title, #7a1f1f);
-  /* Priority 5: Increase horizontal padding */
   margin: 2rem 1.5rem 2rem;
   padding: 1rem 0 1rem 1.25rem;
 }

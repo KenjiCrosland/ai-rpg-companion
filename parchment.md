@@ -303,7 +303,7 @@ The decisions that shouldn't be casually violated:
 - **H6 — (resolved as intentional)** Read-aloud's two treatments are now both canonical ([§5](#read-aloud--two-canonical-registers), [§7](#7-semantic-differentiation-load-bearing-rule)). No longer drift.
 
 ### Medium — surface / token drift
-- **M2 — NPC generator has no editorial container** (renders on page bg). Wrap in a `surface-card` container to match the other tools.
+- **M2 — ✅ Fixed.** The generated-NPC area now sits on a cream `surface-card` stage (`#FEFBF4` + soft shadow, no border so it doesn't double-border the `NPCCard` inside) — matching the form card above it and the item generator's `.item-view`, instead of floating bare on the cool desk.
 - **M3 — ✅ Fixed.** The `#fdfbf6` fallback (≠ the real `#FBF7F0` token) was normalized across ~20 sites.
 - **M4 — partially fixed.** ✅ `#f8f3e8` → `--par-color-callout-bg-light` (a true zero-shift map, ~2 off). Still open (each would shift the visible color, so they want an eyeball, not a sweep): `#fdf8ef` (banners), `#f4f2ed` (cool-grey dashboard/relationship surfaces), `#fafaf6`, `#fefdf9` (statblock inputs).
 - **M5 — Expandable-card divergence:** three toggle treatments and a border-weight split (lore nodes 1px `--par-color-border` vs others 1.5px `--par-color-border-strong`). Converge when extracting `ParExpandableCard`.

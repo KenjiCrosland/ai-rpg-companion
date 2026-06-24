@@ -2650,7 +2650,7 @@ onUnmounted(() => {
 .premium-banner {
   font-size: 1.2rem;
   color: $cdr-color-text-secondary;
-  background-color: #fdf8ef;
+  background-color: var(--par-color-surface, #FBF7F0);
   border: 1px solid #f0e4cc;
   border-radius: 6px;
   padding: 0.75rem 1rem;
