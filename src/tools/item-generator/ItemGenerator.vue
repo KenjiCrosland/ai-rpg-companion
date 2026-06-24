@@ -104,7 +104,7 @@
               </p>
             </fieldset>
             <!-- END TEST-REGISTER-OVERRIDE -->
-            <ParButton class="generate-button" type="submit" :full-width="true">Generate magic item
+            <ParButton class="generate-button" type="submit" :full-width="true" data-testid="generate-item">Generate magic item
             </ParButton>
           </form>
         </div>
@@ -132,7 +132,7 @@
       <!-- Tabbed Content for Generated Item — Pattern A: the tab strip
            floats on the page background; each panel owns its own lifted
            content surface (no outer card-within-card wrapper). -->
-      <div v-if="magicItemDescription && !loadingItem" class="item-view paper-grain">
+      <div v-if="magicItemDescription && !loadingItem" class="item-view paper-grain" data-testid="item-output">
         <div class="item-view__tabs">
           <ParTabs :tabs="itemTabs" v-model:active-id="activeTabId" />
         </div>
@@ -143,7 +143,7 @@
             <div v-if="!isEditing" class="item-card parchment">
               <header class="item-card-header">
                 <div class="item-card-header-text">
-                  <h2 class="item-card-name">{{ magicItemDescription.name }}</h2>
+                  <h2 class="item-card-name" data-testid="item-name">{{ magicItemDescription.name }}</h2>
                   <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity
                     }}<span v-if="magicItemDescription.requires_attunement"> (requires attunement{{
                       magicItemDescription.attunement_restriction ? ' ' + magicItemDescription.attunement_restriction :

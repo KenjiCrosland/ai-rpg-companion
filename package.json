@@ -8,6 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "jest --verbose",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:smoke": "SMOKE=true playwright test smoke.spec.js",
     "generate-srd-index": "node scripts/generate-srd-index.mjs"
   },
   "dependencies": {
@@ -29,6 +33,7 @@
     "@babel/preset-env": "^7.21.5",
     "@babel/preset-react": "^7.18.6",
     "@pinia/testing": "^1.0.3",
+    "@playwright/test": "^1.61.1",
     "@rei/cdr-tokens": "^11.0.1",
     "@vitejs/plugin-vue": "^4.2.3",
     "@vue/test-utils": "^2.4.6",
@@ -68,6 +73,10 @@
     },
     "transformIgnorePatterns": [
       "node_modules/(?!(@rei|@vue)/)"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/tests/"
     ]
   }
 }

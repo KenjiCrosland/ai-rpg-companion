@@ -1,0 +1,9 @@
+{
+  "dm_notes": [
+    "The three corrupted knights are in a trance until the ritual completes (3 rounds). They cannot be knocked prone but can be moved. Breaking their concentration requires damage exceeding 10 in a single hit. Once broken, they fight with desperate frenzy, using shield bashes to protect the altar.",
+    "The ritual succeeds on initiative count 0 of round 4. When it does, each knight makes a DC 17 Charisma saving throw. On a failure the knight transforms into a wraith-touched creature; on a success it regains its senses, horrified, and may flee or surrender.",
+    "Jhalmuk observes from a broken window alcove (30 ft. up) until his cover is blown, at which point he descends with unsettling grace. He wants the ritual to succeed but will abandon it if the party proves too competent.",
+    "The tower's second floor has partially collapsed, creating difficult terrain and a 10-foot drop hazard. Any creature knocked prone near the drop edge must make a DC 13 Strength saving throw or fall, taking 1d6 bludgeoning damage.",
+    "After the encounter: if any knight transforms, they become agents of an unseen darkness. If the altar is destroyed, the tower begins to stabilize. If Jhalmuk escapes with a fragment, it leaks dark energy into the surrounding land."
+  ]
+}

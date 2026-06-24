@@ -100,7 +100,7 @@
                 what you have.
               </template>
             </ParField>
-            <ParButton type="submit" :full-width="true">
+            <ParButton type="submit" :full-width="true" data-testid="generate-setting">
               Generate setting
             </ParButton>
           </form>
@@ -125,7 +125,7 @@
       <!-- Tab strip (ParTabs) + bare panels — no card surface around the
            content; the tab components own their own cards (matches the Item
            Generator). Also covers the overview-loading skeleton state. -->
-      <div v-if="settingOverviewExists || currentSetting.loadingsettingOverview" class="setting-tabs paper-grain">
+      <div v-if="settingOverviewExists || currentSetting.loadingsettingOverview" class="setting-tabs paper-grain" data-testid="setting-output">
         <ParTabs :tabs="settingTabs" v-model:active-id="activeTabId" />
         <div
           :id="`par-tabs-panel-${activeTabId}`"

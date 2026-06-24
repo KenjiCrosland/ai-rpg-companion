@@ -90,7 +90,7 @@
                 <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link>.
               </template>
             </ParField>
-            <ParButton type="submit" :full-width="true">Generate dungeon</ParButton>
+            <ParButton type="submit" :full-width="true" data-testid="generate-dungeon">Generate dungeon</ParButton>
           </form>
         </div>
 
@@ -110,7 +110,7 @@
           </PatreonCallout>
         </div>
       </div>
-      <div v-if="dungeonStore.currentDungeon || isGenerating" class="content-container paper-grain">
+      <div v-if="dungeonStore.currentDungeon || isGenerating" class="content-container paper-grain" data-testid="dungeon-output">
         <ParTabs :tabs="dungeonTabs" v-model:active-id="activeTabId" />
 
         <!-- Panels use v-show (not v-if) so all four tabs stay mounted —

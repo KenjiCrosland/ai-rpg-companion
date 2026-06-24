@@ -1,0 +1,32 @@
+{
+  "name": "Eldora's Crossing",
+  "title": "Republic of the Silver Ford",
+  "overview": "A thriving mercantile city built where the Silverflow River narrows into a natural ford, the primary crossing for trade between the northern kingdoms and the southern merchant republics. Stacked warehouses line the dockside while noble estates crown the eastern bluffs.",
+  "history": "Founded 300 years ago by the merchant lord Eldora as a trading post, the city has grown into a regional power. The original stone keep still stands in the center, now housing the guilds' offices.",
+  "current_ruler_sentence": "A council of guild masters governs by uneasy consensus, its chair rotating each season.",
+  "social_history": "Old dock families and newer guild money circle each other warily across the bluffs and the wharves.",
+  "economic_history": "Tariffs on the ford built the city's wealth; smuggling routes beneath the cisterns quietly erode it.",
+  "military_history": "A standing harbor watch and hired caravan guards stand in for any real army the republic never raised.",
+  "central_dynamic": "Guild ambition versus dock-family tradition, with the failing cisterns forcing both to act.",
+  "present_state": "A shipment of rare reagents has vanished from the docks while the aging water cisterns spring fresh breaches.",
+  "where_it_sits": "At the narrowest ford of the Silverflow, between the northern kingdoms and the southern republics.",
+  "extent": "The walled city and its terraced bluffs, plus the ford and warehouse flats along both banks.",
+  "features": "A stone keep, tiered guild halls, dockside warehouses, and a labyrinth of underground cisterns.",
+  "what_happens_here": "Caravans are bonded, cargo is taxed, and contraband changes hands in the small hours.",
+  "what_lives_here": "Merchants, dock crews, guild factors, and the smugglers who work the cisterns below.",
+  "travel_and_hazards": "The ford is safe by day; the warehouse district turns dangerous after dark.",
+  "who_frequents_here": "Caravan masters, guild factors, river pilots, and informants for every faction.",
+  "hidden_detail": "A sealed cistern gate hides the original smugglers' dock beneath the merchant quarter.",
+  "named_entities": [
+    "Eldora's Crossing",
+    "The Silverflow River",
+    "The Merchant Guilds",
+    "The Old Cisterns"
+  ],
+  "npc_list": [
+    {
+      "name": "Guildmaster Veyra",
+      "description": "The sharp-eyed chair of the merchant council, balancing dock families against newer guild money."
+    }
+  ]
+}

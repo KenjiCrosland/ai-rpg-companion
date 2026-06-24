@@ -264,6 +264,29 @@ npm test -- StatblockGenerator.spec.js     # Run specific test file
 npm test -- --maxWorkers=1                 # Run tests sequentially (helps with flaky tests)
 ```
 
+### Acceptance tests (Playwright, end-to-end)
+
+There are **two separate test suites**, and they must not be conflated:
+
+- `npm test` → **Jest** unit/component tests (the section above). Jest's config
+  has `testPathIgnorePatterns: ["<rootDir>/tests/"]` so it does **not** pick up
+  the Playwright specs. Don't remove that exclusion, and don't repoint the
+  `test` script at Playwright — `npm test` staying Jest is load-bearing.
+- `npm run test:e2e` → **Playwright** acceptance tests in `tests/`, run locally
+  against the Vite dev server with mocked LLM responses (`test:e2e:headed`,
+  `test:e2e:ui`, and `test:e2e:smoke` for the real-endpoint smoke tests also
+  exist). These cover the critical cross-tool user flows whose regression would
+  matter most for a release.
+
+**`tests/README.md` is the authoritative guide** — read it before adding or
+debugging an e2e test. The non-obvious realities it documents (and that bit us
+once already): dev is a single SPA so navigation is `localStorage['dev-current-page']`
+not per-tool URLs; premium is the page *variant* (`<tool>-premium`), not a
+runtime flag; all tools POST to one `/api/ai/*` endpoint so the mock sequences
+fixtures by call order; fixtures are hand-authored to pass each tool's real
+validator; and two-part generators need the *completion* signal (not the part-1
+signal) before you reset or navigate.
+
 ## Migration Status
 
 The project has undergone two major types of migrations:

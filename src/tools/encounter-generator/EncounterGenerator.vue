@@ -129,7 +129,7 @@
           </section>
 
           <!-- Generate Button -->
-          <ParButton class="generate-button" :full-width="true" @click="generateEncounter" :disabled="loading">
+          <ParButton class="generate-button" :full-width="true" @click="generateEncounter" :disabled="loading" data-testid="generate-encounter">
             {{ loading ? 'Generating…' : 'Generate encounter' }}
           </ParButton>
         </div>
@@ -141,7 +141,7 @@
       </div>
 
       <!-- Output card (separate from form) -->
-      <div v-if="generatedEncounter || loading" class="output-card parchment paper-grain">
+      <div v-if="generatedEncounter || loading" class="output-card parchment paper-grain" data-testid="encounter-output">
         <!-- Show skeleton for title while loading and no place_name yet -->
         <div v-if="loading && (!generatedEncounter || !generatedEncounter.place_name)" class="title-skeleton">
           <cdr-skeleton>

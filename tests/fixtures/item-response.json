@@ -1,0 +1,25 @@
+{
+  "name": "Verdant Resilience Cloak",
+  "item_type": "Wondrous Item",
+  "rarity": "Rare",
+  "bonus": "+1",
+  "modifier_sentence": "This item grants a +1 bonus to AC and Dexterity saving throws.",
+  "feature_count": 2,
+  "requires_attunement": true,
+  "attunement_restriction": null,
+  "features": {
+    "Verdant Resilience": "While wearing this cloak, you have advantage on saving throws against poison and resistance to poison damage.",
+    "Nature's Bond": "Once per day, you can use an action to cast Pass Without Trace without expending a spell slot. This property recharges at dawn."
+  },
+  "physical_description": "A flowing cloak woven from living vines that shimmer with emerald luminescence. Thorny patterns spiral along the hem, and the fabric pulses gently with a heartbeat-like rhythm.",
+  "lore": "Cultivated by the druids of the Moonwood Circle over three generations, this cloak was shaped from a single ancient vine that once sheltered a dying fey lord. Now it seeks a guardian who will shield the balance between civilization and wilderness.",
+  "related_npcs": [
+    {
+      "name": "Lyralei of the Moonwood",
+      "role_brief": "Druid who wove the cloak",
+      "context": "The master druid who spent decades cultivating the cloak from living vine.",
+      "source_quote": "cultivated by the druids of the Moonwood Circle over three generations",
+      "npc_id": null
+    }
+  ]
+}

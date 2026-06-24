@@ -118,7 +118,7 @@
                         <!-- END TEST-REGISTER-OVERRIDE -->
 
                         <ParButton type="submit" :disabled="loadingPart1" :full-width="true"
-                            class="generate-button">Generate NPC</ParButton>
+                            class="generate-button" data-testid="generate-npc">Generate NPC</ParButton>
                     </form>
                 </div>
 
@@ -150,7 +150,7 @@
             </div>
 
             <!-- NPC Content (shown when NPC is loaded or loading) -->
-            <div id="npc-content-area" class="location-description paper-grain"
+            <div id="npc-content-area" class="location-description paper-grain" data-testid="npc-output"
                 v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
 
                 <!-- NPC Card (always shown when loading or data exists) -->

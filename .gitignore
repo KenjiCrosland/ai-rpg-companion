@@ -45,3 +45,7 @@ PREMIUM-MIGRATION.md
 /src/data/srd-monsters-temp.json
 /src/data/srd-alt.json
 /src/data/srd-monsters-statblocks.json
+
+# Playwright
+test-results/
+playwright-report/
