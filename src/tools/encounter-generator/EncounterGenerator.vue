@@ -68,7 +68,7 @@
         </div>
 
         <!-- ZONE 2: Form card -->
-        <div class="form-card parchment">
+        <div class="form-card parchment paper-grain">
 
           <!-- Scene Description — leads because it drives narrative quality -->
           <section class="form-section">
@@ -141,7 +141,7 @@
       </div>
 
       <!-- Output card (separate from form) -->
-      <div v-if="generatedEncounter || loading" class="output-card parchment">
+      <div v-if="generatedEncounter || loading" class="output-card parchment paper-grain">
         <!-- Show skeleton for title while loading and no place_name yet -->
         <div v-if="loading && (!generatedEncounter || !generatedEncounter.place_name)" class="title-skeleton">
           <cdr-skeleton>

@@ -84,7 +84,7 @@
                 </div>
 
                 <!-- ZONE 2: Form card — lifted cream surface, lapis "magic UI" -->
-                <div class="form-card parchment">
+                <div class="form-card parchment paper-grain">
                     <SeededFromBanner
                         :source-type="seedSourceType"
                         :source-name="seedSourceName"
@@ -150,7 +150,7 @@
             </div>
 
             <!-- NPC Content (shown when NPC is loaded or loading) -->
-            <div id="npc-content-area" class="location-description"
+            <div id="npc-content-area" class="location-description paper-grain"
                 v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
 
                 <!-- NPC Card (always shown when loading or data exists) -->

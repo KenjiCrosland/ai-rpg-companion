@@ -1,0 +1,40 @@
+/**
+ * Paper grain — a subtle parchment texture for editorial container surfaces.
+ *
+ * Opt in by adding `class="paper-grain"` to a cream (`--par-color-surface-card`
+ * / `--par-color-surface`) editorial container. CSS-only: an SVG fractal-noise
+ * overlay multiplied onto the surface so it darkens the cream into soft tonal
+ * mottling (the uneven aging of vellum) rather than replacing the color.
+ *
+ * Started as an item-generator experiment; landed ("very subtle but makes
+ * everything pop") and propagated to the main content surfaces across tools.
+ * Applied to editorial DOCUMENT containers, not chrome (the sidebar stays
+ * flat) — texture is a property of the page you read, not the tool frame.
+ *
+ * ONE KNOB tunes the whole system: the feColorMatrix alpha (0.04) below is the
+ * intensity. baseFrequency 0.035 is the mottle scale (lower = bigger, softer
+ * patches; higher → finer "static"). numOctaves 4 adds a faint fiber grain.
+ * Fully reversible: delete this file's import in base.js, or drop the class.
+ */
+.paper-grain {
+  position: relative;
+  isolation: isolate;
+}
+
+.paper-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper-grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper-grain)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Decorative texture — strip on print. */
+@media print {
+  .paper-grain::before {
+    display: none;
+  }
+}

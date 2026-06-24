@@ -41,7 +41,7 @@
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
         :premium="true" currentApp="rpgTimelines" />
 
-      <div class="timeline-card">
+      <div class="timeline-card paper-grain">
         <!-- ── Header: subject · subtitle · world-year · hairline ───────────── -->
         <header class="timeline-header">
           <div class="timeline-header__titles">

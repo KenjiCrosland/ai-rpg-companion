@@ -61,7 +61,7 @@
         </div>
 
         <!-- ZONE 2: Form card -->
-        <div class="form-card parchment">
+        <div class="form-card parchment paper-grain">
           <!-- Cross-tool seed callout: shown when the user arrived from
                the Item Generator (pendingSeed populated by the mount
                handler). Removes the "is anything actually happening?"
@@ -110,7 +110,7 @@
           </PatreonCallout>
         </div>
       </div>
-      <div v-if="dungeonStore.currentDungeon || isGenerating" class="content-container">
+      <div v-if="dungeonStore.currentDungeon || isGenerating" class="content-container paper-grain">
         <ParTabs :tabs="dungeonTabs" v-model:active-id="activeTabId" />
 
         <!-- Panels use v-show (not v-if) so all four tabs stay mounted —

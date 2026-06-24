@@ -74,7 +74,7 @@
         </div>
 
         <!-- ZONE 2: Form card — lifted cream surface, lapis "magic UI" -->
-        <div class="form-card parchment">
+        <div class="form-card parchment paper-grain">
           <h2 class="form-heading">Generate a monster statblock</h2>
           <form @submit.prevent="generateStatblock" class="monster-form">
             <ParField label="Monster name" :optional="true">

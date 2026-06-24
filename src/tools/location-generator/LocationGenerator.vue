@@ -4,7 +4,7 @@
 
     <div class="app-container">
     <div class="main-container">
-      <div class="form-container parchment">
+      <div class="form-container parchment paper-grain">
         <div class="location-heading">
           <span class="location-heading__tag">Kenji's Location Generator</span>
           <h1 class="location-heading__title">Describe a location for your players</h1>

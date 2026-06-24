@@ -174,7 +174,10 @@ Every main editorial container resolves to cream `#FEFBF4` (`--par-color-surface
 
 Sidebar (`GeneratorLayout`) is also `#FEFBF4` with a 0.5px `border-strong` right edge.
 
-**Known gap:** the NPC generator renders generated content bare on the page background instead of a cream card — the one tool missing the editorial container ([§9 M2](#medium--surface--token-drift)).
+### Paper grain
+Editorial container surfaces carry a **subtle paper-grain texture** — a CSS-only SVG fractal-noise overlay (`mix-blend-mode: multiply`) that mottles the cream like aging vellum. Opt in with the **`paper-grain`** utility class (defined once in `src/parchment/texture.css`, loaded globally via `base.js`); the host gets `position: relative; isolation: isolate` and a `z-index:-1 ::before`. **One knob tunes the whole system** — the `feColorMatrix` alpha in `texture.css` (currently `0.04`, "very subtle but makes everything pop"); `baseFrequency 0.035` is the mottle scale.
+
+Applied to the **editorial document containers** of every tool (item-view, the form cards, content-container, output-card, setting-tabs, timeline-card, location/book form containers, the NPC stage), **not to chrome** — the sidebar stays flat. Texture is a property of the page you read, not the tool frame. Started as an item-generator experiment; it landed and propagated. Stripped on print.
 
 ---
 

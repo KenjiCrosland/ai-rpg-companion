@@ -81,7 +81,7 @@
         </div>
 
         <!-- ZONE 2: Form card — lifted cream surface, lapis "magic UI" -->
-        <div class="form-card parchment">
+        <div class="form-card parchment paper-grain">
           <SeededFromBanner
             :source-type="seededSourceType"
             :source-name="seededSourceName"
@@ -125,7 +125,7 @@
       <!-- Tab strip (ParTabs) + bare panels — no card surface around the
            content; the tab components own their own cards (matches the Item
            Generator). Also covers the overview-loading skeleton state. -->
-      <div v-if="settingOverviewExists || currentSetting.loadingsettingOverview" class="setting-tabs">
+      <div v-if="settingOverviewExists || currentSetting.loadingsettingOverview" class="setting-tabs paper-grain">
         <ParTabs :tabs="settingTabs" v-model:active-id="activeTabId" />
         <div
           :id="`par-tabs-panel-${activeTabId}`"

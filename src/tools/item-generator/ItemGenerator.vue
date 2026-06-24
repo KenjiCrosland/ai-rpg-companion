@@ -56,7 +56,7 @@
         <!-- `parchment` opts the card out of App.vue's global font-family
              !important override so the serif heading/subhead are honored
              (the form primitives self-mark, but the raw h2/p need this). -->
-        <div class="form-card parchment">
+        <div class="form-card parchment paper-grain">
           <h2 class="form-heading">Generate a magic item</h2>
           <p class="form-subhead">
             Specify what you want, or
@@ -132,7 +132,7 @@
       <!-- Tabbed Content for Generated Item — Pattern A: the tab strip
            floats on the page background; each panel owns its own lifted
            content surface (no outer card-within-card wrapper). -->
-      <div v-if="magicItemDescription && !loadingItem" class="item-view">
+      <div v-if="magicItemDescription && !loadingItem" class="item-view paper-grain">
         <div class="item-view__tabs">
           <ParTabs :tabs="itemTabs" v-model:active-id="activeTabId" />
         </div>
@@ -2503,6 +2503,7 @@ onUnmounted(() => {
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-lg, 12px);
   padding: 2.25rem 2.25rem 2rem;
+  /* Paper grain via the shared `.paper-grain` utility class on the element. */
 }
 
 .form-heading {
@@ -2685,6 +2686,8 @@ onUnmounted(() => {
   padding: 2.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   margin-bottom: 2rem;
+  /* Paper grain via the shared `.paper-grain` utility class on the element
+     (src/parchment/texture.css). */
 }
 
 @media (max-width: 2080px) {

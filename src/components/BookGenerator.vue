@@ -2,7 +2,7 @@
   <div class="app-container book-generator parchment">
     <ToolNavigation />
 
-    <div class="book-form-card">
+    <div class="book-form-card paper-grain">
       <div class="book-heading">
         <span class="book-heading__tag">Kenji's Bookshelf Generator</span>
         <h1 class="book-heading__title">Stock a shelf for your players</h1>
