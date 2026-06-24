@@ -139,7 +139,38 @@
         :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
         @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
         @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
-        @toggle-export="showExports = !showExports" />
+        @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+
+      <!-- Regenerate panel (toggled by the 🔄 Regenerate action in the
+           statblock footer bar). Re-rolls a saved statblock: the gen params
+           (name, build, CR, description, spellcaster) were saved with the
+           monster and restored into the form refs by selectMonster, so
+           generateStatblock() re-rolls keeping them — replacing this monster
+           in place (the activeMonsterIndex !== null path). Build + CR are
+           surfaced so you can nudge the re-roll; name/description are kept
+           silently. Only meaningful for a saved monster. -->
+      <div
+        class="regenerate-bar parchment"
+        v-if="showRegenerate && monster && activeMonsterIndex !== null && !loadingPart1 && !loadingPart2"
+      >
+        <p class="regenerate-bar__title">Regenerate this monster</p>
+        <p class="regenerate-bar__hint">
+          Re-rolls a fresh version, keeping the name and description. Adjust the build or CR first if you like.
+        </p>
+        <div class="regenerate-bar__grid">
+          <ParField label="Build">
+            <ParSelect v-model="monsterType"
+              :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
+          </ParField>
+          <ParField label="Challenge rating">
+            <ParSelect v-model="selectedChallengeRating" :options="challengeRatingData.fullArray" placeholder="CR" />
+          </ParField>
+        </div>
+        <ParButton class="regenerate-bar__button" variant="primary" :full-width="true"
+          :disabled="loadingPart1 || loadingPart2" @click="generateStatblock">
+          ↻ Regenerate
+        </ParButton>
+      </div>
 
       <!-- Linked NPCs (appears when references exist) -->
       <div v-if="linkedNPCs.length > 0 && monster && !loadingPart2" class="linked-npcs">
@@ -276,6 +307,7 @@ function deleteAllMonsters() {
 }
 const showFolderMover = ref(false);
 const showExports = ref(false);
+const showRegenerate = ref(false);
 const folderMoveTarget = ref('');
 
 const folderMoveOptions = computed(() => {
@@ -949,6 +981,45 @@ async function generateStatblock() {
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-lg, 12px);
   padding: 2.25rem 2.25rem 2rem;
+}
+
+/* Regenerate bar — a compact form-card shown above a saved statblock so it
+   can be re-rolled (keeping its saved gen params). Mirrors .form-card. */
+.regenerate-bar {
+  max-width: 850px;
+  margin: 0 auto 1.5rem;
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 1.5rem 1.75rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+.regenerate-bar__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+.regenerate-bar__hint {
+  margin: 0 0 1rem;
+  font-size: 1.4rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--par-color-text-secondary, #555);
+}
+
+.regenerate-bar__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.regenerate-bar__button {
+  margin-top: 1.25rem;
 }
 
 .form-heading {

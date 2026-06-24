@@ -274,6 +274,11 @@
                     {{ createNpcButtonText }}
                 </CardFooterAction>
 
+                <CardFooterAction @click="$emit('toggle-regenerate')">
+                    <template #icon>🔄</template>
+                    Regenerate
+                </CardFooterAction>
+
                 <CardFooterAction @click="$emit('toggle-export')">
                     <template #icon>📤</template>
                     Export
@@ -341,7 +346,7 @@ const props = defineProps({
 
 const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `max-width: ${props.width}px; width: 100%`);
 const createNpcButtonText = computed(() => props.linkedNpcsCount > 0 ? 'Create another NPC' : 'Create NPC');
-const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export']);
+const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export', 'toggle-regenerate']);
 
 const containerRef = ref(null);
 const containerWidth = ref(850);
@@ -912,11 +917,16 @@ textarea {
     }
 }
 
-/* Footer bar for card actions */
+/* Footer bar for card actions. Wraps at any width: the action group and the
+   trailing Delete stay on one line when there's room and flow onto further
+   lines when there isn't (narrow viewports, more actions) instead of
+   overflowing the card edge. */
 .card-footer-bar {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
     padding: 1rem 1.5rem;
     border-top: 1px solid #e0d6c2;
     background: rgba(0, 0, 0, 0.02);
@@ -930,17 +940,7 @@ textarea {
 
 .card-footer-bar__actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.25rem;
-}
-
-@media (max-width: 480px) {
-    .card-footer-bar {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .card-footer-bar__actions {
-        flex-wrap: wrap;
-    }
 }
 </style>
