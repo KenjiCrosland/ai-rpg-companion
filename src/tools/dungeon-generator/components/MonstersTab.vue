@@ -529,7 +529,9 @@ function saveEditMonster() {
    content-container without the heavier callout-bg tan. */
 .monster-card {
   background: var(--par-color-surface, #FBF7F0);
-  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  /* Light 1px tan edge — converged with the faction card, lore spine nodes,
+     and the item/NPC cards (M5). Was the heavier 1.5px border-strong. */
+  border: 1px solid var(--par-color-border, #e8e2d4);
   border-radius: 0.8rem;
   box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
   margin-bottom: 0.8rem;

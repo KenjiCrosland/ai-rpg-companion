@@ -186,7 +186,7 @@ The full primitive catalog lives in `src/parchment/CLAUDE.md`. This section capt
 The bounded cream zone where content lives — `#FEFBF4`, tan border (or shadow), generous padding. Tab content zones, generated-content views, expanded card bodies.
 
 ### Expandable card
-Collapsed = title + one-line teaser; expanded = full content with section labels. **Surface is `--par-color-surface` `#FBF7F0` + border** (not warm tan). Three toggle treatments currently coexist — burgundy 90° chevron (faction/monster cards), slate 180° chevron + 3px burgundy top accent (NPC card), and no-caret title-click (lore spine nodes); see [§9 M5](#medium--surface--token-drift). Pattern proven across 5 sites; primitive extraction (`ParExpandableCard`) pending a consolidation pass.
+Collapsed = title + one-line teaser; expanded = full content with section labels. **Surface is `--par-color-surface` `#FBF7F0` + a light `1px --par-color-border` edge** (the same edge weight as the item/NPC cards — converged in M5; not warm tan). The "expandable card" pattern proper is the **faction + monster cards** (a list of expandable sub-cards), which are identical: burgundy 90° chevron. The other two "expandables" are different UI paradigms and keep their own toggles by design — the lore **timeline-spine nodes** (no caret, title-click) and the **NPC entity-card collapse** (slate 180° chevron). A `ParExpandableCard` primitive is deferred (the two true consumers already match — see [§9 M5](#low--local--hygiene)).
 
 ### Tabs — three intentional registers
 Distinct by surface context, **by design** — do not unify:
@@ -306,7 +306,7 @@ The decisions that shouldn't be casually violated:
 - **M2 — ✅ Fixed.** The generated-NPC area now sits on a cream `surface-card` stage (`#FEFBF4` + soft shadow, no border so it doesn't double-border the `NPCCard` inside) — matching the form card above it and the item generator's `.item-view`, instead of floating bare on the cool desk.
 - **M3 — ✅ Fixed.** The `#fdfbf6` fallback (≠ the real `#FBF7F0` token) was normalized across ~20 sites.
 - **M4 — partially fixed.** ✅ `#f8f3e8` → `--par-color-callout-bg-light` (a true zero-shift map, ~2 off). Still open (each would shift the visible color, so they want an eyeball, not a sweep): `#fdf8ef` (banners), `#f4f2ed` (cool-grey dashboard/relationship surfaces), `#fafaf6`, `#fefdf9` (statblock inputs).
-- **M5 — Expandable-card divergence:** three toggle treatments and a border-weight split (lore nodes 1px `--par-color-border` vs others 1.5px `--par-color-border-strong`). Converge when extracting `ParExpandableCard`.
+- **M5 — ✅ Resolved.** The real inconsistency — the **border-weight split** — is fixed: faction + monster expandable cards moved from `1.5px border-strong` to the light `1px --par-color-border`, so every card in the suite (item, NPC, faction, monster, lore nodes) now shares one edge weight. The **three toggle treatments are intentional, not drift** — different UI paradigms: list sub-card chevron (faction/monster, the "expandable card" pair, already identical to each other), timeline-spine title-click (lore nodes), entity-card collapse (NPC). A `ParExpandableCard` primitive is **deferred** — the only two consumers of the exact pattern are already identical, so extraction would dedupe ~10 lines of CSS at the cost of rewriting two rich card markups; not worth it yet.
 - **M6 — ✅ Resolved.** NPC/dungeon/setting names normalized to the 28px / 600 header register; the item card name kept as the 29px / 400 **display** register (focused hero context — understated reads better there). Two intentional registers, see [§2](#heading-patterns). Sub-entity small-caps titles (room, lore subject) unchanged.
 
 ### Low — local / hygiene
@@ -330,7 +330,7 @@ The decisions that shouldn't be casually violated:
 Extractions earn their existence through real duplicated need, not speculative scaffolding.
 
 - **`ParIconButton`** (round ghost icon — ✕ delete / ⓘ info) — multiple real consumers now exist: the 2 `DashboardPlus` icon-deletes still on Cedar, plus the hand-rolled `.related-*-remove` / `.npc-stub-delete` ✕ buttons and the encounter party-group remove. Strong candidate to build next.
-- **`ParExpandableCard`** — pattern shipped across 5 sites (faction/monster/NPC cards, lore spine). Extract in a consolidation pass; resolve M5's three toggle treatments then.
+- **`ParExpandableCard`** — the exact pattern has only two true consumers (faction + monster cards) and they're already identical (M5 converged their borders; the NPC collapse and lore spine are different paradigms). Extraction would dedupe ~10 lines at the cost of rewriting two rich card markups — deferred until there's a third consumer or a reason to touch both anyway.
 - **Pale-lapis read-aloud component** — the sourcebook boxed-text frame is built ad hoc from `--par-color-readaloud-*` in the dungeon generator. Extract a `ParBoxedText` (or similar) if a second tool needs the sourcebook register. (`ParReadAloud` already covers the warm-tan editorial register.)
 - **Filled-destructive `ParButton` variant** — the gap behind H4's 7× duplicated delete-all button. Build it or route delete-all through `ParConfirm`.
 - **Maker presence in chrome** — currently absent; editorial voice carries it. Build an About page eventually as a findable maker home.
