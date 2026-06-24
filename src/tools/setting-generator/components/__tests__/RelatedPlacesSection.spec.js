@@ -52,7 +52,7 @@ function makeSetting(related_places = []) {
 // form is expanded). Since AddRelatedPlaceForm starts collapsed in
 // every test below, all "Create Setting" buttons are row buttons.
 function findRowCreateButtons(wrapper) {
-  return wrapper.findAll('button').filter(b => b.text().trim() === 'Create Setting');
+  return wrapper.findAll('button').filter(b => b.text().trim() === 'Create setting');
 }
 
 describe('RelatedPlacesSection — rendering by kind', () => {

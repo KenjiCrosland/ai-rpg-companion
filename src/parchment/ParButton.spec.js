@@ -153,14 +153,15 @@ describe('ParButton', () => {
       expect(wrapper.classes()).toContain('par-button--variant-secondary');
     });
 
-    it('accepts primary, primary-outline, secondary, and luminous via prop validator', () => {
+    it('accepts primary, primary-outline, secondary, secondary-filled, destructive, and luminous via prop validator', () => {
       const validator = ParButton.props.variant.validator;
       expect(validator('primary')).toBe(true);
       expect(validator('primary-outline')).toBe(true);
       expect(validator('secondary')).toBe(true);
+      expect(validator('secondary-filled')).toBe(true);
+      expect(validator('destructive')).toBe(true);
       expect(validator('luminous')).toBe(true);
       expect(validator('tertiary')).toBe(false);
-      expect(validator('destructive')).toBe(false);
       expect(validator('')).toBe(false);
     });
 

@@ -24,18 +24,19 @@ When you add a new pattern that genuinely doesn't fit the existing vocabulary, *
 
 ## 1. Color semantics
 
-Two registers are the spine of the system and are honored consistently:
+Two registers are the spine of the system, plus a third narrow one for destruction:
 
-- **Burgundy = editorial / content.** Titles, proper nouns, content section labels, narrative emphasis, destructive text.
+- **Burgundy = editorial / content.** Titles, proper nouns, content section labels, narrative emphasis, read-aloud rules. **Editorial ink only — never a button fill.**
 - **Lapis = chrome / actions.** Tool labels, navigation, page headings, primary action buttons, form field labels.
+- **Destructive red (`#A03333`) = delete/destroy** (see [Destructive](#destructive-its-own-register)). Its own register so a delete never reads as a heading.
 
-The user reads "this is content" vs "this is a tool control" without thinking about it. That split is load-bearing — protect it.
+The user reads "this is content" vs "this is a tool control" vs "this destroys something" without thinking about it. That split is load-bearing — protect it.
 
 ### Inks (text / structural emphasis)
 
 | Token | Hex | Role |
 |---|---|---|
-| `--par-color-title` | `#7a1f1f` | **Burgundy.** Editorial emphasis: titles, proper nouns, small-caps content labels, callout rules, destructive text. |
+| `--par-color-title` | `#7a1f1f` | **Burgundy — editorial ink only.** Titles, proper nouns, small-caps content labels, callout/read-aloud rules. Not for buttons or delete actions (delete uses `--par-color-destructive`). |
 | `--par-color-title-deep` | `#58180d` | Deep burgundy — hover/active on burgundy actions. |
 | `--par-color-text` | `#222` | Standard body ink. |
 | `--par-color-text-secondary` | `#555` | Taglines, type-lines, sidebar metadata, subtitles. |
@@ -59,6 +60,19 @@ The lapis + slate palette is intentionally **unprefixed** (`--color-action-*`) �
 | `--color-action-luminous-*` | `#A0B8D0`/`#3D6BA0`/`#1F3A5C`/`#142640` | Cabochon gradient stops — **rare** premium upsell only. |
 
 > **Naming hazard:** `--par-color-action-hover`/`-active` are *burgundy* washes (`rgba(122,31,31,…)`), while `--color-action-hover`/`-active` are *lapis*. The `par`-prefixed action aliases (`--par-color-action-primary #2A4D70`, `-muted #5A7A9A`) mirror the chrome lapis for in-system consumers. Easy to grab the wrong one — check the prefix.
+
+### Destructive (its own register)
+
+Delete/destroy actions use a dedicated red, **not** burgundy. Splitting it out keeps burgundy purely editorial (titles, anchors, labels, read-aloud rules) so a delete never reads as a heading.
+
+| Token | Hex | Role |
+|---|---|---|
+| `--par-color-destructive` | `#A03333` | Destructive red — delete ghosts, the danger row, the filled confirm. Warmer/brighter than burgundy `#7a1f1f`, still in the earth-tone palette so it reads as "ours." |
+| `--par-color-destructive-deep` | `#862828` | Hover on the filled destructive button. |
+| `--par-color-destructive-bg-hover` | `rgba(160,51,51,.06)` | Ghost hover tint. |
+| `--par-color-destructive-text-on-fill` | `#FBF7F0` | Cream text on the filled destructive button. |
+
+Consumers: `ParButton variant="destructive"` (filled confirm), `ParCardButton variant="danger"` (muted→red on hover; the single-entity delete + `ParConfirm`), the `SidebarFooter` delete-all danger row, and the raw monster/faction delete ghosts. There are **three** action registers now — lapis (chrome actions), burgundy (editorial ink, never a button fill), and destructive red (delete).
 
 ### Surfaces
 
@@ -185,7 +199,7 @@ Distinct by surface context, **by design** — do not unify:
 Padding `1.3rem 1.6rem`; 1px `--par-color-divider` bottom border; name 16px/500; metadata small-caps 13px `#555` 0.08em uppercase. **Active row = warm-tan `#f3ebda` fill with a lapis `#2A4D70`/600 name** (the *fill* is tan, only the *name* is lapis). Used by all six sidebar tools.
 
 ### Sidebar footer
-Full-width "+ New X" (`ParButton primary`) → 0.5px divider → "Data options" lapis disclosure → tan panel with "Delete all" (burgundy danger). Identical across the six tools, but **copy-pasted into each main component** rather than slotted from `GeneratorLayout` ([§9 L3](#low--local--hygiene)).
+Full-width "+ New X" (`ParButton primary`) → 0.5px divider → "Data options" lapis disclosure → tan panel with "Delete all" (burgundy danger) → delete-all confirm modal. **Now a single shared component, `src/components/SidebarFooter.vue`** (was copy-pasted into all 7 tools). Safety contract: the component owns only the chrome and emits `@new` / `@open-data-manager` / `@delete-all`; `@delete-all` fires **only after the user confirms** in the built-in modal, and each tool wires it to its **own** delete handler — so the component can never delete the wrong tool's data. The confirm CTA uses `ParButton variant="destructive"`.
 
 ### Buttons
 Two primitives, two registers:
@@ -195,6 +209,7 @@ Two primitives, two registers:
 - `primary-outline` — lapis outline, **sans** 13px/500, compact. Repeated data-row create/view actions ("Create Setting," "View in X"). Lighter so 6+ rows don't read as a wall of blue.
 - `secondary` — slate outline, serif. Supporting alternative (Cancel beside Generate).
 - `secondary-filled` — cream fill + lapis text/outline, serif. Edit/Cancel pairs that must read as real buttons on a busy surface.
+- `destructive` — **solid destructive-red fill (`--par-color-destructive` `#A03333`), cream text, serif.** The filled destructive CTA for confirmation dialogs (the "Delete all X" confirm). Its own register (see [§1 Destructive](#destructive-its-own-register)) — not burgundy, not lapis. (Replaced a raw `.delete-all-modal__confirm` button that was copy-pasted across 7 tools.)
 - `luminous` — cabochon gradient. Rare special moments (premium upsell). Don't proliferate.
 
 **`ParCardButton` (editorial/burgundy):** base transparent + 1px border + burgundy text, sans 15px.
@@ -261,7 +276,7 @@ These differences are the system working as intended. Don't unify them.
 
 The decisions that shouldn't be casually violated:
 
-1. **Burgundy = content emphasis & proper-noun anchors; lapis = chrome & primary actions.** Never burgundy as a primary button color outside destructive contexts.
+1. **Three registers, kept separate: burgundy = editorial ink only (titles, anchors, labels, read-aloud rules — never a button fill); lapis = chrome & primary actions; destructive red (`#A03333`) = delete/destroy.** A delete is red, not burgundy; a heading is burgundy, never red.
 2. **Warm tan `#f3ebda` = "nested editorial zone within a document."** Use consistently across cards' accents, callouts, active tabs, active sidebar rows, the editorial read-aloud.
 3. **Editorial containers are cream `#FEFBF4` with tan borders.** The page background (`#EAEEF2`) never gets tan borders.
 4. **At high mechanical density, two-tier emphasis** (burgundy anchors, standard-ink-600 stats). Don't bold-burgundy everything mechanical.
@@ -279,22 +294,22 @@ The decisions that shouldn't be casually violated:
 ### High — same semantic, different treatment
 - **H1 — "Edit" has ~6 treatments.** `ParCardButton link`/`affirmative`/`default`, `ParButton secondary-filled`/`secondary`, and raw slate ghosts (dungeon monster, setting faction). The vocabulary defines one: `ParCardButton affirmative`.
 - **H2 — "Delete single entity" has ~5 treatments.** `ParCardButton danger` (canonical for cards), `ParButton secondary` (encounter, lore), `ParCardButton muted` (quest hooks), raw burgundy ghosts (dungeon monster, setting faction), `CardFooterAction danger`+emoji (statblock).
-- **H3 — "Cancel" has 3+ treatments, plus a bug.** `secondary` / `secondary-filled` / `ParCardButton muted` — and `ParCardButton danger` is misused *as* Cancel on Setting/Dungeon Overview tabs (danger styling on a non-destructive action). That one's a genuine bug worth fixing whenever those tabs are next touched.
-- **H4 — Delete-all confirm is a raw `.delete-all-modal__confirm` button duplicated ×7**, each re-defining the burgundy-fill CSS, while `ParConfirm` already solves modal-destructive. Root gap: `ParButton` has no solid-destructive variant. Resolution options: adopt `ParConfirm` for delete-all, or add a filled-destructive `ParButton` variant.
-- **H5 — Cross-tool "Create X" splits lapis registers.** Item generator uses `ParButton secondary` (slate); setting generator uses `primary-outline` (lapis) for the same promote action. `primary-outline` is the documented choice — item's slate is the outlier.
+- **H3 — partially fixed.** ✅ The bug part is resolved: Setting/Dungeon Overview tabs no longer use `ParCardButton danger` for Cancel (now `muted`). The broader spread of Cancel treatments (`secondary` / `secondary-filled` / `muted` across contexts) is still open — left as known state; resolve by context if it bothers you.
+- **H4 — ✅ Fixed.** Added `ParButton variant="destructive"` (solid burgundy) and routed delete-all through the new shared `SidebarFooter` (one modal, one button) — the raw `.delete-all-modal__confirm` duplicated across 7 tools is gone.
+- **H5 — ✅ Fixed.** Item generator's cross-tool promote/view buttons switched from `secondary` (slate) to `primary-outline` (lapis), matching the setting generator and the documented repeated-row register.
 - **H6 — (resolved as intentional)** Read-aloud's two treatments are now both canonical ([§5](#read-aloud--two-canonical-registers), [§7](#7-semantic-differentiation-load-bearing-rule)). No longer drift.
 
 ### Medium — surface / token drift
 - **M2 — NPC generator has no editorial container** (renders on page bg). Wrap in a `surface-card` container to match the other tools.
 - **M3 — ✅ Fixed.** The `#fdfbf6` fallback (≠ the real `#FBF7F0` token) was normalized across ~20 sites.
-- **M4 — Raw cream literals on secondary surfaces** with matching tokens: `#fdf8ef` (banners), `#f8f3e8` (≈`callout-bg-light`), `#f4f2ed` (cool-grey dashboard/relationship surfaces), `#fafaf6`, `#fefdf9` (statblock inputs). Map each to its nearest token when touched.
+- **M4 — partially fixed.** ✅ `#f8f3e8` → `--par-color-callout-bg-light` (a true zero-shift map, ~2 off). Still open (each would shift the visible color, so they want an eyeball, not a sweep): `#fdf8ef` (banners), `#f4f2ed` (cool-grey dashboard/relationship surfaces), `#fafaf6`, `#fefdf9` (statblock inputs).
 - **M5 — Expandable-card divergence:** three toggle treatments and a border-weight split (lore nodes 1px `--par-color-border` vs others 1.5px `--par-color-border-strong`). Converge when extracting `ParExpandableCard`.
 - **M6 — ✅ Resolved.** NPC/dungeon/setting names normalized to the 28px / 600 header register; the item card name kept as the 29px / 400 **display** register (focused hero context — understated reads better there). Two intentional registers, see [§2](#heading-patterns). Sub-entity small-caps titles (room, lore subject) unchanged.
 
 ### Low — local / hygiene
 - **L1 — ✅ Fixed.** Dead `#ffffff` `.output-card` rule removed from the encounter generator (live cream rule preserved).
 - **L2 — ✅ Fixed.** Dead "candy" difficulty palette removed (parchment palette is the only definition now).
-- **L3 — Sidebar footer duplicated per-tool** (6×). Consider slotting from `GeneratorLayout`. Low now (byte-identical); a drift vector.
+- **L3 — ✅ Fixed.** Sidebar footer extracted to the shared `src/components/SidebarFooter.vue` and adopted by all 7 tools (item, NPC, setting, dungeon, encounter, statblock, lore). Deletion stays per-tool (see §5 Sidebar footer).
 - **L4 — ✅ Fixed.** `src/parchment/CLAUDE.md` Cedar carve-out list updated (only the 2 `DashboardPlus` icon-deletes remain).
 - **L5 — ✅ Fixed.** Stale `#FBF8F1` page-surface comment in legacy `Tabs.vue` corrected to `#EAEEF2`.
 - **L6 — ✅ Fixed.** Swept button/label copy to sentence case across all tools: entity-type words lowercased ("Generate dungeon," "+ New setting," "Generate abilities," "Re-generate actions," "Save changes," "Create dungeon," "Edit overview," "Generate full NPC," "Move to folder," "Re-scan lore," "Hide export," "Copy as plain text"). **Kept capitalized** (rule): acronyms (`NPC`, `HTML`), proper tool names (`View in NPC Generator`), and proper format/product names (`Markdown`, `Homebrewery`). Left alone: dev-only chrome ("Show Dev"), the compound "Backup / Restore" control label, and the legacy/chase-tracker tools (out of scope).

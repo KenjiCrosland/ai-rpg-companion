@@ -35,8 +35,8 @@
       </p>
 
       <div class="related-dungeons-empty-actions">
-        <ParButton variant="secondary" @click="onCreateFromWholeItem">
-          Generate a Dungeon from this Item
+        <ParButton variant="primary-outline" @click="onCreateFromWholeItem">
+          Generate a dungeon from this item
         </ParButton>
       </div>
     </div>
@@ -61,7 +61,7 @@
         <div class="related-dungeon-actions">
           <ParButton
             v-if="!stub.dungeon_id"
-            variant="secondary"
+            variant="primary-outline"
             size="small"
             @click="onCreate(stub)"
           >
@@ -69,7 +69,7 @@
           </ParButton>
           <ParButton
             v-else
-            variant="secondary"
+            variant="primary-outline"
             size="small"
             @click="onView(stub)"
           >

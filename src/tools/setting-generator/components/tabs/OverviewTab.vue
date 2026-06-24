@@ -90,7 +90,7 @@
       />
 
       <footer class="setting-edit__footer">
-        <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
+        <ParCardButton variant="muted" @click="cancelEdit">Cancel</ParCardButton>
         <ParCardButton @click="saveEdit">Save changes</ParCardButton>
       </footer>
     </div>

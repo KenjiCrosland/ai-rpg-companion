@@ -552,7 +552,7 @@ watch(() => props.setting, () => {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 
   &:hover {
-    background: #f8f3e8;
+    background: var(--par-color-callout-bg-light, #F8F2E3);
     border-color: var(--par-color-title, #7a1f1f);
   }
 

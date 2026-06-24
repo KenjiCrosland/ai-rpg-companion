@@ -270,15 +270,15 @@ const classes = computed(() => ({
   text-decoration: underline;
 }
 
-/* Danger variant: muted by default, warms up on hover. */
+/* Danger variant: muted by default, warms to destructive red on hover. */
 .par-card-button--danger {
   color: var(--par-color-text-muted, #6b6b6b);
 }
 
 .par-card-button--danger:hover:not(:disabled) {
-  color: var(--par-color-title, #7a1f1f);
-  border-color: var(--par-color-title, #7a1f1f);
-  background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
+  color: var(--par-color-destructive, #A03333);
+  border-color: var(--par-color-destructive, #A03333);
+  background: var(--par-color-destructive-bg-hover, rgba(160, 51, 51, 0.06));
 }
 
 .par-card-button__icon {

@@ -16,6 +16,20 @@
   --par-color-title:           #7a1f1f;
   --par-color-title-deep:      #58180d;
 
+  /* Color: destructive — a brighter, warmer red than the editorial burgundy
+     above, its own semantic register for delete / destroy actions. Splitting
+     it out frees burgundy (--par-color-title) for editorial work ONLY
+     (titles, proper-noun anchors, small-caps labels, read-aloud rules). Stays
+     in the earth-tone palette so it still reads as "ours," but is clearly
+     distinguishable from burgundy so a delete never looks like a heading.
+     Used by ParButton variant="destructive" (filled), ParCardButton
+     variant="danger" (ghost), the delete-all confirm, ParConfirm, and the
+     raw delete-ghost buttons (monster/faction). */
+  --par-color-destructive:           #A03333;
+  --par-color-destructive-deep:      #862828;                  /* hover (filled) */
+  --par-color-destructive-bg-hover:  rgba(160, 51, 51, 0.06);  /* hover tint (ghost) */
+  --par-color-destructive-text-on-fill: #FBF7F0;               /* cream text on filled destructive */
+
   /* Color: text */
   --par-color-text:            #222;
   --par-color-text-secondary:  #555;

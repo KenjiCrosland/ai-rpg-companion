@@ -18,55 +18,19 @@
           </ul>
         </div>
 
-        <div class="sidebar-footer">
-          <ParButton variant="primary" :full-width="true" @click="newItem">
-            + New magic item
-          </ParButton>
-
-          <div class="sidebar-footer__divider"></div>
-
-          <div class="sidebar-data-options">
-            <button
-              class="sidebar-data-options__toggle"
-              @click="dataOptionsExpanded = !dataOptionsExpanded"
-              :aria-expanded="dataOptionsExpanded"
-              aria-controls="sidebar-data-options-panel"
-            >
-              <span>Data options</span>
-              <svg
-                class="sidebar-data-options__icon"
-                :class="{ 'is-expanded': dataOptionsExpanded }"
-                width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            </button>
-
-            <div
-              v-if="dataOptionsExpanded"
-              id="sidebar-data-options-panel"
-              class="sidebar-data-options__panel"
-            >
-              <p class="sidebar-data-options__description">
-                Save your library to a file or restore from a backup. Your data stays on your device.
-              </p>
-
-              <button class="sidebar-data-options__action" @click="showDataManagerModal = true">
-                Backup / Restore library
-              </button>
-
-              <button
-                class="sidebar-data-options__action sidebar-data-options__action--danger"
-                @click="confirmDeleteAll"
-              >
-                Delete all items
-              </button>
-            </div>
-          </div>
-        </div>
+        <SidebarFooter
+          new-label="+ New magic item"
+          data-description="Save your library to a file or restore from a backup. Your data stays on your device."
+          backup-label="Backup / Restore library"
+          delete-all-label="Delete all items"
+          confirm-title="Delete all magic items?"
+          confirm-body="This will permanently delete all magic items in your library. This action cannot be undone."
+          confirm-suggestion="Consider backing up your library first if you might want to restore these items later."
+          confirm-cta="Delete all items"
+          @new="newItem"
+          @open-data-manager="showDataManagerModal = true"
+          @delete-all="deleteAllItems"
+        />
       </div>
     </template>
 
@@ -75,23 +39,6 @@
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
         currentApp="savedItems" />
 
-      <!-- Delete-all confirmation -->
-      <ParModal
-        :opened="showDeleteConfirmation"
-        title="Delete all magic items?"
-        @cancel="showDeleteConfirmation = false"
-      >
-        <p class="delete-all-modal__body">
-          This will permanently delete all magic items in your library. This action cannot be undone.
-        </p>
-        <p class="delete-all-modal__suggestion">
-          Consider backing up your library first if you might want to restore these items later.
-        </p>
-        <template #footer>
-          <ParButton variant="secondary" @click="showDeleteConfirmation = false">Cancel</ParButton>
-          <button class="delete-all-modal__confirm" @click="deleteAllItems">Delete all items</button>
-        </template>
-      </ParModal>
       <!-- LANDING STATE: Three-zone layout -->
       <div class="landing-wrapper" v-if="!magicItemDescription && !loadingItem">
 
@@ -379,6 +326,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CdrInput, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { logger } from "@/util/logger.mjs";
@@ -391,7 +339,7 @@ import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import RelatedSettingsSection from './components/RelatedSettingsSection.vue';
 import RelatedDungeonsSection from './components/RelatedDungeonsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParCardButton, ParButton, ParModal, ParCardInput, ParCardTextarea, ParCardSelect, ParCheckbox, ParField, ParInput, ParSelect, ParTextarea, ParTabs } from '@/parchment';
+import { ParCardButton, ParButton, ParCardInput, ParCardTextarea, ParCardSelect, ParCheckbox, ParField, ParInput, ParSelect, ParTextarea, ParTabs } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import { useToast } from '@/composables/useToast';
@@ -457,8 +405,6 @@ const loadingItem = ref(false);
 const savedItems = ref([]);
 const activeItemIndex = ref(null);
 const showDataManagerModal = ref(false);
-const dataOptionsExpanded = ref(false);
-const showDeleteConfirmation = ref(false);
 const activeTabId = ref('item-details');
 const itemTabs = [
   { id: 'item-details', label: 'Item Details' },
@@ -2251,10 +2197,6 @@ const newItem = () => {
   isEditing.value = false;
 };
 
-function confirmDeleteAll() {
-  showDeleteConfirmation.value = true;
-}
-
 function deleteAllItems() {
   // Drop each item's cross-tool references before clearing the library,
   // mirroring the single-item delete path (removeReferencesForItem). The
@@ -2266,8 +2208,6 @@ function deleteAllItems() {
   savedItems.value = [];
   localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
   newItem();
-  showDeleteConfirmation.value = false;
-  dataOptionsExpanded.value = false;
   toast.success('All magic items deleted.');
 }
 
@@ -3044,167 +2984,6 @@ onUnmounted(() => {
     }
   }
 
-  /* Pinned footer: holds the new-item action, separated from the scrollable
-     list by a thin divider so it always stays at the sidebar bottom
-     regardless of library size. Mirrors the statblock/dungeon structure. */
-  .sidebar-footer {
-    flex-shrink: 0;
-    padding: 12px 16px;
-  }
-
-  /* Thin tan divider between the primary new-item button and the quiet
-     Data options affordance below it. */
-  .sidebar-footer__divider {
-    height: 0;
-    border-top: 0.5px solid var(--par-color-border, #e8e2d4);
-    margin: 0.75rem 0;
-  }
-
-  /* Quiet expandable affordance for library data operations — lifted-lapis
-     label + gear, expanding into a warm-tan panel of slate-ghost actions. */
-  .sidebar-data-options__toggle {
-    /* Full-bleed row: negative margins cancel the footer's 16px side padding
-       so the hover tint spans the sidebar edge-to-edge, matching the item
-       rows above. Label + gear centered as a group with a small gap. */
-    margin: 0 -16px;
-    padding: 12px 16px;
-    width: calc(100% + 32px);
-    background: transparent;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-    font-size: 1.4rem;
-    color: var(--color-action-rest, #365A85);
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-
-    &:hover {
-      background-color: rgba(243, 235, 218, 0.4);
-      color: var(--color-action-hover, #2A4D70);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
-      outline-offset: -2px;
-    }
-  }
-
-  .sidebar-data-options__icon {
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
-    color: currentColor;
-    transition: transform 0.2s ease;
-
-    &.is-expanded {
-      transform: rotate(30deg);
-    }
-  }
-
-  .sidebar-data-options__panel {
-    margin-top: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: var(--par-color-callout-bg, #f3ebda);
-    border-radius: 8px;
-  }
-
-  .sidebar-data-options__description {
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-    font-size: 1.2rem;
-    font-style: italic;
-    color: var(--par-color-text-secondary, #555);
-    line-height: 1.5;
-    margin: 0 0 0.75rem;
-  }
-
-  .sidebar-data-options__action {
-    width: 100%;
-    padding: 7px 12px;
-    background: transparent;
-    color: var(--color-action-secondary-rest, #5A7A9A);
-    border: 0.5px solid var(--color-action-secondary-rest, #5A7A9A);
-    border-radius: 6px;
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-    font-size: 1.2rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-    margin-bottom: 0.4rem;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    &:hover {
-      background-color: var(--color-action-secondary-hover-bg, rgba(90, 122, 154, 0.08));
-      color: var(--color-action-rest, #365A85);
-      border-color: var(--color-action-rest, #365A85);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
-      outline-offset: 2px;
-    }
-  }
-
-  /* Destructive action — burgundy text (brief Option A): subtle caution
-     signal; slate border retained until hover deepens it to burgundy. */
-  .sidebar-data-options__action--danger {
-    color: var(--par-color-title, #7a1f1f);
-
-    &:hover {
-      background-color: rgba(122, 31, 31, 0.05);
-      color: var(--par-color-title, #7a1f1f);
-      border-color: var(--par-color-title, #7a1f1f);
-    }
-  }
-}
-
-/* Delete-all confirmation modal body (ParModal provides the surface/chrome) */
-.delete-all-modal__body {
-  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 1.5rem;
-  line-height: 1.6;
-  color: var(--par-color-text, #222);
-  margin: 0 0 0.75rem;
-}
-
-.delete-all-modal__suggestion {
-  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 1.4rem;
-  line-height: 1.6;
-  font-style: italic;
-  color: var(--par-color-text-secondary, #555);
-  margin: 0;
-}
-
-/* Solid-burgundy destructive confirm. Parchment has no solid-destructive
-   button primitive yet (ParCardButton danger is a quiet text action, too
-   low-emphasis for a modal's primary destructive CTA), so this is a local
-   treatment built from the burgundy title tokens. */
-.delete-all-modal__confirm {
-  padding: 8px 18px;
-  background-color: var(--par-color-title, #7a1f1f);
-  color: var(--par-color-surface, #FBF7F0);
-  border: none;
-  border-radius: 6px;
-  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.delete-all-modal__confirm:hover {
-  background-color: var(--par-color-title-deep, #58180d);
-}
-
-.delete-all-modal__confirm:focus-visible {
-  outline: 2px solid var(--par-color-title, #7a1f1f);
-  outline-offset: 2px;
 }
 
 // Responsive

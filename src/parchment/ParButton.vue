@@ -93,11 +93,18 @@ const props = defineProps({
     //                     read as real buttons against a busy surface
     //                     rather than washed outlines. Lower volume than
     //                     primary's saturated lapis fill.
+    // 'destructive'     — solid destructive-RED fill (--par-color-
+    //                     destructive #A03333), cream text, serif. The
+    //                     filled destructive CTA for confirmation dialogs
+    //                     (the "Delete all X" confirm). Its own register,
+    //                     distinct from both lapis (chrome actions) and
+    //                     burgundy (editorial ink) — destruction reads as
+    //                     destruction, not as a heading or a normal action.
     // 'luminous'        — cabochon gradient. Reserved for rare special-
     //                     importance moments (premium upsell, etc.).
     //                     Don't proliferate — the variant earns its
     //                     complexity through scarcity.
-    validator: v => ['primary', 'primary-outline', 'secondary', 'secondary-filled', 'luminous'].includes(v),
+    validator: v => ['primary', 'primary-outline', 'secondary', 'secondary-filled', 'destructive', 'luminous'].includes(v),
   },
   size: {
     type: String,
@@ -143,6 +150,7 @@ const classes = computed(() => [
     'par-button--variant-primary-outline': props.variant === 'primary-outline',
     'par-button--variant-secondary': props.variant === 'secondary',
     'par-button--variant-secondary-filled': props.variant === 'secondary-filled',
+    'par-button--variant-destructive': props.variant === 'destructive',
     'par-button--variant-luminous': props.variant === 'luminous',
     'par-button--full-width': props.fullWidth && !props.iconOnly,
     'par-button--icon-only': props.iconOnly,
@@ -451,6 +459,44 @@ function handleClick(event) {
   border-color: var(--color-action-disabled, #9DAFC1);
   color: var(--color-action-disabled, #9DAFC1);
   fill: var(--color-action-disabled, #9DAFC1);
+  cursor: not-allowed;
+}
+
+/* -----------------------------------------------------------------------
+   Destructive variant — solid destructive-RED fill, cream text, serif. The
+   filled destructive CTA for confirmation dialogs (the "Delete all X"
+   confirm). Its own --par-color-destructive register (#A03333), distinct
+   from lapis (chrome) and burgundy (editorial ink) so a delete never reads
+   as a heading or a normal action. Replaces the per-tool raw
+   .delete-all-modal__confirm button that used to be copy-pasted across the
+   delete-all modals. Inherits serif/size/padding from the base block.
+   ----------------------------------------------------------------------- */
+.par-button--variant-destructive {
+  background-color: var(--par-color-destructive, #A03333);
+  color: var(--par-color-destructive-text-on-fill, #FBF7F0);
+  fill: var(--par-color-destructive-text-on-fill, #FBF7F0);
+  border: none;
+}
+
+.par-button--variant-destructive:hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-destructive-deep, #862828);
+}
+
+.par-button--variant-destructive:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-destructive-deep, #862828);
+}
+
+.par-button--variant-destructive:focus-visible {
+  outline: 2px solid var(--par-color-destructive, #A03333);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(160, 51, 51, 0.3);
+}
+
+.par-button--variant-destructive:disabled,
+.par-button--variant-destructive[aria-disabled="true"] {
+  background-color: rgba(160, 51, 51, 0.35);
+  color: rgba(251, 247, 240, 0.8);
+  fill: rgba(251, 247, 240, 0.8);
   cursor: not-allowed;
 }
 

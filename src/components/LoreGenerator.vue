@@ -20,53 +20,19 @@
           </ul>
         </div>
 
-        <div class="sidebar-footer">
-          <ParButton variant="primary" :full-width="true" @click="newTimeline">
-            + New timeline
-          </ParButton>
-
-          <div class="sidebar-footer__divider"></div>
-
-          <div class="sidebar-data-options">
-            <button
-              class="sidebar-data-options__toggle"
-              @click="dataOptionsExpanded = !dataOptionsExpanded"
-              :aria-expanded="dataOptionsExpanded"
-              aria-controls="sidebar-data-options-panel"
-            >
-              <span>Data options</span>
-              <svg
-                class="sidebar-data-options__icon"
-                :class="{ 'is-expanded': dataOptionsExpanded }"
-                width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            </button>
-
-            <div
-              v-if="dataOptionsExpanded"
-              id="sidebar-data-options-panel"
-              class="sidebar-data-options__panel"
-            >
-              <p class="sidebar-data-options__description">
-                Save your timelines to a file or restore from a backup. Your data stays on your device.
-              </p>
-              <button class="sidebar-data-options__action" @click="showDataManagerModal = true">
-                Backup / Restore timelines
-              </button>
-              <button
-                class="sidebar-data-options__action sidebar-data-options__action--danger"
-                @click="confirmDeleteAll"
-              >
-                Delete all timelines
-              </button>
-            </div>
-          </div>
-        </div>
+        <SidebarFooter
+          new-label="+ New timeline"
+          data-description="Save your timelines to a file or restore from a backup. Your data stays on your device."
+          backup-label="Backup / Restore timelines"
+          delete-all-label="Delete all timelines"
+          confirm-title="Delete all timelines?"
+          confirm-body="This will permanently delete every saved timeline. This action cannot be undone."
+          confirm-suggestion="Consider backing up first if you might want to restore these later."
+          confirm-cta="Delete all timelines"
+          @new="newTimeline"
+          @open-data-manager="showDataManagerModal = true"
+          @delete-all="deleteAllTimelines"
+        />
       </div>
     </template>
 
@@ -74,19 +40,6 @@
     <div class="main-container">
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event"
         :premium="true" currentApp="rpgTimelines" />
-
-      <ParModal :opened="showDeleteConfirmation" title="Delete all timelines?" @cancel="showDeleteConfirmation = false">
-        <p class="delete-all-modal__body">
-          This will permanently delete every saved timeline. This action cannot be undone.
-        </p>
-        <p class="delete-all-modal__suggestion">
-          Consider backing up first if you might want to restore these later.
-        </p>
-        <template #footer>
-          <ParButton variant="secondary" @click="showDeleteConfirmation = false">Cancel</ParButton>
-          <button class="delete-all-modal__confirm" @click="deleteAllTimelines">Delete all timelines</button>
-        </template>
-      </ParModal>
 
       <div class="timeline-card">
         <!-- ── Header: subject · subtitle · world-year · hairline ───────────── -->
@@ -337,12 +290,12 @@ import {
   ParButton,
   ParField,
   ParTextarea,
-  ParModal,
   ParCardButton,
   ParCardInput,
   ParCardTextarea,
 } from '@/parchment';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import SidebarFooter from '@/components/SidebarFooter.vue';
 import DataManagerModal from './DataManagerModal.vue';
 import LoreSummonCard from '@/tools/item-generator/components/LoreSummonCard.vue';
 import { formatMarkdown } from '@/tools/item-generator/utils/format-markdown.mjs';
@@ -398,8 +351,6 @@ const showExport = ref(false);
 const timelines = ref([]);
 const activeIndex = ref(null);
 const showDataManagerModal = ref(false);
-const dataOptionsExpanded = ref(false);
-const showDeleteConfirmation = ref(false);
 
 // Guards the autosave watcher from firing while we're loading an entry's data
 // into the working refs (those mutations shouldn't write back). Cleared on the
@@ -653,17 +604,11 @@ const deleteCurrentTimeline = () => {
   clearWorkingState();
 };
 
-const confirmDeleteAll = () => {
-  showDeleteConfirmation.value = true;
-};
-
 const deleteAllTimelines = () => {
   timelines.value = [];
   saveTimelines();
   activeIndex.value = null;
   clearWorkingState();
-  showDeleteConfirmation.value = false;
-  dataOptionsExpanded.value = false;
 };
 
 // ── Year validation ──────────────────────────────────────────────────────────
@@ -1514,152 +1459,6 @@ $line-x: 8.5rem;
     font-size: 1.4rem;
     font-style: italic;
     color: var(--par-color-text-muted, #6b6b6b);
-  }
-
-  .sidebar-footer {
-    flex-shrink: 0;
-    padding: 12px 16px;
-  }
-
-  .sidebar-footer__divider {
-    height: 0;
-    border-top: 0.5px solid var(--par-color-border, #e8e2d4);
-    margin: 0.75rem 0;
-  }
-
-  .sidebar-data-options__toggle {
-    margin: 0 -16px;
-    padding: 12px 16px;
-    width: calc(100% + 32px);
-    background: transparent;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-    font-size: 1.4rem;
-    color: var(--color-action-rest, #365A85);
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-
-    &:hover {
-      background-color: rgba(243, 235, 218, 0.4);
-      color: var(--color-action-hover, #2A4D70);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
-      outline-offset: -2px;
-    }
-  }
-
-  .sidebar-data-options__icon {
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
-    color: currentColor;
-    transition: transform 0.2s ease;
-
-    &.is-expanded {
-      transform: rotate(30deg);
-    }
-  }
-
-  .sidebar-data-options__panel {
-    margin-top: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: var(--par-color-callout-bg, #f3ebda);
-    border-radius: 8px;
-  }
-
-  .sidebar-data-options__description {
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-    font-size: 1.2rem;
-    font-style: italic;
-    color: var(--par-color-text-secondary, #555);
-    line-height: 1.5;
-    margin: 0 0 0.75rem;
-  }
-
-  .sidebar-data-options__action {
-    width: 100%;
-    padding: 7px 12px;
-    background: transparent;
-    color: var(--color-action-secondary-rest, #5A7A9A);
-    border: 0.5px solid var(--color-action-secondary-rest, #5A7A9A);
-    border-radius: 6px;
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-    font-size: 1.2rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-    margin-bottom: 0.4rem;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    &:hover {
-      background-color: var(--color-action-secondary-hover-bg, rgba(90, 122, 154, 0.08));
-      color: var(--color-action-rest, #365A85);
-      border-color: var(--color-action-rest, #365A85);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
-      outline-offset: 2px;
-    }
-  }
-
-  .sidebar-data-options__action--danger {
-    color: var(--par-color-title, #7a1f1f);
-
-    &:hover {
-      background-color: rgba(122, 31, 31, 0.05);
-      color: var(--par-color-title, #7a1f1f);
-      border-color: var(--par-color-title, #7a1f1f);
-    }
-  }
-}
-
-/* ── Delete-all confirmation modal ──────────────────────────────────────── */
-.delete-all-modal__body {
-  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 1.5rem;
-  line-height: 1.6;
-  color: var(--par-color-text, #222);
-  margin: 0 0 0.75rem;
-}
-
-.delete-all-modal__suggestion {
-  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 1.4rem;
-  line-height: 1.6;
-  font-style: italic;
-  color: var(--par-color-text-secondary, #555);
-  margin: 0;
-}
-
-.delete-all-modal__confirm {
-  padding: 8px 18px;
-  background-color: var(--par-color-title, #7a1f1f);
-  color: var(--par-color-surface, #FBF7F0);
-  border: none;
-  border-radius: 6px;
-  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-
-  &:hover {
-    background-color: var(--par-color-title-deep, #58180d);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
-    outline-offset: 2px;
   }
 }
 </style>

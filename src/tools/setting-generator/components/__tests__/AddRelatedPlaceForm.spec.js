@@ -47,7 +47,7 @@ describe('AddRelatedPlaceForm', () => {
     const wrapper = mount(AddRelatedPlaceForm);
     await wrapper.findComponent({ name: 'ParAddNewButton' }).trigger('click');
 
-    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Create Setting'));
+    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Create setting'));
     // No disabled attribute regardless of empty fields — kind has a
     // default, and empty fields signal "let the AI invent freely."
     expect(submitBtn.attributes('disabled')).toBeUndefined();
@@ -72,7 +72,7 @@ describe('AddRelatedPlaceForm', () => {
     await inputs[0].setValue('The Northern Marches');
     await inputs[1].setValue('Kingdom containing the city');
 
-    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Create Setting'));
+    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Create setting'));
     await submitBtn.trigger('click');
 
     const events = wrapper.emitted('add-and-promote');
@@ -90,7 +90,7 @@ describe('AddRelatedPlaceForm', () => {
     await wrapper.findComponent({ name: 'ParAddNewButton' }).trigger('click');
 
     await wrapper.find('input[type="text"]').setValue('Aethelmar');
-    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Create Setting'));
+    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Create setting'));
     await submitBtn.trigger('click');
 
     // Form collapsed back to toggle.
@@ -118,7 +118,7 @@ describe('AddRelatedPlaceForm', () => {
     await inputs[0].setValue('  Aethelmar  ');
     await inputs[1].setValue('  Trading port  ');
 
-    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Create Setting'));
+    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Create setting'));
     await submitBtn.trigger('click');
 
     const events = wrapper.emitted('add-and-promote');

@@ -955,12 +955,13 @@ watch(
   background: rgba(54, 90, 133, 0.08);
 }
 
+/* Delete faction — destructive register (red, not editorial burgundy). */
 .faction-ghost--burgundy {
-  color: var(--par-color-title, #7a1f1f);
+  color: var(--par-color-destructive, #A03333);
 }
 
 .faction-ghost--burgundy:hover:not(:disabled) {
-  background: rgba(122, 31, 31, 0.06);
+  background: var(--par-color-destructive-bg-hover, rgba(160, 51, 51, 0.06));
 }
 
 /* ── Edit form (inside expanded card) ──────────────────────────────────── */

@@ -701,11 +701,12 @@ function saveEditMonster() {
   }
 }
 
+/* Delete monster — destructive register (red, not editorial burgundy). */
 .monster-ghost--burgundy {
-  color: var(--par-color-title, #7a1f1f);
+  color: var(--par-color-destructive, #A03333);
 
   &:hover:not(:disabled) {
-    background: rgba(122, 31, 31, 0.06);
+    background: var(--par-color-destructive-bg-hover, rgba(160, 51, 51, 0.06));
   }
 }
 

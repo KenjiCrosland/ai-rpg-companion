@@ -49,7 +49,7 @@
         <div class="related-setting-actions">
           <ParButton
             v-if="!stub.setting_id"
-            variant="secondary"
+            variant="primary-outline"
             size="small"
             @click="onCreate(stub)"
           >
@@ -57,7 +57,7 @@
           </ParButton>
           <ParButton
             v-else
-            variant="secondary"
+            variant="primary-outline"
             size="small"
             @click="onView(stub)"
           >

@@ -774,7 +774,7 @@ Generate a D&D 5e quest hook for the following magic item:
 }
 
 .quest-hook-collapsed:hover {
-  background: #f8f3e8;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
   border-color: var(--par-color-title, #7a1f1f);
 }
 
