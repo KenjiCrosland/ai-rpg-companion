@@ -90,7 +90,7 @@
             <NPCSkeleton />
           </div>
 
-          <!-- Stub: name + short description, with inline Generate Full NPC + X delete -->
+          <!-- Stub: name + short description, with inline Generate full NPC + X delete -->
           <div
             v-else-if="!isExpanded(entry) && isStub(entry.npc)"
             key="stub"
@@ -108,7 +108,7 @@
                 :disabled="dungeonStore.currentlyLoadingNPCs[entry.index]"
                 @click="handleGenerateFullNPC(entry)"
               >
-                Generate Full NPC
+                Generate full NPC
               </ParCardButton>
               <button
                 type="button"
@@ -211,7 +211,7 @@
                 <p><strong>Statblock not found</strong></p>
                 <p>The statblock "{{ entry.npc.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
                 <div class="button-group">
-                  <ParButton @click="generateNpcStatblock(entry.index, premium)" size="small">Regenerate Statblock</ParButton>
+                  <ParButton @click="generateNpcStatblock(entry.index, premium)" size="small">Regenerate statblock</ParButton>
                   <ParButton @click="clearNpcStatblockReference(entry.index)" variant="secondary" size="small">Clear Reference</ParButton>
                 </div>
               </div>
@@ -255,7 +255,7 @@
                       ? 'Generating...'
                       : (entry.npc.statblock
                         ? 'Re-generate Statblock'
-                        : 'Generate Statblock')
+                        : 'Generate statblock')
                   }}
                 </ParButton>
               </form>
@@ -431,7 +431,7 @@ function toggleExpand(entry) {
 
 // Auto-expand on stub → full-NPC promotion. Set the expansion BEFORE
 // kicking off generation so the loading skeleton renders in the
-// expanded slot (the user clicked "Generate Full NPC" — they implicitly
+// expanded slot (the user clicked "Generate full NPC" — they implicitly
 // asked to see this NPC). The rowKey is stable across the promotion:
 // `ensureNPCHasId` inside generateDungeonNPC stamps the npc_id early,
 // and even if the entry started as a `stub-N` key, the row keeps that

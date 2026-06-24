@@ -37,7 +37,7 @@
           :brief="stub.role_brief" @remove="onRemove(stub)">
           <template #actions>
             <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline" @click="onPromote(stub, 'parent')">
-              Create Setting
+              Create setting
             </ParButton>
             <ParButton v-else variant="primary-outline" @click="onView(stub)">View in Setting Generator</ParButton>
           </template>
@@ -53,7 +53,7 @@
           :brief="stub.role_brief" @remove="onRemove(stub)">
           <template #actions>
             <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline" @click="onPromote(stub, 'sibling')">
-              Create Setting
+              Create setting
             </ParButton>
             <ParButton v-else variant="primary-outline" @click="onView(stub)">View in Setting Generator</ParButton>
           </template>
@@ -70,7 +70,7 @@
           <template #actions>
             <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline"
               @click="onPromote(stub, 'sublocation')">
-              Create Setting
+              Create setting
             </ParButton>
             <ParButton v-else variant="primary-outline" @click="onView(stub)">View in Setting Generator</ParButton>
           </template>

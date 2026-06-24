@@ -17,7 +17,7 @@
           :disabled="loading"
           @click="rescan"
         >
-          {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
+          {{ loading ? 'Scanning…' : 'Re-scan lore' }}
         </button>
       </ParTooltip>
     </div>
@@ -26,7 +26,7 @@
          - Existing users (bulk after this release): items pre-date the
            related_npcs field, so the array is empty even though their
            lore likely already names characters. The primary action is
-           "Re-scan Lore" — points up at the button in the section header.
+           "Re-scan lore" — points up at the button in the section header.
          - New users: the scan ran during item generation. If the array
            is empty, the lore genuinely had no named characters, and the
            Lore Builder is the path to richer lore that names someone.
@@ -34,7 +34,7 @@
          Lore Builder as the conditional fallback for the new-user case. -->
     <div v-if="!hasStubs" class="related-npcs-empty">
       <p class="related-npcs-empty-copy">
-        No related NPCs yet. Click Re-scan Lore above to find named characters in this item's lore. If the lore doesn't mention any,
+        No related NPCs yet. Click Re-scan lore above to find named characters in this item's lore. If the lore doesn't mention any,
         <a
           href="#"
           class="related-npcs-empty-link"
@@ -215,7 +215,7 @@ function onRemove(idx) {
   line-height: 1.3;
 }
 
-/* Re-scan Lore: lifted-lapis text link with a thin lapis underline —
+/* Re-scan lore: lifted-lapis text link with a thin lapis underline —
    a tool action affordance, not a burgundy editorial cue. */
 .related-npcs-rescan {
   appearance: none;

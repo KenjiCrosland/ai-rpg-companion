@@ -146,7 +146,7 @@
                     Copy as Markdown
                   </ParCardButton>
                   <ParCardButton variant="affirmative" size="small" @click="exportQuestAsPlainText(hook)">
-                    Copy as Plain Text
+                    Copy as plain text
                   </ParCardButton>
                 </div>
                 <p class="quest-export__tip">

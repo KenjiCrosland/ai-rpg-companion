@@ -2,7 +2,7 @@
   <div class="related-settings-section parchment">
     <!-- Header mirrors RelatedNPCsSection: title + ghost re-scan button.
          Tooltip explains when re-scan is useful so the affordance label
-         can stay short ("Re-scan Lore"). -->
+         can stay short ("Re-scan lore"). -->
     <div class="related-settings-header">
       <h3 class="related-settings-title">Related Settings</h3>
       <ParTooltip
@@ -14,7 +14,7 @@
           :disabled="loading"
           @click="rescan"
         >
-          {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
+          {{ loading ? 'Scanning…' : 'Re-scan lore' }}
         </button>
       </ParTooltip>
     </div>
@@ -25,7 +25,7 @@
          opens the path to richer lore that names places. -->
     <div v-if="!hasStubs" class="related-settings-empty">
       <p class="related-settings-empty-copy">
-        No related settings yet. Click Re-scan Lore above to find named locations in this item's lore. If the lore doesn't mention any,
+        No related settings yet. Click Re-scan lore above to find named locations in this item's lore. If the lore doesn't mention any,
         <a
           href="#"
           class="related-settings-empty-link"
@@ -53,7 +53,7 @@
             size="small"
             @click="onCreate(stub)"
           >
-            Create Setting
+            Create setting
           </ParButton>
           <ParButton
             v-else

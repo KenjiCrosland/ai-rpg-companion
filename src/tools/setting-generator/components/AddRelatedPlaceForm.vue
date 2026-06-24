@@ -4,7 +4,7 @@
       v-if="!expanded"
       @click="expanded = true"
     >
-      + Add a Related Place
+      + Add a related place
     </ParAddNewButton>
 
     <form
@@ -58,7 +58,7 @@
           variant="primary-outline"
           @click="onSubmit"
         >
-          Create Setting
+          Create setting
         </ParButton>
         <button type="button" class="add-related-place-cancel" @click="reset">
           Cancel

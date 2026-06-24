@@ -72,7 +72,7 @@
                     :disabled="loadingNpcIndex === entry.index"
                     @click="$emit('generate-detailed-description', { npcIndex: entry.index })"
                   >
-                    {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate Full NPC' }}
+                    {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate full NPC' }}
                   </ParCardButton>
                   <button
                     type="button"
@@ -181,7 +181,7 @@
                   :disabled="loadingNpcIndex === entry.index"
                   @click="$emit('generate-detailed-description', { npcIndex: entry.index })"
                 >
-                  {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate Full NPC' }}
+                  {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate full NPC' }}
                 </ParCardButton>
                 <button
                   type="button"
@@ -564,7 +564,7 @@ watch(() => props.setting, () => {
 
 /* Stub row — same parchment surface as the collapsed row, but no
    expand affordance (chevron gone, cursor default, no hover-as-button
-   feedback). Inline actions sit on the right: Generate Full NPC
+   feedback). Inline actions sit on the right: Generate full NPC
    promotes the stub, Delete removes it. Stubs are not expandable
    because there's nothing to expand — the user's short blurb is all
    the stub has. The two actions cover both intents directly. */

@@ -12,7 +12,7 @@
 
     <cdr-input class="new-folder" label="Or Create New Folder:" type="text" v-model="newFolder" id="new-folder-input" placeholder="New Folder Name" />
   </div>
-  <ParButton class="save-button" :full-width="true" @click="saveMonster">Save Statblock</ParButton>
+  <ParButton class="save-button" :full-width="true" @click="saveMonster">Save statblock</ParButton>
 </template>
 
 <script setup>

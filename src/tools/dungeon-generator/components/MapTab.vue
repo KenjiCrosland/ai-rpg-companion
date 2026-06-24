@@ -75,7 +75,7 @@
         <div class="generate-button-container">
           <ParButton @click="handleGenerateMapClick" size="small"
             :disabled="dungeonStore.isAssigningMapContext">
-            {{ dungeonStore.currentDungeon && dungeonStore.currentDungeon.rooms ? 'Re-generate Map' : 'Generate Map' }}
+            {{ dungeonStore.currentDungeon && dungeonStore.currentDungeon.rooms ? 'Re-generate Map' : 'Generate map' }}
           </ParButton>
           <ParButton v-if="mapExists" @click="handleDownloadMapClick" size="small"
             :disabled="dungeonStore.isAssigningMapContext">

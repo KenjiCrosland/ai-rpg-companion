@@ -4,7 +4,7 @@
 
     <div class="export-buttons">
       <ParButton @click="copyAsPlainText" variant="secondary">
-        Copy as Plain Text
+        Copy as plain text
       </ParButton>
       <ParButton @click="copyAsHTML" variant="secondary">
         Copy as HTML
@@ -37,7 +37,7 @@
       <ParAccordion variant="understated" :level="4" id="export-help-text" label="How to use Plain Text format"
         :opened="openAccordion === 'text'" @accordion-toggle="toggleAccordion('text')">
         <ol class="export-help__steps">
-          <li>Click "Copy as Plain Text" above.</li>
+          <li>Click "Copy as plain text" above.</li>
           <li>Paste into any text editor, notes app, or document.</li>
           <li>Great for sharing via Discord, forums, or email.</li>
         </ol>

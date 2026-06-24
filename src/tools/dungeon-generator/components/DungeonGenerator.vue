@@ -15,7 +15,7 @@
 
         <div class="sidebar-footer">
           <ParButton variant="primary" :full-width="true" @click="dungeonStore.createNewDungeon">
-            + New Dungeon
+            + New dungeon
           </ParButton>
 
           <div class="sidebar-footer__divider"></div>
@@ -101,7 +101,7 @@
           </div>
           <template v-if="isSeededFlow">
             <h1 class="page-heading__title">
-              Create Dungeon<template v-if="seedStubName">: {{ seedStubName }}</template>
+              Create dungeon<template v-if="seedStubName">: {{ seedStubName }}</template>
             </h1>
             <p class="value-prop">
               From your {{ seedSourceType }}
@@ -145,7 +145,7 @@
                 <cdr-link href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link>.
               </template>
             </ParField>
-            <ParButton type="submit" :full-width="true">Generate Dungeon</ParButton>
+            <ParButton type="submit" :full-width="true">Generate dungeon</ParButton>
           </form>
         </div>
 

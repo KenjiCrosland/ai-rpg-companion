@@ -2,7 +2,7 @@
   <div class="related-dungeons-section parchment">
     <!-- Header mirrors RelatedSettingsSection: title + ghost re-scan button.
          Tooltip explains when re-scan is useful so the affordance label
-         can stay short ("Re-scan Lore"). -->
+         can stay short ("Re-scan lore"). -->
     <div class="related-dungeons-header">
       <h3 class="related-dungeons-title">Related Dungeons</h3>
       <ParTooltip
@@ -14,7 +14,7 @@
           :disabled="loading"
           @click="rescan"
         >
-          {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
+          {{ loading ? 'Scanning…' : 'Re-scan lore' }}
         </button>
       </ParTooltip>
     </div>
@@ -25,7 +25,7 @@
          by the dungeon generator on mount. -->
     <div v-if="!hasStubs" class="related-dungeons-empty">
       <p class="related-dungeons-empty-copy">
-        No dungeon-shaped locations in this item's lore. Click Re-scan Lore above to look again, or
+        No dungeon-shaped locations in this item's lore. Click Re-scan lore above to look again, or
         <a
           href="#"
           class="related-dungeons-empty-link"
@@ -65,7 +65,7 @@
             size="small"
             @click="onCreate(stub)"
           >
-            Create Dungeon
+            Create dungeon
           </ParButton>
           <ParButton
             v-else

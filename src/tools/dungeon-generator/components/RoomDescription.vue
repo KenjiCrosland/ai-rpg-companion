@@ -8,7 +8,7 @@
     <h3 class="room-title parchment">{{ roomName }}</h3>
     <div v-if="activeView === 'form'" class="room-form parchment">
       <p class="room-form__intro">
-        All fields below are optional. Click <em>Generate Description</em> to create a room from the dungeon's existing context, or fill in any field to steer the generation.
+        All fields below are optional. Click <em>Generate description</em> to create a room from the dungeon's existing context, or fill in any field to steer the generation.
       </p>
       <ParCardInput v-model="roomFormName" label="Room Name" />
       <ParCardTextarea v-model="roomFormShortDescription" label="Short Description" :rows="3" />
@@ -29,7 +29,7 @@
       </div>
       <div class="generation-button">
         <ParButton size="xsmall" @click="generateDescription">
-          Generate Description
+          Generate description
         </ParButton>
       </div>
     </div>
@@ -79,7 +79,7 @@
 
       <!-- Edit Mode -->
       <div v-else class="edit-form parchment">
-        <h3 class="edit-form__title">Edit Room Description</h3>
+        <h3 class="edit-form__title">Edit room description</h3>
 
         <ParCardInput
           v-model="roomEditForm.name"
@@ -103,7 +103,7 @@
         </div>
 
         <div class="button-group">
-          <ParButton size="xsmall" @click="saveEditRoom">Save Changes</ParButton>
+          <ParButton size="xsmall" @click="saveEditRoom">Save changes</ParButton>
           <ParButton size="xsmall" variant="secondary" @click="cancelEditRoom">Cancel</ParButton>
         </div>
       </div>
@@ -148,8 +148,8 @@ import {
 import { ref, watch, onMounted, computed } from 'vue';
 
 const viewToggleOptions = [
-  { value: 'description', label: 'Show Description' },
-  { value: 'form', label: 'Show Form' },
+  { value: 'description', label: 'Show description' },
+  { value: 'form', label: 'Show form' },
 ];
 import RoomSkeleton from './skeletons/RoomSkeleton.vue';
 import BossStatblockPrompt from './BossStatblockPrompt.vue';
@@ -934,7 +934,7 @@ onMounted(() => {
 
 /* Form intro: "all fields are optional" affordance. Sans serif at
    muted color so it reads as helper text, not body content. The
-   <em>Generate Description</em> references the button label exactly
+   <em>Generate description</em> references the button label exactly
    so users can match the prose to the affordance below. */
 .room-form__intro {
   font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);

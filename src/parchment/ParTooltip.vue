@@ -18,7 +18,7 @@
  *
  * Why custom rather than `title` attribute: native browser tooltips have
  * a ~1s show delay and unstyled rendering; for "you'd come back to this
- * affordance when X happens" buttons (Re-scan Lore, etc.) the latency
+ * affordance when X happens" buttons (Re-scan lore, etc.) the latency
  * undercuts the explanation. CSS-driven show/hide is immediate.
  *
  * Why CSS-only show/hide rather than Vue refs: `:hover` plus
@@ -27,7 +27,7 @@
  *
  * Usage:
  *   <ParTooltip text="Re-runs lore extraction. Useful after editing...">
- *     <ParCardButton variant="ghost" size="small">Re-scan Lore</ParCardButton>
+ *     <ParCardButton variant="ghost" size="small">Re-scan lore</ParCardButton>
  *   </ParTooltip>
  *
  * Props:

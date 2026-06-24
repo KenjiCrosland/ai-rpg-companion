@@ -76,7 +76,7 @@
         </p>
         <div class="npc-card-stub-actions">
           <ParCardButton @click="$emit('generate-detailed')">
-            Generate Detailed Description
+            Generate detailed description
           </ParCardButton>
         </div>
       </template>
@@ -203,7 +203,7 @@
         </div>
 
         <ParCardButton size="small" @click="addRelationshipToForm" class="npc-edit__add">
-          + Add Relationship
+          + Add relationship
         </ParCardButton>
       </section>
 
@@ -230,13 +230,13 @@
 
         <div class="npc-edit__generate-actions">
           <ParCardButton @click="generateRelationship" :disabled="isGeneratingRelationship">
-            Generate Relationship
+            Generate relationship
           </ParCardButton>
         </div>
       </section>
 
       <footer class="npc-edit__footer">
-        <ParCardButton variant="primary" @click="saveEdit">Save Changes</ParCardButton>
+        <ParCardButton variant="primary" @click="saveEdit">Save changes</ParCardButton>
         <ParCardButton variant="muted" @click="$emit('cancel-edit')">Cancel</ParCardButton>
       </footer>
     </div>
@@ -249,11 +249,11 @@
         </ParCardButton>
 
         <ParCardButton v-if="showMoveToFolder" @click="$emit('move-to-folder')">
-          Move to Folder
+          Move to folder
         </ParCardButton>
 
         <ParCardButton v-if="showExport" @click="$emit('toggle-export')">
-          {{ exportOpen ? 'Hide Export' : 'Export' }}
+          {{ exportOpen ? 'Hide export' : 'Export' }}
         </ParCardButton>
       </div>
 
@@ -382,7 +382,7 @@ const props = defineProps({
   },
 
   // Whether the parent's export panel is currently open. Drives the
-  // toggle button label between "Export" and "Hide Export".
+  // toggle button label between "Export" and "Hide export".
   exportOpen: {
     type: Boolean,
     default: false,

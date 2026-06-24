@@ -37,7 +37,7 @@
 
         <div class="sidebar-footer">
           <ParButton variant="primary" :full-width="true" @click="newEncounter(activeFolder)">
-            + New Encounter
+            + New encounter
           </ParButton>
 
           <div class="sidebar-footer__divider"></div>
@@ -298,7 +298,7 @@
             <div v-else class="generate-statblock-section">
               <p>Statblock not available for this monster.</p>
               <ParButton v-if="!monster.loadingStatblock" @click="generateStatblock(index)" variant="secondary">
-                Generate Statblock
+                Generate statblock
               </ParButton>
               <div v-else class="loading-statblock">
                 Generating statblock...
@@ -343,7 +343,7 @@
             <a href="https://homebrewery.naturalcrit.com" target="_blank" rel="noopener">Homebrewery</a>.
           </template>
           <template #buttons>
-            <ParButton variant="secondary" @click="exportAsPlainText">Copy as Plain Text</ParButton>
+            <ParButton variant="secondary" @click="exportAsPlainText">Copy as plain text</ParButton>
             <ParButton variant="secondary" @click="exportToMarkdown">Copy as Homebrewery Markdown</ParButton>
           </template>
           <template #tip>

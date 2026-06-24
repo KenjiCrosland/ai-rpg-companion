@@ -309,7 +309,7 @@
               <a href="https://homebrewery.naturalcrit.com/new" target="_blank" rel="noopener noreferrer">Homebrewery</a>,
               and reorder or edit it into a beautifully formatted PDF.
             </p>
-            <ParCardButton variant="affirmative" @click="copyAsMarkdown">Copy as markdown</ParCardButton>
+            <ParCardButton variant="affirmative" @click="copyAsMarkdown">Copy as Markdown</ParCardButton>
           </div>
           <div class="export-card">
             <p class="export-card__label">Plain text</p>

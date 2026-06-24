@@ -17,7 +17,7 @@
             </p>
           </div>
           <div class="dungeon-card-header-actions">
-            <ParCardButton size="small" @click="startEditing">Edit Overview</ParCardButton>
+            <ParCardButton size="small" @click="startEditing">Edit overview</ParCardButton>
           </div>
         </div>
 
@@ -55,7 +55,7 @@
       <!-- Edit Mode -->
       <div v-else class="dungeon-edit">
         <header class="dungeon-edit__header">
-          <h2 class="dungeon-edit__title">Edit Dungeon Overview</h2>
+          <h2 class="dungeon-edit__title">Edit dungeon overview</h2>
         </header>
 
         <ParCardInput
@@ -82,7 +82,7 @@
 
         <footer class="dungeon-edit__footer">
           <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
-          <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+          <ParCardButton @click="saveEdit">Save changes</ParCardButton>
         </footer>
       </div>
     </div>

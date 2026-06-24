@@ -22,7 +22,7 @@
       <template #buttons>
         <ParButton variant="secondary" @click="copyAsMarkdown">Copy as Markdown</ParButton>
         <ParButton variant="secondary" @click="copyAsHtml">Copy as HTML</ParButton>
-        <ParButton variant="secondary" @click="copyAsPlainText">Copy as Plain Text</ParButton>
+        <ParButton variant="secondary" @click="copyAsPlainText">Copy as plain text</ParButton>
       </template>
       <template #tip>
         <strong>Quick tip:</strong> After copying as markdown, visit

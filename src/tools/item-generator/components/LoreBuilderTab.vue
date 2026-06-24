@@ -203,7 +203,7 @@
           <ParCardButton v-if="historicalSummary && itemLegacy" variant="affirmative" class="summary-card__commit"
             @click="requestUpdateItemLore"
             title="Replace the item's current lore with the generated historical summary">
-            Update Item Lore
+            Update item lore
           </ParCardButton>
         </div>
       </div>

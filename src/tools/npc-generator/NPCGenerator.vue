@@ -262,7 +262,7 @@
                         </template>
                         <template #buttons>
                             <ParButton @click="copyNPCAsPlainText" variant="secondary">
-                                Copy as Plain Text
+                                Copy as plain text
                             </ParButton>
                             <ParButton @click="copyNPCAsMarkdown">
                                 Copy as Homebrewery Markdown

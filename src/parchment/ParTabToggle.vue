@@ -33,8 +33,8 @@
  *   <ParTabToggle
  *     v-model="activeView"
  *     :options="[
- *       { value: 'description', label: 'Show Description' },
- *       { value: 'form',        label: 'Show Form' }
+ *       { value: 'description', label: 'Show description' },
+ *       { value: 'form',        label: 'Show form' }
  *     ]"
  *   />
  *

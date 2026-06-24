@@ -4,7 +4,7 @@
         label="Dungeon Name:" required></cdr-input>
       <cdr-input class="dungeon_form_input" id="dungeon_description" v-model="dungeon_description" background="secondary"
         label="Dungeon Details:" :rows="4"></cdr-input>
-      <ParButton class="generate_button" type="submit" :disabled="!dungeon_name">Generate Dungeon Details</ParButton>
+      <ParButton class="generate_button" type="submit" :disabled="!dungeon_name">Generate dungeon details</ParButton>
     </form>
     <div class="dungeon-details" v-if="dungeon_details">
       <h2>{{ dungeon_name }}</h2>

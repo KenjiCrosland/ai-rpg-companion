@@ -15,7 +15,7 @@
           </p>
         </div>
         <div class="setting-card-header-actions">
-          <ParCardButton size="small" @click="startEditing">Edit Overview</ParCardButton>
+          <ParCardButton size="small" @click="startEditing">Edit overview</ParCardButton>
         </div>
       </div>
 
@@ -64,7 +64,7 @@
     <!-- Edit Mode -->
     <div v-else class="setting-edit">
       <header class="setting-edit__header">
-        <h2 class="setting-edit__title">Edit Setting Overview</h2>
+        <h2 class="setting-edit__title">Edit setting overview</h2>
       </header>
 
       <ParCardInput
@@ -91,7 +91,7 @@
 
       <footer class="setting-edit__footer">
         <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
-        <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+        <ParCardButton @click="saveEdit">Save changes</ParCardButton>
       </footer>
     </div>
   </div>

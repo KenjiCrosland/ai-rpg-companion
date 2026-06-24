@@ -256,7 +256,7 @@
                   Copy as Markdown
                 </ParButton>
                 <ParButton @click="copyAsPlainText" variant="secondary">
-                  Copy as Plain Text
+                  Copy as plain text
                 </ParButton>
               </template>
               <template #tip>
@@ -285,7 +285,7 @@
             <!-- Edit Mode -->
             <div v-else class="item-edit">
               <header class="item-edit__header">
-                <h2 class="item-edit__title">Edit Magic Item</h2>
+                <h2 class="item-edit__title">Edit magic item</h2>
               </header>
 
               <ParCardInput v-model="editForm.name" label="Name" class="item-edit__field" />
@@ -331,7 +331,7 @@
                   </div>
                 </div>
                 <ParCardButton size="small" @click="addFeature" class="item-edit__add-feature">
-                  + Add Feature
+                  + Add feature
                 </ParCardButton>
               </section>
 
@@ -339,7 +339,7 @@
 
               <footer class="item-edit__footer">
                 <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
-                <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+                <ParCardButton @click="saveEdit">Save changes</ParCardButton>
               </footer>
             </div>
           </template>

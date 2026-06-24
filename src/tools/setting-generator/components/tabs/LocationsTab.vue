@@ -36,7 +36,7 @@
                 subLocationDescription: location.description,
                 setting_type: location.setting_type,
               })">
-                Create Setting
+                Create setting
               </ParButton>
             </template>
           </template>

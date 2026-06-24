@@ -225,7 +225,7 @@ Rule of thumb: *describing a place the players are standing in* → pale-lapis s
 
 ## 6. Voice and copy
 
-- **Sentence case is the intent** (button labels, headings, section titles). Small-caps structural labels render uppercase via CSS. The Item Generator is the clean reference. **Known drift:** NPC/Dungeon generators and the cross-tool button family ("Create NPC," "View in NPC Generator," "Generate Dungeon") use Title Case. This is recorded as drift ([§9 L6](#low--local--hygiene)) but **not swept** — fix specific labels only if they feel wrong in context.
+- **Sentence case for all user-readable text** (button labels, headings, section titles); small-caps structural labels render uppercase via CSS. This is applied across the tools. The rule for what stays capitalized: **acronyms** (`NPC`, `HTML`), **proper tool names** (`View in NPC Generator`), and **proper format/product names** (`Markdown`, `Homebrewery`). Everything else — entity-type words included — is lowercase: "Generate dungeon," "+ New setting," "Generate abilities," "Save changes," "Create dungeon," "Move to folder," "Copy as plain text." When adding a new label, follow this rule rather than Title Case. (Legacy and chase-tracker tools are out of scope and still carry Title Case.)
 - **Editorial placeholders** (a strong, consistent pattern worth keeping): an in-world noun phrase trailing into `…` or "or leave blank for a surprise." E.g. `A fallen empire, a coastal cult, a lost language…`; `A scheming guildmaster, or leave blank for a surprise`.
 - **Taglines** under headings: italic `#555`, brief, evocative. Seeded variants link back to the source entity (`From your {{ type }} <a>{{ name }}</a>`).
 - **Cross-references between tools** build the integration moat by making the ecosystem visible at the point of relevance: `Related NPCs` sections, per-stub `Create X` + `View in X Generator`, `Re-scan Lore` as an inline lapis text-link. Keep surfacing these.
@@ -297,7 +297,7 @@ The decisions that shouldn't be casually violated:
 - **L3 — Sidebar footer duplicated per-tool** (6×). Consider slotting from `GeneratorLayout`. Low now (byte-identical); a drift vector.
 - **L4 — ✅ Fixed.** `src/parchment/CLAUDE.md` Cedar carve-out list updated (only the 2 `DashboardPlus` icon-deletes remain).
 - **L5 — ✅ Fixed.** Stale `#FBF8F1` page-surface comment in legacy `Tabs.vue` corrected to `#EAEEF2`.
-- **L6 — Title/sentence-case drift** in the cross-tool button family. Normalize only what bothers you in context.
+- **L6 — ✅ Fixed.** Swept button/label copy to sentence case across all tools: entity-type words lowercased ("Generate dungeon," "+ New setting," "Generate abilities," "Re-generate actions," "Save changes," "Create dungeon," "Edit overview," "Generate full NPC," "Move to folder," "Re-scan lore," "Hide export," "Copy as plain text"). **Kept capitalized** (rule): acronyms (`NPC`, `HTML`), proper tool names (`View in NPC Generator`), and proper format/product names (`Markdown`, `Homebrewery`). Left alone: dev-only chrome ("Show Dev"), the compound "Backup / Restore" control label, and the legacy/chase-tracker tools (out of scope).
 
 ### Intentional — do NOT reconcile
 - Difficulty (warning) vs rarity (taxonomy) registers.

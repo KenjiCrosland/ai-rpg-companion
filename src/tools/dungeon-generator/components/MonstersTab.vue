@@ -85,7 +85,7 @@
               <p><strong>Statblock not found</strong></p>
               <p>The statblock "{{ monster.statblock_name }}" was not found. It may have been deleted or renamed in the Statblock Generator.</p>
               <div class="button-group">
-                <ParButton @click="dungeonStore.generateMonsterStatblock(monster.id, premium)" size="small">Regenerate Statblock</ParButton>
+                <ParButton @click="dungeonStore.generateMonsterStatblock(monster.id, premium)" size="small">Regenerate statblock</ParButton>
                 <ParButton @click="clearMonsterStatblockReference(monster)" variant="secondary" size="small">Clear Reference</ParButton>
               </div>
             </div>

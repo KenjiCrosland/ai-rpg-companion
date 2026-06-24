@@ -128,8 +128,8 @@
                 <div v-if="isEditing && !loadingAbilities" class="ability-forms">
                     <ParButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
                         @click="generateAbilities(editedMonster, userSuggestion)">{{
-                            monster.abilities.length > 0 ? 'Re-Generate Abilities' :
-                                'Generate Abilities' }}</ParButton>
+                            monster.abilities.length > 0 ? 'Re-generate abilities' :
+                                'Generate abilities' }}</ParButton>
                     <li v-for="(ability, index) in editedAbilities" :key="index">
                         <input v-model="ability.name" />
                         <textarea v-model="ability.description"></textarea>
@@ -178,7 +178,7 @@
                     <ParButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
                         v-if="isEditing" @click="generateActions(editedMonster, userSuggestion)">{{ editedActions.length
                             > 0 ?
-                            'Re-Generate Actions' : 'Generate Actions' }}</ParButton>
+                            'Re-generate actions' : 'Generate actions' }}</ParButton>
                     <li v-for="(action, index) in editedActions" :key="'action-' + index">
                         <input v-model="action.name" />
                         <textarea v-model="action.description"></textarea>
@@ -207,14 +207,14 @@
                     spent legendary actions at the start of its turn.</p>
                 <p class="statblock-p" v-if="isEditing && editedLegendaryActions.length === 0">Add some legendary
                     actions to the monster.
-                    You can either add them one at at time manually or click "Generate Legendary Actions" to
+                    You can either add them one at at time manually or click "Generate legendary actions" to
                     generate actions for you. Please note that that adding legendary actions will make this creature
                     stronger than the CR provided.</p>
                 <ParButton class="regenerate-button" v-if="isEditing && !loadingLegendaryActions" size="small"
                     :full-width="true" modifier="secondary"
                     @click="generateLegendaryActions(editedMonster, userSuggestion)">{{
-                        editedLegendaryActions.length > 0 ? 'Re-Generate Legendary Actions' :
-                            'Generate Legendary Actions' }}</ParButton>
+                        editedLegendaryActions.length > 0 ? 'Re-generate legendary actions' :
+                            'Generate legendary actions' }}</ParButton>
                 <ul class="abilities" v-if="editedLegendaryActions.length > 0 || isEditing">
                     <template v-if="!isEditing">
                         <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
@@ -261,7 +261,7 @@
             <div class="card-footer-bar__actions">
                 <CardFooterAction @click="$emit('move-to-folder')">
                     <template #icon>📁</template>
-                    Move to Folder
+                    Move to folder
                 </CardFooterAction>
 
                 <CardFooterAction @click="$emit('use-in-encounter')">
@@ -340,7 +340,7 @@ const props = defineProps({
 });
 
 const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `max-width: ${props.width}px; width: 100%`);
-const createNpcButtonText = computed(() => props.linkedNpcsCount > 0 ? 'Create Another NPC' : 'Create NPC');
+const createNpcButtonText = computed(() => props.linkedNpcsCount > 0 ? 'Create another NPC' : 'Create NPC');
 const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export']);
 
 const containerRef = ref(null);

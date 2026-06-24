@@ -36,7 +36,7 @@
         <div class="sidebar-footer">
           <ParButton variant="primary" :full-width="true"
             v-if="!currentlyLoadingOverview" @click="createNewSetting">
-            + New Setting
+            + New setting
           </ParButton>
 
           <div class="sidebar-footer__divider"></div>
@@ -121,7 +121,7 @@
           </div>
           <template v-if="isSeededFlow">
             <h1 class="page-heading__title">
-              Create Setting<template v-if="seedStubName">: {{ seedStubName }}</template>
+              Create setting<template v-if="seedStubName">: {{ seedStubName }}</template>
             </h1>
             <p class="page-heading__tagline">
               From your {{ seededSourceType }}
@@ -156,7 +156,7 @@
               </template>
             </ParField>
             <ParButton type="submit" :full-width="true">
-              Generate Setting
+              Generate setting
             </ParButton>
           </form>
         </div>

@@ -54,7 +54,7 @@ export default {
         },
         buttonText: {
             type: String,
-            default: 'Generate Description'
+            default: 'Generate description'
         },
     },
     methods: {
