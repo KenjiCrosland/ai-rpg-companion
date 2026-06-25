@@ -79,13 +79,13 @@
             </div>
 
             <ParField label="Origin"
-              hint="Colors the item's theme, look, and name — chosen for you when you leave the name and notes blank.">
+              hint="Colors the item's theme, look, and name — chosen for you when you leave the name and lore blank.">
               <ParSelect v-model="itemOrigin" :options="originOptions" placeholder="Random" />
             </ParField>
 
-            <ParField label="Notes for the scribe" :optional="true">
+            <ParField label="Lore" :optional="true">
               <ParTextarea v-model="itemLore" :rows="3"
-                placeholder="A fallen empire, a coastal cult, a lost language…" />
+                placeholder="Forged by a drowned cult, recovered from a lich's vault — any history or inspiration to weave into its lore…" />
             </ParField>
             <!-- TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE -->
             <fieldset v-if="isDev" class="test-register-override">
