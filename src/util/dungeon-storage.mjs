@@ -305,3 +305,114 @@ export function resetDungeonSourceForDeletedEntity(sourceType, sourceId) {
   }
   return resetCount;
 }
+
+/**
+ * Propagate a dungeon RENAME to the denormalized display-name caches that point
+ * at it. Dungeons use a stable `id`, so linkage never breaks — but the cached
+ * NAMES in other stores go stale without this. Mirrors `renameSettingReferences`
+ * in `setting-storage.mjs` (dungeons have no `related_places`, so that branch is
+ * omitted). Call from the dungeon overview's saveEdit when the name changes.
+ *
+ * Updates:
+ *   1. Items' `related_dungeons[].name` stubs (matched by `dungeon_id`).
+ *   2. `tool-references` edges where the dungeon is source or target.
+ *   3. Dungeon-sourced NPCs' denormalized `sourceName`.
+ *
+ * @param {string} dungeonId
+ * @param {string} newName
+ * @returns {{ totalUpdated: number }}
+ */
+export function renameDungeonReferences(dungeonId, newName) {
+  if (!dungeonId || typeof newName !== 'string') return { totalUpdated: 0 };
+  let totalUpdated = 0;
+
+  // 1. Items' related_dungeons[] stubs.
+  const itemsRaw = localStorage.getItem('savedItems');
+  if (itemsRaw) {
+    let items;
+    try {
+      items = JSON.parse(itemsRaw);
+    } catch {
+      items = null;
+    }
+    if (Array.isArray(items)) {
+      let changed = false;
+      for (const item of items) {
+        if (!Array.isArray(item?.related_dungeons)) continue;
+        for (const stub of item.related_dungeons) {
+          if (String(stub?.dungeon_id) === String(dungeonId) && stub.name !== newName) {
+            stub.name = newName;
+            totalUpdated++;
+            changed = true;
+          }
+        }
+      }
+      if (changed) localStorage.setItem('savedItems', JSON.stringify(items));
+    }
+  }
+
+  // 2. Reference graph edges where this dungeon is source or target.
+  const refsRaw = localStorage.getItem('tool-references');
+  if (refsRaw) {
+    let refs;
+    try {
+      refs = JSON.parse(refsRaw);
+    } catch {
+      refs = null;
+    }
+    if (refs && typeof refs === 'object') {
+      let changed = false;
+      for (const ref of Object.values(refs)) {
+        if (ref?.target_type === 'dungeon' && String(ref.target_id) === String(dungeonId)
+            && ref.target_name !== newName) {
+          ref.target_name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+        if (ref?.source_type === 'dungeon' && String(ref.source_id) === String(dungeonId)
+            && ref.source_name !== newName) {
+          ref.source_name = newName;
+          totalUpdated++;
+          changed = true;
+        }
+      }
+      if (changed) localStorage.setItem('tool-references', JSON.stringify(refs));
+    }
+  }
+
+  // 3. NPCs whose source provenance points at this dungeon.
+  const npcsRaw = localStorage.getItem('npcGeneratorNPCs');
+  if (npcsRaw) {
+    let npcs;
+    try {
+      npcs = JSON.parse(npcsRaw);
+    } catch {
+      npcs = null;
+    }
+    if (npcs && typeof npcs === 'object') {
+      let changed = false;
+      for (const folder of Object.values(npcs)) {
+        if (!Array.isArray(folder)) continue;
+        for (const npc of folder) {
+          if (npc?.sourceType !== 'dungeon' || String(npc.sourceId) !== String(dungeonId)) continue;
+          const oldName = npc.sourceName;
+          if (npc.sourceName !== newName) {
+            npc.sourceName = newName;
+            totalUpdated++;
+            changed = true;
+          }
+          // For dungeon-sourced NPCs typeOfPlace mirrors the dungeon name (it's
+          // the subtitle "origin"). Keep it in sync when it still holds the old
+          // name, so the card doesn't read "Old · From New".
+          if (npc.typeOfPlace === oldName && npc.typeOfPlace !== newName) {
+            npc.typeOfPlace = newName;
+            changed = true;
+          }
+        }
+      }
+      if (changed) localStorage.setItem('npcGeneratorNPCs', JSON.stringify(npcs));
+    }
+  }
+
+  return { totalUpdated };
+}

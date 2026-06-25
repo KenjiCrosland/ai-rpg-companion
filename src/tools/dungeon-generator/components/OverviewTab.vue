@@ -98,6 +98,7 @@ import DungeonOverviewCardSkeleton from './skeletons/DungeonOverviewCardSkeleton
 import { renderOverview, consolidateOverviewToMarkdown } from '../util/renderDungeonOverview.mjs';
 import { combineDungeonOverview } from '../util/combineDungeonOverview.mjs';
 import { sourceExists } from '@/util/seeded-input.mjs';
+import { renameDungeonReferences } from '@/util/dungeon-storage.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
 
 const props = defineProps({
@@ -223,12 +224,25 @@ const cancelEdit = () => {
 };
 
 const saveEdit = () => {
-  if (dungeonStore.currentDungeon?.dungeonOverview) {
-    dungeonStore.currentDungeon.dungeonOverview.name = editForm.value.name;
-    dungeonStore.currentDungeon.dungeonOverview.title = editForm.value.title;
-    dungeonStore.currentDungeon.dungeonOverview.combined_content = editForm.value.content;
+  const dungeon = dungeonStore.currentDungeon;
+  const oldName = dungeon?.dungeonOverview?.name || '';
+  const newName = editForm.value.name || '';
+
+  if (dungeon?.dungeonOverview) {
+    dungeon.dungeonOverview.name = editForm.value.name;
+    dungeon.dungeonOverview.title = editForm.value.title;
+    dungeon.dungeonOverview.combined_content = editForm.value.content;
   }
   dungeonStore.saveDungeons();
+
+  // Propagate the rename to denormalized name caches in other stores (item
+  // related_dungeons stubs, tool-references, dungeon-sourced NPC sourceName) —
+  // mirrors the Setting Generator's renameSettingReferences. Linkage is id-based
+  // and never breaks; without this the cached display NAMES go stale.
+  if (dungeon?.id && newName && oldName !== newName) {
+    renameDungeonReferences(dungeon.id, newName);
+  }
+
   isEditing.value = false;
 };
 </script>

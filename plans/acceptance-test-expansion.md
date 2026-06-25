@@ -135,10 +135,14 @@ full bundle, restore imports whatever keys are present (MERGE, not replace).
 Effort tiers: **S** = ready now, testids + maybe dialog handler; **M** = needs a
 new fixture or helper; **L** = needs fixture investment or behavior investigation.
 
-### Phase 1 — Per-tool lifecycle (create → INLINE edit → delete) — ✅ DONE (2026-06-24)
-13 specs in `tests/lifecycle/` (item, encounter, npc, setting, dungeon, statblock),
-each a create→edit→delete + a delete-cancel case. **Lore lifecycle deferred** (needs
-a `lore` fixture + SEQUENCES entry — `validateEventJson`/`validateSummaryJson`).
+### Phase 1 — Per-tool lifecycle (create → INLINE edit → delete) — ✅ FULLY DONE (2026-06-24)
+14 specs in `tests/lifecycle/` (item, encounter, npc, setting, dungeon, statblock,
++ lore). **Lore lifecycle now done** — `lore-lifecycle.spec.js`: subject + world
+year → "+ Create Historical Timeline" → summon card (type pre-set; fill "Specific
+year") → Generate → "Keep" commits → inline-edit ("Edit" → "Event Title" → "Save")
+→ "Remove" (direct, no ParConfirm). Fixture `lore-event.json` = `{title, description}`
+(`validateTimelineEventJson`), sequence `lore`. Standalone lore generator has NO
+premium page variant — `gotoTool(page, 'lore-generator')` (no premium flag).
 Testids added: `edit-{item,encounter,npc,setting,dungeon}`,
 `delete-{item,encounter,npc,setting,dungeon,statblock}`,
 `{npc,setting,dungeon}-edit-name`. All green.
@@ -187,13 +191,29 @@ setting-quest-hook):**
    X" form often has a same-named field).
 4. Delete: scope confirm to `getByRole('dialog')` (trigger may share the label).
 
-**Remaining (deferred):** lore-event (item Lore Builder; delete is direct, no
-ParConfirm), dungeon-monster (`ParConfirm`; add via MonstersTab form→AI),
-setting-quest-hook (same shape as item-QH). setting-locations / dungeon-rooms are
-generation-only/no-manual-delete — limited CRUD surface.
+**Also done:** `tests/sub-entity/dungeon-monsters.spec.js` — delete a monster via
+`ParConfirm` (a 3rd tool). The overview pre-seeds the monster list, so no extra
+generation needed for delete; inline edit needs a generated full description first
+("Edit description" is hidden until then) — deferred.
 
-### Phase 3 — Cross-tool data integrity — L (highest uncertainty)
-3-4 specs (`integrity/*.spec.js`). Pure `seedStorage` setup (no generation).
+**Remaining (deferred, all follow the recipe):** setting-quest-hook (same shape as
+item-QH), dungeon-monster *edit* (needs a description fixture), item Lore Builder
+sub-entity. setting-locations / dungeon-rooms are generation-only/no-manual-delete.
+
+### Phase 3 — Cross-tool data integrity — ✅ DONE (2026-06-24)
+2 specs in `tests/integrity/`. (1) `deletion-isolation.spec.js` — seed all six
+storage keys, capture a baseline AFTER mount (migrations + quota seeding settle —
+the `monsters` key gains quota fields, settings/dungeons get id-normalized, so
+compare before/after the delete, NOT against the raw seed), delete-all items,
+assert every other key is byte-identical to its baseline. (2)
+`orphaned-reference.spec.js` — seed an NPC with a denormalized `sourceType:'item'`
+/ `sourceId` pointing at an item that was never seeded; open it; assert the card
+renders (no crash), shows `.npc-source-deleted` ("(deleted)"), and renders NO
+`.npc-source-link`. Key lesson: integrity assertions must tolerate mount-time
+migration normalization — test the *operation's* effect (before/after) or an
+identity field, not raw-seed equality.
+
+Original notes: 3-4 specs (`integrity/*.spec.js`). Pure `seedStorage` setup (no generation).
 First run reveals actual orphan-handling; assert against what cros.land *does*
 (minimum bar: "loads without crashing"), and comment any behavior that looks
 wrong rather than forcing a "should-be" failure.

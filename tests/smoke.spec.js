@@ -2,26 +2,28 @@ import { test, expect } from '@playwright/test';
 import { gotoTool } from './helpers/page-nav.js';
 
 /**
- * Real-endpoint smoke tests. These DO NOT mock the LLM — they hit the live
- * `/api/ai/*` proxy, which requires a provider API key in the dev server's
- * environment (.env.local). They are slow and mildly flaky, so they are
- * skipped unless SMOKE=true. Run with `npm run test:e2e:smoke`.
+ * Real-endpoint smoke tests — part of the normal e2e run. Unlike every other
+ * spec, these DO NOT mock the LLM: they hit the live `/api/ai/*` proxy to catch
+ * integration breakage mocks can't (proxy wiring, response-shape drift). They
+ * need a provider API key in the dev server's `.env.local`, make a few real
+ * (cheap) calls, and are slower + mildly flakier than the mocked specs.
+ *
+ * For a fast, zero-cost iteration loop that skips these, run the mocked-only
+ * script: `npm run test:e2e:mocked` (grep-inverts "smoke").
  */
-const SMOKE = process.env.SMOKE === 'true';
-
 test.describe('Real-endpoint smoke tests', () => {
-  test.skip(!SMOKE, 'Smoke tests run only with SMOKE=true');
+  // Real LLM calls exceed the global 30s test timeout — give them room.
+  test.describe.configure({ timeout: 120_000 });
 
   test('item generator produces real content from the API', async ({ page }) => {
     await gotoTool(page, 'item-generator', { premium: true });
 
     await page.getByTestId('generate-item').click();
 
-    await expect(page.getByTestId('item-output')).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByTestId('item-name')).not.toBeEmpty();
+    await expect(page.getByTestId('item-name')).not.toBeEmpty({ timeout: 60_000 });
   });
 
-  test('encounter generator produces real content with a read-aloud block', async ({ page }) => {
+  test('encounter generator produces real content', async ({ page }) => {
     await gotoTool(page, 'encounter-generator', { premium: true });
 
     const firstMonster = page.locator('.monster-picker .monster-row').first();
@@ -29,7 +31,8 @@ test.describe('Real-endpoint smoke tests', () => {
 
     await page.getByTestId('generate-encounter').click();
 
-    await expect(page.getByTestId('encounter-output')).toBeVisible({ timeout: 90_000 });
-    await expect(page.locator('.encounter-title')).not.toBeEmpty();
+    // The title only renders once the real call-1 response (place_name) lands —
+    // give it the full real-call budget, not the default expect timeout.
+    await expect(page.locator('.encounter-title')).not.toBeEmpty({ timeout: 90_000 });
   });
 });

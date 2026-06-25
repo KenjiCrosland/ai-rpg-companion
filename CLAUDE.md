@@ -273,8 +273,10 @@ There are **two separate test suites**, and they must not be conflated:
   the Playwright specs. Don't remove that exclusion, and don't repoint the
   `test` script at Playwright — `npm test` staying Jest is load-bearing.
 - `npm run test:e2e` → **Playwright** acceptance tests in `tests/`, run locally
-  against the Vite dev server with mocked LLM responses (`test:e2e:headed`,
-  `test:e2e:ui`, and `test:e2e:smoke` for the real-endpoint smoke tests also
+  against the Vite dev server. Most specs mock the LLM; 2 real-endpoint smoke
+  tests hit the live `/api/ai/*` proxy (need an API key in `.env.local`) and run
+  as part of this full suite. Use `npm run test:e2e:mocked` for the fast, no-key,
+  no-cost iteration loop (`test:e2e:headed`/`test:e2e:ui`/`test:e2e:smoke` also
   exist). These cover the critical cross-tool user flows whose regression would
   matter most for a release.
 

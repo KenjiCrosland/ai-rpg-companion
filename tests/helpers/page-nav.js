@@ -37,3 +37,19 @@ export async function gotoTool(page, tool, opts = {}) {
   // even though the SPA has mounted and is fully interactive.
   await page.goto('/', { waitUntil: 'domcontentloaded' });
 }
+
+/**
+ * Switch the active tool WITHIN the same context (after gotoTool's one-shot
+ * guard has already fired). Sets dev-current-page directly and reloads, so any
+ * cross-tool propagation written to localStorage by the previous tool is read
+ * fresh by the destination.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string} tool  base page id
+ * @param {{ premium?: boolean }} [opts]
+ */
+export async function switchTool(page, tool, opts = {}) {
+  const pageId = opts.premium ? `${tool}-premium` : tool;
+  await page.evaluate((id) => localStorage.setItem('dev-current-page', id), pageId);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+}

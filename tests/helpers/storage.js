@@ -14,8 +14,18 @@ export async function clearStorage(page) {
 }
 
 export async function seedStorage(page, key, value) {
+  // One-shot per key: addInitScript re-runs on every navigation/reload, so a
+  // naive setItem would re-seed the ORIGINAL value on each reload and clobber
+  // any app mutation (e.g. a rename) made during the test. The sessionStorage
+  // guard seeds once per context, letting reloads (switchTool) read the app's
+  // real persisted state.
   await page.addInitScript(
-    ({ k, v }) => localStorage.setItem(k, JSON.stringify(v)),
+    ({ k, v }) => {
+      const guard = `e2e-seeded-${k}`;
+      if (sessionStorage.getItem(guard)) return;
+      localStorage.setItem(k, JSON.stringify(v));
+      sessionStorage.setItem(guard, '1');
+    },
     { k: key, v: value },
   );
 }

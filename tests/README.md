@@ -6,11 +6,17 @@ tools. Separate from the Jest unit suite — **`npm test` is still Jest.**
 ## Running
 
 ```bash
-npm run test:e2e         # full mocked suite (fast)
-npm run test:e2e:headed  # same, with a visible browser
+npm run test:e2e         # FULL suite: mocked specs + 2 real-endpoint smoke tests
+npm run test:e2e:mocked  # mocked-only (fast, zero API cost) — for tight iteration
+npm run test:e2e:smoke   # just the real-endpoint smoke tests
+npm run test:e2e:headed  # full suite, visible browser
 npm run test:e2e:ui      # Playwright UI mode (development)
-npm run test:e2e:smoke   # real-LLM smoke tests (slow; needs an API key in .env.local)
 ```
+
+The 2 smoke tests hit the live `/api/ai/*` proxy (a few cheap calls) to catch
+integration breakage mocks can't. They need a provider API key in the dev
+server's `.env.local`; without one they'll fail. Use `test:e2e:mocked` for the
+fast, no-key, no-cost loop while iterating.
 
 First-time setup (once):
 
@@ -23,8 +29,8 @@ if you already have `npm run dev` running it'll be reused.
 
 ## When to run
 
-- Before every push: `npm run test:e2e`
-- Before a deploy: `npm run test:e2e && npm run test:e2e:smoke`
+- While iterating: `npm run test:e2e:mocked` (fast, no API)
+- Before every push: `npm run test:e2e` (full — includes the real-API smoke tests)
 
 ## How it works (the parts that differ from a generic Playwright setup)
 

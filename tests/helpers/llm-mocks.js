@@ -43,6 +43,7 @@ const settingOverviewNoNpc = load('setting-overview-no-npc.json');
 const factionList = load('faction-list.json');
 const classifyNpcs = load('classify-npcs.json');
 const itemQuestHook = load('item-quest-hook.json');
+const loreEvent = load('lore-event.json');
 const dungeonOverview = load('dungeon-overview.json');
 
 const GENERIC = { description: 'stub', text: 'stub', name: 'Stub' };
@@ -64,6 +65,8 @@ const SEQUENCES = {
   // overview (has an NPC) → faction list → classify-NPCs-by-faction.
   'setting-faction-classify': [settingOverview, factionList, classifyNpcs],
   'item-quest-hook': [item, itemQuestHook],
+  // Standalone lore/timeline generator: each "Generate" is one event call.
+  lore: [loreEvent],
 };
 
 function wrap(fixture) {
