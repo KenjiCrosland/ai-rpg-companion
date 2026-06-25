@@ -1,0 +1,18 @@
+[
+  {
+    "name": "The Ashen Concord",
+    "influence_level": 4,
+    "faction_leader": "Magister Holloway",
+    "faction_leader_description": "A calculating spice magnate who chairs the trade council.",
+    "key_resources_and_assets": "Control of the ford tariffs and a private dock fleet.",
+    "motto": "The tide pays its due."
+  },
+  {
+    "name": "The Cistern Hands",
+    "influence_level": 2,
+    "faction_leader": "Old Brisa",
+    "faction_leader_description": "A wiry smuggler who knows every flooded tunnel beneath the quarter.",
+    "key_resources_and_assets": "The drowned dock and the routes beneath the merchant quarter.",
+    "motto": "What sinks is ours."
+  }
+]

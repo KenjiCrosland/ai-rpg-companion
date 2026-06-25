@@ -39,6 +39,10 @@ const statblockPart2 = load('statblock-part2.json');
 const npcPart1 = load('npc-part1.json');
 const npcPart2 = load('npc-part2.json');
 const settingOverview = load('setting-overview.json');
+const settingOverviewNoNpc = load('setting-overview-no-npc.json');
+const factionList = load('faction-list.json');
+const classifyNpcs = load('classify-npcs.json');
+const itemQuestHook = load('item-quest-hook.json');
 const dungeonOverview = load('dungeon-overview.json');
 
 const GENERIC = { description: 'stub', text: 'stub', name: 'Stub' };
@@ -52,6 +56,14 @@ const SEQUENCES = {
   // the overview rendering the tabs/container.
   setting: [settingOverview, GENERIC],
   dungeon: [dungeonOverview, GENERIC],
+  // Sub-entity flows: parent generation (call 0) then a sub-entity generation
+  // (call 1). The no-npc setting avoids a follow-up classify-NPCs call, so
+  // faction generation is exactly one call.
+  'setting-faction': [settingOverviewNoNpc, factionList],
+  // With NPCs present, faction generation also fires a classify-NPCs call: setting
+  // overview (has an NPC) → faction list → classify-NPCs-by-faction.
+  'setting-faction-classify': [settingOverview, factionList, classifyNpcs],
+  'item-quest-hook': [item, itemQuestHook],
 };
 
 function wrap(fixture) {
@@ -60,19 +72,35 @@ function wrap(fixture) {
   };
 }
 
-/**
- * @param {import('@playwright/test').Page} page
- * @param {keyof typeof SEQUENCES} [tool]
- */
-export async function mockLLM(page, tool) {
+async function installRoute(page, tool, delayMs) {
   const sequence = (tool && SEQUENCES[tool]) || [GENERIC];
   let call = 0;
 
   await page.route('**/api/ai/**', async (route) => {
     const fixture = sequence[call % sequence.length];
     call += 1;
+    if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
     await route.fulfill({ json: wrap(fixture) });
   });
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {keyof typeof SEQUENCES} [tool]
+ */
+export async function mockLLM(page, tool) {
+  return installRoute(page, tool, 0);
+}
+
+/**
+ * Like mockLLM, but holds each response for `delayMs` so a test can observe the
+ * in-flight loading state before it resolves. Same call-order-modulo sequencing.
+ * @param {import('@playwright/test').Page} page
+ * @param {keyof typeof SEQUENCES} [tool]
+ * @param {number} [delayMs]
+ */
+export async function mockLLMWithDelay(page, tool, delayMs = 1000) {
+  return installRoute(page, tool, delayMs);
 }
 
 /** Force every LLM call to fail (network error) — for error-path tests. */

@@ -155,17 +155,42 @@ sidebar updated; also a Cancel-discards case). Delete step per table C.
   `delete-item|encounter|npc` (setting/dungeon single-delete is sidebar-level —
   decide whether to cover). Save/Cancel: prefer text "Save changes"/"Cancel".
 
-### Phase 2 — Sub-entity CRUD — L
-6-7 specs (`sub-entity/*.spec.js`). **Add = generation**, so author a fixture +
-SEQUENCES entry per sub-entity (faction, setting-quest-hook, item-quest-hook,
-lore-event, dungeon-monster), each passing its real validator. Edit = inline.
-Delete = per table C (`ParConfirm` for factions/setting-QH/monsters/item-QH —
-click confirm; direct for lore/locations).
-- **Testids:** `add-faction`, `add-quest-hook` (scope per tool — setting vs item
-  differ), `edit-faction|quest-hook`, `delete-faction|quest-hook|monster`, and a
-  testid on the relevant `ParConfirm` confirm button (e.g. `confirm-delete`).
-- Verify before writing: setting-locations and dungeon-rooms are
-  generation-only/no-delete — write only what's actually possible.
+### Phase 2 — Sub-entity CRUD — ✅ CORE DONE (2026-06-24); rest follow the recipe
+**Done — 2 sub-entities, 4 specs, proving the pattern across two tools + two
+validators:**
+- `tests/sub-entity/setting-factions.spec.js` (3 specs) — generate (bulk) →
+  inline-edit → ParConfirm delete (using `setting-overview-no-npc.json` for a
+  ONE-call generation). PLUS a **3-call classification test**: with the union
+  setting (`setting-overview.json`, has an NPC), faction generation fires
+  overview → faction list → **classify-NPCs-by-faction** (sequence
+  `setting-faction-classify`, fixture `classify-npcs.json` =
+  `{assignments:[{name, faction}]}`). Asserts the pre-existing NPC is grouped under
+  her assigned faction in the NPCs tab (`.related-npcs-group` whose
+  `.related-npcs-group-title` is the faction name `contains` the NPC). Fixtures:
+  `faction-list.json` is an ARRAY per `factionListValidation`.
+- `tests/sub-entity/item-quest-hooks.spec.js` — pick quest type → generate →
+  inline-edit → ParConfirm delete. Fixture `item-quest-hook.json` (`{title,
+  questGiver, setup, objectives[], challenges[], reward, twist}` per
+  `questHookValidation`). Sequence `item-quest-hook`. Hook auto-expands (`open:true`).
+
+**The recipe (for the remaining sub-entities — lore-event, dungeon-monster,
+setting-quest-hook):**
+1. Find the validator (`grep` the tab component) and its required keys. Author a
+   fixture matching it EXACTLY (array vs object matters).
+2. Add a `SEQUENCES` entry `[parentOverview, subEntity]` — parent gen is call 0,
+   sub-entity gen is call 1. **Watch for follow-up calls** (faction's classify-NPCs;
+   check the handler for a second `generateGptResponse`) and shape the parent
+   fixture to avoid them, or pad the sequence.
+3. **No new testids needed** — scope by the rendered card (`.faction-card--expanded`,
+   `.quest-card`) and use button text ("Edit faction", "Delete", "Save changes").
+   For edit name fields, scope `getByLabel(...)` to the card (a sibling "Create new
+   X" form often has a same-named field).
+4. Delete: scope confirm to `getByRole('dialog')` (trigger may share the label).
+
+**Remaining (deferred):** lore-event (item Lore Builder; delete is direct, no
+ParConfirm), dungeon-monster (`ParConfirm`; add via MonstersTab form→AI),
+setting-quest-hook (same shape as item-QH). setting-locations / dungeon-rooms are
+generation-only/no-manual-delete — limited CRUD surface.
 
 ### Phase 3 — Cross-tool data integrity — L (highest uncertainty)
 3-4 specs (`integrity/*.spec.js`). Pure `seedStorage` setup (no generation).
@@ -178,18 +203,18 @@ wrong rather than forcing a "should-be" failure.
   assert others intact (verifies storage-key isolation).
 - Storage keys to seed: per `EXPORT_KEYS` (E above).
 
-### Phase 4 — Backup / restore — M
-3 specs (`data-options/*.spec.js`). Treat backup as the **global bundle** (E).
-- backup-creates-valid-json: `waitForEvent('download')` on "Download JSON",
-  read file, assert JSON + expected keys.
-- restore-from-backup: author `fixtures/backup/*.json` (capture real shape via
-  UI once), `setInputFiles` the hidden input, accept the native `confirm()`,
-  then **re-wait for the reload** before asserting sidebar.
-- restore semantics = MERGE (only present keys overwrite).
-- **Testids:** `data-options-toggle`, `data-options-backup` ("Download JSON"),
-  `data-options-restore-input` (the file input). (Brief's
-  `data-options-backup/restore/delete-all` naming → match to the 2 real actions
-  in DataManagerModal + delete-all in SidebarFooter.)
+### Phase 4 — Backup / restore — ✅ DONE (2026-06-24)
+2 specs in `tests/data-options/backup-restore.spec.js` + fixture
+`tests/fixtures/backup/item-library-backup.json`. backup-downloads-valid-JSON
+(`waitForEvent('download')` on "Download JSON" → read file → assert
+`bundle.savedItems`); restore-repopulates (`setInputFiles` on
+`input[type="file"][accept="application/json"]` → restore confirms via native
+`confirm()` + `alert()` + `location.reload()`, so register `page.on('dialog', d =>
+d.accept())` BEFORE → assert restored items in sidebar after the reload).
+**No new testids** — DataManagerModal buttons are "Download JSON" / "Upload JSON",
+opened via the "Backup / Restore library" action; footer is **premium-only**.
+Restore semantics = MERGE. The reversible-by-restore Phase-5 case can now chain
+these. **Zero production change.**
 
 ### Phase 5 — Delete-all — ✅ DONE (2026-06-24)
 2 specs in `tests/data-options/delete-all.spec.js`: clears-this-tool-only (seed
@@ -201,8 +226,16 @@ confirm button shares the danger-row label, so scope with `getByRole('dialog')`.
 The disclosure is a *toggle* — only expand if not already open. **Deferred:**
 reversible-by-restore (chains Phase 4 backup/restore).
 
-### Phase 6 — Modal behavior — REWRITE — S/M
-The original 5 modal-edit specs are invalid (no edit modals). Replace with:
+### Phase 6 — Modal behavior — ✅ DONE (2026-06-24)
+4 specs in `tests/ui/modals.spec.js`: delete-all `ParModal` closes on Escape and on
+backdrop-click (both without deleting); destructive `ParConfirm` closes on Escape
+(entity preserved); DataManagerModal opens and closes. Notes: `getByRole('dialog')`
+identifies the open modal (only one at a time). Backdrop close needs
+`locator('.par-modal-backdrop').evaluate(el => el.click())` — `@click.self` requires
+`event.target === backdrop`, which a coordinate click doesn't reliably produce. The
+ParConfirm confirm/cancel paths are already covered by the lifecycle specs.
+
+Original notes: The original 5 modal-edit specs are invalid (no edit modals). Replace with:
 - inline-edit-saves / inline-edit-cancel-discards (this overlaps Phase 1 — fold
   in or keep one canonical pair).
 - `ParConfirm` cancel-preserves + confirm-deletes — now covers ALL confirmed
@@ -222,18 +255,22 @@ targeted by `getByRole('tab', { name })` and activation asserted via
 `aria-selected="true"`. Each test switches through every tab, asserts the output
 container persists, and returns to the first tab with content intact.
 
-### Phase 8 — Form validation — S/M
-3 specs (`ui/form-validation-*.spec.js`). Note: faction add is generation, so
-"faction name required" may or may not gate — verify. Solid one:
-encounter-monster-required (generate disabled / no-op with no monsters). Quota
-case overlaps Phase-1 quota tests — only add what's new.
+### Phase 8 — Form validation — ✅ DONE (2026-06-24)
+1 spec in `tests/ui/form-validation.spec.js`: encounter-requires-a-monster (warning
+toast "Add at least one monster before generating." + no output; then adding a
+monster releases the gate). This is the only hard required-field in the suite —
+verified statblock CR is optional (defaults to random) and all other tools allow
+blank input. Faction/quest-hook "required" gates are generation flows (Phase 2);
+quota gating is covered by quota-counts.
 
-### Phase 9 — Loading states — M
-3 specs (`ui/loading-*.spec.js`). Needs new helper **`mockLLMWithDelay(page,
-tool, delayMs)`** in `helpers/llm-mocks.js` — same call-order-modulo sequencing,
-delay each fulfill (`await new Promise(r => setTimeout(r, delayMs))` inside the
-route handler). Tests: loading appears then clears; error path via existing
-`failLLM` (assert error UI + button re-enabled); loading clears on cross-tool nav.
+### Phase 9 — Loading states — ✅ DONE (2026-06-24)
+3 specs in `tests/ui/loading-states.spec.js`. Added `mockLLMWithDelay(page, tool,
+delayMs)` to `helpers/llm-mocks.js` (refactored mockLLM/mockLLMWithDelay onto a
+shared `installRoute`). Tests: loading-appears-then-clears (item — generate button
+hidden during loading, output after); error-clears-loading (encounter `failLLM` →
+toast "Failed to generate encounter…" + button re-enabled); navigate-away-mid-
+generation lands cleanly (delayed item gen, switch to npc via dev-current-page +
+reload). **Zero production change** — all behavioral signals already existed.
 
 ### Phase 10 — Cross-session persistence — ✅ DONE (2026-06-24)
 1 spec in `tests/persistence/cross-session.spec.js`. Generate an item in context
