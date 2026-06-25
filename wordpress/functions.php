@@ -709,11 +709,46 @@ function rpg_companion_chrome_styles() {
  */
 function rpg_companion_app_style_guards() {
     return "
+        /* Parchment 'desk' — App.vue sets this on <body> in dev, but App.vue
+           doesn't run in prod (tool pages mount via base.js), so the theme's
+           white shows behind the cream cards. The cream editorial surfaces are
+           designed to lift off this cool desk via warm-on-cool contrast. This
+           inline style only loads on tool pages, so the rest of the site is
+           untouched; the SEO section (cream) and footer (tan) sit outside
+           .entry-content and keep their own backgrounds. */
+        body,
+        .site-inner,
+        .content,
+        .entry,
+        .entry-content {
+            background-color: #EAEEF2;
+        }
+
+        /* Parchment content headings are ALWAYS serif (sans is reserved for
+           compact chrome, never headings). Many heading classes set color +
+           size but rely on inheriting the serif — which the Genesis theme's
+           `h1-h6 { font-family: <sans> }` overrides directly on the element,
+           so those headings (item/setting/dungeon card names, etc.) render
+           sans while body text stays serif. Force the serif on every app
+           heading. `#app` specificity beats the theme decisively, and since
+           no app heading is ever sans this can't harm a component. */
+        #app h1, #app h2, #app h3, #app h4, #app h5, #app h6 {
+            font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+        }
+
         /* Parchment headings are margin-spaced and set no top padding;
            neutralize the structural `h1, h2 { padding-top: 2rem }` leak. */
         .entry-content h1,
         .entry-content h2 {
             padding-top: 0;
+        }
+
+        /* The page's (otherwise empty) post content renders as a leading
+           empty Gutenberg paragraph; the block theme's block-gap then adds
+           ~30px above the tool. An empty paragraph is never meaningful
+           content, so collapse it. */
+        .entry-content p.wp-block-paragraph:empty {
+            display: none;
         }
     ";
 }

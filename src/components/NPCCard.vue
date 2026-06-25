@@ -675,7 +675,7 @@ function navigateToNPCGenerator() {
 /* Content wrapper - centers all view mode content with shared left edge */
 .npc-card-content {
   /* Priority 1: Limit line length for readability - applied to wrapper so all content shares one left edge */
-  max-width: 65ch;
+  max-width: 75ch;
   margin-inline: auto;
 }
 

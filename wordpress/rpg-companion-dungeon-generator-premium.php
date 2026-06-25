@@ -100,18 +100,6 @@ function vue_app_enqueue_assets() {
             width: 100%;
         }
 
-        /* Dungeon overview card — readable line length.
-           OverviewTab.vue declares max-width: 75ch in a scoped style,
-           which compiles to `.dungeon-card-content[data-v-xxx]`
-           (specificity 0,2,0). A plain `.dungeon-card-content` rule
-           here would only be 0,1,0 and lose. Prefix with `#app` to
-           reach 1,1,0 and win cleanly without !important. The 65ch
-           value is a deliberate prod-only tightening because the
-           surrounding WordPress page is wider than the dev shell. */
-        #app .dungeon-card-content {
-            max-width: 65ch;
-            margin-inline: auto;
-        }
         .entry-content ul > li {
             list-style-type: none;
         }

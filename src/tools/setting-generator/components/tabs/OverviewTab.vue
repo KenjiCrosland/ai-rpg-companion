@@ -304,13 +304,9 @@ watch(
   flex-shrink: 0;
 }
 
-/* Content wrapper centers prose at readable line length. The 3rem side
-   gutters sit *inside* the box, so the cap is widened by 6rem to keep the
-   actual line measure at 65ch — matching the NPC card, whose 65ch wrapper
-   carries no padding. (Without the compensation the measure was 65ch − 6rem,
-   reading noticeably narrower than the NPC card at the same nominal 65ch.) */
+/* Content wrapper centers prose at a readable line length. */
 .setting-card-content {
-  max-width: calc(65ch + 6rem);
+  max-width: 75ch;
   margin-inline: auto;
   padding: 0 3rem 2.5rem;
 }
