@@ -17,7 +17,7 @@
 
 <script setup>
 /**
- * ParActionButton — chrome-level primary action button in the cros.land
+ * ParButton — chrome-level primary action button in the cros.land
  * lapis palette. The first component in the parchment system that is
  * deliberately *not* burgundy: this is the form-page CTA (Generate Magic
  * Item, Save Changes, Delete Quest Hook), where the parchment editorial
@@ -25,7 +25,7 @@
  *
  * Sibling to ParCardButton:
  *   - ParCardButton          — editorial card-context button, burgundy palette.
- *   - ParActionButton    — chrome form-page CTA, lapis palette.
+ *   - ParButton    — chrome form-page CTA, lapis palette.
  *
  * Don't merge them. They differ in palette, weight, role, and the surfaces
  * they sit on — they read as different components, not variants.
@@ -38,7 +38,7 @@
  *               attribute and binding it produces invalid HTML.
  *   size      — 'small' | 'medium' (default) | 'large'. Sized to match
  *               Cedar's equivalents during the migration so swapping
- *               cdr-button for par-action-button doesn't shift layouts.
+ *               cdr-button for par-button doesn't shift layouts.
  *   fullWidth — boolean. Block-level layout with width 100%.
  *   iconOnly  — boolean. Square padding, no text.
  *   disabled  — boolean. Greys out interaction feedback and prevents
@@ -58,7 +58,7 @@
 
 import { computed, useSlots } from 'vue';
 
-defineOptions({ name: 'ParActionButton' });
+defineOptions({ name: 'ParButton' });
 
 const props = defineProps({
   tag: {
@@ -87,11 +87,24 @@ const props = defineProps({
     //                     alternative beside a primary CTA (Cancel
     //                     beside Generate). Same family as primary,
     //                     lower visual volume.
+    // 'secondary-filled'— CREAM fill, lapis text + outline, serif. The
+    //                     solid (non-transparent) counterpart to
+    //                     'secondary', for Cancel/Edit pairs that must
+    //                     read as real buttons against a busy surface
+    //                     rather than washed outlines. Lower volume than
+    //                     primary's saturated lapis fill.
+    // 'destructive'     — solid destructive-RED fill (--par-color-
+    //                     destructive #A03333), cream text, serif. The
+    //                     filled destructive CTA for confirmation dialogs
+    //                     (the "Delete all X" confirm). Its own register,
+    //                     distinct from both lapis (chrome actions) and
+    //                     burgundy (editorial ink) — destruction reads as
+    //                     destruction, not as a heading or a normal action.
     // 'luminous'        — cabochon gradient. Reserved for rare special-
     //                     importance moments (premium upsell, etc.).
     //                     Don't proliferate — the variant earns its
     //                     complexity through scarcity.
-    validator: v => ['primary', 'primary-outline', 'secondary', 'luminous'].includes(v),
+    validator: v => ['primary', 'primary-outline', 'secondary', 'secondary-filled', 'destructive', 'luminous'].includes(v),
   },
   size: {
     type: String,
@@ -129,20 +142,22 @@ const nativeDisabled = computed(() =>
 );
 
 const classes = computed(() => [
-  'par-action',
-  `par-action--${props.size}`,
+  'par-button',
+  `par-button--${props.size}`,
   {
     // Variant: only non-primary variants need their own class. The
-    // base .par-action styles already are the primary treatment.
-    'par-action--variant-primary-outline': props.variant === 'primary-outline',
-    'par-action--variant-secondary': props.variant === 'secondary',
-    'par-action--variant-luminous': props.variant === 'luminous',
-    'par-action--full-width': props.fullWidth && !props.iconOnly,
-    'par-action--icon-only': props.iconOnly,
+    // base .par-button styles already are the primary treatment.
+    'par-button--variant-primary-outline': props.variant === 'primary-outline',
+    'par-button--variant-secondary': props.variant === 'secondary',
+    'par-button--variant-secondary-filled': props.variant === 'secondary-filled',
+    'par-button--variant-destructive': props.variant === 'destructive',
+    'par-button--variant-luminous': props.variant === 'luminous',
+    'par-button--full-width': props.fullWidth && !props.iconOnly,
+    'par-button--icon-only': props.iconOnly,
     // Padding adjustments only apply when an icon coexists with label text.
     // iconOnly buttons handle their own padding via --icon-only.
-    'par-action--has-icon-left': !!slots['icon-left'] && !!slots.default,
-    'par-action--has-icon-right': !!slots['icon-right'] && !!slots.default,
+    'par-button--has-icon-left': !!slots['icon-left'] && !!slots.default,
+    'par-button--has-icon-right': !!slots['icon-right'] && !!slots.default,
   },
 ]);
 
@@ -166,7 +181,7 @@ function handleClick(event) {
  *
  * Anchor reset: text-decoration off, color inherits from our own rules.
  */
-.par-action {
+.par-button {
   /* Native reset */
   appearance: none;
   -webkit-appearance: none;
@@ -210,11 +225,11 @@ function handleClick(event) {
 /* States — `:not(:disabled, [aria-disabled="true"])` covers both <button>
    disabled and the anchor aria-disabled equivalent so disabled buttons
    never show interaction feedback (which would mislead users). */
-.par-action:hover:not(:disabled):not([aria-disabled="true"]) {
+.par-button:hover:not(:disabled):not([aria-disabled="true"]) {
   background-color: var(--color-action-hover, #2A4D70);
 }
 
-.par-action:active:not(:disabled):not([aria-disabled="true"]) {
+.par-button:active:not(:disabled):not([aria-disabled="true"]) {
   background-color: var(--color-action-active, #1F3A5C);
 }
 
@@ -222,14 +237,14 @@ function handleClick(event) {
    navigation; mouse clicks don't get the ring (which is what mouse
    users expect). Cream outline + soft lapis glow against the lapis
    background gives clear high-contrast focus indication. */
-.par-action:focus-visible {
+.par-button:focus-visible {
   outline: 2px solid var(--color-action-text, #FBF7F0);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(42, 77, 112, 0.4);
 }
 
-.par-action:disabled,
-.par-action[aria-disabled="true"] {
+.par-button:disabled,
+.par-button[aria-disabled="true"] {
   background-color: var(--color-action-disabled, #9DAFC1);
   color: rgba(251, 247, 240, 0.7);
   fill: rgba(251, 247, 240, 0.7);
@@ -237,7 +252,7 @@ function handleClick(event) {
 }
 
 /* Sizes — calibrated to match Cedar's small/medium/large so swapping
-   cdr-button for par-action-button during migration doesn't reflow
+   cdr-button for par-button during migration doesn't reflow
    surrounding layouts. The codebase is 10px-base (1rem = 10px).
 
    xsmall sits below Cedar's range — a parchment-native compact size
@@ -247,7 +262,7 @@ function handleClick(event) {
    compact size the chrome register reads more honestly than a serif
    CTA, which at 12px starts to look like body type rather than a
    button. */
-.par-action--xsmall {
+.par-button--xsmall {
   font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-size: 1.2rem;
   font-weight: 500;
@@ -255,55 +270,55 @@ function handleClick(event) {
   padding: 0.45rem 1rem;
 }
 
-.par-action--small {
+.par-button--small {
   font-size: 1.4rem;
   padding: 0.6rem 1.2rem;
 }
 
-/* .par-action--medium has no rules of its own — the base block carries
+/* .par-button--medium has no rules of its own — the base block carries
    the medium values. The class is still applied so consumers can style
    against it from outside. */
 
-.par-action--large {
+.par-button--large {
   font-size: 1.6rem;
   padding: 1.2rem 2.4rem;
 }
 
 /* Layout modifiers. */
-.par-action--full-width {
+.par-button--full-width {
   width: 100%;
 }
 
-.par-action--icon-only {
+.par-button--icon-only {
   padding: 0.8rem;
   aspect-ratio: 1;
 }
 
 /* Padding adjustments when an icon sits next to the label, so the icon
    has a slightly tighter outer margin than the text-side padding. */
-.par-action--has-icon-left {
+.par-button--has-icon-left {
   padding-left: 1.2rem;
 }
 
-.par-action--has-icon-right {
+.par-button--has-icon-right {
   padding-right: 1.2rem;
 }
 
 /* Default-slot icon sizing — matches the surrounding text size with a
    small visual lead. Inline-flex on the slots ensures SVGs align to the
    text baseline cleanly. */
-.par-action :slotted(svg) {
+.par-button :slotted(svg) {
   width: 1.8rem;
   height: 1.8rem;
   flex-shrink: 0;
 }
 
-.par-action--small :slotted(svg) {
+.par-button--small :slotted(svg) {
   width: 1.6rem;
   height: 1.6rem;
 }
 
-.par-action--large :slotted(svg) {
+.par-button--large :slotted(svg) {
   width: 2rem;
   height: 2rem;
 }
@@ -318,7 +333,7 @@ function handleClick(event) {
    primary. Saturated lapis (not slate, like secondary) keeps the action
    signal strong despite the lower weight.
 
-   This variant deliberately diverges from the base .par-action typography:
+   This variant deliberately diverges from the base .par-button typography:
      - sans-serif (vs serif) — reads as chrome action, not editorial CTA
      - 13px (vs 16px) — compact for row contexts
      - weight 500 (vs 600) — quieter
@@ -328,7 +343,7 @@ function handleClick(event) {
    When you need a serif/large primary action, use variant="primary".
    When you need a desaturated slate alternative, use variant="secondary".
    ----------------------------------------------------------------------- */
-.par-action--variant-primary-outline {
+.par-button--variant-primary-outline {
   background-color: transparent;
   color: var(--par-color-action-primary, #2A4D70);
   fill: var(--par-color-action-primary, #2A4D70);
@@ -341,25 +356,25 @@ function handleClick(event) {
   padding: 0.7rem 1.4rem;
 }
 
-.par-action--variant-primary-outline:hover:not(:disabled):not([aria-disabled="true"]) {
+.par-button--variant-primary-outline:hover:not(:disabled):not([aria-disabled="true"]) {
   background-color: var(--par-color-action-primary-hover-bg, rgba(42, 77, 112, 0.08));
 }
 
-.par-action--variant-primary-outline:active:not(:disabled):not([aria-disabled="true"]) {
+.par-button--variant-primary-outline:active:not(:disabled):not([aria-disabled="true"]) {
   background-color: var(--par-color-action-primary-hover-bg, rgba(42, 77, 112, 0.08));
   /* Slightly darker on active — uses a deeper tint of the same lapis
      by relying on additive opacity rather than a second token. */
   box-shadow: inset 0 0 0 9999px rgba(42, 77, 112, 0.05);
 }
 
-.par-action--variant-primary-outline:focus-visible {
+.par-button--variant-primary-outline:focus-visible {
   outline: 2px solid var(--par-color-action-primary, #2A4D70);
   outline-offset: 2px;
   box-shadow: 0 0 0 3px rgba(42, 77, 112, 0.25);
 }
 
-.par-action--variant-primary-outline:disabled,
-.par-action--variant-primary-outline[aria-disabled="true"] {
+.par-button--variant-primary-outline:disabled,
+.par-button--variant-primary-outline[aria-disabled="true"] {
   background-color: transparent;
   color: rgba(42, 77, 112, 0.35);
   fill: rgba(42, 77, 112, 0.35);
@@ -371,40 +386,117 @@ function handleClick(event) {
    Secondary variant — faded slate ghost. Sits alongside primary at a
    lower visual volume: outlined rather than filled, desaturated rather
    than saturated. Inherits all sizing, padding, typography, fullWidth,
-   iconOnly, and icon-slot styling from the base .par-action — only
+   iconOnly, and icon-slot styling from the base .par-button — only
    surface and state colors change.
 
    Placed at the end of the file so source order beats the primary state
    rules at equal specificity (both are 3 simple selectors / pseudos).
    ----------------------------------------------------------------------- */
-.par-action--variant-secondary {
+.par-button--variant-secondary {
   background-color: transparent;
   color: var(--color-action-secondary-rest, #5A7A9A);
   fill: var(--color-action-secondary-rest, #5A7A9A);
   border: 1px solid var(--color-action-secondary-rest, #5A7A9A);
 }
 
-.par-action--variant-secondary:hover:not(:disabled):not([aria-disabled="true"]) {
+.par-button--variant-secondary:hover:not(:disabled):not([aria-disabled="true"]) {
   background-color: var(--color-action-secondary-hover-bg, rgba(90, 122, 154, 0.08));
   /* Border and text color stay the same — only the background tints. */
 }
 
-.par-action--variant-secondary:active:not(:disabled):not([aria-disabled="true"]) {
+.par-button--variant-secondary:active:not(:disabled):not([aria-disabled="true"]) {
   background-color: var(--color-action-secondary-active-bg, rgba(90, 122, 154, 0.16));
 }
 
-.par-action--variant-secondary:focus-visible {
+.par-button--variant-secondary:focus-visible {
   outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px var(--color-action-secondary-focus-glow, rgba(90, 122, 154, 0.3));
 }
 
-.par-action--variant-secondary:disabled,
-.par-action--variant-secondary[aria-disabled="true"] {
+.par-button--variant-secondary:disabled,
+.par-button--variant-secondary[aria-disabled="true"] {
   background-color: transparent;
   color: var(--color-action-secondary-disabled, rgba(90, 122, 154, 0.35));
   fill: var(--color-action-secondary-disabled, rgba(90, 122, 154, 0.35));
   border-color: var(--color-action-secondary-disabled, rgba(90, 122, 154, 0.35));
+  cursor: not-allowed;
+}
+
+/* -----------------------------------------------------------------------
+   Secondary-filled variant — CREAM fill, lapis text + outline. The solid,
+   non-transparent counterpart to `secondary`: a real cream fill so the
+   button reads as a button against a busy/parchment surface instead of a
+   washed transparent outline, but lower volume than primary's saturated
+   lapis fill. Hover firms the lapis and warms the fill.
+   ----------------------------------------------------------------------- */
+.par-button--variant-secondary-filled {
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  color: var(--color-action-hover, #2A4D70);
+  fill: var(--color-action-hover, #2A4D70);
+  border: 1px solid var(--color-action-rest, #365A85);
+}
+
+.par-button--variant-secondary-filled:hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-surface, #FBF7F0);
+  border-color: var(--color-action-hover, #2A4D70);
+}
+
+.par-button--variant-secondary-filled:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-callout-bg, #f3ebda);
+  border-color: var(--color-action-active, #1F3A5C);
+}
+
+.par-button--variant-secondary-filled:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-action-secondary-focus-glow, rgba(90, 122, 154, 0.3));
+}
+
+.par-button--variant-secondary-filled:disabled,
+.par-button--variant-secondary-filled[aria-disabled="true"] {
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  border-color: var(--color-action-disabled, #9DAFC1);
+  color: var(--color-action-disabled, #9DAFC1);
+  fill: var(--color-action-disabled, #9DAFC1);
+  cursor: not-allowed;
+}
+
+/* -----------------------------------------------------------------------
+   Destructive variant — solid destructive-RED fill, cream text, serif. The
+   filled destructive CTA for confirmation dialogs (the "Delete all X"
+   confirm). Its own --par-color-destructive register (#A03333), distinct
+   from lapis (chrome) and burgundy (editorial ink) so a delete never reads
+   as a heading or a normal action. Replaces the per-tool raw
+   .delete-all-modal__confirm button that used to be copy-pasted across the
+   delete-all modals. Inherits serif/size/padding from the base block.
+   ----------------------------------------------------------------------- */
+.par-button--variant-destructive {
+  background-color: var(--par-color-destructive, #A03333);
+  color: var(--par-color-destructive-text-on-fill, #FBF7F0);
+  fill: var(--par-color-destructive-text-on-fill, #FBF7F0);
+  border: none;
+}
+
+.par-button--variant-destructive:hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-destructive-deep, #862828);
+}
+
+.par-button--variant-destructive:active:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--par-color-destructive-deep, #862828);
+}
+
+.par-button--variant-destructive:focus-visible {
+  outline: 2px solid var(--par-color-destructive, #A03333);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(160, 51, 51, 0.3);
+}
+
+.par-button--variant-destructive:disabled,
+.par-button--variant-destructive[aria-disabled="true"] {
+  background-color: rgba(160, 51, 51, 0.35);
+  color: rgba(251, 247, 240, 0.8);
+  fill: rgba(251, 247, 240, 0.8);
   cursor: not-allowed;
 }
 
@@ -418,7 +510,7 @@ function handleClick(event) {
    Justified because the variant only appears in rare, high-importance
    moments. Don't propagate to common buttons.
    ----------------------------------------------------------------------- */
-.par-action--variant-luminous {
+.par-button--variant-luminous {
   background-color: transparent;
   background-image: linear-gradient(
     165deg,
@@ -434,7 +526,7 @@ function handleClick(event) {
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 }
 
-.par-action--variant-luminous:hover:not(:disabled):not([aria-disabled="true"]) {
+.par-button--variant-luminous:hover:not(:disabled):not([aria-disabled="true"]) {
   background-image: linear-gradient(
     165deg,
     var(--color-action-luminous-mid, #3D6BA0) 0%,
@@ -443,7 +535,7 @@ function handleClick(event) {
   );
 }
 
-.par-action--variant-luminous:active:not(:disabled):not([aria-disabled="true"]) {
+.par-button--variant-luminous:active:not(:disabled):not([aria-disabled="true"]) {
   /* Active reuses the hover gradient — gives a stable visual through
      the press without an additional state shift that would feel busy
      at this level of visual elaboration. */
@@ -455,7 +547,7 @@ function handleClick(event) {
   );
 }
 
-.par-action--variant-luminous:focus-visible {
+.par-button--variant-luminous:focus-visible {
   outline: 2px solid var(--color-action-text, #FBF7F0);
   outline-offset: 2px;
   /* Stack the focus halo with the inset highlights so the cabochon
@@ -466,8 +558,8 @@ function handleClick(event) {
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 }
 
-.par-action--variant-luminous:disabled,
-.par-action--variant-luminous[aria-disabled="true"] {
+.par-button--variant-luminous:disabled,
+.par-button--variant-luminous[aria-disabled="true"] {
   background-image: linear-gradient(165deg, #B5BFC9 0%, #98A4B0 100%);
   color: rgba(251, 247, 240, 0.7);
   fill: rgba(251, 247, 240, 0.7);

@@ -1,20 +1,36 @@
 <template>
   <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
     <template #sidebar>
-      <div class="sidebar-content">
-        <ul class="saved-items">
-          <li v-for="(item, index) in savedItems" :key="index" :class="{ 'active': activeItemIndex === index }">
-            <button class="item-button" @click="selectItem(index)">
-              <span>{{ item.name }}</span>
-              <span>{{ item.rarity }}</span>
-            </button>
-          </li>
-          <li>
-            <button class="item-button" @click="newItem" :class="{ 'active': activeItemIndex === null }">
-              + New Magic Item
-            </button>
-          </li>
-        </ul>
+      <div class="sidebar-content parchment">
+        <div class="sidebar-scroll">
+          <ul class="saved-items">
+            <li
+              v-for="(item, index) in savedItems"
+              :key="index"
+              class="sidebar-item"
+              :class="{ 'sidebar-item--active': activeItemIndex === index }"
+            >
+              <button class="sidebar-item__button" @click="selectItem(index)">
+                <span class="sidebar-item__name">{{ item.name }}</span>
+                <span class="sidebar-item__rarity">{{ item.rarity }}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <SidebarFooter
+          new-label="+ New magic item"
+          data-description="Save your library to a file or restore from a backup. Your data stays on your device."
+          backup-label="Backup / Restore library"
+          delete-all-label="Delete all items"
+          confirm-title="Delete all magic items?"
+          confirm-body="This will permanently delete all magic items in your library. This action cannot be undone."
+          confirm-suggestion="Consider backing up your library first if you might want to restore these items later."
+          confirm-cta="Delete all items"
+          @new="newItem"
+          @open-data-manager="showDataManagerModal = true"
+          @delete-all="deleteAllItems"
+        />
       </div>
     </template>
 
@@ -22,43 +38,55 @@
       <!-- DataManagerModal component -->
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
         currentApp="savedItems" />
+
       <!-- LANDING STATE: Three-zone layout -->
       <div class="landing-wrapper" v-if="!magicItemDescription && !loadingItem">
 
         <!-- ZONE 1: Hero header -->
-        <div class="hero-header">
+        <div class="hero-header parchment">
           <div class="brand-line">
             <span class="brand-name">Kenji's Item Generator</span>
-            <span v-if="!premium" class="version-pill">Free</span>
-            <span v-else class="version-pill premium">Premium</span>
+            <VersionBadge :premium="premium" />
           </div>
-          <h1>Craft Unique D&D 5e Magic Items in Seconds</h1>
-          <p class="value-prop">Generate balanced magic items with lore, quest hooks, and Homebrewery export — powered
-            by
-            AI.</p>
+          <h1 class="page-heading__title">Craft unique D&D 5e magic items</h1>
+          <p class="page-heading__tagline">Mechanics, lore, and quest hooks for your campaign.</p>
         </div>
 
         <!-- ZONE 2: Form card -->
-        <div class="form-card">
+        <!-- `parchment` opts the card out of App.vue's global font-family
+             !important override so the serif heading/subhead are honored
+             (the form primitives self-mark, but the raw h2/p need this). -->
+        <div class="form-card parchment paper-grain">
+          <h2 class="form-heading">Generate a magic item</h2>
+          <p class="form-subhead">
+            Specify what you want, or
+            <button type="button" class="form-subhead__random" @click="generateRandom">surprise me with something
+              random</button>.
+          </p>
           <form class="item-form" @submit.prevent="generateMagicItem">
-            <cdr-input class="form-input" id="item-name" v-model="itemName" background="secondary"
-              label="Magic Item Name (optional):">
-              <template #helper-text-bottom>
-                Example: "Goblet of the Firmament". Leave blank for a random name.
-              </template>
-            </cdr-input>
+            <ParField label="Item name">
+              <ParInput v-model="itemName"
+                placeholder="Goblet of the Firmament, or leave blank for a random name" />
+            </ParField>
 
-            <cdr-select v-model="rarity" label="Rarity Level (optional)" prompt="Choose a rarity level"
-              :options="rarityOptions" />
-            <cdr-select v-model="itemType" label="Item Type (optional)" prompt="Random" :options="itemTypeOptions" />
-            <cdr-select v-model="itemOrigin" label="Item Origin (optional)" prompt="Random" :options="originOptions">
-              <template #helper-text-bottom>
-                Influences theme, aesthetics, and naming. Auto-selected when name and lore are blank.
-              </template>
-            </cdr-select>
-            <cdr-input :rows="7" tag="textarea" v-model="itemLore" background="secondary" label="Item Lore (optional)"
-              placeholder="Enter any details about the item lore" class="item-lore-details">
-            </cdr-input>
+            <div class="form-grid">
+              <ParField label="Rarity">
+                <ParSelect v-model="rarity" :options="rarityOptions" placeholder="Any rarity" />
+              </ParField>
+              <ParField label="Type">
+                <ParSelect v-model="itemType" :options="itemTypeOptions" placeholder="Random" />
+              </ParField>
+            </div>
+
+            <ParField label="Origin"
+              hint="Colors the item's theme, look, and name — chosen for you when you leave the name and lore blank.">
+              <ParSelect v-model="itemOrigin" :options="originOptions" placeholder="Random" />
+            </ParField>
+
+            <ParField label="Lore" :optional="true">
+              <ParTextarea v-model="itemLore" :rows="3"
+                placeholder="Forged by a drowned cult, recovered from a lich's vault — any history or inspiration to weave into its lore…" />
+            </ParField>
             <!-- TEST-REGISTER-OVERRIDE — REMOVE WHEN YORUBA TESTING COMPLETE -->
             <fieldset v-if="isDev" class="test-register-override">
               <legend>TEST: Register Override (dev only)</legend>
@@ -76,8 +104,8 @@
               </p>
             </fieldset>
             <!-- END TEST-REGISTER-OVERRIDE -->
-            <ParActionButton class="generate-button" type="submit" :full-width="true">Generate Magic Item
-            </ParActionButton>
+            <ParButton class="generate-button" type="submit" :full-width="true" data-testid="generate-item">Generate magic item
+            </ParButton>
           </form>
         </div>
 
@@ -98,35 +126,31 @@
               </li>
             </template>
           </PatreonCallout>
-
-          <!-- Premium users: Show save/load button on a parchment surface
-               so the active premium status reads as a coherent block,
-               matching the upsell callout's surface above. -->
-          <ParCallout v-else>
-            <p>All features unlimited. Item data is saved on this browser. Export to a file to use on another device.</p>
-            <ParActionButton @click="showDataManagerModal = true">
-              Save/Load Data from a File
-            </ParActionButton>
-          </ParCallout>
         </div>
       </div>
 
-      <!-- Tabbed Content for Generated Item -->
-      <div v-if="magicItemDescription && !loadingItem" class="form-container">
-        <Tabs :activeIndex="activeTabIndex" @tabChange="activeTabIndex = $event">
-          <TabPanel label="Item Details">
+      <!-- Tabbed Content for Generated Item — Pattern A: the tab strip
+           floats on the page background; each panel owns its own lifted
+           content surface (no outer card-within-card wrapper). -->
+      <div v-if="magicItemDescription && !loadingItem" class="item-view paper-grain" data-testid="item-output">
+        <div class="item-view__tabs">
+          <ParTabs :tabs="itemTabs" v-model:active-id="activeTabId" />
+        </div>
+        <div :id="`par-tabs-panel-${activeTabId}`" role="tabpanel"
+          :aria-labelledby="`par-tabs-tab-${activeTabId}`" tabindex="0" class="item-view__panel">
+          <template v-if="activeTabId === 'item-details'">
             <!-- View Mode -->
             <div v-if="!isEditing" class="item-card parchment">
               <header class="item-card-header">
                 <div class="item-card-header-text">
-                  <h2 class="item-card-name">{{ magicItemDescription.name }}</h2>
+                  <h2 class="item-card-name" data-testid="item-name">{{ magicItemDescription.name }}</h2>
                   <p class="item-card-subtitle">{{ magicItemDescription.item_type }}, {{ magicItemDescription.rarity
                     }}<span v-if="magicItemDescription.requires_attunement"> (requires attunement{{
                       magicItemDescription.attunement_restriction ? ' ' + magicItemDescription.attunement_restriction :
                       ''
                       }})</span></p>
                 </div>
-                <ParCardButton variant="link" @click="startEditing">Edit item</ParCardButton>
+                <ParCardButton variant="affirmative" @click="startEditing" data-testid="edit-item">Edit item</ParCardButton>
               </header>
 
               <!-- Description: italic, no box, sits in the flow. -->
@@ -160,7 +184,7 @@
                 <ParCardButton @click="showExport = !showExport">
                   {{ showExport ? 'Hide export' : 'Export' }}
                 </ParCardButton>
-                <ParCardButton variant="danger" class="item-card-footer__trail" @click="deleteItem">
+                <ParCardButton variant="danger" class="item-card-footer__trail" @click="deleteItem" data-testid="delete-item">
                   Delete item
                 </ParCardButton>
               </footer>
@@ -175,12 +199,12 @@
                 for creating beautifully formatted D&D handouts.
               </template>
               <template #buttons>
-                <ParActionButton @click="copyAsMarkdown" variant="secondary">
+                <ParButton @click="copyAsMarkdown" variant="secondary">
                   Copy as Markdown
-                </ParActionButton>
-                <ParActionButton @click="copyAsPlainText" variant="secondary">
-                  Copy as Plain Text
-                </ParActionButton>
+                </ParButton>
+                <ParButton @click="copyAsPlainText" variant="secondary">
+                  Copy as plain text
+                </ParButton>
               </template>
               <template #tip>
                 <strong>Quick tip:</strong> After copying as markdown, visit
@@ -192,13 +216,13 @@
 
             <!-- Related NPCs (its own section, sibling to the card) -->
             <RelatedNPCsSection v-if="!isEditing" :item="magicItemDescription" @update:item="handleUpdatedItem"
-              @switch-to-lore-builder="activeTabIndex = 1" />
+              @switch-to-lore-builder="activeTabId = 'lore-builder'" />
 
             <!-- Related Settings — sits below NPCs as a parallel
                  cross-tool stub list. Same parchment surface, same
                  row styling. -->
             <RelatedSettingsSection v-if="!isEditing" :item="magicItemDescription" @update:item="handleUpdatedItem"
-              @switch-to-lore-builder="activeTabIndex = 1" />
+              @switch-to-lore-builder="activeTabId = 'lore-builder'" />
 
             <!-- Related Dungeon — single dungeon per item; mode
                  (forgotten / revered / carried / trial) is inferred
@@ -208,15 +232,15 @@
             <!-- Edit Mode -->
             <div v-else class="item-edit">
               <header class="item-edit__header">
-                <h2 class="item-edit__title">Edit Magic Item</h2>
+                <h2 class="item-edit__title">Edit magic item</h2>
               </header>
 
-              <ParInput v-model="editForm.name" label="Name" class="item-edit__field" />
+              <ParCardInput v-model="editForm.name" label="Name" class="item-edit__field" />
 
               <div class="item-edit__row">
-                <ParSelect v-model="editForm.item_type" label="Type" :options="concreteItemTypeOptions"
+                <ParCardSelect v-model="editForm.item_type" label="Type" :options="concreteItemTypeOptions"
                   class="item-edit__field item-edit__field--inline" />
-                <ParSelect v-model="editForm.rarity" label="Rarity" :options="rarityOptions"
+                <ParCardSelect v-model="editForm.rarity" label="Rarity" :options="rarityOptions"
                   class="item-edit__field item-edit__field--inline" />
               </div>
 
@@ -224,25 +248,25 @@
                 <ParCheckbox v-model="editForm.requires_attunement" class="item-edit__attunement-toggle">
                   Requires attunement
                 </ParCheckbox>
-                <ParInput v-if="editForm.requires_attunement" v-model="editForm.attunement_restriction"
+                <ParCardInput v-if="editForm.requires_attunement" v-model="editForm.attunement_restriction"
                   label="Restriction (optional)"
                   hint="Leave blank for any character. Example: &quot;by a paladin&quot; or &quot;by a creature of evil alignment&quot;."
                   placeholder="by a paladin" class="item-edit__field item-edit__attunement-restriction" />
               </fieldset>
 
-              <ParInput v-model="editForm.modifier_sentence" label="Modifier sentence (optional)"
+              <ParCardInput v-model="editForm.modifier_sentence" label="Modifier sentence (optional)"
                 hint='Example: "You have a +1 bonus to attack and damage rolls made with this weapon."'
                 class="item-edit__field" />
 
-              <ParTextarea v-model="editForm.physical_description" label="Physical description" :rows="4"
+              <ParCardTextarea v-model="editForm.physical_description" label="Physical description" :rows="4"
                 class="item-edit__field" />
 
               <section class="item-edit__features">
                 <h3 class="item-edit__section-title">Features</h3>
                 <div v-for="(feature, index) in editForm.featuresArray" :key="index" class="item-edit__feature-row">
-                  <ParInput v-model="feature.name" label="Feature name" hint="Leave blank to auto-generate a name."
+                  <ParCardInput v-model="feature.name" label="Feature name" hint="Leave blank to auto-generate a name."
                     class="item-edit__feature-name" />
-                  <ParTextarea v-model="feature.description" label="Description" :rows="3"
+                  <ParCardTextarea v-model="feature.description" label="Description" :rows="3"
                     class="item-edit__feature-desc" />
                   <div class="item-edit__feature-actions">
                     <ParCardButton size="small" @click="generateFeature(index)" :disabled="feature.generating">
@@ -254,27 +278,25 @@
                   </div>
                 </div>
                 <ParCardButton size="small" @click="addFeature" class="item-edit__add-feature">
-                  + Add Feature
+                  + Add feature
                 </ParCardButton>
               </section>
 
-              <ParTextarea v-model="editForm.lore" label="Lore" :rows="5" class="item-edit__field" />
+              <ParCardTextarea v-model="editForm.lore" label="Lore" :rows="5" class="item-edit__field" />
 
               <footer class="item-edit__footer">
-                <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
-                <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+                <ParCardButton variant="muted" @click="cancelEdit">Cancel</ParCardButton>
+                <ParCardButton variant="primary" @click="saveEdit">Save changes</ParCardButton>
               </footer>
             </div>
-          </TabPanel>
+          </template>
 
-          <TabPanel label="Lore Builder">
-            <LoreBuilderTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
-          </TabPanel>
+          <LoreBuilderTab v-if="activeTabId === 'lore-builder'" :item="magicItemDescription"
+            @updated-item="handleUpdatedItem" :premium="premium" />
 
-          <TabPanel label="Quest Hooks">
-            <QuestHookTab :item="magicItemDescription" @updated-item="handleUpdatedItem" :premium="premium" />
-          </TabPanel>
-        </Tabs>
+          <QuestHookTab v-if="activeTabId === 'quest-hooks'" :item="magicItemDescription"
+            @updated-item="handleUpdatedItem" :premium="premium" />
+        </div>
       </div>
 
       <!-- Footer below item content (separate card) -->
@@ -291,22 +313,46 @@
             </li>
           </template>
         </PatreonCallout>
-
-        <!-- Premium users: parchment surface so the active premium
-             status reads as a coherent block, matching the upsell
-             callout's surface above. -->
-        <ParCallout v-else>
-          <p>All features unlimited. Item data is saved on this browser. Export to a file to use on another device.</p>
-          <ParActionButton @click="showDataManagerModal = true">
-            Save/Load Data from a File
-          </ParActionButton>
-        </ParCallout>
       </div>
 
       <div v-if="loadingItem" class="form-container">
         <item-skeleton />
       </div>
     </div>
+
+    <ParConfirm
+      :opened="pendingItemDelete"
+      title="Delete this item?"
+      confirm-label="Delete item"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performItemDelete"
+      @cancel="pendingItemDelete = false"
+    >
+      Deleting this magic item removes it from your library. This can't be undone.
+    </ParConfirm>
+
+    <ParConfirm
+      :opened="pendingSwitchIndex !== null"
+      title="Discard unsaved changes?"
+      confirm-label="Discard and switch"
+      cancel-label="Keep editing"
+      @confirm="performSwitchItem"
+      @cancel="pendingSwitchIndex = null"
+    >
+      You have unsaved changes to this item. Switching will discard them.
+    </ParConfirm>
+
+    <ParConfirm
+      :opened="pendingFeatureRegen !== null"
+      title="Regenerate this feature?"
+      confirm-label="Regenerate"
+      cancel-label="Cancel"
+      @confirm="performFeatureRegen"
+      @cancel="pendingFeatureRegen = null"
+    >
+      This erases the feature's current content and regenerates it from the feature name.
+    </ParConfirm>
   </GeneratorLayout>
 </template>
 
@@ -314,6 +360,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { CdrInput, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import SidebarFooter from '@/components/SidebarFooter.vue';
+import VersionBadge from '@/components/VersionBadge.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { logger } from "@/util/logger.mjs";
 import { convertItemToMarkdown } from '@/util/convertToMarkdown.mjs';
@@ -325,11 +373,9 @@ import RelatedNPCsSection from './components/RelatedNPCsSection.vue';
 import RelatedSettingsSection from './components/RelatedSettingsSection.vue';
 import RelatedDungeonsSection from './components/RelatedDungeonsSection.vue';
 import ItemExportsSection from './components/ItemExportsSection.vue';
-import { ParCardButton, ParActionButton, ParCallout, ParInput, ParTextarea, ParSelect, ParCheckbox } from '@/parchment';
+import { ParCardButton, ParButton, ParCardInput, ParCardTextarea, ParCardSelect, ParCheckbox, ParField, ParInput, ParSelect, ParTextarea, ParTabs, ParConfirm } from '@/parchment';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
-import Tabs from '@/components/tabs/Tabs.vue';
-import TabPanel from '@/components/tabs/TabPanel.vue';
 import { useToast } from '@/composables/useToast';
 import { renameItemReferences, removeReferencesForItem } from '@/util/item-storage.mjs';
 import { getNavigationParams } from '@/util/navigation.mjs';
@@ -393,7 +439,12 @@ const loadingItem = ref(false);
 const savedItems = ref([]);
 const activeItemIndex = ref(null);
 const showDataManagerModal = ref(false);
-const activeTabIndex = ref(0);
+const activeTabId = ref('item-details');
+const itemTabs = [
+  { id: 'item-details', label: 'Item Details' },
+  { id: 'lore-builder', label: 'Lore Builder' },
+  { id: 'quest-hooks', label: 'Quest Hooks' },
+];
 const isEditing = ref(false);
 const showExport = ref(false);
 const editForm = ref({
@@ -466,6 +517,18 @@ const rarityGuidelines = {
   'Very Rare': 'Either a +3 bonus (possibly with minor feature) OR +2 with powerful feature OR +1 with very powerful feature. Save DC: 17.',
   'Legendary': '+3 with multiple features OR +2 with legendary features OR multiple legendary features. Very rarely +4. Save DC: 19+',
   'Artifact': 'Campaign-defining relics with +3 bonus and 5-6 legendary effects. MUST include major drawbacks, curses, or dangerous side effects. Save DC: 20+. Examples: Eye of Vecna, Book of Vile Darkness, Wand of Orcus.'
+};
+
+// "Surprise me" affordance: ignore any in-progress field values and
+// generate a fully unconstrained item. Clearing every field lets
+// generateMagicItem's random fallbacks fire for rarity, type, and origin.
+const generateRandom = () => {
+  itemName.value = '';
+  itemLore.value = '';
+  itemOrigin.value = '';
+  rarity.value = '';
+  itemType.value = '';
+  generateMagicItem();
 };
 
 const generateMagicItem = async () => {
@@ -1758,7 +1821,7 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
     saveItem(magicItemDescription.value);
     const index = savedItems.value.findIndex((item) => item.name === magicItemDescription.value.name);
     selectItem(index);
-    activeTabIndex.value = 0;
+    activeTabId.value = 'item-details';
     toast.success('Magic item generated and saved.');
   } catch (error) {
     logger.error("Error generating magic item:", error);
@@ -2108,13 +2171,24 @@ const detectEditChanges = () => {
   return false;
 };
 
+// Native confirm()s replaced by ParConfirm modals. Each gate uses a re-entrant
+// guard: the trigger opens the modal (stores the pending target) and returns;
+// the modal's @confirm re-invokes the trigger with that target already pending,
+// so the guard falls through to the real work.
+const pendingSwitchIndex = ref(null);
+const pendingItemDelete = ref(false);
+const pendingFeatureRegen = ref(null);
+
+const performSwitchItem = () => {
+  if (pendingSwitchIndex.value !== null) selectItem(pendingSwitchIndex.value);
+};
+
 const selectItem = (index) => {
-  if (isEditing.value && detectEditChanges()) {
-    const confirmed = confirm('You have unsaved changes. Are you sure you want to switch items without saving?');
-    if (!confirmed) {
-      return;
-    }
+  if (isEditing.value && detectEditChanges() && pendingSwitchIndex.value !== index) {
+    pendingSwitchIndex.value = index; // open the discard-changes modal
+    return;
   }
+  pendingSwitchIndex.value = null;
 
   isEditing.value = false;
 
@@ -2124,12 +2198,17 @@ const selectItem = (index) => {
   rarity.value = magicItemDescription.value.rarity;
   itemType.value = magicItemDescription.value.item_type;
   itemLore.value = magicItemDescription.value.lore || '';
-  activeTabIndex.value = 0;
+  activeTabId.value = 'item-details';
   showExport.value = false;
 };
 
 const deleteItem = () => {
-  if (confirm('Are you sure you want to delete this item?')) {
+  pendingItemDelete.value = true;
+};
+
+const performItemDelete = () => {
+  pendingItemDelete.value = false;
+  {
     if (activeItemIndex.value !== null) {
       const deletedName = savedItems.value[activeItemIndex.value]?.name;
       savedItems.value.splice(activeItemIndex.value, 1);
@@ -2167,6 +2246,20 @@ const newItem = () => {
   itemLore.value = '';
   isEditing.value = false;
 };
+
+function deleteAllItems() {
+  // Drop each item's cross-tool references before clearing the library,
+  // mirroring the single-item delete path (removeReferencesForItem). The
+  // canonical entities in other stores (NPCs, settings, dungeons) are left
+  // intact — deleting items does not cascade.
+  for (const item of savedItems.value) {
+    if (item?.name) removeReferencesForItem(item.name);
+  }
+  savedItems.value = [];
+  localStorage.setItem('savedItems', JSON.stringify(savedItems.value));
+  newItem();
+  toast.success('All magic items deleted.');
+}
 
 const startEditing = () => {
   const featuresArray = Object.entries(magicItemDescription.value.features || {}).map(([name, description]) => ({
@@ -2252,16 +2345,20 @@ const removeFeature = (index) => {
   editForm.value.featuresArray.splice(index, 1);
 };
 
+const performFeatureRegen = () => {
+  if (pendingFeatureRegen.value !== null) generateFeature(pendingFeatureRegen.value);
+};
+
 const generateFeature = async (index) => {
   const feature = editForm.value.featuresArray[index];
 
-  if (feature.description && feature.description.trim()) {
-    const featureName = feature.name.trim() || 'Unnamed Feature';
-    const confirmed = confirm(`This will erase and regenerate this feature based on the feature name "${featureName}". Proceed?`);
-    if (!confirmed) {
-      return;
-    }
+  // Regenerating a feature that already has content is destructive — gate it
+  // behind a ParConfirm (re-entrant guard; see selectItem above).
+  if (feature.description && feature.description.trim() && pendingFeatureRegen.value !== index) {
+    pendingFeatureRegen.value = index;
+    return;
   }
+  pendingFeatureRegen.value = null;
 
   feature.generating = true;
 
@@ -2398,7 +2495,9 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
-/* ZONE 1: Hero header */
+/* ZONE 1: Hero header — page heading zone (H1 + tagline) above the form
+   card. H1 carries SEO/marketing/impact; the form card's H2 does
+   editorial form-orientation. */
 .hero-header {
   text-align: center;
   padding: 2rem 1rem 2.5rem;
@@ -2408,53 +2507,121 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .page-heading__title {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 3.6rem;
+    font-weight: 600;
+    color: var(--color-action-hover, #2A4D70); /* dark lapis */
+    margin: 0 0 0.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+  }
+
+  .page-heading__tagline {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.6rem;
+    color: var(--par-color-text-secondary, #555);
+    font-style: italic;
+    margin: 0;
+    line-height: 1.6;
   }
 
   .brand-name {
-    font-size: 1.4rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.3rem;
     font-weight: 500;
-    color: $cdr-color-text-secondary;
-    letter-spacing: 0.02em;
+    color: var(--color-action-secondary-rest, #5A7A9A); /* muted lapis */
+    letter-spacing: 0.04em;
   }
 
-  .version-pill {
-    display: inline-block;
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 0.2rem 0.8rem;
-    border-radius: 100px;
-    background-color: #ededed;
-    color: $cdr-color-text-secondary;
+}
 
-    &.premium {
-      background-color: #fdf3e0;
-      color: #9c6a0a;
-    }
+/* Page H1 scales down on narrow viewports so it doesn't wrap awkwardly. */
+@media (max-width: 600px) {
+  .hero-header .page-heading__title {
+    font-size: 2.8rem;
+    line-height: 1.2;
   }
 
-  h1 {
-    font-size: 3.2rem;
-    line-height: 1.15;
-    margin: 0 0 0.75rem;
-    color: $cdr-color-text-primary;
-  }
-
-  .value-prop {
-    font-size: 1.6rem;
-    font-weight: 400;
-    color: $cdr-color-text-secondary;
-    margin: 0;
+  .hero-header .page-heading__tagline {
+    font-size: 1.5rem;
   }
 }
 
-/* ZONE 2: Form card */
+/* ZONE 2: Form card — lifted content surface, lapis "magic UI" register */
 .form-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e2e2;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  padding: 2.5rem 3rem;
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 2.25rem 2.25rem 2rem;
+  /* Paper grain via the shared `.paper-grain` utility class on the element. */
+}
+
+.form-heading {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2A4D70); /* dark lapis */
+  text-align: center;
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.form-subhead {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  color: var(--par-color-text-secondary, #555);
+  text-align: center;
+  font-style: italic;
+  margin: 0 0 1.75rem;
+  line-height: 1.6;
+}
+
+.form-subhead__random {
+  display: inline;
+  background: transparent;
+  border: none;
+  padding: 0 0 1px;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: italic; /* explicit — buttons don't inherit italic */
+  color: var(--color-action-hover, #2A4D70);
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--color-action-hover, #2A4D70);
+  vertical-align: baseline;
+  line-height: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.form-subhead__random:hover {
+  color: var(--color-action-active, #1F3A5C);
+  border-color: var(--color-action-active, #1F3A5C);
+}
+
+.form-subhead__random:focus {
+  outline: none;
+}
+
+.form-subhead__random:focus-visible {
+  outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 0 0 1.25rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ZONE 3: Footer meta */
@@ -2538,7 +2705,7 @@ onUnmounted(() => {
 .premium-banner {
   font-size: 1.2rem;
   color: $cdr-color-text-secondary;
-  background-color: #fdf8ef;
+  background-color: var(--par-color-surface, #FBF7F0);
   border: 1px solid #f0e4cc;
   border-radius: 6px;
   padding: 0.75rem 1rem;
@@ -2559,12 +2726,42 @@ onUnmounted(() => {
    POST-GENERATION: Tabbed content card
    ======================================== */
 
+/* Pattern A item view: layout only. The container, tab strip, and
+   related sections all span the full main-container width; only the
+   item card (and its edit form) is centered at the prior ~700px content
+   width within it. */
+/* Content container — cream surface-card panel (same as the dungeon
+   generator's .content-container). Extends up over the ParTabs strip so the
+   tabs and the active panel share one card. */
+.item-view {
+  box-sizing: border-box;
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  border-radius: 8px;
+  padding: 2.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 2rem;
+  /* Paper grain via the shared `.paper-grain` utility class on the element
+     (src/parchment/texture.css). */
+}
+
+@media (max-width: 2080px) {
+  .item-view {
+    margin-top: 3rem;
+  }
+}
+
+.item-view__panel:focus {
+  outline: none;
+}
+
+/* Loading skeleton wrapper (transient). */
 .form-container {
   color: $cdr-color-text-primary;
   padding: 2rem 3rem;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  box-shadow: 0 1px 3px rgba(60, 50, 30, 0.06);
 }
 
 .rarity {
@@ -2573,10 +2770,8 @@ onUnmounted(() => {
 }
 
 .item-form {
+  /* No flex gap — ParField owns vertical rhythm via its own margins. */
   margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
 }
 
 .generate-button {
@@ -2648,11 +2843,12 @@ onUnmounted(() => {
    rather than a separate form.
    ============================================ */
 .item-edit {
-  background: var(--par-color-surface, #fdfbf6);
-  border: 1px solid var(--par-color-border, #e8e2d4);
+  background: var(--par-color-surface, #FBF7F0);
+  border: 0.5px solid var(--par-color-border, #e8e2d4);
   border-top: 2px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
-  padding: 2rem 2.5rem;
+  /* Full-width card; form content centered to a ~700px column. */
+  padding: 2rem max(2.5rem, calc((100% - 700px) / 2));
   margin-bottom: 1.5rem;
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
   display: flex;
@@ -2756,60 +2952,95 @@ onUnmounted(() => {
 }
 
 .sidebar-content {
-  $background-color: #f4f4f4;
-  $active-color: #ffffff;
-  $hover-background-color: #f0f0f0;
-  $default-background-color: #e0e0e0;
-  $active-border-color: #007BFF;
-  $transition-speed: 0.3s;
-
   flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+
+  /* Scrollable item list. The pinned footer below never scrolls away. */
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-top: 0.5rem;
+  }
 
   .saved-items {
     list-style: none;
     padding: 0;
     margin: 0;
+  }
 
-    li {
-      margin-bottom: 4px;
+  /* Each entry is a designed object: editorial name + small-caps rarity tag.
+     Typography is the sole treatment — no rarity color marker, by design
+     (per-rarity bars read as categorical noise when items group up). */
+  .sidebar-item {
+    transition: background-color 0.15s ease;
 
-      &.active {
-        .item-button {
-          background-color: $active-color;
-          border-left-color: $active-border-color;
-          font-weight: bold;
-        }
-      }
-
-      .item-button {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 20px;
-        font-size: 1.5rem;
-        text-align: left;
-        background-color: $default-background-color;
-        border: none;
-        color: inherit;
-        cursor: pointer;
-        border-left: 5px solid transparent;
-        transition: background-color $transition-speed, border-left-color $transition-speed;
-
-        &:hover {
-          background-color: $hover-background-color;
-        }
-
-        &:focus {
-          outline: none;
-          border-left-color: $active-border-color;
-        }
-      }
+    &:hover {
+      background-color: rgba(243, 235, 218, 0.4); /* subtle warm tint */
     }
   }
+
+  .sidebar-item__button {
+    width: 100%;
+    /* Single-line row: name left, rarity tag right. baseline keeps the
+       name and rarity tag sharing a typographic baseline. */
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    text-align: left;
+    background: transparent;
+    border: none;
+    /* Roomier rows with a hairline divider — matches the statblock sidebar. */
+    border-bottom: 1px solid var(--par-color-divider, #e2dccd);
+    padding: 1.3rem 1.6rem;
+    font-family: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+      outline-offset: -2px;
+    }
+  }
+
+  .sidebar-item__name {
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--par-color-text, #222);
+    line-height: 1.3;
+    /* long names wrap to a second line; rarity tag stays right on line one */
+  }
+
+  .sidebar-item__rarity {
+    font-size: 1.3rem;
+    color: var(--par-color-text-secondary, #555);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap; /* never wrap the rarity tag itself */
+    flex-shrink: 0;      /* and never let it get squeezed */
+  }
+
+  /* Active: warm tan bg + lapis name. */
+  .sidebar-item--active {
+    background-color: var(--par-color-callout-bg, #f3ebda);
+
+    &:hover {
+      background-color: var(--par-color-callout-bg, #f3ebda);
+    }
+
+    .sidebar-item__name {
+      color: var(--color-action-hover, #2A4D70);
+      font-weight: 600;
+    }
+
+    .sidebar-item__rarity {
+      color: var(--par-color-text-secondary, #555);
+    }
+  }
+
 }
 
 // Responsive
@@ -2820,15 +3051,11 @@ onUnmounted(() => {
 
   .hero-header {
     padding: 1.5rem 0.5rem 2rem;
-
-    h1 {
-      font-size: 2.4rem;
-    }
   }
 
   .form-card {
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--par-radius-lg, 12px);
   }
 
   .form-container {
@@ -2863,12 +3090,15 @@ onUnmounted(() => {
    the parchment system over time. NPCCard.vue went through the same
    sweep — both cards now render against the same paper tone. */
 .item-card {
-  background: var(--par-color-surface, #fdfbf6);
-  border: 1px solid var(--par-color-border, #e8e2d4);
+  background: var(--par-color-surface, #FBF7F0);
+  border: 0.5px solid var(--par-color-border, #e8e2d4);
   border-top: 2px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
   margin-bottom: 1.5rem;
-  padding: 2rem 2.5rem;
+  /* Full-width card surface (cohesive with the related sections); the
+     content is centered to a ~700px readable column via symmetric
+     padding that grows on wider cards and falls back on narrow ones. */
+  padding: 2rem max(2.5rem, calc((100% - 700px) / 2));
   /* Card root carries the `parchment` marker class (see App.vue) which
      opts the card and its descendants out of the project-wide sans-serif
      override, so this declaration applies normally and inherits down. */

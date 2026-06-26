@@ -1,0 +1,33 @@
+{
+  "name": "Veilbound Wraith",
+  "type_and_alignment": "Medium undead, chaotic evil",
+  "armor_class": "15 (ethereal form)",
+  "hit_points": "52 (8d8 + 16)",
+  "speed": "0 ft., fly 50 ft. (hover)",
+  "abilities": {
+    "STR": 6,
+    "DEX": 16,
+    "CON": 14,
+    "INT": 12,
+    "WIS": 14,
+    "CHA": 15
+  },
+  "saving_throws": "WIS +4, CHA +4",
+  "damage_resistances": "acid, cold, fire, lightning, thunder; bludgeoning, piercing, and slashing from nonmagical attacks",
+  "damage_immunities": "necrotic, poison",
+  "condition_immunities": "charmed, exhaustion, frightened, grappled, paralyzed, petrified, poisoned, prone, restrained",
+  "senses": "darkvision 60 ft., passive Perception 12",
+  "languages": "understands all languages it knew in life but can't speak",
+  "challenge_rating": "5 (1,800 XP)",
+  "proficiency_bonus": "+3",
+  "special_abilities": [
+    {
+      "name": "Ethereal Sight",
+      "description": "The wraith can see 60 feet into the Ethereal Plane when it is on the Material Plane, and vice versa."
+    },
+    {
+      "name": "Incorporeal Movement",
+      "description": "The wraith can move through other creatures and objects as difficult terrain. It takes 5 (1d10) force damage if it ends its turn inside an object."
+    }
+  ]
+}

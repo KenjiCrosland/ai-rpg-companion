@@ -53,12 +53,12 @@
       </p>
 
       <div class="add-npc-actions">
-        <ParActionButton
+        <ParButton
           variant="primary-outline"
           @click="onSubmit"
         >
           Create NPC
-        </ParActionButton>
+        </ParButton>
         <button type="button" class="add-npc-cancel" @click="reset">
           Cancel
         </button>
@@ -69,7 +69,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { ParActionButton, ParAddNewButton } from '@/parchment';
+import { ParButton, ParAddNewButton } from '@/parchment';
 
 const props = defineProps({
   factions: {
@@ -121,8 +121,8 @@ defineExpose({
   padding: 1.25rem;
   border: 1px solid var(--par-color-divider, #e2dccd);
   border-radius: var(--par-radius-sm, 3px);
-  background: var(--par-color-surface, #fdfbf6);
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  background: var(--par-color-surface, #FBF7F0);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .add-npc-row {
@@ -175,7 +175,7 @@ defineExpose({
 
 .add-npc-helper {
   margin: 0 0 1rem 0;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 1.3rem;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);

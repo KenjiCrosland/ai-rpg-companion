@@ -15,7 +15,7 @@
           </p>
         </div>
         <div class="setting-card-header-actions">
-          <ParCardButton size="small" @click="startEditing">Edit Overview</ParCardButton>
+          <ParCardButton variant="affirmative" size="small" @click="startEditing" data-testid="edit-setting">Edit overview</ParCardButton>
         </div>
       </div>
 
@@ -64,24 +64,25 @@
     <!-- Edit Mode -->
     <div v-else class="setting-edit">
       <header class="setting-edit__header">
-        <h2 class="setting-edit__title">Edit Setting Overview</h2>
+        <h2 class="setting-edit__title">Edit setting overview</h2>
       </header>
 
-      <ParInput
+      <ParCardInput
         v-model="editForm.name"
         label="Name"
         hint='The bare place name (e.g., "Hjallmark").'
         class="setting-edit__field"
+        data-testid="setting-edit-name"
       />
 
-      <ParInput
+      <ParCardInput
         v-model="editForm.title"
         label="Subtitle"
         hint='A short evocative phrase that pairs with the name (e.g., "Village of the Drawn Blade").'
         class="setting-edit__field"
       />
 
-      <ParTextarea
+      <ParCardTextarea
         v-model="editForm.content"
         label="Overview Content"
         :rows="18"
@@ -90,8 +91,8 @@
       />
 
       <footer class="setting-edit__footer">
-        <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
-        <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+        <ParCardButton variant="muted" @click="cancelEdit">Cancel</ParCardButton>
+        <ParCardButton variant="primary" @click="saveEdit">Save changes</ParCardButton>
       </footer>
     </div>
   </div>
@@ -99,7 +100,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
+import { ParCardButton, ParCardInput, ParCardTextarea } from '@/parchment';
 import { combineSettingOverview } from '@/util/combineSettingOverview.mjs';
 import {
   renderOverview,
@@ -231,10 +232,10 @@ watch(
    top ribbon was dropped because the active tab indicator above the
    card already carries the structural emphasis at the top edge. */
 .setting-card {
-  background: var(--par-color-surface, #fdfbf6);
-  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1px solid var(--par-color-border, #e8e2d4);
   border-radius: 2px;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   overflow: hidden;
   margin-bottom: 1.5rem;
   font-size: 17px;
@@ -258,7 +259,7 @@ watch(
 .setting-card-name {
   margin: 0 0 0.125rem;
   font-size: 2.8rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.02em;
   line-height: 1.15;
@@ -303,9 +304,9 @@ watch(
   flex-shrink: 0;
 }
 
-/* Content wrapper centers prose at readable line length */
+/* Content wrapper centers prose at a readable line length. */
 .setting-card-content {
-  max-width: 65ch;
+  max-width: 75ch;
   margin-inline: auto;
   padding: 0 3rem 2.5rem;
 }
@@ -387,7 +388,7 @@ watch(
 /* Edit form */
 .setting-edit {
   padding: 0 3rem 2rem;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   display: flex;
   flex-direction: column;
   gap: 1.4rem;
@@ -399,7 +400,7 @@ watch(
 
 .setting-edit__title {
   margin: 0;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 1.85rem;
   font-weight: 600;
   color: var(--par-color-title, #7a1f1f);

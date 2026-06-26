@@ -60,7 +60,7 @@ import { CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 }
 
 .read-aloud {
-  background-color: #f4f2ed;
+  background-color: var(--par-color-surface, #FBF7F0);
   color: #423b2fbf;
   padding: 1rem 2rem;
   font-style: italic;

@@ -1,12 +1,15 @@
 <template>
-    <div>
+    <div class="location-form parchment">
         <form v-if="!formContent" @submit.prevent="generateLocationDescription">
-            <cdr-input id="typeOfPlace" v-model="typeOfPlace" background="secondary" :label="formLabel" required />
-            <ParActionButton class="location-form-button" type="submit" :disabled="disabledButton">{{ buttonText }}</ParActionButton>
+            <ParField :label="formLabel">
+                <ParInput id="typeOfPlace" v-model="typeOfPlace"
+                    placeholder="e.g., a tavern, a wizard's tower, a smuggler's cove…" />
+            </ParField>
+            <ParButton class="location-form-button" type="submit" :full-width="true" :disabled="disabledButton">{{ buttonText }}</ParButton>
         </form>
-        <ParActionButton :size="buttonSize" v-else @click="generateLocationDescription" :disabled="disabledButton">
+        <ParButton :size="buttonSize" v-else @click="generateLocationDescription" :disabled="disabledButton">
             {{ buttonText }}
-        </ParActionButton>
+        </ParButton>
     </div>
 </template>
 
@@ -14,9 +17,7 @@
 import { startCase } from 'lodash';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { PROVIDERS } from "@/util/ai-config.mjs";
-import { CdrInput } from "@rei/cedar";
-import { ParActionButton } from "@/parchment";
-import "@rei/cedar/dist/style/cdr-input.css";
+import { ParButton, ParField, ParInput } from "@/parchment";
 import { createLocationPrompt } from "./location-prompts.mjs";
 
 export default {
@@ -26,8 +27,9 @@ export default {
         };
     },
     components: {
-        CdrInput,
-        ParActionButton,
+        ParButton,
+        ParField,
+        ParInput,
     },
     props: {
         buttonSize: {
@@ -36,7 +38,7 @@ export default {
         },
         formLabel: {
             type: String,
-            default: 'Type of Location:'
+            default: 'Type of location'
         },
         parentLocation: {
             type: Object,
@@ -52,7 +54,7 @@ export default {
         },
         buttonText: {
             type: String,
-            default: 'Generate Description'
+            default: 'Generate description'
         },
     },
     methods: {

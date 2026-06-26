@@ -1,7 +1,7 @@
 <template>
   <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
     <template #sidebar>
-      <div class="sidebar-content">
+      <div class="sidebar-content parchment">
         <ul class="settings-tabs">
           <!-- Collapsible tree: every node renders at its depth as a
                (chevron-or-spacer) + label row. Branches stay collapsed
@@ -31,17 +31,22 @@
               </button>
             </div>
           </li>
-          <li>
-            <button v-if="!currentlyLoadingOverview && allSettingsHaveAnOverview" class="setting-button"
-              @click="createNewSetting">+ New Setting</button>
-          </li>
         </ul>
-        <div class="copy-buttons">
-          <!-- Export buttons moved to <SettingExports> below the main
-               content area. Only Delete All stays in the sidebar
-               because it's destructive cleanup, not an export. -->
-          <ParActionButton @click="deleteAllSettings" v-if="!currentlyLoading">Delete All Settings</ParActionButton>
-        </div>
+
+        <SidebarFooter
+          v-if="!currentlyLoadingOverview && !currentlyLoading"
+          new-label="+ New setting"
+          data-description="Save your library to a file or restore from a backup. Your data stays on your device."
+          backup-label="Backup / Restore library"
+          delete-all-label="Delete all settings"
+          confirm-title="Delete all settings?"
+          confirm-body="This will permanently delete every saved setting in your library. This action cannot be undone."
+          confirm-suggestion="Consider backing up your library first if you might want to restore these later."
+          confirm-cta="Delete all settings"
+          @new="createNewSetting"
+          @open-data-manager="showDataManagerModal = true"
+          @delete-all="deleteAllSettings"
+        />
       </div>
 
       <DataManagerModal :opened="showDataManagerModal" @update:opened="showDataManagerModal = $event" :premium="premium"
@@ -50,64 +55,61 @@
 
     <div class="main-content">
       <div class="landing-wrapper" v-show="!settingOverviewExists && !currentSetting.loadingsettingOverview">
-        <!-- ZONE 1: Brand + Headline -->
-        <div class="hero-header">
+        <!-- ZONE 1: Hero header (lapis editorial register) -->
+        <div class="hero-header parchment">
           <div class="brand-line">
             <span class="brand-name">Kenji's Setting Generator</span>
             <!-- Version pill is fresh-visit framing — suppressed during
                  seeded flows where the user is mid-task. Mirrors the
                  NPC and dungeon generators. -->
-            <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
-            <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
+            <VersionBadge v-if="!isSeededFlow" :premium="premium" />
           </div>
           <template v-if="isSeededFlow">
-            <h1>
-              Create Setting<template v-if="seedStubName">: {{ seedStubName }}</template>
+            <h1 class="page-heading__title">
+              Create setting<template v-if="seedStubName">: {{ seedStubName }}</template>
             </h1>
-            <p class="value-prop">
+            <p class="page-heading__tagline">
               From your {{ seededSourceType }}
               <a href="#" class="seed-source-link" @click.prevent="navigateBackToSeedSource">{{ seededSourceName }}</a>
             </p>
           </template>
           <template v-else>
-            <h1>Generate Rich RPG Settings with Factions, NPCs &amp; Quests</h1>
-            <p class="value-prop">From a single name to a fully detailed kingdom, town or empire with nested
+            <h1 class="page-heading__title">Generate rich RPG settings with factions, NPCs &amp; quests</h1>
+            <p class="page-heading__tagline">From a single name to a fully detailed kingdom, town or empire with nested
               locations, political factions, and quest hooks.</p>
           </template>
         </div>
 
-        <!-- ZONE 2: Form card -->
-        <div class="form-card">
+        <!-- ZONE 2: Form card — lifted cream surface, lapis "magic UI" -->
+        <div class="form-card parchment paper-grain">
           <SeededFromBanner
             :source-type="seededSourceType"
             :source-name="seededSourceName"
           />
           <form @submit.prevent="generateSetting" class="setting-form">
-            <div class="form-row-description">
-              <cdr-input id="setting_description" v-model="currentSetting.setting_description" background="secondary"
-                label="Describe your setting (optional)"
+            <ParField label="Describe your setting" :optional="true">
+              <ParInput id="setting_description" v-model="currentSetting.setting_description"
                 placeholder="e.g. A decadent mercantile republic in decline — or leave blank for a surprise." />
-            </div>
-            <div class="form-row-lore">
-              <cdr-input :rows="4" tag="textarea" v-model="currentSetting.place_lore" background="secondary"
-                label="Setting Lore (optional)"
-                placeholder="Paste in existing lore, or describe deeper history — optional.">
-                <template #helper-text-bottom>
-                  Already have lore? Paste it from the <cdr-link
-                    href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link> to build
-                  on what you have.
-                </template>
-              </cdr-input>
-            </div>
-            <ParActionButton type="submit" :full-width="true">
-              Generate Setting
-            </ParActionButton>
+            </ParField>
+            <ParField label="Setting lore" :optional="true">
+              <ParTextarea :rows="4" v-model="currentSetting.place_lore"
+                placeholder="Paste in existing lore, or describe deeper history — optional." />
+              <template #hint>
+                Already have lore? Paste it from the <cdr-link
+                  href="https://cros.land/ai-powered-lore-and-timeline-generator/">Lore Generator</cdr-link> to build on
+                what you have.
+              </template>
+            </ParField>
+            <ParButton type="submit" :full-width="true" data-testid="generate-setting">
+              Generate setting
+            </ParButton>
           </form>
         </div>
 
-        <!-- ZONE 3: Footer meta -->
-        <div class="footer-meta">
-          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+        <!-- ZONE 3: Footer meta (free users only — premium's backup/restore
+             lives in the sidebar footer's Data options). -->
+        <div class="footer-meta" v-if="!premium">
+          <PatreonCallout :patreon-url="patreonLoginUrl">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
             </template>
@@ -118,35 +120,36 @@
               </li>
             </template>
           </PatreonCallout>
-          <ParCallout v-else>
-            <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
-            <ParActionButton @click="showDataManagerModal = true">
-              Save/Load Data from a File
-            </ParActionButton>
-          </ParCallout>
         </div>
       </div>
-      <Tabs class="content-tabs" v-if="settingOverviewExists" height="auto" style="width: 100%"
-        :activeIndex="activeTabIndex">
-        <TabPanel label="Overview">
-          <OverviewTab :setting="currentSetting" :premium="premium" @updated-setting="onOverviewUpdated" />
-        </TabPanel>
-        <TabPanel label="Locations" :bare="true">
-          <LocationsTab :setting="currentSetting" :all-settings="settings" :premium="premium"
-            @updated-setting="onLocationsUpdated" @generate-sublocation="generateSetting"
-            @delete-sublocation-setting="deleteSetting"
-            @promote-related-place="onPromoteRelatedPlace" />
-        </TabPanel>
-        <TabPanel label="Factions">
-          <FactionsTab :setting="currentSetting" :premium="premium" @updated-setting="onFactionsUpdated" />
-        </TabPanel>
-        <TabPanel label="NPCs" name="NPCs">
-          <NPCsTab :setting="currentSetting" :premium="premium" @updated-setting="onNPCsUpdated" />
-        </TabPanel>
-        <TabPanel label="Quest Hooks">
-          <QuestHooksTab :setting="currentSetting" :premium="premium" @updated-setting="onQuestHooksUpdated" />
-        </TabPanel>
-      </Tabs>
+      <!-- Tab strip (ParTabs) + bare panels — no card surface around the
+           content; the tab components own their own cards (matches the Item
+           Generator). Also covers the overview-loading skeleton state. -->
+      <div v-if="settingOverviewExists || currentSetting.loadingsettingOverview" class="setting-tabs paper-grain" data-testid="setting-output">
+        <ParTabs :tabs="settingTabs" v-model:active-id="activeTabId" />
+        <div
+          :id="`par-tabs-panel-${activeTabId}`"
+          role="tabpanel"
+          :aria-labelledby="`par-tabs-tab-${activeTabId}`"
+          tabindex="0"
+          class="setting-tab-panel"
+        >
+          <SettingOverviewCardSkeleton v-if="!settingOverviewExists && currentSetting.loadingsettingOverview" />
+          <template v-else>
+            <OverviewTab v-if="activeTabId === 'overview'" :setting="currentSetting" :premium="premium"
+              @updated-setting="onOverviewUpdated" />
+            <LocationsTab v-else-if="activeTabId === 'locations'" :setting="currentSetting" :all-settings="settings"
+              :premium="premium" @updated-setting="onLocationsUpdated" @generate-sublocation="generateSetting"
+              @delete-sublocation-setting="deleteSetting" @promote-related-place="onPromoteRelatedPlace" />
+            <FactionsTab v-else-if="activeTabId === 'factions'" :setting="currentSetting" :premium="premium"
+              @updated-setting="onFactionsUpdated" />
+            <NPCsTab v-else-if="activeTabId === 'npcs'" :setting="currentSetting" :premium="premium"
+              @updated-setting="onNPCsUpdated" />
+            <QuestHooksTab v-else-if="activeTabId === 'quest-hooks'" :setting="currentSetting" :premium="premium"
+              @updated-setting="onQuestHooksUpdated" />
+          </template>
+        </div>
+      </div>
       <SettingOperations
         v-if="settingOverviewExists && !currentlyLoading"
         :settings-tree="currentSettingSubtree"
@@ -154,9 +157,9 @@
         @delete-setting="deleteSetting(currentSetting.id)"
       />
 
-      <!-- Footer below content -->
-      <div class="footer-meta" v-if="settingOverviewExists">
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+      <!-- Footer below content (free users only). -->
+      <div class="footer-meta" v-if="settingOverviewExists && !premium">
+        <PatreonCallout :patreon-url="patreonLoginUrl">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
           </template>
@@ -168,37 +171,27 @@
             </li>
           </template>
         </PatreonCallout>
-        <ParCallout v-else>
-          <p>Setting data is saved on this browser. Export to a file to use on another device.</p>
-          <ParActionButton @click="showDataManagerModal = true">
-            Save/Load Data from a File
-          </ParActionButton>
-        </ParCallout>
       </div>
 
-      <!-- Loading branch mirrors the loaded-state Tabs wrapper exactly
-           (class, width style) so the skeleton card has identical
-           horizontal context to the rendered OverviewTab card. -->
-      <Tabs class="content-tabs" v-if="!settingOverviewExists && currentSetting.loadingsettingOverview"
-        height="auto" style="width: 100%">
-        <TabPanel label="Overview">
-          <SettingOverviewCardSkeleton />
-        </TabPanel>
-        <TabPanel label="Locations" :disabled="true">
-        </TabPanel>
-        <TabPanel label="Factions" :disabled="true">
-        </TabPanel>
-        <TabPanel label="NPCs" :disabled="true">
-        </TabPanel>
-        <TabPanel label="Quest Hooks" :disabled="true">
-        </TabPanel>
-      </Tabs>
     </div>
+
+    <ParConfirm
+      :opened="pendingSettingDelete !== null"
+      title="Delete this setting?"
+      confirm-label="Delete setting"
+      cancel-label="Cancel"
+      :destructive="true"
+      @confirm="performSettingDelete"
+      @cancel="pendingSettingDelete = null"
+    >
+      Deleting this setting removes it and re-parents its children. This can't be undone.
+    </ParConfirm>
   </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParActionButton, ParCallout } from "@/parchment";
+import { ParButton, ParField, ParInput, ParTextarea, ParTabs, ParConfirm } from "@/parchment";
+import SidebarFooter from '@/components/SidebarFooter.vue';
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { CdrInput, CdrLink } from "@rei/cedar";
 import {
@@ -215,11 +208,10 @@ import SeededFromBanner from '@/components/SeededFromBanner.vue';
 import { logger } from '@/util/logger.mjs';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
-import Tabs from '@/components/tabs/Tabs.vue';
-import TabPanel from '@/components/tabs/TabPanel.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { saveNPCToStorage, settingNPCToCanonical } from '@/util/npc-storage.mjs';
 import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
+import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
 import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
@@ -260,6 +252,7 @@ import { canGenerateCrossTool } from '@/util/can-generate-cross-tool.mjs';
 import LocationsTab from './components/tabs/LocationsTab.vue';
 import NPCsTab from './components/tabs/NPCsTab.vue';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import VersionBadge from '@/components/VersionBadge.vue';
 
 const props = defineProps({
   premium: {
@@ -281,6 +274,12 @@ const onLocationsUpdated = (updatedSetting) => {
   const idx = currentSettingIndex.value;
   if (settings.value[idx]) {
     settings.value[idx].importantLocations = updatedSetting.importantLocations;
+    // LocationsTab also emits this handler when a related-place stub is
+    // removed (the X on a NEIGHBORS/sub-location card). Persist that too —
+    // dropping it here is why the remove appeared to do nothing.
+    if (updatedSetting.related_places !== undefined) {
+      settings.value[idx].related_places = updatedSetting.related_places;
+    }
     saveSettingsToLocalStorage();
   }
 };
@@ -331,11 +330,13 @@ const onQuestHooksUpdated = (updatedSetting) => {
 };
 
 function deleteAllSettings() {
-  if (confirm("Are you sure you want to delete all settings?")) {
-    settings.value = [reactive(freshDefaultSetting())];
-    currentSettingIndex.value = 0;
-    saveSettingsToLocalStorage();
-  }
+  settings.value = [reactive(freshDefaultSetting())];
+  currentSettingIndex.value = 0;
+  saveSettingsToLocalStorage();
+  // Drop cross-tool edges pointing at the now-deleted settings. Runs after
+  // the store is saved so the sweep sees them as gone.
+  sweepOrphanReferences();
+  showDataManagerModal.value = false;
 }
 
 function isNumber(value) {
@@ -343,7 +344,16 @@ function isNumber(value) {
 }
 const currentlyLoading = ref(false);
 const currentSettingIndex = ref(0);
-const activeTabIndex = ref(0);
+// ParTabs strip: { id, label } pairs + the active id (v-model). Replaces the
+// old numeric activeTabIndex with the Tabs component.
+const settingTabs = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'locations', label: 'Locations' },
+  { id: 'factions', label: 'Factions' },
+  { id: 'npcs', label: 'NPCs' },
+  { id: 'quest-hooks', label: 'Quest Hooks' },
+];
+const activeTabId = ref('overview');
 const isNewSetting = ref(false);  // Flag to track if the current setting is new
 function makeSettingId() {
   return `set_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -432,7 +442,7 @@ onMounted(async () => {
       currentSettingIndex.value = settingIndex;
       await nextTick();
       await nextTick();
-      activeTabIndex.value = 3;
+      activeTabId.value = 'npcs';
     }
     return;
   }
@@ -646,8 +656,13 @@ function toggleExpanded(settingId) {
 
 // Filtered + depth-tagged list the sidebar renders. Recomputes when
 // the tree shape changes OR when the user toggles a branch.
+// A freshly-created setting ("+ New Setting") is a blank, unnamed, overview-
+// less leaf. Like the other tools, we don't surface that in-progress draft in
+// the list — it appears once it has a name or a generated overview. Nodes with
+// children are always kept so the tree never orphans descendants.
 const visibleSidebarSettings = computed(() =>
   flattenVisibleSettings(settingsTree.value, expandedSettingIds.value)
+    .filter(s => s.hasChildren || s.place_name || s.setting_overview?.overview)
 );
 
 // Auto-expand the ancestor path to the currently-selected setting.
@@ -686,9 +701,16 @@ const updateOriginalIndices = () => {
   });
 };
 
+const pendingSettingDelete = ref(null);
+
 const deleteSetting = (idToDelete) => {
-  //confirm deletion
-  if (!confirm("Are you sure you want to delete this setting?")) return;
+  if (!idToDelete) return;
+  pendingSettingDelete.value = idToDelete;
+};
+
+const performSettingDelete = () => {
+  const idToDelete = pendingSettingDelete.value;
+  pendingSettingDelete.value = null;
   if (!idToDelete) return;
   const indexToDelete = settings.value.findIndex(s => s?.id === idToDelete);
   if (indexToDelete < 0) return;
@@ -758,7 +780,7 @@ const allSettingsHaveAnOverview = computed(() => {
 watch(currentSettingIndex, (newValue, oldValue) => {
   if (newValue !== oldValue) {
     nextTick(() => {
-      activeTabIndex.value = 0;  // Reset active tab index when switching settings
+      activeTabId.value = 'overview';  // Reset to the first tab when switching settings
     });
   }
 });
@@ -767,6 +789,17 @@ watch(currentSettingIndex, (newValue, oldValue) => {
 // focuses the form. Form submission runs the inference + generation
 // pipeline against whatever the user typed (or nothing).
 const createNewSetting = () => {
+  // Reuse an existing blank draft (no name, no overview) rather than stacking
+  // another — so the button can stay visible for cross-tool consistency
+  // without piling up empty settings.
+  const blankIdx = settings.value.findIndex(
+    s => !s.place_name && !s.setting_overview?.overview,
+  );
+  if (blankIdx !== -1) {
+    currentSettingIndex.value = blankIdx;
+    isNewSetting.value = true;
+    return;
+  }
   settings.value.push(reactive(freshDefaultSetting()));
   currentSettingIndex.value = settings.value.length - 1;
   isNewSetting.value = true;
@@ -2156,51 +2189,48 @@ function collectRelatedSettingNames(setting) {
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 // Sidebar-specific styles
-$active-color: #ffffff;
-$hover-background-color: #f0f0f0;
-$default-background-color: #e0e0e0;
-$active-border-color: #007BFF;
+$active-color: var(--par-color-callout-bg-deep, #ede2cb);
+$hover-background-color: var(--par-color-callout-bg, #f3ebda);
+$default-background-color: transparent;
+$active-border-color: var(--color-action-rest, #365A85);
 $transition-speed: 0.3s;
 
 .sidebar-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 1rem;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .settings-tabs {
+  flex: 1;
+  overflow-y: auto;
   list-style: none;
   padding: 0;
   margin: 0;
-  margin-bottom: 1rem;
 
-  li {
-    margin-bottom: 4px;
+  /* Tree rows — chevron column + label, sharing a row-level background so
+     the selection highlight reads at any depth. */
+  .setting-tree-item.active-tab .setting-tree-row {
+    background-color: var(--par-color-callout-bg, #f3ebda);
   }
 
-  /* Tree rows — chevron column + label, sharing a row-level
-     background so the selection highlight reads at any depth.
-     Border-left accent stays at the leftmost edge regardless of
-     indent so deep selections are still visible at a glance. */
-  .setting-tree-item {
-    &.active-tab .setting-tree-row {
-      background-color: $active-color;
-      border-left-color: $active-border-color;
-    }
+  .setting-tree-item.active-tab .setting-tree-label {
+    color: var(--color-action-hover, #2A4D70);
+    font-weight: 600;
   }
 
   .setting-tree-row {
     display: flex;
     align-items: stretch;
     min-width: 0;
-    background-color: $default-background-color;
-    border-left: 5px solid transparent;
-    transition: background-color $transition-speed, border-left-color $transition-speed;
+    background-color: transparent;
+    border-bottom: 1px solid var(--par-color-divider, #e2dccd);
+    transition: background-color 0.15s ease;
 
     &:hover {
-      background-color: $hover-background-color;
+      background-color: rgba(243, 235, 218, 0.4);
     }
   }
 
@@ -2218,7 +2248,7 @@ $transition-speed: 0.3s;
     border: none;
     padding: 0;
     cursor: pointer;
-    color: var(--par-color-text-muted, #6b6b6b);
+    color: var(--color-action-muted, #5A7A9A);
 
     /* Inline SVG triangle, not a Unicode glyph: WordPress's emoji
        conversion script substitutes `▶` (U+25B6) for an s.w.org-hosted
@@ -2234,11 +2264,11 @@ $transition-speed: 0.3s;
     }
 
     &:hover {
-      color: var(--par-color-text, #222);
+      color: var(--color-action-hover, #2A4D70);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--par-color-action-primary, #2A4D70);
+      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
       outline-offset: -2px;
     }
   }
@@ -2246,12 +2276,13 @@ $transition-speed: 0.3s;
   .setting-tree-label {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 12px 16px 12px 4px;
-    font-size: 1.5rem;
+    padding: 1.3rem 1.6rem 1.3rem 0.4rem;
+    font-family: inherit;
+    font-size: 1.6rem;
     text-align: left;
     background: transparent;
     border: none;
-    color: inherit;
+    color: var(--par-color-text, #222);
     cursor: pointer;
     /* Long names (Italian compounds, deep hierarchies) truncate
        with ellipsis rather than wrap or push the row wider. */
@@ -2259,61 +2290,50 @@ $transition-speed: 0.3s;
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    &:focus {
-      outline: none;
+    &:focus-visible {
+      outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+      outline-offset: -2px;
     }
   }
-
-  /* Standalone setting-button — kept for the "+ New Setting" row at
-     the bottom of the list. The tree rows use setting-tree-* classes
-     above; this block stays for the lone-button case so its styling
-     doesn't need a separate variant. */
-  .setting-button {
-    width: 100%;
-    padding: 12px 20px;
-    font-size: 1.5rem;
-    text-align: left;
-    background-color: $default-background-color;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    border-left: 5px solid transparent;
-    transition: background-color $transition-speed, border-left-color $transition-speed;
-
-    &:hover {
-      background-color: $hover-background-color;
-    }
-
-    &:focus {
-      outline: none;
-      border-left-color: $active-border-color;
-    }
-  }
-}
-
-.copy-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 // Main content styles
 .main-content {
   flex-grow: 1;
-  padding: 10px;
+  /* Match NPCGenerator's content canvas exactly (940px max + 30px side
+     padding ≈ 880px effective) so tab content reads at the same width as
+     the other generators. The landing form stays 800px via .landing-wrapper. */
+  padding: 2px 30px 30px 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
   margin: 3rem auto;
-  /* Match NPCGenerator's content area width (940px) so the parchment
-     card surface gets the same canvas — narrower (800px) was clamping
-     the card body well inside the 65ch readability target. */
   max-width: 940px;
 
-  .content-tabs {
-    box-shadow: 0 4px 6px #0000001a;
-    padding: 3rem;
+  /* Content container — cream surface-card panel (same as the dungeon
+     generator's .content-container). Extends up over the ParTabs strip so the
+     tabs and the active panel share one card; the per-tab components no longer
+     carry their own surface (they render bare inside this container). */
+  .setting-tabs {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--par-color-surface-card, #FEFBF4);
     border-radius: 8px;
+    padding: 2.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 2080px) {
+    .setting-tabs {
+      margin-top: 3rem;
+    }
+  }
+
+  .setting-tab-panel {
+    &:focus {
+      outline: none;
+    }
   }
 
   p {
@@ -2331,7 +2351,7 @@ $transition-speed: 0.3s;
   width: 100%;
 }
 
-/* ZONE 1: Hero header */
+/* ZONE 1: Hero header — lapis editorial register (matches the other tools) */
 .hero-header {
   text-align: center;
   padding: 2rem 1rem 2.5rem;
@@ -2341,44 +2361,35 @@ $transition-speed: 0.3s;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
 
   .brand-name {
-    font-size: 1.4rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.3rem;
     font-weight: 500;
-    color: $cdr-color-text-secondary;
-    letter-spacing: 0.02em;
+    color: var(--color-action-secondary-rest, #5A7A9A);
+    letter-spacing: 0.04em;
   }
 
-  .version-pill {
-    display: inline-block;
-    font-size: 1.1rem;
+  .page-heading__title {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 3.6rem;
     font-weight: 600;
-    padding: 0.2rem 0.8rem;
-    border-radius: 100px;
-    background-color: #ededed;
-    color: $cdr-color-text-secondary;
-
-    &.premium {
-      background-color: #fdf3e0;
-      color: #9c6a0a;
-    }
-  }
-
-  h1 {
-    font-size: 3.2rem;
-    line-height: 1.15;
+    color: var(--color-action-hover, #2A4D70);
     margin: 0 0 0.75rem;
-    color: $cdr-color-text-primary;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
   }
 
-  .value-prop {
+  .page-heading__tagline {
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
     font-size: 1.6rem;
     font-weight: 400;
-    color: $cdr-color-text-secondary;
+    color: var(--par-color-text-secondary, #555);
+    font-style: italic;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.6;
   }
 
   /* Seeded-flow back-link to the source entity. Mirrors NPCGenerator's
@@ -2402,13 +2413,12 @@ $transition-speed: 0.3s;
   }
 }
 
-/* ZONE 2: Form card */
+/* ZONE 2: Form card — lifted cream surface, lapis "magic UI" register */
 .form-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e2e2;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  padding: 2.5rem 3rem;
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 2.25rem 2.25rem 2rem;
 }
 
 .setting-form {
@@ -2524,7 +2534,7 @@ $transition-speed: 0.3s;
 
 /* Setting-level destructive action — right-aligned in its own row so
    it pairs with the trailing edge of the tab area instead of floating
-   orphaned. Uses ParActionButton secondary variant (faded slate ghost)
+   orphaned. Uses ParButton secondary variant (faded slate ghost)
    so a permanent action doesn't compete for attention. */
 .delete-setting-row {
   width: 100%;
@@ -2592,7 +2602,7 @@ $transition-speed: 0.3s;
 }
 
 .relationship-buttons {
-  background-color: #f4f2ed;
+  background-color: var(--par-color-surface, #FBF7F0);
   border-radius: 8px;
   padding: 1rem 1rem 4rem 1rem;
   margin: 1rem auto;

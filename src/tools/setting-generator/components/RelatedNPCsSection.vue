@@ -72,7 +72,7 @@
                     :disabled="loadingNpcIndex === entry.index"
                     @click="$emit('generate-detailed-description', { npcIndex: entry.index })"
                   >
-                    {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate Full NPC' }}
+                    {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate full NPC' }}
                   </ParCardButton>
                   <button
                     type="button"
@@ -181,7 +181,7 @@
                   :disabled="loadingNpcIndex === entry.index"
                   @click="$emit('generate-detailed-description', { npcIndex: entry.index })"
                 >
-                  {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate Full NPC' }}
+                  {{ loadingNpcIndex === entry.index ? 'Generating…' : 'Generate full NPC' }}
                 </ParCardButton>
                 <button
                   type="button"
@@ -438,11 +438,11 @@ watch(() => props.setting, () => {
 /* Workspace surface — same parchment register as RelatedPlacesSection.
    Font stacks include the same fallback chain tokens.css defines so
    the serif still resolves correctly when the CSS variable hasn't
-   loaded yet (matches the convention used by ParActionButton,
-   ParCallout, ParTextarea, etc.). */
+   loaded yet (matches the convention used by ParButton,
+   ParCallout, ParCardTextarea, etc.). */
 .related-npcs-section {
   background: transparent;
-  padding: 2rem;
+  padding: 1rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
@@ -451,9 +451,11 @@ watch(() => props.setting, () => {
 }
 
 .related-npcs-title {
-  margin: 0 0 0.25rem;
+  /* Large 2.8rem — the shared tab-header standard across Locations /
+     Factions / NPCs / Quest Hooks. */
+  margin: 0 0 0.3rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
-  font-size: 2rem;
+  font-size: 2.8rem;
   font-weight: 600;
   color: var(--par-color-action-primary, #2A4D70);
   letter-spacing: 0;
@@ -461,13 +463,15 @@ watch(() => props.setting, () => {
 }
 
 .related-npcs-subtitle {
+  /* Standard tab description: regular-weight serif body text (matches the
+     Locations tab, the canonical reference). */
   margin: 0;
-  font-family: var(--par-font-sans, sans-serif);
-  font-size: 1.3rem;
-  font-style: italic;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: normal;
   font-weight: 400;
-  color: var(--par-color-text-muted, #6b6b6b);
-  line-height: 1.5;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.55;
 }
 
 .related-npcs-subtitle-link {
@@ -493,8 +497,8 @@ watch(() => props.setting, () => {
 
 .related-npcs-empty {
   margin: 0.75rem 0 0;
-  font-family: var(--par-font-sans, sans-serif);
-  font-size: 1.3rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);
   line-height: 1.6;
@@ -505,13 +509,13 @@ watch(() => props.setting, () => {
 }
 
 .related-npcs-group-title {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.6rem 0;
   font-family: var(--par-font-sans, sans-serif);
-  font-size: 1.1rem;
-  font-weight: 500;
+  font-size: 1.2rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--par-color-action-primary, #2A4D70);
+  letter-spacing: 0.16em;
+  color: var(--color-action-hover, #2A4D70);
 }
 
 .related-npcs-list {
@@ -548,7 +552,7 @@ watch(() => props.setting, () => {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 
   &:hover {
-    background: #f8f3e8;
+    background: var(--par-color-callout-bg-light, #F8F2E3);
     border-color: var(--par-color-title, #7a1f1f);
   }
 
@@ -560,7 +564,7 @@ watch(() => props.setting, () => {
 
 /* Stub row — same parchment surface as the collapsed row, but no
    expand affordance (chevron gone, cursor default, no hover-as-button
-   feedback). Inline actions sit on the right: Generate Full NPC
+   feedback). Inline actions sit on the right: Generate full NPC
    promotes the stub, Delete removes it. Stubs are not expandable
    because there's nothing to expand — the user's short blurb is all
    the stub has. The two actions cover both intents directly. */

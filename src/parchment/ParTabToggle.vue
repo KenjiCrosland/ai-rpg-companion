@@ -26,15 +26,15 @@
  *
  * The active state uses burgundy (--par-color-title) — the parchment
  * editorial accent — NOT lapis. Lapis is reserved for chrome action
- * primitives (ParActionButton). The visual difference reinforces
+ * primitives (ParButton). The visual difference reinforces
  * "this lives on a content surface" vs "this is a chrome control".
  *
  * Usage:
  *   <ParTabToggle
  *     v-model="activeView"
  *     :options="[
- *       { value: 'description', label: 'Show Description' },
- *       { value: 'form',        label: 'Show Form' }
+ *       { value: 'description', label: 'Show description' },
+ *       { value: 'form',        label: 'Show form' }
  *     ]"
  *   />
  *

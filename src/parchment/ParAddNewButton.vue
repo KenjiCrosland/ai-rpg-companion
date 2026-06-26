@@ -22,10 +22,10 @@
  * small affordance commit: as the user prepares to click, the
  * placeholder becomes "real." Subtle but recognizable.
  *
- * This is intentionally a distinct component from ParActionButton
+ * This is intentionally a distinct component from ParButton
  * because:
  *   - It's always full-width within its container (not inline like
- *     ParActionButton).
+ *     ParButton).
  *   - The dashed treatment isn't a per-instance variant — it's the
  *     entire purpose of the component.
  *   - The "+ " prefix is part of the affordance convention; callers

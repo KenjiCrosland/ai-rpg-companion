@@ -4,7 +4,7 @@
         label="Dungeon Name:" required></cdr-input>
       <cdr-input class="dungeon_form_input" id="dungeon_description" v-model="dungeon_description" background="secondary"
         label="Dungeon Details:" :rows="4"></cdr-input>
-      <ParActionButton class="generate_button" type="submit" :disabled="!dungeon_name">Generate Dungeon Details</ParActionButton>
+      <ParButton class="generate_button" type="submit" :disabled="!dungeon_name">Generate dungeon details</ParButton>
     </form>
     <div class="dungeon-details" v-if="dungeon_details">
       <h2>{{ dungeon_name }}</h2>
@@ -36,7 +36,7 @@
 import { ref } from 'vue';
 import { dungeonFormatGuidelines } from "../prompts/prompts.mjs";
 import { CdrInput, CdrText, CdrSelect } from "@rei/cedar";
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import StatblockBase from './StatblockBase.vue';
 import _ from 'lodash';
@@ -53,7 +53,7 @@ export default {
     CdrText,
     CdrSelect,
     StatblockBase,
-    ParActionButton,
+    ParButton,
   },
   setup() {
     const roomType = ref('Entrance');

@@ -29,7 +29,9 @@
       <div style="display: flex; gap: 0.5rem; align-items: center;">
         <ParCardButton
           v-if="editable && !isEditing && !loadingDescription && !bodyHidden && !stubMode"
+          variant="affirmative"
           size="small"
+          data-testid="edit-npc"
           @click="$emit('start-edit')"
         >
           Edit NPC
@@ -76,7 +78,7 @@
         </p>
         <div class="npc-card-stub-actions">
           <ParCardButton @click="$emit('generate-detailed')">
-            Generate Detailed Description
+            Generate detailed description
           </ParCardButton>
         </div>
       </template>
@@ -168,15 +170,15 @@
         <h2 class="npc-edit__title">Edit NPC</h2>
       </header>
 
-      <ParInput v-model="editForm.name" label="Name" class="npc-edit__field" />
+      <ParCardInput v-model="editForm.name" label="Name" class="npc-edit__field" data-testid="npc-edit-name" />
 
-      <ParTextarea v-model="editForm.read_aloud_description"
+      <ParCardTextarea v-model="editForm.read_aloud_description"
         label="Read-aloud description"
         :rows="4"
         hint="The initial description when the NPC is first encountered."
         class="npc-edit__field" />
 
-      <ParTextarea v-model="editForm.combined_details"
+      <ParCardTextarea v-model="editForm.combined_details"
         label="Details"
         :rows="10"
         hint="Position, location, mannerisms, secrets, and roleplaying tips. Use double line breaks for paragraphs."
@@ -191,8 +193,8 @@
 
         <div v-for="(relationship, relIndex) in editForm.relationshipsArray" :key="relIndex"
           class="npc-edit__relationship-row">
-          <ParInput v-model="relationship.name" label="Name" />
-          <ParTextarea v-model="relationship.description"
+          <ParCardInput v-model="relationship.name" label="Name" />
+          <ParCardTextarea v-model="relationship.description"
             label="Description"
             :rows="2" />
           <div class="npc-edit__relationship-actions">
@@ -203,7 +205,7 @@
         </div>
 
         <ParCardButton size="small" @click="addRelationshipToForm" class="npc-edit__add">
-          + Add Relationship
+          + Add relationship
         </ParCardButton>
       </section>
 
@@ -219,25 +221,25 @@
           </CdrSkeleton>
         </div>
 
-        <ParInput v-model="relationshipForm.name"
+        <ParCardInput v-model="relationshipForm.name"
           label="Name"
           hint="The name of the related NPC." />
 
-        <ParTextarea v-model="relationshipForm.description"
+        <ParCardTextarea v-model="relationshipForm.description"
           label="Short description"
           :rows="2"
           hint='Brief description of their relationship (e.g., "the wizard&apos;s familiar", "his estranged sister").' />
 
         <div class="npc-edit__generate-actions">
           <ParCardButton @click="generateRelationship" :disabled="isGeneratingRelationship">
-            Generate Relationship
+            Generate relationship
           </ParCardButton>
         </div>
       </section>
 
       <footer class="npc-edit__footer">
-        <ParCardButton variant="danger" @click="$emit('cancel-edit')">Cancel</ParCardButton>
-        <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+        <ParCardButton variant="primary" @click="saveEdit">Save changes</ParCardButton>
+        <ParCardButton variant="muted" @click="$emit('cancel-edit')">Cancel</ParCardButton>
       </footer>
     </div>
 
@@ -249,15 +251,15 @@
         </ParCardButton>
 
         <ParCardButton v-if="showMoveToFolder" @click="$emit('move-to-folder')">
-          Move to Folder
+          Move to folder
         </ParCardButton>
 
         <ParCardButton v-if="showExport" @click="$emit('toggle-export')">
-          {{ exportOpen ? 'Hide Export' : 'Export' }}
+          {{ exportOpen ? 'Hide export' : 'Export' }}
         </ParCardButton>
       </div>
 
-      <ParCardButton v-if="showDelete" variant="danger" @click="$emit('delete')">
+      <ParCardButton v-if="showDelete" variant="danger" @click="$emit('delete')" data-testid="delete-npc">
         Delete
       </ParCardButton>
     </div>
@@ -267,7 +269,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
-import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
+import { ParCardButton, ParCardInput, ParCardTextarea } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { sourceExists } from '@/util/seeded-input.mjs';
 
@@ -382,7 +384,7 @@ const props = defineProps({
   },
 
   // Whether the parent's export panel is currently open. Drives the
-  // toggle button label between "Export" and "Hide Export".
+  // toggle button label between "Export" and "Hide export".
   exportOpen: {
     type: Boolean,
     default: false,
@@ -644,7 +646,7 @@ function navigateToNPCGenerator() {
 <style scoped>
 /* Card surface uses the parchment palette directly — no local --npc-*
    vars. The previous local palette ran slightly warmer than the rest of
-   the parchment system (var(--par-color-surface, #fdfbf6) surface, var(--par-color-text, #222) body); converged to the
+   the parchment system (var(--par-color-surface, #FBF7F0) surface, var(--par-color-text, #222) body); converged to the
    parchment tokens so the NPC card renders in the same paper tone as the
    item card and any future card surface. If the NPC card needs to
    diverge visually for a real reason, swap specific tokens at the
@@ -652,8 +654,11 @@ function navigateToNPCGenerator() {
 
 /* Card container */
 .npc-card {
-  background: var(--par-color-surface, #fdfbf6);
-  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  background: var(--par-color-surface, #FBF7F0);
+  /* Soft frame — a light 1px tan edge + the original 3px burgundy top accent.
+     Lighter than the previous 1.5px border-strong all-around (too heavy on a
+     cream stage), but 1px (not 0.5px) so the card keeps enough definition. */
+  border: 1px solid var(--par-color-border, #e8e2d4);
   border-top: 3px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
   /* Card root carries the `parchment` marker class (see App.vue) which
@@ -670,7 +675,7 @@ function navigateToNPCGenerator() {
 /* Content wrapper - centers all view mode content with shared left edge */
 .npc-card-content {
   /* Priority 1: Limit line length for readability - applied to wrapper so all content shares one left edge */
-  max-width: 65ch;
+  max-width: 75ch;
   margin-inline: auto;
 }
 
@@ -759,9 +764,10 @@ function navigateToNPCGenerator() {
   margin: 0 0 0.125rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 2.8rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.02em;
+  line-height: 1.15;
 }
 
 .npc-card-subtitle {
@@ -793,8 +799,6 @@ function navigateToNPCGenerator() {
   /* Priority 5: Increase horizontal padding */
   padding: 0.5rem 2rem;
   background: var(--par-color-callout-bg, #f3ebda);
-  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
-  border-bottom: 1px solid var(--par-color-border-strong, #c9b99a);
   margin: 0 0 0.75rem;
 }
 
@@ -805,13 +809,12 @@ function navigateToNPCGenerator() {
   font-style: italic;
 }
 
-/* Read-aloud */
+/* Read-aloud — burgundy left bar marks the player-facing opener (the
+   read-aloud convention). The top/bottom tan hairlines were dropped: they
+   read as a heavy box now that the card sits on a cream stage, and the left
+   bar alone matches the lighter setting/item read-aloud treatment. */
 .npc-card-read-aloud {
-  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
-  border-bottom: 1px solid var(--par-color-border-strong, #c9b99a);
-  /* Priority 6: Add left border accent for quick scanning */
   border-left: 3px solid var(--par-color-title, #7a1f1f);
-  /* Priority 5: Increase horizontal padding */
   margin: 2rem 1.5rem 2rem;
   padding: 1rem 0 1rem 1.25rem;
 }
@@ -1021,7 +1024,7 @@ function navigateToNPCGenerator() {
 .npc-card-relationship-generator {
   border-top: 1px solid var(--par-color-border-strong, #c9b99a);
   padding: 1rem 2rem 1.25rem;
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
 }
 
 /* Footer bar for card actions */

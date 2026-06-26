@@ -1012,9 +1012,6 @@ describe('NPCGenerator', () => {
 
       localStorage.setItem('npcGeneratorNPCs', JSON.stringify(mockNPCs));
 
-      // Mock window.confirm to auto-accept
-      global.confirm = jest.fn(() => true);
-
       wrapper = mount(NPCGenerator, {
         props: { premium: false }
       });
@@ -1024,8 +1021,10 @@ describe('NPCGenerator', () => {
       // Load the NPC
       wrapper.vm.loadNPCIntoView('Single NPC Folder', 0);
 
-      // Delete the NPC
+      // Delete now goes through a ParConfirm modal: deleteCurrentNPC() opens it,
+      // performNPCDelete() runs on @confirm.
       wrapper.vm.deleteCurrentNPC();
+      wrapper.vm.performNPCDelete();
 
       await flushPromises();
 

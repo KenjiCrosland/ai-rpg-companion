@@ -19,8 +19,8 @@ import RelatedPlacesSection from '../RelatedPlacesSection.vue';
 // double-fire because the parent's listener lands twice (once via
 // fallthrough, once via the explicit $emit).
 jest.mock('@/parchment', () => ({
-  ParActionButton: {
-    name: 'ParActionButton',
+  ParButton: {
+    name: 'ParButton',
     template: '<button type="button"><slot></slot></button>',
     props: ['variant', 'disabled'],
   },
@@ -52,7 +52,7 @@ function makeSetting(related_places = []) {
 // form is expanded). Since AddRelatedPlaceForm starts collapsed in
 // every test below, all "Create Setting" buttons are row buttons.
 function findRowCreateButtons(wrapper) {
-  return wrapper.findAll('button').filter(b => b.text().trim() === 'Create Setting');
+  return wrapper.findAll('button').filter(b => b.text().trim() === 'Create setting');
 }
 
 describe('RelatedPlacesSection — rendering by kind', () => {
@@ -250,7 +250,7 @@ describe('RelatedPlacesSection — remove', () => {
     const setting = makeSetting([stub]);
     const wrapper = mount(RelatedPlacesSection, { props: { setting } });
 
-    const removeBtn = wrapper.find('.related-place-remove');
+    const removeBtn = wrapper.find('.related-stub__remove');
     await removeBtn.trigger('click');
 
     const events = wrapper.emitted('remove-related-place');

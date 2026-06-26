@@ -47,7 +47,7 @@ defineEmits(['update:modelValue']);
   margin: 0;
   width: 1.6rem;
   height: 1.6rem;
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 1px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-sm, 3px);
   cursor: pointer;
@@ -72,8 +72,8 @@ defineEmits(['update:modelValue']);
   content: '';
   width: 0.9rem;
   height: 0.55rem;
-  border-left: 2px solid var(--par-color-surface, #fdfbf6);
-  border-bottom: 2px solid var(--par-color-surface, #fdfbf6);
+  border-left: 2px solid var(--par-color-surface, #FBF7F0);
+  border-bottom: 2px solid var(--par-color-surface, #FBF7F0);
   transform: rotate(-45deg) translate(0.05rem, -0.1rem);
 }
 

@@ -418,10 +418,23 @@ function rpg_companion_enqueue_entry( $entry_key ) {
     $dist_url = get_stylesheet_directory_uri() . '/rpg-companion/dist';
     rpg_companion_enqueue_chunk( $manifest, $manifest[ $entry_file ], $dist_url, $enqueued );
 
-    // Google Fonts (Inter + Material Icons + Material Symbols Outlined)
+    // Google Fonts (Source Serif 4 + Inter + Material Icons + Material Symbols Outlined)
+    // Source Serif 4 is the parchment design system's serif — every card title,
+    // body paragraph, and heading in the app resolves to it (--par-font-serif).
+    // In dev it loads via a <link> in App.vue, but App.vue doesn't run in prod
+    // (tool pages mount through base.js), so without this enqueue the entire
+    // parchment system silently falls back to Georgia on the live site.
+    wp_enqueue_style( 'rpg-font-source-serif', 'https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap', [], null );
     wp_enqueue_style( 'rpg-font-inter', 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap', [], null );
     wp_enqueue_style( 'rpg-material-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', [], null );
     wp_enqueue_style( 'rpg-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap', [], null );
+
+    // Parchment style guards — re-assert parchment values the per-template
+    // structural resets would clobber on app content. Higher specificity, so
+    // load order vs the template's inline overrides doesn't matter.
+    wp_register_style( 'rpg-app-guards', false );
+    wp_enqueue_style( 'rpg-app-guards' );
+    wp_add_inline_style( 'rpg-app-guards', rpg_companion_app_style_guards() );
 }
 
 /**
@@ -451,6 +464,293 @@ function rpg_companion_enqueue_chunk( $manifest, $chunk, $dist_url, &$enqueued )
             rpg_companion_enqueue_chunk( $manifest, $manifest[ $import_key ], $dist_url, $enqueued );
         }
     }
+}
+
+/**
+ * Shared parchment chrome — the SEO content section, FAQ accordion, and page
+ * footer that wrap every RPG Companion tool page. These three blocks were
+ * copy-pasted, byte-identical, into ~8 templates; they now live here once.
+ *
+ * Hard-coded parchment values (WordPress has no access to
+ * src/parchment/tokens.css). Keep in sync with parchment.md:
+ *   burgundy editorial ink  #7a1f1f      lapis action/link  #2A4D70 / #1F3A5C
+ *   cream surface           #FBF7F0      warm-tan zone      #f3ebda
+ *   tan borders             #e8e2d4 (light) / #c9b99a (strong) / #b8a685 (deep)
+ *   body ink #444  ·  muted #6b6b6b  ·  serif: Source Serif 4 → Georgia fallback
+ *
+ * NOTE: these styles live OUTSIDE #app, so 1rem = the theme root (~16px), NOT
+ * the app's 10px. Font sizes are px on purpose; spacing stays in rem.
+ *
+ * Per-tool structural overrides (Genesis resets, #app width, tool-specific
+ * rules like the dungeon card-content max-width) stay in each template's own
+ * inline block — only the shared chrome is centralized here.
+ *
+ * @return string CSS (no <style> wrapper — pass to wp_add_inline_style()).
+ */
+function rpg_companion_chrome_styles() {
+    $serif = "'Source Serif 4', Georgia, 'Times New Roman', serif";
+
+    return "
+        /* ---- SEO content section ---- */
+        .rpg-seo-section {
+            display: flex;
+            border-top: 1px solid #e8e2d4;
+            margin-top: 4rem;
+            background: #FBF7F0;
+        }
+
+        /* Sidebar spacer — mirrors the app's sidebar so the SEO copy lines up
+           with the tool content above it. */
+        .rpg-seo-spacer {
+            width: 400px;
+            flex-shrink: 0;
+            background: #FBF7F0;
+        }
+
+        .rpg-seo-inner {
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 0 6rem;
+        }
+
+        @media (max-width: 1300px) {
+            .rpg-seo-spacer { width: 320px; }
+        }
+
+        .rpg-seo-inner h2 {
+            font-family: {$serif};
+            font-size: 22px;
+            font-weight: 600;
+            color: #7a1f1f;
+            margin: 0 0 0.75rem;
+            padding: 0;
+        }
+
+        .rpg-seo-inner h3 {
+            font-family: {$serif};
+            font-size: 18px;
+            font-weight: 600;
+            color: #7a1f1f;
+            margin: 2rem 0 0.5rem;
+            padding: 0;
+        }
+
+        .rpg-seo-inner p {
+            font-family: {$serif};
+            font-size: 15px;
+            color: #444;
+            line-height: 1.7;
+            margin: 0 0 0.75rem;
+        }
+
+        .rpg-seo-inner a {
+            color: #2A4D70;
+            text-decoration: none;
+        }
+
+        .rpg-seo-inner a:hover {
+            text-decoration: underline;
+        }
+
+        /* ---- FAQ accordion ---- */
+        .rpg-faq details {
+            border-top: 1px solid #e8e2d4;
+        }
+
+        .rpg-faq details:last-child {
+            border-bottom: 1px solid #e8e2d4;
+        }
+
+        .rpg-faq summary {
+            font-family: {$serif};
+            font-size: 16px;
+            font-weight: 600;
+            color: #7a1f1f;
+            cursor: pointer;
+            padding: 0.85rem 0;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rpg-faq summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .rpg-faq summary::after {
+            content: \"+\";
+            color: #b8a685;
+            font-size: 18px;
+            font-weight: 400;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        .rpg-faq details[open] summary::after {
+            content: \"−\";
+        }
+
+        .rpg-faq details p {
+            font-family: {$serif};
+            font-size: 15px;
+            color: #444;
+            line-height: 1.65;
+            padding: 0 0 0.85rem;
+            margin: 0;
+        }
+
+        /* ---- Footer — warm-tan parchment colophon ---- */
+        .site-footer {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            margin: 0;
+            border-top: 1px solid #c9b99a;
+            background: #f3ebda;
+        }
+
+        .rpg-footer-inner {
+            max-width: 660px;
+            margin: 0 auto;
+        }
+
+        .rpg-footer-title {
+            font-family: {$serif};
+            font-size: 17px;
+            font-weight: 600;
+            color: #7a1f1f;
+            margin-bottom: 0.75rem;
+        }
+
+        .rpg-footer-links {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            font-family: {$serif};
+            font-size: 15px;
+        }
+
+        .rpg-footer-links a {
+            color: #2A4D70;
+            text-decoration: none;
+        }
+
+        .rpg-footer-links a:hover {
+            color: #1F3A5C;
+            text-decoration: underline;
+        }
+
+        .rpg-footer-links span {
+            color: #b8a685;
+        }
+
+        /* .rpg-footer-ogl (most tools) and .rpg-footer-attribution
+           (chase tracker — icon credits + OGL) share one treatment. */
+        .rpg-footer-ogl,
+        .rpg-footer-attribution {
+            font-family: {$serif};
+            font-size: 13px;
+            color: #6b6b6b;
+            line-height: 1.55;
+        }
+
+        .rpg-footer-ogl a,
+        .rpg-footer-attribution a {
+            color: #2A4D70;
+            text-decoration: none;
+        }
+
+        .rpg-footer-ogl a:hover,
+        .rpg-footer-attribution a:hover {
+            color: #1F3A5C;
+            text-decoration: underline;
+        }
+
+        /* ---- Responsive: sidebar collapses at 768px ---- */
+        @media (max-width: 768px) {
+            .rpg-seo-spacer { display: none; }
+            .rpg-seo-inner { padding: 1.5rem 1rem 4rem; }
+            .site-footer { margin-bottom: 60px; }
+        }
+    ";
+}
+
+/**
+ * Parchment style guards — re-assert parchment-design values that the
+ * per-template structural overrides (Genesis-theme resets) would otherwise
+ * clobber on app content. These DUPLICATE the parchment intent with just
+ * enough extra specificity to win; they never replace or weaken the
+ * structural resets (those are load-bearing against the Genesis theme,
+ * which targets `li` directly — hence the templates' `ul > li` form).
+ *
+ * The heading guard `.entry-content h1, .entry-content h2` = (0,1,1):
+ * beats the bare `h1, h2 { padding-top: 2rem }` leak (0,0,1) but LOSES to
+ * any component heading class (0,2,0), so it can never override a component
+ * that intentionally sets padding on a heading. Every parchment heading
+ * (page-heading__title, form-heading, the card names, …) is margin-spaced
+ * and sets no top padding, so in prod the bare rule was pushing all of them
+ * down 2rem relative to the design; this restores parity with dev.
+ *
+ * Note: the `ul > li { list-style: none }` reset needs NO guard. Every app
+ * list either sets `list-style: none` itself (agreeing with the reset) or
+ * sets its bullets on the `<li>` directly (DashboardPlus `.relationship`,
+ * which already wins). The one list that sets `disc` on the `<ul>`
+ * (DataManagerModal `.summary-list`) lives inside a ParModal `<Teleport
+ * to="body">`, so it renders outside `.entry-content` and the reset never
+ * reaches it. No `ul` incongruity exists.
+ *
+ * Enqueued from rpg_companion_enqueue_entry() so it covers EVERY tool page
+ * (chrome or not). Higher specificity wins regardless of load order.
+ *
+ * @return string CSS (no <style> wrapper — pass to wp_add_inline_style()).
+ */
+function rpg_companion_app_style_guards() {
+    return "
+        /* Parchment 'desk' — App.vue sets this on <body> in dev, but App.vue
+           doesn't run in prod (tool pages mount via base.js), so the theme's
+           white shows behind the cream cards. The cream editorial surfaces are
+           designed to lift off this cool desk via warm-on-cool contrast. This
+           inline style only loads on tool pages, so the rest of the site is
+           untouched; the SEO section (cream) and footer (tan) sit outside
+           .entry-content and keep their own backgrounds. */
+        body,
+        .site-inner,
+        .content,
+        .entry,
+        .entry-content {
+            background-color: #BECBDB;
+        }
+
+        /* Parchment content headings are ALWAYS serif (sans is reserved for
+           compact chrome, never headings). Many heading classes set color +
+           size but rely on inheriting the serif — which the Genesis theme's
+           `h1-h6 { font-family: <sans> }` overrides directly on the element,
+           so those headings (item/setting/dungeon card names, etc.) render
+           sans while body text stays serif. Force the serif on every app
+           heading. `#app` specificity beats the theme decisively, and since
+           no app heading is ever sans this can't harm a component. */
+        #app h1, #app h2, #app h3, #app h4, #app h5, #app h6 {
+            font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+        }
+
+        /* Parchment headings are margin-spaced and set no top padding;
+           neutralize the structural `h1, h2 { padding-top: 2rem }` leak. */
+        .entry-content h1,
+        .entry-content h2 {
+            padding-top: 0;
+        }
+
+        /* The page's (otherwise empty) post content renders as a leading
+           empty Gutenberg paragraph; the block theme's block-gap then adds
+           ~30px above the tool. An empty paragraph is never meaningful
+           content, so collapse it. */
+        .entry-content p.wp-block-paragraph:empty {
+            display: none;
+        }
+    ";
 }
 
 // Make all RPG companion scripts load as ES modules.

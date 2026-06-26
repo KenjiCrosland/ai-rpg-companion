@@ -84,14 +84,14 @@ describe('DungeonExports.vue', () => {
   it('should display all three export buttons', () => {
     const buttons = wrapper.findAll('button');
     expect(buttons.length).toBeGreaterThanOrEqual(3);
-    expect(wrapper.text()).toContain('Copy as Plain Text');
+    expect(wrapper.text()).toContain('Copy as plain text');
     expect(wrapper.text()).toContain('Copy as HTML');
     expect(wrapper.text()).toContain('Copy as Homebrewery Markdown');
   });
 
   it('should copy plain text when plain text button is clicked', async () => {
     const plainTextButton = wrapper.findAll('button').find(btn =>
-      btn.text().includes('Copy as Plain Text')
+      btn.text().includes('Copy as plain text')
     );
 
     await plainTextButton.trigger('click');
@@ -126,7 +126,7 @@ describe('DungeonExports.vue', () => {
     navigator.clipboard.writeText.mockRejectedValueOnce(new Error('Clipboard error'));
 
     const plainTextButton = wrapper.findAll('button').find(btn =>
-      btn.text().includes('Copy as Plain Text')
+      btn.text().includes('Copy as plain text')
     );
 
     await plainTextButton.trigger('click');
@@ -184,7 +184,7 @@ describe('DungeonExports.vue', () => {
     const { dungeonToPlainText } = require('../util/dungeon-to-plain-text.mjs');
 
     const plainTextButton = wrapper.findAll('button').find(btn =>
-      btn.text().includes('Copy as Plain Text')
+      btn.text().includes('Copy as plain text')
     );
     await plainTextButton.trigger('click');
     expect(dungeonToPlainText).toHaveBeenCalledWith(mockDungeon);

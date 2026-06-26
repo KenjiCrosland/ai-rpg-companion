@@ -100,211 +100,71 @@ function vue_app_enqueue_assets() {
             color: inherit;
         }
 
-        /* ---- SEO content section ---- */
-        .rpg-seo-section {
-            border-top: 1px solid #e5e2db;
-            margin-top: 4rem;
-            background: #faf9f6;
-        }
-
-        .rpg-seo-inner {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 3rem 2rem 6rem;
-        }
-
-        .rpg-seo-inner h2 {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 18px;
-            font-weight: 500;
-            color: #3d3929;
-            margin: 0 0 0.5rem;
-            padding: 0;
-        }
-
-        .rpg-seo-inner h3 {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 16px;
-            font-weight: 500;
-            color: #3d3929;
-            margin: 1rem 0 0.5rem;
-            padding: 0;
-        }
-
-        .rpg-seo-inner p {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 14px;
-            color: #7a7668;
-            line-height: 1.6;
-            margin: 0 0 0.5rem;
-        }
-
+        /* ---- Price-calculator-specific SEO content (parchment) ----
+           Reference tables + callout box. Tool-specific (not shared chrome),
+           so they live here. Shared SEO/FAQ/footer come from
+           rpg_companion_chrome_styles(). Parchment tokens hard-coded. */
         .rpg-seo-inner p strong {
-            color: #3d3929;
-            font-weight: 500;
+            color: #222;
+            font-weight: 600;
         }
 
-        .rpg-seo-inner a {
-            color: #5a8a5e;
-            text-decoration: none;
-        }
-
-        .rpg-seo-inner a:hover {
-            text-decoration: underline;
-        }
-
-        /* ---- Reference tables ---- */
         .rpg-ref-table {
             width: 100%;
             border-collapse: collapse;
             margin: 1rem 0 2rem;
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 13px;
+            font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+            font-size: 14px;
         }
-
         .rpg-ref-table thead th {
             text-align: left;
-            font-weight: 500;
-            font-size: 12px;
-            color: #9a9589;
+            font-weight: 600;
+            font-size: 11px;
+            color: #7a1f1f;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.12em;
             padding: 0.5rem 0.75rem;
-            border-bottom: 1px solid #e5e2db;
+            border-bottom: 1px solid #c9b99a;
         }
-
         .rpg-ref-table tbody td {
             padding: 0.5rem 0.75rem;
-            color: #3d3929;
-            border-bottom: 1px solid #f0eee8;
+            color: #222;
+            border-bottom: 1px solid #e8e2d4;
             line-height: 1.5;
             vertical-align: top;
         }
-
         .rpg-ref-table tbody tr:last-child td {
-            border-bottom: 1px solid #e5e2db;
+            border-bottom: 1px solid #c9b99a;
         }
-
         .rpg-ref-table tbody td:first-child {
-            font-weight: 500;
+            font-weight: 600;
             white-space: nowrap;
         }
-
         .rpg-ref-table tbody td:nth-child(2) {
             white-space: nowrap;
         }
-
         .rpg-ref-table th:nth-child(2),
         .rpg-ref-table td:nth-child(2) {
             width: 70px;
         }
 
-        /* ---- Callout box ---- */
         .rpg-callout {
-            background: #f4f1e8;
-            border-left: 3px solid #5a8a5e;
+            background: #f3ebda;
+            border-left: 3px solid #7a1f1f;
             padding: 1rem 1.25rem;
             margin: 1.5rem 0 2rem;
             border-radius: 2px;
+            font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
         }
-
         .rpg-callout p {
             margin: 0 0 0.5rem;
         }
-
         .rpg-callout p:last-child {
             margin-bottom: 0;
         }
+        ' );
 
-        /* ---- FAQ accordion ---- */
-        .rpg-faq details {
-            border-top: 1px solid #eeece6;
-        }
-
-        .rpg-faq details:last-child {
-            border-bottom: 1px solid #eeece6;
-        }
-
-        .rpg-faq summary {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            color: #3d3929;
-            cursor: pointer;
-            padding: 0.6rem 0;
-            list-style: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .rpg-faq summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .rpg-faq summary::after {
-            content: "+";
-            color: #999;
-            font-size: 18px;
-            font-weight: 300;
-            flex-shrink: 0;
-            margin-left: 1rem;
-        }
-
-        .rpg-faq details[open] summary::after {
-            content: "−";
-        }
-
-        .rpg-faq details p {
-            font-size: 13px;
-            padding: 0 0 0.6rem;
-            margin: 0;
-        }
-
-        /* ---- Footer (lightweight) ---- */
-        .site-footer {
-            text-align: center;
-            padding: 1.5rem 1rem;
-            margin: 0;
-            border-top: 1px solid #e5e2db;
-            background: #faf9f6;
-        }
-
-        .rpg-footer-ogl {
-            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 13px;
-            color: #9a9589;
-        }
-
-        .rpg-footer-ogl a {
-            color: #7a7668;
-            text-decoration: none;
-        }
-
-        .rpg-footer-ogl a:hover {
-            text-decoration: underline;
-        }
-
-        /* ---- Responsive ---- */
-        @media (max-width: 768px) {
-            .rpg-seo-inner {
-                padding: 1.5rem 1rem 4rem;
-            }
-            .rpg-ref-table {
-                font-size: 12px;
-            }
-            .rpg-ref-table thead th,
-            .rpg-ref-table tbody td {
-                padding: 0.4rem 0.5rem;
-            }
-            .rpg-ref-table tbody td:first-child {
-                white-space: normal;
-            }
-            .site-footer {
-                margin-bottom: 60px;
-            }
-        }
-    ' );
+    wp_add_inline_style( 'rpg-companion-overrides', rpg_companion_chrome_styles() );
 }
 add_action( 'wp_enqueue_scripts', 'vue_app_enqueue_assets' );
 

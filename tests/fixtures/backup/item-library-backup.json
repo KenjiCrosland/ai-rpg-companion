@@ -1,0 +1,22 @@
+{
+  "savedItems": [
+    {
+      "name": "Restored Aegis Ring",
+      "item_type": "Ring",
+      "rarity": "Very Rare",
+      "feature_count": 1,
+      "features": { "Aegis": "Once per day, gain resistance to all damage until your next turn." },
+      "physical_description": "A plain iron band that hums faintly when danger is near.",
+      "lore": "Recovered from a backup, as a test of the restore flow."
+    },
+    {
+      "name": "Restored Tide Compass",
+      "item_type": "Wondrous Item",
+      "rarity": "Uncommon",
+      "feature_count": 1,
+      "features": { "True North": "Always points toward the nearest body of open water." },
+      "physical_description": "A brass compass whose needle is a tiny silver fish.",
+      "lore": "Recovered from a backup, as a test of the restore flow."
+    }
+  ]
+}

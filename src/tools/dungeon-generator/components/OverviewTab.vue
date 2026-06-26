@@ -17,7 +17,7 @@
             </p>
           </div>
           <div class="dungeon-card-header-actions">
-            <ParCardButton size="small" @click="startEditing">Edit Overview</ParCardButton>
+            <ParCardButton variant="affirmative" size="small" @click="startEditing" data-testid="edit-dungeon">Edit overview</ParCardButton>
           </div>
         </div>
 
@@ -50,35 +50,30 @@
             </p>
           </section>
         </div>
-
-        <!-- Below-content actions: destructive Delete separated from
-             the editorial card by a hairline + standalone action row. -->
-        <div class="dungeon-card-actions">
-          <ParCardButton variant="danger" @click="confirmDelete">Delete Current Dungeon</ParCardButton>
-        </div>
       </template>
 
       <!-- Edit Mode -->
       <div v-else class="dungeon-edit">
         <header class="dungeon-edit__header">
-          <h2 class="dungeon-edit__title">Edit Dungeon Overview</h2>
+          <h2 class="dungeon-edit__title">Edit dungeon overview</h2>
         </header>
 
-        <ParInput
+        <ParCardInput
           v-model="editForm.name"
           label="Name"
           hint='The bare dungeon name (e.g., "Eikheim Barrow").'
           class="dungeon-edit__field"
+          data-testid="dungeon-edit-name"
         />
 
-        <ParInput
+        <ParCardInput
           v-model="editForm.title"
           label="Subtitle"
           hint='A short evocative phrase that pairs with the name (e.g., "Tomb of the Singing Bones").'
           class="dungeon-edit__field"
         />
 
-        <ParTextarea
+        <ParCardTextarea
           v-model="editForm.content"
           label="Overview Content"
           :rows="18"
@@ -87,8 +82,8 @@
         />
 
         <footer class="dungeon-edit__footer">
-          <ParCardButton variant="danger" @click="cancelEdit">Cancel</ParCardButton>
-          <ParCardButton @click="saveEdit">Save Changes</ParCardButton>
+          <ParCardButton variant="muted" @click="cancelEdit">Cancel</ParCardButton>
+          <ParCardButton variant="primary" @click="saveEdit">Save changes</ParCardButton>
         </footer>
       </div>
     </div>
@@ -96,13 +91,14 @@
 </template>
 
 <script setup>
-import { ParCardButton, ParInput, ParTextarea } from '@/parchment';
+import { ParCardButton, ParCardInput, ParCardTextarea } from '@/parchment';
 import { ref, computed, h } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import DungeonOverviewCardSkeleton from './skeletons/DungeonOverviewCardSkeleton.vue';
 import { renderOverview, consolidateOverviewToMarkdown } from '../util/renderDungeonOverview.mjs';
 import { combineDungeonOverview } from '../util/combineDungeonOverview.mjs';
 import { sourceExists } from '@/util/seeded-input.mjs';
+import { renameDungeonReferences } from '@/util/dungeon-storage.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
 
 const props = defineProps({
@@ -228,23 +224,26 @@ const cancelEdit = () => {
 };
 
 const saveEdit = () => {
-  if (dungeonStore.currentDungeon?.dungeonOverview) {
-    dungeonStore.currentDungeon.dungeonOverview.name = editForm.value.name;
-    dungeonStore.currentDungeon.dungeonOverview.title = editForm.value.title;
-    dungeonStore.currentDungeon.dungeonOverview.combined_content = editForm.value.content;
+  const dungeon = dungeonStore.currentDungeon;
+  const oldName = dungeon?.dungeonOverview?.name || '';
+  const newName = editForm.value.name || '';
+
+  if (dungeon?.dungeonOverview) {
+    dungeon.dungeonOverview.name = editForm.value.name;
+    dungeon.dungeonOverview.title = editForm.value.title;
+    dungeon.dungeonOverview.combined_content = editForm.value.content;
   }
   dungeonStore.saveDungeons();
-  isEditing.value = false;
-};
 
-const confirmDelete = () => {
-  const dungeonName = dungeonStore.currentDungeon?.dungeonOverview?.name
-    || dungeonStore.currentDungeon?.dungeonOverview?.title
-    || 'this dungeon';
-  const confirmed = window.confirm(`Are you sure you want to delete "${dungeonName}"? This action cannot be undone.`);
-  if (confirmed) {
-    dungeonStore.deleteDungeon(dungeonStore.currentDungeonId);
+  // Propagate the rename to denormalized name caches in other stores (item
+  // related_dungeons stubs, tool-references, dungeon-sourced NPC sourceName) —
+  // mirrors the Setting Generator's renameSettingReferences. Linkage is id-based
+  // and never breaks; without this the cached display NAMES go stale.
+  if (dungeon?.id && newName && oldName !== newName) {
+    renameDungeonReferences(dungeon.id, newName);
   }
+
+  isEditing.value = false;
 };
 </script>
 
@@ -253,8 +252,8 @@ const confirmDelete = () => {
    .setting-card so the two tools' overview cards read as visual
    siblings. */
 .dungeon-card {
-  background: var(--par-color-surface, #fdfbf6);
-  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1px solid var(--par-color-border, #e8e2d4);
   border-radius: 2px;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   overflow: hidden;
@@ -281,7 +280,7 @@ const confirmDelete = () => {
 .dungeon-card-name {
   margin: 0 0 0.125rem;
   font-size: 2.8rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--par-color-title, #7a1f1f);
   letter-spacing: 0.02em;
   line-height: 1.15;
@@ -414,13 +413,6 @@ const confirmDelete = () => {
 
 /* Below-content destructive action — hairline separator + right-
    aligned button. */
-.dungeon-card-actions {
-  padding: 1rem 3rem 2rem;
-  border-top: 1px solid var(--par-color-divider, #e2dccd);
-  display: flex;
-  justify-content: flex-end;
-}
-
 /* Edit form — same register as setting's edit panel. */
 .dungeon-edit {
   padding: 0 3rem 2rem;
@@ -455,7 +447,6 @@ const confirmDelete = () => {
 @media (max-width: 600px) {
   .dungeon-card-header,
   .dungeon-card-content,
-  .dungeon-card-actions,
   .dungeon-edit {
     padding-left: 1.5rem;
     padding-right: 1.5rem;

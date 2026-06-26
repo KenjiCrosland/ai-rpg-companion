@@ -1,5 +1,6 @@
 <template>
-  <div class="tool-navigation">
+  <!-- `parchment` opts out of App.vue's global font-family !important. -->
+  <div class="tool-navigation parchment">
     <label for="tool-select">Current Tool:</label>
     <select id="tool-select" :value="currentSlug" @change="navigate($event.target.value)">
       <optgroup label="Generators">
@@ -40,26 +41,34 @@ function navigate(slug) {
 }
 
 .tool-navigation label {
-  font-size: 1.6rem;
-  color: #999;
-  font-weight: 500;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.55rem;
+  color: var(--color-action-hover, #2A4D70);
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .tool-navigation select {
-  font-size: 1.6rem;
-  padding: 0.625rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #fff;
-  color: #333;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding: 0.6rem 2.4rem 0.6rem 1rem;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
+  background: var(--par-color-field-bg, rgba(243, 235, 218, 0.5))
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M0 0l6 8 6-8z' fill='%232A4D70'/></svg>")
+    no-repeat right 1rem center / 0.7rem 0.5rem;
+  color: var(--color-action-hover, #2A4D70);
+  appearance: none;
+  -webkit-appearance: none;
   cursor: pointer;
   min-width: 280px;
+  transition: border-color 0.15s ease;
 }
 
 .tool-navigation select:focus {
-  outline: 2px solid #007a5a;
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--color-action-rest, #365A85);
 }
 
 @media (max-width: 768px) {

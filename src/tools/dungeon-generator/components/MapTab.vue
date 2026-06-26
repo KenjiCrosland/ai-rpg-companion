@@ -1,10 +1,11 @@
 <template>
   <div class="map-and-sidebar-container" ref="mapContainer">
     <div class="dungeon-map-wrapper" ref="mapWrapper">
+      <div class="dungeon-map-heading parchment">
+        <h3 class="dungeon-map-heading__title">Map</h3>
+        <p class="dungeon-map-heading__tagline">Click a room to view and generate its description.</p>
+      </div>
       <div v-if="dungeonStore.currentDungeon" class="dungeon-map-container" ref="mapInnerContainer">
-        <h4 style="text-align: center">
-          Map of {{ dungeonStore.currentDungeon.dungeonOverview.name }}
-        </h4>
         <div v-if="dungeonStore.currentDungeon.rooms" class="dungeon-map-positioner">
           <DungeonMap :rooms="dungeonStore.currentDungeon.rooms" @roomClicked="handleRoomClick" ref="dungeonMap"
             :dungeonName="dungeonStore.currentDungeon.dungeonOverview.name" @mapClicked="handleMapClick"
@@ -72,14 +73,14 @@
           Click a room number to add details
         </p>
         <div class="generate-button-container">
-          <ParActionButton @click="handleGenerateMapClick" size="small"
+          <ParButton @click="handleGenerateMapClick" size="small"
             :disabled="dungeonStore.isAssigningMapContext">
-            {{ dungeonStore.currentDungeon && dungeonStore.currentDungeon.rooms ? 'Re-generate Map' : 'Generate Map' }}
-          </ParActionButton>
-          <ParActionButton v-if="mapExists" @click="handleDownloadMapClick" size="small"
+            {{ dungeonStore.currentDungeon && dungeonStore.currentDungeon.rooms ? 'Re-generate Map' : 'Generate map' }}
+          </ParButton>
+          <ParButton v-if="mapExists" @click="handleDownloadMapClick" size="small"
             :disabled="dungeonStore.isAssigningMapContext">
             Download Map
-          </ParActionButton>
+          </ParButton>
         </div>
       </div>
     </div>
@@ -90,7 +91,7 @@
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import DungeonMap from './DungeonMap.vue';
@@ -171,6 +172,30 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Tab header — shared 2.8rem standard (matches the other dungeon/setting tabs). */
+.dungeon-map-heading {
+  margin-bottom: 1.5rem;
+}
+
+.dungeon-map-heading__title {
+  margin: 0 0 0.3rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.8rem;
+  font-weight: 600;
+  color: var(--par-color-action-primary, #2A4D70);
+  line-height: 1.2;
+}
+
+.dungeon-map-heading__tagline {
+  margin: 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.55;
+}
+
 .map-and-sidebar-container {
   display: flex;
   flex-direction: row;
@@ -180,7 +205,6 @@ onMounted(() => {
 }
 
 .dungeon-map-wrapper {
-  background-color: #fafaf6;
   overflow: auto;
   flex: 1 1 auto;
 }
@@ -218,7 +242,7 @@ onMounted(() => {
   text-align: center;
   max-width: 340px;
   padding: 1.75rem 2rem;
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 1.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-sm, 3px);
   box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));

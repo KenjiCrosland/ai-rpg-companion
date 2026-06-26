@@ -353,6 +353,15 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Parchment page "desk" behind every tool — a deeper cool base. The
+   brightness lives in a halo behind the content (GeneratorLayout
+   .app-container), so cream cards sit in light against this darker surround.
+   Kept in sync with the prod desk in wordpress/functions.php
+   (rpg_companion_app_style_guards). */
+body {
+  background-color: #BECBDB;
+}
+
 /* Make form controls inherit too */
 body,
 button,

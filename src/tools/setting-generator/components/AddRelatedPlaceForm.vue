@@ -4,7 +4,7 @@
       v-if="!expanded"
       @click="expanded = true"
     >
-      + Add a Related Place
+      + Add a related place
     </ParAddNewButton>
 
     <form
@@ -54,12 +54,12 @@
       </p>
 
       <div class="add-related-place-actions">
-        <ParActionButton
+        <ParButton
           variant="primary-outline"
           @click="onSubmit"
         >
-          Create Setting
-        </ParActionButton>
+          Create setting
+        </ParButton>
         <button type="button" class="add-related-place-cancel" @click="reset">
           Cancel
         </button>
@@ -70,7 +70,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { ParActionButton, ParAddNewButton } from '@/parchment';
+import { ParButton, ParAddNewButton } from '@/parchment';
 
 // `computed` retained for the dynamic placeholders below — submit
 // validation isn't needed anymore now that name + description are
@@ -143,8 +143,8 @@ defineExpose({
   /* Cleanest cream so the form lifts off the page-surface tint of
      the surrounding Related Places section — same surface-contrast
      pattern the row cards use. */
-  background: var(--par-color-surface, #fdfbf6);
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  background: var(--par-color-surface, #FBF7F0);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .add-related-place-row {
@@ -201,7 +201,7 @@ defineExpose({
 
 .add-related-place-helper {
   margin: 0 0 1rem 0;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   font-size: 1.3rem;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);

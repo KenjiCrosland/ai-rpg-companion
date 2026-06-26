@@ -1,0 +1,13 @@
+{
+  "place_name": "The Shattered Watchtower",
+  "tone_id": "interrupted_activity",
+  "key_npc": "Jhalmuk, an oni disguised as a wounded traveler seeking refuge",
+  "situation": "The party discovers a ruined tower where a small band of corrupted knights is performing a blood ritual over stolen relics. The ritual is nearly complete, and the knights will become something worse if undisturbed.",
+  "centerpiece": {
+    "description": "In the tower's center, an ancient stone altar glows with sickly crimson light. Three corrupted knights stand around it, chanting in a language that makes the air taste of copper and ash.",
+    "mechanic": "The altar channels necrotic energy. Any creature that ends its turn within 10 feet must make a DC 15 Constitution saving throw or take 2d6 necrotic damage.",
+    "player_exploit": "Shattering the altar requires 3 successful melee attacks (AC 16, 15 HP). Breaking it immediately ends the ritual and forces a concentration check on all chanting creatures."
+  },
+  "has_turn": true,
+  "disguised_as": "a travel-worn figure in tattered robes with fresh wounds that weep black ichor beneath torn bandages"
+}

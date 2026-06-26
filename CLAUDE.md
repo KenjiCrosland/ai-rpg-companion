@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Design system
+
+For design system decisions — color, typography, surfaces, components, voice — see [`parchment.md`](parchment.md) at the repo root. **Read it before making styling decisions on any cros.land surface.** It's a descriptive map of the system as it exists (with notes on intent and known drift), and `src/parchment/CLAUDE.md` is the component-level catalog.
+
 ## Check `plans/` before starting feature work
 
 Before implementing anything substantive, **scan `plans/README.md`** and read any plan whose trigger matches the work you're about to do. Plans in that folder document deferred fixes, latent issues, and design decisions whose context would otherwise be lost between sessions. They're written assuming you have no prior conversation history. If a relevant plan exists, follow it instead of re-deriving the approach from scratch.
@@ -259,6 +263,31 @@ npm test                                    # Run all tests
 npm test -- StatblockGenerator.spec.js     # Run specific test file
 npm test -- --maxWorkers=1                 # Run tests sequentially (helps with flaky tests)
 ```
+
+### Acceptance tests (Playwright, end-to-end)
+
+There are **two separate test suites**, and they must not be conflated:
+
+- `npm test` → **Jest** unit/component tests (the section above). Jest's config
+  has `testPathIgnorePatterns: ["<rootDir>/tests/"]` so it does **not** pick up
+  the Playwright specs. Don't remove that exclusion, and don't repoint the
+  `test` script at Playwright — `npm test` staying Jest is load-bearing.
+- `npm run test:e2e` → **Playwright** acceptance tests in `tests/`, run locally
+  against the Vite dev server. Most specs mock the LLM; 2 real-endpoint smoke
+  tests hit the live `/api/ai/*` proxy (need an API key in `.env.local`) and run
+  as part of this full suite. Use `npm run test:e2e:mocked` for the fast, no-key,
+  no-cost iteration loop (`test:e2e:headed`/`test:e2e:ui`/`test:e2e:smoke` also
+  exist). These cover the critical cross-tool user flows whose regression would
+  matter most for a release.
+
+**`tests/README.md` is the authoritative guide** — read it before adding or
+debugging an e2e test. The non-obvious realities it documents (and that bit us
+once already): dev is a single SPA so navigation is `localStorage['dev-current-page']`
+not per-tool URLs; premium is the page *variant* (`<tool>-premium`), not a
+runtime flag; all tools POST to one `/api/ai/*` endpoint so the mock sequences
+fixtures by call order; fixtures are hand-authored to pass each tool's real
+validator; and two-part generators need the *completion* signal (not the part-1
+signal) before you reset or navigate.
 
 ## Migration Status
 

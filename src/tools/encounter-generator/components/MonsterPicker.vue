@@ -1,21 +1,19 @@
 <template>
-  <div class="monster-picker">
+  <div class="monster-picker parchment">
     <div class="picker-search">
-      <cdr-input v-model="searchTerm" label="Search" :hide-label="true" placeholder="🔍 Search monsters..."
-        background="secondary" class="search-input" />
-      <cdr-select :hide-label="true" v-model="sourceFilter" label="Source" :options="sourceOptions"
-        class="source-filter" />
-      <cdr-select :hide-label="true" v-model="crFilter" label="CR" :options="crOptions" class="cr-filter" />
+      <ParInput v-model="searchTerm" placeholder="🔍 Search monsters…" class="search-input" />
+      <ParSelect v-model="sourceFilter" :options="sourceOptions" class="source-filter" />
+      <ParSelect v-model="crFilter" :options="crOptions" class="cr-filter" />
     </div>
 
     <div class="monster-list">
       <div v-if="filteredMonsters.length === 0" class="empty-state">
-        <p v-if="allMonsters.length === 0">Loading monsters...</p>
+        <p v-if="allMonsters.length === 0">Loading monsters…</p>
         <p v-else-if="sourceFilter === 'custom' && customMonsters.length === 0">
           No custom statblocks yet.<br />
-          <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/">
+          <a class="picker-link" href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/">
             Create one in the Statblock Generator →
-          </cdr-link>
+          </a>
         </p>
         <p v-else>No monsters match your filters.</p>
       </div>
@@ -28,7 +26,10 @@
         </div>
         <div class="monster-secondary">
           <span class="monster-cr">CR {{ monster.cr }}</span>
-          <span v-if="monster.creatureType" class="monster-type">{{ monster.creatureType }}</span>
+          <template v-if="monster.creatureType">
+            <span class="monster-separator">·</span>
+            <span class="monster-type">{{ monster.creatureType }}</span>
+          </template>
         </div>
       </div>
 
@@ -41,16 +42,17 @@
     </div>
 
     <div class="picker-footer">
-      <cdr-link href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/">
-        Want custom monsters? → Statblock Generator
-      </cdr-link>
+      <p class="picker-cross-reference">
+        Want custom monsters?
+        <a class="picker-cross-reference-link" href="https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/">Generate one in the Statblock Generator</a> →
+      </p>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { CdrInput, CdrSelect, CdrLink } from '@rei/cedar';
+import { ParInput, ParSelect } from '@/parchment';
 import { loadSRDMonsters, loadCustomMonsters, getUniqueCRs } from '../util/monster-adapter.mjs';
 
 const emit = defineEmits(['add-monster']);
@@ -74,10 +76,10 @@ const allMonsters = computed(() => {
 });
 
 const sourceOptions = computed(() => {
-  const options = [{ text: 'All Sources', value: 'all' }];
-  if (srdMonsters.value.length > 0) options.push({ text: 'SRD', value: 'srd' });
+  const options = [{ label: 'All Sources', value: 'all' }];
+  if (srdMonsters.value.length > 0) options.push({ label: 'SRD', value: 'srd' });
   if (customMonsters.value.length > 0) {
-    options.push({ text: 'My Statblocks', value: 'custom' });
+    options.push({ label: 'My Statblocks', value: 'custom' });
 
     const folders = new Set();
     customMonsters.value.forEach(m => {
@@ -86,7 +88,7 @@ const sourceOptions = computed(() => {
       }
     });
     folders.forEach(folder => {
-      options.push({ text: folder, value: `folder:${folder}` });
+      options.push({ label: folder, value: `folder:${folder}` });
     });
   }
   return options;
@@ -95,8 +97,8 @@ const sourceOptions = computed(() => {
 const crOptions = computed(() => {
   const crs = getUniqueCRs(allMonsters.value);
   return [
-    { text: 'Any CR', value: 'any' },
-    ...crs.map(cr => ({ text: `CR ${cr}`, value: cr })),
+    { label: 'Any CR', value: 'any' },
+    ...crs.map(cr => ({ label: `CR ${cr}`, value: cr })),
   ];
 });
 
@@ -138,10 +140,11 @@ const paginatedMonsters = computed(() => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
+  background: var(--par-color-surface, #FBF7F0);
   overflow: hidden;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .picker-search {
@@ -150,15 +153,13 @@ const paginatedMonsters = computed(() => {
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
   padding: 0.75rem;
-  border-bottom: 1px solid #ddd;
-  background: #fafafa;
+  border-bottom: 0.5px solid var(--par-color-divider, #e2dccd);
+  background: var(--par-color-surface-card, #FEFBF4);
 }
 
-.picker-search> :first-child {
+.picker-search > :first-child {
   grid-column: 1 / -1;
 }
-
-/* Source and CR filters take equal width in grid */
 
 .monster-list {
   flex: 1;
@@ -170,20 +171,20 @@ const paginatedMonsters = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.9rem;
   cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.1s;
+  border-bottom: 0.5px solid rgba(201, 185, 154, 0.4);
+  transition: background-color 0.1s ease;
   user-select: none;
   min-height: 4rem;
 }
 
 .monster-row:hover {
-  background: #e8f5e9;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
 }
 
 .monster-row:active {
-  background: #c8e6c9;
+  background: var(--par-color-callout-bg, #f3ebda);
 }
 
 .monster-row:last-child {
@@ -198,36 +199,43 @@ const paginatedMonsters = computed(() => {
 }
 
 .monster-name {
-  font-weight: 600;
-  font-size: 1.2rem;
+  font-weight: 500;
+  font-size: 1.5rem;
+  color: var(--par-color-text, #222);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .source-tag {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 0.0625rem 0.375rem;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.1rem 0.5rem;
   border-radius: 3px;
-  background: #f3e5f5;
-  color: #7b1fa2;
+  background: var(--par-color-callout-bg, #f3ebda);
+  color: var(--par-color-text-secondary, #555);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
   flex-shrink: 0;
 }
 
 .monster-secondary {
   display: flex;
-  gap: 0.75rem;
-  font-size: 1rem;
-  color: #666;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 1.2rem;
+  color: var(--par-color-text-secondary, #555);
+  letter-spacing: 0.04em;
   flex-shrink: 0;
 }
 
 .monster-cr {
-  font-weight: 600;
-  color: #555;
+  color: var(--par-color-title, #7a1f1f);
+  font-weight: 500;
+}
+
+.monster-separator {
+  color: var(--par-color-text-muted, #6b6b6b);
 }
 
 .monster-type {
@@ -237,28 +245,36 @@ const paginatedMonsters = computed(() => {
 .empty-state {
   padding: 2rem;
   text-align: center;
-  color: #666;
-  font-size: 1.2rem;
+  color: var(--par-color-text-secondary, #555);
+  font-size: 1.4rem;
+  font-style: italic;
   line-height: 1.5;
 }
 
+.picker-link {
+  color: var(--color-action-rest, #365A85);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .pagination-note {
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.9rem;
   text-align: center;
-  color: #888;
-  font-size: 0.8125rem;
-  border-top: 1px solid #eee;
-  background: #fafafa;
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-size: 1.2rem;
+  border-top: 0.5px solid var(--par-color-divider, #e2dccd);
+  background: var(--par-color-callout-bg-light, #F8F2E3);
 }
 
 .show-more-btn {
   margin-left: 0.5rem;
   background: none;
   border: none;
-  color: #007a5a;
+  color: var(--color-action-rest, #365A85);
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.8125rem;
+  font-size: 1.2rem;
+  font-family: inherit;
 }
 
 .show-more-btn:hover {
@@ -267,23 +283,24 @@ const paginatedMonsters = computed(() => {
 
 .picker-footer {
   flex-shrink: 0;
-  padding: 0.875rem 0.75rem;
-  border-top: 1px solid #ddd;
-  background: #f0f7f4;
+  padding: 0.875rem 0.9rem;
+  border-top: 0.5px solid var(--par-color-divider, #e2dccd);
+  background: var(--par-color-callout-bg-light, #F8F2E3);
   text-align: center;
+}
+
+.picker-cross-reference {
+  margin: 0;
+  font-family: inherit;
   font-size: 1.2rem;
-  font-weight: 600;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
 }
 
-.picker-footer a {
-  color: #007a5a;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.picker-footer a:hover {
-  color: #005a42;
+.picker-cross-reference-link {
+  color: var(--color-action-rest, #365A85);
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 @media (max-width: 600px) {

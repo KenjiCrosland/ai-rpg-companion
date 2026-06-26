@@ -1,17 +1,17 @@
 <template>
-  <div v-if="!loading" class="exports-section">
+  <div v-if="!loading" class="exports-section parchment">
     <h3 class="exports-heading">Export Your Statblock</h3>
 
     <div class="export-buttons">
-      <ParActionButton @click="copyAsMarkdown" variant="secondary">
+      <ParButton @click="copyAsMarkdown" variant="secondary">
         Copy as Markdown
-      </ParActionButton>
-      <ParActionButton @click="copyAsVTT" variant="secondary">
+      </ParButton>
+      <ParButton @click="copyAsVTT" variant="secondary">
         Copy for Foundry VTT
-      </ParActionButton>
-      <ParActionButton @click="copyAsImprovedInitiative" variant="secondary">
+      </ParButton>
+      <ParButton @click="copyAsImprovedInitiative" variant="secondary">
         Copy for Improved Initiative
-      </ParActionButton>
+      </ParButton>
     </div>
 
     <div class="roll20-callout">
@@ -21,60 +21,55 @@
       — your monsters sync automatically.
     </div>
 
-    <cdr-accordion-group class="export-help">
-      <cdr-accordion level="4" id="export-help-markdown" :opened="openAccordion === 'markdown'"
-        @accordion-toggle="toggleAccordion('markdown')">
-        <template #label>How to use with Homebrewery</template>
-        <ol>
+    <ParAccordionGroup class="export-help">
+      <ParAccordion variant="understated" :level="4" id="export-help-markdown" label="How to use with Homebrewery"
+        :opened="openAccordion === 'markdown'" @accordion-toggle="toggleAccordion('markdown')">
+        <ol class="export-help__steps">
           <li>Click "Copy as Markdown" above.</li>
           <li>Visit <a href="https://homebrewery.naturalcrit.com/new" target="_blank"
               rel="noopener noreferrer">Homebrewery</a>
             and paste on the left side.</li>
           <li>Edit as you like — your statblock renders as a beautiful D&D-styled PDF.</li>
         </ol>
-      </cdr-accordion>
+      </ParAccordion>
 
-      <cdr-accordion level="4" id="export-help-foundry" :opened="openAccordion === 'foundry'"
-        @accordion-toggle="toggleAccordion('foundry')">
-        <template #label>How to import into Foundry VTT</template>
-        <ol>
+      <ParAccordion variant="understated" :level="4" id="export-help-foundry" label="How to import into Foundry VTT"
+        :opened="openAccordion === 'foundry'" @accordion-toggle="toggleAccordion('foundry')">
+        <ol class="export-help__steps">
           <li>Click "Copy for Foundry VTT" above.</li>
           <li>Install the <a href="https://foundryvtt.com/packages/5e-statblock-importer" target="_blank"
               rel="noopener noreferrer">5e Statblock Importer</a> module in Foundry.</li>
           <li>Open the importer, paste, and import.</li>
         </ol>
-      </cdr-accordion>
+      </ParAccordion>
 
-      <cdr-accordion level="4" id="export-help-initiative" :opened="openAccordion === 'initiative'"
-        @accordion-toggle="toggleAccordion('initiative')">
-        <template #label>How to import into Improved Initiative</template>
-        <ol>
+      <ParAccordion variant="understated" :level="4" id="export-help-initiative" label="How to import into Improved Initiative"
+        :opened="openAccordion === 'initiative'" @accordion-toggle="toggleAccordion('initiative')">
+        <ol class="export-help__steps">
           <li>Click "Copy for Improved Initiative" above.</li>
           <li>Visit <a href="https://improvedinitiative.app/e/" target="_blank" rel="noopener noreferrer">Improved
               Initiative</a>.</li>
           <li>Click "Add New", choose "JSON" mode, paste, and save.</li>
         </ol>
-      </cdr-accordion>
+      </ParAccordion>
 
-      <cdr-accordion level="4" id="export-help-roll20" :opened="openAccordion === 'roll20'"
-        @accordion-toggle="toggleAccordion('roll20')">
-        <template #label>How to export to Roll20</template>
-        <ol>
+      <ParAccordion variant="understated" :level="4" id="export-help-roll20" label="How to export to Roll20"
+        :opened="openAccordion === 'roll20'" @accordion-toggle="toggleAccordion('roll20')">
+        <ol class="export-help__steps">
           <li>Install the <a
               href="https://chromewebstore.google.com/detail/conjure-creature/oepoeaoeoaaedbgobaegpfamofhkbifo"
               target="_blank" rel="noopener noreferrer">Conjure Creature Chrome Extension</a>.</li>
           <li>Generate your monsters here — they sync automatically to the extension.</li>
           <li>Open a Roll20 NPC sheet, click the extension, select your monster, and export.</li>
         </ol>
-      </cdr-accordion>
-    </cdr-accordion-group>
+      </ParAccordion>
+    </ParAccordionGroup>
   </div>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton, ParAccordion, ParAccordionGroup } from "@/parchment";
 import { ref } from 'vue';
-import { CdrAccordion, CdrAccordionGroup } from "@rei/cedar";
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
 import { convertToImprovedInitiative } from '@/util/convertToImprovedInitiative.mjs';
 import { convertToFoundryVTT } from '@/util/convertToFoundryVTT.mjs';
@@ -114,19 +109,24 @@ const copyAsImprovedInitiative = () => {
 </script>
 
 <style scoped lang="scss">
-@import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
-
+/* Parchment export panel — matches the shared ItemExportsSection register
+   (serif, warm-tan surface, tokens, dark-lapis heading). */
 .exports-section {
   max-width: 850px;
   margin: 2rem auto;
   padding: 2rem;
-  background-color: $cdr-color-background-secondary;
-  border-radius: 8px;
+  background-color: var(--par-color-callout-bg, #f3ebda);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .exports-heading {
   margin: 0 0 1.25rem;
-  font-size: 1.6rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2A4D70); /* dark lapis */
 }
 
 .export-buttons {
@@ -137,31 +137,33 @@ const copyAsImprovedInitiative = () => {
 }
 
 .roll20-callout {
-  font-size: 1.3rem;
-  color: $cdr-color-text-secondary;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.35rem;
+  color: var(--par-color-text-secondary, #555);
   margin-bottom: 1.5rem;
-  line-height: 1.5;
+  line-height: 1.6;
 
   a {
-    color: $cdr-color-text-brand;
+    color: var(--color-action-hover, #2A4D70);
+    text-decoration: underline;
   }
 }
 
-.export-help {
+.export-help__steps {
+  margin: 0;
+  padding-left: 1.5rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.4rem;
+  line-height: 1.65;
+  color: var(--par-color-text, #222);
 
-  ol {
-    margin: 0.5rem 0 0.5rem 1.5rem;
-    padding: 0;
-    font-size: 1.3rem;
-    line-height: 1.6;
+  li {
+    margin-bottom: 0.3rem;
+  }
 
-    li {
-      margin-bottom: 0.25rem;
-    }
-
-    a {
-      color: $cdr-color-text-brand;
-    }
+  a {
+    color: var(--color-action-hover, #2A4D70);
+    text-decoration: underline;
   }
 }
 

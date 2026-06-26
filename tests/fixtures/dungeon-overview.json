@@ -1,0 +1,63 @@
+{
+  "name": "The Sunken Citadel",
+  "title": "The Sunken Citadel of the Elder Kings",
+  "overview": "An ancient city built by a long-dead civilization lies submerged beneath the Shattered Lake, accessible only through underwater passages that open during low-tide cycles. Crumbling towers and elegant aqueducts hint at the city's former glory.",
+  "quest_hook": "A scholar uncovers evidence that the lost Crown of Tides lies within the citadel's vaults. The party is hired to retrieve it before the rising tide covers the entrances for another decade.",
+  "relation_to_larger_setting": "The citadel was the capital of the Tidecallers, a maritime empire that ruled the region 800 years ago before a catastrophic flood sank their civilization.",
+  "approach_and_threshold": "The ruins lie beneath the lake's waters, accessible via a massive stone causeway that surfaces only when the moon is dark and the tide is lowest. The causeway is guarded by water-bloated draugr and ancient mechanical sentries.",
+  "history": "The citadel was built 1,200 years ago as a monument to arcane mastery. At its height the city housed 50,000. A magical catastrophe submerged the entire city overnight. Scholars debate whether this was punishment for hubris or an act of preservation.",
+  "dominant_power": "The undead Lich-Admiral Valoress, once the city's greatest naval general, has become the dominant force within the ruins. She seeks to restore the city to its former glory by gathering the scattered relics of the Tidecallers' empire.",
+  "inhabitants_home_faction": "The Draugr Hierarchy — undead sailors and soldiers loyal to Valoress, organized in a rigid naval command structure mirroring the old Tidecaller Navy.",
+  "inhabitants_second_faction": "Rogue water elementals bound to the city's original defenses, increasingly erratic as the binding runes deteriorate.",
+  "inhabitants_contact": "A ghost-mage named Kalleth, once the citadel's chief enchanter, haunts one of the library towers. He retains fragments of knowledge about the city's secrets.",
+  "central_dynamic": "Valoress seeks to reawaken the ancient magical engines that originally sank the city, hoping to raise it from the depths. Meanwhile the binding runes holding the water elementals are failing.",
+  "present_state_clock": "The citadel is caught between decay and dark resurrection. Ancient mechanisms are slowly reactivating. The water elementals grow more volatile daily.",
+  "present_state_recent_shift": "A week ago, a massive crystalline structure deep within the citadel began glowing with eldritch light — a sign that Valoress's plans are accelerating.",
+  "potential_outcomes_primary": "If the party retrieves the Crown of Tides and destroys Valoress, the citadel's systems destabilize and the ruins sink deeper, becoming permanently inaccessible.",
+  "potential_outcomes_secondary": "If Valoress completes her ritual first, the citadel rises from the lake and becomes a base of undead power threatening the entire region.",
+  "potential_outcomes_tertiary": "If the party frees Kalleth's ghost, he can teach them the password to the royal vault, which holds far greater treasures than the Crown alone.",
+  "named_entities": [
+    "Valoress, the Lich-Admiral",
+    "Kalleth, the Ghost-Mage",
+    "The Crown of Tides",
+    "The Sunken Archives",
+    "The Draugr Hierarchy"
+  ],
+  "npc_list": [
+    {
+      "name": "Valoress",
+      "description": "The undead Lich-Admiral who commands the citadel. Once a brilliant naval strategist, she is now consumed by obsession with restoring her lost empire."
+    },
+    {
+      "name": "Kalleth",
+      "description": "A spectral scholar-mage trapped within the library towers he once managed. Torn between loyalty to the old kingdom and revulsion at Valoress's ambitions."
+    },
+    {
+      "name": "Captain Torven",
+      "description": "A draugr naval captain still maintaining the discipline of the old Tidecaller Navy. More honor-bound than Valoress; might be negotiated with."
+    }
+  ],
+  "monsters": [
+    {
+      "type": "minion",
+      "name": "Draugr Sailor",
+      "description": "A waterlogged corpse in the tattered remains of naval uniform, armed with a rusted cutlass and driven by slavish obedience to Valoress.",
+      "danger": "Individually weak but deadly in numbers; they fill the corridors and can overwhelm unprepared adventurers.",
+      "CR": "1/4"
+    },
+    {
+      "type": "strong_minion",
+      "name": "Draugr Sentry",
+      "description": "An elite undead warrior with arcane reinforcement visible as faint glowing runes across its decomposing form.",
+      "danger": "Significantly stronger than common draugr, capable of tactical decisions and resistant to standard turning attempts.",
+      "CR": "2"
+    },
+    {
+      "type": "large_creature",
+      "name": "Tidewrought Horror",
+      "description": "A monstrous amalgam of drowned sailors fused with elemental water, towering and relentless.",
+      "danger": "A devastating bruiser that can grapple multiple creatures and drag them beneath the waves.",
+      "CR": "9"
+    }
+  ]
+}

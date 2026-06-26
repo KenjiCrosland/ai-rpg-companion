@@ -1,39 +1,54 @@
 <template>
     <GeneratorLayout :premium="premium" :flexible-sidebar="true" :show-footer="false">
         <template #sidebar>
-            <div class="sidebar-content">
+            <div class="sidebar-content parchment">
                 <div class="sidebar-scroll">
-                    <cdr-accordion-group>
-                        <cdr-accordion level="3" v-for="(folder, folderName) in npcs" :key="folderName" :id="folderName"
-                            :opened="openedFolders[folderName]"
-                            @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]">
-                            <template #label>
-                                {{ folderName }}
-                            </template>
+                    <ParAccordionGroup>
+                        <ParAccordion
+                            v-for="(folder, folderName) in npcs"
+                            :key="folderName"
+                            :id="`npc-folder-${folderName}`"
+                            :label="folderName"
+                            :count="folder.length"
+                            :level="3"
+                            :content-spacing="false"
+                            :opened="!!openedFolders[folderName]"
+                            @accordion-toggle="openedFolders[folderName] = !openedFolders[folderName]"
+                        >
                             <ul class="npc-list">
-                                <li v-for="(npc, index) in folder" :key="index" :id="`npc-${folderName}-${index}`"
-                                    :class="{ 'active-tab': currentNPCIndex === index && activeFolder === folderName }">
-                                    <button class="npc-button" @click="selectNPC(folderName, index)">
+                                <li v-for="(npc, index) in folder" :key="index"
+                                    class="npc-row"
+                                    :class="{ 'npc-row--active': currentNPCIndex === index && activeFolder === folderName }">
+                                    <button class="npc-row__button" @click="selectNPC(folderName, index)">
                                         {{ npc.npcDescriptionPart1?.character_name || 'Unnamed NPC' }}
                                     </button>
                                 </li>
-                                <li>
-                                    <button v-if="!loadingPart1" class="npc-button" @click="createNewNPC(folderName)"
-                                        :class="{ 'active-tab': currentNPCIndex === null && activeFolder === folderName }">
+                                <li class="npc-row">
+                                    <button v-if="!loadingPart1"
+                                        class="npc-row__button npc-row__new"
+                                        :class="{ 'npc-row__new--active': currentNPCIndex === null && activeFolder === folderName }"
+                                        @click="createNewNPC(folderName)">
                                         + New NPC
                                     </button>
                                 </li>
                             </ul>
-                        </cdr-accordion>
-                    </cdr-accordion-group>
+                        </ParAccordion>
+                    </ParAccordionGroup>
                 </div>
 
-                <div class="sidebar-buttons">
-                    <ParActionButton @click="deleteAllNPCs" v-if="Object.keys(npcs).length > 0 && !loadingPart1"
-                        modifier="secondary" style="width: 100%;">
-                        Delete All NPCs
-                    </ParActionButton>
-                </div>
+                <SidebarFooter
+                    new-label="+ New NPC"
+                    data-description="Save your library to a file or restore from a backup. Your data stays on your device."
+                    backup-label="Backup / Restore library"
+                    delete-all-label="Delete all NPCs"
+                    confirm-title="Delete all NPCs?"
+                    confirm-body="This will permanently delete every saved NPC in your library. This action cannot be undone."
+                    confirm-suggestion="Consider backing up your library first if you might want to restore these later."
+                    confirm-cta="Delete all NPCs"
+                    @new="createNewNPC(activeFolder)"
+                    @open-data-manager="showDataManagerModal = true"
+                    @delete-all="deleteAllNPCs"
+                />
             </div>
         </template>
 
@@ -45,48 +60,41 @@
             <!-- LANDING STATE: Three-zone layout -->
             <div class="landing-wrapper" v-if="!npcDescriptionPart1 && !loadingPart1">
 
-                <!-- ZONE 1: Hero header -->
-                <div class="hero-header">
+                <!-- ZONE 1: Hero header (lapis editorial register) -->
+                <div class="hero-header parchment">
                     <div class="brand-line">
                         <span class="brand-name">Kenji's NPC Generator</span>
                         <!-- Version pill is fresh-visit framing — suppressed
                              during seeded flows where the user is mid-task. -->
-                        <span v-if="!isSeededFlow && !premium" class="version-pill">Free</span>
-                        <span v-else-if="!isSeededFlow" class="version-pill premium">Premium</span>
+                        <VersionBadge v-if="!isSeededFlow" :premium="premium" />
                     </div>
                     <template v-if="isSeededFlow">
-                        <h1>Create NPC: {{ seedStubName }}</h1>
-                        <p class="value-prop">
+                        <h1 class="page-heading__title">Create NPC: {{ seedStubName }}</h1>
+                        <p class="page-heading__tagline">
                             From your {{ seedSourceType }}
                             <a href="#" class="seed-source-link" @click.prevent="navigateBackToSeedSource">{{
                                 seedSourceName }}</a>
                         </p>
                     </template>
                     <template v-else>
-                        <h1>Bring Your World to Life with Detailed NPCs</h1>
-                        <p class="value-prop">Generate memorable characters with backstories, relationships, and combat
-                            statblocks —
-                            ready for any session.</p>
+                        <h1 class="page-heading__title">Bring your world to life with detailed NPCs</h1>
+                        <p class="page-heading__tagline">Generate memorable characters with backstories, relationships,
+                            and combat statblocks — ready for any session.</p>
                     </template>
                 </div>
 
-                <!-- ZONE 2: Form card -->
-                <div class="form-card">
+                <!-- ZONE 2: Form card — lifted cream surface, lapis "magic UI" -->
+                <div class="form-card parchment paper-grain">
                     <SeededFromBanner
                         :source-type="seedSourceType"
                         :source-name="seedSourceName"
                     />
                     <form @submit.prevent="handleGenerateNPC">
-                        <cdr-input id="typeOfNPC" v-model="typeOfPlace" background="secondary"
-                            label="Give me an NPC Description For:" :optional="true">
-                            <!-- Examples are orientation for fresh visitors; in a
-                                 seeded flow the field is already pre-filled with
-                                 the right content, and alternatives are noise. -->
-                            <template v-if="!isSeededFlow" #helper-text-bottom>Examples: A notable tavern patron, a
-                                drunken ronin,
-                                a sentient gazebo named Gary, a cyberpunk hacker losing themselves to the implants, a
-                                goblin named Boblin</template>
-                        </cdr-input>
+                        <ParField label="Give me an NPC description for" :optional="true"
+                            :hint="!isSeededFlow ? 'Examples: a notable tavern patron, a drunken ronin, a sentient gazebo named Gary, a cyberpunk hacker losing themselves to the implants, a goblin named Boblin' : ''">
+                            <ParInput id="typeOfNPC" v-model="typeOfPlace"
+                                placeholder="A scheming guildmaster, or leave blank for a surprise" />
+                        </ParField>
 
                         <StatblockFuzzySearch v-model="selectedStatblock" label="Associated Statblock"
                             placeholder="Search for a statblock..." :optional="true" :highlight-on-mount="isDeepLink" />
@@ -109,8 +117,8 @@
                         </fieldset>
                         <!-- END TEST-REGISTER-OVERRIDE -->
 
-                        <ParActionButton type="submit" :disabled="loadingPart1" class="generate-button">Generate
-                            NPC</ParActionButton>
+                        <ParButton type="submit" :disabled="loadingPart1" :full-width="true"
+                            class="generate-button" data-testid="generate-npc">Generate NPC</ParButton>
                     </form>
                 </div>
 
@@ -121,9 +129,10 @@
                      doesn't need that framing. The persistent affordances
                      (Patreon CTA for free users, Save/Load for premium) stay
                      available regardless. -->
-                <div class="footer-meta">
-                    <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
-                    <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+                <!-- Free users only — premium's backup/restore lives in the
+                     sidebar footer's Data options. -->
+                <div class="footer-meta" v-if="!premium">
+                    <PatreonCallout :patreon-url="patreonLoginUrl">
                         <template #body>
                             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs
                                 across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
@@ -137,23 +146,11 @@
                             </li>
                         </template>
                     </PatreonCallout>
-
-                    <!-- Premium users: parchment surface so the active
-                         status reads as a coherent block, matching the
-                         upsell callout above. -->
-                    <ParCallout v-else>
-                        <p v-if="!isSeededFlow">All features unlimited. NPC data is saved on this browser. Export to a
-                            file to
-                            use on another device.</p>
-                        <ParActionButton @click="showDataManagerModal = true">
-                            Save/Load Data from a File
-                        </ParActionButton>
-                    </ParCallout>
                 </div>
             </div>
 
             <!-- NPC Content (shown when NPC is loaded or loading) -->
-            <div id="npc-content-area" class="location-description"
+            <div id="npc-content-area" class="location-description paper-grain" data-testid="npc-output"
                 v-if="loadingPart1 || loadingPart2 || npcDescriptionPart1 || npcDescriptionPart2 || errorMessage">
 
                 <!-- NPC Card (always shown when loading or data exists) -->
@@ -174,29 +171,29 @@
                 <div v-if="npcDescriptionPart2 && !loadingPart2 && !isEditingNPC">
 
                     <!-- Folder Mover Interface -->
-                    <div v-if="showFolderMover" class="folder-mover"
-                        style="margin-top: 1.5rem; padding: 1.5rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
-                        <h4 style="margin-top: 0; margin-bottom: 1rem;">Move NPC to Folder</h4>
+                    <div v-if="showFolderMover" class="npc-folder-mover parchment">
+                        <h4 class="npc-folder-mover__heading">Move NPC to folder</h4>
 
-                        <cdr-select v-model="folderMoveTarget" label="Destination folder" prompt="Select a folder"
-                            background="secondary" style="margin-bottom: 1rem;">
-                            <option v-for="folder in folderOptions" :key="folder" :value="folder">{{ folder }}</option>
-                            <option value="__new__">+ Create new folder</option>
-                        </cdr-select>
+                        <div class="npc-folder-mover__row">
+                            <ParField label="Destination folder" class="npc-folder-mover__field">
+                                <ParSelect v-model="folderMoveTarget" :options="folderMoveSelectOptions"
+                                    placeholder="Select a folder" />
+                            </ParField>
+                            <ParField v-if="folderMoveTarget === '__new__'" label="New folder name"
+                                class="npc-folder-mover__field">
+                                <ParInput v-model="newFolderName" placeholder="e.g., Villains" />
+                            </ParField>
+                        </div>
 
-                        <cdr-input v-if="folderMoveTarget === '__new__'" v-model="newFolderName" label="New folder name"
-                            background="secondary" style="margin-bottom: 1rem;" />
-
-                        <div class="button-group" style="margin-top: 1rem;">
-                            <ParActionButton @click="handleFolderMove"
+                        <div class="npc-folder-mover__actions">
+                            <ParButton variant="primary" @click="handleFolderMove"
                                 :disabled="!folderMoveTarget || (folderMoveTarget === '__new__' && !newFolderName.trim())">
                                 Move NPC
-                            </ParActionButton>
-                            <ParActionButton
-                                @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';"
-                                variant="secondary">
+                            </ParButton>
+                            <ParButton variant="secondary-filled"
+                                @click="showFolderMover = false; folderMoveTarget = ''; newFolderName = '';">
                                 Cancel
-                            </ParActionButton>
+                            </ParButton>
                         </div>
                     </div>
 
@@ -209,12 +206,12 @@
                             for handouts.
                         </template>
                         <template #buttons>
-                            <ParActionButton @click="copyNPCAsPlainText" variant="secondary">
-                                Copy as Plain Text
-                            </ParActionButton>
-                            <ParActionButton @click="copyNPCAsMarkdown">
+                            <ParButton @click="copyNPCAsPlainText" variant="secondary">
+                                Copy as plain text
+                            </ParButton>
+                            <ParButton @click="copyNPCAsMarkdown">
                                 Copy as Homebrewery Markdown
-                            </ParActionButton>
+                            </ParButton>
                         </template>
                     </ItemExportsSection>
 
@@ -227,40 +224,44 @@
                         </p>
                     </div>
                 </div>
-                <div v-if="npcDescriptionPart2 && !loadingPart2">
-                    <h3>{{ npcDescriptionPart1.statblock_name ? 'Associated Statblock' :
-                        'Generate D&D 5e Statblock for' +
-                        npcDescriptionPart1.character_name }}</h3>
+                <div v-if="npcDescriptionPart2 && !loadingPart2" class="npc-statblock parchment">
+                    <h3 v-if="npcDescriptionPart1.statblock_name" class="npc-statblock__heading">Associated statblock</h3>
                     <div>
                         <!-- Generate or Attach Statblock (only show if no statblock attached) -->
-                        <div v-if="!npcDescriptionPart1.statblock_name" class="generate-monster">
-
-                            <div class="cr-select">
-                                <cdr-select v-model="selectedChallengeRating" label="Challenge Rating" prompt="CR"
-                                    :options="challengeRatingData.fullArray" />
-                                <cdr-checkbox label="Spellcaster:" v-model="isSpellcaster">NPC is a
-                                    Spellcaster</cdr-checkbox>
+                        <div v-if="!npcDescriptionPart1.statblock_name" class="npc-statblock__form parchment">
+                            <h3 class="npc-statblock__heading npc-statblock__heading--inset">
+                                Generate a D&D 5e statblock for {{ npcDescriptionPart1.character_name }}
+                            </h3>
+                            <div class="npc-statblock__fields">
+                                <ParField label="Challenge rating" class="npc-statblock__cr">
+                                    <ParSelect v-model="selectedChallengeRating"
+                                        :options="challengeRatingData.fullArray" placeholder="CR" />
+                                </ParField>
+                                <ParCheckbox v-model="isSpellcaster" class="npc-statblock__caster">
+                                    NPC is a spellcaster
+                                </ParCheckbox>
                             </div>
 
-                            <div style="display: flex; gap: 0.5rem;">
-                                <ParActionButton @click="generateStatblock()">Generate Statblock</ParActionButton>
-                                <ParActionButton variant="secondary" @click="showAttachStatblockModal = true">Attach
-                                    Statblock
-                                </ParActionButton>
+                            <div class="npc-statblock__actions">
+                                <ParButton variant="primary" @click="generateStatblock()">Generate statblock</ParButton>
+                                <ParButton variant="secondary-filled" @click="showAttachStatblockModal = true">
+                                    Attach statblock
+                                </ParButton>
                             </div>
                         </div>
 
                         <!-- Attach Statblock Modal (inline) -->
-                        <div v-if="showAttachStatblockModal" class="attach-statblock-modal">
+                        <div v-if="showAttachStatblockModal" class="attach-statblock-modal parchment">
                             <StatblockFuzzySearch v-model="attachStatblockSelection"
                                 label="Select a Statblock to Attach" placeholder="Search for a statblock..."
                                 :optional="false" />
-                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                                <ParActionButton @click="confirmAttachStatblock" :disabled="!attachStatblockSelection">
+                            <div class="npc-statblock__actions">
+                                <ParButton variant="primary" @click="confirmAttachStatblock"
+                                    :disabled="!attachStatblockSelection">
                                     Attach
-                                </ParActionButton>
-                                <ParActionButton variant="secondary" @click="cancelAttachStatblock">Cancel
-                                </ParActionButton>
+                                </ParButton>
+                                <ParButton variant="secondary-filled" @click="cancelAttachStatblock">Cancel
+                                </ParButton>
                             </div>
                         </div>
 
@@ -272,11 +273,11 @@
                                 deleted
                                 or renamed in the Statblock Generator.</p>
                             <div class="button-group">
-                                <ParActionButton @click="generateStatblock()" size="small">Regenerate Statblock
-                                </ParActionButton>
-                                <ParActionButton @click="clearStatblockReference()" variant="secondary" size="small">
+                                <ParButton @click="generateStatblock()" size="small">Regenerate Statblock
+                                </ParButton>
+                                <ParButton @click="clearStatblockReference()" variant="secondary" size="small">
                                     Clear
-                                    Reference</ParActionButton>
+                                    Reference</ParButton>
                             </div>
                         </div>
 
@@ -308,9 +309,10 @@
             </div>
 
             <!-- Footer below NPC content (separate card) -->
-            <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1">
-                <!-- Free users: PatreonCallout owns the upsell messaging end-to-end. -->
-                <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+            <!-- Free users only — premium's backup/restore lives in the
+                 sidebar footer's Data options. -->
+            <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1 && !premium">
+                <PatreonCallout :patreon-url="patreonLoginUrl">
                     <template #body>
                         <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across
                             devices and unlocks unlimited combat statblock generation for your NPCs.</p>
@@ -324,35 +326,39 @@
                         </li>
                     </template>
                 </PatreonCallout>
-
-                <!-- Premium users: parchment surface so the active
-                     status reads as a coherent block, matching the
-                     upsell callout above. -->
-                <ParCallout v-else>
-                    <p>All features unlimited. NPC data is saved on this browser. Export to a file to use on another
-                        device.</p>
-                    <ParActionButton @click="showDataManagerModal = true">
-                        Save/Load Data from a File
-                    </ParActionButton>
-                </ParCallout>
             </div>
         </div>
+
+        <ParConfirm
+            :opened="pendingNPCDelete !== null"
+            title="Delete this NPC?"
+            confirm-label="Delete NPC"
+            cancel-label="Cancel"
+            :destructive="true"
+            @confirm="performNPCDelete"
+            @cancel="pendingNPCDelete = null"
+        >
+            <span style="white-space: pre-line;">{{ pendingNPCDelete?.message }}</span>
+        </ParConfirm>
     </GeneratorLayout>
 </template>
 
 <script setup>
-import { ParActionButton, ParCallout } from "@/parchment";
+import { ParButton, ParAccordion, ParAccordionGroup, ParField, ParInput, ParSelect, ParCheckbox, ParConfirm } from "@/parchment";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { CdrLink, CdrCheckbox, CdrSelect, CdrSkeleton, CdrSkeletonBone, CdrInput, CdrAccordion, CdrAccordionGroup } from '@rei/cedar';
+import { CdrLink, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
+import VersionBadge from '@/components/VersionBadge.vue';
 import NPCCard from '@/components/NPCCard.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import Statblock from '@/components/Statblock.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
 import SeededFromBanner from '@/components/SeededFromBanner.vue';
+import SidebarFooter from '@/components/SidebarFooter.vue';
 import { logger } from '@/util/logger.mjs';
+import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
@@ -405,8 +411,6 @@ import '@rei/cedar/dist/style/cdr-list.css';
 import '@rei/cedar/dist/style/cdr-skeleton.css';
 import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
 import '@rei/cedar/dist/style/cdr-input.css';
-import '@rei/cedar/dist/style/cdr-accordion.css';
-import '@rei/cedar/dist/style/cdr-accordion-group.css';
 
 const toast = useToast();
 
@@ -489,6 +493,13 @@ function openInStatblockGenerator() {
 const folderOptions = computed(() => {
     return Object.keys(npcs.value).filter(folderName => folderName !== activeFolder.value);
 });
+
+// {value,label} options for the parchment ParSelect in the folder mover,
+// with the trailing "create new folder" sentinel.
+const folderMoveSelectOptions = computed(() => [
+    ...folderOptions.value.map(name => ({ label: name, value: name })),
+    { label: '＋ Create new folder', value: '__new__' },
+]);
 
 // Current NPC being viewed
 const currentNPC = computed(() => {
@@ -1180,6 +1191,13 @@ function selectNPC(folderName, index) {
     loadNPCIntoView(folderName, index);
 }
 
+// Delete confirmation (ParConfirm modal — replaces native confirm()).
+// deleteCurrentNPC builds the context + message and opens the modal;
+// performNPCDelete (on @confirm) runs the original delete work. The modal
+// blocks interaction while open, so the live `currentNPCIndex` reads in the
+// perform step behave as the original blocking confirm() did.
+const pendingNPCDelete = ref(null);
+
 function deleteCurrentNPC() {
     const folderName = activeFolder.value || 'Uncategorized';
     const npcToDelete = npcs.value[folderName]?.[currentNPCIndex.value];
@@ -1188,20 +1206,13 @@ function deleteCurrentNPC() {
 
     if (!npcId) {
         // Fallback for NPCs without IDs (shouldn't happen after migration, but just in case)
-        if (confirm(`Are you sure you want to delete ${npcName}?`)) {
-            if (npcs.value[folderName] && currentNPCIndex.value < npcs.value[folderName].length) {
-                npcs.value[folderName].splice(currentNPCIndex.value, 1);
-                saveNPCsToLocalStorage();
-                toast.success('NPC deleted.');
-
-                if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
-                    const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
-                    loadNPCIntoView(activeFolder.value, newIndex);
-                } else {
-                    createNewNPC();
-                }
-            }
-        }
+        pendingNPCDelete.value = {
+            npcId: null,
+            npcName,
+            folderName,
+            isFallback: true,
+            message: `Are you sure you want to delete ${npcName}?`,
+        };
         return;
     }
 
@@ -1213,10 +1224,7 @@ function deleteCurrentNPC() {
     let confirmMessage = `Are you sure you want to delete "${npcName}"?\n\n`;
     confirmMessage += 'This NPC will be deleted from:\n';
 
-    const deleteLocations = [];
-
     if (locations.npcGenerator.length > 0) {
-        deleteLocations.push('NPC Generator');
         if (locations.npcGenerator.length === 1) {
             confirmMessage += `- NPC Generator (${locations.npcGenerator[0]})\n`;
         } else {
@@ -1234,50 +1242,75 @@ function deleteCurrentNPC() {
         }
     }
 
-    if (confirm(confirmMessage)) {
-        // Reset any source-tool stubs pointing to this NPC back to the
-        // unpromoted state. Do this BEFORE removing references so the
-        // source-of-truth links survive long enough to be inspected if
-        // needed.
-        const stubsReset = resetStubsForDeletedNPC(npcId);
+    pendingNPCDelete.value = { npcId, npcName, folderName, isFallback: false, message: confirmMessage };
+}
 
-        // Remove references for this NPC
-        removeReferencesForEntity('npc', npcId);
+function performNPCDelete() {
+    const pending = pendingNPCDelete.value;
+    pendingNPCDelete.value = null;
+    if (!pending) return;
+    const { npcId, npcName, folderName, isFallback } = pending;
 
-        // Delete from all locations
-        const results = deleteNPCFromAllLocations(npcId);
-
-        // Reload NPCs from localStorage to sync the UI
-        loadNPCsFromLocalStorage();
-
-        // Show success message
-        const deletedFrom = [];
-        if (results.npcGenerator > 0) deletedFrom.push('NPC Generator');
-        if (stubsReset > 0) deletedFrom.push(`${stubsReset} source stub${stubsReset === 1 ? '' : 's'} reset`);
-
-        if (deletedFrom.length > 0) {
-            toast.success(`"${npcName}" deleted from ${deletedFrom.join(', ')}.`);
-        } else {
+    if (isFallback) {
+        if (npcs.value[folderName] && currentNPCIndex.value < npcs.value[folderName].length) {
+            npcs.value[folderName].splice(currentNPCIndex.value, 1);
+            saveNPCsToLocalStorage();
             toast.success('NPC deleted.');
-        }
 
-        // Load next NPC or create new one
-        if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
-            const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
-            loadNPCIntoView(activeFolder.value, newIndex);
-        } else {
-            createNewNPC();
+            if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
+                const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
+                loadNPCIntoView(activeFolder.value, newIndex);
+            } else {
+                createNewNPC();
+            }
         }
+        return;
+    }
+
+    // Reset any source-tool stubs pointing to this NPC back to the
+    // unpromoted state. Do this BEFORE removing references so the
+    // source-of-truth links survive long enough to be inspected if
+    // needed.
+    const stubsReset = resetStubsForDeletedNPC(npcId);
+
+    // Remove references for this NPC
+    removeReferencesForEntity('npc', npcId);
+
+    // Delete from all locations
+    const results = deleteNPCFromAllLocations(npcId);
+
+    // Reload NPCs from localStorage to sync the UI
+    loadNPCsFromLocalStorage();
+
+    // Show success message
+    const deletedFrom = [];
+    if (results.npcGenerator > 0) deletedFrom.push('NPC Generator');
+    if (stubsReset > 0) deletedFrom.push(`${stubsReset} source stub${stubsReset === 1 ? '' : 's'} reset`);
+
+    if (deletedFrom.length > 0) {
+        toast.success(`"${npcName}" deleted from ${deletedFrom.join(', ')}.`);
+    } else {
+        toast.success('NPC deleted.');
+    }
+
+    // Load next NPC or create new one
+    if (npcs.value[activeFolder.value] && npcs.value[activeFolder.value].length > 0) {
+        const newIndex = Math.max(0, Math.min(currentNPCIndex.value, npcs.value[activeFolder.value].length - 1));
+        loadNPCIntoView(activeFolder.value, newIndex);
+    } else {
+        createNewNPC();
     }
 }
 
 function deleteAllNPCs() {
-    if (confirm('Are you sure you want to delete all NPCs? This cannot be undone.')) {
-        npcs.value = { 'Uncategorized': [] };
-        createNewNPC();
-        saveNPCsToLocalStorage();
-        toast.success('All NPCs deleted.');
-    }
+    npcs.value = { 'Uncategorized': [] };
+    createNewNPC();
+    saveNPCsToLocalStorage();
+    // Drop cross-tool edges pointing at the now-deleted NPCs. Runs after
+    // the store is saved so the sweep sees them as gone.
+    sweepOrphanReferences();
+    showDataManagerModal.value = false;
+    toast.success('All NPCs deleted.');
 }
 
 // Folder management
@@ -1943,65 +1976,76 @@ function clearStatblockReference() {
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 $sidebar-width: 350px;
-$background-color: #f4f4f4;
-$active-color: #ffffff;
-$hover-background-color: #f0f0f0;
-$default-background-color: #e0e0e0;
-$active-border-color: #007BFF;
+$background-color: transparent;
+$active-color: var(--par-color-callout-bg-deep, #ede2cb);
+$hover-background-color: var(--par-color-callout-bg, #f3ebda);
+$default-background-color: transparent;
+$active-border-color: var(--color-action-rest, #365A85);
 
 .sidebar-content {
     flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 
-    .npc-list {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 2rem 0;
-
-        li {
-            margin-bottom: 4px;
-
-            &.active-tab {
-                .npc-button {
-                    background-color: $active-color;
-                    border-left: 4px solid $active-border-color;
-                }
-            }
-
-            .npc-button {
-                width: 100%;
-                padding: 12px 20px;
-                font-size: 1.25rem;
-                text-align: left;
-                background-color: $default-background-color;
-                border: none;
-                color: inherit;
-                border-left: 4px solid transparent;
-                border-radius: 4px;
-                cursor: pointer;
-                transition: background-color 0.2s;
-                font-family: 'Roboto', sans-serif;
-
-                &:hover {
-                    background-color: $hover-background-color;
-                }
-
-                &:focus {
-                    outline: none;
-                    border-left-color: $active-border-color;
-                }
-            }
-        }
+    .sidebar-scroll {
+        flex: 1;
+        overflow-y: auto;
     }
+}
 
-    .sidebar-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
+/* ---- NPC rows inside a ParAccordion folder ---- */
+.npc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.npc-row__button {
+    width: 100%;
+    padding: 1.3rem 1.6rem;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--par-color-divider, #e2dccd);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1.6rem;
+    color: var(--par-color-text, #222);
+    line-height: 1.3;
+    transition: background-color 0.15s ease;
+}
+
+.npc-row__button:hover {
+    background-color: rgba(243, 235, 218, 0.4);
+}
+
+.npc-row__button:focus-visible {
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+    outline-offset: -2px;
+}
+
+.npc-row--active .npc-row__button {
+    background-color: var(--par-color-callout-bg, #f3ebda);
+    color: var(--color-action-hover, #2A4D70);
+    font-weight: 600;
+}
+
+/* Per-folder "create new" affordance — lapis, quieter than an NPC row. */
+.npc-row__new {
+    font-size: 1.35rem;
+    color: var(--color-action-rest, #365A85);
+}
+
+.npc-row__new:hover {
+    color: var(--color-action-hover, #2A4D70);
+}
+
+.npc-row__new--active {
+    background-color: var(--par-color-callout-bg, #f3ebda);
+    color: var(--color-action-hover, #2A4D70);
+    font-weight: 600;
 }
 
 /* ========================================
@@ -2013,7 +2057,7 @@ $active-border-color: #007BFF;
     margin: 0 auto;
 }
 
-/* ZONE 1: Hero header */
+/* ZONE 1: Hero header — lapis editorial register (matches Statblock/Item) */
 .hero-header {
     text-align: center;
     padding: 2rem 1rem 2.5rem;
@@ -2023,43 +2067,34 @@ $active-border-color: #007BFF;
         align-items: center;
         justify-content: center;
         gap: 0.75rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.25rem;
     }
 
     .brand-name {
-        font-size: 1.4rem;
+        font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+        font-size: 1.3rem;
         font-weight: 500;
-        color: $cdr-color-text-secondary;
-        letter-spacing: 0.02em;
+        color: var(--color-action-secondary-rest, #5A7A9A);
+        letter-spacing: 0.04em;
     }
 
-    .version-pill {
-        display: inline-block;
-        font-size: 1.1rem;
+    .page-heading__title {
+        font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+        font-size: 3.6rem;
         font-weight: 600;
-        padding: 0.2rem 0.8rem;
-        border-radius: 100px;
-        background-color: #ededed;
-        color: $cdr-color-text-secondary;
-
-        &.premium {
-            background-color: #fdf3e0;
-            color: #9c6a0a;
-        }
-    }
-
-    h1 {
-        font-size: 3.2rem;
-        line-height: 1.15;
+        color: var(--color-action-hover, #2A4D70);
         margin: 0 0 0.75rem;
-        color: $cdr-color-text-primary;
+        line-height: 1.15;
+        letter-spacing: -0.015em;
     }
 
-    .value-prop {
+    .page-heading__tagline {
+        font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
         font-size: 1.6rem;
-        font-weight: 400;
-        color: $cdr-color-text-secondary;
+        color: var(--par-color-text-secondary, #555);
+        font-style: italic;
         margin: 0;
+        line-height: 1.6;
     }
 
     /* Seeded-flow back-link to the source entity (item, etc.). Burgundy
@@ -2088,18 +2123,17 @@ $active-border-color: #007BFF;
     }
 }
 
-/* ZONE 2: Form card */
+/* ZONE 2: Form card — lifted cream surface, lapis "magic UI" register */
 .form-card {
-    background-color: #ffffff;
-    border: 1px solid #e2e2e2;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    padding: 2.5rem 3rem;
+    background: var(--par-color-surface-card, #FEFBF4);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-radius: var(--par-radius-lg, 12px);
+    padding: 2.25rem 2.25rem 2rem;
 
     form {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 1.25rem;
         background-color: transparent;
         border-radius: 0;
         padding: 0;
@@ -2107,7 +2141,8 @@ $active-border-color: #007BFF;
     }
 
     .generate-button {
-        align-self: flex-start;
+        align-self: stretch;
+        margin-top: 0.5rem;
     }
 }
 
@@ -2146,7 +2181,7 @@ $active-border-color: #007BFF;
 .premium-banner {
     font-size: 1.2rem;
     color: $cdr-color-text-secondary;
-    background-color: #fdf8ef;
+    background-color: var(--par-color-surface, #FBF7F0);
     border: 1px solid #f0e4cc;
     border-radius: 6px;
     padding: 0.75rem 1rem;
@@ -2168,15 +2203,50 @@ $active-border-color: #007BFF;
     padding: 2px 30px 30px 30px;
 }
 
+/* The NPC content area no longer carries its own white card — the NPCCard
+   (and the rendered statblock) bring their own parchment surfaces, so this is
+   just a transparent layout wrapper. */
+/* Editorial container for the generated NPC (M2): frames the output on a
+   cream stage instead of leaving the NPC card bare on the cool desk. Matched
+   to the other tools' containers (.item-view / .setting-tabs /
+   .content-container): #FEFBF4, 8px radius, 2.5rem padding, 2rem bottom
+   margin, soft shadow, no border (so it doesn't double-border the card). */
 .location-description {
     @include cdr-text-body-500();
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
+    margin-bottom: 2rem;
     width: 100%;
     box-sizing: border-box;
+    background-color: var(--par-color-surface-card, #FEFBF4);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 2.5rem;
+}
+
+/* Drop the trailing card margin so the cream stage's bottom padding isn't
+   doubled when the NPC card is the last child. */
+.location-description > :last-child {
+    margin-bottom: 0;
+}
+
+/* The NPCCard carries generous horizontal padding (3rem) sized for
+   standalone/WordPress use. Inside the stage that stacks with the stage's
+   2.5rem, pushing content too far in and out of rhythm with the other tools.
+   Trim the card's section padding to 2rem here (scoped to the NPC generator —
+   the card's read-only use in dungeon/setting/encounter is untouched) so the
+   content inset reads consistently. */
+.location-description :deep(.npc-card-header),
+.location-description :deep(.npc-card-content),
+.location-description :deep(.npc-card-stub-body),
+.location-description :deep(.npc-edit) {
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+@media (max-width: 2080px) {
+    #npc-content-area {
+        margin-top: 3rem;
+    }
 }
 
 hr {
@@ -2196,22 +2266,96 @@ div[class^="cdr-skeleton-bone"] {
     gap: 10px;
 }
 
-.generate-monster {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
+/* ---- Folder mover (parchment cream card) ---- */
+.npc-folder-mover {
+    margin-top: 1.5rem;
+    padding: 1.75rem 2rem;
+    background: var(--par-color-surface-card, #FEFBF4);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-radius: var(--par-radius-lg, 12px);
+}
 
-    button {
-        margin-top: 4px;
-    }
+.npc-folder-mover__heading {
+    margin: 0 0 1.25rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--color-action-hover, #2A4D70);
+}
+
+.npc-folder-mover__row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.npc-folder-mover .npc-folder-mover__field {
+    flex: 1 1 220px;
+    min-width: 0;
+    margin-bottom: 1rem;
+}
+
+.npc-folder-mover__actions {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+/* ---- Generate-statblock section ---- */
+.npc-statblock {
+    margin-top: 2rem;
+}
+
+.npc-statblock__heading {
+    margin: 0 0 1rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-action-hover, #2A4D70);
+    line-height: 1.2;
+}
+
+.npc-statblock__form {
+    padding: 1.75rem 2rem;
+    background: var(--par-color-surface-card, #FEFBF4);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-radius: var(--par-radius-lg, 12px);
+}
+
+/* Heading living inside the form card — no top margin, sits above the fields. */
+.npc-statblock__heading--inset {
+    margin: 0 0 1.5rem;
+}
+
+.npc-statblock__fields {
+    display: flex;
+    align-items: flex-end;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.npc-statblock .npc-statblock__cr {
+    margin-bottom: 0;
+    flex: 0 1 200px;
+}
+
+.npc-statblock__caster {
+    margin-bottom: 0.4rem;
+}
+
+.npc-statblock__actions {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
 }
 
 .attach-statblock-modal {
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 1.5rem;
     margin-top: 1rem;
+    padding: 1.75rem 2rem;
+    background: var(--par-color-surface-card, #FEFBF4);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-radius: var(--par-radius-lg, 12px);
 }
 
 .button-group {
@@ -2276,7 +2420,7 @@ div[class^="cdr-skeleton-bone"] {
     text-align: center;
     margin-top: 1.5rem;
     padding: 1.5rem;
-    background: #fdf8ef;
+    background: var(--par-color-surface, #FBF7F0);
     border: 1px solid #f0e4cc;
     border-radius: 6px;
 
@@ -2294,45 +2438,49 @@ div[class^="cdr-skeleton-bone"] {
 .statblock-saved-message {
     margin-top: 1.5rem;
     padding: 1rem 1.5rem;
-    background: #f0fdf4;
-    border: 1px solid #22c55e;
-    border-radius: 6px;
+    background: var(--par-color-callout-bg, #f3ebda);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-radius: var(--par-radius-md, 4px);
 
     p {
         margin: 0;
-        color: #14532d;
+        color: var(--par-color-text, #222);
         font-size: 1.6rem;
     }
 
     a {
-        color: #16a34a;
+        color: var(--color-action-hover, #2A4D70);
         font-weight: 600;
         text-decoration: underline;
 
         &:hover {
-            color: #22c55e;
+            color: var(--color-action-active, #1F3A5C);
         }
     }
 }
 
+/* Warning state — parchment callout with a burgundy left-rule (burgundy is
+   the parchment "attention" accent), not the alarming red. */
 .statblock-not-found-message {
     margin-top: 1.5rem;
-    padding: 1.5rem;
-    background: #fef2f2;
-    border: 1px solid #ef4444;
-    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    background: var(--par-color-callout-bg, #f3ebda);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-left: 3px solid var(--par-color-title, #7a1f1f);
+    border-radius: 0 var(--par-radius-md, 4px) var(--par-radius-md, 4px) 0;
 
     p {
         margin: 0 0 0.5rem 0;
-        color: #7f1d1d;
+        color: var(--par-color-text, #222);
         font-size: 1.6rem;
+        line-height: 1.6;
 
         &:last-of-type {
             margin-bottom: 1rem;
         }
 
         strong {
-            color: #991b1b;
+            color: var(--par-color-title, #7a1f1f);
         }
     }
 
@@ -2390,52 +2538,13 @@ div[class^="cdr-skeleton-bone"] {
     }
 }
 
-/* NPC Card Skeleton Styles */
-.npc-card {
-    background: #faf8f3;
-    border: 1.5px solid #c9b99a;
-    border-top: 3px solid #7b2d26;
-    border-radius: 2px;
-    font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-
-.npc-card-header {
-    padding: 1.25rem 1.5rem 0.75rem;
-}
-
-.npc-card-read-aloud {
-    border-top: 1px solid #c9b99a;
-    border-bottom: 1px solid #c9b99a;
-    margin: 0 1.5rem;
-    padding: 1rem 0;
-}
-
-.npc-card-body {
-    padding: 0.75rem 1.5rem 1rem;
-    color: #3d3d3d;
-    font-size: 15px;
-    line-height: 1.6;
-}
-
-.npc-flourish {
-    width: 60%;
-    height: 12px;
-    display: block;
-    margin: 1rem auto;
-}
-
-.npc-card-relationships {
-    padding: 0.75rem 1.5rem 1rem;
-}
-
-.npc-relationship-card {
-    background: #f4f0e8;
-    border-radius: 3px;
-    padding: 0.625rem 0.75rem;
-    margin-bottom: 0.75rem;
-}
+/* (Removed stale "NPC Card Skeleton Styles": a legacy duplicate of the
+   NPCCard's own `.npc-card*` rules with hardcoded pre-token hexes. Because a
+   child component's root element inherits the parent's scope attribute, the
+   bare `.npc-card` rule here was overriding NPCCard.vue's tokenized styling on
+   the real card — making edits there appear to do nothing. NPCGenerator
+   renders the <NPCCard> component, not its own `.npc-card` markup, so these
+   were pure leakage and are gone. NPCCard owns its styling.) */
 
 /* Responsive */
 @media (max-width: 768px) {

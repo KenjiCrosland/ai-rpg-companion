@@ -8,6 +8,10 @@ import { getEffectivePremium, initDevPremiumControls } from '@/util/dev-premium-
 // See src/parchment/CLAUDE.md.
 import '@/parchment/tokens.css';
 
+// Paper-grain texture utility (`.paper-grain`) — subtle parchment overlay for
+// editorial container surfaces. See src/parchment/texture.css.
+import '@/parchment/texture.css';
+
 // Cedar design system CSS — loaded once, shared by all tools
 import '@rei/cedar/dist/cdr-fonts.css';
 import '@rei/cedar/dist/reset.css';

@@ -154,10 +154,10 @@ provide('currentIndex', currentIndex);
 
 .tab-header-item[aria-selected="true"] {
   color: #0c0b08bf;
-  /* Warm parchment tint — slightly darker than the page surface
-     (--par-color-surface-page #FBF8F1) so the active tab reads as
-     gently recessed into the parchment rather than as a Cedar-grey
-     element pasted above. */
+  /* Warm parchment tint so the active tab reads as gently recessed into the
+     parchment rather than as a Cedar-grey element pasted above. (The page
+     surface --par-color-surface-page is the cool gray #EAEEF2; this warm tint
+     sits in the editorial register against it.) */
   background-color: #F8F5EF;
   font-weight: 500;
   border-bottom: 3px solid #406eb5;

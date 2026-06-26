@@ -148,6 +148,18 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
 .app-container {
   display: flex;
 
+  /* Halo — a light pool behind/around the content so the cream cards sit in
+     light against the darker desk (src/App.vue / functions.php). Painted on
+     .app-container, behind the main-content <slot>; the opaque cream sidebar
+     overlays the left, so the light reads as pooling over the content. The
+     content column (~800px) covers the halo's center, so it's anchored HIGH
+     (y 12%) and wide — the glow shows in the visible area above and beside the
+     content, fading down/out to the darker desk. Viewport-fixed so it stays
+     near the top as you scroll. Tune: center color (#F2F6FB; lighter =
+     brighter) and the transparent stop (72%); darker desk = more contrast. */
+  background: radial-gradient(90% 72% at 60% 12%, #F2F6FB 0%, rgba(242, 246, 251, 0) 72%);
+  background-attachment: fixed;
+
   .overlay {
     position: fixed;
     top: 0;
@@ -160,18 +172,29 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
 
   .sidebar {
     transition: transform 0.3s ease;
-    background-color: #f4f4f4;
+    background-color: var(--par-color-surface-card, #FEFBF4);
+    border-right: 0.5px solid var(--par-color-border-strong, #c9b99a);
     width: 400px;
     min-width: 320px;
     height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     z-index: 1001;
     overflow: hidden;
 
     &.flexible {
-      height: auto;
-      min-height: 200px;
+      /* Sticky full-height sidebar: stays one screen tall and pinned to the
+         top of the viewport while the main column — and the WordPress footer
+         below #app — scroll past. That keeps the pinned .sidebar-footer action
+         at the bottom of the screen at all times. align-self: flex-start stops
+         the flex row from stretching the sidebar to the (taller) content
+         height, which is what gives sticky room to work. Height comes from the
+         base .sidebar rule (100dvh). Mobile (≤768px) overrides position to
+         fixed via inline style, so this only governs desktop. */
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
     }
   }
 

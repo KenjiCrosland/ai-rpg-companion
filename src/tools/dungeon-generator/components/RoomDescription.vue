@@ -8,11 +8,11 @@
     <h3 class="room-title parchment">{{ roomName }}</h3>
     <div v-if="activeView === 'form'" class="room-form parchment">
       <p class="room-form__intro">
-        All fields below are optional. Click <em>Generate Description</em> to create a room from the dungeon's existing context, or fill in any field to steer the generation.
+        All fields below are optional. Click <em>Generate description</em> to create a room from the dungeon's existing context, or fill in any field to steer the generation.
       </p>
-      <ParInput v-model="roomFormName" label="Room Name" />
-      <ParTextarea v-model="roomFormShortDescription" label="Short Description" :rows="3" />
-      <ParSelect
+      <ParCardInput v-model="roomFormName" label="Room Name" />
+      <ParCardTextarea v-model="roomFormShortDescription" label="Short Description" :rows="3" />
+      <ParCardSelect
         v-model="selectedNPCName"
         label="Include NPC in Room"
         :options="npcOptions"
@@ -28,9 +28,9 @@
         </ParCheckbox>
       </div>
       <div class="generation-button">
-        <ParActionButton size="xsmall" @click="generateDescription">
-          Generate Description
-        </ParActionButton>
+        <ParButton size="xsmall" @click="generateDescription">
+          Generate description
+        </ParButton>
       </div>
     </div>
     <div v-if="activeView === 'loading'">
@@ -68,27 +68,27 @@
           </template>
         </div>
         <div class="generation-button">
-          <ParActionButton size="xsmall" @click="generateDescription">
+          <ParButton size="xsmall" @click="generateDescription">
             Re-Generate Description
-          </ParActionButton>
-          <ParActionButton size="xsmall" variant="secondary" @click="startEditingRoom">
+          </ParButton>
+          <ParCardButton size="small" variant="affirmative" @click="startEditingRoom">
             Edit Room
-          </ParActionButton>
+          </ParCardButton>
         </div>
       </div>
 
       <!-- Edit Mode -->
       <div v-else class="edit-form parchment">
-        <h3 class="edit-form__title">Edit Room Description</h3>
+        <h3 class="edit-form__title">Edit room description</h3>
 
-        <ParInput
+        <ParCardInput
           v-model="roomEditForm.name"
           label="Room Name"
           hint="The name of the room (without the room number)"
           class="edit-field"
         />
 
-        <ParTextarea
+        <ParCardTextarea
           v-model="roomEditForm.content"
           label="Room Content (Markup Format)"
           :rows="20"
@@ -103,8 +103,8 @@
         </div>
 
         <div class="button-group">
-          <ParActionButton size="xsmall" @click="saveEditRoom">Save Changes</ParActionButton>
-          <ParActionButton size="xsmall" variant="secondary" @click="cancelEditRoom">Cancel</ParActionButton>
+          <ParCardButton size="small" variant="primary" @click="saveEditRoom">Save changes</ParCardButton>
+          <ParCardButton size="small" variant="muted" @click="cancelEditRoom">Cancel</ParCardButton>
         </div>
       </div>
     </div>
@@ -137,19 +137,19 @@
 
 <script setup>
 import {
-  ParActionButton,
+  ParButton,
   ParCardButton,
   ParCheckbox,
-  ParInput,
-  ParSelect,
+  ParCardInput,
+  ParCardSelect,
   ParTabToggle,
-  ParTextarea,
+  ParCardTextarea,
 } from "@/parchment";
 import { ref, watch, onMounted, computed } from 'vue';
 
 const viewToggleOptions = [
-  { value: 'description', label: 'Show Description' },
-  { value: 'form', label: 'Show Form' },
+  { value: 'description', label: 'Show description' },
+  { value: 'form', label: 'Show form' },
 ];
 import RoomSkeleton from './skeletons/RoomSkeleton.vue';
 import BossStatblockPrompt from './BossStatblockPrompt.vue';
@@ -934,7 +934,7 @@ onMounted(() => {
 
 /* Form intro: "all fields are optional" affordance. Sans serif at
    muted color so it reads as helper text, not body content. The
-   <em>Generate Description</em> references the button label exactly
+   <em>Generate description</em> references the button label exactly
    so users can match the prose to the affordance below. */
 .room-form__intro {
   font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);

@@ -1,5 +1,14 @@
 <template>
   <div class="dashboard">
+    <div class="setting-generator-notice">
+      <p class="setting-generator-notice__text">
+        Our <a class="setting-generator-notice__link"
+          href="https://cros.land/rpg-setting-generator-and-world-building-tool/">Setting Generator</a>
+        does everything this Town Generator can — plus factions, quest hooks, and nested settings.
+        This older version stays available for anyone who prefers it.
+      </p>
+    </div>
+
     <div class="form-container">
       <location-form @location-description-generated="addLocation($event)" @set-loading-state="loadingLocation = $event"
         buttonText="Add Location" :disabledButton="anythingLoading" />
@@ -160,7 +169,7 @@
       <li>Enjoy the beautifully formatted content!</li>
     </cdr-list>
     <div class="markdown-button">
-      <ParActionButton @click="copyAsMarkdown">Copy as Markdown</ParActionButton>
+      <ParButton @click="copyAsMarkdown">Copy as Markdown</ParButton>
     </div>
   </div>
 </template>
@@ -168,7 +177,7 @@
 <script>
 import { ref, reactive, nextTick, computed, onMounted } from 'vue';
 import { CdrButton, CdrText, CdrList, CdrLink, CdrTooltip, CdrAccordionGroup, CdrAccordion, CdrInput, CdrSkeleton, CdrSkeletonBone, IconXSm } from '@rei/cedar';
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import LocationForm from '@/tools/location-generator/LocationForm.vue';
 import NPCGenerationButton from '@/tools/npc-generator/components/NPCGenerationButton.vue';
 import NPCForm from '@/tools/npc-generator/components/NPCForm.vue';
@@ -197,7 +206,7 @@ export default {
     CdrButton,
     CdrTooltip,
     IconXSm,
-    ParActionButton,
+    ParButton,
     LocationForm,
     NPCForm,
     NPCGenerationButton,
@@ -447,6 +456,26 @@ h3 {
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
+}
+
+.setting-generator-notice {
+  background-color: #f4f2ed;
+  border-left: 4px solid #1565c0;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.setting-generator-notice__text {
+  @include cdr-text-body-400();
+  margin: 0;
+  line-height: 1.5;
+}
+
+.setting-generator-notice__link {
+  color: #1565c0;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .read-aloud {

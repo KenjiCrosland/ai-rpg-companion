@@ -88,9 +88,9 @@ import { CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
 /* Mirror the live `.item-card` surface so the skeleton occupies the
    same footprint and the swap-in feels seamless. */
 .item-skeleton-card {
-  background: #fdfbf6;
-  border: 1px solid #e8e2d4;
-  border-top: 2px solid #7a1f1f;
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-top: 2px solid var(--par-color-title, #7a1f1f);
   border-radius: 2px;
   margin-bottom: 1.5rem;
   padding: 2rem 2.5rem;

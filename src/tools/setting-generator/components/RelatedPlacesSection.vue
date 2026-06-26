@@ -33,23 +33,15 @@
     <div v-if="groups.parent.length" class="related-places-group">
       <h4 class="related-places-group-title">Part Of</h4>
       <ul class="related-places-list">
-        <li v-for="stub in groups.parent" :key="`p-${stub.name}`" class="related-place-row">
-          <div class="related-place-info">
-            <strong class="related-place-name">{{ stub.name }}</strong>
-            <span v-if="stub.role_brief" class="related-place-role">{{ stub.role_brief }}</span>
-          </div>
-          <div class="related-place-actions">
-            <ParActionButton v-if="!stub.promoted_setting_id" variant="primary-outline"
-              @click="onPromote(stub, 'parent')">
-              Create Setting
-            </ParActionButton>
-            <ParActionButton v-else variant="primary-outline" @click="onView(stub)">
-              View in Setting Generator
-            </ParActionButton>
-            <button type="button" class="related-place-remove" :title="`Remove ${stub.name}`"
-              :aria-label="`Remove ${stub.name}`" @click="onRemove(stub)">✕</button>
-          </div>
-        </li>
+        <RelatedStubRow v-for="stub in groups.parent" :key="`p-${stub.name}`" :name="stub.name"
+          :brief="stub.role_brief" @remove="onRemove(stub)">
+          <template #actions>
+            <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline" @click="onPromote(stub, 'parent')">
+              Create setting
+            </ParButton>
+            <ParButton v-else variant="primary-outline" @click="onView(stub)">View in Setting Generator</ParButton>
+          </template>
+        </RelatedStubRow>
       </ul>
     </div>
 
@@ -57,23 +49,15 @@
     <div v-if="groups.sibling.length" class="related-places-group">
       <h4 class="related-places-group-title">Neighbors</h4>
       <ul class="related-places-list">
-        <li v-for="stub in groups.sibling" :key="`s-${stub.name}`" class="related-place-row">
-          <div class="related-place-info">
-            <strong class="related-place-name">{{ stub.name }}</strong>
-            <span v-if="stub.role_brief" class="related-place-role">{{ stub.role_brief }}</span>
-          </div>
-          <div class="related-place-actions">
-            <ParActionButton v-if="!stub.promoted_setting_id" variant="primary-outline"
-              @click="onPromote(stub, 'sibling')">
-              Create Setting
-            </ParActionButton>
-            <ParActionButton v-else variant="primary-outline" @click="onView(stub)">
-              View in Setting Generator
-            </ParActionButton>
-            <button type="button" class="related-place-remove" :title="`Remove ${stub.name}`"
-              :aria-label="`Remove ${stub.name}`" @click="onRemove(stub)">✕</button>
-          </div>
-        </li>
+        <RelatedStubRow v-for="stub in groups.sibling" :key="`s-${stub.name}`" :name="stub.name"
+          :brief="stub.role_brief" @remove="onRemove(stub)">
+          <template #actions>
+            <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline" @click="onPromote(stub, 'sibling')">
+              Create setting
+            </ParButton>
+            <ParButton v-else variant="primary-outline" @click="onView(stub)">View in Setting Generator</ParButton>
+          </template>
+        </RelatedStubRow>
       </ul>
     </div>
 
@@ -81,23 +65,16 @@
     <div v-if="groups.sublocation.length" class="related-places-group">
       <h4 class="related-places-group-title">Contains</h4>
       <ul class="related-places-list">
-        <li v-for="stub in groups.sublocation" :key="`l-${stub.name}`" class="related-place-row">
-          <div class="related-place-info">
-            <strong class="related-place-name">{{ stub.name }}</strong>
-            <span v-if="stub.role_brief" class="related-place-role">{{ stub.role_brief }}</span>
-          </div>
-          <div class="related-place-actions">
-            <ParActionButton v-if="!stub.promoted_setting_id" variant="primary-outline"
+        <RelatedStubRow v-for="stub in groups.sublocation" :key="`l-${stub.name}`" :name="stub.name"
+          :brief="stub.role_brief" @remove="onRemove(stub)">
+          <template #actions>
+            <ParButton v-if="!stub.promoted_setting_id" variant="primary-outline"
               @click="onPromote(stub, 'sublocation')">
-              Create Setting
-            </ParActionButton>
-            <ParActionButton v-else variant="primary-outline" @click="onView(stub)">
-              View in Setting Generator
-            </ParActionButton>
-            <button type="button" class="related-place-remove" :title="`Remove ${stub.name}`"
-              :aria-label="`Remove ${stub.name}`" @click="onRemove(stub)">✕</button>
-          </div>
-        </li>
+              Create setting
+            </ParButton>
+            <ParButton v-else variant="primary-outline" @click="onView(stub)">View in Setting Generator</ParButton>
+          </template>
+        </RelatedStubRow>
       </ul>
     </div>
 
@@ -112,9 +89,10 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ParActionButton } from '@/parchment';
+import { ParButton } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import AddRelatedPlaceForm from './AddRelatedPlaceForm.vue';
+import RelatedStubRow from './RelatedStubRow.vue';
 
 const addFormRef = ref(null);
 function openAddForm() {
@@ -220,8 +198,8 @@ function onAddAndPromote({ kind, name, role_brief, suggested_setting_type }) {
          background: var(--par-color-surface-page);
        and the workspace will read as a continuous tinted zone again. */
   background: transparent;
-  padding: 2rem;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  padding: 1rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
 .related-places-header {
@@ -230,11 +208,12 @@ function onAddAndPromote({ kind, name, role_brief, suggested_setting_type }) {
 
 .related-places-title {
   /* Tab heading, not a card opening. Lapis chrome (matches the
-     "Generate a magic item" precedent), serif, weight 600 to read
-     as a section title without dominating the surface. */
-  margin: 0 0 0.25rem;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
-  font-size: 2rem;
+     "Generate a magic item" precedent), serif, weight 600. Large 2.8rem
+     size — the shared tab-header standard across Locations / Factions /
+     NPCs / Quest Hooks. */
+  margin: 0 0 0.3rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 2.8rem;
   font-weight: 600;
   color: var(--par-color-action-primary, #2A4D70);
   letter-spacing: 0;
@@ -242,14 +221,16 @@ function onAddAndPromote({ kind, name, role_brief, suggested_setting_type }) {
 }
 
 .related-places-subtitle {
-  /* Sans-serif chrome metadata, not editorial epithet. */
+  /* Standard tab description: regular-weight serif body text, the shared
+     treatment across the Locations / Factions / NPCs / Quest Hooks tab
+     headers. Locations is the canonical reference. */
   margin: 0;
-  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  font-size: 1.3rem;
-  font-style: italic;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
+  font-style: normal;
   font-weight: 400;
-  color: var(--par-color-text-muted, #6b6b6b);
-  line-height: 1.5;
+  color: var(--par-color-text-secondary, #555);
+  line-height: 1.55;
 }
 
 /* Inline interactive phrase ("added manually") — lapis underlined,
@@ -281,8 +262,8 @@ function onAddAndPromote({ kind, name, role_brief, suggested_setting_type }) {
 
 .related-places-empty {
   margin: 0.75rem 0 0;
-  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  font-size: 1.3rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.5rem;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);
   line-height: 1.6;
@@ -293,17 +274,14 @@ function onAddAndPromote({ kind, name, role_brief, suggested_setting_type }) {
 }
 
 .related-places-group-title {
-  /* Section labels (PART OF / NEIGHBORS / CONTAINS) — mirrors the
-     magic item form's field labels (ITEM NAME, RARITY, TYPE). Lapis
-     chrome, sans, compact, generous letter-spacing for the
-     all-caps tracking. No hairline rule beneath. */
-  margin: 0 0 0.5rem 0;
+  /* Section labels (PART OF / NEIGHBORS / CONTAINS) — bold lapis, all-caps. */
+  margin: 0 0 0.6rem 0;
   font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  font-size: 1.1rem;
-  font-weight: 500;
+  font-size: 1.2rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--par-color-action-primary, #2A4D70);
+  letter-spacing: 0.16em;
+  color: var(--color-action-hover, #2A4D70);
 }
 
 .related-places-list {
@@ -315,92 +293,5 @@ function onAddAndPromote({ kind, name, role_brief, suggested_setting_type }) {
   gap: 0.4rem;
 }
 
-.related-place-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1.5rem;
-  /* Compact row geometry — workspace density, not card breathing room. */
-  padding: 1.2rem 1.4rem;
-  /* Transitional surface treatment: the page surface is currently
-     near-white so surface contrast alone can't carry the lift. The
-     stronger warm-tan border (1.5px instead of 1px, using the
-     existing border-strong token rather than forking a new hex) plus
-     a faint warm-toned shadow do the differentiation work that
-     cream-on-cream contrast will eventually do once the page tint
-     deepens post-migration. */
-  background: var(--par-color-surface, #FBF7F0);
-  border: 1.5px solid var(--par-color-border-strong, #c9b99a);
-  border-radius: var(--par-radius-sm, 3px);
-  box-shadow: var(--par-color-card-shadow, 0 1px 3px rgba(122, 50, 30, 0.04));
-}
-
-.related-place-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-  flex: 1;
-}
-
-.related-place-name {
-  /* Editorial serif at workspace weight — readable as the row's
-     primary identifier without competing with the section title. */
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
-  font-size: 1.5rem;
-  font-weight: 500;
-  color: var(--par-color-text, #222);
-  line-height: 1.3;
-}
-
-.related-place-role {
-  /* Sans italic muted — chrome metadata under the editorial name.
-     The serif/sans split here is intentional: name = entity (serif),
-     role = descriptor (sans), same pattern the rest of the chrome uses. */
-  font-family: var(--par-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  font-size: 1.3rem;
-  font-style: italic;
-  color: var(--par-color-text-muted, #6b6b6b);
-  line-height: 1.4;
-}
-
-.related-place-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-shrink: 0;
-  padding-top: 0.2rem;
-}
-
-/* × dismiss — quiet faded-slate glyph at rest, burgundy on hover.
-   The two-step (slate → burgundy) gives the user a moment to confirm
-   intent: at rest the affordance reads as "minor secondary control,"
-   on hover it commits to "this is a destructive action." This is the
-   only place burgundy is allowed into the action layer, and only as
-   the hover confirmation step. */
-.related-place-remove {
-  appearance: none;
-  -webkit-appearance: none;
-  background: none;
-  border: none;
-  margin: 0;
-  padding: 0.5rem 0.8rem;
-  font-family: inherit;
-  font-size: 1.8rem;
-  line-height: 1;
-  color: var(--par-color-action-muted, #5A7A9A);
-  border-radius: var(--par-radius-sm, 3px);
-  cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
-
-  &:hover {
-    color: var(--par-color-title, #7a1f1f);
-    background: var(--par-color-action-destructive-hover, rgba(122, 31, 31, 0.06));
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
-    outline-offset: 2px;
-  }
-}
+/* Stub rows are the shared RelatedStubRow component. */
 </style>

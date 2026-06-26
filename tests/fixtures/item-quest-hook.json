@@ -1,0 +1,16 @@
+{
+  "title": "The Drowned Vault of Eldora",
+  "questGiver": "Magister Holloway, a silver-bearded trade councillor with ink-stained cuffs, fears a rival will reach the relic first. He offers coin and a writ of passage.",
+  "setup": "Old survey maps place a sealed vault beneath the failing cisterns, and the cloak's vines are said to point the way. The council wants it recovered before the spring floods drown the route for another decade.",
+  "objectives": [
+    "Descend into the flooded cistern tunnels beneath the merchant quarter.",
+    "Find the sealed vault and recover the relic within.",
+    "Return before the tide closes the lower gate."
+  ],
+  "challenges": [
+    "Waterlogged draugr guard the lower stair (DC 14 Strength to brace against the current).",
+    "A rival expedition races the party and will parley or fight as it suits them."
+  ],
+  "reward": "The council's writ, 500 gp, and standing salvage rights to the vault's lesser caches.",
+  "twist": "The vault is not a tomb but a prison, and the relic is the lock."
+}

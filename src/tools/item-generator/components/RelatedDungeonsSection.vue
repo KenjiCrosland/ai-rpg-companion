@@ -1,21 +1,21 @@
 <template>
-  <div class="related-dungeons-section">
+  <div class="related-dungeons-section parchment">
     <!-- Header mirrors RelatedSettingsSection: title + ghost re-scan button.
          Tooltip explains when re-scan is useful so the affordance label
-         can stay short ("Re-scan Lore"). -->
+         can stay short ("Re-scan lore"). -->
     <div class="related-dungeons-header">
       <h3 class="related-dungeons-title">Related Dungeons</h3>
       <ParTooltip
         text="Scans this item's lore and timeline events for named dungeon-shaped places (a barrow, tomb, vault, forge, lair) and adds them here. Re-run after editing the lore or adding events."
       >
-        <ParCardButton
-          variant="ghost"
-          size="small"
+        <button
+          type="button"
+          class="related-dungeons-rescan"
           :disabled="loading"
           @click="rescan"
         >
-          {{ loading ? 'Scanning…' : 'Re-scan Lore' }}
-        </ParCardButton>
+          {{ loading ? 'Scanning…' : 'Re-scan lore' }}
+        </button>
       </ParTooltip>
     </div>
 
@@ -23,20 +23,22 @@
          dungeon-shaped places). Offer the whole-item fallback — let the
          user create a dungeon seeded from the whole item, mode inferred
          by the dungeon generator on mount. -->
-    <p v-if="!hasStubs" class="related-dungeons-empty">
-      No dungeon-shaped locations in this item's lore. Click Re-scan Lore above to look again, or
-      <a
-        href="#"
-        class="related-dungeons-empty-link"
-        @click.prevent="$emit('switch-to-lore-builder')"
-      >use the Lore Builder</a>
-      to add lore that names a tomb, vault, forge, lair, or similar bounded site.
-    </p>
+    <div v-if="!hasStubs" class="related-dungeons-empty">
+      <p class="related-dungeons-empty-copy">
+        No dungeon-shaped locations in this item's lore. Click Re-scan lore above to look again, or
+        <a
+          href="#"
+          class="related-dungeons-empty-link"
+          @click.prevent="$emit('switch-to-lore-builder')"
+        >use the Lore Builder</a>
+        to add lore that names a tomb, vault, forge, lair, or similar bounded site.
+      </p>
 
-    <div v-if="!hasStubs" class="related-dungeons-actions">
-      <ParCardButton @click="onCreateFromWholeItem">
-        Generate a Dungeon from this Item
-      </ParCardButton>
+      <div class="related-dungeons-empty-actions">
+        <ParButton variant="primary-outline" @click="onCreateFromWholeItem">
+          Generate a dungeon from this item
+        </ParButton>
+      </div>
     </div>
 
     <!-- Stub list: one row per dungeon-shape stub. Each stub gets its
@@ -57,18 +59,22 @@
         </div>
 
         <div class="related-dungeon-actions">
-          <ParCardButton
+          <ParButton
             v-if="!stub.dungeon_id"
+            variant="primary-outline"
+            size="small"
             @click="onCreate(stub)"
           >
-            Create Dungeon
-          </ParCardButton>
-          <ParCardButton
+            Create dungeon
+          </ParButton>
+          <ParButton
             v-else
+            variant="primary-outline"
+            size="small"
             @click="onView(stub)"
           >
             View in Dungeon Generator
-          </ParCardButton>
+          </ParButton>
           <!--
             Only show the ✕ for UNPROMOTED stubs. Once a stub has a
             dungeon_id, clicking ✕ only severs the item's stored
@@ -108,7 +114,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ParCardButton, ParTooltip } from '@/parchment';
+import { ParButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { extractRelatedDungeons, mergeStubs } from '@/tools/item-generator/utils/extract-related-dungeons.mjs';
 import { getDungeonDisplayName } from '@/util/dungeon-storage.mjs';
@@ -221,9 +227,9 @@ function onRemove(idx) {
    "related entities" trio under a single item.
    ============================================ */
 .related-dungeons-section {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--par-color-divider, #e2dccd);
+  border-top: 1px solid var(--par-color-border-strong, #c9b99a);
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
 }
 
@@ -238,41 +244,90 @@ function onRemove(idx) {
 .related-dungeons-title {
   margin: 0;
   font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 600;
-  color: var(--par-color-title, #7a1f1f);
+  color: var(--color-action-hover, #2A4D70);
   letter-spacing: 0.02em;
   line-height: 1.3;
 }
 
+.related-dungeons-rescan {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0 0 1px;
+  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  color: var(--color-action-rest, #365A85);
+  cursor: pointer;
+  border-bottom: 0.5px solid var(--color-action-rest, #365A85);
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    color: var(--color-action-hover, #2A4D70);
+    border-color: var(--color-action-hover, #2A4D70);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/* Empty state: warm-tan contained surface so the copy + action read as
+   "this section is currently empty, here's what to do" rather than text
+   floating on the page. Parallel to a populated stub row's surface
+   treatment. Heading + Re-scan stay outside, on the page register. */
 .related-dungeons-empty {
   margin: 0.75rem 0 0;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
+  border-radius: 0.8rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.related-dungeons-empty-copy {
+  margin: 0;
   font-size: 1.5rem;
   font-style: italic;
-  color: var(--par-color-text-muted, #6b6b6b);
+  color: var(--par-color-text-secondary, #555);
   line-height: 1.6;
 }
 
 .related-dungeons-empty-link {
-  color: var(--par-color-title, #7a1f1f);
-  text-decoration: underline;
+  color: var(--color-action-rest, #365A85);
+  text-decoration: none;
+  border-bottom: 0.5px solid var(--color-action-rest, #365A85);
   cursor: pointer;
   font-style: normal;
+  transition: color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    color: var(--par-color-title-deep, #58180d);
+    color: var(--color-action-hover, #2A4D70);
+    border-color: var(--color-action-hover, #2A4D70);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }
 
-.related-dungeons-actions {
+.related-dungeons-empty-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+  margin-top: 1rem;
 }
 
 .related-dungeons-list {
@@ -289,9 +344,10 @@ function onRemove(idx) {
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
-  padding: 1.35rem 1.25rem;
-  background: rgba(0, 0, 0, 0.025);
-  border-radius: var(--par-radius-sm, 3px);
+  padding: 0.95rem 1.25rem;
+  background: var(--par-color-callout-bg-light, #F8F2E3);
+  border: 1px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: 0.8rem;
 }
 
 .related-dungeon-info {
@@ -341,12 +397,12 @@ function onRemove(idx) {
   transition: color 0.15s ease, background-color 0.15s ease;
 
   &:hover {
-    color: var(--par-color-title, #7a1f1f);
-    background: var(--par-color-action-hover, rgba(122, 31, 31, 0.06));
+    color: var(--par-color-text, #222);
+    background: rgba(0, 0, 0, 0.04);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }
@@ -360,16 +416,16 @@ function onRemove(idx) {
   padding: 0.5rem 0;
   font-family: inherit;
   font-size: 1.4rem;
-  color: var(--par-color-title, #7a1f1f);
+  color: var(--color-action-rest, #365A85);
   cursor: pointer;
   text-decoration: underline;
 
   &:hover {
-    color: var(--par-color-title-deep, #58180d);
+    color: var(--color-action-hover, #2A4D70);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
+    outline: 2px solid var(--color-action-secondary-rest, #5A7A9A);
     outline-offset: 2px;
   }
 }

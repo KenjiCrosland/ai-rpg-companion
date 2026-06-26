@@ -1,30 +1,36 @@
 <template>
-  <cdr-modal label="Save/Load Data" :opened="opened" aria-describedby="dataManagerModalDescription"
-    @closed="closeModal">
-    <template #title>
-      <cdr-text tag="h3" class="title-header">
-        Save/Load Data
-      </cdr-text>
-    </template>
+  <ParModal
+    :opened="opened"
+    title="Backup / Restore library"
+    @cancel="closeModal"
+  >
+    <!-- Free tier upsell — mirrors the PatreonCallout: serif body + luminous
+         Support-on-Patreon CTA. -->
+    <div v-if="!premium" class="dm-upsell">
+      <p class="dm-text">
+        Backing up and restoring your library to a file is a patron perk. Become a $5 patron to save your data to a
+        file, move it between devices, and unlock unlimited generation across every tool.
+      </p>
 
-    <!-- Free tier upsell -->
-    <div v-if="!premium">
-      <cdr-text id="dataManagerModalDescription" tag="p" style="margin-bottom: 1rem;">
-        Downloading and uploading app data is reserved for the premium version of this app.
-        Please access the premium version here:
-      </cdr-text>
-
-      <cdr-link v-if="matchedApp?.premiumLink" :href="matchedApp.premiumLink" target="_blank">
-        {{ matchedApp?.appName }} - Premium Version
-      </cdr-link>
+      <div class="dm-upsell__actions">
+        <ParButton variant="luminous" tag="a" :href="patreonTiersUrl" target="_blank" rel="noopener">
+          <template #icon-left>
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <circle cx="9" cy="7" r="4" fill="currentColor" />
+              <rect x="2" y="3" width="2" height="8" fill="currentColor" />
+            </svg>
+          </template>
+          Support on Patreon
+        </ParButton>
+      </div>
     </div>
 
     <!-- Premium: single bundled download/upload -->
-    <div v-else>
-      <cdr-text id="dataManagerModalDescription" tag="p" style="margin-bottom: 1rem;">
+    <template v-else>
+      <p class="dm-text">
         Save your data to a file you can back up, share, or move to another device. Upload a saved file to restore your
         work.
-      </cdr-text>
+      </p>
 
       <div v-if="hasAnyData" class="summary">
         <p class="summary-heading">Currently in your browser:</p>
@@ -35,40 +41,32 @@
         </ul>
         <p class="summary-footer">Connections between your items, NPCs, and other tools are preserved automatically.</p>
       </div>
-      <p v-else style="margin: 0.75rem 0;">
+      <p v-else class="dm-empty">
         No saved data found in this browser. Upload a previous export to restore your work.
       </p>
 
-      <div class="buttons-container">
-        <ParActionButton variant="secondary" @click="triggerFileSelect">
-          Upload JSON
-        </ParActionButton>
-        <input ref="fileInput" type="file" accept="application/json" style="display: none;"
-          @change="handleFileChange" />
+      <input ref="fileInput" type="file" accept="application/json" style="display: none;"
+        @change="handleFileChange" />
+    </template>
 
-        <ParActionButton @click="downloadData" :disabled="!hasAnyData">
-          Download JSON
-        </ParActionButton>
-      </div>
-    </div>
-  </cdr-modal>
+    <template v-if="premium" #footer>
+      <ParButton variant="secondary" @click="triggerFileSelect">
+        Upload JSON
+      </ParButton>
+      <ParButton @click="downloadData" :disabled="!hasAnyData">
+        Download JSON
+      </ParButton>
+    </template>
+  </ParModal>
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton, ParModal } from "@/parchment";
 import { ref, computed } from 'vue';
-import {
-  CdrModal,
-  CdrText,
-  CdrLink
-} from '@rei/cedar';
+import { logger } from '@/util/logger.mjs';
+import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import { QUOTA_FIELDS, seedFreshQuotas } from '@/util/quota-storage.mjs';
 import { runPendingMigrations } from '@/util/migration-runner.mjs';
-
-// Cedar CSS
-import '@rei/cedar/dist/style/cdr-modal.css';
-import '@rei/cedar/dist/style/cdr-text.css';
-import '@rei/cedar/dist/style/cdr-link.css';
 
 const props = defineProps({
   opened: {
@@ -111,23 +109,6 @@ const EXPORT_KEYS = [
   'tool-references',
   'rpgTimelineState',
 ];
-
-/**
- * Per-tool display info. Used only for the free-tier upsell link
- * (matched against `currentApp`) — single-bundle exports don't need
- * the per-tool checkbox UI anymore.
- */
-const APP_INFO = {
-  monsters:         { appName: 'Statblock Generator',     premiumLink: 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator-premium/' },
-  savedItems:       { appName: 'Magic Item Generator',    premiumLink: 'https://cros.land/dnd-5e-magic-item-generator-premium-version/' },
-  npcGeneratorNPCs: { appName: 'NPC Generator',           premiumLink: 'https://cros.land/npc-generator-premium-version/' },
-  rpgTimelineState: { appName: 'Timeline Generator',      premiumLink: null },
-  gameSettings:     { appName: 'Worldbuilding Dashboard', premiumLink: 'https://cros.land/rpg-setting-generator-and-world-building-tool-premium-version/' },
-  dungeons:         { appName: 'Dungeon Generator',       premiumLink: 'https://cros.land/dungeon-generator-2-0-premium-version/' },
-  encounters:       { appName: 'Encounter Generator',     premiumLink: 'https://cros.land/dnd-5e-encounter-generator/' },
-};
-
-const matchedApp = computed(() => APP_INFO[props.currentApp] || null);
 
 function safeParse(raw) {
   if (!raw) return null;
@@ -333,7 +314,7 @@ function handleFileChange(event) {
       // will also call it on next mount — migrations are gated by
       // migrations-completed and skip work already done.
       runPendingMigrations().catch((err) => {
-        console.error('Post-import migrations failed:', err);
+        logger.error('Post-import migrations failed:', err);
       });
 
       // After importing `monsters`, seed fresh quota fields so the
@@ -362,17 +343,39 @@ function handleFileChange(event) {
 </script>
 
 <style scoped>
+.dm-text {
+  margin: 0 0 1rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 16px;
+  color: var(--par-color-text, #222);
+  line-height: 1.6;
+}
+
+/* Upsell CTA row — mirrors the PatreonCallout's luminous Support button. */
+.dm-upsell__actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+/* Inner callout in the pale-lapis chrome register so the summary
+   reads as emphasis against the cream parchment surface (per ParModal
+   convention), not as a second parchment card. */
 .summary {
   margin: 0.75rem 0 1rem;
-  padding: 0.75rem 1rem;
-  background: #f4f0e8;
-  border: 1px solid #c9b99a;
+  padding: 1rem 1.25rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  background: var(--par-color-readaloud-bg-deep, #C5D4E5);
+  border: 1px solid var(--par-color-readaloud-rule, #7A8FAA);
   border-radius: 4px;
 }
 
 .summary-heading {
   margin: 0 0 0.5rem;
   font-weight: 600;
+  color: var(--color-action-hover, #2A4D70);
 }
 
 .summary-list {
@@ -389,13 +392,12 @@ function handleFileChange(event) {
   margin: 0.6rem 0 0;
   font-size: 0.85em;
   font-style: italic;
-  color: #6b6356;
+  color: var(--par-color-text-secondary, #555);
 }
 
-.buttons-container {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-  justify-content: flex-end;
+.dm-empty {
+  margin: 0.75rem 0;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  color: var(--par-color-text-secondary, #555);
 }
 </style>

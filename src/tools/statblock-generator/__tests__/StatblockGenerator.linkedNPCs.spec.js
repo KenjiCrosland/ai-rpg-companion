@@ -444,8 +444,10 @@ describe('StatblockGenerator - Linked NPCs', () => {
       wrapper.vm.selectMonster('Boss Monsters', 0);
       await nextTick();
 
-      // Delete the statblock
+      // Delete the statblock (deleteStatblock opens the ParConfirm modal;
+      // performStatblockDelete runs the actual deletion on @confirm).
       wrapper.vm.deleteStatblock();
+      wrapper.vm.performStatblockDelete();
       await nextTick();
 
       // Wait for dynamic import to resolve
@@ -480,7 +482,7 @@ describe('StatblockGenerator - Linked NPCs', () => {
       await nextTick();
 
       // Should not throw when deleting
-      expect(() => wrapper.vm.deleteStatblock()).not.toThrow();
+      expect(() => { wrapper.vm.deleteStatblock(); wrapper.vm.performStatblockDelete(); }).not.toThrow();
       await nextTick();
 
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -515,6 +517,7 @@ describe('StatblockGenerator - Linked NPCs', () => {
       await nextTick();
 
       wrapper.vm.deleteStatblock();
+      wrapper.vm.performStatblockDelete();
       await nextTick();
 
       const monstersData = JSON.parse(localStorage.getItem('monsters') || '{}');

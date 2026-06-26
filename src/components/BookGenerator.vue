@@ -1,82 +1,88 @@
 <template>
-  <div class="app-container">
-    <h1>RPG Bookshelf Generator</h1>
-    <form class="title-form" @submit.prevent="generateBookTitles">
-      <cdr-input class="book-form-input" id="setting" v-model="setting" background="secondary" label="RPG Setting:"
-        required>
-        <template #helper-text-bottom>
-          Examples: "Night City", "Eberron", "Rokugan", "Waterdeep"
-        </template>
-      </cdr-input>
-      <cdr-input class="book-form-input" id="location" v-model="location" background="secondary"
-        label="Specific Location:" required>
-        <template #helper-text-bottom>
-          Examples: "The study of an eccentric wizard" or "The waiting room of a ripperdoc clinic"
-        </template>
-      </cdr-input>
-      <cdr-input class="book-form-input" id="genre" v-model="genre" background="secondary" label="Genres to Include"
-        :optional="true">
-        <template #helper-text-bottom>
-          Example: "cookbooks, birdwatching". If you want to include more than one genre, include both separated by a
-          comma.
-        </template>
-      </cdr-input>
-      <ParActionButton class="generate-button" type="submit" :disabled="!setting || !location || loadingTitles">Generate Book
-        Titles</ParActionButton>
-    </form>
-    <cdr-accordion-group v-if="loadingTitles">
-      <cdr-accordion class="accordion" level="2" v-for="n in 7" :key="n" id="loading-location">
+  <div class="app-container book-generator parchment">
+    <ToolNavigation />
+
+    <div class="book-form-card paper-grain">
+      <div class="book-heading">
+        <span class="book-heading__tag">Kenji's Bookshelf Generator</span>
+        <h1 class="book-heading__title">Stock a shelf for your players</h1>
+        <p class="book-heading__tagline">
+          Seven eclectic books for any setting — each with an author, an excerpt, and a hidden secret.
+        </p>
+      </div>
+
+      <form class="title-form" @submit.prevent="generateBookTitles">
+        <ParField label="RPG setting">
+          <ParInput id="setting" v-model="setting" placeholder="e.g., a high-magic kingdom, a neon megacity" />
+          <template #hint>Examples: "a rain-soaked harbor city", "a steam-and-clockwork empire".</template>
+        </ParField>
+        <ParField label="Specific location">
+          <ParInput id="location" v-model="location" placeholder="e.g., the study of an eccentric wizard" />
+          <template #hint>Examples: "the study of an eccentric wizard" or "the waiting room of a back-alley cyber-clinic".</template>
+        </ParField>
+        <ParField label="Genres to include" :optional="true">
+          <ParInput id="genre" v-model="genre" placeholder="e.g., cookbooks, birdwatching" />
+          <template #hint>Separate multiple genres with a comma.</template>
+        </ParField>
+        <ParButton class="generate-button" type="submit" :full-width="true"
+          :disabled="!setting || !location || loadingTitles">
+          {{ loadingTitles ? 'Generating…' : 'Generate book titles' }}
+        </ParButton>
+      </form>
+
+      <ParAccordionGroup v-if="loadingTitles" class="book-accordions">
+      <ParAccordion v-for="n in 7" :key="n" :level="3" variant="burgundy" :id="`loading-${n}`">
         <template #label>
           <CdrSkeleton>
             <CdrSkeletonBone class="accordion-bone" type="line" />
           </CdrSkeleton>
         </template>
-      </cdr-accordion>
-    </cdr-accordion-group>
-    <cdr-accordion-group>
-      <cdr-accordion v-for="(title, index) in bookTitles" :key="title" :id="`accordion-${index}`" :level="2"
-        :opened="openedAccordions[index]" @accordion-toggle="toggleAccordion(index)">
-        <template #label>
-          {{ title }}
-        </template>
-        <div>
-          <form v-if="!bookDescriptions[index]" @submit.prevent="generateBookDescription(title, index)">
-            <ParActionButton class="generate-button" variant="secondary" :disabled="loadingDescriptions[index]"
-              :full-width="true" type="submit">Generate Full Description</ParActionButton>
-          </form>
-          <form v-if="bookDescriptions[index]" @submit.prevent="generateBookDescription(title, index)">
-            <ParActionButton class="generate-button" variant="secondary" :disabled="loadingDescriptions[index]"
-              :full-width="true" type="submit">Re-Generate Full Description</ParActionButton>
-          </form>
-          <div v-if="bookDescriptions[index] && !loadingDescriptions[index]">
-            <h2>{{ bookDescriptions[index].book_title }}</h2>
+      </ParAccordion>
+    </ParAccordionGroup>
 
-            <h3>Author Name</h3>
-            <cdr-text class="body-text">{{ bookDescriptions[index].author_name }}</cdr-text>
+    <ParAccordionGroup v-if="bookTitles" class="book-accordions">
+      <ParAccordion v-for="(title, index) in bookTitles" :key="title" :id="`book-${index}`" :level="3"
+        variant="burgundy" :label="title" :opened="!!openedAccordions[index]"
+        @accordion-toggle="toggleAccordion(index)">
+        <form @submit.prevent="generateBookDescription(title, index)">
+          <ParButton class="generate-button" variant="primary-outline" :disabled="loadingDescriptions[index]"
+            :full-width="true" type="submit">
+            {{ bookDescriptions[index] ? 'Re-generate full description' : 'Generate full description' }}
+          </ParButton>
+        </form>
 
-            <h3>Author's Background</h3>
-            <cdr-text class="body-text">{{ bookDescriptions[index].author_background }}</cdr-text>
+        <div v-if="bookDescriptions[index] && !loadingDescriptions[index]" class="book-detail">
+          <h2 class="book-detail__title">{{ bookDescriptions[index].book_title }}</h2>
 
-            <h3>Book Physical Description</h3>
-            <cdr-text class="body-text">{{ bookDescriptions[index].book_physical_description }}</cdr-text>
+          <p class="book-detail__label">Author</p>
+          <p class="book-detail__body">{{ bookDescriptions[index].author_name }}</p>
 
-            <h3>Summary</h3>
-            <cdr-text class="body-text">{{ bookDescriptions[index].summary }}</cdr-text>
+          <p class="book-detail__label">Author's background</p>
+          <p class="book-detail__body">{{ bookDescriptions[index].author_background }}</p>
 
-            <h3>Excerpt</h3>
-            <cdr-text class="body-text">{{ bookDescriptions[index].excerpt }}</cdr-text>
+          <p class="book-detail__label">Physical description</p>
+          <p class="book-detail__body">{{ bookDescriptions[index].book_physical_description }}</p>
 
-            <h3>Secret (Requires a {{ bookDescriptions[index].secret_check_difficulty }} {{
-              bookDescriptions[index].secret_check_needed }})</h3>
-            <cdr-text class="body-text">{{ bookDescriptions[index].secret_description }}</cdr-text>
-            <cdr-text class="body-text">{{ bookDescriptions[index].secret_found }}</cdr-text>
-          </div>
-          <div v-if="loadingDescriptions[index]">
-            <BookSkeleton />
-          </div>
+          <p class="book-detail__label">Summary</p>
+          <p class="book-detail__body">{{ bookDescriptions[index].summary }}</p>
+
+          <ParReadAloud label="Excerpt" :text="bookDescriptions[index].excerpt" />
+
+          <p class="book-detail__label">Secret</p>
+          <p class="book-detail__check">
+            Requires a {{ bookDescriptions[index].secret_check_difficulty }}
+            {{ bookDescriptions[index].secret_check_needed }}
+          </p>
+          <p class="book-detail__body">{{ bookDescriptions[index].secret_description }}</p>
+          <p class="book-detail__body">{{ bookDescriptions[index].secret_found }}</p>
         </div>
-      </cdr-accordion>
-    </cdr-accordion-group>
+
+        <div v-if="loadingDescriptions[index]">
+          <BookSkeleton />
+        </div>
+      </ParAccordion>
+      </ParAccordionGroup>
+    </div>
   </div>
 </template>
 
@@ -84,17 +90,12 @@
 <script>
 import { ref } from 'vue';
 import BookSkeleton from './BookSkeleton.vue';
-import { CdrInput, CdrList, CdrText, CdrAccordionGroup, CdrAccordion, CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
-import { ParActionButton } from "@/parchment";
+import ToolNavigation from '@/components/ToolNavigation.vue';
+import { CdrSkeleton, CdrSkeletonBone } from "@rei/cedar";
+import { ParButton, ParField, ParInput, ParAccordion, ParAccordionGroup, ParReadAloud } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import "@rei/cedar/dist/cdr-fonts.css";
 import "@rei/cedar/dist/reset.css";
-import "@rei/cedar/dist/style/cdr-input.css";
-import "@rei/cedar/dist/style/cdr-button.css";
-import '@rei/cedar/dist/style/cdr-list.css';
-import '@rei/cedar/dist/style/cdr-text.css';
-import '@rei/cedar/dist/style/cdr-accordion.css';
-import '@rei/cedar/dist/style/cdr-accordion-group.css';
 import "@rei/cedar/dist/style/cdr-skeleton.css";
 import "@rei/cedar/dist/style/cdr-skeleton-bone.css";
 import { generateGptResponse } from "@/util/ai-client.mjs";
@@ -102,12 +103,13 @@ import { generateGptResponse } from "@/util/ai-client.mjs";
 export default {
   components: {
     BookSkeleton,
-    CdrInput,
-    ParActionButton,
-    CdrList,
-    CdrText,
-    CdrAccordionGroup,
-    CdrAccordion,
+    ToolNavigation,
+    ParButton,
+    ParField,
+    ParInput,
+    ParAccordion,
+    ParAccordionGroup,
+    ParReadAloud,
     CdrSkeleton,
     CdrSkeletonBone
   },
@@ -140,7 +142,7 @@ export default {
 
         const response = await generateGptResponse(prompt);
         logger.log(response);
-        bookTitles.value = response.split('\n');
+        bookTitles.value = response.split('\n').map(t => t.trim()).filter(Boolean);
         loadingTitles.value = false;
       } catch (error) {
         logger.error("Error generating book titles:", error);
@@ -214,18 +216,62 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '@rei/cdr-tokens/dist/scss/cdr-tokens.scss';
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-
 .app-container {
-  @include cdr-text-body-400();
-  color: $cdr-color-text-primary;
   max-width: 800px;
-  margin: 20px auto;
+  margin: 3rem auto;
   padding: 2px 30px 30px 30px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+}
+
+/* ── Editorial heading ─────────────────────────────────────────────────── */
+.book-heading {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.book-heading__tag {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--color-action-secondary-rest, #5A7A9A);
+  letter-spacing: 0.04em;
+}
+
+.book-heading__title {
+  font-size: 3rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2A4D70);
+  margin: 0.4rem 0 0.5rem;
+  line-height: 1.15;
+}
+
+.book-heading__tagline {
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Form card ─────────────────────────────────────────────────────────── */
+.book-form-card {
+  background-color: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 2.25rem 2.5rem 2rem;
+}
+
+.title-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.book-accordions {
+  margin-top: 1.5rem;
+}
+
+.book-accordions .generate-button {
+  margin-bottom: 1rem;
 }
 
 @media screen and (max-width: 500px) {
@@ -240,40 +286,38 @@ export default {
   }
 }
 
-.body-text {
-  margin: 1rem 0;
+/* ── Book detail (inside an expanded accordion) ────────────────────────── */
+.book-detail__title {
+  margin: 0.5rem 0 1rem;
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  line-height: 1.2;
 }
 
-hr {
-  border: 1px solid $cdr-color-border-secondary;
-  width: 80%;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+.book-detail__label {
+  margin: 1.5rem 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--par-color-title, #7a1f1f);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.title-form {
-  background-color: $cdr-color-background-secondary;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.book-detail__check {
+  margin: 0 0 0.6rem;
+  max-width: 62rem;
+  font-size: 1.4rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--par-color-text-secondary, #555);
 }
 
-.generate-button {
-  align-self: flex-start;
-}
-
-.book-title-container {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
-}
-
-.book-title {
-  @include cdr-text-body-500();
+.book-detail__body {
+  margin: 0;
+  max-width: 62rem;
+  font-size: 1.55rem;
+  line-height: 1.7;
+  color: var(--par-color-text, #222);
 }
 </style>

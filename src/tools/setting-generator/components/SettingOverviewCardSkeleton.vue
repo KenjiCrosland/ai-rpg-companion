@@ -82,10 +82,10 @@ const skeletonSections = [
    don't cross component boundaries; the skeleton owns its own visual
    shell so the loading state renders complete on its own. */
 .setting-card {
-  background: var(--par-color-surface, #fdfbf6);
+  background: var(--par-color-surface, #FBF7F0);
   border: 1.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: 2px;
-  font-family: var(--par-font-serif, Georgia, 'Times New Roman', serif);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
   overflow: hidden;
   margin-bottom: 1.5rem;
   font-size: 17px;
@@ -121,7 +121,9 @@ const skeletonSections = [
 }
 
 .setting-card-content {
-  max-width: 65ch;
+  /* Matches OverviewTab: cap widened by the 6rem of side gutters so the
+     measure stays at 65ch and the skeleton doesn't jump on load. */
+  max-width: calc(65ch + 6rem);
   margin-inline: auto;
   padding: 0 3rem 2.5rem;
 }

@@ -1,0 +1,22 @@
+{
+  "actions": [
+    {
+      "name": "Life Drain",
+      "description": "Melee Spell Attack: +5 to hit, reach 5 ft., one target. Hit: 22 (4d8 + 4) necrotic damage, and the target must succeed on a DC 14 Constitution saving throw or its hit point maximum is reduced by an amount equal to the damage taken."
+    },
+    {
+      "name": "Ethereal Jaunt",
+      "description": "As a bonus action, the wraith can move up to its speed and pass through walls and other barriers as if moving through difficult terrain."
+    }
+  ],
+  "legendary_actions": [
+    {
+      "name": "Ethereal Step",
+      "description": "The wraith moves up to half its flying speed without provoking opportunity attacks."
+    },
+    {
+      "name": "Spectral Drain (Costs 2 Actions)",
+      "description": "The wraith makes one Life Drain attack."
+    }
+  ]
+}

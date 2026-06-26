@@ -226,23 +226,30 @@ function removeMonster(index) {
 
 <style scoped>
 .encounter-monster-list {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  padding: 1.5rem;
+  background: transparent;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
 }
 
+/* Empty state — warm-cream dashed box: "Click a monster to add it." */
 .empty-state {
+  background: var(--par-color-surface, #FBF7F0);
+  border: 0.5px dashed var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
   padding: 1.5rem 1rem;
   text-align: center;
-  color: #888;
-  font-size: 1.2rem;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
 }
 
 .monster-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .monster-entry {
@@ -250,9 +257,9 @@ function removeMonster(index) {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  background: #fafafa;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
+  background: var(--par-color-callout-bg-light, #F8F2E3);
   gap: 1rem;
 }
 
@@ -271,43 +278,25 @@ function removeMonster(index) {
 
 .monster-name {
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  color: var(--par-color-title, #7a1f1f);
 }
 
-/* ─── Source badges ─────────────────────────────────────────────────────────── */
-.source-badge {
-  padding: 0.0625rem 0.375rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
+/* Source / folder badges — quiet tan pills (no candy colors). */
+.source-badge,
+.folder-badge {
+  padding: 0.1rem 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
   border-radius: 3px;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
   white-space: nowrap;
+  background: var(--par-color-callout-bg, #f3ebda);
+  color: var(--par-color-text-secondary, #555);
+  border: none;
 }
 
-.source-srd {
-  background: #e3f2fd;
-  color: #1565c0;
-}
-
-.source-custom {
-  background: #f3e5f5;
-  color: #7b1fa2;
-}
-
-.source-saved {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.source-other,
-.source-unknown {
-  background: #f5f5f5;
-  color: #757575;
-  border: 1px solid #e0e0e0;
-}
-
-/* ─── Badge group layout ────────────────────────────────────────────────────── */
 .badge-group {
   display: flex;
   align-items: center;
@@ -315,32 +304,17 @@ function removeMonster(index) {
   flex-wrap: wrap;
 }
 
-.folder-badge {
-  padding: 0.0625rem 0.375rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  border-radius: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  background: #fff3e0;
-  color: #e65100;
-  border: 1px solid #ffcc80;
-}
-
-/* ─── Monster stats ─────────────────────────────────────────────────────────── */
 .monster-stats {
   display: flex;
   gap: 0.75rem;
-  font-size: 0.8125rem;
-  color: #666;
+  font-size: 1.2rem;
+  color: var(--par-color-text-secondary, #555);
 }
 
 .stat {
   font-weight: 500;
 }
 
-/* ─── Controls ──────────────────────────────────────────────────────────────── */
 .monster-controls {
   display: flex;
   align-items: center;
@@ -348,13 +322,12 @@ function removeMonster(index) {
   flex-shrink: 0;
 }
 
-/* Grouped −/quantity/+ as a single connected control */
 .quantity-control {
   display: flex;
   align-items: center;
   gap: 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
   overflow: hidden;
 }
 
@@ -364,29 +337,24 @@ function removeMonster(index) {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.125rem;
+  font-size: 1.4rem;
   font-weight: 600;
   line-height: 1;
   border: none;
-  background: #f5f5f5;
-  color: #333;
+  background: var(--par-color-surface, #FBF7F0);
+  color: var(--par-color-text, #222);
   cursor: pointer;
   transition: background-color 0.15s;
   padding: 0;
-  -webkit-user-select: none;
   user-select: none;
 }
 
 .qty-btn:hover:not(:disabled) {
-  background: #e0e0e0;
-}
-
-.qty-btn:active:not(:disabled) {
-  background: #d0d0d0;
+  background: var(--par-color-callout-bg, #f3ebda);
 }
 
 .qty-btn:disabled {
-  color: #bbb;
+  color: var(--par-color-text-disabled, #ccc);
   cursor: not-allowed;
 }
 
@@ -397,41 +365,42 @@ function removeMonster(index) {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.9375rem;
-  background: #fff;
-  border-left: 1px solid #ccc;
-  border-right: 1px solid #ccc;
+  font-size: 1.3rem;
+  color: var(--par-color-text, #222);
+  background: var(--par-color-surface-card, #FEFBF4);
+  border-left: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-right: 0.5px solid var(--par-color-border-strong, #c9b99a);
 }
 
-/* Distinct remove button — square with visible X, red on hover */
+/* Remove — quiet slate, burgundy on hover (the parchment destructive step). */
 .remove-btn {
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: 1.4rem;
   line-height: 1;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  color: #999;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
+  background: transparent;
+  color: var(--color-action-secondary-rest, #5A7A9A);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
   padding: 0;
 }
 
 .remove-btn:hover {
-  background: #fef2f2;
-  border-color: #e57373;
-  color: #c62828;
+  background: var(--par-color-action-destructive-hover, rgba(122, 31, 31, 0.06));
+  border-color: var(--par-color-title, #7a1f1f);
+  color: var(--par-color-title, #7a1f1f);
 }
 
-/* ─── Summary ───────────────────────────────────────────────────────────────── */
+/* Summary */
 .encounter-summary {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 2px solid #ddd;
+  border-top: 0.5px solid var(--par-color-border-strong, #c9b99a);
 }
 
 .summary-row {
@@ -439,79 +408,79 @@ function removeMonster(index) {
   justify-content: space-between;
   align-items: center;
   padding: 0.375rem 0;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  color: var(--par-color-text, #222);
 }
 
 .summary-row.difficulty {
   margin-top: 0.5rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #eee;
+  border-top: 0.5px solid var(--par-color-divider, #e2dccd);
 }
 
 .label {
   font-weight: 600;
+  color: var(--par-color-text-secondary, #555);
 }
 
 .multiplier-note {
   font-weight: 400;
-  color: #888;
-  font-size: 0.8125rem;
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-size: 1.2rem;
 }
 
 .value {
-  font-size: 1rem;
+  font-size: 1.4rem;
   font-weight: 700;
+  color: var(--par-color-text, #222);
 }
 
-/* ─── Difficulty badges ─────────────────────────────────────────────────────── */
+/* Difficulty pill — original semantic colors, desaturated/warm-toned for
+   parchment. Small-caps register. */
 .difficulty-badge {
-  padding: 0.1875rem 0.625rem;
-  font-weight: 700;
-  font-size: 1rem;
-  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 3px;
 }
 
 .difficulty-none {
-  background: #f5f5f5;
-  color: #9e9e9e;
+  background: transparent;
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-weight: 500;
 }
 
 .difficulty-trivial {
-  background: #e0e0e0;
-  color: #757575;
+  background: #e8e2d4;
+  color: #6b6b6b;
 }
 
 .difficulty-easy {
-  background: #c8e6c9;
-  color: #2e7d32;
+  background: #dde7d3;
+  color: #4d6a3c;
 }
 
 .difficulty-medium {
-  background: #fff9c4;
-  color: #f57f17;
+  background: #efe6c6;
+  color: #87691d;
 }
 
 .difficulty-hard {
-  background: #ffccbc;
-  color: #d84315;
+  background: #ecd7c2;
+  color: #9b5730;
 }
 
 .difficulty-deadly {
-  background: #ffcdd2;
-  color: #c62828;
+  background: #ebcfca;
+  color: #8e3830;
 }
 
-/* Highlight animation for deep link monster addition */
 @keyframes monster-highlight {
-  0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
-  }
+  0% { box-shadow: 0 0 0 0 rgba(122, 31, 31, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(122, 31, 31, 0.08); }
+  100% { box-shadow: 0 0 0 0 rgba(122, 31, 31, 0); }
 }
 
 .monster-entry-highlight {

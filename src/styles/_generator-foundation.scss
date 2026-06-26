@@ -14,12 +14,14 @@
 // SIDEBAR
 // ════════════════════════════════════════════════════════════════
 
-$sidebar-bg: #f4f4f4;
-$sidebar-active-color: #ffffff;
-$sidebar-hover-bg: #f0f0f0;
-$sidebar-default-bg: #e0e0e0;
-$sidebar-active-border: #007BFF;
-$sidebar-transition: 0.3s;
+// Parchment sidebar palette (lapis "magic UI" register). The cream frame
+// is owned by GeneratorLayout's .sidebar; rows sit transparently on it.
+$sidebar-bg: transparent;
+$sidebar-active-color: var(--par-color-callout-bg-deep, #ede2cb);
+$sidebar-hover-bg: var(--par-color-callout-bg, #f3ebda);
+$sidebar-default-bg: transparent;
+$sidebar-active-border: var(--color-action-rest, #365A85);
+$sidebar-transition: 0.15s;
 
 .sidebar-content {
   flex: 1;
@@ -48,29 +50,32 @@ $sidebar-transition: 0.3s;
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 12px 20px;
-  font-size: 1.5rem;
+  padding: 0.7rem 1rem;
+  font-size: 1.4rem;
   text-align: left;
   background-color: $sidebar-default-bg;
   border: none;
-  color: inherit;
+  border-radius: var(--par-radius-sm, 3px);
+  color: var(--par-color-text, #222);
   cursor: pointer;
-  border-left: 5px solid transparent;
-  transition: background-color $sidebar-transition, border-left-color $sidebar-transition;
+  border-left: 4px solid transparent;
+  transition: background-color $sidebar-transition, border-left-color $sidebar-transition, color $sidebar-transition;
 
   &:hover {
     background-color: $sidebar-hover-bg;
   }
 
-  &:focus {
+  &:focus-visible {
     outline: none;
     border-left-color: $sidebar-active-border;
+    background-color: $sidebar-hover-bg;
   }
 
   &.active {
     background-color: $sidebar-active-color;
     border-left-color: $sidebar-active-border;
-    font-weight: bold;
+    color: var(--color-action-hover, #2A4D70);
+    font-weight: 600;
   }
 }
 
@@ -80,7 +85,8 @@ $sidebar-transition: 0.3s;
     .#{$button-class} {
       background-color: $sidebar-active-color;
       border-left-color: $sidebar-active-border;
-      font-weight: bold;
+      color: var(--color-action-hover, #2A4D70);
+      font-weight: 600;
     }
   }
 }
@@ -114,20 +120,8 @@ $sidebar-transition: 0.3s;
     letter-spacing: 0.02em;
   }
 
-  .version-pill {
-    display: inline-block;
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 0.2rem 0.8rem;
-    border-radius: 100px;
-    background-color: #ededed;
-    color: $cdr-color-text-secondary;
-
-    &.premium {
-      background-color: #fdf3e0;
-      color: #9c6a0a;
-    }
-  }
+  /* The Free/Premium badge is now the shared VersionBadge component
+     (src/components/VersionBadge.vue) — no per-foundation pill style. */
 
   h1 {
     font-size: 3.2rem;

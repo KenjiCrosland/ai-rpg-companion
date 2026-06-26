@@ -126,10 +126,10 @@
                     </li>
                 </div>
                 <div v-if="isEditing && !loadingAbilities" class="ability-forms">
-                    <ParActionButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
+                    <ParButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
                         @click="generateAbilities(editedMonster, userSuggestion)">{{
-                            monster.abilities.length > 0 ? 'Re-Generate Abilities' :
-                                'Generate Abilities' }}</ParActionButton>
+                            monster.abilities.length > 0 ? 'Re-generate abilities' :
+                                'Generate abilities' }}</ParButton>
                     <li v-for="(ability, index) in editedAbilities" :key="index">
                         <input v-model="ability.name" />
                         <textarea v-model="ability.description"></textarea>
@@ -152,12 +152,12 @@
             </ul>
 
             <div class="edit-save-buttons" v-if="!readonly">
-                <ParActionButton size="small" variant="secondary" v-if="showEditButton && !isEditing"
-                    @click="enterEditMode">Edit</ParActionButton>
-                <ParActionButton style="margin-right: 1rem" size="small" variant="secondary" v-if="isEditing"
-                    @click="saveChanges">Save</ParActionButton>
-                <ParActionButton style="margin-right: 1.5rem" size="small" variant="secondary" v-if="isEditing"
-                    @click="cancelChanges">Cancel</ParActionButton>
+                <ParCardButton size="small" variant="affirmative" v-if="showEditButton && !isEditing"
+                    @click="enterEditMode">Edit</ParCardButton>
+                <ParCardButton size="small" variant="primary" v-if="isEditing"
+                    @click="saveChanges">Save</ParCardButton>
+                <ParCardButton size="small" variant="muted" v-if="isEditing"
+                    @click="cancelChanges">Cancel</ParCardButton>
             </div>
         </div>
 
@@ -175,10 +175,10 @@
                     </li>
                 </div>
                 <div v-if="isEditing && !loadingActions" class="ability-forms">
-                    <ParActionButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
+                    <ParButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
                         v-if="isEditing" @click="generateActions(editedMonster, userSuggestion)">{{ editedActions.length
                             > 0 ?
-                            'Re-Generate Actions' : 'Generate Actions' }}</ParActionButton>
+                            'Re-generate actions' : 'Generate actions' }}</ParButton>
                     <li v-for="(action, index) in editedActions" :key="'action-' + index">
                         <input v-model="action.name" />
                         <textarea v-model="action.description"></textarea>
@@ -207,14 +207,14 @@
                     spent legendary actions at the start of its turn.</p>
                 <p class="statblock-p" v-if="isEditing && editedLegendaryActions.length === 0">Add some legendary
                     actions to the monster.
-                    You can either add them one at at time manually or click "Generate Legendary Actions" to
+                    You can either add them one at at time manually or click "Generate legendary actions" to
                     generate actions for you. Please note that that adding legendary actions will make this creature
                     stronger than the CR provided.</p>
-                <ParActionButton class="regenerate-button" v-if="isEditing && !loadingLegendaryActions" size="small"
+                <ParButton class="regenerate-button" v-if="isEditing && !loadingLegendaryActions" size="small"
                     :full-width="true" modifier="secondary"
                     @click="generateLegendaryActions(editedMonster, userSuggestion)">{{
-                        editedLegendaryActions.length > 0 ? 'Re-Generate Legendary Actions' :
-                            'Generate Legendary Actions' }}</ParActionButton>
+                        editedLegendaryActions.length > 0 ? 'Re-generate legendary actions' :
+                            'Generate legendary actions' }}</ParButton>
                 <ul class="abilities" v-if="editedLegendaryActions.length > 0 || isEditing">
                     <template v-if="!isEditing">
                         <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
@@ -240,9 +240,9 @@
                                 @click="addLegendaryAction">Add
                                 Legendary Action</button>
                         </div>
-                        <ParActionButton style="margin-top: .5rem" size="small" :full-width="true" variant="secondary"
+                        <ParButton style="margin-top: .5rem" size="small" :full-width="true" variant="secondary"
                             v-if="editedLegendaryActions.length > 0" @click="clearLegendaryActions">Remove
-                            All Legendary Actions</ParActionButton>
+                            All Legendary Actions</ParButton>
 
                     </template>
                     <div v-if="loadingLegendaryActions">
@@ -261,7 +261,7 @@
             <div class="card-footer-bar__actions">
                 <CardFooterAction @click="$emit('move-to-folder')">
                     <template #icon>📁</template>
-                    Move to Folder
+                    Move to folder
                 </CardFooterAction>
 
                 <CardFooterAction @click="$emit('use-in-encounter')">
@@ -274,13 +274,18 @@
                     {{ createNpcButtonText }}
                 </CardFooterAction>
 
+                <CardFooterAction @click="$emit('toggle-regenerate')">
+                    <template #icon>🔄</template>
+                    Regenerate
+                </CardFooterAction>
+
                 <CardFooterAction @click="$emit('toggle-export')">
                     <template #icon>📤</template>
                     Export
                 </CardFooterAction>
             </div>
 
-            <CardFooterAction @click="$emit('delete')" variant="danger">
+            <CardFooterAction @click="$emit('delete')" variant="danger" data-testid="delete-statblock">
                 <template #icon>🗑️</template>
                 Delete
             </CardFooterAction>
@@ -289,7 +294,7 @@
 </template>
 
 <script setup>
-import { ParActionButton } from "@/parchment";
+import { ParButton, ParCardButton } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';
@@ -340,8 +345,8 @@ const props = defineProps({
 });
 
 const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `max-width: ${props.width}px; width: 100%`);
-const createNpcButtonText = computed(() => props.linkedNpcsCount > 0 ? 'Create Another NPC' : 'Create NPC');
-const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export']);
+const createNpcButtonText = computed(() => props.linkedNpcsCount > 0 ? 'Create another NPC' : 'Create NPC');
+const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export', 'toggle-regenerate']);
 
 const containerRef = ref(null);
 const containerWidth = ref(850);
@@ -643,7 +648,7 @@ input,
 textarea,
 select {
     border: 1px solid #cbab77;
-    background-color: #fefdf9;
+    background-color: var(--par-color-surface-card, #FEFBF4);
     padding: .75rem;
     font-size: 14px;
 
@@ -690,11 +695,12 @@ textarea {
     position: absolute;
     top: 10px;
     right: 10px;
+    gap: 0.6rem;
 }
 
 
 .container:hover .edit-save-buttons {
-    display: inline-block;
+    display: flex;
 }
 
 .statblock {
@@ -772,7 +778,7 @@ textarea {
 .remove-button,
 .add-button,
 .regenerate-button-small {
-    background-color: #fefdf9;
+    background-color: var(--par-color-surface-card, #FEFBF4);
     color: #8d7349;
     font-weight: bold;
     border: 1px solid #cbab77;
@@ -782,7 +788,7 @@ textarea {
 
     &:hover {
         background-color: #cbab77;
-        color: #fefdf9;
+        color: var(--par-color-surface-card, #FEFBF4);
         transition: .3s, color .3s;
     }
 
@@ -911,11 +917,16 @@ textarea {
     }
 }
 
-/* Footer bar for card actions */
+/* Footer bar for card actions. Wraps at any width: the action group and the
+   trailing Delete stay on one line when there's room and flow onto further
+   lines when there isn't (narrow viewports, more actions) instead of
+   overflowing the card edge. */
 .card-footer-bar {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
     padding: 1rem 1.5rem;
     border-top: 1px solid #e0d6c2;
     background: rgba(0, 0, 0, 0.02);
@@ -929,17 +940,7 @@ textarea {
 
 .card-footer-bar__actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.25rem;
-}
-
-@media (max-width: 480px) {
-    .card-footer-bar {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .card-footer-bar__actions {
-        flex-wrap: wrap;
-    }
 }
 </style>
