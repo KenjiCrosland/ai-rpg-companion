@@ -148,6 +148,18 @@ watch([isSidebarVisible, windowWidth], ([sidebarOpen, width]) => {
 .app-container {
   display: flex;
 
+  /* Halo — a light pool behind/around the content so the cream cards sit in
+     light against the darker desk (src/App.vue / functions.php). Painted on
+     .app-container, behind the main-content <slot>; the opaque cream sidebar
+     overlays the left, so the light reads as pooling over the content. The
+     content column (~800px) covers the halo's center, so it's anchored HIGH
+     (y 12%) and wide — the glow shows in the visible area above and beside the
+     content, fading down/out to the darker desk. Viewport-fixed so it stays
+     near the top as you scroll. Tune: center color (#F2F6FB; lighter =
+     brighter) and the transparent stop (72%); darker desk = more contrast. */
+  background: radial-gradient(90% 72% at 60% 12%, #F2F6FB 0%, rgba(242, 246, 251, 0) 72%);
+  background-attachment: fixed;
+
   .overlay {
     position: fixed;
     top: 0;

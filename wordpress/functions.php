@@ -721,7 +721,7 @@ function rpg_companion_app_style_guards() {
         .content,
         .entry,
         .entry-content {
-            background-color: #EAEEF2;
+            background-color: #BECBDB;
         }
 
         /* Parchment content headings are ALWAYS serif (sans is reserved for
