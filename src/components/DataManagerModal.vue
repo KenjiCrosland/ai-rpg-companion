@@ -13,7 +13,7 @@
       </p>
 
       <div class="dm-upsell__actions">
-        <ParButton variant="luminous" tag="a" :href="patreonTiersUrl" target="_blank" rel="noopener">
+        <ParButton variant="luminous" tag="a" :href="patreonTiersUrl" target="_blank" rel="noopener" @click="onPatreonClick">
           <template #icon-left>
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
               <circle cx="9" cy="7" r="4" fill="currentColor" />
@@ -65,6 +65,7 @@ import { ParButton, ParModal } from "@/parchment";
 import { ref, computed } from 'vue';
 import { logger } from '@/util/logger.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { QUOTA_FIELDS, seedFreshQuotas } from '@/util/quota-storage.mjs';
 import { runPendingMigrations } from '@/util/migration-runner.mjs';
 
@@ -84,6 +85,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:opened']);
+
+// Analytics: the modal's "Support on Patreon" CTA (conversion click).
+function onPatreonClick() {
+  trackEvent('patreon_click', { location: 'data-manager' });
+}
 
 /**
  * Every localStorage key that's part of the user's game-master data

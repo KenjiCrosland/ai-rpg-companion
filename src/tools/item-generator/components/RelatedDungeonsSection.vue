@@ -116,6 +116,7 @@
 import { computed, ref } from 'vue';
 import { ParButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { extractRelatedDungeons, mergeStubs } from '@/tools/item-generator/utils/extract-related-dungeons.mjs';
 import { getDungeonDisplayName } from '@/util/dungeon-storage.mjs';
 import { useToast } from '@/composables/useToast';
@@ -184,6 +185,7 @@ function onCreate(stub) {
   // Stub-based seed: pass `entityName` so the dungeon generator's
   // mount handler builds the per-stub prefill (via buildDungeonPrefillFromItem)
   // and links back to this specific stub on finalize.
+  trackEvent('cross_tool_start', { from_tool: 'item-generator', to_tool: 'dungeon-generator' });
   navigateToTool('dungeon-generator', {
     fromType: 'item',
     fromId: props.item.name,
@@ -197,6 +199,7 @@ function onCreateFromWholeItem() {
   // and generates a dungeon from scratch — the stub gets created on
   // the spot during the finalize hook (no back-link needed because
   // there was no stub to link from).
+  trackEvent('cross_tool_start', { from_tool: 'item-generator', to_tool: 'dungeon-generator' });
   navigateToTool('dungeon-generator', {
     fromType: 'item',
     fromId: props.item.name,

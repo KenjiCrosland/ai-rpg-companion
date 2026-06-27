@@ -303,7 +303,7 @@
       <!-- Footer is the free-tier upgrade prompt only; premium has no callout
            (Backup/Restore lives in the sidebar Data options). -->
       <div v-if="!premium" class="encounter-footer">
-        <PatreonCallout :patreon-url="patreonLoginUrl">
+        <PatreonCallout :patreon-url="patreonLoginUrl" location="encounter-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your encounters across devices.</p>
           </template>
@@ -1429,10 +1429,11 @@ onMounted(async () => {
         highlightDeepLink.value = true;
         highlightMonsterIndex.value = 0;
 
-        // Clear query param to prevent re-adding on refresh (production only)
-        if (window.location.search) {
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, '', newUrl);
+        // Clear the deep-link param to prevent re-adding on refresh (production
+        // only). navigateToTool now writes handoff params to the URL fragment,
+        // so clear the hash too — not just the query string.
+        if (window.location.search || window.location.hash) {
+          window.history.replaceState({}, '', window.location.pathname);
         }
       }
     } catch (error) {

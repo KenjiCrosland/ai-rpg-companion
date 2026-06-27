@@ -160,7 +160,7 @@
               Blog & Resources
             </a>
 
-            <a class="btn small gold" href="https://patreon.com/ai_rpg_tookit" target="_blank" rel="noopener">
+            <a class="btn small gold" href="https://patreon.com/ai_rpg_tookit" target="_blank" rel="noopener" @click="onPatreonClick">
               <span class="material-symbols-outlined">favorite</span>
               Support on Patreon
             </a>
@@ -183,6 +183,12 @@
 
 <script setup>
 import { computed, ref } from "vue";
+import { trackEvent } from '@/util/analytics.mjs';
+
+// Analytics: the landing-page "Support on Patreon" CTA (conversion click).
+function onPatreonClick() {
+  trackEvent('patreon_click', { location: 'landing' });
+}
 
 /**
  * HERO IMAGE

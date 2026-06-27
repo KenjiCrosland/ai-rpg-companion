@@ -46,7 +46,7 @@
                cross-tool (lives in the suite-wide showcase, not a single
                generator), so the bullets pitch the whole-suite benefits
                rather than tool-specific quota lifts. -->
-          <PatreonCallout v-if="!isSupporter" patreon-url="https://patreon.com/ai_rpg_tookit">
+          <PatreonCallout v-if="!isSupporter" patreon-url="https://patreon.com/ai_rpg_tookit" location="showcase">
             <template #body>
               <p class="patreon-callout__body">Your work across cros.land's tools is saved to this browser only. Premium syncs across devices, lifts daily generation caps, and unlocks patron-exclusive tools.</p>
             </template>

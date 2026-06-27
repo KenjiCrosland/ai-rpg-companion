@@ -109,7 +109,7 @@
         <!-- ZONE 3: Footer meta (free users only — premium's backup/restore
              lives in the sidebar footer's Data options). -->
         <div class="footer-meta" v-if="!premium">
-          <PatreonCallout :patreon-url="patreonLoginUrl">
+          <PatreonCallout :patreon-url="patreonLoginUrl" location="setting-footer">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
             </template>
@@ -159,7 +159,7 @@
 
       <!-- Footer below content (free users only). -->
       <div class="footer-meta" v-if="settingOverviewExists && !premium">
-        <PatreonCallout :patreon-url="patreonLoginUrl">
+        <PatreonCallout :patreon-url="patreonLoginUrl" location="setting-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your settings across devices.</p>
           </template>
@@ -214,6 +214,7 @@ import { removeReferencesForEntity } from '@/util/reference-storage.mjs';
 import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import { getNavigationParams, navigateToTool } from '@/util/navigation.mjs';
 import { loadSeededInput, addReferenceForSeed, sourceExists } from '@/util/seeded-input.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { buildSettingPrefillFromItem } from '@/prompts/item-setting-prompts.mjs';
 import {
   linkSettingToItemStub,
@@ -527,6 +528,10 @@ function finalizePendingSeed(setting) {
   setting.sourceType = seed.source.type;
   setting.sourceId = seed.source.id;
   setting.sourceName = seed.source.name;
+
+  // Analytics: a seeded generation completed — closes the cross_tool_start
+  // funnel. Only the provenance flag (not the setting tool's full usability).
+  trackEvent('generate', { tool: 'setting-generator', seeded: true, seed_source: seed.source.type });
 
   pendingSeed.value = null;
 }

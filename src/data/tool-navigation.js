@@ -1,3 +1,5 @@
+import { trackEvent } from '@/util/analytics.mjs';
+
 export const tools = [
   { name: 'Monster Statblock Generator', slug: 'statblock-generator', url: 'https://cros.land/ai-powered-dnd-5e-monster-statblock-generator/' },
   { name: 'Dungeon Generator', slug: 'dungeon-generator', url: 'https://cros.land/kenjis-dungeon-generator-2-0/' },
@@ -31,6 +33,10 @@ export function getCurrentSlug() {
 export function navigate(slug) {
   const tool = tools.find(t => t.slug === slug);
   if (!tool) return;
+
+  // Analytics: every tool-to-tool move (closed-vocab slugs), fired before
+  // navigation. Captures arrivals into each tool (`to`) for free.
+  trackEvent('tool_switch', { from: getCurrentSlug(), to: slug });
 
   if (import.meta.env.DEV) {
     localStorage.setItem('dev-current-page', slug);

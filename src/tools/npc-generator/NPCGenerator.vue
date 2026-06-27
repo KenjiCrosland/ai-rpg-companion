@@ -132,7 +132,7 @@
                 <!-- Free users only — premium's backup/restore lives in the
                      sidebar footer's Data options. -->
                 <div class="footer-meta" v-if="!premium">
-                    <PatreonCallout :patreon-url="patreonLoginUrl">
+                    <PatreonCallout :patreon-url="patreonLoginUrl" location="npc-footer">
                         <template #body>
                             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs
                                 across devices and unlocks unlimited combat statblock generation for your NPCs.</p>
@@ -312,7 +312,7 @@
             <!-- Free users only — premium's backup/restore lives in the
                  sidebar footer's Data options. -->
             <div class="footer-meta" v-if="npcDescriptionPart1 && !loadingPart1 && !premium">
-                <PatreonCallout :patreon-url="patreonLoginUrl">
+                <PatreonCallout :patreon-url="patreonLoginUrl" location="npc-footer">
                     <template #body>
                         <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across
                             devices and unlocks unlimited combat statblock generation for your NPCs.</p>
@@ -393,6 +393,7 @@ const registerOverrideOptions = registerList
 // END TEST-REGISTER-OVERRIDE
 import { buildStatblockContext } from './utils/statblock-context.mjs';
 import { addReference, getReferencesForEntity, removeReferencesForEntity } from '@/util/reference-storage.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import {
     loadSeededInput,
     buildPrefillForSeed,
@@ -1622,6 +1623,9 @@ function finalizePendingSeed() {
 
     addReferenceForSeed(seed, { type: 'npc', id: npc.npc_id, name: npcName });
     writeBackPromotedNPC(seed, { npc_id: npc.npc_id, name: npcName, folderName });
+    // Analytics: a seeded generation completed — closes the cross_tool_start
+    // funnel. Only the provenance flag (not the NPC tool's full usability).
+    trackEvent('generate', { tool: 'npc-generator', seeded: true, seed_source: seed.source.type });
 
     pendingSeed.value = null;
 }

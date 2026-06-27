@@ -116,7 +116,7 @@
                benefits (Lore Builder, Quest Hook) are stated explicitly at
                the call site rather than relied on as PatreonCallout's
                default. Other tools' migrations follow the same shape. -->
-          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+          <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" location="item-footer">
             <template #features>
               <li>Cross-device save and load — your campaigns sync between browsers and devices.</li>
               <li>Unlimited Lore Builder generations — no daily cap.</li>
@@ -303,7 +303,7 @@
       <div class="footer-meta" v-if="magicItemDescription && !loadingItem">
         <!-- Free users: PatreonCallout owns the upsell messaging end-to-end.
              Same slot content as the form-sidebar instance above. -->
-        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl">
+        <PatreonCallout v-if="!premium" :patreon-url="patreonLoginUrl" location="item-footer">
           <template #features>
             <li>Cross-device save and load — your campaigns sync between browsers and devices.</li>
             <li>Unlimited Lore Builder generations — no daily cap.</li>
@@ -358,6 +358,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { trackEvent } from '@/util/analytics.mjs';
+import { buildItemGenerateParams } from './utils/build-generate-params.mjs';
 import { CdrInput, CdrSelect, CdrLink } from "@rei/cedar";
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
@@ -532,6 +534,17 @@ const generateRandom = () => {
 };
 
 const generateMagicItem = async () => {
+  // Analytics: snapshot the content-free field-usage params BEFORE the form is
+  // mutated below (an empty rarity gets random-filled), so an omitted rarity
+  // reflects the user's actual choice. Fired on success only (see below).
+  const generateParams = buildItemGenerateParams({
+    itemName: itemName.value,
+    rarity: rarity.value,
+    itemType: itemType.value,
+    itemOrigin: itemOrigin.value,
+    itemLore: itemLore.value,
+  });
+
   if (!rarity.value) {
     const randomIndex = Math.floor(Math.random() * rarityOptions.length);
     rarity.value = rarityOptions[randomIndex];
@@ -1823,6 +1836,9 @@ Do this: ${selectedExample}${resolvedItemType === 'Potion' ? '\n\nPOTION EXAMPLE
     selectItem(index);
     activeTabId.value = 'item-details';
     toast.success('Magic item generated and saved.');
+    // Analytics: content-free generate event (field-usage only). Snapshot
+    // captured at the top of this function, fired here on success.
+    trackEvent('generate', generateParams);
   } catch (error) {
     logger.error("Error generating magic item:", error);
     toast.error('Failed to generate magic item. Please try again.');
@@ -2073,6 +2089,7 @@ const copyAsMarkdown = () => {
   if (markdownContent) {
     navigator.clipboard.writeText(markdownContent);
     toast.success('Copied as markdown!');
+    trackEvent('item_action', { action: 'copy' });
   } else {
     toast.error('No content available to copy.');
   }
@@ -2100,6 +2117,7 @@ const copyAsPlainText = () => {
 
   navigator.clipboard.writeText(parts.join('\n'));
   toast.success('Copied as plain text!');
+  trackEvent('item_action', { action: 'copy' });
 };
 
 const saveItem = (item) => {
@@ -2279,6 +2297,7 @@ const startEditing = () => {
     lore: magicItemDescription.value.lore || ''
   };
   isEditing.value = true;
+  trackEvent('item_action', { action: 'edit' });
 };
 
 const cancelEdit = () => {
@@ -2331,6 +2350,7 @@ const saveEdit = () => {
   }
 
   isEditing.value = false;
+  trackEvent('item_action', { action: 'save' });
 };
 
 const addFeature = () => {
@@ -2359,6 +2379,13 @@ const generateFeature = async (index) => {
     return;
   }
   pendingFeatureRegen.value = null;
+
+  // Analytics: a *regenerate* of existing content is an output action; the old
+  // description is still present here iff this is a regeneration (vs. an initial
+  // feature generation, which isn't tracked).
+  if (feature.description && feature.description.trim()) {
+    trackEvent('item_action', { action: 'regenerate' });
+  }
 
   feature.generating = true;
 
@@ -2454,6 +2481,9 @@ const handleSavedItemsStorageChange = (e) => {
 };
 
 onMounted(() => {
+  // Analytics: the generate-rate denominator — fired once per landing.
+  trackEvent('tool_open', { tool: 'item-generator' });
+
   loadSavedItems();
   window.addEventListener('storage', handleSavedItemsStorageChange);
   window.addEventListener('saved-items-updated', handleSavedItemsStorageChange);

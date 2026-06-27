@@ -12,6 +12,7 @@ import {
   pickTierForRarity,
 } from '../util/infer-item-dungeon-mode.mjs';
 import { addReferenceForSeed } from '@/util/seeded-input.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import {
   getItemFromStorage,
   linkDungeonToItemStub,
@@ -349,6 +350,9 @@ export async function generateDungeonOverview() {
       newDungeon.sourceId = pendingSeed.value.source.id;
       newDungeon.sourceName = pendingSeed.value.source.name;
       newDungeon.seedMode = seedMode;  // 'forgotten' | 'revered' | 'carried' | 'trial'
+      // Analytics: a seeded generation completed — closes the cross_tool_start
+      // funnel. Only the provenance flag (not the dungeon's full usability).
+      trackEvent('generate', { tool: 'dungeon-generator', seeded: true, seed_source: pendingSeed.value.source.type });
 
       const itemName = pendingSeed.value.source.id;
       const stubName = pendingSeed.value.entities?.[0]?.name;

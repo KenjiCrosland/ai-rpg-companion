@@ -20,6 +20,7 @@
 import { detectIncognito } from 'detectincognitojs';
 import { useToast } from '../composables/useToast';
 import { readQuota, writeQuota, ensureQuotaSeeded } from './quota-storage.mjs';
+import { trackEvent } from './analytics.mjs';
 
 const MAX_GENERATIONS = 5;
 const RESET_WINDOW_MS = 86400000; // 24h
@@ -86,6 +87,8 @@ export async function canGenerateCrossTool(sourceType, destType, isPremium) {
       0,
       'incognito-warning',
     );
+    // Analytics: private-mode block (tool = the destination where it triggered).
+    trackEvent('gate_blocked', { tool: `${destType}-generator`, reason: 'incognito' });
     return false;
   }
 
@@ -122,6 +125,8 @@ export async function canGenerateCrossTool(sourceType, destType, isPremium) {
       0,
       'rate-limit-warning',
     );
+    // Analytics: daily cap hit (tool = the destination where it triggered).
+    trackEvent('quota_reached', { tool: `${destType}-generator`, quota_type: 'cross-tool' });
     return false;
   }
 

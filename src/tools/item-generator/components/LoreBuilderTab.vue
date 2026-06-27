@@ -267,6 +267,7 @@ import { formatMarkdown } from '../utils/format-markdown.mjs';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
 import { readQuota, writeQuota, remainingFromQuota, ensureQuotaSeeded } from '@/util/quota-storage.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import {
   generateEventPrompt,
   generateSummaryPrompt,
@@ -455,6 +456,8 @@ const canGenerateEvent = async () => {
       "The free lore builder is not available in incognito or private mode. Please disable incognito mode or become a $5 patron for unlimited access.",
       8000
     );
+    // Analytics: private-mode block — a distinct gate from the daily cap.
+    trackEvent('gate_blocked', { tool: 'item-generator', reason: 'incognito' });
     return false;
   }
 
@@ -477,6 +480,8 @@ const canGenerateEvent = async () => {
     } else {
       const resetTime = new Date(firstGenTime + RESET_WINDOW_MS);
       toast.warning(`You've reached the 5 event generation limit. Come back at ${resetTime.toLocaleString()} or become a $5 patron for unlimited access.`, 8000);
+      // Analytics: daily cap hit (fires even if the user never clicks the upsell).
+      trackEvent('quota_reached', { tool: 'item-generator', quota_type: 'lore' });
       return false;
     }
   } else {
@@ -573,6 +578,8 @@ const generateEvent = async () => {
       eventYear: eventYear,
       yearsAgo: yearsAgo
     };
+    // Analytics: a lore-timeline event was generated (premium-gated feature use).
+    trackEvent('item_action', { action: 'lore_generate' });
 
   } catch (error) {
     logger.error('Error generating event:', error);
@@ -762,6 +769,8 @@ const confirmUpdateItemLore = () => {
   };
 
   emit('updated-item', updatedItem);
+  // Analytics: the lore timeline was summarized into the item's lore.
+  trackEvent('item_action', { action: 'lore_summary' });
 
   toast.success('Item lore has been updated with the historical summary!');
 };

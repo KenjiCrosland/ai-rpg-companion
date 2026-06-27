@@ -110,7 +110,7 @@
              the upsell; premium users no longer need a save/load callout —
              the sidebar footer's Data options covers backup/restore. -->
         <div class="footer-meta" v-if="!premium">
-          <PatreonCallout :patreon-url="patreonLoginUrl">
+          <PatreonCallout :patreon-url="patreonLoginUrl" location="statblock-footer">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
             </template>
@@ -203,7 +203,7 @@
       <!-- Footer below monster content (free users only — premium's
            backup/restore lives in the sidebar footer's Data options). -->
       <div class="footer-meta" v-if="monster && !loadingPart2 && !premium">
-        <PatreonCallout :patreon-url="patreonLoginUrl">
+        <PatreonCallout :patreon-url="patreonLoginUrl" location="statblock-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
           </template>

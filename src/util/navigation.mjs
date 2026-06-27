@@ -61,7 +61,12 @@ export function navigateToTool(toolName, params = {}) {
 
     const baseUrl = `https://cros.land${toolPath}`;
     const queryString = new URLSearchParams(params).toString();
-    window.location.href = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+    // Cross-tool handoff params go in the URL FRAGMENT (#…), not the query
+    // string, so user-derived values (fromId = item name, entityName) never
+    // land in what GA records as page_location — the fragment is not sent to
+    // the server and GA doesn't log it by default. getNavigationParams reads it
+    // back, with a ?query fallback for any in-flight pre-migration links.
+    window.location.href = queryString ? `${baseUrl}#${queryString}` : baseUrl;
   }
 }
 
@@ -95,9 +100,14 @@ export function getNavigationParams() {
     }
     return {};
   } else {
-    // Production: Read from URL parameters
+    // Production: read from the URL FRAGMENT (where navigateToTool now writes
+    // handoff params, to keep them out of GA's page_location). Fall back to the
+    // query string for backward compatibility with pre-migration ?param links
+    // and the direct ?monster/?folder deep-links built by getStatblockGeneratorUrl.
     const params = {};
-    const urlParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.replace(/^#/, '');
+    const search = window.location.search.replace(/^\?/, '');
+    const urlParams = new URLSearchParams(hash || search);
     urlParams.forEach((value, key) => {
       params[key] = decodeURIComponent(value);
     });
