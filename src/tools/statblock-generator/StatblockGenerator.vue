@@ -258,6 +258,7 @@ import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
 import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
 import { navigateToTool, getNavigationParams } from '@/util/navigation.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { useToast } from '@/composables/useToast';
 import { getReferencesForEntity } from '@/util/reference-storage.mjs';
 
@@ -821,6 +822,7 @@ async function generateStatblock() {
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
   loadingPart2.value = false;
   toast.success('Statblock generated and saved.');
+  trackEvent('generate', { tool: 'statblock-generator' });
 
   // Enrich custom statblock in background (non-blocking)
   try {

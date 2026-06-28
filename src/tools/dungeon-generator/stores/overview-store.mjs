@@ -105,6 +105,10 @@ export const currentDungeonOverviewString = computed(() => {
  * without re-rolling.
  */
 export async function generateDungeonOverview() {
+  // Analytics: snapshot the seeded state up front — the seeded block below
+  // nulls pendingSeed before we'd otherwise read it. Seeded generations fire
+  // their own generate (with the provenance flag) in that block.
+  const wasSeeded = !!pendingSeed.value;
   try {
     activeTabIndex.value = 0;
 
@@ -380,6 +384,8 @@ export async function generateDungeonOverview() {
     overviewForm.value.difficulty = '';
 
     saveDungeons();
+    // Analytics: normal (non-seeded) dungeon generation.
+    if (!wasSeeded) trackEvent('generate', { tool: 'dungeon-generator' });
   } catch (error) {
     logger.error('Error generating dungeon overview:', error);
     alert(`Failed to generate dungeon overview: ${error.message}\n\nPlease try again.`);

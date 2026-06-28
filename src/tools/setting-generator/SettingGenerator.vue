@@ -1876,6 +1876,10 @@ async function handleGenerateSetting({ operationIndex, parentId, prompt, subloca
       // edge + flip the source item's stub from "Create Setting" to
       // "View in Setting Generator". No-op for sublocations and for
       // generations that didn't come from a cross-tool flow.
+      // Analytics: a normal (non-seeded) setting generation (top-level or
+      // sublocation). Seeded top-level ones fire their own generate inside
+      // finalizePendingSeed.
+      if (!pendingSeed.value) trackEvent('generate', { tool: 'setting-generator' });
       if (!isSublocation) {
         finalizePendingSeed(settings.value[operationIndex]);
       }

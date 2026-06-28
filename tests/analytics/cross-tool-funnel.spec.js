@@ -46,6 +46,10 @@ test('cross-tool funnel: Create NPC fires cross_tool_start, then a seeded genera
   const seeded = await waitForEvent(page, 'generate');
   expect(seeded.params).toMatchObject({ tool: 'npc-generator', seeded: true, seed_source: 'item' });
 
+  // A seeded generation fires ONLY the seeded variant — not also a plain
+  // generate (the guard prevents double-counting).
+  expect((await getEvents(page, 'generate')).length).toBe(1);
+
   // And the start was captured before the navigation.
   const starts = await getEvents(page, 'cross_tool_start');
   expect(starts.some((e) => e.params.from_tool === 'item-generator' && e.params.to_tool === 'npc-generator')).toBe(true);

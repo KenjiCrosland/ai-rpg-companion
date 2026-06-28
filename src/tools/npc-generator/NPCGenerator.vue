@@ -1589,6 +1589,9 @@ function displayNPCDescription({ part, npcDescription }) {
         // ran — leaving the stub.npc_id null and no tool-reference.
         // Part 2 carries supplementary relationships, not the NPC's
         // cross-tool identity, so the link is correct to fire here.
+        // Analytics: a normal (non-seeded) NPC generation. Seeded ones fire
+        // their own generate (with the provenance flag) inside finalizePendingSeed.
+        if (!pendingSeed.value) trackEvent('generate', { tool: 'npc-generator' });
         finalizePendingSeed();
     } else if (part === 2) {
         npcDescriptionPart2.value = npcDescription;

@@ -367,6 +367,7 @@ import { removeReferencesForEntity, getAllReferences } from '@/util/reference-st
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
 import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
@@ -864,6 +865,7 @@ async function generateEncounter() {
 
     // Save
     saveNewEncounter();
+    trackEvent('generate', { tool: 'encounter-generator' });
   } catch (error) {
     logger.error('Error generating encounter:', error);
     toast.error('Failed to generate encounter. Please try again.');

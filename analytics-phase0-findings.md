@@ -382,6 +382,15 @@ logged. `tab` dropped — `tab_view` was cut as noise (owner). `reason` for
 - Seeded provenance: `generate { tool, seeded: true, seed_source }` at each
   destination's seed-finalize — `NPCGenerator.finalizePendingSeed`,
   `SettingGenerator.finalizePendingSeed`, dungeon `overview-store`.
+
+**Per-tool main `generate` (added after Phase 2):** every generator tool now
+fires a content-free `generate { tool }` on a normal generation (npc, setting,
+dungeon, statblock, encounter, location) — not granular (no field-usage; that's
+item-only). The seeded destinations (npc/setting/dungeon) are GUARDED so a
+seeded generation fires only the seeded variant, never a plain `generate` too
+(no double-count). Verified e2e: `tests/analytics/per-tool-generate.spec.js`
+(normal gen fires once, not seeded) + the funnel spec's "exactly 1 generate"
+check. No new GA dimensions (`tool`/`seeded`/`seed_source` already registered).
 - **Fragment migration (decision C):** `navigateToTool` now writes handoff params
   to `#fragment` (not `?query`); `getNavigationParams` reads hash with a
   ?query fallback. EncounterGenerator's deep-link cleanup updated to clear the
