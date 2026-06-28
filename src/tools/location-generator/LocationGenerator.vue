@@ -23,7 +23,7 @@
         </ul>
 
         <LocationForm ref="locationFormRef" @set-loading-state="loading = $event"
-          @location-description-generated="gptResponse = $event" @location-description-error="handleError" />
+          @location-description-generated="onLocationGenerated" @location-description-error="handleError" />
 
         <!-- Loading skeleton -->
         <div v-if="loading" class="result-card">
@@ -86,9 +86,17 @@ import { CdrLink, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import LocationForm from './LocationForm.vue';
 import ToolNavigation from '@/components/ToolNavigation.vue';
 import { mainTools, patronTools, getCurrentSlug, navigate as navigateToTool } from '@/data/tool-navigation.js';
+import { trackEvent } from '@/util/analytics.mjs';
 
 const loading = ref(false);
 const gptResponse = ref(null);
+
+// Analytics: a location was generated (only the standalone tool — LocationForm
+// embedded in other tools emits to a different parent).
+const onLocationGenerated = (e) => {
+  gptResponse.value = e;
+  trackEvent('generate', { tool: 'location-generator' });
+};
 
 const locationFormRef = ref(null);
 const currentSlug = computed(() => getCurrentSlug());

@@ -100,6 +100,7 @@
 import { computed, ref } from 'vue';
 import { ParButton, ParTooltip } from '@/parchment';
 import { navigateToTool } from '@/util/navigation.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { extractRelatedSettings, mergeStubs } from '@/tools/item-generator/utils/extract-related-settings.mjs';
 import { getSettingDisplayName } from '@/util/setting-storage.mjs';
 import { useToast } from '@/composables/useToast';
@@ -165,6 +166,7 @@ async function rescan() {
 }
 
 function onCreate(stub) {
+  trackEvent('cross_tool_start', { from_tool: 'item-generator', to_tool: 'setting-generator' });
   navigateToTool('setting-generator', {
     fromType: 'item',
     fromId: props.item.name,

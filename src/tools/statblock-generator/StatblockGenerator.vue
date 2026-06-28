@@ -110,7 +110,7 @@
              the upsell; premium users no longer need a save/load callout —
              the sidebar footer's Data options covers backup/restore. -->
         <div class="footer-meta" v-if="!premium">
-          <PatreonCallout :patreon-url="patreonLoginUrl">
+          <PatreonCallout :patreon-url="patreonLoginUrl" location="statblock-footer">
             <template #body>
               <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
             </template>
@@ -203,7 +203,7 @@
       <!-- Footer below monster content (free users only — premium's
            backup/restore lives in the sidebar footer's Data options). -->
       <div class="footer-meta" v-if="monster && !loadingPart2 && !premium">
-        <PatreonCallout :patreon-url="patreonLoginUrl">
+        <PatreonCallout :patreon-url="patreonLoginUrl" location="statblock-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs across devices and unlocks unlimited statblock generation.</p>
           </template>
@@ -258,6 +258,7 @@ import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
 import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
 import { navigateToTool, getNavigationParams } from '@/util/navigation.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { useToast } from '@/composables/useToast';
 import { getReferencesForEntity } from '@/util/reference-storage.mjs';
 
@@ -821,6 +822,7 @@ async function generateStatblock() {
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
   loadingPart2.value = false;
   toast.success('Statblock generated and saved.');
+  trackEvent('generate', { tool: 'statblock-generator' });
 
   // Enrich custom statblock in background (non-blocking)
   try {

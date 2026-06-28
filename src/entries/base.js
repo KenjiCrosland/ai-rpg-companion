@@ -3,6 +3,7 @@ import AppToast from '../components/AppToast.vue';
 import { registerToast } from '../composables/useToast';
 import { runPendingMigrations } from '@/util/migration-runner.mjs';
 import { getEffectivePremium, initDevPremiumControls } from '@/util/dev-premium-controls.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 
 // Parchment design tokens — loaded once, shared by all tools.
 // See src/parchment/CLAUDE.md.
@@ -66,6 +67,26 @@ export function mountApp(component, withPremium = false) {
 
   const el = document.getElementById('app');
   const isPremium = getEffectivePremium({ withPremium, el });
+
+  // Analytics: detect a free→premium transition (the conversion moment). Premium
+  // is server-determined (WordPress sets data-premium on #app), so there is no
+  // in-app OAuth callback — instead we compare the last-known state to the raw
+  // subscription flag and fire once on the flip. Read el.dataset.premium
+  // DIRECTLY (not the entry-gated `isPremium`) so the user's real state is seen
+  // consistently across every tool page regardless of the entry's withPremium.
+  // Only fires free→premium (not first-load-already-premium). Prod-only: base.js
+  // doesn't run in dev, and trackEvent no-ops without gtag.
+  try {
+    const PREMIUM_STATE_KEY = 'seen-premium-state';
+    const now = el?.dataset?.premium === 'true' ? 'premium' : 'free';
+    const last = localStorage.getItem(PREMIUM_STATE_KEY);
+    if (now === 'premium' && last === 'free') {
+      trackEvent('premium_unlocked', {});
+    }
+    localStorage.setItem(PREMIUM_STATE_KEY, now);
+  } catch {
+    // localStorage unavailable (private mode) — skip silently.
+  }
 
   const Root = {
     setup() {

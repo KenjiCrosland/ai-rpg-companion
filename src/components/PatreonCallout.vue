@@ -95,6 +95,7 @@
         variant="luminous"
         tag="a"
         :href="patreonUrl"
+        @click="onCtaClick"
       >
         <template #icon-left>
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -132,13 +133,26 @@
 import { ref } from 'vue';
 import { ParButton } from '@/parchment';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 
-defineProps({
+const props = defineProps({
   patreonUrl: {
     type: String,
     required: true,
   },
+  // Stable analytics label for WHERE this upsell was clicked (e.g.
+  // 'item-form', 'dungeon-monster-statblock-limit'). Content-free.
+  location: {
+    type: String,
+    default: '',
+  },
 });
+
+// Analytics: fired before navigation (ParButton emits click; the anchor's
+// default navigation still proceeds, and gtag beacons survive page unload).
+function onCtaClick() {
+  trackEvent('patreon_click', { location: props.location });
+}
 
 const isExpanded = ref(false);
 

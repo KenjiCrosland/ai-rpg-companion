@@ -104,6 +104,32 @@ clobbering it. Navigate via the UI, then assert on the destination tool's DOM.
 the saved-count pattern. Adding a tool? Add its two testids to the component
 first, then write the spec against them.
 
+## Analytics events (`tests/analytics/`)
+
+`trackEvent` (`src/util/analytics.mjs`) calls `window.gtag?.('event', …)`, which
+no-ops in dev — so this genuinely can't be a Jest test; it needs the real app
+firing through real clicks. The pure param-builder (`buildItemGenerateParams`) is
+unit-tested in Jest; everything else is here.
+
+`helpers/analytics.js`:
+- `captureAnalytics(page)` — installs a `window.gtag` stub **before** mount (so
+  `tool_open` is caught) that records each event to **sessionStorage**. Call it
+  *before* `gotoTool`. sessionStorage (not an in-page array) so events **survive
+  the full-page navigations** in cross-tool / tool-switch flows.
+- `getEvents(page, action?)`, `waitForEvent(page, action)`, `eventsJson(page)`.
+
+Gotchas this suite hit (and how they're handled):
+- **PII contract** is the crown-jewel test: type a canary into the form, assert
+  the canary appears in *no* event payload (behavior, not shape).
+- **Patreon CTA** is a real external `<a>` — aborting its nav makes sessionStorage
+  access-denied; instead neutralize the `href` (`a.setAttribute('href','#')`) so
+  the click fires the event without leaving.
+- **tool_switch / cross-tool** reload or navigate: read events *after* the
+  destination page lands (the sessionStorage persistence is what makes this work),
+  never mid-navigation (context-destroyed error).
+- **Quota** counters are SHA-256 signed — can't be injected. Exhaust through the
+  UI, gating each generation on its `/api/ai/**` response.
+
 ## Updating fixtures
 
 When an LLM response shape changes, recapture: run a tool locally, copy the

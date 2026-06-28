@@ -215,6 +215,7 @@ import ItemExportsSection from './ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
 import { detectIncognito } from 'detectincognitojs';
 import { readQuota, writeQuota, remainingFromQuota, ensureQuotaSeeded } from '@/util/quota-storage.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
@@ -286,6 +287,8 @@ const canGenerateQuestHook = async () => {
       "The free quest hook generator is not available in incognito or private mode. Please disable incognito mode or become a $5 patron for unlimited access.",
       8000
     );
+    // Analytics: private-mode block — a distinct gate from the daily cap.
+    trackEvent('gate_blocked', { tool: 'item-generator', reason: 'incognito' });
     return false;
   }
 
@@ -308,6 +311,8 @@ const canGenerateQuestHook = async () => {
     } else {
       const resetTime = new Date(firstGenTime + RESET_WINDOW_MS);
       toast.warning(`You've reached the 5 quest hook generation limit. Come back at ${resetTime.toLocaleString()} or become a $5 patron for unlimited access.`, 8000);
+      // Analytics: daily cap hit (fires even if the user never clicks the upsell).
+      trackEvent('quota_reached', { tool: 'item-generator', quota_type: 'quest-hook' });
       return false;
     }
   } else {
@@ -703,6 +708,8 @@ Generate a D&D 5e quest hook for the following magic item:
     // Auto-expand the freshly generated hook (the user just asked for it).
     expandedKey.value = hooks.value.length - 1;
     emitUpdatedItem();
+    // Analytics: a quest-hook was actually generated (premium-gated feature use).
+    trackEvent('item_action', { action: 'quest_hook_generate' });
   } catch (err) {
     console.error('Error generating quest hook:', err);
     toast.error('Failed to generate quest hook. Please try again.');

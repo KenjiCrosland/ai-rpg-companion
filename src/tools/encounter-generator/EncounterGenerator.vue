@@ -303,7 +303,7 @@
       <!-- Footer is the free-tier upgrade prompt only; premium has no callout
            (Backup/Restore lives in the sidebar Data options). -->
       <div v-if="!premium" class="encounter-footer">
-        <PatreonCallout :patreon-url="patreonLoginUrl">
+        <PatreonCallout :patreon-url="patreonLoginUrl" location="encounter-footer">
           <template #body>
             <p class="patreon-callout__body">Your work is saved to this browser only. Premium syncs your encounters across devices.</p>
           </template>
@@ -367,6 +367,7 @@ import { removeReferencesForEntity, getAllReferences } from '@/util/reference-st
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
 import { generateStatblockPart1, completeStatblock } from '@/util/statblock-generator.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
@@ -864,6 +865,7 @@ async function generateEncounter() {
 
     // Save
     saveNewEncounter();
+    trackEvent('generate', { tool: 'encounter-generator' });
   } catch (error) {
     logger.error('Error generating encounter:', error);
     toast.error('Failed to generate encounter. Please try again.');
@@ -1429,10 +1431,11 @@ onMounted(async () => {
         highlightDeepLink.value = true;
         highlightMonsterIndex.value = 0;
 
-        // Clear query param to prevent re-adding on refresh (production only)
-        if (window.location.search) {
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, '', newUrl);
+        // Clear the deep-link param to prevent re-adding on refresh (production
+        // only). navigateToTool now writes handoff params to the URL fragment,
+        // so clear the hash too — not just the query string.
+        if (window.location.search || window.location.hash) {
+          window.history.replaceState({}, '', window.location.pathname);
         }
       }
     } catch (error) {

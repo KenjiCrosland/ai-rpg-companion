@@ -116,7 +116,7 @@
               class="statblock-limit-message">
               <p><strong>Statblock generation limit reached</strong></p>
               <p>You are at your daily statblock generation limit (5 per 24 hours).</p>
-              <PatreonCallout :patreon-url="patreonLoginUrl">
+              <PatreonCallout :patreon-url="patreonLoginUrl" location="dungeon-monster-statblock-limit">
                 <template #body></template>
                 <template #aside></template>
                 <template #features>

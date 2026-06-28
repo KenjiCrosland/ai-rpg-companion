@@ -12,6 +12,7 @@ import {
   pickTierForRarity,
 } from '../util/infer-item-dungeon-mode.mjs';
 import { addReferenceForSeed } from '@/util/seeded-input.mjs';
+import { trackEvent } from '@/util/analytics.mjs';
 import {
   getItemFromStorage,
   linkDungeonToItemStub,
@@ -104,6 +105,10 @@ export const currentDungeonOverviewString = computed(() => {
  * without re-rolling.
  */
 export async function generateDungeonOverview() {
+  // Analytics: snapshot the seeded state up front — the seeded block below
+  // nulls pendingSeed before we'd otherwise read it. Seeded generations fire
+  // their own generate (with the provenance flag) in that block.
+  const wasSeeded = !!pendingSeed.value;
   try {
     activeTabIndex.value = 0;
 
@@ -349,6 +354,9 @@ export async function generateDungeonOverview() {
       newDungeon.sourceId = pendingSeed.value.source.id;
       newDungeon.sourceName = pendingSeed.value.source.name;
       newDungeon.seedMode = seedMode;  // 'forgotten' | 'revered' | 'carried' | 'trial'
+      // Analytics: a seeded generation completed — closes the cross_tool_start
+      // funnel. Only the provenance flag (not the dungeon's full usability).
+      trackEvent('generate', { tool: 'dungeon-generator', seeded: true, seed_source: pendingSeed.value.source.type });
 
       const itemName = pendingSeed.value.source.id;
       const stubName = pendingSeed.value.entities?.[0]?.name;
@@ -376,6 +384,8 @@ export async function generateDungeonOverview() {
     overviewForm.value.difficulty = '';
 
     saveDungeons();
+    // Analytics: normal (non-seeded) dungeon generation.
+    if (!wasSeeded) trackEvent('generate', { tool: 'dungeon-generator' });
   } catch (error) {
     logger.error('Error generating dungeon overview:', error);
     alert(`Failed to generate dungeon overview: ${error.message}\n\nPlease try again.`);
