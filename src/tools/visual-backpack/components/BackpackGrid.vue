@@ -30,8 +30,10 @@
           v-for="item in items"
           :key="item.instanceId"
           :item="item"
+          :selected="item.instanceId === selectedId"
           @remove="$emit('remove', $event)"
           @nudge="$emit('nudge', $event)"
+          @select="$emit('select', $event)"
         />
       </TransitionGroup>
     </div>
@@ -57,9 +59,10 @@ const GAP = 6; // px, matches --gap
 const props = defineProps({
   items: { type: Array, default: () => [] },
   strength: { type: Number, default: 10 },
+  selectedId: { type: String, default: null },
 });
 
-const emit = defineEmits(['place', 'move', 'remove', 'nudge', 'autopack']);
+const emit = defineEmits(['place', 'move', 'remove', 'nudge', 'autopack', 'select']);
 
 const gridEl = ref(null);
 const isOver = ref(false);

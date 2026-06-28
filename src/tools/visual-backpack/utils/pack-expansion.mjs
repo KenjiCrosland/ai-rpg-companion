@@ -9,22 +9,25 @@
 
 import { tileSize } from './tile-presentation.mjs';
 
-const round2 = (n) => Math.round(n * 100) / 100;
-
-/** Expand a pack's `contents` into tile templates (no instanceId — the caller stamps that). */
+/**
+ * Expand a pack's `contents` into tile templates (no instanceId — the caller
+ * stamps that). A line of N is ONE tile with `quantity: N` (per-unit weight kept);
+ * the tile shows ×N and its size reflects the effective weight.
+ */
 export function expandPackToTemplates(pack) {
   if (!pack || !Array.isArray(pack.contents)) return [];
   return pack.contents.map((c) => {
-    const qty = Number(c.quantity) || 1;
-    const weight = round2((Number(c.weight) || 0) * qty);
+    const quantity = Number(c.quantity) || 1;
+    const weight = Number(c.weight) || 0; // per-unit weight
     const category = c.category || 'Adventuring Gear';
     return {
       id: c.id,
-      name: qty > 1 ? `${c.name} (×${qty})` : c.name,
+      name: c.name,
       weight,
+      quantity,
       category,
-      // shape from the base item name, size from the stacked weight
-      size: tileSize({ name: c.name, category, weight }),
+      size: tileSize({ name: c.name, category, weight, quantity }),
+      description: c.description || '',
       source: 'srd',
     };
   });

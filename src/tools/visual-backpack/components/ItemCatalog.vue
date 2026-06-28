@@ -127,7 +127,7 @@ const props = defineProps({
 
 const emit = defineEmits(['add', 'add-pack', 'add-custom', 'remove-custom']);
 
-const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools'];
+const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic Item'];
 const categoryOptions = [{ value: '', label: 'All categories' }, ...categories];
 
 const search = ref('');

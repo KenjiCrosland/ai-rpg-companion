@@ -32,10 +32,71 @@ import { tileSize } from '../src/tools/visual-backpack/utils/tile-presentation.m
 
 const SRC_URL =
   'https://raw.githubusercontent.com/5e-bits/5e-database/main/src/2014/en/5e-SRD-Equipment.json';
+const MAGIC_URL =
+  'https://raw.githubusercontent.com/5e-bits/5e-database/main/src/2014/en/5e-SRD-Magic-Items.json';
 
 const KEPT_CATEGORIES = new Set(['Weapon', 'Armor', 'Adventuring Gear', 'Tools']);
 
 const round2 = (n) => Math.round(n * 100) / 100;
+
+/**
+ * Magic-item weight. SRD magic items rarely list a weight; when they do
+ * ("...weighs 15 pounds"), use it. Otherwise apply cross-edition guidelines:
+ * rods/staves are heavier (~5 lb); magic weapons/armor weigh roughly half their
+ * mundane counterpart; everything else (potions, rings, scrolls, wands, wondrous
+ * items, ammo) is negligible for carry purposes (0). All editable in-app.
+ */
+function magicWeight(e) {
+  const text = (e.desc || []).join(' ');
+  const m = text.match(/weighs?\s+([\d.]+)\s*(?:pounds?|lbs?)\b/i);
+  if (m) return round2(parseFloat(m[1]));
+  const cat = e.equipment_category?.name;
+  if (cat === 'Rod' || cat === 'Staff') return 5;
+  if (cat === 'Weapon') return 2; // ~half a typical weapon
+  if (cat === 'Armor') return 20; // ~half typical armor (rough)
+  return 0;
+}
+
+// --- description / mechanics builders -------------------------------------
+
+function describeWeapon(e) {
+  const parts = [];
+  const kind = [e.weapon_category, e.weapon_range].filter(Boolean).join(' ');
+  if (kind) parts.push(`${kind} weapon.`);
+  if (e.damage) {
+    parts.push(`Damage: ${e.damage.damage_dice} ${e.damage.damage_type?.name || ''}`.trim() + '.');
+  }
+  if (e.two_handed_damage) {
+    parts.push(`Two-handed: ${e.two_handed_damage.damage_dice} ${e.two_handed_damage.damage_type?.name || ''}`.trim() + '.');
+  }
+  if (e.properties?.length) parts.push('Properties: ' + e.properties.map((p) => p.name).join(', ') + '.');
+  if (e.range && (e.range.normal || e.range.long)) {
+    parts.push(`Range: ${e.range.normal}${e.range.long ? `/${e.range.long}` : ''} ft.`);
+  }
+  return parts.join(' ');
+}
+
+function describeArmor(e) {
+  const parts = [];
+  if (e.armor_category) parts.push(`${e.armor_category} armor.`);
+  if (e.armor_class) {
+    const ac = e.armor_class;
+    let s = `AC ${ac.base}`;
+    if (ac.dex_bonus) s += ` + Dex${ac.max_bonus ? ` (max ${ac.max_bonus})` : ''}`;
+    parts.push(s + '.');
+  }
+  if (e.str_minimum) parts.push(`Requires Strength ${e.str_minimum}.`);
+  if (e.stealth_disadvantage) parts.push('Disadvantage on Stealth checks.');
+  return parts.join(' ');
+}
+
+function describeEquipment(e) {
+  if (e.desc?.length) return e.desc.join('\n\n');
+  const cat = e.equipment_category?.name;
+  if (cat === 'Weapon') return describeWeapon(e);
+  if (cat === 'Armor') return describeArmor(e);
+  return '';
+}
 
 async function main() {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -79,6 +140,29 @@ async function main() {
       category,
       size: tileSize({ name: e.name, category, weight }),
       source: 'srd',
+      description: describeEquipment(e),
+    });
+  }
+
+  // Resolve packs against the GEAR catalog (built above) before adding magic.
+  const itemsById = new Map(items.map((i) => [i.id, i]));
+
+  // --- magic items (separate SRD file) ------------------------------------
+  process.stdout.write(`Fetching ${MAGIC_URL}\n`);
+  const magicRes = await fetch(MAGIC_URL);
+  if (!magicRes.ok) throw new Error(`Magic fetch failed: ${magicRes.status}`);
+  const magicRaw = await magicRes.json();
+  for (const e of magicRaw) {
+    const weight = magicWeight(e);
+    items.push({
+      id: `mi-${e.index}`, // namespaced so it can't collide with gear ids
+      name: e.name,
+      weight,
+      category: 'Magic Item',
+      size: tileSize({ name: e.name, category: 'Magic Item', weight }),
+      source: 'srd',
+      description: (e.desc || []).join('\n\n'),
+      rarity: e.rarity?.name || '',
     });
   }
 
@@ -88,8 +172,7 @@ async function main() {
       : a.category.localeCompare(b.category),
   );
 
-  // Resolve each pack's contents against the built catalog.
-  const itemsById = new Map(items.map((i) => [i.id, i]));
+  // Resolve each pack's contents against the gear catalog (itemsById, above).
   const unresolved = [];
   const packs = packEntries
     .map((e) => {
@@ -103,10 +186,11 @@ async function main() {
         contents.push({
           id: ref.id,
           name: ref.name,
-          weight: ref.weight, // unit weight; expansion multiplies by quantity
+          weight: ref.weight, // unit weight
           category: ref.category,
           size: ref.size,
           quantity: Number(c.quantity) || 1,
+          description: ref.description || '',
         });
       }
       return {

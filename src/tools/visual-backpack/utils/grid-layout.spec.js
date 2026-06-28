@@ -6,6 +6,7 @@ import {
   placeItemAt,
   packItems,
   contentRows,
+  findStackTarget,
   COLS,
 } from './grid-layout.mjs';
 
@@ -117,6 +118,26 @@ describe('packItems', () => {
   it('packs to the top-left (the first item starts at the origin)', () => {
     const packed = packItems(items);
     expect(packed.some((p) => p.pos.x === 0 && p.pos.y === 0)).toBe(true);
+  });
+});
+
+describe('findStackTarget — stack identical items', () => {
+  const items = [
+    placed(0, 0, 1, 1, { instanceId: 'a', id: 'dagger' }),
+    placed(3, 0, 1, 1, { instanceId: 'b', id: 'dagger' }),
+    placed(5, 0, 1, 1, { instanceId: 'c', id: 'torch' }),
+  ];
+
+  it('returns the identical tile dropped onto', () => {
+    expect(findStackTarget(items, 'b', { x: 0, y: 0 })).toBe('a'); // dagger onto dagger
+  });
+
+  it('returns null when the target is a different item', () => {
+    expect(findStackTarget(items, 'b', { x: 5, y: 0 })).toBe(null); // dagger onto torch
+  });
+
+  it('returns null when dropped on empty space', () => {
+    expect(findStackTarget(items, 'b', { x: 7, y: 4 })).toBe(null);
   });
 });
 

@@ -31,24 +31,36 @@
     </div>
 
     <div class="backpack__main">
-      <ItemCatalog
-        class="backpack__catalog"
-        :catalog="catalog"
-        :packs="packs"
-        @add="addItem"
-        @add-pack="onAddPack"
-        @add-custom="onAddCustom"
-        @remove-custom="removeCustomItem"
-      />
+      <div class="backpack__sidebar">
+        <ItemDetail
+          :item="selectedItem"
+          :categories="detailCategories"
+          @set-quantity="({ id, quantity }) => setQuantity(id, quantity)"
+          @update="({ id, patch }) => updateItem(id, patch)"
+          @remove="removeItem"
+        />
+
+        <ItemCatalog
+          class="backpack__catalog"
+          :catalog="catalog"
+          :packs="packs"
+          @add="addItem"
+          @add-pack="onAddPack"
+          @add-custom="onAddCustom"
+          @remove-custom="removeCustomItem"
+        />
+      </div>
 
       <div class="backpack__pack">
         <BackpackGrid
           :items="items"
           :strength="strength"
+          :selected-id="selectedItem?.instanceId || null"
           @place="({ template, pos }) => addItem(template, pos)"
           @move="({ instanceId, pos }) => moveItemTo(instanceId, pos)"
           @nudge="({ instanceId, dx, dy }) => nudge(instanceId, dx, dy)"
           @remove="removeItem"
+          @select="selectItem"
           @autopack="autopack"
         />
         <CoinPurse
@@ -105,6 +117,7 @@ import { useToast } from '@/composables/useToast';
 import { useBackpack } from './composables/useBackpack.js';
 import { downloadBackpack } from './utils/backpack-storage.mjs';
 import StrengthControl from './components/StrengthControl.vue';
+import ItemDetail from './components/ItemDetail.vue';
 import ItemCatalog from './components/ItemCatalog.vue';
 import BackpackGrid from './components/BackpackGrid.vue';
 import CoinPurse from './components/CoinPurse.vue';
@@ -126,6 +139,11 @@ const {
   catalog,
   packs,
   status,
+  selectedItem,
+  selectItem,
+  deselect,
+  setQuantity,
+  updateItem,
   setStrength,
   setCoin,
   toggleCoinWeight,
@@ -141,6 +159,8 @@ const {
   importBundle,
   currentState,
 } = useBackpack();
+
+const detailCategories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic Item'];
 
 const confirmClear = ref(false);
 const fileInput = ref(null);
@@ -238,9 +258,15 @@ function onFileChosen(e) {
 
 .backpack__main {
   display: grid;
-  grid-template-columns: 32rem 1fr;
+  grid-template-columns: 32rem 1fr; /* [detail + catalog] | pack */
   gap: 1.8rem;
   align-items: start;
+}
+
+.backpack__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
 }
 
 .backpack__pack {

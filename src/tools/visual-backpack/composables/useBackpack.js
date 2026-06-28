@@ -10,8 +10,16 @@ import {
 import { useCarryCapacity } from './useCarryCapacity.js';
 import { coinWeight, coinValueGp } from '../utils/carry-capacity.mjs';
 import { expandPackToTemplates } from '../utils/pack-expansion.mjs';
-import { tileSize } from '../utils/tile-presentation.mjs';
-import { resolvePosition, placeItemAt, packItems, collidesAny, COLS } from '../utils/grid-layout.mjs';
+import { tileSize, cleanName } from '../utils/tile-presentation.mjs';
+import {
+  resolvePosition,
+  placeItemAt,
+  packItems,
+  collidesAny,
+  findStackTarget,
+  clampPos,
+  COLS,
+} from '../utils/grid-layout.mjs';
 
 const MIN_STR = 1;
 const MAX_STR = 30;
@@ -25,13 +33,21 @@ const slug = (name) =>
 
 /** Build a fresh placed instance from a catalog template. */
 function instantiate(template) {
+  const weight = Number(template.weight) || 0;
+  const quantity = Math.max(1, Math.floor(Number(template.quantity) || 1));
+  const category = template.category || 'Adventuring Gear';
+  const name = template.name;
   return {
     instanceId: makeInstanceId(),
     id: template.id,
-    name: template.name,
-    weight: Number(template.weight) || 0,
-    category: template.category || 'Adventuring Gear',
-    size: { w: template.size?.w || 1, h: template.size?.h || 1 },
+    name,
+    weight,
+    quantity,
+    category,
+    // Size always derives from the item's own (effective) weight.
+    size: tileSize({ name, category, weight, quantity }),
+    description: template.description || '',
+    rarity: template.rarity || '',
     source: template.source === 'srd' ? 'srd' : 'custom',
   };
 }
@@ -51,6 +67,7 @@ export function useBackpack() {
   const customItems = ref(initial.customItems); // user-defined catalog templates
   const coins = ref(initial.coins); // { gp, ep, sp, cp }
   const countCoinWeight = ref(initial.countCoinWeight); // toggle coin encumbrance
+  const selectedId = ref(null); // tile open in the detail panel (ephemeral)
 
   watch(
     [strength, items, customItems, coins, countCoinWeight],
@@ -79,6 +96,13 @@ export function useBackpack() {
   // Starter packs (static SRD data) — expand into their contents on add.
   const packs = srdPacks;
 
+  // The tile currently open in the detail panel.
+  const selectedItem = computed(
+    () => items.value.find((i) => i.instanceId === selectedId.value) || null,
+  );
+  const selectItem = (id) => { selectedId.value = id; };
+  const deselect = () => { selectedId.value = null; };
+
   function setStrength(v) {
     strength.value = clampStr(v);
   }
@@ -92,21 +116,50 @@ export function useBackpack() {
     countCoinWeight.value = on === undefined ? !countCoinWeight.value : !!on;
   }
 
+  /** Add `addQty` to a placed stack, resize it, and re-settle (displacing if it grew). */
+  function bumpStack(targetId, addQty) {
+    const target = items.value.find((i) => i.instanceId === targetId);
+    if (!target) return;
+    const q = (Number(target.quantity) || 1) + (Number(addQty) || 1);
+    const next = items.value.map((i) =>
+      i.instanceId === targetId
+        ? { ...i, name: cleanName(i.name), quantity: q, size: tileSize({ ...i, quantity: q }) }
+        : i,
+    );
+    items.value = placeItemAt(next, targetId, target.pos, COLS);
+  }
+
   /**
-   * Add a catalog item. With a `preferred` cell (a drop), it lands exactly there
-   * and displaces whatever it overlaps; without one (click/pack), it fills the
-   * first free spot.
+   * Add a catalog item.
+   *  - Click (no preferred): if an identical item is already packed, just bump its
+   *    count; otherwise drop a new tile in the first free spot.
+   *  - Drop at a cell (preferred): land there (displacing), unless it lands on an
+   *    identical item — then stack into it.
    */
   function addItem(template, preferred = null) {
     if (!template) return;
-    const item = instantiate(template);
-    if (preferred) {
-      const list = [...items.value, { ...item, pos: { x: 0, y: 0 } }];
-      items.value = placeItemAt(list, item.instanceId, preferred, COLS);
-    } else {
+    const addQty = Math.max(1, Math.floor(Number(template.quantity) || 1));
+
+    if (!preferred) {
+      const existing = items.value.find((i) => i.id === template.id);
+      if (existing) {
+        bumpStack(existing.instanceId, addQty);
+        return;
+      }
+      const item = instantiate(template);
       const pos = resolvePosition({ x: 0, y: 0 }, item.size, items.value, COLS);
       items.value = [...items.value, { ...item, pos }];
+      return;
     }
+
+    const item = instantiate(template);
+    const list = [...items.value, { ...item, pos: clampPos(preferred, item.size, COLS) }];
+    const targetId = findStackTarget(list, item.instanceId, preferred, COLS);
+    if (targetId) {
+      bumpStack(targetId, item.quantity);
+      return;
+    }
+    items.value = placeItemAt(list, item.instanceId, preferred, COLS);
   }
 
   /** Expand a starter pack's contents into the pack as individual tiles. */
@@ -124,11 +177,51 @@ export function useBackpack() {
 
   function removeItem(instanceId) {
     items.value = items.value.filter((i) => i.instanceId !== instanceId);
+    if (selectedId.value === instanceId) selectedId.value = null;
   }
 
-  /** Move a tile to exactly the `preferred` cell, displacing anything it overlaps. */
+  /** Change a placed item's quantity; resize and re-settle (displacing if it grew). */
+  function setQuantity(instanceId, quantity) {
+    const item = items.value.find((i) => i.instanceId === instanceId);
+    if (!item) return;
+    const q = Math.max(1, Math.floor(Number(quantity) || 1));
+    const size = tileSize({ ...item, quantity: q });
+    const updated = items.value.map((i) =>
+      i.instanceId === instanceId ? { ...i, quantity: q, size } : i,
+    );
+    items.value = placeItemAt(updated, instanceId, item.pos, COLS);
+  }
+
+  /** Edit a placed item's fields (name/weight/category/quantity/description). */
+  function updateItem(instanceId, patch) {
+    const item = items.value.find((i) => i.instanceId === instanceId);
+    if (!item) return;
+    const next = { ...item };
+    if (patch.name !== undefined) next.name = String(patch.name).trim() || item.name;
+    if (patch.category !== undefined) next.category = patch.category || item.category;
+    if (patch.description !== undefined) next.description = String(patch.description);
+    if (patch.weight !== undefined) next.weight = Math.max(0, Number(patch.weight) || 0);
+    if (patch.quantity !== undefined) next.quantity = Math.max(1, Math.floor(Number(patch.quantity) || 1));
+    next.size = tileSize(next);
+    const updated = items.value.map((i) => (i.instanceId === instanceId ? next : i));
+    items.value = placeItemAt(updated, instanceId, item.pos, COLS);
+  }
+
+  /**
+   * Move a tile to the `preferred` cell. If it lands on an identical item, stack
+   * the two (combine counts); otherwise place there, displacing what it overlaps.
+   */
   function moveItemTo(instanceId, preferred) {
-    if (!items.value.some((i) => i.instanceId === instanceId)) return;
+    const moved = items.value.find((i) => i.instanceId === instanceId);
+    if (!moved) return;
+    const targetId = findStackTarget(items.value, instanceId, preferred, COLS);
+    if (targetId) {
+      const addQty = Number(moved.quantity) || 1;
+      items.value = items.value.filter((i) => i.instanceId !== instanceId);
+      bumpStack(targetId, addQty);
+      if (selectedId.value === instanceId) selectedId.value = targetId;
+      return;
+    }
     items.value = placeItemAt(items.value, instanceId, preferred, COLS);
   }
 
@@ -207,6 +300,11 @@ export function useBackpack() {
     catalog,
     packs,
     status,
+    selectedItem,
+    selectItem,
+    deselect,
+    setQuantity,
+    updateItem,
     setStrength,
     setCoin,
     toggleCoinWeight,

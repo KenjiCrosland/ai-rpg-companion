@@ -26,10 +26,13 @@ export function heavilyEncumberedThreshold(str) {
   return str * 10;
 }
 
-/** Sum item weights, ignoring missing/non-numeric weights. */
+/** Sum item weights (per-unit weight × quantity), ignoring missing weights. */
 export function totalWeight(items) {
   if (!Array.isArray(items)) return 0;
-  const sum = items.reduce((acc, it) => acc + (Number(it?.weight) || 0), 0);
+  const sum = items.reduce(
+    (acc, it) => acc + (Number(it?.weight) || 0) * (Number(it?.quantity) || 1),
+    0,
+  );
   // Trim binary-float dust (weights are integers or simple fractions).
   return Math.round(sum * 100) / 100;
 }

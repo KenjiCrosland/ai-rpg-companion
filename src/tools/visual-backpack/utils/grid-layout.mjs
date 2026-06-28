@@ -30,6 +30,34 @@ export function offsetToCell(offset, pitch) {
   return Math.max(0, Math.floor(offset / pitch));
 }
 
+/** Clamp a preferred top-left so a `size` tile stays inside the columns. */
+export function clampPos(pos, size, cols = COLS) {
+  const maxX = Math.max(0, cols - (size?.w || 1));
+  return {
+    x: clamp(Math.round(pos?.x ?? 0), 0, maxX),
+    y: Math.max(0, Math.round(pos?.y ?? 0)),
+  };
+}
+
+/**
+ * If dropping `movedId` at `preferred` would land on an IDENTICAL item (same id),
+ * return that item's instanceId so the caller can stack them; otherwise null.
+ */
+export function findStackTarget(items, movedId, preferred, cols = COLS) {
+  const moved = items.find((i) => i.instanceId === movedId);
+  if (!moved) return null;
+  const pos = clampPos(preferred, moved.size, cols);
+  const rect = { x: pos.x, y: pos.y, w: moved.size.w, h: moved.size.h };
+  const target = items.find(
+    (i) =>
+      i.instanceId !== movedId &&
+      i.id === moved.id &&
+      i.pos &&
+      rectsOverlap(rect, { x: i.pos.x, y: i.pos.y, w: i.size.w, h: i.size.h }),
+  );
+  return target ? target.instanceId : null;
+}
+
 /**
  * A free position for `size` as close to `preferred` as possible, never failing:
  * if the preferred cell is free it's used as-is (so gaps are preserved); else we

@@ -1,4 +1,4 @@
-import { itemType, typeColor, tileSize, TYPE_COLORS } from './tile-presentation.mjs';
+import { itemType, typeColor, tileSize, cleanName, TYPE_COLORS } from './tile-presentation.mjs';
 
 const item = (name, category, weight) => ({ name, category, weight });
 

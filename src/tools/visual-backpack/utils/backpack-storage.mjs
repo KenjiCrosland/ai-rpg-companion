@@ -64,15 +64,19 @@ function normalizeItem(it) {
   const h = Number(it?.size?.h);
   const px = Number(it?.pos?.x);
   const py = Number(it?.pos?.y);
+  const qty = Math.floor(Number(it?.quantity));
   return {
     instanceId: it?.instanceId || makeInstanceId(),
     id: String(it?.id ?? ''),
     name: String(it?.name ?? 'Item'),
     weight: Number.isFinite(weight) ? weight : 0,
+    quantity: Number.isFinite(qty) && qty > 0 ? qty : 1,
     category: String(it?.category ?? 'Adventuring Gear'),
     size: { w: Number.isFinite(w) ? w : 1, h: Number.isFinite(h) ? h : 1 },
     // Grid position; null means "unplaced" (the composable packs it on load).
     pos: Number.isFinite(px) && Number.isFinite(py) ? { x: px, y: py } : null,
+    description: typeof it?.description === 'string' ? it.description : '',
+    rarity: typeof it?.rarity === 'string' ? it.rarity : '',
     source: it?.source === 'srd' ? 'srd' : 'custom',
   };
 }

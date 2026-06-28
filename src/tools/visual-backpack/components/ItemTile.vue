@@ -1,12 +1,13 @@
 <template>
   <div
     class="tile"
-    :class="{ 'tile--lifted': lifted }"
+    :class="{ 'tile--lifted': lifted, 'tile--selected': selected }"
     :style="tileStyle"
     draggable="true"
     tabindex="0"
     role="listitem"
     :aria-label="ariaLabel"
+    @click="$emit('select', item.instanceId)"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
     @keydown="onKeydown"
@@ -20,8 +21,13 @@
       @dragstart.prevent.stop
     >×</button>
 
-    <span class="tile__name">{{ item.name }}</span>
-    <span class="tile__weight">{{ formatWeight(item.weight) }} lb</span>
+    <span class="tile__name"
+      >{{ baseName }}<span
+        v-if="item.quantity > 1"
+        :key="item.quantity"
+        class="tile__qty"
+      > ×{{ item.quantity }}</span></span>
+    <span class="tile__weight">{{ formatWeight(weight) }} lb</span>
   </div>
 </template>
 
@@ -33,20 +39,23 @@
  * alongside pointer drag.
  */
 import { computed, ref } from 'vue';
-import { typeColor, tileSize } from '../utils/tile-presentation.mjs';
+import { typeColor, tileSize, effectiveWeight, cleanName } from '../utils/tile-presentation.mjs';
 import { setDrag, clearDrag } from '../composables/drag-state.js';
 
 const props = defineProps({
   item: { type: Object, required: true },
+  selected: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['remove', 'nudge']);
+const emit = defineEmits(['remove', 'nudge', 'select']);
 
 const lifted = ref(false);
 
-// Color = type; square size = weight; placement = pos.
+// Color = type; square size = effective weight; placement = pos.
 const colors = computed(() => typeColor(props.item));
 const span = computed(() => tileSize(props.item));
+const weight = computed(() => effectiveWeight(props.item));
+const baseName = computed(() => cleanName(props.item.name));
 
 const tileStyle = computed(() => {
   const x = props.item.pos?.x ?? 0;
@@ -97,6 +106,9 @@ function onKeydown(e) {
   if (NUDGES[e.key]) {
     e.preventDefault();
     emit('nudge', { instanceId: props.item.instanceId, ...NUDGES[e.key] });
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    emit('select', props.item.instanceId);
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     e.preventDefault();
     emit('remove', props.item.instanceId);
@@ -132,6 +144,12 @@ function onKeydown(e) {
   outline-offset: 2px;
 }
 
+.tile--selected {
+  outline: 2.5px solid var(--color-action-rest, #365a85);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
 .tile--lifted {
   opacity: 0.45;
   cursor: grabbing;
@@ -152,11 +170,31 @@ function onKeydown(e) {
   overflow: hidden;
 }
 
+/* Live quantity in the title; pulses when it changes (re-keyed on quantity). */
+.tile__qty {
+  display: inline-block;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 0 0.15rem;
+  transform-origin: center;
+  animation: qty-pulse 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes qty-pulse {
+  0% { transform: scale(1); background: transparent; }
+  30% { transform: scale(1.6); background: rgba(255, 255, 255, 0.7); }
+  100% { transform: scale(1); background: transparent; }
+}
+
 .tile__weight {
   font-size: 1rem;
   font-weight: 500;
   opacity: 0.85;
   letter-spacing: 0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile__qty { animation: none; }
 }
 
 .tile__remove {

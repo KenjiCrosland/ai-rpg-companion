@@ -16,17 +16,18 @@ describe('expandPackToTemplates', () => {
     expect(totalWeight(tiles)).toBe(burglars.totalWeight);
   });
 
-  it('folds quantity into a single tile: name gets ×N and weight stacks', () => {
+  it('a stacked line is one tile with a quantity (per-unit weight kept)', () => {
     const tiles = expandPackToTemplates(burglars);
     const pitons = tiles.find((t) => t.id === 'piton');
-    expect(pitons.name).toBe('Piton (×10)'); // 10 pitons, 0.25 lb each
-    expect(pitons.weight).toBe(2.5);
+    expect(pitons.name).toBe('Piton'); // clean name, no "(×10)"
+    expect(pitons.quantity).toBe(10);
+    expect(pitons.weight).toBe(0.25); // per-unit, not stacked
   });
 
-  it('leaves single-quantity items un-suffixed', () => {
+  it('single-quantity items get quantity 1', () => {
     const tiles = expandPackToTemplates(burglars);
     const crowbar = tiles.find((t) => t.id === 'crowbar');
-    expect(crowbar.name).toBe('Crowbar'); // no "(×1)"
+    expect(crowbar.quantity).toBe(1);
   });
 
   it('every pack round-trips to its stated total weight', () => {
