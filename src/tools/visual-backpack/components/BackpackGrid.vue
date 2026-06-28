@@ -2,15 +2,64 @@
   <section class="grid-panel parchment paper-grain" aria-label="Your backpack">
     <header class="grid-panel__head">
       <h2 class="grid-panel__title">Your pack</h2>
-      <ParButton
-        size="small"
-        variant="primary-outline"
-        :disabled="!items.length"
-        @click="$emit('autopack')"
-      >Tidy up</ParButton>
+      <div class="grid-panel__controls">
+        <div class="view-toggle" role="group" aria-label="View mode">
+          <button
+            type="button"
+            class="view-toggle__btn"
+            :class="{ 'view-toggle__btn--active': view === 'grid' }"
+            :aria-pressed="view === 'grid'"
+            @click="setView('grid')"
+          >Grid</button>
+          <button
+            type="button"
+            class="view-toggle__btn"
+            :class="{ 'view-toggle__btn--active': view === 'list' }"
+            :aria-pressed="view === 'list'"
+            @click="setView('list')"
+          >List</button>
+        </div>
+        <label class="grid-panel__sort">
+          <span class="grid-panel__sort-label">Sort</span>
+          <ParSelect
+            :model-value="sortBy"
+            :options="sortOptions"
+            aria-label="Sort pack"
+            @update:model-value="onSort"
+          />
+        </label>
+        <ParButton
+          size="small"
+          variant="primary-outline"
+          :disabled="!items.length"
+          @click="$emit('autopack', sortBy)"
+        >Tidy up</ParButton>
+      </div>
     </header>
 
+    <div v-if="items.length" class="grid-panel__pills" role="group" aria-label="Filter pack by type">
+      <button
+        class="pill"
+        type="button"
+        :class="{ 'pill--active': !typeFilter }"
+        @click="typeFilter = ''"
+      >All</button>
+      <button
+        v-for="t in types"
+        :key="t.key"
+        class="pill"
+        type="button"
+        :class="{ 'pill--active': typeFilter === t.key }"
+        :style="pillStyle(t)"
+        @click="typeFilter = typeFilter === t.key ? '' : t.key"
+      >
+        <span class="pill__dot" :style="{ background: t.color.bg }" aria-hidden="true"></span>{{ t.label }}
+      </button>
+    </div>
+
+    <!-- GRID VIEW -->
     <div
+      v-if="view === 'grid'"
       ref="gridEl"
       class="grid-drop"
       :class="{ 'grid-drop--over': isOver }"
@@ -24,10 +73,13 @@
         <span class="grid-empty__icon" aria-hidden="true">🎒</span>
         <span>Start with a <strong>starter pack</strong>, or drag gear anywhere on the grid.</span>
       </p>
+      <p v-else-if="!gridItems.length" class="grid-empty">
+        No {{ activeTypeLabel }} items in your pack.
+      </p>
 
       <TransitionGroup name="tile" tag="div" class="tile-layer">
         <ItemTile
-          v-for="item in items"
+          v-for="item in gridItems"
           :key="item.instanceId"
           :item="item"
           :selected="item.instanceId === selectedId"
@@ -35,6 +87,51 @@
           @nudge="$emit('nudge', $event)"
           @select="$emit('select', $event)"
         />
+      </TransitionGroup>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div v-else class="list">
+      <p v-if="!items.length" class="grid-empty grid-empty--list">
+        <span class="grid-empty__icon" aria-hidden="true">🎒</span>
+        <span>Start with a <strong>starter pack</strong>, or add gear from the catalog.</span>
+      </p>
+      <p v-else-if="!listItems.length" class="grid-empty grid-empty--list">
+        No {{ activeTypeLabel }} items in your pack.
+      </p>
+
+      <TransitionGroup v-else name="row" tag="ul" class="list__items" role="list">
+        <li
+          v-for="item in listItems"
+          :key="item.instanceId"
+          class="row-item"
+          :class="{
+            'row-item--selected': item.instanceId === selectedId,
+            'row-item--drop': dragOverId === item.instanceId,
+            'row-item--dragging': listDragId === item.instanceId,
+          }"
+          draggable="true"
+          tabindex="0"
+          @click="$emit('select', item.instanceId)"
+          @keydown="onRowKeydown(item, $event)"
+          @dragstart="onRowDragStart(item, $event)"
+          @dragover.prevent="dragOverId = item.instanceId"
+          @drop="onRowDrop(item)"
+          @dragend="onRowDragEnd"
+        >
+          <span class="row-item__handle" aria-hidden="true">⠿</span>
+          <span class="row-item__swatch" :style="{ background: rowColor(item).bg }" aria-hidden="true"></span>
+          <span class="row-item__name"
+            >{{ rowName(item) }}<span v-if="item.quantity > 1" class="row-item__qty"> ×{{ item.quantity }}</span></span>
+          <span class="row-item__weight">{{ formatWeight(rowWeight(item)) }} lb</span>
+          <button
+            class="row-item__remove"
+            type="button"
+            :aria-label="`Remove ${item.name}`"
+            @click.stop="$emit('remove', item.instanceId)"
+            @dragstart.prevent.stop
+          >×</button>
+        </li>
       </TransitionGroup>
     </div>
   </section>
@@ -49,12 +146,14 @@
  * limit (CapacityIndicator).
  */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { ParButton } from '@/parchment';
+import { ParButton, ParSelect } from '@/parchment';
 import ItemTile from './ItemTile.vue';
 import { dragPayload, clearDrag } from '../composables/drag-state.js';
-import { COLS, offsetToCell, contentRows } from '../utils/grid-layout.mjs';
+import { COLS, offsetToCell, contentRows, packItems } from '../utils/grid-layout.mjs';
+import { itemType, TYPE_COLORS, typeColor, effectiveWeight, cleanName } from '../utils/tile-presentation.mjs';
 
 const GAP = 6; // px, matches --gap
+const VIEW_KEY = 'backpack-view';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -62,7 +161,97 @@ const props = defineProps({
   selectedId: { type: String, default: null },
 });
 
-const emit = defineEmits(['place', 'move', 'remove', 'nudge', 'autopack', 'select']);
+const emit = defineEmits(['place', 'move', 'remove', 'nudge', 'autopack', 'select', 'reorder']);
+
+// Grid ⇄ List view (remembered).
+const view = ref(localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'grid');
+function setView(v) {
+  view.value = v;
+  try {
+    localStorage.setItem(VIEW_KEY, v);
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+// Sort the arrangement (re-packs) and filter the visible tiles by type.
+const sortOptions = [
+  { value: 'type', label: 'Type' },
+  { value: 'name', label: 'Name' },
+  { value: 'weight-desc', label: 'Weight (heavy first)' },
+  { value: 'weight-asc', label: 'Weight (light first)' },
+];
+const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic'].map((key) => ({
+  key,
+  label: TYPE_COLORS[key].label,
+  color: TYPE_COLORS[key],
+}));
+
+const sortBy = ref('type');
+const typeFilter = ref('');
+
+// Items after the type filter (array order — used by the list view).
+const listItems = computed(() =>
+  typeFilter.value ? props.items.filter((i) => itemType(i) === typeFilter.value) : props.items,
+);
+
+// Grid view: when filtered, the hidden items are treated as absent and the
+// visible subset is tidied into a fresh top-left layout for the view only (the
+// stored positions are untouched, so clearing the filter restores them).
+const gridItems = computed(() =>
+  typeFilter.value ? packItems(listItems.value, COLS, sortBy.value) : props.items,
+);
+const activeTypeLabel = computed(
+  () => (types.find((t) => t.key === typeFilter.value)?.label || '').toLowerCase(),
+);
+
+function onSort(v) {
+  sortBy.value = v;
+  emit('autopack', v); // re-pack in the new order
+}
+function pillStyle(t) {
+  return typeFilter.value === t.key
+    ? { background: t.color.bg, color: t.color.text, borderColor: t.color.text }
+    : {};
+}
+
+// --- list rows -----------------------------------------------------------
+const rowName = (it) => cleanName(it.name);
+const rowColor = (it) => typeColor(it);
+const rowWeight = (it) => effectiveWeight(it);
+function formatWeight(w) {
+  const n = Number(w) || 0;
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+
+const listDragId = ref(null);
+const dragOverId = ref(null);
+
+function onRowDragStart(item, e) {
+  listDragId.value = item.instanceId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', item.name);
+}
+function onRowDrop(target) {
+  if (listDragId.value && listDragId.value !== target.instanceId) {
+    emit('reorder', { movedId: listDragId.value, targetId: target.instanceId });
+  }
+  listDragId.value = null;
+  dragOverId.value = null;
+}
+function onRowDragEnd() {
+  listDragId.value = null;
+  dragOverId.value = null;
+}
+function onRowKeydown(item, e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    emit('select', item.instanceId);
+  } else if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault();
+    emit('remove', item.instanceId);
+  }
+}
 
 const gridEl = ref(null);
 const isOver = ref(false);
@@ -70,7 +259,7 @@ const cellPx = ref(60); // measured square cell side
 const pitch = computed(() => cellPx.value + GAP);
 
 // Enough rows to drop below the lowest item (and a comfortable minimum).
-const rows = computed(() => Math.max(8, contentRows(props.items) + 3));
+const rows = computed(() => Math.max(8, contentRows(gridItems.value) + 3));
 
 const gridStyle = computed(() => ({
   '--cols': COLS,
@@ -142,7 +331,9 @@ function onDrop(e) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .grid-panel__title {
@@ -151,6 +342,207 @@ function onDrop(e) {
   font-size: 2rem;
   font-weight: 600;
   color: var(--color-action-hover, #2a4d70);
+}
+
+.grid-panel__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.grid-panel__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.grid-panel__sort-label {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-action-hover, #2a4d70);
+}
+.grid-panel__sort :deep(.par-select-wrapper) {
+  min-width: 16rem;
+}
+
+.grid-panel__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: 999px;
+  background: var(--par-color-surface, #fbf7f0);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.2rem;
+  color: var(--par-color-text-secondary, #555);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.pill:hover {
+  border-color: var(--par-color-border-deep, #b8a685);
+}
+.pill:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 1px;
+}
+.pill--active {
+  font-weight: 600;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-color: var(--par-color-border-deep, #b8a685);
+}
+.pill__dot {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  border: 0.5px solid rgba(122, 50, 30, 0.2);
+}
+
+/* Grid / List view toggle. */
+.view-toggle {
+  display: inline-flex;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
+  overflow: hidden;
+}
+.view-toggle__btn {
+  padding: 0.45rem 1.1rem;
+  border: none;
+  background: var(--par-color-surface, #fbf7f0);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.3rem;
+  color: var(--par-color-text-secondary, #555);
+  cursor: pointer;
+}
+.view-toggle__btn + .view-toggle__btn {
+  border-left: 0.5px solid var(--par-color-border-strong, #c9b99a);
+}
+.view-toggle__btn--active {
+  background: var(--color-action-rest, #365a85);
+  color: var(--color-action-text, #fbf7f0);
+  font-weight: 600;
+}
+
+/* List view. */
+.list__items {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 0.5px solid var(--par-color-divider, #e2dccd);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  cursor: grab;
+  transition: background 0.12s ease;
+}
+.row-item:hover {
+  background: var(--par-color-callout-bg-light, #f8f2e3);
+}
+.row-item:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: -2px;
+}
+.row-item--selected {
+  background: var(--par-color-callout-bg, #f3ebda);
+  box-shadow: inset 3px 0 0 var(--color-action-rest, #365a85);
+}
+.row-item--dragging {
+  opacity: 0.45;
+}
+.row-item--drop {
+  box-shadow: inset 0 2px 0 var(--color-action-rest, #365a85);
+}
+.row-item__handle {
+  flex: none;
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-size: 1.4rem;
+}
+.row-item__swatch {
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 4px;
+  border: 0.5px solid rgba(122, 50, 30, 0.2);
+}
+.row-item__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--par-color-text, #222);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-item__qty {
+  font-weight: 700;
+  color: var(--color-action-hover, #2a4d70);
+}
+.row-item__weight {
+  flex: none;
+  font-size: 1.35rem;
+  color: var(--par-color-text-secondary, #555);
+}
+.row-item__remove {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  color: var(--par-color-text-muted, #6b6b6b);
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  opacity: 0;
+}
+.row-item:hover .row-item__remove,
+.row-item:focus-within .row-item__remove {
+  opacity: 0.7;
+}
+.row-item__remove:hover {
+  opacity: 1;
+  background: rgba(160, 51, 51, 0.14);
+  color: var(--par-color-destructive, #a03333);
+}
+
+.grid-empty--list {
+  position: static;
+  min-height: 16rem;
+}
+
+.row-move,
+.row-enter-active,
+.row-leave-active {
+  transition: transform 0.28s ease, opacity 0.2s ease;
+}
+.row-enter-from,
+.row-leave-to {
+  opacity: 0;
+  transform: translateX(-1rem);
+}
+.row-leave-active {
+  position: absolute;
+  width: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .row-move,
+  .row-enter-active,
+  .row-leave-active {
+    transition: none;
+  }
 }
 
 .grid-drop {

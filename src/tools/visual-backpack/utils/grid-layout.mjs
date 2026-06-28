@@ -117,23 +117,38 @@ export function placeItemAt(items, movedId, preferred, cols = COLS) {
   return out;
 }
 
-const CATEGORY_ORDER = { Weapon: 0, Armor: 1, 'Adventuring Gear': 2, Tools: 3 };
+const CATEGORY_ORDER = { Weapon: 0, Armor: 1, 'Adventuring Gear': 2, Tools: 3, 'Magic Item': 4 };
 const area = (it) => (it.size?.w || 1) * (it.size?.h || 1);
+const effWeight = (it) => (Number(it.weight) || 0) * (Number(it.quantity) || 1);
+
+/** Comparator for a sort key: 'type' (default) | 'name' | 'weight-asc' | 'weight-desc'. */
+function packComparator(sortKey) {
+  switch (sortKey) {
+    case 'name':
+      return (a, b) => a.name.localeCompare(b.name);
+    case 'weight-desc':
+      return (a, b) => effWeight(b) - effWeight(a) || a.name.localeCompare(b.name);
+    case 'weight-asc':
+      return (a, b) => effWeight(a) - effWeight(b) || a.name.localeCompare(b.name);
+    case 'type':
+    default:
+      return (a, b) => {
+        const ca = CATEGORY_ORDER[a.category] ?? 9;
+        const cb = CATEGORY_ORDER[b.category] ?? 9;
+        if (ca !== cb) return ca - cb;
+        if (area(b) !== area(a)) return area(b) - area(a);
+        return a.name.localeCompare(b.name);
+      };
+  }
+}
 
 /**
  * Re-pack every item into a tidy top-left reading-order arrangement (the "Tidy
- * up" action and the fallback for items without a saved position). Groups by
- * category, biggest first. Returns new items with fresh `pos`.
+ * up" action and the fallback for items without a saved position), sorted by
+ * `sortKey`. Returns new items with fresh `pos`.
  */
-export function packItems(items, cols = COLS) {
-  const sorted = [...items].sort((a, b) => {
-    const ca = CATEGORY_ORDER[a.category] ?? 9;
-    const cb = CATEGORY_ORDER[b.category] ?? 9;
-    if (ca !== cb) return ca - cb;
-    if (area(b) !== area(a)) return area(b) - area(a);
-    return a.name.localeCompare(b.name);
-  });
-
+export function packItems(items, cols = COLS, sortKey = 'type') {
+  const sorted = [...items].sort(packComparator(sortKey));
   const placed = [];
   for (const it of sorted) {
     const pos = resolvePosition({ x: 0, y: 0 }, it.size, placed, cols);

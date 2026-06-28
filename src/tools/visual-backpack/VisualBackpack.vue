@@ -30,6 +30,19 @@
       </div>
     </div>
 
+    <p v-if="!saveNoteDismissed" class="backpack__save-note">
+      <span class="backpack__save-icon" aria-hidden="true">💾</span>
+      <span>Your pack saves automatically in <strong>this browser</strong>. To use it on
+      another machine, click <strong>Back up</strong> and send that file there, then
+      open this page and click <strong>Restore</strong>.</span>
+      <button
+        class="backpack__save-dismiss"
+        type="button"
+        aria-label="Dismiss this message"
+        @click="dismissSaveNote"
+      >×</button>
+    </p>
+
     <div class="backpack__main">
       <div class="backpack__sidebar">
         <ItemDetail
@@ -58,6 +71,7 @@
           :selected-id="selectedItem?.instanceId || null"
           @place="({ template, pos }) => addItem(template, pos)"
           @move="({ instanceId, pos }) => moveItemTo(instanceId, pos)"
+          @reorder="({ movedId, targetId }) => reorderList(movedId, targetId)"
           @nudge="({ instanceId, dx, dy }) => nudge(instanceId, dx, dy)"
           @remove="removeItem"
           @select="selectItem"
@@ -151,6 +165,7 @@ const {
   addPack,
   removeItem,
   moveItemTo,
+  reorderList,
   nudge,
   autopack,
   clearAll,
@@ -164,6 +179,17 @@ const detailCategories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic
 
 const confirmClear = ref(false);
 const fileInput = ref(null);
+
+const SAVE_NOTE_KEY = 'backpack-save-note-dismissed';
+const saveNoteDismissed = ref(localStorage.getItem(SAVE_NOTE_KEY) === '1');
+function dismissSaveNote() {
+  saveNoteDismissed.value = true;
+  try {
+    localStorage.setItem(SAVE_NOTE_KEY, '1');
+  } catch (e) {
+    /* ignore storage errors */
+  }
+}
 
 function onAddCustom(payload) {
   const template = addCustomItem(payload);
@@ -243,7 +269,47 @@ function onFileChosen(e) {
   align-items: center;
   justify-content: space-between;
   gap: 1.2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+}
+
+.backpack__save-note {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 2rem;
+  padding: 0.7rem 1.1rem;
+  background: var(--par-color-callout-bg-light, #f8f2e3);
+  border: 0.5px solid var(--par-color-border, #e8e2d4);
+  border-radius: var(--par-radius-md, 4px);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.3rem;
+  line-height: 1.5;
+  color: var(--par-color-text-secondary, #555);
+}
+.backpack__save-icon {
+  font-size: 1.5rem;
+  flex: none;
+}
+.backpack__save-note strong {
+  font-weight: 600;
+  color: var(--par-color-text, #222);
+}
+.backpack__save-dismiss {
+  flex: none;
+  margin-left: auto;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: none;
+  background: transparent;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: var(--par-color-text-muted, #6b6b6b);
+  cursor: pointer;
+  border-radius: 50%;
+}
+.backpack__save-dismiss:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--par-color-text, #222);
 }
 
 .backpack__actions {
@@ -313,6 +379,7 @@ function onFileChosen(e) {
 @media print {
   .backpack__header,
   .backpack__toolbar,
+  .backpack__save-note,
   .backpack__main,
   .backpack__footer {
     display: none !important;

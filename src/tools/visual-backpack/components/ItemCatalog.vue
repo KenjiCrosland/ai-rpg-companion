@@ -48,9 +48,9 @@
       </button>
       <div v-show="gearOpen" class="catalog__panel">
         <div class="catalog__filters">
-      <ParInput v-model="search" placeholder="Search gear…" aria-label="Search gear" />
-      <ParSelect v-model="categoryFilter" :options="categoryOptions" aria-label="Filter by category" />
-    </div>
+          <ParInput v-model="search" placeholder="Search gear…" aria-label="Search gear" />
+          <ParSelect v-model="categoryFilter" :options="categoryOptions" aria-label="Filter by category" />
+        </div>
 
     <div class="catalog__list" role="list">
       <p v-if="!groups.length" class="catalog__empty">No gear matches “{{ search }}”.</p>

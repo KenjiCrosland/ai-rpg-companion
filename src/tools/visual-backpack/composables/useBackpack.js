@@ -225,6 +225,18 @@ export function useBackpack() {
     items.value = placeItemAt(items.value, instanceId, preferred, COLS);
   }
 
+  /** List view: move one item to sit where another is (vertical reorder). */
+  function reorderList(movedId, targetId) {
+    if (movedId === targetId) return;
+    const list = [...items.value];
+    const from = list.findIndex((i) => i.instanceId === movedId);
+    if (from < 0) return;
+    const [moved] = list.splice(from, 1);
+    const to = list.findIndex((i) => i.instanceId === targetId);
+    list.splice(to < 0 ? list.length : to, 0, moved);
+    items.value = list;
+  }
+
   /** Keyboard reposition: move one cell if the target is free, else no-op. */
   function nudge(instanceId, dx, dy) {
     const item = items.value.find((i) => i.instanceId === instanceId);
@@ -236,9 +248,9 @@ export function useBackpack() {
     items.value = items.value.map((i) => (i.instanceId === instanceId ? { ...i, pos: { x, y } } : i));
   }
 
-  /** Tidy: re-pack into a top-left, category-grouped, big-first arrangement. */
-  function autopack() {
-    items.value = packItems(items.value, COLS);
+  /** Tidy: re-pack into a top-left arrangement, sorted by `sortKey`. */
+  function autopack(sortKey = 'type') {
+    items.value = packItems(items.value, COLS, sortKey);
   }
 
   function clearAll() {
@@ -312,6 +324,7 @@ export function useBackpack() {
     addPack,
     removeItem,
     moveItemTo,
+    reorderList,
     nudge,
     autopack,
     clearAll,
