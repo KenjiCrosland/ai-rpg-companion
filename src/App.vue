@@ -67,6 +67,7 @@
           <option value="price-calculator">Magic Item Price Calculator</option>
           <option value="chase-tracker">Chase Tracker</option>
           <option value="chase-tracker-premium">Chase Tracker (Premium)</option>
+          <option value="backpack">Visual Backpack</option>
         </optgroup>
         <optgroup label="Examples">
           <option value="tabs-example">Tabs Example</option>
@@ -100,6 +101,7 @@
     <PriceCalculator v-if="currentPage === 'price-calculator'" />
     <ChaseTracker v-if="currentPage === 'chase-tracker'" />
     <ChaseTracker :premium="true" v-if="currentPage === 'chase-tracker-premium'" />
+    <VisualBackpack v-if="currentPage === 'backpack'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
     <LandingPage v-if="currentPage === 'category-landing'" />
 
@@ -123,6 +125,7 @@ import SettingGenerator from '@/tools/setting-generator/SettingGenerator.vue';
 import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGenerator.vue';
 import PriceCalculator from '@/tools/price-calculator/PriceCalculator.vue';
 import ChaseTracker from '@/tools/chase-tracker/ChaseTracker.vue';
+import VisualBackpack from '@/tools/visual-backpack/VisualBackpack.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
 import LandingPage from '@/components/LandingPage.vue';
 import AppToast from '@/components/AppToast.vue';
@@ -150,6 +153,7 @@ export default {
     SettingGenerator,
     PriceCalculator,
     ChaseTracker,
+    VisualBackpack,
     TabsExample,
     LandingPage,
     AppToast

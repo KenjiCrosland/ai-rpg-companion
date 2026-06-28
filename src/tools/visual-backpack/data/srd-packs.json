@@ -1,0 +1,784 @@
+[
+  {
+    "id": "burglars-pack",
+    "name": "Burglar's Pack",
+    "itemCount": 14,
+    "totalWeight": 47.5,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "ball-bearings-bag-of-1000",
+        "name": "Ball bearings (bag of 1,000)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "string-10-feet",
+        "name": "String (10 feet)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "bell",
+        "name": "Bell",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "candle",
+        "name": "Candle",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 5
+      },
+      {
+        "id": "crowbar",
+        "name": "Crowbar",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "hammer",
+        "name": "Hammer",
+        "weight": 3,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "piton",
+        "name": "Piton",
+        "weight": 0.25,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10
+      },
+      {
+        "id": "lantern-hooded",
+        "name": "Lantern, hooded",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "oil-flask",
+        "name": "Oil (flask)",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 5
+      },
+      {
+        "id": "tinderbox",
+        "name": "Tinderbox",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "rope-hempen-50-feet",
+        "name": "Rope, hempen (50 feet)",
+        "weight": 10,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "diplomats-pack",
+    "name": "Diplomat's Pack",
+    "itemCount": 11,
+    "totalWeight": 36,
+    "contents": [
+      {
+        "id": "chest",
+        "name": "Chest",
+        "weight": 25,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "case-map-or-scroll",
+        "name": "Case, map or scroll",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2
+      },
+      {
+        "id": "clothes-fine",
+        "name": "Clothes, fine",
+        "weight": 6,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "ink-1-ounce-bottle",
+        "name": "Ink (1 ounce bottle)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "ink-pen",
+        "name": "Ink pen",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "lamp",
+        "name": "Lamp",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "oil-flask",
+        "name": "Oil (flask)",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2
+      },
+      {
+        "id": "paper-one-sheet",
+        "name": "Paper (one sheet)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 5
+      },
+      {
+        "id": "perfume-vial",
+        "name": "Perfume (vial)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "sealing-wax",
+        "name": "Sealing wax",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "soap",
+        "name": "Soap",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "dungeoneers-pack",
+    "name": "Dungeoneer's Pack",
+    "itemCount": 9,
+    "totalWeight": 61.5,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "crowbar",
+        "name": "Crowbar",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "hammer",
+        "name": "Hammer",
+        "weight": 3,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "piton",
+        "name": "Piton",
+        "weight": 0.25,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10
+      },
+      {
+        "id": "torch",
+        "name": "Torch",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10
+      },
+      {
+        "id": "tinderbox",
+        "name": "Tinderbox",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "rope-hempen-50-feet",
+        "name": "Rope, hempen (50 feet)",
+        "weight": 10,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "entertainers-pack",
+    "name": "Entertainer's Pack",
+    "itemCount": 7,
+    "totalWeight": 38,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "bedroll",
+        "name": "Bedroll",
+        "weight": 7,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "clothes-costume",
+        "name": "Clothes, costume",
+        "weight": 4,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2
+      },
+      {
+        "id": "candle",
+        "name": "Candle",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 5
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 5
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "disguise-kit",
+        "name": "Disguise Kit",
+        "weight": 3,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "explorers-pack",
+    "name": "Explorer's Pack",
+    "itemCount": 8,
+    "totalWeight": 59,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "bedroll",
+        "name": "Bedroll",
+        "weight": 7,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "mess-kit",
+        "name": "Mess Kit",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "tinderbox",
+        "name": "Tinderbox",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "torch",
+        "name": "Torch",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "rope-hempen-50-feet",
+        "name": "Rope, hempen (50 feet)",
+        "weight": 10,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "priests-pack",
+    "name": "Priest's Pack",
+    "itemCount": 10,
+    "totalWeight": 18,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "blanket",
+        "name": "Blanket",
+        "weight": 3,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "candle",
+        "name": "Candle",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10
+      },
+      {
+        "id": "tinderbox",
+        "name": "Tinderbox",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "alms-box",
+        "name": "Alms box",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "block-of-incense",
+        "name": "Block of incense",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2
+      },
+      {
+        "id": "censer",
+        "name": "Censer",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "vestments",
+        "name": "Vestments",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "id": "scholars-pack",
+    "name": "Scholar's Pack",
+    "itemCount": 7,
+    "totalWeight": 10,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "book",
+        "name": "Book",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "ink-1-ounce-bottle",
+        "name": "Ink (1 ounce bottle)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "ink-pen",
+        "name": "Ink pen",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      },
+      {
+        "id": "parchment-one-sheet",
+        "name": "Parchment (one sheet)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10
+      },
+      {
+        "id": "little-bag-of-sand",
+        "name": "Little bag of sand",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1
+      },
+      {
+        "id": "small-knife",
+        "name": "Small knife",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1
+      }
+    ]
+  }
+]

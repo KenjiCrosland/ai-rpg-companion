@@ -1,0 +1,2092 @@
+[
+  {
+    "id": "abacus",
+    "name": "Abacus",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "acid-vial",
+    "name": "Acid (vial)",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "alchemists-fire-flask",
+    "name": "Alchemist's fire (flask)",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "alms-box",
+    "name": "Alms box",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "amulet",
+    "name": "Amulet",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "antitoxin-vial",
+    "name": "Antitoxin (vial)",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "arrow",
+    "name": "Arrow",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "backpack",
+    "name": "Backpack",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "ball-bearings-bag-of-1000",
+    "name": "Ball bearings (bag of 1,000)",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "barrel",
+    "name": "Barrel",
+    "weight": 70,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "basket",
+    "name": "Basket",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "bedroll",
+    "name": "Bedroll",
+    "weight": 7,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "bell",
+    "name": "Bell",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "blanket",
+    "name": "Blanket",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "block-and-tackle",
+    "name": "Block and tackle",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "block-of-incense",
+    "name": "Block of incense",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "blowgun-needle",
+    "name": "Blowgun needle",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "book",
+    "name": "Book",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "bottle-glass",
+    "name": "Bottle, glass",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "bucket",
+    "name": "Bucket",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "caltrops",
+    "name": "Caltrops",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "candle",
+    "name": "Candle",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "case-crossbow-bolt",
+    "name": "Case, crossbow bolt",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "case-map-or-scroll",
+    "name": "Case, map or scroll",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "censer",
+    "name": "Censer",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "chain-10-feet",
+    "name": "Chain (10 feet)",
+    "weight": 10,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "chalk-1-piece",
+    "name": "Chalk (1 piece)",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "chest",
+    "name": "Chest",
+    "weight": 25,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "climbers-kit",
+    "name": "Climber's Kit",
+    "weight": 12,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "clothes-common",
+    "name": "Clothes, common",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "clothes-costume",
+    "name": "Clothes, costume",
+    "weight": 4,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "clothes-fine",
+    "name": "Clothes, fine",
+    "weight": 6,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "clothes-travelers",
+    "name": "Clothes, traveler's",
+    "weight": 4,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "component-pouch",
+    "name": "Component pouch",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "crossbow-bolt",
+    "name": "Crossbow bolt",
+    "weight": 1.5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "crowbar",
+    "name": "Crowbar",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "crystal",
+    "name": "Crystal",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "disguise-kit",
+    "name": "Disguise Kit",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "emblem",
+    "name": "Emblem",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "fishing-tackle",
+    "name": "Fishing tackle",
+    "weight": 4,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "flask-or-tankard",
+    "name": "Flask or tankard",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "forgery-kit",
+    "name": "Forgery Kit",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "grappling-hook",
+    "name": "Grappling hook",
+    "weight": 4,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "hammer",
+    "name": "Hammer",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "hammer-sledge",
+    "name": "Hammer, sledge",
+    "weight": 10,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "healers-kit",
+    "name": "Healer's Kit",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "herbalism-kit",
+    "name": "Herbalism Kit",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "holy-water-flask",
+    "name": "Holy water (flask)",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "hourglass",
+    "name": "Hourglass",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "hunting-trap",
+    "name": "Hunting trap",
+    "weight": 25,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "ink-1-ounce-bottle",
+    "name": "Ink (1 ounce bottle)",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "ink-pen",
+    "name": "Ink pen",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "jug-or-pitcher",
+    "name": "Jug or pitcher",
+    "weight": 4,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "ladder-10-foot",
+    "name": "Ladder (10-foot)",
+    "weight": 25,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "lamp",
+    "name": "Lamp",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "lantern-bullseye",
+    "name": "Lantern, bullseye",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "lantern-hooded",
+    "name": "Lantern, hooded",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "little-bag-of-sand",
+    "name": "Little bag of sand",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "lock",
+    "name": "Lock",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "magnifying-glass",
+    "name": "Magnifying glass",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "manacles",
+    "name": "Manacles",
+    "weight": 6,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "mess-kit",
+    "name": "Mess Kit",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "mirror-steel",
+    "name": "Mirror, steel",
+    "weight": 0.5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "oil-flask",
+    "name": "Oil (flask)",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "orb",
+    "name": "Orb",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "paper-one-sheet",
+    "name": "Paper (one sheet)",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "parchment-one-sheet",
+    "name": "Parchment (one sheet)",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "perfume-vial",
+    "name": "Perfume (vial)",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "pick-miners",
+    "name": "Pick, miner's",
+    "weight": 10,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "piton",
+    "name": "Piton",
+    "weight": 0.25,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "poison-basic-vial",
+    "name": "Poison, basic (vial)",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "poisoners-kit",
+    "name": "Poisoner's Kit",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "pole-10-foot",
+    "name": "Pole (10-foot)",
+    "weight": 7,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "pot-iron",
+    "name": "Pot, iron",
+    "weight": 10,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "pouch",
+    "name": "Pouch",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "quiver",
+    "name": "Quiver",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "ram-portable",
+    "name": "Ram, portable",
+    "weight": 35,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "rations-1-day",
+    "name": "Rations (1 day)",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "reliquary",
+    "name": "Reliquary",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "robes",
+    "name": "Robes",
+    "weight": 4,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "rod",
+    "name": "Rod",
+    "weight": 2,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "rope-hempen-50-feet",
+    "name": "Rope, hempen (50 feet)",
+    "weight": 10,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "rope-silk-50-feet",
+    "name": "Rope, silk (50 feet)",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "sack",
+    "name": "Sack",
+    "weight": 0.5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "scale-merchants",
+    "name": "Scale, merchant's",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "sealing-wax",
+    "name": "Sealing wax",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "shovel",
+    "name": "Shovel",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "signal-whistle",
+    "name": "Signal whistle",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "signet-ring",
+    "name": "Signet ring",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "sling-bullet",
+    "name": "Sling bullet",
+    "weight": 1.5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "small-knife",
+    "name": "Small knife",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "soap",
+    "name": "Soap",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "spellbook",
+    "name": "Spellbook",
+    "weight": 3,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "spike-iron",
+    "name": "Spike, iron",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "sprig-of-mistletoe",
+    "name": "Sprig of mistletoe",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "spyglass",
+    "name": "Spyglass",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "staff",
+    "name": "Staff",
+    "weight": 4,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "string-10-feet",
+    "name": "String (10 feet)",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "tent-two-person",
+    "name": "Tent, two-person",
+    "weight": 20,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "tinderbox",
+    "name": "Tinderbox",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "torch",
+    "name": "Torch",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "totem",
+    "name": "Totem",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "vestments",
+    "name": "Vestments",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "vial",
+    "name": "Vial",
+    "weight": 0,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "wand",
+    "name": "Wand",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "waterskin",
+    "name": "Waterskin",
+    "weight": 5,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "whetstone",
+    "name": "Whetstone",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "wooden-staff",
+    "name": "Wooden staff",
+    "weight": 4,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "yew-wand",
+    "name": "Yew wand",
+    "weight": 1,
+    "category": "Adventuring Gear",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "breastplate",
+    "name": "Breastplate",
+    "weight": 20,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "chain-mail",
+    "name": "Chain Mail",
+    "weight": 55,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "chain-shirt",
+    "name": "Chain Shirt",
+    "weight": 20,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "half-plate-armor",
+    "name": "Half Plate Armor",
+    "weight": 40,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "hide-armor",
+    "name": "Hide Armor",
+    "weight": 12,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "leather-armor",
+    "name": "Leather Armor",
+    "weight": 10,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "padded-armor",
+    "name": "Padded Armor",
+    "weight": 8,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "plate-armor",
+    "name": "Plate Armor",
+    "weight": 65,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "ring-mail",
+    "name": "Ring Mail",
+    "weight": 40,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "scale-mail",
+    "name": "Scale Mail",
+    "weight": 45,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "shield",
+    "name": "Shield",
+    "weight": 6,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "splint-armor",
+    "name": "Splint Armor",
+    "weight": 60,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "studded-leather-armor",
+    "name": "Studded Leather Armor",
+    "weight": 13,
+    "category": "Armor",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "alchemists-supplies",
+    "name": "Alchemist's Supplies",
+    "weight": 8,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "bagpipes",
+    "name": "Bagpipes",
+    "weight": 6,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "brewers-supplies",
+    "name": "Brewer's Supplies",
+    "weight": 9,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "calligraphers-supplies",
+    "name": "Calligrapher's Supplies",
+    "weight": 5,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "carpenters-tools",
+    "name": "Carpenter's Tools",
+    "weight": 6,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "cartographers-tools",
+    "name": "Cartographer's Tools",
+    "weight": 6,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "cobblers-tools",
+    "name": "Cobbler's Tools",
+    "weight": 5,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "cooks-utensils",
+    "name": "Cook's utensils",
+    "weight": 8,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "dice-set",
+    "name": "Dice Set",
+    "weight": 0,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "drum",
+    "name": "Drum",
+    "weight": 3,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "dulcimer",
+    "name": "Dulcimer",
+    "weight": 10,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "flute",
+    "name": "Flute",
+    "weight": 1,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "glassblowers-tools",
+    "name": "Glassblower's Tools",
+    "weight": 5,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "horn",
+    "name": "Horn",
+    "weight": 2,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "jewelers-tools",
+    "name": "Jeweler's Tools",
+    "weight": 2,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "leatherworkers-tools",
+    "name": "Leatherworker's Tools",
+    "weight": 5,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "lute",
+    "name": "Lute",
+    "weight": 2,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "lyre",
+    "name": "Lyre",
+    "weight": 2,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "masons-tools",
+    "name": "Mason's Tools",
+    "weight": 8,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "navigators-tools",
+    "name": "Navigator's Tools",
+    "weight": 2,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "painters-supplies",
+    "name": "Painter's Supplies",
+    "weight": 5,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "pan-flute",
+    "name": "Pan flute",
+    "weight": 2,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "playing-card-set",
+    "name": "Playing Card Set",
+    "weight": 0,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "potters-tools",
+    "name": "Potter's Tools",
+    "weight": 3,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "shawm",
+    "name": "Shawm",
+    "weight": 1,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "smiths-tools",
+    "name": "Smith's Tools",
+    "weight": 8,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "thieves-tools",
+    "name": "Thieves' Tools",
+    "weight": 1,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "tinkers-tools",
+    "name": "Tinker's Tools",
+    "weight": 10,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "viol",
+    "name": "Viol",
+    "weight": 1,
+    "category": "Tools",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "weavers-tools",
+    "name": "Weaver's Tools",
+    "weight": 5,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "woodcarvers-tools",
+    "name": "Woodcarver's Tools",
+    "weight": 5,
+    "category": "Tools",
+    "size": {
+      "w": 2,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "battleaxe",
+    "name": "Battleaxe",
+    "weight": 4,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "blowgun",
+    "name": "Blowgun",
+    "weight": 1,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "club",
+    "name": "Club",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "crossbow-hand",
+    "name": "Crossbow, hand",
+    "weight": 3,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "crossbow-heavy",
+    "name": "Crossbow, heavy",
+    "weight": 18,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "crossbow-light",
+    "name": "Crossbow, light",
+    "weight": 5,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "dagger",
+    "name": "Dagger",
+    "weight": 1,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "dart",
+    "name": "Dart",
+    "weight": 0.25,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "flail",
+    "name": "Flail",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "glaive",
+    "name": "Glaive",
+    "weight": 6,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "greataxe",
+    "name": "Greataxe",
+    "weight": 7,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "greatclub",
+    "name": "Greatclub",
+    "weight": 10,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "greatsword",
+    "name": "Greatsword",
+    "weight": 6,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "halberd",
+    "name": "Halberd",
+    "weight": 6,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "handaxe",
+    "name": "Handaxe",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "javelin",
+    "name": "Javelin",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "lance",
+    "name": "Lance",
+    "weight": 6,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "light-hammer",
+    "name": "Light hammer",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "longbow",
+    "name": "Longbow",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "longsword",
+    "name": "Longsword",
+    "weight": 3,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "mace",
+    "name": "Mace",
+    "weight": 4,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "maul",
+    "name": "Maul",
+    "weight": 10,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "morningstar",
+    "name": "Morningstar",
+    "weight": 4,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "net",
+    "name": "Net",
+    "weight": 3,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "pike",
+    "name": "Pike",
+    "weight": 18,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "quarterstaff",
+    "name": "Quarterstaff",
+    "weight": 4,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "rapier",
+    "name": "Rapier",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "scimitar",
+    "name": "Scimitar",
+    "weight": 3,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "shortbow",
+    "name": "Shortbow",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "shortsword",
+    "name": "Shortsword",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "sickle",
+    "name": "Sickle",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "sling",
+    "name": "Sling",
+    "weight": 0,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "spear",
+    "name": "Spear",
+    "weight": 3,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "trident",
+    "name": "Trident",
+    "weight": 4,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  },
+  {
+    "id": "war-pick",
+    "name": "War pick",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "warhammer",
+    "name": "Warhammer",
+    "weight": 2,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 1
+    },
+    "source": "srd"
+  },
+  {
+    "id": "whip",
+    "name": "Whip",
+    "weight": 3,
+    "category": "Weapon",
+    "size": {
+      "w": 1,
+      "h": 2
+    },
+    "source": "srd"
+  }
+]
