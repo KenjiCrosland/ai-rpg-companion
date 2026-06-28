@@ -11,9 +11,10 @@
     </header>
 
     <div
+      ref="gridEl"
       class="grid-drop"
       :class="{ 'grid-drop--over': isOver }"
-      :style="dropStyle"
+      :style="gridStyle"
       @dragover.prevent="onDragOver"
       @dragenter.prevent="isOver = true"
       @dragleave="onDragLeave"
@@ -21,17 +22,16 @@
     >
       <p v-if="!items.length" class="grid-empty">
         <span class="grid-empty__icon" aria-hidden="true">🎒</span>
-        <span>Start with a <strong>starter pack</strong>, or drag gear here to pack it.</span>
+        <span>Start with a <strong>starter pack</strong>, or drag gear anywhere on the grid.</span>
       </p>
 
-      <TransitionGroup v-else name="tile" tag="div" class="tile-grid">
+      <TransitionGroup name="tile" tag="div" class="tile-layer">
         <ItemTile
-          v-for="(item, idx) in items"
+          v-for="item in items"
           :key="item.instanceId"
           :item="item"
-          :index="idx"
           @remove="$emit('remove', $event)"
-          @move="$emit('move', $event)"
+          @nudge="$emit('nudge', $event)"
         />
       </TransitionGroup>
     </div>
@@ -40,48 +40,89 @@
 
 <script setup>
 /**
- * The drop target. The grid is a VISUAL ARRANGEMENT — it never rejects an item
- * for lack of space (auto-flow dense + grows). Weight is the only real limit
- * (CapacityIndicator). Min-height scales subtly with Strength so a stronger
- * character's pack reads as roomier.
+ * The positioned drop grid. Tiles live at real cell coordinates (item.pos), so
+ * they can sit anywhere — separated, with gaps. The grid is a fixed COLS wide and
+ * grows downward; a drop is placed at the pointed cell and NEVER rejected (it
+ * slides to the nearest free cell if that spot is taken). Weight is the only real
+ * limit (CapacityIndicator).
  */
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { ParButton } from '@/parchment';
 import ItemTile from './ItemTile.vue';
 import { dragPayload, clearDrag } from '../composables/drag-state.js';
+import { COLS, offsetToCell, contentRows } from '../utils/grid-layout.mjs';
+
+const GAP = 6; // px, matches --gap
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
   strength: { type: Number, default: 10 },
 });
 
-const emit = defineEmits(['add', 'remove', 'move', 'autopack']);
+const emit = defineEmits(['place', 'move', 'remove', 'nudge', 'autopack']);
 
+const gridEl = ref(null);
 const isOver = ref(false);
+const cellPx = ref(60); // measured square cell side
+const pitch = computed(() => cellPx.value + GAP);
 
-// Visual capacity grows with Strength (cosmetic — weight is the real limit).
-const dropStyle = computed(() => ({ minHeight: `${160 + props.strength * 14}px` }));
+// Enough rows to drop below the lowest item (and a comfortable minimum).
+const rows = computed(() => Math.max(8, contentRows(props.items) + 3));
+
+const gridStyle = computed(() => ({
+  '--cols': COLS,
+  '--cell': `${cellPx.value}px`,
+  '--gap': `${GAP}px`,
+  '--pitch': `${pitch.value}px`,
+  minHeight: `${rows.value * pitch.value}px`,
+}));
+
+let ro = null;
+function measure() {
+  const el = gridEl.value;
+  if (!el) return;
+  const w = el.clientWidth;
+  cellPx.value = Math.max(28, (w - (COLS - 1) * GAP) / COLS);
+}
+onMounted(() => {
+  measure();
+  ro = new ResizeObserver(measure);
+  if (gridEl.value) ro.observe(gridEl.value);
+});
+onBeforeUnmount(() => ro?.disconnect());
+
+function cellFromEvent(e) {
+  const rect = gridEl.value.getBoundingClientRect();
+  return {
+    x: offsetToCell(e.clientX - rect.left, pitch.value),
+    y: offsetToCell(e.clientY - rect.top, pitch.value),
+  };
+}
 
 function onDragOver(e) {
   e.dataTransfer.dropEffect = dragPayload.value?.kind === 'move' ? 'move' : 'copy';
 }
 
 function onDragLeave(e) {
-  // Only clear when leaving the drop zone itself, not when crossing child tiles.
   if (!e.currentTarget.contains(e.relatedTarget)) isOver.value = false;
 }
 
-function onDrop() {
+function onDrop(e) {
   isOver.value = false;
   const payload = dragPayload.value;
-  if (payload?.kind === 'add' && payload.template) {
-    emit('add', payload.template);
-  } else if (payload?.kind === 'move') {
-    // Dropped onto open grid area → send to the end of the arrangement.
-    emit('move', { from: payload.index, to: props.items.length - 1 });
+  if (!payload) return;
+  const cell = cellFromEvent(e);
+  // Offset by the grabbed cell so the tile lands under the pointer, not corner-first.
+  const grab = payload.grab || { x: 0, y: 0 };
+  const pos = { x: cell.x - grab.x, y: cell.y - grab.y };
+  if (payload.kind === 'add' && payload.template) {
+    emit('place', { template: payload.template, pos });
+  } else if (payload.kind === 'move' && payload.instanceId) {
+    emit('move', { instanceId: payload.instanceId, pos });
   }
   clearDrag();
 }
+
 </script>
 
 <style scoped>
@@ -110,34 +151,42 @@ function onDrop() {
 }
 
 .grid-drop {
+  position: relative;
   flex: 1;
-  border: 1.5px dashed transparent;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  grid-auto-rows: var(--cell);
+  gap: var(--gap);
   border-radius: var(--par-radius-md, 4px);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  /* Faint cell lattice so the droppable grid is visible. */
+  background-image:
+    linear-gradient(to right, rgba(122, 50, 30, 0.07) 0 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(122, 50, 30, 0.07) 0 1px, transparent 1px);
+  background-size: var(--pitch) var(--pitch);
+  background-position: 0 0;
+  outline: 1.5px dashed transparent;
+  outline-offset: -1px;
+  transition: outline-color 0.15s ease, background-color 0.15s ease;
 }
 
 .grid-drop--over {
-  border-color: var(--color-action-rest, #365a85);
-  background: var(--par-color-readaloud-bg, #d8e3ef);
+  outline-color: var(--color-action-rest, #365a85);
+  background-color: rgba(54, 90, 133, 0.04);
 }
 
-.tile-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10.4rem, 1fr));
-  grid-auto-rows: 10.4rem;
-  grid-auto-flow: row dense;
-  gap: 0.8rem;
-  padding: 0.4rem;
+/* The tile layer participates directly in the grid so tiles place by grid-area. */
+.tile-layer {
+  display: contents;
 }
 
 .grid-empty {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.8rem;
-  height: 100%;
-  min-height: 16rem;
   margin: 0;
   padding: 2rem;
   text-align: center;
@@ -153,7 +202,7 @@ function onDrop() {
   opacity: 0.8;
 }
 
-/* FLIP animation for autopack / add / remove. */
+/* FLIP animation for autopack / placement / remove. */
 .tile-move,
 .tile-enter-active,
 .tile-leave-active {

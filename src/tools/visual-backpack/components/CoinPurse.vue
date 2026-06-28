@@ -2,88 +2,75 @@
   <section class="purse parchment" aria-label="Coin purse">
     <header class="purse__head">
       <h2 class="purse__title">Coin purse</h2>
+      <span class="purse__weight-note">{{ coinLbs }} lb</span>
     </header>
 
-    <div class="purse__body">
-      <div class="purse__coins">
-        <div
-          v-for="denom in denoms"
-          :key="denom.key"
-          class="coin"
-          :style="{ '--metal': denom.metal, '--metal-deep': denom.deep }"
-        >
-          <span class="coin__label">{{ denom.key }}</span>
-          <!-- One compact field: −[ value ]+ -->
-          <div class="stepper">
-            <button
-              class="stepper__btn"
-              type="button"
-              :aria-label="`Remove one ${denom.key}`"
-              :disabled="(coins[denom.key] || 0) <= 0"
-              @click="step(denom.key, -1)"
-            >−</button>
-            <input
-              class="stepper__input"
-              type="number"
-              min="0"
-              step="1"
-              :value="coins[denom.key]"
-              :aria-label="denom.name"
-              @input="onInput(denom.key, $event)"
-            />
-            <button
-              class="stepper__btn"
-              type="button"
-              :aria-label="`Add one ${denom.key}`"
-              @click="step(denom.key, 1)"
-            >+</button>
-          </div>
+    <div class="purse__row">
+      <div v-for="denom in denoms" :key="denom.key" class="coin" :class="`coin--${denom.key}`">
+        <span class="coin__label">{{ denom.key }}</span>
+        <!-- One compact field: −[ value ]+ -->
+        <div class="stepper">
+          <button
+            class="stepper__btn"
+            type="button"
+            :aria-label="`Remove one ${denom.key}`"
+            :disabled="(coins[denom.key] || 0) <= 0"
+            @click="step(denom.key, -1)"
+          >−</button>
+          <input
+            class="stepper__input"
+            type="number"
+            min="0"
+            step="1"
+            :value="coins[denom.key]"
+            :aria-label="denom.name"
+            @input="onInput(denom.key, $event)"
+          />
+          <button
+            class="stepper__btn"
+            type="button"
+            :aria-label="`Add one ${denom.key}`"
+            @click="step(denom.key, 1)"
+          >+</button>
         </div>
       </div>
 
-      <div class="purse__total" :title="`${coinGold} gp total value`">
-        <span class="purse__total-label">Total</span>
-        <span class="purse__total-value"><strong>{{ formatGp(coinGold) }}</strong> gp</span>
+      <div class="coin-total" :title="`${coinGold} gp total value`">
+        <span class="coin-total__label">Total</span>
+        <span class="coin-total__value"
+          >{{ formatGp(coinGold) }} <span class="coin-total__unit">gp</span></span
+        >
       </div>
-    </div>
-
-    <div class="purse__foot">
-      <label class="purse__toggle">
-        <input
-          type="checkbox"
-          :checked="countCoinWeight"
-          @change="$emit('toggle', $event.target.checked)"
-        />
-        <span>Count coin weight</span>
-      </label>
-      <span class="purse__weight" :class="{ 'purse__weight--muted': !countCoinWeight }">
-        {{ coinLbs }} lb<template v-if="!countCoinWeight"> (ignored)</template>
-      </span>
     </div>
   </section>
 </template>
 
 <script setup>
 /**
- * Gold / electrum / silver / copper counter. Each denomination is a flat labeled
- * stepper — metal lives only in the label + a thin top accent on the field, with
- * −[value]+ as a single compact unit (no nested boxes). The total is its own
- * emphasized block on the right: adjust coins → read the total.
+ * Gold / electrum / silver / copper counter — coins only. Each denomination is a
+ * flat labeled stepper (metal color in the label, −[value]+ as one field); the
+ * total is a defined summary pool on the right (warm tan, lapis text). The coin
+ * weight is a quiet inline note in the heading.
+ *
+ * Coin weight is reported, not gated here: the "include coin weight" toggle lives
+ * on the carrying bar (it's a carrying-calculation setting, not a coin property).
+ *
+ * The metal colors are coin-purse-specific contextual treatment — they do not
+ * enter parchment's global token system or propagate to other tools.
  */
 const props = defineProps({
   coins: { type: Object, required: true },
-  countCoinWeight: { type: Boolean, default: true },
   coinLbs: { type: Number, default: 0 },
   coinGold: { type: Number, default: 0 },
 });
 
-const emit = defineEmits(['set-coin', 'toggle']);
+const emit = defineEmits(['set-coin']);
 
 const denoms = [
-  { key: 'gp', name: 'Gold pieces', metal: '#c8a22b', deep: '#9a7c1c' },
-  { key: 'ep', name: 'Electrum pieces', metal: '#b3a96a', deep: '#857b3f' },
-  { key: 'sp', name: 'Silver pieces', metal: '#9aa3ad', deep: '#6c747c' },
-  { key: 'cp', name: 'Copper pieces', metal: '#b06a3b', deep: '#8a4f29' },
+  { key: 'gp', name: 'Gold pieces' },
+  { key: 'ep', name: 'Electrum pieces' },
+  { key: 'sp', name: 'Silver pieces' },
+  { key: 'cp', name: 'Copper pieces' },
 ];
 
 function onInput(denom, e) {
@@ -103,6 +90,14 @@ function formatGp(v) {
 
 <style scoped>
 .purse {
+  /* Coin-purse-specific metal colors — contextual to this widget only.
+     Darkened to clear WCAG AA (4.5:1) on the cream card at 11px/700, while
+     keeping the four hues clearly separated (warm amber / olive / cool / brown). */
+  --coin-color-gold: #956a0b;
+  --coin-color-electrum: #7a743b;
+  --coin-color-silver: #617493;
+  --coin-color-copper: #a8562e;
+
   background: var(--par-color-surface-card, #fefbf4);
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-lg, 12px);
@@ -110,8 +105,13 @@ function formatGp(v) {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
 }
 
+/* Zone 1: heading + inline weight note. */
 .purse__head {
-  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
 }
 .purse__title {
   margin: 0;
@@ -119,47 +119,55 @@ function formatGp(v) {
   font-weight: 600;
   color: var(--color-action-hover, #2a4d70);
 }
-
-/* [ four compact steppers ] → [ total ] */
-.purse__body {
-  display: flex;
-  align-items: stretch;
-  gap: 1.4rem;
+.purse__weight-note {
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
 }
 
-.purse__coins {
-  flex: 1;
+/* Zone 2: four steppers + the total pool, auto-sized so there's no gap at the end. */
+.purse__row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.1rem;
+  grid-template-columns: repeat(4, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
 }
 
 .coin {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 .coin__label {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-size: 1.1rem;
+  font-weight: 700; /* heavier than burgundy small-caps — metal colors are less saturated */
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--metal-deep);
+  text-align: center;
+}
+.coin--gp .coin__label {
+  color: var(--coin-color-gold);
+}
+.coin--ep .coin__label {
+  color: var(--coin-color-electrum);
+}
+.coin--sp .coin__label {
+  color: var(--coin-color-silver);
+}
+.coin--cp .coin__label {
+  color: var(--coin-color-copper);
 }
 
-/* The single field: minus, number, plus share one border; metal top accent. */
 .stepper {
   display: flex;
   align-items: stretch;
   width: 100%;
-  background: #fff;
+  background: var(--par-color-surface, #fbf7f0);
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
-  border-top: 2.5px solid var(--metal);
   border-radius: var(--par-radius-md, 4px);
   overflow: hidden;
 }
-
 .stepper__btn {
   flex: none;
   width: 3.2rem;
@@ -187,7 +195,6 @@ function formatGp(v) {
   outline: 2px solid var(--color-action-rest, #365a85);
   outline-offset: -2px;
 }
-
 .stepper__input {
   flex: 1;
   width: 100%;
@@ -198,7 +205,7 @@ function formatGp(v) {
   background: transparent;
   text-align: center;
   font-family: inherit;
-  font-size: 1.7rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--par-color-text, #222);
   outline: none;
@@ -213,84 +220,49 @@ function formatGp(v) {
   background: rgba(54, 90, 133, 0.06);
 }
 
-/* The output, as a destination. */
-.purse__total {
-  flex: none;
+/* The total: a defined summary zone — warm tan pool, lapis text. */
+.coin-total {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  min-width: 11rem;
-  padding: 0.6rem 1.6rem;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  min-width: 13rem;
   background: var(--par-color-callout-bg, #f3ebda);
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-md, 4px);
 }
-.purse__total-label {
+.coin-total__label {
   font-size: 1.1rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
+  text-align: right;
+  color: var(--color-action-hover, #2a4d70);
+  margin-bottom: 0.2rem;
+}
+.coin-total__value {
+  /* Slightly smaller than the section heading (2rem) for hierarchy. */
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: right;
   color: var(--color-action-hover, #2a4d70);
 }
-.purse__total-value {
-  font-size: 1.4rem;
-  color: var(--par-color-text-secondary, #555);
-}
-.purse__total-value strong {
-  font-size: 2.4rem;
-  font-weight: 600;
-  color: var(--par-color-text, #222);
-}
-
-.purse__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1.3rem;
-  padding-top: 1rem;
-  border-top: 0.5px solid var(--par-color-divider, #e2dccd);
-}
-.purse__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 1.4rem;
-  color: var(--par-color-text, #222);
-  cursor: pointer;
-}
-.purse__toggle input {
-  width: 1.8rem;
-  height: 1.8rem;
-  accent-color: var(--color-action-rest, #365a85);
-  cursor: pointer;
-}
-.purse__weight {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--par-color-text-secondary, #555);
-}
-.purse__weight--muted {
-  font-weight: 400;
+.coin-total__unit {
+  font-size: 1.3rem;
   font-style: italic;
+  font-weight: 400;
   color: var(--par-color-text-muted, #6b6b6b);
 }
 
-@media (max-width: 620px) {
-  .purse__body {
-    flex-direction: column;
-  }
-  .purse__total {
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-    min-width: 0;
-  }
-}
-@media (max-width: 460px) {
-  .purse__coins {
+@media (max-width: 560px) {
+  .purse__row {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .coin-total {
+    grid-column: 1 / -1;
+    min-width: 0;
   }
 }
 

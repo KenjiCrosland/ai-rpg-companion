@@ -20,10 +20,20 @@
       <span class="capacity__tick" style="left: 66.66%" title="Heavily encumbered"></span>
     </div>
 
-    <p class="capacity__consequence">
-      <template v-if="status.consequences">{{ status.consequences }}</template>
-      <template v-else>Unencumbered — carry on.</template>
-    </p>
+    <div class="capacity__footer">
+      <span class="capacity__status">
+        <template v-if="status.consequences">{{ status.consequences }}</template>
+        <template v-else>Unencumbered — carry on.</template>
+      </span>
+      <label class="capacity__toggle">
+        <input
+          type="checkbox"
+          :checked="countCoinWeight"
+          @change="$emit('toggle', $event.target.checked)"
+        />
+        <span>Include coin weight</span>
+      </label>
+    </div>
   </section>
 </template>
 
@@ -32,12 +42,18 @@
  * The real limit made legible. Bar fill + tier color follow the same load
  * severity gradient as the tiles (easy→deadly), with overflow going to the
  * destructive-red token. Consequences spell out the 5e variant encumbrance rules.
+ *
+ * Owns the "include coin weight" toggle — it's a carrying-calculation setting, so
+ * it lives here next to the encumbrance read, not on the coin purse.
  */
 import { computed } from 'vue';
 
 const props = defineProps({
   status: { type: Object, required: true },
+  countCoinWeight: { type: Boolean, default: true },
 });
+
+defineEmits(['toggle']);
 
 const fillWidth = computed(() => `${Math.min(1, props.status.ratio || 0) * 100}%`);
 
@@ -115,15 +131,38 @@ function formatWeight(w) {
   transform: translateX(-0.5px);
 }
 
-.capacity__consequence {
-  margin: 0.7rem 0 0;
+.capacity__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  margin-top: 0.7rem;
+}
+
+.capacity__status {
   font-size: 1.35rem;
   line-height: 1.5;
   color: var(--tier-color);
 }
-.capacity--ok .capacity__consequence {
+.capacity--ok .capacity__status {
   color: var(--par-color-text-secondary, #555);
   font-style: italic;
+}
+
+.capacity__toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  color: var(--par-color-text-muted, #6b6b6b);
+  cursor: pointer;
+}
+.capacity__toggle input {
+  width: 1.6rem;
+  height: 1.6rem;
+  accent-color: var(--color-action-rest, #365a85);
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {

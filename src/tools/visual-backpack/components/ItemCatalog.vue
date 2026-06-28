@@ -69,7 +69,7 @@
           @dragstart="onDragStart(tpl, $event)"
           @dragend="onDragEnd"
         >
-          <span class="row__swatch" :style="{ background: bucketBg(tpl.weight) }" aria-hidden="true"></span>
+          <span class="row__swatch" :style="{ background: swatchColor(tpl) }" aria-hidden="true"></span>
           <span class="row__name">{{ tpl.name }}</span>
           <span v-if="tpl.source === 'custom'" class="row__badge">custom</span>
           <span class="row__weight">{{ formatWeight(tpl.weight) }} lb</span>
@@ -100,9 +100,6 @@
         <ParField label="Category">
           <ParSelect v-model="form.category" :options="categories" />
         </ParField>
-        <ParField label="Size">
-          <ParSelect v-model="form.sizeValue" :options="sizeSelectOptions" />
-        </ParField>
       </div>
         <ParButton type="submit" variant="primary" size="small" :full-width="true">+ Add custom item</ParButton>
       </form>
@@ -120,7 +117,7 @@
  */
 import { reactive, ref, computed } from 'vue';
 import { ParInput, ParSelect, ParField, ParButton } from '@/parchment';
-import { weightBucket, SIZE_OPTIONS, sizeFromValue } from '../utils/tile-presentation.mjs';
+import { typeColor } from '../utils/tile-presentation.mjs';
 import { setDrag, clearDrag } from '../composables/drag-state.js';
 
 const props = defineProps({
@@ -132,14 +129,13 @@ const emit = defineEmits(['add', 'add-pack', 'add-custom', 'remove-custom']);
 
 const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools'];
 const categoryOptions = [{ value: '', label: 'All categories' }, ...categories];
-const sizeSelectOptions = SIZE_OPTIONS.map((o) => ({ value: o.value, label: `${o.label} (${o.value})` }));
 
 const search = ref('');
 const categoryFilter = ref('');
 const starterOpen = ref(true);
 const gearOpen = ref(true);
 
-const form = reactive({ name: '', weight: '', category: 'Adventuring Gear', sizeValue: '1x1' });
+const form = reactive({ name: '', weight: '', category: 'Adventuring Gear' });
 
 const groups = computed(() => {
   const q = search.value.trim().toLowerCase();
@@ -154,8 +150,8 @@ const groups = computed(() => {
     .filter((g) => g.items.length);
 });
 
-function bucketBg(weight) {
-  return weightBucket(weight).bg;
+function swatchColor(tpl) {
+  return typeColor(tpl).bg;
 }
 
 function formatWeight(w) {
@@ -179,7 +175,6 @@ function submitCustom() {
     name: form.name,
     weight: form.weight,
     category: form.category,
-    size: sizeFromValue(form.sizeValue),
   });
   form.name = '';
   form.weight = '';
@@ -419,7 +414,7 @@ function submitCustom() {
 
 .custom__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.8rem;
 }
 

@@ -62,6 +62,8 @@ function normalizeItem(it) {
   const weight = Number(it?.weight);
   const w = Number(it?.size?.w);
   const h = Number(it?.size?.h);
+  const px = Number(it?.pos?.x);
+  const py = Number(it?.pos?.y);
   return {
     instanceId: it?.instanceId || makeInstanceId(),
     id: String(it?.id ?? ''),
@@ -69,6 +71,8 @@ function normalizeItem(it) {
     weight: Number.isFinite(weight) ? weight : 0,
     category: String(it?.category ?? 'Adventuring Gear'),
     size: { w: Number.isFinite(w) ? w : 1, h: Number.isFinite(h) ? h : 1 },
+    // Grid position; null means "unplaced" (the composable packs it on load).
+    pos: Number.isFinite(px) && Number.isFinite(py) ? { x: px, y: py } : null,
     source: it?.source === 'srd' ? 'srd' : 'custom',
   };
 }

@@ -45,20 +45,23 @@
         <BackpackGrid
           :items="items"
           :strength="strength"
-          @add="addItem"
+          @place="({ template, pos }) => addItem(template, pos)"
+          @move="({ instanceId, pos }) => moveItemTo(instanceId, pos)"
+          @nudge="({ instanceId, dx, dy }) => nudge(instanceId, dx, dy)"
           @remove="removeItem"
-          @move="onMove"
           @autopack="autopack"
         />
         <CoinPurse
           :coins="coins"
-          :count-coin-weight="countCoinWeight"
           :coin-lbs="coinLbs"
           :coin-gold="coinGold"
           @set-coin="({ denom, value }) => setCoin(denom, value)"
+        />
+        <CapacityIndicator
+          :status="status"
+          :count-coin-weight="countCoinWeight"
           @toggle="toggleCoinWeight"
         />
-        <CapacityIndicator :status="status" />
       </div>
     </div>
 
@@ -129,7 +132,8 @@ const {
   addItem,
   addPack,
   removeItem,
-  reorder,
+  moveItemTo,
+  nudge,
   autopack,
   clearAll,
   addCustomItem,
@@ -140,10 +144,6 @@ const {
 
 const confirmClear = ref(false);
 const fileInput = ref(null);
-
-function onMove({ from, to }) {
-  reorder(from, to);
-}
 
 function onAddCustom(payload) {
   const template = addCustomItem(payload);

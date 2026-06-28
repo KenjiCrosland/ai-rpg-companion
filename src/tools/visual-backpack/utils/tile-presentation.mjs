@@ -1,42 +1,56 @@
 /**
  * tile-presentation.mjs
  *
- * Cosmetic mapping for backpack tiles: weight → color bucket, and tile size
- * options. Pure, no DOM.
+ * Tile encoding for the inventory:
+ *   COLOR = item TYPE  (weapon / armor / consumable / tools / gear)
+ *   SIZE  = WEIGHT      (heavier items get a bigger square)
  *
- * The weight color scale REUSES the encounter generator's difficulty gradient
- * (trivial → deadly) verbatim — see parchment.md §7 and EncounterMonsterList.vue.
- * No new colors are introduced; a sanctioned earth-tone gradient is simply applied
- * to a new axis (per-item weight). If that palette ever becomes a shared token,
- * point these `bg`/`text` values at it.
+ * Both are Visual-Backpack-specific contextual treatments for the at-a-glance
+ * "what is this / how heavy is it" read — they don't enter parchment's global
+ * token system. Pure, no DOM.
  */
 
-export const WEIGHT_BUCKETS = [
-  { key: 'feather', max: 1, label: 'Feather', bg: '#e8e2d4', text: '#6b6b6b' },
-  { key: 'light', max: 5, label: 'Light', bg: '#dde7d3', text: '#4d6a3c' },
-  { key: 'medium', max: 15, label: 'Medium', bg: '#efe6c6', text: '#87691d' },
-  { key: 'heavy', max: 40, label: 'Heavy', bg: '#ecd7c2', text: '#9b5730' },
-  { key: 'veryHeavy', max: Infinity, label: 'Very heavy', bg: '#ebcfca', text: '#8e3830' },
-];
+// Muted, distinct type colors (a light fill + a readable dark ink each).
+export const TYPE_COLORS = {
+  weapon: { label: 'Weapon', bg: '#d9bdb6', text: '#5e3a31' }, // clay red
+  armor: { label: 'Armor', bg: '#bfc8d4', text: '#3a4654' }, // steel blue
+  consumable: { label: 'Consumable', bg: '#cbd9b6', text: '#465533' }, // sage green
+  tools: { label: 'Tools', bg: '#e3d29c', text: '#6a5615' }, // ochre
+  gear: { label: 'Gear', bg: '#e7ddc7', text: '#5c513a' }, // tan
+};
 
-/** Bucket an item's weight (lb) onto the gradient. */
-export function weightBucket(weight) {
-  const w = Number(weight) || 0;
-  return WEIGHT_BUCKETS.find((b) => w <= b.max) || WEIGHT_BUCKETS[WEIGHT_BUCKETS.length - 1];
+// Consumables hide inside SRD "Adventuring Gear" — detect the obvious ones
+// (food, light sources, alchemical one-shots, ammunition).
+const CONSUMABLE_RE =
+  /\b(ration|potion|oil|torch|candle|arrow|bolt|bullet|needle|antitoxin|acid|alchemist|holy water|poison)/i;
+
+/** Classify an item into a colored type. */
+export function itemType(item) {
+  switch (item?.category) {
+    case 'Weapon':
+      return 'weapon';
+    case 'Armor':
+      return 'armor';
+    case 'Tools':
+      return 'tools';
+    default:
+      return CONSUMABLE_RE.test(item?.name || '') ? 'consumable' : 'gear';
+  }
 }
 
-// Tile shapes the grid can render. `w` = columns, `h` = rows.
-export const SIZE_OPTIONS = [
-  { value: '1x1', label: 'Small', size: { w: 1, h: 1 } },
-  { value: '1x2', label: 'Tall', size: { w: 1, h: 2 } },
-  { value: '2x1', label: 'Wide', size: { w: 2, h: 1 } },
-  { value: '2x2', label: 'Large', size: { w: 2, h: 2 } },
-];
-
-export function sizeFromValue(value) {
-  return (SIZE_OPTIONS.find((o) => o.value === value) || SIZE_OPTIONS[0]).size;
+export function typeColor(item) {
+  return TYPE_COLORS[itemType(item)] || TYPE_COLORS.gear;
 }
 
-export function sizeToValue(size) {
-  return `${size?.w || 1}x${size?.h || 1}`;
+/**
+ * SIZE encodes weight — a square tile that grows with load, across five tiers:
+ * 0–3 / 3–5 / 5–10 / 10–20 / 20+ lb. (Square-only for this release.)
+ */
+export function tileSize(item) {
+  const w = Number(item?.weight) || 0;
+  if (w <= 3) return { w: 1, h: 1 };
+  if (w <= 5) return { w: 2, h: 2 };
+  if (w <= 10) return { w: 3, h: 3 };
+  if (w <= 20) return { w: 4, h: 4 };
+  return { w: 5, h: 5 };
 }

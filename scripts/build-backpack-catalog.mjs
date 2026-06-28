@@ -28,6 +28,7 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { tileSize } from '../src/tools/visual-backpack/utils/tile-presentation.mjs';
 
 const SRC_URL =
   'https://raw.githubusercontent.com/5e-bits/5e-database/main/src/2014/en/5e-SRD-Equipment.json';
@@ -35,36 +36,6 @@ const SRC_URL =
 const KEPT_CATEGORIES = new Set(['Weapon', 'Armor', 'Adventuring Gear', 'Tools']);
 
 const round2 = (n) => Math.round(n * 100) / 100;
-
-// Size = { w: columns, h: rows }. Constrained to the four shapes the grid renders.
-const SMALL = { w: 1, h: 1 };
-const TALL = { w: 1, h: 2 };
-const WIDE = { w: 2, h: 1 };
-const BIG = { w: 2, h: 2 };
-
-const TWO_HANDED = /(great|heavy|maul|pike|glaive|halberd|lance|two|long ?bow|cross ?bow)/i;
-const AMMO = /(arrow|bolt|needle|bullet|ammunition|dart)/i;
-
-function pickSize(category, name, weight, weaponCat) {
-  const w = typeof weight === 'number' ? weight : 1;
-
-  if (category === 'Weapon') {
-    if (AMMO.test(name)) return SMALL;
-    if (TWO_HANDED.test(name) || (weaponCat === 'Martial' && w >= 6)) return TALL;
-    return w <= 2 ? SMALL : TALL;
-  }
-  if (category === 'Armor') {
-    if (/shield/i.test(name)) return BIG;
-    return w >= 20 ? BIG : WIDE;
-  }
-  if (category === 'Tools') {
-    return w >= 5 ? WIDE : SMALL;
-  }
-  // Adventuring Gear
-  if (w >= 15 || /(pack|tent|chest|barrel|bedroll|bag of)/i.test(name)) return BIG;
-  if (w >= 5) return TALL;
-  return SMALL;
-}
 
 async function main() {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -106,7 +77,7 @@ async function main() {
       name: e.name,
       weight,
       category,
-      size: pickSize(category, e.name, weight, e.weapon_category),
+      size: tileSize({ name: e.name, category, weight }),
       source: 'srd',
     });
   }

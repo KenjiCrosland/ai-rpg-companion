@@ -93,8 +93,8 @@
     "weight": 2,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 1,
+      "h": 1
     },
     "source": "srd"
   },
@@ -104,8 +104,8 @@
     "weight": 70,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -126,8 +126,8 @@
     "weight": 7,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -159,7 +159,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -192,7 +192,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -280,8 +280,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -302,8 +302,8 @@
     "weight": 25,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -313,8 +313,8 @@
     "weight": 12,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 4,
+      "h": 4
     },
     "source": "srd"
   },
@@ -335,8 +335,8 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 1
+      "w": 2,
+      "h": 2
     },
     "source": "srd"
   },
@@ -346,8 +346,8 @@
     "weight": 6,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -357,8 +357,8 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 1
+      "w": 2,
+      "h": 2
     },
     "source": "srd"
   },
@@ -390,7 +390,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -434,8 +434,8 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 1
+      "w": 2,
+      "h": 2
     },
     "source": "srd"
   },
@@ -456,7 +456,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -467,8 +467,8 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 1
+      "w": 2,
+      "h": 2
     },
     "source": "srd"
   },
@@ -489,8 +489,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -544,8 +544,8 @@
     "weight": 25,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -577,8 +577,8 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 1
+      "w": 2,
+      "h": 2
     },
     "source": "srd"
   },
@@ -588,8 +588,8 @@
     "weight": 25,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -632,8 +632,8 @@
     "weight": 0,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 1,
+      "h": 1
     },
     "source": "srd"
   },
@@ -665,8 +665,8 @@
     "weight": 6,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -753,8 +753,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -797,8 +797,8 @@
     "weight": 7,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -808,8 +808,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -841,8 +841,8 @@
     "weight": 35,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -874,8 +874,8 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 1
+      "w": 2,
+      "h": 2
     },
     "source": "srd"
   },
@@ -896,8 +896,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -907,7 +907,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -951,7 +951,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -1028,7 +1028,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -1061,8 +1061,8 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 1
+      "w": 2,
+      "h": 2
     },
     "source": "srd"
   },
@@ -1083,8 +1083,8 @@
     "weight": 20,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 4,
+      "h": 4
     },
     "source": "srd"
   },
@@ -1160,7 +1160,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -1182,8 +1182,8 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 1,
-      "h": 1
+      "w": 2,
+      "h": 2
     },
     "source": "srd"
   },
@@ -1204,8 +1204,8 @@
     "weight": 20,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 4,
+      "h": 4
     },
     "source": "srd"
   },
@@ -1215,8 +1215,8 @@
     "weight": 55,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -1226,8 +1226,8 @@
     "weight": 20,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 4,
+      "h": 4
     },
     "source": "srd"
   },
@@ -1237,8 +1237,8 @@
     "weight": 40,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -1248,8 +1248,8 @@
     "weight": 12,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 4,
+      "h": 4
     },
     "source": "srd"
   },
@@ -1259,8 +1259,8 @@
     "weight": 10,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1270,8 +1270,8 @@
     "weight": 8,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1281,8 +1281,8 @@
     "weight": 65,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -1292,8 +1292,8 @@
     "weight": 40,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -1303,8 +1303,8 @@
     "weight": 45,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -1314,8 +1314,8 @@
     "weight": 6,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1325,8 +1325,8 @@
     "weight": 60,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 2
+      "w": 5,
+      "h": 5
     },
     "source": "srd"
   },
@@ -1336,8 +1336,8 @@
     "weight": 13,
     "category": "Armor",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 4,
+      "h": 4
     },
     "source": "srd"
   },
@@ -1347,8 +1347,8 @@
     "weight": 8,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1358,8 +1358,8 @@
     "weight": 6,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1369,8 +1369,8 @@
     "weight": 9,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1381,7 +1381,7 @@
     "category": "Tools",
     "size": {
       "w": 2,
-      "h": 1
+      "h": 2
     },
     "source": "srd"
   },
@@ -1391,8 +1391,8 @@
     "weight": 6,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1402,8 +1402,8 @@
     "weight": 6,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1414,7 +1414,7 @@
     "category": "Tools",
     "size": {
       "w": 2,
-      "h": 1
+      "h": 2
     },
     "source": "srd"
   },
@@ -1424,8 +1424,8 @@
     "weight": 8,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1457,8 +1457,8 @@
     "weight": 10,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1480,7 +1480,7 @@
     "category": "Tools",
     "size": {
       "w": 2,
-      "h": 1
+      "h": 2
     },
     "source": "srd"
   },
@@ -1513,7 +1513,7 @@
     "category": "Tools",
     "size": {
       "w": 2,
-      "h": 1
+      "h": 2
     },
     "source": "srd"
   },
@@ -1545,8 +1545,8 @@
     "weight": 8,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1568,7 +1568,7 @@
     "category": "Tools",
     "size": {
       "w": 2,
-      "h": 1
+      "h": 2
     },
     "source": "srd"
   },
@@ -1622,8 +1622,8 @@
     "weight": 8,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1644,8 +1644,8 @@
     "weight": 10,
     "category": "Tools",
     "size": {
-      "w": 2,
-      "h": 1
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1667,7 +1667,7 @@
     "category": "Tools",
     "size": {
       "w": 2,
-      "h": 1
+      "h": 2
     },
     "source": "srd"
   },
@@ -1678,7 +1678,7 @@
     "category": "Tools",
     "size": {
       "w": 2,
-      "h": 1
+      "h": 2
     },
     "source": "srd"
   },
@@ -1688,7 +1688,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -1722,7 +1722,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 2
+      "h": 1
     },
     "source": "srd"
   },
@@ -1732,8 +1732,8 @@
     "weight": 18,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 4,
+      "h": 4
     },
     "source": "srd"
   },
@@ -1743,7 +1743,7 @@
     "weight": 5,
     "category": "Weapon",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -1787,8 +1787,8 @@
     "weight": 6,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1798,8 +1798,8 @@
     "weight": 7,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1809,8 +1809,8 @@
     "weight": 10,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1820,8 +1820,8 @@
     "weight": 6,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1831,8 +1831,8 @@
     "weight": 6,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1864,8 +1864,8 @@
     "weight": 6,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1887,7 +1887,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 2
+      "h": 1
     },
     "source": "srd"
   },
@@ -1898,7 +1898,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 2
+      "h": 1
     },
     "source": "srd"
   },
@@ -1908,7 +1908,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -1919,8 +1919,8 @@
     "weight": 10,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 3,
+      "h": 3
     },
     "source": "srd"
   },
@@ -1930,7 +1930,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -1942,7 +1942,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 2
+      "h": 1
     },
     "source": "srd"
   },
@@ -1952,8 +1952,8 @@
     "weight": 18,
     "category": "Weapon",
     "size": {
-      "w": 1,
-      "h": 2
+      "w": 4,
+      "h": 4
     },
     "source": "srd"
   },
@@ -1963,7 +1963,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -1986,7 +1986,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 2
+      "h": 1
     },
     "source": "srd"
   },
@@ -2041,7 +2041,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 2
+      "h": 1
     },
     "source": "srd"
   },
@@ -2051,7 +2051,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 1,
+      "w": 2,
       "h": 2
     },
     "source": "srd"
@@ -2085,7 +2085,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 2
+      "h": 1
     },
     "source": "srd"
   }

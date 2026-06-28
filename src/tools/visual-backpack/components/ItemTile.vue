@@ -27,35 +27,40 @@
 
 <script setup>
 /**
- * A single draggable backpack tile. Color encodes weight (the encounter
- * difficulty gradient, reused); shape (grid span) is the cosmetic size field.
- * Keyboard: ←/→ reorder, Delete/Backspace remove — the touch/keyboard-accessible
- * path alongside pointer drag.
+ * A single draggable backpack tile, placed at its grid cell (item.pos). Color
+ * encodes type, square size encodes weight. Keyboard: arrow keys nudge the tile
+ * one cell, Delete/Backspace removes — the touch/keyboard-accessible path
+ * alongside pointer drag.
  */
 import { computed, ref } from 'vue';
-import { weightBucket } from '../utils/tile-presentation.mjs';
+import { typeColor, tileSize } from '../utils/tile-presentation.mjs';
 import { setDrag, clearDrag } from '../composables/drag-state.js';
 
 const props = defineProps({
   item: { type: Object, required: true },
-  index: { type: Number, required: true },
 });
 
-const emit = defineEmits(['remove', 'move']);
+const emit = defineEmits(['remove', 'nudge']);
 
 const lifted = ref(false);
 
-const bucket = computed(() => weightBucket(props.item.weight));
+// Color = type; square size = weight; placement = pos.
+const colors = computed(() => typeColor(props.item));
+const span = computed(() => tileSize(props.item));
 
-const tileStyle = computed(() => ({
-  gridColumn: `span ${props.item.size?.w || 1}`,
-  gridRow: `span ${props.item.size?.h || 1}`,
-  '--tile-bg': bucket.value.bg,
-  '--tile-text': bucket.value.text,
-}));
+const tileStyle = computed(() => {
+  const x = props.item.pos?.x ?? 0;
+  const y = props.item.pos?.y ?? 0;
+  return {
+    gridColumn: `${x + 1} / span ${span.value.w}`,
+    gridRow: `${y + 1} / span ${span.value.h}`,
+    '--tile-bg': colors.value.bg,
+    '--tile-text': colors.value.text,
+  };
+});
 
 const ariaLabel = computed(
-  () => `${props.item.name}, ${formatWeight(props.item.weight)} pounds, ${bucket.value.label} weight. Use left and right arrow keys to reorder, Delete to remove.`,
+  () => `${props.item.name}, ${formatWeight(props.item.weight)} pounds, ${colors.value.label}. Use arrow keys to move, Delete to remove.`,
 );
 
 function formatWeight(w) {
@@ -65,7 +70,13 @@ function formatWeight(w) {
 
 function onDragStart(e) {
   lifted.value = true;
-  setDrag({ kind: 'move', index: props.index });
+  // Which cell of the tile was grabbed — so the drop keeps that cell under the
+  // cursor (the tile follows the pointer instead of snapping its corner there).
+  const rect = e.currentTarget.getBoundingClientRect();
+  const { w, h } = span.value;
+  const gx = Math.min(w - 1, Math.max(0, Math.floor((e.clientX - rect.left) / (rect.width / w))));
+  const gy = Math.min(h - 1, Math.max(0, Math.floor((e.clientY - rect.top) / (rect.height / h))));
+  setDrag({ kind: 'move', instanceId: props.item.instanceId, grab: { x: gx, y: gy } });
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', props.item.name);
 }
@@ -75,13 +86,17 @@ function onDragEnd() {
   clearDrag();
 }
 
+const NUDGES = {
+  ArrowLeft: { dx: -1, dy: 0 },
+  ArrowRight: { dx: 1, dy: 0 },
+  ArrowUp: { dx: 0, dy: -1 },
+  ArrowDown: { dx: 0, dy: 1 },
+};
+
 function onKeydown(e) {
-  if (e.key === 'ArrowLeft') {
+  if (NUDGES[e.key]) {
     e.preventDefault();
-    emit('move', { from: props.index, to: props.index - 1 });
-  } else if (e.key === 'ArrowRight') {
-    e.preventDefault();
-    emit('move', { from: props.index, to: props.index + 1 });
+    emit('nudge', { instanceId: props.item.instanceId, ...NUDGES[e.key] });
   } else if (e.key === 'Delete' || e.key === 'Backspace') {
     e.preventDefault();
     emit('remove', props.item.instanceId);
@@ -95,8 +110,7 @@ function onKeydown(e) {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 6.4rem;
-  padding: 0.9rem 1rem;
+  padding: 0.5rem 0.55rem;
   background: var(--tile-bg, #e8e2d4);
   color: var(--tile-text, #6b6b6b);
   border: 0.5px solid rgba(122, 50, 30, 0.18);
@@ -124,9 +138,9 @@ function onKeydown(e) {
 }
 
 .tile__name {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.15;
   /* Wrap long words instead of clipping them ("Waterskin" was losing its n). */
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -139,7 +153,7 @@ function onKeydown(e) {
 }
 
 .tile__weight {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 500;
   opacity: 0.85;
   letter-spacing: 0.02em;
@@ -147,10 +161,10 @@ function onKeydown(e) {
 
 .tile__remove {
   position: absolute;
-  top: 0.2rem;
-  right: 0.3rem;
-  width: 2rem;
-  height: 2rem;
+  top: 0.1rem;
+  right: 0.15rem;
+  width: 1.7rem;
+  height: 1.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,7 +173,7 @@ function onKeydown(e) {
   background: transparent;
   color: inherit;
   opacity: 0;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   line-height: 1;
   border-radius: 50%;
   cursor: pointer;
