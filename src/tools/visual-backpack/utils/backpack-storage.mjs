@@ -11,7 +11,7 @@
 import { logger } from '@/util/logger.mjs';
 
 const STORAGE_KEY = 'backpackInventory';
-const VERSION = 1;
+const VERSION = 2; // v2: multi-character store
 const DEFAULT_STRENGTH = 10;
 const COIN_DENOMS = ['gp', 'ep', 'sp', 'cp'];
 
@@ -30,13 +30,13 @@ function normalizeCoins(input) {
   return coins;
 }
 
-/** A fresh, empty backpack. */
-export function defaultState() {
+/** One character's inventory: their own gear, Strength, coins, and pack state. */
+export function defaultCharacter(name = 'Character 1') {
   return {
-    version: VERSION,
+    id: makeCharId(),
+    name,
     strength: DEFAULT_STRENGTH,
     items: [],
-    customItems: [],
     coins: defaultCoins(),
     countCoinWeight: true,
     // Tactical "pack dropped" mode: count only equipped weight (reversible).
@@ -44,20 +44,47 @@ export function defaultState() {
   };
 }
 
-/** Coerce arbitrary parsed input into a valid, complete state object. */
-export function normalizeState(input) {
-  const base = defaultState();
-  if (!input || typeof input !== 'object') return base;
+/** Coerce arbitrary parsed input into a valid, complete character. */
+export function normalizeCharacter(input) {
+  if (!input || typeof input !== 'object') return defaultCharacter();
   const strength = Number(input.strength);
   return {
-    version: VERSION,
+    id: typeof input.id === 'string' && input.id ? input.id : makeCharId(),
+    name: typeof input.name === 'string' && input.name.trim() ? input.name.trim() : 'Character',
     strength: Number.isFinite(strength) && strength > 0 ? strength : DEFAULT_STRENGTH,
     items: Array.isArray(input.items) ? input.items.map(normalizeItem) : [],
-    customItems: Array.isArray(input.customItems) ? input.customItems.map(normalizeItem) : [],
     coins: normalizeCoins(input.coins),
     // Default to RAW (coins count); only an explicit false disables it.
     countCoinWeight: input.countCoinWeight !== false,
     packDropped: !!input.packDropped,
+  };
+}
+
+/** A fresh store: one character, an empty shared custom-item catalog. */
+export function defaultStore() {
+  const ch = defaultCharacter('Character 1');
+  return { version: VERSION, currentId: ch.id, customItems: [], characters: [ch] };
+}
+
+/**
+ * Coerce parsed input into a valid multi-character store. Anything that isn't a
+ * recognizable v2 store (including any pre-release shape) falls back to a fresh
+ * default — there is no released data to migrate.
+ */
+export function normalizeStore(input) {
+  if (!input || typeof input !== 'object' || !Array.isArray(input.characters)) {
+    return defaultStore();
+  }
+  let characters = input.characters.map(normalizeCharacter);
+  if (!characters.length) characters = [defaultCharacter()];
+  const currentId = characters.some((c) => c.id === input.currentId)
+    ? input.currentId
+    : characters[0].id;
+  return {
+    version: VERSION,
+    currentId,
+    customItems: Array.isArray(input.customItems) ? input.customItems.map(normalizeItem) : [],
+    characters,
   };
 }
 
@@ -100,23 +127,30 @@ export function makeInstanceId() {
   return `bp_${Date.now().toString(36)}_${counter}_${rand}`;
 }
 
+let charCounter = 0;
+/** Unique-enough id for a character. */
+export function makeCharId() {
+  charCounter += 1;
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `char_${Date.now().toString(36)}_${charCounter}_${rand}`;
+}
+
 export function loadBackpack() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultState();
-    return normalizeState(JSON.parse(raw));
+    if (!raw) return defaultStore();
+    return normalizeStore(JSON.parse(raw));
   } catch (error) {
     logger.warn('Corrupted backpackInventory detected, starting fresh:', error);
-    return defaultState();
+    return defaultStore();
   }
 }
 
-export function saveBackpack(state) {
-  const bundle = serializeBundle(state);
+export function saveBackpack(store) {
+  const bundle = serializeBundle(store);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(bundle));
-  window.dispatchEvent(
-    new CustomEvent('backpack-updated', { detail: { count: bundle.items.length } }),
-  );
+  const count = bundle.characters.reduce((n, c) => n + c.items.length, 0);
+  window.dispatchEvent(new CustomEvent('backpack-updated', { detail: { count } }));
 }
 
 export function clearBackpack() {
@@ -125,25 +159,22 @@ export function clearBackpack() {
 }
 
 /** The portable bundle shape (what export writes and import reads). */
-export function serializeBundle(state) {
-  const s = normalizeState(state);
+export function serializeBundle(store) {
+  const s = normalizeStore(store);
   return {
     version: VERSION,
-    strength: s.strength,
-    items: s.items,
+    currentId: s.currentId,
     customItems: s.customItems,
-    coins: s.coins,
-    countCoinWeight: s.countCoinWeight,
-    packDropped: s.packDropped,
+    characters: s.characters,
   };
 }
 
-export function toJSON(state) {
-  return JSON.stringify(serializeBundle(state), null, 2);
+export function toJSON(store) {
+  return JSON.stringify(serializeBundle(store), null, 2);
 }
 
 export function fromJSON(text) {
-  return normalizeState(JSON.parse(text));
+  return normalizeStore(JSON.parse(text));
 }
 
 /** Filename matching the suite convention: `backpack-{mon}-{day}-{yy}.json`. */

@@ -6,6 +6,7 @@ import {
   saveBackpack,
   makeInstanceId,
   fromJSON,
+  defaultCharacter,
 } from '../utils/backpack-storage.mjs';
 import { useCarryCapacity } from './useCarryCapacity.js';
 import { coinWeight, coinValueGp, totalWeight } from '../utils/carry-capacity.mjs';
@@ -103,29 +104,98 @@ const hydrate = (list) => backfillFromCatalog(ensurePositions(list));
  * change.
  */
 export function useBackpack() {
-  const initial = loadBackpack();
-  const strength = ref(initial.strength);
-  const items = ref(hydrate(initial.items)); // placed tiles (each has pos)
-  const customItems = ref(initial.customItems); // user-defined catalog templates
-  const coins = ref(initial.coins); // { gp, ep, sp, cp }
-  const countCoinWeight = ref(initial.countCoinWeight); // toggle coin encumbrance
-  const packDropped = ref(initial.packDropped); // "pack dropped" combat mode
+  const store = loadBackpack();
+  // Each character owns its inventory; hydrate items (grid positions + catalog backfill).
+  const characters = ref(store.characters.map((c) => ({ ...c, items: hydrate(c.items) })));
+  const currentId = ref(store.currentId);
+  const customItems = ref(store.customItems); // shared custom catalog across characters
   const selectedId = ref(null); // tile open in the detail panel (ephemeral)
 
+  // The active character — every mutation below reads/writes through it.
+  const current = computed(
+    () => characters.value.find((c) => c.id === currentId.value) || characters.value[0],
+  );
+
+  // Per-character state surfaced as writable refs, so the rest of the composable is
+  // untouched: `items.value = …` / `strength.value = …` write into the character.
+  // Raw (allows transient empty while typing); the sidebar shows a fallback label.
+  const characterName = computed({
+    get: () => current.value?.name ?? '',
+    set: (v) => { if (current.value) current.value.name = String(v); },
+  });
+  const strength = computed({ get: () => current.value.strength, set: (v) => { current.value.strength = v; } });
+  const items = computed({ get: () => current.value.items, set: (v) => { current.value.items = v; } });
+  const coins = computed({ get: () => current.value.coins, set: (v) => { current.value.coins = v; } });
+  const countCoinWeight = computed({
+    get: () => current.value.countCoinWeight,
+    set: (v) => { current.value.countCoinWeight = v; },
+  });
+  const packDropped = computed({ get: () => current.value.packDropped, set: (v) => { current.value.packDropped = v; } });
+
+  // Lightweight roster for the sidebar.
+  const characterList = computed(() =>
+    characters.value.map((c) => ({
+      id: c.id,
+      name: c.name,
+      itemCount: c.items.length,
+      totalWeight: totalWeight(c.items),
+    })),
+  );
+
   watch(
-    [strength, items, customItems, coins, countCoinWeight, packDropped],
+    [characters, currentId, customItems],
     () => {
       saveBackpack({
-        strength: strength.value,
-        items: items.value,
+        version: 2,
+        currentId: currentId.value,
         customItems: customItems.value,
-        coins: coins.value,
-        countCoinWeight: countCoinWeight.value,
-        packDropped: packDropped.value,
+        characters: characters.value,
       });
     },
     { deep: true },
   );
+
+  // --- character management ----------------------------------------------
+  function nextCharacterName() {
+    const names = new Set(characters.value.map((c) => c.name));
+    let n = characters.value.length + 1;
+    while (names.has(`Character ${n}`)) n += 1;
+    return `Character ${n}`;
+  }
+  function selectCharacter(id) {
+    if (!characters.value.some((c) => c.id === id)) return;
+    currentId.value = id;
+    selectedId.value = null; // the detail panel belongs to whoever's active
+  }
+  function addCharacter(name) {
+    const ch = defaultCharacter(name && name.trim() ? name.trim() : nextCharacterName());
+    characters.value = [...characters.value, ch];
+    currentId.value = ch.id;
+    selectedId.value = null;
+    return ch;
+  }
+  function renameCharacter(id, name) {
+    const c = characters.value.find((x) => x.id === id);
+    if (c) c.name = String(name).trim() || c.name;
+  }
+  function removeCharacter(id) {
+    // Never leave zero characters — emptying the last one resets it instead.
+    if (characters.value.length <= 1) {
+      const fresh = defaultCharacter('Character 1');
+      characters.value = [fresh];
+      currentId.value = fresh.id;
+      selectedId.value = null;
+      return;
+    }
+    const idx = characters.value.findIndex((c) => c.id === id);
+    if (idx < 0) return;
+    const wasCurrent = currentId.value === id;
+    characters.value = characters.value.filter((c) => c.id !== id);
+    if (wasCurrent) {
+      currentId.value = characters.value[Math.max(0, idx - 1)].id;
+      selectedId.value = null;
+    }
+  }
 
   // Coin weight (lb) folded into encumbrance only when the toggle is on.
   const coinLbs = computed(() => coinWeight(coins.value));
@@ -448,29 +518,33 @@ export function useBackpack() {
     customItems.value = customItems.value.filter((t) => t.id !== id);
   }
 
-  /** Replace all state from an imported bundle (JSON text). Throws on bad JSON. */
+  /** Replace the whole store from an imported bundle (JSON text). Throws on bad JSON. */
   function importBundle(text) {
     const next = fromJSON(text);
-    strength.value = next.strength;
-    items.value = hydrate(next.items);
+    characters.value = next.characters.map((c) => ({ ...c, items: hydrate(c.items) }));
+    currentId.value = next.currentId;
     customItems.value = next.customItems;
-    coins.value = next.coins;
-    countCoinWeight.value = next.countCoinWeight;
-    packDropped.value = next.packDropped;
+    selectedId.value = null;
   }
 
   function currentState() {
     return {
-      strength: strength.value,
-      items: items.value,
+      version: 2,
+      currentId: currentId.value,
       customItems: customItems.value,
-      coins: coins.value,
-      countCoinWeight: countCoinWeight.value,
-      packDropped: packDropped.value,
+      characters: characters.value,
     };
   }
 
   return {
+    // characters
+    characters: characterList,
+    currentCharacterId: currentId,
+    characterName,
+    selectCharacter,
+    addCharacter,
+    renameCharacter,
+    removeCharacter,
     strength,
     items,
     customItems,

@@ -174,6 +174,33 @@
         </li>
       </TransitionGroup>
     </div>
+
+    <!-- Pack data actions — secondary affordances, anchored to the pack they affect. -->
+    <footer class="pack-footer">
+      <div class="pack-actions">
+        <button class="pack-action" type="button" @click="$emit('print')">
+          <span class="pack-action__icon" aria-hidden="true">🖨️</span>
+          <span class="pack-action__label">Print list</span>
+        </button>
+        <button class="pack-action" type="button" @click="$emit('backup')">
+          <span class="pack-action__icon" aria-hidden="true">💾</span>
+          <span class="pack-action__label">Back up</span>
+        </button>
+        <button class="pack-action" type="button" @click="$emit('restore')">
+          <span class="pack-action__icon" aria-hidden="true">↩️</span>
+          <span class="pack-action__label">Restore</span>
+        </button>
+        <button
+          class="pack-action pack-action--destructive"
+          type="button"
+          :disabled="!items.length"
+          @click="$emit('empty')"
+        >
+          <span class="pack-action__icon" aria-hidden="true">🗑️</span>
+          <span class="pack-action__label">Empty pack</span>
+        </button>
+      </div>
+    </footer>
   </section>
 </template>
 
@@ -207,6 +234,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'place', 'move', 'remove', 'nudge', 'autopack', 'select', 'reorder', 'unequip', 'equip', 'update:view',
+  'print', 'backup', 'restore', 'empty',
 ]);
 
 const setView = (v) => emit('update:view', v);
@@ -383,6 +411,7 @@ function onDrop(e) {
 
 <style scoped>
 .grid-panel {
+  position: relative; /* containing block so an absolute empty-state can't escape */
   display: flex;
   flex-direction: column;
   background: var(--par-color-surface-card, #fefbf4);
@@ -624,7 +653,9 @@ function onDrop(e) {
   color: var(--par-color-destructive, #a03333);
 }
 
-.grid-empty--list {
+/* Higher specificity than `.grid-empty` so the list empty-state stays in flow
+   (the base rule is absolute + inset:0 for the grid overlay, declared later). */
+.grid-empty.grid-empty--list {
   position: static;
   min-height: 16rem;
 }
@@ -725,6 +756,82 @@ function onDrop(e) {
   .tile-enter-active,
   .tile-leave-active {
     transition: none;
+  }
+}
+
+/* Pack data actions: quiet, footer-placed secondary affordances. */
+.pack-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 0.5px solid rgba(201, 185, 154, 0.5);
+}
+.pack-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  align-items: center;
+}
+.pack-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 3.2rem;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: 0.5px solid transparent;
+  border-radius: var(--par-radius-md, 4px);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.3rem;
+  color: var(--par-color-text-muted, #6b6b6b);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.pack-action:hover {
+  background: rgba(243, 235, 218, 0.5);
+  color: var(--color-action-active, #1f3a5c);
+  border-color: rgba(201, 185, 154, 0.4);
+}
+.pack-action:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 1px;
+}
+.pack-action__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.pack-action__label {
+  font-weight: 500;
+}
+
+/* Empty pack — irreversible, so it reads in destructive red and sits set apart. */
+.pack-action--destructive {
+  margin-left: 0.4rem;
+  color: var(--par-color-destructive, #a03333);
+}
+.pack-action--destructive:hover {
+  background: rgba(160, 51, 51, 0.06);
+  color: #862828;
+  border-color: rgba(160, 51, 51, 0.3);
+}
+.pack-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.pack-action:disabled:hover {
+  background: transparent;
+  color: var(--par-color-destructive, #a03333);
+  border-color: transparent;
+}
+
+@media (max-width: 500px) {
+  .pack-action__label {
+    display: none;
+  }
+  .pack-action {
+    padding: 0.55rem 0.7rem;
   }
 }
 </style>

@@ -49,15 +49,22 @@ const TIER_LABELS = {
 };
 const tierLabel = computed(() => TIER_LABELS[props.status.tier] || '');
 
-const CATEGORY_ORDER = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools'];
-const groups = computed(() =>
-  CATEGORY_ORDER.map((category) => ({
+const CATEGORY_ORDER = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic Item'];
+const groups = computed(() => {
+  const known = new Set(CATEGORY_ORDER);
+  const ordered = CATEGORY_ORDER.map((category) => ({
     category,
     items: props.items
       .filter((i) => i.category === category)
       .sort((a, b) => a.name.localeCompare(b.name)),
-  })).filter((g) => g.items.length),
-);
+  }));
+  // Catch-all so an unexpected category can never be silently dropped from a printout.
+  const other = props.items
+    .filter((i) => !known.has(i.category))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (other.length) ordered.push({ category: 'Other', items: other });
+  return ordered.filter((g) => g.items.length);
+});
 
 function formatWeight(w) {
   const n = Number(w) || 0;
