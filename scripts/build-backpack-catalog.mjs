@@ -76,6 +76,12 @@ function describeWeapon(e) {
   return parts.join(' ');
 }
 
+/** True when the weapon has the SRD "Two-Handed" property (needs both hands —
+ *  distinct from a versatile weapon, which CAN use two hands but is one-handed). */
+function isTwoHandedWeapon(e) {
+  return (e.properties || []).some((p) => /two-handed/i.test(p.name));
+}
+
 function describeArmor(e) {
   const parts = [];
   if (e.armor_category) parts.push(`${e.armor_category} armor.`);
@@ -141,6 +147,8 @@ async function main() {
       size: tileSize({ name: e.name, category, weight }),
       source: 'srd',
       description: describeEquipment(e),
+      // Hand occupancy for the paper doll (weapons only).
+      ...(category === 'Weapon' ? { twoHanded: isTwoHandedWeapon(e) } : {}),
     });
   }
 
@@ -154,6 +162,8 @@ async function main() {
   const magicRaw = await magicRes.json();
   for (const e of magicRaw) {
     const weight = magicWeight(e);
+    // Attunement lives in the first desc line: "...rarity (requires attunement[ by …])".
+    const att = ((e.desc || [])[0] || '').match(/\(requires attunement([^)]*)\)/i);
     items.push({
       id: `mi-${e.index}`, // namespaced so it can't collide with gear ids
       name: e.name,
@@ -163,6 +173,9 @@ async function main() {
       source: 'srd',
       description: (e.desc || []).join('\n\n'),
       rarity: e.rarity?.name || '',
+      magicType: e.equipment_category?.name || '', // Ring / Weapon / Wondrous Items / …
+      requiresAttunement: !!att,
+      attunementNote: att ? att[1].trim() : '',
     });
   }
 

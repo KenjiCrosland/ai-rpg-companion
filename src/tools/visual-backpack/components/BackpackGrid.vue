@@ -1,7 +1,15 @@
 <template>
   <section class="grid-panel parchment paper-grain" aria-label="Your backpack">
     <header class="grid-panel__head">
-      <h2 class="grid-panel__title">Your pack</h2>
+      <div class="grid-panel__titlebar">
+        <h2 class="grid-panel__title">Your pack</h2>
+        <span
+          v-if="attunedCount > 0 || view === 'equip'"
+          class="grid-panel__attune"
+          :class="{ 'grid-panel__attune--over': attunedCount > maxAttunement }"
+          title="Attuned magic items (max 3)"
+        >⚜ {{ attunedCount }}/{{ maxAttunement }}</span>
+      </div>
       <div class="grid-panel__controls">
         <div class="view-toggle" role="group" aria-label="View mode">
           <button
@@ -18,26 +26,35 @@
             :aria-pressed="view === 'list'"
             @click="setView('list')"
           >List</button>
+          <button
+            type="button"
+            class="view-toggle__btn"
+            :class="{ 'view-toggle__btn--active': view === 'equip' }"
+            :aria-pressed="view === 'equip'"
+            @click="setView('equip')"
+          >Equip</button>
         </div>
-        <label class="grid-panel__sort">
-          <span class="grid-panel__sort-label">Sort</span>
-          <ParSelect
-            :model-value="sortBy"
-            :options="sortOptions"
-            aria-label="Sort pack"
-            @update:model-value="onSort"
-          />
-        </label>
-        <ParButton
-          size="small"
-          variant="primary-outline"
-          :disabled="!items.length"
-          @click="$emit('autopack', sortBy)"
-        >Tidy up</ParButton>
+        <template v-if="view !== 'equip'">
+          <label class="grid-panel__sort">
+            <span class="grid-panel__sort-label">Sort</span>
+            <ParSelect
+              :model-value="sortBy"
+              :options="sortOptions"
+              aria-label="Sort pack"
+              @update:model-value="onSort"
+            />
+          </label>
+          <ParButton
+            size="small"
+            variant="primary-outline"
+            :disabled="!items.length"
+            @click="$emit('autopack', sortBy)"
+          >Tidy up</ParButton>
+        </template>
       </div>
     </header>
 
-    <div v-if="items.length" class="grid-panel__pills" role="group" aria-label="Filter pack by type">
+    <div v-if="items.length && view !== 'equip'" class="grid-panel__pills" role="group" aria-label="Filter pack by type">
       <button
         class="pill"
         type="button"
@@ -54,6 +71,15 @@
         @click="typeFilter = typeFilter === t.key ? '' : t.key"
       >
         <span class="pill__dot" :style="{ background: t.color.bg }" aria-hidden="true"></span>{{ t.label }}
+      </button>
+      <button
+        v-if="hasEquipped || typeFilter === 'equipped'"
+        class="pill pill--equipped"
+        type="button"
+        :class="{ 'pill--active': typeFilter === 'equipped' }"
+        @click="typeFilter = typeFilter === 'equipped' ? '' : 'equipped'"
+      >
+        <span class="pill__check" aria-hidden="true">✓</span>Equipped
       </button>
     </div>
 
@@ -90,6 +116,19 @@
       </TransitionGroup>
     </div>
 
+    <!-- EQUIP (PAPER DOLL) VIEW -->
+    <EquipDoll
+      v-else-if="view === 'equip'"
+      :by-slot="equippedBySlot"
+      :items="items"
+      :attuned-count="attunedCount"
+      :max-attunement="maxAttunement"
+      :selected-id="selectedId"
+      @select="$emit('select', $event)"
+      @unequip="$emit('unequip', $event)"
+      @equip="$emit('equip', $event)"
+    />
+
     <!-- LIST VIEW -->
     <div v-else class="list">
       <p v-if="!items.length" class="grid-empty grid-empty--list">
@@ -123,6 +162,7 @@
           <span class="row-item__swatch" :style="{ background: rowColor(item).bg }" aria-hidden="true"></span>
           <span class="row-item__name"
             >{{ rowName(item) }}<span v-if="item.quantity > 1" class="row-item__qty"> ×{{ item.quantity }}</span></span>
+          <span v-if="item.equippedSlot" class="row-item__equipped">✓ Equipped</span>
           <span class="row-item__weight">{{ formatWeight(rowWeight(item)) }} lb</span>
           <button
             class="row-item__remove"
@@ -145,34 +185,31 @@
  * slides to the nearest free cell if that spot is taken). Weight is the only real
  * limit (CapacityIndicator).
  */
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 import { ParButton, ParSelect } from '@/parchment';
 import ItemTile from './ItemTile.vue';
+import EquipDoll from './EquipDoll.vue';
 import { dragPayload, clearDrag } from '../composables/drag-state.js';
 import { COLS, offsetToCell, contentRows, packItems } from '../utils/grid-layout.mjs';
 import { itemType, TYPE_COLORS, typeColor, effectiveWeight, cleanName } from '../utils/tile-presentation.mjs';
 
 const GAP = 6; // px, matches --gap
-const VIEW_KEY = 'backpack-view';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
   strength: { type: Number, default: 10 },
   selectedId: { type: String, default: null },
+  equippedBySlot: { type: Object, default: () => ({}) },
+  attunedCount: { type: Number, default: 0 },
+  maxAttunement: { type: Number, default: 3 },
+  view: { type: String, default: 'grid' }, // grid | list | equip (owned by the root)
 });
 
-const emit = defineEmits(['place', 'move', 'remove', 'nudge', 'autopack', 'select', 'reorder']);
+const emit = defineEmits([
+  'place', 'move', 'remove', 'nudge', 'autopack', 'select', 'reorder', 'unequip', 'equip', 'update:view',
+]);
 
-// Grid ⇄ List view (remembered).
-const view = ref(localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'grid');
-function setView(v) {
-  view.value = v;
-  try {
-    localStorage.setItem(VIEW_KEY, v);
-  } catch (e) {
-    /* ignore */
-  }
-}
+const setView = (v) => emit('update:view', v);
 
 // Sort the arrangement (re-packs) and filter the visible tiles by type.
 const sortOptions = [
@@ -190,9 +227,18 @@ const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic'].map((k
 const sortBy = ref('type');
 const typeFilter = ref('');
 
-// Items after the type filter (array order — used by the list view).
+// "Equipped" is a cross-cutting filter (any item worn on the doll), alongside the
+// type pills. Only offered when something is actually equipped.
+const hasEquipped = computed(() => props.items.some((i) => i.equippedSlot));
+const matchesFilter = (i) => {
+  if (!typeFilter.value) return true;
+  if (typeFilter.value === 'equipped') return !!i.equippedSlot;
+  return itemType(i) === typeFilter.value;
+};
+
+// Items after the active filter (array order — used by the list view).
 const listItems = computed(() =>
-  typeFilter.value ? props.items.filter((i) => itemType(i) === typeFilter.value) : props.items,
+  typeFilter.value ? props.items.filter(matchesFilter) : props.items,
 );
 
 // Grid view: when filtered, the hidden items are treated as absent and the
@@ -201,8 +247,10 @@ const listItems = computed(() =>
 const gridItems = computed(() =>
   typeFilter.value ? packItems(listItems.value, COLS, sortBy.value) : props.items,
 );
-const activeTypeLabel = computed(
-  () => (types.find((t) => t.key === typeFilter.value)?.label || '').toLowerCase(),
+const activeTypeLabel = computed(() =>
+  typeFilter.value === 'equipped'
+    ? 'equipped'
+    : (types.find((t) => t.key === typeFilter.value)?.label || '').toLowerCase(),
 );
 
 function onSort(v) {
@@ -274,14 +322,30 @@ function measure() {
   const el = gridEl.value;
   if (!el) return;
   const w = el.clientWidth;
+  if (!w) return; // element not laid out yet (e.g. still hidden) — keep last good value
   cellPx.value = Math.max(28, (w - (COLS - 1) * GAP) / COLS);
 }
-onMounted(() => {
+// (Re)bind measurement to the live grid element. The grid-drop is v-if'd on the
+// grid view, so it's created/destroyed as the user switches views — measure the
+// fresh element and re-point the observer at it each time it appears, otherwise
+// the cell-size measurement (and the background lattice) stays at its stale
+// default and the tiles no longer line up with the grid.
+function attachGrid() {
+  ro?.disconnect();
+  ro = null;
+  if (!gridEl.value) return;
   measure();
   ro = new ResizeObserver(measure);
-  if (gridEl.value) ro.observe(gridEl.value);
-});
+  ro.observe(gridEl.value);
+}
+onMounted(attachGrid);
 onBeforeUnmount(() => ro?.disconnect());
+watch(
+  () => props.view,
+  (v) => {
+    if (v === 'grid') nextTick(attachGrid);
+  },
+);
 
 function cellFromEvent(e) {
   const rect = gridEl.value.getBoundingClientRect();
@@ -336,12 +400,31 @@ function onDrop(e) {
   margin-bottom: 1rem;
 }
 
+.grid-panel__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 .grid-panel__title {
   margin: 0;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   font-size: 2rem;
   font-weight: 600;
   color: var(--color-action-hover, #2a4d70);
+}
+.grid-panel__attune {
+  padding: 0.2rem 0.7rem;
+  background: var(--par-color-callout-bg, #f3ebda);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: 999px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+  white-space: nowrap;
+}
+.grid-panel__attune--over {
+  border-color: var(--par-color-destructive, #a03333);
+  color: var(--par-color-destructive, #a03333);
 }
 
 .grid-panel__controls {
@@ -403,6 +486,19 @@ function onDrop(e) {
   height: 0.9rem;
   border-radius: 50%;
   border: 0.5px solid rgba(122, 50, 30, 0.2);
+}
+.pill__check {
+  font-weight: 700;
+  color: var(--color-action-rest, #365a85);
+}
+/* Equipped is a different dimension from type — give it the lapis action color. */
+.pill--equipped.pill--active {
+  background: var(--color-action-rest, #365a85);
+  border-color: var(--color-action-rest, #365a85);
+  color: var(--color-action-text, #fbf7f0);
+}
+.pill--equipped.pill--active .pill__check {
+  color: var(--color-action-text, #fbf7f0);
 }
 
 /* Grid / List view toggle. */
@@ -489,6 +585,16 @@ function onDrop(e) {
 .row-item__qty {
   font-weight: 700;
   color: var(--color-action-hover, #2a4d70);
+}
+.row-item__equipped {
+  flex: none;
+  padding: 0.15rem 0.55rem;
+  background: var(--color-action-rest, #365a85);
+  color: var(--color-action-text, #fbf7f0);
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 .row-item__weight {
   flex: none;

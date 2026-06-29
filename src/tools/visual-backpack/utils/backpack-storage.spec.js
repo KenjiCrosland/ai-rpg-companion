@@ -102,6 +102,7 @@ describe('serializeBundle', () => {
       'countCoinWeight',
       'customItems',
       'items',
+      'packDropped',
       'strength',
       'version',
     ]);
@@ -112,6 +113,13 @@ describe('serializeBundle', () => {
     const restored = fromJSON(toJSON(state));
     expect(restored.coins).toEqual({ gp: 25, ep: 0, sp: 8, cp: 40 });
     expect(restored.countCoinWeight).toBe(false);
+  });
+
+  it('preserves the dropped-pack mode through a round-trip', () => {
+    expect(fromJSON(toJSON(normalizeState({ packDropped: true }))).packDropped).toBe(true);
+    // Defaults off, and coerces truthy/garbage input to a real boolean.
+    expect(normalizeState({}).packDropped).toBe(false);
+    expect(normalizeState({ packDropped: 1 }).packDropped).toBe(true);
   });
 });
 

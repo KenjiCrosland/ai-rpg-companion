@@ -45,6 +45,57 @@
           <span class="detail__weight">{{ weightText }}</span>
         </div>
 
+        <div v-if="slotKind || item.requiresAttunement" class="detail__equip">
+          <template v-if="slotKind">
+            <!-- Equipped → a single unequip (says which hand / both hands). -->
+            <ParButton
+              v-if="isEquipped"
+              variant="secondary"
+              size="small"
+              @click="emit('unequip', item.instanceId)"
+            >Unequip ({{ twoHanded ? 'both hands' : equippedSlotLabel }})</ParButton>
+            <!-- One-handed weapon → choose a hand (dual-wield = one in each). -->
+            <template v-else-if="weaponHands === 'one'">
+              <ParButton variant="primary" size="small"
+                @click="emit('equip', { instanceId: item.instanceId, slot: 'mainHand' })"
+              >Main hand</ParButton>
+              <ParButton variant="primary-outline" size="small"
+                @click="emit('equip', { instanceId: item.instanceId, slot: 'offHand' })"
+              >Off hand</ParButton>
+            </template>
+            <!-- Two-handed weapon → one button; it claims both hands. -->
+            <ParButton
+              v-else-if="weaponHands === 'two'"
+              variant="primary"
+              size="small"
+              @click="emit('equip', { instanceId: item.instanceId })"
+            >Equip · Both hands</ParButton>
+            <!-- Everything else → its single slot. -->
+            <ParButton
+              v-else
+              variant="primary"
+              size="small"
+              @click="emit('equip', { instanceId: item.instanceId })"
+            >Equip · {{ SLOT_LABEL[slotKind === 'ring' ? 'ring1' : slotKind] }}</ParButton>
+          </template>
+          <label v-if="item.requiresAttunement" class="detail__attune" :class="{ 'detail__attune--blocked': attuneBlocked }">
+            <input
+              type="checkbox"
+              :checked="item.attuned"
+              :disabled="attuneBlocked"
+              @change="emit('attune', item.instanceId)"
+            />
+            <span>Attuned</span>
+          </label>
+        </div>
+        <p v-if="item.requiresAttunement" class="detail__attune-note">
+          ⚜ Requires attunement<template v-if="item.attunementNote"> {{ item.attunementNote }}</template>
+        </p>
+
+        <button v-if="slotKind" type="button" class="detail__viewequip" @click="emit('view-equipped')">
+          View equipped items →
+        </button>
+
         <div v-if="paragraphs.length" class="detail__desc">
           <p v-for="(para, i) in paragraphs" :key="i">{{ para }}</p>
         </div>
@@ -93,14 +144,38 @@
  */
 import { computed, reactive, ref, watch } from 'vue';
 import { ParButton, ParField, ParInput, ParSelect, ParTextarea } from '@/parchment';
-import { effectiveWeight, cleanName } from '../utils/tile-presentation.mjs';
+import {
+  effectiveWeight,
+  cleanName,
+  equipSlot,
+  isWeapon,
+  isTwoHanded,
+  EQUIP_SLOTS,
+} from '../utils/tile-presentation.mjs';
 
 const props = defineProps({
   item: { type: Object, default: null },
   categories: { type: Array, default: () => [] },
+  attunedCount: { type: Number, default: 0 },
+  maxAttunement: { type: Number, default: 3 },
 });
 
-const emit = defineEmits(['set-quantity', 'update', 'remove']);
+const emit = defineEmits([
+  'set-quantity', 'update', 'remove', 'equip', 'unequip', 'attune', 'view-equipped',
+]);
+
+const SLOT_LABEL = Object.fromEntries(EQUIP_SLOTS.map((s) => [s.id, s.label]));
+const slotKind = computed(() => (props.item ? equipSlot(props.item) : null));
+const isEquipped = computed(() => !!props.item?.equippedSlot);
+const equippedSlotLabel = computed(() => SLOT_LABEL[props.item?.equippedSlot] || 'equipped');
+// Weapons choose a hand: 'one' → main/off buttons, 'two' → a single both-hands button.
+const weaponHands = computed(() =>
+  props.item && isWeapon(props.item) ? (isTwoHanded(props.item) ? 'two' : 'one') : null,
+);
+const twoHanded = computed(() => !!props.item && isTwoHanded(props.item));
+const attuneBlocked = computed(
+  () => !props.item?.attuned && props.attunedCount >= props.maxAttunement,
+);
 
 const open = ref(false);
 const editing = ref(false);
@@ -295,6 +370,54 @@ function save() {
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--par-color-text, #222);
+}
+
+.detail__equip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+.detail__attune {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.35rem;
+  color: var(--par-color-text, #222);
+  cursor: pointer;
+}
+.detail__attune input {
+  width: 1.6rem;
+  height: 1.6rem;
+  accent-color: var(--par-color-title, #7a1f1f);
+  cursor: pointer;
+}
+.detail__attune--blocked {
+  color: var(--par-color-text-muted, #6b6b6b);
+  cursor: not-allowed;
+}
+.detail__attune-note {
+  margin: 0 0 1.1rem;
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+.detail__viewequip {
+  display: inline-block;
+  margin: 0 0 1.2rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.35rem;
+  color: var(--color-action-hover, #2a4d70);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.detail__viewequip:hover {
+  color: var(--color-action-active, #1f3a5c);
 }
 
 .detail__desc {

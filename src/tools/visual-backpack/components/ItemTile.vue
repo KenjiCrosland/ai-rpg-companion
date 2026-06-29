@@ -21,12 +21,15 @@
       @dragstart.prevent.stop
     >×</button>
 
-    <span class="tile__name"
-      >{{ baseName }}<span
-        v-if="item.quantity > 1"
-        :key="item.quantity"
-        class="tile__qty"
-      > ×{{ item.quantity }}</span></span>
+    <div class="tile__top">
+      <span v-if="equipped" class="tile__equipped" title="Equipped">✓ Equipped</span>
+      <span class="tile__name"
+        >{{ baseName }}<span
+          v-if="item.quantity > 1"
+          :key="item.quantity"
+          class="tile__qty"
+        > ×{{ item.quantity }}</span></span>
+    </div>
     <span class="tile__weight">{{ formatWeight(weight) }} lb</span>
   </div>
 </template>
@@ -56,6 +59,7 @@ const colors = computed(() => typeColor(props.item));
 const span = computed(() => tileSize(props.item));
 const weight = computed(() => effectiveWeight(props.item));
 const baseName = computed(() => cleanName(props.item.name));
+const equipped = computed(() => !!props.item.equippedSlot);
 
 const tileStyle = computed(() => {
   const x = props.item.pos?.x ?? 0;
@@ -195,6 +199,27 @@ function onKeydown(e) {
 
 @media (prefers-reduced-motion: reduce) {
   .tile__qty { animation: none; }
+}
+
+.tile__top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.tile__equipped {
+  align-self: flex-start;
+  max-width: calc(100% - 1.6rem); /* leave room for the remove ✕ */
+  padding: 0.05rem 0.4rem;
+  background: var(--color-action-rest, #365a85);
+  color: var(--color-action-text, #fbf7f0);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-radius: var(--par-radius-sm, 3px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tile__remove {

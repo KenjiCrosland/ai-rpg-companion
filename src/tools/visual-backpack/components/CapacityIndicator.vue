@@ -4,6 +4,7 @@
       <span class="capacity__label">Carrying</span>
       <span class="capacity__value">
         <strong>{{ formatWeight(status.total) }}</strong> / {{ status.capacity }} lb
+        <span v-if="packDropped" class="capacity__dropped-tag">🎒 pack dropped</span>
       </span>
     </div>
 
@@ -34,6 +35,23 @@
         <span>Include coin weight</span>
       </label>
     </div>
+
+    <div v-if="hasPack" class="capacity__drop" :class="{ 'capacity__drop--active': packDropped }">
+      <ParButton
+        size="small"
+        :variant="packDropped ? 'primary' : 'primary-outline'"
+        @click="$emit('toggle-drop', !packDropped)"
+      >{{ packDropped ? 'Pick up pack' : 'Drop pack' }}</ParButton>
+      <span class="capacity__drop-note">
+        <template v-if="packDropped">
+          <strong>{{ formatWeight(packWeight) }} lb</strong> on the ground — counting worn gear only.
+        </template>
+        <template v-else>
+          Set down <strong>{{ formatWeight(packWeight) }} lb</strong> to fight at
+          <strong>{{ formatWeight(equippedWeight) }} lb</strong> of worn gear.
+        </template>
+      </span>
+    </div>
   </section>
 </template>
 
@@ -47,13 +65,18 @@
  * it lives here next to the encumbrance read, not on the coin purse.
  */
 import { computed } from 'vue';
+import { ParButton } from '@/parchment';
 
 const props = defineProps({
   status: { type: Object, required: true },
   countCoinWeight: { type: Boolean, default: true },
+  packDropped: { type: Boolean, default: false },
+  packWeight: { type: Number, default: 0 },
+  equippedWeight: { type: Number, default: 0 },
+  hasPack: { type: Boolean, default: false },
 });
 
-defineEmits(['toggle']);
+defineEmits(['toggle', 'toggle-drop']);
 
 const fillWidth = computed(() => `${Math.min(1, props.status.ratio || 0) * 100}%`);
 
@@ -105,6 +128,38 @@ function formatWeight(w) {
 .capacity__value strong {
   font-weight: 600;
   color: var(--tier-color);
+}
+.capacity__dropped-tag {
+  margin-left: 0.6rem;
+  padding: 0.1rem 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2a4d70);
+  background: var(--par-color-callout-bg, #f3ebda);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Drop-pack control: the tactical move made one tap. */
+.capacity__drop {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 0.5px solid var(--par-color-divider, #e2dccd);
+}
+.capacity__drop-note {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--par-color-text-secondary, #555);
+}
+.capacity__drop-note strong {
+  font-weight: 600;
+  color: var(--par-color-text, #222);
+}
+.capacity__drop--active .capacity__drop-note strong {
+  color: var(--color-action-hover, #2a4d70);
 }
 
 .capacity__bar {

@@ -50,6 +50,94 @@ export function effectiveWeight(item) {
   return (Number(item?.weight) || 0) * (Number(item?.quantity) || 1);
 }
 
+// --- equipment slots (paper doll) ---------------------------------------
+
+/** The doll's slots, in display order. `ring` resolves to ring1/ring2 at equip time. */
+export const EQUIP_SLOTS = [
+  { id: 'head', label: 'Head' },
+  { id: 'neck', label: 'Neck' },
+  { id: 'cloak', label: 'Cloak' },
+  { id: 'body', label: 'Armor' },
+  { id: 'hands', label: 'Hands' },
+  { id: 'belt', label: 'Belt' },
+  { id: 'feet', label: 'Feet' },
+  { id: 'mainHand', label: 'Main hand' },
+  { id: 'offHand', label: 'Off hand' },
+  { id: 'ring1', label: 'Ring' },
+  { id: 'ring2', label: 'Ring' },
+];
+
+const WONDROUS_RULES = [
+  [/\b(amulet|necklace|periapt|medallion|talisman|brooch|scarab|pearl)\b/i, 'neck'],
+  // "Wings of Flying" is worn as a cloak (checked before head so "Robe of Eyes" → cloak).
+  [/\b(cloak|cape|mantle|robe|wings?)\b/i, 'cloak'],
+  [/\b(boots|slippers|sandals)\b/i, 'feet'],
+  [/\b(gauntlets?|gloves?|bracers?)\b/i, 'hands'],
+  // "Eyes of …" are lenses worn over the eyes → head slot.
+  [/\b(helm|circlet|crown|cap|hat|mask|goggles|lenses|eyes?|headband|ioun)\b/i, 'head'],
+  [/\b(belt|girdle)\b/i, 'belt'],
+  [/\bshield\b/i, 'offHand'],
+  [/\brings?\b/i, 'ring'],
+];
+
+/**
+ * The generic equip slot an item belongs to ('ring' resolves to ring1/ring2),
+ * or null if it isn't equippable (potions, scrolls, ammo, most wondrous trinkets).
+ */
+export function equipSlot(item) {
+  const name = item?.name || '';
+  const cat = item?.category;
+  if (cat === 'Armor') return /shield/i.test(name) ? 'offHand' : 'body';
+  if (cat === 'Weapon') return 'mainHand';
+  if (cat !== 'Magic Item') return null; // adventuring gear, tools
+
+  switch (item?.magicType) {
+    case 'Ring':
+      return 'ring';
+    case 'Armor':
+      return /shield/i.test(name) ? 'offHand' : 'body';
+    case 'Weapon':
+      return 'mainHand';
+    case 'Staff':
+    case 'Rod':
+    case 'Wand':
+      return 'mainHand'; // held
+    case 'Wondrous Items': {
+      for (const [re, slot] of WONDROUS_RULES) if (re.test(name)) return slot;
+      return null; // unslottable wondrous (Bag of Holding, Deck of …)
+    }
+    default:
+      return null; // Potion, Scroll, Ammunition
+  }
+}
+
+/** A weapon (base or magic) — the only items that can choose main/off hand. */
+export function isWeapon(item) {
+  return item?.category === 'Weapon' || item?.magicType === 'Weapon';
+}
+
+/**
+ * A two-handed weapon claims BOTH hands. Base weapons carry the `twoHanded` flag
+ * from the SRD catalog; magic weapons (unknown grip) default to one-handed.
+ */
+export function isTwoHanded(item) {
+  return isWeapon(item) && item?.twoHanded === true;
+}
+
+/**
+ * The slot id(s) an item may occupy:
+ *  - two-handed weapon → ['mainHand'] (it also blocks the off hand once equipped)
+ *  - one-handed weapon → ['mainHand', 'offHand'] (equip one each to dual-wield)
+ *  - ring → ['ring1', 'ring2']; everything else → its single slot.
+ */
+export function equipTargets(item) {
+  const kind = equipSlot(item);
+  if (!kind) return [];
+  if (isWeapon(item)) return isTwoHanded(item) ? ['mainHand'] : ['mainHand', 'offHand'];
+  if (kind === 'ring') return ['ring1', 'ring2'];
+  return [kind];
+}
+
 /**
  * Strip a trailing "×N" / "(×N)" count from a name so the quantity can be shown
  * live in the title instead (and to clean up older saved data that baked it in).

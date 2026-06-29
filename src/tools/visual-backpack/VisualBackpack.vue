@@ -1,5 +1,7 @@
 <template>
   <div class="backpack">
+    <p class="sr-only" aria-live="polite" role="status">{{ announcement }}</p>
+
     <header class="backpack__header">
       <h1 class="backpack__title">Visual backpack</h1>
       <p class="backpack__tagline">
@@ -48,9 +50,15 @@
         <ItemDetail
           :item="selectedItem"
           :categories="detailCategories"
+          :attuned-count="attunedCount"
+          :max-attunement="maxAttunement"
           @set-quantity="({ id, quantity }) => setQuantity(id, quantity)"
           @update="({ id, patch }) => updateItem(id, patch)"
           @remove="removeItem"
+          @equip="({ instanceId, slot }) => equipItem(instanceId, slot)"
+          @unequip="unequipItem"
+          @attune="toggleAttune"
+          @view-equipped="setPackView('equip')"
         />
 
         <ItemCatalog
@@ -69,12 +77,19 @@
           :items="items"
           :strength="strength"
           :selected-id="selectedItem?.instanceId || null"
+          :equipped-by-slot="equippedBySlot"
+          :attuned-count="attunedCount"
+          :max-attunement="maxAttunement"
+          :view="packView"
+          @update:view="setPackView"
           @place="({ template, pos }) => addItem(template, pos)"
           @move="({ instanceId, pos }) => moveItemTo(instanceId, pos)"
           @reorder="({ movedId, targetId }) => reorderList(movedId, targetId)"
           @nudge="({ instanceId, dx, dy }) => nudge(instanceId, dx, dy)"
           @remove="removeItem"
           @select="selectItem"
+          @unequip="unequipItem"
+          @equip="({ instanceId, slot }) => equipItem(instanceId, slot)"
           @autopack="autopack"
         />
         <CoinPurse
@@ -86,7 +101,12 @@
         <CapacityIndicator
           :status="status"
           :count-coin-weight="countCoinWeight"
+          :pack-dropped="packDropped"
+          :pack-weight="packWeight"
+          :equipped-weight="equippedWeight"
+          :has-pack="!!items.length"
           @toggle="toggleCoinWeight"
+          @toggle-drop="toggleDropPack"
         />
       </div>
     </div>
@@ -158,6 +178,17 @@ const {
   deselect,
   setQuantity,
   updateItem,
+  packDropped,
+  packWeight,
+  equippedWeight,
+  toggleDropPack,
+  attunedCount,
+  maxAttunement,
+  equippedBySlot,
+  equipItem,
+  unequipItem,
+  toggleAttune,
+  announcement,
   setStrength,
   setCoin,
   toggleCoinWeight,
@@ -179,6 +210,21 @@ const detailCategories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic
 
 const confirmClear = ref(false);
 const fileInput = ref(null);
+
+const PACK_VIEW_KEY = 'backpack-view';
+const packView = ref(
+  ['grid', 'list', 'equip'].includes(localStorage.getItem(PACK_VIEW_KEY))
+    ? localStorage.getItem(PACK_VIEW_KEY)
+    : 'grid',
+);
+function setPackView(v) {
+  packView.value = v;
+  try {
+    localStorage.setItem(PACK_VIEW_KEY, v);
+  } catch (e) {
+    /* ignore */
+  }
+}
 
 const SAVE_NOTE_KEY = 'backpack-save-note-dismissed';
 const saveNoteDismissed = ref(localStorage.getItem(SAVE_NOTE_KEY) === '1');
@@ -238,6 +284,18 @@ function onFileChosen(e) {
 </script>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .backpack {
   max-width: 120rem;
   margin: 0 auto;

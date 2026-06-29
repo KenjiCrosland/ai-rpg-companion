@@ -39,6 +39,8 @@ export function defaultState() {
     customItems: [],
     coins: defaultCoins(),
     countCoinWeight: true,
+    // Tactical "pack dropped" mode: count only equipped weight (reversible).
+    packDropped: false,
   };
 }
 
@@ -55,6 +57,7 @@ export function normalizeState(input) {
     coins: normalizeCoins(input.coins),
     // Default to RAW (coins count); only an explicit false disables it.
     countCoinWeight: input.countCoinWeight !== false,
+    packDropped: !!input.packDropped,
   };
 }
 
@@ -77,7 +80,15 @@ function normalizeItem(it) {
     pos: Number.isFinite(px) && Number.isFinite(py) ? { x: px, y: py } : null,
     description: typeof it?.description === 'string' ? it.description : '',
     rarity: typeof it?.rarity === 'string' ? it.rarity : '',
+    magicType: typeof it?.magicType === 'string' ? it.magicType : '',
+    requiresAttunement: !!it?.requiresAttunement,
+    attunementNote: typeof it?.attunementNote === 'string' ? it.attunementNote : '',
+    equippedSlot: typeof it?.equippedSlot === 'string' ? it.equippedSlot : null,
+    attuned: !!it?.attuned,
     source: it?.source === 'srd' ? 'srd' : 'custom',
+    // Weapon grip — preserved only when present so the catalog backfill can heal
+    // older saved weapons that predate the field (undefined ≠ false here).
+    ...(typeof it?.twoHanded === 'boolean' ? { twoHanded: it.twoHanded } : {}),
   };
 }
 
@@ -123,6 +134,7 @@ export function serializeBundle(state) {
     customItems: s.customItems,
     coins: s.coins,
     countCoinWeight: s.countCoinWeight,
+    packDropped: s.packDropped,
   };
 }
 
