@@ -96,8 +96,23 @@
           View equipped items →
         </button>
 
-        <div v-if="paragraphs.length" class="detail__desc">
-          <p v-for="(para, i) in paragraphs" :key="i">{{ para }}</p>
+        <div v-if="blocks.length" class="detail__desc">
+          <template v-for="(b, i) in blocks" :key="i">
+            <p v-if="b.type === 'p'"><RichText :text="b.text" /></p>
+            <ul v-else-if="b.type === 'list'" class="detail__list">
+              <li v-for="(li, k) in b.items" :key="k"><RichText :text="li" /></li>
+            </ul>
+            <table v-else class="detail__table">
+              <thead v-if="b.headers.length">
+                <tr><th v-for="(h, hi) in b.headers" :key="hi"><RichText :text="h" /></th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, ri) in b.rows" :key="ri">
+                  <td v-for="(cell, ci) in row" :key="ci"><RichText :text="cell" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </template>
         </div>
         <p v-else class="detail__nodesc">No description for this item.</p>
 
@@ -152,6 +167,8 @@ import {
   isTwoHanded,
   EQUIP_SLOTS,
 } from '../utils/tile-presentation.mjs';
+import { parseDescription } from '../utils/format-description.mjs';
+import RichText from './RichText.vue';
 
 const props = defineProps({
   item: { type: Object, default: null },
@@ -203,9 +220,7 @@ const typeLine = computed(() => {
   return bits.join(' · ');
 });
 
-const paragraphs = computed(() =>
-  (props.item?.description || '').split('\n\n').map((p) => p.trim()).filter(Boolean),
-);
+const blocks = computed(() => parseDescription(props.item?.description || ''));
 
 const weightText = computed(() => {
   if (!props.item) return '';
@@ -428,6 +443,38 @@ function save() {
   overflow-y: auto;
 }
 .detail__desc p { margin: 0 0 0.9rem; }
+.detail__desc :deep(strong) {
+  font-weight: 700;
+  color: var(--par-color-title, #7a1f1f);
+}
+.detail__list {
+  margin: 0 0 0.9rem;
+  padding-left: 1.8rem;
+}
+.detail__list li {
+  margin: 0 0 0.3rem;
+}
+.detail__table {
+  width: 100%;
+  margin: 0 0 0.9rem;
+  border-collapse: collapse;
+  font-size: 1.3rem;
+}
+.detail__table th,
+.detail__table td {
+  padding: 0.35rem 0.6rem;
+  border: 0.5px solid var(--par-color-border, #e8e2d4);
+  text-align: left;
+  vertical-align: top;
+}
+.detail__table th {
+  background: var(--par-color-callout-bg, #f3ebda);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-action-hover, #2a4d70);
+}
 .detail__nodesc {
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);

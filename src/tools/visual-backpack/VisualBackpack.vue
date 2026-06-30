@@ -108,6 +108,7 @@
       <div class="backpack__pack">
         <BackpackGrid
           :items="items"
+          :title="packTitle"
           :strength="strength"
           :selected-id="selectedItem?.instanceId || null"
           :equipped-by-slot="equippedBySlot"
@@ -275,6 +276,15 @@ const characterSidebar = ref(null);
 function setCharacterName(v) {
   characterName.value = v;
 }
+
+// "Gorm's pack" / "Gus' pack" (names ending in s take a bare apostrophe);
+// falls back to "Your pack" when the character is unnamed.
+const packTitle = computed(() => {
+  const n = (characterName.value || '').trim();
+  if (!n) return 'Your pack';
+  const possessive = /s$/i.test(n) ? `${n}’` : `${n}’s`;
+  return `${possessive} pack`;
+});
 
 // Collapsible character rail on narrow screens (mirrors GeneratorLayout).
 const sidebarOpen = ref(false);

@@ -2,7 +2,7 @@
   <section class="grid-panel parchment paper-grain" aria-label="Your backpack">
     <header class="grid-panel__head">
       <div class="grid-panel__titlebar">
-        <h2 class="grid-panel__title">Your pack</h2>
+        <h2 class="grid-panel__title">{{ title }}</h2>
         <span
           v-if="attunedCount > 0 || view === 'equip'"
           class="grid-panel__attune"
@@ -224,6 +224,7 @@ const GAP = 6; // px, matches --gap
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
+  title: { type: String, default: 'Your pack' },
   strength: { type: Number, default: 10 },
   selectedId: { type: String, default: null },
   equippedBySlot: { type: Object, default: () => ({}) },
