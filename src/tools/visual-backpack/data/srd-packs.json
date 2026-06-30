@@ -11,7 +11,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -24,7 +24,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 1,
         "description": "As an action, you can spill these tiny metal balls from their pouch to cover a level, square area that is 10 feet on a side.\n\nA creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or fall prone.\n\nA creature moving through the area at half speed doesn't need to make the save."
@@ -71,7 +71,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -84,7 +84,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 1,
         "description": ""
@@ -108,7 +108,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 1,
         "description": "A hooded lantern casts bright light in a 30-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil. As an action, you can lower the hood, reducing the light to dim light in a 5-foot radius."
@@ -132,7 +132,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 5,
         "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
@@ -155,7 +155,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -167,8 +167,8 @@
         "weight": 10,
         "category": "Adventuring Gear",
         "size": {
-          "w": 3,
-          "h": 3
+          "w": 2,
+          "h": 2
         },
         "quantity": 1,
         "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
@@ -187,8 +187,8 @@
         "weight": 25,
         "category": "Adventuring Gear",
         "size": {
-          "w": 5,
-          "h": 5
+          "w": 2,
+          "h": 3
         },
         "quantity": 1,
         "description": ""
@@ -211,8 +211,8 @@
         "weight": 6,
         "category": "Adventuring Gear",
         "size": {
-          "w": 3,
-          "h": 3
+          "w": 2,
+          "h": 2
         },
         "quantity": 1,
         "description": ""
@@ -327,7 +327,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -339,7 +339,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -352,7 +352,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 1,
         "description": ""
@@ -400,7 +400,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 10,
         "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
@@ -411,7 +411,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -423,8 +423,8 @@
         "weight": 10,
         "category": "Adventuring Gear",
         "size": {
-          "w": 3,
-          "h": 3
+          "w": 2,
+          "h": 2
         },
         "quantity": 1,
         "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
@@ -443,7 +443,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -455,8 +455,8 @@
         "weight": 7,
         "category": "Adventuring Gear",
         "size": {
-          "w": 3,
-          "h": 3
+          "w": 2,
+          "h": 2
         },
         "quantity": 1,
         "description": ""
@@ -467,7 +467,7 @@
         "weight": 4,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 2,
@@ -492,7 +492,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 5,
         "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
@@ -503,7 +503,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -516,7 +516,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 1,
         "description": "This pouch of cosmetics, hair dye, and small props lets you create disguises that change your physical appearance. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a visual disguise."
@@ -535,7 +535,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -547,8 +547,8 @@
         "weight": 7,
         "category": "Adventuring Gear",
         "size": {
-          "w": 3,
-          "h": 3
+          "w": 2,
+          "h": 2
         },
         "quantity": 1,
         "description": ""
@@ -596,7 +596,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 10,
         "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
@@ -607,7 +607,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -619,8 +619,8 @@
         "weight": 10,
         "category": "Adventuring Gear",
         "size": {
-          "w": 3,
-          "h": 3
+          "w": 2,
+          "h": 2
         },
         "quantity": 1,
         "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
@@ -639,7 +639,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -652,7 +652,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 1,
         "description": ""
@@ -688,7 +688,7 @@
         "category": "Adventuring Gear",
         "size": {
           "w": 1,
-          "h": 1
+          "h": 2
         },
         "quantity": 2,
         "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
@@ -699,7 +699,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -767,7 +767,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,
@@ -779,7 +779,7 @@
         "weight": 5,
         "category": "Adventuring Gear",
         "size": {
-          "w": 2,
+          "w": 1,
           "h": 2
         },
         "quantity": 1,

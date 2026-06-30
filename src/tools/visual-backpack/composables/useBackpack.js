@@ -96,7 +96,12 @@ const backfillFromCatalog = (list) => {
   });
 };
 
-const hydrate = (list) => backfillFromCatalog(ensurePositions(list));
+// Refresh each item's footprint from its weight first: the tile renders at
+// tileSize(item), but the packer/collision read the stored item.size — if a saved
+// size is stale (e.g. the bucket rules changed) the two disagree and Tidy leaves
+// gaps. Recompute size, then position.
+const hydrate = (list) =>
+  ensurePositions(backfillFromCatalog(list).map((i) => ({ ...i, size: tileSize(i) })));
 
 /**
  * Central backpack state: Strength, the carried tiles, the user's custom catalog
@@ -156,19 +161,15 @@ export function useBackpack() {
   );
 
   // --- character management ----------------------------------------------
-  function nextCharacterName() {
-    const names = new Set(characters.value.map((c) => c.name));
-    let n = characters.value.length + 1;
-    while (names.has(`Character ${n}`)) n += 1;
-    return `Character ${n}`;
-  }
   function selectCharacter(id) {
     if (!characters.value.some((c) => c.id === id)) return;
     currentId.value = id;
     selectedId.value = null; // the detail panel belongs to whoever's active
   }
-  function addCharacter(name) {
-    const ch = defaultCharacter(name && name.trim() ? name.trim() : nextCharacterName());
+  function addCharacter(name = '') {
+    // Empty name by default — the sidebar focuses the field so the user names it
+    // immediately (it shows "Unnamed character" until they do).
+    const ch = defaultCharacter(String(name).trim());
     characters.value = [...characters.value, ch];
     currentId.value = ch.id;
     selectedId.value = null;
@@ -399,16 +400,16 @@ export function useBackpack() {
     items.value = placeItemAt(list, item.instanceId, preferred, COLS);
   }
 
-  /** Expand a starter pack's contents into the pack as individual tiles. */
+  /**
+   * Expand a starter pack's contents into the pack as individual tiles. A pack is
+   * a bulk drop of many varied sizes, so we re-tidy the whole pack afterward
+   * (grouped by type) rather than scattering the new tiles into existing gaps.
+   */
   function addPack(packId) {
     const pack = srdPacks.find((p) => p.id === packId);
     if (!pack) return null;
-    const list = [...items.value];
-    for (const tile of expandPackToTemplates(pack).map(instantiate)) {
-      const pos = resolvePosition({ x: 0, y: 0 }, tile.size, list, COLS);
-      list.push({ ...tile, pos });
-    }
-    items.value = list;
+    const added = expandPackToTemplates(pack).map(instantiate);
+    items.value = packItems([...items.value, ...added], COLS, 'type');
     return pack;
   }
 

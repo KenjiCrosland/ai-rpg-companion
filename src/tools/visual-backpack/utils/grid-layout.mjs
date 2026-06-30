@@ -8,7 +8,9 @@
  * the nearest free spot rather than failing. No DOM.
  */
 
-export const COLS = 8;
+import { itemType } from './tile-presentation.mjs';
+
+export const COLS = 6;
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -117,9 +119,20 @@ export function placeItemAt(items, movedId, preferred, cols = COLS) {
   return out;
 }
 
-const CATEGORY_ORDER = { Weapon: 0, Armor: 1, 'Adventuring Gear': 2, Tools: 3, 'Magic Item': 4 };
-const area = (it) => (it.size?.w || 1) * (it.size?.h || 1);
+// Match the filter pills' classification + order (so "consumables sort with
+// consumables", not lumped into Adventuring Gear). See itemType / the pill list.
+const TYPE_ORDER = { weapon: 0, armor: 1, consumable: 2, tools: 3, gear: 4, magic: 5 };
+const tw = (it) => it.size?.w || 1;
+const th = (it) => it.size?.h || 1;
 const effWeight = (it) => (Number(it.weight) || 0) * (Number(it.quantity) || 1);
+
+/**
+ * Shelf-friendly shape ordering: tallest first, then widest. Placing the big
+ * blocks before the small ones lets first-fit tuck the 1×1/2×1 tiles into the
+ * leftover slivers beside tall items instead of stranding them — the key to
+ * packing the mixed rectangles (1×1 … 3×3) without ragged gaps.
+ */
+const byShape = (a, b) => th(b) - th(a) || tw(b) - tw(a) || a.name.localeCompare(b.name);
 
 /** Comparator for a sort key: 'type' (default) | 'name' | 'weight-asc' | 'weight-desc'. */
 function packComparator(sortKey) {
@@ -127,17 +140,16 @@ function packComparator(sortKey) {
     case 'name':
       return (a, b) => a.name.localeCompare(b.name);
     case 'weight-desc':
-      return (a, b) => effWeight(b) - effWeight(a) || a.name.localeCompare(b.name);
+      return (a, b) => effWeight(b) - effWeight(a) || byShape(a, b);
     case 'weight-asc':
-      return (a, b) => effWeight(a) - effWeight(b) || a.name.localeCompare(b.name);
+      return (a, b) => effWeight(a) - effWeight(b) || byShape(a, b);
     case 'type':
     default:
       return (a, b) => {
-        const ca = CATEGORY_ORDER[a.category] ?? 9;
-        const cb = CATEGORY_ORDER[b.category] ?? 9;
-        if (ca !== cb) return ca - cb;
-        if (area(b) !== area(a)) return area(b) - area(a);
-        return a.name.localeCompare(b.name);
+        const ta = TYPE_ORDER[itemType(a)] ?? 9;
+        const tb = TYPE_ORDER[itemType(b)] ?? 9;
+        if (ta !== tb) return ta - tb;
+        return byShape(a, b);
       };
   }
 }

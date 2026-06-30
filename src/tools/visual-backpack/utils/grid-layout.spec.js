@@ -119,6 +119,18 @@ describe('packItems', () => {
     const packed = packItems(items);
     expect(packed.some((p) => p.pos.x === 0 && p.pos.y === 0)).toBe(true);
   });
+
+  it('type sort groups by the filter type — consumables separate from other gear', () => {
+    // Both Torch and Backpack are SRD "Adventuring Gear", but the pills (and now
+    // the sort) split Torch out as a consumable, ahead of plain gear.
+    const mixed = [
+      placed(9, 9, 1, 1, { name: 'Backpack', category: 'Adventuring Gear' }),
+      placed(9, 9, 1, 1, { name: 'Torch', category: 'Adventuring Gear' }),
+      placed(9, 9, 1, 1, { name: 'Dagger', category: 'Weapon' }),
+    ];
+    const order = packItems(mixed, COLS, 'type').map((i) => i.name);
+    expect(order).toEqual(['Dagger', 'Torch', 'Backpack']); // weapon → consumable → gear
+  });
 });
 
 describe('findStackTarget — stack identical items', () => {

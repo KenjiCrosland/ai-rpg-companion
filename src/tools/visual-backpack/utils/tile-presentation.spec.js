@@ -11,22 +11,23 @@ import {
 
 const item = (name, category, weight) => ({ name, category, weight });
 
-describe('tileSize — square tile, size encodes weight (5 tiers)', () => {
-  it('grows in square tiers (0–3 / 3–5 / 5–10 / 10–20 / 20+)', () => {
+describe('tileSize — size encodes weight (5 buckets)', () => {
+  it('grows in footprint tiers (≤1 / ≤5 tall / ≤15 / ≤40 tall / 40+)', () => {
+    expect(tileSize(item('Piton', 'Adventuring Gear', 0.25))).toEqual({ w: 1, h: 1 });
     expect(tileSize(item('Dagger', 'Weapon', 1))).toEqual({ w: 1, h: 1 });
-    expect(tileSize(item('Longsword', 'Weapon', 3))).toEqual({ w: 1, h: 1 });
-    expect(tileSize(item('Mace', 'Weapon', 4))).toEqual({ w: 2, h: 2 });
-    expect(tileSize(item('Shield', 'Armor', 6))).toEqual({ w: 3, h: 3 });
-    expect(tileSize(item('Crossbow, heavy', 'Weapon', 18))).toEqual({ w: 4, h: 4 });
-    expect(tileSize(item('Chain Mail', 'Armor', 55))).toEqual({ w: 5, h: 5 });
+    expect(tileSize(item('Hammer', 'Tools', 3))).toEqual({ w: 1, h: 2 });
+    expect(tileSize(item('Crowbar', 'Adventuring Gear', 5))).toEqual({ w: 1, h: 2 });
+    expect(tileSize(item('Rope, hempen', 'Adventuring Gear', 10))).toEqual({ w: 2, h: 2 });
+    expect(tileSize(item('Leather Armor', 'Armor', 10))).toEqual({ w: 2, h: 2 });
+    expect(tileSize(item('Chain Shirt', 'Armor', 20))).toEqual({ w: 2, h: 3 });
+    expect(tileSize(item('Chain Mail', 'Armor', 55))).toEqual({ w: 3, h: 3 });
   });
 
-  it('is always square and never shrinks with more weight', () => {
-    const area = (w) => { const s = tileSize(item('x', 'Tools', w)); return [s.w === s.h, s.w * s.h]; };
+  it('never shrinks in footprint as weight grows', () => {
     let prev = 0;
-    for (const w of [0, 3, 4, 6, 11, 25]) {
-      const [square, a] = area(w);
-      expect(square).toBe(true);
+    for (const w of [0, 1, 5, 15, 40, 80]) {
+      const s = tileSize(item('x', 'Tools', w));
+      const a = s.w * s.h;
       expect(a).toBeGreaterThanOrEqual(prev);
       prev = a;
     }

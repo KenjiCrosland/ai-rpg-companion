@@ -6,7 +6,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -89,7 +89,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -102,7 +102,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "As an action, you can spill these tiny metal balls from their pouch to cover a level, square area that is 10 feet on a side.\n\nA creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or fall prone.\n\nA creature moving through the area at half speed doesn't need to make the save."
@@ -113,8 +113,8 @@
     "weight": 70,
     "category": "Adventuring Gear",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 3,
+      "h": 3
     },
     "source": "srd",
     "description": ""
@@ -126,7 +126,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -137,8 +137,8 @@
     "weight": 7,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -162,7 +162,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -173,7 +173,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -209,7 +209,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -222,7 +222,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -234,7 +234,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -246,7 +246,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "As an action, you can spread a bag of caltrops to cover a square area that is 5 feet on a side.\n\nAny creature that enters the area must succeed on a DC 15 Dexterity saving throw or stop moving this turn and take 1 piercing damage.\n\nTaking this damage reduces the creature's walking speed by 10 feet until the creature regains at least 1 hit point.\n\nA creature moving through the area at half speed doesn't need to make the save."
@@ -305,8 +305,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "A chain has 10 hit points. It can be burst with a successful DC 20 Strength check."
@@ -329,8 +329,8 @@
     "weight": 25,
     "category": "Adventuring Gear",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": ""
@@ -341,8 +341,8 @@
     "weight": 12,
     "category": "Adventuring Gear",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "A climber's kit includes special pitons, boot tips, gloves, and a harness. You can use the climber's kit as an action to anchor yourself; when you do, you can't fall more than 25 feet from the point where you anchored yourself, and you can't climb more than 25 feet away from that point without undoing the anchor."
@@ -354,7 +354,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -365,7 +365,7 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -377,8 +377,8 @@
     "weight": 6,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -389,7 +389,7 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -402,7 +402,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "A component pouch is a small, watertight leather belt pouch that has compartments to hold all the material components and other special items you need to cast your spells, except for those components that have a specific cost (as indicated in a spell's description)."
@@ -414,7 +414,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -425,7 +425,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -450,7 +450,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "This pouch of cosmetics, hair dye, and small props lets you create disguises that change your physical appearance. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a visual disguise."
@@ -473,7 +473,7 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -497,7 +497,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -509,7 +509,7 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -522,7 +522,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -533,8 +533,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -546,7 +546,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "This kit is a leather pouch containing bandages, salves, and splints. The kit has ten uses. As an action, you can expend one use of the kit to stabilize a creature that has 0 hit points, without needing to make a Wisdom (Medicine) check."
@@ -558,7 +558,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "This kit contains a variety of instruments such as clippers, mortar and pestle, and pouches and vials used by herbalists to create remedies and potions. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to identify or apply herbs. Also, proficiency with this kit is required to create antitoxin and potions of healing."
@@ -593,8 +593,8 @@
     "weight": 25,
     "category": "Adventuring Gear",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "When you use your action to set it, this trap forms a saw-toothed steel ring that snaps shut when a creature steps on a pressure plate in the center. The trap is affixed by a heavy chain to an immobile object, such as a tree or a spike driven into the ground.\n\nA creature that steps on the plate must succeed on a DC 13 Dexterity saving throw or take 1d4 piercing damage and stop moving. Thereafter, until the creature breaks free of the trap, its movement is limited by the length of the chain (typically 3 feet long).\n\nA creature can use its action to make a DC 13 Strength check, freeing itself or another creature within its reach on a success. Each failed check deals 1 piercing damage to the trapped creature."
@@ -629,7 +629,7 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -641,8 +641,8 @@
     "weight": 25,
     "category": "Adventuring Gear",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": ""
@@ -666,7 +666,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "A bullseye lantern casts bright light in a 60-foot cone and dim light for an additional 60 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil."
@@ -678,7 +678,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "A hooded lantern casts bright light in a 30-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil. As an action, you can lower the hood, reducing the light to dim light in a 5-foot radius."
@@ -725,8 +725,8 @@
     "weight": 6,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These metal restraints can bind a Small or Medium creature. Escaping the manacles requires a successful DC 20 Dexterity check. Breaking them requires a successful DC 20 Strength check.\n\nEach set of manacles comes with one key. Without the key, a creature proficient with thieves' tools can pick the manacles' lock with a successful DC 15 Dexterity check. Manacles have 15 hit points."
@@ -774,7 +774,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus."
@@ -821,8 +821,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -858,7 +858,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "A poisoner's kit includes the vials, chemicals, and other equipment necessary for the creation of poisons. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to craft or use poisons."
@@ -869,8 +869,8 @@
     "weight": 7,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -881,8 +881,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -917,8 +917,8 @@
     "weight": 35,
     "category": "Adventuring Gear",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "You can use a portable ram to break down doors. When doing so, you gain a +4 bonus on the Strength check. One other character can help you use the ram, giving you advantage on this check."
@@ -930,7 +930,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
@@ -942,7 +942,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic.\n\nAppendix B lists the symbols commonly associated with many gods in the multiverse. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield."
@@ -953,7 +953,7 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -966,7 +966,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus."
@@ -977,8 +977,8 @@
     "weight": 10,
     "category": "Adventuring Gear",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
@@ -989,7 +989,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -1014,7 +1014,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "A scale includes a small balance, pans, and a suitable assortment of weights up to 2 pounds. With it, you can measure the exact weight of small objects, such as raw precious metals or trade goods, to help determine their worth."
@@ -1037,7 +1037,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -1074,7 +1074,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": ""
@@ -1110,7 +1110,7 @@
     "category": "Adventuring Gear",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Essential for wizards, a spellbook is a leather-bound tome with 100 blank vellum pages suitable for recording spells."
@@ -1121,7 +1121,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -1157,7 +1157,7 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -1181,8 +1181,8 @@
     "weight": 20,
     "category": "Adventuring Gear",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "A simple and portable canvas shelter, a tent sleeps two."
@@ -1265,7 +1265,7 @@
     "weight": 5,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -1289,7 +1289,7 @@
     "weight": 4,
     "category": "Adventuring Gear",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -1313,8 +1313,8 @@
     "weight": 20,
     "category": "Armor",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Medium armor. AC 14 + Dex (max 2)."
@@ -1325,8 +1325,8 @@
     "weight": 55,
     "category": "Armor",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 3,
+      "h": 3
     },
     "source": "srd",
     "description": "Heavy armor. AC 16. Requires Strength 13. Disadvantage on Stealth checks."
@@ -1337,8 +1337,8 @@
     "weight": 20,
     "category": "Armor",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Medium armor. AC 13 + Dex (max 2)."
@@ -1349,8 +1349,8 @@
     "weight": 40,
     "category": "Armor",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Medium armor. AC 15 + Dex (max 2). Disadvantage on Stealth checks."
@@ -1361,8 +1361,8 @@
     "weight": 12,
     "category": "Armor",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Medium armor. AC 12 + Dex (max 2)."
@@ -1373,8 +1373,8 @@
     "weight": 10,
     "category": "Armor",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Light armor. AC 11 + Dex."
@@ -1385,8 +1385,8 @@
     "weight": 8,
     "category": "Armor",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Light armor. AC 11 + Dex. Disadvantage on Stealth checks."
@@ -1397,8 +1397,8 @@
     "weight": 65,
     "category": "Armor",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 3,
+      "h": 3
     },
     "source": "srd",
     "description": "Heavy armor. AC 18. Requires Strength 15. Disadvantage on Stealth checks."
@@ -1409,8 +1409,8 @@
     "weight": 40,
     "category": "Armor",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Heavy armor. AC 14. Disadvantage on Stealth checks."
@@ -1421,8 +1421,8 @@
     "weight": 45,
     "category": "Armor",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 3,
+      "h": 3
     },
     "source": "srd",
     "description": "Medium armor. AC 14 + Dex (max 2). Disadvantage on Stealth checks."
@@ -1433,8 +1433,8 @@
     "weight": 6,
     "category": "Armor",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Shield armor. AC 2."
@@ -1445,8 +1445,8 @@
     "weight": 60,
     "category": "Armor",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 3,
+      "h": 3
     },
     "source": "srd",
     "description": "Heavy armor. AC 17. Requires Strength 15. Disadvantage on Stealth checks."
@@ -1457,8 +1457,8 @@
     "weight": 13,
     "category": "Armor",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Light armor. AC 12 + Dex."
@@ -1469,8 +1469,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (medium or heavy, but not hide), uncommon\n\nThis suit of armor is reinforced with adamantine, one of the hardest substances in existence. While you're wearing it, any critical hit against you becomes a normal hit.",
@@ -1629,8 +1629,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (shield), very rare (requires attunement)\n\nWhile holding this shield, you can speak its command word as a bonus action to cause it to animate. The shield leaps into the air and hovers in your space to protect you as if you were wielding it, leaving your hands free. The shield remains animated for 1 minute, until you use a bonus action to end this effect, or until you are incapacitated or die, at which point the shield falls to the ground or into your hand if you have one free.",
@@ -1661,8 +1661,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (plate), legendary (requires attunement)\n\nYou have resistance to nonmagical damage while you wear this armor. Additionally, you can use an action to make yourself immune to nonmagical damage for 10 minutes or until you are no longer wearing the armor. Once this special action is used, it can't be used again until the next dawn.",
@@ -1677,8 +1677,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (light, medium, or heavy), rare (requires attunement)\n\nYou have resistance to one type of damage while you wear this armor. The GM chooses the type or determines it randomly from the options below.\n\n| d10 | Damage Type |\n\n|---|---|\n\n| 1 | Acid |\n\n| 2 | Cold |\n\n| 3 | Fire |\n\n| 4 | Force |\n\n| 5 | Lightning |\n\n| 6 | Necrotic |\n\n| 7 | Poison |\n\n| 8 | Psychic |\n\n| 9 | Radiant |\n\n| 10 | Thunder |",
@@ -1693,8 +1693,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (plate), rare (requires attunement)\n\nWhile wearing this armor, you have resistance to  one of the following damage types: bludgeoning, piercing, or slashing. The GM chooses the type or determines it randomly.\n\n***Curse.*** This armor is cursed, a fact that is revealed only when an identify spell is cast on the armor or you attune to it. Attuning to the armor curses you until you are targeted by the remove curse spell or similar magic; removing the armor fails to end the curse. While cursed, you have vulnerability to two of the three damage types associated with the armor (not the one to which it grants resistance).",
@@ -1709,8 +1709,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (light, medium, or heavy), rare\n\nYou have a +1 bonus to AC while wearing this armor.",
@@ -1725,8 +1725,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (light, medium, or heavy), rare (+1), very rare (+2), or legendary (+3)\n\nYou have a bonus to AC while wearing this armor. The bonus is determined by its rarity.",
@@ -1741,8 +1741,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (light, medium, or heavy), very rare\n\nYou have a +2 bonus to AC while wearing this armor.",
@@ -1757,8 +1757,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (light, medium, or heavy), legendary\n\nYou have a +3 bonus to AC while wearing this armor.",
@@ -1789,8 +1789,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (shield), rare (requires attunement)\n\nYou gain a +2 bonus to AC against ranged attacks while you wield this shield. This bonus is in addition to the shield's normal bonus to AC. In addition, whenever an attacker makes a ranged attack against a target within 5 feet of you, you can use your reaction to become the target of the attack instead.",
@@ -1837,8 +1837,8 @@
     "weight": 15,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Wondrous item, uncommon\n\nThis bag has an interior space considerably larger than its outside dimensions, roughly 2 feet in diameter at the mouth and 4 feet deep. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet. The bag weighs 15 pounds, regardless of its contents. Retrieving an item from the bag requires an action.\n\nIf the bag is overloaded, pierced, or torn, it ruptures and is destroyed, and its contents are scattered in the Astral Plane. If the bag is turned inside out, its contents spill forth, unharmed, but the bag must be put right before it can be used again. Breathing creatures inside the bag can survive up to a number of minutes equal to 10 divided by the number of creatures (minimum 1 minute), after which time they begin to suffocate.\n\nPlacing a bag of holding inside an extradimensional space created by a Handy Haversack, Portable Hole, or similar item instantly destroys both items and opens a gate to the Astral Plane. The gate originates where the one item was placed inside the other. Any creature within 10 feet of the gate is sucked through it to a random location on the Astral Plane. The gate then closes. The gate is one-way only and can't be reopened.",
@@ -2014,7 +2014,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any axe), rare (requires attunement)\n\nYou gain a +1 bonus to Attack and Damage Rolls made with this Magic Weapon. In addition, while you are attuned to this weapon, your Hit Points maximum increases by 1 for each level you have attained.\n\n***Curse.*** This axe is Cursed, and becoming attuned to it extends the curse to you. As long as you remain Cursed, you are unwilling to part with the axe, keeping it within reach at all times. You also have disadvantage on Attack rolls with Weapons other than this one, unless no foe is within 60 feet of you that you can see or hear.\n\nWhenever a Hostile creature damages you while the axe is in your possession, you must succeed on a DC 15 Wisdom saving throw or go berserk. While berserk, you must use your action each round to Attack the creature nearest to you with the axe. If you can make extra attacks as part of the Attack action, you use those extra attacks, moving to Attack the next nearest creature after you fell your current target. If you have multiple possible Targets, you Attack one at random. You are berserk until you start Your Turn with no creatures within 60 feet of you that you can see or hear.",
@@ -2045,8 +2045,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a black dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to acid damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest black dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -2061,8 +2061,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a blue dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to lightning damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest blue dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -2158,7 +2158,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Wondrous item, rare\n\nWhile this bowl is filled with water, you can use an action to speak the bowl's command word and summon a water elemental, as if you had cast the conjure elemental spell. The bowl can't be used this way again until the next dawn.\n\nThe bowl is about 1 foot in diameter and half as deep. It weighs 3 pounds and holds about 3 gallons.",
@@ -2205,8 +2205,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a brass dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to fire damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest brass dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -2237,7 +2237,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -2253,8 +2253,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a bronze dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to lightning damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest bronze dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -2318,7 +2318,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Wondrous item, uncommon\n\nThis wooden broom, which weighs 3 pounds, functions like a mundane broom until you stand astride it and speak its command word. It then hovers beneath you and can be ridden in the air. It has a flying speed of 50 feet. It can carry up to 400 pounds, but its flying speed becomes 30 feet while carrying over 200 pounds. The broom stops hovering when you land.\n\nYou can send the broom to travel alone to a destination within 1 mile of you if you speak the command word, name the location, and are familiar with that place. The broom comes back to you when you speak another command word, provided that the broom is still within 1 mile of you.",
@@ -2589,8 +2589,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a copper dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to acid damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest copper dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -2702,7 +2702,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (dagger), rare\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon.\n\nYou can use an action to cause thick, black poison to coat the blade. The poison remains for 1 minute or until an attack using this weapon hits a creature. That creature must succeed on a DC 15 Constitution saving throw or take 2d10 poison damage and become poisoned for 1 minute. The dagger can't be used this way again until the next dawn.",
@@ -2718,7 +2718,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), very rare (requires attunement)\n\nYou can use a bonus action to toss this magic sword into the air and speak the command word. When you do so, the sword begins to hover, flies up to 30 feet, and attacks one creature of your choice within 5 feet of it. The sword uses your attack roll and ability score modifier to damage rolls.\n\nWhile the sword hovers, you can use a bonus action to cause it to fly up to 30 feet to another spot within 30 feet of you. As part of the same bonus action, you can cause the sword to attack one creature within 5 feet of it.\n\nAfter the hovering sword attacks for the fourth time, it flies up to 30 feet and tries to return to your hand. If you have no hand free, it falls to the ground at your feet. If the sword has no unobstructed path to you, it moves as close to you as it can and then falls to the ground. It also ceases to hover if you grasp it or move more than 30 feet away from it.",
@@ -2734,7 +2734,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Wondrous item, uncommon\n\nThis stoppered flask sloshes when shaken, as if it contains water. The decanter weighs 2 pounds.\n\nYou can use an action to remove the stopper and speak one of three command words, whereupon an amount of fresh water or salt water (your choice) pours out of the flask. The water stops pouring out at the start of your next turn. Choose from the following options:\n\n\"Stream\" produces 1 gallon of water.\n\n\"Fountain\" produces 5 gallons of water.\n\n\"Geyser\" produces 30 gallons of water that gushes forth in a geyser 30 feet long and 1 foot wide. As a bonus action while holding the decanter, you can aim the geyser at a creature you can see within 30 feet of you. The target must succeed on a DC 13 Strength saving throw or take 1d4 bludgeoning damage and fall prone. Instead of a creature, you can target an object that isn't being worn or carried and that weighs no more than 200 pounds. The object is either knocked over or pushed up to 15 feet away from you.",
@@ -2782,7 +2782,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), legendary (requires attunement)\n\nYou gain a +3 bonus to attack and damage rolls made with this magic weapon.\n\nThe first time you attack with the sword on each of your turns, you can transfer some or all of the sword's bonus to your Armor Class, instead of using the bonus on any attacks that turn. For example, you could reduce the bonus to your attack and damage rolls to +1 and gain a +2 bonus to AC. The adjusted bonuses remain in effect until the start of your next turn, although you must hold the sword to gain a bonus to AC from it.",
@@ -2797,8 +2797,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (plate), very rare (requires attunement)\n\nWhile wearing this armor, you gain a +1 bonus to AC, and you can understand and speak Abyssal. In addition, the armor's clawed gauntlets turn unarmed strikes with your hands into magic weapons that deal slashing damage, with a +1 bonus to attack rolls and damage rolls and a damage die of 1d8.\n\n***Curse.*** Once you don this cursed armor, you can't doff it unless you are targeted by the remove curse spell or similar magic. While wearing the armor, you have disadvantage on attack rolls against demons and on saving throws against their spells and special abilities.",
@@ -2829,8 +2829,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of one kind of dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to one damage type that is determined by the kind of dragon that provided the scales (see the table).\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest dragon within 30 miles of you that is of the same type as the armor. This special action can't be used again until the next dawn.\n\n| Dragon | Resistance |\n\n|---|---|\n\n| Black | Acid |\n\n| Blue | Lightning |\n\n| Brass | Fire |\n\n| Bronze | Lightning |\n\n| Copper | Acid |\n\n| Gold | Fire |\n\n| Green | Poison |\n\n| Red | Fire |\n\n| Silver | Cold |\n\n| White | Cold |",
@@ -2846,7 +2846,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), rare\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon.\n\nWhen you hit a dragon with this weapon, the dragon takes an extra 3d6 damage of the weapon's type. For the purpose of this weapon, \"dragon\" refers to any creature with the dragon type, including dragon turtles and wyverns.",
@@ -2909,8 +2909,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (plate), very rare\n\nWhile wearing this armor, you gain a +2 bonus to AC. In addition, if an effect moves you against your will along the ground, you can use your reaction to reduce the distance you are moved by up to 10 feet.",
@@ -2926,7 +2926,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (warhammer), very rare (requires attunement by a dwarf)\n\nYou gain a +3 bonus to attack and damage rolls made with this magic weapon. It has the thrown property with a normal range of 20 feet and a long range of 60 feet. When you hit with a ranged attack using this weapon, it deals an extra 1d8 damage or, if the target is a giant, 2d8 damage. Immediately after the attack, the weapon flies back to your hand.",
@@ -3021,8 +3021,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (chain shirt), rare\n\nYou gain a +1 bonus to AC while you wear this armor. You are considered proficient with this armor even if you lack proficiency with medium armor.",
@@ -3166,7 +3166,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), rare (requires attunement)\n\nYou can use a bonus action to speak this magic sword's command word, causing flames to erupt from the blade. These flames shed bright light in a 40-foot radius and dim light for an additional 40 feet. While the sword is ablaze, it deals an extra 2d6 fire damage to any target it hits. The flames last until you use a bonus action to speak the command word again or until you drop or sheathe the sword.",
@@ -3181,7 +3181,7 @@
     "weight": 4,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -3198,7 +3198,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), very rare (requires attunement)\n\nWhen you hit with an attack using this magic sword, the target takes an extra 1d6 cold damage. In addition, while you hold the sword, you have resistance to fire damage.\n\nIn freezing temperatures, the blade sheds bright light in a 10-foot radius and dim light for an additional 10 feet.\n\nWhen you draw this weapon, you can extinguish all nonmagical flames within 30 feet of you. This property can be used no more than once per hour.",
@@ -3262,7 +3262,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any axe or sword), rare\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon.\n\nWhen you hit a giant with it, the giant takes an extra 2d6 damage of the weapon's type and must succeed on a DC 15 Strength saving throw or fall prone. For the purpose of this weapon, \"giant\" refers to any creature with the giant type, including ettins and trolls.",
@@ -3277,8 +3277,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (studded leather), rare\n\nWhile wearing this armor, you gain a +1 bonus to AC. You can also use a bonus action to speak the armor's command word and cause the armor to assume the appearance of a normal set of clothing or some other kind of armor. You decide what it looks like, including color, style, and accessories, but the armor retains its normal bulk and weight. The illusory appearance lasts until you use this property again or remove the armor.",
@@ -3341,8 +3341,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a gold dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to fire damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest gold dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -3389,8 +3389,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a green dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to poison damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest green dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -3406,7 +3406,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (maul), legendary\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon.\n\nGiant's Bane (Requires Attunement). You must be wearing a belt of giant strength (any variety) and gauntlets of ogre power to attune to this weapon. The attunement ends if you take off either of those items. While you are attuned to this weapon and holding it, your Strength score increases by 4 and can exceed 20, but not 30. When you roll a 20 on an attack roll made with this weapon against a giant, the giant must succeed on a DC 17 Constitution saving throw or die.\n\nThe hammer also has 5 charges. While attuned to it, you can expend 1 charge and make a ranged weapon attack with the hammer, hurling it as if it had the thrown property with a normal range of 20 feet and a long range of 60 feet. If the attack hits, the hammer unleashes a thunderclap audible out to 300 feet. The target and every creature within 30 feet of it must succeed on a DC 17 Constitution saving throw or be stunned until the end of your next turn. The hammer regains 1d4 + 1 expended charges daily at dawn.",
@@ -3421,7 +3421,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -3534,7 +3534,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), legendary (requires attunement by a paladin)\n\nYou gain a +3 bonus to attack and damage rolls made with this magic weapon. When you hit a fiend or an undead with it, that creature takes an extra 2d10 radiant damage.\n\nWhile you hold the drawn sword, it creates an aura in a 10-foot radius around you. You and all creatures friendly to you in the aura have advantage on saving throws against spells and other magical effects. If you have 17 or more levels in the paladin class, the radius of the aura increases to 30 feet.",
@@ -3613,7 +3613,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -3950,7 +3950,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (javelin), uncommon\n\nThis javelin is a magic weapon. When you hurl it and speak its command word, it transforms into a bolt of lightning, forming a line 5 feet wide that extends out from you to a target within 120 feet. Each creature in the line excluding you and the target must make a DC 13 Dexterity saving throw, taking 4d6 lightning damage on a failed save, and half as much damage on a successful one. The lightning bolt turns back into a javelin when it reaches the target. Make a ranged weapon attack against the target. On a hit, the target takes damage from the javelin plus 4d6 lightning damage.\n\nThe javelin's property can't be used again until the next dawn. In the meantime, the javelin can still be used as a magic weapon.",
@@ -3982,7 +3982,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), legendary (requires attunement)\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon. While the sword is on your person, you also gain a +1 bonus to saving throws.\n\n***Luck.*** If the sword is on your person, you can call on its luck (no action required) to reroll one attack roll, ability check, or saving throw you dislike. You must use the second roll. This property can't be used again until the next dawn.\n\n***Wish.*** The sword has 1d4 - 1 charges. While holding it, you can use an action to expend 1 charge and cast the wish spell from it. This property can't be used again until the next dawn. The sword loses this property if it has no charges.",
@@ -3998,7 +3998,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (mace), rare (requires attunement)\n\nWhen you hit a fiend or an undead with this magic weapon, that creature takes an extra 2d6 radiant damage. If the target has 25 hit points or fewer after taking this damage, it must succeed on a DC 15 Wisdom saving throw or be destroyed. On a successful save, the creature becomes frightened of you until the end of your next turn.\n\nWhile you hold this weapon, it sheds bright light in a 20-foot radius and dim light for an additional 20 feet.",
@@ -4014,7 +4014,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (mace), rare\n\nYou gain a +1 bonus to attack and damage rolls made with this magic weapon. The bonus increases to +3 when you use the mace to attack a construct.\n\nWhen you roll a 20 on an attack roll made with this weapon, the target takes an extra 2d6 bludgeoning damage, or 4d6 bludgeoning damage if it's a construct. If a construct has 25 hit points or fewer after taking this damage, it is destroyed.",
@@ -4030,7 +4030,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (mace), rare (requires attunement)\n\nThis magic weapon has 3 charges. While holding it, you can use an action and expend 1 charge to release a wave of terror. Each creature of your choice in a 30-foot radius extending from you must succeed on a DC 15 Wisdom saving throw or become frightened of you for 1 minute. While it is frightened in this way, a creature must spend its turns trying to move as far away from you as it can, and it can't willingly move to a space within 30 feet of you. It also can't take reactions. For its action, it can use only the Dash action or try to escape from an effect that prevents it from moving. If it has nowhere it can move, the creature can use the Dodge action. At the end of each of its turns, a creature can repeat the saving throw, ending the effect on itself on a success.\n\nThe mace regains 1d3 expended charges daily at dawn.",
@@ -4237,8 +4237,8 @@
     "weight": 50,
     "category": "Magic Item",
     "size": {
-      "w": 5,
-      "h": 5
+      "w": 3,
+      "h": 3
     },
     "source": "srd",
     "description": "Wondrous item, very rare\n\nWhen this 4-foot-tall mirror is viewed indirectly, its surface shows faint images of creatures. The mirror weighs 50 pounds, and it has AC 11, 10 hit points, and vulnerability to bludgeoning damage. It shatters and is destroyed when reduced to 0 hit points.\n\nIf the mirror is hanging on a vertical surface and you are within 5 feet of it, you can use an action to speak its command word and activate it. It remains activated until you use an action to speak the command word again.\n\nAny creature other than you that sees its reflection in the activated mirror while within 30 feet of it must succeed on a DC 15 Charisma saving throw or be trapped, along with anything it is wearing or carrying, in one of the mirror's twelve extradimensional cells. This saving throw is made with advantage if the creature knows the mirror's nature, and constructs succeed on the saving throw automatically.\n\nAn extradimensional cell is an infinite expanse filled with thick fog that reduces visibility to 10 feet. Creatures trapped in the mirror's cells don't age, and they don't need to eat, drink, or sleep. A creature trapped within a cell can escape using magic that permits planar travel. Otherwise, the creature is confined to the cell until freed.\n\nIf the mirror traps a creature but its twelve extradimensional cells are already occupied, the mirror frees one trapped creature at random to accommodate the new prisoner. A freed creature appears in an unoccupied space within sight of the mirror but facing away from it. If the mirror is shattered, all creatures it contains are freed and appear in unoccupied spaces near it.\n\nWhile within 5 feet of the mirror, you can use an action to speak the name of one creature trapped in it or call out a particular cell by number. The creature named or contained in the named cell appears as an image on the mirror's surface. You and the creature can then communicate normally.\n\nIn a similar way, you can use an action to speak a second command word and free one creature trapped in the mirror. The freed creature appears, along with its possessions, in the unoccupied space nearest to the mirror and facing away from it.",
@@ -4253,8 +4253,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (medium or heavy), uncommon\n\nMithral is a light, flexible metal. A mithral chain shirt or breastplate can be worn under normal clothes. If the armor normally imposes disadvantage on Dexterity (Stealth) checks or has a Strength requirement, the mithral version of the armor doesn't.",
@@ -4318,7 +4318,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), very rare (requires attunement)\n\nYou gain a +2 bonus to attack and damage rolls made with this magic weapon.\n\nThe sword has 1d8 + 1 charges. If you score a critical hit against a creature that has fewer than 100 hit points, it must succeed on a DC 15 Constitution saving throw or be slain instantly as the sword tears its life force from its body (a construct or an undead is immune). The sword loses 1 charge if the creature is slain. When the sword has no charges remaining, it loses this property.",
@@ -4334,7 +4334,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (longbow), very rare (requires attunement)\n\nWhen you nock an arrow on this bow, it whispers in Elvish, \"Swift defeat to my enemies.\" When you use this weapon to make a ranged attack, you can, as a command phrase, say, \"Swift death to you who have wronged me.\" The target of your attack becomes your sworn enemy until it dies or until dawn seven days later. You can have only one such sworn enemy at a time. When your sworn enemy dies, you can choose a new one after the next dawn.\n\nWhen you make a ranged attack roll with this weapon against your sworn enemy, you have advantage on the roll. In addition, your target gains no benefit from cover, other than total cover, and you suffer no disadvantage due to long range. If the attack hits, your sworn enemy takes an extra 3d6 piercing damage.\n\nWhile your sworn enemy lives, you have disadvantage on attack rolls with all other weapons.",
@@ -4557,8 +4557,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (plate), legendary (requires attunement)\n\nWhile you're wearing this armor, you can speak its command word as an action to gain the effect of the etherealness spell, which last for 10 minutes or until you remove the armor or use an action to speak the command word again. This property of the armor can't be used again until the next dawn.",
@@ -5165,8 +5165,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a red dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to fire damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest red dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -5853,7 +5853,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -5869,7 +5869,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -5885,7 +5885,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -5901,7 +5901,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -5917,7 +5917,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -5934,7 +5934,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Wondrous item, uncommon\n\nThis 60-foot length of silk rope weighs 3 pounds and can hold up to 3,000 pounds. If you hold one end of the rope and use an action to speak the command word, the rope animates. As a bonus action, you can command the other end to move toward a destination you choose. That end moves 10 feet on your turn when you first command it and 10 feet on each of your turns until reaching its destination, up to its maximum length away, or until you tell it to stop. You can also tell the rope to fasten itself securely to an object or to unfasten itself, to knot or unknot itself, or to coil itself for carrying.\n\nIf you tell the rope to knot, large knots appear at 1 foot intervals along the rope. While knotted, the rope shortens to a 50-foot length and grants advantage on checks made to climb it.\n\nThe rope has AC 20 and 20 hit points. It regains 1 hit point every 5 minutes as long as it has at least 1 hit point. If the rope drops to 0 hit points, it is destroyed.",
@@ -5950,7 +5950,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Wondrous item, rare\n\nThis rope is 30 feet long and weighs 3 pounds. If you hold one end of the rope and use an action to speak its command word, the other end darts forward to entangle a creature you can see within 20 feet of you. The target must succeed on a DC 15 Dexterity saving throw or become restrained.\n\nYou can release the creature by using a bonus action to speak a second command word. A target restrained by the rope can use an action to make a DC 15 Strength or Dexterity check (target's choice). On a success, the creature is no longer restrained by the rope.\n\nThe rope has AC 20 and 20 hit points. It regains 1 hit point every 5 minutes as long as it has at least 1 hit point. If the rope drops to 0 hit points, it is destroyed.",
@@ -5998,7 +5998,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (scimitar), very rare (requires attunement)\n\nYou gain a +2 bonus to attack and damage rolls made with this magic weapon. In addition, you can make one attack with it as a bonus action on each of your turns.",
@@ -6029,8 +6029,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (shield), rare (requires attunement)\n\nWhile holding this shield, you have resistance to damage from ranged weapon attacks.\n\n***Curse.*** This shield is cursed. Attuning to it curses you until you are targeted by the remove curse spell or similar magic. Removing the shield fails to end the curse on you. Whenever a ranged weapon attack is made against a target within 10 feet of you, the curse causes you to become the target instead.",
@@ -6045,8 +6045,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a silver dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to cold damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest silver dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -6301,8 +6301,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (shield), very rare (requires attunement)\n\nWhile holding this shield, you have advantage on saving throws against spells and other magical effects, and spell attacks have disadvantage against you.",
@@ -6333,7 +6333,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6349,7 +6349,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6365,7 +6365,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6381,7 +6381,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6397,7 +6397,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6413,7 +6413,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6429,7 +6429,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6445,7 +6445,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6461,7 +6461,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6477,7 +6477,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6493,7 +6493,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6509,7 +6509,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6525,7 +6525,7 @@
     "weight": 5,
     "category": "Magic Item",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -6558,7 +6558,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (longsword), rare (requires attunement)\n\nThis item appears to be a longsword hilt. While grasping the hilt, you can use a bonus action to cause a blade of pure radiance to spring into existence, or make the blade disappear. While the blade exists, this magic longsword has the finesse property. If you are proficient with shortswords or longswords, you are proficient with the sun blade.\n\nYou gain a +2 bonus to attack and damage rolls made with this weapon, which deals radiant damage instead of slashing damage. When you hit an undead with it, that target takes an extra 1d8 radiant damage.\n\nThe sword's luminous blade emits bright light in a 15-foot radius and dim light for an additional 15 feet. The light is sunlight. While the blade persists, you can use an action to expand or reduce its radius of bright and dim light by 5 feet each, to a maximum of 30 feet each or a minimum of 10 feet each.",
@@ -6590,7 +6590,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), rare (requires attunement)\n\nWhen you attack a creature with this magic weapon and roll a 20 on the attack roll, that target takes an extra 3d6 necrotic damage, provided that the target isn't a construct or an undead. You gain temporary hit points equal to the extra damage dealt.",
@@ -6606,7 +6606,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword that deals slashing damage), very rare (requires attunement)\n\nWhen you attack an object with this magic sword and hit, maximize your weapon damage dice against the target.\n\nWhen you attack a creature with this weapon and roll a 20 on the attack roll, that target takes an extra 4d6 slashing damage. Then roll another d20. If you roll a 20, you lop off one of the target's limbs, with the effect of such loss determined by the GM. If the creature has no limb to sever, you lop off a portion of its body instead.\n\nIn addition, you can speak the sword's command word to cause the blade to shed bright light in a 10 foot radius and dim light for an additional 10 feet. Speaking the command word again or sheathing the sword puts out the light.",
@@ -6622,7 +6622,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword), rare (requires attunement)\n\nHit points lost to this weapon's damage can be regained only through a short or long rest, rather than by regeneration, magic, or any other means.\n\nOnce per turn, when you hit a creature with an attack using this magic weapon, you can wound the target. At the start of each of the wounded creature's turns, it takes 1d4 necrotic damage for each time you've wounded it, and it can then make a DC 15 Constitution saving throw, ending the effect of all such wounds on itself on a success. Alternatively, the wounded creature, or a creature within 5 feet of it, can use an action to make a DC 15 Wisdom (Medicine) check, ending the effect of such wounds on it on a success.",
@@ -6766,7 +6766,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (trident), uncommon (requires attunement)\n\nThis trident is a magic weapon. It has 3 charges. While you carry it, you can use an action and expend 1 charge to cast dominate beast (save DC 15) from it on a beast that has an innate swimming speed. The trident regains 1d3 expended charges daily at dawn.",
@@ -6798,7 +6798,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any), rare\n\nWhen you roll a 20 on your attack roll with this magic weapon, your critical hit deals an extra 2d6 damage of the weapon's type.",
@@ -6814,7 +6814,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any sword that deals slashing damage), legendary (requires attunement)\n\nYou gain a +3 bonus to attack and damage rolls made with this magic weapon. In addition, the weapon ignores resistance to slashing damage.\n\nWhen you attack a creature that has at least one head with this weapon and roll a 20 on the attack roll, you cut off one of the creature's heads. The creature dies if it can't survive without the lost head. A creature is immune to this effect if it is immune to slashing damage, doesn't have or need a head, has legendary actions, or the GM decides that the creature is too big for its head to be cut off with this weapon. Such a creature instead takes an extra 6d8 slashing damage from the hit.",
@@ -7102,7 +7102,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any), uncommon\n\nYou have a +1 bonus to attack and damage rolls made with this magic weapon.",
@@ -7118,7 +7118,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any), uncommon (+1), rare (+2), or very rare (+3)\n\nYou have a bonus to attack and damage rolls made with this magic weapon. The bonus is determined by the weapon's rarity.",
@@ -7134,7 +7134,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any), rare\n\nYou have a +2 bonus to attack and damage rolls made with this magic weapon.",
@@ -7150,7 +7150,7 @@
     "category": "Magic Item",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Weapon (any), very rare\n\nYou have a +3 bonus to attack and damage rolls made with this magic weapon.",
@@ -7197,8 +7197,8 @@
     "weight": 20,
     "category": "Magic Item",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Armor (scale mail), very rare (requires attunement)\n\nDragon scale mail is made of the scales of a white dragon. Sometimes dragons collect their cast-off scales and gift them to humanoids. Other times, hunters carefully skin and preserve the hide of a dead dragon. In either case, dragon scale mail is highly valued.\n\nWhile wearing this armor, you gain a +1 bonus to AC, you have advantage on saving throws against the Frightful Presence and breath weapons of dragons, and you have resistance to cold damage.\n\nAdditionally, you can focus your senses as an action to magically discern the distance and direction to the closest white dragon within 30 miles of you. This special action can't be used again until the next dawn.",
@@ -7261,8 +7261,8 @@
     "weight": 8,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7273,8 +7273,8 @@
     "weight": 6,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
@@ -7285,8 +7285,8 @@
     "weight": 9,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7297,7 +7297,7 @@
     "weight": 5,
     "category": "Tools",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7309,8 +7309,8 @@
     "weight": 6,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7321,8 +7321,8 @@
     "weight": 6,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7333,7 +7333,7 @@
     "weight": 5,
     "category": "Tools",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7345,8 +7345,8 @@
     "weight": 8,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7370,7 +7370,7 @@
     "category": "Tools",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
@@ -7381,8 +7381,8 @@
     "weight": 10,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
@@ -7405,7 +7405,7 @@
     "weight": 5,
     "category": "Tools",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7418,7 +7418,7 @@
     "category": "Tools",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
@@ -7430,7 +7430,7 @@
     "category": "Tools",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7441,7 +7441,7 @@
     "weight": 5,
     "category": "Tools",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7454,7 +7454,7 @@
     "category": "Tools",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
@@ -7466,7 +7466,7 @@
     "category": "Tools",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
@@ -7477,8 +7477,8 @@
     "weight": 8,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7490,7 +7490,7 @@
     "category": "Tools",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "This set of instruments is used for navigation at sea. Proficiency with navigator's tools lets you chart a ship's course and follow navigation charts. In addition, these tools allow you to add your proficiency bonus to any ability check you make to avoid getting lost at sea."
@@ -7501,7 +7501,7 @@
     "weight": 5,
     "category": "Tools",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7514,7 +7514,7 @@
     "category": "Tools",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
@@ -7538,7 +7538,7 @@
     "category": "Tools",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7561,8 +7561,8 @@
     "weight": 8,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7585,8 +7585,8 @@
     "weight": 10,
     "category": "Tools",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
@@ -7609,7 +7609,7 @@
     "weight": 5,
     "category": "Tools",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7621,7 +7621,7 @@
     "weight": 5,
     "category": "Tools",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7633,7 +7633,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7660,7 +7660,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d4 Bludgeoning. Properties: Light, Monk. Range: 5 ft.",
@@ -7673,7 +7673,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Damage: 1d6 Piercing. Properties: Ammunition, Light, Loading. Range: 30/120 ft.",
@@ -7685,8 +7685,8 @@
     "weight": 18,
     "category": "Weapon",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Damage: 1d10 Piercing. Properties: Ammunition, Heavy, Loading, Two-Handed. Range: 100/400 ft.",
@@ -7698,7 +7698,7 @@
     "weight": 5,
     "category": "Weapon",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7738,7 +7738,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Bludgeoning. Range: 5 ft.",
@@ -7750,8 +7750,8 @@
     "weight": 6,
     "category": "Weapon",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d10 Slashing. Properties: Heavy, Reach, Two-Handed. Range: 5 ft.",
@@ -7763,8 +7763,8 @@
     "weight": 7,
     "category": "Weapon",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d12 Slashing. Properties: Heavy, Two-Handed. Range: 5 ft.",
@@ -7776,8 +7776,8 @@
     "weight": 10,
     "category": "Weapon",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d8 Bludgeoning. Properties: Two-Handed. Range: 5 ft.",
@@ -7789,8 +7789,8 @@
     "weight": 6,
     "category": "Weapon",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 2d6 Slashing. Properties: Heavy, Two-Handed. Range: 5 ft.",
@@ -7802,8 +7802,8 @@
     "weight": 6,
     "category": "Weapon",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d10 Slashing. Properties: Heavy, Reach, Two-Handed. Range: 5 ft.",
@@ -7816,7 +7816,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d6 Slashing. Properties: Light, Thrown, Monk. Range: 5 ft.",
@@ -7829,7 +7829,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d6 Piercing. Properties: Thrown, Monk. Range: 5 ft.",
@@ -7841,8 +7841,8 @@
     "weight": 6,
     "category": "Weapon",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d12 Piercing. Properties: Reach, Special. Range: 5 ft.",
@@ -7855,7 +7855,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d4 Bludgeoning. Properties: Light, Thrown, Monk. Range: 5 ft.",
@@ -7868,7 +7868,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Damage: 1d8 Piercing. Properties: Ammunition, Heavy, Two-Handed. Range: 150/600 ft.",
@@ -7881,7 +7881,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Slashing. Two-handed: 1d10 Slashing. Properties: Versatile. Range: 5 ft.",
@@ -7893,7 +7893,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7906,8 +7906,8 @@
     "weight": 10,
     "category": "Weapon",
     "size": {
-      "w": 3,
-      "h": 3
+      "w": 2,
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 2d6 Bludgeoning. Properties: Heavy, Two-Handed. Range: 5 ft.",
@@ -7919,7 +7919,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7933,7 +7933,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Properties: Thrown, Special. Range: 5/15 ft.",
@@ -7945,8 +7945,8 @@
     "weight": 18,
     "category": "Weapon",
     "size": {
-      "w": 4,
-      "h": 4
+      "w": 2,
+      "h": 3
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d10 Piercing. Properties: Heavy, Reach, Two-Handed. Range: 5 ft.",
@@ -7958,7 +7958,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -7972,7 +7972,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Piercing. Properties: Finesse. Range: 5 ft.",
@@ -7985,7 +7985,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d6 Slashing. Properties: Finesse, Light. Range: 5 ft.",
@@ -7998,7 +7998,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Simple Ranged weapon. Damage: 1d6 Piercing. Properties: Ammunition, Two-Handed. Range: 80/320 ft.",
@@ -8011,7 +8011,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d6 Piercing. Properties: Finesse, Light, Monk. Range: 5 ft.",
@@ -8024,7 +8024,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d4 Slashing. Properties: Light, Monk. Range: 5 ft.",
@@ -8050,7 +8050,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d6 Piercing. Two-handed: 1d8 Piercing. Properties: Thrown, Versatile, Monk. Range: 5 ft.",
@@ -8062,7 +8062,7 @@
     "weight": 4,
     "category": "Weapon",
     "size": {
-      "w": 2,
+      "w": 1,
       "h": 2
     },
     "source": "srd",
@@ -8076,7 +8076,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Piercing. Range: 5 ft.",
@@ -8089,7 +8089,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Bludgeoning. Two-handed: 1d10 Bludgeoning. Properties: Versatile. Range: 5 ft.",
@@ -8102,7 +8102,7 @@
     "category": "Weapon",
     "size": {
       "w": 1,
-      "h": 1
+      "h": 2
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d4 Slashing. Properties: Finesse, Reach. Range: 5 ft.",

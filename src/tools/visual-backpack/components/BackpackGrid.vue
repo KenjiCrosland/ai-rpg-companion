@@ -690,12 +690,14 @@ function onDrop(e) {
   grid-auto-rows: var(--cell);
   gap: var(--gap);
   border-radius: var(--par-radius-md, 4px);
-  /* Faint cell lattice so the droppable grid is visible. */
+  /* Faint cell lattice so the droppable grid is visible. Shifted by half a gap so
+     the lines fall in the gap centers — framing each tile symmetrically rather
+     than leaving the gap trailing to one side (tiles read as centered, not top-left). */
   background-image:
     linear-gradient(to right, rgba(122, 50, 30, 0.07) 0 1px, transparent 1px),
     linear-gradient(to bottom, rgba(122, 50, 30, 0.07) 0 1px, transparent 1px);
   background-size: var(--pitch) var(--pitch);
-  background-position: 0 0;
+  background-position: calc(var(--gap) / -2) calc(var(--gap) / -2);
   outline: 1.5px dashed transparent;
   outline-offset: -1px;
   transition: outline-color 0.15s ease, background-color 0.15s ease;

@@ -149,14 +149,20 @@ export function cleanName(name) {
 }
 
 /**
- * SIZE encodes (effective) weight — a square tile that grows with load, across
- * five tiers: 0–3 / 3–5 / 5–10 / 10–20 / 20+ lb. (Square-only for this release.)
+ * SIZE encodes (effective) weight across five buckets, as {w,h} cell footprints —
+ * small items are squares, mid-weight items stand tall, the heavy outliers are
+ * the biggest blocks:
+ *   ≤1 lb → 1×1   (bell, candle, piton, tinderbox)
+ *   ≤5 lb → 1×2 (tall)  (waterskin, hammer, backpack, crowbar)
+ *   ≤15 lb → 2×2  (rope, rations stack, lantern)
+ *   ≤40 lb → 2×3 (tall) (armor, heavy gear)
+ *   >40 lb → 3×3  (barrel, the truly heavy outliers)
  */
 export function tileSize(item) {
   const w = effectiveWeight(item);
-  if (w <= 3) return { w: 1, h: 1 };
-  if (w <= 5) return { w: 2, h: 2 };
-  if (w <= 10) return { w: 3, h: 3 };
-  if (w <= 20) return { w: 4, h: 4 };
-  return { w: 5, h: 5 };
+  if (w <= 1) return { w: 1, h: 1 };
+  if (w <= 5) return { w: 1, h: 2 };
+  if (w <= 15) return { w: 2, h: 2 };
+  if (w <= 40) return { w: 2, h: 3 };
+  return { w: 3, h: 3 };
 }

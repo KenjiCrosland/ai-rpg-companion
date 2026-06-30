@@ -39,41 +39,28 @@
       </div>
     </header>
 
-    <!-- Cream chrome strip: the active character's identity + stats. -->
-    <div class="character-controls-strip">
-      <div class="character-controls-strip__inner">
-        <div class="field-group">
-          <label class="field-label" for="char-name">Character</label>
-          <input
-            id="char-name"
-            v-model="characterName"
-            class="character-name-input"
-            type="text"
-            placeholder="Name this character"
-            maxlength="40"
-            autocomplete="off"
-          />
-        </div>
-        <StrengthControl :model-value="strength" @update:model-value="setStrength" />
-        <input
-          ref="fileInput"
-          class="backpack__file"
-          type="file"
-          accept="application/json,.json"
-          @change="onFileChosen"
-        />
-      </div>
-    </div>
+    <input
+      ref="fileInput"
+      class="backpack__file"
+      type="file"
+      accept="application/json,.json"
+      @change="onFileChosen"
+    />
 
     <div class="backpack__layout">
       <CharacterSidebar
+        ref="characterSidebar"
         class="backpack__rail"
         :characters="characters"
         :current-id="currentCharacterId"
         :open="sidebarOpen"
+        :character-name="characterName"
+        :strength="strength"
         @select="onSelectCharacter"
         @add="onAddCharacter"
         @remove="askRemoveCharacter"
+        @update:character-name="setCharacterName"
+        @update:strength="setStrength"
       />
 
       <div class="backpack__page">
@@ -204,7 +191,6 @@ import { ParConfirm } from '@/parchment';
 import { useToast } from '@/composables/useToast';
 import { useBackpack } from './composables/useBackpack.js';
 import { downloadBackpack } from './utils/backpack-storage.mjs';
-import StrengthControl from './components/StrengthControl.vue';
 import CharacterSidebar from './components/CharacterSidebar.vue';
 import RulesDrawer from './components/RulesDrawer.vue';
 import ItemDetail from './components/ItemDetail.vue';
@@ -284,6 +270,12 @@ function closeRules() {
   nextTick(() => rulesTrigger.value?.focus());
 }
 
+// Edit the active character's name from the sidebar (writable computed; empty allowed).
+const characterSidebar = ref(null);
+function setCharacterName(v) {
+  characterName.value = v;
+}
+
 // Collapsible character rail on narrow screens (mirrors GeneratorLayout).
 const sidebarOpen = ref(false);
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200);
@@ -304,7 +296,8 @@ function onSelectCharacter(id) {
 }
 function onAddCharacter() {
   addCharacter();
-  if (isNarrow.value) sidebarOpen.value = false;
+  // Keep the rail open and drop the cursor straight into the new name field.
+  nextTick(() => characterSidebar.value?.focusName());
 }
 
 // Character deletion (parent-side confirm).
@@ -491,59 +484,6 @@ function onFileChosen(e) {
   line-height: 1;
 }
 
-/* Cream controls strip, flush beneath the top bar (related chrome layers). The
-   band's bg spans full width; padding-left clears the rail so the inner centers
-   exactly like the content column below it (same 104rem box in the post-rail
-   space) — leaving the fields left-aligned within that centered area. */
-.character-controls-strip {
-  background: var(--par-color-surface-card, #fefbf4);
-  border-bottom: 0.5px solid var(--par-color-border-strong, #c9b99a);
-  padding-left: 25rem; /* rail width */
-}
-.character-controls-strip__inner {
-  max-width: 104rem;
-  margin: 0 auto;
-  padding: 0.75rem 2.4rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-.field-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.field-label {
-  font-size: 1.1rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-action-hover, #2a4d70);
-}
-/* Character names are editorial content → burgundy ink on the nested surface. */
-.character-name-input {
-  max-width: 24rem;
-  padding: 0.3rem 0.6rem;
-  background: var(--par-color-surface, #fbf7f0);
-  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
-  border-radius: var(--par-radius-md, 4px);
-  font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: var(--par-color-title, #7a1f1f);
-  transition: border-color 0.15s ease;
-}
-.character-name-input::placeholder {
-  color: var(--par-color-text-muted, #6b6b6b);
-  font-weight: 400;
-  font-style: italic;
-}
-.character-name-input:focus {
-  outline: none;
-  border-color: var(--color-action-active, #1f3a5c);
-}
-
 .backpack__content {
   min-width: 0; /* let the inner grid shrink instead of overflowing */
 }
@@ -628,10 +568,6 @@ function onFileChosen(e) {
   .backpack__main {
     grid-template-columns: 1fr;
   }
-  /* Rail is off-canvas here, so the strip centers in the full width like the page. */
-  .character-controls-strip {
-    padding-left: 0;
-  }
   /* Bottom-left FAB to open the (now off-canvas) character rail. */
   .backpack__menu-toggle {
     position: fixed;
@@ -660,7 +596,6 @@ function onFileChosen(e) {
 
 @media print {
   .app-top-bar,
-  .character-controls-strip,
   .backpack__rail,
   .backpack__overlay,
   .backpack__menu-toggle,
