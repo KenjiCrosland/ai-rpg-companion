@@ -78,6 +78,19 @@
           >×</button>
         </p>
 
+        <p v-if="showBagTip" class="backpack__save-note backpack__save-note--bag">
+          <span class="backpack__save-icon" aria-hidden="true">🧳</span>
+          <span>You've got a <strong>Bag of Holding</strong>! Drag items onto its panel below (or use
+          <strong>Stash in bag</strong> in an item's details) to tuck them away. Stashed gear stops
+          counting against your carry weight. It holds up to <strong>500 lb</strong>.</span>
+          <button
+            class="backpack__save-dismiss"
+            type="button"
+            aria-label="Dismiss this message"
+            @click="dismissBagTip"
+          >×</button>
+        </p>
+
         <div class="backpack__main">
           <div class="backpack__sidebar">
         <ItemDetail
@@ -85,12 +98,14 @@
           :categories="detailCategories"
           :attuned-count="attunedCount"
           :max-attunement="maxAttunement"
+          :can-stash="canStashSelected"
           @set-quantity="({ id, quantity }) => setQuantity(id, quantity)"
           @update="({ id, patch }) => updateItem(id, patch)"
           @remove="removeItem"
           @equip="({ instanceId, slot }) => equipItem(instanceId, slot)"
           @unequip="unequipItem"
           @attune="toggleAttune"
+          @stash="stashSelected"
           @view-equipped="setPackView('equip')"
         />
 
@@ -121,7 +136,7 @@
           @reorder="({ movedId, targetId }) => reorderList(movedId, targetId)"
           @nudge="({ instanceId, dx, dy }) => nudge(instanceId, dx, dy)"
           @remove="removeItem"
-          @select="selectItem"
+          @select="onSelectTile"
           @unequip="unequipItem"
           @equip="({ instanceId, slot }) => equipItem(instanceId, slot)"
           @autopack="autopack"
@@ -130,7 +145,18 @@
           @restore="triggerImport"
           @empty="confirmClear = true"
         />
+        <BagPanel
+          v-for="b in bags"
+          :key="b.instanceId"
+          :bag="b"
+          @stash="(id) => stashItem(id, b.instanceId)"
+          @retrieve="retrieveItem"
+          @empty="emptyBag"
+          @reject-bag="onRejectBag"
+        />
         <CoinPurse
+          ref="coinPurse"
+          :class="{ 'coin-flash': coinFlash }"
           :coins="coins"
           :coin-lbs="coinLbs"
           :coin-gold="coinGold"
@@ -197,9 +223,11 @@ import RulesDrawer from './components/RulesDrawer.vue';
 import ItemDetail from './components/ItemDetail.vue';
 import ItemCatalog from './components/ItemCatalog.vue';
 import BackpackGrid from './components/BackpackGrid.vue';
+import BagPanel from './components/BagPanel.vue';
 import CoinPurse from './components/CoinPurse.vue';
 import CapacityIndicator from './components/CapacityIndicator.vue';
 import PrintList from './components/PrintList.vue';
+import { isBagOfHolding } from './utils/tile-presentation.mjs';
 
 // Free standalone tool; accept (and ignore) a premium prop so mountApp can't warn.
 defineProps({ premium: { type: Boolean, default: false } });
@@ -237,6 +265,12 @@ const {
   equipItem,
   unequipItem,
   toggleAttune,
+  bags,
+  hasBag,
+  stashItem,
+  retrieveItem,
+  emptyBag,
+  coinPurseId,
   announcement,
   setStrength,
   setCoin,
@@ -256,6 +290,46 @@ const {
 } = useBackpack();
 
 const detailCategories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic Item'];
+
+// --- bag of holding ---
+const canStashSelected = computed(
+  () => hasBag.value && !!selectedItem.value && !isBagOfHolding(selectedItem.value),
+);
+function stashSelected() {
+  if (!selectedItem.value || !bags.value.length) return;
+  stashItem(selectedItem.value.instanceId, bags.value[0].instanceId);
+}
+function onRejectBag() {
+  toast.error('A bag of holding inside another tears a rift to the Astral Plane. The SRD says don’t!');
+}
+
+// Clicking the coin-purse tile focuses the coin editor instead of opening the detail panel.
+const coinPurse = ref(null);
+const coinFlash = ref(false);
+function focusCoins() {
+  const el = coinPurse.value?.$el;
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  coinFlash.value = true;
+  setTimeout(() => (coinFlash.value = false), 1200);
+}
+function onSelectTile(id) {
+  if (id === coinPurseId) focusCoins();
+  else selectItem(id);
+}
+
+// One-time tip the first time a bag of holding appears in the pack.
+const BAG_TIP_KEY = 'backpack-bag-tip-dismissed';
+const bagTipDismissed = ref(localStorage.getItem(BAG_TIP_KEY) === '1');
+const showBagTip = computed(() => hasBag.value && !bagTipDismissed.value);
+function dismissBagTip() {
+  bagTipDismissed.value = true;
+  try {
+    localStorage.setItem(BAG_TIP_KEY, '1');
+  } catch (e) {
+    /* ignore */
+  }
+}
 
 const confirmClear = ref(false);
 const fileInput = ref(null);
@@ -361,7 +435,7 @@ function onAddCustom(payload) {
 
 function onAddPack(packId) {
   const pack = addPack(packId);
-  if (pack) toast.success(`Added ${pack.name} — ${pack.itemCount} items.`);
+  if (pack) toast.success(`Added ${pack.name}: ${pack.itemCount} items.`);
 }
 
 function doClear() {
@@ -496,6 +570,14 @@ function onFileChosen(e) {
 
 .backpack__content {
   min-width: 0; /* let the inner grid shrink instead of overflowing */
+}
+
+/* Brief highlight when the coin-purse tile is clicked (focuses the editor). */
+.coin-flash {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 2px;
+  border-radius: var(--par-radius-lg, 12px);
+  transition: outline-color 0.3s ease;
 }
 
 .backpack__save-note {

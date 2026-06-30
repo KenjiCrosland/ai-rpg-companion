@@ -58,7 +58,7 @@
             v-else-if="slot.id === 'offHand' && twoHandedMain"
             class="slot slot--blocked"
             aria-disabled="true"
-            :aria-label="`Off hand blocked — ${cleanName(twoHandedMain.name)} uses both hands.`"
+            :aria-label="`Off hand blocked. ${cleanName(twoHandedMain.name)} uses both hands.`"
           >
             <span class="slot__label">{{ slot.label }}</span>
             <span class="slot__blocked-mark" aria-hidden="true">✕</span>

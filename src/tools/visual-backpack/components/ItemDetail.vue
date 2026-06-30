@@ -96,6 +96,14 @@
           View equipped items →
         </button>
 
+        <ParButton
+          v-if="canStash"
+          variant="primary-outline"
+          size="small"
+          class="detail__stash"
+          @click="emit('stash', item.instanceId)"
+        >🧳 Stash in bag</ParButton>
+
         <div v-if="blocks.length" class="detail__desc">
           <template v-for="(b, i) in blocks" :key="i">
             <p v-if="b.type === 'p'"><RichText :text="b.text" /></p>
@@ -175,10 +183,11 @@ const props = defineProps({
   categories: { type: Array, default: () => [] },
   attunedCount: { type: Number, default: 0 },
   maxAttunement: { type: Number, default: 3 },
+  canStash: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
-  'set-quantity', 'update', 'remove', 'equip', 'unequip', 'attune', 'view-equipped',
+  'set-quantity', 'update', 'remove', 'equip', 'unequip', 'attune', 'view-equipped', 'stash',
 ]);
 
 const SLOT_LABEL = Object.fromEntries(EQUIP_SLOTS.map((s) => [s.id, s.label]));
@@ -433,6 +442,9 @@ function save() {
 }
 .detail__viewequip:hover {
   color: var(--color-action-active, #1f3a5c);
+}
+.detail__stash {
+  margin-bottom: 1.2rem;
 }
 
 .detail__desc {

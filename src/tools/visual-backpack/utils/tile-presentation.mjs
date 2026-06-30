@@ -18,6 +18,7 @@ export const TYPE_COLORS = {
   tools: { label: 'Tools', bg: '#e3d29c', text: '#6a5615' }, // ochre
   gear: { label: 'Gear', bg: '#e7ddc7', text: '#5c513a' }, // tan
   magic: { label: 'Magic Item', bg: '#d6c4dd', text: '#553a62' }, // arcane plum
+  currency: { label: 'Currency', bg: '#ecd98f', text: '#6e561a' }, // gold (coin purse)
 };
 
 // Consumables hide inside SRD "Adventuring Gear" — detect the obvious ones
@@ -27,6 +28,7 @@ const CONSUMABLE_RE =
 
 /** Classify an item into a colored type. */
 export function itemType(item) {
+  if (item?.isCoinPurse) return 'currency';
   switch (item?.category) {
     case 'Weapon':
       return 'weapon';
@@ -109,6 +111,11 @@ export function equipSlot(item) {
     default:
       return null; // Potion, Scroll, Ammunition
   }
+}
+
+/** The Bag of Holding — an extradimensional container (its contents don't weigh you down). */
+export function isBagOfHolding(item) {
+  return item?.id === 'mi-bag-of-holding' || /\bbag of holding\b/i.test(item?.name || '');
 }
 
 /** A weapon (base or magic) — the only items that can choose main/off hand. */

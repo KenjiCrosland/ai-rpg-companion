@@ -112,7 +112,11 @@ function normalizeItem(it) {
     attunementNote: typeof it?.attunementNote === 'string' ? it.attunementNote : '',
     equippedSlot: typeof it?.equippedSlot === 'string' ? it.equippedSlot : null,
     attuned: !!it?.attuned,
+    // instanceId of the bag of holding this item is stashed in (null = main pack).
+    inBagId: typeof it?.inBagId === 'string' ? it.inBagId : null,
     source: it?.source === 'srd' ? 'srd' : 'custom',
+    // Derived coin-purse marker (reflects the coins object; carries no coin data).
+    ...(it?.isCoinPurse ? { isCoinPurse: true } : {}),
     // Weapon grip — preserved only when present so the catalog backfill can heal
     // older saved weapons that predate the field (undefined ≠ false here).
     ...(typeof it?.twoHanded === 'boolean' ? { twoHanded: it.twoHanded } : {}),

@@ -13,6 +13,7 @@
     @keydown="onKeydown"
   >
     <button
+      v-if="!item.isCoinPurse"
       class="tile__remove"
       type="button"
       :aria-label="`Remove ${item.name}`"
@@ -30,6 +31,7 @@
           class="tile__qty"
         > ×{{ item.quantity }}</span></span>
     </div>
+    <span v-if="item.isCoinPurse" class="tile__coinvalue">{{ item.valueGp }} gp</span>
     <span class="tile__weight">{{ formatWeight(weight) }} lb</span>
   </div>
 </template>
@@ -42,7 +44,7 @@
  * alongside pointer drag.
  */
 import { computed, ref } from 'vue';
-import { typeColor, tileSize, effectiveWeight, cleanName } from '../utils/tile-presentation.mjs';
+import { typeColor, tileSize, effectiveWeight, cleanName, isBagOfHolding } from '../utils/tile-presentation.mjs';
 import { setDrag, clearDrag } from '../composables/drag-state.js';
 
 const props = defineProps({
@@ -89,7 +91,12 @@ function onDragStart(e) {
   const { w, h } = span.value;
   const gx = Math.min(w - 1, Math.max(0, Math.floor((e.clientX - rect.left) / (rect.width / w))));
   const gy = Math.min(h - 1, Math.max(0, Math.floor((e.clientY - rect.top) / (rect.height / h))));
-  setDrag({ kind: 'move', instanceId: props.item.instanceId, grab: { x: gx, y: gy } });
+  setDrag({
+    kind: 'move',
+    instanceId: props.item.instanceId,
+    grab: { x: gx, y: gy },
+    isBag: isBagOfHolding(props.item),
+  });
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', props.item.name);
 }
@@ -194,6 +201,11 @@ function onKeydown(e) {
   font-size: 1rem;
   font-weight: 500;
   opacity: 0.85;
+  letter-spacing: 0.02em;
+}
+.tile__coinvalue {
+  font-size: 1.15rem;
+  font-weight: 700;
   letter-spacing: 0.02em;
 }
 

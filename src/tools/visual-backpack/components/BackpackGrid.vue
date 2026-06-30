@@ -47,14 +47,14 @@
           <ParButton
             size="small"
             variant="primary-outline"
-            :disabled="!items.length"
+            :disabled="!hasGridItems"
             @click="$emit('autopack', sortBy)"
           >Tidy up</ParButton>
         </template>
       </div>
     </header>
 
-    <div v-if="items.length && view !== 'equip'" class="grid-panel__pills" role="group" aria-label="Filter pack by type">
+    <div v-if="hasGridItems && view !== 'equip'" class="grid-panel__pills" role="group" aria-label="Filter pack by type">
       <button
         class="pill"
         type="button"
@@ -95,7 +95,7 @@
       @dragleave="onDragLeave"
       @drop="onDrop"
     >
-      <p v-if="!items.length" class="grid-empty">
+      <p v-if="!hasGridItems" class="grid-empty">
         <span class="grid-empty__icon" aria-hidden="true">🎒</span>
         <span>Start with a <strong>starter pack</strong>, or drag gear anywhere on the grid.</span>
       </p>
@@ -131,7 +131,7 @@
 
     <!-- LIST VIEW -->
     <div v-else class="list">
-      <p v-if="!items.length" class="grid-empty grid-empty--list">
+      <p v-if="!hasGridItems" class="grid-empty grid-empty--list">
         <span class="grid-empty__icon" aria-hidden="true">🎒</span>
         <span>Start with a <strong>starter pack</strong>, or add gear from the catalog.</span>
       </p>
@@ -193,7 +193,7 @@
         <button
           class="pack-action pack-action--destructive"
           type="button"
-          :disabled="!items.length"
+          :disabled="!hasGridItems"
           @click="$emit('empty')"
         >
           <span class="pack-action__icon" aria-hidden="true">🗑️</span>
@@ -216,9 +216,9 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { ParButton, ParSelect } from '@/parchment';
 import ItemTile from './ItemTile.vue';
 import EquipDoll from './EquipDoll.vue';
-import { dragPayload, clearDrag } from '../composables/drag-state.js';
+import { dragPayload, setDrag, clearDrag } from '../composables/drag-state.js';
 import { COLS, offsetToCell, contentRows, packItems } from '../utils/grid-layout.mjs';
-import { itemType, TYPE_COLORS, typeColor, effectiveWeight, cleanName } from '../utils/tile-presentation.mjs';
+import { itemType, TYPE_COLORS, typeColor, effectiveWeight, cleanName, isBagOfHolding } from '../utils/tile-presentation.mjs';
 
 const GAP = 6; // px, matches --gap
 
@@ -256,9 +256,13 @@ const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic'].map((k
 const sortBy = ref('type');
 const typeFilter = ref('');
 
+// Items stashed in a bag of holding live in the bag panel, not the grid.
+const onGrid = computed(() => props.items.filter((i) => !i.inBagId));
+const hasGridItems = computed(() => onGrid.value.length > 0);
+
 // "Equipped" is a cross-cutting filter (any item worn on the doll), alongside the
 // type pills. Only offered when something is actually equipped.
-const hasEquipped = computed(() => props.items.some((i) => i.equippedSlot));
+const hasEquipped = computed(() => onGrid.value.some((i) => i.equippedSlot));
 const matchesFilter = (i) => {
   if (!typeFilter.value) return true;
   if (typeFilter.value === 'equipped') return !!i.equippedSlot;
@@ -267,14 +271,14 @@ const matchesFilter = (i) => {
 
 // Items after the active filter (array order — used by the list view).
 const listItems = computed(() =>
-  typeFilter.value ? props.items.filter(matchesFilter) : props.items,
+  typeFilter.value ? onGrid.value.filter(matchesFilter) : onGrid.value,
 );
 
 // Grid view: when filtered, the hidden items are treated as absent and the
 // visible subset is tidied into a fresh top-left layout for the view only (the
 // stored positions are untouched, so clearing the filter restores them).
 const gridItems = computed(() =>
-  typeFilter.value ? packItems(listItems.value, COLS, sortBy.value) : props.items,
+  typeFilter.value ? packItems(listItems.value, COLS, sortBy.value) : onGrid.value,
 );
 const activeTypeLabel = computed(() =>
   typeFilter.value === 'equipped'
@@ -308,6 +312,8 @@ function onRowDragStart(item, e) {
   listDragId.value = item.instanceId;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', item.name);
+  // Also publish to drag-state so the bag panel can accept a list-row drop.
+  setDrag({ kind: 'move', instanceId: item.instanceId, grab: { x: 0, y: 0 }, isBag: isBagOfHolding(item) });
 }
 function onRowDrop(target) {
   if (listDragId.value && listDragId.value !== target.instanceId) {
@@ -319,6 +325,7 @@ function onRowDrop(target) {
 function onRowDragEnd() {
   listDragId.value = null;
   dragOverId.value = null;
+  clearDrag();
 }
 function onRowKeydown(item, e) {
   if (e.key === 'Enter') {

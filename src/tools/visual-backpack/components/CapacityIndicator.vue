@@ -24,7 +24,7 @@
     <div class="capacity__footer">
       <span class="capacity__status">
         <template v-if="status.consequences">{{ status.consequences }}</template>
-        <template v-else>Unencumbered — carry on.</template>
+        <template v-else>Unencumbered, carry on.</template>
       </span>
       <label class="capacity__toggle">
         <input
@@ -44,7 +44,7 @@
       >{{ packDropped ? 'Pick up pack' : 'Drop pack' }}</ParButton>
       <span class="capacity__drop-note">
         <template v-if="packDropped">
-          <strong>{{ formatWeight(packWeight) }} lb</strong> on the ground — counting worn gear only.
+          <strong>{{ formatWeight(packWeight) }} lb</strong> on the ground, counting worn gear only.
         </template>
         <template v-else>
           Set down <strong>{{ formatWeight(packWeight) }} lb</strong> to fight at

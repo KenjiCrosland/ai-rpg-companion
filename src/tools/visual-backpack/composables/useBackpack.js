@@ -9,7 +9,7 @@ import {
   defaultCharacter,
 } from '../utils/backpack-storage.mjs';
 import { useCarryCapacity } from './useCarryCapacity.js';
-import { coinWeight, coinValueGp, totalWeight } from '../utils/carry-capacity.mjs';
+import { coinWeight, coinValueGp, totalWeight, totalCoins } from '../utils/carry-capacity.mjs';
 import { expandPackToTemplates } from '../utils/pack-expansion.mjs';
 import {
   tileSize,
@@ -17,10 +17,13 @@ import {
   equipSlot,
   equipTargets,
   isTwoHanded,
+  isBagOfHolding,
   EQUIP_SLOTS,
 } from '../utils/tile-presentation.mjs';
 
 const MAX_ATTUNEMENT = 3;
+const BAG_CAPACITY = 500; // lb — a bag of holding holds up to 500 lb (SRD)
+const COIN_ID = '__coins__'; // the synced coin-purse marker (one per character)
 const SLOT_LABEL = Object.fromEntries(EQUIP_SLOTS.map((s) => [s.id, s.label]));
 import {
   resolvePosition,
@@ -64,13 +67,25 @@ function instantiate(template) {
     attunementNote: template.attunementNote || '',
     equippedSlot: null,
     attuned: false,
+    inBagId: null,
     source: template.source === 'srd' ? 'srd' : 'custom',
     ...(typeof template.twoHanded === 'boolean' ? { twoHanded: template.twoHanded } : {}),
   };
 }
 
-// Items load with saved grid positions; pack any that are missing one.
-const ensurePositions = (list) => (list.some((i) => !i.pos) ? packItems(list, COLS) : list);
+// Pack any GRID items missing a position; bag-stashed items (inBagId) stay off-grid.
+const ensurePositions = (list) => {
+  if (!list.some((i) => !i.inBagId && !i.pos)) return list;
+  const bagged = list.filter((i) => i.inBagId);
+  const grid = list.filter((i) => !i.inBagId);
+  return [...packItems(grid, COLS), ...bagged];
+};
+
+// Drop dangling bag references (stashed in a bag that no longer exists → back to pack).
+const sweepBags = (list) => {
+  const bagIds = new Set(list.filter(isBagOfHolding).map((i) => i.instanceId));
+  return list.map((i) => (i.inBagId && !bagIds.has(i.inBagId) ? { ...i, inBagId: null } : i));
+};
 
 // Heal saved SRD items that predate the magicType/attunement fields — without it
 // they carry an empty magicType, so equipSlot() returns null and no Equip button
@@ -101,7 +116,13 @@ const backfillFromCatalog = (list) => {
 // size is stale (e.g. the bucket rules changed) the two disagree and Tidy leaves
 // gaps. Recompute size, then position.
 const hydrate = (list) =>
-  ensurePositions(backfillFromCatalog(list).map((i) => ({ ...i, size: tileSize(i) })));
+  ensurePositions(
+    sweepBags(backfillFromCatalog(list)).map((i) => ({
+      ...i,
+      size: tileSize(i),
+      ...(i.inBagId ? { pos: null } : {}), // stashed items have no grid position
+    })),
+  );
 
 /**
  * Central backpack state: Strength, the carried tiles, the user's custom catalog
@@ -142,8 +163,8 @@ export function useBackpack() {
     characters.value.map((c) => ({
       id: c.id,
       name: c.name,
-      itemCount: c.items.length,
-      totalWeight: totalWeight(c.items),
+      itemCount: c.items.filter((i) => !i.isCoinPurse).length,
+      totalWeight: totalWeight(c.items.filter((i) => !i.inBagId && !i.isCoinPurse)),
     })),
   );
 
@@ -206,23 +227,25 @@ export function useBackpack() {
   // stay on the body; everything else (plus coins) is in the pack and hits the
   // ground when dropped.
   const round2 = (n) => Math.round(n * 100) / 100;
+  // Items stashed in a bag of holding don't weigh you down (only the bag's own
+  // 15 lb does, and the bag is a normal carried item). So they're excluded from
+  // every carry-weight figure.
+  const carried = (i) => !i.inBagId;
   const equippedWeight = computed(() => totalWeight(items.value.filter((i) => i.equippedSlot)));
+  // Coin weight rides on the coin-purse marker (an item), so it's already in these
+  // sums — no separate extraWeight term.
   const packWeight = computed(() =>
-    round2(
-      totalWeight(items.value.filter((i) => !i.equippedSlot)) +
-        (countCoinWeight.value ? coinLbs.value : 0),
-    ),
+    round2(totalWeight(items.value.filter((i) => carried(i) && !i.equippedSlot))),
   );
 
   // When the pack is dropped, encumbrance counts only worn gear (and no coins).
   const loadItems = computed(() =>
-    packDropped.value ? items.value.filter((i) => i.equippedSlot) : items.value,
-  );
-  const extraWeight = computed(() =>
-    packDropped.value ? 0 : countCoinWeight.value ? coinLbs.value : 0,
+    packDropped.value
+      ? items.value.filter((i) => i.equippedSlot)
+      : items.value.filter(carried),
   );
 
-  const status = useCarryCapacity(strength, loadItems, extraWeight);
+  const status = useCarryCapacity(strength, loadItems);
 
   // Drag-source catalog = SRD items + the user's custom templates.
   const catalog = computed(() => [...srdEquipment, ...customItems.value]);
@@ -327,6 +350,109 @@ export function useBackpack() {
     );
   }
 
+  // --- bag of holding ----------------------------------------------------
+  /** Every bag of holding in the pack, with its live contents + capacity read. */
+  const bags = computed(() =>
+    items.value
+      .filter(isBagOfHolding)
+      .map((bag) => {
+        const contents = items.value.filter((i) => i.inBagId === bag.instanceId);
+        return {
+          instanceId: bag.instanceId,
+          name: cleanName(bag.name),
+          contents,
+          used: contents.reduce((s, i) => s + (Number(i.weight) || 0) * (Number(i.quantity) || 1), 0),
+          capacity: BAG_CAPACITY,
+        };
+      }),
+  );
+  const hasBag = computed(() => bags.value.length > 0);
+
+  /** Place a (newly un-bagged) item back on the grid at the first free spot. */
+  function placeOnGrid(list, instanceId) {
+    const it = list.find((i) => i.instanceId === instanceId);
+    const others = list.filter((i) => i.instanceId !== instanceId && !i.inBagId);
+    const pos = resolvePosition({ x: 0, y: 0 }, it.size, others, COLS);
+    return list.map((i) => (i.instanceId === instanceId ? { ...i, pos } : i));
+  }
+
+  /** Stash an item into a bag of holding — it leaves the grid and stops counting weight. */
+  function stashItem(instanceId, bagId) {
+    const item = items.value.find((i) => i.instanceId === instanceId);
+    const bag = items.value.find((i) => i.instanceId === bagId);
+    if (!item || !bag || !isBagOfHolding(bag) || instanceId === bagId) return false;
+    if (isBagOfHolding(item)) return false; // a bag inside a bag — handled by the caller (rift!)
+    items.value = items.value.map((i) =>
+      i.instanceId === instanceId
+        ? { ...i, inBagId: bagId, equippedSlot: null, attuned: false, pos: null }
+        : i,
+    );
+    announce(`${cleanName(item.name)} stashed in the ${cleanName(bag.name)}.`);
+    return true;
+  }
+
+  /** Take an item out of its bag and back into the main pack. */
+  function retrieveItem(instanceId) {
+    const item = items.value.find((i) => i.instanceId === instanceId);
+    if (!item || !item.inBagId) return;
+    const cleared = items.value.map((i) => (i.instanceId === instanceId ? { ...i, inBagId: null } : i));
+    items.value = placeOnGrid(cleared, instanceId);
+    announce(`${cleanName(item.name)} taken out of the bag.`);
+  }
+
+  /** Empty a bag — all its contents return to the main pack. */
+  function emptyBag(bagId) {
+    let working = items.value;
+    for (const it of items.value.filter((i) => i.inBagId === bagId)) {
+      working = placeOnGrid(
+        working.map((i) => (i.instanceId === it.instanceId ? { ...i, inBagId: null } : i)),
+        it.instanceId,
+      );
+    }
+    items.value = working;
+  }
+
+  // --- coin purse (a marker item synced from the coins object — no second store) ---
+  const coinPurseId = COIN_ID;
+  function syncCoinPurse() {
+    if (!current.value) return;
+    const list = items.value;
+    const existing = list.find((i) => i.instanceId === COIN_ID);
+    // Coins are a weighable tile only when "include coin weight" is on (else just a number).
+    const show = countCoinWeight.value && totalCoins(coins.value) > 0;
+    if (!show) {
+      if (existing) items.value = list.filter((i) => i.instanceId !== COIN_ID);
+      return;
+    }
+    const weight = coinLbs.value;
+    const valueGp = coinGold.value;
+    const size = tileSize({ weight });
+    if (existing) {
+      if (existing.weight !== weight || existing.valueGp !== valueGp) {
+        items.value = list.map((i) =>
+          i.instanceId === COIN_ID ? { ...i, weight, valueGp, size } : i,
+        );
+      }
+      return;
+    }
+    const marker = {
+      instanceId: COIN_ID,
+      id: COIN_ID,
+      isCoinPurse: true,
+      name: 'Coin purse',
+      weight,
+      valueGp,
+      quantity: 1,
+      category: 'Currency',
+      size,
+      pos: null,
+      inBagId: null,
+      source: 'srd',
+    };
+    items.value = placeOnGrid([...list, marker], COIN_ID);
+  }
+  watch([coins, countCoinWeight, currentId], () => syncCoinPurse(), { deep: true, immediate: true });
+
   function setStrength(v) {
     strength.value = clampStr(v);
   }
@@ -349,7 +475,7 @@ export function useBackpack() {
     packDropped.value = on === undefined ? !packDropped.value : !!on;
     announce(
       packDropped.value
-        ? `Pack dropped — ${packWeight.value} lb set down. Carrying ${status.value.total} lb of worn gear.`
+        ? `Pack dropped: ${packWeight.value} lb set down. Carrying ${status.value.total} lb of worn gear.`
         : `Pack picked up. Carrying ${status.value.total} lb.`,
     );
   }
@@ -414,6 +540,10 @@ export function useBackpack() {
   }
 
   function removeItem(instanceId) {
+    if (instanceId === COIN_ID) return; // the coin purse is managed via the stepper
+    // Removing a bag returns its contents to the pack rather than vanishing them.
+    const removed = items.value.find((i) => i.instanceId === instanceId);
+    if (removed && isBagOfHolding(removed)) emptyBag(instanceId);
     items.value = items.value.filter((i) => i.instanceId !== instanceId);
     if (selectedId.value === instanceId) selectedId.value = null;
   }
@@ -486,13 +616,15 @@ export function useBackpack() {
     items.value = items.value.map((i) => (i.instanceId === instanceId ? { ...i, pos: { x, y } } : i));
   }
 
-  /** Tidy: re-pack into a top-left arrangement, sorted by `sortKey`. */
+  /** Tidy: re-pack the grid items top-left by `sortKey`; bag-stashed items stay put. */
   function autopack(sortKey = 'type') {
-    items.value = packItems(items.value, COLS, sortKey);
+    const bagged = items.value.filter((i) => i.inBagId);
+    const grid = items.value.filter((i) => !i.inBagId);
+    items.value = [...packItems(grid, COLS, sortKey), ...bagged];
   }
 
   function clearAll() {
-    items.value = [];
+    items.value = items.value.filter((i) => i.isCoinPurse); // keep the coin purse
   }
 
   /**
@@ -571,6 +703,13 @@ export function useBackpack() {
     equipItem,
     unequipItem,
     toggleAttune,
+    bags,
+    hasBag,
+    bagCapacity: BAG_CAPACITY,
+    stashItem,
+    retrieveItem,
+    emptyBag,
+    coinPurseId,
     announcement,
     setStrength,
     setCoin,

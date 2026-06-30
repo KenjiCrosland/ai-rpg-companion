@@ -100,10 +100,14 @@ export function placeItemAt(items, movedId, preferred, cols = COLS) {
   };
   const withMoved = items.map((i) => (i.instanceId === movedId ? { ...i, pos } : i));
 
+  // Off-grid items (no pos — e.g. stashed in a bag of holding) sit out of the
+  // geometry entirely and are preserved as-is.
+  const offGrid = withMoved.filter((i) => i.instanceId !== movedId && !i.pos);
+
   // Settle the rest in reading order; anyone overlapping a settled tile relocates.
   const anchor = withMoved.find((i) => i.instanceId === movedId);
   const others = withMoved
-    .filter((i) => i.instanceId !== movedId)
+    .filter((i) => i.instanceId !== movedId && i.pos)
     .sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x);
 
   const settled = [anchor];
@@ -116,7 +120,7 @@ export function placeItemAt(items, movedId, preferred, cols = COLS) {
     settled.push(next);
     out.push(next);
   }
-  return out;
+  return [...out, ...offGrid];
 }
 
 // Match the filter pills' classification + order (so "consumables sort with

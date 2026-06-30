@@ -62,10 +62,10 @@ export function coinValueGp(coins) {
 
 export const CONSEQUENCES = {
   ok: '',
-  encumbered: 'Encumbered — speed reduced by 10 feet.',
+  encumbered: 'Encumbered: speed reduced by 10 feet.',
   heavily:
-    'Heavily encumbered — speed reduced by 20 feet, and disadvantage on ability checks, attack rolls, and saving throws that use Strength, Dexterity, or Constitution.',
-  over: 'Over capacity — you cannot carry this much. Drop something or raise Strength.',
+    'Heavily encumbered: speed reduced by 20 feet, and disadvantage on ability checks, attack rolls, and saving throws that use Strength, Dexterity, or Constitution.',
+  over: 'Over capacity: you cannot carry this much. Drop something or raise Strength.',
 };
 
 /**

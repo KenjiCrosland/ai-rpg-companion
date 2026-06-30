@@ -25,15 +25,18 @@
       <section class="rules-section">
         <h3 class="rules-section__heading">Carrying capacity</h3>
         <p class="rules-section__text">
-          Your carrying capacity is your <strong>Strength score × 15</strong> pounds. You can
-          shoulder up to that weight; this tool tracks the total in the carrying bar.
+          Your maximum carrying capacity is your <strong>Strength score × 15</strong> pounds: a
+          hard ceiling on what you can carry at all. By the core rules you're unhindered right up
+          to it. The optional <em>encumbrance</em> rules below don't change that ceiling; they add
+          graduated speed penalties at lower thresholds, so you slow down before you reach the cap.
+          The carrying bar tracks your total either way.
         </p>
       </section>
 
       <section class="rules-section">
         <h3 class="rules-section__heading">Encumbrance (variant)</h3>
         <p class="rules-section__text">
-          Carrying more than <strong>Strength × 5</strong> makes you <em>encumbered</em> — your
+          Carrying more than <strong>Strength × 5</strong> makes you <em>encumbered</em>: your
           speed drops by 10 feet. Past <strong>Strength × 10</strong> you're
           <em>heavily encumbered</em>: speed drops by 20 feet, and you have disadvantage on
           ability checks, attack rolls, and saving throws that use Strength, Dexterity, or
@@ -72,9 +75,9 @@
         <h3 class="rules-section__heading">Dropping your pack</h3>
         <p class="rules-section__text">
           Setting your pack down is a <strong>free object interaction</strong> on your turn,
-          leaving you carrying only your worn and wielded gear — which can shed the
+          leaving you carrying only your worn and wielded gear, which can shed the
           <em>encumbered</em> condition right before a fight. The catch: if you have to retreat,
-          you may have to <strong>leave the pack — and everything in it — behind</strong>.
+          you may have to <strong>leave the pack (and everything in it) behind</strong>.
         </p>
       </section>
     </div>
