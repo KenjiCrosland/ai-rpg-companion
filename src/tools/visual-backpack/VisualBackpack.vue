@@ -113,7 +113,9 @@
           class="backpack__catalog"
           :catalog="catalog"
           :packs="packs"
+          :coins="coins"
           @add="addItem"
+          @buy="buyItem"
           @add-pack="onAddPack"
           @add-custom="onAddCustom"
           @remove-custom="removeCustomItem"
@@ -139,6 +141,7 @@
           @select="onSelectTile"
           @unequip="unequipItem"
           @equip="({ instanceId, slot }) => equipItem(instanceId, slot)"
+          @set-quantity="({ id, quantity }) => setQuantity(id, quantity)"
           @autopack="autopack"
           @print="printList"
           @backup="exportData"
@@ -161,6 +164,8 @@
           :coin-lbs="coinLbs"
           :coin-gold="coinGold"
           @set-coin="({ denom, value }) => setCoin(denom, value)"
+          @adjust="adjustCoins"
+          @empty="confirmEmptyPurse = true"
         />
         <CapacityIndicator
           :status="status"
@@ -191,6 +196,17 @@
       destructive
       @confirm="doClear"
       @cancel="confirmClear = false"
+    />
+
+    <ParConfirm
+      :opened="confirmEmptyPurse"
+      title="Empty your purse?"
+      message="This removes every coin (gp, ep, sp, and cp). This can't be undone."
+      confirm-label="Empty purse"
+      cancel-label="Keep it"
+      destructive
+      @confirm="doEmptyPurse"
+      @cancel="confirmEmptyPurse = false"
     />
 
     <ParConfirm
@@ -274,8 +290,11 @@ const {
   announcement,
   setStrength,
   setCoin,
+  adjustCoins,
+  emptyPurse,
   toggleCoinWeight,
   addItem,
+  buyItem,
   addPack,
   removeItem,
   moveItemTo,
@@ -332,6 +351,7 @@ function dismissBagTip() {
 }
 
 const confirmClear = ref(false);
+const confirmEmptyPurse = ref(false);
 const fileInput = ref(null);
 
 // Rules-reference drawer (chrome affordance). Returns focus to the trigger on close.
@@ -441,6 +461,11 @@ function onAddPack(packId) {
 function doClear() {
   clearAll();
   confirmClear.value = false;
+}
+
+function doEmptyPurse() {
+  emptyPurse();
+  confirmEmptyPurse.value = false;
 }
 
 function printList() {

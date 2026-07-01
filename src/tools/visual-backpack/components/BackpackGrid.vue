@@ -160,9 +160,31 @@
         >
           <span class="row-item__handle" aria-hidden="true">⠿</span>
           <span class="row-item__swatch" :style="{ background: rowColor(item).bg }" aria-hidden="true"></span>
-          <span class="row-item__name"
-            >{{ rowName(item) }}<span v-if="item.quantity > 1" class="row-item__qty"> ×{{ item.quantity }}</span></span>
+          <span class="row-item__name">{{ rowName(item) }}</span>
           <span v-if="item.equippedSlot" class="row-item__equipped">✓ Equipped</span>
+          <!-- Any numbered row gets a stepper: consumables/ammo spend one (− clears the
+               last), other stacks adjust the count. + always restocks. -->
+          <div
+            v-if="isNumbered(item)"
+            class="row-use"
+            @click.stop
+            @dragstart.prevent.stop
+            @keydown.stop
+          >
+            <button
+              class="row-use__btn"
+              type="button"
+              :aria-label="`${isConsumable(item) ? 'Use' : 'Remove'} one ${rowName(item)} (${item.quantity} left)`"
+              @click.stop="useOne(item)"
+            >−</button>
+            <span class="row-use__count" aria-hidden="true">{{ item.quantity }}</span>
+            <button
+              class="row-use__btn"
+              type="button"
+              :aria-label="`Add one ${rowName(item)}`"
+              @click.stop="addOne(item)"
+            >+</button>
+          </div>
           <span class="row-item__weight">{{ formatWeight(rowWeight(item)) }} lb</span>
           <button
             class="row-item__remove"
@@ -218,7 +240,7 @@ import ItemTile from './ItemTile.vue';
 import EquipDoll from './EquipDoll.vue';
 import { dragPayload, setDrag, clearDrag } from '../composables/drag-state.js';
 import { COLS, offsetToCell, contentRows, packItems } from '../utils/grid-layout.mjs';
-import { itemType, TYPE_COLORS, typeColor, effectiveWeight, cleanName, isBagOfHolding } from '../utils/tile-presentation.mjs';
+import { itemType, itemTypes, TYPE_COLORS, typeColor, effectiveWeight, cleanName, isBagOfHolding } from '../utils/tile-presentation.mjs';
 
 const GAP = 6; // px, matches --gap
 
@@ -235,7 +257,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'place', 'move', 'remove', 'nudge', 'autopack', 'select', 'reorder', 'unequip', 'equip', 'update:view',
-  'print', 'backup', 'restore', 'empty',
+  'print', 'backup', 'restore', 'empty', 'set-quantity',
 ]);
 
 const setView = (v) => emit('update:view', v);
@@ -246,6 +268,7 @@ const sortOptions = [
   { value: 'name', label: 'Name' },
   { value: 'weight-desc', label: 'Weight (heavy first)' },
   { value: 'weight-asc', label: 'Weight (light first)' },
+  { value: 'quantity', label: 'Quantity (most first)' },
 ];
 const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic'].map((key) => ({
   key,
@@ -266,7 +289,7 @@ const hasEquipped = computed(() => onGrid.value.some((i) => i.equippedSlot));
 const matchesFilter = (i) => {
   if (!typeFilter.value) return true;
   if (typeFilter.value === 'equipped') return !!i.equippedSlot;
-  return itemType(i) === typeFilter.value;
+  return itemTypes(i).includes(typeFilter.value); // primary + overlaps (magic weapon → Weapon too)
 };
 
 // Items after the active filter (array order — used by the list view).
@@ -300,6 +323,22 @@ function pillStyle(t) {
 const rowName = (it) => cleanName(it.name);
 const rowColor = (it) => typeColor(it);
 const rowWeight = (it) => effectiveWeight(it);
+
+// Consumables + ammo get an in-row use stepper (the count is the live state to track).
+// Consumable for stepper purposes = anything whose kind overlaps 'consumable',
+// including magic consumables (Arrow of Slaying, Potion of Healing, Spell Scroll)
+// whose primary/color type is 'magic'.
+const isConsumable = (it) => itemTypes(it).includes('consumable');
+// A row shows a stepper when it's numbered: any consumable/ammo (steppable even at 1,
+// so you can restock) or any item carried as a stack of more than one.
+const isNumbered = (it) => isConsumable(it) || (Number(it.quantity) || 1) > 1;
+function useOne(item) {
+  if (item.quantity > 1) emit('set-quantity', { id: item.instanceId, quantity: item.quantity - 1 });
+  else emit('remove', item.instanceId); // used the last one
+}
+function addOne(item) {
+  emit('set-quantity', { id: item.instanceId, quantity: item.quantity + 1 });
+}
 function formatWeight(w) {
   const n = Number(w) || 0;
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
@@ -619,10 +658,6 @@ function onDrop(e) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.row-item__qty {
-  font-weight: 700;
-  color: var(--color-action-hover, #2a4d70);
-}
 .row-item__equipped {
   flex: none;
   padding: 0.15rem 0.55rem;
@@ -635,8 +670,49 @@ function onDrop(e) {
 }
 .row-item__weight {
   flex: none;
+  min-width: 5.5rem; /* fixed column so the stepper doesn't shift with 1–3 digit weights */
+  text-align: right;
   font-size: 1.35rem;
   color: var(--par-color-text-secondary, #555);
+}
+
+/* In-row use stepper for consumables/ammo. */
+.row-use {
+  flex: none;
+  display: inline-grid;
+  grid-template-columns: 2.2rem 2.8rem 2.2rem;
+  align-items: stretch;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-sm, 3px);
+  overflow: hidden;
+  background: var(--par-color-surface, #fbf7f0);
+  cursor: default;
+}
+.row-use__btn {
+  height: 2.6rem;
+  border: none;
+  background: transparent;
+  color: var(--color-action-hover, #2a4d70);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.row-use__btn:hover {
+  background: rgba(42, 77, 112, 0.1);
+}
+.row-use__btn:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: -2px;
+}
+.row-use__count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-right: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--par-color-text, #222);
 }
 .row-item__remove {
   flex: none;

@@ -51,6 +51,10 @@
           <ParInput v-model="search" placeholder="Search gear…" aria-label="Search gear" />
           <ParSelect v-model="categoryFilter" :options="categoryOptions" aria-label="Filter by category" />
         </div>
+        <p class="catalog__hint">
+          Click or drag an item to add it free. Click <strong>Buy</strong> to deduct
+          its standard SRD price from your coin purse.
+        </p>
 
     <div class="catalog__list" role="list">
       <p v-if="!groups.length" class="catalog__empty">No gear matches “{{ search }}”.</p>
@@ -72,7 +76,25 @@
           <span class="row__swatch" :style="{ background: swatchColor(tpl) }" aria-hidden="true"></span>
           <span class="row__name">{{ tpl.name }}</span>
           <span v-if="tpl.source === 'custom'" class="row__badge">custom</span>
-          <span class="row__weight">{{ formatWeight(tpl.weight) }} lb</span>
+          <span class="row__meta"
+            >{{ formatWeight(tpl.weight) }} lb<span v-if="tpl.cost" class="row__price"> · {{ formatCost(tpl.cost) }}</span></span>
+          <!-- Priced items get a quiet, separate Buy target: click the row to add
+               it free; click Buy to add it AND spend the coin. Priceless items
+               (magic items, anything with no SRD cost) show neither price nor Buy. -->
+          <span
+            v-if="tpl.cost"
+            class="row__buy"
+            :class="{ 'row__buy--disabled': !affordable(tpl) }"
+            role="button"
+            :tabindex="affordable(tpl) ? 0 : -1"
+            :aria-disabled="!affordable(tpl)"
+            :aria-label="affordable(tpl) ? `Buy ${tpl.name} for ${formatCost(tpl.cost)}` : `Not enough coin for ${tpl.name}`"
+            :title="affordable(tpl) ? `Buy for ${formatCost(tpl.cost)}` : 'Not enough coin'"
+            @click.stop="onBuy(tpl)"
+            @keydown.enter.stop.prevent="onBuy(tpl)"
+            @keydown.space.stop.prevent="onBuy(tpl)"
+            @dragstart.prevent.stop
+          >Buy</span>
           <span
             v-if="tpl.source === 'custom'"
             class="row__remove"
@@ -118,14 +140,22 @@
 import { reactive, ref, computed } from 'vue';
 import { ParInput, ParSelect, ParField, ParButton } from '@/parchment';
 import { typeColor } from '../utils/tile-presentation.mjs';
+import { formatCost, canAfford } from '../utils/carry-capacity.mjs';
 import { setDrag, clearDrag } from '../composables/drag-state.js';
 
 const props = defineProps({
   catalog: { type: Array, default: () => [] },
   packs: { type: Array, default: () => [] },
+  coins: { type: Object, default: () => ({ gp: 0, ep: 0, sp: 0, cp: 0 }) },
 });
 
-const emit = defineEmits(['add', 'add-pack', 'add-custom', 'remove-custom']);
+const emit = defineEmits(['add', 'add-pack', 'add-custom', 'remove-custom', 'buy']);
+
+/** Can the current purse afford one of this priced item? */
+const affordable = (tpl) => canAfford(props.coins, tpl.cost, tpl.quantity || 1);
+const onBuy = (tpl) => {
+  if (affordable(tpl)) emit('buy', tpl);
+};
 
 const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic Item'];
 const categoryOptions = [{ value: '', label: 'All categories' }, ...categories];
@@ -248,6 +278,19 @@ function submitCustom() {
   font-style: italic;
   line-height: 1.45;
   color: var(--par-color-text-muted, #6b6b6b);
+}
+.catalog__hint {
+  margin: 0.8rem 0 0.4rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+.catalog__hint strong {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--par-color-text-secondary, #555);
 }
 
 .starter__list {
@@ -375,10 +418,54 @@ function submitCustom() {
   color: var(--par-color-text-muted, #6b6b6b);
 }
 
-.row__weight {
+.row__meta {
   flex: none;
   font-size: 1.2rem;
   color: var(--par-color-text-secondary, #555);
+  white-space: nowrap;
+}
+.row__price {
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+/* Buy: understated — the row's primary action is still "add", so Buy is a quiet
+   muted-ink outline (no lapis, small corners), reading as "available if you want
+   it", not a CTA. Still a real tap target. */
+.row__buy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.2rem;
+  min-height: 2.6rem;
+  padding: 0 0.8rem;
+  border: 0.5px solid var(--par-color-border-strong, #cbb8a0);
+  border-radius: var(--par-radius-sm, 3px);
+  background: transparent;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--par-color-text-secondary, #555);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.row__buy:hover {
+  border-color: var(--par-color-text-secondary, #555);
+  background: var(--par-color-callout-bg, #f3ebda);
+  color: var(--par-color-text, #222);
+}
+.row__buy:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 2px;
+}
+.row__buy--disabled {
+  border-color: var(--par-color-border, #e4d8c4);
+  color: var(--par-color-text-muted, #9a9082);
+  cursor: not-allowed;
+}
+.row__buy--disabled:hover {
+  background: transparent;
+  border-color: var(--par-color-border, #e4d8c4);
+  color: var(--par-color-text-muted, #9a9082);
 }
 
 .row__remove {

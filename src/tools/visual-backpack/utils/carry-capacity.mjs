@@ -60,6 +60,66 @@ export function coinValueGp(coins) {
   return round2(gp + ep * 0.5 + sp * 0.1 + cp * 0.01);
 }
 
+// --- prices & buying (catalog "Buy" button) -------------------------------
+// All money math runs in copper (the base unit) so it stays integer-exact —
+// no floating-point drift when subtracting a purchase from the purse.
+
+/** Copper value of one coin of each denomination. */
+const COIN_IN_CP = { pp: 1000, gp: 100, ep: 50, sp: 10, cp: 1 };
+
+/** A whole purse ({gp,ep,sp,cp}) expressed in copper. */
+export function coinsToCp(coins) {
+  if (!coins) return 0;
+  return Object.keys(COIN_IN_CP).reduce(
+    (acc, k) => acc + (Number(coins[k]) || 0) * COIN_IN_CP[k],
+    0,
+  );
+}
+
+/**
+ * An SRD price ({ quantity, unit }) in copper, times an optional item quantity
+ * (buying 20 arrows costs 20× the unit price). Returns 0 for a missing/priceless
+ * cost — priceless items are never buyable, so this is only ever a guard.
+ */
+export function costToCp(cost, quantity = 1) {
+  if (!cost || !COIN_IN_CP[cost.unit]) return 0;
+  const q = Math.max(1, Math.floor(Number(quantity) || 1));
+  return (Number(cost.quantity) || 0) * COIN_IN_CP[cost.unit] * q;
+}
+
+/** Human price label in the item's native denomination, e.g. "15 gp", "5 sp". */
+export function formatCost(cost) {
+  if (!cost || !COIN_IN_CP[cost.unit]) return '';
+  return `${Number(cost.quantity) || 0} ${cost.unit}`;
+}
+
+/** Can this purse afford `quantity` of an item at `cost`? */
+export function canAfford(coins, cost, quantity = 1) {
+  const price = costToCp(cost, quantity);
+  return price > 0 && coinsToCp(coins) >= price;
+}
+
+/**
+ * Spend `quantity`×`cost` from a purse. The purse is melted to copper, the price
+ * subtracted, and the remainder re-minted greedily from the highest denomination
+ * down — value-exact, fewest coins. Re-mints only into the denominations this
+ * tool tracks (gp/ep/sp/cp, no platinum), so no value can hide in an untracked
+ * coin. Returns the new purse, or `null` if it can't be afforded (the caller
+ * should have disabled Buy already).
+ */
+export function spendCoins(coins, cost, quantity = 1) {
+  const price = costToCp(cost, quantity);
+  if (price <= 0) return null;
+  let remaining = coinsToCp(coins) - price;
+  if (remaining < 0) return null;
+  const out = { gp: 0, ep: 0, sp: 0, cp: 0 };
+  for (const k of ['gp', 'ep', 'sp', 'cp']) {
+    out[k] = Math.floor(remaining / COIN_IN_CP[k]);
+    remaining -= out[k] * COIN_IN_CP[k];
+  }
+  return out;
+}
+
 export const CONSEQUENCES = {
   ok: '',
   encumbered: 'Encumbered: speed reduced by 10 feet.',

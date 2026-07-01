@@ -1,5 +1,6 @@
 import {
   itemType,
+  itemTypes,
   typeColor,
   tileSize,
   cleanName,
@@ -126,6 +127,25 @@ describe('weapon handedness (equipTargets)', () => {
       equipTargets({ name: 'Ring of Protection', category: 'Magic Item', magicType: 'Ring' }),
     ).toEqual(['ring1', 'ring2']);
     expect(equipTargets({ name: 'Torch', category: 'Adventuring Gear' })).toEqual([]);
+  });
+});
+
+describe('itemTypes — primary color type + filtering overlaps', () => {
+  const mi = (name, magicType) => ({ name, category: 'Magic Item', magicType });
+
+  it('keeps magic items plum (primary) but also matches their real kind for filters', () => {
+    expect(itemTypes(mi('Flame Tongue', 'Weapon'))).toEqual(['magic', 'weapon']);
+    expect(itemTypes(mi('Dragon Scale Mail', 'Armor'))).toEqual(['magic', 'armor']);
+    expect(itemTypes(mi('Ammunition, +1', 'Ammunition'))).toEqual(['magic', 'consumable']);
+    expect(itemTypes(mi('Potion of Healing', 'Potion'))).toEqual(['magic', 'consumable']);
+    // color (primary) is unchanged:
+    expect(itemType(mi('Flame Tongue', 'Weapon'))).toBe('magic');
+  });
+
+  it('non-overlapping items have a single type', () => {
+    expect(itemTypes({ name: 'Longsword', category: 'Weapon' })).toEqual(['weapon']);
+    expect(itemTypes({ name: 'Torch', category: 'Adventuring Gear' })).toEqual(['consumable']);
+    expect(itemTypes(mi('Bag of Holding', 'Wondrous Items'))).toEqual(['magic']);
   });
 });
 

@@ -147,6 +147,10 @@ async function main() {
       size: tileSize({ name: e.name, category, weight }),
       source: 'srd',
       description: describeEquipment(e),
+      // SRD price ({quantity, unit}) — drives the catalog "Buy" button. Its very
+      // PRESENCE marks an item as buyable; magic items (below) carry no cost, so
+      // they show no price and no Buy — pricing them is the GM's call.
+      ...(e.cost && e.cost.unit ? { cost: { quantity: Number(e.cost.quantity) || 0, unit: e.cost.unit } } : {}),
       // Hand occupancy for the paper doll (weapons only).
       ...(category === 'Weapon' ? { twoHanded: isTwoHandedWeapon(e) } : {}),
     });

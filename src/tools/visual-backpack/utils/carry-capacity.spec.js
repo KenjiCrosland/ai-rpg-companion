@@ -6,6 +6,11 @@ import {
   totalCoins,
   coinWeight,
   coinValueGp,
+  coinsToCp,
+  costToCp,
+  formatCost,
+  canAfford,
+  spendCoins,
   encumbranceStatus,
 } from './carry-capacity.mjs';
 
@@ -93,6 +98,57 @@ describe('coins', () => {
     expect(coinValueGp({ gp: 0, ep: 0, sp: 10, cp: 0 })).toBe(1);
     expect(coinValueGp({ gp: 0, ep: 0, sp: 0, cp: 100 })).toBe(1);
     expect(coinValueGp(purse)).toBe(112); // 100 + 5 + 5 + 2
+  });
+});
+
+describe('prices & buying', () => {
+  const gp = (n) => ({ gp: n, ep: 0, sp: 0, cp: 0 });
+
+  it('converts a purse and a price to copper (the exact base unit)', () => {
+    expect(coinsToCp({ gp: 1, ep: 1, sp: 1, cp: 1 })).toBe(161); // 100+50+10+1
+    expect(costToCp({ quantity: 15, unit: 'gp' })).toBe(1500);
+    expect(costToCp({ quantity: 5, unit: 'sp' })).toBe(50);
+    expect(costToCp(undefined)).toBe(0); // priceless → never buyable
+  });
+
+  it('is quantity-aware: a bundle costs unit price × quantity', () => {
+    // 20 arrows at 1 gp per bundle-of-20... here unit price × 20 quantity.
+    expect(costToCp({ quantity: 1, unit: 'gp' }, 20)).toBe(2000);
+    expect(canAfford(gp(20), { quantity: 1, unit: 'gp' }, 20)).toBe(true);
+    expect(canAfford(gp(19), { quantity: 1, unit: 'gp' }, 20)).toBe(false);
+  });
+
+  it('labels a price in its native denomination', () => {
+    expect(formatCost({ quantity: 15, unit: 'gp' })).toBe('15 gp');
+    expect(formatCost({ quantity: 5, unit: 'sp' })).toBe('5 sp');
+    expect(formatCost(null)).toBe('');
+  });
+
+  it('affords only when the purse value covers the price', () => {
+    expect(canAfford(gp(15), { quantity: 15, unit: 'gp' })).toBe(true);
+    expect(canAfford(gp(14), { quantity: 15, unit: 'gp' })).toBe(false);
+    // mixed coin makes change: 14 gp + 100 sp (=10 gp) = 24 gp ≥ 15 gp
+    expect(canAfford({ gp: 14, ep: 0, sp: 100, cp: 0 }, { quantity: 15, unit: 'gp' })).toBe(true);
+    expect(canAfford(gp(100), undefined)).toBe(false); // priceless isn't buyable
+  });
+
+  it('spends coin so the purse loses EXACTLY the price value (making change)', () => {
+    // Buy a 15 gp item with a 20 gp purse → 5 gp of value remains.
+    const after = spendCoins(gp(20), { quantity: 15, unit: 'gp' });
+    expect(coinValueGp(after)).toBe(5);
+    // Pay a 15 gp item entirely in silver: 200 sp (=20 gp) → 5 gp of value left.
+    const afterSp = spendCoins({ gp: 0, ep: 0, sp: 200, cp: 0 }, { quantity: 15, unit: 'gp' });
+    expect(coinValueGp(afterSp)).toBe(5);
+    // Bundle: 20 × 1 gp from 25 gp → 5 gp left.
+    const afterBundle = spendCoins(gp(25), { quantity: 1, unit: 'gp' }, 20);
+    expect(coinValueGp(afterBundle)).toBe(5);
+    // never mints platinum (value can't hide in an untracked coin)
+    expect(after.pp).toBeUndefined();
+  });
+
+  it('refuses to spend when unaffordable or priceless (returns null)', () => {
+    expect(spendCoins(gp(10), { quantity: 15, unit: 'gp' })).toBe(null);
+    expect(spendCoins(gp(10), undefined)).toBe(null);
   });
 });
 

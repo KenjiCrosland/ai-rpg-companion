@@ -9,7 +9,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "acid-vial",
@@ -21,7 +25,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "As an action, you can splash the contents of this vial onto a creature within 5 feet of you or throw the vial up to 20 feet, shattering it on impact. In either case, make a ranged attack against a creature or object, treating the acid as an improvised weapon.\n\nOn a hit, the target takes 2d6 acid damage."
+    "description": "As an action, you can splash the contents of this vial onto a creature within 5 feet of you or throw the vial up to 20 feet, shattering it on impact. In either case, make a ranged attack against a creature or object, treating the acid as an improvised weapon.\n\nOn a hit, the target takes 2d6 acid damage.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "alchemists-fire-flask",
@@ -33,7 +41,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This sticky, adhesive fluid ignites when exposed to air.\n\nAs an action, you can throw this flask up to 20 feet, shattering it on impact. Make a ranged attack against a creature or object, treating the alchemist's fire as an improvised weapon.\n\nOn a hit, the target takes 1d4 fire damage at the start of each of its turns. A creature can end this damage by using its action to make a DC 10 Dexterity check to extinguish the flames."
+    "description": "This sticky, adhesive fluid ignites when exposed to air.\n\nAs an action, you can throw this flask up to 20 feet, shattering it on impact. Make a ranged attack against a creature or object, treating the alchemist's fire as an improvised weapon.\n\nOn a hit, the target takes 1d4 fire damage at the start of each of its turns. A creature can end this damage by using its action to make a DC 10 Dexterity check to extinguish the flames.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    }
   },
   {
     "id": "alms-box",
@@ -45,7 +57,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A small box for alms, typically found in a priest's pack."
+    "description": "A small box for alms, typically found in a priest's pack.",
+    "cost": {
+      "quantity": 0,
+      "unit": "cp"
+    }
   },
   {
     "id": "amulet",
@@ -57,7 +73,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic.\n\nAppendix B lists the symbols commonly associated with many gods in the multiverse. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield."
+    "description": "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic.\n\nAppendix B lists the symbols commonly associated with many gods in the multiverse. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "antitoxin-vial",
@@ -69,7 +89,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A creature that drinks this vial of liquid gains advantage on saving throws against poison for 1 hour. It confers no benefit to undead or constructs."
+    "description": "A creature that drinks this vial of liquid gains advantage on saving throws against poison for 1 hour. It confers no benefit to undead or constructs.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    }
   },
   {
     "id": "arrow",
@@ -81,7 +105,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "backpack",
@@ -93,7 +121,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "ball-bearings-bag-of-1000",
@@ -105,7 +137,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "As an action, you can spill these tiny metal balls from their pouch to cover a level, square area that is 10 feet on a side.\n\nA creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or fall prone.\n\nA creature moving through the area at half speed doesn't need to make the save."
+    "description": "As an action, you can spill these tiny metal balls from their pouch to cover a level, square area that is 10 feet on a side.\n\nA creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or fall prone.\n\nA creature moving through the area at half speed doesn't need to make the save.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "barrel",
@@ -117,7 +153,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "basket",
@@ -129,7 +169,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 4,
+      "unit": "sp"
+    }
   },
   {
     "id": "bedroll",
@@ -141,7 +185,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "bell",
@@ -153,7 +201,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "blanket",
@@ -165,7 +217,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    }
   },
   {
     "id": "block-and-tackle",
@@ -177,7 +233,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A set of pulleys with a cable threaded through them and a hook to attach to objects, a block and tackle allows you to hoist up to four times the weight you can normally lift."
+    "description": "A set of pulleys with a cable threaded through them and a hook to attach to objects, a block and tackle allows you to hoist up to four times the weight you can normally lift.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "block-of-incense",
@@ -189,7 +249,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A block of incense, typically found in a priest's pack."
+    "description": "A block of incense, typically found in a priest's pack.",
+    "cost": {
+      "quantity": 0,
+      "unit": "cp"
+    }
   },
   {
     "id": "blowgun-needle",
@@ -201,7 +265,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "book",
@@ -213,7 +281,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A book might contain poetry, historical accounts, information pertaining to a particular field of lore, diagrams and notes on gnomish contraptions, or just about anything else that can be represented using text or pictures. A book of spells is a spellbook (described later in this section)."
+    "description": "A book might contain poetry, historical accounts, information pertaining to a particular field of lore, diagrams and notes on gnomish contraptions, or just about anything else that can be represented using text or pictures. A book of spells is a spellbook (described later in this section).",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "bottle-glass",
@@ -225,7 +297,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "bucket",
@@ -237,7 +313,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "cp"
+    }
   },
   {
     "id": "caltrops",
@@ -249,7 +329,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "As an action, you can spread a bag of caltrops to cover a square area that is 5 feet on a side.\n\nAny creature that enters the area must succeed on a DC 15 Dexterity saving throw or stop moving this turn and take 1 piercing damage.\n\nTaking this damage reduces the creature's walking speed by 10 feet until the creature regains at least 1 hit point.\n\nA creature moving through the area at half speed doesn't need to make the save."
+    "description": "As an action, you can spread a bag of caltrops to cover a square area that is 5 feet on a side.\n\nAny creature that enters the area must succeed on a DC 15 Dexterity saving throw or stop moving this turn and take 1 piercing damage.\n\nTaking this damage reduces the creature's walking speed by 10 feet until the creature regains at least 1 hit point.\n\nA creature moving through the area at half speed doesn't need to make the save.",
+    "cost": {
+      "quantity": 5,
+      "unit": "cp"
+    }
   },
   {
     "id": "candle",
@@ -261,7 +345,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "For 1 hour, a candle sheds bright light in a 5-foot radius and dim light for an additional 5 feet."
+    "description": "For 1 hour, a candle sheds bright light in a 5-foot radius and dim light for an additional 5 feet.",
+    "cost": {
+      "quantity": 1,
+      "unit": "cp"
+    }
   },
   {
     "id": "case-crossbow-bolt",
@@ -273,7 +361,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This wooden case can hold up to twenty crossbow bolts."
+    "description": "This wooden case can hold up to twenty crossbow bolts.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "case-map-or-scroll",
@@ -285,7 +377,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This cylindrical leather case can hold up to ten rolled-up sheets of paper or five rolled-up sheets of parchment."
+    "description": "This cylindrical leather case can hold up to ten rolled-up sheets of paper or five rolled-up sheets of parchment.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "censer",
@@ -297,7 +393,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A censer, typically found in a priest's pack."
+    "description": "A censer, typically found in a priest's pack.",
+    "cost": {
+      "quantity": 0,
+      "unit": "cp"
+    }
   },
   {
     "id": "chain-10-feet",
@@ -309,7 +409,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A chain has 10 hit points. It can be burst with a successful DC 20 Strength check."
+    "description": "A chain has 10 hit points. It can be burst with a successful DC 20 Strength check.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "chalk-1-piece",
@@ -321,7 +425,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "cp"
+    }
   },
   {
     "id": "chest",
@@ -333,7 +441,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "climbers-kit",
@@ -345,7 +457,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A climber's kit includes special pitons, boot tips, gloves, and a harness. You can use the climber's kit as an action to anchor yourself; when you do, you can't fall more than 25 feet from the point where you anchored yourself, and you can't climb more than 25 feet away from that point without undoing the anchor."
+    "description": "A climber's kit includes special pitons, boot tips, gloves, and a harness. You can use the climber's kit as an action to anchor yourself; when you do, you can't fall more than 25 feet from the point where you anchored yourself, and you can't climb more than 25 feet away from that point without undoing the anchor.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "clothes-common",
@@ -357,7 +473,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    }
   },
   {
     "id": "clothes-costume",
@@ -369,7 +489,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "clothes-fine",
@@ -381,7 +505,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 15,
+      "unit": "gp"
+    }
   },
   {
     "id": "clothes-travelers",
@@ -393,7 +521,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "component-pouch",
@@ -405,7 +537,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A component pouch is a small, watertight leather belt pouch that has compartments to hold all the material components and other special items you need to cast your spells, except for those components that have a specific cost (as indicated in a spell's description)."
+    "description": "A component pouch is a small, watertight leather belt pouch that has compartments to hold all the material components and other special items you need to cast your spells, except for those components that have a specific cost (as indicated in a spell's description).",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "crossbow-bolt",
@@ -417,7 +553,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "crowbar",
@@ -429,7 +569,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Using a crowbar grants advantage to Strength checks where the crowbar's leverage can be applied."
+    "description": "Using a crowbar grants advantage to Strength checks where the crowbar's leverage can be applied.",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "crystal",
@@ -441,7 +585,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus."
+    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "disguise-kit",
@@ -453,7 +601,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "This pouch of cosmetics, hair dye, and small props lets you create disguises that change your physical appearance. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a visual disguise."
+    "description": "This pouch of cosmetics, hair dye, and small props lets you create disguises that change your physical appearance. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a visual disguise.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "emblem",
@@ -465,7 +617,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic.\n\nAppendix B lists the symbols commonly associated with many gods in the multiverse. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield."
+    "description": "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic.\n\nAppendix B lists the symbols commonly associated with many gods in the multiverse. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "fishing-tackle",
@@ -477,7 +633,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "This kit includes a wooden rod, silken line, corkwood bobbers, steel hooks, lead sinkers, velvet lures, and narrow netting."
+    "description": "This kit includes a wooden rod, silken line, corkwood bobbers, steel hooks, lead sinkers, velvet lures, and narrow netting.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "flask-or-tankard",
@@ -489,7 +649,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "cp"
+    }
   },
   {
     "id": "forgery-kit",
@@ -501,7 +665,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "This small box contains a variety of papers and parchments, pens and inks, seals and sealing wax, gold and silver leaf, and other supplies necessary to create convincing forgeries of physical documents. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a physical forgery of a document."
+    "description": "This small box contains a variety of papers and parchments, pens and inks, seals and sealing wax, gold and silver leaf, and other supplies necessary to create convincing forgeries of physical documents. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a physical forgery of a document.",
+    "cost": {
+      "quantity": 15,
+      "unit": "gp"
+    }
   },
   {
     "id": "grappling-hook",
@@ -513,7 +681,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "hammer",
@@ -525,7 +697,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "hammer-sledge",
@@ -537,7 +713,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "healers-kit",
@@ -549,7 +729,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "This kit is a leather pouch containing bandages, salves, and splints. The kit has ten uses. As an action, you can expend one use of the kit to stabilize a creature that has 0 hit points, without needing to make a Wisdom (Medicine) check."
+    "description": "This kit is a leather pouch containing bandages, salves, and splints. The kit has ten uses. As an action, you can expend one use of the kit to stabilize a creature that has 0 hit points, without needing to make a Wisdom (Medicine) check.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "herbalism-kit",
@@ -561,7 +745,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "This kit contains a variety of instruments such as clippers, mortar and pestle, and pouches and vials used by herbalists to create remedies and potions. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to identify or apply herbs. Also, proficiency with this kit is required to create antitoxin and potions of healing."
+    "description": "This kit contains a variety of instruments such as clippers, mortar and pestle, and pouches and vials used by herbalists to create remedies and potions. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to identify or apply herbs. Also, proficiency with this kit is required to create antitoxin and potions of healing.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "holy-water-flask",
@@ -573,7 +761,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "As an action, you can splash the contents of this flask onto a creature within 5 feet of you or throw it up to 20 feet, shattering it on impact. In either case, make a ranged attack against a target creature, treating the holy water as an improvised weapon.\n\nIf the target is a fiend or undead, it takes 2d6 radiant damage.\n\nA cleric or paladin may create holy water by performing a special ritual.\n\nThe ritual takes 1 hour to perform, uses 25 gp worth of powdered silver, and requires the caster to expend a 1st-level spell slot."
+    "description": "As an action, you can splash the contents of this flask onto a creature within 5 feet of you or throw it up to 20 feet, shattering it on impact. In either case, make a ranged attack against a target creature, treating the holy water as an improvised weapon.\n\nIf the target is a fiend or undead, it takes 2d6 radiant damage.\n\nA cleric or paladin may create holy water by performing a special ritual.\n\nThe ritual takes 1 hour to perform, uses 25 gp worth of powdered silver, and requires the caster to expend a 1st-level spell slot.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "hourglass",
@@ -585,7 +777,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "hunting-trap",
@@ -597,7 +793,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "When you use your action to set it, this trap forms a saw-toothed steel ring that snaps shut when a creature steps on a pressure plate in the center. The trap is affixed by a heavy chain to an immobile object, such as a tree or a spike driven into the ground.\n\nA creature that steps on the plate must succeed on a DC 13 Dexterity saving throw or take 1d4 piercing damage and stop moving. Thereafter, until the creature breaks free of the trap, its movement is limited by the length of the chain (typically 3 feet long).\n\nA creature can use its action to make a DC 13 Strength check, freeing itself or another creature within its reach on a success. Each failed check deals 1 piercing damage to the trapped creature."
+    "description": "When you use your action to set it, this trap forms a saw-toothed steel ring that snaps shut when a creature steps on a pressure plate in the center. The trap is affixed by a heavy chain to an immobile object, such as a tree or a spike driven into the ground.\n\nA creature that steps on the plate must succeed on a DC 13 Dexterity saving throw or take 1d4 piercing damage and stop moving. Thereafter, until the creature breaks free of the trap, its movement is limited by the length of the chain (typically 3 feet long).\n\nA creature can use its action to make a DC 13 Strength check, freeing itself or another creature within its reach on a success. Each failed check deals 1 piercing damage to the trapped creature.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "ink-1-ounce-bottle",
@@ -609,7 +809,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "ink-pen",
@@ -621,7 +825,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "cp"
+    }
   },
   {
     "id": "jug-or-pitcher",
@@ -633,7 +841,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "cp"
+    }
   },
   {
     "id": "ladder-10-foot",
@@ -645,7 +857,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "sp"
+    }
   },
   {
     "id": "lamp",
@@ -657,7 +873,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A lamp casts bright light in a 15-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil."
+    "description": "A lamp casts bright light in a 15-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil.",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    }
   },
   {
     "id": "lantern-bullseye",
@@ -669,7 +889,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A bullseye lantern casts bright light in a 60-foot cone and dim light for an additional 60 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil."
+    "description": "A bullseye lantern casts bright light in a 60-foot cone and dim light for an additional 60 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "lantern-hooded",
@@ -681,7 +905,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A hooded lantern casts bright light in a 30-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil. As an action, you can lower the hood, reducing the light to dim light in a 5-foot radius."
+    "description": "A hooded lantern casts bright light in a 30-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil. As an action, you can lower the hood, reducing the light to dim light in a 5-foot radius.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "little-bag-of-sand",
@@ -693,7 +921,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A small bag of sand, typically found in a scholar's pack."
+    "description": "A small bag of sand, typically found in a scholar's pack.",
+    "cost": {
+      "quantity": 0,
+      "unit": "cp"
+    }
   },
   {
     "id": "lock",
@@ -705,7 +937,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A key is provided with the lock. Without the key, a creature proficient with thieves' tools can pick this lock with a successful DC 15 Dexterity check. Your GM may decide that better locks are available for higher prices."
+    "description": "A key is provided with the lock. Without the key, a creature proficient with thieves' tools can pick this lock with a successful DC 15 Dexterity check. Your GM may decide that better locks are available for higher prices.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "magnifying-glass",
@@ -717,7 +953,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This lens allows a closer look at small objects. It is also useful as a substitute for flint and steel when starting fires. Lighting a fire with a magnifying glass requires light as bright as sunlight to focus, tinder to ignite, and about 5 minutes for the fire to ignite.\n\nA magnifying glass grants advantage on any ability check made to appraise or inspect an item that is small or highly detailed."
+    "description": "This lens allows a closer look at small objects. It is also useful as a substitute for flint and steel when starting fires. Lighting a fire with a magnifying glass requires light as bright as sunlight to focus, tinder to ignite, and about 5 minutes for the fire to ignite.\n\nA magnifying glass grants advantage on any ability check made to appraise or inspect an item that is small or highly detailed.",
+    "cost": {
+      "quantity": 100,
+      "unit": "gp"
+    }
   },
   {
     "id": "manacles",
@@ -729,7 +969,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These metal restraints can bind a Small or Medium creature. Escaping the manacles requires a successful DC 20 Dexterity check. Breaking them requires a successful DC 20 Strength check.\n\nEach set of manacles comes with one key. Without the key, a creature proficient with thieves' tools can pick the manacles' lock with a successful DC 15 Dexterity check. Manacles have 15 hit points."
+    "description": "These metal restraints can bind a Small or Medium creature. Escaping the manacles requires a successful DC 20 Dexterity check. Breaking them requires a successful DC 20 Strength check.\n\nEach set of manacles comes with one key. Without the key, a creature proficient with thieves' tools can pick the manacles' lock with a successful DC 15 Dexterity check. Manacles have 15 hit points.",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "mess-kit",
@@ -741,7 +985,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This tin box contains a cup and simple cutlery. The box clamps together, and one side can be used as a cooking pan and the other as a plate or shallow bowl."
+    "description": "This tin box contains a cup and simple cutlery. The box clamps together, and one side can be used as a cooking pan and the other as a plate or shallow bowl.",
+    "cost": {
+      "quantity": 2,
+      "unit": "sp"
+    }
   },
   {
     "id": "mirror-steel",
@@ -753,7 +1001,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "oil-flask",
@@ -765,7 +1017,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "Oil usually comes in a clay flask that holds 1 pint.\n\nAs an action, you can splash the oil in this flask onto a creature within 5 feet of you or throw it up to 20 feet, shattering it on impact. Make a ranged attack against a target creature or object, treating the oil as an improvised weapon.\n\nOn a hit, the target is covered in oil. If the target takes any fire damage before the oil dries (after 1 minute), the target takes an additional 5 fire damage from the burning oil.\n\nYou can also pour a flask of oil on the ground to cover a 5-foot-square area, provided that the surface is level.\n\nIf lit, the oil burns for 2 rounds and deals 5 fire damage to any creature that enters the area or ends its turn in the area. A creature can take this damage only once per turn."
+    "description": "Oil usually comes in a clay flask that holds 1 pint.\n\nAs an action, you can splash the oil in this flask onto a creature within 5 feet of you or throw it up to 20 feet, shattering it on impact. Make a ranged attack against a target creature or object, treating the oil as an improvised weapon.\n\nOn a hit, the target is covered in oil. If the target takes any fire damage before the oil dries (after 1 minute), the target takes an additional 5 fire damage from the burning oil.\n\nYou can also pour a flask of oil on the ground to cover a 5-foot-square area, provided that the surface is level.\n\nIf lit, the oil burns for 2 rounds and deals 5 fire damage to any creature that enters the area or ends its turn in the area. A creature can take this damage only once per turn.",
+    "cost": {
+      "quantity": 1,
+      "unit": "sp"
+    }
   },
   {
     "id": "orb",
@@ -777,7 +1033,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus."
+    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus.",
+    "cost": {
+      "quantity": 20,
+      "unit": "gp"
+    }
   },
   {
     "id": "paper-one-sheet",
@@ -789,7 +1049,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "sp"
+    }
   },
   {
     "id": "parchment-one-sheet",
@@ -801,7 +1065,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "sp"
+    }
   },
   {
     "id": "perfume-vial",
@@ -813,7 +1081,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "pick-miners",
@@ -825,7 +1097,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "piton",
@@ -837,7 +1113,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "cp"
+    }
   },
   {
     "id": "poison-basic-vial",
@@ -849,7 +1129,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "You can use the poison in this vial to coat one slashing or piercing weapon or up to three pieces of ammunition. Applying the poison takes an action. A creature hit by the poisoned weapon or ammunition must make a DC 10 Constitution saving throw or take 1d4 poison damage. Once applied, the poison retains potency for 1 minute before drying."
+    "description": "You can use the poison in this vial to coat one slashing or piercing weapon or up to three pieces of ammunition. Applying the poison takes an action. A creature hit by the poisoned weapon or ammunition must make a DC 10 Constitution saving throw or take 1d4 poison damage. Once applied, the poison retains potency for 1 minute before drying.",
+    "cost": {
+      "quantity": 100,
+      "unit": "gp"
+    }
   },
   {
     "id": "poisoners-kit",
@@ -861,7 +1145,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A poisoner's kit includes the vials, chemicals, and other equipment necessary for the creation of poisons. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to craft or use poisons."
+    "description": "A poisoner's kit includes the vials, chemicals, and other equipment necessary for the creation of poisons. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to craft or use poisons.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    }
   },
   {
     "id": "pole-10-foot",
@@ -873,7 +1161,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "cp"
+    }
   },
   {
     "id": "pot-iron",
@@ -885,7 +1177,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "pouch",
@@ -897,7 +1193,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A cloth or leather pouch can hold up to 20 sling bullets or 50 blowgun needles, among other things. A compartmentalized pouch for holding spell components is called a component pouch (described earlier in this section)."
+    "description": "A cloth or leather pouch can hold up to 20 sling bullets or 50 blowgun needles, among other things. A compartmentalized pouch for holding spell components is called a component pouch (described earlier in this section).",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    }
   },
   {
     "id": "quiver",
@@ -909,7 +1209,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A quiver can hold up to 20 arrows."
+    "description": "A quiver can hold up to 20 arrows.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "ram-portable",
@@ -921,7 +1225,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "You can use a portable ram to break down doors. When doing so, you gain a +4 bonus on the Strength check. One other character can help you use the ram, giving you advantage on this check."
+    "description": "You can use a portable ram to break down doors. When doing so, you gain a +4 bonus on the Strength check. One other character can help you use the ram, giving you advantage on this check.",
+    "cost": {
+      "quantity": 4,
+      "unit": "gp"
+    }
   },
   {
     "id": "rations-1-day",
@@ -933,7 +1241,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
+    "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts.",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    }
   },
   {
     "id": "reliquary",
@@ -945,7 +1257,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic.\n\nAppendix B lists the symbols commonly associated with many gods in the multiverse. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield."
+    "description": "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic.\n\nAppendix B lists the symbols commonly associated with many gods in the multiverse. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "robes",
@@ -957,7 +1273,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "rod",
@@ -969,7 +1289,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus."
+    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "rope-hempen-50-feet",
@@ -981,7 +1305,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
+    "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "rope-silk-50-feet",
@@ -993,7 +1321,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
+    "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "sack",
@@ -1005,7 +1337,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "cp"
+    }
   },
   {
     "id": "scale-merchants",
@@ -1017,7 +1353,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A scale includes a small balance, pans, and a suitable assortment of weights up to 2 pounds. With it, you can measure the exact weight of small objects, such as raw precious metals or trade goods, to help determine their worth."
+    "description": "A scale includes a small balance, pans, and a suitable assortment of weights up to 2 pounds. With it, you can measure the exact weight of small objects, such as raw precious metals or trade goods, to help determine their worth.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "sealing-wax",
@@ -1029,7 +1369,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    }
   },
   {
     "id": "shovel",
@@ -1041,7 +1385,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "signal-whistle",
@@ -1053,7 +1401,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "cp"
+    }
   },
   {
     "id": "signet-ring",
@@ -1065,7 +1417,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "sling-bullet",
@@ -1077,7 +1433,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 4,
+      "unit": "cp"
+    }
   },
   {
     "id": "small-knife",
@@ -1089,7 +1449,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A small knife, typically found in a scholar's pack."
+    "description": "A small knife, typically found in a scholar's pack.",
+    "cost": {
+      "quantity": 0,
+      "unit": "cp"
+    }
   },
   {
     "id": "soap",
@@ -1101,7 +1465,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "cp"
+    }
   },
   {
     "id": "spellbook",
@@ -1113,7 +1481,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Essential for wizards, a spellbook is a leather-bound tome with 100 blank vellum pages suitable for recording spells."
+    "description": "Essential for wizards, a spellbook is a leather-bound tome with 100 blank vellum pages suitable for recording spells.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    }
   },
   {
     "id": "spike-iron",
@@ -1125,7 +1497,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "sp"
+    }
   },
   {
     "id": "sprig-of-mistletoe",
@@ -1137,7 +1513,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus."
+    "description": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "spyglass",
@@ -1149,7 +1529,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "Objects viewed through a spyglass are magnified to twice their size."
+    "description": "Objects viewed through a spyglass are magnified to twice their size.",
+    "cost": {
+      "quantity": 1000,
+      "unit": "gp"
+    }
   },
   {
     "id": "staff",
@@ -1161,7 +1545,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus."
+    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "string-10-feet",
@@ -1173,7 +1561,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A 10-foot length of string, typically found in a burglar's pack."
+    "description": "A 10-foot length of string, typically found in a burglar's pack.",
+    "cost": {
+      "quantity": 0,
+      "unit": "cp"
+    }
   },
   {
     "id": "tent-two-person",
@@ -1185,7 +1577,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "A simple and portable canvas shelter, a tent sleeps two."
+    "description": "A simple and portable canvas shelter, a tent sleeps two.",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "tinderbox",
@@ -1197,7 +1593,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This small container holds flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a torch--or anything else with abundant, exposed fuel--takes an action.\n\nLighting any other fire takes 1 minute."
+    "description": "This small container holds flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a torch--or anything else with abundant, exposed fuel--takes an action.\n\nLighting any other fire takes 1 minute.",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    }
   },
   {
     "id": "torch",
@@ -1209,7 +1609,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A torch burns for 1 hour, providing bright light in a 20-foot radius and dim light for an additional 20 feet. If you make a melee attack with a burning torch and hit, it deals 1 fire damage."
+    "description": "A torch burns for 1 hour, providing bright light in a 20-foot radius and dim light for an additional 20 feet. If you make a melee attack with a burning torch and hit, it deals 1 fire damage.",
+    "cost": {
+      "quantity": 1,
+      "unit": "cp"
+    }
   },
   {
     "id": "totem",
@@ -1221,7 +1625,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus."
+    "description": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "vestments",
@@ -1233,7 +1641,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "Religious clothing, typically found in a priest's pack."
+    "description": "Religious clothing, typically found in a priest's pack.",
+    "cost": {
+      "quantity": 0,
+      "unit": "cp"
+    }
   },
   {
     "id": "vial",
@@ -1245,7 +1657,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "wand",
@@ -1257,7 +1673,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus."
+    "description": "An arcane focus is a special item--an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item--designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "waterskin",
@@ -1269,7 +1689,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 2,
+      "unit": "sp"
+    }
   },
   {
     "id": "whetstone",
@@ -1281,7 +1705,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": ""
+    "description": "",
+    "cost": {
+      "quantity": 1,
+      "unit": "cp"
+    }
   },
   {
     "id": "wooden-staff",
@@ -1293,7 +1721,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus."
+    "description": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "yew-wand",
@@ -1305,7 +1737,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus."
+    "description": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "breastplate",
@@ -1317,7 +1753,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "Medium armor. AC 14 + Dex (max 2)."
+    "description": "Medium armor. AC 14 + Dex (max 2).",
+    "cost": {
+      "quantity": 400,
+      "unit": "gp"
+    }
   },
   {
     "id": "chain-mail",
@@ -1329,7 +1769,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "Heavy armor. AC 16. Requires Strength 13. Disadvantage on Stealth checks."
+    "description": "Heavy armor. AC 16. Requires Strength 13. Disadvantage on Stealth checks.",
+    "cost": {
+      "quantity": 75,
+      "unit": "gp"
+    }
   },
   {
     "id": "chain-shirt",
@@ -1341,7 +1785,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "Medium armor. AC 13 + Dex (max 2)."
+    "description": "Medium armor. AC 13 + Dex (max 2).",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    }
   },
   {
     "id": "half-plate-armor",
@@ -1353,7 +1801,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "Medium armor. AC 15 + Dex (max 2). Disadvantage on Stealth checks."
+    "description": "Medium armor. AC 15 + Dex (max 2). Disadvantage on Stealth checks.",
+    "cost": {
+      "quantity": 750,
+      "unit": "gp"
+    }
   },
   {
     "id": "hide-armor",
@@ -1365,7 +1817,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Medium armor. AC 12 + Dex (max 2)."
+    "description": "Medium armor. AC 12 + Dex (max 2).",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "leather-armor",
@@ -1377,7 +1833,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Light armor. AC 11 + Dex."
+    "description": "Light armor. AC 11 + Dex.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "padded-armor",
@@ -1389,7 +1849,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Light armor. AC 11 + Dex. Disadvantage on Stealth checks."
+    "description": "Light armor. AC 11 + Dex. Disadvantage on Stealth checks.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "plate-armor",
@@ -1401,7 +1865,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "Heavy armor. AC 18. Requires Strength 15. Disadvantage on Stealth checks."
+    "description": "Heavy armor. AC 18. Requires Strength 15. Disadvantage on Stealth checks.",
+    "cost": {
+      "quantity": 1500,
+      "unit": "gp"
+    }
   },
   {
     "id": "ring-mail",
@@ -1413,7 +1881,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "Heavy armor. AC 14. Disadvantage on Stealth checks."
+    "description": "Heavy armor. AC 14. Disadvantage on Stealth checks.",
+    "cost": {
+      "quantity": 30,
+      "unit": "gp"
+    }
   },
   {
     "id": "scale-mail",
@@ -1425,7 +1897,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "Medium armor. AC 14 + Dex (max 2). Disadvantage on Stealth checks."
+    "description": "Medium armor. AC 14 + Dex (max 2). Disadvantage on Stealth checks.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    }
   },
   {
     "id": "shield",
@@ -1437,7 +1913,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Shield armor. AC 2."
+    "description": "Shield armor. AC 2.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "splint-armor",
@@ -1449,7 +1929,11 @@
       "h": 3
     },
     "source": "srd",
-    "description": "Heavy armor. AC 17. Requires Strength 15. Disadvantage on Stealth checks."
+    "description": "Heavy armor. AC 17. Requires Strength 15. Disadvantage on Stealth checks.",
+    "cost": {
+      "quantity": 200,
+      "unit": "gp"
+    }
   },
   {
     "id": "studded-leather-armor",
@@ -1461,7 +1945,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Light armor. AC 12 + Dex."
+    "description": "Light armor. AC 12 + Dex.",
+    "cost": {
+      "quantity": 45,
+      "unit": "gp"
+    }
   },
   {
     "id": "mi-adamantine-armor",
@@ -7265,7 +7753,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    }
   },
   {
     "id": "bagpipes",
@@ -7277,7 +7769,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 30,
+      "unit": "gp"
+    }
   },
   {
     "id": "brewers-supplies",
@@ -7289,7 +7785,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 20,
+      "unit": "gp"
+    }
   },
   {
     "id": "calligraphers-supplies",
@@ -7301,7 +7801,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "carpenters-tools",
@@ -7313,7 +7817,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 8,
+      "unit": "gp"
+    }
   },
   {
     "id": "cartographers-tools",
@@ -7325,7 +7833,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 15,
+      "unit": "gp"
+    }
   },
   {
     "id": "cobblers-tools",
@@ -7337,7 +7849,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "cooks-utensils",
@@ -7349,7 +7865,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "dice-set",
@@ -7361,7 +7881,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This item encompasses a wide range of game pieces, including dice and decks of cards (for games such as Three-Dragon Ante). A few common examples appear on the Tools table, but other kinds of gaming sets exist. If you are proficient with a gaming set, you can add your proficiency bonus to ability checks you make to play a game with that set. Each type of gaming set requires a separate proficiency."
+    "description": "This item encompasses a wide range of game pieces, including dice and decks of cards (for games such as Three-Dragon Ante). A few common examples appear on the Tools table, but other kinds of gaming sets exist. If you are proficient with a gaming set, you can add your proficiency bonus to ability checks you make to play a game with that set. Each type of gaming set requires a separate proficiency.",
+    "cost": {
+      "quantity": 1,
+      "unit": "sp"
+    }
   },
   {
     "id": "drum",
@@ -7373,7 +7897,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 6,
+      "unit": "gp"
+    }
   },
   {
     "id": "dulcimer",
@@ -7385,7 +7913,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "flute",
@@ -7397,7 +7929,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "glassblowers-tools",
@@ -7409,7 +7945,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 30,
+      "unit": "gp"
+    }
   },
   {
     "id": "horn",
@@ -7421,7 +7961,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 3,
+      "unit": "gp"
+    }
   },
   {
     "id": "jewelers-tools",
@@ -7433,7 +7977,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "leatherworkers-tools",
@@ -7445,7 +7993,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    }
   },
   {
     "id": "lute",
@@ -7457,7 +8009,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 35,
+      "unit": "gp"
+    }
   },
   {
     "id": "lyre",
@@ -7469,7 +8025,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 30,
+      "unit": "gp"
+    }
   },
   {
     "id": "masons-tools",
@@ -7481,7 +8041,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "navigators-tools",
@@ -7493,7 +8057,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "This set of instruments is used for navigation at sea. Proficiency with navigator's tools lets you chart a ship's course and follow navigation charts. In addition, these tools allow you to add your proficiency bonus to any ability check you make to avoid getting lost at sea."
+    "description": "This set of instruments is used for navigation at sea. Proficiency with navigator's tools lets you chart a ship's course and follow navigation charts. In addition, these tools allow you to add your proficiency bonus to any ability check you make to avoid getting lost at sea.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "painters-supplies",
@@ -7505,7 +8073,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "pan-flute",
@@ -7517,7 +8089,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 12,
+      "unit": "gp"
+    }
   },
   {
     "id": "playing-card-set",
@@ -7529,7 +8105,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This item encompasses a wide range of game pieces, including dice and decks of cards (for games such as Three-Dragon Ante). A few common examples appear on the Tools table, but other kinds of gaming sets exist. If you are proficient with a gaming set, you can add your proficiency bonus to ability checks you make to play a game with that set. Each type of gaming set requires a separate proficiency."
+    "description": "This item encompasses a wide range of game pieces, including dice and decks of cards (for games such as Three-Dragon Ante). A few common examples appear on the Tools table, but other kinds of gaming sets exist. If you are proficient with a gaming set, you can add your proficiency bonus to ability checks you make to play a game with that set. Each type of gaming set requires a separate proficiency.",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    }
   },
   {
     "id": "potters-tools",
@@ -7541,7 +8121,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    }
   },
   {
     "id": "shawm",
@@ -7553,7 +8137,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    }
   },
   {
     "id": "smiths-tools",
@@ -7565,7 +8153,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 20,
+      "unit": "gp"
+    }
   },
   {
     "id": "thieves-tools",
@@ -7577,7 +8169,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "This set of tools includes a small file, a set of lock picks, a small mirror mounted on a metal handle, a set of narrow-bladed scissors, and a pair of pliers. Proficiency with these tools lets you add your proficiency bonus to any ability checks you make to disarm traps or open locks."
+    "description": "This set of tools includes a small file, a set of lock picks, a small mirror mounted on a metal handle, a set of narrow-bladed scissors, and a pair of pliers. Proficiency with these tools lets you add your proficiency bonus to any ability checks you make to disarm traps or open locks.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    }
   },
   {
     "id": "tinkers-tools",
@@ -7589,7 +8185,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    }
   },
   {
     "id": "viol",
@@ -7601,7 +8201,11 @@
       "h": 1
     },
     "source": "srd",
-    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency."
+    "description": "Several of the most common types of musical instruments are shown on the table as examples. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency.",
+    "cost": {
+      "quantity": 30,
+      "unit": "gp"
+    }
   },
   {
     "id": "weavers-tools",
@@ -7613,7 +8217,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "woodcarvers-tools",
@@ -7625,7 +8233,11 @@
       "h": 2
     },
     "source": "srd",
-    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency."
+    "description": "These special tools include the items needed to pursue a craft or trade. The table shows examples of the most common types of tools, each providing items related to a single craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability checks you make using the tools in your craft. Each type of artisan's tools requires a separate proficiency.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    }
   },
   {
     "id": "battleaxe",
@@ -7638,6 +8250,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Slashing. Two-handed: 1d10 Slashing. Properties: Versatile. Range: 5 ft.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7651,6 +8267,10 @@
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Damage: 1 Piercing. Properties: Ammunition, Loading. Range: 25/100 ft.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7664,6 +8284,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d4 Bludgeoning. Properties: Light, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 1,
+      "unit": "sp"
+    },
     "twoHanded": false
   },
   {
@@ -7677,6 +8301,10 @@
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Damage: 1d6 Piercing. Properties: Ammunition, Light, Loading. Range: 30/120 ft.",
+    "cost": {
+      "quantity": 75,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7690,6 +8318,10 @@
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Damage: 1d10 Piercing. Properties: Ammunition, Heavy, Loading, Two-Handed. Range: 100/400 ft.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7703,6 +8335,10 @@
     },
     "source": "srd",
     "description": "Simple Ranged weapon. Damage: 1d8 Piercing. Properties: Ammunition, Loading, Two-Handed. Range: 80/320 ft.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7716,6 +8352,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d4 Piercing. Properties: Finesse, Light, Thrown, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7729,6 +8369,10 @@
     },
     "source": "srd",
     "description": "Simple Ranged weapon. Damage: 1d4 Piercing. Properties: Finesse, Thrown. Range: 20/60 ft.",
+    "cost": {
+      "quantity": 5,
+      "unit": "cp"
+    },
     "twoHanded": false
   },
   {
@@ -7742,6 +8386,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Bludgeoning. Range: 5 ft.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7755,6 +8403,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d10 Slashing. Properties: Heavy, Reach, Two-Handed. Range: 5 ft.",
+    "cost": {
+      "quantity": 20,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7768,6 +8420,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d12 Slashing. Properties: Heavy, Two-Handed. Range: 5 ft.",
+    "cost": {
+      "quantity": 30,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7781,6 +8437,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d8 Bludgeoning. Properties: Two-Handed. Range: 5 ft.",
+    "cost": {
+      "quantity": 2,
+      "unit": "sp"
+    },
     "twoHanded": true
   },
   {
@@ -7794,6 +8454,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 2d6 Slashing. Properties: Heavy, Two-Handed. Range: 5 ft.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7807,6 +8471,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d10 Slashing. Properties: Heavy, Reach, Two-Handed. Range: 5 ft.",
+    "cost": {
+      "quantity": 20,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7820,6 +8488,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d6 Slashing. Properties: Light, Thrown, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7833,6 +8505,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d6 Piercing. Properties: Thrown, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 5,
+      "unit": "sp"
+    },
     "twoHanded": false
   },
   {
@@ -7846,6 +8522,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d12 Piercing. Properties: Reach, Special. Range: 5 ft.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7859,6 +8539,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d4 Bludgeoning. Properties: Light, Thrown, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7872,6 +8556,10 @@
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Damage: 1d8 Piercing. Properties: Ammunition, Heavy, Two-Handed. Range: 150/600 ft.",
+    "cost": {
+      "quantity": 50,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7885,6 +8573,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Slashing. Two-handed: 1d10 Slashing. Properties: Versatile. Range: 5 ft.",
+    "cost": {
+      "quantity": 15,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7898,6 +8590,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d6 Bludgeoning. Properties: Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7911,6 +8607,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 2d6 Bludgeoning. Properties: Heavy, Two-Handed. Range: 5 ft.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7924,6 +8624,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Piercing. Range: 5 ft.",
+    "cost": {
+      "quantity": 15,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7937,6 +8641,10 @@
     },
     "source": "srd",
     "description": "Martial Ranged weapon. Properties: Thrown, Special. Range: 5/15 ft.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7950,6 +8658,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d10 Piercing. Properties: Heavy, Reach, Two-Handed. Range: 5 ft.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -7963,6 +8675,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d6 Bludgeoning. Two-handed: 1d8 Bludgeoning. Properties: Versatile, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 2,
+      "unit": "sp"
+    },
     "twoHanded": false
   },
   {
@@ -7976,6 +8692,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Piercing. Properties: Finesse. Range: 5 ft.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -7989,6 +8709,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d6 Slashing. Properties: Finesse, Light. Range: 5 ft.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -8002,6 +8726,10 @@
     },
     "source": "srd",
     "description": "Simple Ranged weapon. Damage: 1d6 Piercing. Properties: Ammunition, Two-Handed. Range: 80/320 ft.",
+    "cost": {
+      "quantity": 25,
+      "unit": "gp"
+    },
     "twoHanded": true
   },
   {
@@ -8015,6 +8743,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d6 Piercing. Properties: Finesse, Light, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 10,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -8028,6 +8760,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d4 Slashing. Properties: Light, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -8041,6 +8777,10 @@
     },
     "source": "srd",
     "description": "Simple Ranged weapon. Damage: 1d4 Bludgeoning. Properties: Ammunition. Range: 30/120 ft.",
+    "cost": {
+      "quantity": 1,
+      "unit": "sp"
+    },
     "twoHanded": false
   },
   {
@@ -8054,6 +8794,10 @@
     },
     "source": "srd",
     "description": "Simple Melee weapon. Damage: 1d6 Piercing. Two-handed: 1d8 Piercing. Properties: Thrown, Versatile, Monk. Range: 5 ft.",
+    "cost": {
+      "quantity": 1,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -8067,6 +8811,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d6 Piercing. Two-handed: 1d8 Piercing. Properties: Thrown, Versatile. Range: 5 ft.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -8080,6 +8828,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Piercing. Range: 5 ft.",
+    "cost": {
+      "quantity": 5,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -8093,6 +8845,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d8 Bludgeoning. Two-handed: 1d10 Bludgeoning. Properties: Versatile. Range: 5 ft.",
+    "cost": {
+      "quantity": 15,
+      "unit": "gp"
+    },
     "twoHanded": false
   },
   {
@@ -8106,6 +8862,10 @@
     },
     "source": "srd",
     "description": "Martial Melee weapon. Damage: 1d4 Slashing. Properties: Finesse, Reach. Range: 5 ft.",
+    "cost": {
+      "quantity": 2,
+      "unit": "gp"
+    },
     "twoHanded": false
   }
 ]

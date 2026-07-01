@@ -47,6 +47,31 @@ export function typeColor(item) {
   return TYPE_COLORS[itemType(item)] || TYPE_COLORS.gear;
 }
 
+// A magic item's underlying kind also counts for FILTERING — a Flame Tongue is a
+// Magic Item (its color) but genuinely a Weapon too; +1 armor is Armor; magic
+// ammo/potions/scrolls are Consumables.
+const MAGIC_SECONDARY = {
+  Weapon: 'weapon',
+  Armor: 'armor',
+  Ammunition: 'consumable',
+  Potion: 'consumable',
+  Scroll: 'consumable',
+};
+
+/**
+ * Every type an item matches for FILTERING — its primary (color) type first, then
+ * any genuine overlap. `itemType()` remains the single primary type used for color.
+ */
+export function itemTypes(item) {
+  const primary = itemType(item);
+  const types = [primary];
+  if (item?.category === 'Magic Item') {
+    const secondary = MAGIC_SECONDARY[item?.magicType];
+    if (secondary && secondary !== primary) types.push(secondary);
+  }
+  return types;
+}
+
 /** Effective weight = per-unit weight × quantity (quantity defaults to 1). */
 export function effectiveWeight(item) {
   return (Number(item?.weight) || 0) * (Number(item?.quantity) || 1);

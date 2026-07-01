@@ -131,6 +131,19 @@ describe('packItems', () => {
     const order = packItems(mixed, COLS, 'type').map((i) => i.name);
     expect(order).toEqual(['Dagger', 'Torch', 'Backpack']); // weapon → consumable → gear
   });
+
+  it('quantity sort is most-first, but a steppable you have one of sinks last', () => {
+    const items = [
+      placed(9, 9, 1, 1, { name: 'Torch', category: 'Adventuring Gear', quantity: 1 }), // steppable qty1 → sinks
+      placed(9, 9, 1, 1, { name: 'Longsword', category: 'Weapon', quantity: 3 }),
+      placed(9, 9, 1, 1, { name: 'Rope', category: 'Adventuring Gear', quantity: 1 }), // plain qty1
+      placed(9, 9, 1, 1, { name: 'Arrow of Slaying', category: 'Magic Item', magicType: 'Ammunition', quantity: 1 }), // magic consumable qty1 → also sinks
+    ];
+    const order = packItems(items, COLS, 'quantity').map((i) => i.name);
+    // qty3 first, then the non-steppable single, then the two depleted steppables last.
+    expect(order.slice(0, 2)).toEqual(['Longsword', 'Rope']);
+    expect(order.slice(2).sort()).toEqual(['Arrow of Slaying', 'Torch']);
+  });
 });
 
 describe('findStackTarget — stack identical items', () => {

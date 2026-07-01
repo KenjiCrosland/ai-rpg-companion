@@ -42,6 +42,49 @@
         >
       </div>
     </div>
+
+    <!-- Relative adjust: add a reward, or spend an amount (change made across
+         denominations). Complements the per-coin steppers above for bulk moves. -->
+    <div class="adjust">
+      <span class="adjust__label">Adjust</span>
+      <input
+        class="adjust__amount"
+        type="number"
+        min="0"
+        step="1"
+        inputmode="numeric"
+        placeholder="0"
+        aria-label="Amount to add or spend"
+        v-model="amount"
+        @keydown.enter.prevent="apply('add')"
+      />
+      <select class="adjust__denom" v-model="denom" aria-label="Denomination">
+        <option v-for="d in denoms" :key="d.key" :value="d.key">{{ d.key }}</option>
+      </select>
+      <button
+        class="adjust__btn adjust__btn--add"
+        type="button"
+        :disabled="!amountN"
+        @click="apply('add')"
+      >+ Add</button>
+      <button
+        class="adjust__btn adjust__btn--spend"
+        type="button"
+        :disabled="!canSpend"
+        :title="amountN && !canSpend ? 'Not enough coin' : ''"
+        @click="apply('spend')"
+      >− Spend</button>
+
+      <span class="adjust__spacer"></span>
+
+      <button
+        class="adjust__btn adjust__btn--empty"
+        type="button"
+        :disabled="isEmpty"
+        title="Remove all coins from the purse"
+        @click="$emit('empty')"
+      >Empty purse</button>
+    </div>
   </section>
 </template>
 
@@ -58,13 +101,19 @@
  * The metal colors are coin-purse-specific contextual treatment — they do not
  * enter parchment's global token system or propagate to other tools.
  */
+import { ref, computed } from 'vue';
+import { canAfford } from '../utils/carry-capacity.mjs';
+
 const props = defineProps({
   coins: { type: Object, required: true },
   coinLbs: { type: Number, default: 0 },
   coinGold: { type: Number, default: 0 },
 });
 
-const emit = defineEmits(['set-coin']);
+const emit = defineEmits(['set-coin', 'adjust', 'empty']);
+
+// Purse holds nothing → Empty is a no-op, so disable it.
+const isEmpty = computed(() => denoms.every((d) => (Number(props.coins[d.key]) || 0) === 0));
 
 const denoms = [
   { key: 'gp', name: 'Gold pieces' },
@@ -80,6 +129,22 @@ function onInput(denom, e) {
 function step(denom, delta) {
   const next = Math.max(0, (Number(props.coins[denom]) || 0) + delta);
   emit('set-coin', { denom, value: next });
+}
+
+// --- relative adjust (add a reward / spend an amount) ---
+const amount = ref('');
+const denom = ref('gp');
+const amountN = computed(() => Math.max(0, Math.floor(Number(amount.value) || 0)));
+// Spend is only offered when the purse can actually cover the value asked.
+const canSpend = computed(
+  () => amountN.value > 0 && canAfford(props.coins, { quantity: amountN.value, unit: denom.value }),
+);
+
+function apply(mode) {
+  if (!amountN.value) return;
+  if (mode === 'spend' && !canSpend.value) return;
+  emit('adjust', { denom: denom.value, amount: amountN.value, mode });
+  amount.value = '';
 }
 
 function formatGp(v) {
@@ -256,6 +321,93 @@ function formatGp(v) {
   color: var(--par-color-text-muted, #6b6b6b);
 }
 
+/* Zone 3: relative adjust row — quiet, sits under the steppers. */
+.adjust {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 0.5px solid var(--par-color-border, #e8e2d4);
+}
+.adjust__label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--par-color-text-secondary, #555);
+}
+.adjust__amount {
+  width: 7rem;
+  min-height: 3.2rem;
+  padding: 0 0.7rem;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
+  background: var(--par-color-surface, #fbf7f0);
+  font-family: inherit;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--par-color-text, #222);
+  -moz-appearance: textfield;
+}
+.adjust__amount::-webkit-outer-spin-button,
+.adjust__amount::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.adjust__amount:focus {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: -1px;
+}
+.adjust__denom {
+  min-height: 3.2rem;
+  padding: 0 0.5rem;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
+  background: var(--par-color-surface, #fbf7f0);
+  font-family: inherit;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--par-color-text, #222);
+}
+.adjust__btn {
+  min-height: 3.2rem;
+  padding: 0 1rem;
+  border: 0.5px solid var(--par-color-border-strong, #cbb8a0);
+  border-radius: var(--par-radius-sm, 3px);
+  background: transparent;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--par-color-text-secondary, #555);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.adjust__btn:hover:not(:disabled) {
+  border-color: var(--par-color-text-secondary, #555);
+  background: var(--par-color-callout-bg, #f3ebda);
+  color: var(--par-color-text, #222);
+}
+.adjust__btn:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 2px;
+}
+.adjust__btn:disabled {
+  border-color: var(--par-color-border, #e4d8c4);
+  color: var(--par-color-text-muted, #9a9082);
+  cursor: not-allowed;
+}
+.adjust__spacer {
+  flex: 1;
+}
+/* Empty purse: quiet by default, destructive-red only on hover (it's a clearing
+   action, but confirmed at the parent — the red is the warning, not a CTA). */
+.adjust__btn--empty:hover:not(:disabled) {
+  border-color: var(--par-color-destructive, #a03333);
+  background: rgba(160, 51, 51, 0.08);
+  color: var(--par-color-destructive, #a03333);
+}
+
 @media (max-width: 560px) {
   .purse__row {
     grid-template-columns: repeat(2, 1fr);
@@ -263,6 +415,9 @@ function formatGp(v) {
   .coin-total {
     grid-column: 1 / -1;
     min-width: 0;
+  }
+  .adjust {
+    flex-wrap: wrap;
   }
 }
 

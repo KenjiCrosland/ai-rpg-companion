@@ -9,7 +9,15 @@ import {
   defaultCharacter,
 } from '../utils/backpack-storage.mjs';
 import { useCarryCapacity } from './useCarryCapacity.js';
-import { coinWeight, coinValueGp, totalWeight, totalCoins } from '../utils/carry-capacity.mjs';
+import {
+  coinWeight,
+  coinValueGp,
+  totalWeight,
+  totalCoins,
+  canAfford,
+  spendCoins,
+  formatCost,
+} from '../utils/carry-capacity.mjs';
 import { expandPackToTemplates } from '../utils/pack-expansion.mjs';
 import {
   tileSize,
@@ -462,6 +470,37 @@ export function useBackpack() {
     coins.value = { ...coins.value, [denom]: n };
   }
 
+  /**
+   * Relative purse adjustment (the coin-purse "Adjust" row):
+   *  - 'add'   → literally add N coins of `denom` (a reward: gp 100 → 137).
+   *  - 'spend' → subtract N×denom of VALUE, making change across denominations
+   *              via spendCoins (pay 15 gp out of silver). No-op + notice if the
+   *              purse can't cover it. Returns whether it applied.
+   */
+  function adjustCoins({ denom, amount, mode } = {}) {
+    const n = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!n || !['gp', 'ep', 'sp', 'cp'].includes(denom)) return false;
+    if (mode === 'spend') {
+      const next = spendCoins(coins.value, { quantity: n, unit: denom });
+      if (!next) {
+        announce(`Not enough coin to spend ${n} ${denom}.`);
+        return false;
+      }
+      coins.value = next;
+      announce(`Spent ${n} ${denom}.`);
+      return true;
+    }
+    coins.value = { ...coins.value, [denom]: (Number(coins.value[denom]) || 0) + n };
+    announce(`Added ${n} ${denom}.`);
+    return true;
+  }
+
+  /** Zero out every denomination (the confirmable "Empty purse" action). */
+  function emptyPurse() {
+    coins.value = { gp: 0, ep: 0, sp: 0, cp: 0 };
+    announce('Purse emptied.');
+  }
+
   function toggleCoinWeight(on) {
     countCoinWeight.value = on === undefined ? !countCoinWeight.value : !!on;
   }
@@ -524,6 +563,20 @@ export function useBackpack() {
       return;
     }
     items.value = placeItemAt(list, item.instanceId, preferred, COLS);
+  }
+
+  /**
+   * Buy a catalog item: deduct its price (× quantity) from the purse, then add it
+   * like a normal drop. Priceless items (no `cost`) and unaffordable ones are
+   * no-ops here — the catalog disables Buy in those cases; this is the guard.
+   */
+  function buyItem(template) {
+    if (!template?.cost) return;
+    const qty = Math.max(1, Math.floor(Number(template.quantity) || 1));
+    if (!canAfford(coins.value, template.cost, qty)) return;
+    coins.value = spendCoins(coins.value, template.cost, qty);
+    addItem(template);
+    announce(`Bought ${cleanName(template.name)} for ${formatCost(template.cost)}.`);
   }
 
   /**
@@ -713,8 +766,11 @@ export function useBackpack() {
     announcement,
     setStrength,
     setCoin,
+    adjustCoins,
+    emptyPurse,
     toggleCoinWeight,
     addItem,
+    buyItem,
     addPack,
     removeItem,
     moveItemTo,

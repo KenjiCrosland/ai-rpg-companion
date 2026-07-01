@@ -8,7 +8,7 @@
  * the nearest free spot rather than failing. No DOM.
  */
 
-import { itemType } from './tile-presentation.mjs';
+import { itemType, itemTypes } from './tile-presentation.mjs';
 
 export const COLS = 6;
 
@@ -147,6 +147,18 @@ function packComparator(sortKey) {
       return (a, b) => effWeight(b) - effWeight(a) || byShape(a, b);
     case 'weight-asc':
       return (a, b) => effWeight(a) - effWeight(b) || byShape(a, b);
+    case 'quantity':
+      return (a, b) => {
+        // "Most first", but a steppable item you have only ONE of (a depleted
+        // consumable/ammo stack) sinks below everything else — it's the thing
+        // most in need of restocking, so it belongs at the very bottom.
+        const sink = (i) => ((Number(i.quantity) || 1) === 1 && itemTypes(i).includes('consumable') ? 1 : 0);
+        return (
+          sink(a) - sink(b) ||
+          (Number(b.quantity) || 1) - (Number(a.quantity) || 1) ||
+          byShape(a, b)
+        );
+      };
     case 'type':
     default:
       return (a, b) => {
