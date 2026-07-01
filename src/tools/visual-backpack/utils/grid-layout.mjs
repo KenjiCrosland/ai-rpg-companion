@@ -125,7 +125,7 @@ export function placeItemAt(items, movedId, preferred, cols = COLS) {
 
 // Match the filter pills' classification + order (so "consumables sort with
 // consumables", not lumped into Adventuring Gear). See itemType / the pill list.
-const TYPE_ORDER = { weapon: 0, armor: 1, consumable: 2, tools: 3, gear: 4, magic: 5 };
+const TYPE_ORDER = { weapon: 0, armor: 1, consumable: 2, tools: 3, gear: 4, magic: 5, treasure: 6 };
 const tw = (it) => it.size?.w || 1;
 const th = (it) => it.size?.h || 1;
 const effWeight = (it) => (Number(it.weight) || 0) * (Number(it.quantity) || 1);
@@ -138,6 +138,12 @@ const effWeight = (it) => (Number(it.weight) || 0) * (Number(it.quantity) || 1);
  */
 const byShape = (a, b) => th(b) - th(a) || tw(b) - tw(a) || a.name.localeCompare(b.name);
 
+// A "steppable" item shows a +/− stepper in the list: any consumable/ammo (even
+// a single one, so you can restock) or any stack of more than one. Kept in sync
+// with BackpackGrid's isNumbered().
+const steppable = (i) =>
+  itemTypes(i).includes('consumable') || (Number(i.quantity) || 1) > 1;
+
 /** Comparator for a sort key: 'type' (default) | 'name' | 'weight-asc' | 'weight-desc'. */
 function packComparator(sortKey) {
   switch (sortKey) {
@@ -149,12 +155,13 @@ function packComparator(sortKey) {
       return (a, b) => effWeight(a) - effWeight(b) || byShape(a, b);
     case 'quantity':
       return (a, b) => {
-        // "Most first", but a steppable item you have only ONE of (a depleted
-        // consumable/ammo stack) sinks below everything else — it's the thing
-        // most in need of restocking, so it belongs at the very bottom.
-        const sink = (i) => ((Number(i.quantity) || 1) === 1 && itemTypes(i).includes('consumable') ? 1 : 0);
+        // Everything with a stepper rises to the top (grouped together — that's
+        // where the counts you're actually tracking live); the static "just a
+        // count of 1" items settle below. Within each group, most-first.
+        const sa = steppable(a) ? 1 : 0;
+        const sb = steppable(b) ? 1 : 0;
         return (
-          sink(a) - sink(b) ||
+          sb - sa ||
           (Number(b.quantity) || 1) - (Number(a.quantity) || 1) ||
           byShape(a, b)
         );
@@ -170,13 +177,18 @@ function packComparator(sortKey) {
   }
 }
 
+/** Order items by a sort key WITHOUT assigning positions (for the flat list view). */
+export function sortItems(items, sortKey = 'type') {
+  return [...items].sort(packComparator(sortKey));
+}
+
 /**
  * Re-pack every item into a tidy top-left reading-order arrangement (the "Tidy
  * up" action and the fallback for items without a saved position), sorted by
  * `sortKey`. Returns new items with fresh `pos`.
  */
 export function packItems(items, cols = COLS, sortKey = 'type') {
-  const sorted = [...items].sort(packComparator(sortKey));
+  const sorted = sortItems(items, sortKey);
   const placed = [];
   for (const it of sorted) {
     const pos = resolvePosition({ x: 0, y: 0 }, it.size, placed, cols);

@@ -39,10 +39,13 @@ export function totalWeight(items) {
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
+/** The tool's coin denominations, highest value first. */
+export const COIN_DENOMS = ['pp', 'gp', 'ep', 'sp', 'cp'];
+
 /** Total number of coins across all denominations. */
 export function totalCoins(coins) {
   if (!coins) return 0;
-  return ['gp', 'ep', 'sp', 'cp'].reduce((acc, k) => acc + (Number(coins[k]) || 0), 0);
+  return COIN_DENOMS.reduce((acc, k) => acc + (Number(coins[k]) || 0), 0);
 }
 
 /** Coin weight in pounds. 5e: 50 coins weigh 1 lb, regardless of denomination. */
@@ -50,14 +53,15 @@ export function coinWeight(coins) {
   return round2(totalCoins(coins) / 50);
 }
 
-/** Total coin value expressed in gold pieces (1 gp = 2 ep = 10 sp = 100 cp). */
+/** Total coin value expressed in gold pieces (1 pp = 10 gp = 20 ep = 100 sp = 1000 cp). */
 export function coinValueGp(coins) {
   if (!coins) return 0;
+  const pp = Number(coins.pp) || 0;
   const gp = Number(coins.gp) || 0;
   const ep = Number(coins.ep) || 0;
   const sp = Number(coins.sp) || 0;
   const cp = Number(coins.cp) || 0;
-  return round2(gp + ep * 0.5 + sp * 0.1 + cp * 0.01);
+  return round2(pp * 10 + gp + ep * 0.5 + sp * 0.1 + cp * 0.01);
 }
 
 // --- prices & buying (catalog "Buy" button) -------------------------------
@@ -66,6 +70,7 @@ export function coinValueGp(coins) {
 
 /** Copper value of one coin of each denomination. */
 const COIN_IN_CP = { pp: 1000, gp: 100, ep: 50, sp: 10, cp: 1 };
+const HIGH_TO_LOW = ['pp', 'gp', 'ep', 'sp', 'cp'];
 
 /** A whole purse ({gp,ep,sp,cp}) expressed in copper. */
 export function coinsToCp(coins) {
@@ -100,24 +105,46 @@ export function canAfford(coins, cost, quantity = 1) {
 }
 
 /**
- * Spend `quantity`×`cost` from a purse. The purse is melted to copper, the price
- * subtracted, and the remainder re-minted greedily from the highest denomination
- * down — value-exact, fewest coins. Re-mints only into the denominations this
- * tool tracks (gp/ep/sp/cp, no platinum), so no value can hide in an untracked
- * coin. Returns the new purse, or `null` if it can't be afforded (the caller
- * should have disabled Buy already).
+ * Spend `quantity`×`cost` from a purse, disturbing it as little as possible:
+ * pay with existing coins highest-denomination-first, and only when the small
+ * coins fall short, break ONE larger coin into change (the rest of the purse —
+ * including any platinum you're hoarding — is left intact). Value-exact.
+ * Returns the new purse, or `null` if it can't be afforded.
  */
 export function spendCoins(coins, cost, quantity = 1) {
   const price = costToCp(cost, quantity);
   if (price <= 0) return null;
-  let remaining = coinsToCp(coins) - price;
-  if (remaining < 0) return null;
-  const out = { gp: 0, ep: 0, sp: 0, cp: 0 };
-  for (const k of ['gp', 'ep', 'sp', 'cp']) {
-    out[k] = Math.floor(remaining / COIN_IN_CP[k]);
-    remaining -= out[k] * COIN_IN_CP[k];
+  const purse = {};
+  for (const d of HIGH_TO_LOW) purse[d] = Number(coins?.[d]) || 0;
+  if (coinsToCp(purse) < price) return null;
+
+  // Pay exact coins, largest first.
+  let owed = price;
+  for (const d of HIGH_TO_LOW) {
+    if (owed <= 0) break;
+    const use = Math.min(purse[d], Math.floor(owed / COIN_IN_CP[d]));
+    purse[d] -= use;
+    owed -= use * COIN_IN_CP[d];
   }
-  return out;
+  // Remainder < every remaining coin's value → break the smallest coin big
+  // enough to cover it, and mint the change back (largest denominations first).
+  if (owed > 0) {
+    for (let i = HIGH_TO_LOW.length - 1; i >= 0; i -= 1) {
+      const d = HIGH_TO_LOW[i];
+      if (purse[d] > 0 && COIN_IN_CP[d] >= owed) {
+        purse[d] -= 1;
+        let change = COIN_IN_CP[d] - owed;
+        owed = 0;
+        for (const cd of HIGH_TO_LOW) {
+          const add = Math.floor(change / COIN_IN_CP[cd]);
+          purse[cd] += add;
+          change -= add * COIN_IN_CP[cd];
+        }
+        break;
+      }
+    }
+  }
+  return purse;
 }
 
 export const CONSEQUENCES = {

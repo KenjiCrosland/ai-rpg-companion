@@ -138,14 +138,14 @@ describe('normalizeCharacter', () => {
 
   it('defaults coins to zero and the coin-weight toggle to true', () => {
     const c = normalizeCharacter({});
-    expect(c.coins).toEqual({ gp: 0, ep: 0, sp: 0, cp: 0 });
+    expect(c.coins).toEqual({ pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 });
     expect(c.countCoinWeight).toBe(true);
     expect(c.packDropped).toBe(false);
   });
 
   it('floors and clamps negative/garbage coin values', () => {
-    const c = normalizeCharacter({ coins: { gp: 3.9, ep: -5, sp: 'x', cp: 12 } });
-    expect(c.coins).toEqual({ gp: 3, ep: 0, sp: 0, cp: 12 });
+    const c = normalizeCharacter({ coins: { pp: 2, gp: 3.9, ep: -5, sp: 'x', cp: 12 } });
+    expect(c.coins).toEqual({ pp: 2, gp: 3, ep: 0, sp: 0, cp: 12 });
   });
 
   it('coerces the dropped-pack mode to a real boolean', () => {

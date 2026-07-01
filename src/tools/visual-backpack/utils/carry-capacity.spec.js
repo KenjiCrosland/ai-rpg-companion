@@ -92,12 +92,18 @@ describe('coins', () => {
     expect(coinWeight({})).toBe(0);
   });
 
-  it('values coins in gold (1 gp = 2 ep = 10 sp = 100 cp)', () => {
+  it('values coins in gold (1 pp = 10 gp = 20 ep = 100 sp = 1000 cp)', () => {
+    expect(coinValueGp({ pp: 1 })).toBe(10);
     expect(coinValueGp({ gp: 1, ep: 0, sp: 0, cp: 0 })).toBe(1);
     expect(coinValueGp({ gp: 0, ep: 1, sp: 0, cp: 0 })).toBe(0.5);
     expect(coinValueGp({ gp: 0, ep: 0, sp: 10, cp: 0 })).toBe(1);
     expect(coinValueGp({ gp: 0, ep: 0, sp: 0, cp: 100 })).toBe(1);
     expect(coinValueGp(purse)).toBe(112); // 100 + 5 + 5 + 2
+    expect(coinValueGp({ pp: 4, gp: 74, ep: 0, sp: 374, cp: 28 })).toBe(151.68); // hoard example
+  });
+
+  it('counts platinum toward the coin count', () => {
+    expect(totalCoins({ pp: 4, gp: 74, sp: 374, cp: 28 })).toBe(480);
   });
 });
 
@@ -142,8 +148,20 @@ describe('prices & buying', () => {
     // Bundle: 20 × 1 gp from 25 gp → 5 gp left.
     const afterBundle = spendCoins(gp(25), { quantity: 1, unit: 'gp' }, 20);
     expect(coinValueGp(afterBundle)).toBe(5);
-    // never mints platinum (value can't hide in an untracked coin)
-    expect(after.pp).toBeUndefined();
+  });
+
+  it('spends without disturbing the rest of the purse (platinum stays put)', () => {
+    // Pay a 2 gp item from a purse holding platinum + gold: only 2 gp leaves;
+    // the 4 platinum is untouched (no melting the whole purse into change).
+    const after = spendCoins({ pp: 4, gp: 5, ep: 0, sp: 0, cp: 0 }, { quantity: 2, unit: 'gp' });
+    expect(after).toEqual({ pp: 4, gp: 3, ep: 0, sp: 0, cp: 0 });
+  });
+
+  it('breaks exactly one larger coin to make change when small coins fall short', () => {
+    // Spend 5 sp (50 cp) from pure gold: break one 1 gp coin → 5 sp change back.
+    const after = spendCoins(gp(3), { quantity: 5, unit: 'sp' });
+    expect(coinValueGp(after)).toBe(2.5); // 3 gp − 0.5 gp
+    expect(after).toEqual({ pp: 0, gp: 2, ep: 1, sp: 0, cp: 0 }); // 2 gp + 1 ep = 2.5 gp
   });
 
   it('refuses to spend when unaffordable or priceless (returns null)', () => {

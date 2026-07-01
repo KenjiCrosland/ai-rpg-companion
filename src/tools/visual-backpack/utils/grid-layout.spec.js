@@ -132,17 +132,19 @@ describe('packItems', () => {
     expect(order).toEqual(['Dagger', 'Torch', 'Backpack']); // weapon → consumable → gear
   });
 
-  it('quantity sort is most-first, but a steppable you have one of sinks last', () => {
+  it('quantity sort: stepper items first (by quantity), non-steppers below', () => {
     const items = [
-      placed(9, 9, 1, 1, { name: 'Torch', category: 'Adventuring Gear', quantity: 1 }), // steppable qty1 → sinks
-      placed(9, 9, 1, 1, { name: 'Longsword', category: 'Weapon', quantity: 3 }),
-      placed(9, 9, 1, 1, { name: 'Rope', category: 'Adventuring Gear', quantity: 1 }), // plain qty1
-      placed(9, 9, 1, 1, { name: 'Arrow of Slaying', category: 'Magic Item', magicType: 'Ammunition', quantity: 1 }), // magic consumable qty1 → also sinks
+      placed(9, 9, 1, 1, { name: 'Torch', category: 'Adventuring Gear', quantity: 1 }), // steppable (consumable)
+      placed(9, 9, 1, 1, { name: 'Longsword', category: 'Weapon', quantity: 3 }), // steppable (qty > 1)
+      placed(9, 9, 1, 1, { name: 'Rope', category: 'Adventuring Gear', quantity: 1 }), // non-steppable single
+      placed(9, 9, 1, 1, { name: 'Arrow of Slaying', category: 'Magic Item', magicType: 'Ammunition', quantity: 1 }), // steppable (magic ammo)
     ];
     const order = packItems(items, COLS, 'quantity').map((i) => i.name);
-    // qty3 first, then the non-steppable single, then the two depleted steppables last.
-    expect(order.slice(0, 2)).toEqual(['Longsword', 'Rope']);
-    expect(order.slice(2).sort()).toEqual(['Arrow of Slaying', 'Torch']);
+    // Steppers lead, most-first (Longsword qty3, then the two qty-1 steppables);
+    // the non-stepper Rope settles at the bottom.
+    expect(order[0]).toBe('Longsword');
+    expect(order[order.length - 1]).toBe('Rope');
+    expect(order.slice(1, 3).sort()).toEqual(['Arrow of Slaying', 'Torch']);
   });
 });
 

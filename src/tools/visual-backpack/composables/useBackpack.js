@@ -19,6 +19,7 @@ import {
   formatCost,
 } from '../utils/carry-capacity.mjs';
 import { expandPackToTemplates } from '../utils/pack-expansion.mjs';
+import { parseTreasure } from '../utils/parse-treasure.mjs';
 import {
   tileSize,
   cleanName,
@@ -69,6 +70,8 @@ function instantiate(template) {
     // Size always derives from the item's own (effective) weight.
     size: tileSize({ name, category, weight, quantity }),
     description: template.description || '',
+    // Treasure/valuable worth (gp) — 0 for ordinary gear; drives the wealth total.
+    valueGp: Number(template.valueGp) || 0,
     rarity: template.rarity || '',
     magicType: template.magicType || '',
     requiresAttunement: !!template.requiresAttunement,
@@ -235,6 +238,17 @@ export function useBackpack() {
   // stay on the body; everything else (plus coins) is in the pack and hits the
   // ground when dropped.
   const round2 = (n) => Math.round(n * 100) / 100;
+  // Total gp worth of Treasure tiles (gems, art, trade goods) — feeds the purse's
+  // "total wealth" readout alongside coin value.
+  const treasureValue = computed(() =>
+    round2(
+      items.value.reduce(
+        (s, i) =>
+          i.category === 'Treasure' ? s + (Number(i.valueGp) || 0) * (Number(i.quantity) || 1) : s,
+        0,
+      ),
+    ),
+  );
   // Items stashed in a bag of holding don't weigh you down (only the bag's own
   // 15 lb does, and the bag is a normal carried item). So they're excluded from
   // every carry-weight figure.
@@ -479,7 +493,7 @@ export function useBackpack() {
    */
   function adjustCoins({ denom, amount, mode } = {}) {
     const n = Math.max(0, Math.floor(Number(amount) || 0));
-    if (!n || !['gp', 'ep', 'sp', 'cp'].includes(denom)) return false;
+    if (!n || !['pp', 'gp', 'ep', 'sp', 'cp'].includes(denom)) return false;
     if (mode === 'spend') {
       const next = spendCoins(coins.value, { quantity: n, unit: denom });
       if (!next) {
@@ -497,7 +511,7 @@ export function useBackpack() {
 
   /** Zero out every denomination (the confirmable "Empty purse" action). */
   function emptyPurse() {
-    coins.value = { gp: 0, ep: 0, sp: 0, cp: 0 };
+    coins.value = { pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 };
     announce('Purse emptied.');
   }
 
@@ -579,6 +593,29 @@ export function useBackpack() {
     announce(`Bought ${cleanName(template.name)} for ${formatCost(template.cost)}.`);
   }
 
+  /** Parse a pasted hoard for the preview (pure — commits nothing). */
+  function previewTreasure(text) {
+    return parseTreasure(text, srdEquipment);
+  }
+
+  /**
+   * Commit a pasted treasure hoard: add its coins to the purse and drop its items
+   * (matched SRD gear/magic + Treasure/custom tiles) into the pack.
+   */
+  function importTreasure(text) {
+    const parsed = parseTreasure(text, srdEquipment);
+    const next = { ...coins.value };
+    for (const d of ['pp', 'gp', 'ep', 'sp', 'cp']) {
+      next[d] = (Number(next[d]) || 0) + (parsed.coins[d] || 0);
+    }
+    coins.value = next;
+    for (const t of parsed.items) addItem(t);
+    const coinCount = ['pp', 'gp', 'ep', 'sp', 'cp'].reduce((s, d) => s + (parsed.coins[d] || 0), 0);
+    const itemCount = parsed.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0);
+    announce(`Treasure added: ${itemCount} item(s)${coinCount ? ' and coins' : ''}.`);
+    return parsed;
+  }
+
   /**
    * Expand a starter pack's contents into the pack as individual tiles. A pack is
    * a bulk drop of many varied sizes, so we re-tidy the whole pack afterward
@@ -623,6 +660,7 @@ export function useBackpack() {
     if (patch.description !== undefined) next.description = String(patch.description);
     if (patch.weight !== undefined) next.weight = Math.max(0, Number(patch.weight) || 0);
     if (patch.quantity !== undefined) next.quantity = Math.max(1, Math.floor(Number(patch.quantity) || 1));
+    if (patch.valueGp !== undefined) next.valueGp = Math.max(0, Number(patch.valueGp) || 0);
     next.size = tileSize(next);
     const updated = items.value.map((i) => (i.instanceId === instanceId ? next : i));
     items.value = placeItemAt(updated, instanceId, item.pos, COLS);
@@ -771,6 +809,9 @@ export function useBackpack() {
     toggleCoinWeight,
     addItem,
     buyItem,
+    previewTreasure,
+    importTreasure,
+    treasureValue,
     addPack,
     removeItem,
     moveItemTo,

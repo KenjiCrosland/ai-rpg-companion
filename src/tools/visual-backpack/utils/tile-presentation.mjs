@@ -18,6 +18,7 @@ export const TYPE_COLORS = {
   tools: { label: 'Tools', bg: '#e3d29c', text: '#6a5615' }, // ochre
   gear: { label: 'Gear', bg: '#e7ddc7', text: '#5c513a' }, // tan
   magic: { label: 'Magic Item', bg: '#d6c4dd', text: '#553a62' }, // arcane plum
+  treasure: { label: 'Treasure', bg: '#e6c34d', text: '#5f4708' }, // rich gold (gems, art, valuables) — deeper/more saturated than the coin-purse currency gold
   currency: { label: 'Currency', bg: '#ecd98f', text: '#6e561a' }, // gold (coin purse)
 };
 
@@ -38,6 +39,8 @@ export function itemType(item) {
       return 'tools';
     case 'Magic Item':
       return 'magic';
+    case 'Treasure':
+      return 'treasure'; // gems, art, trade goods — imported valuables, worth only their gp
     default:
       return CONSUMABLE_RE.test(item?.name || '') ? 'consumable' : 'gear';
   }

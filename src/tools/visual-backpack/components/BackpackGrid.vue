@@ -158,7 +158,7 @@
           @drop="onRowDrop(item)"
           @dragend="onRowDragEnd"
         >
-          <span class="row-item__handle" aria-hidden="true">⠿</span>
+          <span class="row-item__handle" title="Drag to reorder" aria-hidden="true">⠿</span>
           <span class="row-item__swatch" :style="{ background: rowColor(item).bg }" aria-hidden="true"></span>
           <span class="row-item__name">{{ rowName(item) }}</span>
           <span v-if="item.equippedSlot" class="row-item__equipped">✓ Equipped</span>
@@ -239,7 +239,7 @@ import { ParButton, ParSelect } from '@/parchment';
 import ItemTile from './ItemTile.vue';
 import EquipDoll from './EquipDoll.vue';
 import { dragPayload, setDrag, clearDrag } from '../composables/drag-state.js';
-import { COLS, offsetToCell, contentRows, packItems } from '../utils/grid-layout.mjs';
+import { COLS, offsetToCell, contentRows, packItems, sortItems } from '../utils/grid-layout.mjs';
 import { itemType, itemTypes, TYPE_COLORS, typeColor, effectiveWeight, cleanName, isBagOfHolding } from '../utils/tile-presentation.mjs';
 
 const GAP = 6; // px, matches --gap
@@ -269,8 +269,9 @@ const sortOptions = [
   { value: 'weight-desc', label: 'Weight (heavy first)' },
   { value: 'weight-asc', label: 'Weight (light first)' },
   { value: 'quantity', label: 'Quantity (most first)' },
+  { value: 'manual', label: 'Manual (drag to reorder)' },
 ];
-const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic'].map((key) => ({
+const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic', 'treasure'].map((key) => ({
   key,
   label: TYPE_COLORS[key].label,
   color: TYPE_COLORS[key],
@@ -292,10 +293,14 @@ const matchesFilter = (i) => {
   return itemTypes(i).includes(typeFilter.value); // primary + overlaps (magic weapon → Weapon too)
 };
 
-// Items after the active filter (array order — used by the list view).
-const listItems = computed(() =>
-  typeFilter.value ? onGrid.value.filter(matchesFilter) : onGrid.value,
-);
+// The list view is a live-sorted table: it always reflects the chosen sort (so it
+// stays consistent as items are added/imported), independent of the grid's manual
+// positions. Filtered first, then ordered by sortBy.
+const listItems = computed(() => {
+  const base = typeFilter.value ? onGrid.value.filter(matchesFilter) : onGrid.value;
+  // 'manual' keeps the raw array order (drag-reorderable); every other key sorts.
+  return sortBy.value === 'manual' ? base : sortItems(base, sortBy.value);
+});
 
 // Grid view: when filtered, the hidden items are treated as absent and the
 // visible subset is tidied into a fresh top-left layout for the view only (the
@@ -311,7 +316,8 @@ const activeTypeLabel = computed(() =>
 
 function onSort(v) {
   sortBy.value = v;
-  emit('autopack', v); // re-pack in the new order
+  // 'manual' means "leave my order alone"; every real sort re-packs the grid too.
+  if (v !== 'manual') emit('autopack', v);
 }
 function pillStyle(t) {
   return typeFilter.value === t.key
@@ -348,6 +354,13 @@ const listDragId = ref(null);
 const dragOverId = ref(null);
 
 function onRowDragStart(item, e) {
+  // Dragging a row IS a switch to Manual order: bake the current sorted order into
+  // the array first (so nothing visibly jumps — the baked order equals what's on
+  // screen), then stop live-sorting so the drag-reorder actually sticks.
+  if (sortBy.value !== 'manual') {
+    emit('autopack', sortBy.value);
+    sortBy.value = 'manual';
+  }
   listDragId.value = item.instanceId;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', item.name);

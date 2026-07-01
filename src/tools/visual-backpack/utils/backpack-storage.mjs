@@ -13,10 +13,10 @@ import { logger } from '@/util/logger.mjs';
 const STORAGE_KEY = 'backpackInventory';
 const VERSION = 2; // v2: multi-character store
 const DEFAULT_STRENGTH = 10;
-const COIN_DENOMS = ['gp', 'ep', 'sp', 'cp'];
+const COIN_DENOMS = ['pp', 'gp', 'ep', 'sp', 'cp'];
 
 function defaultCoins() {
-  return { gp: 0, ep: 0, sp: 0, cp: 0 };
+  return { pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 };
 }
 
 function normalizeCoins(input) {
@@ -106,6 +106,7 @@ function normalizeItem(it) {
     // Grid position; null means "unplaced" (the composable packs it on load).
     pos: Number.isFinite(px) && Number.isFinite(py) ? { x: px, y: py } : null,
     description: typeof it?.description === 'string' ? it.description : '',
+    valueGp: Number.isFinite(Number(it?.valueGp)) ? Number(it.valueGp) : 0,
     rarity: typeof it?.rarity === 'string' ? it.rarity : '',
     magicType: typeof it?.magicType === 'string' ? it.magicType : '',
     requiresAttunement: !!it?.requiresAttunement,

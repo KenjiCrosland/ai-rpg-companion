@@ -31,12 +31,12 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   strength: { type: Number, default: 10 },
   status: { type: Object, required: true },
-  coins: { type: Object, default: () => ({ gp: 0, ep: 0, sp: 0, cp: 0 }) },
+  coins: { type: Object, default: () => ({ pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 }) },
   coinGold: { type: Number, default: 0 },
 });
 
 const coinLine = computed(() =>
-  ['gp', 'ep', 'sp', 'cp']
+  ['pp', 'gp', 'ep', 'sp', 'cp']
     .filter((k) => Number(props.coins?.[k]) > 0)
     .map((k) => `${props.coins[k]} ${k}`)
     .join(', '),

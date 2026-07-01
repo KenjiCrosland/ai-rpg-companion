@@ -146,7 +146,7 @@ import { setDrag, clearDrag } from '../composables/drag-state.js';
 const props = defineProps({
   catalog: { type: Array, default: () => [] },
   packs: { type: Array, default: () => [] },
-  coins: { type: Object, default: () => ({ gp: 0, ep: 0, sp: 0, cp: 0 }) },
+  coins: { type: Object, default: () => ({ pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 }) },
 });
 
 const emit = defineEmits(['add', 'add-pack', 'add-custom', 'remove-custom', 'buy']);

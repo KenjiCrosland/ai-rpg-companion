@@ -45,6 +45,11 @@
           <span class="detail__weight">{{ weightText }}</span>
         </div>
 
+        <p v-if="valueText" class="detail__value">
+          <span class="detail__value-label">Worth</span>
+          <span class="detail__value-amount">{{ valueText }}</span>
+        </p>
+
         <div v-if="slotKind || item.requiresAttunement" class="detail__equip">
           <template v-if="slotKind">
             <!-- Equipped → a single unequip (says which hand / both hands). -->
@@ -143,6 +148,9 @@
             <ParInput v-model="form.quantity" type="number" />
           </ParField>
         </div>
+        <ParField label="Value (gp each)" hint="Worth per unit — for treasure, gems, and valuables.">
+          <ParInput v-model="form.valueGp" type="number" />
+        </ParField>
         <ParField label="Category">
           <ParSelect v-model="form.category" :options="categories" />
         </ParField>
@@ -205,7 +213,7 @@ const attuneBlocked = computed(
 
 const open = ref(false);
 const editing = ref(false);
-const form = reactive({ name: '', weight: 0, quantity: 1, category: '', description: '' });
+const form = reactive({ name: '', weight: 0, quantity: 1, valueGp: 0, category: '', description: '' });
 
 // Selecting a tile opens the panel and drops out of edit mode.
 watch(
@@ -239,11 +247,21 @@ const weightText = computed(() => {
   return props.item.quantity > 1 ? `${fmt(total)} lb (${fmt(each)} each)` : `${fmt(total)} lb`;
 });
 
+// Treasure/valuables carry a gp worth — show per-unit and the stack total.
+const valueText = computed(() => {
+  const each = Number(props.item?.valueGp) || 0;
+  if (each <= 0) return '';
+  const total = each * (Number(props.item.quantity) || 1);
+  const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
+  return props.item.quantity > 1 ? `${fmt(total)} gp (${fmt(each)} gp each)` : `${fmt(each)} gp`;
+});
+
 function startEdit() {
   const it = props.item;
   form.name = it.name;
   form.weight = it.weight;
   form.quantity = it.quantity;
+  form.valueGp = it.valueGp || 0;
   form.category = it.category;
   form.description = it.description || '';
   editing.value = true;
@@ -256,6 +274,7 @@ function save() {
       name: form.name,
       weight: form.weight,
       quantity: form.quantity,
+      valueGp: form.valueGp,
       category: form.category,
       description: form.description,
     },
@@ -394,6 +413,26 @@ function save() {
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--par-color-text, #222);
+}
+
+.detail__value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin: -0.3rem 0 1.1rem;
+}
+.detail__value-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-action-hover, #2a4d70);
+}
+.detail__value-amount {
+  font-size: 1.45rem;
+  font-weight: 700;
+  /* Treasure gold ink to tie the worth to the treasure tile color. */
+  color: #8a6a12;
 }
 
 .detail__equip {

@@ -2,7 +2,15 @@
   <section class="purse parchment" aria-label="Coin purse">
     <header class="purse__head">
       <h2 class="purse__title">Coin purse</h2>
-      <span class="purse__weight-note">{{ coinLbs }} lb</span>
+      <div class="purse__head-right">
+        <span class="purse__weight-note">{{ coinLbs }} lb</span>
+        <button
+          class="purse__paste"
+          type="button"
+          title="Paste a treasure block (coins and items)"
+          @click="$emit('paste-treasure')"
+        >Paste treasure</button>
+      </div>
     </header>
 
     <div class="purse__row">
@@ -34,11 +42,29 @@
           >+</button>
         </div>
       </div>
+    </div>
 
-      <div class="coin-total" :title="`${coinGold} gp total value`">
-        <span class="coin-total__label">Total</span>
-        <span class="coin-total__value"
-          >{{ formatGp(coinGold) }} <span class="coin-total__unit">gp</span></span
+    <!-- Wealth summary: a full-width strip below the steppers (kept out of the
+         coin grid so all five denominations get real room). -->
+    <div
+      class="wealth"
+      :class="{ 'wealth--total-only': treasureValue <= 0 }"
+      :title="`${totalWealth} gp total wealth`"
+    >
+      <template v-if="treasureValue > 0">
+        <div class="wealth__seg">
+          <span class="wealth__label">Coins</span>
+          <span class="wealth__value">{{ formatGp(coinGold) }} gp</span>
+        </div>
+        <div class="wealth__seg">
+          <span class="wealth__label">Treasure</span>
+          <span class="wealth__value">{{ formatGp(treasureValue) }} gp</span>
+        </div>
+      </template>
+      <div class="wealth__seg wealth__seg--total">
+        <span class="wealth__label">{{ treasureValue > 0 ? 'Total wealth' : 'Total' }}</span>
+        <span class="wealth__value wealth__value--big"
+          >{{ formatGp(totalWealth) }} <span class="wealth__unit">gp</span></span
         >
       </div>
     </div>
@@ -108,14 +134,19 @@ const props = defineProps({
   coins: { type: Object, required: true },
   coinLbs: { type: Number, default: 0 },
   coinGold: { type: Number, default: 0 },
+  // Summed gp value of Treasure-type tiles in the pack (gems, art, trade goods).
+  treasureValue: { type: Number, default: 0 },
 });
 
-const emit = defineEmits(['set-coin', 'adjust', 'empty']);
+const totalWealth = computed(() => Math.round((props.coinGold + props.treasureValue) * 100) / 100);
+
+const emit = defineEmits(['set-coin', 'adjust', 'empty', 'paste-treasure']);
 
 // Purse holds nothing → Empty is a no-op, so disable it.
 const isEmpty = computed(() => denoms.every((d) => (Number(props.coins[d.key]) || 0) === 0));
 
 const denoms = [
+  { key: 'pp', name: 'Platinum pieces' },
   { key: 'gp', name: 'Gold pieces' },
   { key: 'ep', name: 'Electrum pieces' },
   { key: 'sp', name: 'Silver pieces' },
@@ -158,6 +189,7 @@ function formatGp(v) {
   /* Coin-purse-specific metal colors — contextual to this widget only.
      Darkened to clear WCAG AA (4.5:1) on the cream card at 11px/700, while
      keeping the four hues clearly separated (warm amber / olive / cool / brown). */
+  --coin-color-platinum: #5b6b74;
   --coin-color-gold: #956a0b;
   --coin-color-electrum: #7a743b;
   --coin-color-silver: #617493;
@@ -184,16 +216,43 @@ function formatGp(v) {
   font-weight: 600;
   color: var(--color-action-hover, #2a4d70);
 }
+.purse__head-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 .purse__weight-note {
   font-size: 1.2rem;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);
 }
+.purse__paste {
+  min-height: 2.8rem;
+  padding: 0 1rem;
+  border: 0.5px solid var(--par-color-border-strong, #cbb8a0);
+  border-radius: var(--par-radius-sm, 3px);
+  background: transparent;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--par-color-text-secondary, #555);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.purse__paste:hover {
+  border-color: var(--color-action-rest, #365a85);
+  background: var(--par-color-callout-bg, #f3ebda);
+  color: var(--color-action-hover, #2a4d70);
+}
+.purse__paste:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 2px;
+}
 
-/* Zone 2: four steppers + the total pool, auto-sized so there's no gap at the end. */
+/* Zone 2: five coin steppers, each an equal share of the full width. */
 .purse__row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr) auto;
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.75rem;
   align-items: end;
 }
@@ -210,6 +269,9 @@ function formatGp(v) {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   text-align: center;
+}
+.coin--pp .coin__label {
+  color: var(--coin-color-platinum);
 }
 .coin--gp .coin__label {
   color: var(--coin-color-gold);
@@ -235,7 +297,7 @@ function formatGp(v) {
 }
 .stepper__btn {
   flex: none;
-  width: 3.2rem;
+  width: 2.8rem;
   min-height: 4rem;
   border: none;
   background: transparent;
@@ -285,36 +347,57 @@ function formatGp(v) {
   background: rgba(54, 90, 133, 0.06);
 }
 
-/* The total: a defined summary zone — warm tan pool, lapis text. */
-.coin-total {
-  align-self: stretch;
+/* Wealth strip: a full-width warm-tan pool under the steppers. Coins/Treasure/
+   Total sit side by side; the Total segment is pushed right and emphasized. */
+.wealth {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 0.5rem 1rem;
-  min-width: 13rem;
+  align-items: center;
+  gap: 1.6rem;
+  margin-top: 1.2rem;
+  padding: 0.7rem 1.2rem;
   background: var(--par-color-callout-bg, #f3ebda);
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-md, 4px);
 }
-.coin-total__label {
+.wealth__seg {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.wealth__seg--total {
+  margin-left: auto; /* push the total to the right edge */
+  padding-left: 1.6rem;
+  border-left: 0.5px solid var(--par-color-border-strong, #c9b99a);
+}
+/* No treasure → the Total is the only segment: span the full strip with the
+   label at the left and the value at the right, so there's no dead space. */
+.wealth--total-only .wealth__seg--total {
+  flex: 1;
+  justify-content: space-between;
+  margin-left: 0;
+  padding-left: 0;
+  border-left: none;
+}
+.wealth__label {
   font-size: 1.1rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  text-align: right;
-  color: var(--color-action-hover, #2a4d70);
-  margin-bottom: 0.2rem;
+  color: var(--par-color-text-secondary, #555);
 }
-.coin-total__value {
-  /* Slightly smaller than the section heading (2rem) for hierarchy. */
-  font-size: 1.8rem;
+.wealth__seg--total .wealth__label {
+  color: var(--color-action-hover, #2a4d70);
+}
+.wealth__value {
+  font-size: 1.35rem;
   font-weight: 600;
-  line-height: 1;
-  text-align: right;
   color: var(--color-action-hover, #2a4d70);
 }
-.coin-total__unit {
+.wealth__value--big {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+.wealth__unit {
   font-size: 1.3rem;
   font-style: italic;
   font-weight: 400;
@@ -410,11 +493,16 @@ function formatGp(v) {
 
 @media (max-width: 560px) {
   .purse__row {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
-  .coin-total {
-    grid-column: 1 / -1;
-    min-width: 0;
+  .wealth {
+    flex-wrap: wrap;
+    gap: 0.6rem 1.2rem;
+  }
+  .wealth__seg--total {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
   }
   .adjust {
     flex-wrap: wrap;

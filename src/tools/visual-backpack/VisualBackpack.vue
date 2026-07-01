@@ -163,9 +163,11 @@
           :coins="coins"
           :coin-lbs="coinLbs"
           :coin-gold="coinGold"
+          :treasure-value="treasureValue"
           @set-coin="({ denom, value }) => setCoin(denom, value)"
           @adjust="adjustCoins"
           @empty="confirmEmptyPurse = true"
+          @paste-treasure="treasureOpen = true"
         />
         <CapacityIndicator
           :status="status"
@@ -186,6 +188,13 @@
     </div>
 
     <RulesDrawer :open="rulesOpen" @close="closeRules" />
+
+    <TreasureImportModal
+      :opened="treasureOpen"
+      :parse="previewTreasure"
+      @cancel="treasureOpen = false"
+      @confirm="onImportTreasure"
+    />
 
     <ParConfirm
       :opened="confirmClear"
@@ -241,6 +250,7 @@ import ItemCatalog from './components/ItemCatalog.vue';
 import BackpackGrid from './components/BackpackGrid.vue';
 import BagPanel from './components/BagPanel.vue';
 import CoinPurse from './components/CoinPurse.vue';
+import TreasureImportModal from './components/TreasureImportModal.vue';
 import CapacityIndicator from './components/CapacityIndicator.vue';
 import PrintList from './components/PrintList.vue';
 import { isBagOfHolding } from './utils/tile-presentation.mjs';
@@ -292,6 +302,9 @@ const {
   setCoin,
   adjustCoins,
   emptyPurse,
+  previewTreasure,
+  importTreasure,
+  treasureValue,
   toggleCoinWeight,
   addItem,
   buyItem,
@@ -352,6 +365,7 @@ function dismissBagTip() {
 
 const confirmClear = ref(false);
 const confirmEmptyPurse = ref(false);
+const treasureOpen = ref(false);
 const fileInput = ref(null);
 
 // Rules-reference drawer (chrome affordance). Returns focus to the trigger on close.
@@ -466,6 +480,11 @@ function doClear() {
 function doEmptyPurse() {
   emptyPurse();
   confirmEmptyPurse.value = false;
+}
+
+function onImportTreasure(text) {
+  importTreasure(text);
+  treasureOpen.value = false;
 }
 
 function printList() {
