@@ -7,9 +7,9 @@
         <button
           class="purse__paste"
           type="button"
-          title="Paste a treasure block (coins and items)"
+          title="Paste a loot list (coins and items)"
           @click="$emit('paste-treasure')"
-        >Paste treasure</button>
+        >Paste loot list</button>
       </div>
     </header>
 

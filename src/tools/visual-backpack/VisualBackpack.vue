@@ -303,7 +303,7 @@ const {
   adjustCoins,
   emptyPurse,
   previewTreasure,
-  importTreasure,
+  applyTreasure,
   treasureValue,
   toggleCoinWeight,
   addItem,
@@ -482,8 +482,8 @@ function doEmptyPurse() {
   confirmEmptyPurse.value = false;
 }
 
-function onImportTreasure(text) {
-  importTreasure(text);
+function onImportTreasure({ coins: parsedCoins, items }) {
+  applyTreasure(parsedCoins, items);
   treasureOpen.value = false;
 }
 
@@ -685,6 +685,7 @@ function onFileChosen(e) {
   display: flex;
   flex-direction: column;
   gap: 1.4rem;
+  min-width: 0; /* let the 1fr grid track shrink so long row names wrap, not overflow */
 }
 
 /* Dim backdrop behind the collapsed sidebar on mobile. */

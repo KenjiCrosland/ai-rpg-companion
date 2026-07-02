@@ -599,20 +599,30 @@ export function useBackpack() {
   }
 
   /**
-   * Commit a pasted treasure hoard: add its coins to the purse and drop its items
-   * (matched SRD gear/magic + Treasure/custom tiles) into the pack.
+   * Apply a (possibly user-filtered) treasure result: add coins to the purse and
+   * drop the given items into the pack. The import modal passes only the items the
+   * user left checked.
    */
+  function applyTreasure(parsedCoins, parsedItems) {
+    if (parsedCoins) {
+      const next = { ...coins.value };
+      for (const d of ['pp', 'gp', 'ep', 'sp', 'cp']) {
+        next[d] = (Number(next[d]) || 0) + (Number(parsedCoins[d]) || 0);
+      }
+      coins.value = next;
+    }
+    for (const t of parsedItems || []) addItem(t);
+    const coinCount = parsedCoins
+      ? ['pp', 'gp', 'ep', 'sp', 'cp'].reduce((s, d) => s + (Number(parsedCoins[d]) || 0), 0)
+      : 0;
+    const itemCount = (parsedItems || []).reduce((s, i) => s + (Number(i.quantity) || 1), 0);
+    announce(`Treasure added: ${itemCount} item(s)${coinCount ? ' and coins' : ''}.`);
+  }
+
+  /** Parse a pasted hoard and apply the whole thing (coins + every item). */
   function importTreasure(text) {
     const parsed = parseTreasure(text, srdEquipment);
-    const next = { ...coins.value };
-    for (const d of ['pp', 'gp', 'ep', 'sp', 'cp']) {
-      next[d] = (Number(next[d]) || 0) + (parsed.coins[d] || 0);
-    }
-    coins.value = next;
-    for (const t of parsed.items) addItem(t);
-    const coinCount = ['pp', 'gp', 'ep', 'sp', 'cp'].reduce((s, d) => s + (parsed.coins[d] || 0), 0);
-    const itemCount = parsed.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0);
-    announce(`Treasure added: ${itemCount} item(s)${coinCount ? ' and coins' : ''}.`);
+    applyTreasure(parsed.coins, parsed.items);
     return parsed;
   }
 
@@ -811,6 +821,7 @@ export function useBackpack() {
     buyItem,
     previewTreasure,
     importTreasure,
+    applyTreasure,
     treasureValue,
     addPack,
     removeItem,

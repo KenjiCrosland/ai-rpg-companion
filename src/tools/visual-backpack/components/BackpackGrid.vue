@@ -269,7 +269,9 @@ const sortOptions = [
   { value: 'weight-desc', label: 'Weight (heavy first)' },
   { value: 'weight-asc', label: 'Weight (light first)' },
   { value: 'quantity', label: 'Quantity (most first)' },
-  { value: 'manual', label: 'Manual (drag to reorder)' },
+  // Short by design — dragging a row auto-selects this, so it needs only a concise
+  // label (not "Manual (drag to reorder)"), which kept the sort control too wide.
+  { value: 'manual', label: 'Manual' },
 ];
 const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic', 'treasure'].map((key) => ({
   key,
@@ -484,18 +486,23 @@ function onDrop(e) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* title + view/sort/actions share ONE row */
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
 .grid-panel__titlebar {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: baseline;
+  gap: 0.7rem;
+  min-width: 0; /* allow the title to shrink/truncate before the controls do */
 }
 .grid-panel__title {
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
   font-size: 2rem;
   font-weight: 600;
@@ -520,6 +527,7 @@ function onDrop(e) {
   display: flex;
   align-items: center;
   gap: 0.9rem;
+  flex: none; /* controls keep their size; the title yields space instead */
 }
 .grid-panel__sort {
   display: inline-flex;
@@ -667,9 +675,10 @@ function onDrop(e) {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--par-color-text, #222);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Long flavor-loot names (DMG hoard items run long) wrap onto multiple lines
+     instead of overflowing the row / ellipsing away the interesting bit. */
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 .row-item__equipped {
   flex: none;
@@ -923,6 +932,16 @@ function onDrop(e) {
   background: transparent;
   color: var(--par-color-destructive, #a03333);
   border-color: transparent;
+}
+
+@media (max-width: 640px) {
+  /* Too narrow for one row — let the controls drop below the title. */
+  .grid-panel__head {
+    flex-wrap: wrap;
+  }
+  .grid-panel__title {
+    white-space: normal; /* no need to truncate once we're allowed to wrap */
+  }
 }
 
 @media (max-width: 500px) {

@@ -1,12 +1,12 @@
 <template>
   <ParModal
     :opened="opened"
-    title="Paste treasure"
+    title="Paste loot list"
     :close-on-backdrop="false"
     @cancel="$emit('cancel')"
   >
     <p class="ti__intro">
-      Paste a treasure block — coins and items, one per line. Loot-generator dumps
+      Paste a loot list — coins and items, one per line. Loot-generator dumps
       work as-is. We'll sort coins into your purse and drop items into the pack.
     </p>
 
@@ -19,7 +19,7 @@
     />
 
     <div v-if="text.trim()" class="ti__preview">
-      <h4 class="ti__preview-title">Preview</h4>
+      <h4 class="ti__preview-title">Preview — uncheck anything you don't want</h4>
 
       <p v-if="coinChips.length" class="ti__coins">
         <span class="ti__coins-label">Coins</span>
@@ -27,7 +27,19 @@
       </p>
 
       <ul v-if="preview.items.length" class="ti__items">
-        <li v-for="it in preview.items" :key="it.id" class="ti__item">
+        <li
+          v-for="it in preview.items"
+          :key="it.id"
+          class="ti__item"
+          :class="{ 'ti__item--off': excluded.has(it.id) }"
+        >
+          <input
+            class="ti__check"
+            type="checkbox"
+            :checked="!excluded.has(it.id)"
+            :aria-label="`Include ${it.name}`"
+            @change="toggle(it.id)"
+          />
           <span class="ti__item-qty">{{ it.quantity }}×</span>
           <span class="ti__item-name">{{ it.name }}</span>
           <span class="ti__item-tag" :class="tagClass(it)">{{ tagLabel(it) }}</span>
@@ -38,6 +50,13 @@
       <p v-if="!coinChips.length && !preview.items.length" class="ti__empty">
         Nothing recognized yet.
       </p>
+
+      <div v-if="preview.unrecognized && preview.unrecognized.length" class="ti__skipped">
+        <h4 class="ti__skipped-title">Couldn't read these — add them by hand</h4>
+        <ul class="ti__skipped-list">
+          <li v-for="(l, i) in preview.unrecognized" :key="i">{{ l }}</li>
+        </ul>
+      </div>
     </div>
 
     <template #footer>
@@ -55,7 +74,7 @@
  * nothing) so the user sees exactly which lines become coins, matched SRD items,
  * Treasure valuables, or plain custom items before confirming.
  */
-import { ref, computed, watch } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { ParModal, ParButton, ParTextarea } from '@/parchment';
 
 const props = defineProps({
@@ -67,18 +86,31 @@ const props = defineProps({
 const emit = defineEmits(['cancel', 'confirm']);
 
 const text = ref('');
+// Item ids the user has unchecked (excluded from the import). Everything is
+// included by default; this only tracks the opt-outs.
+const excluded = reactive(new Set());
 
-// Reset the field each time the modal opens fresh.
+// Reset the field + selections each time the modal opens fresh.
 watch(
   () => props.opened,
   (open) => {
-    if (open) text.value = '';
+    if (open) {
+      text.value = '';
+      excluded.clear();
+    }
   },
 );
 
 const preview = computed(() =>
-  text.value.trim() ? props.parse(text.value) : { coins: {}, items: [] },
+  text.value.trim() ? props.parse(text.value) : { coins: {}, items: [], unrecognized: [] },
 );
+
+const toggle = (id) => {
+  if (excluded.has(id)) excluded.delete(id);
+  else excluded.add(id);
+};
+
+const includedItems = computed(() => preview.value.items.filter((it) => !excluded.has(it.id)));
 
 const coinChips = computed(() =>
   ['pp', 'gp', 'ep', 'sp', 'cp']
@@ -86,7 +118,7 @@ const coinChips = computed(() =>
     .filter((c) => c.n > 0),
 );
 
-const hasAnything = computed(() => coinChips.value.length > 0 || preview.value.items.length > 0);
+const hasAnything = computed(() => coinChips.value.length > 0 || includedItems.value.length > 0);
 
 function tagLabel(it) {
   if (it.matched) return 'matched';
@@ -103,7 +135,8 @@ function formatGp(v) {
 
 function confirm() {
   if (!hasAnything.value) return;
-  emit('confirm', text.value);
+  // Only the checked items (plus coins) get imported.
+  emit('confirm', { coins: preview.value.coins, items: includedItems.value });
 }
 </script>
 
@@ -171,6 +204,19 @@ function confirm() {
   font-size: 1.35rem;
   border-bottom: 0.5px solid var(--par-color-border, #e8e2d4);
 }
+.ti__check {
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  accent-color: var(--color-action-rest, #365a85);
+  cursor: pointer;
+}
+.ti__item--off {
+  opacity: 0.45;
+}
+.ti__item--off .ti__item-name {
+  text-decoration: line-through;
+}
 .ti__item-qty {
   flex: none;
   font-weight: 700;
@@ -213,5 +259,26 @@ function confirm() {
   margin: 0;
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);
+}
+.ti__skipped {
+  margin-top: 1.2rem;
+  padding: 0.8rem 1rem;
+  border-left: 2px solid var(--par-color-destructive, #a03333);
+  background: rgba(160, 51, 51, 0.06);
+  border-radius: 0 var(--par-radius-sm, 3px) var(--par-radius-sm, 3px) 0;
+}
+.ti__skipped-title {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--par-color-destructive, #a03333);
+}
+.ti__skipped-list {
+  margin: 0;
+  padding-left: 1.6rem;
+  font-size: 1.2rem;
+  color: var(--par-color-text-secondary, #555);
 }
 </style>

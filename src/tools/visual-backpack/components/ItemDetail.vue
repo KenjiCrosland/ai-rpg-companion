@@ -308,9 +308,13 @@ function save() {
   outline-offset: 2px;
 }
 .detail__toggle-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Long flavor-loot names wrap to a few lines instead of truncating away the
+     interesting part; the chevron stays put beside it. */
+  flex: 1;
+  min-width: 0;
+  text-align: left; /* the toggle is a <button> (centers text by default) */
+  overflow-wrap: anywhere;
+  line-height: 1.3;
   font-size: 1.7rem;
   font-weight: 600;
   color: var(--par-color-title, #7a1f1f);
