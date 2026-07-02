@@ -239,7 +239,7 @@ import { ParButton, ParSelect } from '@/parchment';
 import ItemTile from './ItemTile.vue';
 import EquipDoll from './EquipDoll.vue';
 import { dragPayload, setDrag, clearDrag } from '../composables/drag-state.js';
-import { COLS, offsetToCell, contentRows, packItems, sortItems } from '../utils/grid-layout.mjs';
+import { COLS, offsetToCell, contentRows, packItems } from '../utils/grid-layout.mjs';
 import { itemType, itemTypes, TYPE_COLORS, typeColor, effectiveWeight, cleanName, isBagOfHolding } from '../utils/tile-presentation.mjs';
 
 const GAP = 6; // px, matches --gap
@@ -269,9 +269,6 @@ const sortOptions = [
   { value: 'weight-desc', label: 'Weight (heavy first)' },
   { value: 'weight-asc', label: 'Weight (light first)' },
   { value: 'quantity', label: 'Quantity (most first)' },
-  // Short by design — dragging a row auto-selects this, so it needs only a concise
-  // label (not "Manual (drag to reorder)"), which kept the sort control too wide.
-  { value: 'manual', label: 'Manual' },
 ];
 const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic', 'treasure'].map((key) => ({
   key,
@@ -295,14 +292,13 @@ const matchesFilter = (i) => {
   return itemTypes(i).includes(typeFilter.value); // primary + overlaps (magic weapon → Weapon too)
 };
 
-// The list view is a live-sorted table: it always reflects the chosen sort (so it
-// stays consistent as items are added/imported), independent of the grid's manual
-// positions. Filtered first, then ordered by sortBy.
-const listItems = computed(() => {
-  const base = typeFilter.value ? onGrid.value.filter(matchesFilter) : onGrid.value;
-  // 'manual' keeps the raw array order (drag-reorderable); every other key sorts.
-  return sortBy.value === 'manual' ? base : sortItems(base, sortBy.value);
-});
+// The list renders in ARRAY order. Sorting is a one-shot action (picking a sort
+// re-packs the array via onSort → autopack); it is NOT re-applied as items change,
+// so incrementing/decrementing a row's quantity leaves it exactly where it is
+// instead of jumping around. Drag reorders the array directly.
+const listItems = computed(() =>
+  typeFilter.value ? onGrid.value.filter(matchesFilter) : onGrid.value,
+);
 
 // Grid view: when filtered, the hidden items are treated as absent and the
 // visible subset is tidied into a fresh top-left layout for the view only (the
@@ -317,9 +313,10 @@ const activeTypeLabel = computed(() =>
 );
 
 function onSort(v) {
+  // A one-shot sort: re-pack the array now. It won't re-apply as items change, and
+  // dragging or "Tidy up" can rearrange from here.
   sortBy.value = v;
-  // 'manual' means "leave my order alone"; every real sort re-packs the grid too.
-  if (v !== 'manual') emit('autopack', v);
+  emit('autopack', v);
 }
 function pillStyle(t) {
   return typeFilter.value === t.key
@@ -356,13 +353,8 @@ const listDragId = ref(null);
 const dragOverId = ref(null);
 
 function onRowDragStart(item, e) {
-  // Dragging a row IS a switch to Manual order: bake the current sorted order into
-  // the array first (so nothing visibly jumps — the baked order equals what's on
-  // screen), then stop live-sorting so the drag-reorder actually sticks.
-  if (sortBy.value !== 'manual') {
-    emit('autopack', sortBy.value);
-    sortBy.value = 'manual';
-  }
+  // The list renders array order, so a drag just reorders the array (on drop) —
+  // no need to bake or switch modes.
   listDragId.value = item.instanceId;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', item.name);

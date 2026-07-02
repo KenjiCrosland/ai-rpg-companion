@@ -87,7 +87,11 @@ export function resolvePosition(preferred, size, others, cols = COLS) {
  * Place `movedId` at exactly the `preferred` cell (clamped to fit the columns),
  * then DISPLACE any items it now overlaps to their nearest free cell — cascading,
  * so nothing ends up overlapping. The dragged item always lands where you point;
- * the others get out of its way. Returns new items.
+ * the others get out of its way.
+ *
+ * The INPUT array order is preserved — only positions change. The list view renders
+ * in array order, so a quantity tweak (which re-runs this to re-settle the grid)
+ * must NOT reshuffle the rows; the one-shot sort (packItems) owns ordering.
  */
 export function placeItemAt(items, movedId, preferred, cols = COLS) {
   const moved = items.find((i) => i.instanceId === movedId);
@@ -98,29 +102,24 @@ export function placeItemAt(items, movedId, preferred, cols = COLS) {
     x: clamp(Math.round(preferred?.x ?? 0), 0, maxX),
     y: Math.max(0, Math.round(preferred?.y ?? 0)),
   };
-  const withMoved = items.map((i) => (i.instanceId === movedId ? { ...i, pos } : i));
 
-  // Off-grid items (no pos — e.g. stashed in a bag of holding) sit out of the
-  // geometry entirely and are preserved as-is.
-  const offGrid = withMoved.filter((i) => i.instanceId !== movedId && !i.pos);
-
-  // Settle the rest in reading order; anyone overlapping a settled tile relocates.
-  const anchor = withMoved.find((i) => i.instanceId === movedId);
-  const others = withMoved
+  // Settle in reading order to resolve overlaps, recording each item's final
+  // position — but don't let that order leak into the returned array.
+  const anchor = { ...moved, pos };
+  const others = items
     .filter((i) => i.instanceId !== movedId && i.pos)
     .sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x);
 
   const settled = [anchor];
-  const out = [anchor];
+  const posOf = new Map([[movedId, pos]]);
   for (const it of others) {
     const rect = { x: it.pos.x, y: it.pos.y, w: it.size.w, h: it.size.h };
-    const next = collidesAny(rect, settled)
-      ? { ...it, pos: resolvePosition(it.pos, it.size, settled, cols) }
-      : it;
-    settled.push(next);
-    out.push(next);
+    const nextPos = collidesAny(rect, settled) ? resolvePosition(it.pos, it.size, settled, cols) : it.pos;
+    settled.push({ ...it, pos: nextPos });
+    posOf.set(it.instanceId, nextPos);
   }
-  return [...out, ...offGrid];
+  // Return in the ORIGINAL array order, applying only the new positions.
+  return items.map((i) => (posOf.has(i.instanceId) ? { ...i, pos: posOf.get(i.instanceId) } : i));
 }
 
 // Match the filter pills' classification + order (so "consumables sort with

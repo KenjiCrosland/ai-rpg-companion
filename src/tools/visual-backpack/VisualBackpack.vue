@@ -187,6 +187,8 @@
       </div>
     </div>
 
+    <RiftOverlay :active="riftActive" @close="riftActive = false" />
+
     <RulesDrawer :open="rulesOpen" @close="closeRules" />
 
     <TreasureImportModal
@@ -248,6 +250,7 @@ import RulesDrawer from './components/RulesDrawer.vue';
 import ItemDetail from './components/ItemDetail.vue';
 import ItemCatalog from './components/ItemCatalog.vue';
 import BackpackGrid from './components/BackpackGrid.vue';
+import RiftOverlay from './components/RiftOverlay.vue';
 import BagPanel from './components/BagPanel.vue';
 import CoinPurse from './components/CoinPurse.vue';
 import TreasureImportModal from './components/TreasureImportModal.vue';
@@ -331,8 +334,11 @@ function stashSelected() {
   if (!selectedItem.value || !bags.value.length) return;
   stashItem(selectedItem.value.instanceId, bags.value[0].instanceId);
 }
+const riftActive = ref(false);
 function onRejectBag() {
-  toast.error('A bag of holding inside another tears a rift to the Astral Plane. The SRD says don’t!');
+  // Easter egg: play the Astral-rift gag instead of a plain error. The bag was
+  // never stashed, so it simply stays where it is once the animation clears.
+  riftActive.value = true;
 }
 
 // Clicking the coin-purse tile focuses the coin editor instead of opening the detail panel.
