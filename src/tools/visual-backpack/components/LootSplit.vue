@@ -1,5 +1,6 @@
 <template>
-  <div class="ls">
+  <div class="ls" ref="rootEl">
+    <p class="ls__sr" aria-live="polite" role="status">{{ announce }}</p>
     <div class="ls__bar">
       <label class="ls__shares">
         <span class="ls__shares-label">Shares</span>
@@ -7,7 +8,7 @@
         <span class="ls__shares-n" aria-live="polite">{{ shares }}</span>
         <button class="ls__step" type="button" :disabled="shares >= 8" aria-label="More shares" @click="setShares(shares + 1)">+</button>
       </label>
-      <button class="ls__redeal" type="button" @click="deal">↻ Re-deal items</button>
+      <button class="ls__redeal" type="button" @click="redeal">↻ Re-deal items</button>
       <button class="ls__redeal" type="button" @click="printAllShares">🖨 Print all shares</button>
       <label class="ls__rebalance">
         <input type="checkbox" v-model="rebalanceEnabled" @change="deal" />
@@ -55,20 +56,34 @@
                 class="ls__item"
                 :class="{ 'ls__item--open': menuKey === `${pi}:${it.id}` }"
                 draggable="true"
+                :tabindex="claimedIndex >= 0 ? -1 : 0"
+                role="button"
+                aria-haspopup="menu"
+                :aria-expanded="menuKey === `${pi}:${it.id}`"
+                :aria-label="`${itemLabel(it)}, Share ${pi + 1}. Press Enter to move it to another share.`"
                 @dragstart="onDragStart(pi, it.id, $event)"
                 @dragend="dropTarget = -1"
                 @click.stop="toggleMenu(pi, it.id)"
+                @keydown="onItemKey(pi, it.id, $event)"
               >
                 <span class="ls__item-grip" aria-hidden="true">⠿</span>
                 <span class="ls__item-name">{{ it.name }}<span v-if="it.quantity > 1"> ×{{ it.quantity }}</span></span>
 
-                <div v-if="menuKey === `${pi}:${it.id}`" class="ls__menu" @click.stop>
+                <div
+                  v-if="menuKey === `${pi}:${it.id}`"
+                  class="ls__menu"
+                  role="menu"
+                  aria-label="Move item to another share"
+                  @click.stop
+                  @keydown.esc.stop.prevent="closeMenuFromInside"
+                >
                   <span class="ls__menu-label">Move to</span>
                   <button
                     v-for="ti in otherPiles(pi)"
                     :key="ti"
                     class="ls__menu-opt"
                     type="button"
+                    role="menuitem"
                     @click="pickMove(pi, it.id, ti)"
                   >Share {{ ti + 1 }}</button>
                 </div>
@@ -125,7 +140,7 @@
  * "move" menu, copy any pile as text to hand off, and claim exactly one pile into
  * their own pack. Stateless — nothing persists; the parent owns applyTreasure.
  */
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { splitLoot, rebalanceCoins } from '../utils/split-loot.mjs';
 import { coinValueGp } from '../utils/carry-capacity.mjs';
 import { itemType, TYPE_COLORS } from '../utils/tile-presentation.mjs';
@@ -147,7 +162,17 @@ const readBalancePref = () => {
 const rebalanceEnabled = ref(readBalancePref());
 watch(rebalanceEnabled, (v) => {
   try { localStorage.setItem(BALANCE_PREF_KEY, v ? 'true' : 'false'); } catch { /* storage blocked */ }
+  announceMsg(`Balancing by value ${v ? 'on' : 'off'}.`);
 });
+const rootEl = ref(null);
+// Screen-reader status line: mouse-free feedback for actions that otherwise leave
+// no visible focus (re-deal, move, copy, claim). Blanked then reset so the same
+// message re-announces.
+const announce = ref('');
+function announceMsg(msg) {
+  announce.value = '';
+  nextTick(() => { announce.value = msg; });
+}
 const piles = ref([]);
 const leftover = ref({ coins: {}, valueGp: 0 });
 const claimedIndex = ref(-1);
@@ -171,12 +196,18 @@ function deal() {
 function setShares(n) {
   shares.value = Math.min(8, Math.max(2, n));
 }
+// User-triggered re-deal (announced); the mount/watch calls to deal() stay silent.
+function redeal() {
+  deal();
+  announceMsg(`Loot re-dealt into ${shares.value} shares.`);
+}
 onMounted(deal);
 watch(shares, deal);
 // Re-deal if the upstream selection changes (checkbox toggles in the modal).
 watch(() => [props.items, props.coins], deal, { deep: true });
 
 const otherPiles = (pi) => piles.value.map((_, i) => i).filter((i) => i !== pi);
+const itemLabel = (it) => `${it.name}${it.quantity > 1 ? ` (×${it.quantity})` : ''}`;
 
 // The item-value component of a pile's total: mundane treasure always, plus magic
 // rarity estimates when balancing (so total = coins + item value reconciles, and a
@@ -223,7 +254,32 @@ const closeMenu = () => { menuKey.value = null; };
 function toggleMenu(pi, id) {
   if (claimedIndex.value >= 0) return; // arrangement locks once a pile is claimed
   const key = `${pi}:${id}`;
-  menuKey.value = menuKey.value === key ? null : key;
+  if (menuKey.value === key) {
+    menuKey.value = null;
+  } else {
+    menuKey.value = key;
+    // Drop focus onto the first destination so keyboard users land in the menu.
+    nextTick(() => rootEl.value?.querySelector('.ls__menu-opt')?.focus());
+  }
+}
+// Keyboard on an item row: Enter/Space opens the move menu, Escape closes it.
+function onItemKey(pi, id, e) {
+  // Ignore keys bubbling up from the open menu's buttons (else Enter on a
+  // destination would be hijacked here and never reach the button's click).
+  if (e.target !== e.currentTarget) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    toggleMenu(pi, id);
+  } else if (e.key === 'Escape' && menuKey.value === `${pi}:${id}`) {
+    e.preventDefault();
+    menuKey.value = null;
+  }
+}
+// Escape from inside the menu — close and return focus to the row that owns it.
+function closeMenuFromInside() {
+  const row = rootEl.value?.querySelector('.ls__item--open');
+  menuKey.value = null;
+  row?.focus();
 }
 function pickMove(fromPi, id, toPi) {
   moveItem(fromPi, id, toPi);
@@ -258,6 +314,7 @@ function moveItem(fromPi, id, toPi) {
     recompute(from);
     recompute(to);
   }
+  announceMsg(`Moved ${itemLabel(it)} to Share ${toPi + 1}.${rebalanceEnabled.value ? ' Coins re-balanced.' : ''}`);
 }
 
 // --- drag ---
@@ -275,6 +332,7 @@ function claim(pi) {
   if (claimedIndex.value >= 0) return;
   claimedIndex.value = pi;
   emit('claim', { coins: { ...piles.value[pi].coins }, items: piles.value[pi].items.map((i) => ({ ...i })) });
+  announceMsg(`Share ${pi + 1} added to your pack.`);
 }
 
 // --- text export ---
@@ -312,6 +370,7 @@ async function copyPile(pi) {
     ta.remove();
   }
   copiedIndex.value = pi;
+  announceMsg(`Share ${pi + 1} copied to the clipboard.`);
   setTimeout(() => { if (copiedIndex.value === pi) copiedIndex.value = -1; }, 1400);
 }
 
@@ -516,6 +575,22 @@ function printAllShares() {
 }
 .ls__item:hover { background: var(--par-color-callout-bg, #f3ebda); }
 .ls__item--open { background: var(--par-color-callout-bg, #f3ebda); }
+.ls__item:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: -2px;
+}
+/* Visually-hidden live region — announced by screen readers, invisible on screen. */
+.ls__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .ls__item-grip { flex: none; color: var(--par-color-text-muted, #b6ab97); cursor: grab; }
 /* One line by default (badges stay aligned); the full name wraps only when the
    row is clicked open. */
