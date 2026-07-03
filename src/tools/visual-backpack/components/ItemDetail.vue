@@ -1,6 +1,7 @@
 <template>
-  <aside class="detail parchment" aria-label="Item details">
+  <aside class="detail parchment" :class="{ 'detail--embedded': embedded }" aria-label="Item details">
     <button
+      v-if="!embedded"
       class="detail__toggle"
       type="button"
       :aria-expanded="open"
@@ -14,7 +15,7 @@
       ><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
     </button>
 
-    <div v-show="open" class="detail__panel">
+    <div v-show="open || embedded" class="detail__panel">
       <p v-if="!item" class="detail__empty">
         <span class="detail__empty-icon" aria-hidden="true">📜</span>
         <span>Click an item in your pack to see its details.</span>
@@ -192,6 +193,9 @@ const props = defineProps({
   attunedCount: { type: Number, default: 0 },
   maxAttunement: { type: Number, default: 3 },
   canStash: { type: Boolean, default: false },
+  // Inline/embedded mode (mobile pack list): the row above is the header, so hide
+  // this component's own accordion header and keep the panel open.
+  embedded: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -290,6 +294,13 @@ function save() {
   border-radius: var(--par-radius-lg, 12px);
   padding: 1.2rem 1.6rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+}
+/* Inline in the pack list — blend into the expanded row instead of a nested card. */
+.detail--embedded {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0.4rem 0.2rem 0.6rem;
 }
 
 .detail__toggle {

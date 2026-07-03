@@ -166,6 +166,18 @@ function onKeydown(e) {
   cursor: grabbing;
 }
 
+/* Brief warm-tan glow when this tile's item was just added from the catalog. */
+.tile--flash {
+  animation: tile-flash 1s ease-out;
+}
+@keyframes tile-flash {
+  0% { box-shadow: 0 0 0 4px rgba(243, 235, 218, 0.85); }
+  100% { box-shadow: 0 0 0 0 rgba(243, 235, 218, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile--flash { animation: none; box-shadow: 0 0 0 3px rgba(243, 235, 218, 0.85); }
+}
+
 .tile__name {
   font-size: 1.2rem;
   font-weight: 600;

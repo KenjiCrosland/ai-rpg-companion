@@ -13,6 +13,7 @@
       <div class="grid-panel__controls">
         <div class="view-toggle" role="group" aria-label="View mode">
           <button
+            v-if="!mobile"
             type="button"
             class="view-toggle__btn"
             :class="{ 'view-toggle__btn--active': view === 'grid' }"
@@ -22,8 +23,8 @@
           <button
             type="button"
             class="view-toggle__btn"
-            :class="{ 'view-toggle__btn--active': view === 'list' }"
-            :aria-pressed="view === 'list'"
+            :class="{ 'view-toggle__btn--active': effectiveView === 'list' }"
+            :aria-pressed="effectiveView === 'list'"
             @click="setView('list')"
           >List</button>
           <button
@@ -85,7 +86,7 @@
 
     <!-- GRID VIEW -->
     <div
-      v-if="view === 'grid'"
+      v-if="effectiveView === 'grid'"
       ref="gridEl"
       class="grid-drop"
       :class="{ 'grid-drop--over': isOver }"
@@ -109,6 +110,7 @@
           :key="item.instanceId"
           :item="item"
           :selected="item.instanceId === selectedId"
+          :class="{ 'tile--flash': item.instanceId === flashId }"
           @remove="$emit('remove', $event)"
           @nudge="$emit('nudge', $event)"
           @select="$emit('select', $event)"
@@ -118,7 +120,7 @@
 
     <!-- EQUIP (PAPER DOLL) VIEW -->
     <EquipDoll
-      v-else-if="view === 'equip'"
+      v-else-if="effectiveView === 'equip'"
       :by-slot="equippedBySlot"
       :items="items"
       :attuned-count="attunedCount"
@@ -146,12 +148,15 @@
           class="row-item"
           :class="{
             'row-item--selected': item.instanceId === selectedId,
+            'row-item--open': mobile && item.instanceId === selectedId,
             'row-item--drop': dragOverId === item.instanceId,
             'row-item--dragging': listDragId === item.instanceId,
+            'row-item--flash': item.instanceId === flashId,
           }"
           draggable="true"
           tabindex="0"
-          @click="$emit('select', item.instanceId)"
+          :aria-expanded="mobile ? item.instanceId === selectedId : undefined"
+          @click="onRowClick(item)"
           @keydown="onRowKeydown(item, $event)"
           @dragstart="onRowDragStart(item, $event)"
           @dragover.prevent="dragOverId = item.instanceId"
@@ -193,6 +198,17 @@
             @click.stop="$emit('remove', item.instanceId)"
             @dragstart.prevent.stop
           >×</button>
+          <!-- Mobile: the item's detail expands inline (wraps to a full-width line
+               under the row) so tapping any row always shows its detail in place. -->
+          <div
+            v-if="mobile && item.instanceId === selectedId"
+            class="row-item__detail"
+            @click.stop
+            @keydown.stop
+            @dragstart.prevent.stop
+          >
+            <slot name="detail" />
+          </div>
         </li>
       </TransitionGroup>
     </div>
@@ -253,6 +269,8 @@ const props = defineProps({
   attunedCount: { type: Number, default: 0 },
   maxAttunement: { type: Number, default: 3 },
   view: { type: String, default: 'grid' }, // grid | list | equip (owned by the root)
+  flashId: { type: String, default: null }, // instanceId to briefly highlight after an add
+  mobile: { type: Boolean, default: false }, // mobile hides Grid (spatial canvas is desktop-only)
 });
 
 const emit = defineEmits([
@@ -261,6 +279,14 @@ const emit = defineEmits([
 ]);
 
 const setView = (v) => emit('update:view', v);
+// The spatial Grid canvas needs a mouse + width; on mobile it falls back to List.
+const effectiveView = computed(() => (props.mobile && props.view === 'grid' ? 'list' : props.view));
+// On mobile, tapping a row toggles its inline detail (tap again to collapse). On
+// desktop a tap just selects (shows the sidebar detail), as before.
+function onRowClick(item) {
+  const id = item.instanceId;
+  emit('select', props.mobile && id === props.selectedId ? null : id);
+}
 
 // Sort the arrangement (re-packs) and filter the visible tiles by type.
 const sortOptions = [
@@ -643,6 +669,19 @@ function onDrop(e) {
   background: var(--par-color-callout-bg, #f3ebda);
   box-shadow: inset 3px 0 0 var(--color-action-rest, #365a85);
 }
+/* Mobile: tapping a row expands its detail inline. The detail is a full-width flex
+   line that wraps below the row (only the open row wraps, so normal rows are intact). */
+.row-item--open {
+  flex-wrap: wrap;
+  background: var(--par-color-callout-bg, #f3ebda);
+  box-shadow: inset 3px 0 0 var(--color-action-rest, #365a85);
+}
+.row-item__detail {
+  flex: 0 0 100%;
+  width: 100%;
+  margin-top: 0.4rem;
+  cursor: default;
+}
 .row-item--dragging {
   opacity: 0.45;
 }
@@ -926,13 +965,39 @@ function onDrop(e) {
   border-color: transparent;
 }
 
-@media (max-width: 640px) {
-  /* Too narrow for one row — let the controls drop below the title. */
+/* Brief highlight on a row when its item was just added from the catalog. */
+.row-item--flash {
+  animation: row-flash 1s ease-out;
+}
+@keyframes row-flash {
+  0% { background: rgba(243, 235, 218, 0.95); box-shadow: 0 0 0 3px rgba(243, 235, 218, 0.6); }
+  100% { background: transparent; box-shadow: 0 0 0 0 rgba(243, 235, 218, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row-item--flash { animation: none; background: rgba(243, 235, 218, 0.9); }
+}
+
+@media (max-width: 768px) {
+  /* Too narrow for one row — let the controls drop below the title and wrap
+     among themselves, and let the Sort select shrink instead of pushing
+     "Tidy up" past the card edge. */
   .grid-panel__head {
     flex-wrap: wrap;
   }
   .grid-panel__title {
     white-space: normal; /* no need to truncate once we're allowed to wrap */
+  }
+  .grid-panel__controls {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .grid-panel__sort {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+  .grid-panel__sort :deep(.par-select-wrapper) {
+    min-width: 0;
+    width: 100%;
   }
 }
 

@@ -1,5 +1,14 @@
 <template>
   <section class="catalog parchment" aria-label="Item catalog">
+    <!-- Bulk add: paste a whole haul (coins + items) — a peer to the catalog and packs. -->
+    <button class="catalog__paste" type="button" @click="$emit('paste-treasure')">
+      <span class="catalog__paste-icon" aria-hidden="true">📋</span>
+      <span class="catalog__paste-text">
+        <span class="catalog__paste-title">Paste a loot list</span>
+        <span class="catalog__paste-sub">Coins &amp; items from a hoard or generator dump</span>
+      </span>
+    </button>
+
     <div v-if="packs.length" class="catalog__section">
       <button
         class="catalog__head"
@@ -51,7 +60,7 @@
           <ParInput v-model="search" placeholder="Search gear…" aria-label="Search gear" />
           <ParSelect v-model="categoryFilter" :options="categoryOptions" aria-label="Filter by category" />
         </div>
-        <p class="catalog__hint">
+        <p class="catalog__hint" :class="{ 'catalog__hint--used': hintDismissed }">
           Click or drag an item to add it free. Click <strong>Buy</strong> to deduct
           its standard SRD price from your coin purse.
         </p>
@@ -69,7 +78,7 @@
           role="listitem"
           draggable="true"
           :title="`Add ${tpl.name} to your pack`"
-          @click="$emit('add', tpl)"
+          @click="onRowAdd(tpl)"
           @dragstart="onDragStart(tpl, $event)"
           @dragend="onDragEnd"
         >
@@ -110,21 +119,36 @@
       </div>
     </div>
 
-    <form class="custom" @submit.prevent="submitCustom">
-      <h3 class="custom__title">Add a custom item</h3>
-      <ParField label="Name">
-        <ParInput v-model="form.name" placeholder="Lantern of the deep…" />
-      </ParField>
-      <div class="custom__grid">
-        <ParField label="Weight (lb)">
-          <ParInput v-model="form.weight" type="number" placeholder="0" />
+    <div class="custom" :class="{ 'custom--collapsed': !customOpen }">
+      <button
+        class="custom__toggle"
+        type="button"
+        :aria-expanded="customOpen"
+        @click="customOpen = !customOpen"
+      >
+        <span>+ Add a custom item</span>
+        <svg
+          class="custom__caret"
+          :class="{ 'custom__caret--open': customOpen }"
+          width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"
+        ><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+      <form class="custom__body" @submit.prevent="submitCustom">
+        <h3 class="custom__title">Add a custom item</h3>
+        <ParField label="Name">
+          <ParInput v-model="form.name" placeholder="Lantern of the deep…" />
         </ParField>
-        <ParField label="Category">
-          <ParSelect v-model="form.category" :options="categories" />
-        </ParField>
-      </div>
+        <div class="custom__grid">
+          <ParField label="Weight (lb)">
+            <ParInput v-model="form.weight" type="number" placeholder="0" />
+          </ParField>
+          <ParField label="Category">
+            <ParSelect v-model="form.category" :options="categories" />
+          </ParField>
+        </div>
         <ParButton type="submit" variant="primary" size="small" :full-width="true">+ Add custom item</ParButton>
       </form>
+    </div>
       </div>
     </div>
   </section>
@@ -147,14 +171,18 @@ const props = defineProps({
   catalog: { type: Array, default: () => [] },
   packs: { type: Array, default: () => [] },
   coins: { type: Object, default: () => ({ pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 }) },
+  mobile: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['add', 'add-pack', 'add-custom', 'remove-custom', 'buy']);
+const emit = defineEmits(['add', 'add-pack', 'add-custom', 'remove-custom', 'buy', 'paste-treasure']);
 
 /** Can the current purse afford one of this priced item? */
 const affordable = (tpl) => canAfford(props.coins, tpl.cost, tpl.quantity || 1);
 const onBuy = (tpl) => {
-  if (affordable(tpl)) emit('buy', tpl);
+  if (affordable(tpl)) {
+    emit('buy', tpl);
+    markInstructionsUsed();
+  }
 };
 
 const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic Item'];
@@ -162,8 +190,27 @@ const categoryOptions = [{ value: '', label: 'All categories' }, ...categories];
 
 const search = ref('');
 const categoryFilter = ref('');
-const starterOpen = ref(true);
+const starterOpen = ref(!props.mobile); // collapsed on mobile to keep the gear list near the top
 const gearOpen = ref(true);
+// Mobile-only: the custom-item form is collapsed by default (desktop shows it always).
+const customOpen = ref(false);
+
+// The long "click or drag to add" hint is shown until the first add, then hidden on
+// mobile to reclaim space (persisted). Desktop keeps it — room is not scarce there.
+const INSTRUCTIONS_KEY = 'vb-catalog-instructions-shown';
+const hintDismissed = ref(safeGet(INSTRUCTIONS_KEY) === 'true');
+function safeGet(k) {
+  try { return localStorage.getItem(k); } catch { return null; }
+}
+function markInstructionsUsed() {
+  if (hintDismissed.value) return;
+  hintDismissed.value = true;
+  try { localStorage.setItem(INSTRUCTIONS_KEY, 'true'); } catch { /* storage blocked */ }
+}
+function onRowAdd(tpl) {
+  emit('add', tpl);
+  markInstructionsUsed();
+}
 
 const form = reactive({ name: '', weight: '', category: 'Adventuring Gear' });
 
@@ -219,6 +266,48 @@ function submitCustom() {
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-lg, 12px);
   padding: 1.6rem 1.6rem 1.8rem;
+}
+
+/* Bulk-add CTA — paste a whole haul; a peer to browsing the catalog / starter packs. */
+.catalog__paste {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  margin-bottom: 1.4rem;
+  padding: 0.9rem 1.1rem;
+  border: 0.5px dashed var(--color-action-rest, #365a85);
+  border-radius: var(--par-radius-md, 4px);
+  background: var(--par-color-callout-bg-light, #f8f2e3);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.catalog__paste:hover {
+  background: var(--par-color-callout-bg, #f3ebda);
+}
+.catalog__paste:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 2px;
+}
+.catalog__paste-icon {
+  flex: none;
+  font-size: 1.8rem;
+}
+.catalog__paste-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+}
+.catalog__paste-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2a4d70);
+}
+.catalog__paste-sub {
+  font-size: 1.1rem;
+  color: var(--par-color-text-muted, #6b6b6b);
 }
 
 .catalog__title {
@@ -491,6 +580,28 @@ function submitCustom() {
   border-top: 0.5px solid var(--par-color-divider, #e2dccd);
 }
 
+/* Desktop shows the form directly; the toggle is a mobile-only affordance. */
+.custom__toggle {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.4rem 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+}
+.custom__caret {
+  transition: transform 0.18s ease;
+}
+.custom__caret--open {
+  transform: rotate(180deg);
+}
+
 .custom__title {
   margin: 0 0 1rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
@@ -508,6 +619,28 @@ function submitCustom() {
 @media (max-width: 560px) {
   .custom__grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile: compress the catalog so it stays browsable above the pack drawer. */
+@media (max-width: 768px) {
+  .row {
+    padding: 0.35rem 0.5rem;
+    gap: 0.5rem;
+  }
+  /* The long instructional hint is reclaimed after the first add. */
+  .catalog__hint--used {
+    display: none;
+  }
+  /* Custom-item form collapses behind a toggle to save vertical space. */
+  .custom__toggle {
+    display: flex;
+  }
+  .custom__title {
+    display: none;
+  }
+  .custom--collapsed .custom__body {
+    display: none;
   }
 }
 </style>

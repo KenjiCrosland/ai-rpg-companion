@@ -1,5 +1,5 @@
 <template>
-  <div class="backpack parchment">
+  <div class="backpack parchment" :class="isMobile ? `backpack--m-${mobileMode}` : ''">
     <p class="sr-only" aria-live="polite" role="status">{{ announcement }}</p>
 
     <!-- Collapsed-sidebar affordance (mobile only). -->
@@ -91,9 +91,35 @@
           >×</button>
         </p>
 
+        <div v-if="isMobile" class="mobile-bar">
+          <div class="mobile-bar__capacity">
+            <span class="mobile-bar__dot" :class="encumbranceDotClass"></span>
+            <span class="mobile-bar__weight">{{ formatLbs(status.total) }} / {{ status.capacity }} lb</span>
+            <span class="mobile-bar__sep">·</span>
+            <span class="mobile-bar__count">{{ items.length }} {{ items.length === 1 ? 'item' : 'items' }}</span>
+          </div>
+          <div class="mobile-bar__switch" role="tablist" aria-label="View">
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="mobileMode === 'catalog'"
+              :class="{ 'mobile-bar__tab--active': mobileMode === 'catalog' }"
+              @click="mobileMode = 'catalog'"
+            >Add gear</button>
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="mobileMode === 'pack'"
+              :class="{ 'mobile-bar__tab--active': mobileMode === 'pack' }"
+              @click="mobileMode = 'pack'"
+            >My pack</button>
+          </div>
+        </div>
+
         <div class="backpack__main">
           <div class="backpack__sidebar">
         <ItemDetail
+          v-if="!isMobile"
           :item="selectedItem"
           :categories="detailCategories"
           :attuned-count="attunedCount"
@@ -114,17 +140,21 @@
           :catalog="catalog"
           :packs="packs"
           :coins="coins"
-          @add="addItem"
-          @buy="buyItem"
-          @add-pack="onAddPack"
+          @add="onCatalogAdd"
+          @buy="onBuyItem"
+          @add-pack="onAddPackMobile"
           @add-custom="onAddCustom"
           @remove-custom="removeCustomItem"
+          @paste-treasure="treasureOpen = true"
+          :mobile="isMobile"
         />
       </div>
 
       <div class="backpack__pack">
         <BackpackGrid
           :items="items"
+          :flash-id="flashItemId"
+          :mobile="isMobile"
           :title="packTitle"
           :strength="strength"
           :selected-id="selectedItem?.instanceId || null"
@@ -147,7 +177,44 @@
           @backup="exportData"
           @restore="triggerImport"
           @empty="confirmClear = true"
-        />
+        >
+          <!-- Mobile: the selected item's detail renders inline under its list row. -->
+          <template #detail>
+            <div v-if="selectedItem?.isCoinPurse" class="coin-detail backpack__mobile-detail">
+              <p class="coin-detail__summary">
+                <span class="coin-detail__gold">{{ formatGp(coinGold) }} gp</span>
+                <span class="coin-detail__weight">{{ formatLbs(coinLbs) }} lb</span>
+              </p>
+              <div class="coin-detail__actions">
+                <button
+                  v-if="hasBag"
+                  type="button"
+                  class="coin-detail__btn coin-detail__btn--primary"
+                  @click="stashCoins"
+                >🧳 Stash coins in bag</button>
+                <button type="button" class="coin-detail__btn" @click="focusCoins">Edit coins</button>
+              </div>
+            </div>
+            <ItemDetail
+              v-else
+              embedded
+              class="backpack__mobile-detail"
+              :item="selectedItem"
+              :categories="detailCategories"
+              :attuned-count="attunedCount"
+              :max-attunement="maxAttunement"
+              :can-stash="canStashSelected"
+              @set-quantity="({ id, quantity }) => setQuantity(id, quantity)"
+              @update="({ id, patch }) => updateItem(id, patch)"
+              @remove="removeItem"
+              @equip="({ instanceId, slot }) => equipItem(instanceId, slot)"
+              @unequip="unequipItem"
+              @attune="toggleAttune"
+              @stash="stashSelected"
+              @view-equipped="setPackView('equip')"
+            />
+          </template>
+        </BackpackGrid>
         <BagPanel
           v-for="b in bags"
           :key="b.instanceId"
@@ -167,7 +234,6 @@
           @set-coin="({ denom, value }) => setCoin(denom, value)"
           @adjust="adjustCoins"
           @empty="confirmEmptyPurse = true"
-          @paste-treasure="treasureOpen = true"
         />
         <CapacityIndicator
           :status="status"
@@ -353,8 +419,23 @@ function focusCoins() {
   setTimeout(() => (coinFlash.value = false), 1200);
 }
 function onSelectTile(id) {
-  if (id === coinPurseId) focusCoins();
-  else selectItem(id);
+  if (id === coinPurseId) {
+    if (isMobile.value) selectItem(id); // mobile: open the inline coin detail (with "stash in bag")
+    else focusCoins(); // desktop: jump straight to the coin editor
+  } else {
+    selectItem(id);
+  }
+}
+// Stash the coin purse INTO the bag of holding, like any item: it moves to the bag
+// panel and its coin weight stops counting (bagged items are excluded from carry
+// weight). Take it back out from the bag panel (retrieve), same as other gear.
+function stashCoins() {
+  if (!bags.value.length) return;
+  stashItem(coinPurseId, bags.value[0].instanceId);
+  selectItem(null);
+}
+function formatGp(n) {
+  return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 // One-time tip the first time a bag of holding appears in the pack.
@@ -405,14 +486,18 @@ const packTitle = computed(() => {
 const sidebarOpen = ref(false);
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200);
 const isNarrow = computed(() => windowWidth.value <= 860);
+const isMobile = computed(() => windowWidth.value <= 768);
 function onResize() {
   windowWidth.value = window.innerWidth;
   if (!isNarrow.value) sidebarOpen.value = false; // desktop: rail is always shown
 }
 onMounted(() => window.addEventListener('resize', onResize));
 onBeforeUnmount(() => window.removeEventListener('resize', onResize));
-watch([sidebarOpen, isNarrow], ([open, narrow]) => {
-  document.body.style.overflow = open && narrow ? 'hidden' : '';
+watch([sidebarOpen, isNarrow], () => {
+  // Only the off-canvas character rail locks scroll. The pack is DOCKED (non-modal):
+  // the catalog must stay scrollable while the pack is expanded so items can move
+  // between them.
+  document.body.style.overflow = sidebarOpen.value && isNarrow.value ? 'hidden' : '';
 });
 // On mobile, picking/adding a character dismisses the off-canvas rail.
 function onSelectCharacter(id) {
@@ -471,13 +556,52 @@ function dismissSaveNote() {
 
 function onAddCustom(payload) {
   const template = addCustomItem(payload);
-  addItem(template); // add it to the pack immediately, and keep it in the catalog
+  // add it to the pack immediately (and keep it in the catalog); flash where it lands
+  flashItem(addItem(template));
 }
 
 function onAddPack(packId) {
   const pack = addPack(packId);
   if (pack) toast.success(`Added ${pack.name}: ${pack.itemCount} items.`);
 }
+
+// --- mobile: catalog vs pack mode + add feedback ---
+// On mobile the tool is a task switch, not two panes: browse gear ('catalog') or
+// review the pack ('pack'). Desktop shows both side by side and ignores this.
+const mobileMode = ref('catalog');
+const flashItemId = ref(null);
+let flashTimer = null;
+
+// Encumbrance dot for the sticky capacity bar (reinforced by the weight text beside it).
+const encumbranceDotClass = computed(() => {
+  const t = status.value?.tier;
+  if (t === 'heavily' || t === 'over') return 'mobile-bar__dot--danger';
+  if (t === 'encumbered') return 'mobile-bar__dot--warn';
+  return '';
+});
+function formatLbs(n) {
+  return Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 1 });
+}
+// Flash the tile/row that just landed — visible when the pack view is showing; in
+// catalog mode the capacity bar's item/weight bump is the "it landed" feedback.
+function flashItem(id) {
+  if (!id) return;
+  flashItemId.value = id;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => {
+    if (flashItemId.value === id) flashItemId.value = null;
+  }, 1200);
+}
+function onCatalogAdd(template) {
+  flashItem(addItem(template));
+}
+function onBuyItem(template) {
+  flashItem(buyItem(template));
+}
+function onAddPackMobile(packId) {
+  onAddPack(packId);
+}
+onBeforeUnmount(() => clearTimeout(flashTimer));
 
 function doClear() {
   clearAll();
@@ -638,7 +762,7 @@ function onFileChosen(e) {
 
 .backpack__save-note {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* icon + dismiss align to the first line, not the middle of a wrapped block */
   gap: 0.6rem;
   margin: 0 0 2rem;
   padding: 0.7rem 1.1rem;
@@ -691,6 +815,7 @@ function onFileChosen(e) {
   display: flex;
   flex-direction: column;
   gap: 1.4rem;
+  min-width: 0; /* let the catalog wrap/shrink in the 1fr mobile column instead of overflowing */
 }
 
 .backpack__pack {
@@ -698,6 +823,152 @@ function onFileChosen(e) {
   flex-direction: column;
   gap: 1.4rem;
   min-width: 0; /* let the 1fr grid track shrink so long row names wrap, not overflow */
+}
+
+/* --- mobile: task-switch layout --------------------------------------------
+   Desktop is unaffected (catalog + pack side by side). Below 768px the two become
+   full-width modes toggled by a sticky bar (capacity + Add gear / My pack). */
+.mobile-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Tighter gutters on phones — cards sit near the edges as distinct "islands". */
+  .backpack__page {
+    padding: 1.2rem 1.2rem 4rem;
+  }
+  .app-top-bar__inner {
+    padding: 1rem 1.2rem;
+  }
+
+  /* Sticky capacity + mode switch: the tool's constant compass, always in view. */
+  .mobile-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    margin: -1.2rem -1.2rem 1.2rem;
+    padding: 0.9rem 1.2rem;
+    background: var(--par-color-surface-page, #eaeef2);
+    border-bottom: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  }
+  .mobile-bar__capacity {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+    font-size: 1.35rem;
+    color: var(--par-color-text-secondary, #555);
+  }
+  .mobile-bar__weight {
+    font-weight: 700;
+    color: var(--par-color-text, #222);
+  }
+  .mobile-bar__sep {
+    color: var(--par-color-text-muted, #9a9082);
+  }
+  .mobile-bar__dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #5a7a4a; /* ok — green */
+  }
+  .mobile-bar__dot--warn {
+    background: #b8912d;
+  }
+  .mobile-bar__dot--danger {
+    background: var(--par-color-destructive, #a03333);
+  }
+  .mobile-bar__switch {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.3rem;
+    background: var(--par-color-callout-bg, #f3ebda);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-radius: 999px;
+  }
+  .mobile-bar__switch button {
+    flex: 1;
+    min-height: 3.6rem;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--par-color-text-secondary, #555);
+    cursor: pointer;
+  }
+  .mobile-bar__switch button.mobile-bar__tab--active {
+    background: var(--color-action-rest, #365a85);
+    color: var(--color-action-text, #fbf7f0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Two full-width modes — show one, hide the other. */
+  .backpack--m-catalog .backpack__pack {
+    display: none;
+  }
+  .backpack--m-pack .backpack__sidebar {
+    display: none;
+  }
+  .backpack__mobile-detail {
+    margin-bottom: 0.2rem;
+  }
+
+  /* Declutter the top: the notice is a full-width banner (flush to the header and
+     both edges), not a card floating in the gutter. */
+  .backpack__save-note {
+    margin: -1.2rem -1.2rem 1.2rem;
+    padding: 0.8rem 1.2rem;
+    border-width: 0 0 0.5px;
+    border-radius: 0;
+    font-size: 1.15rem;
+    line-height: 1.4;
+  }
+}
+
+/* Inline coin-purse detail (mobile): summary + stash-in-bag / edit actions. */
+.coin-detail {
+  padding: 0.4rem 0.2rem 0.6rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+}
+.coin-detail__summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin: 0 0 0.7rem;
+  font-size: 1.3rem;
+  color: var(--par-color-text-secondary, #555);
+}
+.coin-detail__gold {
+  font-weight: 700;
+  color: var(--par-color-title, #7a1f1f);
+}
+.coin-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.coin-detail__btn {
+  min-height: 3.2rem;
+  padding: 0 1rem;
+  border: 0.5px solid var(--par-color-border-strong, #cbb8a0);
+  border-radius: var(--par-radius-sm, 3px);
+  background: transparent;
+  font-family: inherit;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--par-color-text-secondary, #555);
+  cursor: pointer;
+}
+.coin-detail__btn--primary {
+  border-color: var(--color-action-rest, #365a85);
+  color: var(--color-action-hover, #2a4d70);
+  font-weight: 600;
 }
 
 /* Dim backdrop behind the collapsed sidebar on mobile. */

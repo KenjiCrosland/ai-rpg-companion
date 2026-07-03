@@ -4,12 +4,6 @@
       <h2 class="purse__title">Coin purse</h2>
       <div class="purse__head-right">
         <span class="purse__weight-note">{{ coinLbs }} lb</span>
-        <button
-          class="purse__paste"
-          type="button"
-          title="Paste a loot list (coins and items)"
-          @click="$emit('paste-treasure')"
-        >Paste loot list</button>
       </div>
     </header>
 
@@ -140,7 +134,7 @@ const props = defineProps({
 
 const totalWealth = computed(() => Math.round((props.coinGold + props.treasureValue) * 100) / 100);
 
-const emit = defineEmits(['set-coin', 'adjust', 'empty', 'paste-treasure']);
+const emit = defineEmits(['set-coin', 'adjust', 'empty']);
 
 // Purse holds nothing → Empty is a no-op, so disable it.
 const isEmpty = computed(() => denoms.every((d) => (Number(props.coins[d.key]) || 0) === 0));
@@ -226,29 +220,6 @@ function formatGp(v) {
   font-style: italic;
   color: var(--par-color-text-muted, #6b6b6b);
 }
-.purse__paste {
-  min-height: 2.8rem;
-  padding: 0 1rem;
-  border: 0.5px solid var(--par-color-border-strong, #cbb8a0);
-  border-radius: var(--par-radius-sm, 3px);
-  background: transparent;
-  font-family: inherit;
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: var(--par-color-text-secondary, #555);
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-}
-.purse__paste:hover {
-  border-color: var(--color-action-rest, #365a85);
-  background: var(--par-color-callout-bg, #f3ebda);
-  color: var(--color-action-hover, #2a4d70);
-}
-.purse__paste:focus-visible {
-  outline: 2px solid var(--color-action-rest, #365a85);
-  outline-offset: 2px;
-}
-
 /* Zone 2: five coin steppers, each an equal share of the full width. */
 .purse__row {
   display: grid;

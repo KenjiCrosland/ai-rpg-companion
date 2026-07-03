@@ -553,20 +553,22 @@ export function useBackpack() {
    *  - Drop at a cell (preferred): land there (displacing), unless it lands on an
    *    identical item — then stack into it.
    */
+  // Returns the instanceId of the item that was added or stacked onto, so callers
+  // (e.g. the mobile pack drawer) can flash-highlight where the item landed.
   function addItem(template, preferred = null) {
-    if (!template) return;
+    if (!template) return null;
     const addQty = Math.max(1, Math.floor(Number(template.quantity) || 1));
 
     if (!preferred) {
       const existing = items.value.find((i) => i.id === template.id);
       if (existing) {
         bumpStack(existing.instanceId, addQty);
-        return;
+        return existing.instanceId;
       }
       const item = instantiate(template);
       const pos = resolvePosition({ x: 0, y: 0 }, item.size, items.value, COLS);
       items.value = [...items.value, { ...item, pos }];
-      return;
+      return item.instanceId;
     }
 
     const item = instantiate(template);
@@ -574,9 +576,10 @@ export function useBackpack() {
     const targetId = findStackTarget(list, item.instanceId, preferred, COLS);
     if (targetId) {
       bumpStack(targetId, item.quantity);
-      return;
+      return targetId;
     }
     items.value = placeItemAt(list, item.instanceId, preferred, COLS);
+    return item.instanceId;
   }
 
   /**
@@ -585,12 +588,13 @@ export function useBackpack() {
    * no-ops here — the catalog disables Buy in those cases; this is the guard.
    */
   function buyItem(template) {
-    if (!template?.cost) return;
+    if (!template?.cost) return null;
     const qty = Math.max(1, Math.floor(Number(template.quantity) || 1));
-    if (!canAfford(coins.value, template.cost, qty)) return;
+    if (!canAfford(coins.value, template.cost, qty)) return null;
     coins.value = spendCoins(coins.value, template.cost, qty);
-    addItem(template);
+    const id = addItem(template);
     announce(`Bought ${cleanName(template.name)} for ${formatCost(template.cost)}.`);
+    return id;
   }
 
   /** Parse a pasted hoard for the preview (pure — commits nothing). */
