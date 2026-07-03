@@ -82,6 +82,22 @@ export function coinsToCp(coins) {
 }
 
 /**
+ * Mint a copper amount into a tidy purse using gp/sp/cp — the coins players think
+ * in for a handout. Value-exact (any amount is representable without pp/ep), and
+ * it avoids the jarring "100 gp → 10 pp" promotion a fully-greedy mint would do.
+ * Used to express a loot-split share as coins.
+ */
+export function mintCoins(cp) {
+  let rem = Math.max(0, Math.floor(Number(cp) || 0));
+  const out = { pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 };
+  for (const d of ['gp', 'sp', 'cp']) {
+    out[d] = Math.floor(rem / COIN_IN_CP[d]);
+    rem -= out[d] * COIN_IN_CP[d];
+  }
+  return out;
+}
+
+/**
  * An SRD price ({ quantity, unit }) in copper, times an optional item quantity
  * (buying 20 arrows costs 20× the unit price). Returns 0 for a missing/priceless
  * cost — priceless items are never buyable, so this is only ever a guard.

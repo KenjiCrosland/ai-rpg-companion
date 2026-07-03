@@ -270,7 +270,7 @@ const sortOptions = [
   { value: 'weight-asc', label: 'Weight (light first)' },
   { value: 'quantity', label: 'Quantity (most first)' },
 ];
-const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'magic', 'treasure'].map((key) => ({
+const types = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'misc', 'magic', 'treasure'].map((key) => ({
   key,
   label: TYPE_COLORS[key].label,
   color: TYPE_COLORS[key],

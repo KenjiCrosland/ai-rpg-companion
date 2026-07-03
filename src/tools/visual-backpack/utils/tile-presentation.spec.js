@@ -59,6 +59,13 @@ describe('itemType — color encodes type', () => {
     expect(itemType({ category: 'Adventuring Gear', name: 'Rope, hempen (50 feet)' })).toBe('gear');
   });
 
+  it('classifies unrecognized flavor loot as Misc, not gear', () => {
+    expect(itemType({ category: 'Misc', name: 'A scroll with a long epic poem praising the dragon' })).toBe('misc');
+    expect(itemType({ category: 'Misc', name: 'A kneeling bench for addressing the dragon' })).toBe('misc');
+    // A Misc item named like a consumable still reads as one (name wins).
+    expect(itemType({ category: 'Misc', name: 'Oil of dubious provenance' })).toBe('consumable');
+  });
+
   it('defaults safely', () => {
     expect(itemType(null)).toBe('gear');
   });

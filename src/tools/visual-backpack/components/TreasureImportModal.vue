@@ -57,6 +57,13 @@
           <li v-for="(l, i) in preview.unrecognized" :key="i">{{ l }}</li>
         </ul>
       </div>
+
+      <div v-if="hasAnything" class="ti__split-wrap">
+        <button class="ti__split-toggle" type="button" @click="splitting = !splitting">
+          {{ splitting ? '▴ Hide loot split' : '⚖ Split this loot between players' }}
+        </button>
+        <LootSplit v-if="splitting" :coins="preview.coins" :items="includedItems" @claim="$emit('claim', $event)" />
+      </div>
     </div>
 
     <template #footer>
@@ -76,6 +83,7 @@
  */
 import { ref, reactive, computed, watch } from 'vue';
 import { ParModal, ParButton, ParTextarea } from '@/parchment';
+import LootSplit from './LootSplit.vue';
 
 const props = defineProps({
   opened: { type: Boolean, default: false },
@@ -83,9 +91,10 @@ const props = defineProps({
   parse: { type: Function, required: true },
 });
 
-const emit = defineEmits(['cancel', 'confirm']);
+const emit = defineEmits(['cancel', 'confirm', 'claim']);
 
 const text = ref('');
+const splitting = ref(false);
 // Item ids the user has unchecked (excluded from the import). Everything is
 // included by default; this only tracks the opt-outs.
 const excluded = reactive(new Set());
@@ -97,6 +106,7 @@ watch(
     if (open) {
       text.value = '';
       excluded.clear();
+      splitting.value = false;
     }
   },
 );
@@ -280,5 +290,25 @@ function confirm() {
   padding-left: 1.6rem;
   font-size: 1.2rem;
   color: var(--par-color-text-secondary, #555);
+}
+.ti__split-wrap {
+  margin-top: 1.2rem;
+}
+.ti__split-toggle {
+  width: 100%;
+  min-height: 3.2rem;
+  padding: 0 1rem;
+  border: 0.5px dashed var(--color-action-rest, #365a85);
+  border-radius: var(--par-radius-sm, 3px);
+  background: transparent;
+  font-family: inherit;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-action-hover, #2a4d70);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.ti__split-toggle:hover {
+  background: var(--par-color-callout-bg, #f3ebda);
 }
 </style>

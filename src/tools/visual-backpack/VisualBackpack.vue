@@ -196,6 +196,7 @@
       :parse="previewTreasure"
       @cancel="treasureOpen = false"
       @confirm="onImportTreasure"
+      @claim="onClaimPile"
     />
 
     <ParConfirm
@@ -491,6 +492,11 @@ function doEmptyPurse() {
 function onImportTreasure({ coins: parsedCoins, items }) {
   applyTreasure(parsedCoins, items);
   treasureOpen.value = false;
+}
+function onClaimPile({ coins: pileCoins, items }) {
+  // Claim one loot-split pile into the pack — the modal stays open so the other
+  // piles can still be copied for the (offline) players.
+  applyTreasure(pileCoins, items);
 }
 
 function printList() {

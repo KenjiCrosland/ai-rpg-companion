@@ -243,10 +243,11 @@ function parseTreasureJson(data, resolveMatch) {
       if (t) addItem({ ...t, name: t.name, quantity, matched: true });
       else addItem({ id: `mag-${slug(name)}`, name, quantity, category: 'Magic Item', weight: 0, valueGp: 0, matched: false, source: 'custom' });
     } else {
-      // Mundane flavor loot (rarity "unknown"/none, no value) — match if we can, else keep as gear.
+      // Mundane flavor loot (rarity "unknown"/none, no value) — match if we can; an
+      // unrecognized line is Misc, not gear (a poem-scroll isn't adventuring equipment).
       const t = resolveMatch(name);
       if (t) addItem({ ...t, name: t.name, quantity, matched: true });
-      else addItem({ id: `cst-${slug(name)}`, name, quantity, category: 'Adventuring Gear', weight: 0, valueGp: 0, matched: false, source: 'custom' });
+      else addItem({ id: `cst-${slug(name)}`, name, quantity, category: 'Misc', weight: 0, valueGp: 0, matched: false, source: 'custom' });
     }
   }
 
@@ -375,9 +376,9 @@ export function parseTreasure(text, catalog = []) {
       addItem({ id: `trs-${slug(name)}`, name, quantity, category: 'Treasure', weight: 0, valueGp, matched: false, source: 'custom' });
     } else {
       // An unmatched line under a "Magic Items" header, or one tagged with a
-      // rarity, is still a (GM-priced) magic item; anything else is mundane gear.
+      // rarity, is still a (GM-priced) magic item; anything else is unrecognized Misc.
       const isMagic = groupMagic || segLooksMagic;
-      addItem({ id: `${isMagic ? 'mag' : 'cst'}-${slug(name)}`, name, quantity, category: isMagic ? 'Magic Item' : 'Adventuring Gear', weight: 0, valueGp: 0, matched: false, source: 'custom' });
+      addItem({ id: `${isMagic ? 'mag' : 'cst'}-${slug(name)}`, name, quantity, category: isMagic ? 'Magic Item' : 'Misc', weight: 0, valueGp: 0, matched: false, source: 'custom' });
     }
   };
 

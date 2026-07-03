@@ -61,9 +61,9 @@ describe('parseTreasure — items', () => {
     expect(items[0]).toMatchObject({ category: 'Treasure', valueGp: 5 }); // 50 sp = 5 gp
   });
 
-  it('an unknown item with no price is a plain custom item, not treasure', () => {
+  it('an unknown item with no price is Misc (not gear, not treasure)', () => {
     const { items } = parseTreasure('a mysterious note', catalog);
-    expect(items[0]).toMatchObject({ category: 'Adventuring Gear', valueGp: 0, matched: false });
+    expect(items[0]).toMatchObject({ category: 'Misc', valueGp: 0, matched: false });
   });
 
   it('treats "worth X gp" WITHOUT a leading quantity as a valuable (qty 1)', () => {
@@ -130,10 +130,10 @@ Spell Scroll (5th Level) ( [reroll] Hallow -or- see all 5th-level spells ) (Roll
     expect(items.some((i) => /total|coinage/i.test(i.name))).toBe(false);
   });
 
-  it('keeps mundane flavor items as valueless gear', () => {
+  it('keeps unrecognized flavor items as valueless Misc (not gear)', () => {
     const { items } = parseTreasure(DMG, catalog);
     const bench = byName(items, 'A kneeling bench, which anyone addressing the dragon is required to use');
-    expect(bench).toMatchObject({ category: 'Adventuring Gear', valueGp: 0 });
+    expect(bench).toMatchObject({ category: 'Misc', valueGp: 0 });
   });
 
   it('strips magic-item roll noise, matches known ones, keeps unknown ones as Magic Items', () => {
@@ -321,6 +321,6 @@ describe('parseTreasure — structured JSON export', () => {
     expect(byName(items, 'Potion of Healing')).toMatchObject({ matched: true });
     expect(byName(items, 'Potion of Invulnerability')).toMatchObject({ category: 'Magic Item', matched: false });
     expect(byName(items, 'Spell Scroll (Mending)')).toMatchObject({ category: 'Magic Item' }); // spell → scroll
-    expect(byName(items, 'A kneeling bench for addressing the dragon')).toMatchObject({ category: 'Adventuring Gear', valueGp: 0 });
+    expect(byName(items, 'A kneeling bench for addressing the dragon')).toMatchObject({ category: 'Misc', valueGp: 0 });
   });
 });
