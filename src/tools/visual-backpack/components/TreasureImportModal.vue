@@ -23,7 +23,16 @@
 
       <p v-if="coinChips.length" class="ti__coins">
         <span class="ti__coins-label">Coins</span>
-        <span v-for="c in coinChips" :key="c.denom" class="ti__coin-chip">+{{ c.n }} {{ c.denom }}</span>
+        <button
+          v-for="c in coinChips"
+          :key="c.denom"
+          type="button"
+          class="ti__coin-chip"
+          :class="{ 'ti__coin-chip--off': c.off }"
+          :aria-pressed="!c.off"
+          :title="c.off ? `Include ${c.denom} in the import` : `Leave ${c.denom} out of the import`"
+          @click="toggleCoin(c.denom)"
+        >+{{ formatCount(c.n) }} {{ c.denom }}</button>
       </p>
 
       <ul v-if="preview.items.length" class="ti__items">
@@ -62,7 +71,7 @@
         <button class="ti__split-toggle" type="button" @click="splitting = !splitting">
           {{ splitting ? '▴ Hide loot split' : '⚖ Split this loot between players' }}
         </button>
-        <LootSplit v-if="splitting" :coins="preview.coins" :items="includedItems" @claim="$emit('claim', $event)" />
+        <LootSplit v-if="splitting" :coins="includedCoins" :items="includedItems" @claim="$emit('claim', $event)" />
       </div>
     </div>
 
@@ -98,6 +107,9 @@ const splitting = ref(false);
 // Item ids the user has unchecked (excluded from the import). Everything is
 // included by default; this only tracks the opt-outs.
 const excluded = reactive(new Set());
+// Coin denominations left out of the import (e.g. the platinum goes to the party
+// fund, not the split). Same opt-out model as items — excluded = not imported.
+const excludedCoins = reactive(new Set());
 
 // Reset the field + selections each time the modal opens fresh.
 watch(
@@ -106,6 +118,7 @@ watch(
     if (open) {
       text.value = '';
       excluded.clear();
+      excludedCoins.clear();
       splitting.value = false;
     }
   },
@@ -115,20 +128,34 @@ const preview = computed(() =>
   text.value.trim() ? props.parse(text.value) : { coins: {}, items: [], unrecognized: [] },
 );
 
+const DENOMS = ['pp', 'gp', 'ep', 'sp', 'cp'];
+
 const toggle = (id) => {
   if (excluded.has(id)) excluded.delete(id);
   else excluded.add(id);
 };
+const toggleCoin = (denom) => {
+  if (excludedCoins.has(denom)) excludedCoins.delete(denom);
+  else excludedCoins.add(denom);
+};
 
 const includedItems = computed(() => preview.value.items.filter((it) => !excluded.has(it.id)));
 
+// The coins that actually import: parsed amounts with excluded denominations zeroed.
+const includedCoins = computed(() => {
+  const src = preview.value.coins || {};
+  const out = {};
+  for (const d of DENOMS) out[d] = excludedCoins.has(d) ? 0 : Number(src[d]) || 0;
+  return out;
+});
+
 const coinChips = computed(() =>
-  ['pp', 'gp', 'ep', 'sp', 'cp']
-    .map((denom) => ({ denom, n: Number(preview.value.coins?.[denom]) || 0 }))
+  DENOMS.map((denom) => ({ denom, n: Number(preview.value.coins?.[denom]) || 0, off: excludedCoins.has(denom) }))
     .filter((c) => c.n > 0),
 );
 
-const hasAnything = computed(() => coinChips.value.length > 0 || includedItems.value.length > 0);
+const hasIncludedCoins = computed(() => DENOMS.some((d) => includedCoins.value[d] > 0));
+const hasAnything = computed(() => hasIncludedCoins.value || includedItems.value.length > 0);
 
 function tagLabel(it) {
   if (it.matched) return 'matched';
@@ -142,11 +169,14 @@ function formatGp(v) {
   const n = Number(v) || 0;
   return Number.isInteger(n) ? String(n) : n.toFixed(2);
 }
+function formatCount(n) {
+  return (Number(n) || 0).toLocaleString('en-US');
+}
 
 function confirm() {
   if (!hasAnything.value) return;
-  // Only the checked items (plus coins) get imported.
-  emit('confirm', { coins: preview.value.coins, items: includedItems.value });
+  // Only the checked items and included coin denominations get imported.
+  emit('confirm', { coins: includedCoins.value, items: includedItems.value });
 }
 </script>
 
@@ -194,9 +224,20 @@ function confirm() {
   border-radius: 999px;
   background: var(--par-color-callout-bg, #f3ebda);
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  font-family: inherit;
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--color-action-hover, #2a4d70);
+  cursor: pointer;
+  transition: opacity 0.12s ease, background 0.12s ease;
+}
+.ti__coin-chip:hover { background: var(--par-color-border, #e8e2d4); }
+/* Excluded denomination — dimmed + struck through, mirroring an unchecked item. */
+.ti__coin-chip--off {
+  opacity: 0.5;
+  background: transparent;
+  text-decoration: line-through;
+  color: var(--par-color-text-muted, #6b6b6b);
 }
 .ti__items {
   list-style: none;
