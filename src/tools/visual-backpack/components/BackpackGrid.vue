@@ -545,6 +545,7 @@ function onDrop(e) {
   color: var(--par-color-destructive, #a03333);
 }
 
+
 .grid-panel__controls {
   display: flex;
   align-items: center;

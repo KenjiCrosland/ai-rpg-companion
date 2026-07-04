@@ -74,6 +74,7 @@
           v-for="tpl in group.items"
           :key="tpl.id"
           class="row"
+          :class="{ 'row--added': addedId === tpl.id }"
           type="button"
           role="listitem"
           draggable="true"
@@ -181,6 +182,7 @@ const affordable = (tpl) => canAfford(props.coins, tpl.cost, tpl.quantity || 1);
 const onBuy = (tpl) => {
   if (affordable(tpl)) {
     emit('buy', tpl);
+    confirmAdded(tpl.id);
     markInstructionsUsed();
   }
 };
@@ -220,8 +222,20 @@ function markInstructionsUsed() {
   hintDismissed.value = true;
   try { localStorage.setItem(INSTRUCTIONS_KEY, 'true'); } catch { /* storage blocked */ }
 }
+// Confirm the tap ON the row (a green "added" flash), so it's obvious which item
+// landed — important on mobile where the pack itself isn't in view.
+const addedId = ref(null);
+let addedTimer = null;
+function confirmAdded(id) {
+  addedId.value = id;
+  clearTimeout(addedTimer);
+  addedTimer = setTimeout(() => {
+    if (addedId.value === id) addedId.value = null;
+  }, 850);
+}
 function onRowAdd(tpl) {
   emit('add', tpl);
+  confirmAdded(tpl.id);
   markInstructionsUsed();
 }
 
@@ -499,6 +513,26 @@ function submitCustom() {
 .row:focus-visible {
   outline: 2px solid var(--color-action-rest, #365a85);
   outline-offset: -2px;
+}
+/* Green "added" flash confirming the tap landed on this item (mobile especially). */
+.row--added {
+  animation: row-added 0.85s ease-out;
+}
+@keyframes row-added {
+  0% {
+    background: rgba(90, 122, 74, 0.38);
+    box-shadow: inset 3px 0 0 #5a7a4a;
+  }
+  100% {
+    background: transparent;
+    box-shadow: inset 3px 0 0 rgba(90, 122, 74, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row--added {
+    animation: none;
+    background: rgba(90, 122, 74, 0.22);
+  }
 }
 
 .row__swatch {

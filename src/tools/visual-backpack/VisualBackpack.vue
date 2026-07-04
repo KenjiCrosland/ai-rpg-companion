@@ -20,7 +20,7 @@
     <header class="app-top-bar">
       <div class="app-top-bar__inner">
         <div class="app-top-bar__brand">
-          <h1 class="app-top-bar__title">D&amp;D 5e Inventory Manager</h1>
+          <h1 class="app-top-bar__title">Kenji&rsquo;s D&amp;D 5e Inventory Manager</h1>
           <p class="app-top-bar__subtitle">
             Lay out each character's gear like a video-game inventory.
           </p>
@@ -92,25 +92,34 @@
         </p>
 
         <div v-if="isMobile" class="mobile-bar">
-          <!-- Character identity is otherwise hidden in the off-canvas rail; surface
-               name + STR here so new users see (and can set) the Strength that drives
-               carry capacity. Tapping opens the character rail to edit. -->
-          <button
-            class="mobile-bar__char"
-            type="button"
-            :aria-label="`Edit character ${characterName || 'Character 1'}, Strength ${strength}`"
-            @click="editCharacter"
-          >
-            <span class="mobile-bar__char-icon" aria-hidden="true">🧍</span>
-            <span class="mobile-bar__char-name">{{ characterName || 'Character 1' }}</span>
-            <span class="mobile-bar__char-str">STR {{ strength }}</span>
-            <span class="mobile-bar__char-edit" aria-hidden="true">✎</span>
-          </button>
-          <div class="mobile-bar__capacity">
-            <span class="mobile-bar__dot" :class="encumbranceDotClass"></span>
-            <span class="mobile-bar__weight">{{ formatLbs(status.total) }} / {{ status.capacity }} lb</span>
-            <span class="mobile-bar__sep">·</span>
-            <span class="mobile-bar__count">{{ items.length }} {{ items.length === 1 ? 'item' : 'items' }}</span>
+          <!-- Character row: tap the name to rename in place; use the stepper to set
+               Strength (which drives carry capacity). Roster management (switch / add /
+               delete) stays in the off-canvas rail, reached via the Characters pill. -->
+          <div class="mobile-bar__char">
+            <span class="mobile-bar__field-label">Name</span>
+            <input
+              v-if="nameEditing"
+              ref="nameInput"
+              class="mobile-bar__name-input"
+              :value="characterName"
+              aria-label="Character name"
+              @input="setCharacterName($event.target.value)"
+              @blur="nameEditing = false"
+              @keydown.enter.prevent="nameEditing = false"
+            />
+            <button v-else class="mobile-bar__name" type="button" @click="startNameEdit">
+              {{ characterName || 'Character 1' }}
+            </button>
+            <span class="mobile-bar__field-label">Str</span>
+            <div class="mobile-bar__str">
+              <button class="mobile-bar__str-btn" type="button" aria-label="Decrease Strength" @click="setStrength(strength - 1)">−</button>
+              <span class="mobile-bar__str-val" aria-live="polite">{{ strength }}</span>
+              <button class="mobile-bar__str-btn" type="button" aria-label="Increase Strength" @click="setStrength(strength + 1)">+</button>
+            </div>
+            <span class="mobile-bar__status" :title="status.tier === 'ok' ? 'Unencumbered' : status.consequences">
+              <span class="mobile-bar__dot" :class="encumbranceDotClass"></span>
+              <span class="mobile-bar__weight">{{ formatLbs(status.total) }} / {{ status.capacity }} lb</span>
+            </span>
           </div>
           <div class="mobile-bar__switch" role="tablist" aria-label="View">
             <button
@@ -126,7 +135,7 @@
               :aria-selected="mobileMode === 'pack'"
               :class="{ 'mobile-bar__tab--active': mobileMode === 'pack' }"
               @click="mobileMode = 'pack'"
-            >My pack</button>
+            >My pack<span v-if="packCount" :key="packBump" class="mobile-bar__tab-count">{{ packCount }}</span></button>
           </div>
         </div>
 
@@ -527,10 +536,15 @@ function onAddCharacter() {
   // Keep the rail open and drop the cursor straight into the new name field.
   nextTick(() => characterSidebar.value?.focusName());
 }
-// Mobile: the character bar opens the rail (where name + Strength are edited).
-function editCharacter() {
-  sidebarOpen.value = true;
-  nextTick(() => characterSidebar.value?.focusName());
+// Mobile: tap the name in the character row to rename it in place.
+const nameEditing = ref(false);
+const nameInput = ref(null);
+function startNameEdit() {
+  nameEditing.value = true;
+  nextTick(() => {
+    nameInput.value?.focus();
+    nameInput.value?.select();
+  });
 }
 
 // Character deletion (parent-side confirm).
@@ -594,8 +608,12 @@ function onAddPack(packId) {
 const mobileMode = ref('catalog');
 const flashItemId = ref(null);
 let flashTimer = null;
+// Add feedback: the "My pack" tab shows a live count that pops on every add (packBump
+// re-keys the badge to replay the animation). Coin purse tile excluded from the count.
+const packBump = ref(0);
+const packCount = computed(() => items.value.filter((i) => !i.isCoinPurse).length);
 
-// Encumbrance dot for the sticky capacity bar (reinforced by the weight text beside it).
+// Encumbrance dot for the header status line (reinforced by the weight text beside it).
 const encumbranceDotClass = computed(() => {
   const t = status.value?.tier;
   if (t === 'heavily' || t === 'over') return 'mobile-bar__dot--danger';
@@ -607,9 +625,18 @@ function formatLbs(n) {
 }
 // Flash the tile/row that just landed — visible when the pack view is showing; in
 // catalog mode the capacity bar's item/weight bump is the "it landed" feedback.
+function notifyAdded() {
+  packBump.value += 1; // pop the "My pack" tab count
+  try {
+    navigator.vibrate?.(8); // a tiny tactile confirmation on supporting devices
+  } catch {
+    /* no haptics */
+  }
+}
 function flashItem(id) {
   if (!id) return;
   flashItemId.value = id;
+  notifyAdded();
   clearTimeout(flashTimer);
   flashTimer = setTimeout(() => {
     if (flashItemId.value === id) flashItemId.value = null;
@@ -623,6 +650,7 @@ function onBuyItem(template) {
 }
 function onAddPackMobile(packId) {
   onAddPack(packId);
+  notifyAdded();
 }
 onBeforeUnmount(() => clearTimeout(flashTimer));
 
@@ -863,6 +891,10 @@ function onFileChosen(e) {
   .app-top-bar__inner {
     padding: 1rem 1.2rem;
   }
+  /* The tagline is desktop chrome; on a phone the title alone is enough. */
+  .app-top-bar__subtitle {
+    display: none;
+  }
 
   /* Sticky capacity + mode switch: the tool's constant compass, always in view. */
   .mobile-bar {
@@ -880,57 +912,90 @@ function onFileChosen(e) {
   .mobile-bar__char {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.5rem;
     width: 100%;
-    padding: 0.5rem 0.7rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  }
+  /* Name: a nested cream field that reads as editable; becomes an input on tap. */
+  .mobile-bar__name,
+  .mobile-bar__name-input {
+    flex: 1;
+    min-width: 4rem;
+    height: 3rem;
+    padding: 0 0.7rem;
     border: 0.5px solid var(--par-color-border-strong, #c9b99a);
     border-radius: var(--par-radius-sm, 3px);
     background: var(--par-color-surface-card, #fefbf4);
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
-    font-size: 1.35rem;
-    cursor: pointer;
-  }
-  .mobile-bar__char-icon {
-    flex: none;
-  }
-  .mobile-bar__char-name {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-family: inherit;
+    font-size: 1.4rem;
     font-weight: 700;
     color: var(--color-action-hover, #2a4d70);
   }
-  .mobile-bar__char-str {
+  .mobile-bar__name {
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: text;
+  }
+  .mobile-bar__name-input {
+    outline: none;
+  }
+  .mobile-bar__name-input:focus {
+    border-color: var(--color-action-rest, #365a85);
+    box-shadow: 0 0 0 2px rgba(54, 90, 133, 0.2);
+  }
+  .mobile-bar__field-label {
     flex: none;
-    padding: 0.05rem 0.6rem;
-    border-radius: 999px;
-    background: var(--par-color-callout-bg, #f3ebda);
     font-size: 1.15rem;
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--par-color-text-secondary, #555);
   }
-  .mobile-bar__char-edit {
+  .mobile-bar__str {
     flex: none;
-    color: var(--par-color-text-muted, #6b6b6b);
-  }
-
-  .mobile-bar__capacity {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
-    font-size: 1.35rem;
-    color: var(--par-color-text-secondary, #555);
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-radius: var(--par-radius-sm, 3px);
+    background: var(--par-color-surface-card, #fefbf4);
+    overflow: hidden;
   }
-  .mobile-bar__weight {
+  .mobile-bar__str-btn {
+    width: 2.6rem;
+    height: 3rem;
+    border: none;
+    background: transparent;
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: var(--color-action-rest, #365a85);
+    cursor: pointer;
+  }
+  .mobile-bar__str-btn:active {
+    background: var(--par-color-callout-bg, #f3ebda);
+  }
+  .mobile-bar__str-val {
+    min-width: 2rem;
+    text-align: center;
+    font-size: 1.45rem;
     font-weight: 700;
     color: var(--par-color-text, #222);
   }
-  .mobile-bar__sep {
-    color: var(--par-color-text-muted, #9a9082);
+
+  /* Always-visible encumbrance read (both modes) — the tool's core "am I overloaded".
+     Sits inline at the end of the character row. */
+  .mobile-bar__status {
+    flex: none;
+    /* breathing room on each side — the flexing name field yields the space. */
+    margin: 0 0.3rem 0 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+    font-size: 1.25rem;
+    color: var(--par-color-text-secondary, #555);
   }
   .mobile-bar__dot {
     flex: none;
@@ -945,30 +1010,59 @@ function onFileChosen(e) {
   .mobile-bar__dot--danger {
     background: var(--par-color-destructive, #a03333);
   }
+  .mobile-bar__weight {
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--par-color-text, #222);
+  }
+  /* iOS-style segmented control: a recessed neutral track with a raised, light
+     active segment (not a bold fill). Subtle — it's a view toggle, not a CTA. */
   .mobile-bar__switch {
     display: flex;
-    gap: 0.4rem;
-    padding: 0.3rem;
-    background: var(--par-color-callout-bg, #f3ebda);
-    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
-    border-radius: 999px;
+    gap: 0.2rem;
+    padding: 0.25rem;
+    background: rgba(58, 70, 84, 0.1);
+    border-radius: 0.9rem;
   }
   .mobile-bar__switch button {
     flex: 1;
-    min-height: 3.6rem;
+    min-height: 3.2rem;
     border: none;
-    border-radius: 999px;
+    border-radius: 0.7rem;
     background: transparent;
     font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight: 600;
     color: var(--par-color-text-secondary, #555);
     cursor: pointer;
+    transition: color 0.15s ease;
   }
   .mobile-bar__switch button.mobile-bar__tab--active {
+    background: var(--par-color-surface-card, #fefbf4);
+    color: var(--color-action-hover, #2a4d70);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+  }
+  /* Live pack count on the My-pack tab — pops on every add (re-keyed to replay). */
+  .mobile-bar__tab-count {
+    display: inline-block;
+    margin-left: 0.5rem;
+    min-width: 2rem;
+    padding: 0 0.45rem;
+    border-radius: 999px;
     background: var(--color-action-rest, #365a85);
     color: var(--color-action-text, #fbf7f0);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 2rem;
+    animation: tab-count-pop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes tab-count-pop {
+    0% { transform: scale(0.5); }
+    55% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-bar__tab-count { animation: none; }
   }
 
   /* Two full-width modes — show one, hide the other. */
