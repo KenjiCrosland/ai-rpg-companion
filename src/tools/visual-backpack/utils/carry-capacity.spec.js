@@ -157,11 +157,26 @@ describe('prices & buying', () => {
     expect(after).toEqual({ pp: 4, gp: 3, ep: 0, sp: 0, cp: 0 });
   });
 
-  it('breaks exactly one larger coin to make change when small coins fall short', () => {
-    // Spend 5 sp (50 cp) from pure gold: break one 1 gp coin → 5 sp change back.
+  it('makes change in silver, never electrum (breaks one larger coin)', () => {
+    // Spend 5 sp (50 cp) from pure gold: break one 1 gp coin → 5 sp change back
+    // (NOT 1 ep — a shop doesn't hand out electrum as change).
     const after = spendCoins(gp(3), { quantity: 5, unit: 'sp' });
     expect(coinValueGp(after)).toBe(2.5); // 3 gp − 0.5 gp
-    expect(after).toEqual({ pp: 0, gp: 2, ep: 1, sp: 0, cp: 0 }); // 2 gp + 1 ep = 2.5 gp
+    expect(after).toEqual({ pp: 0, gp: 2, ep: 0, sp: 5, cp: 0 });
+    expect(after.ep).toBe(0);
+  });
+
+  it('sheds coin bulk — spends the copper pile before touching gold', () => {
+    // Buy a 1 gp item from a purse fat with copper: pay it in 100 cp (= 1 gp) and
+    // leave the compact gold untouched. Fewer coins carried after = lighter purse.
+    const after = spendCoins({ pp: 0, gp: 5, ep: 0, sp: 0, cp: 300 }, { quantity: 1, unit: 'gp' });
+    expect(after).toEqual({ pp: 0, gp: 5, ep: 0, sp: 0, cp: 200 });
+  });
+
+  it('spends electrum on hand (the odd coin) rather than hoarding it', () => {
+    // Only electrum in the purse: a 1 gp buy pays with two 1 ep coins (2 ep = 1 gp).
+    const after = spendCoins({ pp: 0, gp: 0, ep: 3, sp: 0, cp: 0 }, { quantity: 1, unit: 'gp' });
+    expect(after).toEqual({ pp: 0, gp: 0, ep: 1, sp: 0, cp: 0 });
   });
 
   it('refuses to spend when unaffordable or priceless (returns null)', () => {

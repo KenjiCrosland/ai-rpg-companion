@@ -8,7 +8,12 @@
     </header>
 
     <div class="purse__row">
-      <div v-for="denom in denoms" :key="denom.key" class="coin" :class="`coin--${denom.key}`">
+      <div
+        v-for="denom in denoms"
+        :key="denom.key"
+        class="coin"
+        :class="[`coin--${denom.key}`, { 'coin--flash': flashing[denom.key] }]"
+      >
         <span class="coin__label">{{ denom.key }}</span>
         <!-- One compact field: −[ value ]+ -->
         <div class="stepper">
@@ -27,6 +32,8 @@
             :value="coins[denom.key]"
             :aria-label="denom.name"
             @input="onInput(denom.key, $event)"
+            @focus="editingKey = denom.key"
+            @blur="editingKey = null"
           />
           <button
             class="stepper__btn"
@@ -121,7 +128,7 @@
  * The metal colors are coin-purse-specific contextual treatment — they do not
  * enter parchment's global token system or propagate to other tools.
  */
-import { ref, computed } from 'vue';
+import { ref, computed, reactive, watch } from 'vue';
 import { canAfford } from '../utils/carry-capacity.mjs';
 
 const props = defineProps({
@@ -155,6 +162,29 @@ function step(denom, delta) {
   const next = Math.max(0, (Number(props.coins[denom]) || 0) + delta);
   emit('set-coin', { denom, value: next });
 }
+
+// --- flash-highlight denominations that change (a Buy, a Spend, an Add) so the
+// eye catches what moved in the purse. We skip the field the user is actively
+// typing in — flashing your own keystrokes back at you is just noise. Steppers,
+// adjust, and external buys all flash. The highlight is a background/timer toggle
+// (not keyframes): a burst of buys holds the glow, then it fades on the last one.
+const flashing = reactive({ pp: false, gp: false, ep: false, sp: false, cp: false });
+const editingKey = ref(null);
+const flashTimers = {};
+
+watch(
+  () => denoms.map((d) => Number(props.coins[d.key]) || 0),
+  (next, prev) => {
+    denoms.forEach((d, i) => {
+      if (next[i] === prev[i] || d.key === editingKey.value) return;
+      flashing[d.key] = true;
+      clearTimeout(flashTimers[d.key]);
+      flashTimers[d.key] = setTimeout(() => {
+        flashing[d.key] = false;
+      }, 650);
+    });
+  },
+);
 
 // --- relative adjust (add a reward / spend an amount) ---
 const amount = ref('');
@@ -265,6 +295,21 @@ function formatGp(v) {
   border: 0.5px solid var(--par-color-border-strong, #c9b99a);
   border-radius: var(--par-radius-md, 4px);
   overflow: hidden;
+  /* Slow fade-OUT is the resting transition; the flash rule overrides with a
+     fast fade-IN, so a changed coin lights up sharply then eases back down. */
+  transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+.coin--flash .stepper {
+  background-color: rgba(230, 195, 77, 0.28);
+  border-color: var(--coin-color-gold, #956a0b);
+  box-shadow: 0 0 0 2px rgba(230, 195, 77, 0.45);
+  transition-duration: 0.12s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stepper,
+  .coin--flash .stepper {
+    transition: none;
+  }
 }
 .stepper__btn {
   flex: none;

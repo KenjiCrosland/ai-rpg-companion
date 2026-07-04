@@ -64,6 +64,10 @@
           Click or drag an item to add it free. Click <strong>Buy</strong> to deduct
           its standard SRD price from your coin purse.
         </p>
+        <div class="catalog__purse" role="status" :aria-label="`In purse: ${formatGp(coinGold)} gold`">
+          <span class="catalog__purse-label">In purse</span>
+          <span class="catalog__purse-amount">{{ formatGp(coinGold) }} gp</span>
+        </div>
 
     <div class="catalog__list" role="list">
       <p v-if="!groups.length" class="catalog__empty">No gear matches “{{ search }}”.</p>
@@ -165,7 +169,8 @@
 import { reactive, ref, computed } from 'vue';
 import { ParInput, ParSelect, ParField, ParButton } from '@/parchment';
 import { typeColor, itemTypes, TYPE_COLORS } from '../utils/tile-presentation.mjs';
-import { formatCost, canAfford } from '../utils/carry-capacity.mjs';
+import { useToast } from '@/composables/useToast';
+import { formatCost, canAfford, coinValueGp } from '../utils/carry-capacity.mjs';
 import { setDrag, clearDrag } from '../composables/drag-state.js';
 
 const props = defineProps({
@@ -179,11 +184,23 @@ const emit = defineEmits(['add', 'add-pack', 'add-custom', 'remove-custom', 'buy
 
 /** Can the current purse afford one of this priced item? */
 const affordable = (tpl) => canAfford(props.coins, tpl.cost, tpl.quantity || 1);
+// Purse total (gp equivalent), shown as a quick "can I afford Buy?" readout in the
+// catalog — the coin purse itself isn't reliably in view (mobile: other mode; desktop:
+// below a collapsible catalog / a long pack).
+const coinGold = computed(() => coinValueGp(props.coins));
+function formatGp(n) {
+  return (Number(n) || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+const toast = useToast();
 const onBuy = (tpl) => {
   if (affordable(tpl)) {
     emit('buy', tpl);
     confirmAdded(tpl.id);
     markInstructionsUsed();
+  } else if (props.mobile) {
+    // No hover-tooltip on touch — say why, and point to the free-add path.
+    toast.warning('Not enough coin to buy that — add coins to your purse, or tap the item to add it for free.');
   }
 };
 
@@ -413,6 +430,31 @@ function submitCustom() {
   color: var(--par-color-text-secondary, #555);
 }
 
+/* Understated "in purse" bar — an ambient balance readout while you shop, not a
+   callout. Soft warm-tan strip, small-caps label left, burgundy value right. */
+.catalog__purse {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--par-radius-sm, 3px);
+  background: rgba(243, 235, 218, 0.35);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.3rem;
+}
+.catalog__purse-label {
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+.catalog__purse-amount {
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+}
+
 .starter__list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
@@ -571,6 +613,7 @@ function submitCustom() {
 /* Buy: understated — the row's primary action is still "add", so Buy is a quiet
    muted-ink outline (no lapis, small corners), reading as "available if you want
    it", not a CTA. Still a real tap target. */
+/* Gold "coin" action — visually distinct from the free row-tap-to-add. */
 .row__buy {
   flex: none;
   display: inline-flex;
@@ -579,28 +622,29 @@ function submitCustom() {
   min-width: 4.2rem;
   min-height: 2.6rem;
   padding: 0 0.8rem;
-  border: 0.5px solid var(--par-color-border-strong, #cbb8a0);
+  border: 0.5px solid #d3ba69;
   border-radius: var(--par-radius-sm, 3px);
-  background: transparent;
+  background: rgba(230, 195, 77, 0.16);
   font-size: 1.15rem;
-  font-weight: 500;
-  color: var(--par-color-text-secondary, #555);
+  font-weight: 600;
+  color: #6e561a;
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 .row__buy:hover {
-  border-color: var(--par-color-text-secondary, #555);
-  background: var(--par-color-callout-bg, #f3ebda);
-  color: var(--par-color-text, #222);
+  border-color: #bf9f3c;
+  background: rgba(230, 195, 77, 0.32);
+  color: #5f4708;
 }
 .row__buy:focus-visible {
   outline: 2px solid var(--color-action-rest, #365a85);
   outline-offset: 2px;
 }
+/* Can't afford it — muted, but still tappable (mobile taps get an explanatory toast). */
 .row__buy--disabled {
   border-color: var(--par-color-border, #e4d8c4);
+  background: transparent;
   color: var(--par-color-text-muted, #9a9082);
-  cursor: not-allowed;
 }
 .row__buy--disabled:hover {
   background: transparent;
