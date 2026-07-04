@@ -58,7 +58,7 @@
       <div v-show="gearOpen" class="catalog__panel">
         <div class="catalog__filters">
           <ParInput v-model="search" placeholder="Search gear…" aria-label="Search gear" />
-          <ParSelect v-model="categoryFilter" :options="categoryOptions" aria-label="Filter by category" />
+          <ParSelect v-model="typeFilter" :options="typeOptions" aria-label="Filter by type" />
         </div>
         <p class="catalog__hint" :class="{ 'catalog__hint--used': hintDismissed }">
           Click or drag an item to add it free. Click <strong>Buy</strong> to deduct
@@ -163,7 +163,7 @@
  */
 import { reactive, ref, computed } from 'vue';
 import { ParInput, ParSelect, ParField, ParButton } from '@/parchment';
-import { typeColor } from '../utils/tile-presentation.mjs';
+import { typeColor, itemTypes, TYPE_COLORS } from '../utils/tile-presentation.mjs';
 import { formatCost, canAfford } from '../utils/carry-capacity.mjs';
 import { setDrag, clearDrag } from '../composables/drag-state.js';
 
@@ -185,11 +185,24 @@ const onBuy = (tpl) => {
   }
 };
 
-const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic Item'];
-const categoryOptions = [{ value: '', label: 'All categories' }, ...categories];
+// D&D categories — used to group the catalog and to seed the custom-item form.
+const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Consumable', 'Tools', 'Magic Item', 'Misc'];
+
+// Filtering uses the same TYPE taxonomy the pack does (weapon / consumable / gear / …),
+// via itemTypes() (PLURAL) so an item counts under every type it belongs to — a magic
+// weapon shows under both Weapon and Magic Item, a potion under both Consumable and
+// Magic Item. Only types actually present are offered.
+const TYPE_ORDER = ['weapon', 'armor', 'consumable', 'tools', 'gear', 'misc', 'magic', 'treasure', 'currency'];
+const typeOptions = computed(() => {
+  const present = new Set(props.catalog.flatMap((t) => itemTypes(t)));
+  return [
+    { value: '', label: 'All types' },
+    ...TYPE_ORDER.filter((t) => present.has(t)).map((t) => ({ value: t, label: TYPE_COLORS[t]?.label || t })),
+  ];
+});
 
 const search = ref('');
-const categoryFilter = ref('');
+const typeFilter = ref('');
 const starterOpen = ref(!props.mobile); // collapsed on mobile to keep the gear list near the top
 const gearOpen = ref(true);
 // Mobile-only: the custom-item form is collapsed by default (desktop shows it always).
@@ -217,11 +230,15 @@ const form = reactive({ name: '', weight: '', category: 'Adventuring Gear' });
 const groups = computed(() => {
   const q = search.value.trim().toLowerCase();
   return categories
-    .filter((cat) => !categoryFilter.value || categoryFilter.value === cat)
     .map((category) => ({
       category,
       items: props.catalog
-        .filter((t) => t.category === category && (!q || t.name.toLowerCase().includes(q)))
+        .filter(
+          (t) =>
+            t.category === category &&
+            (!q || t.name.toLowerCase().includes(q)) &&
+            (!typeFilter.value || itemTypes(t).includes(typeFilter.value)),
+        )
         .sort((a, b) => a.name.localeCompare(b.name)),
     }))
     .filter((g) => g.items.length);

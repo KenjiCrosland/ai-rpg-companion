@@ -40,6 +40,8 @@ export function itemType(item) {
       return 'tools';
     case 'Magic Item':
       return 'magic';
+    case 'Consumable':
+      return 'consumable'; // custom items can pick this explicitly (a single-use item)
     case 'Treasure':
       return 'treasure'; // gems, art, trade goods — imported valuables, worth only their gp
     case 'Misc':

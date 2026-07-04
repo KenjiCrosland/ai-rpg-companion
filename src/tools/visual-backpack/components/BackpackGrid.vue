@@ -215,6 +215,10 @@
 
     <!-- Pack data actions — secondary affordances, anchored to the pack they affect. -->
     <footer class="pack-footer">
+      <!-- The carrying "total" folds into the pack card here (desktop + mobile). -->
+      <div v-if="$slots.capacity" class="pack-footer__capacity">
+        <slot name="capacity" />
+      </div>
       <div class="pack-actions">
         <button class="pack-action" type="button" @click="$emit('print')">
           <span class="pack-action__icon" aria-hidden="true">🖨️</span>
@@ -901,10 +905,14 @@ function onDrop(e) {
 /* Pack data actions: quiet, footer-placed secondary affordances. */
 .pack-footer {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 1.2rem;
   margin-top: 1.2rem;
   padding-top: 1rem;
   border-top: 0.5px solid rgba(201, 185, 154, 0.5);
+}
+.pack-footer__capacity {
+  width: 100%;
 }
 .pack-actions {
   display: flex;

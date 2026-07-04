@@ -59,6 +59,10 @@ describe('itemType — color encodes type', () => {
     expect(itemType({ category: 'Adventuring Gear', name: 'Rope, hempen (50 feet)' })).toBe('gear');
   });
 
+  it('maps an explicit Consumable category (custom items) to the consumable type', () => {
+    expect(itemType({ category: 'Consumable', name: 'Homebrew tonic' })).toBe('consumable');
+  });
+
   it('classifies unrecognized flavor loot as Misc, not gear', () => {
     expect(itemType({ category: 'Misc', name: 'A scroll with a long epic poem praising the dragon' })).toBe('misc');
     expect(itemType({ category: 'Misc', name: 'A kneeling bench for addressing the dragon' })).toBe('misc');

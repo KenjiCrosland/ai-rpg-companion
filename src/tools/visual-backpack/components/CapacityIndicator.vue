@@ -1,5 +1,5 @@
 <template>
-  <section class="capacity" :class="`capacity--${status.tier}`" aria-live="polite">
+  <section class="capacity" :class="[`capacity--${status.tier}`, { 'capacity--embedded': embedded }]" aria-live="polite">
     <div class="capacity__row">
       <span class="capacity__label">Carrying</span>
       <span class="capacity__value">
@@ -26,31 +26,28 @@
         <template v-if="status.consequences">{{ status.consequences }}</template>
         <template v-else>Unencumbered, carry on.</template>
       </span>
-      <label class="capacity__toggle">
-        <input
-          type="checkbox"
-          :checked="countCoinWeight"
-          @change="$emit('toggle', $event.target.checked)"
-        />
-        <span>Include coin weight</span>
-      </label>
-    </div>
-
-    <div v-if="hasPack" class="capacity__drop" :class="{ 'capacity__drop--active': packDropped }">
-      <ParButton
-        size="small"
-        :variant="packDropped ? 'primary' : 'primary-outline'"
-        @click="$emit('toggle-drop', !packDropped)"
-      >{{ packDropped ? 'Pick up pack' : 'Drop pack' }}</ParButton>
-      <span class="capacity__drop-note">
-        <template v-if="packDropped">
-          <strong>{{ formatWeight(packWeight) }} lb</strong> on the ground, counting worn gear only.
-        </template>
-        <template v-else>
-          Set down <strong>{{ formatWeight(packWeight) }} lb</strong> to fight at
-          <strong>{{ formatWeight(equippedWeight) }} lb</strong> of worn gear.
-        </template>
-      </span>
+      <div class="capacity__toggles">
+        <!-- Drop pack: a situational combat toggle. The state stays legible via the
+             "🎒 pack dropped" tag by the weight; the numbers live in the tooltip. -->
+        <label
+          v-if="hasPack"
+          class="capacity__toggle"
+          :title="packDropped
+            ? `Pack is set down — ${formatWeight(packWeight)} lb on the ground, fighting at ${formatWeight(equippedWeight)} lb of worn gear.`
+            : `Set the pack down to fight in worn gear only — drop ${formatWeight(packWeight)} lb to ${formatWeight(equippedWeight)} lb.`"
+        >
+          <input type="checkbox" :checked="packDropped" @change="$emit('toggle-drop', $event.target.checked)" />
+          <span>Drop pack</span>
+        </label>
+        <label class="capacity__toggle" title="Count coin weight toward your carry total.">
+          <input
+            type="checkbox"
+            :checked="countCoinWeight"
+            @change="$emit('toggle', $event.target.checked)"
+          />
+          <span>Include coin weight</span>
+        </label>
+      </div>
     </div>
   </section>
 </template>
@@ -65,7 +62,6 @@
  * it lives here next to the encumbrance read, not on the coin purse.
  */
 import { computed } from 'vue';
-import { ParButton } from '@/parchment';
 
 const props = defineProps({
   status: { type: Object, required: true },
@@ -74,6 +70,8 @@ const props = defineProps({
   packWeight: { type: Number, default: 0 },
   equippedWeight: { type: Number, default: 0 },
   hasPack: { type: Boolean, default: false },
+  // Rendered inside the pack card (mobile) instead of as its own card — drop the chrome.
+  embedded: { type: Boolean, default: false },
 });
 
 defineEmits(['toggle', 'toggle-drop']);
@@ -94,6 +92,13 @@ function formatWeight(w) {
   border-radius: var(--par-radius-lg, 12px);
   padding: 1.2rem 1.6rem 1.3rem;
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+}
+/* Folded into the pack card footer — no card chrome (the footer supplies the divider). */
+.capacity--embedded {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .capacity--encumbered {
@@ -140,27 +145,6 @@ function formatWeight(w) {
   white-space: nowrap;
 }
 
-/* Drop-pack control: the tactical move made one tap. */
-.capacity__drop {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 0.5px solid var(--par-color-divider, #e2dccd);
-}
-.capacity__drop-note {
-  font-size: 1.25rem;
-  line-height: 1.4;
-  color: var(--par-color-text-secondary, #555);
-}
-.capacity__drop-note strong {
-  font-weight: 600;
-  color: var(--par-color-text, #222);
-}
-.capacity__drop--active .capacity__drop-note strong {
-  color: var(--color-action-hover, #2a4d70);
-}
 
 .capacity__bar {
   position: relative;
@@ -190,8 +174,14 @@ function formatWeight(w) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.2rem;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
   margin-top: 0.7rem;
+}
+.capacity__toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
 }
 
 .capacity__status {

@@ -92,6 +92,20 @@
         </p>
 
         <div v-if="isMobile" class="mobile-bar">
+          <!-- Character identity is otherwise hidden in the off-canvas rail; surface
+               name + STR here so new users see (and can set) the Strength that drives
+               carry capacity. Tapping opens the character rail to edit. -->
+          <button
+            class="mobile-bar__char"
+            type="button"
+            :aria-label="`Edit character ${characterName || 'Character 1'}, Strength ${strength}`"
+            @click="editCharacter"
+          >
+            <span class="mobile-bar__char-icon" aria-hidden="true">🧍</span>
+            <span class="mobile-bar__char-name">{{ characterName || 'Character 1' }}</span>
+            <span class="mobile-bar__char-str">STR {{ strength }}</span>
+            <span class="mobile-bar__char-edit" aria-hidden="true">✎</span>
+          </button>
           <div class="mobile-bar__capacity">
             <span class="mobile-bar__dot" :class="encumbranceDotClass"></span>
             <span class="mobile-bar__weight">{{ formatLbs(status.total) }} / {{ status.capacity }} lb</span>
@@ -214,6 +228,20 @@
               @view-equipped="setPackView('equip')"
             />
           </template>
+          <!-- Carrying total folds into the pack card footer (desktop + mobile). -->
+          <template #capacity>
+            <CapacityIndicator
+              embedded
+              :status="status"
+              :count-coin-weight="countCoinWeight"
+              :pack-dropped="packDropped"
+              :pack-weight="packWeight"
+              :equipped-weight="equippedWeight"
+              :has-pack="!!items.length"
+              @toggle="toggleCoinWeight"
+              @toggle-drop="toggleDropPack"
+            />
+          </template>
         </BackpackGrid>
         <BagPanel
           v-for="b in bags"
@@ -234,16 +262,6 @@
           @set-coin="({ denom, value }) => setCoin(denom, value)"
           @adjust="adjustCoins"
           @empty="confirmEmptyPurse = true"
-        />
-        <CapacityIndicator
-          :status="status"
-          :count-coin-weight="countCoinWeight"
-          :pack-dropped="packDropped"
-          :pack-weight="packWeight"
-          :equipped-weight="equippedWeight"
-          :has-pack="!!items.length"
-          @toggle="toggleCoinWeight"
-          @toggle-drop="toggleDropPack"
         />
         </div>
         </div>
@@ -391,7 +409,7 @@ const {
   currentState,
 } = useBackpack();
 
-const detailCategories = ['Weapon', 'Armor', 'Adventuring Gear', 'Tools', 'Magic Item'];
+const detailCategories = ['Weapon', 'Armor', 'Adventuring Gear', 'Consumable', 'Tools', 'Magic Item', 'Misc'];
 
 // --- bag of holding ---
 const canStashSelected = computed(
@@ -507,6 +525,11 @@ function onSelectCharacter(id) {
 function onAddCharacter() {
   addCharacter();
   // Keep the rail open and drop the cursor straight into the new name field.
+  nextTick(() => characterSidebar.value?.focusName());
+}
+// Mobile: the character bar opens the rail (where name + Strength are edited).
+function editCharacter() {
+  sidebarOpen.value = true;
   nextTick(() => characterSidebar.value?.focusName());
 }
 
@@ -854,6 +877,46 @@ function onFileChosen(e) {
     background: var(--par-color-surface-page, #eaeef2);
     border-bottom: 0.5px solid var(--par-color-border-strong, #c9b99a);
   }
+  .mobile-bar__char {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.5rem 0.7rem;
+    border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+    border-radius: var(--par-radius-sm, 3px);
+    background: var(--par-color-surface-card, #fefbf4);
+    font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+    font-size: 1.35rem;
+    cursor: pointer;
+  }
+  .mobile-bar__char-icon {
+    flex: none;
+  }
+  .mobile-bar__char-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+    color: var(--color-action-hover, #2a4d70);
+  }
+  .mobile-bar__char-str {
+    flex: none;
+    padding: 0.05rem 0.6rem;
+    border-radius: 999px;
+    background: var(--par-color-callout-bg, #f3ebda);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--par-color-text-secondary, #555);
+  }
+  .mobile-bar__char-edit {
+    flex: none;
+    color: var(--par-color-text-muted, #6b6b6b);
+  }
+
   .mobile-bar__capacity {
     display: flex;
     align-items: center;
