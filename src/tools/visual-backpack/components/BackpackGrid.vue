@@ -9,6 +9,15 @@
           :class="{ 'grid-panel__attune--over': attunedCount > maxAttunement }"
           title="Attuned magic items (max 3)"
         >⚜ {{ attunedCount }}/{{ maxAttunement }}</span>
+        <!-- Mobile: "Tidy up" rides the title row, opposite the pack name, as a
+             quiet text action (the outlined button below is desktop-only). -->
+        <button
+          v-if="mobile && view !== 'equip'"
+          type="button"
+          class="tidy-mini"
+          :disabled="!hasGridItems"
+          @click="$emit('autopack', sortBy)"
+        >Tidy up</button>
       </div>
       <div class="grid-panel__controls">
         <div class="view-toggle" role="group" aria-label="View mode">
@@ -46,6 +55,7 @@
             />
           </label>
           <ParButton
+            v-if="!mobile"
             size="small"
             variant="primary-outline"
             :disabled="!hasGridItems"
@@ -508,7 +518,10 @@ function onDrop(e) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: nowrap; /* title + view/sort/actions share ONE row */
+  /* Title + view/sort/actions share one row on a wide panel, but WRAP when the
+     pack column is narrow (e.g. the 3-column iPad-portrait layout) rather than
+     shoving "Tidy up" past the card edge. */
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1rem;
 }
@@ -545,17 +558,51 @@ function onDrop(e) {
   color: var(--par-color-destructive, #a03333);
 }
 
+/* Mobile-only quiet "Tidy up" — a text action, not a boxed button. Pushed to the
+   far end of the title row so it sits opposite the pack name. */
+.tidy-mini {
+  margin-left: auto;
+  flex: none;
+  align-self: center;
+  min-height: 2.8rem;
+  padding: 0.2rem 0.4rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--par-radius-sm, 3px);
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--color-action-rest, #365a85);
+  cursor: pointer;
+}
+.tidy-mini:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.tidy-mini:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 1px;
+}
+.tidy-mini:disabled {
+  color: var(--par-color-text-disabled, #c3b9a6);
+  cursor: not-allowed;
+}
+
 
 .grid-panel__controls {
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  flex: none; /* controls keep their size; the title yields space instead */
+  /* Hold natural size on a wide row, but shrink + wrap internally (rather than
+     overflow) once the panel gets tight. */
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .grid-panel__sort {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0; /* let the select shrink below its preferred width when cramped */
 }
 .grid-panel__sort-label {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
@@ -566,7 +613,10 @@ function onDrop(e) {
   color: var(--color-action-hover, #2a4d70);
 }
 .grid-panel__sort :deep(.par-select-wrapper) {
-  min-width: 16rem;
+  /* Prefer 16rem, but allow shrinking so a narrow pack panel wraps cleanly
+     instead of pushing the row past the card edge. */
+  flex: 1 1 16rem;
+  min-width: 0;
 }
 
 .grid-panel__pills {
@@ -993,6 +1043,10 @@ function onDrop(e) {
   .grid-panel__head {
     flex-wrap: wrap;
   }
+  .grid-panel__titlebar {
+    width: 100%; /* so "Tidy up" can sit opposite the title at the row's far end */
+    align-items: center;
+  }
   .grid-panel__title {
     white-space: normal; /* no need to truncate once we're allowed to wrap */
   }
@@ -1011,11 +1065,16 @@ function onDrop(e) {
 }
 
 @media (max-width: 500px) {
-  .pack-action__label {
-    display: none;
+  /* Keep the labels — icons alone were ambiguous (a save vs. a restore icon
+     read the same at a glance). Tighten spacing so the four labeled actions
+     still fit, wrapping if the row runs out of room. */
+  .pack-actions {
+    justify-content: center;
+    gap: 0.3rem;
   }
   .pack-action {
-    padding: 0.55rem 0.7rem;
+    padding: 0.5rem 0.55rem;
+    font-size: 1.2rem;
   }
 }
 </style>

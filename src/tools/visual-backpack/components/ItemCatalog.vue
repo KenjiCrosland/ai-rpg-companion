@@ -151,6 +151,11 @@
             <ParSelect v-model="form.category" :options="categories" />
           </ParField>
         </div>
+        <!-- Treasure has no combat/utility stats — what matters is its worth, which
+             feeds the purse's Treasure subtotal. Field is hidden until Treasure is picked. -->
+        <ParField v-if="form.category === 'Treasure'" label="Value (gp)">
+          <ParInput v-model="form.valueGp" type="number" placeholder="0" />
+        </ParField>
         <ParButton type="submit" variant="primary" size="small" :full-width="true">+ Add custom item</ParButton>
       </form>
     </div>
@@ -205,7 +210,7 @@ const onBuy = (tpl) => {
 };
 
 // D&D categories — used to group the catalog and to seed the custom-item form.
-const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Consumable', 'Tools', 'Magic Item', 'Misc'];
+const categories = ['Weapon', 'Armor', 'Adventuring Gear', 'Consumable', 'Tools', 'Magic Item', 'Treasure', 'Misc'];
 
 // Filtering uses the same TYPE taxonomy the pack does (weapon / consumable / gear / …),
 // via itemTypes() (PLURAL) so an item counts under every type it belongs to — a magic
@@ -256,7 +261,7 @@ function onRowAdd(tpl) {
   markInstructionsUsed();
 }
 
-const form = reactive({ name: '', weight: '', category: 'Adventuring Gear' });
+const form = reactive({ name: '', weight: '', category: 'Adventuring Gear', valueGp: '' });
 
 const groups = computed(() => {
   const q = search.value.trim().toLowerCase();
@@ -300,9 +305,12 @@ function submitCustom() {
     name: form.name,
     weight: form.weight,
     category: form.category,
+    // Only Treasure carries a gp value; ignored (0) for every other category.
+    valueGp: form.category === 'Treasure' ? form.valueGp : 0,
   });
   form.name = '';
   form.weight = '';
+  form.valueGp = '';
 }
 </script>
 

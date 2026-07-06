@@ -116,7 +116,9 @@ function metaLine(c) {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
 }
 
-@media (max-width: 860px) {
+/* 1024px so iPad-portrait collapses the rail too — kept in lockstep with
+   isNarrow in VisualBackpack.vue. */
+@media (max-width: 1024px) {
   /* Off-canvas: collapsed by default, slides in over the content when opened. */
   .chars {
     position: fixed;
@@ -135,7 +137,7 @@ function metaLine(c) {
     transform: translateX(0);
   }
 }
-@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
   .chars {
     transition: none;
   }

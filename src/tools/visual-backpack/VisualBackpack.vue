@@ -421,12 +421,30 @@ const {
 const detailCategories = ['Weapon', 'Armor', 'Adventuring Gear', 'Consumable', 'Tools', 'Magic Item', 'Misc'];
 
 // --- bag of holding ---
-const canStashSelected = computed(
-  () => hasBag.value && !!selectedItem.value && !isBagOfHolding(selectedItem.value),
-);
+// A selected bag of holding can only be "stashed" into a DIFFERENT bag — which is
+// the Astral-rift Easter egg. This is how a touch user (no drag) reaches the gag:
+// with two bags in the pack, tap one → "Stash in bag" → rift.
+const otherBagForSelected = computed(() => {
+  const sel = selectedItem.value;
+  if (!sel || !isBagOfHolding(sel)) return null;
+  return bags.value.find((b) => b.instanceId !== sel.instanceId) || null;
+});
+const canStashSelected = computed(() => {
+  if (!selectedItem.value) return false;
+  // A bag can be "stashed" only into ANOTHER bag — which is the Astral-rift gag.
+  // Offered on both platforms (desktop can also drag one bag onto another).
+  if (isBagOfHolding(selectedItem.value)) return !!otherBagForSelected.value;
+  return hasBag.value;
+});
 function stashSelected() {
-  if (!selectedItem.value || !bags.value.length) return;
-  stashItem(selectedItem.value.instanceId, bags.value[0].instanceId);
+  const sel = selectedItem.value;
+  if (!sel) return;
+  if (isBagOfHolding(sel)) {
+    if (otherBagForSelected.value) onRejectBag(); // bag-in-a-bag → rift, not a real stash
+    return;
+  }
+  if (!bags.value.length) return;
+  stashItem(sel.instanceId, bags.value[0].instanceId);
 }
 const riftActive = ref(false);
 function onRejectBag() {
@@ -512,7 +530,11 @@ const packTitle = computed(() => {
 // Collapsible character rail on narrow screens (mirrors GeneratorLayout).
 const sidebarOpen = ref(false);
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200);
-const isNarrow = computed(() => windowWidth.value <= 860);
+// Off-canvas character rail. 1024px so iPad-portrait (1024×1366) collapses the
+// rail too — the persistent 3-column layout is too cramped there (the pack panel
+// gets squeezed). Keep this in lockstep with the `max-width: 1024px` media
+// queries here and in CharacterSidebar.vue.
+const isNarrow = computed(() => windowWidth.value <= 1024);
 const isMobile = computed(() => windowWidth.value <= 768);
 function onResize() {
   windowWidth.value = window.innerWidth;
@@ -1065,6 +1087,12 @@ function onFileChosen(e) {
     .mobile-bar__tab-count { animation: none; }
   }
 
+  /* Phone: one full-width column (the task-switch shows a single panel at a time).
+     Above 768px the catalog + pack sit side by side (32rem 1fr) even with the
+     character rail collapsed off-canvas. */
+  .backpack__main {
+    grid-template-columns: 1fr;
+  }
   /* Two full-width modes — show one, hide the other. */
   .backpack--m-catalog .backpack__pack {
     display: none;
@@ -1141,10 +1169,10 @@ function onFileChosen(e) {
   display: none;
 }
 
-@media (max-width: 860px) {
-  .backpack__main {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 1024px) {
+  /* iPad-portrait and narrower: the character rail goes off-canvas (see isNarrow).
+     The catalog + pack stay side by side down to 768px, where the mobile task-
+     switch layout takes over. */
   /* Bottom-left FAB to open the (now off-canvas) character rail. */
   .backpack__menu-toggle {
     position: fixed;

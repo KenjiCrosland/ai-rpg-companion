@@ -74,33 +74,40 @@
          denominations). Complements the per-coin steppers above for bulk moves. -->
     <div class="adjust">
       <span class="adjust__label">Adjust</span>
-      <input
-        class="adjust__amount"
-        type="number"
-        min="0"
-        step="1"
-        inputmode="numeric"
-        placeholder="0"
-        aria-label="Amount to add or spend"
-        v-model="amount"
-        @keydown.enter.prevent="apply('add')"
-      />
-      <select class="adjust__denom" v-model="denom" aria-label="Denomination">
-        <option v-for="d in denoms" :key="d.key" :value="d.key">{{ d.key }}</option>
-      </select>
-      <button
-        class="adjust__btn adjust__btn--add"
-        type="button"
-        :disabled="!amountN"
-        @click="apply('add')"
-      >+ Add</button>
-      <button
-        class="adjust__btn adjust__btn--spend"
-        type="button"
-        :disabled="!canSpend"
-        :title="amountN && !canSpend ? 'Not enough coin' : ''"
-        @click="apply('spend')"
-      >− Spend</button>
+      <!-- entry + ops are `display: contents` on desktop (transparent to the flex
+           row, so the horizontal layout is unchanged); on mobile they become the
+           two stacked rows: amount+denom, then Add/Spend. -->
+      <div class="adjust__entry">
+        <input
+          class="adjust__amount"
+          type="number"
+          min="0"
+          step="1"
+          inputmode="numeric"
+          placeholder="0"
+          aria-label="Amount to add or spend"
+          v-model="amount"
+          @keydown.enter.prevent="apply('add')"
+        />
+        <select class="adjust__denom" v-model="denom" aria-label="Denomination">
+          <option v-for="d in denoms" :key="d.key" :value="d.key">{{ d.key }}</option>
+        </select>
+      </div>
+      <div class="adjust__ops">
+        <button
+          class="adjust__btn adjust__btn--add"
+          type="button"
+          :disabled="!amountN"
+          @click="apply('add')"
+        >+ Add</button>
+        <button
+          class="adjust__btn adjust__btn--spend"
+          type="button"
+          :disabled="!canSpend"
+          :title="amountN && !canSpend ? 'Not enough coin' : ''"
+          @click="apply('spend')"
+        >− Spend</button>
+      </div>
 
       <span class="adjust__spacer"></span>
 
@@ -429,6 +436,13 @@ function formatGp(v) {
   padding-top: 1.1rem;
   border-top: 0.5px solid var(--par-color-border, #e8e2d4);
 }
+/* Desktop: the entry/ops wrappers are invisible to layout — amount, denom, Add,
+   Spend all flow in the single horizontal row exactly as before. Mobile reworks
+   these into stacked rows (see the 768px query). */
+.adjust__entry,
+.adjust__ops {
+  display: contents;
+}
 .adjust__label {
   font-size: 1.1rem;
   font-weight: 600;
@@ -507,21 +521,107 @@ function formatGp(v) {
   color: var(--par-color-destructive, #a03333);
 }
 
-@media (max-width: 560px) {
-  .purse__row {
-    grid-template-columns: repeat(3, 1fr);
-  }
+@media (max-width: 768px) {
+  /* --- Wealth: receipt-style stacked block (same vocabulary as the loot-splitter
+     share cards). Warm tan at ~50%, small-caps labels left / values right, COINS
+     & TREASURE as lapis subtotals, TOTAL WEALTH as a burgundy grand total set off
+     by a thin rule above it. --- */
   .wealth {
-    flex-wrap: wrap;
-    gap: 0.6rem 1.2rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    padding: 0.8rem 1rem;
+    background: rgba(243, 235, 218, 0.5);
+  }
+  .wealth__seg {
+    justify-content: space-between; /* label left, value right */
+    gap: 1rem;
+  }
+  /* Subtotals — lapis 600 @ 13px. */
+  .wealth__seg:not(.wealth__seg--total) .wealth__label,
+  .wealth__seg:not(.wealth__seg--total) .wealth__value {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-action-hover, #2a4d70);
   }
   .wealth__seg--total {
-    margin-left: 0;
-    padding-left: 0;
+    margin: 0.4rem 0 0;
+    padding: 0.5rem 0 0;
     border-left: none;
+    border-top: 0.5px solid var(--par-color-border-strong, #c9b99a); /* the thin rule */
   }
+  /* Grand total — burgundy 600 @ 16px. */
+  .wealth__seg--total .wealth__label {
+    color: var(--par-color-title, #7a1f1f);
+    font-weight: 600;
+  }
+  .wealth__seg--total .wealth__value--big {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--par-color-title, #7a1f1f);
+  }
+  /* No treasure → the total stands alone; drop the rule (nothing above to divide). */
+  .wealth--total-only .wealth__seg--total {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  /* --- Adjust: vertical stack. Row 1 amount (grows) + denom (fixed 65px); row 2
+     Add / Spend side by side (equal); Empty purse a quiet burnt-copper link below,
+     separated from the Add/Spend chrome. --- */
   .adjust {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.7rem;
+  }
+  .adjust__entry {
+    display: flex;
+    gap: 0.6rem;
+  }
+  .adjust__entry .adjust__amount {
+    flex: 1 1 auto;
+    width: auto;
+  }
+  .adjust__entry .adjust__denom {
+    flex: 0 0 65px;
+    width: 65px;
+  }
+  .adjust__ops {
+    display: flex;
+    gap: 0.6rem;
+  }
+  .adjust__ops .adjust__btn {
+    flex: 1 1 0;
+  }
+  .adjust__spacer {
+    display: none;
+  }
+  /* Empty purse → small italic underlined burnt-copper link, centered below. */
+  .adjust__btn--empty {
+    align-self: center;
+    min-height: 0;
+    padding: 0.2rem 0.4rem;
+    border: none;
+    background: transparent;
+    font-size: 1.2rem;
+    font-style: italic;
+    font-weight: 400;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    color: var(--coin-color-copper, #a8562e);
+  }
+  .adjust__btn--empty:hover:not(:disabled) {
+    border: none;
+    background: transparent;
+    color: #8f4826;
+  }
+}
+
+@media (max-width: 560px) {
+  /* Denominations wrap to 3 + 2 (accepted). */
+  .purse__row {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 

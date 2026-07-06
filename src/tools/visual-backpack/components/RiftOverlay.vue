@@ -51,7 +51,7 @@ watch(
   () => props.active,
   (on) => {
     clearTimeout(timer);
-    if (on) timer = setTimeout(() => emit('close'), 2600);
+    if (on) timer = setTimeout(() => emit('close'), 4600);
   },
 );
 onBeforeUnmount(() => clearTimeout(timer));
@@ -81,7 +81,7 @@ onBeforeUnmount(() => clearTimeout(timer));
   background: linear-gradient(180deg, transparent, #f4ecff 12%, #c9a8ff 50%, #f4ecff 88%, transparent);
   box-shadow: 0 0 24px 8px rgba(201, 168, 255, 0.9), 0 0 90px 30px rgba(126, 74, 210, 0.7);
   transform: translate(-50%, -50%) scaleY(0);
-  animation: rift-tear 2.5s ease-in-out forwards;
+  animation: rift-tear 4.5s ease-in-out forwards;
 }
 .rift__glow {
   position: absolute;
@@ -92,7 +92,7 @@ onBeforeUnmount(() => clearTimeout(timer));
   border-radius: 50%;
   transform: translate(-50%, -50%) scale(0.2);
   background: radial-gradient(circle, rgba(150, 100, 230, 0.5), transparent 65%);
-  animation: rift-glow 2.5s ease-in-out forwards;
+  animation: rift-glow 4.5s ease-in-out forwards;
 }
 
 .rift__bag {
@@ -126,7 +126,7 @@ onBeforeUnmount(() => clearTimeout(timer));
   text-align: center;
   color: #f4ecff;
   opacity: 0;
-  animation: rift-msg 2.5s ease-out forwards;
+  animation: rift-msg 4.5s ease-out forwards;
 }
 .rift__title {
   margin: 0 0 0.5rem;
@@ -169,9 +169,11 @@ onBeforeUnmount(() => clearTimeout(timer));
   100% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
 }
 @keyframes rift-msg {
-  0%, 30% { opacity: 0; transform: translateY(10px); }
-  48% { opacity: 1; transform: translateY(0); }
-  85% { opacity: 1; }
+  /* Appear quickly (~1.2s in), then HOLD readable for the extra ~2s before fading. */
+  0% { opacity: 0; transform: translateY(10px); }
+  18% { opacity: 0; transform: translateY(10px); }
+  27% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; }
 }
 

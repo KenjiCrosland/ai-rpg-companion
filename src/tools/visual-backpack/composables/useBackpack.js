@@ -558,9 +558,12 @@ export function useBackpack() {
   function addItem(template, preferred = null) {
     if (!template) return null;
     const addQty = Math.max(1, Math.floor(Number(template.quantity) || 1));
+    // A bag of holding is a unique extradimensional container — each one gets its
+    // own tile + BagPanel + contents, so they never merge into a counted stack.
+    const noStack = isBagOfHolding(template);
 
     if (!preferred) {
-      const existing = items.value.find((i) => i.id === template.id);
+      const existing = noStack ? null : items.value.find((i) => i.id === template.id);
       if (existing) {
         bumpStack(existing.instanceId, addQty);
         return existing.instanceId;
@@ -573,7 +576,7 @@ export function useBackpack() {
 
     const item = instantiate(template);
     const list = [...items.value, { ...item, pos: clampPos(preferred, item.size, COLS) }];
-    const targetId = findStackTarget(list, item.instanceId, preferred, COLS);
+    const targetId = noStack ? null : findStackTarget(list, item.instanceId, preferred, COLS);
     if (targetId) {
       bumpStack(targetId, item.quantity);
       return targetId;
@@ -736,7 +739,7 @@ export function useBackpack() {
    * Define a reusable custom catalog item (also covers SRD gaps). Returns the
    * created template so the caller can immediately add it to the pack.
    */
-  function addCustomItem({ name, weight, category }) {
+  function addCustomItem({ name, weight, category, valueGp }) {
     const w = Math.max(0, Number(weight) || 0);
     const cleanName = String(name || 'Custom item').trim() || 'Custom item';
     const cat = category || 'Adventuring Gear';
@@ -745,6 +748,8 @@ export function useBackpack() {
       name: cleanName,
       weight: w,
       category: cat,
+      // Treasure worth in gp (feeds the purse's Treasure subtotal); 0 for other gear.
+      valueGp: cat === 'Treasure' ? Math.max(0, Number(valueGp) || 0) : 0,
       size: tileSize({ name: cleanName, category: cat, weight: w }), // shape + weight
       source: 'custom',
     };

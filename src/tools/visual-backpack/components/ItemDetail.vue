@@ -98,17 +98,19 @@
           ⚜ Requires attunement<template v-if="item.attunementNote"> {{ item.attunementNote }}</template>
         </p>
 
-        <button v-if="slotKind" type="button" class="detail__viewequip" @click="emit('view-equipped')">
-          View equipped items →
-        </button>
+        <div v-if="slotKind || canStash" class="detail__meta-actions">
+          <button v-if="slotKind" type="button" class="detail__viewequip" @click="emit('view-equipped')">
+            View equipped items →
+          </button>
 
-        <ParButton
-          v-if="canStash"
-          variant="primary-outline"
-          size="small"
-          class="detail__stash"
-          @click="emit('stash', item.instanceId)"
-        >🧳 Stash in bag</ParButton>
+          <ParButton
+            v-if="canStash"
+            variant="primary-outline"
+            size="small"
+            class="detail__stash"
+            @click="emit('stash', item.instanceId)"
+          >🧳 Stash in bag</ParButton>
+        </div>
 
         <div v-if="blocks.length" class="detail__desc">
           <template v-for="(b, i) in blocks" :key="i">
@@ -481,9 +483,18 @@ function save() {
   color: var(--par-color-title, #7a1f1f);
 }
 
+/* Stack "View equipped items" + "Stash in bag" vertically, hugging the left —
+   they must never sit side by side (a link crammed against a button reads badly). */
+.detail__meta-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
 .detail__viewequip {
   display: inline-block;
-  margin: 0 0 1.2rem;
+  margin: 0;
   padding: 0;
   border: none;
   background: transparent;
@@ -498,7 +509,7 @@ function save() {
   color: var(--color-action-active, #1f3a5c);
 }
 .detail__stash {
-  margin-bottom: 1.2rem;
+  margin-bottom: 0;
 }
 
 .detail__desc {
