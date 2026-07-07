@@ -173,7 +173,8 @@
           @drop="onRowDrop(item)"
           @dragend="onRowDragEnd"
         >
-          <span class="row-item__handle" title="Drag to reorder" aria-hidden="true">⠿</span>
+          <!-- Drag-to-reorder is pointer-only; on touch the handle is a dead affordance, so hide it. -->
+          <span v-if="!mobile" class="row-item__handle" title="Drag to reorder" aria-hidden="true">⠿</span>
           <span class="row-item__swatch" :style="{ background: rowColor(item).bg }" aria-hidden="true"></span>
           <span class="row-item__name">{{ rowName(item) }}</span>
           <span v-if="item.equippedSlot" class="row-item__equipped">✓ Equipped</span>

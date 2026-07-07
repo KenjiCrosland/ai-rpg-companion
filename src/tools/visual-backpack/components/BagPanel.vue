@@ -47,8 +47,9 @@
     </ul>
     <p v-else class="bag__empty">
       <span class="bag__empty-icon" aria-hidden="true">✨</span>
-      Drag items here (or use <strong>Stash in bag</strong> in an item's details). Stashed gear
-      stops counting against your carry weight.
+      <template v-if="mobile">Open an item and tap <strong>Stash in bag</strong> to move it here.</template>
+      <template v-else>Drag items here (or use <strong>Stash in bag</strong> in an item's details).</template>
+      Stashed gear stops counting against your carry weight.
     </p>
 
     <footer v-if="bag.contents.length" class="bag__footer">
@@ -71,6 +72,7 @@ import { dragPayload, clearDrag } from '../composables/drag-state.js';
 
 const props = defineProps({
   bag: { type: Object, required: true }, // { instanceId, name, contents, used, capacity }
+  mobile: { type: Boolean, default: false }, // touch: no drag — copy leads with the tap path
 });
 const emit = defineEmits(['retrieve', 'empty', 'stash', 'reject-bag']);
 

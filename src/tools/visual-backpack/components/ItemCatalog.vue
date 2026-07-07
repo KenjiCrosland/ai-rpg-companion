@@ -24,7 +24,7 @@
         ><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
       </button>
       <div v-show="starterOpen" class="catalog__panel">
-        <p class="starter__hint">Drops the pack's contents in as individual items you can rearrange or drop.</p>
+        <p class="starter__hint">Adds the pack's contents as individual items you can manage separately.</p>
         <div class="starter__list">
         <button
           v-for="pack in packs"
@@ -61,8 +61,10 @@
           <ParSelect v-model="typeFilter" :options="typeOptions" aria-label="Filter by type" />
         </div>
         <p class="catalog__hint" :class="{ 'catalog__hint--used': hintDismissed }">
-          Click or drag an item to add it free. Click <strong>Buy</strong> to deduct
-          its standard SRD price from your coin purse.
+          <template v-if="mobile">Tap an item to add it free. Tap <strong>Buy</strong> to spend
+          its standard SRD price from your coin purse.</template>
+          <template v-else>Click or drag an item to add it free. Click <strong>Buy</strong> to deduct
+          its standard SRD price from your coin purse.</template>
         </p>
         <div class="catalog__purse" role="status" :aria-label="`In purse: ${formatGp(coinGold)} gold`">
           <span class="catalog__purse-label">In purse</span>

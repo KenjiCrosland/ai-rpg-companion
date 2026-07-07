@@ -68,8 +68,8 @@
         <p v-if="!saveNoteDismissed" class="backpack__save-note">
           <span class="backpack__save-icon" aria-hidden="true">💾</span>
           <span>Every character saves automatically in <strong>this browser</strong>. To use them on
-          another machine, click <strong>Back up</strong> and send that file there, then
-          open this page and click <strong>Restore</strong>.</span>
+          another machine, use <strong>Back up</strong> and send that file there, then
+          open this page and use <strong>Restore</strong>.</span>
           <button
             class="backpack__save-dismiss"
             type="button"
@@ -80,9 +80,10 @@
 
         <p v-if="showBagTip" class="backpack__save-note backpack__save-note--bag">
           <span class="backpack__save-icon" aria-hidden="true">🧳</span>
-          <span>You've got a <strong>Bag of Holding</strong>! Drag items onto its panel below (or use
-          <strong>Stash in bag</strong> in an item's details) to tuck them away. Stashed gear stops
-          counting against your carry weight. It holds up to <strong>500 lb</strong>.</span>
+          <span>You've got a <strong>Bag of Holding</strong>!
+            <template v-if="isMobile">Tap an item, then <strong>Stash in bag</strong>, to tuck it away.</template>
+            <template v-else>Drag items onto its panel below (or use <strong>Stash in bag</strong> in an item's details) to tuck them away.</template>
+            Stashed gear stops counting against your carry weight. It holds up to <strong>500 lb</strong>.</span>
           <button
             class="backpack__save-dismiss"
             type="button"
@@ -258,6 +259,7 @@
           v-for="b in bags"
           :key="b.instanceId"
           :bag="b"
+          :mobile="isMobile"
           @stash="(id) => stashItem(id, b.instanceId)"
           @retrieve="retrieveItem"
           @empty="emptyBag"
