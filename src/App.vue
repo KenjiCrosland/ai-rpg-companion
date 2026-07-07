@@ -68,6 +68,7 @@
           <option value="chase-tracker">Chase Tracker</option>
           <option value="chase-tracker-premium">Chase Tracker (Premium)</option>
           <option value="backpack">Visual Backpack</option>
+          <option value="loot-splitter">Loot Splitter</option>
         </optgroup>
         <optgroup label="Examples">
           <option value="tabs-example">Tabs Example</option>
@@ -102,6 +103,7 @@
     <ChaseTracker v-if="currentPage === 'chase-tracker'" />
     <ChaseTracker :premium="true" v-if="currentPage === 'chase-tracker-premium'" />
     <VisualBackpack v-if="currentPage === 'backpack'" />
+    <LootSplitter v-if="currentPage === 'loot-splitter'" />
     <TabsExample v-if="currentPage === 'tabs-example'" />
     <LandingPage v-if="currentPage === 'category-landing'" />
 
@@ -126,6 +128,7 @@ import DungeonGenerator from '@/tools/dungeon-generator/components/DungeonGenera
 import PriceCalculator from '@/tools/price-calculator/PriceCalculator.vue';
 import ChaseTracker from '@/tools/chase-tracker/ChaseTracker.vue';
 import VisualBackpack from '@/tools/visual-backpack/VisualBackpack.vue';
+import LootSplitter from '@/tools/loot-splitter/LootSplitter.vue';
 import TabsExample from '@/components/tabs/TabsExample.vue';
 import LandingPage from '@/components/LandingPage.vue';
 import AppToast from '@/components/AppToast.vue';
@@ -154,6 +157,7 @@ export default {
     PriceCalculator,
     ChaseTracker,
     VisualBackpack,
+    LootSplitter,
     TabsExample,
     LandingPage,
     AppToast

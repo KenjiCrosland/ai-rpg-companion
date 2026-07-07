@@ -72,6 +72,10 @@
           {{ splitting ? '▴ Hide loot split' : '⚖ Split this loot between players' }}
         </button>
         <LootSplit v-if="splitting" :coins="includedCoins" :items="includedItems" @claim="$emit('claim', $event)" />
+        <p class="ti__split-standalone">
+          Prefer a full-page splitter?
+          <a href="#" class="ti__split-link" @click.prevent="openStandaloneSplitter">Open the standalone Loot Splitter →</a>
+        </p>
       </div>
     </div>
 
@@ -93,6 +97,7 @@
 import { ref, reactive, computed, watch } from 'vue';
 import { ParModal, ParButton, ParTextarea } from '@/parchment';
 import LootSplit from './LootSplit.vue';
+import { navigateToTool } from '@/util/navigation.mjs';
 
 const props = defineProps({
   opened: { type: Boolean, default: false },
@@ -177,6 +182,12 @@ function confirm() {
   if (!hasAnything.value) return;
   // Only the checked items and included coin denominations get imported.
   emit('confirm', { coins: includedCoins.value, items: includedItems.value });
+}
+
+// Open the standalone Loot Splitter (a separate page) for players who'd rather
+// split loot outside the backpack. Opens fresh — the loot isn't carried over.
+function openStandaloneSplitter() {
+  navigateToTool('loot-splitter');
 }
 </script>
 
@@ -351,5 +362,17 @@ function confirm() {
 }
 .ti__split-toggle:hover {
   background: var(--par-color-callout-bg, #f3ebda);
+}
+.ti__split-standalone {
+  margin: 0.9rem 0 0;
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+.ti__split-link {
+  font-style: normal;
+  color: var(--color-action-hover, #2a4d70);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 </style>

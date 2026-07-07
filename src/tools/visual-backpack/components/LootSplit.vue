@@ -28,8 +28,8 @@
 
     <p class="ls__hint">
       <template v-if="!rebalanceEnabled">Coins split evenly by value; items are dealt at random. </template>Click
-      an item to move it to another pile (or drag it). Copy a pile to hand it off;
-      claim one for yourself.
+      an item to move it to another pile (or drag it). Copy a pile to hand it off<template v-if="allowClaim">;
+      claim one for yourself</template>.
     </p>
 
     <div class="ls__piles">
@@ -113,20 +113,22 @@
           <button class="ls__copy" type="button" @click="copyPile(pi)">
             {{ copiedIndex === pi ? '✓ Copied' : 'Copy' }}
           </button>
-          <button
-            v-if="claimedIndex === pi"
-            class="ls__claimed"
-            type="button"
-            disabled
-          >✓ Added to your pack</button>
-          <button
-            v-else
-            class="ls__claim"
-            type="button"
-            :disabled="claimedIndex >= 0"
-            :title="claimedIndex >= 0 ? 'You’ve already claimed a pile' : 'Add this pile to your pack'"
-            @click="claim(pi)"
-          >Add to my pack</button>
+          <template v-if="allowClaim">
+            <button
+              v-if="claimedIndex === pi"
+              class="ls__claimed"
+              type="button"
+              disabled
+            >✓ Added to your pack</button>
+            <button
+              v-else
+              class="ls__claim"
+              type="button"
+              :disabled="claimedIndex >= 0"
+              :title="claimedIndex >= 0 ? 'You’ve already claimed a pile' : 'Add this pile to your pack'"
+              @click="claim(pi)"
+            >Add to my pack</button>
+          </template>
         </div>
       </div>
     </div>
@@ -149,6 +151,9 @@ import { estimateMagicValue } from '@/util/magic-item-value.mjs';
 const props = defineProps({
   coins: { type: Object, default: () => ({}) },
   items: { type: Array, default: () => [] },
+  // "Claim a pile into your pack" only makes sense inside the backpack. The
+  // standalone splitter has no pack, so it hides that action (Copy stays).
+  allowClaim: { type: Boolean, default: true },
 });
 const emit = defineEmits(['claim']);
 

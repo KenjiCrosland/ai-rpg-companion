@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => {
           'price-calculator': 'src/entries/price-calculator.js',
           'chase-tracker': 'src/entries/chase-tracker.js',
           backpack: 'src/entries/backpack.js',
+          'loot-splitter': 'src/entries/loot-splitter.js',
         },
       },
     },

@@ -51,6 +51,10 @@ export function navigateToTool(toolName, params = {}) {
       'item-generator': '/dnd-5e-magic-item-generator/',
       'encounter-generator': '/dnd-5e-encounter-generator/',
       'location-generator': '/rpg-location-description-generator/',
+      // Standalone free tools. NOTE: these paths must match the WordPress page
+      // slugs you publish for each template — adjust if your slugs differ.
+      backpack: '/dnd-5e-inventory-manager/',
+      'loot-splitter': '/dnd-5e-loot-splitter/',
     };
 
     const toolPath = toolUrls[toolName];
