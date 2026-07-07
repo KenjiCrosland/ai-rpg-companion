@@ -146,6 +146,7 @@ export function useBackpack() {
   const characters = ref(store.characters.map((c) => ({ ...c, items: hydrate(c.items) })));
   const currentId = ref(store.currentId);
   const customItems = ref(store.customItems); // shared custom catalog across characters
+  const settings = ref(store.settings); // tool-wide (table-level) ruleset settings
   const selectedId = ref(null); // tile open in the detail panel (ephemeral)
 
   // The active character — every mutation below reads/writes through it.
@@ -168,6 +169,11 @@ export function useBackpack() {
     set: (v) => { current.value.countCoinWeight = v; },
   });
   const packDropped = computed({ get: () => current.value.packDropped, set: (v) => { current.value.packDropped = v; } });
+  // Tool-wide (not per-character): variant encumbrance is a table-level house rule.
+  const encumbranceVariant = computed({
+    get: () => settings.value.encumbranceVariant,
+    set: (v) => { settings.value.encumbranceVariant = !!v; },
+  });
 
   // Lightweight roster for the sidebar.
   const characterList = computed(() =>
@@ -180,13 +186,14 @@ export function useBackpack() {
   );
 
   watch(
-    [characters, currentId, customItems],
+    [characters, currentId, customItems, settings],
     () => {
       saveBackpack({
         version: 2,
         currentId: currentId.value,
         customItems: customItems.value,
         characters: characters.value,
+        settings: settings.value,
       });
     },
     { deep: true },
@@ -267,7 +274,7 @@ export function useBackpack() {
       : items.value.filter(carried),
   );
 
-  const status = useCarryCapacity(strength, loadItems);
+  const status = useCarryCapacity(strength, loadItems, 0, encumbranceVariant);
 
   // Drag-source catalog = SRD items + the user's custom templates.
   const catalog = computed(() => [...srdEquipment, ...customItems.value]);
@@ -517,6 +524,11 @@ export function useBackpack() {
 
   function toggleCoinWeight(on) {
     countCoinWeight.value = on === undefined ? !countCoinWeight.value : !!on;
+  }
+
+  /** Switch the whole tool between variant encumbrance and standard cap-only. */
+  function toggleEncumbranceVariant(on) {
+    encumbranceVariant.value = on === undefined ? !encumbranceVariant.value : !!on;
   }
 
   /**
@@ -793,6 +805,7 @@ export function useBackpack() {
     customItems,
     coins,
     countCoinWeight,
+    encumbranceVariant,
     packDropped,
     equippedWeight,
     packWeight,
@@ -826,6 +839,7 @@ export function useBackpack() {
     adjustCoins,
     emptyPurse,
     toggleCoinWeight,
+    toggleEncumbranceVariant,
     addItem,
     buyItem,
     previewTreasure,

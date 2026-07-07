@@ -16,9 +16,13 @@
       :aria-valuemax="status.capacity"
     >
       <div class="capacity__fill" :style="{ width: fillWidth }"></div>
-      <!-- threshold ticks: encumbered = Str×5 (⅓), heavily = Str×10 (⅔) -->
-      <span class="capacity__tick" style="left: 33.33%" title="Encumbered"></span>
-      <span class="capacity__tick" style="left: 66.66%" title="Heavily encumbered"></span>
+      <!-- threshold ticks: encumbered = Str×5 (⅓), heavily = Str×10 (⅔). Only the
+           variant ruleset has these tiers — in standard mode the bar is just fill
+           vs. the hard cap, so the ticks would be meaningless. -->
+      <template v-if="variant">
+        <span class="capacity__tick" style="left: 33.33%" title="Encumbered"></span>
+        <span class="capacity__tick" style="left: 66.66%" title="Heavily encumbered"></span>
+      </template>
     </div>
 
     <div class="capacity__footer">
@@ -47,6 +51,20 @@
           />
           <span>Include coin weight</span>
         </label>
+        <!-- Table-wide ruleset toggle: variant tiers vs. standard cap-only. -->
+        <label
+          class="capacity__toggle"
+          :title="variant
+            ? 'Variant encumbrance: slowed over Str×5, more over Str×10. Uncheck for standard 5e (a hard carry cap only).'
+            : 'Standard 5e: only a hard carry cap applies. Check to use variant encumbrance penalties.'"
+        >
+          <input
+            type="checkbox"
+            :checked="variant"
+            @change="$emit('toggle-variant', $event.target.checked)"
+          />
+          <span>Encumbrance penalties</span>
+        </label>
       </div>
     </div>
   </section>
@@ -66,6 +84,8 @@ import { computed } from 'vue';
 const props = defineProps({
   status: { type: Object, required: true },
   countCoinWeight: { type: Boolean, default: true },
+  // Variant encumbrance (tiers) vs. standard cap-only — hides the tier ticks when off.
+  variant: { type: Boolean, default: true },
   packDropped: { type: Boolean, default: false },
   packWeight: { type: Number, default: 0 },
   equippedWeight: { type: Number, default: 0 },
@@ -74,7 +94,7 @@ const props = defineProps({
   embedded: { type: Boolean, default: false },
 });
 
-defineEmits(['toggle', 'toggle-drop']);
+defineEmits(['toggle', 'toggle-drop', 'toggle-variant']);
 
 const fillWidth = computed(() => `${Math.min(1, props.status.ratio || 0) * 100}%`);
 

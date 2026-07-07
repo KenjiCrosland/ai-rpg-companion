@@ -61,9 +61,33 @@ export function normalizeCharacter(input) {
 }
 
 /** A fresh store: one character, an empty shared custom-item catalog. */
+/** Tool-wide settings — table-level ruleset choices shared across all characters. */
+export function defaultSettings() {
+  return {
+    // Variant encumbrance (encumbered Str×5 / heavily Str×10) vs. standard cap-only.
+    encumbranceVariant: true,
+  };
+}
+
+/** Coerce parsed input into a complete settings object (defaults on missing). */
+export function normalizeSettings(input) {
+  const s = input && typeof input === 'object' ? input : {};
+  return {
+    // Default to variant (the richer read); only an explicit false opts into standard.
+    encumbranceVariant: s.encumbranceVariant !== false,
+  };
+}
+
+/** A fresh store: one character, an empty shared custom-item catalog, default settings. */
 export function defaultStore() {
   const ch = defaultCharacter('Character 1');
-  return { version: VERSION, currentId: ch.id, customItems: [], characters: [ch] };
+  return {
+    version: VERSION,
+    currentId: ch.id,
+    customItems: [],
+    characters: [ch],
+    settings: defaultSettings(),
+  };
 }
 
 /**
@@ -85,6 +109,7 @@ export function normalizeStore(input) {
     currentId,
     customItems: Array.isArray(input.customItems) ? input.customItems.map(normalizeItem) : [],
     characters,
+    settings: normalizeSettings(input.settings),
   };
 }
 
@@ -171,6 +196,7 @@ export function serializeBundle(store) {
     currentId: s.currentId,
     customItems: s.customItems,
     characters: s.characters,
+    settings: s.settings,
   };
 }
 

@@ -66,3 +66,29 @@ describe('useBackpack — custom Treasure carries a gp value', () => {
     expect(bp.treasureValue.value).toBe(0);
   });
 });
+
+describe('useBackpack — encumbrance variant is a global, toggleable ruleset', () => {
+  const heavyRock = { id: 'rock', name: 'Rock', category: 'Misc', weight: 60 };
+
+  it('defaults to variant on, and toggling it flips the live status tier', () => {
+    const bp = useBackpack();
+    bp.setStrength(10); // cap 150; encumbered above 50
+    bp.addItem(heavyRock); // 60 lb → encumbered under variant
+
+    expect(bp.encumbranceVariant.value).toBe(true);
+    expect(bp.status.value.tier).toBe('encumbered');
+
+    bp.toggleEncumbranceVariant(false); // standard: only the hard cap matters
+    expect(bp.encumbranceVariant.value).toBe(false);
+    expect(bp.status.value.tier).toBe('ok');
+  });
+
+  it('is tool-wide, not per-character (the setting survives switching characters)', () => {
+    const bp = useBackpack();
+    bp.toggleEncumbranceVariant(false);
+    const other = bp.addCharacter('Second'); // switches to the new character
+    expect(bp.encumbranceVariant.value).toBe(false);
+    bp.selectCharacter(other.id);
+    expect(bp.encumbranceVariant.value).toBe(false);
+  });
+});

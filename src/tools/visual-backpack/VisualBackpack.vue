@@ -243,12 +243,14 @@
               embedded
               :status="status"
               :count-coin-weight="countCoinWeight"
+              :variant="encumbranceVariant"
               :pack-dropped="packDropped"
               :pack-weight="packWeight"
               :equipped-weight="equippedWeight"
               :has-pack="!!items.length"
               @toggle="toggleCoinWeight"
               @toggle-drop="toggleDropPack"
+              @toggle-variant="toggleEncumbranceVariant"
             />
           </template>
         </BackpackGrid>
@@ -368,6 +370,7 @@ const {
   items,
   coins,
   countCoinWeight,
+  encumbranceVariant,
   coinLbs,
   coinGold,
   catalog,
@@ -403,6 +406,7 @@ const {
   applyTreasure,
   treasureValue,
   toggleCoinWeight,
+  toggleEncumbranceVariant,
   addItem,
   buyItem,
   addPack,

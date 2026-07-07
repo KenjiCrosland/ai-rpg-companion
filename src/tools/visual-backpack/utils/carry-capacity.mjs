@@ -184,11 +184,19 @@ export const CONSEQUENCES = {
  * `extraWeight` folds in non-tile load (currently coin weight, when the user has
  * coin encumbrance enabled). It's part of the total against every threshold.
  *
+ * `opts.variant` toggles the 5e ruleset:
+ *  - `true` (default): PHB VARIANT encumbrance — the encumbered (Str×5) and
+ *    heavily-encumbered (Str×10) tiers apply on the way to the cap.
+ *  - `false`: STANDARD rule — only the hard carry cap (Str×15) matters; you're
+ *    'ok' right up to it, then 'over'. No mid-tiers, no speed penalties.
+ * The thresholds are always returned (for the bar ticks); only which tier the
+ * total lands in changes.
+ *
  * @returns {{ tier:'ok'|'encumbered'|'heavily'|'over', total:number, capacity:number,
  *   encumberedThreshold:number, heavilyEncumberedThreshold:number, ratio:number,
- *   consequences:string }}
+ *   consequences:string, variant:boolean }}
  */
-export function encumbranceStatus(str, items, extraWeight = 0) {
+export function encumbranceStatus(str, items, extraWeight = 0, { variant = true } = {}) {
   const total = round2(totalWeight(items) + (Number(extraWeight) || 0));
   const capacity = carryCapacity(str);
   const enc = encumberedThreshold(str);
@@ -196,8 +204,8 @@ export function encumbranceStatus(str, items, extraWeight = 0) {
 
   let tier;
   if (total > capacity) tier = 'over';
-  else if (total > heavy) tier = 'heavily';
-  else if (total > enc) tier = 'encumbered';
+  else if (variant && total > heavy) tier = 'heavily';
+  else if (variant && total > enc) tier = 'encumbered';
   else tier = 'ok';
 
   return {
@@ -208,5 +216,6 @@ export function encumbranceStatus(str, items, extraWeight = 0) {
     heavilyEncumberedThreshold: heavy,
     ratio: capacity > 0 ? total / capacity : 0,
     consequences: CONSEQUENCES[tier],
+    variant,
   };
 }

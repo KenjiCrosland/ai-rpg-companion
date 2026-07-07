@@ -157,7 +157,7 @@ describe('normalizeCharacter', () => {
 describe('serializeBundle', () => {
   it('emits only the portable store fields', () => {
     const bundle = serializeBundle(sampleStore());
-    expect(Object.keys(bundle).sort()).toEqual(['characters', 'currentId', 'customItems', 'version']);
+    expect(Object.keys(bundle).sort()).toEqual(['characters', 'currentId', 'customItems', 'settings', 'version']);
   });
 });
 

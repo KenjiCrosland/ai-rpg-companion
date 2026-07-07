@@ -78,6 +78,38 @@ describe('encumbranceStatus tiers (Str 10 → 50 / 100 / 150)', () => {
   });
 });
 
+describe('encumbranceStatus — standard ruleset (variant: false)', () => {
+  const std = (w) => encumbranceStatus(10, items(w), 0, { variant: false });
+
+  it('stays ok all the way up to the hard cap — no mid-tiers', () => {
+    // Weights that are encumbered/heavily under the variant rules are just "ok" here.
+    expect(std(51).tier).toBe('ok'); // variant: encumbered
+    expect(std(101).tier).toBe('ok'); // variant: heavily
+    expect(std(150).tier).toBe('ok'); // exactly at the cap
+    expect(std(51).consequences).toBe('');
+  });
+
+  it('still goes over past the hard cap (Str×15)', () => {
+    const s = std(151);
+    expect(s.tier).toBe('over');
+    expect(s.consequences).toMatch(/cannot carry/i);
+  });
+
+  it('reports the same total/capacity/thresholds (only the tier logic changes)', () => {
+    const s = std(100);
+    expect(s.total).toBe(100);
+    expect(s.capacity).toBe(150);
+    expect(s.encumberedThreshold).toBe(50);
+    expect(s.heavilyEncumberedThreshold).toBe(100);
+    expect(s.variant).toBe(false);
+  });
+
+  it('defaults to variant when no option is passed (back-compat)', () => {
+    expect(encumbranceStatus(10, items(51)).tier).toBe('encumbered');
+    expect(encumbranceStatus(10, items(51)).variant).toBe(true);
+  });
+});
+
 describe('coins', () => {
   const purse = { gp: 100, ep: 10, sp: 50, cp: 200 };
 
