@@ -12,7 +12,7 @@ test.describe('Loot Splitter (standalone, no AI)', () => {
   test('splits a pasted hoard into shares and re-deals when the count changes', async ({ page }) => {
     await gotoTool(page, 'loot-splitter');
 
-    await page.getByRole('button', { name: /load this example/i }).click();
+    await page.getByRole('button', { name: /load an example/i }).click();
 
     // Defaults to 3 shares.
     await expect(page.locator('.ls__pile')).toHaveCount(3);

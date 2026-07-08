@@ -18,6 +18,9 @@
       aria-label="Treasure block"
     />
 
+    <!-- Empty state: which generators paste in cleanly (hides once they start typing). -->
+    <LootGeneratorLinks v-if="!text.trim()" class="ti__compat" />
+
     <div v-if="text.trim()" class="ti__preview">
       <h4 class="ti__preview-title">Preview — uncheck anything you don't want</h4>
 
@@ -97,6 +100,7 @@
 import { ref, reactive, computed, watch } from 'vue';
 import { ParModal, ParButton, ParTextarea } from '@/parchment';
 import LootSplit from './LootSplit.vue';
+import LootGeneratorLinks from './LootGeneratorLinks.vue';
 import { navigateToTool } from '@/util/navigation.mjs';
 
 const props = defineProps({
@@ -203,6 +207,9 @@ function openStandaloneSplitter() {
 .ti__input {
   width: 100%;
   font-family: var(--par-font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
+}
+.ti__compat {
+  margin-top: 1.2rem;
 }
 .ti__preview {
   margin-top: 1.4rem;

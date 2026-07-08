@@ -393,7 +393,8 @@ function rpg_companion_backpack_enqueue_assets() {
         #app .char-row__delete,
         #app .row-item__remove,
         #app .tile__remove,
-        #app .row__remove {
+        #app .row__remove,
+        #app .slot__unequip {
             min-width: 0;
             padding: 0;
             border: none;
@@ -414,6 +415,8 @@ function rpg_companion_backpack_enqueue_assets() {
         #app .tile__remove { width: 1.7rem; height: 1.7rem; font-size: 1.5rem; }
         #app .row__remove { width: 1.8rem; height: 1.8rem; font-size: 1.5rem; color: #6b6b6b; }
         #app .row__remove:hover { background: rgba(160, 51, 51, 0.14); color: #a03333; }
+        #app .slot__unequip { width: 2.4rem; height: 2.4rem; font-size: 1.5rem; color: #6b6b6b; }
+        #app .slot__unequip:hover { background: rgba(160, 51, 51, 0.14); color: #a03333; }
         #app .backpack__save-dismiss {
             width: 2.2rem;
             height: 2.2rem;

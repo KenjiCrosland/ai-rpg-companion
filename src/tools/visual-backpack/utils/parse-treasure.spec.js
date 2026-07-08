@@ -324,3 +324,45 @@ describe('parseTreasure — structured JSON export', () => {
     expect(byName(items, 'A kneeling bench for addressing the dragon')).toMatchObject({ category: 'Misc', valueGp: 0 });
   });
 });
+
+describe("parseTreasure — Thieves' Guild section format", () => {
+  const byName = (items, name) => items.find((i) => i.name === name);
+  // thievesguild.cc/tables/treasuresplit.php: bare category headers (with † / ‡
+  // footnote markers), a comma-joined coin line with thousands separators, and
+  // inline "(N gp)" / "(N gp each)" values.
+  const HOARD = `Gold
+5,684 gp, 162 sp, 81 cp
+
+Objects †
+an amber mug with rose-gold studs (2,500 gp)
+jacinth statuette of a cheetah with smooth amber eyes (2,500 gp)
+
+Gems ‡
+2 smooth black opals (600 gp each)
+3 amber stones (1,200 gp each)`;
+
+  it('reads the comma-joined coin line with thousands separators', () => {
+    const { coins } = parseTreasure(HOARD, []);
+    expect(coins).toEqual({ pp: 0, gp: 5684, ep: 0, sp: 162, cp: 81 });
+  });
+
+  it('treats section headers ("Gold", "Objects †", "Gems ‡") as labels, not loot', () => {
+    const { items } = parseTreasure(HOARD, []);
+    expect(items.some((i) => /^(gold|objects|gems)\b/i.test(i.name))).toBe(false);
+  });
+
+  it('parses inline-priced art objects as single Treasure items', () => {
+    const { items } = parseTreasure(HOARD, []);
+    expect(byName(items, 'an amber mug with rose-gold studs')).toMatchObject({
+      category: 'Treasure',
+      quantity: 1,
+      valueGp: 2500,
+    });
+  });
+
+  it('parses "(N gp each)" gems with a leading quantity and per-unit value', () => {
+    const { items } = parseTreasure(HOARD, []);
+    expect(byName(items, 'smooth black opals')).toMatchObject({ quantity: 2, valueGp: 600, category: 'Treasure' });
+    expect(byName(items, 'amber stones')).toMatchObject({ quantity: 3, valueGp: 1200, category: 'Treasure' });
+  });
+});

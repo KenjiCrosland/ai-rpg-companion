@@ -41,13 +41,24 @@ const MUNDANE_SECTION_RE = /^(?:\d+\s+)?mundane\b/i;
 // Magic-item section headers — either DMG "Magic Items (Table A)" or the donjon
 // rarity tiers ("Legendary items (×1):", "Very Rare items (×2):", "Major items:").
 const MAGIC_SECTION_RE = /^(?:magic|major|minor|legendary|very rare|rare|uncommon|common)\s+items?\b/i;
+// A bare category header that groups a hoard's sections, optionally with a
+// footnote marker (†, ‡, *) and/or trailing colon — "Gold", "Objects †",
+// "Gems ‡", "Art Objects:", "Coins" (the Thieves' Guild / thievesguild.cc shape).
+// Organizational only: the line carries no loot itself.
+const CATEGORY_HEADER_RE = /^(?:gold|silver|copper|platinum|electrum|coins?|coinage|currency|money|objects?|art\s*objects?|art|gems?|gemstones?|jewell?ery|valuables?|treasure)\s*[†‡*]*\s*:?\s*$/i;
+// Of those, the ones that introduce priced treasure (art / gems), not coins —
+// a valueless header, so items below stay Treasure even without an inline price.
+const TREASURE_HEADER_RE = /^(?:objects?|art\s*objects?|art|gems?|gemstones?|jewell?ery|valuables?)\b/i;
+// A footnote line the generator appends ("† Objects are art objects worth …") —
+// explanatory, never loot.
+const FOOTNOTE_RE = /^[†‡]/;
 // A leading quantity, optionally with donjon's "x"/"×" multiplier ("3 bottles of
 // wine", "2 x agate"), or a trailing count ("Moss agate, ×2"). The "x" must be a
 // standalone token (space after) so it can't eat the start of a word like "xorn".
 const LEAD_QTY_RE = /^(\d[\d,]*)\s+(?:[×x]\s+)?(.+)$/i;
 const TRAIL_QTY_RE = /[,;]?\s*[×xX]\s*(\d+)\s*$/;
 const WORTH_RE = /^(?:(\d[\d,]*)\s+(?:[×x]\s+)?)?(.+?)\s+worth\s+([\d,.]+)\s*(pp|gp|ep|sp|cp)?\b(?:\s+each)?\.?$/i;
-const PAREN_RE = /^(?:(\d[\d,]*)\s+(?:[×x]\s+)?)?(.+?)\s*\(\s*([\d,.]+)\s*(pp|gp|ep|sp|cp)?\s*\)\.?$/i;
+const PAREN_RE = /^(?:(\d[\d,]*)\s+(?:[×x]\s+)?)?(.+?)\s*\(\s*([\d,.]+)\s*(pp|gp|ep|sp|cp)?\s*(?:each|apiece|a piece|ea\.?)?\s*\)\.?$/i;
 
 // Container words a loot generator prepends to a real item ("vial of holy water"
 // → holy water). Stripped only as a matching fallback, never from the shown name.
@@ -425,6 +436,15 @@ export function parseTreasure(text, catalog = []) {
     if (MUNDANE_SECTION_RE.test(line) || MAGIC_SECTION_RE.test(line)) {
       resetGroup();
       groupMagic = MAGIC_SECTION_RE.test(line);
+      continue;
+    }
+    // 2b. A bare category header ("Gold", "Objects †", "Gems ‡") or an appended
+    //     footnote line — organizational, not loot. Treasure categories (gems/art)
+    //     set the group so any valueless items beneath them still read as Treasure.
+    if (FOOTNOTE_RE.test(line)) continue;
+    if (CATEGORY_HEADER_RE.test(line)) {
+      resetGroup();
+      if (TREASURE_HEADER_RE.test(line)) groupTreasure = true;
       continue;
     }
     // 3. Prose summary / total / label lines → skip (the tool recomputes totals).

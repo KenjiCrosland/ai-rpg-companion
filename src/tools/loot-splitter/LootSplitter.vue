@@ -11,7 +11,7 @@
     <main class="lst__page">
       <section class="lst__input parchment paper-grain">
         <label class="lst__label" for="lst-text">Your hoard</label>
-        <p class="lst__intro">Coins and items, one per line — loot-generator dumps work as-is.</p>
+        <p class="lst__intro">Coins and items, one per line — loot-generator dumps work as-is. <button v-if="!text.trim()" type="button" class="lst__example-link" @click="loadExample">Load an example</button></p>
         <ParTextarea
           id="lst-text"
           v-model="text"
@@ -48,23 +48,14 @@
         >⚖ Split this loot between players</button>
       </section>
 
+      <LootGeneratorLinks />
+
       <LootSplit
         v-if="hasAnything && splitOpen"
         :coins="coins"
         :items="items"
         :allow-claim="false"
       />
-
-      <section v-else-if="!text.trim()" class="lst__example parchment">
-        <h2 class="lst__example-title">Nothing to split yet</h2>
-        <p class="lst__example-lead">Paste a hoard above, or start from an example:</p>
-        <pre class="lst__example-pre">374 Silver
-74 Gold
-3 black jasper worth 50 gp each
-Potion of Healing
-Flame Tongue</pre>
-        <button type="button" class="lst__example-btn" @click="loadExample">Load this example</button>
-      </section>
     </main>
 
     <footer class="lst__foot">
@@ -89,6 +80,7 @@ Flame Tongue</pre>
 import { ref, computed, watch } from 'vue';
 import { ParTextarea } from '@/parchment';
 import LootSplit from '@/tools/visual-backpack/components/LootSplit.vue';
+import LootGeneratorLinks from '@/tools/visual-backpack/components/LootGeneratorLinks.vue';
 import { parseTreasure } from '@/tools/visual-backpack/utils/parse-treasure.mjs';
 import srdEquipment from '@/tools/visual-backpack/data/srd-equipment.json';
 import { navigateToTool } from '@/util/navigation.mjs';
@@ -272,50 +264,20 @@ function goBackpack() {
   outline-offset: 2px;
 }
 
-/* Empty-state example */
-.lst__example {
-  padding: 1.8rem;
-  background: var(--par-color-surface-card, #fefbf4);
-  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
-  border-radius: var(--par-radius-lg, 12px);
-}
-.lst__example-title {
-  margin: 0 0 0.4rem;
-  font-size: 1.9rem;
-  font-weight: 600;
-  color: var(--color-action-hover, #2a4d70);
-}
-.lst__example-lead {
-  margin: 0 0 0.8rem;
-  font-size: 1.35rem;
-  color: var(--par-color-text-secondary, #555);
-}
-.lst__example-pre {
-  margin: 0 0 1.1rem;
-  padding: 1rem 1.2rem;
-  border-radius: var(--par-radius-md, 4px);
-  background: var(--par-color-surface, #fbf7f0);
-  border: 0.5px solid var(--par-color-border, #e8e2d4);
-  font-family: var(--par-font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
-  font-size: 1.25rem;
-  line-height: 1.6;
-  color: var(--par-color-text, #222);
-  white-space: pre-wrap;
-}
-.lst__example-btn {
-  padding: 0.7rem 1.3rem;
-  border: 0.5px solid var(--color-action-rest, #365a85);
-  border-radius: var(--par-radius-md, 4px);
-  background: transparent;
-  color: var(--color-action-hover, #2a4d70);
+/* "Load an example" — a quiet inline link in the intro, not a whole card. */
+.lst__example-link {
+  padding: 0;
+  border: none;
+  background: none;
   font-family: inherit;
-  font-size: 1.35rem;
-  font-weight: 600;
+  font-size: inherit;
+  color: var(--color-action-hover, #2a4d70);
+  text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
-  transition: background 0.15s ease;
 }
-.lst__example-btn:hover {
-  background: var(--par-color-callout-bg, #f3ebda);
+.lst__example-link:hover {
+  color: var(--color-action-active, #1f3a5c);
 }
 
 /* Footer */
