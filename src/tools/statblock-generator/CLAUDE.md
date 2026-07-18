@@ -8,14 +8,39 @@ The Statblock Generator creates complete D&D 5e monster statblocks using a two-p
 
 ## Architecture
 
+**Two generation paths** behind a 2024/2014 rules toggle (default 2024,
+persisted to `localStorage['statblock-format']`; a loaded monster's own
+`format` field decides which display card renders):
+
+- **2024 (engine-first)** — the contract is [docs/2024-architecture.md](/docs/2024-architecture.md);
+  read it before touching anything under `chassis/` or `format-2024/`.
+  CR + archetype → deterministic numbers (`chassis/chassis.mjs`), slot plan
+  (`chassis/slot-plan.mjs`), slot-filling prompt with numeric skeletons
+  (`format-2024/generate.mjs`), assembly that stamps engine numbers over the
+  LLM's flavor, lint with a correct/reject loop (`format-2024/lint.mjs`),
+  markdown render (`format-2024/render.mjs`), display via
+  `@/components/Statblock2024.vue` (read-only v1). The LLM never decides
+  numbers. Archetype select: Auto (micro resolve call when a concept exists,
+  random pick when blank), Balanced, or one of 8 roles.
+- **2014 (template-driven)** — the original two-part prompt flow described
+  below. Untouched by the 2024 work.
+
 ### Component Structure
 
 ```
 src/tools/statblock-generator/
-├── StatblockGenerator.vue          # Main component
-├── StatblockGenerator.spec.js      # Test suite (11 tests)
+├── StatblockGenerator.vue          # Main component (both paths)
+├── StatblockGenerator.spec.js      # 2014 flow suite
+├── chassis/                        # Edition-agnostic math engine
+│   ├── chassis.mjs                 # chassisFor / pbFor / applyArchetype
+│   └── slot-plan.mjs               # tierFor / slotPlanFor
+├── format-2024/                    # 2024-specific layers
+│   ├── generate.mjs                # prompt builder, assembly, corrections, orchestration
+│   ├── render.mjs                  # 2024 markdown renderer
+│   └── lint.mjs                    # spec lint_rules + plan-structure checks
+├── __tests__/                      # engine + 2024 flow suites (~300 tests)
 └── components/
-    └── StatblockExports.vue        # Export functionality component
+    └── StatblockExports.vue        # Exports (2024 blocks: markdown only for now)
 ```
 
 ### Two-Part Generation Process

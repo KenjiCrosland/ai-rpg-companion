@@ -49,6 +49,14 @@ never accept LLM numbers); missing required_slots reject the generation.
 
 ## Build order (one layer per session; each has its own test surface)
 
+> **Status (2026-07-18): all five steps shipped.** Chassis (`chassis/chassis.mjs`),
+> resolver (`chassis/slot-plan.mjs`), renderer (`format-2024/render.mjs`), lint
+> (`format-2024/lint.mjs`), and prompt/UI integration (`format-2024/generate.mjs`,
+> `Statblock2024.vue`, toggle + archetype select in `StatblockGenerator.vue`).
+> Deferred follow-ups live in `plans/statblock-2024-*.md` and
+> `plans/statblock-2014-archetype-retrofit.md`. Flavor quality remains
+> manual-production-review; prompts are in `format-2024/generate.mjs`.
+
 1. **Chassis module + tests.** Pure functions: `chassisFor(cr)`, `pbFor(cr)`,
    `applyArchetype(chassis, archetype)`. Test against known SRD values.
 2. **Archetype/tier resolver + tests.** CR + archetype → slot plan (counts, types,
@@ -83,6 +91,27 @@ never accept LLM numbers); missing required_slots reject the generation.
 - **2014 archetype retrofit is deferred.** Chassis/archetype math is edition-agnostic;
   a 2014 upgrade is mostly a renderer + prompt variant. Add a `plans/` entry for it
   during the step-5 session.
+- **2024 display component (settled from owner's reference screenshots, 2026-07-18).**
+  New `Statblock2024.vue` with its own scoped "canonical textbook" stylesheet —
+  owner explicitly OK'd deviating from parchment inside the card to match the
+  official 2024 MM look. `Statblock.vue` (2014) stays untouched; the toggle picks
+  the display component. Spec distilled from references:
+  - Card: cream field, thin warm-brown rounded border; name in dark-red small caps;
+    italic size/type/alignment line; section headers in red small caps over a thin
+    full-width rule; entry names bold-italic with trailing period.
+  - AC left + Initiative right on one line; HP and Speed lines below.
+  - Ability table is the official 3-group grid: two rows (STR/DEX/CON, INT/WIS/CHA),
+    each cell `ABBR · score · MOD · SAVE`, small `MOD SAVE` headers per group,
+    tinted mod/save columns. This is display-only — the markdown renderer
+    (format-2024/render.mjs) keeps its linear table for export/prompt use.
+  - Fonts: approximate the official small-caps serif with a free/system stack +
+    font-variant; official fonts are licensed, don't ship them.
+  - Text phrasing follows SRD 5.2.1 (no `*Hit:*` marker — the official MM has it,
+    the SRD drops it; our data is the licensed source).
+  - Existing two-column toggle logic carries over.
+  - Optional, owner's call at review: D&D Beyond-style keyword tinting for
+    conditions/skills. Cheap (condition vocabulary already in lint) but a taste
+    decision; skippable for v1.
 
 ## Testing philosophy (owner's standing rules)
 

@@ -6,13 +6,20 @@
       <ParButton @click="copyAsMarkdown" variant="secondary">
         Copy as Markdown
       </ParButton>
-      <ParButton @click="copyAsVTT" variant="secondary">
-        Copy for Foundry VTT
-      </ParButton>
-      <ParButton @click="copyAsImprovedInitiative" variant="secondary">
-        Copy for Improved Initiative
-      </ParButton>
+      <template v-if="!is2024">
+        <ParButton @click="copyAsVTT" variant="secondary">
+          Copy for Foundry VTT
+        </ParButton>
+        <ParButton @click="copyAsImprovedInitiative" variant="secondary">
+          Copy for Improved Initiative
+        </ParButton>
+      </template>
     </div>
+
+    <p v-if="is2024" class="export-note">
+      Foundry VTT and Improved Initiative exports currently support 2014-format
+      statblocks only — 2024 support is coming.
+    </p>
 
     <div class="roll20-callout">
       <strong>Roll20 users:</strong> Export directly via the
@@ -33,7 +40,7 @@
         </ol>
       </ParAccordion>
 
-      <ParAccordion variant="understated" :level="4" id="export-help-foundry" label="How to import into Foundry VTT"
+      <ParAccordion v-if="!is2024" variant="understated" :level="4" id="export-help-foundry" label="How to import into Foundry VTT"
         :opened="openAccordion === 'foundry'" @accordion-toggle="toggleAccordion('foundry')">
         <ol class="export-help__steps">
           <li>Click "Copy for Foundry VTT" above.</li>
@@ -43,7 +50,7 @@
         </ol>
       </ParAccordion>
 
-      <ParAccordion variant="understated" :level="4" id="export-help-initiative" label="How to import into Improved Initiative"
+      <ParAccordion v-if="!is2024" variant="understated" :level="4" id="export-help-initiative" label="How to import into Improved Initiative"
         :opened="openAccordion === 'initiative'" @accordion-toggle="toggleAccordion('initiative')">
         <ol class="export-help__steps">
           <li>Click "Copy for Improved Initiative" above.</li>
@@ -69,8 +76,9 @@
 
 <script setup>
 import { ParButton, ParAccordion, ParAccordionGroup } from "@/parchment";
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { statblockToMarkdown } from '@/util/convertToMarkdown.mjs';
+import { renderStatblock2024 } from '../format-2024/render.mjs';
 import { convertToImprovedInitiative } from '@/util/convertToImprovedInitiative.mjs';
 import { convertToFoundryVTT } from '@/util/convertToFoundryVTT.mjs';
 import { useToast } from '@/composables/useToast';
@@ -85,12 +93,20 @@ const props = defineProps({
 
 const openAccordion = ref(null);
 
+// 2024-format blocks export markdown via the 2024 renderer; Foundry VTT and
+// Improved Initiative converters expect the 2014 model shape, so those
+// buttons hide for now (see plans/statblock-2024-export-mappers.md).
+const is2024 = computed(() => props.monster?.format === '2024');
+
 const toggleAccordion = (id) => {
   openAccordion.value = openAccordion.value === id ? null : id;
 };
 
 const copyAsMarkdown = () => {
-  navigator.clipboard.writeText(statblockToMarkdown(props.monster, props.columns))
+  const markdown = is2024.value
+    ? renderStatblock2024(props.monster)
+    : statblockToMarkdown(props.monster, props.columns);
+  navigator.clipboard.writeText(markdown)
     .then(() => toast.success('Copied as markdown — paste into Homebrewery to format.'))
     .catch(() => toast.error('Failed to copy content.'));
 };
@@ -134,6 +150,14 @@ const copyAsImprovedInitiative = () => {
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
+}
+
+.export-note {
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, 'Times New Roman', serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+  margin: -0.5rem 0 1.5rem;
 }
 
 .roll20-callout {

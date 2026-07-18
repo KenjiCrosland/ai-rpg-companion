@@ -118,6 +118,36 @@ describe('each rule catches its violation class', () => {
     expect(rules(lint(broken))).toContain('phrasing-saving-throw');
   });
 
+  test('damage-dice: listed average disagrees with its own dice', () => {
+    // 2d8 + 4 averages 13; a listed 15 is LLM arithmetic drift.
+    const broken = withAction(cleanLurker, 1, {
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 15 (2d8 + 4) Slashing damage.',
+    });
+    const result = lint(broken, {});
+    expect(rules(result)).toContain('damage-dice');
+    expect(result.findings.find((f) => f.rule === 'damage-dice').expected).toBe(13);
+  });
+
+  test('phrasing-hybrid-save: 2014 lead-in glued onto the 2024 skeleton', () => {
+    const broken = withAction(cleanLurker, 2, {
+      text: 'Each creature within 30 feet must make a *Dexterity Saving Throw*: DC 13, each creature within 30 feet. *Failure:* 21 (6d6) Psychic damage.',
+    });
+    const result = lint(broken);
+    expect(rules(result)).toContain('phrasing-hybrid-save');
+    expect(result.findings.find((f) => f.rule === 'phrasing-hybrid-save').severity).toBe('reject');
+  });
+
+  test('term-caps: lowercase Hit Points / opportunity attacks', () => {
+    const broken = withAction(cleanLurker, 1, {
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target can\'t regain hit points until the start of the stalker\'s next turn.',
+    });
+    expect(rules(lint(broken))).toContain('term-caps');
+    const broken2 = withAction(cleanLurker, 1, {
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage. The stalker can then move 10 feet without provoking opportunity attacks.',
+    });
+    expect(rules(lint(broken2))).toContain('term-caps');
+  });
+
   test('condition-caps: lowercase condition word', () => {
     const broken = withAction(cleanLurker, 1, {
       text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target is knocked prone.',

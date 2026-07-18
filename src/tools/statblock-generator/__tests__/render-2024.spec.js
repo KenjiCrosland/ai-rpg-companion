@@ -101,6 +101,13 @@ describe('optional fields', () => {
   test('subtype renders in the subtitle', () => {
     expect(renderStatblock2024(byName('Allosaurus'))).toContain('*Large Beast (Dinosaur), Unaligned*');
   });
+
+  test('legendary_uses renders the 2024 uses preamble; absent field renders none', () => {
+    const generated = { ...byName('Aboleth'), legendary_uses: 3 };
+    expect(renderStatblock2024(generated)).toContain('*Legendary Action Uses: 3.');
+    // SRD-parsed blocks carry no legendary_uses — output unchanged (snapshots guard this too).
+    expect(renderStatblock2024(byName('Aboleth'))).not.toContain('Legendary Action Uses');
+  });
 });
 
 // ---------------------------------------------------------------------------

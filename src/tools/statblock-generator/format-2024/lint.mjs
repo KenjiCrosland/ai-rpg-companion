@@ -53,6 +53,16 @@ const LOWERCASE_CONDITION_RE = new RegExp(
   `\\b(${CONDITIONS.map((c) => c.toLowerCase()).join('|')})\\b`
 );
 
+// 2014-style lead-in glued onto the structured 2024 save skeleton
+// ("...must make a Dexterity Saving Throw: DC 27, each creature...").
+// Never legal 2024; zero hits across the SRD corpus.
+const HYBRID_SAVE_RE =
+  /must (?:make|succeed on) an? \*?(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\*? \*?Saving Throw\*?\s*:/i;
+
+// Game terms the 2024 SRD always capitalizes (case-sensitive; zero lowercase
+// occurrences across the corpus).
+const LOWERCASE_TERM_RE = /\b(hit points?|opportunity attacks?)\b/;
+
 const SECTION_FOR_CATEGORY = {
   trait: 'Traits',
   action: 'Actions',
@@ -179,6 +189,22 @@ export function lintStatblock(monster, { chassis, plan } = {}) {
     const lower = LOWERCASE_CONDITION_RE.exec(entry.text);
     if (lower) {
       push('condition-caps', 'reject', `Lowercase condition "${lower[1]}" in ${where} — 2024 conditions are capitalized`);
+    }
+    if (HYBRID_SAVE_RE.test(entry.text)) {
+      push('phrasing-hybrid-save', 'reject', `Hybrid save phrasing in ${where} — the "*Ability Saving Throw*: DC n, <targets>" skeleton is the whole sentence; drop the "must make a" lead-in`);
+    }
+    const term = LOWERCASE_TERM_RE.exec(entry.text);
+    if (term) {
+      push('term-caps', 'reject', `Lowercase game term "${term[1]}" in ${where} — 2024 capitalizes Hit Points and Opportunity Attacks`);
+    }
+    // Every damage expression must be internally consistent: N (XdY ± Z)
+    // with N = floor-average. Calibrated against all 728 expressions in the
+    // SRD corpus: zero mismatches, so full strictness is safe.
+    for (const dm of entry.text.matchAll(/(\d+)\s*\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/g)) {
+      const avg = avgDice(dm[2]);
+      if (avg !== null && avg !== Number(dm[1])) {
+        push('damage-dice', 'correctable', `${where}: "${dm[0]}" — ${dm[2]} averages ${avg}`, avg);
+      }
     }
   }
 

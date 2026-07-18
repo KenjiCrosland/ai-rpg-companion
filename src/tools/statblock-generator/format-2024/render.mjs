@@ -102,6 +102,12 @@ export function renderStatblock2024(monster) {
     if (!entries?.length) continue;
     lines.push('');
     lines.push(`### ${section}`);
+    if (section === 'Legendary Actions' && monster.legendary_uses) {
+      lines.push('');
+      lines.push(
+        `*Legendary Action Uses: ${monster.legendary_uses}. Immediately after another creature's turn, it can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.*`
+      );
+    }
     for (const { name, text } of entries) {
       lines.push('');
       lines.push(`***${name}.*** ${text}`);

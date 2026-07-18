@@ -82,15 +82,24 @@
                 placeholder="Headless Horseman, or leave blank for a random monster" />
             </ParField>
 
+            <ParToggleGroup v-model="format" aria-label="Statblock rules version" class="format-toggle">
+              <ParToggleButton toggleValue="2024">2024 rules</ParToggleButton>
+              <ParToggleButton toggleValue="2014">2014 rules</ParToggleButton>
+            </ParToggleGroup>
+
             <div class="form-grid">
-              <ParField label="Build">
+              <ParField v-if="format === '2014'" label="Build">
                 <ParSelect v-model="monsterType"
                   :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
+              </ParField>
+              <ParField v-else label="Combat role">
+                <ParSelect v-model="archetype" :options="archetypeOptions" />
               </ParField>
               <ParField label="Challenge rating">
                 <ParSelect v-model="selectedChallengeRating" :options="challengeRatingData.fullArray" placeholder="CR" />
               </ParField>
             </div>
+            <p v-if="format === '2024'" class="archetype-help">{{ archetypeHelp }}</p>
 
             <ParField label="Description / special instructions" :optional="true">
               <ParTextarea v-model="monsterDescription" :rows="4"
@@ -134,9 +143,14 @@
         <ParToggleButton toggleValue="one_column">1 Column</ParToggleButton>
         <ParToggleButton toggleValue="two_columns">2 Columns</ParToggleButton>
       </ParToggleGroup>
-      <Statblock v-if="!errorMessage && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
+      <Statblock v-if="!errorMessage && displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
         :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
         :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
+        @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
+        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+        @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+      <Statblock2024 v-else-if="!errorMessage && displayFormat === '2024' && (loadingPart1 || monster)"
+        :monster="monster" :columns="userColumnsPreference" :width="850" :loading="loadingPart1"
         @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
         @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
         @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
@@ -158,9 +172,12 @@
           Re-rolls a fresh version, keeping the name and description. Adjust the build or CR first if you like.
         </p>
         <div class="regenerate-bar__grid">
-          <ParField label="Build">
+          <ParField v-if="format === '2014'" label="Build">
             <ParSelect v-model="monsterType"
               :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
+          </ParField>
+          <ParField v-else label="Combat role">
+            <ParSelect v-model="archetype" :options="archetypeOptions" />
           </ParField>
           <ParField label="Challenge rating">
             <ParSelect v-model="selectedChallengeRating" :options="challengeRatingData.fullArray" placeholder="CR" />
@@ -238,8 +255,13 @@
 <script setup>
 import { ParButton, ParAccordion, ParAccordionGroup, ParToggleGroup, ParToggleButton, ParField, ParInput, ParSelect, ParTextarea, ParCheckbox, ParConfirm } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
-import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
+import { ref, onMounted, onUnmounted, computed, reactive, watch } from 'vue';
 import Statblock from '@/components/Statblock.vue';
+import Statblock2024 from '@/components/Statblock2024.vue';
+import {
+  generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
+  parseGenerationResponse, pickRandomArchetype, crNumberFor, crKeyFor,
+} from './format-2024/generate.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
@@ -280,6 +302,40 @@ const loadingPart1 = ref(false);
 const loadingPart2 = ref(false);
 const monsterName = ref('');
 const monsterType = ref('Random');
+
+// 2014/2024 rules toggle — default 2024, remembered per browser. The 2024
+// path swaps the Build select for the archetype ("Combat role") select.
+const FORMAT_STORAGE_KEY = 'statblock-format';
+const format = ref(localStorage.getItem(FORMAT_STORAGE_KEY) === '2014' ? '2014' : '2024');
+watch(format, (v) => localStorage.setItem(FORMAT_STORAGE_KEY, v));
+
+const archetype = ref('auto');
+const ARCHETYPE_HELP = {
+  auto: "We'll pick the role that best fits your monster's name and description.",
+  balanced: 'No role bias — the raw mathematical baseline for this CR.',
+  brute: 'Hits hard up close, soaks damage, easy to hit. Ogres, zombies, giant hyenas.',
+  defender: 'High AC, protects allies, punishes movement. Animated armor, ropers.',
+  skirmisher: 'Mobile hit-and-run attacker with a movement trick.',
+  artillery: 'Fragile long-range damage dealer with an escape tool.',
+  controller: 'Locks enemies down with conditions instead of raw damage. Aboleths.',
+  lurker: 'Fragile ambusher with a devastating opening strike. Ghosts, will-o\'-wisps.',
+  support: 'Buffs, heals, and enables allies — underperforms its CR when fought alone.',
+  swarm: 'A mass of small creatures acting as one, hard to put down with weapons.',
+};
+const archetypeOptions = [
+  { label: 'Auto — match my concept', value: 'auto' },
+  { label: 'Balanced (no role)', value: 'balanced' },
+  ...Object.keys(ARCHETYPE_HELP)
+    .filter((k) => k !== 'auto' && k !== 'balanced')
+    .map((k) => ({ label: k.charAt(0).toUpperCase() + k.slice(1), value: k })),
+];
+const archetypeHelp = computed(() => ARCHETYPE_HELP[archetype.value] ?? '');
+
+// Which card renders: a loaded monster's own format wins; while generating
+// (monster is null) the form toggle decides.
+const displayFormat = computed(() =>
+  monster.value ? (monster.value.format === '2024' ? '2024' : '2014') : format.value
+);
 const monsterDescription = ref('');
 const selectedChallengeRating = ref(null);
 const monster = ref(null);
@@ -509,6 +565,7 @@ function newMonster(folderName = 'Uncategorized') {
   monster.value = null;
   monsterName.value = '';
   monsterType.value = 'Random';
+  archetype.value = 'auto';
   monsterDescription.value = '';
   selectedChallengeRating.value = null;
 }
@@ -553,6 +610,14 @@ function selectMonster(folderName = 'Uncategorized', index) {
   monsterDescription.value = monster.value.monsterDescription || '';
   selectedChallengeRating.value = monster.value.selectedChallengeRating || getFirstNumber(monster.value.challenge_rating);
   caster.value = monster.value.caster;
+  // Follow the selected monster's rules version so Regenerate re-rolls in the
+  // same format; restore its archetype choice ('auto' when it was auto-picked).
+  format.value = monster.value.format === '2024' ? '2024' : '2014';
+  if (monster.value.format === '2024') {
+    archetype.value = monster.value.archetype_source === 'auto'
+      ? 'auto'
+      : (monster.value.archetype || 'auto');
+  }
 }
 
 const updateWindowWidth = () => {
@@ -738,6 +803,12 @@ async function generateStatblock() {
   if (!canGenerate) {
     return;
   }
+
+  if (format.value === '2024') {
+    await generateStatblock2024();
+    return;
+  }
+
   loadingPart1.value = true;
   loadingPart2.value = true;
   const randomCR = Math.floor(Math.random() * 30) + 1;
@@ -791,6 +862,81 @@ async function generateStatblock() {
   finalMonster.monsterName = monsterName.value || monster.name;
   finalMonster.caster = caster.value;
 
+  await saveGeneratedMonster(finalMonster);
+}
+
+// 2024 path: engine-first pipeline (chassis → slot plan → slot-filling prompt
+// → assemble → lint with correct/reject loop) via format-2024/generate.mjs.
+// The LLM never decides numbers; see docs/2024-architecture.md.
+async function generateStatblock2024() {
+  loadingPart1.value = true;
+  const crInput = selectedChallengeRating.value || String(Math.floor(Math.random() * 30) + 1);
+  const cr = crNumberFor(crInput);
+
+  // Archetype resolution order (settled in the architecture doc):
+  // user-picked → no call; Auto + concept → micro resolve call;
+  // Auto + all inputs blank → random client-side pick, no call.
+  let archetypeName = archetype.value;
+  let archetypeSource = 'user';
+  if (archetypeName === 'auto') {
+    archetypeSource = 'auto';
+    const conceptSeed = [monsterName.value, monsterDescription.value]
+      .map((s) => (s || '').trim())
+      .filter(Boolean)
+      .join(' — ');
+    if (conceptSeed) {
+      try {
+        const raw = await generateGptResponse(
+          buildArchetypeResolvePrompt(conceptSeed),
+          validateArchetypeResponse,
+          2,
+        );
+        archetypeName = parseGenerationResponse(raw)?.archetype || pickRandomArchetype();
+      } catch (e) {
+        logger.warn('Archetype auto-resolve failed, picking randomly:', e);
+        archetypeName = pickRandomArchetype();
+      }
+    } else {
+      archetypeName = pickRandomArchetype();
+    }
+  }
+
+  const concept = monsterName.value.trim()
+    || monsterDescription.value.trim()
+    || `a CR ${crKeyFor(cr)} ${archetypeName === 'balanced' ? '' : `${archetypeName} `}creature — invent something unconventional`;
+
+  let finalMonster;
+  try {
+    finalMonster = await generateMonster2024(
+      {
+        concept,
+        description: monsterDescription.value,
+        cr,
+        archetypeName,
+        caster: caster.value,
+        archetypeSource,
+      },
+      (prompt, validate) => generateGptResponse(prompt, validate, 3),
+    );
+  } catch (e) {
+    errorMessage.value = e.message;
+    toast.error('Failed to generate statblock. Please try again.');
+    loadingPart1.value = false;
+    return;
+  }
+
+  // Regen params — same fields the 2014 path stamps, so selectMonster
+  // restores the form for Regenerate.
+  finalMonster.monsterDescription = monsterDescription.value;
+  finalMonster.selectedChallengeRating = crKeyFor(cr);
+  finalMonster.monsterName = monsterName.value || finalMonster.name;
+  finalMonster.caster = caster.value;
+
+  loadingPart1.value = false;
+  await saveGeneratedMonster(finalMonster);
+}
+
+async function saveGeneratedMonster(finalMonster) {
   // Save and display statblock immediately
   if (activeMonsterIndex.value !== null) {
     monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
@@ -1291,5 +1437,17 @@ async function generateStatblock() {
 .slide-leave-to {
   max-height: 0;
   opacity: 0;
+}
+
+/* 2014/2024 rules toggle + archetype helper line (lapis form register). */
+.format-toggle {
+  margin-bottom: 1.2rem;
+}
+
+.archetype-help {
+  margin: -0.4rem 0 1rem;
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
 }
 </style>

@@ -187,6 +187,18 @@ describe('StatblockGenerator - Prompt Generation', () => {
     localStorageMock = new LocalStorageMock();
     global.localStorage = localStorageMock;
 
+    // This suite exercises the 2014 two-part generation flow; the form now
+    // defaults to 2024 rules, so pin the persisted toggle to 2014. Written to
+    // both the mock and the real jsdom store — depending on jsdom version the
+    // component's bare `localStorage` binding may resolve to either.
+    // The 2024 pipeline has its own suite (statblock-2024-flow.spec.js).
+    localStorageMock.setItem('statblock-format', '2014');
+    try {
+      window.localStorage.setItem('statblock-format', '2014');
+    } catch {
+      /* jsdom storage unavailable — mock covers it */
+    }
+
     // Reset all mocks
     jest.clearAllMocks();
 

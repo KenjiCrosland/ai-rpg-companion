@@ -205,9 +205,13 @@ Create a `.env.local` file with:
 # Default provider: deepseek-v3 | gpt-4o-mini
 VITE_AI_DEFAULT_PROVIDER=deepseek-v3
 
-# API Keys (add keys for providers you want to use)
-VITE_DEEPSEEK_API_KEY=your-deepseek-key-here
-VITE_OPENAI_API_KEY=your-openai-key-here
+# API Keys (add keys for providers you want to use).
+# IMPORTANT: NO `VITE_` prefix on the keys — prefixed vars are bundled into
+# browser code. The dev proxy in vite.config.js reads these unprefixed names
+# and injects the Authorization header server-side; the browser never sees
+# the key. A `VITE_DEEPSEEK_API_KEY` line is silently ignored.
+DEEPSEEK_API_KEY=your-deepseek-key-here
+OPENAI_API_KEY=your-openai-key-here
 ```
 
 **Development Provider Switching:**

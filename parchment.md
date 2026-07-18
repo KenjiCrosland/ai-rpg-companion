@@ -325,6 +325,7 @@ The decisions that shouldn't be casually violated:
 - The three tab registers (warm-tan pill / burgundy underline / lapis pill).
 - Read-aloud's two registers (sourcebook vs editorial).
 - `ParCardButton create` being the one lapis affordance in the burgundy card register.
+- **`Statblock2024.vue` is deliberately out-of-system** (owner-approved, 2026-07-18): the 2024 statblock card mimics the official 2025 Monster Manual look (its own cream, gold rules, tinted ability-grid columns, small-caps burgundy headers via `font-variant`) rather than parchment chrome. The deviation stops at the card edge — the surrounding form, sidebar, and footer actions stay parchment. Spec in `docs/2024-architecture.md` (UI decisions).
 
 ---
 
