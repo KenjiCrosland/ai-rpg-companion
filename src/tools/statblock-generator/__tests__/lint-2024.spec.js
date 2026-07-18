@@ -1,0 +1,355 @@
+/**
+ * Lint module tests — build-order step 4 of docs/2024-architecture.md.
+ *
+ * Per the contract: deliberately broken blocks, one per rule class, each
+ * asserting its rule fires. The SRD clean pass is the false-positive
+ * guarantee: context-free rules must accept all 329 official blocks (minus
+ * two documented source quirks).
+ */
+import { lintStatblock, avgDice } from '../format-2024/lint.mjs';
+import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
+import { slotPlanFor } from '../chassis/slot-plan.mjs';
+import monsters from '@/data/srd52-monsters.json';
+
+// A clean generated-shape block: lurker at CR 4.
+// chassis: hp 59, ac 14, attack +7, DC 13, pb 2 (verified in chassis.spec.js).
+const lurkerChassis = applyArchetype(chassisFor(4), 'lurker');
+const lurkerPlan = slotPlanFor(4, 'lurker');
+
+const cleanLurker = {
+  name: 'Gloom Stalker',
+  size: 'Medium', type: 'Monstrosity', alignment: 'Neutral Evil',
+  ac: 14, hp: 59, hp_formula: '13d8 + 1',
+  speed: '40 ft.',
+  initiative_bonus: 3, initiative_score: 13,
+  stats: { STR: 12, DEX: 16, CON: 12, INT: 6, WIS: 14, CHA: 8 },
+  saves: { STR: 1, DEX: 5, CON: 1, INT: -2, WIS: 2, CHA: -1 },
+  senses: 'darkvision 60 ft.; Passive Perception 14',
+  cr: 4, cr_str: '4', xp: 1100, pb: 2,
+  sections: {
+    Traits: [
+      {
+        name: 'Umbral Veil',
+        slot: 'stealth/phasing/invisibility trait',
+        text: 'While in Dim Light or Darkness, the stalker has the Invisible condition.',
+      },
+    ],
+    Actions: [
+      { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
+      { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.' },
+      {
+        name: 'Ambush Pounce',
+        slot: 'ambush or once-per-fight nova mechanic',
+        text: '*Dexterity Saving Throw*: DC 13, one creature that has not acted this combat. *Failure:* 21 (6d6) Psychic damage and the target has the Frightened condition until the end of its next turn. *Success:* Half damage.',
+      },
+    ],
+  },
+};
+
+const lint = (block, opts = { chassis: lurkerChassis, plan: lurkerPlan }) => lintStatblock(block, opts);
+const rules = (result) => result.findings.map((f) => f.rule);
+const withAction = (block, index, patch) => ({
+  ...block,
+  sections: {
+    ...block.sections,
+    Actions: block.sections.Actions.map((e, i) => (i === index ? { ...e, ...patch } : e)),
+  },
+});
+
+// ---------------------------------------------------------------------------
+// 0. The clean block is clean
+// ---------------------------------------------------------------------------
+test('clean lurker block passes all rules with chassis and plan', () => {
+  expect(lint(cleanLurker)).toEqual({ ok: true, findings: [] });
+});
+
+// ---------------------------------------------------------------------------
+// 1. One broken block per rule class
+// ---------------------------------------------------------------------------
+describe('each rule catches its violation class', () => {
+  test('hp-formula: listed HP disagrees with dice average', () => {
+    const result = lint({ ...cleanLurker, hp: 60 });
+    expect(rules(result)).toContain('hp-formula');
+    expect(result.findings.find((f) => f.rule === 'hp-formula').expected).toBe(59);
+  });
+
+  test('saves: save that is neither mod nor mod+PB', () => {
+    const broken = { ...cleanLurker, saves: { ...cleanLurker.saves, DEX: 6 } };
+    expect(rules(lint(broken))).toContain('saves');
+  });
+
+  test('initiative: passive score must be 10 + bonus', () => {
+    expect(rules(lint({ ...cleanLurker, initiative_score: 15 }))).toContain('initiative');
+  });
+
+  test('pb: inconsistent with CR table', () => {
+    expect(rules(lint({ ...cleanLurker, pb: 3 }))).toContain('pb');
+  });
+
+  test('xp: off the CR table', () => {
+    expect(rules(lint({ ...cleanLurker, xp: 1000 }))).toContain('xp');
+  });
+
+  test('phrasing-2014: Melee Weapon Attack form', () => {
+    const broken = withAction(cleanLurker, 1, {
+      text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. 13 (2d8 + 4) slashing damage.',
+    });
+    expect(rules(lint(broken))).toContain('phrasing-2014');
+  });
+
+  test('phrasing-to-hit: vestigial "to hit" in a 2024 attack line', () => {
+    const broken = withAction(cleanLurker, 1, {
+      text: '*Melee Attack Roll:* +7 to hit, reach 5 ft. 13 (2d8 + 4) Slashing damage.',
+    });
+    expect(rules(lint(broken))).toContain('phrasing-to-hit');
+  });
+
+  test('phrasing-to-hit: spellcasting "to hit with spell attacks" is legal', () => {
+    const ok = withAction(cleanLurker, 2, {
+      text: 'The stalker casts one spell (spell save DC 13, +5 to hit with spell attacks).',
+    });
+    expect(rules(lint(ok, {}))).not.toContain('phrasing-to-hit');
+  });
+
+  test('phrasing-saving-throw: saving throw without an ability name', () => {
+    const broken = withAction(cleanLurker, 2, {
+      text: '*Saving Throw*: DC 13, one creature. *Failure:* 21 (6d6) Psychic damage.',
+    });
+    expect(rules(lint(broken))).toContain('phrasing-saving-throw');
+  });
+
+  test('condition-caps: lowercase condition word', () => {
+    const broken = withAction(cleanLurker, 1, {
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target is knocked prone.',
+    });
+    expect(rules(lint(broken))).toContain('condition-caps');
+  });
+
+  test('ac-band / attack-band / dc-band: numbers outside ±1 of budget', () => {
+    expect(rules(lint({ ...cleanLurker, ac: 16 }))).toContain('ac-band');
+    const hotAttack = withAction(cleanLurker, 1, {
+      text: '*Melee Attack Roll:* +9, reach 5 ft. 13 (2d8 + 4) Slashing damage.',
+    });
+    expect(rules(lint(hotAttack))).toContain('attack-band');
+    const hotDC = withAction(cleanLurker, 2, {
+      text: '*Dexterity Saving Throw*: DC 15, one creature. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.',
+    });
+    expect(rules(lint(hotDC))).toContain('dc-band');
+  });
+
+  test('hp-band: internally consistent HP still outside the budget band', () => {
+    // 9d8 + 4 averages 44; 44/59 ≈ 0.75 falls just below the band.
+    const result = lint({ ...cleanLurker, hp: 44, hp_formula: '9d8 + 4' });
+    expect(rules(result)).toEqual(['hp-band']);
+    expect(result.findings[0].expected).toBe(59);
+  });
+
+  test('slot-missing: required slot without a tagged entry', () => {
+    const broken = withAction(cleanLurker, 2, { slot: undefined });
+    const result = lint(broken);
+    expect(rules(result)).toContain('slot-missing');
+    expect(result.findings.find((f) => f.rule === 'slot-missing').severity).toBe('reject');
+  });
+
+  test('multiattack: required at tier 3 but absent', () => {
+    const broken = {
+      ...cleanLurker,
+      sections: { ...cleanLurker.sections, Actions: cleanLurker.sections.Actions.slice(1) },
+    };
+    expect(rules(lint(broken))).toContain('multiattack');
+  });
+
+  test('multiattack: forbidden at tier 1 but present', () => {
+    const minion = {
+      name: 'Test', cr: 0.25, hp: 13, ac: 12,
+      stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+      sections: { Actions: [{ name: 'Multiattack', text: 'Two attacks.' }] },
+    };
+    expect(rules(lintStatblock(minion, { plan: slotPlanFor(0.25, null) }))).toContain('multiattack');
+  });
+
+  test('legendary: required at tier 6 but absent', () => {
+    expect(rules(lint(cleanLurker, { plan: slotPlanFor(25, null) }))).toContain('legendary');
+  });
+
+  test('section-structure: forbidden section present at tier 1', () => {
+    const minion = {
+      name: 'Test', cr: 0.25, hp: 13, ac: 12,
+      stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+      sections: {
+        Actions: [{ name: 'Peck', text: '*Melee Attack Roll:* +4, reach 5 ft. 1 Piercing damage.' }],
+        Reactions: [{ name: 'Flinch', text: 'It flinches.' }],
+      },
+    };
+    expect(rules(lintStatblock(minion, { plan: slotPlanFor(0.25, null) }))).toContain('section-structure');
+  });
+
+  test('counts: entry counts outside the plan range', () => {
+    const extraTraits = {
+      ...cleanLurker,
+      sections: {
+        ...cleanLurker.sections,
+        Traits: [1, 2, 3, 4].map((n) => ({ name: `T${n}`, text: 'A trait.' })),
+      },
+    };
+    expect(rules(lint(extraTraits))).toContain('counts');
+  });
+
+  test('passive slots: field-level obligations checked directly', () => {
+    const swarmPlan = slotPlanFor(0.25, 'swarm');
+    const swarm = {
+      name: 'Rat Swarm', cr: 0.25, hp: 13, ac: 11,
+      stats: { STR: 9, DEX: 11, CON: 9, INT: 2, WIS: 10, CHA: 3 },
+      resistances: 'Bludgeoning, Piercing, Slashing',
+      immunities: 'Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned',
+      sections: {
+        Traits: [{ name: 'Swarm', slot: "swarm trait (occupy other creatures' space, no Tiny-space penalty)", text: 'The swarm can occupy another creature\'s space and vice versa.' }],
+        Actions: [{ name: 'Bites', slot: 'half-damage attack mode at or below half HP', text: '*Melee Attack Roll:* +2, reach 5 ft. 5 (2d4) Piercing damage, or 2 (1d4) Piercing damage if the swarm is at half its Hit Points or fewer.' }],
+      },
+    };
+    expect(rules(lintStatblock(swarm, { plan: swarmPlan }))).toEqual([]);
+    const noImmunities = { ...swarm, immunities: 'Charmed, Frightened' };
+    expect(rules(lintStatblock(noImmunities, { plan: swarmPlan }))).toContain('slot-missing');
+  });
+
+  test('passive slots: high STR for brutes', () => {
+    const brutePlan = slotPlanFor(5, 'brute');
+    const base = {
+      name: 'Test Brute', cr: 5, hp: 124, ac: 14,
+      stats: { STR: 19, DEX: 10, CON: 16, INT: 5, WIS: 8, CHA: 5 },
+      sections: { Actions: [] },
+    };
+    const strFinding = (block) =>
+      lintStatblock(block, { plan: brutePlan }).findings
+        .some((f) => f.rule === 'slot-missing' && f.message.includes('high STR'));
+    expect(strFinding(base)).toBe(false);
+    expect(strFinding({ ...base, stats: { ...base.stats, STR: 12 } })).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2. Boundary exactness
+// ---------------------------------------------------------------------------
+describe('band boundaries are inclusive', () => {
+  const chassis = { hp: 100, ac: 15, attack_bonus: 7, save_dc: 14 };
+  const block = (patch, text) => ({
+    name: 'Edge Case', cr: 5, hp: 100, ac: 15,
+    stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+    sections: { Actions: [{ name: 'Strike', text: text ?? '*Melee Attack Roll:* +7, reach 5 ft. 11 (2d10) Slashing damage.' }] },
+    ...patch,
+  });
+  const bandRules = (b) => rules(lintStatblock(b, { chassis }));
+
+  test.each([
+    [75, true], [74, false], [135, true], [136, false],
+  ])('hp %p in band: %p', (hp, ok) => {
+    expect(bandRules(block({ hp })).includes('hp-band')).toBe(!ok);
+  });
+
+  test.each([
+    [16, true], [17, false], [14, true], [13, false],
+  ])('ac %p in band: %p', (ac, ok) => {
+    expect(bandRules(block({ ac })).includes('ac-band')).toBe(!ok);
+  });
+
+  test.each([
+    ['+8', true], ['+9', false], ['+6', true], ['+5', false],
+  ])('attack %s in band: %p', (atk, ok) => {
+    const b = block({}, `*Melee Attack Roll:* ${atk}, reach 5 ft. 11 (2d10) Slashing damage.`);
+    expect(bandRules(b).includes('attack-band')).toBe(!ok);
+  });
+
+  test.each([
+    [15, true], [16, false], [13, true], [12, false],
+  ])('DC %p in band: %p', (dc, ok) => {
+    const b = block({}, `*Wisdom Saving Throw*: DC ${dc}, one creature. *Failure:* 11 (2d10) Psychic damage.`);
+    expect(bandRules(b).includes('dc-band')).toBe(!ok);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3. SRD clean pass (false-positive guarantee)
+// ---------------------------------------------------------------------------
+describe('SRD corpus', () => {
+  test('context-free rules accept all 329 official blocks (2 documented quirks)', () => {
+    // The SRD source itself carries vestigial "to hit" in exactly two attack
+    // lines (Ancient Gold Dragon's Rend, Bat's Bite). Everything else must
+    // lint clean — if a rule flags official text, the rule is wrong.
+    const QUIRKS = new Set(['Ancient Gold Dragon', 'Bat']);
+    for (const m of monsters) {
+      const result = lintStatblock(m);
+      if (QUIRKS.has(m.name)) {
+        expect(rules(result)).toEqual(['phrasing-to-hit']);
+      } else {
+        expect({ name: m.name, findings: result.findings }).toEqual({ name: m.name, findings: [] });
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 4. Severity routing
+// ---------------------------------------------------------------------------
+describe('severity routing', () => {
+  test('numeric findings are correctable and carry expected values', () => {
+    const result = lint({ ...cleanLurker, ac: 17, pb: 3 });
+    for (const f of result.findings) {
+      expect(f.severity).toBe('correctable');
+      expect(f.expected).toEqual(expect.any(Number));
+    }
+    expect(rules(result)).toEqual(expect.arrayContaining(['ac-band', 'pb']));
+  });
+
+  test('slot and phrasing findings are reject', () => {
+    const broken = withAction(
+      { ...cleanLurker, sections: { ...cleanLurker.sections } }, 2,
+      { slot: undefined, text: 'Melee Weapon Attack: +7 to hit, reach 5 ft.' }
+    );
+    const result = lint(broken);
+    expect(result.ok).toBe(false);
+    for (const f of result.findings) expect(f.severity).toBe('reject');
+  });
+
+  test('avgDice mirrors the reference implementation', () => {
+    expect(avgDice('20d10 + 40')).toBe(150);
+    expect(avgDice('12d10+24')).toBe(90);
+    expect(avgDice('11d4')).toBe(27);
+    expect(avgDice('1d4 - 1')).toBe(1);
+    expect(avgDice('not dice')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. Slot-tag protocol
+// ---------------------------------------------------------------------------
+describe('slot-tag protocol', () => {
+  test('flexible slots accept any allowed section', () => {
+    // The nova slot is ['trait', 'action'] — move it to Traits; slot check
+    // still passes (only the action-count rule complains about the plan).
+    const moved = {
+      ...cleanLurker,
+      sections: {
+        Traits: [...cleanLurker.sections.Traits, cleanLurker.sections.Actions[2]],
+        Actions: cleanLurker.sections.Actions.slice(0, 2),
+      },
+    };
+    const result = lint(moved);
+    expect(rules(result)).not.toContain('slot-missing');
+    expect(rules(result)).toContain('counts');
+  });
+
+  test('a tag in a disallowed section does not satisfy the slot', () => {
+    // Stealth slot is trait-only; tagging an Action with it must not count.
+    const misplaced = {
+      ...cleanLurker,
+      sections: {
+        Traits: [],
+        Actions: [
+          ...cleanLurker.sections.Actions,
+          { name: 'Fade', slot: 'stealth/phasing/invisibility trait', text: 'It fades from view and has the Invisible condition.' },
+        ],
+      },
+    };
+    expect(rules(lint(misplaced))).toContain('slot-missing');
+  });
+});
