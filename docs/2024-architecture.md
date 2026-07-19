@@ -53,9 +53,14 @@ never accept LLM numbers); missing required_slots reject the generation.
 > resolver (`chassis/slot-plan.mjs`), renderer (`format-2024/render.mjs`), lint
 > (`format-2024/lint.mjs`), and prompt/UI integration (`format-2024/generate.mjs`,
 > `Statblock2024.vue`, toggle + archetype select in `StatblockGenerator.vue`).
-> Deferred follow-ups live in `plans/statblock-2024-*.md` and
-> `plans/statblock-2014-archetype-retrofit.md`. Flavor quality remains
-> manual-production-review; prompts are in `format-2024/generate.mjs`.
+> Deferred follow-ups live in `plans/statblock-2024-*.md`. Flavor quality
+> remains manual-production-review; prompts are in `format-2024/generate.mjs`.
+>
+> **2014 retrofit shipped (2026-07-18):** both editions run the engine. The
+> 2014 edition uses 2014 phrasing rules/skeletons and converts to the legacy
+> model shape (`toLegacyModel`) so the classic display/export chain works
+> unchanged. The pre-engine two-part pipeline survives behind
+> `localStorage['statblock-legacy-2014']` until production-verified.
 
 1. **Chassis module + tests.** Pure functions: `chassisFor(cr)`, `pbFor(cr)`,
    `applyArchetype(chassis, archetype)`. Test against known SRD values.

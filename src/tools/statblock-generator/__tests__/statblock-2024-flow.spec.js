@@ -144,11 +144,11 @@ describe('StatblockGenerator 2024 flow', () => {
       wrapper.unmount();
     });
 
-    test('persisted 2014 preference restores the Build select', () => {
+    test('2014 mode also shows the Combat role select (Build is retired)', () => {
       localStorage.setItem('statblock-format', '2014');
       const wrapper = mountGenerator();
-      expect(hasOption(wrapper, 'Stronger Defense')).toBe(true);
-      expect(hasOption(wrapper, 'lurker')).toBe(false);
+      expect(hasOption(wrapper, 'lurker')).toBe(true);
+      expect(hasOption(wrapper, 'Stronger Defense')).toBe(false);
       wrapper.unmount();
     });
 

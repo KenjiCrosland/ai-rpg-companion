@@ -44,6 +44,28 @@ const EXEMPLAR_CANDIDATES = {
 };
 const GENERIC_EXEMPLARS = ['Allosaurus', 'Air Elemental', 'Aboleth', 'Ancient Red Dragon'];
 
+// Static 2014-phrasing exemplar (the SRD 5.2.1 corpus is 2024-phrased, so the
+// 2014 edition ships a hand-written style reference in the same LLM schema).
+const EXEMPLAR_2014 = {
+  name: 'Barrow Sentinel',
+  size: 'Medium', type: 'Undead', alignment: 'Lawful Evil',
+  speed: '25 ft.',
+  stats: { STR: 16, DEX: 10, CON: 15, INT: 6, WIS: 12, CHA: 8 },
+  save_proficiencies: ['STR'],
+  skill_proficiencies: ['Perception'],
+  senses_special: 'darkvision 60 ft.',
+  sections: {
+    Traits: [
+      { name: 'Grave Vigil', text: 'The sentinel remains motionless and is indistinguishable from a statue while it stays still. It has advantage on saving throws against being frightened.' },
+    ],
+    Actions: [
+      { name: 'Multiattack', text: 'The sentinel makes two Rusted Blade attacks.' },
+      { name: 'Rusted Blade', text: 'Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 11 (2d8 + 2) slashing damage, and the target must succeed on a DC 12 Constitution saving throw or be poisoned until the end of its next turn.' },
+      { name: 'Grave Wail (Recharge 5-6)', text: 'Each creature within 30 feet of the sentinel must make a DC 12 Wisdom saving throw, taking 14 (4d6) psychic damage on a failed save, or half as much damage on a successful one. A creature that fails is also frightened until the end of its next turn.' },
+    ],
+  },
+};
+
 const modOf = (score) => Math.floor((score - 10) / 2);
 const signed = (n) => (n >= 0 ? `+${n}` : `${n}`);
 
@@ -222,10 +244,13 @@ function slotInstructions(plan, numbers) {
   return lines.join('\n');
 }
 
-export function buildGenerationPrompt({ concept, description = '', cr, chassis, plan, caster = false }) {
+export function buildGenerationPrompt({ concept, description = '', cr, chassis, plan, caster = false, edition = '2024' }) {
   const numbers = damageBudgetFor(cr, chassis, plan);
   const perAttackDice = damageDiceFor(numbers.perAttack);
   const novaAvg = chassis.nova_mult ? Math.round(numbers.perAttack * chassis.nova_mult) : null;
+  if (edition === '2014') {
+    return buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, perAttackDice, novaAvg });
+  }
   const exemplar = exemplarFor(chassis.archetype, cr);
 
   const schema = {
@@ -270,6 +295,7 @@ RULES — read first; they apply to every line of output:
 6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock — if you created an action called "Spectral Saber", write "makes two Spectral Saber attacks". Never the bare "makes two attacks", and never an attack name that does not appear in this statblock's Actions.
 7. The statblock text is in-world only and third person. Never reference these instructions, rulebook editions ("2024", "5e"), or design terms ("legal condition", "budget"). Never "you"/"your" ("each creature of the warden's choice", not "of your choice"). Never write "(any race)" in the subtype — 2024 dropped it.
 8. Every attack you tell the creature to make ("makes one Shield Bash attack") MUST exist as a fully written attack action in this statblock. Define it or don't reference it.
+9. Defensive traits must be NARROW. Never write a passive trait that halves or reduces incoming damage, grants resistance to everything, or otherwise multiplies the creature's durability — the fixed AC/HP already price its defenses. Mitigating a single attack is fine ONLY as a Reaction (once per round).
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
@@ -295,6 +321,60 @@ ${JSON.stringify(schema, null, 2)}
 Here is a real SRD 2024 statblock as a style reference (structure and phrasing, NOT numbers):
 
 ${JSON.stringify(exemplar, null, 2)}
+
+Apply all six RULES from the top of this prompt. Return ONLY the JSON object.`;
+}
+
+// 2014-edition prompt: identical numeric skeletons and structure, classic
+// phrasing rules, hand-written exemplar. Same JSON schema — assembly and lint
+// run on the shared internal model before legacy conversion.
+function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, perAttackDice, novaAvg }) {
+  const schema = {
+    name: 'CREATURE NAME',
+    size: 'Tiny|Small|Medium|Large|Huge|Gargantuan',
+    type: 'Aberration|Beast|Celestial|Construct|Dragon|Elemental|Fey|Fiend|Giant|Humanoid|Monstrosity|Ooze|Plant|Undead',
+    subtype: 'optional, omit if none',
+    alignment: 'e.g. neutral evil, unaligned',
+    speed: 'e.g. 30 ft., fly 60 ft.',
+    stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+    save_proficiencies: ['zero to two of STR|DEX|CON|INT|WIS|CHA'],
+    skill_proficiencies: ['zero to three skills, e.g. Perception, Stealth'],
+    senses_special: 'optional, e.g. darkvision 60 ft. (omit passive Perception; computed for you)',
+    languages: 'optional',
+    resistances: 'optional damage resistances',
+    immunities: 'optional — damage types first, then conditions after a semicolon',
+    sections: {
+      Traits: [{ name: 'Trait Name', text: 'Trait text.', slot: 'only when filling a required slot' }],
+      Actions: [{ name: 'Action Name', text: 'Action text.' }],
+    },
+  };
+
+  return `You are an expert D&D 5th edition (2014 rules) monster designer. Write the FLAVOR for a statblock whose numbers are already fixed. Never invent different numbers — use the exact skeletons given below.
+
+RULES — read first; they apply to every line of output:
+1. This is CLASSIC 2014 phrasing. NEVER write "Attack Roll:", "*Failure:*", "*Success:*", or "has the X condition" — those are 2024 forms.
+2. Attack lines use EXACTLY this skeleton: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${numbers.perAttack} (${perAttackDice}) <damage type> damage. (Ranged: Ranged Weapon Attack: ${signed(chassis.attack_bonus)} to hit, range 60 ft., one target. Hit: same skeleton.) The skeleton's damage is the attack's TOTAL — never append "plus X (dice) damage" riders on top of it. To use two damage types, split the total (e.g. ${Math.max(1, numbers.perAttack - Math.floor(numbers.perAttack / 3))} + ${Math.floor(numbers.perAttack / 3)}), keeping the sum exactly ${numbers.perAttack}. Non-damage riders (conditions, pushes) are welcome.
+3. Saving-throw effects use classic forms: "The target must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${numbers.total} (${damageDiceFor(numbers.total)}) <type> damage on a failed save, or half as much damage on a successful one." — or for conditions: "must succeed on a DC ${chassis.save_dc} <Ability> saving throw or be knocked prone / become frightened / be poisoned...".
+4. Conditions, damage types, and game terms are lowercase in prose: "knocked prone", "frightened", "slashing damage", "hit points".
+5. Third person only, in-world only — never "you"/"your", never rulebook or design references.
+6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock. Every attack you reference MUST exist as a written attack action.
+7. Defensive traits must be NARROW. Never write a passive trait that halves or reduces incoming damage or grants resistance to everything — the fixed AC/HP already price the creature's defenses. Mitigating a single attack is fine ONLY as a reaction (once per round).
+
+CONCEPT: ${concept}
+CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
+${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
+STRUCTURE (exact requirements):
+- Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
+- Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
+${slotInstructions(plan, numbers)}
+${novaAvg ? `- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..."\n` : ''}
+Return ONLY a JSON object in exactly this shape (no markdown fences, no commentary). Omit optional fields rather than emitting empty ones. Do NOT include ac, hp, CR, XP, or PB — those are stamped for you:
+
+${JSON.stringify(schema, null, 2)}
+
+Here is a statblock in the correct classic style (structure and phrasing, NOT numbers):
+
+${JSON.stringify(EXEMPLAR_2014, null, 2)}
 
 Apply all six RULES from the top of this prompt. Return ONLY the JSON object.`;
 }
@@ -382,6 +462,65 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
 }
 
 // ---------------------------------------------------------------------------
+// Legacy (2014) model conversion
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert the internal (sections-based) model to the legacy 2014 shape the
+ * existing Statblock.vue display, exports, and encounter adapter consume.
+ * Reactions and Bonus Actions fold into `abilities` with a suffix — the
+ * legacy display has no sections for them.
+ */
+export function toLegacyModel(m) {
+  const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: e.text }));
+  const splitDefense = (value) => {
+    const [damage = '', conditions = ''] = (value ?? '').split(';').map((s) => s.trim());
+    return { damage, conditions };
+  };
+
+  const imm = splitDefense(m.immunities);
+  const res = splitDefense(m.resistances);
+  const savingThrows = STAT_ORDER
+    .filter((s) => m.saves[s] !== modOf(m.stats[s]))
+    .map((s) => `${s} ${signed(m.saves[s])}`)
+    .join(', ');
+
+  const abilities = [
+    ...entryList('Traits'),
+    ...entryList('Bonus Actions').map((e) => ({ ...e, name: `${e.name} (Bonus Action)` })),
+    ...entryList('Reactions').map((e) => ({ ...e, name: `${e.name} (Reaction)` })),
+  ];
+
+  const legacy = {
+    name: m.name,
+    type_and_alignment: `${m.size} ${m.type.toLowerCase()}${m.subtype ? ` (${m.subtype.toLowerCase()})` : ''}, ${m.alignment.toLowerCase()}`,
+    armor_class: String(m.ac),
+    hit_points: `${m.hp} (${m.hp_formula})`,
+    speed: m.speed,
+    attributes: STAT_ORDER.map((s) => `${s} ${m.stats[s]} (${signed(modOf(m.stats[s]))})`).join(', '),
+    saving_throws: savingThrows,
+    skills: m.skills ?? '',
+    senses: (m.senses ?? '').replace('Passive Perception', 'passive Perception'),
+    languages: m.languages ?? '',
+    challenge_rating: `${m.cr_str} (${(m.xp ?? 0).toLocaleString('en-US')} XP)`,
+    proficiency_bonus: `+${m.pb}`,
+    abilities,
+    actions: entryList('Actions'),
+    // Engine metadata (same keys the 2024 path stamps, minus format '2024'
+    // so displayFormat routes to the legacy Statblock.vue display).
+    format: '2014',
+    archetype: m.archetype,
+    archetype_source: m.archetype_source,
+  };
+  if (res.damage) legacy.damage_resistances = res.damage;
+  if (imm.damage) legacy.damage_immunities = imm.damage;
+  if (imm.conditions) legacy.condition_immunities = imm.conditions;
+  const legendary = entryList('Legendary Actions');
+  if (legendary.length) legacy.legendary_actions = legendary;
+  return legacy;
+}
+
+// ---------------------------------------------------------------------------
 // Deterministic corrections for correctable findings
 // ---------------------------------------------------------------------------
 
@@ -436,7 +575,7 @@ export function applyCorrections(monster, findings, { chassis }) {
     for (const entries of Object.values(out.sections ?? {})) {
       for (const entry of entries) {
         if (has('attack-band')) {
-          entry.text = entry.text.replace(/(Attack Roll:\*?\s*)\+(\d+)/g, (m, pre, n) =>
+          entry.text = entry.text.replace(/(Attack(?: Roll)?:\*?\s*)\+(\d+)/g, (m, pre, n) =>
             Math.abs(Number(n) - chassis.attack_bonus) > 1 ? `${pre}${signed(chassis.attack_bonus)}` : m
           );
         }
@@ -456,10 +595,10 @@ export function applyCorrections(monster, findings, { chassis }) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user' } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024' } = options;
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
   const assembleCtx = { cr, chassis, plan, archetypeName: archetype, archetypeSource };
-  const prompt = buildGenerationPrompt({ concept, description, cr, chassis, plan, caster });
+  const prompt = buildGenerationPrompt({ concept, description, cr, chassis, plan, caster, edition });
 
   const attempt = async (p) => {
     const raw = await callLLM(p, validateGenerationResponse);
@@ -467,8 +606,8 @@ export async function generateMonster2024(options, callLLM) {
     const parsed = parseGenerationResponse(raw);
     if (!parsed) return null;
     let monster = assembleMonster(parsed, assembleCtx);
-    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan }).findings, { chassis });
-    const result = lintStatblock(monster, { chassis, plan });
+    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition }).findings, { chassis });
+    const result = lintStatblock(monster, { chassis, plan, edition });
     return { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
   };
 
@@ -489,5 +628,7 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
       `Generated statblock failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`
     );
   }
-  return outcome.monster;
+  // 2014 edition ships in the legacy model shape: the existing Statblock.vue
+  // display, exports, encounter adapter, and inline editing all consume it.
+  return edition === '2014' ? toLegacyModel(outcome.monster) : outcome.monster;
 }

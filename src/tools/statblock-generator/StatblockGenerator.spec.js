@@ -187,14 +187,18 @@ describe('StatblockGenerator - Prompt Generation', () => {
     localStorageMock = new LocalStorageMock();
     global.localStorage = localStorageMock;
 
-    // This suite exercises the 2014 two-part generation flow; the form now
-    // defaults to 2024 rules, so pin the persisted toggle to 2014. Written to
-    // both the mock and the real jsdom store — depending on jsdom version the
-    // component's bare `localStorage` binding may resolve to either.
-    // The 2024 pipeline has its own suite (statblock-2024-flow.spec.js).
+    // This suite exercises the LEGACY 2014 two-part generation flow, which now
+    // lives behind an escape flag (2014 defaults to the engine path). Pin both
+    // the format toggle and the legacy flag. Written to both the mock and the
+    // real jsdom store — depending on jsdom version the component's bare
+    // `localStorage` binding may resolve to either.
+    // The engine pipeline has its own suites (statblock-2024-flow.spec.js,
+    // engine-2014.spec.js).
     localStorageMock.setItem('statblock-format', '2014');
+    localStorageMock.setItem('statblock-legacy-2014', '1');
     try {
       window.localStorage.setItem('statblock-format', '2014');
+      window.localStorage.setItem('statblock-legacy-2014', '1');
     } catch {
       /* jsdom storage unavailable — mock covers it */
     }
@@ -256,8 +260,10 @@ describe('StatblockGenerator - Prompt Generation', () => {
       await nameInput.setValue('Fire Drake');
 
       const selects = wrapper.findAll('select');
-      // First select is monsterType, second is CR based on form structure
-      await selects[0].setValue('Balanced');  // type
+      // First select is the Combat role (the Build select is retired; the
+      // legacy pipeline derives Build from the role via ARCHETYPE_TO_BUILD),
+      // second is CR based on form structure
+      await selects[0].setValue('balanced');  // role → Build 'Balanced'
       await selects[1].setValue('5');  // CR
 
       // Submit the form

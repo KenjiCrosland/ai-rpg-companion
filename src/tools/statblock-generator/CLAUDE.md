@@ -8,22 +8,32 @@ The Statblock Generator creates complete D&D 5e monster statblocks using a two-p
 
 ## Architecture
 
-**Two generation paths** behind a 2024/2014 rules toggle (default 2024,
-persisted to `localStorage['statblock-format']`; a loaded monster's own
-`format` field decides which display card renders):
+**Both editions are engine-first** behind a 2024/2014 rules toggle (default
+2024, persisted to `localStorage['statblock-format']`; a loaded monster's own
+`format` field decides which display renders). The contract is
+[docs/2024-architecture.md](/docs/2024-architecture.md); read it before
+touching anything under `chassis/` or `format-2024/`.
 
-- **2024 (engine-first)** — the contract is [docs/2024-architecture.md](/docs/2024-architecture.md);
-  read it before touching anything under `chassis/` or `format-2024/`.
-  CR + archetype → deterministic numbers (`chassis/chassis.mjs`), slot plan
-  (`chassis/slot-plan.mjs`), slot-filling prompt with numeric skeletons
-  (`format-2024/generate.mjs`), assembly that stamps engine numbers over the
-  LLM's flavor, lint with a correct/reject loop (`format-2024/lint.mjs`),
-  markdown render (`format-2024/render.mjs`), display via
-  `@/components/Statblock2024.vue` (read-only v1). The LLM never decides
-  numbers. Archetype select: Auto (micro resolve call when a concept exists,
+- **Shared engine**: CR + archetype → deterministic numbers
+  (`chassis/chassis.mjs`), slot plan (`chassis/slot-plan.mjs`), slot-filling
+  prompt with numeric skeletons, assembly that stamps engine numbers over the
+  LLM's flavor, edition-aware lint with a correct/reject loop
+  (`format-2024/lint.mjs`). The LLM never decides numbers. One Combat role
+  select for both editions: Auto (micro resolve call when a concept exists,
   random pick when blank), Balanced, or one of 8 roles.
-- **2014 (template-driven)** — the original two-part prompt flow described
-  below. Untouched by the 2024 work.
+- **2024 edition**: sections-based model, markdown render
+  (`format-2024/render.mjs`), display via `@/components/Statblock2024.vue`
+  (read-only v1).
+- **2014 edition**: same pipeline with 2014 phrasing rules/skeletons/exemplar,
+  then `toLegacyModel()` converts to the classic model shape — so the
+  existing `Statblock.vue` display (including inline editing), all three
+  exports, the encounter adapter, and enrichment work unchanged.
+- **Legacy two-part pipeline** (template-driven, pre-engine): reachable only
+  via `localStorage['statblock-legacy-2014'] = '1'` — kept as a fallback
+  until the engine 2014 path is production-verified; removal is a future
+  decision. `StatblockGenerator.spec.js` and the statblock e2e specs seed the
+  flag and cover it. Old saved monsters' Build values map onto archetypes for
+  regeneration (`BUILD_TO_ARCHETYPE`).
 
 ### Component Structure
 

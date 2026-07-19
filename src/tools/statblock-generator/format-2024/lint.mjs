@@ -71,6 +71,14 @@ const ATTACK_REF_RE = /\bmakes? (?:a|an|one|two|three|four|up to \w+) ((?:[A-Z][
 // Statblocks are third person; zero second-person occurrences in the corpus.
 const SECOND_PERSON_RE = /\byours?\b/i;
 
+// Blanket self-mitigation as a passive trait ("halves the damage against it")
+// — a defensive multiplier the numeric bands can't see, effectively doubling
+// HP outside the chassis budget. Zero occurrences in corpus Traits sections;
+// the correctly priced form is a Reaction (one attack per round), which stays
+// allowed. Edition-shared: classic Uncanny Dodge is a reaction in 2014 too.
+const SELF_MITIGATION_RE =
+  /(halves?|halving|reduces?)[^.]{0,50}damage (against|dealt to|it takes|taken)|damage (against|dealt to) (it|the \w+'?s?\w*) is (halved|reduced)|halves? the( attack'?s?)? damage/i;
+
 const SECTION_FOR_CATEGORY = {
   trait: 'Traits',
   action: 'Actions',
@@ -120,10 +128,11 @@ function maxExtracted(monster, re) {
   return max;
 }
 
-export function lintStatblock(monster, { chassis, plan } = {}) {
+export function lintStatblock(monster, { chassis, plan, edition = '2024' } = {}) {
   if (!monster || typeof monster !== 'object') {
     throw new TypeError('lintStatblock expects a statblock model object');
   }
+  const is2024 = edition !== '2014';
   const findings = [];
   const push = (rule, severity, message, expected) => {
     findings.push(expected === undefined ? { rule, severity, message } : { rule, severity, message, expected });
@@ -181,7 +190,8 @@ export function lintStatblock(monster, { chassis, plan } = {}) {
 
   // 2024 dropped the "from nonmagical attacks" qualifier — resistance and
   // immunity lines list bare damage types (zero corpus occurrences).
-  for (const field of ['resistances', 'immunities', 'vulnerabilities']) {
+  // 2014 phrasing legitimately uses the qualifier, so 2024-only.
+  for (const field of is2024 ? ['resistances', 'immunities', 'vulnerabilities'] : []) {
     if (monster[field] && /\s*from nonmagical attacks?/i.test(monster[field])) {
       push(
         'nonmagical', 'correctable',
@@ -198,29 +208,36 @@ export function lintStatblock(monster, { chassis, plan } = {}) {
 
   for (const { section, entry } of entriesOf(monster)) {
     const where = `${section}/${entry.name}`;
-    if (/(Melee|Ranged)\s+(Weapon|Spell)\s+Attack/.test(entry.text)) {
-      push('phrasing-2014', 'reject', `2014 attack phrasing in ${where} — use "Melee Attack Roll:" form`);
-    }
-    if (/to hit(?! with spell attacks)/.test(entry.text)) {
-      push('phrasing-to-hit', 'reject', `"to hit" phrasing in ${where} — 2024 attack lines carry no "to hit"`);
-    }
-    for (const m of entry.text.matchAll(/Saving Throw/g)) {
-      const before = entry.text.slice(0, m.index);
-      if (!new RegExp(`(${ABILITIES.join('|')})[*\\s]*$`).test(before)) {
-        push('phrasing-saving-throw', 'reject', `Saving throw in ${where} must name an ability: "*Constitution Saving Throw*: DC n"`);
-        break;
+    if (is2024) {
+      if (/(Melee|Ranged)\s+(Weapon|Spell)\s+Attack/.test(entry.text)) {
+        push('phrasing-2014', 'reject', `2014 attack phrasing in ${where} — use "Melee Attack Roll:" form`);
       }
-    }
-    const lower = LOWERCASE_CONDITION_RE.exec(entry.text);
-    if (lower) {
-      push('condition-caps', 'reject', `Lowercase condition "${lower[1]}" in ${where} — 2024 conditions are capitalized`);
-    }
-    if (HYBRID_SAVE_RE.test(entry.text)) {
-      push('phrasing-hybrid-save', 'reject', `Hybrid save phrasing in ${where} — the "*Ability Saving Throw*: DC n, <targets>" skeleton is the whole sentence; drop the "must make a" lead-in`);
-    }
-    const term = LOWERCASE_TERM_RE.exec(entry.text);
-    if (term) {
-      push('term-caps', 'reject', `Lowercase game term "${term[1]}" in ${where} — 2024 capitalizes Hit Points and Opportunity Attacks`);
+      if (/to hit(?! with spell attacks)/.test(entry.text)) {
+        push('phrasing-to-hit', 'reject', `"to hit" phrasing in ${where} — 2024 attack lines carry no "to hit"`);
+      }
+      for (const m of entry.text.matchAll(/Saving Throw/g)) {
+        const before = entry.text.slice(0, m.index);
+        if (!new RegExp(`(${ABILITIES.join('|')})[*\\s]*$`).test(before)) {
+          push('phrasing-saving-throw', 'reject', `Saving throw in ${where} must name an ability: "*Constitution Saving Throw*: DC n"`);
+          break;
+        }
+      }
+      const lower = LOWERCASE_CONDITION_RE.exec(entry.text);
+      if (lower) {
+        push('condition-caps', 'reject', `Lowercase condition "${lower[1]}" in ${where} — 2024 conditions are capitalized`);
+      }
+      if (HYBRID_SAVE_RE.test(entry.text)) {
+        push('phrasing-hybrid-save', 'reject', `Hybrid save phrasing in ${where} — the "*Ability Saving Throw*: DC n, <targets>" skeleton is the whole sentence; drop the "must make a" lead-in`);
+      }
+      const term = LOWERCASE_TERM_RE.exec(entry.text);
+      if (term) {
+        push('term-caps', 'reject', `Lowercase game term "${term[1]}" in ${where} — 2024 capitalizes Hit Points and Opportunity Attacks`);
+      }
+    } else {
+      // 2014 edition: the inverse phrasing gate — 2024-isms are the defect.
+      if (/(Melee|Ranged)(?: or Ranged)? Attack Roll:/.test(entry.text) || /\*?Failure:\*?/.test(entry.text)) {
+        push('phrasing-2024-in-2014', 'reject', `2024 phrasing in ${where} — 2014 blocks use "Melee Weapon Attack: +X to hit" and "must succeed on a DC n ... saving throw" forms, never "Attack Roll:" or "Failure:" markers`);
+      }
     }
     for (const ref of entry.text.matchAll(ATTACK_REF_RE)) {
       const name = ref[1].trim();
@@ -230,6 +247,9 @@ export function lintStatblock(monster, { chassis, plan } = {}) {
     }
     if (SECOND_PERSON_RE.test(entry.text)) {
       push('second-person', 'reject', `Second-person voice in ${where} — statblocks are third person ("of the creature's choice", never "of your choice")`);
+    }
+    if (section === 'Traits' && SELF_MITIGATION_RE.test(entry.text)) {
+      push('trait-mitigation', 'reject', `Blanket damage mitigation as a passive trait in ${where} — the chassis already prices defenses; single-attack mitigation must be a Reaction (once per round)`);
     }
     // Every damage expression must be internally consistent: N (XdY ± Z)
     // with N = floor-average. Calibrated against all 728 expressions in the
@@ -253,7 +273,8 @@ export function lintStatblock(monster, { chassis, plan } = {}) {
     if (monster.ac != null && Math.abs(monster.ac - chassis.ac) > 1) {
       push('ac-band', 'correctable', `AC ${monster.ac} outside ±1 of budget ${chassis.ac}`, chassis.ac);
     }
-    const maxAttack = maxExtracted(monster, /Attack Roll:\*?\s*\+(\d+)/g);
+    // Matches both editions: "Melee Attack Roll: +9" and "Melee Weapon Attack: +7 to hit".
+    const maxAttack = maxExtracted(monster, /Attack(?: Roll)?:\*?\s*\+(\d+)/g);
     if (maxAttack != null && Math.abs(maxAttack - chassis.attack_bonus) > 1) {
       push('attack-band', 'correctable', `Attack bonus +${maxAttack} outside ±1 of budget +${chassis.attack_bonus}`, chassis.attack_bonus);
     }

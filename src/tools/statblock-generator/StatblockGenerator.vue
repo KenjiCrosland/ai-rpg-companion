@@ -88,18 +88,14 @@
             </ParToggleGroup>
 
             <div class="form-grid">
-              <ParField v-if="format === '2014'" label="Build">
-                <ParSelect v-model="monsterType"
-                  :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
-              </ParField>
-              <ParField v-else label="Combat role">
+              <ParField label="Combat role">
                 <ParSelect v-model="archetype" :options="archetypeOptions" />
               </ParField>
               <ParField label="Challenge rating">
                 <ParSelect v-model="selectedChallengeRating" :options="challengeRatingData.fullArray" placeholder="CR" />
               </ParField>
             </div>
-            <p v-if="format === '2024'" class="archetype-help">{{ archetypeHelp }}</p>
+            <p class="archetype-help">{{ archetypeHelp }}</p>
 
             <ParField label="Description / special instructions" :optional="true">
               <ParTextarea v-model="monsterDescription" :rows="4"
@@ -172,11 +168,7 @@
           Re-rolls a fresh version, keeping the name and description. Adjust the build or CR first if you like.
         </p>
         <div class="regenerate-bar__grid">
-          <ParField v-if="format === '2014'" label="Build">
-            <ParSelect v-model="monsterType"
-              :options="['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense']" />
-          </ParField>
-          <ParField v-else label="Combat role">
+          <ParField label="Combat role">
             <ParSelect v-model="archetype" :options="archetypeOptions" />
           </ParField>
           <ParField label="Challenge rating">
@@ -184,7 +176,7 @@
           </ParField>
         </div>
         <p
-          v-if="format === '2024' && monster?.archetype_source === 'auto' && monster?.archetype"
+          v-if="monster?.archetype_source === 'auto' && monster?.archetype"
           class="archetype-help"
         >
           Auto picked "{{ monster.archetype }}" for this monster — choose a role above to override it.
@@ -336,6 +328,27 @@ const archetypeOptions = [
     .map((k) => ({ label: k.charAt(0).toUpperCase() + k.slice(1), value: k })),
 ];
 const archetypeHelp = computed(() => ARCHETYPE_HELP[archetype.value] ?? '');
+
+// Legacy Build values map onto archetypes for regenerating pre-engine
+// monsters (the Build select itself is retired from the form).
+const BUILD_TO_ARCHETYPE = {
+  'Stronger Defense': 'defender',
+  'Stronger Offense': 'brute',
+  Balanced: 'balanced',
+  Random: 'auto',
+};
+// Reverse map so the legacy two-part pipeline (escape hatch below) can still
+// be steered from the Combat role select.
+const ARCHETYPE_TO_BUILD = {
+  defender: 'Stronger Defense',
+  brute: 'Stronger Offense',
+  balanced: 'Balanced',
+};
+
+// Escape hatch: the pre-engine 2014 two-part pipeline, kept as a reachable
+// fallback until the engine-generated 2014 path is production-verified
+// (plans/statblock-2014-archetype-retrofit.md). Not surfaced in the UI.
+const useLegacy2014 = () => localStorage.getItem('statblock-legacy-2014') === '1';
 
 // Which card renders: a loaded monster's own format wins; while generating
 // (monster is null) the form toggle decides.
@@ -619,10 +632,13 @@ function selectMonster(folderName = 'Uncategorized', index) {
   // Follow the selected monster's rules version so Regenerate re-rolls in the
   // same format; restore its archetype choice ('auto' when it was auto-picked).
   format.value = monster.value.format === '2024' ? '2024' : '2014';
-  if (monster.value.format === '2024') {
+  if (monster.value.archetype) {
     archetype.value = monster.value.archetype_source === 'auto'
       ? 'auto'
-      : (monster.value.archetype || 'auto');
+      : monster.value.archetype;
+  } else {
+    // Pre-engine monster: map its old Build value onto the archetype select.
+    archetype.value = BUILD_TO_ARCHETYPE[monster.value.monsterType] ?? 'auto';
   }
 }
 
@@ -810,8 +826,8 @@ async function generateStatblock() {
     return;
   }
 
-  if (format.value === '2024') {
-    await generateStatblock2024();
+  if (format.value === '2024' || !useLegacy2014()) {
+    await generateStatblockEngine(format.value);
     return;
   }
 
@@ -822,7 +838,9 @@ async function generateStatblock() {
   const promptOptions = {
     monsterName: monsterName.value,
     challengeRating: selectedChallengeRating.value || randomCR.toString(),
-    monsterType: monsterType.value,
+    // The Build select is retired; the legacy pipeline derives its Build
+    // value from the Combat role select.
+    monsterType: ARCHETYPE_TO_BUILD[archetype.value] ?? 'Random',
     monsterDescription: monsterDescription.value,
     caster: caster.value
   };
@@ -863,7 +881,7 @@ async function generateStatblock() {
   };
 
   finalMonster.monsterDescription = monsterDescription.value;
-  finalMonster.monsterType = monsterType.value;
+  finalMonster.monsterType = ARCHETYPE_TO_BUILD[archetype.value] ?? 'Random';
   finalMonster.selectedChallengeRating = selectedChallengeRating.value || getFirstNumber(finalMonster.challenge_rating);
   finalMonster.monsterName = monsterName.value || monster.name;
   finalMonster.caster = caster.value;
@@ -871,10 +889,11 @@ async function generateStatblock() {
   await saveGeneratedMonster(finalMonster);
 }
 
-// 2024 path: engine-first pipeline (chassis → slot plan → slot-filling prompt
-// → assemble → lint with correct/reject loop) via format-2024/generate.mjs.
-// The LLM never decides numbers; see docs/2024-architecture.md.
-async function generateStatblock2024() {
+// Engine path, both editions: chassis → slot plan → slot-filling prompt →
+// assemble → lint with correct/reject loop, via format-2024/generate.mjs.
+// The LLM never decides numbers; see docs/2024-architecture.md. 2014 edition
+// ships in the legacy model shape so the existing display/export chain works.
+async function generateStatblockEngine(edition) {
   loadingPart1.value = true;
   const crInput = selectedChallengeRating.value || String(Math.floor(Math.random() * 30) + 1);
   const cr = crNumberFor(crInput);
@@ -921,6 +940,7 @@ async function generateStatblock2024() {
         archetypeName,
         caster: caster.value,
         archetypeSource,
+        edition,
       },
       (prompt, validate) => generateGptResponse(prompt, validate, 3),
     );

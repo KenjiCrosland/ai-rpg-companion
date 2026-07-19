@@ -178,6 +178,26 @@ describe('each rule catches its violation class', () => {
     expect(rules(lint(broken))).toContain('second-person');
   });
 
+  test('trait-mitigation: blanket damage halving as a trait is rejected; as a Reaction it is allowed', () => {
+    const mitigationText = 'When an attacker hits it, the stalker halves the damage against it.';
+    const asTrait = {
+      ...cleanLurker,
+      sections: {
+        ...cleanLurker.sections,
+        Traits: [...cleanLurker.sections.Traits, { name: 'Uncanny Dodge', text: mitigationText }],
+      },
+    };
+    expect(rules(lint(asTrait, {}))).toContain('trait-mitigation');
+    const asReaction = {
+      ...cleanLurker,
+      sections: {
+        ...cleanLurker.sections,
+        Reactions: [{ name: 'Uncanny Dodge', text: mitigationText }],
+      },
+    };
+    expect(rules(lint(asReaction, {}))).not.toContain('trait-mitigation');
+  });
+
   test('condition-caps: lowercase condition word', () => {
     const broken = withAction(cleanLurker, 1, {
       text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target is knocked prone.',
