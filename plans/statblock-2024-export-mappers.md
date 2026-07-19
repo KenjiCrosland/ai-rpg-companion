@@ -1,9 +1,27 @@
-# Foundry VTT / Improved Initiative exports for 2024 statblocks
+# 2024 statblock interop: exports + cross-tool consumers
 
 ## Trigger
 
 User requests for Foundry/Improved Initiative export of a 2024-format block,
-or any session touching the export converters in `src/util/convertTo*.mjs`.
+any session touching the export converters in `src/util/convertTo*.mjs`, OR
+work on tools that consume the `monsters` store (encounter generator, NPC
+generator, Roll20 extension expectations).
+
+## Cross-tool consumer audit (2026-07-18, during production review)
+
+The encounter generator's `monster-adapter.mjs` normalizes 2024 blocks
+degraded-but-working: CR/XP resolve via the compat `challenge_rating` string,
+but ability scores default to 10s (reads `attributes`, not `stats`),
+Actions/Traits come out empty (reads `actions` arrays, not `sections`), and
+defenses are missed (reads `damage_immunities`, not `immunities`). Encounter
+AI context for 2024 monsters is therefore hollow until the adapter learns the
+2024 shape — the mapper below is the fix.
+
+Already shimmed inline (minimal fallbacks, done during review):
+- `EncounterGenerator.vue` `convertStatblockToPlainText` — crashed on 2024
+  blocks (`statblock.abilities.STR`); now falls back to `ac`/`hp`/`stats`.
+- `statblock-enrichment.mjs` prompt builder — now renders 2024 `stats`,
+  `sections`, and merged `immunities`/`resistances`.
 
 ## Problem
 

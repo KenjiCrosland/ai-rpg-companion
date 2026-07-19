@@ -1,13 +1,12 @@
 <template>
   <div ref="containerRef" :style="widthStyle" :class="`sb24-container ${effectiveColumns}`">
     <div v-if="loading" class="sb24-card">
-      <StatblockSkeletonPtOne />
+      <Statblock2024Skeleton />
     </div>
 
-    <!-- Role chip lives OUTSIDE the card: it's tool chrome, not part of the
-         canonical 2024 statblock (owner feedback, 2026-07-18). -->
+    <!-- No role chip here — the card stays canonical (owner call, 2026-07-18);
+         the auto-picked role surfaces in the Regenerate panel instead. -->
     <template v-else-if="monster">
-      <p v-if="roleLabel" class="sb24-role">{{ roleLabel }}</p>
       <!-- spec contract: support archetypes flag their solo weakness in the UI
            (archetype-chassis-spec.json solo_warning) -->
       <p v-if="monster.archetype === 'support'" class="sb24-solo-note">
@@ -78,13 +77,12 @@
           </p>
         </section>
       </div>
-      </div>
-    </template>
 
-    <!-- Footer bar: same events as Statblock.vue so the surrounding chrome
-         doesn't care which card is mounted. Read-only v1 — no inline editing
-         (see plans/statblock-2024-inline-editing.md). -->
-    <div v-if="monster && !loading && !readonly" class="card-footer-bar sb24-footer">
+      <!-- Footer bar lives inside the card like Statblock.vue's. Same events
+           so the surrounding chrome doesn't care which card is mounted.
+           Read-only v1 — no inline editing
+           (see plans/statblock-2024-inline-editing.md). -->
+      <div v-if="!readonly" class="card-footer-bar sb24-footer">
       <div class="card-footer-bar__actions">
         <CardFooterAction @click="$emit('move-to-folder')">
           <template #icon>📁</template>
@@ -111,14 +109,16 @@
         <template #icon>🗑️</template>
         Delete
       </CardFooterAction>
-    </div>
+      </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';
-import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
+import Statblock2024Skeleton from './skeletons/Statblock2024Skeleton.vue';
 
 const props = defineProps({
   monster: { type: Object, default: null },
@@ -154,13 +154,6 @@ const subtitle = computed(() => {
   const m = props.monster;
   const subtype = m.subtype ? ` (${m.subtype})` : '';
   return [`${m.size ?? ''} ${m.type ?? ''}${subtype}`.trim(), m.alignment].filter(Boolean).join(', ');
-});
-
-const roleLabel = computed(() => {
-  const m = props.monster;
-  if (!m.archetype) return '';
-  const name = m.archetype.charAt(0).toUpperCase() + m.archetype.slice(1);
-  return `Role: ${name}${m.archetype_source === 'auto' ? ' (auto-picked)' : ''}`;
 });
 
 const initiativeBonus = computed(() =>
@@ -267,18 +260,6 @@ onBeforeUnmount(() => {
   color: #5a5347;
 }
 
-.sb24-role {
-  margin: 0 0 0.8rem;
-  display: inline-block;
-  font-size: 1.15rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #5a5347;
-  background: #f3e9d5;
-  border: 1px solid #ddc9a3;
-  border-radius: 3px;
-  padding: 0.2rem 0.8rem;
-}
-
 .sb24-solo-note {
   margin: -0.2rem 0 0.8rem;
   font-size: 1.2rem;
@@ -297,21 +278,17 @@ onBeforeUnmount(() => {
    strips — cap the card (and its footer/chip), not the container, so the
    parent's column-toggle width detection keeps seeing the full width. */
 .sb24-container.one_column .sb24-card,
-.sb24-container.one_column .sb24-role {
+.sb24-container.one_column .sb24-solo-note {
   max-width: 44rem;
   margin-left: auto;
   margin-right: auto;
 }
 
-.sb24-container.one_column .sb24-role {
+.sb24-container.one_column .sb24-solo-note {
   display: block;
   width: fit-content;
 }
 
-.sb24-container.one_column .sb24-footer {
-  max-width: 44rem;
-  margin: 1.2rem auto 0;
-}
 
 .sb24-vitals,
 .sb24-abilities,
@@ -412,17 +389,17 @@ onBeforeUnmount(() => {
   color: #1a1712;
 }
 
-/* Footer bar: reuse the shared classes from Statblock.vue's bar so spacing
-   matches; minimal local styling. */
+/* Footer bar sits inside the card (matching Statblock.vue), separated by a
+   rule in the card's own palette. */
 .sb24-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.8rem;
-  margin-top: 1.2rem;
-  padding: 0.8rem 0.4rem 0;
-  border-top: 1px solid #e8e2d4;
+  margin-top: 1.8rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #e6dcc6;
 }
 
 .card-footer-bar__actions {

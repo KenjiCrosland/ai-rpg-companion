@@ -99,12 +99,10 @@ describe('Statblock2024', () => {
       expect(brute.find('.sb24-solo-note').exists()).toBe(false);
     });
 
-    test('role chip: absent without archetype, labeled when auto-picked', () => {
-      expect(mountCard(byName('Aboleth')).find('.sb24-role').exists()).toBe(false);
+    test('no role chip renders even with archetype fields (owner call: noise)', () => {
       const auto = mountCard({ ...byName('Aboleth'), archetype: 'lurker', archetype_source: 'auto' });
-      expect(auto.find('.sb24-role').text()).toBe('Role: Lurker (auto-picked)');
-      const manual = mountCard({ ...byName('Aboleth'), archetype: 'lurker', archetype_source: 'user' });
-      expect(manual.find('.sb24-role').text()).toBe('Role: Lurker');
+      expect(auto.find('.sb24-role').exists()).toBe(false);
+      expect(auto.text()).not.toContain('Role:');
     });
   });
 

@@ -193,6 +193,18 @@ describe('archetype resolve helpers', () => {
 // 2. Corrections and orchestration
 // ---------------------------------------------------------------------------
 describe('applyCorrections', () => {
+  test('strips 2014 nonmagical qualifiers from resistance fields', () => {
+    const { chassis, plan } = buildContext(4, 'lurker');
+    const dated = assembleMonster(
+      { ...llmFixture, resistances: 'Bludgeoning, Piercing, Slashing from nonmagical attacks' },
+      ctx()
+    );
+    const findings = lintStatblock(dated, { chassis, plan }).findings;
+    const fixed = applyCorrections(dated, findings, { chassis });
+    expect(fixed.resistances).toBe('Bludgeoning, Piercing, Slashing');
+    expect(lintStatblock(fixed, { chassis, plan }).ok).toBe(true);
+  });
+
   test('rewrites damage averages that disagree with their own dice', () => {
     const { chassis, plan } = buildContext(4, 'lurker');
     const drifted = assembleMonster(JSON.parse(JSON.stringify(llmFixture)), ctx());

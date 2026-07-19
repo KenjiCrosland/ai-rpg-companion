@@ -137,29 +137,54 @@ function formatStatblockAsText(statblock) {
   lines.push(`CR: ${cr}`);
   lines.push('');
 
-  // Ability scores (custom format: "STR 18 (+4), DEX 16 (+3)...")
+  // Ability scores (2014 custom format: "STR 18 (+4), DEX 16 (+3)...";
+  // 2024 format carries a stats map instead — render it equivalently so
+  // enrichment context isn't hollow for 2024 blocks.
   if (statblock.attributes) {
     lines.push('ABILITY SCORES:');
     lines.push(statblock.attributes);
     lines.push('');
+  } else if (statblock.stats) {
+    lines.push('ABILITY SCORES:');
+    lines.push(
+      Object.entries(statblock.stats)
+        .map(([ab, score]) => `${ab} ${score}`)
+        .join(', ')
+    );
+    lines.push('');
   }
 
-  // Core stats
-  if (statblock.armor_class) lines.push(`AC: ${statblock.armor_class}`);
-  if (statblock.hit_points) lines.push(`HP: ${statblock.hit_points}`);
+  // Core stats (2014 string fields, falling back to 2024 numeric fields)
+  const ac = statblock.armor_class ?? statblock.ac;
+  const hp = statblock.hit_points
+    ?? (statblock.hp_formula ? `${statblock.hp} (${statblock.hp_formula})` : statblock.hp);
+  if (ac != null) lines.push(`AC: ${ac}`);
+  if (hp != null) lines.push(`HP: ${hp}`);
   if (statblock.speed) lines.push(`Speed: ${statblock.speed}`);
   if (statblock.senses) lines.push(`Senses: ${statblock.senses}`);
   if (statblock.languages) lines.push(`Languages: ${statblock.languages}`);
   lines.push('');
 
-  // Defenses
+  // Defenses (2014 split fields; 2024 merges into resistances/immunities)
   if (statblock.damage_immunities) lines.push(`Damage Immunities: ${statblock.damage_immunities}`);
   if (statblock.damage_resistances) lines.push(`Damage Resistances: ${statblock.damage_resistances}`);
   if (statblock.damage_vulnerabilities) lines.push(`Damage Vulnerabilities: ${statblock.damage_vulnerabilities}`);
   if (statblock.condition_immunities) lines.push(`Condition Immunities: ${statblock.condition_immunities}`);
+  if (!statblock.damage_immunities && statblock.immunities) lines.push(`Immunities: ${statblock.immunities}`);
+  if (!statblock.damage_resistances && statblock.resistances) lines.push(`Resistances: ${statblock.resistances}`);
   if (statblock.saving_throws) lines.push(`Saving Throws: ${statblock.saving_throws}`);
   if (statblock.skills) lines.push(`Skills: ${statblock.skills}`);
   lines.push('');
+
+  // 2024-format sections ({Traits: [{name, text}], Actions: [...], ...})
+  if (statblock.sections) {
+    for (const [sectionName, entries] of Object.entries(statblock.sections)) {
+      if (!Array.isArray(entries) || entries.length === 0) continue;
+      lines.push(`${sectionName.toUpperCase()}:`);
+      entries.forEach((e) => lines.push(`${e.name}: ${e.text}`));
+      lines.push('');
+    }
+  }
 
   // Traits/Special Abilities (array format: [{name, description}])
   if (statblock.abilities && Array.isArray(statblock.abilities) && statblock.abilities.length > 0) {

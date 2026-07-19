@@ -128,6 +128,17 @@ describe('each rule catches its violation class', () => {
     expect(result.findings.find((f) => f.rule === 'damage-dice').expected).toBe(13);
   });
 
+  test('nonmagical: 2014 resistance qualifier flagged with the stripped value', () => {
+    const broken = {
+      ...cleanLurker,
+      immunities: 'Bludgeoning, Piercing, Slashing from nonmagical attacks; Frightened',
+    };
+    const result = lint(broken, {});
+    const finding = result.findings.find((f) => f.rule === 'nonmagical');
+    expect(finding.severity).toBe('correctable');
+    expect(finding.expected).toBe('Bludgeoning, Piercing, Slashing; Frightened');
+  });
+
   test('phrasing-hybrid-save: 2014 lead-in glued onto the 2024 skeleton', () => {
     const broken = withAction(cleanLurker, 2, {
       text: 'Each creature within 30 feet must make a *Dexterity Saving Throw*: DC 13, each creature within 30 feet. *Failure:* 21 (6d6) Psychic damage.',
@@ -146,6 +157,25 @@ describe('each rule catches its violation class', () => {
       text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage. The stalker can then move 10 feet without provoking opportunity attacks.',
     });
     expect(rules(lint(broken2))).toContain('term-caps');
+  });
+
+  test('undefined-attack-ref: referenced attack must exist in the statblock', () => {
+    const broken = withAction(cleanLurker, 0, {
+      text: 'The stalker makes two Shadow Claw attacks and can make one Phantom Fang attack.',
+    });
+    const result = lint(broken);
+    const finding = result.findings.find((f) => f.rule === 'undefined-attack-ref');
+    expect(finding.severity).toBe('reject');
+    expect(finding.message).toContain('Phantom Fang');
+    // The resolvable Shadow Claw reference in the clean block stays clean.
+    expect(rules(lint(cleanLurker))).not.toContain('undefined-attack-ref');
+  });
+
+  test('second-person: statblocks are third person', () => {
+    const broken = withAction(cleanLurker, 2, {
+      text: '*Dexterity Saving Throw*: DC 13, each creature of your choice within 30 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.',
+    });
+    expect(rules(lint(broken))).toContain('second-person');
   });
 
   test('condition-caps: lowercase condition word', () => {

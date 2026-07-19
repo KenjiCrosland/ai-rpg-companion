@@ -19,6 +19,25 @@
 export async function gotoTool(page, tool, opts = {}) {
   const pageId = opts.premium ? `${tool}-premium` : tool;
 
+  // Playwright contexts ARE incognito contexts, and newer Chromium exposes
+  // that through the storage-quota heuristic detectincognitojs uses — which
+  // makes every free-tier gate (canGenerateStatblock etc.) block with the
+  // "private browsing" toast before any API call. Older Chromium builds hid
+  // this, which is why the suite was green before a browser update. Stub the
+  // quota probe so the app sees a normal-profile-sized quota.
+  await page.addInitScript(() => {
+    const HUGE = 4 * 1024 * 1024 * 1024 * 1024; // 4 TiB — normal-profile-sized
+    // detectincognitojs's Chrome probe: legacy webkitTemporaryStorage quota
+    // compared against a heap-derived floor.
+    if (navigator.webkitTemporaryStorage?.queryUsageAndQuota) {
+      navigator.webkitTemporaryStorage.queryUsageAndQuota = (success) => success(0, HUGE);
+    }
+    // Newer detector versions use storage.estimate — stub both.
+    if (navigator.storage?.estimate) {
+      navigator.storage.estimate = async () => ({ usage: 0, quota: HUGE });
+    }
+  });
+
   // One-shot guard: set the page only on the FIRST load of this context.
   // addInitScript re-runs on every navigation (including reloads and in-app
   // navigateToTool jumps); without the guard it would clobber a cross-tool

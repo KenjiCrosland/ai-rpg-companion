@@ -30,6 +30,8 @@ test.describe('Per-tool main generate event', () => {
 
   test('a statblock generation fires generate { tool: statblock-generator }', async ({ page }) => {
     await mockLLM(page, 'statblock');
+    // Pin the 2014 flow (form defaults to 2024; fixtures are 2014 two-part).
+    await page.addInitScript(() => localStorage.setItem('statblock-format', '2014'));
     await gotoTool(page, 'statblock-generator', { premium: true });
 
     await page.locator('.generate-button').click();

@@ -183,6 +183,12 @@
             <ParSelect v-model="selectedChallengeRating" :options="challengeRatingData.fullArray" placeholder="CR" />
           </ParField>
         </div>
+        <p
+          v-if="format === '2024' && monster?.archetype_source === 'auto' && monster?.archetype"
+          class="archetype-help"
+        >
+          Auto picked "{{ monster.archetype }}" for this monster — choose a role above to override it.
+        </p>
         <ParButton class="regenerate-bar__button" variant="primary" :full-width="true"
           :disabled="loadingPart1 || loadingPart2" @click="generateStatblock">
           ↻ Regenerate

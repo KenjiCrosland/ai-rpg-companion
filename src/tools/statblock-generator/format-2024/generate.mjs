@@ -268,6 +268,8 @@ RULES — read first; they apply to every line of output:
    WRONG: "resistances": "Bludgeoning/Piercing/Slashing"
 5. Spell names are Title Case: Minor Illusion, Blindness/Deafness, Fear.
 6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock — if you created an action called "Spectral Saber", write "makes two Spectral Saber attacks". Never the bare "makes two attacks", and never an attack name that does not appear in this statblock's Actions.
+7. The statblock text is in-world only and third person. Never reference these instructions, rulebook editions ("2024", "5e"), or design terms ("legal condition", "budget"). Never "you"/"your" ("each creature of the warden's choice", not "of your choice"). Never write "(any race)" in the subtype — 2024 dropped it.
+8. Every attack you tell the creature to make ("makes one Shield Bash attack") MUST exist as a fully written attack action in this statblock. Define it or don't reference it.
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
@@ -405,6 +407,12 @@ export function applyCorrections(monster, findings, { chassis }) {
     for (const f of correctable.filter((x) => x.rule === 'saves')) {
       const ab = f.message.split(' ')[0];
       if (out.saves?.[ab] != null) out.saves[ab] = f.expected;
+    }
+  }
+
+  if (has('nonmagical')) {
+    for (const field of ['resistances', 'immunities', 'vulnerabilities']) {
+      if (out[field]) out[field] = out[field].replace(/\s*from nonmagical attacks?/gi, '');
     }
   }
 

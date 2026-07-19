@@ -63,6 +63,14 @@ const HYBRID_SAVE_RE =
 // occurrences across the corpus).
 const LOWERCASE_TERM_RE = /\b(hit points?|opportunity attacks?)\b/;
 
+// "make(s) a <Name> attack" references — every one must resolve to a defined
+// entry name (168 references across the corpus, zero dangling). Catches
+// blocks that tell the DM to make an attack that was never written.
+const ATTACK_REF_RE = /\bmakes? (?:a|an|one|two|three|four|up to \w+) ((?:[A-Z][\w'-]*\s?)+?) attacks?/g;
+
+// Statblocks are third person; zero second-person occurrences in the corpus.
+const SECOND_PERSON_RE = /\byours?\b/i;
+
 const SECTION_FOR_CATEGORY = {
   trait: 'Traits',
   action: 'Actions',
@@ -171,6 +179,23 @@ export function lintStatblock(monster, { chassis, plan } = {}) {
     }
   }
 
+  // 2024 dropped the "from nonmagical attacks" qualifier — resistance and
+  // immunity lines list bare damage types (zero corpus occurrences).
+  for (const field of ['resistances', 'immunities', 'vulnerabilities']) {
+    if (monster[field] && /\s*from nonmagical attacks?/i.test(monster[field])) {
+      push(
+        'nonmagical', 'correctable',
+        `"${field}" carries a 2014 "from nonmagical attacks" qualifier`,
+        monster[field].replace(/\s*from nonmagical attacks?/gi, '')
+      );
+    }
+  }
+
+  // Entry names any attack reference may resolve against (parentheticals
+  // like "(2/Day)" stripped, prefix matches allowed — mirrors the corpus
+  // calibration).
+  const entryNames = entriesOf(monster).map(({ entry }) => entry.name.replace(/\s*\(.*\)$/, ''));
+
   for (const { section, entry } of entriesOf(monster)) {
     const where = `${section}/${entry.name}`;
     if (/(Melee|Ranged)\s+(Weapon|Spell)\s+Attack/.test(entry.text)) {
@@ -196,6 +221,15 @@ export function lintStatblock(monster, { chassis, plan } = {}) {
     const term = LOWERCASE_TERM_RE.exec(entry.text);
     if (term) {
       push('term-caps', 'reject', `Lowercase game term "${term[1]}" in ${where} — 2024 capitalizes Hit Points and Opportunity Attacks`);
+    }
+    for (const ref of entry.text.matchAll(ATTACK_REF_RE)) {
+      const name = ref[1].trim();
+      if (!entryNames.some((n) => n === name || n.startsWith(name))) {
+        push('undefined-attack-ref', 'reject', `${where} references a "${name}" attack that is not defined anywhere in the statblock`);
+      }
+    }
+    if (SECOND_PERSON_RE.test(entry.text)) {
+      push('second-person', 'reject', `Second-person voice in ${where} — statblocks are third person ("of the creature's choice", never "of your choice")`);
     }
     // Every damage expression must be internally consistent: N (XdY ± Z)
     // with N = floor-average. Calibrated against all 728 expressions in the

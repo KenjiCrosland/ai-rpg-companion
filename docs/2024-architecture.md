@@ -86,8 +86,12 @@ never accept LLM numbers); missing required_slots reject the generation.
   lock the dropdown. The differentiator should be tasteable on the free tier.
 - **Dynamic labels.** One-line helper text under the select swaps with the selected
   archetype (e.g. Brute — "Hits hard, soaks damage, easy to hit. Ogres, zombies.").
-  Ground the examples in the spec's `srd_exemplars`. After generation, display the
-  chosen role, e.g. "Role: Lurker (auto-picked)" — the visible face of the feature.
+  Ground the examples in the spec's `srd_exemplars`.
+- **No role chip on the card** (owner reversal during production review,
+  2026-07-18): the "Role: Lurker (auto-picked)" chip read as noise against the
+  canonical card. The auto-picked role surfaces in the Regenerate panel instead
+  ("Auto picked X — choose a role above to override"), where it's actionable.
+  The support solo-warning note (spec `solo_warning`) stays above the card.
 - **2014 archetype retrofit is deferred.** Chassis/archetype math is edition-agnostic;
   a 2014 upgrade is mostly a renderer + prompt variant. Add a `plans/` entry for it
   during the step-5 session.

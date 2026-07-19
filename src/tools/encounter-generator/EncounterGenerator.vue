@@ -1173,11 +1173,14 @@ async function exportToMarkdown() {
 function convertStatblockToPlainText(statblock) {
   let text = `${statblock.name}\n`;
   text += `${statblock.size} ${statblock.type}, ${statblock.alignment}\n\n`;
-  text += `Armor Class: ${statblock.armor_class}\n`;
-  text += `Hit Points: ${statblock.hit_points}\n`;
+  // 2024-format statblocks carry numeric ac/hp + a stats map instead of the
+  // 2014 armor_class/hit_points/abilities fields — fall back accordingly
+  // (full interop: plans/statblock-2024-export-mappers.md).
+  text += `Armor Class: ${statblock.armor_class ?? statblock.ac}\n`;
+  text += `Hit Points: ${statblock.hit_points ?? (statblock.hp_formula ? `${statblock.hp} (${statblock.hp_formula})` : statblock.hp)}\n`;
   text += `Speed: ${statblock.speed}\n\n`;
 
-  const abilities = statblock.abilities;
+  const abilities = statblock.abilities?.STR != null ? statblock.abilities : (statblock.stats ?? {});
   text += `STR: ${abilities.STR} DEX: ${abilities.DEX} CON: ${abilities.CON} INT: ${abilities.INT} WIS: ${abilities.WIS} CHA: ${abilities.CHA}\n\n`;
 
   if (statblock.saving_throws) {
