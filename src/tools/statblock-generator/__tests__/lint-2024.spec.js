@@ -198,6 +198,19 @@ describe('each rule catches its violation class', () => {
     expect(rules(lint(asReaction, {}))).not.toContain('trait-mitigation');
   });
 
+  test('spell-dc-ability: DC must derive from the named ability (8 + PB + mod, ±1)', () => {
+    // cleanLurker: pb 2, CHA 8 (mod -1) → derived DC 9; declared 13 is off by 4.
+    const weak = withAction(cleanLurker, 2, {
+      text: 'The stalker casts spells, using Charisma as the spellcasting ability (spell save DC 13): At will: Minor Illusion.',
+    });
+    expect(rules(lint(weak, {}))).toContain('spell-dc-ability');
+    // WIS 14 (mod +2) → derived 12; declared 13 is within ±1.
+    const ok = withAction(cleanLurker, 2, {
+      text: 'The stalker casts spells, using Wisdom as the spellcasting ability (spell save DC 13): At will: Minor Illusion.',
+    });
+    expect(rules(lint(ok, {}))).not.toContain('spell-dc-ability');
+  });
+
   test('condition-caps: lowercase condition word', () => {
     const broken = withAction(cleanLurker, 1, {
       text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target is knocked prone.',

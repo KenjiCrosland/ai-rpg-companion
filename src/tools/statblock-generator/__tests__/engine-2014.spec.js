@@ -7,7 +7,7 @@
  * the legacy shape.
  */
 import {
-  generateMonster2024, assembleMonster, toLegacyModel, buildContext,
+  generateMonster2024, assembleMonster, toLegacyModel, buildContext, rerollEntry,
 } from '../format-2024/generate.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 
@@ -85,6 +85,17 @@ describe('toLegacyModel', () => {
     expect(legacy.senses).toContain('passive Perception'); // 2014 lowercase p
   });
 
+  test('defense classification is by condition vocabulary, not separator position', () => {
+    // Live finding: "immunities": "frightened" (no semicolon) filed a
+    // condition under Damage Immunities.
+    const noSemicolon = toLegacyModel({ ...internal, immunities: 'frightened' });
+    expect(noSemicolon.damage_immunities).toBeUndefined();
+    expect(noSemicolon.condition_immunities).toBe('frightened');
+    const mixed = toLegacyModel({ ...internal, immunities: 'poison, frightened, necrotic' });
+    expect(mixed.damage_immunities).toBe('poison, necrotic');
+    expect(mixed.condition_immunities).toBe('frightened');
+  });
+
   test('sections map to legacy arrays; merged immunities split', () => {
     expect(legacy.abilities).toEqual([
       { name: 'Umbral Veil', description: expect.stringContaining('invisible') },
@@ -110,6 +121,69 @@ describe('toLegacyModel', () => {
     expect(legacy.format).toBe('2014');
     expect(legacy.archetype).toBe('lurker');
     expect(legacy.legendary_uses).toBeUndefined();
+  });
+});
+
+describe('rerollEntry (engine-based inline edit re-rolls)', () => {
+  const legacy = toLegacyModel(assembleMonster(llm2014Fixture, ctx()));
+  const call = (responses) => {
+    const fn = jest.fn();
+    responses.forEach((r) => fn.mockResolvedValueOnce(JSON.stringify(r)));
+    return fn;
+  };
+
+  test('good re-roll returns a legacy-shaped entry in one call', async () => {
+    const callLLM = call([{ name: 'Shadow Rake', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' }]);
+    const entry = await rerollEntry(legacy, { kind: 'action', current: legacy.actions[1] }, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(entry).toEqual({ name: 'Shadow Rake', description: expect.stringContaining('+7 to hit') });
+  });
+
+  test('off-budget attack bonus is corrected, not retried', async () => {
+    const callLLM = call([{ name: 'Shadow Rake', text: 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' }]);
+    const entry = await rerollEntry(legacy, { kind: 'action', current: legacy.actions[1] }, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(entry.description).toContain('+7 to hit'); // lurker chassis attack
+  });
+
+  test('blanket-mitigation trait is rejected and retried', async () => {
+    const callLLM = call([
+      { name: 'Uncanny Dodge', text: 'When an attacker hits it, the stalker halves the damage against it.' },
+      { name: 'Umbral Veil', text: 'While in dim light or darkness, the stalker is invisible.' },
+    ]);
+    const entry = await rerollEntry(legacy, { kind: 'ability', current: legacy.abilities[0] }, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(entry.name).toBe('Umbral Veil');
+  });
+
+  test('references to undefined attacks are rejected', async () => {
+    const bad = { name: 'Command', text: 'The stalker makes one Phantom Fang attack.' };
+    const callLLM = call([bad, bad]);
+    await expect(
+      rerollEntry(legacy, { kind: 'action', current: legacy.actions[2] }, callLLM),
+    ).rejects.toThrow(/Phantom Fang/);
+  });
+
+  test('pre-engine monsters fall back to a balanced chassis at their displayed CR', async () => {
+    const preEngine = { ...legacy };
+    delete preEngine.archetype;
+    // Balanced CR 4 chassis attack is +6.
+    const callLLM = call([{ name: 'Bite', text: 'Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) piercing damage.' }]);
+    const entry = await rerollEntry(preEngine, { kind: 'action', current: legacy.actions[1] }, callLLM);
+    expect(entry.description).toContain('+6 to hit');
+  });
+
+  test('2024-shaped monsters re-roll under 2024 phrasing rules', async () => {
+    const internal = assembleMonster(llm2014Fixture, ctx());
+    const modern = { ...internal, format: '2024' };
+    // 2014 phrasing must be rejected for a 2024 monster; retry succeeds.
+    const callLLM = call([
+      { name: 'Shadow Rake', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' },
+      { name: 'Shadow Rake', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.' },
+    ]);
+    const entry = await rerollEntry(modern, { kind: 'action', current: { name: 'Shadow Claw' } }, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(entry.description).toContain('Attack Roll');
   });
 });
 

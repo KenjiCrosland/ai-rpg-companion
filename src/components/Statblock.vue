@@ -300,7 +300,10 @@ import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'v
 import CardFooterAction from './CardFooterAction.vue';
 import CRtoXP from '../data/cr-to-xp.json';
 import { generateGptResponse } from "@/util/ai-client.mjs";
-import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt, singleAbilityPrompt, singleActionPrompt, singleLegendaryActionPrompt } from "../prompts/statblock-edit-prompts.mjs";
+import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt } from "../prompts/statblock-edit-prompts.mjs";
+// Single-entry re-rolls run through the engine: budget-constrained skeletons
+// + single-entry lint, replacing the old template-based single*Prompt path.
+import { rerollEntry } from "@/tools/statblock-generator/format-2024/generate.mjs";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
 import StatblockAbilitiesSkeleton from './skeletons/StatblockAbilitiesSkeleton.vue';
@@ -499,20 +502,6 @@ const editMonsterValidation = (json) => {
     }
 };
 
-const singleItemValidation = (json) => {
-    try {
-        const item = JSON.parse(json);
-        if (Array.isArray(item)) {
-            return false;
-        }
-        if (!item.name || !item.description) {
-            return false;
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
 
 async function generateLegendaryActions(monster, userSuggestion) {
     if (!props.premium) {
@@ -560,17 +549,30 @@ async function generateAbilities(monster, userSuggestion) {
     }
 }
 
+// Current edit-state monster for re-roll context: the engine needs the
+// LIVE entry lists (for name references), not the pre-edit snapshot.
+function rerollContext() {
+    return {
+        ...editedMonster.value,
+        abilities: editedAbilities.value,
+        actions: editedActions.value,
+        legendary_actions: editedLegendaryActions.value,
+    };
+}
+
 async function regenerateAbility(index) {
     if (!props.premium) {
         alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
         return;
     }
     const currentAbility = editedAbilities.value[index];
-    const prompt = singleAbilityPrompt(editedMonster.value, currentAbility);
     try {
         loadingAbilityIndices.value.add(index);
-        const newAbilityObject = await generateGptResponse(prompt, singleItemValidation, 3);
-        const newAbility = JSON.parse(newAbilityObject);
+        const newAbility = await rerollEntry(
+            rerollContext(),
+            { kind: 'ability', current: currentAbility },
+            (p, v) => generateGptResponse(p, v, 3),
+        );
         editedAbilities.value[index] = newAbility;
     } catch (e) {
         logger.error('Error regenerating ability:', e);
@@ -586,11 +588,13 @@ async function regenerateAction(index) {
         return;
     }
     const currentAction = editedActions.value[index];
-    const prompt = singleActionPrompt(editedMonster.value, currentAction);
     try {
         loadingActionIndices.value.add(index);
-        const newActionObject = await generateGptResponse(prompt, singleItemValidation, 3);
-        const newAction = JSON.parse(newActionObject);
+        const newAction = await rerollEntry(
+            rerollContext(),
+            { kind: 'action', current: currentAction },
+            (p, v) => generateGptResponse(p, v, 3),
+        );
         editedActions.value[index] = newAction;
     } catch (e) {
         logger.error('Error regenerating action:', e);
@@ -606,11 +610,13 @@ async function regenerateLegendaryAction(index) {
         return;
     }
     const currentAction = editedLegendaryActions.value[index];
-    const prompt = singleLegendaryActionPrompt(editedMonster.value, currentAction);
     try {
         loadingLegendaryActionIndices.value.add(index);
-        const newActionObject = await generateGptResponse(prompt, singleItemValidation, 3);
-        const newAction = JSON.parse(newActionObject);
+        const newAction = await rerollEntry(
+            rerollContext(),
+            { kind: 'legendary', current: currentAction },
+            (p, v) => generateGptResponse(p, v, 3),
+        );
         editedLegendaryActions.value[index] = newAction;
     } catch (e) {
         logger.error('Error regenerating legendary action:', e);

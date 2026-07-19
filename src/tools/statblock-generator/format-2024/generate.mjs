@@ -17,7 +17,7 @@ import srdMonsters from '@/data/srd52-monsters.json';
 import challengeRatings from '@/data/challengeRatings.json';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
-import { lintStatblock, avgDice } from './lint.mjs';
+import { lintStatblock, avgDice, CONDITIONS } from './lint.mjs';
 
 export const ARCHETYPE_NAMES = Object.keys(spec.archetypes).filter((n) => !n.startsWith('_'));
 
@@ -310,7 +310,7 @@ STRUCTURE (exact requirements):
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
 ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
-` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..."` : ''}
+` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Prefer well-known SRD spells.` : ''}
 
 Ability scores: choose scores that fit the concept (the primary ability highest).
 
@@ -367,7 +367,7 @@ STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
 ${slotInstructions(plan, numbers)}
-${novaAvg ? `- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..."\n` : ''}
+${novaAvg ? `- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Use only well-known SRD spells, comma-separated on one line — never hyphens or bullet lists.\n` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- The Legendary Actions preamble must name the creature ("The <creature name> can take 3 legendary actions..."), never "The monster".\n` : ''}
 Return ONLY a JSON object in exactly this shape (no markdown fences, no commentary). Omit optional fields rather than emitting empty ones. Do NOT include ac, hp, CR, XP, or PB — those are stamped for you:
 
 ${JSON.stringify(schema, null, 2)}
@@ -473,9 +473,17 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
  */
 export function toLegacyModel(m) {
   const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: e.text }));
+  // Split merged 2024-style defense lines into 2014's damage vs condition
+  // fields. Classification is by token against the known condition
+  // vocabulary, NOT by the semicolon — the LLM doesn't always emit the
+  // separator (live finding: "immunities": "frightened" landed under
+  // Damage Immunities).
+  const conditionSet = new Set([...CONDITIONS, 'Exhaustion'].map((c) => c.toLowerCase()));
   const splitDefense = (value) => {
-    const [damage = '', conditions = ''] = (value ?? '').split(';').map((s) => s.trim());
-    return { damage, conditions };
+    const tokens = (value ?? '').split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+    const damage = tokens.filter((t) => !conditionSet.has(t.toLowerCase()));
+    const conditions = tokens.filter((t) => conditionSet.has(t.toLowerCase()));
+    return { damage: damage.join(', '), conditions: conditions.join(', ') };
   };
 
   const imm = splitDefense(m.immunities);
@@ -588,6 +596,124 @@ export function applyCorrections(monster, findings, { chassis }) {
     }
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Single-entry re-roll (inline edit) — engine-based
+// ---------------------------------------------------------------------------
+
+const REROLL_SECTION = { ability: 'Traits', action: 'Actions', legendary: 'Legendary Actions' };
+
+function parseLegacyAttributes(attributes) {
+  const stats = {};
+  for (const m of (attributes ?? '').matchAll(/(STR|DEX|CON|INT|WIS|CHA)\s+(\d+)/g)) {
+    stats[m[1]] = Number(m[2]);
+  }
+  return Object.keys(stats).length === 6 ? stats : null;
+}
+
+/** All entries of a monster (either shape) as { section, name, text } rows. */
+function entryRows(monster) {
+  if (monster.sections) {
+    return Object.entries(monster.sections).flatMap(([section, list]) =>
+      (list ?? []).map((e) => ({ section, name: e.name, text: e.text })));
+  }
+  const rows = [];
+  for (const [field, section] of [['abilities', 'Traits'], ['actions', 'Actions'], ['legendary_actions', 'Legendary Actions']]) {
+    for (const e of monster[field] ?? []) rows.push({ section, name: e.name, text: e.description ?? e.text ?? '' });
+  }
+  return rows;
+}
+
+export function validateEntryResponse(jsonString) {
+  const parsed = tryParse(jsonString);
+  return !!parsed && typeof parsed.name === 'string' && parsed.name.trim() !== ''
+    && typeof parsed.text === 'string' && parsed.text.trim() !== '';
+}
+
+/**
+ * Re-roll one entry of a saved monster with engine budgets and lint.
+ *
+ * Context recovery: engine monsters carry cr/archetype; pre-engine monsters
+ * fall back to a balanced chassis at their displayed CR (still stricter than
+ * the old template prompts). Edition keys off the monster's own format field.
+ * Lint runs on a pseudo-block where every OTHER entry is a name-only stub —
+ * so references resolve, but old off-budget text can't false-trigger bands.
+ */
+export async function rerollEntry(monster, { kind, current }, callLLM) {
+  const section = REROLL_SECTION[kind];
+  if (!section) throw new Error(`Unknown re-roll kind: ${kind}`);
+  const edition = monster.format === '2024' ? '2024' : '2014';
+
+  // First numeric token, tolerant of "CR 5 (1,800 XP)" style prefixes.
+  const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
+  const cr = monster.cr ?? crNumberFor(crToken ?? '');
+  const { chassis, plan } = buildContext(cr, monster.archetype ?? 'balanced');
+  const numbers = damageBudgetFor(cr, chassis, plan);
+  const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);
+  const pb = typeof monster.pb === 'number' ? monster.pb : chassis.pb;
+
+  const rows = entryRows(monster);
+  const otherNames = rows.filter((r) => r.name !== current.name).map((r) => r.name);
+  const currentText = current.description ?? current.text ?? '';
+  // If other entries reference this one by name, a rename would break them.
+  const referenced = rows.some((r) => r.name !== current.name && current.name && r.text.includes(current.name));
+
+  const skeletons = edition === '2014'
+    ? `- Attack: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <damage type> damage. (Ranged Weapon Attack: same numbers, range 60 ft.) That damage is the attack's TOTAL — no extra "plus X" riders.
+- Save effect: must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${numbers.total} (${damageDiceFor(numbers.total)}) <type> damage on a failed save, or half as much on a successful one. Conditions lowercase ("knocked prone", "frightened"); "hit points" lowercase; never "Attack Roll:" or "Failure:" markers.`
+    : `- Attack: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <Damage Type> damage. (Ranged: same numbers, range 60 ft.)
+- Save effect: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targets>. *Failure:* ... *Success:* Half damage only. Conditions Capitalized ("has the Prone condition"); never "Melee Weapon Attack" or "to hit".`;
+
+  const prompt = `You are rewriting ONE entry of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock with fresh flavor. The numbers are fixed — never invent different ones.
+
+THE MONSTER: ${monster.name}, CR ${crKeyFor(cr)}${monster.archetype ? `, combat role: ${monster.archetype}` : ''}.
+Its other entries (do not duplicate their mechanics): ${otherNames.join('; ') || 'none'}.
+
+REWRITE THIS ${section === 'Traits' ? 'TRAIT' : section === 'Actions' ? 'ACTION' : 'LEGENDARY ACTION'}:
+"${current.name}": ${currentText}
+
+FIXED NUMBER SKELETONS (use EXACTLY these if the new entry attacks or forces a save):
+${skeletons}
+
+RULES:
+- Third person, in-world only. No traits that halve/reduce incoming damage or grant resistance to everything.
+- Any attack you reference by name must be one of the other entries listed above${referenced ? `.\n- KEEP the name "${current.name}" — other entries reference it by name` : ', or omit attack references'}.
+
+Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
+
+  const attempt = async (p) => {
+    const raw = await callLLM(p, validateEntryResponse);
+    if (!raw) return null;
+    const parsed = tryParse(raw);
+    if (!parsed) return null;
+    // Pseudo-block: full text only for the new entry; the rest are name stubs.
+    const sections = {};
+    for (const r of rows) {
+      if (r.name === current.name && r.section === section) continue;
+      (sections[r.section] ??= []).push({ name: r.name, text: '' });
+    }
+    (sections[section] ??= []).push({ name: parsed.name, text: parsed.text });
+    let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
+    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition }).findings, { chassis });
+    const result = lintStatblock(pseudo, { chassis, edition });
+    const entry = pseudo.sections[section].find((e) => e.name === parsed.name && e.text);
+    return { entry, rejects: result.findings.filter((f) => f.severity === 'reject') };
+  };
+
+  let outcome = await attempt(prompt);
+  if (!outcome) throw new Error('Empty or malformed re-roll response');
+  if (outcome.rejects.length) {
+    const retry = await attempt(`${prompt}
+
+Your previous attempt was rejected for these reasons — fix ALL of them this time:
+${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
+    if (retry) outcome = retry;
+  }
+  if (outcome.rejects.length || !outcome.entry) {
+    throw new Error(`Re-rolled entry failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`);
+  }
+  return { name: outcome.entry.name, description: outcome.entry.text };
 }
 
 // ---------------------------------------------------------------------------

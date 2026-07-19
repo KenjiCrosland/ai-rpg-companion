@@ -43,8 +43,9 @@ const XP_BY_CR = {
 const ABILITIES = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
 
 // 2024 conditions that must render capitalized. "Exhaustion" is excluded —
-// it appears legitimately in prose forms the SRD itself uses.
-const CONDITIONS = [
+// it appears legitimately in prose forms the SRD itself uses. Exported for
+// the legacy converter's damage-vs-condition immunity classification.
+export const CONDITIONS = [
   'Blinded', 'Charmed', 'Deafened', 'Frightened', 'Grappled', 'Incapacitated',
   'Invisible', 'Paralyzed', 'Petrified', 'Poisoned', 'Prone', 'Restrained',
   'Stunned', 'Unconscious',
@@ -76,6 +77,19 @@ const SECOND_PERSON_RE = /\byours?\b/i;
 // HP outside the chassis budget. Zero occurrences in corpus Traits sections;
 // the correctly priced form is a Reaction (one attack per round), which stays
 // allowed. Edition-shared: classic Uncanny Dodge is a reaction in 2014 too.
+// Spell save DCs must derive from the named ability: DC = 8 + PB + mod
+// (±1 — one official block deviates by exactly 1). Matches both editions'
+// phrasings. The fix direction is raising the ABILITY to meet the budget DC,
+// never lowering the DC — so this is a reject, not a correctable.
+const SPELL_DC_RES = [
+  /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability \(spell save DC (\d+)/,
+  /spellcasting ability is (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s*\(spell save DC (\d+)/,
+];
+const ABILITY_ABBR = {
+  Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON',
+  Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA',
+};
+
 const SELF_MITIGATION_RE =
   /(halves?|halving|reduces?)[^.]{0,50}damage (against|dealt to|it takes|taken)|damage (against|dealt to) (it|the \w+'?s?\w*) is (halved|reduced)|halves? the( attack'?s?)? damage/i;
 
@@ -250,6 +264,16 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024' } = {})
     }
     if (section === 'Traits' && SELF_MITIGATION_RE.test(entry.text)) {
       push('trait-mitigation', 'reject', `Blanket damage mitigation as a passive trait in ${where} — the chassis already prices defenses; single-attack mitigation must be a Reaction (once per round)`);
+    }
+    if (monster.stats && monster.pb != null) {
+      for (const re of SPELL_DC_RES) {
+        const sc = re.exec(entry.text);
+        if (!sc) continue;
+        const derived = 8 + monster.pb + modOf(monster.stats[ABILITY_ABBR[sc[1]]]);
+        if (Math.abs(Number(sc[2]) - derived) > 1) {
+          push('spell-dc-ability', 'reject', `${where}: spell save DC ${sc[2]} doesn't derive from ${sc[1]} (8 + PB + mod = ${derived}) — raise the spellcasting ability's score to support the DC`);
+        }
+      }
     }
     // Every damage expression must be internally consistent: N (XdY ± Z)
     // with N = floor-average. Calibrated against all 728 expressions in the

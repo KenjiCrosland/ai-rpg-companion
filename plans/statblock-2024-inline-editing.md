@@ -1,9 +1,34 @@
-# Inline editing for the 2024 statblock card
+# Inline editing for the 2024 card + engine-based edit re-rolls (both editions)
 
 ## Trigger
 
-User requests to edit a generated 2024 statblock beyond regenerating it, or
-any session porting editing features to `Statblock2024.vue`.
+User requests to edit a generated 2024 statblock beyond regenerating it, any
+session porting editing features to `Statblock2024.vue`, or any session
+touching the single-ability re-roll prompts (`statblock-edit-prompts.mjs`).
+
+## Engine-based re-rolls — SINGLE-ENTRY PART SHIPPED (2026-07-19)
+
+`rerollEntry()` in `format-2024/generate.mjs` now powers the three
+single-entry re-rolls in `Statblock.vue` (design below, as built). STILL
+TEMPLATE-BASED and in this plan's remaining scope: the section-level re-rolls
+(`monsterAbilitiesPrompt`/`actionsPrompt`/`legendaryActionsPrompt`) — the
+last statblock-tool path where LLM numbers bypass the engine — plus the
+2024-card editing surface itself. The `single*Prompt` exports in
+`src/prompts/statblock-edit-prompts.mjs` are now unused (the dungeon
+generator has its own copy; don't confuse them).
+
+Original design (implemented for single entries):
+
+- `buildContext(cr, archetype)` → the same attack/save/damage skeletons the
+  full pipeline uses, edition phrasing rules per the monster's `format` field
+  (not the UI toggle), rest-of-block as context.
+- Returned entry passes single-entry lint (phrasing gates, damage-dice,
+  undefined-attack-ref, spell-dc-ability already operate per-entry; band
+  checks need the chassis passed in). Reject → one retry, as in generation.
+- Context recovery: engine monsters carry `cr`/`archetype` → exact rebuild.
+  Pre-engine monsters lack `archetype` → balanced chassis at displayed CR
+  (still better than templates). This is the templates' last generation-side
+  consumer in the statblock tool; the dungeon generator keeps its own.
 
 ## Problem
 

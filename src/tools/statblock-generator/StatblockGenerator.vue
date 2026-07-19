@@ -272,7 +272,6 @@ import StatblockExports from './components/StatblockExports.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import challengeRatingData from '@/data/challengeRatings.json';
-import creatureTemplates from '@/data/creatureTemplates.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
