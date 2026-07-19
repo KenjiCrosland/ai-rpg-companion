@@ -118,6 +118,30 @@ describe('each rule catches its violation class', () => {
     expect(rules(lint(broken))).toContain('phrasing-saving-throw');
   });
 
+  test('attack-damage-band: per-attack damage outside the budget band', () => {
+    // Lurker CR 4 per-attack budget is 9; the fixture's 13 is 1.44× over.
+    const result = lint(cleanLurker, { perAttack: 9 });
+    const finding = result.findings.find((f) => f.rule === 'attack-damage-band');
+    expect(finding.severity).toBe('correctable'); // single expression → clamp
+    expect(finding.expected).toBe(9);
+    expect(finding.loc.entry).toBe('Shadow Claw');
+    // Multi-expression entries route to the fix call instead.
+    const rider = withAction(cleanLurker, 1, {
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage plus 10 (3d6) Necrotic damage.',
+    });
+    const multi = lint(rider, { perAttack: 9 }).findings.find((f) => f.rule === 'attack-damage-band');
+    expect(multi.severity).toBe('reject');
+    // Recharge novas are exempt — 27 is 3× the budget yet produces no
+    // finding once the entry is a recharge (it replaces Shadow Claw here).
+    const nova = withAction(cleanLurker, 1, {
+      name: 'Death Lunge (Recharge 5-6)',
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 27 (6d8) Slashing damage.',
+    });
+    expect(rules(lint(nova, { perAttack: 9 }))).not.toContain('attack-damage-band');
+    // Without perAttack (corpus / context-free lint) the rule never runs.
+    expect(rules(lint(cleanLurker, {}))).not.toContain('attack-damage-band');
+  });
+
   test('damage-dice: listed average disagrees with its own dice', () => {
     // 2d8 + 4 averages 13; a listed 15 is LLM arithmetic drift.
     const broken = withAction(cleanLurker, 1, {

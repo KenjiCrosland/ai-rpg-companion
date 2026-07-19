@@ -198,13 +198,12 @@
             <button class="add-button" v-if="isEditing && !loadingActions" @click="addAction">Add Action</button>
             <div>
                 <h3 v-if="editedLegendaryActions.length > 0 || isEditing">Legendary Actions</h3>
-                <p class="statblock-p" v-if="editedLegendaryActions.length > 0">The monster can take {{
-                    editedLegendaryActions.length }}
-                    legendary {{ editedLegendaryActions.length === 1 ? 'action' : 'actions' }}{{
-                        editedLegendaryActions.length > 1 ? ', choosing from the options below' : '' }}. Only one legendary
-                    action
-                    option can be used at a time and only at the end of another creature's turn. The monster regains
-                    spent legendary actions at the start of its turn.</p>
+                <!-- Official 2014 convention: 3 uses per round regardless of
+                     how many options are listed; named, not "The monster". -->
+                <p class="statblock-p" v-if="editedLegendaryActions.length > 0">{{ legendaryOwnerName }} can take 3
+                    legendary actions, choosing from the options below. Only one legendary action
+                    option can be used at a time and only at the end of another creature's turn.
+                    {{ legendaryOwnerName }} regains spent legendary actions at the start of its turn.</p>
                 <p class="statblock-p" v-if="isEditing && editedLegendaryActions.length === 0">Add some legendary
                     actions to the monster.
                     You can either add them one at at time manually or click "Generate legendary actions" to
@@ -300,10 +299,10 @@ import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'v
 import CardFooterAction from './CardFooterAction.vue';
 import CRtoXP from '../data/cr-to-xp.json';
 import { generateGptResponse } from "@/util/ai-client.mjs";
-import { legendaryActionsPrompt, actionsPrompt, monsterAbilitiesPrompt } from "../prompts/statblock-edit-prompts.mjs";
-// Single-entry re-rolls run through the engine: budget-constrained skeletons
-// + single-entry lint, replacing the old template-based single*Prompt path.
-import { rerollEntry } from "@/tools/statblock-generator/format-2024/generate.mjs";
+// All edit re-rolls (single-entry and whole-section) run through the engine:
+// budget-constrained skeletons + lint, replacing the template-based
+// statblock-edit-prompts path entirely.
+import { rerollEntry, rerollSection } from "@/tools/statblock-generator/format-2024/generate.mjs";
 import StatblockSkeletonPtOne from './StatblockSkeletonPtOne.vue';
 import StatblockSkeletonPtTwo from './StatblockSkeletonPtTwo.vue';
 import StatblockAbilitiesSkeleton from './skeletons/StatblockAbilitiesSkeleton.vue';
@@ -484,36 +483,21 @@ const cancelChanges = () => {
     editedActions.value = [...props.monster.actions];
     editedLegendaryActions.value = props.monster.legendary_actions ? [...props.monster.legendary_actions] : [];
 };
-const editMonsterValidation = (json) => {
-    try {
-        const actions = JSON.parse(json);
-        if (!Array.isArray(actions)) {
-            return false;
-        }
-
-        for (const action of actions) {
-            if (!action.name || !action.description) {
-                return false;
-            }
-        }
-        return true;
-    } catch (e) {
-        return false;
-    }
-};
-
-
 async function generateLegendaryActions(monster, userSuggestion) {
     if (!props.premium) {
         alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
         return;
     }
-    const prompt = legendaryActionsPrompt(monster, userSuggestion);
     try {
         loadingLegendaryActions.value = true;
-        const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
-        const actions = JSON.parse(newActionsObject);
-        editedLegendaryActions.value = actions;
+        editedLegendaryActions.value = await rerollSection(
+            rerollContext(),
+            { kind: 'legendary', suggestion: userSuggestion },
+            (p, v) => generateGptResponse(p, v, 3),
+        );
+    } catch (e) {
+        logger.error('Error regenerating legendary actions:', e);
+        alert('Failed to regenerate legendary actions. Please try again.');
     } finally {
         loadingLegendaryActions.value = false;
     }
@@ -523,12 +507,16 @@ async function generateActions(monster, userSuggestion) {
         alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
         return;
     }
-    const prompt = actionsPrompt(monster, userSuggestion);
     try {
         loadingActions.value = true;
-        const newActionsObject = await generateGptResponse(prompt, editMonsterValidation, 3);
-        const actions = JSON.parse(newActionsObject);
-        editedActions.value = actions;
+        editedActions.value = await rerollSection(
+            rerollContext(),
+            { kind: 'actions', suggestion: userSuggestion },
+            (p, v) => generateGptResponse(p, v, 3),
+        );
+    } catch (e) {
+        logger.error('Error regenerating actions:', e);
+        alert('Failed to regenerate actions. Please try again.');
     } finally {
         loadingActions.value = false;
     }
@@ -538,16 +526,25 @@ async function generateAbilities(monster, userSuggestion) {
         alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
         return;
     }
-    const prompt = monsterAbilitiesPrompt(monster, userSuggestion);
     try {
         loadingAbilities.value = true;
-        const newAbilitiesObject = await generateGptResponse(prompt, editMonsterValidation, 3);
-        const abilities = JSON.parse(newAbilitiesObject);
-        editedAbilities.value = abilities;
+        editedAbilities.value = await rerollSection(
+            rerollContext(),
+            { kind: 'abilities', suggestion: userSuggestion },
+            (p, v) => generateGptResponse(p, v, 3),
+        );
+    } catch (e) {
+        logger.error('Error regenerating abilities:', e);
+        alert('Failed to regenerate abilities. Please try again.');
     } finally {
         loadingAbilities.value = false;
     }
 }
+
+const legendaryOwnerName = computed(() => {
+    const name = props.monster?.name?.trim();
+    return name ? `The ${name.toLowerCase()}` : 'The monster';
+});
 
 // Current edit-state monster for re-roll context: the engine needs the
 // LIVE entry lists (for name references), not the pre-edit snapshot.

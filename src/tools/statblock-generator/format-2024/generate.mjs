@@ -12,6 +12,7 @@
  * injected ((prompt, validate) => Promise<string>) so the pipeline is testable
  * without the AI client; the component passes generateGptResponse.
  */
+import { seedLeakTokens } from './concept-seeds.mjs';
 import spec from '@/data/archetype-chassis-spec.json';
 import srdMonsters from '@/data/srd52-monsters.json';
 import challengeRatings from '@/data/challengeRatings.json';
@@ -367,7 +368,7 @@ STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
 ${slotInstructions(plan, numbers)}
-${novaAvg ? `- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Use only well-known SRD spells, comma-separated on one line — never hyphens or bullet lists.\n` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- The Legendary Actions preamble must name the creature ("The <creature name> can take 3 legendary actions..."), never "The monster".\n` : ''}
+${novaAvg ? `- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Use only well-known SRD spells, comma-separated on one line — never hyphens or bullet lists.\n` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders one automatically. Provide only the option entries themselves.\n` : ''}
 Return ONLY a JSON object in exactly this shape (no markdown fences, no commentary). Omit optional fields rather than emitting empty ones. Do NOT include ac, hp, CR, XP, or PB — those are stamped for you:
 
 ${JSON.stringify(schema, null, 2)}
@@ -532,12 +533,35 @@ export function toLegacyModel(m) {
 // Deterministic corrections for correctable findings
 // ---------------------------------------------------------------------------
 
+// Reject-severity rules that are nonetheless deterministically fixable by
+// string surgery — no LLM call needed. Applied inside applyCorrections so
+// they vanish before the fix ladder ever considers a call.
+const LOWERCASE_CONDITIONS_G = new RegExp(
+  `\\b(${CONDITIONS.map((c) => c.toLowerCase()).join('|')})\\b`, 'g'
+);
+const DETERMINISTIC_TEXT_FIXES = [
+  ['term-caps', (t) => t
+    .replace(/\bhit points\b/g, 'Hit Points').replace(/\bhit point\b/g, 'Hit Point')
+    .replace(/\bopportunity attacks\b/g, 'Opportunity Attacks')
+    .replace(/\bopportunity attack\b/g, 'Opportunity Attack')],
+  ['condition-caps', (t) => t.replace(LOWERCASE_CONDITIONS_G, (m) => m[0].toUpperCase() + m.slice(1))],
+  ['phrasing-to-hit', (t) => t.replace(/(Attack Roll:\*?\s*\+\d+)\s+to hit/g, '$1')],
+  ['second-person', (t) => t.replace(/\byours\b/gi, 'its').replace(/\byour\b/gi, 'its')],
+];
+
 export function applyCorrections(monster, findings, { chassis }) {
+  if (!findings.length) return monster;
   const correctable = findings.filter((f) => f.severity === 'correctable');
-  if (!correctable.length) return monster;
 
   const out = JSON.parse(JSON.stringify(monster));
-  const has = (rule) => correctable.some((f) => f.rule === rule);
+  const has = (rule) => findings.some((f) => f.rule === rule);
+
+  for (const [rule, fix] of DETERMINISTIC_TEXT_FIXES) {
+    if (!has(rule)) continue;
+    for (const entries of Object.values(out.sections ?? {})) {
+      for (const entry of entries) entry.text = fix(entry.text);
+    }
+  }
 
   if (has('hp-band')) out.hp = chassis.hp;
   if (has('hp-band') || has('hp-formula')) {
@@ -560,6 +584,20 @@ export function applyCorrections(monster, findings, { chassis }) {
   if (has('nonmagical')) {
     for (const field of ['resistances', 'immunities', 'vulnerabilities']) {
       if (out[field]) out[field] = out[field].replace(/\s*from nonmagical attacks?/gi, '');
+    }
+  }
+
+  // Single-expression attacks outside the damage band clamp to the exact
+  // skeleton (owner call, 2026-07-19): the prompt dictates exact numbers, so
+  // deviation is disobedience — variety lives in damage types and riders.
+  for (const f of correctable.filter((x) => x.rule === 'attack-damage-band' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) {
+      // Non-global: replaces the entry's sole damage expression.
+      entry.text = entry.text.replace(
+        /(\d+)\s*\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/,
+        `${f.expected} (${damageDiceFor(f.expected)})`
+      );
     }
   }
 
@@ -603,6 +641,14 @@ export function applyCorrections(monster, findings, { chassis }) {
 // ---------------------------------------------------------------------------
 
 const REROLL_SECTION = { ability: 'Traits', action: 'Actions', legendary: 'Legendary Actions' };
+
+function editionSkeletons(edition, chassis, numbers) {
+  return edition === '2014'
+    ? `- Attack: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <damage type> damage. (Ranged Weapon Attack: same numbers, range 60 ft.) That damage is the attack's TOTAL — no extra "plus X" riders.
+- Save effect: must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${numbers.total} (${damageDiceFor(numbers.total)}) <type> damage on a failed save, or half as much on a successful one. Conditions lowercase ("knocked prone", "frightened"); "hit points" lowercase; never "Attack Roll:" or "Failure:" markers.`
+    : `- Attack: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <Damage Type> damage. (Ranged: same numbers, range 60 ft.)
+- Save effect: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targets>. *Failure:* ... *Success:* Half damage only. Conditions Capitalized ("has the Prone condition"); never "Melee Weapon Attack" or "to hit".`;
+}
 
 function parseLegacyAttributes(attributes) {
   const stats = {};
@@ -659,11 +705,7 @@ export async function rerollEntry(monster, { kind, current }, callLLM) {
   // If other entries reference this one by name, a rename would break them.
   const referenced = rows.some((r) => r.name !== current.name && current.name && r.text.includes(current.name));
 
-  const skeletons = edition === '2014'
-    ? `- Attack: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <damage type> damage. (Ranged Weapon Attack: same numbers, range 60 ft.) That damage is the attack's TOTAL — no extra "plus X" riders.
-- Save effect: must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${numbers.total} (${damageDiceFor(numbers.total)}) <type> damage on a failed save, or half as much on a successful one. Conditions lowercase ("knocked prone", "frightened"); "hit points" lowercase; never "Attack Roll:" or "Failure:" markers.`
-    : `- Attack: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <Damage Type> damage. (Ranged: same numbers, range 60 ft.)
-- Save effect: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targets>. *Failure:* ... *Success:* Half damage only. Conditions Capitalized ("has the Prone condition"); never "Melee Weapon Attack" or "to hit".`;
+  const skeletons = editionSkeletons(edition, chassis, numbers);
 
   const prompt = `You are rewriting ONE entry of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock with fresh flavor. The numbers are fixed — never invent different ones.
 
@@ -695,8 +737,8 @@ Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
     }
     (sections[section] ??= []).push({ name: parsed.name, text: parsed.text });
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
-    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition }).findings, { chassis });
-    const result = lintStatblock(pseudo, { chassis, edition });
+    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack }).findings, { chassis });
+    const result = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack });
     const entry = pseudo.sections[section].find((e) => e.name === parsed.name && e.text);
     return { entry, rejects: result.findings.filter((f) => f.severity === 'reject') };
   };
@@ -716,14 +758,252 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
   return { name: outcome.entry.name, description: outcome.entry.text };
 }
 
+const SECTION_KINDS = { abilities: 'Traits', actions: 'Actions', legendary: 'Legendary Actions' };
+
+export function validateSectionResponse(jsonString) {
+  const parsed = tryParse(jsonString);
+  return Array.isArray(parsed) && parsed.length >= 1 && parsed.length <= 8
+    && parsed.every((e) => e && typeof e.name === 'string' && e.name.trim() !== ''
+      && typeof e.text === 'string' && e.text.trim() !== '');
+}
+
+/**
+ * Re-roll a whole section (Traits / Actions / Legendary Actions) of a saved
+ * monster with engine budgets, plan counts, and lint. Same context-recovery
+ * and stub-lint approach as rerollEntry. `suggestion` is the user's steering
+ * text from the edit UI.
+ *
+ * Structural enforcement: entry counts come from the slot plan (balanced plan
+ * for pre-engine monsters), multiattack per the plan when re-rolling Actions.
+ * Legendary sections use a fixed 2–4 range regardless of tier — the monster
+ * already has the section; a re-roll must not delete the feature. Archetype
+ * required_slots are NOT enforced (slot tags don't survive legacy conversion).
+ */
+export async function rerollSection(monster, { kind, suggestion = '' }, callLLM) {
+  const section = SECTION_KINDS[kind];
+  if (!section) throw new Error(`Unknown section re-roll kind: ${kind}`);
+  const edition = monster.format === '2024' ? '2024' : '2014';
+
+  const crToken = String(monster.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0];
+  const cr = monster.cr ?? crNumberFor(crToken ?? '');
+  const { chassis, plan } = buildContext(cr, monster.archetype ?? 'balanced');
+  const numbers = damageBudgetFor(cr, chassis, plan);
+  const stats = monster.stats ?? parseLegacyAttributes(monster.attributes);
+  const pb = typeof monster.pb === 'number' ? monster.pb : chassis.pb;
+
+  const rows = entryRows(monster);
+  const currentSection = rows.filter((r) => r.section === section);
+  const otherRows = rows.filter((r) => r.section !== section);
+  const actionNames = (section === 'Actions' ? otherRows : rows)
+    .filter((r) => r.section === 'Actions')
+    .map((r) => r.name);
+
+  const range = section === 'Traits' ? plan.traits
+    : section === 'Actions' ? plan.actions
+    : { min: 2, max: 4 };
+  const multiattack = section === 'Actions' ? plan.multiattack : { status: 'optional' };
+
+  const structureLines = [
+    `- Produce between ${range.min} and ${range.max} entries.`,
+    ...(multiattack.status === 'required'
+      ? [`- The FIRST entry must be Multiattack: the creature makes ${multiattack.count[0]} attacks, naming attack entries YOU create in this section.`]
+      : []),
+    ...(multiattack.status === 'forbidden' ? ['- No Multiattack entry.'] : []),
+    ...(section === 'Legendary Actions'
+      ? [`- Entries are short; attacks referenced by name must be one of: ${actionNames.join(', ') || 'none — use non-attack options'}.`]
+      : []),
+  ].join('\n');
+
+  const prompt = `You are rewriting the ENTIRE ${section} section of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock with fresh flavor. The numbers are fixed — never invent different ones.
+
+THE MONSTER: ${monster.name}, CR ${crKeyFor(cr)}${monster.archetype ? `, combat role: ${monster.archetype}` : ''}.
+Its entries in OTHER sections (do not duplicate their mechanics): ${otherRows.map((r) => r.name).join('; ') || 'none'}.
+
+PREVIOUS VERSION of this section (write a fresh take on the same creature — do not copy):
+${currentSection.map((r) => `- ${r.name}: ${r.text}`).join('\n') || '(empty)'}
+${suggestion ? `\nUSER DIRECTION (follow it): ${suggestion}\n` : ''}
+STRUCTURE:
+${structureLines}
+
+FIXED NUMBER SKELETONS (use EXACTLY these for any attack or save effect):
+${editionSkeletons(edition, chassis, numbers)}
+
+RULES:
+- Third person, in-world only. No traits that halve/reduce incoming damage or grant resistance to everything.
+
+Return ONLY a JSON array, no markdown fences: [{"name": "...", "text": "..."}, ...]`;
+
+  const attempt = async (p) => {
+    const raw = await callLLM(p, validateSectionResponse);
+    if (!raw) return null;
+    const parsed = tryParse(raw);
+    if (!Array.isArray(parsed)) return null;
+    const sections = {};
+    for (const r of otherRows) (sections[r.section] ??= []).push({ name: r.name, text: '' });
+    sections[section] = parsed.map((e) => ({ name: e.name, text: e.text }));
+    let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
+    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack }).findings, { chassis });
+    const rejects = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack }).findings
+      .filter((f) => f.severity === 'reject');
+    // Structural checks the entry-level lint can't see without a plan.
+    const entries = pseudo.sections[section];
+    if (entries.length < range.min || entries.length > range.max) {
+      rejects.push({ message: `${entries.length} entries — this section must have between ${range.min} and ${range.max}` });
+    }
+    const hasMulti = entries.some((e) => e.name.startsWith('Multiattack'));
+    if (multiattack.status === 'required' && !hasMulti) {
+      rejects.push({ message: 'A Multiattack entry is required, listed first' });
+    }
+    if (multiattack.status === 'forbidden' && hasMulti) {
+      rejects.push({ message: 'Multiattack is not allowed for this creature' });
+    }
+    return { entries, rejects };
+  };
+
+  let outcome = await attempt(prompt);
+  if (!outcome) throw new Error('Empty or malformed section re-roll response');
+  if (outcome.rejects.length) {
+    const retry = await attempt(`${prompt}
+
+Your previous attempt was rejected for these reasons — fix ALL of them this time:
+${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
+    if (retry) outcome = retry;
+  }
+  if (outcome.rejects.length) {
+    throw new Error(`Re-rolled section failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`);
+  }
+  return outcome.entries.map((e) => ({ name: e.name, description: e.text }));
+}
+
+// ---------------------------------------------------------------------------
+// Entry-rewrite fix — targeted, instead of full regeneration
+// ---------------------------------------------------------------------------
+
+// Reject rules that only implicate specific entries' TEXT: the block is
+// otherwise sound, so resend just the flagged entries with their findings.
+const ENTRY_FIXABLE = new Set([
+  'phrasing-2014', 'phrasing-to-hit', 'phrasing-saving-throw',
+  'phrasing-hybrid-save', 'condition-caps', 'term-caps',
+  'phrasing-2024-in-2014', 'second-person', 'trait-mitigation',
+  'undefined-attack-ref', 'attack-damage-band',
+]);
+
+// Rejects that genuinely need new content — only these trigger a full
+// regeneration. spell-dc-ability is here because its fix is an ability-score
+// change with save/skill ripple, not an entry rewrite.
+const STRUCTURAL_REJECTS = new Set([
+  'slot-missing', 'multiattack', 'legendary', 'section-structure', 'counts',
+  'spell-dc-ability',
+]);
+
+async function rewriteFlaggedEntries(monster, rejects, { edition, chassis, plan, cr }, callLLM) {
+  const byEntry = new Map();
+  for (const f of rejects) {
+    if (!f.loc) continue;
+    const key = `${f.loc.section} ${f.loc.entry}`;
+    if (!byEntry.has(key)) byEntry.set(key, { ...f.loc, problems: [] });
+    byEntry.get(key).problems.push(f.message);
+  }
+  const targets = [...byEntry.values()]
+    .map((t) => {
+      const entry = (monster.sections?.[t.section] ?? []).find((e) => e.name === t.entry);
+      return entry ? { ...t, text: entry.text } : null;
+    })
+    .filter(Boolean);
+  if (!targets.length) return monster;
+
+  const numbers = damageBudgetFor(cr, chassis, plan);
+  const prompt = `You are FIXING specific entries of a D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock. Rewrite ONLY the entries below to resolve their listed problems. Keep each entry's NAME exactly as given, keep its mechanical intent and numbers, change as little text as possible. If a mechanic is fundamentally disallowed, replace it with a balanced alternative in the same spirit.
+
+${targets.map((t) => `ENTRY "${t.entry}" (${t.section}):\n${t.text}\nPROBLEMS TO FIX:\n${t.problems.map((p) => `- ${p}`).join('\n')}`).join('\n\n')}
+
+FIXED NUMBER SKELETONS (use these if rephrasing an attack or save):
+${editionSkeletons(edition, chassis, numbers)}
+
+Return ONLY a JSON array with the SAME entry names, no markdown fences: [{"name": "...", "text": "..."}]`;
+
+  const raw = await callLLM(prompt, validateSectionResponse);
+  const parsed = tryParse(raw);
+  if (!Array.isArray(parsed)) return monster;
+
+  const out = JSON.parse(JSON.stringify(monster));
+  for (const { name, text } of parsed) {
+    for (const t of targets) {
+      if (t.entry !== name) continue;
+      const entry = (out.sections?.[t.section] ?? []).find((e) => e.name === name);
+      if (entry && typeof text === 'string' && text.trim()) entry.text = text;
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Seed-leakage rename fix — targeted, instead of full regeneration
+// ---------------------------------------------------------------------------
+
+export function validateRenameResponse(jsonString) {
+  const parsed = tryParse(jsonString);
+  return !!parsed && !Array.isArray(parsed) && typeof parsed === 'object'
+    && Object.values(parsed).every((v) => typeof v === 'string' && v.trim() !== '');
+}
+
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Replace a name everywhere in text, preserving lowercase prose usage. */
+function renameInText(text, oldName, newName) {
+  return text.replace(new RegExp(escapeRe(oldName), 'gi'), (m) =>
+    m === m.toLowerCase() ? newName.toLowerCase() : newName);
+}
+
+/**
+ * Targeted fix for seed-leakage rejects: the block's mechanics are fine, only
+ * names leaked — so ask for a rename map of JUST the offending names and
+ * apply it deterministically (entry names AND every text reference, so
+ * Multiattack/legendary references follow the rename).
+ */
+async function renameLeakedNames(monster, seedTokens, naming, callLLM) {
+  const leaks = (text) => seedTokens.some((t) => (text ?? '').toLowerCase().includes(t));
+  const leakyNames = [
+    ...(leaks(monster.name) ? [monster.name] : []),
+    ...Object.values(monster.sections ?? {}).flatMap((list) =>
+      (list ?? []).filter((e) => leaks(e.name)).map((e) => e.name)),
+  ];
+  if (!leakyNames.length) return monster;
+
+  const prompt = `These names from a D&D statblock must be replaced — they reuse forbidden seed words. Invent fresh replacements that fit the same creature. Never use any of these words or their derivatives: ${seedTokens.join(', ')}.${naming ? `\nThe creature's name should be ${naming}.` : ''}
+
+Names to replace: ${JSON.stringify(leakyNames)}
+
+Return ONLY a JSON object mapping each old name to its replacement, no markdown fences: {"Old Name": "New Name", ...}`;
+
+  const raw = await callLLM(prompt, validateRenameResponse);
+  if (!raw) return monster;
+  const mapping = tryParse(raw);
+  if (!mapping) return monster;
+
+  const out = JSON.parse(JSON.stringify(monster));
+  for (const [oldName, newName] of Object.entries(mapping)) {
+    if (out.name === oldName) out.name = newName;
+    for (const list of Object.values(out.sections ?? {})) {
+      for (const entry of list ?? []) {
+        if (entry.name === oldName) entry.name = newName;
+        entry.text = renameInText(entry.text, oldName, newName);
+      }
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Orchestration
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024' } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null } = options;
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
   const assembleCtx = { cr, chassis, plan, archetypeName: archetype, archetypeSource };
+  const seedTokens = seedTraits ? seedLeakTokens(seedTraits) : undefined;
+  const perAttack = damageBudgetFor(cr, chassis, plan).perAttack;
   const prompt = buildGenerationPrompt({ concept, description, cr, chassis, plan, caster, edition });
 
   const attempt = async (p) => {
@@ -732,21 +1012,45 @@ export async function generateMonster2024(options, callLLM) {
     const parsed = parseGenerationResponse(raw);
     if (!parsed) return null;
     let monster = assembleMonster(parsed, assembleCtx);
-    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition }).findings, { chassis });
-    const result = lintStatblock(monster, { chassis, plan, edition });
+    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack }).findings, { chassis });
+    const result = lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack });
     return { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
   };
 
   let outcome = await attempt(prompt);
   if (!outcome) throw new Error('Empty or malformed 2024 statblock response');
 
-  if (outcome.rejects.length) {
+  // Repair ladder, cheapest tool first (deterministic corrections already ran
+  // inside attempt()):
+  // 1. Full regeneration — ONLY for structural rejects (missing slots/
+  //    sections/counts): the content itself is wrong.
+  // 2. Targeted fix calls — entry rewrites for text-scoped rejects, rename
+  //    map for seed leakage. The block survives; only the flagged parts
+  //    change.
+  const needsRegen = (rejects) => rejects.some((f) => STRUCTURAL_REJECTS.has(f.rule));
+
+  if (outcome.rejects.length && needsRegen(outcome.rejects)) {
     const retryPrompt = `${prompt}
 
 Your previous attempt was rejected for these reasons — fix ALL of them this time:
 ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
     const retry = await attempt(retryPrompt);
     if (retry) outcome = retry;
+  }
+
+  for (let i = 0; i < 2 && outcome.rejects.length && !needsRegen(outcome.rejects); i++) {
+    let monster = outcome.monster;
+    if (outcome.rejects.some((f) => f.rule === 'seed-leakage')) {
+      monster = await renameLeakedNames(monster, seedTokens, seedTraits?.naming, callLLM);
+    }
+    const entryRejects = outcome.rejects.filter((f) => ENTRY_FIXABLE.has(f.rule) && f.loc);
+    if (entryRejects.length) {
+      monster = await rewriteFlaggedEntries(monster, entryRejects, { edition, chassis, plan, cr }, callLLM);
+    }
+    // Fixed text may drift numerically — run corrections, then re-judge.
+    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack }).findings, { chassis });
+    const result = lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack });
+    outcome = { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
   }
 
   if (outcome.rejects.length) {
@@ -756,5 +1060,8 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   }
   // 2014 edition ships in the legacy model shape: the existing Statblock.vue
   // display, exports, encounter adapter, and inline editing all consume it.
-  return edition === '2014' ? toLegacyModel(outcome.monster) : outcome.monster;
+  const finished = edition === '2014' ? toLegacyModel(outcome.monster) : outcome.monster;
+  // Persist the rolled seed for provenance and future name-only re-rolls.
+  if (seedTraits) finished.concept_seed = { ...seedTraits };
+  return finished;
 }

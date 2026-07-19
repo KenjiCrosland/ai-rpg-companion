@@ -70,6 +70,21 @@ jest.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: jest.fn(), error: jest.fn() }),
 }));
 
+// Deterministic seed: a REAL random seed can roll words that collide with the
+// lurker fixture's names ("quadrupedal stalker" → "Gloom Stalker"), which the
+// seed-leakage lint correctly rejects — right behavior, wrong test flake.
+jest.mock('../format-2024/concept-seeds.mjs', () => ({
+  ...jest.requireActual('../format-2024/concept-seeds.mjs'),
+  buildRandomConceptSeed: () => ({
+    intelligence: 'mindless (INT 1-2)',
+    physical: 'metallic',
+    silhouette: 'serpent',
+    origin: 'the Abyss',
+    naming: 'a single stark word: one short, heavy name',
+    concept: 'a mindless (INT 1-2), metallic serpent from the Abyss.',
+  }),
+}));
+
 // LLM response fixture: lurker CR 4 (lint-clean; mirrors generate-2024.spec.js).
 const llmFixture = {
   name: 'Gloom Stalker',
@@ -207,18 +222,20 @@ describe('StatblockGenerator 2024 flow', () => {
       wrapper.unmount();
     });
 
-    test('auto + blank inputs: no resolve call, random client-side pick', async () => {
-      mockLLM();
-      // Pin the random pick to lurker (index 5 of 8) so the lurker-shaped
-      // LLM fixture assembles lint-clean.
-      jest.spyOn(Math, 'random').mockReturnValue(5 / 8);
+    test('auto + blank inputs: a random concept seed feeds the resolve call', async () => {
+      mockLLM({ resolvedArchetype: 'lurker' });
       const wrapper = mountGenerator();
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(1);
-      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateGenerationResponse);
-      expect(savedMonsters().Uncategorized[0].archetype_source).toBe('auto');
+      // Blank form now resolves the role FROM the seeded concept (2 calls:
+      // resolve, then generation) instead of a blind random pick.
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(2);
+      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateArchetypeResponse);
+      expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateGenerationResponse);
+      const saved = savedMonsters().Uncategorized[0];
+      expect(saved.archetype).toBe('lurker');
+      expect(saved.archetype_source).toBe('auto');
       wrapper.unmount();
     });
   });
@@ -245,8 +262,7 @@ describe('StatblockGenerator 2024 flow', () => {
       localStorage.setItem('monsters', JSON.stringify({
         Uncategorized: [{ name: 'Old Wolf', challenge_rating: '2 (450 XP)' }],
       }));
-      mockLLM();
-      jest.spyOn(Math, 'random').mockReturnValue(5 / 8); // pin auto-pick to lurker
+      mockLLM({ resolvedArchetype: 'lurker' }); // blank form resolves from the seed
       const wrapper = mountGenerator();
       await setCR(wrapper, '4');
       await generate(wrapper);

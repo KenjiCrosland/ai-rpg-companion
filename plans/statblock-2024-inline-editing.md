@@ -6,18 +6,21 @@ User requests to edit a generated 2024 statblock beyond regenerating it, any
 session porting editing features to `Statblock2024.vue`, or any session
 touching the single-ability re-roll prompts (`statblock-edit-prompts.mjs`).
 
-## Engine-based re-rolls — SINGLE-ENTRY PART SHIPPED (2026-07-19)
+## Engine-based re-rolls — SHIPPED (2026-07-19)
 
-`rerollEntry()` in `format-2024/generate.mjs` now powers the three
-single-entry re-rolls in `Statblock.vue` (design below, as built). STILL
-TEMPLATE-BASED and in this plan's remaining scope: the section-level re-rolls
-(`monsterAbilitiesPrompt`/`actionsPrompt`/`legendaryActionsPrompt`) — the
-last statblock-tool path where LLM numbers bypass the engine — plus the
-2024-card editing surface itself. The `single*Prompt` exports in
-`src/prompts/statblock-edit-prompts.mjs` are now unused (the dungeon
-generator has its own copy; don't confuse them).
+`rerollEntry()` and `rerollSection()` in `format-2024/generate.mjs` now power
+ALL edit re-rolls in `Statblock.vue` — single-entry and whole-section (with
+plan-derived counts, multiattack enforcement, and the user-suggestion
+steering preserved). Every statblock mutation path now passes through engine
+budgets + lint: generation, regeneration, entry re-rolls, section re-rolls.
+`src/prompts/statblock-edit-prompts.mjs` has no remaining consumers in
+`Statblock.vue` (the dungeon generator has its OWN copy of these prompts —
+still template-based, not this plan's scope).
 
-Original design (implemented for single entries):
+This plan's remaining scope is now ONLY the `Statblock2024.vue` editing
+surface (the read-only-v1 card).
+
+Original design (implemented):
 
 - `buildContext(cr, archetype)` → the same attack/save/damage skeletons the
   full pipeline uses, edition phrasing rules per the monster's `format` field

@@ -56,6 +56,12 @@ never accept LLM numbers); missing required_slots reject the generation.
 > Deferred follow-ups live in `plans/statblock-2024-*.md`. Flavor quality
 > remains manual-production-review; prompts are in `format-2024/generate.mjs`.
 >
+> **Repair ladder (2026-07-19):** the original "reject → regenerate flavor"
+> contract is refined: rejects route through the cheapest sufficient tool —
+> deterministic string surgery (zero calls) → targeted fix calls (entry
+> rewrites / seed-leakage rename maps) → full regeneration only for
+> structural rejects. See generate.mjs ENTRY_FIXABLE / STRUCTURAL_REJECTS.
+>
 > **2014 retrofit shipped (2026-07-18):** both editions run the engine. The
 > 2014 edition uses 2014 phrasing rules/skeletons and converts to the legacy
 > model shape (`toLegacyModel`) so the classic display/export chain works

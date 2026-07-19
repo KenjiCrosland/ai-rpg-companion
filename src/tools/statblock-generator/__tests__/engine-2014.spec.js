@@ -7,7 +7,7 @@
  * the legacy shape.
  */
 import {
-  generateMonster2024, assembleMonster, toLegacyModel, buildContext, rerollEntry,
+  generateMonster2024, assembleMonster, toLegacyModel, buildContext, rerollEntry, rerollSection,
 } from '../format-2024/generate.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 
@@ -187,6 +187,67 @@ describe('rerollEntry (engine-based inline edit re-rolls)', () => {
   });
 });
 
+describe('rerollSection (engine-based whole-section re-rolls)', () => {
+  const legacy = toLegacyModel(assembleMonster(llm2014Fixture, ctx()));
+  const call = (responses) => {
+    const fn = jest.fn();
+    responses.forEach((r) => fn.mockResolvedValueOnce(JSON.stringify(r)));
+    return fn;
+  };
+  const goodActions = [
+    { name: 'Multiattack', text: 'The stalker makes two Night Talon attacks.' },
+    { name: 'Night Talon', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' },
+    { name: 'Terrifying Screech', text: 'Each creature within 30 feet must make a DC 13 Wisdom saving throw or be frightened until the end of its next turn.' },
+  ];
+
+  test('good actions section returns legacy entries in one call', async () => {
+    const callLLM = call([goodActions]);
+    const entries = await rerollSection(legacy, { kind: 'actions' }, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(entries).toHaveLength(3);
+    expect(entries[0]).toEqual({ name: 'Multiattack', description: expect.stringContaining('Night Talon') });
+  });
+
+  test('missing required Multiattack triggers one retry', async () => {
+    const callLLM = call([goodActions.slice(1).concat([{ name: 'Hiss', text: 'It hisses menacingly.' }]), goodActions]);
+    const entries = await rerollSection(legacy, { kind: 'actions' }, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(entries[0].name).toBe('Multiattack');
+  });
+
+  test('count violations are rejected (tier 3 actions must be 3-4)', async () => {
+    const twoOnly = goodActions.slice(0, 2);
+    const callLLM = call([twoOnly, twoOnly]);
+    await expect(rerollSection(legacy, { kind: 'actions' }, callLLM)).rejects.toThrow(/between 3 and 4/);
+  });
+
+  test('off-budget numbers across the section are corrected, not retried', async () => {
+    const hot = JSON.parse(JSON.stringify(goodActions));
+    hot[1].text = 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.';
+    const callLLM = call([hot]);
+    const entries = await rerollSection(legacy, { kind: 'actions' }, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(entries[1].description).toContain('+7 to hit');
+  });
+
+  test('legendary re-roll uses the fixed 2-4 range and resolves attack references', async () => {
+    const withLegendary = { ...legacy, legendary_actions: [{ name: 'Old Lash', description: 'It lashes.' }] };
+    const callLLM = call([[
+      { name: 'Claw', text: 'The stalker makes one Shadow Claw attack.' },
+      { name: 'Skitter', text: 'The stalker moves up to half its speed.' },
+    ]]);
+    const entries = await rerollSection(withLegendary, { kind: 'legendary' }, callLLM);
+    expect(entries).toHaveLength(2);
+    // Referencing the undefined 'Phantom Fang' would have been a reject:
+    const bad = [
+      { name: 'Claw', text: 'The stalker makes one Phantom Fang attack.' },
+      { name: 'Skitter', text: 'The stalker moves up to half its speed.' },
+    ];
+    const badLLM = call([bad, bad]);
+    await expect(rerollSection(withLegendary, { kind: 'legendary' }, badLLM)).rejects.toThrow(/Phantom Fang/);
+  });
+});
+
 describe('generateMonster2024 with edition 2014', () => {
   test('returns the legacy shape on a good response', async () => {
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(llm2014Fixture));
@@ -200,17 +261,24 @@ describe('generateMonster2024 with edition 2014', () => {
     expect(monster.sections).toBeUndefined(); // legacy shape, not internal
   });
 
-  test('2024-phrased response is rejected and retried under edition 2014', async () => {
+  test('2024 phrasing in a 2014 block gets a targeted entry fix, not a re-roll', async () => {
     const modern = JSON.parse(JSON.stringify(llm2014Fixture));
     modern.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.';
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(modern))
-      .mockResolvedValueOnce(JSON.stringify(llm2014Fixture));
+      // Entry-fix response: only the flagged entry, same name, classic phrasing.
+      .mockResolvedValueOnce(JSON.stringify([{
+        name: 'Shadow Claw',
+        text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.',
+      }]));
     const monster = await generateMonster2024(
       { concept: 'a shadow stalker', cr: 4, archetypeName: 'lurker', edition: '2014' },
       callLLM,
     );
     expect(callLLM).toHaveBeenCalledTimes(2);
+    const { validateSectionResponse } = require('../format-2024/generate.mjs');
+    expect(callLLM.mock.calls[1][1]).toBe(validateSectionResponse);
     expect(monster.format).toBe('2014');
+    expect(monster.actions.find((a) => a.name === 'Shadow Claw').description).toContain('Weapon Attack');
   });
 });

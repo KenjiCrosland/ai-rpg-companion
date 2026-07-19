@@ -9,10 +9,13 @@
  *
  * Severities (per the architecture contract):
  * - 'correctable' — out-of-budget or inconsistent NUMBERS. Findings carry the
- *   expected value; the caller clamps the numbers and regenerates flavor only,
- *   never accepting LLM numbers.
- * - 'reject' — missing required slots, structural violations, 2014 phrasing.
- *   The generation is rejected and flavor regenerated.
+ *   expected value; the caller clamps the numbers deterministically.
+ * - 'reject' — the flavor itself is wrong. The generation pipeline routes
+ *   these through a repair ladder, cheapest tool first (see generate.mjs):
+ *   deterministic string surgery (caps/to-hit/second-person) → targeted fix
+ *   calls (entry rewrites, seed-leakage renames) → full regeneration (only
+ *   for STRUCTURAL_REJECTS: missing slots/sections/counts). Entry-scoped
+ *   findings carry `loc: { section, entry }` so fix calls can address them.
  *
  * Rule groups:
  * - Context-free rules always run. Calibrated against all 329 SRD blocks:
@@ -142,14 +145,20 @@ function maxExtracted(monster, re) {
   return max;
 }
 
-export function lintStatblock(monster, { chassis, plan, edition = '2024' } = {}) {
+const ATTACK_LINE_RE = /(?:Melee|Ranged)(?: or Ranged)?(?: Weapon| Spell)? Attack(?: Roll)?:/;
+const DAMAGE_EXPR_RE = /(\d+)\s*\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/g;
+
+export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTokens, perAttack } = {}) {
   if (!monster || typeof monster !== 'object') {
     throw new TypeError('lintStatblock expects a statblock model object');
   }
   const is2024 = edition !== '2014';
   const findings = [];
-  const push = (rule, severity, message, expected) => {
-    findings.push(expected === undefined ? { rule, severity, message } : { rule, severity, message, expected });
+  const push = (rule, severity, message, expected, loc) => {
+    const f = { rule, severity, message };
+    if (expected !== undefined) f.expected = expected;
+    if (loc) f.loc = loc; // { section, entry } for entry-scoped findings
+    findings.push(f);
   };
 
   // --- Context-free consistency rules -------------------------------------
@@ -215,6 +224,25 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024' } = {})
     }
   }
 
+  // Seed-leakage (random-seeded generations only): the rolled trait words
+  // must not surface in the creature's name or its ability names — the seed
+  // is design guidance, not vocabulary. Promoted from a prompt rule after a
+  // live failure ("drifting form" → "Driftking" + "Drifting Step").
+  if (seedTokens?.length) {
+    const leaksIn = (label, text) => {
+      const lower = (text ?? '').toLowerCase();
+      for (const token of seedTokens) {
+        if (lower.includes(token)) {
+          push('seed-leakage', 'reject', `${label} "${text}" uses the seed word "${token}" — seed traits are design guidance, never name vocabulary; invent unrelated names`);
+        }
+      }
+    };
+    leaksIn('Creature name', monster.name);
+    for (const { section, entry } of entriesOf(monster)) {
+      leaksIn(`${section} entry name`, entry.name);
+    }
+  }
+
   // Entry names any attack reference may resolve against (parentheticals
   // like "(2/Day)" stripped, prefix matches allowed — mirrors the corpus
   // calibration).
@@ -222,48 +250,68 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024' } = {})
 
   for (const { section, entry } of entriesOf(monster)) {
     const where = `${section}/${entry.name}`;
+    const loc = { section, entry: entry.name };
     if (is2024) {
       if (/(Melee|Ranged)\s+(Weapon|Spell)\s+Attack/.test(entry.text)) {
-        push('phrasing-2014', 'reject', `2014 attack phrasing in ${where} — use "Melee Attack Roll:" form`);
+        push('phrasing-2014', 'reject', `2014 attack phrasing in ${where} — use "Melee Attack Roll:" form`, undefined, loc);
       }
       if (/to hit(?! with spell attacks)/.test(entry.text)) {
-        push('phrasing-to-hit', 'reject', `"to hit" phrasing in ${where} — 2024 attack lines carry no "to hit"`);
+        push('phrasing-to-hit', 'reject', `"to hit" phrasing in ${where} — 2024 attack lines carry no "to hit"`, undefined, loc);
       }
       for (const m of entry.text.matchAll(/Saving Throw/g)) {
         const before = entry.text.slice(0, m.index);
         if (!new RegExp(`(${ABILITIES.join('|')})[*\\s]*$`).test(before)) {
-          push('phrasing-saving-throw', 'reject', `Saving throw in ${where} must name an ability: "*Constitution Saving Throw*: DC n"`);
+          push('phrasing-saving-throw', 'reject', `Saving throw in ${where} must name an ability: "*Constitution Saving Throw*: DC n"`, undefined, loc);
           break;
         }
       }
       const lower = LOWERCASE_CONDITION_RE.exec(entry.text);
       if (lower) {
-        push('condition-caps', 'reject', `Lowercase condition "${lower[1]}" in ${where} — 2024 conditions are capitalized`);
+        push('condition-caps', 'reject', `Lowercase condition "${lower[1]}" in ${where} — 2024 conditions are capitalized`, undefined, loc);
       }
       if (HYBRID_SAVE_RE.test(entry.text)) {
-        push('phrasing-hybrid-save', 'reject', `Hybrid save phrasing in ${where} — the "*Ability Saving Throw*: DC n, <targets>" skeleton is the whole sentence; drop the "must make a" lead-in`);
+        push('phrasing-hybrid-save', 'reject', `Hybrid save phrasing in ${where} — the "*Ability Saving Throw*: DC n, <targets>" skeleton is the whole sentence; drop the "must make a" lead-in`, undefined, loc);
       }
       const term = LOWERCASE_TERM_RE.exec(entry.text);
       if (term) {
-        push('term-caps', 'reject', `Lowercase game term "${term[1]}" in ${where} — 2024 capitalizes Hit Points and Opportunity Attacks`);
+        push('term-caps', 'reject', `Lowercase game term "${term[1]}" in ${where} — 2024 capitalizes Hit Points and Opportunity Attacks`, undefined, loc);
       }
     } else {
       // 2014 edition: the inverse phrasing gate — 2024-isms are the defect.
       if (/(Melee|Ranged)(?: or Ranged)? Attack Roll:/.test(entry.text) || /\*?Failure:\*?/.test(entry.text)) {
-        push('phrasing-2024-in-2014', 'reject', `2024 phrasing in ${where} — 2014 blocks use "Melee Weapon Attack: +X to hit" and "must succeed on a DC n ... saving throw" forms, never "Attack Roll:" or "Failure:" markers`);
+        push('phrasing-2024-in-2014', 'reject', `2024 phrasing in ${where} — 2014 blocks use "Melee Weapon Attack: +X to hit" and "must succeed on a DC n ... saving throw" forms, never "Attack Roll:" or "Failure:" markers`, undefined, loc);
       }
     }
     for (const ref of entry.text.matchAll(ATTACK_REF_RE)) {
       const name = ref[1].trim();
       if (!entryNames.some((n) => n === name || n.startsWith(name))) {
-        push('undefined-attack-ref', 'reject', `${where} references a "${name}" attack that is not defined anywhere in the statblock`);
+        push('undefined-attack-ref', 'reject', `${where} references a "${name}" attack that is not defined anywhere in the statblock`, undefined, loc);
       }
     }
     if (SECOND_PERSON_RE.test(entry.text)) {
-      push('second-person', 'reject', `Second-person voice in ${where} — statblocks are third person ("of the creature's choice", never "of your choice")`);
+      push('second-person', 'reject', `Second-person voice in ${where} — statblocks are third person ("of the creature's choice", never "of your choice")`, undefined, loc);
     }
     if (section === 'Traits' && SELF_MITIGATION_RE.test(entry.text)) {
-      push('trait-mitigation', 'reject', `Blanket damage mitigation as a passive trait in ${where} — the chassis already prices defenses; single-attack mitigation must be a Reaction (once per round)`);
+      push('trait-mitigation', 'reject', `Blanket damage mitigation as a passive trait in ${where} — the chassis already prices defenses; single-attack mitigation must be a Reaction (once per round)`, undefined, loc);
+    }
+    // Per-attack damage must land within the HP-band ratios of the budget —
+    // the model sometimes writes internally-consistent dice at half (or
+    // double) the skeleton, silently shifting the effective CR. Runs only
+    // when the pipeline supplies perAttack; recharge novas are exempt (they
+    // legitimately exceed the per-attack budget).
+    if (perAttack != null && ATTACK_LINE_RE.test(entry.text) && !/recharge/i.test(entry.name)) {
+      const sums = [...entry.text.matchAll(DAMAGE_EXPR_RE)].map((m) => Number(m[1]));
+      if (sums.length) {
+        const total = sums.reduce((a, b) => a + b, 0);
+        const ratio = total / perAttack;
+        if (ratio < HP_BAND[0] || ratio > HP_BAND[1]) {
+          if (sums.length === 1) {
+            push('attack-damage-band', 'correctable', `${where}: attack damage ${total} outside [${HP_BAND[0]}, ${HP_BAND[1]}] of the ${perAttack} per-attack budget`, perAttack, loc);
+          } else {
+            push('attack-damage-band', 'reject', `${where}: total attack damage ${total} (across ${sums.length} expressions) outside [${HP_BAND[0]}, ${HP_BAND[1]}] of the ${perAttack} per-attack budget — restructure to total ${perAttack}`, undefined, loc);
+          }
+        }
+      }
     }
     if (monster.stats && monster.pb != null) {
       for (const re of SPELL_DC_RES) {
@@ -271,7 +319,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024' } = {})
         if (!sc) continue;
         const derived = 8 + monster.pb + modOf(monster.stats[ABILITY_ABBR[sc[1]]]);
         if (Math.abs(Number(sc[2]) - derived) > 1) {
-          push('spell-dc-ability', 'reject', `${where}: spell save DC ${sc[2]} doesn't derive from ${sc[1]} (8 + PB + mod = ${derived}) — raise the spellcasting ability's score to support the DC`);
+          push('spell-dc-ability', 'reject', `${where}: spell save DC ${sc[2]} doesn't derive from ${sc[1]} (8 + PB + mod = ${derived}) — raise the spellcasting ability's score to support the DC`, undefined, loc);
         }
       }
     }
@@ -281,7 +329,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024' } = {})
     for (const dm of entry.text.matchAll(/(\d+)\s*\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/g)) {
       const avg = avgDice(dm[2]);
       if (avg !== null && avg !== Number(dm[1])) {
-        push('damage-dice', 'correctable', `${where}: "${dm[0]}" — ${dm[2]} averages ${avg}`, avg);
+        push('damage-dice', 'correctable', `${where}: "${dm[0]}" — ${dm[2]} averages ${avg}`, avg, loc);
       }
     }
   }

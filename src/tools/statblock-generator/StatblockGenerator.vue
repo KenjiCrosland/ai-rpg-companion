@@ -260,6 +260,7 @@ import {
   generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
   parseGenerationResponse, pickRandomArchetype, crNumberFor, crKeyFor,
 } from './format-2024/generate.mjs';
+import { buildRandomConceptSeed } from './format-2024/concept-seeds.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
@@ -894,40 +895,45 @@ async function generateStatblock() {
 // ships in the legacy model shape so the existing display/export chain works.
 async function generateStatblockEngine(edition) {
   loadingPart1.value = true;
+  // Statblock.vue renders one skeleton block per loading flag — the old
+  // two-call flow set both, which is what filled both columns. The engine
+  // is a single call, but the 2014 display still wants both halves ghosted.
+  loadingPart2.value = true;
   const crInput = selectedChallengeRating.value || String(Math.floor(Math.random() * 30) + 1);
   const cr = crNumberFor(crInput);
 
   // Archetype resolution order (settled in the architecture doc):
   // user-picked → no call; Auto + concept → micro resolve call;
-  // Auto + all inputs blank → random client-side pick, no call.
+  // Auto + all inputs blank → build a random 5-dimension concept seed
+  // (concept-seeds.mjs) and resolve the role FROM it, so the role coheres
+  // with the seeded traits instead of being a blind random pick.
+  const userConcept = [monsterName.value, monsterDescription.value]
+    .map((s) => (s || '').trim())
+    .filter(Boolean)
+    .join(' — ');
+  const randomSeed = userConcept ? null : buildRandomConceptSeed();
+  const resolveConcept = userConcept || randomSeed.concept;
+
   let archetypeName = archetype.value;
   let archetypeSource = 'user';
   if (archetypeName === 'auto') {
     archetypeSource = 'auto';
-    const conceptSeed = [monsterName.value, monsterDescription.value]
-      .map((s) => (s || '').trim())
-      .filter(Boolean)
-      .join(' — ');
-    if (conceptSeed) {
-      try {
-        const raw = await generateGptResponse(
-          buildArchetypeResolvePrompt(conceptSeed),
-          validateArchetypeResponse,
-          2,
-        );
-        archetypeName = parseGenerationResponse(raw)?.archetype || pickRandomArchetype();
-      } catch (e) {
-        logger.warn('Archetype auto-resolve failed, picking randomly:', e);
-        archetypeName = pickRandomArchetype();
-      }
-    } else {
+    try {
+      const raw = await generateGptResponse(
+        buildArchetypeResolvePrompt(resolveConcept),
+        validateArchetypeResponse,
+        2,
+      );
+      archetypeName = parseGenerationResponse(raw)?.archetype || pickRandomArchetype();
+    } catch (e) {
+      logger.warn('Archetype auto-resolve failed, picking randomly:', e);
       archetypeName = pickRandomArchetype();
     }
   }
 
   const concept = monsterName.value.trim()
     || monsterDescription.value.trim()
-    || `a CR ${crKeyFor(cr)} ${archetypeName === 'balanced' ? '' : `${archetypeName} `}creature — invent something unconventional`;
+    || randomSeed.concept;
 
   let finalMonster;
   try {
@@ -940,6 +946,7 @@ async function generateStatblockEngine(edition) {
         caster: caster.value,
         archetypeSource,
         edition,
+        seedTraits: randomSeed,
       },
       (prompt, validate) => generateGptResponse(prompt, validate, 3),
     );
@@ -947,6 +954,7 @@ async function generateStatblockEngine(edition) {
     errorMessage.value = e.message;
     toast.error('Failed to generate statblock. Please try again.');
     loadingPart1.value = false;
+    loadingPart2.value = false;
     return;
   }
 

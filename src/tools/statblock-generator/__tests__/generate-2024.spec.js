@@ -175,6 +175,114 @@ describe('validateGenerationResponse', () => {
   });
 });
 
+describe('concept seeds', () => {
+  const { buildRandomConceptSeed, SEED_DIMENSIONS } = require('../format-2024/concept-seeds.mjs');
+
+  test('samples one option per dimension and composes them into the concept', () => {
+    for (let i = 0; i < 25; i++) {
+      const seed = buildRandomConceptSeed();
+      for (const [dim, options] of Object.entries(SEED_DIMENSIONS)) {
+        expect(options).toContain(seed[dim]);
+        expect(seed.concept).toContain(seed[dim]);
+      }
+      expect(seed.concept).toContain('contradictions between traits are creative fuel');
+    }
+  });
+
+  test('dimensions are independently sampled (two seeds rarely identical)', () => {
+    const seen = new Set();
+    for (let i = 0; i < 40; i++) seen.add(buildRandomConceptSeed().concept);
+    expect(seen.size).toBeGreaterThan(30);
+  });
+});
+
+describe('seed leakage', () => {
+  const { seedLeakTokens } = require('../format-2024/concept-seeds.mjs');
+  const { lintStatblock } = require('../format-2024/lint.mjs');
+  const driftkingSeed = {
+    intelligence: 'possessed of alien genius (INT 17-20)',
+    physical: 'molten-veined',
+    silhouette: 'floating drifting form',
+    origin: 'a city of graves',
+    naming: 'a single stark word: one short, heavy name',
+  };
+
+  test('seedLeakTokens extracts stemmed content words, not stopwords or the naming register', () => {
+    const tokens = seedLeakTokens(driftkingSeed);
+    for (const t of ['alien', 'genius', 'molten', 'vein', 'float', 'drift', 'grave']) {
+      expect(tokens).toContain(t);
+    }
+    for (const t of ['form', 'from', 'of', 'int', 'stark', 'word']) {
+      expect(tokens).not.toContain(t);
+    }
+  });
+
+  test('the live Driftking failure is caught: seed words in name and ability names', () => {
+    const tokens = seedLeakTokens(driftkingSeed);
+    const leaky = {
+      name: 'Driftking',
+      stats: llmFixture.stats,
+      pb: 3,
+      sections: {
+        Traits: [
+          { name: 'Alien Genius', text: 'It thinks strange thoughts.' },
+          { name: 'Molten Veins', text: 'It burns to the touch.' },
+        ],
+        Actions: [{ name: 'Void Pulse', text: 'It pulses.' }],
+      },
+    };
+    const findings = lintStatblock(leaky, { seedTokens: tokens }).findings
+      .filter((f) => f.rule === 'seed-leakage');
+    expect(findings.length).toBeGreaterThanOrEqual(3); // Driftking, Alien Genius, Molten Veins
+    expect(findings.every((f) => f.severity === 'reject')).toBe(true);
+    // Without seed tokens (user-typed concepts) the rule never runs.
+    expect(lintStatblock(leaky, {}).findings.filter((f) => f.rule === 'seed-leakage')).toHaveLength(0);
+  });
+
+  test('leaky names get a targeted rename fix call, not a full regeneration', async () => {
+    const leaky = JSON.parse(JSON.stringify(llmFixture));
+    leaky.name = 'Shadow Drifter'; // leaks 'drift'
+    leaky.sections.Actions[0].text = 'The stalker makes two Drift Claw attacks.';
+    leaky.sections.Actions[1].name = 'Drift Claw'; // leaks in an entry name too
+    const callLLM = jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(leaky))
+      .mockResolvedValueOnce(JSON.stringify({ 'Shadow Drifter': 'Gloom Stalker', 'Drift Claw': 'Night Talon' }));
+    const monster = await generateMonster2024(
+      {
+        concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto',
+        seedTraits: { silhouette: 'floating drifting form' },
+      },
+      callLLM,
+    );
+    // Call 1 = generation, call 2 = the cheap rename fix — never a re-roll.
+    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(callLLM.mock.calls[1][1]).toBe(require('../format-2024/generate.mjs').validateRenameResponse);
+    expect(monster.name).toBe('Gloom Stalker');
+    const actionNames = monster.sections.Actions.map((e) => e.name);
+    expect(actionNames).toContain('Night Talon');
+    // Cross-references follow the rename — Multiattack can't orphan.
+    expect(monster.sections.Actions[0].text).toContain('Night Talon');
+    expect(monster.concept_seed).toEqual({ silhouette: 'floating drifting form' });
+  });
+
+  test('a fix call that still leaks gets one more, then errors', async () => {
+    const leaky = JSON.parse(JSON.stringify(llmFixture));
+    leaky.name = 'Shadow Drifter';
+    const callLLM = jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(leaky))
+      .mockResolvedValueOnce(JSON.stringify({ 'Shadow Drifter': 'Drifting Shade' })) // still leaks
+      .mockResolvedValueOnce(JSON.stringify({ 'Drifting Shade': 'Drift Wraith' })); // stubborn
+    await expect(generateMonster2024(
+      {
+        concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto',
+        seedTraits: { silhouette: 'floating drifting form' },
+      },
+      callLLM,
+    )).rejects.toThrow(/seed word/);
+    expect(callLLM).toHaveBeenCalledTimes(3); // generation + two fix attempts
+  });
+});
+
 describe('archetype resolve helpers', () => {
   test('validateArchetypeResponse accepts the eight archetypes only', () => {
     expect(validateArchetypeResponse('{"archetype": "lurker"}')).toBe(true);
@@ -241,6 +349,31 @@ describe('generateMonster2024 orchestration', () => {
     expect(callLLM).toHaveBeenCalledTimes(1);
     expect(monster.name).toBe('Gloom Stalker');
     expect(monster.format).toBe('2024');
+  });
+
+  test('under-budget attack damage is clamped to the skeleton, zero extra calls', async () => {
+    // The fixture's Shadow Claw swings 13 against a lurker CR 4 per-attack
+    // budget of 9 — the live Lysilyth failure class (half-CR offense).
+    const callLLM = jest.fn().mockResolvedValue(JSON.stringify(llmFixture));
+    const monster = await generateMonster2024(options, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(monster.sections.Actions[1].text).toContain('9 (2d8)');
+    expect(monster.sections.Actions[1].text).not.toContain('13 (2d8 + 4)');
+  });
+
+  test('deterministically fixable rejects (caps, to-hit, second person) cost zero extra calls', async () => {
+    const messy = JSON.parse(JSON.stringify(llmFixture));
+    messy.sections.Actions[1].text =
+      "*Melee Attack Roll:* +7 to hit, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target is knocked prone and can't regain hit points. It then moves toward a creature of your choice without provoking opportunity attacks.";
+    const callLLM = jest.fn().mockResolvedValue(JSON.stringify(messy));
+    const monster = await generateMonster2024(options, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(1); // string surgery, no fix call
+    const text = monster.sections.Actions[1].text;
+    expect(text).not.toContain('to hit');
+    expect(text).toContain('Prone');
+    expect(text).toContain('Hit Points');
+    expect(text).toContain('Opportunity Attacks');
+    expect(text).toContain('its choice');
   });
 
   test('correctable violations are fixed without a retry call', async () => {
