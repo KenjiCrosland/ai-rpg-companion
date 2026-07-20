@@ -36,9 +36,10 @@ touching anything under `chassis/` or `format-2024/`.
   names survive only when load-bearing (referenced by another entry, or
   Multiattack/Spellcasting), where a model rename is deterministically
   stamped back instead of retried.
-- **Edition switching (cache-and-swap)**: a `ParSwitch` in the card toolbar
-  (`data-testid="edition-switch"`) flips the selected monster between its
-  2014/2024 printings. The saved monster IS the active edition; the
+- **Edition switching (cache-and-swap)**: `ParTabToggle` tabs on the card's
+  top edge (`data-testid="edition-switch"`) flip the selected monster
+  between its 2014/2024 printings — burgundy document tabs, not lapis
+  chrome (view-mode switch on a content surface). The saved monster IS the active edition; the
   converted counterpart caches on it as `monster.other_edition` — flipping
   swaps active↔cached and persists (instant, lossless, no call). Flipping
   toward a not-yet-converted edition shows the target card as a blurred

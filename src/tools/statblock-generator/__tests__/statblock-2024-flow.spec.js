@@ -349,11 +349,16 @@ describe('StatblockGenerator 2024 flow', () => {
       return wrapper;
     };
 
+    // The edition switcher is a ParTabToggle: click the tab for the printing.
+    const clickEditionTab = (wrapper, label) =>
+      wrapper.find('[data-testid="edition-switch"]')
+        .findAll('button').find((b) => b.text().includes(label)).trigger('click');
+
     test('flipping to a missing edition shows the blurred preview; flipping back leaves it — no call, no storage change', async () => {
       const wrapper = await mountWithStalker();
       expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(false);
 
-      await wrapper.find('[data-testid="edition-switch"]').trigger('click');
+      await clickEditionTab(wrapper, '2014 rules');
       const preview = wrapper.find('[data-testid="edition-preview"]');
       expect(preview.exists()).toBe(true);
       expect(preview.find('.statblock-2014-stub').exists()).toBe(true); // deterministic target-shape card
@@ -361,7 +366,7 @@ describe('StatblockGenerator 2024 flow', () => {
       expect(aiClient.generateGptResponse).not.toHaveBeenCalled();
       expect(savedMonsters().Uncategorized[0].format).toBe('2024'); // nothing persisted
 
-      await wrapper.find('[data-testid="edition-switch"]').trigger('click');
+      await clickEditionTab(wrapper, '2024 rules');
       expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(false);
       expect(wrapper.find('.statblock-2024-stub').exists()).toBe(true);
       wrapper.unmount();
@@ -371,7 +376,7 @@ describe('StatblockGenerator 2024 flow', () => {
       aiClient.generateGptResponse.mockResolvedValue(JSON.stringify(conversion2014));
       const wrapper = await mountWithStalker();
 
-      await wrapper.find('[data-testid="edition-switch"]').trigger('click');
+      await clickEditionTab(wrapper, '2014 rules');
       await wrapper.find('[data-testid="convert-edition"]').trigger('click');
       await flushPromises();
 
@@ -385,7 +390,7 @@ describe('StatblockGenerator 2024 flow', () => {
       expect(saved.other_edition.sections.Actions[1].text).toContain('*Melee Attack Roll:*');
 
       // Flip back: instant swap from the cache — no preview, no second call.
-      await wrapper.find('[data-testid="edition-switch"]').trigger('click');
+      await clickEditionTab(wrapper, '2024 rules');
       expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(1);
       expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(false);
       expect(wrapper.find('.statblock-2024-stub').exists()).toBe(true);

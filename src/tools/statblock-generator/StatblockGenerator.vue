@@ -129,62 +129,63 @@
         </div>
       </div>
 
-      <!-- Card toolbar: edition switch (2014 ⇄ 2024 views of THIS monster,
-           cache-and-swap; flipping to a not-yet-converted edition shows the
-           blurred preview below) + column toggle. -->
-      <div class="statblock-toolbar" v-if="monster && !loadingPart1 && !loadingPart2 && !errorMessage">
-        <ParSwitch v-model="cardEditionIs2024" data-testid="edition-switch"
-          off-label="2014" on-label="2024" aria-label="View the 2024 rules version" />
-        <ParToggleGroup
-          v-if="shouldDisplayInterface && canSwitchColumns"
-          v-model="userColumnsPreference"
-          aria-label="Statblock column layout"
-          class="column-toggle"
-        >
-          <ParToggleButton toggleValue="one_column">1 Column</ParToggleButton>
-          <ParToggleButton toggleValue="two_columns">2 Columns</ParToggleButton>
-        </ParToggleGroup>
-      </div>
-      <ParToggleGroup
-        v-else-if="shouldDisplayInterface && canSwitchColumns && (loadingPart1 || loadingPart2)"
-        v-model="userColumnsPreference"
-        aria-label="Statblock column layout"
-        class="column-toggle"
-      >
-        <ParToggleButton toggleValue="one_column">1 Column</ParToggleButton>
-        <ParToggleButton toggleValue="two_columns">2 Columns</ParToggleButton>
-      </ParToggleGroup>
+      <div class="statblock-area" v-if="!errorMessage && (monster || loadingPart1 || loadingPart2)">
+        <!-- One header row on the card's top edge: edition tabs left (two
+             printings of the same document — burgundy content-surface
+             register), compact column pill right (lapis chrome register),
+             sharing a single divider baseline. Picking a not-yet-converted
+             printing shows the blurred preview. -->
+        <div class="statblock-tabbar">
+          <ParTabToggle
+            v-if="monster && !loadingPart1 && !loadingPart2"
+            v-model="cardEdition"
+            :options="EDITION_TAB_OPTIONS"
+            data-testid="edition-switch"
+          />
+          <span v-else></span>
+          <ParToggleGroup
+            v-if="shouldDisplayInterface && canSwitchColumns"
+            v-model="userColumnsPreference"
+            size="small"
+            aria-label="Statblock column layout"
+            class="column-toggle-compact"
+          >
+            <ParToggleButton toggleValue="one_column">1 Column</ParToggleButton>
+            <ParToggleButton toggleValue="two_columns">2 Columns</ParToggleButton>
+          </ParToggleGroup>
+        </div>
 
-      <!-- Preview state: the other edition doesn't exist yet. The card below
-           is the DETERMINISTIC shape mapping of the real monster (numbers and
-           structure are exact; only the prose is still source-edition
-           phrased) — blurred, with the one-time Convert action on top. -->
-      <div v-if="previewEdition && monster && !errorMessage" class="edition-preview" data-testid="edition-preview">
-        <div class="edition-preview__card">
-          <Statblock v-if="previewEdition === '2014'" :monster="previewMonster" :readonly="true"
-            :width="850" :columns="userColumnsPreference" />
-          <Statblock2024 v-else :monster="previewMonster" :loading="!previewMonster" :readonly="true"
-            :width="850" :columns="userColumnsPreference" />
+        <!-- Preview state: the other edition doesn't exist yet. The card below
+             is the DETERMINISTIC shape mapping of the real monster (numbers and
+             structure are exact; only the prose is still source-edition
+             phrased) — blurred, with the one-time Convert action on top. -->
+        <div v-if="previewEdition && monster" class="edition-preview" data-testid="edition-preview">
+          <div class="edition-preview__card">
+            <Statblock v-if="previewEdition === '2014'" :monster="previewMonster" :readonly="true"
+              :width="850" :columns="userColumnsPreference" />
+            <Statblock2024 v-else :monster="previewMonster" :loading="!previewMonster" :readonly="true"
+              :width="850" :columns="userColumnsPreference" />
+          </div>
+          <div class="edition-preview__overlay">
+            <ParButton data-testid="convert-edition" :disabled="converting" @click="convertMonsterEdition">
+              {{ converting ? 'Converting…' : `Convert to ${previewEdition} rules` }}
+            </ParButton>
+            <p class="edition-preview__note">One-time AI conversion — the numbers stay identical; the wording is rewritten in {{ previewEdition }} style. After that the tabs flip instantly.</p>
+          </div>
         </div>
-        <div class="edition-preview__overlay">
-          <ParButton data-testid="convert-edition" :disabled="converting" @click="convertMonsterEdition">
-            {{ converting ? 'Converting…' : `Convert to ${previewEdition} rules` }}
-          </ParButton>
-          <p class="edition-preview__note">One-time AI conversion — the numbers stay identical; the wording is rewritten in {{ previewEdition }} style. After that the switch flips instantly.</p>
-        </div>
+        <Statblock v-else-if="displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
+          :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
+          :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
+          @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
+          @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+          @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+        <Statblock2024 v-else-if="displayFormat === '2024' && (loadingPart1 || monster)"
+          :monster="monster" :columns="userColumnsPreference" :width="850" :loading="loadingPart1"
+          :premium="premium" @update-monster="updateMonster"
+          @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
+          @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+          @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
       </div>
-      <Statblock v-else-if="!errorMessage && displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
-        :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
-        :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
-        @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
-        @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
-      <Statblock2024 v-else-if="!errorMessage && displayFormat === '2024' && (loadingPart1 || monster)"
-        :monster="monster" :columns="userColumnsPreference" :width="850" :loading="loadingPart1"
-        :premium="premium" @update-monster="updateMonster"
-        @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
-        @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
 
       <!-- Regenerate panel (toggled by the 🔄 Regenerate action in the
            statblock footer bar). Re-rolls a saved statblock: the gen params
@@ -286,7 +287,7 @@
 </template>
 
 <script setup>
-import { ParButton, ParAccordion, ParAccordionGroup, ParToggleGroup, ParToggleButton, ParField, ParInput, ParSelect, ParTextarea, ParCheckbox, ParConfirm, ParSwitch } from "@/parchment";
+import { ParButton, ParAccordion, ParAccordionGroup, ParToggleGroup, ParToggleButton, ParField, ParInput, ParSelect, ParTextarea, ParCheckbox, ParConfirm, ParSwitch, ParTabToggle } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, onMounted, onUnmounted, computed, reactive, watch } from 'vue';
 import Statblock from '@/components/Statblock.vue';
@@ -1058,9 +1059,18 @@ const converting = ref(false);
 const activeEdition = computed(() =>
   monster.value?.format === '2024' ? '2024' : '2014');
 
-const cardEditionIs2024 = computed({
-  get: () => (previewEdition.value ?? activeEdition.value) === '2024',
-  set: () => toggleEdition(),
+const EDITION_TAB_OPTIONS = [
+  { value: '2014', label: '2014 rules' },
+  { value: '2024', label: '2024 rules' },
+];
+
+// v-model adapter for the edition tabs: shows the printing being viewed
+// (preview target while previewing); picking the other tab toggles.
+const cardEdition = computed({
+  get: () => previewEdition.value ?? activeEdition.value,
+  set: (v) => {
+    if (v !== (previewEdition.value ?? activeEdition.value)) toggleEdition();
+  },
 });
 
 // Deterministic target-shape preview of the active monster. null (→ skeleton)
@@ -1124,7 +1134,7 @@ async function convertMonsterEdition() {
     persistMonsters();
     format.value = converted.format === '2024' ? '2024' : '2014';
     previewEdition.value = null;
-    toast.success(`Converted to the ${target} rules — the switch now flips instantly.`);
+    toast.success(`Converted to the ${target} rules — both printings are saved; use the tabs to flip between them.`);
   } catch (e) {
     logger.error('Edition conversion failed:', e);
     toast.error('Failed to convert this statblock. Please try again.');
@@ -1482,12 +1492,6 @@ async function saveGeneratedMonster(finalMonster) {
   margin: 0.25rem 0 0.5rem;
 }
 
-.column-toggle {
-  display: flex;
-  margin: 1.5rem auto;
-  justify-content: center;
-}
-
 .generator-container {
   height: 100vh;
   min-height: 100dvh;
@@ -1633,15 +1637,60 @@ async function saveGeneratedMonster(finalMonster) {
   margin: -0.8rem 0 1rem;
 }
 
-/* Card toolbar: edition switch left, column toggle right. */
-.statblock-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.8rem;
+/* Card area: edition tabs sit on the card's top edge like document tabs —
+   two printings of the same monster. */
+.statblock-area {
   max-width: 850px;
-  margin: 1rem auto 0;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.statblock-tabbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.6rem;
+  margin: 1.6rem 0 0;
+  border-bottom: 1px solid var(--par-color-divider, #e2dccd);
+}
+
+/* The row owns the divider so it spans under both controls; strip the tab
+   strip's internal one (the active tab's burgundy underline still overlaps
+   the shared baseline via its own -1px margin). */
+.statblock-tabbar :deep(.par-tab-toggle) {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Scaled up from the primitive's default so the tabs hold their own against
+   the column pill on the same row. */
+.statblock-tabbar :deep(.par-tab-toggle__btn) {
+  font-size: 1.4rem;
+  padding: 0.9rem 1.8rem;
+}
+
+/* ParToggleGroup fills its container by design — shrink it to content and
+   lift it just off the baseline. Sized a notch below the group's own
+   "small" so it reads as an accessory to the tabs, not a peer. */
+.statblock-tabbar .column-toggle-compact {
+  width: auto;
+  margin-bottom: 0.5rem;
+  padding: 0.3rem;
+}
+
+.statblock-tabbar .column-toggle-compact :deep(.par-toggle-button__item) {
+  font-size: 1.1rem;
+  padding: 0.35rem 1rem;
+}
+
+/* Tuck both cards up under the tabs' divider baseline so tab + card read
+   as one document (the cards' own top margins assume a bare page). */
+.statblock-area :deep(.container) {
+  margin-top: 0.6rem;
+}
+
+.statblock-area :deep(.sb24-container) {
+  margin-top: 0.6rem;
 }
 
 /* Blurred deterministic preview of the not-yet-converted edition, with the

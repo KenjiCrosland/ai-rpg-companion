@@ -112,8 +112,9 @@ never accept LLM numbers); missing required_slots reject the generation.
   the 2024 card gained whole-section re-rolls, the 2014 card lost its
   hover-reveal buttons. The form's rules-version control is a compact switch,
   not a segmented bar. **Edition switching is cache-and-swap (owner design,
-  same day):** a `ParSwitch` in the card toolbar flips between 2014/2024
-  views of the monster. The active edition IS the saved object; the converted
+  same day):** `ParTabToggle` tabs on the card's top edge ("2014 rules /
+  2024 rules" — burgundy content-surface register: two printings of one
+  document, per the owner's placement pick) flip between the editions. The active edition IS the saved object; the converted
   counterpart caches on it as `other_edition` (flip = swap + persist,
   instant and lossless — downstream consumers always read the active
   object). Flipping toward a missing edition shows the target card as a
