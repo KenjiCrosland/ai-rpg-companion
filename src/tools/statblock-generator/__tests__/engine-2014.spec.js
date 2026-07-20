@@ -282,3 +282,133 @@ describe('generateMonster2024 with edition 2014', () => {
     expect(monster.actions.find((a) => a.name === 'Shadow Claw').description).toContain('Weapon Attack');
   });
 });
+
+describe('edition conversion (⇄ footer action)', () => {
+  const { fromLegacyModel, convertEdition, validateConversionResponse } =
+    require('../format-2024/generate.mjs');
+
+  const internal = assembleMonster(llm2014Fixture, ctx());
+  const legacyOf = (extras = {}) => ({
+    ...toLegacyModel(JSON.parse(JSON.stringify(internal))),
+    ...extras,
+  });
+
+  // Fake AI: shift queued responses; enforce the validator like the real
+  // client would (a fixture the validator rejects is a broken test).
+  const queuedLLM = (queue) => jest.fn(async (prompt, validate) => {
+    const raw = JSON.stringify(queue.shift());
+    if (validate && !validate(raw)) throw new Error('validator rejected fixture');
+    return raw;
+  });
+
+  const CONVERTED_2024_TEXTS = {
+    'Umbral Veil': 'While in Dim Light or Darkness, the stalker has the Invisible condition.',
+    Multiattack: 'The stalker makes two Shadow Claw attacks.',
+    'Shadow Claw': '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.',
+    'Ambush Pounce': '*Dexterity Saving Throw*: DC 13, each creature within 10 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage only.',
+  };
+  const response2024 = (m) => Object.fromEntries(
+    Object.entries(m.sections).map(([s, es]) =>
+      [s, es.map((e) => ({ name: e.name, text: CONVERTED_2024_TEXTS[e.name] }))]));
+
+  test('fromLegacyModel inverts toLegacyModel', () => {
+    const withExtras = JSON.parse(JSON.stringify(internal));
+    withExtras.sections.Reactions = [{ name: 'Parry', text: 'When a creature hits it, it parries.' }];
+    withExtras.sections['Bonus Actions'] = [{ name: 'Slip Away', text: 'It disengages.' }];
+    const model = fromLegacyModel(toLegacyModel(withExtras));
+    expect(model.stats).toEqual(internal.stats);
+    expect(model.saves).toEqual(internal.saves);
+    expect(model.ac).toBe(internal.ac);
+    expect(model.hp).toBe(internal.hp);
+    expect(model.cr).toBe(4);
+    expect(model.pb).toBe(2);
+    expect(model.xp).toBe(1100);
+    expect(model.size).toBe('Medium');
+    expect(model.type).toBe('Monstrosity');
+    expect(model.alignment).toBe('Neutral Evil');
+    expect(model.immunities).toBe('Poison; Poisoned');
+    // Folded reactions/bonus actions unfold back into their own sections.
+    expect(model.sections.Reactions).toEqual([{ name: 'Parry', text: 'When a creature hits it, it parries.' }]);
+    expect(model.sections['Bonus Actions']).toEqual([{ name: 'Slip Away', text: 'It disengages.' }]);
+    expect(model.sections.Traits.map((e) => e.name)).toEqual(['Umbral Veil']);
+    expect(model.sections.Actions).toHaveLength(3);
+    expect(model.format).toBe('2024');
+  });
+
+  test('2014 → 2024: one rephrase call, deterministic shape, meta carried', async () => {
+    const legacy = legacyOf({ monsterDescription: 'a shadow', selectedChallengeRating: '4', caster: false });
+    const callLLM = queuedLLM([response2024(fromLegacyModel(legacy))]);
+    const converted = await convertEdition(legacy, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(converted.format).toBe('2024');
+    expect(converted.stats.DEX).toBe(16);
+    expect(converted.saves.DEX).toBe(5);
+    expect(converted.sections.Traits[0].text).toContain('Invisible condition');
+    expect(converted.sections.Actions[1].text).toContain('*Melee Attack Roll:*');
+    // Regen params survive the shape change.
+    expect(converted.monsterDescription).toBe('a shadow');
+    expect(converted.caster).toBe(false);
+    // The result passes the 2024 phrasing gates.
+    const rules = lintStatblock(converted, { edition: '2024' }).findings.map((f) => f.rule);
+    expect(rules).not.toContain('phrasing-2014');
+    expect(rules).not.toContain('phrasing-to-hit');
+  });
+
+  test('2024 → 2014: returns the legacy shape with numbers untouched', async () => {
+    const modern = {
+      ...JSON.parse(JSON.stringify(internal)),
+      format: '2024',
+      monsterDescription: 'a shadow',
+    };
+    modern.sections.Traits[0].text = 'While in Dim Light or Darkness, the stalker has the Invisible condition.';
+    modern.sections.Actions[1].text = '*Melee Attack Roll:* +9, reach 5 ft. 13 (2d8 + 4) Slashing damage.';
+    modern.sections.Actions[2].text = '*Dexterity Saving Throw*: DC 13, each creature within 10 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage only.';
+    const response = Object.fromEntries(Object.entries(modern.sections).map(([s, es]) =>
+      [s, es.map((e) => ({
+        name: e.name,
+        text: {
+          'Umbral Veil': 'While in dim light or darkness, the stalker is invisible.',
+          Multiattack: 'The stalker makes two Shadow Claw attacks.',
+          // +9 is off the CR-4 chassis ON PURPOSE: conversion is a dialect
+          // change, never a rebalance — the number must survive.
+          'Shadow Claw': 'Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.',
+          'Ambush Pounce': 'Each creature within 10 feet must make a DC 13 Dexterity saving throw, taking 21 (6d6) psychic damage on a failed save, or half as much damage on a successful one.',
+        }[e.name],
+      }))]));
+    const converted = await convertEdition(modern, queuedLLM([response]));
+    expect(converted.format).toBe('2014');
+    expect(converted.attributes).toContain('DEX 16 (+3)');
+    expect(converted.armor_class).toBe('14');
+    expect(converted.actions.find((a) => a.name === 'Shadow Claw').description).toContain('+9 to hit');
+    expect(converted.monsterDescription).toBe('a shadow');
+    expect(converted.abilities[0].description).toContain('dim light');
+  });
+
+  test('a response that keeps source-edition phrasing gets the fix ladder', async () => {
+    const legacy = legacyOf();
+    const model = fromLegacyModel(legacy);
+    const halfConverted = response2024(model);
+    // Shadow Claw comes back still 2014-phrased.
+    halfConverted.Actions[1].text = 'Melee Weapon Attack: +7, reach 5 ft., one target. Hit: 13 (2d8 + 4) Slashing damage.';
+    const callLLM = queuedLLM([
+      halfConverted,
+      [{ name: 'Shadow Claw', text: CONVERTED_2024_TEXTS['Shadow Claw'] }],
+    ]);
+    const converted = await convertEdition(legacy, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(converted.sections.Actions[1].text).toContain('*Melee Attack Roll:*');
+  });
+
+  test('validateConversionResponse enforces section shape and entry names', () => {
+    const model = fromLegacyModel(legacyOf());
+    const good = response2024(model);
+    expect(validateConversionResponse(JSON.stringify(good), model)).toBe(true);
+    const renamed = JSON.parse(JSON.stringify(good));
+    renamed.Actions[1].name = 'Umbra Claw';
+    expect(validateConversionResponse(JSON.stringify(renamed), model)).toBe(false);
+    const short = JSON.parse(JSON.stringify(good));
+    short.Actions.pop();
+    expect(validateConversionResponse(JSON.stringify(short), model)).toBe(false);
+    expect(validateConversionResponse(JSON.stringify({}), model)).toBe(false);
+  });
+});

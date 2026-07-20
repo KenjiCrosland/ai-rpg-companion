@@ -106,6 +106,26 @@ never accept LLM numbers); missing required_slots reject the generation.
 - **2014 archetype retrofit is deferred.** Chassis/archetype math is edition-agnostic;
   a 2014 upgrade is mostly a renderer + prompt variant. Add a `plans/` entry for it
   during the step-5 session.
+- **Edit-chrome parity + edition conversion (2026-07-19, owner feedback).**
+  Both cards share one edit UX (footer ✏️ Edit / 💾 Save / ↩️ Cancel,
+  per-entry 🔄 Re-roll + ✕ bars, "+ Add" affordances, same premium message);
+  the 2024 card gained whole-section re-rolls, the 2014 card lost its
+  hover-reveal buttons. The form's rules-version control is a compact switch,
+  not a segmented bar. **Editing is IN PLACE (owner call, second pass same
+  day): the 2014 card's convention won — fields swap to inputs where they
+  live in the card layout (name in the header, scores inside the ability
+  grid with live MOD/SAVE, entries inside their sections). The 2024 card's
+  original separate-form edit body was replaced; never reintroduce a
+  form-style edit surface on either card.** Edit mode keeps the two-column
+  flow (owner call): textareas are fixed-height so multicol only rebalances
+  on add/remove/re-roll, and break-inside keeps each entry editor whole. A ⇄ footer action converts a saved block between
+  editions via `convertEdition` — deterministic shape mapping + one phrasing
+  rephrase call, phrasing-lint gated, numbers never rebalanced.
+- **2024 card inline editing shipped (2026-07-19)**: full field/entry editing
+  on `Statblock2024.vue`, engine band hints on numeric edits (advisory — the
+  user may break the math on purpose; only the pipeline may not), score edits
+  recompute saves preserving proficiency, per-entry AI re-rolls via
+  `rerollEntry`. CR/PB/initiative stay engine-owned (Regenerate changes them).
 - **2024 display component (settled from owner's reference screenshots, 2026-07-18).**
   New `Statblock2024.vue` with its own scoped "canonical textbook" stylesheet —
   owner explicitly OK'd deviating from parchment inside the card to match the

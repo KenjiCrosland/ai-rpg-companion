@@ -411,6 +411,17 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         push('entry-name-caps', 'correctable', `${where}: all-caps entry name`, titled, loc);
       }
     }
+    // A reaction with no trigger is a free action in disguise — the trigger
+    // is what prices it (once per round, only when the event occurs). 2024
+    // uses the official "*Trigger:* ... *Response:* ..." form (the SRD has no
+    // bespoke-reaction exemplar; its only 3 reactions delegate via "in
+    // response to the spell's trigger", which stays legal — corpus: 3/3 pass).
+    // 2014 triggers are loose prose (Parry has no "when" at all), so this is
+    // prompt-enforced only there. Empty text = pseudo-block stub, skip.
+    if (is2024 && section === 'Reactions' && entry.text.trim()
+        && !/\*Trigger:\*/.test(entry.text) && !/\bin response to\b/i.test(entry.text)) {
+      push('reaction-trigger', 'reject', `${where} has no trigger — a Reaction is not a free action; it must state when it fires: "*Trigger:* <specific event>. *Response:* <what the creature does>."`, undefined, loc);
+    }
     if (section === 'Traits' && SELF_MITIGATION_RE.test(entry.text)) {
       push('trait-mitigation', 'reject', `Blanket damage mitigation as a passive trait in ${where} — the chassis already prices defenses; single-attack mitigation must be a Reaction (once per round)`, undefined, loc);
     }

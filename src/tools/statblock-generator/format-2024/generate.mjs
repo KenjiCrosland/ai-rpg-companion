@@ -70,6 +70,17 @@ const EXEMPLAR_2014 = {
 const modOf = (score) => Math.floor((score - 10) / 2);
 const signed = (n) => (n >= 0 ? `+${n}` : `${n}`);
 
+const SMALL_WORDS = new Set(['of', 'the', 'a', 'an', 'and', 'in']);
+
+/** Title Case a creature name; small words stay lowercase except first. */
+export function titleCaseName(name) {
+  return name.split(/\s+/).map((w, i) =>
+    i > 0 && SMALL_WORDS.has(w.toLowerCase())
+      ? w.toLowerCase()
+      : w.charAt(0).toUpperCase() + w.slice(1)
+  ).join(' ');
+}
+
 /** CR number → challengeRatings.json / cr_str key ('0.5' → '1/2'). */
 export function crKeyFor(cr) {
   if (cr === 0.125) return '1/8';
@@ -358,6 +369,9 @@ RULES — read first; they apply to every line of output:
 7. The statblock text is in-world only and third person. Never reference these instructions, rulebook editions ("2024", "5e"), or design terms ("legal condition", "budget"). Never "you"/"your" ("each creature of the warden's choice", not "of your choice"). Never write "(any race)" in the subtype — 2024 dropped it.
 8. Every attack you tell the creature to make ("makes one Shield Bash attack") MUST exist as a fully written attack action in this statblock. Define it or don't reference it.
 9. Defensive traits must be NARROW. Never write a passive trait that halves or reduces incoming damage, grants resistance to everything, or otherwise multiplies the creature's durability — the fixed AC/HP already price its defenses. Mitigating a single attack is fine ONLY as a Reaction (once per round).
+10. A Reaction is NOT a free action — it fires once per round, only when a specific event occurs. Every Reactions entry uses EXACTLY this form: *Trigger:* <the specific event that lets the creature respond>. *Response:* <what it does>.
+   CORRECT: *Trigger:* A creature within 30 feet hits the warden with an attack roll. *Response:* The attacker takes 7 (2d6) Radiant damage.
+   WRONG: One creature within 60 feet must succeed on a saving throw... (no trigger — that is an Action, not a Reaction)
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
@@ -385,7 +399,7 @@ Here is a real SRD 2024 statblock as a style reference (structure and phrasing, 
 
 ${JSON.stringify(exemplar, null, 2)}
 
-Apply all six RULES from the top of this prompt. Return ONLY the JSON object.`;
+Apply ALL the RULES from the top of this prompt. Return ONLY the JSON object.`;
 }
 
 // 2014-edition prompt: identical numeric skeletons and structure, classic
@@ -423,6 +437,7 @@ RULES — read first; they apply to every line of output:
 5. Third person only, in-world only — never "you"/"your", never rulebook or design references.
 6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock. Every attack you reference MUST exist as a written attack action.
 7. Defensive traits must be NARROW. Never write a passive trait that halves or reduces incoming damage or grants resistance to everything — the fixed AC/HP already price the creature's defenses. Mitigating a single attack is fine ONLY as a reaction (once per round).
+8. A reaction is not a free action — every Reactions entry begins by stating its trigger in prose: "When <specific event>, the <creature> <responds>." Never write a reaction that can simply be used on the creature's turn.
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
@@ -441,7 +456,7 @@ Here is a statblock in the correct classic style (structure and phrasing, NOT nu
 
 ${JSON.stringify(EXEMPLAR_2014, null, 2)}
 
-Apply all six RULES from the top of this prompt. Return ONLY the JSON object.`;
+Apply ALL the RULES from the top of this prompt. Return ONLY the JSON object.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -491,8 +506,9 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   }
 
   const monster = {
-    // Names never carry a leading article — prose and display add "the".
-    name: (llmJson.name || 'Unnamed Creature').replace(/^the\s+/i, ''),
+    // Names never carry a leading article — prose and display add "the" —
+    // and always render Title Case regardless of what the model wrote.
+    name: titleCaseName((llmJson.name || 'Unnamed Creature').replace(/^the\s+/i, '')),
     size,
     type: llmJson.type || 'Monstrosity',
     alignment: llmJson.alignment || 'Unaligned',
@@ -597,6 +613,186 @@ export function toLegacyModel(m) {
   const legendary = entryList('Legendary Actions');
   if (legendary.length) legacy.legendary_actions = legendary;
   return legacy;
+}
+
+// ---------------------------------------------------------------------------
+// Edition conversion — switch a saved monster between 2024 and 2014
+// ---------------------------------------------------------------------------
+
+/**
+ * Rebuild the internal (sections-based) model from a legacy 2014 block — the
+ * inverse of toLegacyModel. Deterministic: numbers and structure map directly;
+ * only the entry TEXTS stay 2014-phrased (convertEdition's LLM call rewrites
+ * those). Works for pre-engine monsters too (missing fields get fallbacks).
+ */
+export function fromLegacyModel(legacy) {
+  const stats = parseLegacyAttributes(legacy.attributes)
+    ?? Object.fromEntries(STAT_ORDER.map((s) => [s, 10]));
+  const saves = Object.fromEntries(STAT_ORDER.map((s) => [s, modOf(stats[s])]));
+  for (const m of (legacy.saving_throws ?? '').matchAll(/(STR|DEX|CON|INT|WIS|CHA)\s*([+-]\s*\d+)/g)) {
+    saves[m[1]] = Number(m[2].replace(/\s/g, ''));
+  }
+
+  // "Large aberration (titan), lawful evil" → size/type/subtype/alignment.
+  const ta = /^\s*(\S+)\s+([^(,]+?)\s*(?:\(([^)]+)\))?\s*,\s*(.+)$/.exec(legacy.type_and_alignment ?? '') ?? [];
+  const size = titleCaseName(ta[1] ?? 'Medium');
+
+  const hp = /(\d+)\s*(?:\(([^)]*)\))?/.exec(legacy.hit_points ?? '') ?? [];
+  const crToken = String(legacy.challenge_rating ?? '').match(/\d+\/\d+|\d+(\.\d+)?/)?.[0] ?? '1';
+  const cr = crNumberFor(crToken);
+  const xpMatch = /\(([\d,]+)\s*XP\)/.exec(legacy.challenge_rating ?? '');
+
+  const sections = {};
+  const put = (name, e) => {
+    (sections[name] ??= []).push({ name: e.name, text: e.description ?? e.text ?? '' });
+  };
+  for (const e of legacy.abilities ?? []) {
+    const fold = /^(.*)\s+\((Bonus Action|Reaction)\)$/.exec(e.name);
+    if (fold) put(fold[2] === 'Reaction' ? 'Reactions' : 'Bonus Actions', { ...e, name: fold[1] });
+    else put('Traits', e);
+  }
+  for (const e of legacy.actions ?? []) put('Actions', e);
+  for (const e of legacy.legendary_actions ?? []) put('Legendary Actions', e);
+
+  const immunities = [legacy.damage_immunities, legacy.condition_immunities]
+    .filter(Boolean).join('; ');
+
+  const model = {
+    name: legacy.name,
+    size,
+    type: titleCaseName(ta[2] ?? 'Monstrosity'),
+    alignment: titleCaseName(ta[4] ?? 'Unaligned'),
+    ac: parseInt(legacy.armor_class, 10) || 10,
+    hp: Number(hp[1]) || 1,
+    hp_formula: hp[2] || hpFormulaFor(Number(hp[1]) || 1, size, modOf(stats.CON)),
+    speed: legacy.speed,
+    stats,
+    saves,
+    initiative_bonus: modOf(stats.DEX),
+    initiative_score: 10 + modOf(stats.DEX),
+    senses: (legacy.senses ?? '').replace('passive Perception', 'Passive Perception'),
+    cr,
+    cr_str: crKeyFor(cr),
+    xp: xpMatch
+      ? Number(xpMatch[1].replace(/,/g, ''))
+      : (challengeRatings[crKeyFor(cr)]?.XP ?? 0),
+    pb: parseInt(String(legacy.proficiency_bonus ?? '').replace('+', ''), 10)
+      || (challengeRatings[crKeyFor(cr)]?.proficiency_bonus ?? 2),
+    format: '2024',
+    sections,
+  };
+  if (ta[3]) model.subtype = titleCaseName(ta[3]);
+  if (legacy.archetype) model.archetype = legacy.archetype;
+  if (legacy.archetype_source) model.archetype_source = legacy.archetype_source;
+  if (legacy.skills && legacy.skills !== 'None') model.skills = legacy.skills;
+  if (legacy.damage_resistances) model.resistances = legacy.damage_resistances;
+  if (immunities) model.immunities = immunities;
+  if (legacy.languages && legacy.languages !== '—') model.languages = legacy.languages;
+  if ((sections['Legendary Actions'] ?? []).length) model.legendary_uses = 3;
+  return model;
+}
+
+const CONVERSION_RULES = {
+  2014: `You are converting D&D statblock entries from 2024 (5.5e) phrasing to CLASSIC 2014 (5e) phrasing. Rewrite ONLY the wording — every number, die expression, DC, entry name, and mechanical effect stays EXACTLY the same.
+- "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage." becomes "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage." (Ranged attacks likewise, keeping the range.)
+- "*<Ability> Saving Throw*: DC n, <targets>. *Failure:* <damage>. *Success:* Half damage only." becomes "<targets> must make a DC n <Ability> saving throw, taking <damage> on a failed save, or half as much damage on a successful one." Condition-only saves become "must succeed on a DC n <Ability> saving throw or <be/become condition>".
+- Reactions: "*Trigger:* <event>. *Response:* <effect>." becomes "When <event>, <the creature does the effect>."
+- Conditions, damage types, and game terms go lowercase in prose: "is knocked prone", "frightened", "slashing damage", "hit points". Never "has the X condition", never "Attack Roll:", never "*Failure:*"/"*Success:*"/"*Trigger:*" markers.
+- 2024 spellcasting actions convert to the 2014 style: "The creature's spellcasting ability is <Ability> (spell save DC n). It can innately cast the following spells: ..."`,
+  2024: `You are converting D&D statblock entries from classic 2014 (5e) phrasing to 2024 (5.5e) phrasing. Rewrite ONLY the wording — every number, die expression, DC, entry name, and mechanical effect stays EXACTLY the same.
+- "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage." becomes "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage." — never "to hit", never "Weapon Attack", Damage Types Capitalized.
+- Save effects use the structured skeleton as the WHOLE sentence: "*<Ability> Saving Throw*: DC n, <who saves, e.g. each creature in a 30-foot Cone>. *Failure:* <effect>. *Success:* <lesser effect>." Omit *Success:* entirely when success does nothing. Never "must make a" or "must succeed on".
+- Conditions are Capitalized and phrased "has the X condition" (Prone, Frightened, Poisoned, ...). Game terms Capitalized: Hit Points, Opportunity Attack.
+- Reactions become "*Trigger:* <the specific event>. *Response:* <what the creature does>."
+- 2014 spellcasting traits convert to: "The creature casts one of the following spells, using <Ability> as the spellcasting ability (spell save DC n): ..." Spell names Title Case.`,
+};
+
+export function validateConversionResponse(jsonString, model) {
+  const parsed = tryParse(jsonString);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+  for (const [section, entries] of Object.entries(model.sections ?? {})) {
+    const out = parsed[section];
+    if (!Array.isArray(out) || out.length !== entries.length) return false;
+    if (!entries.every((e, i) =>
+      out[i] && out[i].name === e.name
+      && typeof out[i].text === 'string' && out[i].text.trim() !== '')) return false;
+  }
+  return true;
+}
+
+// Only PHRASING rules gate a conversion — the monster keeps its numbers and
+// content verbatim (a dialect change, not a rebalance), so balance rules
+// (trait-mitigation, attack-damage-band, spell-dc-ability, defense budgets)
+// and number-touching corrections (hp-formula, damage-dice) must not fire on
+// pre-existing material they'd otherwise rewrite.
+const CONVERSION_LINT_RULES = new Set([
+  'phrasing-2014', 'phrasing-to-hit', 'phrasing-saving-throw',
+  'phrasing-hybrid-save', 'condition-caps', 'term-caps', 'nonmagical',
+  'reaction-trigger', 'phrasing-2024-in-2014', 'second-person',
+]);
+
+/**
+ * Switch a saved monster to the other edition (its `format` field decides the
+ * direction). Structure and numbers map deterministically (toLegacyModel /
+ * fromLegacyModel); one LLM call rewrites the entry texts into the target
+ * edition's phrasing; the edition's phrasing lint then gates the result via
+ * the usual ladder (deterministic fixes → one targeted entry-rewrite call).
+ */
+export async function convertEdition(monster, callLLM) {
+  const target = monster.format === '2024' ? '2014' : '2024';
+  const model = target === '2014' ? monster : fromLegacyModel(monster);
+
+  const entryPayload = Object.fromEntries(
+    Object.entries(model.sections ?? {})
+      .filter(([, es]) => es.length)
+      .map(([s, es]) => [s, es.map((e) => ({ name: e.name, text: e.text }))])
+  );
+  const prompt = `${CONVERSION_RULES[target]}
+
+THE MONSTER: ${model.name}.
+ENTRIES TO CONVERT (grouped by section):
+${JSON.stringify(entryPayload, null, 2)}
+
+Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry names, and converted texts — no markdown fences, no commentary:
+{"Traits": [{"name": "...", "text": "..."}], ...}`;
+
+  const raw = await callLLM(prompt, (s) => validateConversionResponse(s, model));
+  if (!raw) throw new Error('Empty conversion response');
+  const parsed = tryParse(raw);
+
+  let converted = {
+    ...model,
+    sections: Object.fromEntries(Object.entries(model.sections).map(([s, es]) =>
+      [s, es.map((e, i) => ({ ...e, text: parsed[s]?.[i]?.text ?? e.text }))])),
+  };
+
+  const { chassis, plan } = buildContext(model.cr, model.archetype ?? 'balanced');
+  const phrasingFindings = (m) => lintStatblock(m, { edition: target }).findings
+    .filter((f) => CONVERSION_LINT_RULES.has(f.rule));
+  converted = applyCorrections(converted, phrasingFindings(converted), { chassis });
+  let rejects = phrasingFindings(converted).filter((f) => f.severity === 'reject');
+  if (rejects.length) {
+    converted = await rewriteFlaggedEntries(
+      converted, rejects, { edition: target, chassis, plan, cr: model.cr }, callLLM
+    );
+    rejects = phrasingFindings(converted).filter((f) => f.severity === 'reject');
+    if (rejects.length) {
+      throw new Error(`Conversion failed lint: ${rejects.map((f) => f.message).join('; ')}`);
+    }
+  }
+
+  // Regen params + provenance the generator saves on every monster survive
+  // the shape change so Regenerate/selectMonster keep working.
+  const meta = {};
+  for (const k of ['monsterName', 'monsterDescription', 'selectedChallengeRating', 'caster', 'monsterType', 'concept_seed']) {
+    if (monster[k] !== undefined) meta[k] = monster[k];
+  }
+
+  if (target === '2014') return { ...toLegacyModel(converted), ...meta };
+  if ((converted.sections['Legendary Actions'] ?? []).length && !converted.legendary_uses) {
+    converted.legendary_uses = 3;
+  }
+  return { ...converted, format: '2024', ...meta };
 }
 
 // ---------------------------------------------------------------------------
@@ -724,7 +920,15 @@ export function applyCorrections(monster, findings, { chassis }) {
 // Single-entry re-roll (inline edit) — engine-based
 // ---------------------------------------------------------------------------
 
-const REROLL_SECTION = { ability: 'Traits', action: 'Actions', legendary: 'Legendary Actions' };
+const REROLL_SECTION = {
+  ability: 'Traits', action: 'Actions', legendary: 'Legendary Actions',
+  bonus: 'Bonus Actions', reaction: 'Reactions',
+};
+
+const REROLL_ENTRY_LABEL = {
+  Traits: 'TRAIT', Actions: 'ACTION', 'Legendary Actions': 'LEGENDARY ACTION',
+  'Bonus Actions': 'BONUS ACTION', Reactions: 'REACTION',
+};
 
 function editionSkeletons(edition, chassis, numbers) {
   return edition === '2014'
@@ -796,14 +1000,16 @@ export async function rerollEntry(monster, { kind, current }, callLLM) {
 THE MONSTER: ${monster.name}, CR ${crKeyFor(cr)}${monster.archetype ? `, combat role: ${monster.archetype}` : ''}.
 Its other entries (do not duplicate their mechanics): ${otherNames.join('; ') || 'none'}.
 
-REWRITE THIS ${section === 'Traits' ? 'TRAIT' : section === 'Actions' ? 'ACTION' : 'LEGENDARY ACTION'}:
+REWRITE THIS ${REROLL_ENTRY_LABEL[section]}:
 "${current.name}": ${currentText}
 
 FIXED NUMBER SKELETONS (use EXACTLY these if the new entry attacks or forces a save):
 ${skeletons}
 
 RULES:
-- Third person, in-world only. No traits that halve/reduce incoming damage or grant resistance to everything.
+- Third person, in-world only. No traits that halve/reduce incoming damage or grant resistance to everything.${section === 'Reactions' ? (edition === '2014'
+    ? `\n- This entry is a REACTION: it must begin by stating its trigger in prose — "When <specific event>, the <creature> <responds>." Never a reaction usable on the creature's own turn.`
+    : `\n- This entry is a REACTION — not a free action. It must use EXACTLY this form: *Trigger:* <the specific event that lets the creature respond>. *Response:* <what it does>.`) : ''}
 - Any attack you reference by name must be one of the other entries listed above${referenced ? `.\n- KEEP the name "${current.name}" — other entries reference it by name` : ', or omit attack references'}.
 
 Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
@@ -969,7 +1175,7 @@ const ENTRY_FIXABLE = new Set([
   'phrasing-2014', 'phrasing-to-hit', 'phrasing-saving-throw',
   'phrasing-hybrid-save', 'condition-caps', 'term-caps',
   'phrasing-2024-in-2014', 'second-person', 'trait-mitigation',
-  'undefined-attack-ref', 'attack-damage-band',
+  'undefined-attack-ref', 'attack-damage-band', 'reaction-trigger',
 ]);
 
 // Rejects that genuinely need new content — only these trigger a full
@@ -984,7 +1190,7 @@ async function rewriteFlaggedEntries(monster, rejects, { edition, chassis, plan,
   const byEntry = new Map();
   for (const f of rejects) {
     if (!f.loc) continue;
-    const key = `${f.loc.section} ${f.loc.entry}`;
+    const key = `${f.loc.section}\u0000${f.loc.entry}`;
     if (!byEntry.has(key)) byEntry.set(key, { ...f.loc, problems: [] });
     byEntry.get(key).problems.push(f.message);
   }
@@ -1083,7 +1289,7 @@ export function pickName(candidates, { seedTokens = [], register = '' } = {}) {
     if (seedTokens.some((t) => lower.includes(t))) continue;
     if (isCoinage && (name.includes(' ') || name.length > 9)) continue;
     if (name.split(/\s+/).length > 3) continue;
-    return name;
+    return titleCaseName(name);
   }
   return null;
 }

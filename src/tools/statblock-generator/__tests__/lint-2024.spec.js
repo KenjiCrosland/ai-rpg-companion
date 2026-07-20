@@ -230,6 +230,29 @@ describe('each rule catches its violation class', () => {
     expect(rules(lint(asReaction, {}))).not.toContain('trait-mitigation');
   });
 
+  test('reaction-trigger: a trigger-less Reaction rejects; Trigger/Response and SRD delegation pass', () => {
+    const withReaction = (text) => ({
+      ...cleanLurker,
+      sections: { ...cleanLurker.sections, Reactions: [{ name: 'Mind-Spore', text }] },
+    });
+    // Reads like an action wearing a reaction's hat (live finding).
+    const broken = withReaction('One creature within 60 feet must succeed on a saving throw or have the Incapacitated condition for 1 minute.');
+    const result = lint(broken, {});
+    const finding = result.findings.find((f) => f.rule === 'reaction-trigger');
+    expect(finding.severity).toBe('reject');
+    expect(finding.loc).toEqual({ section: 'Reactions', entry: 'Mind-Spore' });
+    // Official 2024 form passes.
+    expect(rules(lint(withReaction('*Trigger:* A creature within 30 feet hits the stalker with an attack roll. *Response:* The stalker teleports up to 15 feet.'), {})))
+      .not.toContain('reaction-trigger');
+    // The SRD's delegating form ("Protective Magic") passes.
+    expect(rules(lint(withReaction("The stalker casts *Shield* in response to the spell's trigger."), {})))
+      .not.toContain('reaction-trigger');
+    // 2014 triggers are loose prose — prompt-enforced only, never linted.
+    expect(rules(lint(broken, { edition: '2014' }))).not.toContain('reaction-trigger');
+    // Empty text = pseudo-block name stub (reroll lint), skipped.
+    expect(rules(lint(withReaction(''), {}))).not.toContain('reaction-trigger');
+  });
+
   test('spell-dc-ability: DC must derive from the named ability (8 + PB + mod, ±1)', () => {
     // cleanLurker: pb 2, CHA 8 (mod -1) → derived DC 9; declared 13 is off by 4.
     const weak = withAction(cleanLurker, 2, {

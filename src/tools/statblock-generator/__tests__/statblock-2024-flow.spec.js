@@ -179,12 +179,13 @@ describe('StatblockGenerator 2024 flow', () => {
       wrapper.unmount();
     });
 
-    test('switching the toggle persists the choice', async () => {
+    test('flipping the rules switch persists the choice', async () => {
       const wrapper = mountGenerator();
-      const button2014 = wrapper.findAll('button').find((b) => b.text().includes('2014 rules'));
-      await button2014.trigger('click');
+      const rulesSwitch = wrapper.find('[data-testid="rules-switch"]');
+      expect(rulesSwitch.attributes('aria-checked')).toBe('true'); // 2024 default
+      await rulesSwitch.trigger('click');
       expect(localStorage.getItem('statblock-format')).toBe('2014');
-      expect(wrapper.text()).toContain('Build');
+      expect(rulesSwitch.attributes('aria-checked')).toBe('false');
       wrapper.unmount();
     });
 

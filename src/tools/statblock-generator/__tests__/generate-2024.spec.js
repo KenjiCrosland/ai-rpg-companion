@@ -156,9 +156,13 @@ describe('assembleMonster', () => {
     expect(monster.sections.Actions[1].text).toBe('*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.');
   });
 
-  test('leading articles are stripped from names', () => {
+  test('leading articles are stripped and names Title Cased', () => {
     const theNamed = assembleMonster({ ...llmFixture, name: 'The Hanging Shroud' }, ctx());
     expect(theNamed.name).toBe('Hanging Shroud');
+    const lower = assembleMonster({ ...llmFixture, name: 'thorn crawler' }, ctx());
+    expect(lower.name).toBe('Thorn Crawler');
+    const titled = assembleMonster({ ...llmFixture, name: 'the excavator of the deep' }, ctx());
+    expect(titled.name).toBe('Excavator of the Deep');
   });
 
   test('out-of-range ability scores are clamped', () => {

@@ -1,6 +1,5 @@
 <template>
-    <div ref="containerRef" :style="widthStyle" :class="`container ${columns}`" @mouseover="showEditButton = true"
-        @mouseleave="showEditButton = false">
+    <div ref="containerRef" :style="widthStyle" :class="`container ${columns}`">
         <div v-if="!loadingPart1" class="statblock">
             <div class="creature-heading" :class="{ 'editing': isEditing }">
                 <h1 v-if="!isEditing">{{ monster.name }}</h1>
@@ -127,38 +126,27 @@
                 </div>
                 <div v-if="isEditing && !loadingAbilities" class="ability-forms">
                     <ParButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
-                        @click="generateAbilities(editedMonster, userSuggestion)">{{
-                            monster.abilities.length > 0 ? 'Re-generate abilities' :
+                        @click="generateAbilities()">{{
+                            monster.abilities.length > 0 ? 'Re-roll all abilities' :
                                 'Generate abilities' }}</ParButton>
                     <li v-for="(ability, index) in editedAbilities" :key="index">
-                        <input v-model="ability.name" />
+                        <div class="entry-bar">
+                            <input v-model="ability.name" class="entry-name" />
+                            <button class="entry-btn" :disabled="loadingAbilityIndices.has(index)"
+                                @click="regenerateAbility(index)">
+                                {{ loadingAbilityIndices.has(index) ? '…' : 'Re-roll' }}
+                            </button>
+                            <button class="entry-btn entry-btn--danger" @click="removeAbility(index)">✕</button>
+                        </div>
                         <textarea v-model="ability.description"></textarea>
-                        <div v-if="loadingAbilityIndices.has(index)" class="item-loading">
-                            Regenerating...
-                        </div>
-                        <div v-else class="action-buttons">
-                            <button class="regenerate-button-small"
-                                @click="regenerateAbility(index)">Regenerate</button>
-                            <button class="remove-button" @click="removeAbility(index)">Remove</button>
-                        </div>
                     </li>
-                    <button class="add-button" size="small" :full-width="true" modifier="secondary"
-                        @click="addAbility">Add
-                        Ability</button>
+                    <button class="add-button" @click="addAbility">+ Add Ability</button>
                 </div>
                 <div v-if="loadingAbilities">
                     <StatblockAbilitiesSkeleton />
                 </div>
             </ul>
 
-            <div class="edit-save-buttons" v-if="!readonly">
-                <ParCardButton size="small" variant="affirmative" v-if="showEditButton && !isEditing"
-                    @click="enterEditMode">Edit</ParCardButton>
-                <ParCardButton size="small" variant="primary" v-if="isEditing"
-                    @click="saveChanges">Save</ParCardButton>
-                <ParCardButton size="small" variant="muted" v-if="isEditing"
-                    @click="cancelChanges">Cancel</ParCardButton>
-            </div>
         </div>
 
         <div v-if="loadingPart1" class="statblock">
@@ -176,26 +164,26 @@
                 </div>
                 <div v-if="isEditing && !loadingActions" class="ability-forms">
                     <ParButton class="regenerate-button" size="small" :full-width="true" variant="secondary"
-                        v-if="isEditing" @click="generateActions(editedMonster, userSuggestion)">{{ editedActions.length
+                        v-if="isEditing" @click="generateActions()">{{ editedActions.length
                             > 0 ?
-                            'Re-generate actions' : 'Generate actions' }}</ParButton>
+                            'Re-roll all actions' : 'Generate actions' }}</ParButton>
                     <li v-for="(action, index) in editedActions" :key="'action-' + index">
-                        <input v-model="action.name" />
+                        <div class="entry-bar">
+                            <input v-model="action.name" class="entry-name" />
+                            <button class="entry-btn" :disabled="loadingActionIndices.has(index)"
+                                @click="regenerateAction(index)">
+                                {{ loadingActionIndices.has(index) ? '…' : 'Re-roll' }}
+                            </button>
+                            <button class="entry-btn entry-btn--danger" @click="removeAction(index)">✕</button>
+                        </div>
                         <textarea v-model="action.description"></textarea>
-                        <div v-if="loadingActionIndices.has(index)" class="item-loading">
-                            Regenerating...
-                        </div>
-                        <div v-else class="action-buttons">
-                            <button class="regenerate-button-small" @click="regenerateAction(index)">Regenerate</button>
-                            <button class="remove-button" @click="removeAction(index)">Remove</button>
-                        </div>
                     </li>
                 </div>
                 <div v-if="loadingActions">
                     <StatblockAbilitiesSkeleton />
                 </div>
             </ul>
-            <button class="add-button" v-if="isEditing && !loadingActions" @click="addAction">Add Action</button>
+            <button class="add-button" v-if="isEditing && !loadingActions" @click="addAction">+ Add Action</button>
             <div>
                 <h3 v-if="editedLegendaryActions.length > 0 || isEditing">Legendary Actions</h3>
                 <!-- Official 2014 convention: 3 uses per round regardless of
@@ -211,8 +199,8 @@
                     stronger than the CR provided.</p>
                 <ParButton class="regenerate-button" v-if="isEditing && !loadingLegendaryActions" size="small"
                     :full-width="true" modifier="secondary"
-                    @click="generateLegendaryActions(editedMonster, userSuggestion)">{{
-                        editedLegendaryActions.length > 0 ? 'Re-generate legendary actions' :
+                    @click="generateLegendaryActions()">{{
+                        editedLegendaryActions.length > 0 ? 'Re-roll all legendary actions' :
                             'Generate legendary actions' }}</ParButton>
                 <ul class="abilities" v-if="editedLegendaryActions.length > 0 || isEditing">
                     <template v-if="!isEditing">
@@ -224,20 +212,18 @@
                     <template v-if="isEditing && !loadingLegendaryActions">
                         <div class="ability-forms">
                             <li v-for="(action, index) in editedLegendaryActions" :key="'legendary-' + index">
-                                <input v-model="action.name" />
+                                <div class="entry-bar">
+                                    <input v-model="action.name" class="entry-name" />
+                                    <button class="entry-btn" :disabled="loadingLegendaryActionIndices.has(index)"
+                                        @click="regenerateLegendaryAction(index)">
+                                        {{ loadingLegendaryActionIndices.has(index) ? '…' : 'Re-roll' }}
+                                    </button>
+                                    <button class="entry-btn entry-btn--danger"
+                                        @click="removeLegendaryAction(index)">✕</button>
+                                </div>
                                 <textarea v-model="action.description"></textarea>
-                                <div v-if="loadingLegendaryActionIndices.has(index)" class="item-loading">
-                                    Regenerating...
-                                </div>
-                                <div v-else class="action-buttons">
-                                    <button class="regenerate-button-small"
-                                        @click="regenerateLegendaryAction(index)">Regenerate</button>
-                                    <button class="remove-button" @click="removeLegendaryAction(index)">Remove</button>
-                                </div>
                             </li>
-                            <button class="add-button" size="small" :full-width="true" modifier="secondary"
-                                @click="addLegendaryAction">Add
-                                Legendary Action</button>
+                            <button class="add-button" @click="addLegendaryAction">+ Add Legendary Action</button>
                         </div>
                         <ParButton style="margin-top: .5rem" size="small" :full-width="true" variant="secondary"
                             v-if="editedLegendaryActions.length > 0" @click="clearLegendaryActions">Remove
@@ -255,9 +241,26 @@
             <StatblockSkeletonPtTwo />
         </div>
 
-        <!-- Footer Bar -->
-        <div v-if="monster && !loadingPart2 && !readonly" class="card-footer-bar">
+        <!-- Footer Bar — same chrome as Statblock2024.vue: Edit lives here,
+             and edit mode swaps the bar for Save changes / Cancel. -->
+        <div v-if="isEditing" class="card-footer-bar">
             <div class="card-footer-bar__actions">
+                <CardFooterAction data-testid="save-edit" @click="saveChanges">
+                    <template #icon>💾</template>
+                    Save changes
+                </CardFooterAction>
+                <CardFooterAction @click="cancelChanges">
+                    <template #icon>↩️</template>
+                    Cancel
+                </CardFooterAction>
+            </div>
+        </div>
+        <div v-else-if="monster && !loadingPart2 && !readonly" class="card-footer-bar">
+            <div class="card-footer-bar__actions">
+                <CardFooterAction data-testid="edit-statblock" @click="enterEditMode">
+                    <template #icon>✏️</template>
+                    Edit
+                </CardFooterAction>
                 <CardFooterAction @click="$emit('move-to-folder')">
                     <template #icon>📁</template>
                     Move to folder
@@ -278,6 +281,11 @@
                     Regenerate
                 </CardFooterAction>
 
+                <CardFooterAction data-testid="convert-edition" @click="$emit('convert-edition')">
+                    <template #icon>⇄</template>
+                    Convert to 2024
+                </CardFooterAction>
+
                 <CardFooterAction @click="$emit('toggle-export')">
                     <template #icon>📤</template>
                     Export
@@ -293,7 +301,7 @@
 </template>
 
 <script setup>
-import { ParButton, ParCardButton } from "@/parchment";
+import { ParButton } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';
@@ -348,12 +356,11 @@ const props = defineProps({
 
 const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `max-width: ${props.width}px; width: 100%`);
 const createNpcButtonText = computed(() => props.linkedNpcsCount > 0 ? 'Create another NPC' : 'Create NPC');
-const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export', 'toggle-regenerate']);
+const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export', 'toggle-regenerate', 'convert-edition']);
 
 const containerRef = ref(null);
 const containerWidth = ref(850);
 
-const showEditButton = ref(false);
 const isEditing = ref(false);
 const editedMonster = ref({});
 const editedActions = ref([]);
@@ -483,16 +490,16 @@ const cancelChanges = () => {
     editedActions.value = [...props.monster.actions];
     editedLegendaryActions.value = props.monster.legendary_actions ? [...props.monster.legendary_actions] : [];
 };
-async function generateLegendaryActions(monster, userSuggestion) {
+async function generateLegendaryActions() {
     if (!props.premium) {
-        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        alert('AI re-rolls in edit mode are available to premium supporters.');
         return;
     }
     try {
         loadingLegendaryActions.value = true;
         editedLegendaryActions.value = await rerollSection(
             rerollContext(),
-            { kind: 'legendary', suggestion: userSuggestion },
+            { kind: 'legendary' },
             (p, v) => generateGptResponse(p, v, 3),
         );
     } catch (e) {
@@ -502,16 +509,16 @@ async function generateLegendaryActions(monster, userSuggestion) {
         loadingLegendaryActions.value = false;
     }
 }
-async function generateActions(monster, userSuggestion) {
+async function generateActions() {
     if (!props.premium) {
-        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        alert('AI re-rolls in edit mode are available to premium supporters.');
         return;
     }
     try {
         loadingActions.value = true;
         editedActions.value = await rerollSection(
             rerollContext(),
-            { kind: 'actions', suggestion: userSuggestion },
+            { kind: 'actions' },
             (p, v) => generateGptResponse(p, v, 3),
         );
     } catch (e) {
@@ -521,16 +528,16 @@ async function generateActions(monster, userSuggestion) {
         loadingActions.value = false;
     }
 }
-async function generateAbilities(monster, userSuggestion) {
+async function generateAbilities() {
     if (!props.premium) {
-        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        alert('AI re-rolls in edit mode are available to premium supporters.');
         return;
     }
     try {
         loadingAbilities.value = true;
         editedAbilities.value = await rerollSection(
             rerollContext(),
-            { kind: 'abilities', suggestion: userSuggestion },
+            { kind: 'abilities' },
             (p, v) => generateGptResponse(p, v, 3),
         );
     } catch (e) {
@@ -561,7 +568,7 @@ function rerollContext() {
 
 async function regenerateAbility(index) {
     if (!props.premium) {
-        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        alert('AI re-rolls in edit mode are available to premium supporters.');
         return;
     }
     const currentAbility = editedAbilities.value[index];
@@ -583,7 +590,7 @@ async function regenerateAbility(index) {
 
 async function regenerateAction(index) {
     if (!props.premium) {
-        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        alert('AI re-rolls in edit mode are available to premium supporters.');
         return;
     }
     const currentAction = editedActions.value[index];
@@ -605,7 +612,7 @@ async function regenerateAction(index) {
 
 async function regenerateLegendaryAction(index) {
     if (!props.premium) {
-        alert('Generation of abilities, actions, and legendary actions in edit mode is only available to $5 patrons. Please consider becoming a Patron to access the premium statblock generator');
+        alert('AI re-rolls in edit mode are available to premium supporters.');
         return;
     }
     const currentAction = editedLegendaryActions.value[index];
@@ -695,18 +702,6 @@ textarea {
     }
 }
 
-.edit-save-buttons {
-    display: none;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    gap: 0.6rem;
-}
-
-
-.container:hover .edit-save-buttons {
-    display: flex;
-}
 
 .statblock {
     font-family: 'Noto Sans', 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
@@ -774,15 +769,8 @@ textarea {
     width: 100%;
 }
 
-.action-buttons {
-    display: flex;
-    gap: .5rem;
-    margin-top: .5rem;
-}
-
-.remove-button,
 .add-button,
-.regenerate-button-small {
+.entry-btn {
     background-color: var(--par-color-surface-card, #FEFBF4);
     color: #8d7349;
     font-weight: bold;
@@ -802,26 +790,32 @@ textarea {
     }
 }
 
-.remove-button,
-.regenerate-button-small {
-    width: 11rem;
-}
-
-.item-loading {
-    margin-top: .5rem;
-    padding: .5rem;
-    color: #7A200D;
-    font-style: italic;
-    font-size: 13px;
-}
-
 .add-button {
     margin-bottom: 1rem;
-    // letter-spacing: -0.008rem;
-    // font-size: 1.4rem;
-    // line-height: 1.8rem;
-    // padding: 0.6rem 1.2rem;
     width: 100%;
+}
+
+/* Per-entry edit bar — same pattern as the 2024 card: name input flanked by
+   Re-roll and ✕ on one row, the description textarea below. */
+.entry-bar {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .4rem;
+
+    .entry-name {
+        flex: 1;
+        font-weight: bold;
+        min-width: 0;
+    }
+}
+
+.entry-btn--danger {
+    color: #a03333;
+}
+
+.entry-btn:disabled {
+    opacity: .6;
+    cursor: default;
 }
 
 .tapered-rule {

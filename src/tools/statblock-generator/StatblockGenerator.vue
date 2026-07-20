@@ -76,16 +76,20 @@
         <!-- ZONE 2: Form card — lifted cream surface, lapis "magic UI" -->
         <div class="form-card parchment paper-grain">
           <h2 class="form-heading">Generate a monster statblock</h2>
+          <div class="rules-switch-row">
+            <button type="button" role="switch" class="rules-switch" data-testid="rules-switch"
+              :aria-checked="format === '2024' ? 'true' : 'false'" aria-label="Use 2024 rules"
+              @click="format = format === '2024' ? '2014' : '2024'">
+              <span class="rules-switch__opt" :class="{ 'is-active': format === '2014' }">2014 rules</span>
+              <span class="rules-switch__track" aria-hidden="true"><span class="rules-switch__thumb"></span></span>
+              <span class="rules-switch__opt" :class="{ 'is-active': format === '2024' }">2024 rules</span>
+            </button>
+          </div>
           <form @submit.prevent="generateStatblock" class="monster-form">
             <ParField label="Monster name" :optional="true">
               <ParInput id="monsterName" v-model="monsterName"
                 placeholder="Headless Horseman, or leave blank for a random monster" />
             </ParField>
-
-            <ParToggleGroup v-model="format" aria-label="Statblock rules version" class="format-toggle">
-              <ParToggleButton toggleValue="2024">2024 rules</ParToggleButton>
-              <ParToggleButton toggleValue="2014">2014 rules</ParToggleButton>
-            </ParToggleGroup>
 
             <div class="form-grid">
               <ParField label="Combat role">
@@ -143,12 +147,13 @@
         :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
         :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
         @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event" @convert-edition="convertMonsterEdition"
         @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
       <Statblock2024 v-else-if="!errorMessage && displayFormat === '2024' && (loadingPart1 || monster)"
         :monster="monster" :columns="userColumnsPreference" :width="850" :loading="loadingPart1"
+        :premium="premium" @update-monster="updateMonster"
         @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event" @convert-edition="convertMonsterEdition"
         @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
 
       <!-- Regenerate panel (toggled by the 🔄 Regenerate action in the
@@ -260,6 +265,7 @@ import {
   generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
   parseGenerationResponse, pickRandomArchetype, crNumberFor, crKeyFor,
+  convertEdition,
 } from './format-2024/generate.mjs';
 import { buildRandomConceptSeed, buildSynthesizedConcept } from './format-2024/concept-seeds.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -987,6 +993,37 @@ async function generateStatblockEngine(edition) {
   await saveGeneratedMonster(finalMonster);
 }
 
+// ⇄ footer action on both cards: switch the selected monster to the other
+// edition. Numbers and structure map deterministically; one LLM call rewrites
+// the entry texts into the target edition's phrasing (convertEdition). The
+// card swap is automatic — displayFormat keys off the monster's format field.
+async function convertMonsterEdition() {
+  if (!monster.value) return;
+  if (!props.premium) {
+    alert('Edition conversion is available to premium supporters.');
+    return;
+  }
+  const target = monster.value.format === '2024' ? '2014' : '2024';
+  loadingPart1.value = true;
+  loadingPart2.value = true;
+  try {
+    const converted = await convertEdition(
+      JSON.parse(JSON.stringify(monster.value)),
+      (p, v) => generateGptResponse(p, v, 3),
+    );
+    updateMonster(converted);
+    // Follow the converted monster's rules version, matching selectMonster.
+    format.value = converted.format === '2024' ? '2024' : '2014';
+    toast.success(`Converted to the ${target} rules.`);
+  } catch (e) {
+    logger.error('Edition conversion failed:', e);
+    toast.error('Failed to convert this statblock. Please try again.');
+  } finally {
+    loadingPart1.value = false;
+    loadingPart2.value = false;
+  }
+}
+
 async function saveGeneratedMonster(finalMonster) {
   // Save and display statblock immediately
   if (activeMonsterIndex.value !== null) {
@@ -1490,10 +1527,69 @@ async function saveGeneratedMonster(finalMonster) {
   opacity: 0;
 }
 
-/* 2014/2024 rules toggle + archetype helper line (lapis form register). */
-.format-toggle {
-  margin-bottom: 1.2rem;
+/* 2014/2024 rules switch (lapis chrome register) — compact corner control
+   instead of a full-width segmented bar (owner feedback, 2026-07-19). Both
+   states are valid choices, so the track stays lapis in both positions;
+   the flanking labels carry the state. */
+.rules-switch-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: -0.8rem 0 1rem;
 }
+
+.rules-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1.2rem;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-rest, #365A85);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.rules-switch__opt {
+  color: var(--par-color-text-muted, #6b6b6b);
+  letter-spacing: 0.02em;
+
+  &.is-active {
+    color: var(--color-action-hover, #2A4D70);
+    font-weight: 700;
+  }
+}
+
+.rules-switch__track {
+  position: relative;
+  width: 3.4rem;
+  height: 1.8rem;
+  border-radius: 1rem;
+  background: var(--color-action-rest, #365A85);
+  flex-shrink: 0;
+}
+
+.rules-switch__thumb {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--par-color-surface, #FBF7F0);
+  transition: left 0.15s ease;
+}
+
+.rules-switch[aria-checked="true"] .rules-switch__thumb {
+  left: calc(100% - 1.6rem);
+}
+
+/* Archetype helper line (lapis form register). */
 
 .archetype-help {
   margin: -0.4rem 0 1rem;

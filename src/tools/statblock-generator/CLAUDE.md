@@ -23,7 +23,24 @@ touching anything under `chassis/` or `format-2024/`.
   random pick when blank), Balanced, or one of 8 roles.
 - **2024 edition**: sections-based model, markdown render
   (`format-2024/render.mjs`), display via `@/components/Statblock2024.vue`
-  (read-only v1).
+  with inline editing (engine band hints on numeric edits — advisory, never
+  blocking — per-entry AI re-rolls through `rerollEntry`, and whole-section
+  re-rolls through `rerollSection`). Both cards share the same edit chrome
+  and the same **in-place** editing convention (owner call): ✏️ Edit in the
+  footer bar, 💾 Save changes / ↩️ Cancel while editing, and fields swap to
+  inputs where they live in the card layout — name in the header, scores
+  inside the ability grid (MOD/SAVE recompute live), detail lines in place,
+  per-entry name + 🔄 Re-roll + ✕ bar above the description textarea. No
+  separate form-style edit body on either card.
+- **Edition conversion**: the ⇄ "Convert to 2014/2024" footer action on both
+  cards calls `convertEdition()` (`format-2024/generate.mjs`) — deterministic
+  shape mapping (`toLegacyModel`/`fromLegacyModel`) plus ONE LLM call that
+  rewrites entry texts into the target edition's phrasing, gated by the
+  phrasing-only lint subset (`CONVERSION_LINT_RULES`). Numbers are never
+  rebalanced — conversion is a dialect change. Premium-gated in the
+  generator's `convertMonsterEdition` handler. The rules-version control on
+  the form is a compact switch (`data-testid="rules-switch"`), not the old
+  segmented toggle bar.
 - **2014 edition**: same pipeline with 2014 phrasing rules/skeletons/exemplar,
   then `toLegacyModel()` converts to the classic model shape — so the
   existing `Statblock.vue` display (including inline editing), all three
