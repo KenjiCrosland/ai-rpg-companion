@@ -119,8 +119,9 @@ describe('each rule catches its violation class', () => {
   });
 
   test('attack-damage-band: per-attack damage outside the budget band', () => {
-    // Lurker CR 4 per-attack budget is 9; the fixture's 13 is 1.44× over.
-    const result = lint(cleanLurker, { perAttack: 9 });
+    // Lurker CR 4 per-attack budget is 9 (turn total 18 across the fixture's
+    // two-attack Multiattack); the fixture's 13 is 1.44× over.
+    const result = lint(cleanLurker, { perAttack: 9, totalDamage: 18 });
     const finding = result.findings.find((f) => f.rule === 'attack-damage-band');
     expect(finding.severity).toBe('correctable'); // single expression → clamp
     expect(finding.expected).toBe(9);
@@ -129,7 +130,7 @@ describe('each rule catches its violation class', () => {
     const rider = withAction(cleanLurker, 1, {
       text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage plus 10 (3d6) Necrotic damage.',
     });
-    const multi = lint(rider, { perAttack: 9 }).findings.find((f) => f.rule === 'attack-damage-band');
+    const multi = lint(rider, { perAttack: 9, totalDamage: 18 }).findings.find((f) => f.rule === 'attack-damage-band');
     expect(multi.severity).toBe('reject');
     // Recharge novas are exempt — 27 is 3× the budget yet produces no
     // finding once the entry is a recharge (it replaces Shadow Claw here).
@@ -137,9 +138,16 @@ describe('each rule catches its violation class', () => {
       name: 'Death Lunge (Recharge 5-6)',
       text: '*Melee Attack Roll:* +7, reach 5 ft. 27 (6d8) Slashing damage.',
     });
-    expect(rules(lint(nova, { perAttack: 9 }))).not.toContain('attack-damage-band');
+    expect(rules(lint(nova, { perAttack: 9, totalDamage: 18 }))).not.toContain('attack-damage-band');
     // Without perAttack (corpus / context-free lint) the rule never runs.
     expect(rules(lint(cleanLurker, {}))).not.toContain('attack-damage-band');
+  });
+
+  test('entry-name-caps: all-caps ability names are title-cased', () => {
+    const shouty = withAction(cleanLurker, 2, { name: 'CRACKLE (1/Day)' });
+    const finding = lint(shouty, {}).findings.find((f) => f.rule === 'entry-name-caps');
+    expect(finding.severity).toBe('correctable');
+    expect(finding.expected).toBe('Crackle (1/Day)');
   });
 
   test('damage-dice: listed average disagrees with its own dice', () => {
@@ -381,6 +389,13 @@ describe('band boundaries are inclusive', () => {
   ])('DC %p in band: %p', (dc, ok) => {
     const b = block({}, `*Wisdom Saving Throw*: DC ${dc}, one creature. *Failure:* 11 (2d10) Psychic damage.`);
     expect(bandRules(b).includes('dc-band')).toBe(!ok);
+  });
+
+  test('check DCs cannot mask under-budget save DCs', () => {
+    // Save DC 12 is 2 under the 14 budget; the Investigation DC 15 used to
+    // top the max and hide it.
+    const masked = block({}, '*Wisdom Saving Throw*: DC 12, one creature. *Failure:* 11 (2d10) Psychic damage. A creature can discern its nature with a DC 15 Intelligence (Investigation) check.');
+    expect(bandRules(masked)).toContain('dc-band');
   });
 });
 

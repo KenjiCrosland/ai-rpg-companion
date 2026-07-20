@@ -131,6 +131,28 @@ export function damageBudgetFor(cr, chassis, plan) {
   return { total, attacks, perAttack };
 }
 
+/**
+ * Weighted defense-point budget by CR tier (evolved from the legacy count
+ * caps): resistances/immunities are priced by the PLAYER-side damage economy
+ * — fire resistance is a real tax, psychic resistance is nearly free.
+ * Weights live in lint.mjs (DEFENSE_WEIGHTS); immunity costs double resist.
+ * Defender earns +3 (its identity); swarm's +3 exactly covers its required
+ * BPS package. Condition immunities are uncapped (flavor-central).
+ */
+export function defenseBudgetFor(cr, archetypeName) {
+  const base = cr <= 5 ? 1 : cr <= 10 ? 4 : cr <= 25 ? 5 : 8;
+  // Defender/swarm earn more (identity / required package); artillery and
+  // lurker earn LESS — their low hp_mult is the price of their offense, and
+  // a full defense budget would let them buy the fragility back.
+  if (archetypeName === 'defender' || archetypeName === 'swarm') {
+    return { points: base + 3 };
+  }
+  if (archetypeName === 'artillery' || archetypeName === 'lurker') {
+    return { points: Math.floor(base / 2) };
+  }
+  return { points: base };
+}
+
 export function pickRandomArchetype() {
   return ARCHETYPE_NAMES[Math.floor(Math.random() * ARCHETYPE_NAMES.length)];
 }
@@ -160,6 +182,39 @@ Return ONLY JSON, no markdown: {"archetype": "<one of the eight names above>"}`;
 export function validateArchetypeResponse(jsonString) {
   const parsed = tryParse(jsonString);
   return parsed != null && ARCHETYPE_NAMES.includes(parsed.archetype);
+}
+
+/**
+ * Seed synthesis call (blank-form generations): fuse the rolled axes into ONE
+ * creature identity AND classify the role, in the same micro-call. The
+ * generation prompt then receives the fused sentence instead of the axis
+ * list — the model designs from a single idea rather than giving each rolled
+ * trait its own disconnected ability.
+ */
+export function buildSeedSynthesisPrompt(seed) {
+  return `Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.
+
+Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}.
+
+Write one vivid sentence describing a single unified creature. The traits must merge into one identity — one body, one behavior — not remain separate features. Contradictions between traits are creative fuel.
+
+Archetypes:
+- brute: hits hard up close, soaks damage, easy to hit
+- defender: protects allies, high AC, punishes movement
+- skirmisher: mobile hit-and-run attacker
+- artillery: fragile ranged damage dealer
+- controller: locks enemies down with conditions instead of damage
+- lurker: fragile ambusher with a devastating opening strike
+- support: buffs, heals, or enables allies
+- swarm: mass of small creatures acting as one
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the eight>", "synthesis": "<your one sentence>"}`;
+}
+
+export function validateSeedSynthesisResponse(jsonString) {
+  const parsed = tryParse(jsonString);
+  return parsed != null && ARCHETYPE_NAMES.includes(parsed.archetype)
+    && typeof parsed.synthesis === 'string' && parsed.synthesis.trim().length > 10;
 }
 
 // ---------------------------------------------------------------------------
@@ -233,6 +288,11 @@ function slotInstructions(plan, numbers) {
   if (plan.multiattack.status === 'forbidden') {
     lines.push('- No Multiattack action at this tier.');
   }
+  if (plan.multiattack.status === 'optional') {
+    lines.push(
+      `- Multiattack is OPTIONAL. The ${numbers.total} damage budget is for the creature's WHOLE turn: if you include Multiattack with N attacks, each attack deals about ${numbers.total}/N — never the full budget per attack.`
+    );
+  }
   if (plan.legendary.status === 'required' || plan.legendary.status === 'recommended') {
     const res = plan.legendary.resistance_per_day;
     lines.push(
@@ -273,6 +333,7 @@ export function buildGenerationPrompt({ concept, description = '', cr, chassis, 
       Actions: [{ name: 'Action Name', text: 'Action text.' }],
     },
   };
+  const defenses = defenseBudgetFor(cr, chassis.archetype);
 
   return `You are an expert D&D 2024 (5.5e) monster designer. Write the FLAVOR for a statblock whose numbers are already fixed. Never invent different numbers — use the exact skeletons given below.
 
@@ -302,13 +363,14 @@ CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
 ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
 FIXED NUMBERS (do not deviate):
-- Every attack line uses EXACTLY this skeleton: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${numbers.perAttack} (${perAttackDice}) <damage type> damage. (Ranged attacks: *Ranged Attack Roll:* ${signed(chassis.attack_bonus)}, range 60 ft. — same damage skeleton. You choose damage types and may add non-damage riders.)
+- Every attack line uses EXACTLY this skeleton: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${numbers.perAttack} (${perAttackDice}) <Damage Type> damage. (Ranged attacks: *Ranged Attack Roll:* ${signed(chassis.attack_bonus)}, range 60 ft. — same damage skeleton. You choose damage types and may add non-damage riders.) To use two damage types, SPLIT the total (e.g. ${Math.max(1, numbers.perAttack - Math.floor(numbers.perAttack / 3))} + ${Math.floor(numbers.perAttack / 3)}) — never append a zero rider and never exceed ${numbers.perAttack} combined.
 - Every saving-throw effect uses EXACTLY: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targeting>. *Failure:* <effect>. *Success:* <lesser effect or none>.
 - Damage from save-based effects: about ${numbers.total} (${damageDiceFor(numbers.total)}) total, halved on a success.${novaAvg ? `\n- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.` : ''}
 
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
+- Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. The fixed HP already prices typical defenses. Condition immunities are free-form.
 ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
 ` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Prefer well-known SRD spells.` : ''}
@@ -330,6 +392,7 @@ Apply all six RULES from the top of this prompt. Return ONLY the JSON object.`;
 // phrasing rules, hand-written exemplar. Same JSON schema — assembly and lint
 // run on the shared internal model before legacy conversion.
 function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, perAttackDice, novaAvg }) {
+  const defenses = defenseBudgetFor(cr, chassis.archetype);
   const schema = {
     name: 'CREATURE NAME',
     size: 'Tiny|Small|Medium|Large|Huge|Gargantuan',
@@ -367,6 +430,7 @@ ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
+- Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. The fixed HP already prices typical defenses. Condition immunities are free-form.
 ${slotInstructions(plan, numbers)}
 ${novaAvg ? `- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Use only well-known SRD spells, comma-separated on one line — never hyphens or bullet lists.\n` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders one automatically. Provide only the option entries themselves.\n` : ''}
 Return ONLY a JSON object in exactly this shape (no markdown fences, no commentary). Omit optional fields rather than emitting empty ones. Do NOT include ac, hp, CR, XP, or PB — those are stamped for you:
@@ -418,11 +482,17 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
     if (!Array.isArray(entries) || entries.length === 0) continue;
     sections[name] = entries
       .filter((e) => e && e.name && e.text)
-      .map((e) => (e.slot ? { name: e.name, text: e.text, slot: e.slot } : { name: e.name, text: e.text }));
+      .map((e) => {
+        // Strip zero-damage riders ("plus 0 fire damage") — malicious
+        // compliance with the damage-total rule; never legitimate.
+        const text = e.text.replace(/\s*,?\s*plus 0(?:\s*\([^)]*\))?\s+\w+ damage/gi, '');
+        return e.slot ? { name: e.name, text, slot: e.slot } : { name: e.name, text };
+      });
   }
 
   const monster = {
-    name: llmJson.name || 'Unnamed Creature',
+    // Names never carry a leading article — prose and display add "the".
+    name: (llmJson.name || 'Unnamed Creature').replace(/^the\s+/i, ''),
     size,
     type: llmJson.type || 'Monstrosity',
     alignment: llmJson.alignment || 'Unaligned',
@@ -510,7 +580,7 @@ export function toLegacyModel(m) {
     saving_throws: savingThrows,
     skills: m.skills ?? '',
     senses: (m.senses ?? '').replace('Passive Perception', 'passive Perception'),
-    languages: m.languages ?? '',
+    languages: m.languages || '—', // official style: an em-dash, never blank
     challenge_rating: `${m.cr_str} (${(m.xp ?? 0).toLocaleString('en-US')} XP)`,
     proficiency_bonus: `+${m.pb}`,
     abilities,
@@ -587,6 +657,15 @@ export function applyCorrections(monster, findings, { chassis }) {
     }
   }
 
+  for (const f of correctable.filter((x) => x.rule === 'defense-count' && x.loc?.field)) {
+    out[f.loc.field] = f.expected || undefined;
+  }
+
+  for (const f of correctable.filter((x) => x.rule === 'entry-name-caps' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) entry.name = f.expected;
+  }
+
   // Single-expression attacks outside the damage band clamp to the exact
   // skeleton (owner call, 2026-07-19): the prompt dictates exact numbers, so
   // deviation is disobedience — variety lives in damage types and riders.
@@ -626,9 +705,14 @@ export function applyCorrections(monster, findings, { chassis }) {
           );
         }
         if (has('dc-band')) {
-          entry.text = entry.text.replace(/DC\s+(\d+)/g, (m, n) =>
-            Number(n) > chassis.save_dc + 1 ? `DC ${chassis.save_dc}` : m
-          );
+          // Both directions (under-budget DCs raise too), scoped to SAVE
+          // contexts only — escape DCs and skill-check DCs are not the
+          // band's business and must not be rewritten.
+          entry.text = entry.text
+            .replace(/(Saving Throw\*?:?\s*DC\s+)(\d+)/gi, (m, pre, n) =>
+              Math.abs(Number(n) - chassis.save_dc) > 1 ? `${pre}${chassis.save_dc}` : m)
+            .replace(/(DC\s+)(\d+)(\s+\w+ saving throw)/gi, (m, pre, n, post) =>
+              Math.abs(Number(n) - chassis.save_dc) > 1 ? `${pre}${chassis.save_dc}${post}` : m);
         }
       }
     }
@@ -737,8 +821,8 @@ Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
     }
     (sections[section] ??= []).push({ name: parsed.name, text: parsed.text });
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
-    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack }).findings, { chassis });
-    const result = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack });
+    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total }).findings, { chassis });
+    const result = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total });
     const entry = pseudo.sections[section].find((e) => e.name === parsed.name && e.text);
     return { entry, rejects: result.findings.filter((f) => f.severity === 'reject') };
   };
@@ -842,8 +926,8 @@ Return ONLY a JSON array, no markdown fences: [{"name": "...", "text": "..."}, .
     for (const r of otherRows) (sections[r.section] ??= []).push({ name: r.name, text: '' });
     sections[section] = parsed.map((e) => ({ name: e.name, text: e.text }));
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
-    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack }).findings, { chassis });
-    const rejects = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack }).findings
+    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total }).findings, { chassis });
+    const rejects = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total }).findings
       .filter((f) => f.severity === 'reject');
     // Structural checks the entry-level lint can't see without a plan.
     const entries = pseudo.sections[section];
@@ -938,6 +1022,73 @@ Return ONLY a JSON array with the SAME entry names, no markdown fences: [{"name"
 }
 
 // ---------------------------------------------------------------------------
+// Post-generation naming pass (seeded generations)
+// ---------------------------------------------------------------------------
+
+const SRD_NAMES = new Set(srdMonsters.map((m) => m.name.toLowerCase()));
+const MENACE_WORD_RE = /^(terror|doom|dread|horror|death|fear)s?$/i;
+// Positional ban: "Dread Bellringer" (menace as modifier of a concrete doer)
+// is official-grade naming; "Silent Terror" (menace as head noun) is slop.
+const headIsMenace = (name) => MENACE_WORD_RE.test(name.trim().split(/\s+/).pop());
+
+// Sound-symbolism hints by combat role — the naming pass knows the archetype,
+// so a brute can be told to SOUND heavy.
+const PHONETICS_BY_ARCHETYPE = {
+  brute: 'heavy and slow — long vowels, voiced stops (b, d, g, m)',
+  defender: 'solid and blunt — st, gr, d clusters',
+  skirmisher: 'quick and sharp — short vowels, crisp consonants (k, t, p)',
+  artillery: 'taut and snapping — k, t, x',
+  controller: 'resonant and intoning — long o and u, n, m',
+  lurker: 'hushed and sibilant — s, sh, wh, soft vowels',
+  support: 'soft and chiming — l, m, open vowels',
+  swarm: 'skittering and repetitive — ch, k, tt, z',
+};
+
+export function buildNamingPrompt(monster, traits) {
+  const abilities = Object.values(monster.sections ?? {}).flat()
+    .map((e) => `${e.name}: ${e.text.slice(0, 90)}`)
+    .join('\n');
+  return `Name this finished D&D monster. Read what it actually IS — its movement, attacks, and materials — and name THAT creature.
+
+THE CREATURE: ${monster.size} ${monster.type}, speed ${monster.speed}.
+${abilities}
+
+THE NAME must be ${traits.naming}
+${monster.archetype && PHONETICS_BY_ARCHETYPE[monster.archetype] ? `Its sound should be ${PHONETICS_BY_ARCHETYPE[monster.archetype]}.\n` : ''}Rules: name concrete things the creature actually does or is made of. Never hyphens. Abstract menace words (terror, doom, dread, horror, death, fear) never as the head noun — as a leading adjective before a concrete doer they are fine. Never a name already used by a well-known D&D creature, class, or subclass.
+
+Return ONLY JSON, no markdown: {"candidates": ["five different names, best first"]}`;
+}
+
+export function validateNamingResponse(jsonString) {
+  const parsed = tryParse(jsonString);
+  return !!parsed && Array.isArray(parsed.candidates)
+    && parsed.candidates.length >= 3
+    && parsed.candidates.every((c) => typeof c === 'string' && c.trim() !== '');
+}
+
+/**
+ * Deterministic candidate selection: first name that survives every filter.
+ * The register discipline is enforced by filtering, not by hoping.
+ */
+export function pickName(candidates, { seedTokens = [], register = '' } = {}) {
+  const isCoinage = /coinage/.test(register);
+  for (const raw of candidates) {
+    // Leading articles are stripped, not rejected — "the Silent Clinger"
+    // becomes "Silent Clinger"; prose supplies "the".
+    const name = raw.trim().replace(/^the\s+/i, '');
+    const lower = name.toLowerCase();
+    if (!name || name.includes('-')) continue;
+    if (headIsMenace(name)) continue;
+    if (SRD_NAMES.has(lower.replace(/^the /, ''))) continue;
+    if (seedTokens.some((t) => lower.includes(t))) continue;
+    if (isCoinage && (name.includes(' ') || name.length > 9)) continue;
+    if (name.split(/\s+/).length > 3) continue;
+    return name;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Seed-leakage rename fix — targeted, instead of full regeneration
 // ---------------------------------------------------------------------------
 
@@ -981,13 +1132,44 @@ Return ONLY a JSON object mapping each old name to its replacement, no markdown 
   const mapping = tryParse(raw);
   if (!mapping) return monster;
 
+  return applyRenameMapping(monster, mapping);
+}
+
+/** Apply a rename map: names, full-name text references, and short-form
+ * self-references ("the burrower") via positional word pairs. */
+export function applyRenameMapping(monster, mapping) {
   const out = JSON.parse(JSON.stringify(monster));
   for (const [oldName, newName] of Object.entries(mapping)) {
     if (out.name === oldName) out.name = newName;
+    // Monsters self-refer in SHORT form ("the burrower"), which the
+    // full-name replacement misses — map distinctive old-name words to their
+    // positional counterparts too (live finding: a renamed "Burrower of the
+    // Sunken Rift" shipped with "the burrower" throughout its texts).
+    const oldWords = oldName.split(/\s+/);
+    const newWords = newName.split(/\s+/);
+    let wordPairs = oldWords.length === newWords.length
+      ? oldWords.map((w, i) => [w, newWords[i]]).filter(([o, n]) =>
+          o.toLowerCase() !== n.toLowerCase() && o.length >= 4 && /^[A-Z]/.test(o))
+      : [];
+    if (!wordPairs.length && oldWords.length !== newWords.length) {
+      // Different shapes ("Gloom Stalker" → "Quietmaw"): map the head noun
+      // so "the stalker" self-references still follow the rename.
+      const o = oldWords[oldWords.length - 1];
+      const n = newWords[newWords.length - 1];
+      if (o.length >= 4 && o.toLowerCase() !== n.toLowerCase()) wordPairs = [[o, n]];
+    }
     for (const list of Object.values(out.sections ?? {})) {
       for (const entry of list ?? []) {
         if (entry.name === oldName) entry.name = newName;
         entry.text = renameInText(entry.text, oldName, newName);
+        // Only the self-reference form "the <word>" — a bare word replace
+        // would corrupt OTHER entry names' references ("Shadow Claw").
+        for (const [o, n] of wordPairs) {
+          entry.text = entry.text.replace(
+            new RegExp(`\\b(the) ${escapeRe(o)}\\b`, 'gi'),
+            (m, article) => `${article} ${n.toLowerCase()}`
+          );
+        }
       }
     }
   }
@@ -1003,7 +1185,8 @@ export async function generateMonster2024(options, callLLM) {
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
   const assembleCtx = { cr, chassis, plan, archetypeName: archetype, archetypeSource };
   const seedTokens = seedTraits ? seedLeakTokens(seedTraits) : undefined;
-  const perAttack = damageBudgetFor(cr, chassis, plan).perAttack;
+  const { perAttack, total: totalDamage } = damageBudgetFor(cr, chassis, plan);
+  const defenseCaps = defenseBudgetFor(cr, archetype);
   const prompt = buildGenerationPrompt({ concept, description, cr, chassis, plan, caster, edition });
 
   const attempt = async (p) => {
@@ -1012,8 +1195,8 @@ export async function generateMonster2024(options, callLLM) {
     const parsed = parseGenerationResponse(raw);
     if (!parsed) return null;
     let monster = assembleMonster(parsed, assembleCtx);
-    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack }).findings, { chassis });
-    const result = lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack });
+    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps }).findings, { chassis });
+    const result = lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps });
     return { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
   };
 
@@ -1048,8 +1231,8 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
       monster = await rewriteFlaggedEntries(monster, entryRejects, { edition, chassis, plan, cr }, callLLM);
     }
     // Fixed text may drift numerically — run corrections, then re-judge.
-    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack }).findings, { chassis });
-    const result = lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack });
+    monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps }).findings, { chassis });
+    const result = lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps });
     outcome = { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
   }
 
@@ -1058,6 +1241,25 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
       `Generated statblock failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`
     );
   }
+  // Naming pass (seeded generations only): name the FINISHED creature. The
+  // main call's name is provisional; a dedicated micro-call reads the actual
+  // design and proposes candidates, which are filtered deterministically —
+  // first survivor wins, all-fail keeps the provisional name.
+  if (seedTraits) {
+    try {
+      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits), validateNamingResponse);
+      const parsed = raw ? tryParse(raw) : null;
+      const chosen = parsed
+        ? pickName(parsed.candidates, { seedTokens, register: seedTraits.naming ?? '' })
+        : null;
+      if (chosen && chosen !== outcome.monster.name) {
+        outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });
+      }
+    } catch {
+      /* naming is best-effort — the provisional name stands */
+    }
+  }
+
   // 2014 edition ships in the legacy model shape: the existing Statblock.vue
   // display, exports, encounter adapter, and inline editing all consume it.
   const finished = edition === '2014' ? toLegacyModel(outcome.monster) : outcome.monster;

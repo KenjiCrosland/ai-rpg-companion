@@ -149,6 +149,18 @@ describe('assembleMonster', () => {
     expect(monster.legendary_uses).toBeUndefined(); // none without the section
   });
 
+  test('zero-damage riders are stripped at assembly', () => {
+    const belcher = JSON.parse(JSON.stringify(llmFixture));
+    belcher.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage plus 0 fire damage.';
+    const monster = assembleMonster(belcher, ctx());
+    expect(monster.sections.Actions[1].text).toBe('*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.');
+  });
+
+  test('leading articles are stripped from names', () => {
+    const theNamed = assembleMonster({ ...llmFixture, name: 'The Hanging Shroud' }, ctx());
+    expect(theNamed.name).toBe('Hanging Shroud');
+  });
+
   test('out-of-range ability scores are clamped', () => {
     const wild = assembleMonster(
       { ...llmFixture, stats: { ...llmFixture.stats, STR: 45, CHA: -3 } },
@@ -254,8 +266,9 @@ describe('seed leakage', () => {
       },
       callLLM,
     );
-    // Call 1 = generation, call 2 = the cheap rename fix — never a re-roll.
-    expect(callLLM).toHaveBeenCalledTimes(2);
+    // Call 1 = generation, call 2 = rename fix, call 3 = naming pass
+    // (mock exhausted → provisional name kept) — never a full re-roll.
+    expect(callLLM).toHaveBeenCalledTimes(3);
     expect(callLLM.mock.calls[1][1]).toBe(require('../format-2024/generate.mjs').validateRenameResponse);
     expect(monster.name).toBe('Gloom Stalker');
     const actionNames = monster.sections.Actions.map((e) => e.name);
@@ -263,6 +276,27 @@ describe('seed leakage', () => {
     // Cross-references follow the rename — Multiattack can't orphan.
     expect(monster.sections.Actions[0].text).toContain('Night Talon');
     expect(monster.concept_seed).toEqual({ silhouette: 'floating drifting form' });
+  });
+
+  test('renames follow short-form self-references ("the burrower")', async () => {
+    const leaky = JSON.parse(JSON.stringify(llmFixture));
+    leaky.name = 'Drifter of the Deep'; // leaks 'drift'
+    leaky.sections.Traits[0].text = 'While in dim light or darkness, the drifter is invisible. The drifter hungers.';
+    const callLLM = jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(leaky))
+      .mockResolvedValueOnce(JSON.stringify({ 'Drifter of the Deep': 'Excavator of the Deep' }));
+    const monster = await generateMonster2024(
+      {
+        concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto',
+        seedTraits: { silhouette: 'floating drifting form' },
+      },
+      callLLM,
+    );
+    expect(callLLM).toHaveBeenCalledTimes(3); // + naming pass (exhausted)
+    expect(monster.name).toBe('Excavator of the Deep');
+    // (capital Invisible: the condition-caps deterministic fix also ran)
+    expect(monster.sections.Traits[0].text).toContain('the excavator is Invisible');
+    expect(monster.sections.Traits[0].text).not.toContain('drifter');
   });
 
   test('a fix call that still leaks gets one more, then errors', async () => {
@@ -283,7 +317,171 @@ describe('seed leakage', () => {
   });
 });
 
+describe('defense caps', () => {
+  const { defenseBudgetFor } = require('../format-2024/generate.mjs');
+  const { lintStatblock } = require('../format-2024/lint.mjs');
+
+  test('point budgets follow the CR tiers with archetype adjustments', () => {
+    expect(defenseBudgetFor(4, null)).toEqual({ points: 1 });
+    expect(defenseBudgetFor(10, null)).toEqual({ points: 4 });
+    expect(defenseBudgetFor(20, null)).toEqual({ points: 5 });
+    expect(defenseBudgetFor(28, null)).toEqual({ points: 8 });
+    expect(defenseBudgetFor(10, 'defender')).toEqual({ points: 7 });
+    expect(defenseBudgetFor(4, 'swarm')).toEqual({ points: 4 }); // covers the BPS package
+    // Fragile-by-design archetypes can't buy their durability back.
+    expect(defenseBudgetFor(10, 'artillery')).toEqual({ points: 2 });
+    expect(defenseBudgetFor(4, 'lurker')).toEqual({ points: 0 });
+    expect(defenseBudgetFor(10, 'brute')).toEqual({ points: 4 }); // hp_mult already prices it
+  });
+
+  test('weighted trim: cheap types survive, immunities spend first, conditions ride free', () => {
+    const stacked = {
+      name: 'Tank', stats: llmFixture.stats, pb: 2,
+      // costs: Poison immunity 1 → budget gone; Psychic ¼ fits nothing after?
+      resistances: 'Psychic, Fire, Cold',
+      immunities: 'Poison; Charmed, Frightened',
+      sections: { Actions: [{ name: 'Slam', text: 'It slams.' }] },
+    };
+    // Budget 1.5: Poison immunity (0.5×2=1) kept, Psychic resist (0.25) kept,
+    // Fire (1) too expensive, Cold (0.5) too expensive after psychic.
+    const findings = lintStatblock(stacked, { defenseCaps: { points: 1.5 } }).findings
+      .filter((f) => f.rule === 'defense-count');
+    expect(findings).toHaveLength(1); // immunities fit untouched; only resistances trimmed
+    expect(findings[0].loc.field).toBe('resistances');
+    expect(findings[0].expected).toBe('Psychic');
+  });
+
+  test('type freebies and self-dealt types ride free', () => {
+    // Undead lurker at ZERO budget keeps poison immunity (type canon) and
+    // necrotic resistance (it deals necrotic itself); fire still trims.
+    const wraith = {
+      name: 'Wraith', type: 'Undead', stats: llmFixture.stats, pb: 2,
+      resistances: 'Necrotic, Fire',
+      immunities: 'Poison; Poisoned',
+      sections: {
+        Actions: [{ name: 'Grave Touch', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Necrotic damage.' }],
+      },
+    };
+    const findings = lintStatblock(wraith, { defenseCaps: { points: 0 } }).findings
+      .filter((f) => f.rule === 'defense-count');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].loc.field).toBe('resistances');
+    expect(findings[0].expected).toBe('Necrotic'); // fire trimmed, necrotic free
+    // Immunities untouched: poison is undead canon.
+  });
+
+  test('material principle: an ice-bodied creature resists cold free (the Hushspike case)', () => {
+    // Deals only slashing/piercing — no "cold damage" text anywhere — but
+    // its body is ice, so cold resistance rides free even at zero budget.
+    const hushspike = {
+      name: 'Hushspike', type: 'Monstrosity', stats: llmFixture.stats, pb: 2,
+      resistances: 'Cold, Fire',
+      sections: {
+        Traits: [{ name: 'Frozen Stillness', text: 'It appears as a patch of translucent ice.' }],
+        Actions: [{ name: 'Ice Claw', text: 'Melee Weapon Attack: +7 to hit, reach 10 ft., one target. Hit: 7 (1d8 + 3) slashing damage.' }],
+      },
+    };
+    const findings = lintStatblock(hushspike, { defenseCaps: { points: 0 } }).findings
+      .filter((f) => f.rule === 'defense-count');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].expected).toBe('Cold'); // fire trimmed, cold free via material
+  });
+
+  test('pipeline trims stacked defenses within the weighted budget', async () => {
+    const greedy = JSON.parse(JSON.stringify(llmFixture));
+    greedy.resistances = 'Fire, Cold, Psychic';
+    greedy.immunities = 'Poison; Poisoned';
+    const callLLM = jest.fn().mockResolvedValue(JSON.stringify(greedy));
+    const monster = await generateMonster2024(
+      { concept: 'a shadow stalker', cr: 4, archetypeName: 'lurker', archetypeSource: 'user' },
+      callLLM,
+    );
+    expect(callLLM).toHaveBeenCalledTimes(1); // deterministic trim, no fix call
+    // Lurker CR 4 budget is ZERO (fragile-by-design archetypes can't buy
+    // durability back): fire and cold trim, the poison immunity trims
+    // (monstrosities get no poison canon) — but Psychic survives free
+    // because the fixture's own Ambush Pounce deals psychic damage.
+    expect(monster.immunities).toBe('Poisoned');
+    expect(monster.resistances).toBe('Psychic');
+  });
+});
+
+describe('naming pass', () => {
+  const { pickName, validateNamingResponse, buildNamingPrompt, validateRenameResponse } = require('../format-2024/generate.mjs');
+
+  test('pickName strips leading articles instead of rejecting', () => {
+    expect(pickName(['The Silent Clinger'], {})).toBe('Silent Clinger');
+  });
+
+  test('pickName takes the first candidate surviving every filter', () => {
+    const candidates = [
+      'Shard-Crawler',        // hyphen
+      'Silent Terror',        // menace as HEAD noun
+      'Aboleth',              // SRD collision
+      'Drift Maw',            // seed leak
+      'The Long Name Of Many Words', // > 3 words
+      'Quietmaw',             // survivor
+      'Bogtorch',
+    ];
+    expect(pickName(candidates, { seedTokens: ['drift'], register: 'a folk name' })).toBe('Quietmaw');
+  });
+
+  test('menace words are positional: banned as head noun, fine as modifier', () => {
+    expect(pickName(['Dread Bellringer'], {})).toBe('Dread Bellringer');
+    expect(pickName(['Bellringer of Dread'], {})).toBeNull();
+  });
+
+  test('coinage registers demand single short words', () => {
+    expect(pickName(['Grave Whisper', 'Lysilythian', 'Vurk'], { register: 'an alien-tongue coinage' })).toBe('Vurk');
+  });
+
+  test('all candidates failing returns null (provisional name stands)', () => {
+    expect(pickName(['Bad-One', 'Silent Doom'], {})).toBeNull();
+  });
+
+  test('validateNamingResponse requires 3+ non-empty candidates', () => {
+    expect(validateNamingResponse(JSON.stringify({ candidates: ['A', 'B', 'C'] }))).toBe(true);
+    expect(validateNamingResponse(JSON.stringify({ candidates: ['A', ''] }))).toBe(false);
+  });
+
+  test('seeded pipeline runs the naming pass and applies the rename with self-references', async () => {
+    const naming = { naming: 'a folk name' };
+    const callLLM = jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(llmFixture)) // generation
+      .mockResolvedValueOnce(JSON.stringify({ candidates: ['Quietmaw', 'Bogtorch', 'Mirelock'] }));
+    const monster = await generateMonster2024(
+      { concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto', seedTraits: naming },
+      callLLM,
+    );
+    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(callLLM.mock.calls[1][1]).toBe(validateNamingResponse);
+    expect(monster.name).toBe('Quietmaw');
+    // "the stalker" self-references follow via the head-noun mapping.
+    expect(monster.sections.Actions[0].text).toContain('The quietmaw makes');
+  });
+});
+
 describe('archetype resolve helpers', () => {
+  test('validateSeedSynthesisResponse requires a real archetype and a synthesis sentence', () => {
+    const { validateSeedSynthesisResponse } = require('../format-2024/generate.mjs');
+    expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'lurker', synthesis: 'A pale drifting hunger that haunts the passes.' }))).toBe(true);
+    expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'lurker' }))).toBe(false);
+    expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'tank', synthesis: 'A perfectly nice sentence.' }))).toBe(false);
+    expect(validateSeedSynthesisResponse(JSON.stringify({ archetype: 'lurker', synthesis: 'short' }))).toBe(false);
+  });
+
+  test('buildSynthesizedConcept carries the fused sentence, INT tier, and naming rules', () => {
+    const { buildSynthesizedConcept } = require('../format-2024/concept-seeds.mjs');
+    const concept = buildSynthesizedConcept(
+      { intelligence: 'mindless (INT 1-2)', naming: 'a single stark word: one short, heavy English word that names what it looks like or does' },
+      'A frozen coil of riverbed hunger. '
+    );
+    expect(concept).toContain('A frozen coil of riverbed hunger.');
+    expect(concept).toContain('mindless (INT 1-2)');
+    expect(concept).toContain('a single stark word');
+    expect(concept).toContain('banned as the name\'s HEAD noun');
+  });
+
   test('validateArchetypeResponse accepts the eight archetypes only', () => {
     expect(validateArchetypeResponse('{"archetype": "lurker"}')).toBe(true);
     expect(validateArchetypeResponse('{"archetype": "tank"}')).toBe(false);
@@ -332,6 +530,17 @@ describe('applyCorrections', () => {
     const findings = lintStatblock(hot, { chassis, plan }).findings;
     const fixed = applyCorrections(hot, findings, { chassis });
     expect(fixed.sections.Actions[1].text).toContain('+7');
+    expect(fixed.sections.Actions[2].text).toContain('DC 13');
+    expect(lintStatblock(fixed, { chassis, plan }).ok).toBe(true);
+  });
+
+  test('under-budget DCs are raised, not just over-budget ones lowered', () => {
+    // Live finding: CR 20 blocks shipped every save at DC 18 vs a 22 budget.
+    const { chassis, plan } = buildContext(4, 'lurker'); // budget DC 13
+    const soft = assembleMonster(JSON.parse(JSON.stringify(llmFixture)), ctx());
+    soft.sections.Actions[2].text = '*Dexterity Saving Throw*: DC 10, one creature. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.';
+    const findings = lintStatblock(soft, { chassis, plan }).findings;
+    const fixed = applyCorrections(soft, findings, { chassis });
     expect(fixed.sections.Actions[2].text).toContain('DC 13');
     expect(lintStatblock(fixed, { chassis, plan }).ok).toBe(true);
   });

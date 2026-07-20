@@ -258,9 +258,10 @@ import Statblock from '@/components/Statblock.vue';
 import Statblock2024 from '@/components/Statblock2024.vue';
 import {
   generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
+  buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
   parseGenerationResponse, pickRandomArchetype, crNumberFor, crKeyFor,
 } from './format-2024/generate.mjs';
-import { buildRandomConceptSeed } from './format-2024/concept-seeds.mjs';
+import { buildRandomConceptSeed, buildSynthesizedConcept } from './format-2024/concept-seeds.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
@@ -912,19 +913,35 @@ async function generateStatblockEngine(edition) {
     .filter(Boolean)
     .join(' — ');
   const randomSeed = userConcept ? null : buildRandomConceptSeed();
-  const resolveConcept = userConcept || randomSeed.concept;
 
   let archetypeName = archetype.value;
   let archetypeSource = 'user';
+  let synthesizedConcept = null;
   if (archetypeName === 'auto') {
     archetypeSource = 'auto';
     try {
-      const raw = await generateGptResponse(
-        buildArchetypeResolvePrompt(resolveConcept),
-        validateArchetypeResponse,
-        2,
-      );
-      archetypeName = parseGenerationResponse(raw)?.archetype || pickRandomArchetype();
+      if (userConcept) {
+        const raw = await generateGptResponse(
+          buildArchetypeResolvePrompt(userConcept),
+          validateArchetypeResponse,
+          2,
+        );
+        archetypeName = parseGenerationResponse(raw)?.archetype || pickRandomArchetype();
+      } else {
+        // Blank form: the same micro-call fuses the rolled axes into one
+        // creature identity AND picks the role — generation designs from
+        // the fused sentence, not the axis list.
+        const raw = await generateGptResponse(
+          buildSeedSynthesisPrompt(randomSeed),
+          validateSeedSynthesisResponse,
+          2,
+        );
+        const parsed = parseGenerationResponse(raw);
+        archetypeName = parsed?.archetype || pickRandomArchetype();
+        if (parsed?.synthesis) {
+          synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis);
+        }
+      }
     } catch (e) {
       logger.warn('Archetype auto-resolve failed, picking randomly:', e);
       archetypeName = pickRandomArchetype();
@@ -933,6 +950,7 @@ async function generateStatblockEngine(edition) {
 
   const concept = monsterName.value.trim()
     || monsterDescription.value.trim()
+    || synthesizedConcept
     || randomSeed.concept;
 
   let finalMonster;

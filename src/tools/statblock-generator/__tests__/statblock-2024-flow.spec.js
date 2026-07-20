@@ -12,7 +12,8 @@ import { mount, flushPromises } from '@vue/test-utils';
 import StatblockGenerator from '../StatblockGenerator.vue';
 import * as aiClient from '@/util/ai-client.mjs';
 import {
-  validateArchetypeResponse, validateGenerationResponse,
+  validateArchetypeResponse, validateGenerationResponse, validateSeedSynthesisResponse,
+  validateNamingResponse,
 } from '../format-2024/generate.mjs';
 
 jest.mock('@/util/ai-client.mjs', () => ({
@@ -111,8 +112,19 @@ function mockLLM({ resolvedArchetype = 'lurker' } = {}) {
     if (validate === validateArchetypeResponse) {
       return Promise.resolve(JSON.stringify({ archetype: resolvedArchetype }));
     }
+    if (validate === validateSeedSynthesisResponse) {
+      return Promise.resolve(JSON.stringify({
+        archetype: resolvedArchetype,
+        synthesis: 'A pale drifting hunger that haunts the high passes.',
+      }));
+    }
     if (validate === validateGenerationResponse) {
       return Promise.resolve(JSON.stringify(llmFixture));
+    }
+    if (validate === validateNamingResponse) {
+      // All candidates fail the deterministic filters (hyphens) so the
+      // provisional fixture name survives and assertions stay stable.
+      return Promise.resolve(JSON.stringify({ candidates: ['Bad-One', 'Bad-Two', 'Bad-Three'] }));
     }
     return Promise.reject(new Error('Unexpected LLM call in 2024 flow test'));
   });
@@ -199,7 +211,8 @@ describe('StatblockGenerator 2024 flow', () => {
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(1);
+      // generation + the naming pass (blank form → seeded)
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(2);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('user');
@@ -228,11 +241,11 @@ describe('StatblockGenerator 2024 flow', () => {
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      // Blank form now resolves the role FROM the seeded concept (2 calls:
-      // resolve, then generation) instead of a blind random pick.
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(2);
-      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateArchetypeResponse);
+      // Blank form: synthesis micro-call → generation → naming pass.
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(3);
+      expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateSeedSynthesisResponse);
       expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateGenerationResponse);
+      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validateNamingResponse);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('auto');

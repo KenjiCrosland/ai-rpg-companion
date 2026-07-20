@@ -148,7 +148,86 @@ function maxExtracted(monster, re) {
 const ATTACK_LINE_RE = /(?:Melee|Ranged)(?: or Ranged)?(?: Weapon| Spell)? Attack(?: Roll)?:/;
 const DAMAGE_EXPR_RE = /(\d+)\s*\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/g;
 
-export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTokens, perAttack } = {}) {
+/** Highest count word in a Multiattack text ("makes two attacks: one... and one..."). */
+function multiattackCount(monster) {
+  const entry = (monster.sections?.Actions ?? []).find((e) => e.name?.startsWith('Multiattack'));
+  if (!entry) return 1;
+  const WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+  let max = 1;
+  for (const m of entry.text.matchAll(/\b(one|two|three|four|five|six|\d+)\b/gi)) {
+    const v = WORDS[m[1].toLowerCase()] ?? Number(m[1]);
+    if (Number.isFinite(v) && v > max && v <= 6) max = v;
+  }
+  return max;
+}
+
+const CONDITION_TOKEN_SET = new Set(
+  [...CONDITIONS, 'Exhaustion'].map((c) => c.toLowerCase())
+);
+
+// Resistance cost by how often PLAYERS deal the type — psychic resistance is
+// nearly free, fire resistance is a real tax. Immunity costs double;
+// "nonmagical" qualifiers halve (their value decays as parties gear up).
+export const DEFENSE_WEIGHTS = {
+  bludgeoning: 1, piercing: 1, slashing: 1, fire: 1, lightning: 1,
+  cold: 0.5, acid: 0.5, thunder: 0.5, necrotic: 0.5, radiant: 0.5, poison: 0.5,
+  psychic: 0.25, force: 0.25,
+};
+
+function tokenWeight(token) {
+  const lower = token.toLowerCase();
+  let weight = 1; // unknown phrasing → conservative
+  for (const [type, w] of Object.entries(DEFENSE_WEIGHTS)) {
+    if (lower.includes(type)) { weight = w; break; }
+  }
+  return /nonmagical/.test(lower) ? weight / 2 : weight;
+}
+
+function splitTokens(value) {
+  return (value ?? '').split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+}
+
+// Canonical type-flavor defenses ride free (official design treats these as
+// the type's identity, not a durability purchase): undead don't pay for
+// poison immunity.
+export const TYPE_FREEBIES = {
+  undead: ['poison'], construct: ['poison', 'psychic'], elemental: ['poison'],
+  ooze: ['acid'], celestial: ['radiant'], fiend: ['fire'],
+};
+
+const DAMAGE_TYPE_RE = new RegExp(
+  `\\b(${Object.keys(DEFENSE_WEIGHTS).join('|')}) damage\\b`, 'gi'
+);
+
+// Body-material words → the damage type that material implies. An ice
+// creature whose spikes deal piercing never says "cold damage", but it IS
+// cold — material grants the freebie the dealt-type scan misses. Words are
+// chosen to avoid common-prose collisions (no "light", no bare "burn").
+const MATERIAL_LEXICON = {
+  cold: ['ice', 'icy', 'frost', 'frozen', 'glacial', 'rime', 'snow'],
+  fire: ['fire', 'flame', 'molten', 'magma', 'ember', 'burning'],
+  lightning: ['lightning', 'storm'],
+  thunder: ['thunder'],
+  acid: ['acid', 'caustic', 'corrosive'],
+  poison: ['venom', 'toxic'],
+  necrotic: ['rot', 'rotted', 'grave', 'carrion'],
+};
+
+/** Damage types this creature is free to resist: its type's canonical
+ * package, anything it DEALS itself (the fire-elemental principle), and
+ * anything its body is MADE OF (the material principle). */
+function freebieTypes(monster) {
+  const free = new Set(TYPE_FREEBIES[(monster.type ?? '').toLowerCase()] ?? []);
+  const prose = [monster.name ?? '', ...entriesOf(monster).map(({ entry }) => `${entry.name} ${entry.text}`)]
+    .join(' ').toLowerCase();
+  for (const m of prose.matchAll(DAMAGE_TYPE_RE)) free.add(m[1].toLowerCase());
+  for (const [type, words] of Object.entries(MATERIAL_LEXICON)) {
+    if (words.some((w) => new RegExp(`\\b${w}\\b`).test(prose))) free.add(type);
+  }
+  return free;
+}
+
+export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTokens, perAttack, totalDamage, defenseCaps } = {}) {
   if (!monster || typeof monster !== 'object') {
     throw new TypeError('lintStatblock expects a statblock model object');
   }
@@ -243,6 +322,36 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     }
   }
 
+  // Defense stacking (generated blocks only): weighted point budget — the
+  // chassis HP already assumes a typical package, so surplus multiplies
+  // effective HP past budget. Spend order: immunities first (identity
+  // defenses survive), then resistances; conditions ride free.
+  if (defenseCaps?.points != null) {
+    let remaining = defenseCaps.points;
+    const free = freebieTypes(monster);
+    const results = {};
+    for (const [field, mult] of [['immunities', 2], ['resistances', 1]]) {
+      const kept = [];
+      const conditions = [];
+      let trimmedAny = false;
+      for (const token of splitTokens(monster[field])) {
+        if (CONDITION_TOKEN_SET.has(token.toLowerCase())) { conditions.push(token); continue; }
+        const isFree = [...free].some((t) => token.toLowerCase().includes(t));
+        const cost = isFree ? 0 : tokenWeight(token) * mult;
+        if (cost <= remaining) { remaining -= cost; kept.push(token); }
+        else trimmedAny = true;
+      }
+      if (trimmedAny) {
+        results[field] = [kept.join(', '), conditions.join(', ')].filter(Boolean).join('; ');
+      }
+    }
+    for (const [field, value] of Object.entries(results)) {
+      push('defense-count', 'correctable',
+        `damage ${field} exceed the ${defenseCaps.points}-point defense budget (weighted by how often players deal each type; immunities cost double)`,
+        value || '', { field });
+    }
+  }
+
   // Entry names any attack reference may resolve against (parentheticals
   // like "(2/Day)" stripped, prefix matches allowed — mirrors the corpus
   // calibration).
@@ -291,6 +400,17 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     if (SECOND_PERSON_RE.test(entry.text)) {
       push('second-person', 'reject', `Second-person voice in ${where} — statblocks are third person ("of the creature's choice", never "of your choice")`, undefined, loc);
     }
+    // ALL-CAPS entry names ("CRACKLE (1/Day)") — style wart, deterministically
+    // title-cased by the corrections pass. Judged on the base name so
+    // mixed-case parentheticals don't mask it.
+    {
+      const base = entry.name.split(' (')[0];
+      if (base.length > 3 && /[A-Z]{3}/.test(base) && base === base.toUpperCase()) {
+        const titled = entry.name.replace(base,
+          base.toLowerCase().replace(/(^|\s)\w/g, (c) => c.toUpperCase()));
+        push('entry-name-caps', 'correctable', `${where}: all-caps entry name`, titled, loc);
+      }
+    }
     if (section === 'Traits' && SELF_MITIGATION_RE.test(entry.text)) {
       push('trait-mitigation', 'reject', `Blanket damage mitigation as a passive trait in ${where} — the chassis already prices defenses; single-attack mitigation must be a Reaction (once per round)`, undefined, loc);
     }
@@ -300,15 +420,23 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // when the pipeline supplies perAttack; recharge novas are exempt (they
     // legitimately exceed the per-attack budget).
     if (perAttack != null && ATTACK_LINE_RE.test(entry.text) && !/recharge/i.test(entry.name)) {
+      // The effective per-attack budget respects the ACTUAL multiattack count
+      // — a tier where multiattack is optional gets the single-attack budget,
+      // but if the block voluntarily includes "makes two attacks", each
+      // attack owns half the turn total (live finding: 2× DPR at CR 2).
+      const actualAttacks = multiattackCount(monster);
+      const budget = actualAttacks > 1 && totalDamage != null
+        ? Math.max(1, Math.round(totalDamage / actualAttacks))
+        : perAttack;
       const sums = [...entry.text.matchAll(DAMAGE_EXPR_RE)].map((m) => Number(m[1]));
       if (sums.length) {
         const total = sums.reduce((a, b) => a + b, 0);
-        const ratio = total / perAttack;
+        const ratio = total / budget;
         if (ratio < HP_BAND[0] || ratio > HP_BAND[1]) {
           if (sums.length === 1) {
-            push('attack-damage-band', 'correctable', `${where}: attack damage ${total} outside [${HP_BAND[0]}, ${HP_BAND[1]}] of the ${perAttack} per-attack budget`, perAttack, loc);
+            push('attack-damage-band', 'correctable', `${where}: attack damage ${total} outside [${HP_BAND[0]}, ${HP_BAND[1]}] of the ${budget} per-attack budget`, budget, loc);
           } else {
-            push('attack-damage-band', 'reject', `${where}: total attack damage ${total} (across ${sums.length} expressions) outside [${HP_BAND[0]}, ${HP_BAND[1]}] of the ${perAttack} per-attack budget — restructure to total ${perAttack}`, undefined, loc);
+            push('attack-damage-band', 'reject', `${where}: total attack damage ${total} (across ${sums.length} expressions) outside [${HP_BAND[0]}, ${HP_BAND[1]}] of the ${budget} per-attack budget — restructure to total ${budget}`, undefined, loc);
           }
         }
       }
@@ -350,8 +478,14 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     if (maxAttack != null && Math.abs(maxAttack - chassis.attack_bonus) > 1) {
       push('attack-band', 'correctable', `Attack bonus +${maxAttack} outside ±1 of budget +${chassis.attack_bonus}`, chassis.attack_bonus);
     }
-    const maxDC = maxExtracted(monster, /DC\s+(\d+)/g);
-    if (maxDC != null && Math.abs(maxDC - chassis.save_dc) > 1) {
+    // SAVE DCs only — check DCs (Investigation, escape DCs) are excluded, or
+    // a high skill-check DC masks under-budget save DCs (live finding: an
+    // Investigation DC 20 hid save DCs sitting 2 under a 21 budget).
+    const maxDC = Math.max(
+      maxExtracted(monster, /Saving Throw\*?:?\s*DC\s+(\d+)/gi) ?? -Infinity,
+      maxExtracted(monster, /DC\s+(\d+)\s+\w+ saving throw/gi) ?? -Infinity,
+    );
+    if (Number.isFinite(maxDC) && Math.abs(maxDC - chassis.save_dc) > 1) {
       push('dc-band', 'correctable', `Save DC ${maxDC} outside ±1 of budget ${chassis.save_dc}`, chassis.save_dc);
     }
   }

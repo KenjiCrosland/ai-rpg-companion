@@ -47,13 +47,24 @@ export const SEED_DIMENSIONS = {
   // Beast). Shape templates only, never proper-noun examples (examples leak
   // into output verbatim). Every register requires the name to EVOKE the
   // creature — built from plain words describing its body or behavior.
+  // Register list rebuilt against the SRD's measured conventions
+  // (2026-07-19): 47% single words, 36% two-word "<descriptor> <creature
+  // noun>" pairs, and only 3.6% "X of Y" — so the title-epithet register is
+  // gone and the two corpus-dominant two-word patterns are in.
   naming: [
-    'a folk name: what frightened villagers would whisper, shaped like "the <adjective> <noun>", built from plain words that describe its body or behavior',
-    'an archaic compound: two short CONCRETE English roots fused into one word that reads smoothly aloud — one root for its body, material, or sound; one for its movement, weapon, or habit',
-    'a title with an epithet, shaped like "<Title> of the <Domain>", where the title names what it does',
-    'a single stark word: one short, heavy English word that names what it looks like or does',
+    'a folk name: what frightened villagers would whisper — an <adjective> <noun> pair built from plain words that describe its body or behavior (store it WITHOUT a leading "the"; prose adds the article)',
+    'an archaic compound: two short CONCRETE English roots fused into one unhyphenated word that reads smoothly aloud — one root for its body, material, or sound; one for its movement, weapon, or habit. Never pick the creature\'s two most obvious features; the pairing should surprise',
+    'two words: an element, material, or time of day, then a plain creature noun (hag, hound, moth, worm, crawler...) — both words true of the creature',
+    'two words: a vivid, predatory present-participle of how it moves or hunts, then a concrete SINGULAR noun for what it is or resembles — never weak participles (swaying, moving) or abstract plurals',
     'a common noun for what it does or resembles, made unsettling by capitalization alone',
-    'a paired name: one gentle word and one dreadful word joined, both describing the creature',
+    'a paired name: one soft, tender word and one dreadful word joined, both describing the creature — gentle means quiet or sorrowful, never cute or silly',
+    'an atmospheric adjective, then an AGENT noun — what the creature does turned into a doer word (one who rings becomes a ringer). The adjective may be ominous (dread, pale, hollow); the doer must be concrete',
+    // Coinage registers, reinstated 2026-07-19 with discipline (owner's
+    // taxonomy of the SRD's real coinages): STRICT 1-2 syllables, blunt,
+    // never melodic — the failure mode being three-syllable fantasy soup.
+    'a mythological coinage: ONE or TWO syllables that sound excavated from a forgotten real-world pantheon — blunt old-epic phonology, endings like -or, -ar, -oth, -un, -eg. Never three syllables, never melodic',
+    'an onomatopoeic coinage: ONE syllable (two at most) that imitates the actual sound of this creature moving or hunting — say it aloud and you hear the monster. A click, scrape, gulp, or hiss rendered as a word',
+    'an alien-tongue coinage: ONE or TWO syllables transliterated from a language not meant for human mouths — deep, wet, back-of-the-throat sounds (uu, gh, ch, ul, oth). Pronounceable but wrong. Never three syllables',
   ],
 };
 
@@ -91,9 +102,33 @@ export function seedLeakTokens(traits) {
   return [...tokens];
 }
 
+// Naming directives shared by the raw-seed concept and the synthesized one.
+export function namingRules(traits) {
+  return `Name it as ${traits.naming}. ` +
+    'The name must match the creature you actually designed — its primary movement, attack, material, or sound as expressed in its abilities, not a generic monster vibe. ' +
+    'Ability names likewise must name what each ability actually does — never mood words the creature doesn\'t earn (nothing "laments" unless an ability laments). ' +
+    'Never hyphenate names: two-word names use a space; compound names fuse into one word. ' +
+    'The name\'s SOUND should fit the creature: heavy slow things take heavy sounds (long vowels; b, d, g, m), quick things take sharp short sounds (k, t, short vowels), sinuous or stealthy things take sibilants and liquids (s, sh, l). ' +
+    'Name concrete things — body, material, movement, sound, habit. Abstract menace words (terror, doom, dread, horror, death, fear) are banned as the name\'s HEAD noun — as a leading adjective before a concrete doer they are allowed. ' +
+    'The rolled trait words are design guidance ONLY — never use them, or obvious derivatives of them, in the creature\'s name or its ability names.';
+}
+
+/**
+ * Generation concept built from a synthesis sentence (produced by the seed
+ * synthesis call): the model designs from ONE fused identity instead of a
+ * list of axes — the anti-discombobulation mechanism. The intelligence tier
+ * rides along because the synthesis sentence may drop the INT guidance.
+ */
+export function buildSynthesizedConcept(traits, synthesis) {
+  return `${synthesis.trim()} It is ${traits.intelligence}. ` +
+    'Every ability should express that single identity — do not give each physical detail its own separate ability. ' +
+    namingRules(traits);
+}
+
 /**
  * Sample one option per dimension and compose the concept string used for
- * both the archetype resolve call and the generation prompt.
+ * both the archetype resolve call and the generation prompt (fallback path —
+ * the synthesis call produces a fused concept when available).
  */
 export function buildRandomConceptSeed() {
   const traits = {
@@ -105,9 +140,7 @@ export function buildRandomConceptSeed() {
   };
   const concept =
     `a ${traits.intelligence}, ${traits.physical} ${traits.silhouette} from ${traits.origin}. ` +
-    'Blend every trait into one coherent creature — contradictions between traits are creative fuel, not errors. ' +
-    `Name it as ${traits.naming}. ` +
-    'Name concrete things — body, material, movement, sound, habit — never abstract menace words (terror, doom, dread, horror, death, fear). ' +
-    'The trait words above are design guidance ONLY — never use them, or obvious derivatives of them, in the creature\'s name or its ability names.';
+    'Blend every trait into ONE coherent creature with a single unifying identity — contradictions between traits are creative fuel, not errors. ' +
+    namingRules(traits);
   return { ...traits, concept };
 }

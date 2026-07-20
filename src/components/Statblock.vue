@@ -542,7 +542,9 @@ async function generateAbilities(monster, userSuggestion) {
 }
 
 const legendaryOwnerName = computed(() => {
-    const name = props.monster?.name?.trim();
+    // Strip any leading article so a saved "The Hanging Shroud" doesn't
+    // render as "The the hanging shroud".
+    const name = props.monster?.name?.trim().replace(/^the\s+/i, '');
     return name ? `The ${name.toLowerCase()}` : 'The monster';
 });
 
