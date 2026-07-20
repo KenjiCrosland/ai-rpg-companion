@@ -132,11 +132,26 @@ describe('rerollEntry (engine-based inline edit re-rolls)', () => {
     return fn;
   };
 
-  test('good re-roll returns a legacy-shaped entry in one call', async () => {
+  test('good re-roll returns a legacy-shaped entry in one call; referenced names are stamped back', async () => {
+    // Shadow Claw is named in Multiattack — a rename would break the
+    // reference, so keep-mode deterministically restores the name even
+    // when the model renames (no retry burned).
     const callLLM = call([{ name: 'Shadow Rake', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' }]);
     const entry = await rerollEntry(legacy, { kind: 'action', current: legacy.actions[1] }, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(1);
-    expect(entry).toEqual({ name: 'Shadow Rake', description: expect.stringContaining('+7 to hit') });
+    expect(entry).toEqual({ name: 'Shadow Claw', description: expect.stringContaining('+7 to hit') });
+  });
+
+  test('re-roll REPLACES a non-referenced ability: same-name responses are retried', async () => {
+    // The old behavior (same name, shuffled mechanics) is the least valuable
+    // outcome now that the engine owns the numbers — demand a new ability.
+    const callLLM = call([
+      { name: 'Umbral Veil', text: 'While in dim light or darkness, the stalker is invisible.' },
+      { name: 'Gloom Mantle', text: 'The stalker is wreathed in clinging shadow.' },
+    ]);
+    const entry = await rerollEntry(legacy, { kind: 'ability', current: legacy.abilities[0] }, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(entry.name).toBe('Gloom Mantle');
   });
 
   test('off-budget attack bonus is corrected, not retried', async () => {
@@ -149,11 +164,11 @@ describe('rerollEntry (engine-based inline edit re-rolls)', () => {
   test('blanket-mitigation trait is rejected and retried', async () => {
     const callLLM = call([
       { name: 'Uncanny Dodge', text: 'When an attacker hits it, the stalker halves the damage against it.' },
-      { name: 'Umbral Veil', text: 'While in dim light or darkness, the stalker is invisible.' },
+      { name: 'Gloom Mantle', text: 'While in dim light or darkness, the stalker is invisible.' },
     ]);
     const entry = await rerollEntry(legacy, { kind: 'ability', current: legacy.abilities[0] }, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(2);
-    expect(entry.name).toBe('Umbral Veil');
+    expect(entry.name).toBe('Gloom Mantle');
   });
 
   test('references to undefined attacks are rejected', async () => {
@@ -348,6 +363,9 @@ describe('edition conversion (⇄ footer action)', () => {
     // Regen params survive the shape change.
     expect(converted.monsterDescription).toBe('a shadow');
     expect(converted.caster).toBe(false);
+    // Sidebar + CR sorting read challenge_rating on every monster regardless
+    // of edition (live crash: undefined.split after a 2014→2024 convert).
+    expect(converted.challenge_rating).toBe('4 (XP 1,100; PB +2)');
     // The result passes the 2024 phrasing gates.
     const rules = lintStatblock(converted, { edition: '2024' }).findings.map((f) => f.rule);
     expect(rules).not.toContain('phrasing-2014');

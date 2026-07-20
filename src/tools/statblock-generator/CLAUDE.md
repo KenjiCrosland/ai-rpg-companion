@@ -30,17 +30,26 @@ touching anything under `chassis/` or `format-2024/`.
   footer bar, 💾 Save changes / ↩️ Cancel while editing, and fields swap to
   inputs where they live in the card layout — name in the header, scores
   inside the ability grid (MOD/SAVE recompute live), detail lines in place,
-  per-entry name + 🔄 Re-roll + ✕ bar above the description textarea. No
-  separate form-style edit body on either card.
-- **Edition conversion**: the ⇄ "Convert to 2014/2024" footer action on both
-  cards calls `convertEdition()` (`format-2024/generate.mjs`) — deterministic
-  shape mapping (`toLegacyModel`/`fromLegacyModel`) plus ONE LLM call that
-  rewrites entry texts into the target edition's phrasing, gated by the
-  phrasing-only lint subset (`CONVERSION_LINT_RULES`). Numbers are never
-  rebalanced — conversion is a dialect change. Premium-gated in the
-  generator's `convertMonsterEdition` handler. The rules-version control on
-  the form is a compact switch (`data-testid="rules-switch"`), not the old
-  segmented toggle bar.
+  per-entry name + Re-roll + ✕ bar above the description textarea. No
+  separate form-style edit body on either card. **Entry re-roll REPLACES
+  the ability** (new name, new idea — same-name responses are retried);
+  names survive only when load-bearing (referenced by another entry, or
+  Multiattack/Spellcasting), where a model rename is deterministically
+  stamped back instead of retried.
+- **Edition switching (cache-and-swap)**: a `ParSwitch` in the card toolbar
+  (`data-testid="edition-switch"`) flips the selected monster between its
+  2014/2024 printings. The saved monster IS the active edition; the
+  converted counterpart caches on it as `monster.other_edition` — flipping
+  swaps active↔cached and persists (instant, lossless, no call). Flipping
+  toward a not-yet-converted edition shows the target card as a blurred
+  deterministic shape preview (`toLegacyModel`/`fromLegacyModel`) under a
+  one-time premium Convert button that runs `convertEdition()`
+  (`format-2024/generate.mjs`): ONE LLM call rewrites entry texts into the
+  target phrasing, gated by the phrasing-only lint subset
+  (`CONVERSION_LINT_RULES`); numbers are never rebalanced. Any
+  edit/re-roll/regenerate of the active edition deletes `other_edition`
+  (never sync edits across editions). The form's rules-version control is
+  the same `ParSwitch` (`data-testid="rules-switch"`).
 - **2014 edition**: same pipeline with 2014 phrasing rules/skeletons/exemplar,
   then `toLegacyModel()` converts to the classic model shape — so the
   existing `Statblock.vue` display (including inline editing), all three

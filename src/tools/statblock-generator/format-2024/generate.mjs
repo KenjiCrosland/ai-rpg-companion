@@ -681,6 +681,9 @@ export function fromLegacyModel(legacy) {
     format: '2024',
     sections,
   };
+  // Same display string assembleMonster stamps — the sidebar and CR sorting
+  // read challenge_rating on every saved monster regardless of edition.
+  model.challenge_rating = `${model.cr_str} (XP ${model.xp.toLocaleString('en-US')}; PB ${signed(model.pb)})`;
   if (ta[3]) model.subtype = titleCaseName(ta[3]);
   if (legacy.archetype) model.archetype = legacy.archetype;
   if (legacy.archetype_source) model.archetype_source = legacy.archetype_source;
@@ -930,6 +933,10 @@ const REROLL_ENTRY_LABEL = {
   'Bonus Actions': 'BONUS ACTION', Reactions: 'REACTION',
 };
 
+// Structural entry names that must survive a re-roll — the name IS the
+// mechanic (parenthetical suffixes like "(2/Day)" don't exempt them).
+const PROTECTED_ENTRY_NAME_RE = /^(Multiattack|Spellcasting)\b/;
+
 function editionSkeletons(edition, chassis, numbers) {
   return edition === '2014'
     ? `- Attack: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <damage type> damage. (Ranged Weapon Attack: same numbers, range 60 ft.) That damage is the attack's TOTAL — no extra "plus X" riders.
@@ -992,15 +999,24 @@ export async function rerollEntry(monster, { kind, current }, callLLM) {
   const currentText = current.description ?? current.text ?? '';
   // If other entries reference this one by name, a rename would break them.
   const referenced = rows.some((r) => r.name !== current.name && current.name && r.text.includes(current.name));
+  // A re-roll REPLACES the ability (new name, new idea) — the engine already
+  // guarantees the mechanics, so a same-name mechanics shuffle is the least
+  // valuable outcome (owner call, 2026-07-19; replaces the old hidden
+  // "delete the name first" idiom). Names survive only where they're
+  // load-bearing: referenced by other entries, or structural entries whose
+  // name IS the mechanic.
+  const keepName = referenced || PROTECTED_ENTRY_NAME_RE.test(current.name ?? '');
 
   const skeletons = editionSkeletons(edition, chassis, numbers);
 
-  const prompt = `You are rewriting ONE entry of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock with fresh flavor. The numbers are fixed — never invent different ones.
+  const prompt = `You are re-rolling ONE entry of an existing D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock. The numbers are fixed — never invent different ones.
 
 THE MONSTER: ${monster.name}, CR ${crKeyFor(cr)}${monster.archetype ? `, combat role: ${monster.archetype}` : ''}.
-Its other entries (do not duplicate their mechanics): ${otherNames.join('; ') || 'none'}.
+Its other entries (do not duplicate their mechanics or names): ${otherNames.join('; ') || 'none'}.
 
-REWRITE THIS ${REROLL_ENTRY_LABEL[section]}:
+${keepName
+    ? `REWRITE THIS ${REROLL_ENTRY_LABEL[section]} — KEEP the name "${current.name}" EXACTLY (${referenced ? 'other entries reference it by name' : 'the name is structural'}) and write a fresh take on its text:`
+    : `REPLACE THIS ${REROLL_ENTRY_LABEL[section]} with a brand-new ability filling the same role — invent a NEW name (never "${current.name}" or a variation of it) and a fresh idea, not a rewording of this one:`}
 "${current.name}": ${currentText}
 
 FIXED NUMBER SKELETONS (use EXACTLY these if the new entry attacks or forces a save):
@@ -1010,7 +1026,7 @@ RULES:
 - Third person, in-world only. No traits that halve/reduce incoming damage or grant resistance to everything.${section === 'Reactions' ? (edition === '2014'
     ? `\n- This entry is a REACTION: it must begin by stating its trigger in prose — "When <specific event>, the <creature> <responds>." Never a reaction usable on the creature's own turn.`
     : `\n- This entry is a REACTION — not a free action. It must use EXACTLY this form: *Trigger:* <the specific event that lets the creature respond>. *Response:* <what it does>.`) : ''}
-- Any attack you reference by name must be one of the other entries listed above${referenced ? `.\n- KEEP the name "${current.name}" — other entries reference it by name` : ', or omit attack references'}.
+- Any attack you reference by name must be one of the other entries listed above${referenced ? '' : ', or omit attack references'}.
 
 Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
 
@@ -1030,7 +1046,20 @@ Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
     pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total }).findings, { chassis });
     const result = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total });
     const entry = pseudo.sections[section].find((e) => e.name === parsed.name && e.text);
-    return { entry, rejects: result.findings.filter((f) => f.severity === 'reject') };
+    let rejects = result.findings.filter((f) => f.severity === 'reject');
+    const sameName = parsed.name.trim().toLowerCase() === (current.name ?? '').trim().toLowerCase();
+    if (keepName && !sameName && entry) {
+      // Keep-mode rename is deterministically repairable: stamp the
+      // load-bearing name back over the fresh text (cheaper than a retry;
+      // a rename would break the entries that reference it).
+      return { entry: { ...entry, name: current.name }, rejects };
+    }
+    if (!keepName && sameName) {
+      // Replace-mode returned the same ability name — that's the old
+      // "mechanics shuffle" behavior; demand a genuinely new ability.
+      rejects.push({ message: `you returned the same name "${current.name}" — replace this ability with a NEW one: new name, fresh idea` });
+    }
+    return { entry, rejects };
   };
 
   let outcome = await attempt(prompt);

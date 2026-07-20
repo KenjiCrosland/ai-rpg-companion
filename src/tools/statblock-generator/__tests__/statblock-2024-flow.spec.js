@@ -309,4 +309,104 @@ describe('StatblockGenerator 2024 flow', () => {
       wrapper.unmount();
     });
   });
+
+  describe('edition switch (cache-and-swap)', () => {
+    // A saved engine-2024 monster, complete enough for the deterministic
+    // shape mapping (toLegacyModel) that backs the blurred preview.
+    const stalker2024 = () => ({
+      name: 'Gloom Stalker', format: '2024',
+      size: 'Medium', type: 'Monstrosity', alignment: 'Neutral Evil',
+      ac: 14, hp: 59, hp_formula: '13d8 + 1', speed: '40 ft.',
+      stats: { STR: 12, DEX: 16, CON: 12, INT: 6, WIS: 14, CHA: 8 },
+      saves: { STR: 1, DEX: 5, CON: 1, INT: -2, WIS: 2, CHA: -1 },
+      senses: 'darkvision 60 ft.; Passive Perception 14',
+      cr: 4, cr_str: '4', xp: 1100, pb: 2,
+      challenge_rating: '4 (XP 1,100; PB +2)',
+      archetype: 'lurker', archetype_source: 'user',
+      sections: {
+        Traits: [{ name: 'Umbral Veil', text: 'While in Dim Light or Darkness, the stalker has the Invisible condition.' }],
+        Actions: [
+          { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
+          { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.' },
+        ],
+      },
+    });
+
+    const conversion2014 = {
+      Traits: [{ name: 'Umbral Veil', text: 'While in dim light or darkness, the stalker is invisible.' }],
+      Actions: [
+        { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
+        { name: 'Shadow Claw', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' },
+      ],
+    };
+
+    const mountWithStalker = async (monster = stalker2024()) => {
+      localStorage.setItem('monsters', JSON.stringify({ Uncategorized: [monster] }));
+      const wrapper = mountGenerator();
+      await flushPromises();
+      await wrapper.findAll('.statblock-row__button')
+        .find((b) => b.text().includes('Gloom Stalker')).trigger('click');
+      return wrapper;
+    };
+
+    test('flipping to a missing edition shows the blurred preview; flipping back leaves it — no call, no storage change', async () => {
+      const wrapper = await mountWithStalker();
+      expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(false);
+
+      await wrapper.find('[data-testid="edition-switch"]').trigger('click');
+      const preview = wrapper.find('[data-testid="edition-preview"]');
+      expect(preview.exists()).toBe(true);
+      expect(preview.find('.statblock-2014-stub').exists()).toBe(true); // deterministic target-shape card
+      expect(preview.find('[data-testid="convert-edition"]').text()).toContain('Convert to 2014');
+      expect(aiClient.generateGptResponse).not.toHaveBeenCalled();
+      expect(savedMonsters().Uncategorized[0].format).toBe('2024'); // nothing persisted
+
+      await wrapper.find('[data-testid="edition-switch"]').trigger('click');
+      expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(false);
+      expect(wrapper.find('.statblock-2024-stub').exists()).toBe(true);
+      wrapper.unmount();
+    });
+
+    test('Convert fills the cache and swaps; later flips are instant with no calls', async () => {
+      aiClient.generateGptResponse.mockResolvedValue(JSON.stringify(conversion2014));
+      const wrapper = await mountWithStalker();
+
+      await wrapper.find('[data-testid="edition-switch"]').trigger('click');
+      await wrapper.find('[data-testid="convert-edition"]').trigger('click');
+      await flushPromises();
+
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(1);
+      expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(false);
+      expect(wrapper.find('.statblock-2014-stub').exists()).toBe(true);
+      let saved = savedMonsters().Uncategorized[0];
+      expect(saved.format).toBe('2014');
+      expect(saved.actions.find((a) => a.name === 'Shadow Claw').description).toContain('to hit');
+      expect(saved.other_edition.format).toBe('2024'); // original cached, verbatim
+      expect(saved.other_edition.sections.Actions[1].text).toContain('*Melee Attack Roll:*');
+
+      // Flip back: instant swap from the cache — no preview, no second call.
+      await wrapper.find('[data-testid="edition-switch"]').trigger('click');
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(1);
+      expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(false);
+      expect(wrapper.find('.statblock-2024-stub').exists()).toBe(true);
+      saved = savedMonsters().Uncategorized[0];
+      expect(saved.format).toBe('2024');
+      expect(saved.other_edition.format).toBe('2014');
+      wrapper.unmount();
+    });
+
+    test('editing the active edition invalidates the cached conversion', async () => {
+      const monster = stalker2024();
+      monster.other_edition = { name: 'Gloom Stalker', format: '2014', abilities: [], actions: [] };
+      const wrapper = await mountWithStalker(monster);
+
+      const card = wrapper.findComponent({ name: 'Statblock2024' });
+      card.vm.$emit('update-monster', { ...stalker2024(), hp: 70, other_edition: monster.other_edition });
+      await flushPromises();
+
+      expect(savedMonsters().Uncategorized[0].hp).toBe(70);
+      expect(savedMonsters().Uncategorized[0].other_edition).toBeUndefined();
+      wrapper.unmount();
+    });
+  });
 });

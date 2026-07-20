@@ -184,10 +184,6 @@
           <template #icon>🔄</template>
           Regenerate
         </CardFooterAction>
-        <CardFooterAction data-testid="convert-edition" @click="$emit('convert-edition')">
-          <template #icon>⇄</template>
-          Convert to 2014
-        </CardFooterAction>
         <CardFooterAction @click="$emit('toggle-export')">
           <template #icon>📤</template>
           Export
@@ -223,7 +219,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete',
-  'can-switch-columns', 'toggle-export', 'toggle-regenerate', 'convert-edition',
+  'can-switch-columns', 'toggle-export', 'toggle-regenerate',
 ]);
 
 const SECTION_ORDER = ['Traits', 'Actions', 'Bonus Actions', 'Reactions', 'Legendary Actions'];
@@ -740,7 +736,14 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.sb24-edit__btn--danger { color: #a03333; }
+/* ✕ delete is a fixed square (shared shape with the 2014 card's edit bars). */
+.sb24-edit__btn--danger {
+  color: #a03333;
+  width: 3.2rem;
+  padding: 0.3rem 0;
+  text-align: center;
+  flex-shrink: 0;
+}
 .sb24-edit__add { margin-top: 0.2rem; }
 
 /* Footer bar sits inside the card (matching Statblock.vue), separated by a

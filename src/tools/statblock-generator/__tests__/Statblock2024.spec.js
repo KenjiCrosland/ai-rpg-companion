@@ -225,13 +225,6 @@ describe('Statblock2024', () => {
       expect(wrapper.emitted('delete')).toHaveLength(1);
     });
 
-    test('convert-edition action emits (generator premium-gates and converts)', async () => {
-      const wrapper = mountCard(byName('Aboleth'));
-      expect(wrapper.find('[data-testid="convert-edition"]').text()).toContain('2014');
-      await wrapper.find('[data-testid="convert-edition"]').trigger('click');
-      expect(wrapper.emitted('convert-edition')).toHaveLength(1);
-    });
-
     test('readonly hides the footer bar', () => {
       const wrapper = mountCard(byName('Aboleth'), { readonly: true });
       expect(wrapper.find('.card-footer-bar').exists()).toBe(false);

@@ -77,13 +77,8 @@
         <div class="form-card parchment paper-grain">
           <h2 class="form-heading">Generate a monster statblock</h2>
           <div class="rules-switch-row">
-            <button type="button" role="switch" class="rules-switch" data-testid="rules-switch"
-              :aria-checked="format === '2024' ? 'true' : 'false'" aria-label="Use 2024 rules"
-              @click="format = format === '2024' ? '2014' : '2024'">
-              <span class="rules-switch__opt" :class="{ 'is-active': format === '2014' }">2014 rules</span>
-              <span class="rules-switch__track" aria-hidden="true"><span class="rules-switch__thumb"></span></span>
-              <span class="rules-switch__opt" :class="{ 'is-active': format === '2024' }">2024 rules</span>
-            </button>
+            <ParSwitch v-model="formatIs2024" data-testid="rules-switch"
+              off-label="2014 rules" on-label="2024 rules" aria-label="Use 2024 rules" />
           </div>
           <form @submit.prevent="generateStatblock" class="monster-form">
             <ParField label="Monster name" :optional="true">
@@ -134,8 +129,24 @@
         </div>
       </div>
 
+      <!-- Card toolbar: edition switch (2014 ⇄ 2024 views of THIS monster,
+           cache-and-swap; flipping to a not-yet-converted edition shows the
+           blurred preview below) + column toggle. -->
+      <div class="statblock-toolbar" v-if="monster && !loadingPart1 && !loadingPart2 && !errorMessage">
+        <ParSwitch v-model="cardEditionIs2024" data-testid="edition-switch"
+          off-label="2014" on-label="2024" aria-label="View the 2024 rules version" />
+        <ParToggleGroup
+          v-if="shouldDisplayInterface && canSwitchColumns"
+          v-model="userColumnsPreference"
+          aria-label="Statblock column layout"
+          class="column-toggle"
+        >
+          <ParToggleButton toggleValue="one_column">1 Column</ParToggleButton>
+          <ParToggleButton toggleValue="two_columns">2 Columns</ParToggleButton>
+        </ParToggleGroup>
+      </div>
       <ParToggleGroup
-        v-if="shouldDisplayInterface && canSwitchColumns && (monster || loadingPart1 || loadingPart2)"
+        v-else-if="shouldDisplayInterface && canSwitchColumns && (loadingPart1 || loadingPart2)"
         v-model="userColumnsPreference"
         aria-label="Statblock column layout"
         class="column-toggle"
@@ -143,17 +154,36 @@
         <ParToggleButton toggleValue="one_column">1 Column</ParToggleButton>
         <ParToggleButton toggleValue="two_columns">2 Columns</ParToggleButton>
       </ParToggleGroup>
-      <Statblock v-if="!errorMessage && displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
+
+      <!-- Preview state: the other edition doesn't exist yet. The card below
+           is the DETERMINISTIC shape mapping of the real monster (numbers and
+           structure are exact; only the prose is still source-edition
+           phrased) — blurred, with the one-time Convert action on top. -->
+      <div v-if="previewEdition && monster && !errorMessage" class="edition-preview" data-testid="edition-preview">
+        <div class="edition-preview__card">
+          <Statblock v-if="previewEdition === '2014'" :monster="previewMonster" :readonly="true"
+            :width="850" :columns="userColumnsPreference" />
+          <Statblock2024 v-else :monster="previewMonster" :loading="!previewMonster" :readonly="true"
+            :width="850" :columns="userColumnsPreference" />
+        </div>
+        <div class="edition-preview__overlay">
+          <ParButton data-testid="convert-edition" :disabled="converting" @click="convertMonsterEdition">
+            {{ converting ? 'Converting…' : `Convert to ${previewEdition} rules` }}
+          </ParButton>
+          <p class="edition-preview__note">One-time AI conversion — the numbers stay identical; the wording is rewritten in {{ previewEdition }} style. After that the switch flips instantly.</p>
+        </div>
+      </div>
+      <Statblock v-else-if="!errorMessage && displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
         :width="850" :loadingPart2="loadingPart2" :monster="monster" :columns="userColumnsPreference" :premium="premium"
         :linked-npcs-count="linkedNPCs.length" @update-monster="updateMonster"
         @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event" @convert-edition="convertMonsterEdition"
+        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
         @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
       <Statblock2024 v-else-if="!errorMessage && displayFormat === '2024' && (loadingPart1 || monster)"
         :monster="monster" :columns="userColumnsPreference" :width="850" :loading="loadingPart1"
         :premium="premium" @update-monster="updateMonster"
         @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event" @convert-edition="convertMonsterEdition"
+        @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
         @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
 
       <!-- Regenerate panel (toggled by the 🔄 Regenerate action in the
@@ -256,7 +286,7 @@
 </template>
 
 <script setup>
-import { ParButton, ParAccordion, ParAccordionGroup, ParToggleGroup, ParToggleButton, ParField, ParInput, ParSelect, ParTextarea, ParCheckbox, ParConfirm } from "@/parchment";
+import { ParButton, ParAccordion, ParAccordionGroup, ParToggleGroup, ParToggleButton, ParField, ParInput, ParSelect, ParTextarea, ParCheckbox, ParConfirm, ParSwitch } from "@/parchment";
 import { logger } from "@/util/logger.mjs";
 import { ref, onMounted, onUnmounted, computed, reactive, watch } from 'vue';
 import Statblock from '@/components/Statblock.vue';
@@ -265,7 +295,7 @@ import {
   generateMonster2024, buildArchetypeResolvePrompt, validateArchetypeResponse,
   buildSeedSynthesisPrompt, validateSeedSynthesisResponse,
   parseGenerationResponse, pickRandomArchetype, crNumberFor, crKeyFor,
-  convertEdition,
+  convertEdition, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
 import { buildRandomConceptSeed, buildSynthesizedConcept } from './format-2024/concept-seeds.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
@@ -313,6 +343,12 @@ const monsterType = ref('Random');
 const FORMAT_STORAGE_KEY = 'statblock-format';
 const format = ref(localStorage.getItem(FORMAT_STORAGE_KEY) === '2014' ? '2014' : '2024');
 watch(format, (v) => localStorage.setItem(FORMAT_STORAGE_KEY, v));
+
+// v-model adapter for the ParSwitch (on = 2024).
+const formatIs2024 = computed({
+  get: () => format.value === '2024',
+  set: (on) => { format.value = on ? '2024' : '2014'; },
+});
 
 const archetype = ref('auto');
 const ARCHETYPE_HELP = {
@@ -560,7 +596,7 @@ onUnmounted(() => {
 const activeMonsterIndex = ref(null);
 
 function getFirstNumber(text) {
-  const parts = text.split(' ');
+  const parts = String(text ?? '').split(' ');
   for (let part of parts) {
     if (/^\d+\/\d+$/.test(part) || /^\d+(\.\d+)?$/.test(part)) {
       return part;
@@ -596,20 +632,12 @@ function newMonster(folderName = 'Uncategorized') {
   selectedChallengeRating.value = null;
 }
 
-function updateMonster(updatedMonster) {
-  // Store old name to detect renames
-  const oldMonster = monsters.value[activeFolder.value][activeMonsterIndex.value];
-  const oldName = oldMonster?.name;
-  const newName = updatedMonster.name;
-
-  // Update the monster
-  monster.value = updatedMonster;
-  monsters.value[activeFolder.value][activeMonsterIndex.value] = updatedMonster;
-  // Build the save payload from in-memory user data only — drop any
-  // wrapper-owned fields (current quota or legacy) that may have been
-  // loaded into `monsters.value`. Then copy the latest quota fields
-  // forward from localStorage so generate gates and saves don't
-  // clobber each other's writes on this key.
+// Build the save payload from in-memory user data only — drop any
+// wrapper-owned fields (current quota or legacy) that may have been loaded
+// into `monsters.value`. Then copy the latest quota fields forward from
+// localStorage so generate gates and saves don't clobber each other's
+// writes on this key.
+function persistMonsters() {
   const stored = JSON.parse(localStorage.getItem('monsters')) || {};
   const dataToStore = { ...monsters.value };
   for (const key of RESERVED_HOST_FIELDS) delete dataToStore[key];
@@ -617,6 +645,23 @@ function updateMonster(updatedMonster) {
     if (stored[key] !== undefined) dataToStore[key] = stored[key];
   }
   localStorage.setItem('monsters', JSON.stringify(dataToStore));
+}
+
+function updateMonster(updatedMonster) {
+  // Store old name to detect renames
+  const oldMonster = monsters.value[activeFolder.value][activeMonsterIndex.value];
+  const oldName = oldMonster?.name;
+  const newName = updatedMonster.name;
+
+  // An edit invalidates the cached other-edition conversion — the two
+  // printings would silently diverge otherwise. The switch falls back to
+  // the Convert state until re-converted.
+  delete updatedMonster.other_edition;
+
+  // Update the monster
+  monster.value = updatedMonster;
+  monsters.value[activeFolder.value][activeMonsterIndex.value] = updatedMonster;
+  persistMonsters();
 
   // If the name changed, update all references across other tools
   if (oldName && newName && oldName !== newName) {
@@ -993,34 +1038,98 @@ async function generateStatblockEngine(edition) {
   await saveGeneratedMonster(finalMonster);
 }
 
-// ⇄ footer action on both cards: switch the selected monster to the other
-// edition. Numbers and structure map deterministically; one LLM call rewrites
-// the entry texts into the target edition's phrasing (convertEdition). The
-// card swap is automatic — displayFormat keys off the monster's format field.
+// ---------------------------------------------------------------------------
+// Edition switch — cache-and-swap (owner design, 2026-07-19).
+//
+// The saved monster IS the active edition; the converted counterpart lives on
+// it as `other_edition` (full object, no nesting). Flipping the switch swaps
+// active ↔ cached and persists — instant and lossless. Flipping toward an
+// edition that doesn't exist yet enters preview mode: the target card renders
+// the DETERMINISTIC shape mapping of the monster (blurred — the prose is
+// still source-phrased) under a one-time Convert button; convertEdition's
+// LLM call rewrites the prose and fills the cache. Any edit/re-roll/
+// regenerate of the active edition invalidates the cache (updateMonster and
+// saveGeneratedMonster) — propagating edits across editions would be the
+// translation problem again, so we drop and re-convert instead.
+// ---------------------------------------------------------------------------
+const previewEdition = ref(null); // '2014' | '2024' | null
+const converting = ref(false);
+
+const activeEdition = computed(() =>
+  monster.value?.format === '2024' ? '2024' : '2014');
+
+const cardEditionIs2024 = computed({
+  get: () => (previewEdition.value ?? activeEdition.value) === '2024',
+  set: () => toggleEdition(),
+});
+
+// Deterministic target-shape preview of the active monster. null (→ skeleton)
+// only if the mapping throws on a malformed block.
+const previewMonster = computed(() => {
+  if (!previewEdition.value || !monster.value) return null;
+  try {
+    const source = JSON.parse(JSON.stringify(monster.value));
+    delete source.other_edition;
+    return previewEdition.value === '2014' ? toLegacyModel(source) : fromLegacyModel(source);
+  } catch (e) {
+    logger.warn('Edition preview mapping failed:', e);
+    return null;
+  }
+});
+
+// Leaving the monster (select/new/delete/regenerate) leaves preview mode.
+watch(monster, () => { previewEdition.value = null; });
+
+function toggleEdition() {
+  if (!monster.value || converting.value) return;
+  if (previewEdition.value) {
+    previewEdition.value = null; // flip back from an unconverted preview
+    return;
+  }
+  if (monster.value.other_edition) {
+    swapEditions();
+  } else {
+    previewEdition.value = activeEdition.value === '2024' ? '2014' : '2024';
+  }
+}
+
+function swapEditions() {
+  const current = { ...monster.value };
+  const cached = current.other_edition;
+  delete current.other_edition;
+  const next = { ...cached, other_edition: current };
+  monster.value = next;
+  monsters.value[activeFolder.value][activeMonsterIndex.value] = next;
+  persistMonsters();
+  format.value = next.format === '2024' ? '2024' : '2014';
+}
+
+// The one-time Convert action on the blurred preview. One LLM call rewrites
+// the prose into the target edition (convertEdition); numbers never change.
 async function convertMonsterEdition() {
-  if (!monster.value) return;
+  if (!monster.value || !previewEdition.value || converting.value) return;
   if (!props.premium) {
     alert('Edition conversion is available to premium supporters.');
     return;
   }
-  const target = monster.value.format === '2024' ? '2014' : '2024';
-  loadingPart1.value = true;
-  loadingPart2.value = true;
+  const target = previewEdition.value;
+  converting.value = true;
   try {
-    const converted = await convertEdition(
-      JSON.parse(JSON.stringify(monster.value)),
-      (p, v) => generateGptResponse(p, v, 3),
-    );
-    updateMonster(converted);
-    // Follow the converted monster's rules version, matching selectMonster.
+    const source = JSON.parse(JSON.stringify(monster.value));
+    delete source.other_edition;
+    const converted = await convertEdition(source, (p, v) => generateGptResponse(p, v, 3));
+    converted.other_edition = source;
+    monster.value = converted;
+    monsters.value[activeFolder.value][activeMonsterIndex.value] = converted;
+    persistMonsters();
     format.value = converted.format === '2024' ? '2024' : '2014';
-    toast.success(`Converted to the ${target} rules.`);
+    previewEdition.value = null;
+    toast.success(`Converted to the ${target} rules — the switch now flips instantly.`);
   } catch (e) {
     logger.error('Edition conversion failed:', e);
     toast.error('Failed to convert this statblock. Please try again.');
   } finally {
-    loadingPart1.value = false;
-    loadingPart2.value = false;
+    converting.value = false;
   }
 }
 
@@ -1042,18 +1151,7 @@ async function saveGeneratedMonster(finalMonster) {
     const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
     selectMonster(folderName, newIndex);
   }
-  // Build the save payload from in-memory user data only — drop any
-  // wrapper-owned fields (current quota or legacy) that may have been
-  // loaded into `monsters.value`. Then copy the latest quota fields
-  // forward from localStorage so generate gates and saves don't
-  // clobber each other's writes on this key.
-  const stored = JSON.parse(localStorage.getItem('monsters')) || {};
-  const dataToStore = { ...monsters.value };
-  for (const key of RESERVED_HOST_FIELDS) delete dataToStore[key];
-  for (const key of QUOTA_FIELDS) {
-    if (stored[key] !== undefined) dataToStore[key] = stored[key];
-  }
-  localStorage.setItem('monsters', JSON.stringify(dataToStore));
+  persistMonsters();
   loadingPart2.value = false;
   toast.success('Statblock generated and saved.');
   trackEvent('generate', { tool: 'statblock-generator' });
@@ -1527,66 +1625,61 @@ async function saveGeneratedMonster(finalMonster) {
   opacity: 0;
 }
 
-/* 2014/2024 rules switch (lapis chrome register) — compact corner control
-   instead of a full-width segmented bar (owner feedback, 2026-07-19). Both
-   states are valid choices, so the track stays lapis in both positions;
-   the flanking labels carry the state. */
+/* 2014/2024 rules switch (ParSwitch) — compact corner control instead of a
+   full-width segmented bar (owner feedback, 2026-07-19). */
 .rules-switch-row {
   display: flex;
   justify-content: flex-end;
   margin: -0.8rem 0 1rem;
 }
 
-.rules-switch {
-  display: inline-flex;
+/* Card toolbar: edition switch left, column toggle right. */
+.statblock-toolbar {
+  display: flex;
   align-items: center;
-  gap: 0.7rem;
-  background: none;
-  border: none;
-  padding: 0.2rem;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 1.2rem;
-
-  &:focus-visible {
-    outline: 2px solid var(--color-action-rest, #365A85);
-    outline-offset: 2px;
-    border-radius: 4px;
-  }
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  max-width: 850px;
+  margin: 1rem auto 0;
 }
 
-.rules-switch__opt {
-  color: var(--par-color-text-muted, #6b6b6b);
-  letter-spacing: 0.02em;
-
-  &.is-active {
-    color: var(--color-action-hover, #2A4D70);
-    font-weight: 700;
-  }
-}
-
-.rules-switch__track {
+/* Blurred deterministic preview of the not-yet-converted edition, with the
+   one-time Convert action centered on top. */
+.edition-preview {
   position: relative;
-  width: 3.4rem;
-  height: 1.8rem;
-  border-radius: 1rem;
-  background: var(--color-action-rest, #365A85);
-  flex-shrink: 0;
 }
 
-.rules-switch__thumb {
+.edition-preview__card {
+  filter: blur(4px);
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+}
+
+.edition-preview__overlay {
   position: absolute;
-  top: 0.2rem;
-  left: 0.2rem;
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 50%;
-  background: var(--par-color-surface, #FBF7F0);
-  transition: left 0.15s ease;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  padding: 2rem;
+  text-align: center;
 }
 
-.rules-switch[aria-checked="true"] .rules-switch__thumb {
-  left: calc(100% - 1.6rem);
+.edition-preview__note {
+  max-width: 42rem;
+  margin: 0;
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--par-color-text-secondary, #555);
+  background: var(--par-color-surface, #FBF7F0);
+  border: 1px solid var(--par-color-border, #e8e2d4);
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
 }
 
 /* Archetype helper line (lapis form register). */

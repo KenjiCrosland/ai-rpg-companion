@@ -281,11 +281,6 @@
                     Regenerate
                 </CardFooterAction>
 
-                <CardFooterAction data-testid="convert-edition" @click="$emit('convert-edition')">
-                    <template #icon>⇄</template>
-                    Convert to 2024
-                </CardFooterAction>
-
                 <CardFooterAction @click="$emit('toggle-export')">
                     <template #icon>📤</template>
                     Export
@@ -356,7 +351,7 @@ const props = defineProps({
 
 const widthStyle = computed(() => props.width === 0 ? 'width: auto' : `max-width: ${props.width}px; width: 100%`);
 const createNpcButtonText = computed(() => props.linkedNpcsCount > 0 ? 'Create another NPC' : 'Create NPC');
-const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export', 'toggle-regenerate', 'convert-edition']);
+const emit = defineEmits(['update-monster', 'move-to-folder', 'use-in-encounter', 'create-npc', 'delete', 'can-switch-columns', 'toggle-export', 'toggle-regenerate']);
 
 const containerRef = ref(null);
 const containerWidth = ref(850);
@@ -809,8 +804,14 @@ textarea {
     }
 }
 
+/* ✕ delete is a fixed square (matching the 2024 card's edit surface) so the
+   hit target is predictable and visually consistent across both cards. */
 .entry-btn--danger {
     color: #a03333;
+    width: 3.2rem;
+    padding: .5rem 0;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 .entry-btn:disabled {
@@ -886,7 +887,10 @@ textarea {
 .abilities {
     font-size: 14px;
     list-style-type: none;
-    margin-left: -3.8rem;
+    /* Cancel the UA's default ul indent with padding, NOT a negative margin —
+       margin-left: -3.8rem widened the box past its grid column, laying an
+       invisible pointer-trap over the neighboring column's ✕ buttons. */
+    padding-left: 0;
 
     li {
         margin: 1rem 0;

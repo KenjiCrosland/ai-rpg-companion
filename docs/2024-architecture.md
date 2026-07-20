@@ -111,7 +111,16 @@ never accept LLM numbers); missing required_slots reject the generation.
   per-entry 🔄 Re-roll + ✕ bars, "+ Add" affordances, same premium message);
   the 2024 card gained whole-section re-rolls, the 2014 card lost its
   hover-reveal buttons. The form's rules-version control is a compact switch,
-  not a segmented bar. **Editing is IN PLACE (owner call, second pass same
+  not a segmented bar. **Edition switching is cache-and-swap (owner design,
+  same day):** a `ParSwitch` in the card toolbar flips between 2014/2024
+  views of the monster. The active edition IS the saved object; the converted
+  counterpart caches on it as `other_edition` (flip = swap + persist,
+  instant and lossless — downstream consumers always read the active
+  object). Flipping toward a missing edition shows the target card as a
+  blurred DETERMINISTIC shape mapping (`toLegacyModel`/`fromLegacyModel` —
+  real numbers, source-phrased prose) under a one-time premium Convert
+  button (`convertEdition`). Any edit/re-roll/regenerate invalidates the
+  cache — never sync edits across editions. **Editing is IN PLACE (owner call, second pass same
   day): the 2014 card's convention won — fields swap to inputs where they
   live in the card layout (name in the header, scores inside the ability
   grid with live MOD/SAVE, entries inside their sections). The 2024 card's
