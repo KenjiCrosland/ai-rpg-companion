@@ -44,6 +44,23 @@ export function pbFor(cr) {
 }
 
 /**
+ * Ability scores cap at 30 (+10 mod), so an attack bonus above PB + 10 or a
+ * save DC above PB + 18 is unconstructible as an ability derivation — a
+ * combination official blocks never print (they undershoot the ceiling,
+ * never exceed it). The raw formulas obey this at every CR; archetype
+ * attack/dc mods at CR 27+ would otherwise push past it (live finding:
+ * lurker CR 28 emitted +19 to hit against a +18 ceiling, which then baked
+ * an impossible +11 flat damage mod into the skeleton).
+ */
+function capToAbilityCeiling(chassis) {
+  return {
+    ...chassis,
+    attack_bonus: Math.min(chassis.attack_bonus, chassis.pb + 10),
+    save_dc: Math.min(chassis.save_dc, chassis.pb + 18),
+  };
+}
+
+/**
  * Baseline ("Balanced") chassis for a CR. CR below 1 uses the anchor table
  * from the spec; CR 1+ uses the fitted linear formulas.
  */
@@ -51,16 +68,16 @@ export function chassisFor(cr) {
   assertValidCR(cr);
   if (cr < 1) {
     const anchor = ANCHORS[String(cr)];
-    return { cr, pb: pbFor(cr), ...anchor };
+    return capToAbilityCeiling({ cr, pb: pbFor(cr), ...anchor });
   }
-  return {
+  return capToAbilityCeiling({
     cr,
     pb: pbFor(cr),
     ac: Math.round(12.9 + 0.37 * cr),
     hp: Math.round(10 + 17 * cr),
     attack_bonus: Math.round(4.1 + 0.51 * cr),
     save_dc: Math.round(11.2 + 0.52 * cr),
-  };
+  });
 }
 
 /**
@@ -89,7 +106,7 @@ export function applyArchetype(chassis, archetypeName) {
     throw new TypeError('applyArchetype expects a chassis from chassisFor()');
   }
 
-  const adjusted = {
+  const adjusted = capToAbilityCeiling({
     ...chassis,
     archetype: archetypeName,
     hp: Math.round(chassis.hp * (profile.hp_mult ?? 1)),
@@ -99,7 +116,7 @@ export function applyArchetype(chassis, archetypeName) {
     damage_mult: profile.damage_mult ?? 1,
     required_slots: [...(profile.required_slots ?? [])],
     forbidden: [...(profile.forbidden ?? [])],
-  };
+  });
   if (profile.nova_mult != null) adjusted.nova_mult = profile.nova_mult;
   if (profile.solo_warning != null) adjusted.solo_warning = profile.solo_warning;
   return adjusted;

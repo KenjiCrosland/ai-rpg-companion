@@ -93,6 +93,13 @@ const ABILITY_ABBR = {
   Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA',
 };
 
+// 2024 capitalizes damage types ("Fire damage") and area shapes ("15-foot
+// Cone") everywhere — zero lowercase occurrences across the corpus. Both are
+// deterministically fixable string surgery.
+const LOWERCASE_DAMAGE_TYPE_RE = /\b(bludgeoning|piercing|slashing|fire|lightning|cold|acid|thunder|necrotic|radiant|poison|psychic|force) damage\b/;
+const LOWERCASE_AREA_RE = /\b\d+-foot (cone|line|sphere|cylinder|emanation|cube)\b/;
+const DAMAGE_TYPE_WORD_RE = /\b(bludgeoning|piercing|slashing|fire|lightning|cold|acid|thunder|necrotic|radiant|poison|psychic|force)\b/i;
+
 const SELF_MITIGATION_RE =
   /(halves?|halving|reduces?)[^.]{0,50}damage (against|dealt to|it takes|taken)|damage (against|dealt to) (it|the \w+'?s?\w*) is (halved|reduced)|halves? the( attack'?s?)? damage/i;
 
@@ -303,6 +310,23 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     }
   }
 
+  // A damage type listed as both resisted and immune is contradictory —
+  // immunity supersedes; zero corpus occurrences (live finding: acid in
+  // both lines on an ooze). Correctable: drop it from resistances.
+  if (monster.resistances && monster.immunities) {
+    const typeOf = (tok) => DAMAGE_TYPE_WORD_RE.exec(tok)?.[1].toLowerCase();
+    const immuneTypes = new Set(splitTokens(monster.immunities).map(typeOf).filter(Boolean));
+    const kept = [];
+    const dropped = [];
+    for (const tok of splitTokens(monster.resistances)) {
+      const t = typeOf(tok);
+      (t && immuneTypes.has(t) ? dropped : kept).push(tok);
+    }
+    if (dropped.length) {
+      push('defense-overlap', 'correctable', `Damage resistances repeat immune types (${dropped.join(', ')}) — immunity supersedes resistance`, kept.join(', '), { field: 'resistances' });
+    }
+  }
+
   // Seed-leakage (random-seeded generations only): the rolled trait words
   // must not surface in the creature's name or its ability names — the seed
   // is design guidance, not vocabulary. Promoted from a prompt rule after a
@@ -385,10 +409,35 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       if (term) {
         push('term-caps', 'reject', `Lowercase game term "${term[1]}" in ${where} — 2024 capitalizes Hit Points and Opportunity Attacks`, undefined, loc);
       }
+      const lcType = LOWERCASE_DAMAGE_TYPE_RE.exec(entry.text);
+      if (lcType) {
+        push('damage-type-caps', 'reject', `Lowercase damage type "${lcType[1]}" in ${where} — 2024 capitalizes damage types ("Fire damage")`, undefined, loc);
+      }
+      const lcArea = LOWERCASE_AREA_RE.exec(entry.text);
+      if (lcArea) {
+        push('area-term-caps', 'reject', `Lowercase area shape "${lcArea[0]}" in ${where} — 2024 capitalizes shapes ("15-foot Cone")`, undefined, loc);
+      }
+      // Invented conditions: "has the X condition" where X isn't one of the
+      // 14 real conditions (+ Exhaustion). The model occasionally imports
+      // 4e-isms ("Dazed") or invents status names. The SRD's compound form
+      // ("has the Blinded and Restrained conditions") validates per token.
+      for (const cm of entry.text.matchAll(/has the ([A-Za-z]\w*(?:(?:,? and |, )[A-Za-z]\w*)*) conditions?\b/g)) {
+        for (const token of cm[1].split(/,? and |, /)) {
+          if (!CONDITION_TOKEN_SET.has(token.toLowerCase())) {
+            push('condition-unknown', 'reject', `${where} grants a condition that does not exist in 5e: "${token}" — use only real conditions (${CONDITIONS.join(', ')}), or phrase the effect without the word "condition"`, undefined, loc);
+          }
+        }
+      }
     } else {
       // 2014 edition: the inverse phrasing gate — 2024-isms are the defect.
       if (/(Melee|Ranged)(?: or Ranged)? Attack Roll:/.test(entry.text) || /\*?Failure:\*?/.test(entry.text)) {
         push('phrasing-2024-in-2014', 'reject', `2024 phrasing in ${where} — 2014 blocks use "Melee Weapon Attack: +X to hit" and "must succeed on a DC n ... saving throw" forms, never "Attack Roll:" or "Failure:" markers`, undefined, loc);
+      }
+      // "must make a DC n X saving throw OR <condition>" mixes the two
+      // classic constructions — "make ... , taking damage" pairs with
+      // damage, "succeed on ... or" pairs with conditions. Deterministic.
+      if (/\bmust (?:also )?make an? DC \d+ [A-Za-z]+ saving throw or\b/.test(entry.text)) {
+        push('phrasing-save-or', 'reject', `Mixed save construction in ${where} — condition saves read "must succeed on a DC n <Ability> saving throw or ..."`, undefined, loc);
       }
     }
     for (const ref of entry.text.matchAll(ATTACK_REF_RE)) {
@@ -421,6 +470,21 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     if (is2024 && section === 'Reactions' && entry.text.trim()
         && !/\*Trigger:\*/.test(entry.text) && !/\bin response to\b/i.test(entry.text)) {
       push('reaction-trigger', 'reject', `${where} has no trigger — a Reaction is not a free action; it must state when it fires: "*Trigger:* <specific event>. *Response:* <what the creature does>."`, undefined, loc);
+    }
+    // Recharge is action-economy — zero corpus Traits carry it (33 use the
+    // legal "(N/Day)" form). Deterministic: swap the marker.
+    if (section === 'Traits' && /\(Recharge[^)]*\)/i.test(entry.name)) {
+      push('trait-recharge', 'correctable', `${where}: Recharge belongs to actions — a limited trait uses (N/Day)`, entry.name.replace(/\s*\(Recharge[^)]*\)/i, ' (1/Day)'), loc);
+    }
+    // Coined entry names ("Thul-eg"): official hyphenated names join FULL
+    // English words (Shape-Shift, Mind-Rending Roar — every corpus fragment
+    // is ≥4 letters); a sub-4-letter fragment marks a coinage. Ability names
+    // must describe the ability; coinages belong to creature names only.
+    {
+      const base = entry.name.split(' (')[0];
+      if (base.includes('-') && base.split('-').some((frag) => frag.length < 4)) {
+        push('entry-name-coinage', 'reject', `${where}: entry name "${base}" reads as a coined word — ability names describe what the ability does in plain English (coined words belong to the creature's name only). Rename it`, undefined, loc);
+      }
     }
     if (section === 'Traits' && SELF_MITIGATION_RE.test(entry.text)) {
       push('trait-mitigation', 'reject', `Blanket damage mitigation as a passive trait in ${where} — the chassis already prices defenses; single-attack mitigation must be a Reaction (once per round)`, undefined, loc);
@@ -498,6 +562,26 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     );
     if (Number.isFinite(maxDC) && Math.abs(maxDC - chassis.save_dc) > 1) {
       push('dc-band', 'correctable', `Save DC ${maxDC} outside ±1 of budget ${chassis.save_dc}`, chassis.save_dc);
+    }
+    // Swarm archetype demands the swarm type line (live finding: a 2014
+    // swarm came out "Medium aberration" — the clause was missing from the
+    // 2014 prompt). Deterministic: wrap the written type.
+    if (chassis.archetype === 'swarm' && monster.type && !/^swarm of/i.test(monster.type)) {
+      push('swarm-type', 'correctable', `Swarm-archetype type must read "Swarm of Tiny <Creature>", not "${monster.type}"`, `Swarm of Tiny ${monster.type.replace(/s$/i, '')}s`, { field: 'type' });
+    }
+    // Escape DCs (grapple riders) are excluded from dc-band by design (the
+    // Investigation-masking fix) and official values aren't formulaic — the
+    // corpus deviates from 8+PB+STR in 21/39 cases, ALWAYS low. So the
+    // sanity band is asymmetric: an escape DC may sit well under the save
+    // DC (official style) but never meaningfully above it. Correction
+    // lands on save_dc − 2, the typical official offset.
+    for (const { section, entry } of entriesOf(monster)) {
+      for (const em of entry.text.matchAll(/escape DC (\d+)/gi)) {
+        const v = Number(em[1]);
+        if (v > chassis.save_dc + 1 || v < chassis.save_dc - 6) {
+          push('escape-dc', 'correctable', `${section}/${entry.name}: escape DC ${v} out of the sane band for the chassis save DC ${chassis.save_dc}`, Math.max(8, chassis.save_dc - 2), { section, entry: entry.name });
+        }
+      }
     }
   }
 

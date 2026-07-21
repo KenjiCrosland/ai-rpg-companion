@@ -225,3 +225,29 @@ describe('archetype directions match SRD exemplars', () => {
     expect(fixtureByName["Will-o'-Wisp"].hp).toBeLessThan(chassisFor(2).hp);
   });
 });
+
+describe('ability-score ceiling', () => {
+  // Scores cap at 30 (+10 mod): attack must stay ≤ PB + 10 and save DC
+  // ≤ PB + 18 or no ability can derive them (live finding: lurker CR 28
+  // emitted +19 to hit against a +18 ceiling). Sweep every CR × archetype.
+  const CRS = [0, 0.125, 0.25, 0.5, ...Array.from({ length: 30 }, (_, i) => i + 1)];
+  const ARCHES = ['brute', 'defender', 'skirmisher', 'artillery', 'controller', 'lurker', 'support', 'swarm'];
+
+  test('attack ≤ PB + 10 and save DC ≤ PB + 18 for every CR and archetype', () => {
+    for (const cr of CRS) {
+      const base = chassisFor(cr);
+      expect(base.attack_bonus).toBeLessThanOrEqual(base.pb + 10);
+      expect(base.save_dc).toBeLessThanOrEqual(base.pb + 18);
+      for (const arch of ARCHES) {
+        const c = applyArchetype(base, arch);
+        expect(c.attack_bonus).toBeLessThanOrEqual(c.pb + 10);
+        expect(c.save_dc).toBeLessThanOrEqual(c.pb + 18);
+      }
+    }
+  });
+
+  test('the ceiling binds where archetype mods exceed it (lurker CR 28)', () => {
+    const c = applyArchetype(chassisFor(28), 'lurker');
+    expect(c.attack_bonus).toBe(18); // 18 + 1 capped back to PB 8 + 10
+  });
+});

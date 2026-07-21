@@ -18,7 +18,11 @@ touching anything under `chassis/` or `format-2024/`.
   (`chassis/chassis.mjs`), slot plan (`chassis/slot-plan.mjs`), slot-filling
   prompt with numeric skeletons, assembly that stamps engine numbers over the
   LLM's flavor, edition-aware lint with a correct/reject loop
-  (`format-2024/lint.mjs`). The LLM never decides numbers. One Combat role
+  (`format-2024/lint.mjs`). The LLM never decides numbers — including the
+  stat-coherence derivations (2026-07-20): attack bonus = striker-stat mod
+  + PB (raise-only stamp, caster-aware via `attackStatFor`), attack damage
+  flat bonus = striker mod, save damage pure dice, HP formula bonus =
+  dice × CON mod. One Combat role
   select for both editions: Auto (micro resolve call when a concept exists,
   random pick when blank), Balanced, or one of 8 roles.
 - **2024 edition**: sections-based model, markdown render

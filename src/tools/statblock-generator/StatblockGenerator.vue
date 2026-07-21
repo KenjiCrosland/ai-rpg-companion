@@ -521,6 +521,17 @@ onMounted(() => {
   if (savedMonsters) {
     let allData = JSON.parse(savedMonsters);
     allData['Uncategorized'] = allData['Uncategorized'] || [];
+    // Backfill: 2024 blocks saved before assembly stamped challenge_rating
+    // lack the field the sidebar label and CR sort read. In-memory only;
+    // the next save persists it.
+    for (const folder of Object.values(allData)) {
+      if (!Array.isArray(folder)) continue;
+      for (const m of folder) {
+        if (m && !m.challenge_rating && m.cr_str) {
+          m.challenge_rating = `${m.cr_str} (XP ${(m.xp ?? 0).toLocaleString('en-US')}; PB ${m.pb >= 0 ? '+' : ''}${m.pb ?? 2})`;
+        }
+      }
+    }
     monsters.value = allData;
   } else {
     monsters.value = { 'Uncategorized': [] };
@@ -607,6 +618,7 @@ function getFirstNumber(text) {
 }
 
 function fractionToDecimal(fraction) {
+  if (fraction == null) return NaN;
   if (fraction.includes('/')) {
     const [numerator, denominator] = fraction.split('/').map(Number);
     return numerator / denominator;
@@ -615,11 +627,15 @@ function fractionToDecimal(fraction) {
 }
 
 function sortMonstersByCR(folderName) {
-  return monsters.value[folderName].sort((a, b) => {
-    const crA = fractionToDecimal(getFirstNumber(a.challenge_rating));
-    const crB = fractionToDecimal(getFirstNumber(b.challenge_rating));
-    return crA - crB;
-  });
+  // A monster's numeric `cr` (engine blocks) backstops an absent or
+  // unparsable challenge_rating string (2024 blocks saved before the
+  // challenge_rating stamp existed) — unknowns sort last, never crash.
+  const crOf = (m) => {
+    const parsed = fractionToDecimal(getFirstNumber(m.challenge_rating));
+    if (Number.isFinite(parsed)) return parsed;
+    return typeof m.cr === 'number' ? m.cr : Infinity;
+  };
+  return monsters.value[folderName].sort((a, b) => crOf(a) - crOf(b));
 }
 
 function newMonster(folderName = 'Uncategorized') {

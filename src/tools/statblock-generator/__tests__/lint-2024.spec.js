@@ -230,6 +230,101 @@ describe('each rule catches its violation class', () => {
     expect(rules(lint(asReaction, {}))).not.toContain('trait-mitigation');
   });
 
+  test('trait-recharge: Recharge in a trait name becomes (1/Day); coined entry names reject', () => {
+    // Live findings: "Engulfing Dissolution (Recharge 5-6)" as a TRAIT
+    // (zero corpus traits recharge; 33 use N/Day) and "Thul-eg" (coinage as
+    // an ability name — official hyphenated names join full English words).
+    const block = {
+      ...cleanLurker,
+      sections: {
+        ...cleanLurker.sections,
+        Traits: [
+          ...cleanLurker.sections.Traits,
+          { name: 'Engulfing Dissolution (Recharge 5-6)', text: 'It dissolves what it grabs.' },
+          { name: 'Thul-eg', text: 'The creature can move through a space as narrow as 1 inch wide without squeezing.' },
+        ],
+      },
+    };
+    const findings = lint(block, {}).findings;
+    const recharge = findings.find((f) => f.rule === 'trait-recharge');
+    expect(recharge.severity).toBe('correctable');
+    expect(recharge.expected).toBe('Engulfing Dissolution (1/Day)');
+    const coined = findings.find((f) => f.rule === 'entry-name-coinage');
+    expect(coined.severity).toBe('reject');
+    expect(coined.message).toContain('Thul-eg');
+    // Official hyphenated names (full English fragments) stay legal.
+    const official = {
+      ...cleanLurker,
+      sections: {
+        ...cleanLurker.sections,
+        Traits: [...cleanLurker.sections.Traits, { name: 'Shape-Shift', text: 'It shifts its shape.' }],
+      },
+    };
+    expect(rules(lint(official, {}))).not.toContain('entry-name-coinage');
+  });
+
+  test('defense-overlap: a type both resisted and immune drops from resistances', () => {
+    // Live finding: acid in both lines on an ooze — immunity supersedes.
+    const doubled = { ...cleanLurker, resistances: 'Bludgeoning, Acid, Lightning', immunities: 'Acid, Poison' };
+    const f = lint(doubled, {}).findings.find((x) => x.rule === 'defense-overlap');
+    expect(f.severity).toBe('correctable');
+    expect(f.expected).toBe('Bludgeoning, Lightning');
+    expect(f.loc).toEqual({ field: 'resistances' });
+    // Disjoint lines are clean.
+    const clean = { ...cleanLurker, resistances: 'Bludgeoning', immunities: 'Poison' };
+    expect(rules(lint(clean, {}))).not.toContain('defense-overlap');
+  });
+
+  test('condition-unknown: invented conditions reject; the compound official form passes per token', () => {
+    const withTrait = (text) => withAction(cleanLurker, 2, { text });
+    // 4e-ism / invented status.
+    const dazed = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, one creature. *Failure:* The target has the Dazed condition.' });
+    const f = lint(dazed, {}).findings.find((x) => x.rule === 'condition-unknown');
+    expect(f.severity).toBe('reject');
+    expect(f.message).toContain('Dazed');
+    // Compound SRD form validates each token ("Blinded and Restrained conditions").
+    const compound = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, one creature. *Failure:* The target has the Blinded and Restrained conditions.' });
+    expect(rules(lint(compound, {}))).not.toContain('condition-unknown');
+    const badCompound = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, one creature. *Failure:* The target has the Blinded and Winded conditions.' });
+    expect(rules(lint(badCompound, {}))).toContain('condition-unknown');
+  });
+
+  test('damage-type-caps and area-term-caps: lowercase 2024 forms reject (deterministically fixable)', () => {
+    const lcType = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) slashing damage.' });
+    expect(rules(lint(lcType, {}))).toContain('damage-type-caps');
+    const lcArea = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, each creature in a 15-foot cone. *Failure:* 21 (6d6) Psychic damage.' });
+    expect(rules(lint(lcArea, {}))).toContain('area-term-caps');
+    expect(rules(lint(cleanLurker))).not.toContain('damage-type-caps');
+  });
+
+  test('swarm-type: swarm archetype demands the swarm type line', () => {
+    // Live finding: a 2014 swarm generated as "Medium aberration".
+    const swarmChassis = applyArchetype(chassisFor(9), 'swarm');
+    const wrongType = { ...cleanLurker, type: 'Aberration' };
+    const f = lintStatblock(wrongType, { chassis: swarmChassis }).findings
+      .find((x) => x.rule === 'swarm-type');
+    expect(f.severity).toBe('correctable');
+    expect(f.expected).toBe('Swarm of Tiny Aberrations');
+    expect(f.loc).toEqual({ field: 'type' });
+    const rightType = { ...cleanLurker, type: 'Swarm of Tiny Aberrations' };
+    expect(lintStatblock(rightType, { chassis: swarmChassis }).findings
+      .some((x) => x.rule === 'swarm-type')).toBe(false);
+    // Non-swarm archetypes never fire it.
+    expect(rules(lint({ ...cleanLurker, type: 'Aberration' }))).not.toContain('swarm-type');
+  });
+
+  test('escape-dc: asymmetric band — well under the save DC passes (official style), above it flags', () => {
+    // Chassis save DC is 13. Official escape DCs run LOW, so 9 passes.
+    const low = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage. If the target is Medium or smaller, it has the Grappled condition (escape DC 9).' });
+    expect(rules(lint(low))).not.toContain('escape-dc');
+    const high = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage. If the target is Medium or smaller, it has the Grappled condition (escape DC 18).' });
+    const f = lint(high).findings.find((x) => x.rule === 'escape-dc');
+    expect(f.severity).toBe('correctable');
+    expect(f.expected).toBe(11); // save_dc − 2, the typical official offset
+    // Context-free lint (no chassis) never runs the rule — corpus safe.
+    expect(rules(lint(high, {}))).not.toContain('escape-dc');
+  });
+
   test('reaction-trigger: a trigger-less Reaction rejects; Trigger/Response and SRD delegation pass', () => {
     const withReaction = (text) => ({
       ...cleanLurker,

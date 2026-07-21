@@ -106,10 +106,11 @@ export function seedLeakTokens(traits) {
 export function namingRules(traits) {
   return `Name it as ${traits.naming}. ` +
     'The name must match the creature you actually designed — its primary movement, attack, material, or sound as expressed in its abilities, not a generic monster vibe. ' +
-    'Ability names likewise must name what each ability actually does — never mood words the creature doesn\'t earn (nothing "laments" unless an ability laments). ' +
-    'Never hyphenate names: two-word names use a space; compound names fuse into one word. ' +
+    'Ability names likewise must name what each ability actually does, in PLAIN ENGLISH — coined or invented words belong to the creature\'s name only, never to ability names. Never mood words the creature doesn\'t earn (nothing "laments" unless an ability laments). ' +
+    'Never hyphenate names: two-word names use a space; compound names fuse into one word — but a COINED name is built from sound, never by gluing two English words together ("Disshadow" is a glue-word, not a coinage). ' +
     'The name\'s SOUND should fit the creature: heavy slow things take heavy sounds (long vowels; b, d, g, m), quick things take sharp short sounds (k, t, short vowels), sinuous or stealthy things take sibilants and liquids (s, sh, l). ' +
     'Name concrete things — body, material, movement, sound, habit. Abstract menace words (terror, doom, dread, horror, death, fear) are banned as the name\'s HEAD noun — as a leading adjective before a concrete doer they are allowed. ' +
+    'Never cutesy, comedic, or diminutive words (slinky, bouncy, squishy) — satisfy the sound profile with words that keep their menace. The head noun should be a creature, agent, or evocative form, not a plain object, unless the creature genuinely IS an animated object. ' +
     'The rolled trait words are design guidance ONLY — never use them, or obvious derivatives of them, in the creature\'s name or its ability names.';
 }
 

@@ -8,6 +8,7 @@
  */
 import {
   generateMonster2024, assembleMonster, toLegacyModel, buildContext, rerollEntry, rerollSection,
+  applyCorrections,
 } from '../format-2024/generate.mjs';
 import { lintStatblock } from '../format-2024/lint.mjs';
 
@@ -59,6 +60,20 @@ describe('edition-aware lint', () => {
     expect(rules).toContain('phrasing-2024-in-2014');
   });
 
+  test('mixed save construction rejects in 2014 and fixes deterministically', () => {
+    // Live finding: "must make a DC 21 Strength saving throw or be knocked
+    // prone" — condition saves use "must succeed on ... or".
+    const mixed = JSON.parse(JSON.stringify(internal));
+    mixed.sections.Actions[2].text = 'The target must make a DC 13 Strength saving throw or be knocked prone.';
+    const findings = lintStatblock(mixed, { chassis, plan, edition: '2014' }).findings;
+    expect(findings.some((f) => f.rule === 'phrasing-save-or')).toBe(true);
+    const fixed = applyCorrections(mixed, findings, { chassis });
+    expect(fixed.sections.Actions[2].text).toBe('The target must succeed on a DC 13 Strength saving throw or be knocked prone.');
+    // The damage form ("make ... taking X on a failed save") stays legal.
+    expect(lintStatblock(internal, { chassis, plan, edition: '2014' }).findings
+      .some((f) => f.rule === 'phrasing-save-or')).toBe(false);
+  });
+
   test('shared rules still fire in 2014 mode: bands extract from Weapon Attack phrasing', () => {
     const hot = JSON.parse(JSON.stringify(internal));
     hot.sections.Actions[1].text = 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.';
@@ -77,9 +92,10 @@ describe('toLegacyModel', () => {
   test('legacy field shapes', () => {
     expect(legacy.type_and_alignment).toBe('Medium monstrosity, neutral evil');
     expect(legacy.armor_class).toBe('14');
-    expect(legacy.hit_points).toMatch(/^59 \(\d+d\d+( [+-] \d+)?\)$/);
-    expect(legacy.attributes).toBe('STR 12 (+1), DEX 16 (+3), CON 12 (+1), INT 6 (-2), WIS 14 (+2), CHA 8 (-1)');
-    expect(legacy.saving_throws).toBe('DEX +5'); // only the proficient save
+    expect(legacy.hit_points).toBe('60 (11d8 + 11)'); // CON-coherent: bonus = dice x CON mod
+    // DEX stamped 16 -> 20: lurker CR 4 attack +7 with PB +2 needs a +5 striker mod.
+    expect(legacy.attributes).toBe('STR 12 (+1), DEX 20 (+5), CON 12 (+1), INT 6 (-2), WIS 14 (+2), CHA 8 (-1)');
+    expect(legacy.saving_throws).toBe('DEX +7'); // only the proficient save (stamped DEX 20)
     expect(legacy.challenge_rating).toBe('4 (1,100 XP)');
     expect(legacy.proficiency_bonus).toBe('+2');
     expect(legacy.senses).toContain('passive Perception'); // 2014 lowercase p
@@ -102,9 +118,52 @@ describe('toLegacyModel', () => {
     ]);
     expect(legacy.actions).toHaveLength(3);
     expect(legacy.actions[0].name).toBe('Multiattack');
-    expect(legacy.damage_immunities).toBe('Poison');
-    expect(legacy.condition_immunities).toBe('Poisoned');
+    // 2014 lowercases defense lines (the internal model's "Poison; Poisoned"
+    // normalizes at the gate; the 2024 direction re-capitalizes).
+    expect(legacy.damage_immunities).toBe('poison');
+    expect(legacy.condition_immunities).toBe('poisoned');
     expect(legacy.legendary_actions).toBeUndefined();
+  });
+
+  test('2014 case conventions: defense lines lowercase, swarm size stays capitalized in the type line', () => {
+    const swarm = toLegacyModel({
+      ...internal,
+      type: 'Swarm of Tiny Aberrations',
+      resistances: 'Bludgeoning, Piercing, Slashing',
+      immunities: 'Acid; Charmed, Frightened',
+    });
+    expect(swarm.type_and_alignment).toBe('Medium swarm of Tiny aberrations, neutral evil');
+    expect(swarm.damage_resistances).toBe('bludgeoning, piercing, slashing');
+    expect(swarm.damage_immunities).toBe('acid');
+    expect(swarm.condition_immunities).toBe('charmed, frightened');
+  });
+
+  test('the nonmagical clause sorts to the end of the defense line', () => {
+    // Live finding: "bludgeoning, piercing, slashing from nonmagical
+    // attacks, acid, lightning" — mid-list, the qualifier reads as if it
+    // covered acid and lightning too. Official ordering: plain types first,
+    // clause last after a semicolon.
+    const withMixed = toLegacyModel({
+      ...internal,
+      resistances: 'bludgeoning, piercing, slashing from nonmagical attacks, acid, lightning',
+    });
+    expect(withMixed.damage_resistances)
+      .toBe('acid, lightning; bludgeoning, piercing, and slashing from nonmagical attacks');
+    // Already-clean lines pass through untouched.
+    const plain = toLegacyModel({ ...internal, resistances: 'acid, lightning' });
+    expect(plain.damage_resistances).toBe('acid, lightning');
+  });
+
+  test('legendary cost suffixes normalize to the official form', () => {
+    // Live finding: "Stalk (2 Actions)" — 2014 convention is "(Costs 2 Actions)".
+    const withLegendary = JSON.parse(JSON.stringify(internal));
+    withLegendary.sections['Legendary Actions'] = [
+      { name: 'Claw', text: 'It claws once.' },
+      { name: 'Stalk (2 Actions)', text: 'It stalks.' },
+      { name: 'Vanish (Costs 3 Actions)', text: 'It vanishes.' },
+    ];
+    const names = toLegacyModel(withLegendary).legendary_actions.map((a) => a.name);
+    expect(names).toEqual(['Claw', 'Stalk (Costs 2 Actions)', 'Vanish (Costs 3 Actions)']);
   });
 
   test('reactions and bonus actions fold into abilities with suffixes', () => {
@@ -356,8 +415,8 @@ describe('edition conversion (⇄ footer action)', () => {
     const converted = await convertEdition(legacy, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(1);
     expect(converted.format).toBe('2024');
-    expect(converted.stats.DEX).toBe(16);
-    expect(converted.saves.DEX).toBe(5);
+    expect(converted.stats.DEX).toBe(20); // striker stamp survives the round trip
+    expect(converted.saves.DEX).toBe(7);
     expect(converted.sections.Traits[0].text).toContain('Invisible condition');
     expect(converted.sections.Actions[1].text).toContain('*Melee Attack Roll:*');
     // Regen params survive the shape change.
@@ -395,7 +454,7 @@ describe('edition conversion (⇄ footer action)', () => {
       }))]));
     const converted = await convertEdition(modern, queuedLLM([response]));
     expect(converted.format).toBe('2014');
-    expect(converted.attributes).toContain('DEX 16 (+3)');
+    expect(converted.attributes).toContain('DEX 20 (+5)');
     expect(converted.armor_class).toBe('14');
     expect(converted.actions.find((a) => a.name === 'Shadow Claw').description).toContain('+9 to hit');
     expect(converted.monsterDescription).toBe('a shadow');

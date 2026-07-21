@@ -18,7 +18,7 @@ import srdMonsters from '@/data/srd52-monsters.json';
 import challengeRatings from '@/data/challengeRatings.json';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
-import { lintStatblock, avgDice, CONDITIONS } from './lint.mjs';
+import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS } from './lint.mjs';
 
 export const ARCHETYPE_NAMES = Object.keys(spec.archetypes).filter((n) => !n.startsWith('_'));
 
@@ -100,25 +100,87 @@ export function crNumberFor(str) {
 }
 
 /**
- * Deterministic hit-dice solver: an NdD ± M expression whose floor-average is
- * exactly `hp`, with the die from creature size and count shaped by CON.
+ * Deterministic hit-dice solver, CON-coherent: the flat bonus is EXACTLY
+ * dice-count × CON mod (the DMG construction grognards check — "17d10 + 69"
+ * with CON +4 is a tell). Dice count is chosen so the floor-average lands
+ * nearest the chassis target; callers re-read the exact average via
+ * avgDice() and stamp it as the block's HP (the ±35% band absorbs the
+ * drift).
  */
-export function hpFormulaFor(hp, size, conMod = 0) {
+export function hpFormulaFor(targetHp, size, conMod = 0) {
   const die = HIT_DIE_BY_SIZE[size] ?? 8;
   const avgPerDie = (die + 1) / 2;
-  const perDie = Math.max(1, avgPerDie + conMod);
-  const n = Math.max(1, Math.round(hp / perDie));
-  const m = hp - Math.floor(n * avgPerDie);
+  // The 0.5 floor keeps the dice-count estimate honest when CON drags the
+  // per-die contribution near zero (small dice, deeply negative CON).
+  const perDie = Math.max(0.5, avgPerDie + conMod);
+  let n = Math.max(1, Math.round(targetHp / perDie));
+  // Deep-negative CON guard: never emit a formula whose average is < 1.
+  while (n > 1 && Math.floor(n * avgPerDie) + n * conMod < 1) n--;
+  const m = n * conMod;
   if (m === 0) return `${n}d${die}`;
   return m > 0 ? `${n}d${die} + ${m}` : `${n}d${die} - ${-m}`;
 }
 
-/** NdD ± M expression averaging exactly `avg` (damage skeletons; d8 house die). */
-export function damageDiceFor(avg) {
-  const n = Math.max(1, Math.round(avg / 6));
-  const m = avg - Math.floor(n * 4.5);
-  if (m === 0) return `${n}d8`;
-  return m > 0 ? `${n}d8 + ${m}` : `${n}d8 - ${-m}`;
+/**
+ * Attack damage skeleton: NdD + M where M IS the attack ability's modifier
+ * (grognard contract: the flat damage bonus equals the ability mod that
+ * made the attack roll). Returns the dice and their exact floor-average —
+ * the skeleton prints that average, not the raw budget.
+ */
+export function attackDamageDiceFor(avg, mod) {
+  // House die is d8; smaller dice only when meaningfully closer. Within a
+  // ±1 closeness tolerance the LARGER die wins — officials write "4d6 + 9",
+  // not "6d4 + 9" (live finding) — while low-CR budgets (avg ≈ mod) still
+  // fall to d4/d6 to avoid overshooting.
+  const candidates = [];
+  for (const die of [8, 6, 4]) {
+    const per = (die + 1) / 2;
+    const n = Math.max(1, Math.round((avg - mod) / per));
+    const actual = Math.floor(n * per) + mod;
+    if (actual < 1) continue;
+    const dice = mod === 0 ? `${n}d${die}` : mod > 0 ? `${n}d${die} + ${mod}` : `${n}d${die} - ${-mod}`;
+    candidates.push({ dice, avg: actual, diff: Math.abs(actual - avg) });
+  }
+  if (!candidates.length) return { dice: '1d4', avg: Math.max(1, 2 + mod) };
+  const minDiff = Math.min(...candidates.map((c) => c.diff));
+  const { dice, avg: actual } = candidates.find((c) => c.diff <= minDiff + 1);
+  return { dice, avg: actual };
+}
+
+/**
+ * Save-effect damage skeleton: pure dice, no flat bonus — the SRD's own
+ * convention for save-based effects ("21 (6d6)"). Picks the die whose
+ * floor-average lands closest to the budget.
+ */
+export function saveDamageDiceFor(avg) {
+  let best = null;
+  for (const die of [6, 8, 10]) {
+    const per = (die + 1) / 2;
+    const n = Math.max(1, Math.round(avg / per));
+    const actual = Math.floor(n * per);
+    if (!best || Math.abs(actual - avg) < Math.abs(best.avg - avg)) {
+      best = { dice: `${n}d${die}`, avg: actual };
+    }
+  }
+  return best;
+}
+
+/** The chassis-required attack-ability modifier (attack bonus = mod + PB). */
+export function requiredAttackModFor(chassis) {
+  return chassis.attack_bonus - chassis.pb;
+}
+
+/**
+ * The ability a creature attacks with: its best non-CON stat. Mental stats
+ * (INT/WIS/CHA) win only when STRICTLY higher than the best physical, so
+ * casters strike with their casting stat and brutes keep STR — the LLM's
+ * own score ranking names the striker, the engine never guesses.
+ */
+export function attackStatFor(stats) {
+  const best = (keys) => keys.reduce((a, b) => ((stats[b] ?? 10) > (stats[a] ?? 10) ? b : a));
+  const physical = best(['STR', 'DEX']);
+  const mental = best(['INT', 'WIS', 'CHA']);
+  return (stats[mental] ?? 10) > (stats[physical] ?? 10) ? mental : physical;
 }
 
 /** Archetype-adjusted chassis + slot plan for a CR. null/'balanced' → raw chassis. */
@@ -318,10 +380,17 @@ function slotInstructions(plan, numbers) {
 
 export function buildGenerationPrompt({ concept, description = '', cr, chassis, plan, caster = false, edition = '2024' }) {
   const numbers = damageBudgetFor(cr, chassis, plan);
-  const perAttackDice = damageDiceFor(numbers.perAttack);
-  const novaAvg = chassis.nova_mult ? Math.round(numbers.perAttack * chassis.nova_mult) : null;
+  // The attack ability's mod is engine-determined BEFORE the LLM runs
+  // (attack bonus − PB), so the flat damage bonus in every skeleton is
+  // exact; the LLM only decides WHICH ability is the striker stat.
+  const atkMod = requiredAttackModFor(chassis);
+  const atkDmg = attackDamageDiceFor(numbers.perAttack, atkMod);
+  const saveDmg = saveDamageDiceFor(numbers.total);
+  const novaDmg = chassis.nova_mult
+    ? saveDamageDiceFor(Math.round(numbers.perAttack * chassis.nova_mult))
+    : null;
   if (edition === '2014') {
-    return buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, perAttackDice, novaAvg });
+    return buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, novaDmg });
   }
   const exemplar = exemplarFor(chassis.archetype, cr);
 
@@ -377,9 +446,9 @@ CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
 ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
 FIXED NUMBERS (do not deviate):
-- Every attack line uses EXACTLY this skeleton: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${numbers.perAttack} (${perAttackDice}) <Damage Type> damage. (Ranged attacks: *Ranged Attack Roll:* ${signed(chassis.attack_bonus)}, range 60 ft. — same damage skeleton. You choose damage types and may add non-damage riders.) To use two damage types, SPLIT the total (e.g. ${Math.max(1, numbers.perAttack - Math.floor(numbers.perAttack / 3))} + ${Math.floor(numbers.perAttack / 3)}) — never append a zero rider and never exceed ${numbers.perAttack} combined.
+- Every attack line uses EXACTLY this skeleton: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${atkDmg.avg} (${atkDmg.dice}) <Damage Type> damage. (Ranged attacks: *Ranged Attack Roll:* ${signed(chassis.attack_bonus)}, range 60 ft. — same damage skeleton. You choose damage types and may add non-damage riders.) The "+ ${Math.max(0, atkMod)}" is the attack ability's modifier — never change it. To use two damage types, shrink the DICE and add a small dice-only rider of the second type (e.g. "plus 4 (1d8) Fire damage"), keeping the combined average at or below ${atkDmg.avg}; never append a zero rider.
 - Every saving-throw effect uses EXACTLY: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targeting>. *Failure:* <effect>. *Success:* <lesser effect or none>.
-- Damage from save-based effects: about ${numbers.total} (${damageDiceFor(numbers.total)}) total, halved on a success.${novaAvg ? `\n- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.` : ''}
+- Damage from save-based effects: about ${saveDmg.avg} (${saveDmg.dice}) total — pure dice, no flat bonus — halved on a success.${novaDmg ? `\n- The nova/ambush mechanic may deal up to ${novaDmg.avg} (${novaDmg.dice}) once per fight.` : ''}
 
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
@@ -389,7 +458,7 @@ ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
 ` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Prefer well-known SRD spells.` : ''}
 
-Ability scores: choose scores that fit the concept (the primary ability highest).
+Ability scores: choose scores that fit the concept, and make the creature's ATTACK ability its highest non-CON score — STR or DEX for weapon strikers, INT, WIS, or CHA for magical strikers. The engine sets that ability's modifier to ${signed(requiredAttackModFor(chassis))} so the attack bonus derives from it. Key save effects to abilities the concept justifies being strong.
 
 Return ONLY a JSON object in exactly this shape (no markdown fences, no commentary). Omit optional fields rather than emitting empty ones. Do NOT include ac, hp, initiative, CR, XP, or PB — those are stamped for you:
 
@@ -405,7 +474,7 @@ Apply ALL the RULES from the top of this prompt. Return ONLY the JSON object.`;
 // 2014-edition prompt: identical numeric skeletons and structure, classic
 // phrasing rules, hand-written exemplar. Same JSON schema — assembly and lint
 // run on the shared internal model before legacy conversion.
-function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, perAttackDice, novaAvg }) {
+function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, novaDmg }) {
   const defenses = defenseBudgetFor(cr, chassis.archetype);
   const schema = {
     name: 'CREATURE NAME',
@@ -431,8 +500,8 @@ function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, ca
 
 RULES — read first; they apply to every line of output:
 1. This is CLASSIC 2014 phrasing. NEVER write "Attack Roll:", "*Failure:*", "*Success:*", or "has the X condition" — those are 2024 forms.
-2. Attack lines use EXACTLY this skeleton: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${numbers.perAttack} (${perAttackDice}) <damage type> damage. (Ranged: Ranged Weapon Attack: ${signed(chassis.attack_bonus)} to hit, range 60 ft., one target. Hit: same skeleton.) The skeleton's damage is the attack's TOTAL — never append "plus X (dice) damage" riders on top of it. To use two damage types, split the total (e.g. ${Math.max(1, numbers.perAttack - Math.floor(numbers.perAttack / 3))} + ${Math.floor(numbers.perAttack / 3)}), keeping the sum exactly ${numbers.perAttack}. Non-damage riders (conditions, pushes) are welcome.
-3. Saving-throw effects use classic forms: "The target must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${numbers.total} (${damageDiceFor(numbers.total)}) <type> damage on a failed save, or half as much damage on a successful one." — or for conditions: "must succeed on a DC ${chassis.save_dc} <Ability> saving throw or be knocked prone / become frightened / be poisoned...".
+2. Attack lines use EXACTLY this skeleton: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${atkDmg.avg} (${atkDmg.dice}) <damage type> damage. (Ranged: Ranged Weapon Attack: ${signed(chassis.attack_bonus)} to hit, range 60 ft., one target. Hit: same skeleton.) The "+ ${Math.max(0, atkMod)}" is the attack ability's modifier — never change it. The skeleton's damage is the attack's TOTAL; to use two damage types, shrink the dice and add a small dice-only rider of the second type, keeping the combined average at or below ${atkDmg.avg} — never a zero rider. Non-damage riders (conditions, pushes) are welcome.
+3. Saving-throw effects use classic forms: "The target must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${saveDmg.avg} (${saveDmg.dice}) <type> damage on a failed save, or half as much damage on a successful one." (save damage is pure dice, no flat bonus) — or for conditions: "must succeed on a DC ${chassis.save_dc} <Ability> saving throw or be knocked prone / become frightened / be poisoned...".
 4. Conditions, damage types, and game terms are lowercase in prose: "knocked prone", "frightened", "slashing damage", "hit points".
 5. Third person only, in-world only — never "you"/"your", never rulebook or design references.
 6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock. Every attack you reference MUST exist as a written attack action.
@@ -447,7 +516,10 @@ STRUCTURE (exact requirements):
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
 - Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. The fixed HP already prices typical defenses. Condition immunities are free-form.
 ${slotInstructions(plan, numbers)}
-${novaAvg ? `- The nova/ambush mechanic may deal up to ${novaAvg} (${damageDiceFor(novaAvg)}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Use only well-known SRD spells, comma-separated on one line — never hyphens or bullet lists.\n` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders one automatically. Provide only the option entries themselves.\n` : ''}
+${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
+` : ''}${novaDmg ? `- The nova/ambush mechanic may deal up to ${novaDmg.avg} (${novaDmg.dice}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Use only well-known SRD spells, comma-separated on one line — never hyphens or bullet lists.\n` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders one automatically. Provide only the option entries themselves.\n` : ''}
+Ability scores: choose scores that fit the concept, and make the creature's ATTACK ability its highest non-CON score — STR or DEX for weapon strikers, INT, WIS, or CHA for magical strikers. The engine sets that ability's modifier to ${signed(atkMod)} so the attack bonus derives from it. Key save effects to abilities the concept justifies being strong.
+
 Return ONLY a JSON object in exactly this shape (no markdown fences, no commentary). Omit optional fields rather than emitting empty ones. Do NOT include ac, hp, CR, XP, or PB — those are stamped for you:
 
 ${JSON.stringify(schema, null, 2)}
@@ -468,6 +540,43 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   for (const s of STAT_ORDER) {
     stats[s] = Math.min(30, Math.max(1, Math.round(llmJson.stats?.[s] ?? 10)));
   }
+
+  // Attack-stat coherence (grognard contract): the stamped attack bonus must
+  // be reachable as ability mod + PB. The LLM's own score ranking names the
+  // striker stat (attackStatFor — casters keep INT/WIS/CHA); the engine
+  // raises that stat to the chassis-required mod. RAISE-ONLY: official
+  // blocks legitimately print attacks BELOW mod + PB (17/329 in the corpus,
+  // e.g. Will-o'-Wisp DEX 28 with a +4 attack) but never above it.
+  const requiredMod = requiredAttackModFor(chassis);
+  const atkStat = attackStatFor(stats);
+  if (modOf(stats[atkStat]) < requiredMod) {
+    stats[atkStat] = Math.min(30, requiredMod * 2 + 10);
+  }
+
+  const sections = {};
+  for (const [name, entries] of Object.entries(llmJson.sections ?? {})) {
+    if (!Array.isArray(entries) || entries.length === 0) continue;
+    sections[name] = entries
+      .filter((e) => e && e.name && e.text)
+      .map((e) => {
+        // Strip zero-damage riders ("plus 0 fire damage") — malicious
+        // compliance with the damage-total rule; never legitimate.
+        const text = e.text.replace(/\s*,?\s*plus 0(?:\s*\([^)]*\))?\s+\w+ damage/gi, '');
+        // Entry names never carry a leading article ("The Unstable" →
+        // "Unstable") — zero corpus occurrences of "The "-prefixed names.
+        const name = e.name.replace(/^the\s+/i, '');
+        return e.slot ? { name, text, slot: e.slot } : { name, text };
+      });
+  }
+
+  // NOTE — no per-save-ability stamp, on purpose (reverted after the Slinky
+  // Boulder finding): the ability named in "DC n <Ability> saving throw" is
+  // what the TARGET rolls, not what sources the monster's DC (a dragon's
+  // breath forces DEX saves but derives from the dragon's CON). Raising the
+  // target-side stat inflated statlines (every mentioned save type trended
+  // toward 30 at high CR). Derivability is already guaranteed: the chassis
+  // caps keep save_dc ≤ attack_bonus + 8 at every CR × archetype, so the
+  // stamped striker stat always satisfies DC ≤ 8 + PB + mod.
 
   const pb = chassis.pb;
   const saveProfs = (llmJson.save_proficiencies ?? []).filter((s) => STAT_ORDER.includes(s));
@@ -491,19 +600,10 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   const crStr = crKeyFor(cr);
   const xp = challengeRatings[crStr]?.XP ?? 0;
   const initiativeBonus = modOf(stats.DEX);
-
-  const sections = {};
-  for (const [name, entries] of Object.entries(llmJson.sections ?? {})) {
-    if (!Array.isArray(entries) || entries.length === 0) continue;
-    sections[name] = entries
-      .filter((e) => e && e.name && e.text)
-      .map((e) => {
-        // Strip zero-damage riders ("plus 0 fire damage") — malicious
-        // compliance with the damage-total rule; never legitimate.
-        const text = e.text.replace(/\s*,?\s*plus 0(?:\s*\([^)]*\))?\s+\w+ damage/gi, '');
-        return e.slot ? { name: e.name, text, slot: e.slot } : { name: e.name, text };
-      });
-  }
+  // HP follows the CON-coherent formula exactly (bonus = dice × CON mod);
+  // the small drift off the chassis target stays well inside the HP band.
+  const hpFormula = hpFormulaFor(chassis.hp, size, modOf(stats.CON));
+  const hp = Math.max(1, avgDice(hpFormula) ?? chassis.hp);
 
   const monster = {
     // Names never carry a leading article — prose and display add "the" —
@@ -513,8 +613,8 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
     type: llmJson.type || 'Monstrosity',
     alignment: llmJson.alignment || 'Unaligned',
     ac: chassis.ac,
-    hp: chassis.hp,
-    hp_formula: hpFormulaFor(chassis.hp, size, modOf(stats.CON)),
+    hp,
+    hp_formula: hpFormula,
     speed: llmJson.speed || '30 ft.',
     initiative_bonus: initiativeBonus,
     initiative_score: 10 + initiativeBonus,
@@ -558,6 +658,46 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
  * Reactions and Bonus Actions fold into `abilities` with a suffix — the
  * legacy display has no sections for them.
  */
+/** 2014 legendary-cost convention: "(2 Actions)" → "(Costs 2 Actions)".
+ * 2024 dropped costs entirely (zero corpus occurrences), so this runs only
+ * at the legacy gates. */
+export function normalizeLegendaryCost(name) {
+  return (name ?? '').replace(/\((\d+) Actions?\)/, '(Costs $1 Actions)');
+}
+
+const DAMAGE_TYPE_WORD = /(bludgeoning|piercing|slashing|fire|lightning|cold|acid|thunder|necrotic|radiant|poison|psychic|force)/i;
+// Every word that gets capitalized in 2024 defense lines: damage types,
+// conditions, and Exhaustion.
+const DEFENSE_TERM_RE = /\b(bludgeoning|piercing|slashing|fire|lightning|cold|acid|thunder|necrotic|radiant|poison|psychic|force|blinded|charmed|deafened|frightened|grappled|incapacitated|invisible|paralyzed|petrified|poisoned|prone|restrained|stunned|unconscious|exhaustion)\b/gi;
+
+/**
+ * 2014 defense-line ordering: plain types first, the "from nonmagical
+ * attacks" clause LAST after a semicolon — mid-list the qualifier reads as
+ * if it covered the types after it too (live finding: "bludgeoning,
+ * piercing, slashing from nonmagical attacks, acid, lightning"). The bare
+ * type tokens immediately preceding the clause belong to it.
+ */
+export function normalizeNonmagicalClause(value) {
+  if (!value || !/nonmagical/i.test(value)) return value;
+  const tokens = value.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+  const clauseIdx = tokens.findIndex((t) => /nonmagical/i.test(t));
+  let start = clauseIdx;
+  while (
+    start > 0
+    && tokens[start - 1].split(/\s+/).length === 1
+    && DAMAGE_TYPE_WORD.test(tokens[start - 1])
+  ) start--;
+  const clauseTypes = [
+    ...tokens.slice(start, clauseIdx).map((t) => t.toLowerCase()),
+    DAMAGE_TYPE_WORD.exec(tokens[clauseIdx])?.[1].toLowerCase() ?? '',
+  ].filter(Boolean);
+  const rest = [...tokens.slice(0, start), ...tokens.slice(clauseIdx + 1)];
+  const clauseStr = (clauseTypes.length > 1
+    ? `${clauseTypes.slice(0, -1).join(', ')}, and ${clauseTypes[clauseTypes.length - 1]}`
+    : clauseTypes[0]) + ' from nonmagical attacks';
+  return rest.length ? `${rest.join(', ')}; ${clauseStr}` : clauseStr;
+}
+
 export function toLegacyModel(m) {
   const entryList = (name) => (m.sections?.[name] ?? []).map((e) => ({ name: e.name, description: e.text }));
   // Split merged 2024-style defense lines into 2014's damage vs condition
@@ -586,9 +726,15 @@ export function toLegacyModel(m) {
     ...entryList('Reactions').map((e) => ({ ...e, name: `${e.name} (Reaction)` })),
   ];
 
+  // 2014 lowercases the type line — except the size term inside a swarm
+  // type ("Medium swarm of Tiny beasts").
+  const typeLower = m.type.toLowerCase().replace(
+    /^(swarm of )(tiny|small|medium|large|huge|gargantuan)\b/,
+    (all, p, sz) => p + sz[0].toUpperCase() + sz.slice(1)
+  );
   const legacy = {
     name: m.name,
-    type_and_alignment: `${m.size} ${m.type.toLowerCase()}${m.subtype ? ` (${m.subtype.toLowerCase()})` : ''}, ${m.alignment.toLowerCase()}`,
+    type_and_alignment: `${m.size} ${typeLower}${m.subtype ? ` (${m.subtype.toLowerCase()})` : ''}, ${m.alignment.toLowerCase()}`,
     armor_class: String(m.ac),
     hit_points: `${m.hp} (${m.hp_formula})`,
     speed: m.speed,
@@ -607,10 +753,13 @@ export function toLegacyModel(m) {
     archetype: m.archetype,
     archetype_source: m.archetype_source,
   };
-  if (res.damage) legacy.damage_resistances = res.damage;
-  if (imm.damage) legacy.damage_immunities = imm.damage;
-  if (imm.conditions) legacy.condition_immunities = imm.conditions;
-  const legendary = entryList('Legendary Actions');
+  // 2014 lowercases defense lines ("bludgeoning, piercing", "poisoned");
+  // the internal/2024 convention capitalizes, so normalize at the gate.
+  if (res.damage) legacy.damage_resistances = normalizeNonmagicalClause(res.damage).toLowerCase();
+  if (imm.damage) legacy.damage_immunities = normalizeNonmagicalClause(imm.damage).toLowerCase();
+  if (imm.conditions) legacy.condition_immunities = imm.conditions.toLowerCase();
+  const legendary = entryList('Legendary Actions')
+    .map((e) => ({ ...e, name: normalizeLegendaryCost(e.name) }));
   if (legendary.length) legacy.legendary_actions = legendary;
   return legacy;
 }
@@ -654,8 +803,11 @@ export function fromLegacyModel(legacy) {
   for (const e of legacy.actions ?? []) put('Actions', e);
   for (const e of legacy.legendary_actions ?? []) put('Legendary Actions', e);
 
+  // The internal/2024 convention capitalizes damage types and conditions
+  // ("Poison; Poisoned"); 2014 source lines are lowercase.
+  const capDefense = (v) => (v ?? '').replace(DEFENSE_TERM_RE, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
   const immunities = [legacy.damage_immunities, legacy.condition_immunities]
-    .filter(Boolean).join('; ');
+    .filter(Boolean).map(capDefense).join('; ');
 
   const model = {
     name: legacy.name,
@@ -663,7 +815,11 @@ export function fromLegacyModel(legacy) {
     type: titleCaseName(ta[2] ?? 'Monstrosity'),
     alignment: titleCaseName(ta[4] ?? 'Unaligned'),
     ac: parseInt(legacy.armor_class, 10) || 10,
-    hp: Number(hp[1]) || 1,
+    // A legacy formula is kept verbatim (conversion never rebalances); only
+    // an INVENTED fallback formula pins hp to its own CON-coherent average.
+    hp: hp[2]
+      ? (Number(hp[1]) || 1)
+      : Math.max(1, avgDice(hpFormulaFor(Number(hp[1]) || 1, size, modOf(stats.CON))) ?? (Number(hp[1]) || 1)),
     hp_formula: hp[2] || hpFormulaFor(Number(hp[1]) || 1, size, modOf(stats.CON)),
     speed: legacy.speed,
     stats,
@@ -688,7 +844,7 @@ export function fromLegacyModel(legacy) {
   if (legacy.archetype) model.archetype = legacy.archetype;
   if (legacy.archetype_source) model.archetype_source = legacy.archetype_source;
   if (legacy.skills && legacy.skills !== 'None') model.skills = legacy.skills;
-  if (legacy.damage_resistances) model.resistances = legacy.damage_resistances;
+  if (legacy.damage_resistances) model.resistances = capDefense(legacy.damage_resistances);
   if (immunities) model.immunities = immunities;
   if (legacy.languages && legacy.languages !== '—') model.languages = legacy.languages;
   if ((sections['Legendary Actions'] ?? []).length) model.legendary_uses = 3;
@@ -816,7 +972,16 @@ const DETERMINISTIC_TEXT_FIXES = [
   ['condition-caps', (t) => t.replace(LOWERCASE_CONDITIONS_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['phrasing-to-hit', (t) => t.replace(/(Attack Roll:\*?\s*\+\d+)\s+to hit/g, '$1')],
   ['second-person', (t) => t.replace(/\byours\b/gi, 'its').replace(/\byour\b/gi, 'its')],
+  ['phrasing-save-or', (t) => t.replace(/\bmust (also )?make (an? DC \d+ [A-Za-z]+ saving throw) or\b/g,
+    (m, also, rest) => `must ${also ?? ''}succeed on ${rest} or`)],
+  ['damage-type-caps', (t) => t.replace(DAMAGE_TYPES_LOWER_G, (m) => m[0].toUpperCase() + m.slice(1))],
+  ['area-term-caps', (t) => t.replace(/\b(\d+-foot )(cone|line|sphere|cylinder|emanation|cube)\b/g,
+    (m, p, a) => p + a[0].toUpperCase() + a.slice(1))],
 ];
+
+const DAMAGE_TYPES_LOWER_G = new RegExp(
+  `\\b(${Object.keys(DEFENSE_WEIGHTS).join('|')})(?= damage\\b)`, 'g'
+);
 
 export function applyCorrections(monster, findings, { chassis }) {
   if (!findings.length) return monster;
@@ -835,6 +1000,8 @@ export function applyCorrections(monster, findings, { chassis }) {
   if (has('hp-band')) out.hp = chassis.hp;
   if (has('hp-band') || has('hp-formula')) {
     out.hp_formula = hpFormulaFor(out.hp, out.size, modOf(out.stats.CON));
+    // The CON-coherent formula owns the exact number.
+    out.hp = Math.max(1, avgDice(out.hp_formula) ?? out.hp);
   }
   if (has('ac-band')) out.ac = chassis.ac;
   if (has('pb')) out.pb = correctable.find((f) => f.rule === 'pb').expected;
@@ -856,13 +1023,22 @@ export function applyCorrections(monster, findings, { chassis }) {
     }
   }
 
-  for (const f of correctable.filter((x) => x.rule === 'defense-count' && x.loc?.field)) {
+  for (const f of correctable.filter(
+    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type') && x.loc?.field
+  )) {
     out[f.loc.field] = f.expected || undefined;
   }
 
-  for (const f of correctable.filter((x) => x.rule === 'entry-name-caps' && x.loc)) {
+  for (const f of correctable.filter(
+    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge') && x.loc
+  )) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.name = f.expected;
+  }
+
+  for (const f of correctable.filter((x) => x.rule === 'escape-dc' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) entry.text = entry.text.replace(/escape DC \d+/gi, `escape DC ${f.expected}`);
   }
 
   // Single-expression attacks outside the damage band clamp to the exact
@@ -871,10 +1047,11 @@ export function applyCorrections(monster, findings, { chassis }) {
   for (const f of correctable.filter((x) => x.rule === 'attack-damage-band' && x.loc)) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) {
+      const d = attackDamageDiceFor(f.expected, requiredAttackModFor(chassis));
       // Non-global: replaces the entry's sole damage expression.
       entry.text = entry.text.replace(
         /(\d+)\s*\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/,
-        `${f.expected} (${damageDiceFor(f.expected)})`
+        `${d.avg} (${d.dice})`
       );
     }
   }
@@ -938,10 +1115,12 @@ const REROLL_ENTRY_LABEL = {
 const PROTECTED_ENTRY_NAME_RE = /^(Multiattack|Spellcasting)\b/;
 
 function editionSkeletons(edition, chassis, numbers) {
+  const atkDmg = attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis));
+  const saveDmg = saveDamageDiceFor(numbers.total);
   return edition === '2014'
-    ? `- Attack: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <damage type> damage. (Ranged Weapon Attack: same numbers, range 60 ft.) That damage is the attack's TOTAL — no extra "plus X" riders.
-- Save effect: must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${numbers.total} (${damageDiceFor(numbers.total)}) <type> damage on a failed save, or half as much on a successful one. Conditions lowercase ("knocked prone", "frightened"); "hit points" lowercase; never "Attack Roll:" or "Failure:" markers.`
-    : `- Attack: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${numbers.perAttack} (${damageDiceFor(numbers.perAttack)}) <Damage Type> damage. (Ranged: same numbers, range 60 ft.)
+    ? `- Attack: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${atkDmg.avg} (${atkDmg.dice}) <damage type> damage. (Ranged Weapon Attack: same numbers, range 60 ft.) That damage is the attack's TOTAL — no extra "plus X" riders.
+- Save effect: must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${saveDmg.avg} (${saveDmg.dice}) <type> damage on a failed save, or half as much on a successful one. Conditions lowercase ("knocked prone", "frightened"); "hit points" lowercase; never "Attack Roll:" or "Failure:" markers.`
+    : `- Attack: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${atkDmg.avg} (${atkDmg.dice}) <Damage Type> damage. (Ranged: same numbers, range 60 ft.)
 - Save effect: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targets>. *Failure:* ... *Success:* Half damage only. Conditions Capitalized ("has the Prone condition"); never "Melee Weapon Attack" or "to hit".`;
 }
 
@@ -1074,7 +1253,10 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
   if (outcome.rejects.length || !outcome.entry) {
     throw new Error(`Re-rolled entry failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`);
   }
-  return { name: outcome.entry.name, description: outcome.entry.text };
+  const entryName = edition === '2014' && section === 'Legendary Actions'
+    ? normalizeLegendaryCost(outcome.entry.name)
+    : outcome.entry.name;
+  return { name: entryName, description: outcome.entry.text };
 }
 
 const SECTION_KINDS = { abilities: 'Traits', actions: 'Actions', legendary: 'Legendary Actions' };
@@ -1191,7 +1373,10 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
   if (outcome.rejects.length) {
     throw new Error(`Re-rolled section failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`);
   }
-  return outcome.entries.map((e) => ({ name: e.name, description: e.text }));
+  return outcome.entries.map((e) => ({
+    name: edition === '2014' && section === 'Legendary Actions' ? normalizeLegendaryCost(e.name) : e.name,
+    description: e.text,
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -1205,7 +1390,13 @@ const ENTRY_FIXABLE = new Set([
   'phrasing-hybrid-save', 'condition-caps', 'term-caps',
   'phrasing-2024-in-2014', 'second-person', 'trait-mitigation',
   'undefined-attack-ref', 'attack-damage-band', 'reaction-trigger',
+  'condition-unknown', 'damage-type-caps', 'area-term-caps',
+  'phrasing-save-or', 'entry-name-coinage',
 ]);
+
+// Rules whose defect is the entry's NAME — the fix call may rename these
+// (references follow via renameInText); all other fixes keep names exactly.
+const RENAMEABLE_RULES = new Set(['entry-name-coinage']);
 
 // Rejects that genuinely need new content — only these trigger a full
 // regeneration. spell-dc-ability is here because its fix is an ability-score
@@ -1220,37 +1411,65 @@ async function rewriteFlaggedEntries(monster, rejects, { edition, chassis, plan,
   for (const f of rejects) {
     if (!f.loc) continue;
     const key = `${f.loc.section}\u0000${f.loc.entry}`;
-    if (!byEntry.has(key)) byEntry.set(key, { ...f.loc, problems: [] });
+    if (!byEntry.has(key)) byEntry.set(key, { ...f.loc, problems: [], rules: new Set() });
     byEntry.get(key).problems.push(f.message);
+    byEntry.get(key).rules.add(f.rule);
   }
   const targets = [...byEntry.values()]
     .map((t) => {
       const entry = (monster.sections?.[t.section] ?? []).find((e) => e.name === t.entry);
-      return entry ? { ...t, text: entry.text } : null;
+      return entry
+        ? { ...t, text: entry.text, renameAllowed: [...t.rules].some((r) => RENAMEABLE_RULES.has(r)) }
+        : null;
     })
     .filter(Boolean);
   if (!targets.length) return monster;
 
   const numbers = damageBudgetFor(cr, chassis, plan);
-  const prompt = `You are FIXING specific entries of a D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock. Rewrite ONLY the entries below to resolve their listed problems. Keep each entry's NAME exactly as given, keep its mechanical intent and numbers, change as little text as possible. If a mechanic is fundamentally disallowed, replace it with a balanced alternative in the same spirit.
+  const prompt = `You are FIXING specific entries of a D&D ${edition === '2014' ? '5th edition (2014 rules)' : '2024 (5.5e)'} statblock. Rewrite ONLY the entries below to resolve their listed problems. Keep each entry's NAME exactly as given unless a problem tells you to rename it; keep its mechanical intent and numbers, change as little text as possible. If a mechanic is fundamentally disallowed, replace it with a balanced alternative in the same spirit.
 
 ${targets.map((t) => `ENTRY "${t.entry}" (${t.section}):\n${t.text}\nPROBLEMS TO FIX:\n${t.problems.map((p) => `- ${p}`).join('\n')}`).join('\n\n')}
 
 FIXED NUMBER SKELETONS (use these if rephrasing an attack or save):
 ${editionSkeletons(edition, chassis, numbers)}
 
-Return ONLY a JSON array with the SAME entry names, no markdown fences: [{"name": "...", "text": "..."}]`;
+Return ONLY a JSON array in the SAME order as the entries above, no markdown fences: [{"name": "...", "text": "..."}]`;
 
   const raw = await callLLM(prompt, validateSectionResponse);
   const parsed = tryParse(raw);
   if (!Array.isArray(parsed)) return monster;
 
   const out = JSON.parse(JSON.stringify(monster));
-  for (const { name, text } of parsed) {
-    for (const t of targets) {
-      if (t.entry !== name) continue;
-      const entry = (out.sections?.[t.section] ?? []).find((e) => e.name === name);
-      if (entry && typeof text === 'string' && text.trim()) entry.text = text;
+  const matched = new Set();
+  const unmatched = [];
+  for (const resp of parsed) {
+    const t = targets.find((x) => !matched.has(x) && x.entry === resp.name);
+    if (t) {
+      matched.add(t);
+      const entry = (out.sections?.[t.section] ?? []).find((e) => e.name === t.entry);
+      if (entry && typeof resp.text === 'string' && resp.text.trim()) entry.text = resp.text;
+    } else {
+      unmatched.push(resp);
+    }
+  }
+  // Renamed responses pair with rename-allowed targets in order; the new
+  // name replaces the old everywhere (Multiattack/legendary references
+  // follow, same as the seed-leakage rename machinery).
+  for (const resp of unmatched) {
+    const t = targets.find((x) => !matched.has(x) && x.renameAllowed);
+    if (!t || typeof resp.name !== 'string' || !resp.name.trim()
+      || typeof resp.text !== 'string' || !resp.text.trim()) continue;
+    matched.add(t);
+    const entry = (out.sections?.[t.section] ?? []).find((e) => e.name === t.entry);
+    if (!entry) continue;
+    entry.name = resp.name.trim();
+    entry.text = resp.text;
+    const oldBase = t.entry.split(' (')[0];
+    const newBase = entry.name.split(' (')[0];
+    for (const es of Object.values(out.sections ?? {})) {
+      for (const e of es) {
+        if (e !== entry) e.text = renameInText(e.text, oldBase, newBase);
+      }
     }
   }
   return out;
@@ -1262,6 +1481,11 @@ Return ONLY a JSON array with the SAME entry names, no markdown fences: [{"name"
 
 const SRD_NAMES = new Set(srdMonsters.map((m) => m.name.toLowerCase()));
 const MENACE_WORD_RE = /^(terror|doom|dread|horror|death|fear)s?$/i;
+// Bathos ban (live finding: "Slinky Boulder" — the model satisfied the
+// lurker's "sibilant, soft vowels" phonetics with a toy word). Comedic,
+// cutesy, and diminutive words never survive; the name must be sayable by
+// a terrified survivor with a straight face.
+const BATHOS_RE = /\b(slink[iy]|bounc[iy]|wiggl[iy]|wobbl[iy]|jiggl[iy]|squish[iy]|squeak[iy]|sneak[iy]|silly|goof[iy]|wack[iy]|zan[iy]|derp[iy]|chunk[iy]|chubb[iy]|tubb[iy]|fluff[iy]|cuddl[iy]|snuggl[iy]|dink[iy]|stink[iy]|tickl[iy]|jolly|sass[iy]|cheek[iy]|funk[iy]|bumbling|blobb[iy]|nois[iy]|grump[iy]|cranky)\w*\b/i;
 // Positional ban: "Dread Bellringer" (menace as modifier of a concrete doer)
 // is official-grade naming; "Silent Terror" (menace as head noun) is slop.
 const headIsMenace = (name) => MENACE_WORD_RE.test(name.trim().split(/\s+/).pop());
@@ -1289,7 +1513,7 @@ THE CREATURE: ${monster.size} ${monster.type}, speed ${monster.speed}.
 ${abilities}
 
 THE NAME must be ${traits.naming}
-${monster.archetype && PHONETICS_BY_ARCHETYPE[monster.archetype] ? `Its sound should be ${PHONETICS_BY_ARCHETYPE[monster.archetype]}.\n` : ''}Rules: name concrete things the creature actually does or is made of. Never hyphens. Abstract menace words (terror, doom, dread, horror, death, fear) never as the head noun — as a leading adjective before a concrete doer they are fine. Never a name already used by a well-known D&D creature, class, or subclass.
+${monster.archetype && PHONETICS_BY_ARCHETYPE[monster.archetype] ? `Its sound should be ${PHONETICS_BY_ARCHETYPE[monster.archetype]}.\n` : ''}Rules: name concrete things the creature actually does or is made of. Never hyphens. A coined name is built from sound, never by gluing two English words into one. Abstract menace words (terror, doom, dread, horror, death, fear) never as the head noun — as a leading adjective before a concrete doer they are fine. Never cutesy, comedic, or diminutive words (slinky, bouncy, squishy) — satisfy the sound profile with words that keep their menace. The head noun should be a creature, agent, or evocative form, not a plain object (Boulder, Rock, Slab) — an object head is allowed only if the creature genuinely IS an animated object. Never a name already used by a well-known D&D creature, class, or subclass.
 
 Return ONLY JSON, no markdown: {"candidates": ["five different names, best first"]}`;
 }
@@ -1314,6 +1538,7 @@ export function pickName(candidates, { seedTokens = [], register = '' } = {}) {
     const lower = name.toLowerCase();
     if (!name || name.includes('-')) continue;
     if (headIsMenace(name)) continue;
+    if (BATHOS_RE.test(name)) continue;
     if (SRD_NAMES.has(lower.replace(/^the /, ''))) continue;
     if (seedTokens.some((t) => lower.includes(t))) continue;
     if (isCoinage && (name.includes(' ') || name.length > 9)) continue;

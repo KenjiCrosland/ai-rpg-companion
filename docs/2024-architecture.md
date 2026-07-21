@@ -56,6 +56,52 @@ never accept LLM numbers); missing required_slots reject the generation.
 > Deferred follow-ups live in `plans/statblock-2024-*.md`. Flavor quality
 > remains manual-production-review; prompts are in `format-2024/generate.mjs`.
 >
+> **Stat-coherence pass (2026-07-20, grognard audit):** three derivations
+> official blocks obey are now engine-owned. (1) Attack bonus = striker-stat
+> mod + PB: `attackStatFor` reads the LLM's own score ranking (mental beats
+> physical only when strictly higher, so casters strike with INT/WIS/CHA)
+> and assembly RAISES that stat to the required mod — raise-only, because
+> the corpus deviates in 17/329 blocks and always LOW (Will-o'-Wisp DEX 28,
+> attack +4). (2) Attack damage's flat bonus IS the striker mod
+> (`attackDamageDiceFor`, known pre-call since mod = attack − PB); save
+> damage is pure dice (`saveDamageDiceFor`, SRD convention). (3) HP formula
+> bonus = dice count × CON mod (`hpFormulaFor`); HP is stamped from the
+> formula's exact average. Plus corpus-calibrated gates: condition allowlist
+> (compound "X and Y conditions" validates per token), 2024 damage-type and
+> area-term capitalization (deterministic fixes), and an asymmetric escape-DC
+> band (official escape DCs run low, never high). **Ability-score ceiling
+> (Ghuuloth finding, CR 28):** the chassis clamps attack ≤ PB + 10 and save
+> DC ≤ PB + 18 — beyond that no score (cap 30) can derive them; archetype
+> attack/dc mods at CR 27+ otherwise overshoot. Do NOT add a per-save-ability
+> stamp (tried, reverted after the Slinky Boulder finding): the ability in
+> "DC n <Ability> saving throw" is what the TARGET rolls, not the DC's
+> source — keying on it inflates statlines toward 30/30/30. DC derivability
+> is already guaranteed through the striker stat (the caps keep save_dc ≤
+> attack_bonus + 8 everywhere). 2014 style gates from the same audit:
+> legendary "(N Actions)" normalizes to "(Costs N Actions)" at the legacy
+> gates, and "must make a DC n X saving throw or <condition>" deterministically
+> becomes "must succeed on ... or" (phrasing-save-or). Attack dice prefer the
+> larger die within ±1 closeness ("4d6 + 9", never "6d4 + 9"). Tar Grendel
+> round: defense-overlap (a type both resisted and immune drops from
+> resistances), the 2014 nonmagical clause sorts to the end of the defense
+> line after a semicolon, and entry names lose leading articles — all
+> corpus-zero-FP. Naming: BATHOS_RE bans comedic/diminutive words in
+> pickName ("Slinky Boulder"), and both naming prompts demand menace-keeping
+> words and agent/creature head nouns (plain-object heads only for actual
+> animated objects). Disshadow round: trait-recharge (zero corpus traits
+> recharge; (Recharge X-Y) in a trait name deterministically becomes
+> (1/Day)), entry-name-coinage ("Thul-eg" — official hyphenated ability
+> names join FULL English words, so a sub-4-letter fragment marks a coinage;
+> the fix call may RENAME these, the one exception to keep-the-name, with
+> references following), and prompt rules: ability names are plain English
+> (coinages belong to creature names only) and coined creature names build
+> from sound, never by gluing English words ("Disshadow"). Swarm round: the
+> 2014 prompt was missing the "Swarm of Tiny <Creature>" type clause (2024
+> had it) — now both prompts carry it AND a swarm-type correctable backstops
+> it; case conventions normalize at the edition gates (2014 lowercases
+> defense lines and the type line, keeping the size term capitalized in
+> "swarm of Tiny beasts"; the 2014→2024 direction re-capitalizes).
+>
 > **Repair ladder (2026-07-19):** the original "reject → regenerate flavor"
 > contract is refined: rejects route through the cheapest sufficient tool —
 > deterministic string surgery (zero calls) → targeted fix calls (entry

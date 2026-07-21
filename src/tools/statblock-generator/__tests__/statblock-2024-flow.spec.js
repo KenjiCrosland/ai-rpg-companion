@@ -265,7 +265,7 @@ describe('StatblockGenerator 2024 flow', () => {
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.format).toBe('2024');
       expect(saved.challenge_rating).toBe('4 (XP 1,100; PB +2)');
-      expect(saved.hp).toBe(59); // engine number, not LLM's
+      expect(saved.hp).toBe(60); // engine number (CON-coherent formula average), not LLM's
       expect(saved.selectedChallengeRating).toBe('4');
       expect(wrapper.find('.statblock-2024-stub').exists()).toBe(true);
       expect(wrapper.find('.statblock-2014-stub').exists()).toBe(false);
@@ -283,6 +283,25 @@ describe('StatblockGenerator 2024 flow', () => {
 
       const names = savedMonsters().Uncategorized.map((m) => m.name);
       expect(names).toEqual(['Old Wolf', 'Gloom Stalker']); // CR 2 before CR 4
+      wrapper.unmount();
+    });
+
+    test('a neighbor without challenge_rating never crashes the save-time CR sort', async () => {
+      // Live crash: pre-stamp 2024 saves lack challenge_rating; sorting the
+      // folder on the NEXT save (any edition) hit fractionToDecimal(null).
+      // Numeric `cr` backstops the sort; a stamped label is backfilled on load.
+      localStorage.setItem('monsters', JSON.stringify({
+        Uncategorized: [{ name: 'Prestamp Horror', format: '2024', cr: 10, cr_str: '10', xp: 5900, pb: 4 }],
+      }));
+      mockLLM({ resolvedArchetype: 'lurker' });
+      const wrapper = mountGenerator();
+      await setCR(wrapper, '4');
+      await generate(wrapper);
+
+      const saved = savedMonsters().Uncategorized;
+      expect(saved.map((m) => m.name)).toEqual(['Gloom Stalker', 'Prestamp Horror']); // CR 4 before CR 10
+      expect(saved.find((m) => m.name === 'Prestamp Horror').challenge_rating)
+        .toBe('10 (XP 5,900; PB +4)'); // backfilled label persisted with the save
       wrapper.unmount();
     });
 

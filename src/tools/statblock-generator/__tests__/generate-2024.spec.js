@@ -5,7 +5,8 @@
  * solvers, and the correct/reject orchestration with a mocked LLM.
  */
 import {
-  hpFormulaFor, damageDiceFor, crKeyFor, crNumberFor, buildContext,
+  hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor, attackStatFor,
+  crKeyFor, crNumberFor, buildContext,
   damageBudgetFor, assembleMonster, applyCorrections, generateMonster2024,
   validateGenerationResponse, validateArchetypeResponse, parseGenerationResponse,
   pickRandomArchetype, ARCHETYPE_NAMES,
@@ -44,16 +45,25 @@ const ctx = () => {
 // 1. Deterministic solvers
 // ---------------------------------------------------------------------------
 describe('hpFormulaFor', () => {
-  const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
+  const DIE = { Tiny: 4, Small: 6, Medium: 8, Large: 10, Huge: 12, Gargantuan: 20 };
   const HPS = [1, 3, 9, 21, 59, 104, 178, 333, 507, 697];
   const CON_MODS = [-2, 0, 3, 8];
 
-  test('every formula averages exactly to the requested HP', () => {
-    for (const size of SIZES) {
+  test('flat bonus is EXACTLY dice-count × CON mod; average lands near the target', () => {
+    // The grognard construction rule: "17d10 + 69" with CON +4 is a tell —
+    // the bonus must be a clean multiple of the dice count. The caller
+    // stamps the formula's own average as HP, so exactness moved there.
+    for (const [size, die] of Object.entries(DIE)) {
       for (const hp of HPS) {
         for (const conMod of CON_MODS) {
           const formula = hpFormulaFor(hp, size, conMod);
-          expect(avgDice(formula)).toBe(hp);
+          const m = /^(\d+)d(\d+)(?:\s*([+-])\s*(\d+))?$/.exec(formula);
+          const n = Number(m[1]);
+          const bonus = m[3] ? (m[3] === '-' ? -1 : 1) * Number(m[4]) : 0;
+          expect(Number(m[2])).toBe(die);
+          expect(bonus).toBe(n * conMod);
+          // Within one die-step of the chassis target (the HP band absorbs it).
+          expect(Math.abs(avgDice(formula) - hp)).toBeLessThanOrEqual((die + 1) / 2 + Math.abs(conMod) + 1);
         }
       }
     }
@@ -65,10 +75,26 @@ describe('hpFormulaFor', () => {
   });
 });
 
-describe('damageDiceFor', () => {
-  test('every expression averages exactly to the requested damage', () => {
+describe('damage dice solvers', () => {
+  test('attack damage carries EXACTLY the ability mod as its flat bonus', () => {
+    for (let avg = 1; avg <= 60; avg++) {
+      for (const mod of [0, 2, 5, 10]) {
+        if (mod > avg) continue;
+        const { dice, avg: actual } = attackDamageDiceFor(avg, mod);
+        expect(avgDice(dice)).toBe(actual); // self-consistent
+        if (mod === 0) expect(dice).not.toMatch(/[+-]/);
+        else expect(dice.endsWith(`+ ${mod}`)).toBe(true);
+        expect(Math.abs(actual - avg)).toBeLessThanOrEqual(4); // ±1 larger-die preference
+      }
+    }
+  });
+
+  test('save-effect damage is pure dice, no flat bonus (SRD convention)', () => {
     for (let avg = 1; avg <= 100; avg++) {
-      expect(avgDice(damageDiceFor(avg))).toBe(avg);
+      const { dice, avg: actual } = saveDamageDiceFor(avg);
+      expect(dice).not.toMatch(/[+-]/);
+      expect(avgDice(dice)).toBe(actual);
+      expect(Math.abs(actual - avg)).toBeLessThanOrEqual(3);
     }
   });
 });
@@ -105,21 +131,49 @@ describe('assembleMonster', () => {
   test('engine numbers come from the chassis, never the LLM', () => {
     const { chassis } = buildContext(4, 'lurker');
     expect(monster.ac).toBe(chassis.ac);
-    expect(monster.hp).toBe(chassis.hp);
+    // HP follows the CON-coherent formula exactly (chassis 59 → 11d8 + 11
+    // with CON +1 averages 60); the formula's bonus is dice × CON mod.
+    expect(monster.hp_formula).toBe('11d8 + 11');
+    expect(monster.hp).toBe(60);
+    expect(avgDice(monster.hp_formula)).toBe(monster.hp);
     expect(monster.pb).toBe(chassis.pb);
     expect(monster.cr).toBe(4);
     expect(monster.cr_str).toBe('4');
     expect(monster.xp).toBe(1100);
-    expect(avgDice(monster.hp_formula)).toBe(chassis.hp);
   });
 
-  test('derived numbers computed from LLM ability scores', () => {
-    expect(monster.initiative_bonus).toBe(3); // DEX 16
-    expect(monster.initiative_score).toBe(13);
-    expect(monster.saves.DEX).toBe(5); // mod 3 + pb 2 (proficient)
+  test('the striker stat is raised so attack bonus = mod + PB (raise-only, caster-aware)', () => {
+    // Lurker CR 4: attack +7, PB +2 → required mod +5. Fixture DEX 16 → 20.
+    expect(monster.stats.DEX).toBe(20);
+    // Mental striker: INT is the peak stat, so INT rises and DEX is left alone.
+    const wizard = assembleMonster(
+      { ...llmFixture, stats: { STR: 8, DEX: 12, CON: 12, INT: 17, WIS: 10, CHA: 10 } }, ctx());
+    expect(wizard.stats.INT).toBe(20);
+    expect(wizard.stats.DEX).toBe(12); // untouched — the attack rides INT
+    // Raise-only: exceeding the required mod is officially sanctioned
+    // (Will-o'-Wisp DEX 28, attack +4) — never lower a stat.
+    const nimble = assembleMonster(
+      { ...llmFixture, stats: { ...llmFixture.stats, DEX: 24 } }, ctx());
+    expect(nimble.stats.DEX).toBe(24);
+    expect(attackStatFor({ STR: 18, DEX: 14, CON: 20, INT: 8, WIS: 8, CHA: 8 })).toBe('STR');
+    expect(attackStatFor({ STR: 8, DEX: 14, CON: 20, INT: 8, WIS: 8, CHA: 16 })).toBe('CHA');
+  });
+
+  test('derived numbers computed from (stamped) ability scores', () => {
+    expect(monster.initiative_bonus).toBe(5); // DEX raised to 20
+    expect(monster.initiative_score).toBe(15);
+    expect(monster.saves.DEX).toBe(7); // mod 5 + pb 2 (proficient)
     expect(monster.saves.STR).toBe(1); // mod only
-    expect(monster.skills).toBe('Stealth +5, Perception +4');
+    expect(monster.skills).toBe('Stealth +7, Perception +4');
     expect(monster.senses).toBe('darkvision 60 ft.; Passive Perception 14');
+  });
+
+  test('entry names lose leading articles ("The Unstable" → "Unstable")', () => {
+    const withArticle = JSON.parse(JSON.stringify(llmFixture));
+    withArticle.sections.Traits.push({ name: 'The Unstable', text: 'It can move through a space as narrow as 1 inch without squeezing.' });
+    const m = assembleMonster(withArticle, ctx());
+    expect(m.sections.Traits.map((e) => e.name)).toContain('Unstable');
+    expect(m.sections.Traits.map((e) => e.name)).not.toContain('The Unstable');
   });
 
   test('format, archetype, and folder-compat fields are stamped', () => {
@@ -413,6 +467,13 @@ describe('defense caps', () => {
 describe('naming pass', () => {
   const { pickName, validateNamingResponse, buildNamingPrompt, validateRenameResponse } = require('../format-2024/generate.mjs');
 
+  test('pickName rejects bathos words (comedic/diminutive register)', () => {
+    // Live finding: "Slinky Boulder" — sibilant phonetics satisfied by a toy
+    // word. The taste filter is deterministic, not hoped-for.
+    expect(pickName(['Slinky Boulder', 'Squishy Horror King', 'Gloom Warden'], {})).toBe('Gloom Warden');
+    expect(pickName(['Bouncy Doom'], {})).toBe(null);
+  });
+
   test('pickName strips leading articles instead of rejecting', () => {
     expect(pickName(['The Silent Clinger'], {})).toBe('Silent Clinger');
   });
@@ -570,8 +631,29 @@ describe('generateMonster2024 orchestration', () => {
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(llmFixture));
     const monster = await generateMonster2024(options, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(1);
-    expect(monster.sections.Actions[1].text).toContain('9 (2d8)');
+    // The clamp is mod-aware: the flat +5 IS the required attack-stat mod.
+    expect(monster.sections.Actions[1].text).toContain('9 (1d8 + 5)');
     expect(monster.sections.Actions[1].text).not.toContain('13 (2d8 + 4)');
+  });
+
+  test('a coined entry name is fixed by a RENAMING fix call; references follow', async () => {
+    // "Thul-eg" class: the entry's NAME is the defect, so the fix call may
+    // rename (the one exception to keep-the-name), and text references
+    // update through the same rename machinery seed-leakage uses.
+    const coined = JSON.parse(JSON.stringify(llmFixture));
+    coined.sections.Traits.push({ name: 'Thul-eg', text: 'The stalker can move through a space as narrow as 1 inch wide without squeezing.' });
+    coined.sections.Traits[0].text += ' While Thul-eg is active, it makes no sound.';
+    const callLLM = jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(coined))
+      .mockResolvedValueOnce(JSON.stringify([
+        { name: 'Amorphous', text: 'The stalker can move through a space as narrow as 1 inch wide without squeezing.' },
+      ]));
+    const monster = await generateMonster2024(options, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(2);
+    const names = monster.sections.Traits.map((e) => e.name);
+    expect(names).toContain('Amorphous');
+    expect(names).not.toContain('Thul-eg');
+    expect(monster.sections.Traits[0].text).toContain('While Amorphous is active');
   });
 
   test('deterministically fixable rejects (caps, to-hit, second person) cost zero extra calls', async () => {
