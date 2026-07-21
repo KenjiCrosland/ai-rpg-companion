@@ -111,14 +111,20 @@ const SECTION_FOR_CATEGORY = {
 };
 
 // Passive required slots are field-level obligations, checked directly.
+// Case-insensitive: 2024 blocks capitalize defense fields, 2014 blocks
+// lowercase them — both are correct for their edition (live finding: a 2014
+// swarm's lowercase "bludgeoning, piercing, slashing" failed the slot check
+// and forced a doomed full regeneration).
+const hasAll = (value, terms) => {
+  const lower = (value ?? '').toLowerCase();
+  return terms.every((t) => lower.includes(t));
+};
 const PASSIVE_SLOT_CHECKS = {
   'high STR': (m) => (m.stats?.STR ?? 0) >= 16,
   'resistance package: Bludgeoning/Piercing/Slashing': (m) =>
-    ['Bludgeoning', 'Piercing', 'Slashing'].every((d) => (m.resistances ?? '').includes(d)),
+    hasAll(m.resistances, ['bludgeoning', 'piercing', 'slashing']),
   'condition immunities: Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned':
-    (m) =>
-      ['Charmed', 'Frightened', 'Grappled', 'Paralyzed', 'Petrified', 'Prone', 'Restrained', 'Stunned']
-        .every((c) => (m.immunities ?? '').includes(c)),
+    (m) => hasAll(m.immunities, ['charmed', 'frightened', 'grappled', 'paralyzed', 'petrified', 'prone', 'restrained', 'stunned']),
 };
 
 /** floor(NdD average) + mod — mirrors avg_dice in parse-srd52.py. */
@@ -475,6 +481,12 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // legal "(N/Day)" form). Deterministic: swap the marker.
     if (section === 'Traits' && /\(Recharge[^)]*\)/i.test(entry.name)) {
       push('trait-recharge', 'correctable', `${where}: Recharge belongs to actions — a limited trait uses (N/Day)`, entry.name.replace(/\s*\(Recharge[^)]*\)/i, ' (1/Day)'), loc);
+    }
+    // Design vocabulary leaking into entry names ("Hungry Absorption
+    // (Half-Damage Mode)") — slot/budget language is instructions, not
+    // content; zero corpus occurrences. Renameable, like coinages.
+    if (/\b(mode|nova|slot|budget|tier|dpr|half-damage)\b/i.test(entry.name)) {
+      push('entry-name-design-term', 'reject', `${where}: entry name leaks design vocabulary — name the ability in-world (never "mode", "slot", "budget", "tier", "nova"). Rename it`, undefined, loc);
     }
     // Coined entry names ("Thul-eg"): official hyphenated names join FULL
     // English words (Shape-Shift, Mind-Rending Roar — every corpus fragment

@@ -230,6 +230,15 @@ describe('each rule catches its violation class', () => {
     expect(rules(lint(asReaction, {}))).not.toContain('trait-mitigation');
   });
 
+  test('entry-name-design-term: slot/budget vocabulary in entry names rejects', () => {
+    // Live finding: "Hungry Absorption (Half-Damage Mode)".
+    const leaky = withAction(cleanLurker, 2, { name: 'Hungry Absorption (Half-Damage Mode)' });
+    const f = lint(leaky, {}).findings.find((x) => x.rule === 'entry-name-design-term');
+    expect(f.severity).toBe('reject');
+    // In-world names with none of the terms pass.
+    expect(rules(lint(cleanLurker, {}))).not.toContain('entry-name-design-term');
+  });
+
   test('trait-recharge: Recharge in a trait name becomes (1/Day); coined entry names reject', () => {
     // Live findings: "Engulfing Dissolution (Recharge 5-6)" as a TRAIT
     // (zero corpus traits recharge; 33 use N/Day) and "Thul-eg" (coinage as
@@ -295,6 +304,22 @@ describe('each rule catches its violation class', () => {
     const lcArea = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, each creature in a 15-foot cone. *Failure:* 21 (6d6) Psychic damage.' });
     expect(rules(lint(lcArea, {}))).toContain('area-term-caps');
     expect(rules(lint(cleanLurker))).not.toContain('damage-type-caps');
+  });
+
+  test('swarm passive slots accept both editions\' casing', () => {
+    // Live failure: a 2014 swarm's lowercase "bludgeoning, piercing,
+    // slashing" failed the case-sensitive slot check → structural reject →
+    // doomed regeneration loop. Both casings must satisfy the slots.
+    const swarmPlan = slotPlanFor(30, 'swarm');
+    for (const casing of [
+      { resistances: 'bludgeoning, piercing, slashing', immunities: 'necrotic; charmed, frightened, grappled, paralyzed, petrified, prone, restrained, stunned' },
+      { resistances: 'Bludgeoning, Piercing, Slashing', immunities: 'Necrotic; Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned' },
+    ]) {
+      const findings = lintStatblock({ ...cleanLurker, ...casing }, { plan: swarmPlan }).findings;
+      const passiveMisses = findings.filter((f) =>
+        f.rule === 'slot-missing' && /resistance package|condition immunities/.test(f.message));
+      expect(passiveMisses).toEqual([]);
+    }
   });
 
   test('swarm-type: swarm archetype demands the swarm type line', () => {

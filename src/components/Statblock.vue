@@ -1,5 +1,10 @@
 <template>
     <div ref="containerRef" :style="widthStyle" :class="`container ${columns}`">
+        <!-- Spec contract (archetype-chassis-spec solo_warning), mirrored
+             from Statblock2024: support monsters flag their solo weakness. -->
+        <p v-if="monster && monster.archetype === 'support' && !loadingPart1" class="solo-note">
+            Support monsters underperform their CR when fought alone — pair with other creatures.
+        </p>
         <div v-if="!loadingPart1" class="statblock">
             <div class="creature-heading" :class="{ 'editing': isEditing }">
                 <h1 v-if="!isEditing">{{ monster.name }}</h1>
@@ -697,6 +702,14 @@ textarea {
     }
 }
 
+
+.solo-note {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 13px;
+    font-style: italic;
+    color: #7A200D;
+}
 
 .statblock {
     font-family: 'Noto Sans', 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;

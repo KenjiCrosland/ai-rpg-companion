@@ -153,16 +153,22 @@ export function attackDamageDiceFor(avg, mod) {
  * floor-average lands closest to the budget.
  */
 export function saveDamageDiceFor(avg) {
+  // Closeness first, but dice-count sanity matters at scale: officials top
+  // out at 26 dice (Ancient Red's 26d6), while a closeness-only pick
+  // produced "311 (89d6)" (live finding). Counts beyond 15 pay a growing
+  // penalty, so big budgets climb to larger dice (24d12, not 45d6) while
+  // small ones keep the canonical handfuls (6d6).
   let best = null;
-  for (const die of [6, 8, 10]) {
+  for (const die of [6, 8, 10, 12]) {
     const per = (die + 1) / 2;
     const n = Math.max(1, Math.round(avg / per));
     const actual = Math.floor(n * per);
-    if (!best || Math.abs(actual - avg) < Math.abs(best.avg - avg)) {
-      best = { dice: `${n}d${die}`, avg: actual };
+    const score = Math.abs(actual - avg) + Math.max(0, n - 15) * 0.5;
+    if (!best || score < best.score) {
+      best = { dice: `${n}d${die}`, avg: actual, score };
     }
   }
-  return best;
+  return { dice: best.dice, avg: best.avg };
 }
 
 /** The chassis-required attack-ability modifier (attack bonus = mod + PB). */
@@ -352,6 +358,13 @@ function slotInstructions(plan, numbers) {
     lines.push(
       `- Required slot in ${where}: ${slot.description}. The entry that fills it MUST include "slot": ${JSON.stringify(slot.description)}.`
     );
+    // The half-damage swarm slot keeps getting inverted (a BUFF below half
+    // HP) when left open-ended — prescribe the official embedded pattern.
+    if (/half-damage/i.test(slot.description)) {
+      lines.push(
+        `- Write that slot INSIDE the swarm's main attack line, official-style: "Hit: <full> damage, or <reduced> damage if the swarm has half of its Hit Points or fewer" — the reduced number is about HALF the full number, never more. Tag the attack entry with the slot id; do not write a separate action for it, and never use design terms like "mode" in any entry name.`
+      );
+    }
   }
   if (plan.multiattack.status === 'required') {
     lines.push(
@@ -386,11 +399,15 @@ export function buildGenerationPrompt({ concept, description = '', cr, chassis, 
   const atkMod = requiredAttackModFor(chassis);
   const atkDmg = attackDamageDiceFor(numbers.perAttack, atkMod);
   const saveDmg = saveDamageDiceFor(numbers.total);
+  // DMG accounting counts AREA damage double (it assumes 2+ targets), so
+  // cones/lines/bursts budget HALF the single-target number — the fix for
+  // a live CR 30 cone prescribed the full 312-point turn total.
+  const aoeDmg = saveDamageDiceFor(Math.max(1, Math.round(numbers.total / 2)));
   const novaDmg = chassis.nova_mult
     ? saveDamageDiceFor(Math.round(numbers.perAttack * chassis.nova_mult))
     : null;
   if (edition === '2014') {
-    return buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, novaDmg });
+    return buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, aoeDmg, novaDmg });
   }
   const exemplar = exemplarFor(chassis.archetype, cr);
 
@@ -448,7 +465,7 @@ ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
 FIXED NUMBERS (do not deviate):
 - Every attack line uses EXACTLY this skeleton: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${atkDmg.avg} (${atkDmg.dice}) <Damage Type> damage. (Ranged attacks: *Ranged Attack Roll:* ${signed(chassis.attack_bonus)}, range 60 ft. — same damage skeleton. You choose damage types and may add non-damage riders.) The "+ ${Math.max(0, atkMod)}" is the attack ability's modifier — never change it. To use two damage types, shrink the DICE and add a small dice-only rider of the second type (e.g. "plus 4 (1d8) Fire damage"), keeping the combined average at or below ${atkDmg.avg}; never append a zero rider.
 - Every saving-throw effect uses EXACTLY: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targeting>. *Failure:* <effect>. *Success:* <lesser effect or none>.
-- Damage from save-based effects: about ${saveDmg.avg} (${saveDmg.dice}) total — pure dice, no flat bonus — halved on a success.${novaDmg ? `\n- The nova/ambush mechanic may deal up to ${novaDmg.avg} (${novaDmg.dice}) once per fight.` : ''}
+- Save-based damage is pure dice, no flat bonus, halved on a success. SINGLE-target save effects: about ${saveDmg.avg} (${saveDmg.dice}). AREA effects (Cones, Lines, bursts): about ${aoeDmg.avg} (${aoeDmg.dice}) — areas hit multiple creatures, so they use the HALF number, never the single-target number.${novaDmg ? `\n- The nova/ambush mechanic may deal up to ${novaDmg.avg} (${novaDmg.dice}) once per fight.` : ''}
 
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
@@ -456,6 +473,7 @@ STRUCTURE (exact requirements):
 - Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. The fixed HP already prices typical defenses. Condition immunities are free-form.
 ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
+` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders the uses preamble automatically. Provide only the option entries themselves.
 ` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Prefer well-known SRD spells.` : ''}
 
 Ability scores: choose scores that fit the concept, and make the creature's ATTACK ability its highest non-CON score — STR or DEX for weapon strikers, INT, WIS, or CHA for magical strikers. The engine sets that ability's modifier to ${signed(requiredAttackModFor(chassis))} so the attack bonus derives from it. Key save effects to abilities the concept justifies being strong.
@@ -474,7 +492,7 @@ Apply ALL the RULES from the top of this prompt. Return ONLY the JSON object.`;
 // 2014-edition prompt: identical numeric skeletons and structure, classic
 // phrasing rules, hand-written exemplar. Same JSON schema — assembly and lint
 // run on the shared internal model before legacy conversion.
-function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, novaDmg }) {
+function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, aoeDmg, novaDmg }) {
   const defenses = defenseBudgetFor(cr, chassis.archetype);
   const schema = {
     name: 'CREATURE NAME',
@@ -501,7 +519,7 @@ function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, ca
 RULES — read first; they apply to every line of output:
 1. This is CLASSIC 2014 phrasing. NEVER write "Attack Roll:", "*Failure:*", "*Success:*", or "has the X condition" — those are 2024 forms.
 2. Attack lines use EXACTLY this skeleton: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${atkDmg.avg} (${atkDmg.dice}) <damage type> damage. (Ranged: Ranged Weapon Attack: ${signed(chassis.attack_bonus)} to hit, range 60 ft., one target. Hit: same skeleton.) The "+ ${Math.max(0, atkMod)}" is the attack ability's modifier — never change it. The skeleton's damage is the attack's TOTAL; to use two damage types, shrink the dice and add a small dice-only rider of the second type, keeping the combined average at or below ${atkDmg.avg} — never a zero rider. Non-damage riders (conditions, pushes) are welcome.
-3. Saving-throw effects use classic forms: "The target must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${saveDmg.avg} (${saveDmg.dice}) <type> damage on a failed save, or half as much damage on a successful one." (save damage is pure dice, no flat bonus) — or for conditions: "must succeed on a DC ${chassis.save_dc} <Ability> saving throw or be knocked prone / become frightened / be poisoned...".
+3. Saving-throw effects use classic forms: "The target must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${saveDmg.avg} (${saveDmg.dice}) <type> damage on a failed save, or half as much damage on a successful one." (save damage is pure dice, no flat bonus; AREA effects — cones, lines, bursts — use about ${aoeDmg.avg} (${aoeDmg.dice}) instead, never the single-target number) — or for conditions: "must succeed on a DC ${chassis.save_dc} <Ability> saving throw or be knocked prone / become frightened / be poisoned...".
 4. Conditions, damage types, and game terms are lowercase in prose: "knocked prone", "frightened", "slashing damage", "hit points".
 5. Third person only, in-world only — never "you"/"your", never rulebook or design references.
 6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock. Every attack you reference MUST exist as a written attack action.
@@ -1117,11 +1135,12 @@ const PROTECTED_ENTRY_NAME_RE = /^(Multiattack|Spellcasting)\b/;
 function editionSkeletons(edition, chassis, numbers) {
   const atkDmg = attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis));
   const saveDmg = saveDamageDiceFor(numbers.total);
+  const aoeDmg = saveDamageDiceFor(Math.max(1, Math.round(numbers.total / 2)));
   return edition === '2014'
     ? `- Attack: Melee Weapon Attack: ${signed(chassis.attack_bonus)} to hit, reach 5 ft., one target. Hit: ${atkDmg.avg} (${atkDmg.dice}) <damage type> damage. (Ranged Weapon Attack: same numbers, range 60 ft.) That damage is the attack's TOTAL — no extra "plus X" riders.
-- Save effect: must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${saveDmg.avg} (${saveDmg.dice}) <type> damage on a failed save, or half as much on a successful one. Conditions lowercase ("knocked prone", "frightened"); "hit points" lowercase; never "Attack Roll:" or "Failure:" markers.`
+- Save effect: must make a DC ${chassis.save_dc} <Ability> saving throw, taking ${saveDmg.avg} (${saveDmg.dice}) <type> damage (area effects: ${aoeDmg.avg} (${aoeDmg.dice})) on a failed save, or half as much on a successful one. Conditions lowercase ("knocked prone", "frightened"); "hit points" lowercase; never "Attack Roll:" or "Failure:" markers.`
     : `- Attack: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${atkDmg.avg} (${atkDmg.dice}) <Damage Type> damage. (Ranged: same numbers, range 60 ft.)
-- Save effect: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targets>. *Failure:* ... *Success:* Half damage only. Conditions Capitalized ("has the Prone condition"); never "Melee Weapon Attack" or "to hit".`;
+- Save effect: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targets>. *Failure:* ${saveDmg.avg} (${saveDmg.dice}) damage single-target, ${aoeDmg.avg} (${aoeDmg.dice}) for areas. *Success:* Half damage only. Conditions Capitalized ("has the Prone condition"); never "Melee Weapon Attack" or "to hit".`;
 }
 
 function parseLegacyAttributes(attributes) {
@@ -1391,12 +1410,12 @@ const ENTRY_FIXABLE = new Set([
   'phrasing-2024-in-2014', 'second-person', 'trait-mitigation',
   'undefined-attack-ref', 'attack-damage-band', 'reaction-trigger',
   'condition-unknown', 'damage-type-caps', 'area-term-caps',
-  'phrasing-save-or', 'entry-name-coinage',
+  'phrasing-save-or', 'entry-name-coinage', 'entry-name-design-term',
 ]);
 
 // Rules whose defect is the entry's NAME — the fix call may rename these
 // (references follow via renameInText); all other fixes keep names exactly.
-const RENAMEABLE_RULES = new Set(['entry-name-coinage']);
+const RENAMEABLE_RULES = new Set(['entry-name-coinage', 'entry-name-design-term']);
 
 // Rejects that genuinely need new content — only these trigger a full
 // regeneration. spell-dc-ability is here because its fix is an ability-score

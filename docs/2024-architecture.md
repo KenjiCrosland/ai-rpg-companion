@@ -100,7 +100,24 @@ never accept LLM numbers); missing required_slots reject the generation.
 > had it) — now both prompts carry it AND a swarm-type correctable backstops
 > it; case conventions normalize at the edition gates (2014 lowercases
 > defense lines and the type line, keeping the size term capitalized in
-> "swarm of Tiny beasts"; the 2014→2024 direction re-capitalizes).
+> "swarm of Tiny beasts"; the 2014→2024 direction re-capitalizes). Full
+> Ktzzikt round (CR 30 swarm): AREA save damage budgets HALF the turn total
+> (DMG counts area damage double — the full-total skeleton prescribed a
+> 311-point cone); saveDamageDiceFor penalizes dice counts past 15 so big
+> budgets climb dice sizes (24d12, never 89d6 — corpus ceiling is 26 dice);
+> entry-name-design-term rejects slot/budget vocabulary in entry names
+> ("(Half-Damage Mode)", renameable); and the swarm half-damage slot
+> instruction prescribes the official embedded form ("or <reduced> damage
+> if the swarm has half of its Hit Points or fewer") after two inverted
+> (buff-below-half) generations. Also: PASSIVE_SLOT_CHECKS are
+> case-insensitive (2014's lowercase defense lines failed the swarm slots →
+> doomed structural regen — the "more failures" incident; note the provider
+> now serves deepseek-v4-flash, not V3). Full
+> archetype-crossover sweep (owner request): the no-legendary-preamble
+> instruction now exists in BOTH prompts (was 2014-only; both cards
+> auto-render the preamble), and Statblock.vue mirrors the support
+> solo-warning note. The 2014 static exemplar (vs 2024's archetype-matched
+> ones) is deliberate — no licensed 2014-phrased corpus exists.
 >
 > **Repair ladder (2026-07-19):** the original "reject → regenerate flavor"
 > contract is refined: rejects route through the cheapest sufficient tool —

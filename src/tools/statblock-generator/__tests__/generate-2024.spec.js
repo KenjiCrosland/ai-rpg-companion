@@ -94,7 +94,18 @@ describe('damage dice solvers', () => {
       const { dice, avg: actual } = saveDamageDiceFor(avg);
       expect(dice).not.toMatch(/[+-]/);
       expect(avgDice(dice)).toBe(actual);
-      expect(Math.abs(actual - avg)).toBeLessThanOrEqual(3);
+      expect(Math.abs(actual - avg)).toBeLessThanOrEqual(4);
+    }
+  });
+
+  test('save dice climb to bigger dice at scale instead of ballooning counts', () => {
+    // Live finding: "311 (89d6)" — officials top out at 26 dice.
+    expect(saveDamageDiceFor(21).dice).toBe('6d6'); // canonical handfuls stay
+    expect(saveDamageDiceFor(156).dice).toBe('24d12');
+    expect(saveDamageDiceFor(311).dice).toBe('48d12');
+    for (let avg = 10; avg <= 170; avg += 7) {
+      const n = Number(/^(\d+)d/.exec(saveDamageDiceFor(avg).dice)[1]);
+      expect(n).toBeLessThanOrEqual(27); // corpus ceiling is 26
     }
   });
 });
