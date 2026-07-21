@@ -112,7 +112,20 @@ never accept LLM numbers); missing required_slots reject the generation.
 > (buff-below-half) generations. Also: PASSIVE_SLOT_CHECKS are
 > case-insensitive (2014's lowercase defense lines failed the swarm slots →
 > doomed structural regen — the "more failures" incident; note the provider
-> now serves deepseek-v4-flash, not V3). Full
+> now serves deepseek-v4-flash, not V3). Field run (five live generations,
+> 2026-07-20 — all succeeded; all three 2024 blocks lint-clean): lint bands
+> now compare against the SKELETON per-attack value, not the raw budget (at
+> low CR the budget is unreachable with the mandatory flat mod);
+> entry-name-self (a trait named "Uulmoth" on Uulmoth — renameable);
+> legendary-cost-2024 strips "(Costs N Actions)" from 2024 legendary names
+> (2024 uses the uses pool; also prompt-banned); resistance-conditions
+> moves condition tokens out of Damage Resistances into immunities;
+> swarm-heal-contradiction (an entry healed a swarm whose own trait forbids
+> it — keyed on the swarm clause so the Aboleth's target-side curse stays
+> legal); swarm-half-damage substance check (a slot TAG without the actual
+> reduced-damage clause no longer passes); area-circle → Sphere and
+> centred → centered deterministic fixes; movement-mode casing normalizes
+> at the edition gates (2024 "Swim", 2014 "swim"). Full
 > archetype-crossover sweep (owner request): the no-legendary-preamble
 > instruction now exists in BOTH prompts (was 2014-only; both cards
 > auto-render the preamble), and Statblock.vue mirrors the support

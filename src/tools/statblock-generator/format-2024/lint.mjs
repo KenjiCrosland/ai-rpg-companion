@@ -382,6 +382,24 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     }
   }
 
+  // Conditions cannot be "resisted" in 5e — condition tokens belong in
+  // immunities (live finding: "Resistances: ..., Fire; Charmed, Frightened").
+  // Zero corpus occurrences. The applicator moves them across fields.
+  {
+    const conds = splitTokens(monster.resistances)
+      .filter((t) => CONDITION_TOKEN_SET.has(t.toLowerCase()));
+    if (conds.length) {
+      push('resistance-conditions', 'correctable', `Conditions listed as resistances (${conds.join(', ')}) — 5e has no condition resistance; they move to immunities`, undefined, { field: 'resistances' });
+    }
+  }
+
+  // Internal swarm contradiction: the Swarm trait says "can't regain hit
+  // points", then another entry heals the swarm (live finding: Corpse
+  // Feast). Keyed on the swarm-form clause so the Aboleth's target-side
+  // curse ("the target can't regain Hit Points") stays legal.
+  const swarmNoHeal = entriesOf(monster).some(({ entry }) =>
+    /swarm can't regain hit points/i.test(entry.text));
+
   // Entry names any attack reference may resolve against (parentheticals
   // like "(2/Day)" stripped, prefix matches allowed — mirrors the corpus
   // calibration).
@@ -422,6 +440,14 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       const lcArea = LOWERCASE_AREA_RE.exec(entry.text);
       if (lcArea) {
         push('area-term-caps', 'reject', `Lowercase area shape "${lcArea[0]}" in ${where} — 2024 capitalizes shapes ("15-foot Cone")`, undefined, loc);
+      }
+      // "30-foot-radius circle" — not a 5e area term (the one corpus "circle"
+      // is the *Magic Circle* spell); the official shape is a Sphere.
+      if (/\b\d+-foot(?:-radius)? circle\b/i.test(entry.text)) {
+        push('area-circle', 'reject', `${where}: "circle" is not a 5e area — use a Sphere`, undefined, loc);
+      }
+      if (section === 'Legendary Actions' && /\(Costs \d+ Actions?\)/i.test(entry.name)) {
+        push('legendary-cost-2024', 'correctable', `${where}: 2024 legendary options never carry cost suffixes (the uses pool replaced them; zero corpus occurrences)`, entry.name.replace(/\s*\(Costs \d+ Actions?\)/i, ''), loc);
       }
       // Invented conditions: "has the X condition" where X isn't one of the
       // 14 real conditions (+ Exhaustion). The model occasionally imports
@@ -481,6 +507,17 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // legal "(N/Day)" form). Deterministic: swap the marker.
     if (section === 'Traits' && /\(Recharge[^)]*\)/i.test(entry.name)) {
       push('trait-recharge', 'correctable', `${where}: Recharge belongs to actions — a limited trait uses (N/Day)`, entry.name.replace(/\s*\(Recharge[^)]*\)/i, ' (1/Day)'), loc);
+    }
+    // An entry named after the creature itself ("Uulmoth" as a trait name)
+    // — zero corpus occurrences; ability names describe the ability.
+    if (monster.name && entry.name.split(' (')[0].toLowerCase() === monster.name.toLowerCase()) {
+      push('entry-name-self', 'reject', `${where}: the entry is named after the creature itself — name what the ability DOES. Rename it`, undefined, loc);
+    }
+    if (swarmNoHeal && /swarm regains \d+/i.test(entry.text)) {
+      push('swarm-heal-contradiction', 'reject', `${where} heals the swarm, but the Swarm trait says it can't regain hit points — replace the healing with a different benefit`, undefined, loc);
+    }
+    if (/centred/.test(entry.text)) {
+      push('spelling-centred', 'reject', `${where}: "centred" — the books use American spelling ("centered")`, undefined, loc);
     }
     // Design vocabulary leaking into entry names ("Hungry Absorption
     // (Half-Damage Mode)") — slot/budget language is instructions, not
@@ -580,6 +617,14 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // 2014 prompt). Deterministic: wrap the written type.
     if (chassis.archetype === 'swarm' && monster.type && !/^swarm of/i.test(monster.type)) {
       push('swarm-type', 'correctable', `Swarm-archetype type must read "Swarm of Tiny <Creature>", not "${monster.type}"`, `Swarm of Tiny ${monster.type.replace(/s$/i, '')}s`, { field: 'type' });
+    }
+    // Substance check for the swarm's half-damage obligation: the model can
+    // satisfy the slot-TAG protocol without writing the mechanic (live
+    // finding). The official clause must exist in an attack line.
+    if (chassis.archetype === 'swarm'
+      && !entriesOf(monster).some(({ entry }) => /half of its hit points or fewer/i.test(entry.text))) {
+      const atk = entriesOf(monster).find(({ entry }) => ATTACK_LINE_RE.test(entry.text));
+      push('swarm-half-damage', 'reject', `The swarm's main attack must carry the official reduced-damage clause: "..., or <about half> damage if the swarm has half of its Hit Points or fewer" — add it to the attack's Hit line`, undefined, atk ? { section: atk.section, entry: atk.entry.name } : undefined);
     }
     // Escape DCs (grapple riders) are excluded from dc-band by design (the
     // Investigation-masking fix) and official values aren't formulaic — the

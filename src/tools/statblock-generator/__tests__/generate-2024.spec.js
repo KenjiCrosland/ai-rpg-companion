@@ -179,6 +179,14 @@ describe('assembleMonster', () => {
     expect(monster.senses).toBe('darkvision 60 ft.; Passive Perception 14');
   });
 
+  test('conditions listed as resistances move to immunities (field-run finding)', () => {
+    const m = { name: 'Test', resistances: 'Fire, Charmed, Frightened', immunities: 'Poison; Poisoned', sections: {} };
+    const { chassis } = buildContext(4, 'lurker');
+    const out = applyCorrections(m, lintStatblock(m, {}).findings, { chassis });
+    expect(out.resistances).toBe('Fire');
+    expect(out.immunities).toBe('Poison; Poisoned, Charmed, Frightened');
+  });
+
   test('entry names lose leading articles ("The Unstable" → "Unstable")', () => {
     const withArticle = JSON.parse(JSON.stringify(llmFixture));
     withArticle.sections.Traits.push({ name: 'The Unstable', text: 'It can move through a space as narrow as 1 inch without squeezing.' });

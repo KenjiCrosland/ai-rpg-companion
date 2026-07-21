@@ -473,7 +473,7 @@ STRUCTURE (exact requirements):
 - Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. The fixed HP already prices typical defenses. Condition immunities are free-form.
 ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
-` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders the uses preamble automatically. Provide only the option entries themselves.
+` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders the uses preamble automatically. Provide only the option entries themselves. Legendary options never carry cost suffixes in 2024 — never write "(Costs N Actions)"; design bigger effects as 1/Day actions instead.
 ` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Prefer well-known SRD spells.` : ''}
 
 Ability scores: choose scores that fit the concept, and make the creature's ATTACK ability its highest non-CON score — STR or DEX for weapon strikers, INT, WIS, or CHA for magical strikers. The engine sets that ability's modifier to ${signed(requiredAttackModFor(chassis))} so the attack bonus derives from it. Key save effects to abilities the concept justifies being strong.
@@ -755,7 +755,8 @@ export function toLegacyModel(m) {
     type_and_alignment: `${m.size} ${typeLower}${m.subtype ? ` (${m.subtype.toLowerCase()})` : ''}, ${m.alignment.toLowerCase()}`,
     armor_class: String(m.ac),
     hit_points: `${m.hp} (${m.hp_formula})`,
-    speed: m.speed,
+    // 2014 lowercases movement modes; 2024 capitalizes them.
+    speed: (m.speed ?? '').replace(/\b(Climb|Fly|Swim|Burrow|Hover)\b/g, (w) => w.toLowerCase()),
     attributes: STAT_ORDER.map((s) => `${s} ${m.stats[s]} (${signed(modOf(m.stats[s]))})`).join(', '),
     saving_throws: savingThrows,
     skills: m.skills ?? '',
@@ -839,7 +840,7 @@ export function fromLegacyModel(legacy) {
       ? (Number(hp[1]) || 1)
       : Math.max(1, avgDice(hpFormulaFor(Number(hp[1]) || 1, size, modOf(stats.CON))) ?? (Number(hp[1]) || 1)),
     hp_formula: hp[2] || hpFormulaFor(Number(hp[1]) || 1, size, modOf(stats.CON)),
-    speed: legacy.speed,
+    speed: (legacy.speed ?? '').replace(/\b(climb|fly|swim|burrow|hover)\b/g, (w) => w[0].toUpperCase() + w.slice(1)),
     stats,
     saves,
     initiative_bonus: modOf(stats.DEX),
@@ -992,6 +993,8 @@ const DETERMINISTIC_TEXT_FIXES = [
   ['second-person', (t) => t.replace(/\byours\b/gi, 'its').replace(/\byour\b/gi, 'its')],
   ['phrasing-save-or', (t) => t.replace(/\bmust (also )?make (an? DC \d+ [A-Za-z]+ saving throw) or\b/g,
     (m, also, rest) => `must ${also ?? ''}succeed on ${rest} or`)],
+  ['area-circle', (t) => t.replace(/(\d+-foot(?:-radius)?) circle\b/gi, '$1 Sphere')],
+  ['spelling-centred', (t) => t.replace(/centred/g, 'centered')],
   ['damage-type-caps', (t) => t.replace(DAMAGE_TYPES_LOWER_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['area-term-caps', (t) => t.replace(/\b(\d+-foot )(cone|line|sphere|cylinder|emanation|cube)\b/g,
     (m, p, a) => p + a[0].toUpperCase() + a.slice(1))],
@@ -1047,8 +1050,21 @@ export function applyCorrections(monster, findings, { chassis }) {
     out[f.loc.field] = f.expected || undefined;
   }
 
+  if (has('resistance-conditions')) {
+    const condSet = new Set([...CONDITIONS, 'Exhaustion'].map((c) => c.toLowerCase()));
+    const toks = (out.resistances ?? '').split(/[;,]/).map((t) => t.trim()).filter(Boolean);
+    const conds = toks.filter((t) => condSet.has(t.toLowerCase()));
+    const damage = toks.filter((t) => !condSet.has(t.toLowerCase()));
+    out.resistances = damage.join(', ') || undefined;
+    if (conds.length) {
+      out.immunities = out.immunities
+        ? `${out.immunities}${out.immunities.includes(';') ? ', ' : '; '}${conds.join(', ')}`
+        : conds.join(', ');
+    }
+  }
+
   for (const f of correctable.filter(
-    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge') && x.loc
+    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024') && x.loc
   )) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.name = f.expected;
@@ -1241,8 +1257,8 @@ Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
     }
     (sections[section] ??= []).push({ name: parsed.name, text: parsed.text });
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
-    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total }).findings, { chassis });
-    const result = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total });
+    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total }).findings, { chassis });
+    const result = lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total });
     const entry = pseudo.sections[section].find((e) => e.name === parsed.name && e.text);
     let rejects = result.findings.filter((f) => f.severity === 'reject');
     const sameName = parsed.name.trim().toLowerCase() === (current.name ?? '').trim().toLowerCase();
@@ -1362,8 +1378,8 @@ Return ONLY a JSON array, no markdown fences: [{"name": "...", "text": "..."}, .
     for (const r of otherRows) (sections[r.section] ??= []).push({ name: r.name, text: '' });
     sections[section] = parsed.map((e) => ({ name: e.name, text: e.text }));
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
-    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total }).findings, { chassis });
-    const rejects = lintStatblock(pseudo, { chassis, edition, perAttack: numbers.perAttack, totalDamage: numbers.total }).findings
+    pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total }).findings, { chassis });
+    const rejects = lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total }).findings
       .filter((f) => f.severity === 'reject');
     // Structural checks the entry-level lint can't see without a plan.
     const entries = pseudo.sections[section];
@@ -1411,11 +1427,13 @@ const ENTRY_FIXABLE = new Set([
   'undefined-attack-ref', 'attack-damage-band', 'reaction-trigger',
   'condition-unknown', 'damage-type-caps', 'area-term-caps',
   'phrasing-save-or', 'entry-name-coinage', 'entry-name-design-term',
+  'entry-name-self', 'swarm-heal-contradiction', 'swarm-half-damage',
+  'area-circle', 'spelling-centred',
 ]);
 
 // Rules whose defect is the entry's NAME — the fix call may rename these
 // (references follow via renameInText); all other fixes keep names exactly.
-const RENAMEABLE_RULES = new Set(['entry-name-coinage', 'entry-name-design-term']);
+const RENAMEABLE_RULES = new Set(['entry-name-coinage', 'entry-name-design-term', 'entry-name-self']);
 
 // Rejects that genuinely need new content — only these trigger a full
 // regeneration. spell-dc-ability is here because its fix is an ability-score
@@ -1664,7 +1682,11 @@ export async function generateMonster2024(options, callLLM) {
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
   const assembleCtx = { cr, chassis, plan, archetypeName: archetype, archetypeSource };
   const seedTokens = seedTraits ? seedLeakTokens(seedTraits) : undefined;
-  const { perAttack, total: totalDamage } = damageBudgetFor(cr, chassis, plan);
+  const { perAttack: rawPerAttack, total: totalDamage } = damageBudgetFor(cr, chassis, plan);
+  // Band against the SKELETON per-attack value (what the prompt dictated),
+  // not the raw budget — at low CR the budget is unreachable with the
+  // mandatory flat mod (live: CR 1/2 budget 4, skeleton 6 (1d6 + 3)).
+  const perAttack = attackDamageDiceFor(rawPerAttack, requiredAttackModFor(chassis)).avg;
   const defenseCaps = defenseBudgetFor(cr, archetype);
   const prompt = buildGenerationPrompt({ concept, description, cr, chassis, plan, caster, edition });
 

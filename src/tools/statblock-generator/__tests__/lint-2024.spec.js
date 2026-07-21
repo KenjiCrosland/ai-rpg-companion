@@ -322,6 +322,43 @@ describe('each rule catches its violation class', () => {
     }
   });
 
+  test('field-audit rules: self-named entries, swarm heal contradiction, resistance conditions, typography', () => {
+    // Live findings from the five-creature field run (2026-07-20).
+    const selfNamed = { ...cleanLurker, sections: { ...cleanLurker.sections, Traits: [{ name: 'Gloom Stalker', text: 'It climbs difficult surfaces without a check.' }] } };
+    expect(rules(lint(selfNamed, {}))).toContain('entry-name-self');
+
+    const healSwarm = { ...cleanLurker, sections: { ...cleanLurker.sections, Traits: [
+      { name: 'Swarm', text: "The swarm can't regain hit points or gain temporary hit points." },
+      { name: 'Corpse Feast', text: 'The swarm regains 10 (3d6) hit points.' },
+    ] } };
+    const heal = lint(healSwarm, {}).findings.find((x) => x.rule === 'swarm-heal-contradiction');
+    expect(heal.severity).toBe('reject');
+    expect(heal.loc.entry).toBe('Corpse Feast');
+
+    const resCond = { ...cleanLurker, resistances: 'Fire, Charmed, Frightened', immunities: 'Poison' };
+    expect(rules(lint(resCond, {}))).toContain('resistance-conditions');
+
+    const circle = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, each creature in a 30-foot-radius circle centred on a point within 60 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage only.' });
+    const rs = rules(lint(circle, {}));
+    expect(rs).toContain('area-circle');
+    expect(rs).toContain('spelling-centred');
+
+    const legend = { ...cleanLurker, sections: { ...cleanLurker.sections, 'Legendary Actions': [{ name: 'Slam (Costs 2 Actions)', text: 'It slams once.' }] } };
+    const lc = lint(legend, {}).findings.find((x) => x.rule === 'legendary-cost-2024');
+    expect(lc.severity).toBe('correctable');
+    expect(lc.expected).toBe('Slam');
+  });
+
+  test('swarm-half-damage: the reduced-damage clause must actually exist, tags are not enough', () => {
+    const swarmChassis = applyArchetype(chassisFor(9), 'swarm');
+    const missing = lintStatblock(cleanLurker, { chassis: swarmChassis }).findings
+      .find((x) => x.rule === 'swarm-half-damage');
+    expect(missing.loc).toEqual({ section: 'Actions', entry: 'Shadow Claw' });
+    const withClause = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, or 6 (1d4 + 4) Slashing damage if the swarm has half of its Hit Points or fewer.' });
+    expect(lintStatblock(withClause, { chassis: swarmChassis }).findings
+      .some((x) => x.rule === 'swarm-half-damage')).toBe(false);
+  });
+
   test('swarm-type: swarm archetype demands the swarm type line', () => {
     // Live finding: a 2014 swarm generated as "Medium aberration".
     const swarmChassis = applyArchetype(chassisFor(9), 'swarm');
