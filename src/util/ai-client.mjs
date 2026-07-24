@@ -25,8 +25,40 @@ const circuitBreaker = {
   isOpen: false,
   openedAt: null,
   FAILURE_THRESHOLD: 2, // Open circuit after 2 consecutive failures
-  COOLDOWN_MS: 5 * 60 * 1000, // 5 minutes
+  // An hour, not minutes (owner call, 2026-07-24): during a sustained
+  // provider incident, every re-probe costs a ~40s dead 502 wait — pay
+  // that at most once an hour, not every five minutes.
+  COOLDOWN_MS: 60 * 60 * 1000,
 };
+
+// The open state persists across reloads: without this, every fresh page
+// re-pays the two-failure discovery cost (two ~40s stalls) before the
+// breaker re-opens.
+const BREAKER_STORAGE_KEY = 'ai-breaker-open-until';
+
+function hydrateBreakerFromStorage() {
+  if (circuitBreaker.isOpen || typeof window === 'undefined') return;
+  const until = Number(localStorage.getItem(BREAKER_STORAGE_KEY));
+  if (!until) return;
+  if (Date.now() < until) {
+    circuitBreaker.isOpen = true;
+    circuitBreaker.openedAt = until - circuitBreaker.COOLDOWN_MS;
+  } else {
+    localStorage.removeItem(BREAKER_STORAGE_KEY);
+  }
+}
+
+function persistBreakerOpen() {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(BREAKER_STORAGE_KEY, String(Date.now() + circuitBreaker.COOLDOWN_MS));
+  }
+}
+
+function clearPersistedBreaker() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(BREAKER_STORAGE_KEY);
+  }
+}
 
 // Hang guard, not a latency target: genuinely long generations are normal
 // (big prompts, loaded providers), so this only cuts calls that are almost
@@ -52,6 +84,7 @@ function isTransientProviderError(error) {
  * Check if circuit breaker should allow trying primary provider again
  */
 function checkCircuitBreaker() {
+  hydrateBreakerFromStorage();
   if (!circuitBreaker.isOpen) {
     return false; // Circuit is closed, use primary provider
   }
@@ -63,6 +96,7 @@ function checkCircuitBreaker() {
     circuitBreaker.isOpen = false;
     circuitBreaker.consecutiveFailures = 0;
     circuitBreaker.openedAt = null;
+    clearPersistedBreaker();
     logger.log('🔄 Circuit breaker reset - trying primary provider again');
     return false;
   }
@@ -79,6 +113,7 @@ function recordFailure(providerName) {
   if (circuitBreaker.consecutiveFailures >= circuitBreaker.FAILURE_THRESHOLD && !circuitBreaker.isOpen) {
     circuitBreaker.isOpen = true;
     circuitBreaker.openedAt = Date.now();
+    persistBreakerOpen();
     logger.warn(`⚠️ Circuit breaker opened for ${providerName} - switching to fallback provider for ${circuitBreaker.COOLDOWN_MS / 60000} minutes`);
   }
 }
@@ -100,6 +135,7 @@ function recordSuccess() {
  * a weaker model can't polish).
  */
 export function isDegradedMode() {
+  hydrateBreakerFromStorage();
   return getAIProvider() === PROVIDERS.OPENAI || circuitBreaker.isOpen;
 }
 

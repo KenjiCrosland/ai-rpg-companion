@@ -23,6 +23,7 @@ describe('generateGptResponse failover', () => {
 
   beforeEach(() => {
     jest.resetModules();
+    localStorage.clear(); // persisted breaker state must not leak across tests
     global.fetch = jest.fn();
     ({ generateGptResponse } = require('./ai-client.mjs'));
   });
@@ -66,6 +67,34 @@ describe('generateGptResponse failover', () => {
     // triggers another hop.
     expect(global.fetch).toHaveBeenCalledTimes(2);
     expect(global.fetch.mock.calls[1][0]).toBe('/api/ai/openai');
+  });
+
+  test('the open breaker PERSISTS across reloads (localStorage, 1-hour window)', async () => {
+    // Open the breaker: two primary failures.
+    global.fetch
+      .mockResolvedValueOnce(errResponse(502)).mockResolvedValueOnce(okResponse('a'))
+      .mockResolvedValueOnce(errResponse(502)).mockResolvedValueOnce(okResponse('b'));
+    await generateGptResponse('one');
+    await generateGptResponse('two');
+    expect(Number(localStorage.getItem('ai-breaker-open-until'))).toBeGreaterThan(Date.now());
+
+    // "Reload": a fresh module instance hydrates the open state and goes
+    // straight to the fallback — no re-paying the discovery stalls.
+    jest.resetModules();
+    global.fetch = jest.fn().mockResolvedValueOnce(okResponse('after reload'));
+    ({ generateGptResponse } = require('./ai-client.mjs'));
+    await expect(generateGptResponse('three')).resolves.toBe('after reload');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch.mock.calls[0][0]).toBe('/api/ai/openai');
+
+    // An EXPIRED window is cleared and the primary is probed again.
+    localStorage.setItem('ai-breaker-open-until', String(Date.now() - 1000));
+    jest.resetModules();
+    global.fetch = jest.fn().mockResolvedValueOnce(okResponse('probe ok'));
+    ({ generateGptResponse } = require('./ai-client.mjs'));
+    await expect(generateGptResponse('four')).resolves.toBe('probe ok');
+    expect(global.fetch.mock.calls[0][0]).toBe('/api/ai/deepseek');
+    expect(localStorage.getItem('ai-breaker-open-until')).toBe(null);
   });
 
   test('after the breaker opens, subsequent calls go straight to the fallback', async () => {
