@@ -125,10 +125,10 @@ export async function generateGptResponse(
       };
     } else if (providerOverride === PROVIDERS.DEEPSEEK) {
       providerConfig = {
-        name: 'DeepSeek V3',
+        name: 'DeepSeek V4 Flash',
         endpoint: 'https://api.deepseek.com/v1/chat/completions',
         devEndpoint: '/api/ai/deepseek',
-        model: 'deepseek-chat',
+        model: 'deepseek-v4-flash',
         type: 'openai',
       };
     }

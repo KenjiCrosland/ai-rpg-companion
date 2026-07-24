@@ -36,7 +36,7 @@ const cleanLurker = {
     ],
     Actions: [
       { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
-      { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.' },
+      { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Slashing damage.' },
       {
         name: 'Ambush Pounce',
         slot: 'ambush or once-per-fight nova mechanic',
@@ -92,14 +92,14 @@ describe('each rule catches its violation class', () => {
 
   test('phrasing-2014: Melee Weapon Attack form', () => {
     const broken = withAction(cleanLurker, 1, {
-      text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. 13 (2d8 + 4) slashing damage.',
+      text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. 12 (2d8 + 3) slashing damage.',
     });
     expect(rules(lint(broken))).toContain('phrasing-2014');
   });
 
   test('phrasing-to-hit: vestigial "to hit" in a 2024 attack line', () => {
     const broken = withAction(cleanLurker, 1, {
-      text: '*Melee Attack Roll:* +7 to hit, reach 5 ft. 13 (2d8 + 4) Slashing damage.',
+      text: '*Melee Attack Roll:* +7 to hit, reach 5 ft. 12 (2d8 + 3) Slashing damage.',
     });
     expect(rules(lint(broken))).toContain('phrasing-to-hit');
   });
@@ -121,14 +121,14 @@ describe('each rule catches its violation class', () => {
   test('attack-damage-band: per-attack damage outside the budget band', () => {
     // Lurker CR 4 per-attack budget is 9 (turn total 18 across the fixture's
     // two-attack Multiattack); the fixture's 13 is 1.44× over.
-    const result = lint(cleanLurker, { perAttack: 9, totalDamage: 18 });
+    const result = lint(cleanLurker, { perAttack: 8, totalDamage: 16 });
     const finding = result.findings.find((f) => f.rule === 'attack-damage-band');
     expect(finding.severity).toBe('correctable'); // single expression → clamp
-    expect(finding.expected).toBe(9);
+    expect(finding.expected).toBe(8);
     expect(finding.loc.entry).toBe('Shadow Claw');
     // Multi-expression entries route to the fix call instead.
     const rider = withAction(cleanLurker, 1, {
-      text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage plus 10 (3d6) Necrotic damage.',
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Slashing damage plus 10 (3d6) Necrotic damage.',
     });
     const multi = lint(rider, { perAttack: 9, totalDamage: 18 }).findings.find((f) => f.rule === 'attack-damage-band');
     expect(multi.severity).toBe('reject');
@@ -182,11 +182,11 @@ describe('each rule catches its violation class', () => {
 
   test('term-caps: lowercase Hit Points / opportunity attacks', () => {
     const broken = withAction(cleanLurker, 1, {
-      text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target can\'t regain hit points until the start of the stalker\'s next turn.',
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Slashing damage, and the target can\'t regain hit points until the start of the stalker\'s next turn.',
     });
     expect(rules(lint(broken))).toContain('term-caps');
     const broken2 = withAction(cleanLurker, 1, {
-      text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage. The stalker can then move 10 feet without provoking opportunity attacks.',
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Slashing damage. The stalker can then move 10 feet without provoking opportunity attacks.',
     });
     expect(rules(lint(broken2))).toContain('term-caps');
   });
@@ -299,7 +299,7 @@ describe('each rule catches its violation class', () => {
   });
 
   test('damage-type-caps and area-term-caps: lowercase 2024 forms reject (deterministically fixable)', () => {
-    const lcType = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) slashing damage.' });
+    const lcType = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) slashing damage.' });
     expect(rules(lint(lcType, {}))).toContain('damage-type-caps');
     const lcArea = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, each creature in a 15-foot cone. *Failure:* 21 (6d6) Psychic damage.' });
     expect(rules(lint(lcArea, {}))).toContain('area-term-caps');
@@ -320,6 +320,23 @@ describe('each rule catches its violation class', () => {
         f.rule === 'slot-missing' && /resistance package|condition immunities/.test(f.message));
       expect(passiveMisses).toEqual([]);
     }
+  });
+
+  test('rubric-round rules: surprised leakage, bathos entry names, attack-mod coherence', () => {
+    // 2024 removed the surprised state (live: "hits a creature that is surprised").
+    const surprised = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, one creature that is surprised. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.' });
+    expect(rules(lint(surprised, {}))).toContain('phrasing-surprised');
+
+    // "Slurp" as a stealth trait (live) — bathos ban extends to entry names.
+    const slurp = { ...cleanLurker, sections: { ...cleanLurker.sections, Traits: [{ name: 'Slurp', text: 'While in Dim Light, it can take the Hide action as a Bonus Action.' }] } };
+    expect(rules(lint(slurp, {}))).toContain('entry-name-bathos');
+
+    // "1d6 + 4" on a creature whose non-CON mods are {1, 3, -2, 2, -1} (live:
+    // a rider attack keyed to nothing). CON never sources attack damage.
+    const badMod = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 7 (1d6 + 4) Poison damage.' });
+    expect(rules(lint(badMod, {}))).toContain('attack-mod-coherence');
+    // The coherent fixture (+3 = DEX mod) stays clean.
+    expect(rules(lint(cleanLurker))).not.toContain('attack-mod-coherence');
   });
 
   test('field-audit rules: self-named entries, swarm heal contradiction, resistance conditions, typography', () => {
@@ -354,7 +371,7 @@ describe('each rule catches its violation class', () => {
     const missing = lintStatblock(cleanLurker, { chassis: swarmChassis }).findings
       .find((x) => x.rule === 'swarm-half-damage');
     expect(missing.loc).toEqual({ section: 'Actions', entry: 'Shadow Claw' });
-    const withClause = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, or 6 (1d4 + 4) Slashing damage if the swarm has half of its Hit Points or fewer.' });
+    const withClause = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Slashing damage, or 5 (1d4 + 3) Slashing damage if the swarm has half of its Hit Points or fewer.' });
     expect(lintStatblock(withClause, { chassis: swarmChassis }).findings
       .some((x) => x.rule === 'swarm-half-damage')).toBe(false);
   });
@@ -377,9 +394,9 @@ describe('each rule catches its violation class', () => {
 
   test('escape-dc: asymmetric band — well under the save DC passes (official style), above it flags', () => {
     // Chassis save DC is 13. Official escape DCs run LOW, so 9 passes.
-    const low = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage. If the target is Medium or smaller, it has the Grappled condition (escape DC 9).' });
+    const low = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Slashing damage. If the target is Medium or smaller, it has the Grappled condition (escape DC 9).' });
     expect(rules(lint(low))).not.toContain('escape-dc');
-    const high = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage. If the target is Medium or smaller, it has the Grappled condition (escape DC 18).' });
+    const high = withAction(cleanLurker, 1, { text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Slashing damage. If the target is Medium or smaller, it has the Grappled condition (escape DC 18).' });
     const f = lint(high).findings.find((x) => x.rule === 'escape-dc');
     expect(f.severity).toBe('correctable');
     expect(f.expected).toBe(11); // save_dc − 2, the typical official offset
@@ -425,7 +442,7 @@ describe('each rule catches its violation class', () => {
 
   test('condition-caps: lowercase condition word', () => {
     const broken = withAction(cleanLurker, 1, {
-      text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target is knocked prone.',
+      text: '*Melee Attack Roll:* +7, reach 5 ft. 12 (2d8 + 3) Slashing damage, and the target is knocked prone.',
     });
     expect(rules(lint(broken))).toContain('condition-caps');
   });
@@ -433,7 +450,7 @@ describe('each rule catches its violation class', () => {
   test('ac-band / attack-band / dc-band: numbers outside ±1 of budget', () => {
     expect(rules(lint({ ...cleanLurker, ac: 16 }))).toContain('ac-band');
     const hotAttack = withAction(cleanLurker, 1, {
-      text: '*Melee Attack Roll:* +9, reach 5 ft. 13 (2d8 + 4) Slashing damage.',
+      text: '*Melee Attack Roll:* +9, reach 5 ft. 12 (2d8 + 3) Slashing damage.',
     });
     expect(rules(lint(hotAttack))).toContain('attack-band');
     const hotDC = withAction(cleanLurker, 2, {
@@ -583,15 +600,24 @@ describe('band boundaries are inclusive', () => {
 // 3. SRD clean pass (false-positive guarantee)
 // ---------------------------------------------------------------------------
 describe('SRD corpus', () => {
-  test('context-free rules accept all 329 official blocks (2 documented quirks)', () => {
-    // The SRD source itself carries vestigial "to hit" in exactly two attack
-    // lines (Ancient Gold Dragon's Rend, Bat's Bite). Everything else must
-    // lint clean — if a rule flags official text, the rule is wrong.
-    const QUIRKS = new Set(['Ancient Gold Dragon', 'Bat']);
+  test('context-free rules accept all 329 official blocks (3 documented quirks)', () => {
+    // The SRD source itself carries: vestigial "to hit" in exactly two
+    // attack lines (Ancient Gold Dragon's Rend, Bat's Bite), and two flat
+    // damage bonuses that derive from no non-CON ability mod (Frost Giant's
+    // War Cry +5, Giant Frog's Bite +2). Everything else must lint clean —
+    // if a rule flags official text, the rule is wrong.
+    // (Frost Giant's War Cry +5 also derives from no non-CON mod, but that
+    // expression lives in a save effect, and attack-mod-coherence is gated
+    // to attack lines — so it stays clean.)
+    const QUIRKS = {
+      'Ancient Gold Dragon': ['phrasing-to-hit'],
+      Bat: ['phrasing-to-hit'],
+      'Giant Frog': ['attack-mod-coherence'],
+    };
     for (const m of monsters) {
       const result = lintStatblock(m);
-      if (QUIRKS.has(m.name)) {
-        expect(rules(result)).toEqual(['phrasing-to-hit']);
+      if (QUIRKS[m.name]) {
+        expect({ name: m.name, rules: rules(result) }).toEqual({ name: m.name, rules: QUIRKS[m.name] });
       } else {
         expect({ name: m.name, findings: result.findings }).toEqual({ name: m.name, findings: [] });
       }

@@ -19,6 +19,7 @@ import challengeRatings from '@/data/challengeRatings.json';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
 import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS } from './lint.mjs';
+import { logger } from '@/util/logger.mjs';
 
 export const ARCHETYPE_NAMES = Object.keys(spec.archetypes).filter((n) => !n.startsWith('_'));
 
@@ -273,9 +274,9 @@ export function validateArchetypeResponse(jsonString) {
 export function buildSeedSynthesisPrompt(seed) {
   return `Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.
 
-Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}.
+Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}.
 
-Write one vivid sentence describing a single unified creature. The traits must merge into one identity — one body, one behavior — not remain separate features. Contradictions between traits are creative fuel.
+Write one vivid sentence describing a single unified creature. The traits must merge into one identity — one body, one behavior — not remain separate features. Contradictions between traits are creative fuel. The combat role must FOLLOW the rolled disposition — a guardian is a defender, a trickster is not a brute, a pack-hunter skirmishes.
 
 Archetypes:
 - brute: hits hard up close, soaks damage, easy to hit
@@ -1285,8 +1286,15 @@ Your previous attempt was rejected for these reasons — fix ALL of them this ti
 ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
     if (retry) outcome = retry;
   }
-  if (outcome.rejects.length || !outcome.entry) {
-    throw new Error(`Re-rolled entry failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`);
+  if (!outcome.entry) {
+    throw validationError('Re-rolled entry failed validation', outcome.rejects);
+  }
+  if (outcome.rejects.length) {
+    if (onlyStyleRejects(outcome.rejects)) {
+      logger.warn('Re-rolled entry kept style warts:', outcome.rejects.map((f) => f.rule));
+    } else {
+      throw validationError('Re-rolled entry failed validation', outcome.rejects);
+    }
   }
   const entryName = edition === '2014' && section === 'Legendary Actions'
     ? normalizeLegendaryCost(outcome.entry.name)
@@ -1406,7 +1414,11 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
     if (retry) outcome = retry;
   }
   if (outcome.rejects.length) {
-    throw new Error(`Re-rolled section failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`);
+    if (onlyStyleRejects(outcome.rejects)) {
+      logger.warn('Re-rolled section kept style warts:', outcome.rejects.map((f) => f.rule));
+    } else {
+      throw validationError('Re-rolled section failed validation', outcome.rejects);
+    }
   }
   return outcome.entries.map((e) => ({
     name: edition === '2014' && section === 'Legendary Actions' ? normalizeLegendaryCost(e.name) : e.name,
@@ -1428,12 +1440,40 @@ const ENTRY_FIXABLE = new Set([
   'condition-unknown', 'damage-type-caps', 'area-term-caps',
   'phrasing-save-or', 'entry-name-coinage', 'entry-name-design-term',
   'entry-name-self', 'swarm-heal-contradiction', 'swarm-half-damage',
-  'area-circle', 'spelling-centred',
+  'area-circle', 'spelling-centred', 'phrasing-surprised',
+  'entry-name-bathos', 'attack-mod-coherence',
 ]);
 
 // Rules whose defect is the entry's NAME — the fix call may rename these
 // (references follow via renameInText); all other fixes keep names exactly.
-const RENAMEABLE_RULES = new Set(['entry-name-coinage', 'entry-name-design-term', 'entry-name-self']);
+const RENAMEABLE_RULES = new Set(['entry-name-coinage', 'entry-name-design-term', 'entry-name-self', 'entry-name-bathos']);
+
+// Style-tier rejects: wrong WORDS, not wrong math or mechanics. If the
+// repair ladder exhausts with only these left, the block ships anyway with
+// a warning — a failed generation is strictly worse UX than a phrasing
+// wart the user can edit or re-roll (live feedback, 2026-07-22: bursts of
+// failed generations under deepseek-v4-flash). Everything mechanical
+// (bands, structure, references, contradictions, triggers) still blocks.
+const STYLE_TIER_REJECTS = new Set([
+  'phrasing-2014', 'phrasing-to-hit', 'phrasing-saving-throw',
+  'phrasing-hybrid-save', 'phrasing-2024-in-2014', 'phrasing-save-or',
+  'term-caps', 'condition-caps', 'damage-type-caps', 'area-term-caps',
+  'area-circle', 'spelling-centred', 'second-person', 'entry-name-caps',
+  'entry-name-coinage', 'entry-name-design-term', 'entry-name-self',
+  'entry-name-bathos', 'seed-leakage', 'attack-mod-coherence',
+]);
+
+/** True when every remaining reject is a shippable style wart. */
+function onlyStyleRejects(rejects) {
+  return rejects.length > 0 && rejects.every((f) => STYLE_TIER_REJECTS.has(f.rule));
+}
+
+/** Error that carries the reject taxonomy for telemetry. */
+function validationError(prefix, rejects) {
+  const err = new Error(`${prefix}: ${rejects.map((f) => f.message).join('; ')}`);
+  err.rejectRules = rejects.map((f) => f.rule);
+  return err;
+}
 
 // Rejects that genuinely need new content — only these trigger a full
 // regeneration. spell-dc-ability is here because its fix is an ability-score
@@ -1738,9 +1778,12 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   }
 
   if (outcome.rejects.length) {
-    throw new Error(
-      `Generated statblock failed validation: ${outcome.rejects.map((f) => f.message).join('; ')}`
-    );
+    if (onlyStyleRejects(outcome.rejects)) {
+      logger.warn('Statblock shipped with style warts the repair ladder could not clear:',
+        outcome.rejects.map((f) => `${f.rule}: ${f.message}`));
+    } else {
+      throw validationError('Generated statblock failed validation', outcome.rejects);
+    }
   }
   // Naming pass (seeded generations only): name the FINISHED creature. The
   // main call's name is provisional; a dedicated micro-call reads the actual

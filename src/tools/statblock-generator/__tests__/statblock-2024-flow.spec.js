@@ -101,7 +101,7 @@ const llmFixture = {
     ],
     Actions: [
       { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
-      { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.' },
+      { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' },
       { name: 'Ambush Pounce', slot: 'ambush or once-per-fight nova mechanic', text: '*Dexterity Saving Throw*: DC 13, one creature. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.' },
     ],
   },
@@ -346,7 +346,7 @@ describe('StatblockGenerator 2024 flow', () => {
         Traits: [{ name: 'Umbral Veil', text: 'While in Dim Light or Darkness, the stalker has the Invisible condition.' }],
         Actions: [
           { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
-          { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.' },
+          { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' },
         ],
       },
     });
@@ -355,7 +355,7 @@ describe('StatblockGenerator 2024 flow', () => {
       Traits: [{ name: 'Umbral Veil', text: 'While in dim light or darkness, the stalker is invisible.' }],
       Actions: [
         { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
-        { name: 'Shadow Claw', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' },
+        { name: 'Shadow Claw', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.' },
       ],
     };
 

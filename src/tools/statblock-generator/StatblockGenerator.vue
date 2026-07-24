@@ -1038,6 +1038,22 @@ async function generateStatblockEngine(edition) {
     );
   } catch (e) {
     errorMessage.value = e.message;
+    // Failure taxonomy: keep the last 20 failures (rule names + settings) in
+    // a ring buffer so "generations keep failing" reports come with data.
+    // Inspect via localStorage['statblock-failure-log'] in the console.
+    logger.error('Statblock generation failed:', e.rejectRules ?? e.message);
+    try {
+      const log = JSON.parse(localStorage.getItem('statblock-failure-log') ?? '[]');
+      log.push({
+        at: new Date().toISOString(),
+        cr: crKeyFor(cr),
+        archetype: archetypeName,
+        edition,
+        rules: e.rejectRules ?? null,
+        message: String(e.message).slice(0, 300),
+      });
+      localStorage.setItem('statblock-failure-log', JSON.stringify(log.slice(-20)));
+    } catch { /* telemetry must never break the error path */ }
     toast.error('Failed to generate statblock. Please try again.');
     loadingPart1.value = false;
     loadingPart2.value = false;

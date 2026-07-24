@@ -449,6 +449,12 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       if (section === 'Legendary Actions' && /\(Costs \d+ Actions?\)/i.test(entry.name)) {
         push('legendary-cost-2024', 'correctable', `${where}: 2024 legendary options never carry cost suffixes (the uses pool replaced them; zero corpus occurrences)`, entry.name.replace(/\s*\(Costs \d+ Actions?\)/i, ''), loc);
       }
+      // 2024 removed the surprised state (surprise now = Disadvantage on
+      // initiative); "a creature that is surprised" is 2014 assassin-template
+      // language. Zero corpus occurrences.
+      if (/\bsurprised\b/i.test(entry.text)) {
+        push('phrasing-surprised', 'reject', `${where} references "surprised" — 2024 has no surprised state (surprise gives Disadvantage on initiative); phrase the trigger as "a creature that hasn't taken a turn in combat yet"`, undefined, loc);
+      }
       // Invented conditions: "has the X condition" where X isn't one of the
       // 14 real conditions (+ Exhaustion). The model occasionally imports
       // 4e-isms ("Dazed") or invents status names. The SRD's compound form
@@ -507,6 +513,11 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // legal "(N/Day)" form). Deterministic: swap the marker.
     if (section === 'Traits' && /\(Recharge[^)]*\)/i.test(entry.name)) {
       push('trait-recharge', 'correctable', `${where}: Recharge belongs to actions — a limited trait uses (N/Day)`, entry.name.replace(/\s*\(Recharge[^)]*\)/i, ' (1/Day)'), loc);
+    }
+    // Comedic/gross-out entry names ("Slurp" as a stealth trait) — the
+    // bathos ban pickName applies to creature names, extended to abilities.
+    if (/\b(slurp|burp|gulp|squelch|splat|boop|bonk|tickle|wiggle|giggle|snuggle|slink[iy]|bounc[iy]|squish[iy]|wobbl[iy])\w*\b/i.test(entry.name)) {
+      push('entry-name-bathos', 'reject', `${where}: comedic/diminutive entry name — name the ability with words that keep their menace. Rename it`, undefined, loc);
     }
     // An entry named after the creature itself ("Uulmoth" as a trait name)
     // — zero corpus occurrences; ability names describe the ability.
@@ -572,6 +583,20 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         const derived = 8 + monster.pb + modOf(monster.stats[ABILITY_ABBR[sc[1]]]);
         if (Math.abs(Number(sc[2]) - derived) > 1) {
           push('spell-dc-ability', 'reject', `${where}: spell save DC ${sc[2]} doesn't derive from ${sc[1]} (8 + PB + mod = ${derived}) — raise the spellcasting ability's score to support the DC`, undefined, loc);
+        }
+      }
+    }
+    // Attack flat damage bonuses derive from an ability mod — officials key
+    // them to STR/DEX/INT/WIS/CHA (never bare CON; 2 documented corpus
+    // quirks: Frost Giant's War Cry, Giant Frog's Bite). Catches riders like
+    // "1d6 + 4" on a +7 DEX striker. Style-tier: fix calls correct it,
+    // stubborn cases ship.
+    if (monster.stats && ATTACK_LINE_RE.test(entry.text)) {
+      const nonConMods = ['STR', 'DEX', 'INT', 'WIS', 'CHA'].map((k) => modOf(monster.stats[k]));
+      for (const dm of entry.text.matchAll(/\d+\s*\(\d+d\d+\s*\+\s*(\d+)\)/g)) {
+        if (!nonConMods.includes(Number(dm[1]))) {
+          push('attack-mod-coherence', 'reject', `${where}: flat damage bonus +${dm[1]} matches none of the creature's STR/DEX/INT/WIS/CHA modifiers — attack damage bonuses derive from the attack ability`, undefined, loc);
+          break;
         }
       }
     }

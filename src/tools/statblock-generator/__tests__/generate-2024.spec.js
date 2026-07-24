@@ -30,7 +30,7 @@ const llmFixture = {
     ],
     Actions: [
       { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
-      { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.' },
+      { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' },
       { name: 'Ambush Pounce', slot: 'ambush or once-per-fight nova mechanic', text: '*Dexterity Saving Throw*: DC 13, one creature. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.' },
     ],
   },
@@ -224,9 +224,9 @@ describe('assembleMonster', () => {
 
   test('zero-damage riders are stripped at assembly', () => {
     const belcher = JSON.parse(JSON.stringify(llmFixture));
-    belcher.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage plus 0 fire damage.';
+    belcher.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage plus 0 fire damage.';
     const monster = assembleMonster(belcher, ctx());
-    expect(monster.sections.Actions[1].text).toBe('*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.');
+    expect(monster.sections.Actions[1].text).toBe('*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.');
   });
 
   test('leading articles are stripped and names Title Cased', () => {
@@ -383,14 +383,18 @@ describe('seed leakage', () => {
       .mockResolvedValueOnce(JSON.stringify(leaky))
       .mockResolvedValueOnce(JSON.stringify({ 'Shadow Drifter': 'Drifting Shade' })) // still leaks
       .mockResolvedValueOnce(JSON.stringify({ 'Drifting Shade': 'Drift Wraith' })); // stubborn
-    await expect(generateMonster2024(
+    // Stubborn leakage is a STYLE wart: the user never sees the seed, so
+    // after the rename ladder exhausts the block SHIPS instead of failing
+    // (severity tiering, 2026-07-22).
+    const monster = await generateMonster2024(
       {
         concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto',
         seedTraits: { silhouette: 'floating drifting form' },
       },
       callLLM,
-    )).rejects.toThrow(/seed word/);
-    expect(callLLM).toHaveBeenCalledTimes(3); // generation + two fix attempts
+    );
+    expect(callLLM).toHaveBeenCalledTimes(4); // generation + two fixes + naming pass
+    expect(monster.name).toBe('Drift Wraith'); // last rename attempt kept
   });
 });
 
@@ -436,7 +440,7 @@ describe('defense caps', () => {
       resistances: 'Necrotic, Fire',
       immunities: 'Poison; Poisoned',
       sections: {
-        Actions: [{ name: 'Grave Touch', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Necrotic damage.' }],
+        Actions: [{ name: 'Grave Touch', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Necrotic damage.' }],
       },
     };
     const findings = lintStatblock(wraith, { defenseCaps: { points: 0 } }).findings
@@ -609,7 +613,7 @@ describe('applyCorrections', () => {
   test('clamps out-of-band attack and DC numbers in section texts', () => {
     const { chassis, plan } = buildContext(4, 'lurker');
     const hot = assembleMonster(JSON.parse(JSON.stringify(llmFixture)), ctx());
-    hot.sections.Actions[1].text = '*Melee Attack Roll:* +11, reach 5 ft. 13 (2d8 + 4) Slashing damage.';
+    hot.sections.Actions[1].text = '*Melee Attack Roll:* +11, reach 5 ft. 14 (2d8 + 5) Slashing damage.';
     hot.sections.Actions[2].text = '*Dexterity Saving Throw*: DC 19, one creature. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.';
     const findings = lintStatblock(hot, { chassis, plan }).findings;
     const fixed = applyCorrections(hot, findings, { chassis });
@@ -652,7 +656,7 @@ describe('generateMonster2024 orchestration', () => {
     expect(callLLM).toHaveBeenCalledTimes(1);
     // The clamp is mod-aware: the flat +5 IS the required attack-stat mod.
     expect(monster.sections.Actions[1].text).toContain('9 (1d8 + 5)');
-    expect(monster.sections.Actions[1].text).not.toContain('13 (2d8 + 4)');
+    expect(monster.sections.Actions[1].text).not.toContain('14 (2d8 + 5)');
   });
 
   test('a coined entry name is fixed by a RENAMING fix call; references follow', async () => {
@@ -678,7 +682,7 @@ describe('generateMonster2024 orchestration', () => {
   test('deterministically fixable rejects (caps, to-hit, second person) cost zero extra calls', async () => {
     const messy = JSON.parse(JSON.stringify(llmFixture));
     messy.sections.Actions[1].text =
-      "*Melee Attack Roll:* +7 to hit, reach 5 ft. 13 (2d8 + 4) Slashing damage, and the target is knocked prone and can't regain hit points. It then moves toward a creature of your choice without provoking opportunity attacks.";
+      "*Melee Attack Roll:* +7 to hit, reach 5 ft. 14 (2d8 + 5) Slashing damage, and the target is knocked prone and can't regain hit points. It then moves toward a creature of your choice without provoking opportunity attacks.";
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(messy));
     const monster = await generateMonster2024(options, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(1); // string surgery, no fix call
@@ -692,7 +696,7 @@ describe('generateMonster2024 orchestration', () => {
 
   test('correctable violations are fixed without a retry call', async () => {
     const hot = JSON.parse(JSON.stringify(llmFixture));
-    hot.sections.Actions[1].text = '*Melee Attack Roll:* +11, reach 5 ft. 13 (2d8 + 4) Slashing damage.';
+    hot.sections.Actions[1].text = '*Melee Attack Roll:* +11, reach 5 ft. 14 (2d8 + 5) Slashing damage.';
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(hot));
     const monster = await generateMonster2024(options, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(1);
@@ -708,6 +712,19 @@ describe('generateMonster2024 orchestration', () => {
     const monster = await generateMonster2024(options, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(2);
     expect(monster.name).toBe('Gloom Stalker');
+  });
+
+  test('stubborn STYLE rejects ship with a warning; mechanical rejects still fail', async () => {
+    // 2014 attack phrasing in a 2024 block, and the fix calls keep
+    // returning it unchanged (stubborn model). Style-only → ship anyway.
+    const warty = JSON.parse(JSON.stringify(llmFixture));
+    warty.sections.Actions[1].text = 'Melee Weapon Attack: +7, reach 5 ft., one target. Hit: 14 (2d8 + 5) Slashing damage.';
+    const callLLM = jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(warty))
+      .mockResolvedValue(JSON.stringify([{ name: 'Shadow Claw', text: warty.sections.Actions[1].text }]));
+    const monster = await generateMonster2024(options, callLLM);
+    expect(monster.name).toBe('Gloom Stalker'); // shipped, not thrown
+    expect(monster.sections.Actions[1].text).toContain('Weapon Attack'); // wart kept
   });
 
   test('throws when the retry also fails validation', async () => {

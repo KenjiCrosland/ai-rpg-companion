@@ -22,7 +22,7 @@ When you finish work that resolved a plan's trigger, delete the plan file and re
 
 ## Project Overview
 
-AI RPG Companion is a Vue 3 + Vite application that provides AI-powered tabletop RPG content generation tools. The application generates D&D 5e monsters, NPCs, locations, dungeons, encounters, items, and campaign settings using multiple AI providers (DeepSeek V3 by default, with support for OpenAI GPT-4o-mini).
+AI RPG Companion is a Vue 3 + Vite application that provides AI-powered tabletop RPG content generation tools. The application generates D&D 5e monsters, NPCs, locations, dungeons, encounters, items, and campaign settings using multiple AI providers (DeepSeek by default — model `deepseek-v4-flash`; DeepSeek retired the V3-era `deepseek-chat` alias in 2026-07 — with support for OpenAI GPT-4o-mini).
 
 ## Commands
 
@@ -137,14 +137,14 @@ logger.error('failed to parse response', err); // always
 The application supports multiple AI providers with automatic provider selection and model normalization.
 
 **Supported Providers:**
-- **DeepSeek V3** (default) - Cost-effective, high-quality content generation (~$13/month for typical usage)
+- **DeepSeek V4 Flash** (default) - Cost-effective, fast content generation. NOTE: the provider *id* remains `deepseek-v3` (persisted in localStorage overrides and env values); only the model name moved to `deepseek-v4-flash`. `deepseek-v4-pro` also exists if quality ever warrants the upgrade.
 - **OpenAI GPT-4o-mini** - Legacy fallback (~$7/month)
 
 **Architecture:**
 
 1. **Configuration Layer** (`src/util/ai-config.mjs`):
    - Provider configurations (endpoints, models, API keys)
-   - Model normalization (maps model names across providers, e.g., `gpt-4.1-mini` → `deepseek-chat`)
+   - Model normalization (maps model names across providers, e.g., `gpt-4.1-mini` → `deepseek-v4-flash`; retired names like `deepseek-chat` also normalize to the provider default)
    - Provider selection priority: localStorage override > environment variable > default (DeepSeek)
    - Functions: `getAIProvider()`, `getProviderConfig()`, `normalizeModel()`
 
@@ -202,7 +202,8 @@ Create a `.env.local` file with:
 
 ```bash
 # AI Provider Configuration
-# Default provider: deepseek-v3 | gpt-4o-mini
+# Default provider id: deepseek-v3 | gpt-4o-mini  (deepseek-v3 is the stable
+# provider ID; the model it sends is deepseek-v4-flash)
 VITE_AI_DEFAULT_PROVIDER=deepseek-v3
 
 # API Keys (add keys for providers you want to use).

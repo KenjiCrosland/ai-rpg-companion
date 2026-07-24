@@ -40,6 +40,20 @@ export const SEED_DIMENSIONS = {
     'a drowned swamp', 'the high mountain passes', 'a cursed battlefield',
     'the dreams of sleepers', 'a sunken temple',
   ],
+  disposition: [
+    'a relentless ambush predator',
+    'a territorial guardian that defends its home ground to the death',
+    'a frontline berserker that revels in open violence',
+    'a skirmishing pack-hunter that harries, withdraws, and circles back',
+    'a patient killer that strikes from extreme range',
+    'a battlefield manipulator that herds and traps rather than brawls',
+    'a protective herd-beast that shields its own kind',
+    'a curious trickster, more mischief than malice',
+    'a benevolent warden sworn to protect travelers who show respect',
+    'a mindless scavenger drawn to carrion and ruin',
+    'a proud sentinel bound to an ancient oath it no longer remembers',
+    'a colony of many small bodies acting as one will',
+  ],
   // Linguistic registers for the NAME (owner direction, 2026-07-19; trimmed
   // to the folk family same day — coinage and Latinate registers produced
   // non-evocative word salad, and folk-style descriptive English is how most
@@ -83,7 +97,7 @@ const TOKEN_STOPWORDS = new Set([
  * ability names.
  */
 export function seedLeakTokens(traits) {
-  const words = ['intelligence', 'physical', 'silhouette', 'origin']
+  const words = ['intelligence', 'physical', 'silhouette', 'origin', 'disposition']
     .flatMap((dim) => (traits[dim] ?? '').toLowerCase().split(/[^a-z]+/));
   const tokens = new Set();
   for (const w of words) {
@@ -121,7 +135,8 @@ export function namingRules(traits) {
  * rides along because the synthesis sentence may drop the INT guidance.
  */
 export function buildSynthesizedConcept(traits, synthesis) {
-  return `${synthesis.trim()} It is ${traits.intelligence}. ` +
+  return `${synthesis.trim()} It is ${traits.intelligence}, and it is ${traits.disposition ?? 'true to its nature'}. ` +
+    'Its alignment and creature type must FOLLOW that disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
     'Every ability should express that single identity — do not give each physical detail its own separate ability. ' +
     namingRules(traits);
 }
@@ -137,10 +152,12 @@ export function buildRandomConceptSeed() {
     physical: pick(SEED_DIMENSIONS.physical),
     silhouette: pick(SEED_DIMENSIONS.silhouette),
     origin: pick(SEED_DIMENSIONS.origin),
+    disposition: pick(SEED_DIMENSIONS.disposition),
     naming: pick(SEED_DIMENSIONS.naming),
   };
   const concept =
-    `a ${traits.intelligence}, ${traits.physical} ${traits.silhouette} from ${traits.origin}. ` +
+    `a ${traits.intelligence}, ${traits.physical} ${traits.silhouette} from ${traits.origin} — ${traits.disposition}. ` +
+    'Its alignment, combat role, and creature type must FOLLOW the disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
     'Blend every trait into ONE coherent creature with a single unifying identity — contradictions between traits are creative fuel, not errors. ' +
     namingRules(traits);
   return { ...traits, concept };

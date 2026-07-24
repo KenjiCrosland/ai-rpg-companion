@@ -125,12 +125,41 @@ never accept LLM numbers); missing required_slots reject the generation.
 > legal); swarm-half-damage substance check (a slot TAG without the actual
 > reduced-damage clause no longer passes); area-circle → Sphere and
 > centred → centered deterministic fixes; movement-mode casing normalizes
-> at the edition gates (2024 "Swim", 2014 "swim"). Full
+> at the edition gates (2024 "Swim", 2014 "swim"). Rubric round (owner's
+> external review of two random blocks): NEW rules — phrasing-surprised
+> (2024 removed the surprised state; zero corpus), entry-name-bathos
+> ("Slurp" as a stealth trait), attack-mod-coherence (attack flat bonuses
+> must match a non-CON ability mod; style-tier; corpus quirk: Giant Frog).
+> NEW seed dimension `disposition` (guardian/trickster/warden/herd/colony
+> options) — both random rolls had landed lurker + neutral evil + sibilant
+> S-names; disposition now drives the archetype pick and alignment
+> diversity. ADJUDICATED, no change: "DPR under-delivery" is the spec's
+> fitted lurker trade (damage_mult 0.6, nova 2× — official lurkers
+> under-run the DMG table the same way, and both reviewed blocks were
+> skeleton-EXACT); "DC 21 not derivable" is wrong by the striker-derivation
+> contract (STR 30 → 8+6+9 = 23 ≥ 21; officials undershoot);
+> escape-DC-by-formula contradicts the corpus (21/39 official escape DCs
+> off-formula); LR-without-Legendary-Actions is officially sanctioned
+> (2024 Balor, Pit Fiend). The systematic DPR answer stays
+> plans/statblock-trait-weight-crosscheck.md (calculateCR backstop). Full
 > archetype-crossover sweep (owner request): the no-legendary-preamble
 > instruction now exists in BOTH prompts (was 2014-only; both cards
 > auto-render the preamble), and Statblock.vue mirrors the support
 > solo-warning note. The 2014 static exemplar (vs 2024's archetype-matched
 > ones) is deliberate — no licensed 2014-phrased corpus exists.
+>
+> **Severity tiering (2026-07-22, after failed-generation bursts under
+> deepseek-v4-flash):** when the repair ladder exhausts, STYLE-tier rejects
+> (phrasing, capitalization, naming, spelling, seed-leakage — wrong WORDS)
+> ship the block with a logger.warn instead of throwing; mechanical rejects
+> (bands, structure, references, contradictions, triggers) still fail.
+> STYLE_TIER_REJECTS in generate.mjs is the routing table. Failures now
+> carry `rejectRules` on the Error, and the generator keeps the last 20 in
+> `localStorage['statblock-failure-log']` — check it when "generations keep
+> failing" reports arrive, instead of guessing. (Prompt caching does NOT
+> make the model smarter between calls — failure bursts are sampling
+> variance seen through an all-or-nothing pipeline; this tiering removes
+> the all-or-nothing.)
 >
 > **Repair ladder (2026-07-19):** the original "reject → regenerate flavor"
 > contract is refined: rejects route through the cheapest sufficient tool —

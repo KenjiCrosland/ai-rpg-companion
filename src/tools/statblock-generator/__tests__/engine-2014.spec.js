@@ -28,7 +28,7 @@ const llm2014Fixture = {
     ],
     Actions: [
       { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
-      { name: 'Shadow Claw', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' },
+      { name: 'Shadow Claw', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.' },
       { name: 'Ambush Pounce', slot: 'ambush or once-per-fight nova mechanic', text: 'Each creature within 10 feet must make a DC 13 Dexterity saving throw, taking 21 (6d6) psychic damage on a failed save, or half as much damage on a successful one.' },
     ],
   },
@@ -55,7 +55,7 @@ describe('edition-aware lint', () => {
 
   test('2024 phrasing is rejected under edition 2014', () => {
     const modern = JSON.parse(JSON.stringify(internal));
-    modern.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.';
+    modern.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.';
     const rules = lintStatblock(modern, { chassis, plan, edition: '2014' }).findings.map((f) => f.rule);
     expect(rules).toContain('phrasing-2024-in-2014');
   });
@@ -76,11 +76,11 @@ describe('edition-aware lint', () => {
 
   test('shared rules still fire in 2014 mode: bands extract from Weapon Attack phrasing', () => {
     const hot = JSON.parse(JSON.stringify(internal));
-    hot.sections.Actions[1].text = 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.';
+    hot.sections.Actions[1].text = 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.';
     const findings = lintStatblock(hot, { chassis, plan, edition: '2014' }).findings;
     expect(findings.some((f) => f.rule === 'attack-band')).toBe(true);
     const bad = JSON.parse(JSON.stringify(internal));
-    bad.sections.Actions[1].text = 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 15 (2d8 + 4) slashing damage.';
+    bad.sections.Actions[1].text = 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 15 (2d8 + 5) slashing damage.';
     expect(lintStatblock(bad, { chassis, plan, edition: '2014' }).findings.some((f) => f.rule === 'damage-dice')).toBe(true);
   });
 });
@@ -195,7 +195,7 @@ describe('rerollEntry (engine-based inline edit re-rolls)', () => {
     // Shadow Claw is named in Multiattack — a rename would break the
     // reference, so keep-mode deterministically restores the name even
     // when the model renames (no retry burned).
-    const callLLM = call([{ name: 'Shadow Rake', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' }]);
+    const callLLM = call([{ name: 'Shadow Rake', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.' }]);
     const entry = await rerollEntry(legacy, { kind: 'action', current: legacy.actions[1] }, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(1);
     expect(entry).toEqual({ name: 'Shadow Claw', description: expect.stringContaining('+7 to hit') });
@@ -214,7 +214,7 @@ describe('rerollEntry (engine-based inline edit re-rolls)', () => {
   });
 
   test('off-budget attack bonus is corrected, not retried', async () => {
-    const callLLM = call([{ name: 'Shadow Rake', text: 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' }]);
+    const callLLM = call([{ name: 'Shadow Rake', text: 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.' }]);
     const entry = await rerollEntry(legacy, { kind: 'action', current: legacy.actions[1] }, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(1);
     expect(entry.description).toContain('+7 to hit'); // lurker chassis attack
@@ -242,7 +242,7 @@ describe('rerollEntry (engine-based inline edit re-rolls)', () => {
     const preEngine = { ...legacy };
     delete preEngine.archetype;
     // Balanced CR 4 chassis attack is +6.
-    const callLLM = call([{ name: 'Bite', text: 'Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) piercing damage.' }]);
+    const callLLM = call([{ name: 'Bite', text: 'Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) piercing damage.' }]);
     const entry = await rerollEntry(preEngine, { kind: 'action', current: legacy.actions[1] }, callLLM);
     expect(entry.description).toContain('+6 to hit');
   });
@@ -252,8 +252,8 @@ describe('rerollEntry (engine-based inline edit re-rolls)', () => {
     const modern = { ...internal, format: '2024' };
     // 2014 phrasing must be rejected for a 2024 monster; retry succeeds.
     const callLLM = call([
-      { name: 'Shadow Rake', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' },
-      { name: 'Shadow Rake', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.' },
+      { name: 'Shadow Rake', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.' },
+      { name: 'Shadow Rake', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' },
     ]);
     const entry = await rerollEntry(modern, { kind: 'action', current: { name: 'Shadow Claw' } }, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(2);
@@ -270,7 +270,7 @@ describe('rerollSection (engine-based whole-section re-rolls)', () => {
   };
   const goodActions = [
     { name: 'Multiattack', text: 'The stalker makes two Night Talon attacks.' },
-    { name: 'Night Talon', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.' },
+    { name: 'Night Talon', text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.' },
     { name: 'Terrifying Screech', text: 'Each creature within 30 feet must make a DC 13 Wisdom saving throw or be frightened until the end of its next turn.' },
   ];
 
@@ -297,7 +297,7 @@ describe('rerollSection (engine-based whole-section re-rolls)', () => {
 
   test('off-budget numbers across the section are corrected, not retried', async () => {
     const hot = JSON.parse(JSON.stringify(goodActions));
-    hot[1].text = 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.';
+    hot[1].text = 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.';
     const callLLM = call([hot]);
     const entries = await rerollSection(legacy, { kind: 'actions' }, callLLM);
     expect(callLLM).toHaveBeenCalledTimes(1);
@@ -337,13 +337,13 @@ describe('generateMonster2024 with edition 2014', () => {
 
   test('2024 phrasing in a 2014 block gets a targeted entry fix, not a re-roll', async () => {
     const modern = JSON.parse(JSON.stringify(llm2014Fixture));
-    modern.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.';
+    modern.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.';
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(modern))
       // Entry-fix response: only the flagged entry, same name, classic phrasing.
       .mockResolvedValueOnce(JSON.stringify([{
         name: 'Shadow Claw',
-        text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.',
+        text: 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.',
       }]));
     const monster = await generateMonster2024(
       { concept: 'a shadow stalker', cr: 4, archetypeName: 'lurker', edition: '2014' },
@@ -378,7 +378,7 @@ describe('edition conversion (⇄ footer action)', () => {
   const CONVERTED_2024_TEXTS = {
     'Umbral Veil': 'While in Dim Light or Darkness, the stalker has the Invisible condition.',
     Multiattack: 'The stalker makes two Shadow Claw attacks.',
-    'Shadow Claw': '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage.',
+    'Shadow Claw': '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.',
     'Ambush Pounce': '*Dexterity Saving Throw*: DC 13, each creature within 10 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage only.',
   };
   const response2024 = (m) => Object.fromEntries(
@@ -438,7 +438,7 @@ describe('edition conversion (⇄ footer action)', () => {
       monsterDescription: 'a shadow',
     };
     modern.sections.Traits[0].text = 'While in Dim Light or Darkness, the stalker has the Invisible condition.';
-    modern.sections.Actions[1].text = '*Melee Attack Roll:* +9, reach 5 ft. 13 (2d8 + 4) Slashing damage.';
+    modern.sections.Actions[1].text = '*Melee Attack Roll:* +9, reach 5 ft. 14 (2d8 + 5) Slashing damage.';
     modern.sections.Actions[2].text = '*Dexterity Saving Throw*: DC 13, each creature within 10 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage only.';
     const response = Object.fromEntries(Object.entries(modern.sections).map(([s, es]) =>
       [s, es.map((e) => ({
@@ -448,7 +448,7 @@ describe('edition conversion (⇄ footer action)', () => {
           Multiattack: 'The stalker makes two Shadow Claw attacks.',
           // +9 is off the CR-4 chassis ON PURPOSE: conversion is a dialect
           // change, never a rebalance — the number must survive.
-          'Shadow Claw': 'Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage.',
+          'Shadow Claw': 'Melee Weapon Attack: +9 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage.',
           'Ambush Pounce': 'Each creature within 10 feet must make a DC 13 Dexterity saving throw, taking 21 (6d6) psychic damage on a failed save, or half as much damage on a successful one.',
         }[e.name],
       }))]));
@@ -466,7 +466,7 @@ describe('edition conversion (⇄ footer action)', () => {
     const model = fromLegacyModel(legacy);
     const halfConverted = response2024(model);
     // Shadow Claw comes back still 2014-phrased.
-    halfConverted.Actions[1].text = 'Melee Weapon Attack: +7, reach 5 ft., one target. Hit: 13 (2d8 + 4) Slashing damage.';
+    halfConverted.Actions[1].text = 'Melee Weapon Attack: +7, reach 5 ft., one target. Hit: 14 (2d8 + 5) Slashing damage.';
     const callLLM = queuedLLM([
       halfConverted,
       [{ name: 'Shadow Claw', text: CONVERTED_2024_TEXTS['Shadow Claw'] }],
