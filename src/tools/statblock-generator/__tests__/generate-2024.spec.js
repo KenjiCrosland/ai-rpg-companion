@@ -383,9 +383,8 @@ describe('seed leakage', () => {
       .mockResolvedValueOnce(JSON.stringify(leaky))
       .mockResolvedValueOnce(JSON.stringify({ 'Shadow Drifter': 'Drifting Shade' })) // still leaks
       .mockResolvedValueOnce(JSON.stringify({ 'Drifting Shade': 'Drift Wraith' })); // stubborn
-    // Stubborn leakage is a STYLE wart: the user never sees the seed, so
-    // after the rename ladder exhausts the block SHIPS instead of failing
-    // (severity tiering, 2026-07-22).
+    // Stubborn leakage is a STYLE wart: one rename attempt, then the block
+    // SHIPS as-is — cosmetic leftovers never earn extra fix rounds.
     const monster = await generateMonster2024(
       {
         concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto',
@@ -393,8 +392,8 @@ describe('seed leakage', () => {
       },
       callLLM,
     );
-    expect(callLLM).toHaveBeenCalledTimes(4); // generation + two fixes + naming pass
-    expect(monster.name).toBe('Drift Wraith'); // last rename attempt kept
+    expect(callLLM).toHaveBeenCalledTimes(3); // generation + ONE fix + naming pass
+    expect(monster.name).toBe('Drifting Shade'); // first rename attempt kept
   });
 });
 
@@ -727,9 +726,9 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.sections.Actions[1].text).toContain('Weapon Attack'); // wart kept
   });
 
-  test('degraded mode ships MECHANICAL warts the fallback model cannot polish; strict mode throws', async () => {
+  test('stubborn MECHANICAL warts ship with lint_warnings (strict and degraded alike)', async () => {
     // Blanket damage mitigation is a mechanical reject; the fix calls keep
-    // returning it (a weaker model that can't follow the correction).
+    // returning it. Generation ships it anyway, stamped, after three rounds.
     const mitigated = JSON.parse(JSON.stringify(llmFixture));
     const badTrait = { name: 'Uncanny Bulwark', text: 'When an attacker hits it, the stalker halves the damage against it.' };
     mitigated.sections.Traits.push(badTrait);
@@ -737,19 +736,24 @@ describe('generateMonster2024 orchestration', () => {
       .mockResolvedValueOnce(JSON.stringify(mitigated))
       .mockResolvedValue(JSON.stringify([badTrait]));
 
-    await expect(generateMonster2024(options, stubbornLLM())).rejects.toThrow(/failed validation/);
+    const strict = await generateMonster2024(options, stubbornLLM());
+    expect(strict.lint_warnings).toContain('trait-mitigation');
+    expect(strict.sections.Traits.some((e) => e.name === 'Uncanny Bulwark')).toBe(true);
 
-    const monster = await generateMonster2024({ ...options, degraded: true }, stubbornLLM());
-    expect(monster.name).toBe('Gloom Stalker'); // shipped
-    expect(monster.sections.Traits.some((e) => e.name === 'Uncanny Bulwark')).toBe(true);
+    const degraded = await generateMonster2024({ ...options, degraded: true }, stubbornLLM());
+    expect(degraded.lint_warnings).toContain('trait-mitigation');
   });
 
-  test('throws when the retry also fails validation', async () => {
+  test('even a failed structural retry SHIPS, with the warts stamped on the block', async () => {
+    // Generation never fails once a block exists (owner call): the missing
+    // slot survives the regen, so the block ships carrying lint_warnings
+    // and the generator surfaces them.
     const broken = JSON.parse(JSON.stringify(llmFixture));
     delete broken.sections.Actions[2].slot;
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(broken));
-    await expect(generateMonster2024(options, callLLM)).rejects.toThrow(/failed validation/);
-    expect(callLLM).toHaveBeenCalledTimes(2);
+    const monster = await generateMonster2024(options, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(2); // attempt + one structural regen
+    expect(monster.lint_warnings).toContain('slot-missing');
   });
 
   test('throws on an empty response', async () => {

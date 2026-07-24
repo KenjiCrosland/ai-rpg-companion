@@ -148,12 +148,23 @@ never accept LLM numbers); missing required_slots reject the generation.
 > solo-warning note. The 2014 static exemplar (vs 2024's archetype-matched
 > ones) is deliberate — no licensed 2014-phrased corpus exists.
 >
-> **Severity tiering (2026-07-22, after failed-generation bursts under
-> deepseek-v4-flash):** when the repair ladder exhausts, STYLE-tier rejects
-> (phrasing, capitalization, naming, spelling, seed-leakage — wrong WORDS)
-> ship the block with a logger.warn instead of throwing; mechanical rejects
-> (bands, structure, references, contradictions, triggers) still fail.
-> STYLE_TIER_REJECTS in generate.mjs is the routing table. **Degraded-model
+> **Severity tiering (2026-07-22) → never-fail generation (2026-07-24):**
+> the gate philosophy evolved in two steps. First, STYLE-tier rejects
+> (phrasing/caps/naming/spelling/seed-leakage — wrong WORDS) shipped with a
+> warn while mechanical rejects threw. Then the owner drew the line at the
+> right place: GENERATION never fails once an assembled block exists —
+> up to three fix rounds (was two) — but only MECHANICAL rejects earn
+> rounds past the first; cosmetic-only leftovers ship after one attempt
+> (calls spent polishing warts that ship silently anyway are waste) — then
+> ANY surviving warts ship, stamped on the
+> monster as `lint_warnings` (console + debugging only — NOT surfaced in
+> the UI, owner call: don't invite users to second-guess output they're
+> happy with). A failed generation is
+> strictly worse UX than a blemish. RE-ROLLS keep the stricter gates
+> (style-tier/degraded relaxation only): a failed re-roll safely preserves
+> the original entry, so there failure IS the cheap outcome — never replace
+> a fine entry with a warty one. STYLE_TIER_REJECTS in generate.mjs remains
+> the re-roll routing table. **Degraded-model
 > mode (2026-07-24):** when `isDegradedMode()` from ai-client is true (user
 > on OpenAI, or the circuit breaker has failed over to gpt-4o-mini), the
 > pipeline runs the FULL repair ladder and then ships whatever survives —

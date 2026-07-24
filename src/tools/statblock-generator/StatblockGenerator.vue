@@ -1072,6 +1072,9 @@ async function generateStatblockEngine(edition) {
 
   loadingPart1.value = false;
   await saveGeneratedMonster(finalMonster);
+  // lint_warnings stay stamped on the monster (console + debugging), but
+  // are NOT surfaced in the UI (owner call): if the user is happy with the
+  // output, don't invite them to second-guess it.
 }
 
 // ---------------------------------------------------------------------------

@@ -1766,7 +1766,11 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
     if (retry) outcome = retry;
   }
 
-  for (let i = 0; i < 2 && outcome.rejects.length && !needsRegen(outcome.rejects); i++) {
+  // Up to three fix rounds — but only MECHANICAL rejects earn the extra
+  // rounds (owner call, 2026-07-24): cosmetic leftovers ship silently
+  // anyway, so calls spent polishing them past round one are waste.
+  for (let i = 0; i < 3 && outcome.rejects.length && !needsRegen(outcome.rejects); i++) {
+    if (i >= 1 && onlyStyleRejects(outcome.rejects)) break;
     let monster = outcome.monster;
     if (outcome.rejects.some((f) => f.rule === 'seed-leakage')) {
       monster = await renameLeakedNames(monster, seedTokens, seedTraits?.naming, callLLM);
@@ -1781,19 +1785,18 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
     outcome = { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
   }
 
+  // GENERATION never fails once an assembled block exists (owner call,
+  // 2026-07-24): after three fix rounds, surviving warts ship — stamped on
+  // the monster (lint_warnings) and surfaced by the caller — because a
+  // failed generation is strictly worse UX than a blemish the user can
+  // edit or re-roll. Re-rolls keep their stricter gates: failing a re-roll
+  // safely preserves the original entry, so there failure IS the cheap
+  // outcome.
+  let lintWarnings = null;
   if (outcome.rejects.length) {
-    if (degraded) {
-      // Fallback-model mode (owner call, 2026-07-24): the weaker model
-      // gets the whole repair ladder, then ships whatever survives —
-      // a playable degraded block beats a failed generation.
-      logger.warn('Degraded-model mode: shipping with unresolved rejects:',
-        outcome.rejects.map((f) => `${f.rule}: ${f.message}`));
-    } else if (onlyStyleRejects(outcome.rejects)) {
-      logger.warn('Statblock shipped with style warts the repair ladder could not clear:',
-        outcome.rejects.map((f) => `${f.rule}: ${f.message}`));
-    } else {
-      throw validationError('Generated statblock failed validation', outcome.rejects);
-    }
+    logger.warn(`${degraded ? 'Degraded-model mode: ' : ''}shipping with unresolved rejects:`,
+      outcome.rejects.map((f) => `${f.rule}: ${f.message}`));
+    lintWarnings = outcome.rejects.map((f) => f.rule);
   }
   // Naming pass (seeded generations only): name the FINISHED creature. The
   // main call's name is provisional; a dedicated micro-call reads the actual
@@ -1817,6 +1820,7 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   // 2014 edition ships in the legacy model shape: the existing Statblock.vue
   // display, exports, encounter adapter, and inline editing all consume it.
   const finished = edition === '2014' ? toLegacyModel(outcome.monster) : outcome.monster;
+  if (lintWarnings) finished.lint_warnings = lintWarnings;
   // Persist the rolled seed for provenance and future name-only re-rolls.
   if (seedTraits) finished.concept_seed = { ...seedTraits };
   return finished;
