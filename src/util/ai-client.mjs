@@ -28,6 +28,26 @@ const circuitBreaker = {
   COOLDOWN_MS: 5 * 60 * 1000, // 5 minutes
 };
 
+// Hang guard, not a latency target: genuinely long generations are normal
+// (big prompts, loaded providers), so this only cuts calls that are almost
+// certainly dead — and stays under Chrome's own ~300s fetch cutoff so OUR
+// timeout classifies as transient and fails over, instead of surfacing as a
+// generic network error minutes later.
+const REQUEST_TIMEOUT_MS = 240_000;
+
+/**
+ * Transient = the PROVIDER's fault right now (5xx, rate limit, timeout,
+ * network drop) — worth retrying the same call on the fallback provider.
+ * 4xx-class errors are OUR request's fault and would fail identically
+ * everywhere, so they never fail over (and never burn fallback spend).
+ */
+function isTransientProviderError(error) {
+  if (error?.name === 'AbortError' || error?.timedOut) return true;
+  if (typeof error?.status === 'number') return error.status >= 500 || error.status === 429;
+  // fetch network failures surface as TypeError with no status
+  return error instanceof TypeError;
+}
+
 /**
  * Check if circuit breaker should allow trying primary provider again
  */
@@ -154,6 +174,12 @@ export async function generateGptResponse(
     providerConfig = getProviderConfig();
   }
 
+  // Breaker bookkeeping tracks the PRIMARY provider only: explicit override
+  // calls (including the per-call transient failover, which re-enters with
+  // providerOverride) must neither record failures against it nor reset its
+  // failure count on success.
+  const skipBreaker = usingFallback || !!providerOverride;
+
   const adapter = getAdapter(providerConfig.type);
   // Use provider's default model (model normalization only relevant when user has overridden provider)
   const modelToUse = providerConfig.model;
@@ -202,11 +228,16 @@ export async function generateGptResponse(
         body: JSON.stringify(body),
       };
 
+      // Hang guard: abort after REQUEST_TIMEOUT_MS so failover can engage.
+      const abort = new AbortController();
+      const timeoutId = setTimeout(() => abort.abort(), REQUEST_TIMEOUT_MS);
+      requestOptions.signal = abort.signal;
+
       let response;
       if (__DEV__) {
         // Development: Use Vite proxy - API key injected server-side
         const endpoint = providerConfig.devEndpoint;
-        response = await fetch(endpoint, requestOptions);
+        response = await fetch(endpoint, requestOptions).finally(() => clearTimeout(timeoutId));
       } else {
         // Production: WordPress proxy - API key injected server-side
         // Add provider hint header for WordPress proxy routing
@@ -217,17 +248,19 @@ export async function generateGptResponse(
             'X-AI-Provider': usingFallback ? PROVIDERS.OPENAI : primaryProvider,
           },
         };
+        wpRequestOptions.signal = abort.signal;
         response = await fetch(
           '/wp-json/open-ai-proxy/api/v1/proxy',
           wpRequestOptions,
-        );
+        ).finally(() => clearTimeout(timeoutId));
       }
 
       if (!response.ok) {
         const errorText = await response.text();
         providerError = new Error(`HTTP ${response.status}: ${errorText}`);
+        providerError.status = response.status;
         // Record failure for circuit breaker (only for primary provider, not fallback)
-        if (!usingFallback) {
+        if (!skipBreaker) {
           recordFailure(providerConfig.name);
         }
         throw providerError;
@@ -239,7 +272,7 @@ export async function generateGptResponse(
       if (adapter.hasError(responseData)) {
         providerError = new Error(`${providerConfig.name} API error: ${adapter.getErrorMessage(responseData)}`);
         // Record failure for circuit breaker (only for primary provider, not fallback)
-        if (!usingFallback) {
+        if (!skipBreaker) {
           recordFailure(providerConfig.name);
         }
         throw providerError;
@@ -249,7 +282,7 @@ export async function generateGptResponse(
       const responseContent = adapter.extractResponse(responseData);
 
       // Success! Record it for circuit breaker
-      if (!usingFallback) {
+      if (!skipBreaker) {
         recordSuccess();
       }
 
@@ -277,12 +310,16 @@ export async function generateGptResponse(
         validJson = true;
       }
     } catch (error) {
+      if (error?.name === 'AbortError') {
+        error.timedOut = true;
+        error.message = `${providerConfig.name} request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`;
+      }
       logger.error('Error generating response:', error);
       // If it's a provider error, we already recorded it and set providerError
-      // If it's some other error (network, etc), record it
+      // If it's some other error (network, timeout, etc), record it
       if (!providerError) {
         providerError = error;
-        if (!usingFallback) {
+        if (!skipBreaker) {
           recordFailure(providerConfig.name);
         }
       }
@@ -291,6 +328,12 @@ export async function generateGptResponse(
   }
 
   if (providerError) {
+    const fallback = getFallbackProvider(primaryProvider);
+    if (!usingFallback && !providerOverride && fallback === PROVIDERS.OPENAI
+      && isTransientProviderError(providerError)) {
+      logger.warn(`⚠️ ${providerConfig.name} failed transiently (${String(providerError.message).slice(0, 120)}) — retrying this call on the fallback provider`);
+      return generateGptResponse(prompt, validateJSONKeys, maxAttempts, previousContext, model, PROVIDERS.OPENAI);
+    }
     throw providerError;
   }
 
