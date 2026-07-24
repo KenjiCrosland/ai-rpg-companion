@@ -21,6 +21,7 @@ import { DRIVE_TYPES, POWER_STRUCTURES, ORGANIZING_LOGICS } from '../util/dungeo
 // Mock the AI client so the inference call is deterministic.
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 import { generateGptResponse } from '@/util/ai-client.mjs';
 

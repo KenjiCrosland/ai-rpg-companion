@@ -153,7 +153,15 @@ never accept LLM numbers); missing required_slots reject the generation.
 > (phrasing, capitalization, naming, spelling, seed-leakage — wrong WORDS)
 > ship the block with a logger.warn instead of throwing; mechanical rejects
 > (bands, structure, references, contradictions, triggers) still fail.
-> STYLE_TIER_REJECTS in generate.mjs is the routing table. Failures now
+> STYLE_TIER_REJECTS in generate.mjs is the routing table. **Degraded-model
+> mode (2026-07-24):** when `isDegradedMode()` from ai-client is true (user
+> on OpenAI, or the circuit breaker has failed over to gpt-4o-mini), the
+> pipeline runs the FULL repair ladder and then ships whatever survives —
+> mechanical warts included, warn-logged — because the fallback model can't
+> reliably clear the strict gates and a playable degraded block beats a
+> failed generation. Strict gates apply unchanged on DeepSeek. The flag is
+> evaluated by the CALLERS (generator + both cards + conversion) at call
+> time and passed as options.degraded, keeping generate.mjs injection-pure. Failures now
 > carry `rejectRules` on the Error, and the generator keeps the last 20 in
 > `localStorage['statblock-failure-log']` — check it when "generations keep
 > failing" reports arrive, instead of guessing. (Prompt caching does NOT

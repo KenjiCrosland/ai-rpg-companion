@@ -29,6 +29,7 @@ jest.mock('@/util/ai-config.mjs', () => ({
 // Mock the ai-client module
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 // Mock Cedar components with proper v-model support

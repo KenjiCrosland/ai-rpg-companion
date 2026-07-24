@@ -204,7 +204,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';
 import Statblock2024Skeleton from './skeletons/Statblock2024Skeleton.vue';
 import { logger } from '@/util/logger.mjs';
-import { generateGptResponse } from '@/util/ai-client.mjs';
+import { generateGptResponse, isDegradedMode } from '@/util/ai-client.mjs';
 import { rerollEntry, rerollSection, buildContext } from '@/tools/statblock-generator/format-2024/generate.mjs';
 import { lintStatblock } from '@/tools/statblock-generator/format-2024/lint.mjs';
 
@@ -378,7 +378,7 @@ async function rerollEntryAt(section, index) {
   try {
     const result = await rerollEntry(
       edited.value,
-      { kind: REROLL_KIND[section], current: edited.value.sections[section][index] },
+      { kind: REROLL_KIND[section], current: edited.value.sections[section][index], degraded: isDegradedMode() },
       (p, v) => generateGptResponse(p, v, 3),
     );
     edited.value.sections[section][index] = { name: result.name, text: result.description };
@@ -399,7 +399,7 @@ async function rerollSectionAt(section) {
   try {
     const entries = await rerollSection(
       edited.value,
-      { kind: SECTION_REROLL_KIND[section] },
+      { kind: SECTION_REROLL_KIND[section], degraded: isDegradedMode() },
       (p, v) => generateGptResponse(p, v, 3),
     );
     edited.value.sections[section] = entries.map((e) => ({ name: e.name, text: e.description }));

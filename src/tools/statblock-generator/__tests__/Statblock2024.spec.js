@@ -10,6 +10,7 @@ import monsters from '@/data/srd52-monsters.json';
 
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 const byName = (name) => monsters.find((m) => m.name === name);

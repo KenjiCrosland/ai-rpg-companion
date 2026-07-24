@@ -21,6 +21,7 @@ import { registerList } from '@/shared/register-list.mjs';
 // Mock the open-ai module
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 // Mock convertToMarkdown

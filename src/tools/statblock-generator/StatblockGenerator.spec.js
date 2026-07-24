@@ -18,6 +18,7 @@ import * as monsterPrompts from '@/prompts/monster-prompts.mjs';
 // Mock the open-ai module
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 // Mock monster-prompts

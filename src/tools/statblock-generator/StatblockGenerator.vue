@@ -304,7 +304,7 @@ import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
-import { generateGptResponse } from "@/util/ai-client.mjs";
+import { generateGptResponse, isDegradedMode } from "@/util/ai-client.mjs";
 import { CdrLink, CdrList, IconDownload, IconUpload } from "@rei/cedar";
 import "@rei/cedar/dist/style/cdr-list.css";
 import StatblockExports from './components/StatblockExports.vue';
@@ -1033,6 +1033,9 @@ async function generateStatblockEngine(edition) {
         archetypeSource,
         edition,
         seedTraits: randomSeed,
+        // Fallback-model mode: ship degraded output instead of failing
+        // generations the weaker model can't polish (owner call).
+        degraded: isDegradedMode(),
       },
       (prompt, validate) => generateGptResponse(prompt, validate, 3),
     );
@@ -1159,7 +1162,7 @@ async function convertMonsterEdition() {
   try {
     const source = JSON.parse(JSON.stringify(monster.value));
     delete source.other_edition;
-    const converted = await convertEdition(source, (p, v) => generateGptResponse(p, v, 3));
+    const converted = await convertEdition(source, (p, v) => generateGptResponse(p, v, 3), { degraded: isDegradedMode() });
     converted.other_edition = source;
     monster.value = converted;
     monsters.value[activeFolder.value][activeMonsterIndex.value] = converted;

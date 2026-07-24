@@ -19,7 +19,8 @@ import { dungeons, currentDungeon, currentDungeonId } from '../stores/dungeon-st
 
 // Mock dependencies
 jest.mock('@/util/ai-client.mjs', () => ({
-  generateGptResponse: jest.fn()
+  generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false)
 }));
 
 jest.mock('@/util/statblock-storage.mjs', () => ({

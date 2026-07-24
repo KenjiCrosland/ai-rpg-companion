@@ -18,6 +18,7 @@ import {
 
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 jest.mock('@/util/can-generate-statblock.mjs', () => ({

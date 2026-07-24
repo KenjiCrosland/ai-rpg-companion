@@ -306,7 +306,7 @@ import { logger } from "@/util/logger.mjs";
 import { ref, computed, defineProps, onMounted, onBeforeUnmount, watch } from 'vue';
 import CardFooterAction from './CardFooterAction.vue';
 import CRtoXP from '../data/cr-to-xp.json';
-import { generateGptResponse } from "@/util/ai-client.mjs";
+import { generateGptResponse, isDegradedMode } from "@/util/ai-client.mjs";
 // All edit re-rolls (single-entry and whole-section) run through the engine:
 // budget-constrained skeletons + lint, replacing the template-based
 // statblock-edit-prompts path entirely.
@@ -499,7 +499,7 @@ async function generateLegendaryActions() {
         loadingLegendaryActions.value = true;
         editedLegendaryActions.value = await rerollSection(
             rerollContext(),
-            { kind: 'legendary' },
+            { kind: 'legendary', degraded: isDegradedMode() },
             (p, v) => generateGptResponse(p, v, 3),
         );
     } catch (e) {
@@ -518,7 +518,7 @@ async function generateActions() {
         loadingActions.value = true;
         editedActions.value = await rerollSection(
             rerollContext(),
-            { kind: 'actions' },
+            { kind: 'actions', degraded: isDegradedMode() },
             (p, v) => generateGptResponse(p, v, 3),
         );
     } catch (e) {
@@ -537,7 +537,7 @@ async function generateAbilities() {
         loadingAbilities.value = true;
         editedAbilities.value = await rerollSection(
             rerollContext(),
-            { kind: 'abilities' },
+            { kind: 'abilities', degraded: isDegradedMode() },
             (p, v) => generateGptResponse(p, v, 3),
         );
     } catch (e) {
@@ -576,7 +576,7 @@ async function regenerateAbility(index) {
         loadingAbilityIndices.value.add(index);
         const newAbility = await rerollEntry(
             rerollContext(),
-            { kind: 'ability', current: currentAbility },
+            { kind: 'ability', current: currentAbility, degraded: isDegradedMode() },
             (p, v) => generateGptResponse(p, v, 3),
         );
         editedAbilities.value[index] = newAbility;
@@ -598,7 +598,7 @@ async function regenerateAction(index) {
         loadingActionIndices.value.add(index);
         const newAction = await rerollEntry(
             rerollContext(),
-            { kind: 'action', current: currentAction },
+            { kind: 'action', current: currentAction, degraded: isDegradedMode() },
             (p, v) => generateGptResponse(p, v, 3),
         );
         editedActions.value[index] = newAction;
@@ -620,7 +620,7 @@ async function regenerateLegendaryAction(index) {
         loadingLegendaryActionIndices.value.add(index);
         const newAction = await rerollEntry(
             rerollContext(),
-            { kind: 'legendary', current: currentAction },
+            { kind: 'legendary', current: currentAction, degraded: isDegradedMode() },
             (p, v) => generateGptResponse(p, v, 3),
         );
         editedLegendaryActions.value[index] = newAction;

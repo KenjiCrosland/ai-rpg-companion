@@ -21,6 +21,7 @@ import * as navigation from '@/util/navigation.mjs';
 // Mock the open-ai module
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
+  isDegradedMode: jest.fn(() => false),
 }));
 
 // Mock the NPC generator utility

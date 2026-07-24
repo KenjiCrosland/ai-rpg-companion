@@ -93,6 +93,17 @@ function recordSuccess() {
 }
 
 /**
+ * True when generations are being served by the fallback-quality model —
+ * either the user switched to OpenAI outright, or the circuit breaker has
+ * routed traffic there. Content pipelines use this to relax their final
+ * validation gates (accept degraded output rather than fail generations
+ * a weaker model can't polish).
+ */
+export function isDegradedMode() {
+  return getAIProvider() === PROVIDERS.OPENAI || circuitBreaker.isOpen;
+}
+
+/**
  * Get fallback provider configuration
  */
 function getFallbackProvider(currentProvider) {

@@ -917,7 +917,7 @@ const CONVERSION_LINT_RULES = new Set([
  * edition's phrasing; the edition's phrasing lint then gates the result via
  * the usual ladder (deterministic fixes → one targeted entry-rewrite call).
  */
-export async function convertEdition(monster, callLLM) {
+export async function convertEdition(monster, callLLM, { degraded = false } = {}) {
   const target = monster.format === '2024' ? '2014' : '2024';
   const model = target === '2014' ? monster : fromLegacyModel(monster);
 
@@ -956,7 +956,11 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
     );
     rejects = phrasingFindings(converted).filter((f) => f.severity === 'reject');
     if (rejects.length) {
-      throw new Error(`Conversion failed lint: ${rejects.map((f) => f.message).join('; ')}`);
+      if (degraded) {
+        logger.warn('Degraded-model mode: conversion shipped with phrasing warts:', rejects.map((f) => f.rule));
+      } else {
+        throw validationError('Conversion failed lint', rejects);
+      }
     }
   }
 
@@ -1196,7 +1200,7 @@ export function validateEntryResponse(jsonString) {
  * Lint runs on a pseudo-block where every OTHER entry is a name-only stub —
  * so references resolve, but old off-budget text can't false-trigger bands.
  */
-export async function rerollEntry(monster, { kind, current }, callLLM) {
+export async function rerollEntry(monster, { kind, current, degraded = false }, callLLM) {
   const section = REROLL_SECTION[kind];
   if (!section) throw new Error(`Unknown re-roll kind: ${kind}`);
   const edition = monster.format === '2024' ? '2024' : '2014';
@@ -1290,8 +1294,8 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
     throw validationError('Re-rolled entry failed validation', outcome.rejects);
   }
   if (outcome.rejects.length) {
-    if (onlyStyleRejects(outcome.rejects)) {
-      logger.warn('Re-rolled entry kept style warts:', outcome.rejects.map((f) => f.rule));
+    if (degraded || onlyStyleRejects(outcome.rejects)) {
+      logger.warn('Re-rolled entry kept warts:', outcome.rejects.map((f) => f.rule));
     } else {
       throw validationError('Re-rolled entry failed validation', outcome.rejects);
     }
@@ -1323,7 +1327,7 @@ export function validateSectionResponse(jsonString) {
  * already has the section; a re-roll must not delete the feature. Archetype
  * required_slots are NOT enforced (slot tags don't survive legacy conversion).
  */
-export async function rerollSection(monster, { kind, suggestion = '' }, callLLM) {
+export async function rerollSection(monster, { kind, suggestion = '', degraded = false }, callLLM) {
   const section = SECTION_KINDS[kind];
   if (!section) throw new Error(`Unknown section re-roll kind: ${kind}`);
   const edition = monster.format === '2024' ? '2024' : '2014';
@@ -1414,8 +1418,8 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
     if (retry) outcome = retry;
   }
   if (outcome.rejects.length) {
-    if (onlyStyleRejects(outcome.rejects)) {
-      logger.warn('Re-rolled section kept style warts:', outcome.rejects.map((f) => f.rule));
+    if (degraded || onlyStyleRejects(outcome.rejects)) {
+      logger.warn('Re-rolled section kept warts:', outcome.rejects.map((f) => f.rule));
     } else {
       throw validationError('Re-rolled section failed validation', outcome.rejects);
     }
@@ -1718,7 +1722,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false } = options;
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
   const assembleCtx = { cr, chassis, plan, archetypeName: archetype, archetypeSource };
   const seedTokens = seedTraits ? seedLeakTokens(seedTraits) : undefined;
@@ -1778,7 +1782,13 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   }
 
   if (outcome.rejects.length) {
-    if (onlyStyleRejects(outcome.rejects)) {
+    if (degraded) {
+      // Fallback-model mode (owner call, 2026-07-24): the weaker model
+      // gets the whole repair ladder, then ships whatever survives —
+      // a playable degraded block beats a failed generation.
+      logger.warn('Degraded-model mode: shipping with unresolved rejects:',
+        outcome.rejects.map((f) => `${f.rule}: ${f.message}`));
+    } else if (onlyStyleRejects(outcome.rejects)) {
       logger.warn('Statblock shipped with style warts the repair ladder could not clear:',
         outcome.rejects.map((f) => `${f.rule}: ${f.message}`));
     } else {

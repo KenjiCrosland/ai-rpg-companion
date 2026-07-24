@@ -727,6 +727,23 @@ describe('generateMonster2024 orchestration', () => {
     expect(monster.sections.Actions[1].text).toContain('Weapon Attack'); // wart kept
   });
 
+  test('degraded mode ships MECHANICAL warts the fallback model cannot polish; strict mode throws', async () => {
+    // Blanket damage mitigation is a mechanical reject; the fix calls keep
+    // returning it (a weaker model that can't follow the correction).
+    const mitigated = JSON.parse(JSON.stringify(llmFixture));
+    const badTrait = { name: 'Uncanny Bulwark', text: 'When an attacker hits it, the stalker halves the damage against it.' };
+    mitigated.sections.Traits.push(badTrait);
+    const stubbornLLM = () => jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(mitigated))
+      .mockResolvedValue(JSON.stringify([badTrait]));
+
+    await expect(generateMonster2024(options, stubbornLLM())).rejects.toThrow(/failed validation/);
+
+    const monster = await generateMonster2024({ ...options, degraded: true }, stubbornLLM());
+    expect(monster.name).toBe('Gloom Stalker'); // shipped
+    expect(monster.sections.Traits.some((e) => e.name === 'Uncanny Bulwark')).toBe(true);
+  });
+
   test('throws when the retry also fails validation', async () => {
     const broken = JSON.parse(JSON.stringify(llmFixture));
     delete broken.sections.Actions[2].slot;
