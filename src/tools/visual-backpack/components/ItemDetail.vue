@@ -1,0 +1,575 @@
+<template>
+  <aside class="detail parchment" :class="{ 'detail--embedded': embedded }" aria-label="Item details">
+    <button
+      v-if="!embedded"
+      class="detail__toggle"
+      type="button"
+      :aria-expanded="open"
+      @click="open = !open"
+    >
+      <span class="detail__toggle-label">{{ item ? labelText : 'Item details' }}</span>
+      <svg
+        class="detail__chevron"
+        :class="{ 'detail__chevron--open': open }"
+        width="13" height="13" viewBox="0 0 12 12" aria-hidden="true"
+      ><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    </button>
+
+    <div v-show="open || embedded" class="detail__panel">
+      <p v-if="!item" class="detail__empty">
+        <span class="detail__empty-icon" aria-hidden="true">📜</span>
+        <span>Click an item in your pack to see its details.</span>
+      </p>
+
+      <!-- VIEW MODE -->
+      <div v-else-if="!editing" class="detail__body">
+        <p class="detail__type">{{ typeLine }}</p>
+
+        <div class="detail__qty">
+          <span class="detail__qty-label">Quantity</span>
+          <div class="qty">
+            <button
+              class="qty__btn"
+              type="button"
+              aria-label="Decrease quantity"
+              :disabled="item.quantity <= 1"
+              @click="emit('set-quantity', { id: item.instanceId, quantity: item.quantity - 1 })"
+            >−</button>
+            <span class="qty__value" :key="item.quantity">{{ item.quantity }}</span>
+            <button
+              class="qty__btn"
+              type="button"
+              aria-label="Increase quantity"
+              @click="emit('set-quantity', { id: item.instanceId, quantity: item.quantity + 1 })"
+            >+</button>
+          </div>
+          <span class="detail__weight">{{ weightText }}</span>
+        </div>
+
+        <p v-if="valueText" class="detail__value">
+          <span class="detail__value-label">Worth</span>
+          <span class="detail__value-amount">{{ valueText }}</span>
+        </p>
+
+        <div v-if="slotKind || item.requiresAttunement" class="detail__equip">
+          <template v-if="slotKind">
+            <!-- Equipped → a single unequip (says which hand / both hands). -->
+            <ParButton
+              v-if="isEquipped"
+              variant="secondary"
+              size="small"
+              @click="emit('unequip', item.instanceId)"
+            >Unequip ({{ twoHanded ? 'both hands' : equippedSlotLabel }})</ParButton>
+            <!-- One-handed weapon → choose a hand (dual-wield = one in each). -->
+            <template v-else-if="weaponHands === 'one'">
+              <ParButton variant="primary" size="small"
+                @click="emit('equip', { instanceId: item.instanceId, slot: 'mainHand' })"
+              >Main hand</ParButton>
+              <ParButton variant="primary-outline" size="small"
+                @click="emit('equip', { instanceId: item.instanceId, slot: 'offHand' })"
+              >Off hand</ParButton>
+            </template>
+            <!-- Two-handed weapon → one button; it claims both hands. -->
+            <ParButton
+              v-else-if="weaponHands === 'two'"
+              variant="primary"
+              size="small"
+              @click="emit('equip', { instanceId: item.instanceId })"
+            >Equip · Both hands</ParButton>
+            <!-- Everything else → its single slot. -->
+            <ParButton
+              v-else
+              variant="primary"
+              size="small"
+              @click="emit('equip', { instanceId: item.instanceId })"
+            >Equip · {{ SLOT_LABEL[slotKind === 'ring' ? 'ring1' : slotKind] }}</ParButton>
+          </template>
+          <label v-if="item.requiresAttunement" class="detail__attune" :class="{ 'detail__attune--blocked': attuneBlocked }">
+            <input
+              type="checkbox"
+              :checked="item.attuned"
+              :disabled="attuneBlocked"
+              @change="emit('attune', item.instanceId)"
+            />
+            <span>Attuned</span>
+          </label>
+        </div>
+        <p v-if="item.requiresAttunement" class="detail__attune-note">
+          ⚜ Requires attunement<template v-if="item.attunementNote"> {{ item.attunementNote }}</template>
+        </p>
+
+        <div v-if="slotKind || canStash" class="detail__meta-actions">
+          <button v-if="slotKind" type="button" class="detail__viewequip" @click="emit('view-equipped')">
+            View equipped items →
+          </button>
+
+          <ParButton
+            v-if="canStash"
+            variant="primary-outline"
+            size="small"
+            class="detail__stash"
+            @click="emit('stash', item.instanceId)"
+          >🧳 Stash in bag</ParButton>
+        </div>
+
+        <div v-if="blocks.length" class="detail__desc">
+          <template v-for="(b, i) in blocks" :key="i">
+            <p v-if="b.type === 'p'"><RichText :text="b.text" /></p>
+            <ul v-else-if="b.type === 'list'" class="detail__list">
+              <li v-for="(li, k) in b.items" :key="k"><RichText :text="li" /></li>
+            </ul>
+            <table v-else class="detail__table">
+              <thead v-if="b.headers.length">
+                <tr><th v-for="(h, hi) in b.headers" :key="hi"><RichText :text="h" /></th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, ri) in b.rows" :key="ri">
+                  <td v-for="(cell, ci) in row" :key="ci"><RichText :text="cell" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </template>
+        </div>
+        <p v-else class="detail__nodesc">No description for this item.</p>
+
+        <div class="detail__actions">
+          <ParButton variant="primary-outline" size="small" @click="startEdit">Edit</ParButton>
+          <ParButton variant="secondary" size="small" @click="emit('remove', item.instanceId)">Remove</ParButton>
+        </div>
+      </div>
+
+      <!-- EDIT MODE -->
+      <form v-else class="detail__body" @submit.prevent="save">
+        <ParField label="Name">
+          <ParInput v-model="form.name" />
+        </ParField>
+        <div class="detail__row">
+          <ParField label="Weight (lb each)">
+            <ParInput v-model="form.weight" type="number" />
+          </ParField>
+          <ParField label="Quantity">
+            <ParInput v-model="form.quantity" type="number" />
+          </ParField>
+        </div>
+        <ParField label="Value (gp each)" hint="Worth per unit — for treasure, gems, and valuables.">
+          <ParInput v-model="form.valueGp" type="number" />
+        </ParField>
+        <ParField label="Category">
+          <ParSelect v-model="form.category" :options="categories" />
+        </ParField>
+        <ParField label="Description">
+          <ParTextarea v-model="form.description" :rows="6" />
+        </ParField>
+        <div class="detail__actions">
+          <ParButton type="submit" variant="primary" size="small">Save changes</ParButton>
+          <ParButton type="button" variant="secondary" size="small" @click="editing = false">Cancel</ParButton>
+        </div>
+      </form>
+    </div>
+  </aside>
+</template>
+
+<script setup>
+/**
+ * Collapsible item-detail panel that sits above the catalog's add-menus. It
+ * auto-opens when a pack tile is clicked and shows the item's name, type/rarity,
+ * weight, SRD description/mechanics, a quantity stepper, and an Edit mode. Emits
+ * up to the composable; never mutates the item directly.
+ */
+import { computed, reactive, ref, watch } from 'vue';
+import { ParButton, ParField, ParInput, ParSelect, ParTextarea } from '@/parchment';
+import {
+  effectiveWeight,
+  cleanName,
+  equipSlot,
+  isWeapon,
+  isTwoHanded,
+  EQUIP_SLOTS,
+} from '../utils/tile-presentation.mjs';
+import { parseDescription } from '../utils/format-description.mjs';
+import RichText from './RichText.vue';
+
+const props = defineProps({
+  item: { type: Object, default: null },
+  categories: { type: Array, default: () => [] },
+  attunedCount: { type: Number, default: 0 },
+  maxAttunement: { type: Number, default: 3 },
+  canStash: { type: Boolean, default: false },
+  // Inline/embedded mode (mobile pack list): the row above is the header, so hide
+  // this component's own accordion header and keep the panel open.
+  embedded: { type: Boolean, default: false },
+});
+
+const emit = defineEmits([
+  'set-quantity', 'update', 'remove', 'equip', 'unequip', 'attune', 'view-equipped', 'stash',
+]);
+
+const SLOT_LABEL = Object.fromEntries(EQUIP_SLOTS.map((s) => [s.id, s.label]));
+const slotKind = computed(() => (props.item ? equipSlot(props.item) : null));
+const isEquipped = computed(() => !!props.item?.equippedSlot);
+const equippedSlotLabel = computed(() => SLOT_LABEL[props.item?.equippedSlot] || 'equipped');
+// Weapons choose a hand: 'one' → main/off buttons, 'two' → a single both-hands button.
+const weaponHands = computed(() =>
+  props.item && isWeapon(props.item) ? (isTwoHanded(props.item) ? 'two' : 'one') : null,
+);
+const twoHanded = computed(() => !!props.item && isTwoHanded(props.item));
+const attuneBlocked = computed(
+  () => !props.item?.attuned && props.attunedCount >= props.maxAttunement,
+);
+
+const open = ref(false);
+const editing = ref(false);
+const form = reactive({ name: '', weight: 0, quantity: 1, valueGp: 0, category: '', description: '' });
+
+// Selecting a tile opens the panel and drops out of edit mode.
+watch(
+  () => props.item?.instanceId,
+  (id) => {
+    if (id) open.value = true;
+    editing.value = false;
+  },
+);
+
+const labelText = computed(() => {
+  if (!props.item) return '';
+  const base = cleanName(props.item.name);
+  return props.item.quantity > 1 ? `${base} ×${props.item.quantity}` : base;
+});
+
+const typeLine = computed(() => {
+  if (!props.item) return '';
+  const bits = [props.item.category];
+  if (props.item.rarity) bits.push(props.item.rarity);
+  return bits.join(' · ');
+});
+
+const blocks = computed(() => parseDescription(props.item?.description || ''));
+
+const weightText = computed(() => {
+  if (!props.item) return '';
+  const total = effectiveWeight(props.item);
+  const each = Number(props.item.weight) || 0;
+  const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
+  return props.item.quantity > 1 ? `${fmt(total)} lb (${fmt(each)} each)` : `${fmt(total)} lb`;
+});
+
+// Treasure/valuables carry a gp worth — show per-unit and the stack total.
+const valueText = computed(() => {
+  const each = Number(props.item?.valueGp) || 0;
+  if (each <= 0) return '';
+  const total = each * (Number(props.item.quantity) || 1);
+  const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
+  return props.item.quantity > 1 ? `${fmt(total)} gp (${fmt(each)} gp each)` : `${fmt(each)} gp`;
+});
+
+function startEdit() {
+  const it = props.item;
+  form.name = it.name;
+  form.weight = it.weight;
+  form.quantity = it.quantity;
+  form.valueGp = it.valueGp || 0;
+  form.category = it.category;
+  form.description = it.description || '';
+  editing.value = true;
+}
+
+function save() {
+  emit('update', {
+    id: props.item.instanceId,
+    patch: {
+      name: form.name,
+      weight: form.weight,
+      quantity: form.quantity,
+      valueGp: form.valueGp,
+      category: form.category,
+      description: form.description,
+    },
+  });
+  editing.value = false;
+}
+</script>
+
+<style scoped>
+.detail {
+  background: var(--par-color-surface-card, #fefbf4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 1.2rem 1.6rem;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+}
+/* Inline in the pack list — blend into the expanded row instead of a nested card. */
+.detail--embedded {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0.4rem 0.2rem 0.6rem;
+}
+
+.detail__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.2rem 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.detail__toggle:focus-visible {
+  outline: 2px solid var(--color-action-rest, #365a85);
+  outline-offset: 2px;
+}
+.detail__toggle-label {
+  /* Long flavor-loot names wrap to a few lines instead of truncating away the
+     interesting part; the chevron stays put beside it. */
+  flex: 1;
+  min-width: 0;
+  text-align: left; /* the toggle is a <button> (centers text by default) */
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--par-color-title, #7a1f1f);
+}
+.detail__chevron {
+  flex: none;
+  color: var(--color-action-hover, #2a4d70);
+  transition: transform 0.18s ease;
+}
+.detail__chevron--open {
+  transform: rotate(180deg);
+}
+
+.detail__panel {
+  padding-top: 1rem;
+}
+
+.detail__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 1.6rem 1rem;
+  text-align: center;
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+.detail__empty-icon {
+  font-size: 2.6rem;
+}
+
+.detail__type {
+  margin: 0 0 1.1rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--par-color-text-secondary, #555);
+}
+
+.detail__qty {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0;
+  border-top: 0.5px solid var(--par-color-divider, #e2dccd);
+  border-bottom: 0.5px solid var(--par-color-divider, #e2dccd);
+  margin-bottom: 1.1rem;
+}
+.detail__qty-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-action-hover, #2a4d70);
+}
+.qty {
+  display: inline-flex;
+  align-items: stretch;
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-md, 4px);
+  overflow: hidden;
+  background: #fff;
+}
+.qty__btn {
+  width: 2.8rem;
+  min-height: 3.2rem;
+  border: none;
+  background: transparent;
+  color: var(--par-color-text-secondary, #555);
+  font-size: 1.7rem;
+  cursor: pointer;
+}
+.qty__btn:hover:not(:disabled) { background: rgba(0, 0, 0, 0.05); }
+.qty__btn:disabled { color: var(--par-color-text-disabled, #ccc); cursor: not-allowed; }
+.qty__value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.4rem;
+  border-left: 0.5px solid var(--par-color-border, #e8e2d4);
+  border-right: 0.5px solid var(--par-color-border, #e8e2d4);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--par-color-text, #222);
+  animation: qty-flash 0.5s ease;
+}
+
+@keyframes qty-flash {
+  0% { background: transparent; }
+  30% { background: rgba(54, 90, 133, 0.2); }
+  100% { background: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qty__value { animation: none; }
+}
+.detail__weight {
+  margin-left: auto;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--par-color-text, #222);
+}
+
+.detail__value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin: -0.3rem 0 1.1rem;
+}
+.detail__value-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-action-hover, #2a4d70);
+}
+.detail__value-amount {
+  font-size: 1.45rem;
+  font-weight: 700;
+  /* Treasure gold ink to tie the worth to the treasure tile color. */
+  color: #8a6a12;
+}
+
+.detail__equip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+.detail__attune {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.35rem;
+  color: var(--par-color-text, #222);
+  cursor: pointer;
+}
+.detail__attune input {
+  width: 1.6rem;
+  height: 1.6rem;
+  accent-color: var(--par-color-title, #7a1f1f);
+  cursor: pointer;
+}
+.detail__attune--blocked {
+  color: var(--par-color-text-muted, #6b6b6b);
+  cursor: not-allowed;
+}
+.detail__attune-note {
+  margin: 0 0 1.1rem;
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--par-color-title, #7a1f1f);
+}
+
+/* Stack "View equipped items" + "Stash in bag" vertically, hugging the left —
+   they must never sit side by side (a link crammed against a button reads badly). */
+.detail__meta-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.detail__viewequip {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  font-size: 1.35rem;
+  color: var(--color-action-hover, #2a4d70);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.detail__viewequip:hover {
+  color: var(--color-action-active, #1f3a5c);
+}
+.detail__stash {
+  margin-bottom: 0;
+}
+
+.detail__desc {
+  font-size: 1.45rem;
+  line-height: 1.6;
+  color: var(--par-color-text, #222);
+  max-height: 36vh;
+  overflow-y: auto;
+}
+.detail__desc p { margin: 0 0 0.9rem; }
+.detail__desc :deep(strong) {
+  font-weight: 700;
+  color: var(--par-color-title, #7a1f1f);
+}
+.detail__list {
+  margin: 0 0 0.9rem;
+  padding-left: 1.8rem;
+}
+.detail__list li {
+  margin: 0 0 0.3rem;
+}
+.detail__table {
+  width: 100%;
+  margin: 0 0 0.9rem;
+  border-collapse: collapse;
+  font-size: 1.3rem;
+}
+.detail__table th,
+.detail__table td {
+  padding: 0.35rem 0.6rem;
+  border: 0.5px solid var(--par-color-border, #e8e2d4);
+  text-align: left;
+  vertical-align: top;
+}
+.detail__table th {
+  background: var(--par-color-callout-bg, #f3ebda);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-action-hover, #2a4d70);
+}
+.detail__nodesc {
+  font-style: italic;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+.detail__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.detail__actions {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail__chevron { transition: none; }
+}
+</style>

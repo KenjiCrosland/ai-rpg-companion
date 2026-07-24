@@ -1,0 +1,850 @@
+[
+  {
+    "id": "burglars-pack",
+    "name": "Burglar's Pack",
+    "itemCount": 14,
+    "totalWeight": 47.5,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "ball-bearings-bag-of-1000",
+        "name": "Ball bearings (bag of 1,000)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "As an action, you can spill these tiny metal balls from their pouch to cover a level, square area that is 10 feet on a side.\n\nA creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or fall prone.\n\nA creature moving through the area at half speed doesn't need to make the save."
+      },
+      {
+        "id": "string-10-feet",
+        "name": "String (10 feet)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "A 10-foot length of string, typically found in a burglar's pack."
+      },
+      {
+        "id": "bell",
+        "name": "Bell",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "candle",
+        "name": "Candle",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 5,
+        "description": "For 1 hour, a candle sheds bright light in a 5-foot radius and dim light for an additional 5 feet."
+      },
+      {
+        "id": "crowbar",
+        "name": "Crowbar",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "Using a crowbar grants advantage to Strength checks where the crowbar's leverage can be applied."
+      },
+      {
+        "id": "hammer",
+        "name": "Hammer",
+        "weight": 3,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "piton",
+        "name": "Piton",
+        "weight": 0.25,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10,
+        "description": ""
+      },
+      {
+        "id": "lantern-hooded",
+        "name": "Lantern, hooded",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "A hooded lantern casts bright light in a 30-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil. As an action, you can lower the hood, reducing the light to dim light in a 5-foot radius."
+      },
+      {
+        "id": "oil-flask",
+        "name": "Oil (flask)",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2,
+        "description": "Oil usually comes in a clay flask that holds 1 pint.\n\nAs an action, you can splash the oil in this flask onto a creature within 5 feet of you or throw it up to 20 feet, shattering it on impact. Make a ranged attack against a target creature or object, treating the oil as an improvised weapon.\n\nOn a hit, the target is covered in oil. If the target takes any fire damage before the oil dries (after 1 minute), the target takes an additional 5 fire damage from the burning oil.\n\nYou can also pour a flask of oil on the ground to cover a 5-foot-square area, provided that the surface is level.\n\nIf lit, the oil burns for 2 rounds and deals 5 fire damage to any creature that enters the area or ends its turn in the area. A creature can take this damage only once per turn."
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 5,
+        "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
+      },
+      {
+        "id": "tinderbox",
+        "name": "Tinderbox",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "This small container holds flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a torch--or anything else with abundant, exposed fuel--takes an action.\n\nLighting any other fire takes 1 minute."
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "rope-hempen-50-feet",
+        "name": "Rope, hempen (50 feet)",
+        "weight": 10,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
+      }
+    ]
+  },
+  {
+    "id": "diplomats-pack",
+    "name": "Diplomat's Pack",
+    "itemCount": 11,
+    "totalWeight": 36,
+    "contents": [
+      {
+        "id": "chest",
+        "name": "Chest",
+        "weight": 25,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 3
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "case-map-or-scroll",
+        "name": "Case, map or scroll",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2,
+        "description": "This cylindrical leather case can hold up to ten rolled-up sheets of paper or five rolled-up sheets of parchment."
+      },
+      {
+        "id": "clothes-fine",
+        "name": "Clothes, fine",
+        "weight": 6,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "ink-1-ounce-bottle",
+        "name": "Ink (1 ounce bottle)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "ink-pen",
+        "name": "Ink pen",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "lamp",
+        "name": "Lamp",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "A lamp casts bright light in a 15-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil."
+      },
+      {
+        "id": "oil-flask",
+        "name": "Oil (flask)",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2,
+        "description": "Oil usually comes in a clay flask that holds 1 pint.\n\nAs an action, you can splash the oil in this flask onto a creature within 5 feet of you or throw it up to 20 feet, shattering it on impact. Make a ranged attack against a target creature or object, treating the oil as an improvised weapon.\n\nOn a hit, the target is covered in oil. If the target takes any fire damage before the oil dries (after 1 minute), the target takes an additional 5 fire damage from the burning oil.\n\nYou can also pour a flask of oil on the ground to cover a 5-foot-square area, provided that the surface is level.\n\nIf lit, the oil burns for 2 rounds and deals 5 fire damage to any creature that enters the area or ends its turn in the area. A creature can take this damage only once per turn."
+      },
+      {
+        "id": "paper-one-sheet",
+        "name": "Paper (one sheet)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 5,
+        "description": ""
+      },
+      {
+        "id": "perfume-vial",
+        "name": "Perfume (vial)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "sealing-wax",
+        "name": "Sealing wax",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "soap",
+        "name": "Soap",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": ""
+      }
+    ]
+  },
+  {
+    "id": "dungeoneers-pack",
+    "name": "Dungeoneer's Pack",
+    "itemCount": 9,
+    "totalWeight": 61.5,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "crowbar",
+        "name": "Crowbar",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "Using a crowbar grants advantage to Strength checks where the crowbar's leverage can be applied."
+      },
+      {
+        "id": "hammer",
+        "name": "Hammer",
+        "weight": 3,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "piton",
+        "name": "Piton",
+        "weight": 0.25,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10,
+        "description": ""
+      },
+      {
+        "id": "torch",
+        "name": "Torch",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10,
+        "description": "A torch burns for 1 hour, providing bright light in a 20-foot radius and dim light for an additional 20 feet. If you make a melee attack with a burning torch and hit, it deals 1 fire damage."
+      },
+      {
+        "id": "tinderbox",
+        "name": "Tinderbox",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "This small container holds flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a torch--or anything else with abundant, exposed fuel--takes an action.\n\nLighting any other fire takes 1 minute."
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 10,
+        "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "rope-hempen-50-feet",
+        "name": "Rope, hempen (50 feet)",
+        "weight": 10,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
+      }
+    ]
+  },
+  {
+    "id": "entertainers-pack",
+    "name": "Entertainer's Pack",
+    "itemCount": 7,
+    "totalWeight": 38,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "bedroll",
+        "name": "Bedroll",
+        "weight": 7,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "clothes-costume",
+        "name": "Clothes, costume",
+        "weight": 4,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 2,
+        "description": ""
+      },
+      {
+        "id": "candle",
+        "name": "Candle",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 5,
+        "description": "For 1 hour, a candle sheds bright light in a 5-foot radius and dim light for an additional 5 feet."
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 5,
+        "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "disguise-kit",
+        "name": "Disguise Kit",
+        "weight": 3,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "This pouch of cosmetics, hair dye, and small props lets you create disguises that change your physical appearance. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a visual disguise."
+      }
+    ]
+  },
+  {
+    "id": "explorers-pack",
+    "name": "Explorer's Pack",
+    "itemCount": 8,
+    "totalWeight": 59,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "bedroll",
+        "name": "Bedroll",
+        "weight": 7,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "mess-kit",
+        "name": "Mess Kit",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "This tin box contains a cup and simple cutlery. The box clamps together, and one side can be used as a cooking pan and the other as a plate or shallow bowl."
+      },
+      {
+        "id": "tinderbox",
+        "name": "Tinderbox",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "This small container holds flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a torch--or anything else with abundant, exposed fuel--takes an action.\n\nLighting any other fire takes 1 minute."
+      },
+      {
+        "id": "torch",
+        "name": "Torch",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10,
+        "description": "A torch burns for 1 hour, providing bright light in a 20-foot radius and dim light for an additional 20 feet. If you make a melee attack with a burning torch and hit, it deals 1 fire damage."
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 10,
+        "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "rope-hempen-50-feet",
+        "name": "Rope, hempen (50 feet)",
+        "weight": 10,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 2,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
+      }
+    ]
+  },
+  {
+    "id": "priests-pack",
+    "name": "Priest's Pack",
+    "itemCount": 10,
+    "totalWeight": 18,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "blanket",
+        "name": "Blanket",
+        "weight": 3,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "candle",
+        "name": "Candle",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10,
+        "description": "For 1 hour, a candle sheds bright light in a 5-foot radius and dim light for an additional 5 feet."
+      },
+      {
+        "id": "tinderbox",
+        "name": "Tinderbox",
+        "weight": 1,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "This small container holds flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a torch--or anything else with abundant, exposed fuel--takes an action.\n\nLighting any other fire takes 1 minute."
+      },
+      {
+        "id": "rations-1-day",
+        "name": "Rations (1 day)",
+        "weight": 2,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 2,
+        "description": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
+      },
+      {
+        "id": "waterskin",
+        "name": "Waterskin",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "alms-box",
+        "name": "Alms box",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "A small box for alms, typically found in a priest's pack."
+      },
+      {
+        "id": "block-of-incense",
+        "name": "Block of incense",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 2,
+        "description": "A block of incense, typically found in a priest's pack."
+      },
+      {
+        "id": "censer",
+        "name": "Censer",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "A censer, typically found in a priest's pack."
+      },
+      {
+        "id": "vestments",
+        "name": "Vestments",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "Religious clothing, typically found in a priest's pack."
+      }
+    ]
+  },
+  {
+    "id": "scholars-pack",
+    "name": "Scholar's Pack",
+    "itemCount": 7,
+    "totalWeight": 10,
+    "contents": [
+      {
+        "id": "backpack",
+        "name": "Backpack",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "book",
+        "name": "Book",
+        "weight": 5,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 2
+        },
+        "quantity": 1,
+        "description": "A book might contain poetry, historical accounts, information pertaining to a particular field of lore, diagrams and notes on gnomish contraptions, or just about anything else that can be represented using text or pictures. A book of spells is a spellbook (described later in this section)."
+      },
+      {
+        "id": "ink-1-ounce-bottle",
+        "name": "Ink (1 ounce bottle)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "ink-pen",
+        "name": "Ink pen",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": ""
+      },
+      {
+        "id": "parchment-one-sheet",
+        "name": "Parchment (one sheet)",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 10,
+        "description": ""
+      },
+      {
+        "id": "little-bag-of-sand",
+        "name": "Little bag of sand",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "A small bag of sand, typically found in a scholar's pack."
+      },
+      {
+        "id": "small-knife",
+        "name": "Small knife",
+        "weight": 0,
+        "category": "Adventuring Gear",
+        "size": {
+          "w": 1,
+          "h": 1
+        },
+        "quantity": 1,
+        "description": "A small knife, typically found in a scholar's pack."
+      }
+    ]
+  }
+]
