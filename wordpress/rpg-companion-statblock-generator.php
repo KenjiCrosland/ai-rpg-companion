@@ -71,6 +71,42 @@ function vue_app_enqueue_assets() {
             .statblock ul.abilities {
              margin-left: 0;
           }
+
+            /* Statblock2024 ability grid — replicated from the component
+               (scoped styles) at #app specificity, and pinned in PX: the
+               card\'s outer width is px-fixed (850) while the theme\'s root
+               font-size scales rem, so rem-sized grid columns overflow the
+               half column in prod and the theme\'s word-wrap: break-word
+               fractures CON/CHA. px columns + px grid font are immune to
+               the theme root entirely. Values = component rems × 10. */
+            #app .sb24-abilities {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px 8px;
+                font-size: 14px;
+            }
+            #app .sb24-ability-cell {
+                display: grid;
+                grid-template-columns: 32px 23px 29px 29px;
+                column-gap: 3px;
+                align-items: center;
+                text-align: center;
+            }
+            #app .sb24-ability-head {
+                font-size: 9.5px;
+            }
+            #app .sb24-ability-abbr {
+                white-space: nowrap;
+                word-break: normal;
+                overflow-wrap: normal;
+                text-align: left;
+                padding-left: 4px;
+            }
+            /* Edit mode widens the score column for its input (matches the
+               component\'s .sb24-body--editing override). */
+            #app .sb24-body--editing .sb24-ability-cell {
+                grid-template-columns: 32px 52px 29px 29px;
+            }
             select {
                 padding: 1rem;
             }

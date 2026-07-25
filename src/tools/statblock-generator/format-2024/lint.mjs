@@ -455,6 +455,22 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       if (/\bsurprised\b/i.test(entry.text)) {
         push('phrasing-surprised', 'reject', `${where} references "surprised" — 2024 has no surprised state (surprise gives Disadvantage on initiative); phrase the trigger as "a creature that hasn't taken a turn in combat yet"`, undefined, loc);
       }
+      // Fake statuses smuggled in WITHOUT the "has the X condition" wrapper
+      // ("is Slowed" — 4e-ism; live finding). Context-anchored so legit
+      // sentence-start words don't collide; "Cursed" excluded (Rakshasa
+      // uses it officially).
+      {
+        const fake = /\b(?:is|becomes|remains) (Slowed|Dazed|Weakened|Hastened|Winded|Chilled|Confused)\b/.exec(entry.text);
+        if (fake) {
+          push('condition-fake', 'reject', `${where}: "${fake[1]}" is not a 5e condition — use a real condition or describe the effect mechanically (e.g. "its Speed is halved")`, undefined, loc);
+        }
+      }
+      // "*Success:* No effect." / "Success: The target is not X." — official
+      // style OMITS the Success clause when success does nothing (zero
+      // corpus occurrences). Deterministically stripped.
+      if (/\*?Success:\*?\s*(?:No effect|None|The \w+ is not [A-Z]\w+)\.?/.test(entry.text)) {
+        push('success-no-effect', 'reject', `${where}: a Success clause that does nothing — omit *Success:* entirely when success has no effect`, undefined, loc);
+      }
       // Invented conditions: "has the X condition" where X isn't one of the
       // 14 real conditions (+ Exhaustion). The model occasionally imports
       // 4e-isms ("Dazed") or invents status names. The SRD's compound form

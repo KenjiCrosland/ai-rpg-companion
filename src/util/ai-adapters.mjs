@@ -23,6 +23,15 @@ export class OpenAIAdapter {
       messages,
     };
 
+    // DeepSeek V4 models run hidden reasoning by DEFAULT — measured: a
+    // one-word answer produced 234 chars of reasoning_content, 64 output
+    // tokens, and 2× the latency vs 2 tokens with thinking disabled. Our
+    // pipeline dictates exact numeric skeletons, so reasoning buys nothing
+    // and bills as output. DeepSeek-only: OpenAI rejects unknown params.
+    if (model.startsWith('deepseek')) {
+      body.thinking = { type: 'disabled' };
+    }
+
     // SECURITY: Do NOT set Authorization header
     // API key is injected server-side by proxy
     const headers = {

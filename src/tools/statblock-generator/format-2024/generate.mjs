@@ -610,7 +610,9 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
     .join(', ');
 
   const perception = 10 + modOf(stats.WIS) + (skillProfs.includes('Perception') ? pb : 0);
-  const sensesSpecial = (llmJson.senses_special ?? '').trim();
+  const sensesSpecial = (llmJson.senses_special ?? '').trim()
+    // Corpus lowercases sense names ("darkvision 120 ft.").
+    .replace(/\b(Blindsight|Darkvision|Tremorsense|Truesight)\b/g, (w) => w.toLowerCase());
   const senses = sensesSpecial
     ? `${sensesSpecial}; Passive Perception ${perception}`
     : `Passive Perception ${perception}`;
@@ -1000,6 +1002,7 @@ const DETERMINISTIC_TEXT_FIXES = [
     (m, also, rest) => `must ${also ?? ''}succeed on ${rest} or`)],
   ['area-circle', (t) => t.replace(/(\d+-foot(?:-radius)?) circle\b/gi, '$1 Sphere')],
   ['spelling-centred', (t) => t.replace(/centred/g, 'centered')],
+  ['success-no-effect', (t) => t.replace(/\s*\*?Success:\*?\s*(?:No effect|None|The \w+ is not [A-Z]\w+)\.?/g, '')],
   ['damage-type-caps', (t) => t.replace(DAMAGE_TYPES_LOWER_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['area-term-caps', (t) => t.replace(/\b(\d+-foot )(cone|line|sphere|cylinder|emanation|cube)\b/g,
     (m, p, a) => p + a[0].toUpperCase() + a.slice(1))],
@@ -1446,6 +1449,7 @@ const ENTRY_FIXABLE = new Set([
   'entry-name-self', 'swarm-heal-contradiction', 'swarm-half-damage',
   'area-circle', 'spelling-centred', 'phrasing-surprised',
   'entry-name-bathos', 'attack-mod-coherence',
+  'condition-fake', 'success-no-effect',
 ]);
 
 // Rules whose defect is the entry's NAME — the fix call may rename these
@@ -1465,6 +1469,7 @@ const STYLE_TIER_REJECTS = new Set([
   'area-circle', 'spelling-centred', 'second-person', 'entry-name-caps',
   'entry-name-coinage', 'entry-name-design-term', 'entry-name-self',
   'entry-name-bathos', 'seed-leakage', 'attack-mod-coherence',
+  'success-no-effect',
 ]);
 
 /** True when every remaining reject is a shippable style wart. */

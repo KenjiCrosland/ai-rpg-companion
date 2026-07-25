@@ -8,6 +8,7 @@
  */
 import { lintStatblock, avgDice } from '../format-2024/lint.mjs';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
+import { applyCorrections } from '../format-2024/generate.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
 import monsters from '@/data/srd52-monsters.json';
 
@@ -320,6 +321,28 @@ describe('each rule catches its violation class', () => {
         f.rule === 'slot-missing' && /resistance package|condition immunities/.test(f.message));
       expect(passiveMisses).toEqual([]);
     }
+  });
+
+  test('cinderbore-round rules: fake statuses and no-effect Success clauses', () => {
+    // "is Slowed" — a 4e-ism dodging the "has the X condition" wrapper.
+    const slowed = withAction(cleanLurker, 2, { text: '*Strength Saving Throw*: DC 13, one creature. *Failure:* The target falls Prone and is Slowed until the end of its next turn.' });
+    expect(rules(lint(slowed, {}))).toContain('condition-fake');
+    // Real conditions and Bloodied-style terms in the same shape stay legal.
+    const legal = withAction(cleanLurker, 2, { text: '*Strength Saving Throw*: DC 13, one creature. *Failure:* The target is Restrained until the end of its next turn.' });
+    expect(rules(lint(legal, {}))).not.toContain('condition-fake');
+
+    // "*Success:* No effect." strips deterministically.
+    const noEffect = withAction(cleanLurker, 2, { text: '*Dexterity Saving Throw*: DC 13, one creature. *Failure:* 21 (6d6) Psychic damage. *Success:* No effect.' });
+    const findings = lint(noEffect, {}).findings;
+    expect(findings.some((f) => f.rule === 'success-no-effect')).toBe(true);
+    const { chassis } = { chassis: lurkerChassis };
+    const fixed = applyCorrections(noEffect, findings, { chassis });
+    expect(fixed.sections.Actions[2].text).not.toContain('Success');
+    expect(fixed.sections.Actions[2].text).toContain('21 (6d6) Psychic damage.');
+    // The verbose "is not X" form is the same wart (Myrgoth's "Success: The
+    // creature is not Restrained.").
+    const verbose = withAction(cleanLurker, 2, { text: '*Wisdom Saving Throw*: DC 13, one creature. *Failure:* The target has the Restrained condition. *Success:* The target is not Restrained.' });
+    expect(rules(lint(verbose, {}))).toContain('success-no-effect');
   });
 
   test('rubric-round rules: surprised leakage, bathos entry names, attack-mod coherence', () => {

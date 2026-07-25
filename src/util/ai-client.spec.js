@@ -112,3 +112,28 @@ describe('generateGptResponse failover', () => {
     expect(global.fetch).toHaveBeenCalledTimes(5);
   });
 });
+
+describe('DeepSeek thinking parameter', () => {
+  let generateGptResponse;
+
+  beforeEach(() => {
+    jest.resetModules();
+    localStorage.clear();
+    global.fetch = jest.fn();
+    ({ generateGptResponse } = require('./ai-client.mjs'));
+  });
+
+  test('DeepSeek requests disable hidden reasoning; OpenAI requests never send the param', async () => {
+    global.fetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [{ message: { content: 'a' } }] }) })
+      .mockResolvedValueOnce({ ok: false, status: 502, text: async () => 'boom' })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [{ message: { content: 'b' } }] }) });
+    await generateGptResponse('one'); // deepseek
+    await generateGptResponse('two'); // deepseek 502 → openai failover
+    const bodies = global.fetch.mock.calls.map(([url, opts]) => [url, JSON.parse(opts.body)]);
+    expect(bodies[0][0]).toBe('/api/ai/deepseek');
+    expect(bodies[0][1].thinking).toEqual({ type: 'disabled' });
+    expect(bodies[2][0]).toBe('/api/ai/openai');
+    expect(bodies[2][1].thinking).toBeUndefined();
+  });
+});

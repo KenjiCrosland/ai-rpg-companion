@@ -555,10 +555,13 @@ onBeforeUnmount(() => {
 }
 
 /* Cell widths sized to the digits (official-card proportions) so all three
-   groups fit across even the narrow one-column card. */
+   groups fit across even the narrow one-column card. The column gap keeps
+   wide abbreviations (CON, CHA) off two-digit scores; nowrap stops prod
+   themes' word-wrap: break-word from fracturing them. */
 .sb24-ability-cell {
   display: grid;
-  grid-template-columns: 3.2rem 2.6rem 3.2rem 3.2rem;
+  grid-template-columns: 3.2rem 2.3rem 2.9rem 2.9rem;
+  column-gap: 0.3rem;
   align-items: center;
   text-align: center;
 }
@@ -576,6 +579,7 @@ onBeforeUnmount(() => {
   font-variant: small-caps;
   text-align: left;
   padding-left: 0.4rem;
+  white-space: nowrap;
 }
 
 .sb24-ability-cell:not(.sb24-ability-head) {
