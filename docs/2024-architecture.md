@@ -294,6 +294,21 @@ never accept LLM numbers); missing required_slots reject the generation.
 The lint layer and chassis math are the automated-test surface. Flavor is
 production-review only.
 
+## Defect investigation (2026-07-25)
+
+The 16-block field-test corpus was split verbatim into `fixtures/` and audited
+under the seven-task brief; findings live in `docs/investigations/01`–`07`.
+Implemented from it: weighted random-CR bands (`rollRandomCR`, report 06), and
+the `bps-resistance` lint rule + prompt de-anchoring (report 05 — note the
+chassis-gating trick that grandfathers official B/P/S carriers). Reports 02
+(all fixture DCs already chassis-derivable — no fix) and 03 (orphaned
+mechanics are a prose-structure limit) are evidence for future decisions.
+Reports 04 (`cc-aoe`: ungated AoE + damage + hard condition, corpus-verified
+zero-FP), 07 (grapple-exit injection, 52/52 official convention), and 01
+(legendary reuse-target cap, recommendation (a)+(c)) specify promotable rules
+that are **designed but deliberately not implemented** — read the report
+before building any of them.
+
 ## Legal
 
 SRD 5.2.1 content requires this attribution (site footer / tool page):

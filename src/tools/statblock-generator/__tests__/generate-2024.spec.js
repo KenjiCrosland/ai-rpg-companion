@@ -589,12 +589,27 @@ describe('applyCorrections', () => {
   test('strips 2014 nonmagical qualifiers from resistance fields', () => {
     const { chassis, plan } = buildContext(4, 'lurker');
     const dated = assembleMonster(
+      { ...llmFixture, resistances: 'Fire, Cold from nonmagical attacks' },
+      ctx()
+    );
+    const findings = lintStatblock(dated, { chassis, plan }).findings;
+    const fixed = applyCorrections(dated, findings, { chassis });
+    expect(fixed.resistances).toBe('Fire, Cold');
+    expect(lintStatblock(fixed, { chassis, plan }).ok).toBe(true);
+  });
+
+  test('an unearned B/P/S package is removed outright, qualifier and all', () => {
+    // Interaction between the nonmagical strip and the bps-resistance rule:
+    // a non-swarm, non-incorporeal 2024 block loses the physical package
+    // entirely rather than keeping a de-qualified copy.
+    const { chassis, plan } = buildContext(4, 'lurker');
+    const dated = assembleMonster(
       { ...llmFixture, resistances: 'Bludgeoning, Piercing, Slashing from nonmagical attacks' },
       ctx()
     );
     const findings = lintStatblock(dated, { chassis, plan }).findings;
     const fixed = applyCorrections(dated, findings, { chassis });
-    expect(fixed.resistances).toBe('Bludgeoning, Piercing, Slashing');
+    expect(fixed.resistances).toBeUndefined();
     expect(lintStatblock(fixed, { chassis, plan }).ok).toBe(true);
   });
 
@@ -759,5 +774,45 @@ describe('generateMonster2024 orchestration', () => {
   test('throws on an empty response', async () => {
     const callLLM = jest.fn().mockResolvedValue(null);
     await expect(generateMonster2024(options, callLLM)).rejects.toThrow(/Empty or malformed/);
+  });
+});
+
+describe('rollRandomCR (weighted random-path CR)', () => {
+  const { rollRandomCR } = require('../format-2024/concept-seeds.mjs');
+  const { crNumberFor } = require('../format-2024/generate.mjs');
+  const { assertValidCR } = require('../chassis/chassis.mjs');
+
+  afterEach(() => jest.restoreAllMocks());
+
+  test('every band boundary yields a valid CR key from the right band', () => {
+    // Weights 38/30/17/10/5 of 100: probe just inside each band.
+    const probes = [
+      [0.001, ['1/4', '1/2', '1', '2', '3', '4']],
+      [0.379, ['1/4', '1/2', '1', '2', '3', '4']],
+      [0.381, ['5', '6', '7', '8']],
+      [0.679, ['5', '6', '7', '8']],
+      [0.681, ['9', '10', '11', '12']],
+      [0.849, ['9', '10', '11', '12']],
+      [0.851, ['13', '14', '15', '16', '17', '18', '19', '20']],
+      [0.949, ['13', '14', '15', '16', '17', '18', '19', '20']],
+      [0.951, ['21', '22', '23', '24', '25', '26', '27', '28', '29', '30']],
+      [0.999, ['21', '22', '23', '24', '25', '26', '27', '28', '29', '30']],
+    ];
+    for (const [rand, band] of probes) {
+      // First random() picks the band, second picks within it.
+      jest.spyOn(Math, 'random').mockReturnValueOnce(rand).mockReturnValueOnce(0.5);
+      const cr = rollRandomCR();
+      expect(band).toContain(cr);
+      expect(() => assertValidCR(crNumberFor(cr))).not.toThrow();
+      jest.restoreAllMocks();
+    }
+  });
+
+  test('the distribution is low-CR-heavy: 68% of weight sits at CR 8 or below', () => {
+    // Statistical sanity over the real (unmocked) roll.
+    const rolls = Array.from({ length: 4000 }, () => crNumberFor(rollRandomCR()));
+    const low = rolls.filter((c) => c <= 8).length / rolls.length;
+    expect(low).toBeGreaterThan(0.58); // 68% expected; wide tolerance
+    expect(rolls.filter((c) => c >= 21).length / rolls.length).toBeLessThan(0.12);
   });
 });

@@ -298,7 +298,7 @@ import {
   parseGenerationResponse, pickRandomArchetype, crNumberFor, crKeyFor,
   convertEdition, toLegacyModel, fromLegacyModel,
 } from './format-2024/generate.mjs';
-import { buildRandomConceptSeed, buildSynthesizedConcept } from './format-2024/concept-seeds.mjs';
+import { buildRandomConceptSeed, buildSynthesizedConcept, rollRandomCR } from './format-2024/concept-seeds.mjs';
 import GeneratorLayout from '@/components/GeneratorLayout.vue';
 import SidebarFooter from '@/components/SidebarFooter.vue';
 import VersionBadge from '@/components/VersionBadge.vue';
@@ -902,11 +902,11 @@ async function generateStatblock() {
 
   loadingPart1.value = true;
   loadingPart2.value = true;
-  const randomCR = Math.floor(Math.random() * 30) + 1;
+  const randomCR = rollRandomCR(); // weighted toward actual-play CRs
 
   const promptOptions = {
     monsterName: monsterName.value,
-    challengeRating: selectedChallengeRating.value || randomCR.toString(),
+    challengeRating: selectedChallengeRating.value || randomCR,
     // The Build select is retired; the legacy pipeline derives its Build
     // value from the Combat role select.
     monsterType: ARCHETYPE_TO_BUILD[archetype.value] ?? 'Random',
@@ -968,7 +968,7 @@ async function generateStatblockEngine(edition) {
   // two-call flow set both, which is what filled both columns. The engine
   // is a single call, but the 2014 display still wants both halves ghosted.
   loadingPart2.value = true;
-  const crInput = selectedChallengeRating.value || String(Math.floor(Math.random() * 30) + 1);
+  const crInput = selectedChallengeRating.value || rollRandomCR();
   const cr = crNumberFor(crInput);
 
   // Archetype resolution order (settled in the architecture doc):

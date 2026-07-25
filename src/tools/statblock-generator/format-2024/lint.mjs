@@ -681,6 +681,26 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         }
       }
     }
+    // The 2024 MM all but eliminated the unqualified B/P/S resistance
+    // package — in SRD 5.2.1 it survives on swarms, incorporeal undead, a
+    // handful of elementals, and one-off mythics (Tarrasque). Generated
+    // blocks must EARN it: swarm identity or incorporeal movement. Elemental
+    // type is deliberately NOT whitelisted (follow the 2025 direction, not
+    // the legacy carriers). Chassis-gated so the corpus sweep — which lints
+    // officials without a chassis — never sees this rule; 2024-only because
+    // 2014 designs legitimately use the nonmagical-qualified package.
+    if (is2024 && hasAll(monster.resistances, ['bludgeoning', 'piercing', 'slashing'])) {
+      const isSwarm = chassis.archetype === 'swarm' || /\bswarm of\b/i.test(monster.type ?? '');
+      const incorporeal = entriesOf(monster).some(({ entry }) =>
+        /incorporeal|move through (?:other )?creatures and objects/i.test(`${entry.name} ${entry.text}`));
+      if (!isSwarm && !incorporeal) {
+        const kept = splitTokens(monster.resistances)
+          .filter((tok) => !/(bludgeoning|piercing|slashing)/i.test(tok));
+        push('bps-resistance', 'correctable',
+          'Unqualified Bludgeoning/Piercing/Slashing resistance without a swarm or incorporeal identity — 2024 reserves the full physical package for those; the physical types are stripped',
+          kept.join(', '), { field: 'resistances' });
+      }
+    }
   }
 
   // --- Structural rules (need slot plan) ----------------------------------

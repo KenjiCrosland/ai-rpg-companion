@@ -162,3 +162,26 @@ export function buildRandomConceptSeed() {
     namingRules(traits);
   return { ...traits, concept };
 }
+
+// Weighted CR roll for blank-form generations (defect investigation task 6,
+// 2026-07-25): the old uniform 1-30 roll put the median random monster at
+// CR ~15, but actual-play demand concentrates at CR 1/4-10. Bands weight
+// low CRs heavily with a thin tail to 30. Returns the CR *key* string the
+// generator's crInput consumes ('1/4' ... '30').
+const CR_BANDS = [
+  { weight: 38, crs: ['1/4', '1/2', '1', '2', '3', '4'] },
+  { weight: 30, crs: ['5', '6', '7', '8'] },
+  { weight: 17, crs: ['9', '10', '11', '12'] },
+  { weight: 10, crs: ['13', '14', '15', '16', '17', '18', '19', '20'] },
+  { weight: 5, crs: ['21', '22', '23', '24', '25', '26', '27', '28', '29', '30'] },
+];
+const CR_WEIGHT_TOTAL = CR_BANDS.reduce((sum, b) => sum + b.weight, 0);
+
+export function rollRandomCR() {
+  let roll = Math.random() * CR_WEIGHT_TOTAL;
+  for (const band of CR_BANDS) {
+    if (roll < band.weight) return pick(band.crs);
+    roll -= band.weight;
+  }
+  return pick(CR_BANDS[0].crs); // float-edge fallback
+}

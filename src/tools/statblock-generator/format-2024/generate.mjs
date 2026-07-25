@@ -448,9 +448,9 @@ RULES — read first; they apply to every line of output:
    WRONG: The target is Stunned. / The target is Pulled 10 feet. (only real conditions are Capitalized — movement effects like "is pulled" or "is pushed" stay lowercase)
 4. Resistances/Immunities values list bare damage types and condition names, comma-separated (never slashes) — never the words "damage" or "condition", never "from nonmagical attacks". Damage types first, then conditions after a semicolon.
    CORRECT: "immunities": "Poison; Exhaustion, Poisoned"
-   CORRECT: "resistances": "Bludgeoning, Piercing, Slashing"
+   CORRECT: "resistances": "Fire, Cold"
    WRONG: "immunities": "Poison damage, Poisoned condition"
-   WRONG: "resistances": "Bludgeoning/Piercing/Slashing"
+   WRONG: "resistances": "Fire/Cold/Lightning"
 5. Spell names are Title Case: Minor Illusion, Blindness/Deafness, Fear.
 6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock — if you created an action called "Spectral Saber", write "makes two Spectral Saber attacks". Never the bare "makes two attacks", and never an attack name that does not appear in this statblock's Actions.
 7. The statblock text is in-world only and third person. Never reference these instructions, rulebook editions ("2024", "5e"), or design terms ("legal condition", "budget"). Never "you"/"your" ("each creature of the warden's choice", not "of your choice"). Never write "(any race)" in the subtype — 2024 dropped it.
@@ -471,6 +471,7 @@ FIXED NUMBERS (do not deviate):
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
+- NEVER resist all three of Bludgeoning, Piercing, and Slashing — the full physical package is reserved for swarms and incorporeal creatures. Anything else picks elemental/energy resistances instead (or at most ONE physical type with a strong body-material reason).
 - Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. The fixed HP already prices typical defenses. Condition immunities are free-form.
 ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
@@ -1053,7 +1054,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type') && x.loc?.field
+    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance') && x.loc?.field
   )) {
     out[f.loc.field] = f.expected || undefined;
   }
