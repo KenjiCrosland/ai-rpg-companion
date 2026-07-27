@@ -294,6 +294,232 @@ never accept LLM numbers); missing required_slots reject the generation.
 The lint layer and chassis math are the automated-test surface. Flavor is
 production-review only.
 
+## SPRINT CLOSED (2026-07-27, owner call: "90 percent there — long-tail outliers")
+
+The 2024 engine sprint is complete. State at close: ~50 audited blocks since
+batch 4 with ZERO wrong chassis numbers (CR 1/4-30, all archetypes, casters,
+swarms, legendaries); ~40 corpus-calibrated lint rules, each swept to 0/329;
+deterministic correctors for most classes; never-fail shipping throughout.
+The residual tail is documented in the batch notes below (hybrid fix-call
+struggles, referent orphans, unbanded zone sizes, tiny-CR band floor, kit
+clustering) — each with its escalation path. Next sprint: **2014 engine +
+edition conversion**. Known starting facts for it: zero live 2014 blocks were
+generated during this sprint; most new lint rules are is2024-gated and need
+per-rule decisions about 2014 equivalents; the conversion round-trip
+(cache-and-swap + convertEdition + CONVERSION_LINT_RULES) is untested since
+the rule avalanche; the legacy two-part pipeline fallback still exists behind
+localStorage['statblock-legacy-2014'].
+
+## Conversion sprint — batch 1 (2026-07-27, six converted soak-3 blocks)
+
+First live data for 2024→2014 conversion: Bilewurm, Shissar, Stalking
+Webspinner, Chazkor, Ulghoch, Silk Shambler (the soak-3 originals, converted).
+**Verdict: numbers 100% (HP formulas, saves/skills, dice averages, XP for CR
+3/4/7/8/23/30, PB — all exact; nothing rebalanced), skeletons 100% (attack
+lines, save constructions, legendary boilerplate, 2014 swarm trait + condition
+set all correct).** The conversion call handles skeletons but leaks 2024
+*vocabulary*, and the 2014-target lint branch only checked "Attack Roll:"/
+"Failure:" markers, so four leak classes shipped:
+
+1. **Bloodied** (Webspinner Planar Retreat) — term doesn't exist in 2014.
+2. **Emanation** (Ulghoch Caustic Slime "5-foot emanation originating from";
+   Silk Shambler ×2 "20-foot-radius emanation centered on").
+3. **Capitalized area shapes** (Bilewurm "15-foot Cone… in the Cone") — no
+   inverse of `area-term-caps` existed.
+4. **"has the X condition"** (Chazkor Critical Panic "has the stunned
+   condition") — 2024 grammar; 2014 writes "is stunned".
+
+Shipped: four 2014-branch lint rules (`bloodied-in-2014`, `emanation-in-2014`,
+`area-caps-in-2014`, `condition-phrase-in-2014`), each swept **0/327 against
+`src/data/srd-monsters.json`** (the 2014 SRD corpus — note: 2014-target rules
+sweep against THIS corpus, not the 329-block srd52 one), with deterministic
+appliers in `DETERMINISTIC_TEXT_FIXES` (verified no-ops on all 327 official
+texts, since a firing rule applies its fix to every entry in the block).
+Applier edges: "While bloodied" preserves sentence case; creature-name "Cube"
+references ("Gelatinous Cube stat block") are untouched (fix requires a
+"-foot"/"the" lead-in); "has the exhaustion condition" is NOT auto-fixed (2014
+phrases exhaustion as levels — rides the fix ladder). All four registered in
+`CONVERSION_LINT_RULES` (+ `phrasing-save-or`, a phrasing rule with a
+deterministic applier that had been missing from the set), and the
+`CONVERSION_RULES[2014]` prompt now states the vocabulary swaps directly.
+Tests: 10 behavioral tests from the verbatim converted text in
+`engine-2014.spec.js`, including a convertEdition e2e that guards the
+CONVERSION_LINT_RULES wiring (leaked response → cleaned in one call).
+
+Carried-over 2024 defects in this batch (verified present in the soak-3
+originals, NOT conversion regressions): "Webbing Lashs" typo + Web Walker
+referencing web terrain its attack doesn't create; Planar Retreat's "use this
+action as a reaction on its turn"; Ulghoch's garbled Reinforce Slime (predates
+the `legendary-recharge` bypass rule that it motivated — fresh generations
+catch it); Earth Ambush calling a save-AoE a "Surge Strike attack"; the
+"ignores resistance" rider watch item. Cosmetic 2014 nits not yet ruled:
+senses ordering (Shissar lists darkvision before blindsight; corpus is
+alphabetical), condition-immunity line ordering, creature name capitalized in
+prose ("The Stalking Webspinner makes…" vs corpus lowercase "the webspinner").
+
+## Conversion sprint — batch 2 (2026-07-27, three fresh 2024 blocks + conversions)
+
+Wailglacier (CR 1 controller), Emberhide Hulk (CR 5 defender), Leafblade
+Glider (CR 12 skirmisher). **Chassis: all three exact** (AC/atk/DC dead on;
+HP within formula-derivation of the mult; Emberhide HP 105 = 95×1.1 exact;
+all three AoEs EXACTLY at total/2 budget: 4/16/39). Two of batch-1's leak
+rules confirmed working live (Wailglacier Emanation→sphere, Leafblade
+"Bloodied"→half-HP). Two defects found and fixed:
+
+1. **Naming-pass rename orphan** (2024 side, Wailglacier): the model returned
+   an ability rename WITH its usage suffix ("Freezing Fog (Recharge 5-6)" →
+   "Whisper Crush (Recharge 5-6)"); `applyRenameMapping` renamed the entry
+   but couldn't find the suffixed string inside Multiattack's bare prose
+   reference ("a use of its Freezing Fog"), and the word-pair fallback drops
+   "Fog" (< 4 chars). Since renames run AFTER the final lint sweep, the
+   orphan shipped unchecked. Fix: `applyAbilityRenames` is now suffix-aware
+   (resolves bare↔suffixed names both ways, preserves the entry's own
+   suffix, maps the bare name for prose references) AND both call sites go
+   through `renameAbilitiesSafely` — if applying renames increases the
+   `undefined-attack-ref` count, the renames revert wholesale (names are
+   cosmetic; reverting is free, an unadjudicable block is not).
+2. **Modal condition-phrase regression** (conversion side, Emberhide): the
+   batch-1 applier turned "can't have the Invisible condition" into "can't
+   are invisible". Applier now handles modals ("can't have" → "can't be"),
+   negated do ("does not have" → "is not"), and refuses bare "have"
+   (plural/exotic subject — no safe verb; rides the fix ladder). Re-swept:
+   0/327 no-op on officials.
+
+Carried/known-class in this batch (no new rules): Emberhide Seething Gaze
+contradiction (fixed duration + repeat save + orphan "(escape DC 12)" on a
+non-grapple — condition-duration incoherence, referent-orphan family);
+Wailglacier Relentless Slide (trait-material movement permission fused with a
+disconnected 60-ft prone save); "Emanation centered on" vs corpus
+"originating from" (cosmetic); Wailglacier escape DC 11 (within the
+asymmetric sane band, rule fired or tolerated — not chased); Wailglacier
+2-attack routine vs 1-attack controller plan (12 vs 8 budget, still inside
+the raw DMG CR-1 band — watch item, tiny-CR wobble).
+
+## Conversion sprint — batch 3 (2026-07-27, legendary + spellcaster, CR 15/22)
+
+Askor (CR 15 defender, legendary + innate caster) and Tarwurm (CR 22
+defender, legendary), 2024 + conversions. **Chassis exact on both**: Askor AC
+20/atk 12/DC 19, claw primary 16 = perAttack budget 16, routine primaries 48
+vs 49, AoE 24 vs 25; Tarwurm AC 23/atk 15/DC 23, routine primaries 84 vs 86,
+Tar Cone 42 vs 43, escape DC 21 = save_dc−2 formula. Legendary discount
+(0.6) visibly honored at both CRs. Conversions: skeletons/boilerplate all
+correct; batch-2's modal fix confirmed live (Tarwurm "or be grappled").
+
+Shipped this batch:
+1. **Mid-generation overwrite bug (UI)**: `saveGeneratedMonster` resolved
+   `activeFolder`/`activeMonsterIndex` at COMPLETION time, so browsing the
+   sidebar during the wait redirected the save onto the clicked monster.
+   Fix: `generationTarget` captured at generation start (folder + index +
+   occupant name); at save, the index is trusted only if the same monster
+   still occupies it (else find-by-name; deleted → save as new).
+   3 Vue tests (StatblockGenerator.spec.js, mid-generation navigation
+   describe). Test-infra note: earlier describes leave unconsumed
+   mockResolvedValueOnce queues — clearAllMocks doesn't drop them; the new
+   describe resets generateGptResponse fully.
+2. **spell-tiers-inline** (2014 branch + CONVERSION_LINT_RULES): the
+   conversion call flattened Askor's spell tiers onto one line. Official 2014
+   spellcasting puts every tier at a line start (19/19 corpus spellcasters,
+   "\n\nAt will:"). Detection + applier swept 0/327. Companion display fix:
+   legacy Statblock.vue description spans now `white-space: pre-line` (they
+   collapsed newlines, so even SRD-shaped spellcasting rendered run-on).
+
+Carried/known-class, no rules: "Burning Claw Strikew" legendary-action name
+typo (one-off); Askor "moves into a space the askor threatens" (3e-ism,
+reaction-trigger vocabulary watch); "Languages Common (does not speak)" vs
+corpus "understands Common but can't speak"; Tarwurm "the tar coil"
+self-reference in EVERY entry while named Tarwurm — strongest live case yet
+of the epithet self-reference tail item (officials self-refer by name word or
+type word: "the dragon"); Askor immunity list unalphabetized; unbanded ember
+zone (2d6).
+
+## Epithet self-reference rule (2026-07-27, corpus-studied)
+
+Study: for all 656 official blocks (329 srd52 + 327 srd-2014), extract the
+dominant subject-position "the X ‹verb›" phrase from entry texts. Result:
+officials ALWAYS self-refer by a name word, the creature type, "the swarm",
+or a suffix (≥4 chars) of a name word — the only 5 apparent exceptions were
+morphology artifacts that define the contract's edges: Androsphinx/Gynosphinx
+→ "the sphinx" and Warhorse → "the horse" (head-morpheme suffix),
+Half-Dragon and Will-o'-Wisp (hyphenated names). Zero true epithets.
+
+Shipped `epithet-self-reference` (correctable, block-level — needs the
+cross-entry tally): `findEpithetSelfReference(name, type, texts)` in
+lint.mjs (exported; sweeps run the shipped code) tallies verb-anchored
+subjects, applies a stoplist for legit non-self subjects (target/zone/
+portal/...), requires dominance ≥2, and classifies against name words ∪
+type words ∪ {swarm} ∪ name-word suffixes. Applier rewrites "the ‹epithet›"
+→ "the ‹name head noun›" across every entry (possessives follow). Swept
+0/329 + 0/327 with the shipped implementation.
+
+Wiring: fires in the main lint pass (model-invented epithets), in a
+dedicated POST-NAMING sweep in generateMonster2024 (a rename can CREATE the
+epithet — "the tar coil" after Tar Coil → Tarwurm, which pre-naming lint
+cannot see and the head-noun rename word-pair misses for two-word forms),
+and in CONVERSION_LINT_RULES (free cleanup on convert). Known limit: only
+the dominant phrase is rewritten — a secondary one-word variant ("the coil")
+would survive; no live case yet.
+
+## Conversion sprint — batch 4 (2026-07-27, Smokeshade/Shadowpouncer/Cliffskitter)
+
+CR 3 lurker / CR 11 lurker+caster / CR 22 defender+legendary. **Chassis
+clean on all three**: Smokeshade AC 14/atk +7/DC 13, hp 45≈46 lurker; ​
+Shadowpouncer textbook (claws 21 vs perAttack 22, Rending Lunge 44 vs
+single-target budget 43, spell DC 17 = chassis = 8+PB+CHA); Cliffskitter =
+Tarwurm fingerprint, Shockwave 42 vs AoE 43, legendary-inclusive routine
+~84 vs 86. The epithet rule's first live batch: all three self-refer
+correctly ("the stalker", "the shadowpouncer", "the cliffskitter").
+Display fix confirmed live: converted spell tiers render on separate lines.
+
+Shipped:
+1. **hybrid-range-mismatch** (2024 branch, correctable): the docketed
+   hybrid dual-targeting recurrence arrived (Rending Lunge: "lunges at one
+   creature within 15 feet" prose + "DC 17, one creature within 60 feet"
+   skeleton). Corpus: officials NEVER state a one-creature range twice in
+   an entry (0/329 even with matching ranges), so any contradiction is
+   off-corpus; the applier rewrites the skeleton's range to the prose range
+   (the design intent). The batch's conversion had silently dropped the
+   60-ft clause — luck, not a mechanism.
+2. **spell-tiers-inline v2**: the live conversion emitted lowercase
+   "at will:", which v1's case-sensitive regex missed (half-fixed entry:
+   "1/day each" broke onto its line, "at will" stayed inline). v2 is
+   case-insensitive, sheds the inline separator ("darkness; 1/day" →
+   "darkness\n\n1/day"), and normalizes casing to corpus forms ("At will:",
+   "N/day each:"). Re-swept 0/327 detection + no-op applier.
+
+Carried/known-class: Smokeshade Smoke Shroud referent ("starts its turn in
+the light" — should be the cloud; one-off incoherence, fix-call class);
+"(DC 13)" parenthetical save phrasing in a trait; Cinder Burst 14 vs AoE 7
+(1/Day lurker nova slot — by-design leeway, watch); Patrol's Grasp
+restrained-target attack restriction (odd but adjudicable); "Emanation
+centered on" (cosmetic watch); Darkness at-will at CR 11 legal under the
+at-will tier rule (level 2 ≤ floor(11/4)).
+
+## Conversion sprint — batch 5 (2026-07-27, Chittereg/Obsidian Bomber/Glacial Legmire)
+
+CR 10 controller+caster / CR 3 artillery / CR 24 defender+legendary.
+**Chassis EXACT on all three** — the cleanest batch yet: Chittereg legs
+23×2 = 46 = controller total to the point (DC 17 = controller +1 = CHA-
+coherent simultaneously; trail DC 15 = 8+PB+CON, stat-coherent variance);
+Bomber = artillery fingerprint exact (AC 13, atk +7 chassis, Shrapnel 13 =
+AoE 13); Legmire Freezing Slam 52 = AoE 52, Repelling Swell 104 = FULL
+total budget 104 as the 1/Day nova line, Pseudopod 36 vs 35, escape 22 =
+DC−2. Conversions: fully clean, zero leak-class defects (third consecutive
+clean conversion batch); tier line-breaks present (single \n vs corpus \n\n —
+cosmetic, renders identically under pre-line).
+
+One carried defect: Legmire's reaction read "The glide-mmother moves" in
+the 2024 original — a garbled one-off self-reference (typo'd remnant,
+probably of a provisional name). The conversion call silently repaired it
+(luck). It sits in the epithet rule's documented blind spot (dominance ≥2).
+
+**Negative result (valued): epithet threshold cannot drop to count ≥1.**
+Sweeping every distinct non-conforming subject at count ≥1 produced 85+108
+corpus hits — all extraction artifacts (greedy two-word captures like
+"behir can['t]", possessives, legit one-off objects "the whirlwind"/"the
+heart"). The dominance threshold IS the 0-FP mechanism. Garbled one-off
+referents stay in the referent-orphan (fix-call) family; do not re-attempt
+without a fundamentally tighter subject extractor.
+
 ## Defect investigation (2026-07-25)
 
 The 16-block field-test corpus was split verbatim into `fixtures/` and audited
@@ -707,6 +933,180 @@ with the discount to the digit. Changes:
   class, recurrence logged). Owner note for the future: undead-obsidian-
   hound-style type dissonance is a LORE hook — the pending Lore Generator
   migration could generate origin stories for exactly these.
+
+### Batch-15 field findings (2026-07-27) — the re-roll session
+
+Entry/section re-rolls held the numbers (a section re-roll rebuilt Slash at
+the exact per-attack budget) but exposed a new class: **section-shape
+mismatch** — re-rolling an Action produced reaction-phrased entries ("can use
+its Reaction to force...") under the Actions header. Because the re-roll gate
+runs the full lint on a pseudo-block, one new rule protects both paths:
+
+- **`section-shape`** (reject): reaction phrasing outside the Reactions
+  section (0/329; "can't take Reactions" riders excluded). In re-roll flow a
+  failed retry PRESERVES the original — the safe outcome, covered by a
+  behavioral rerollEntry test.
+- **`reaction-damage-band`** (correctable): the SRD has only THREE reactions
+  (all defensive spellcasts, ZERO damage) — damage-dealing punish reactions
+  are entirely our house pattern, taught by our own prompt example at
+  half-attack scale (7 (2d6)). Every generated reaction until this session
+  obeyed it (7-14); the re-rolled 33-damage Venomous Retort was full-attack
+  scale. Cap = perAttack/2, ×1.3 band, dice re-solved; attack-reuse
+  reactions ("makes one Slam attack") exempt.
+- **CR stays fixed on re-roll (owner question answered)**: the 2024 engine is
+  budget-first — CR is the design INPUT the whole chassis derives from, so a
+  post-hoc CR recalculation (the legacy-2014 calculateCR paradigm) would
+  fight regeneration and the sidebar contract. Overweight abilities are
+  banded back to the CR instead — that IS the mechanism that keeps the block
+  at its printed CR. No toast needed; nothing drifts anymore.
+
+### Soak batch (2026-07-27) — 10 randoms, findings counted
+
+**10/10 chassis-exact** (defender ×3, controller ×2, lurker ×2, artillery,
+skirmisher ×2; type dimension spread incl. an LG Beast and an LG Undead). NOT
+zero-mechanical: 2 mechanical + 2 contradiction classes, all fixed:
+
+- **Weave extraction article gap**: "replace one of them with **a** Shatter
+  Volley" (bare article, no "a use of") escaped multiattack-substitution —
+  and exposed that the rule capped only DAMAGE, missing at-budget woven
+  AoEs. New law (both swept): a DAMAGING ungated area save never weaves
+  (officials weave damage-less area saves — Sleep Breath — and state-gated
+  splashes — Kraken Fling, exempted via the Grappled-ammunition gate, which
+  deliberately does NOT exempt the oversized-damage cap). The weave
+  corrector's subject is now bounded to 1-2 words after "The" — an open
+  match once swallowed the whole Multiattack sentence.
+- **`identity-immunity` Elemental branch**: "Shiveroth" (cold elemental,
+  cold-resistant) slipped the name-stem list — Elemental TYPE + dealt
+  NONPHYSICAL type + resist-only now upgrades too (physical excluded: the
+  official Water Elemental resists the Bludgeoning it deals).
+- **`success-damage-orphan`** (correctable): "Success: Half damage" on a
+  save whose Failure deals none — the phantom reference strips. 0/329.
+- **`duplicate-entry`** (reject): identical entry texts under different
+  names in one section (two legendary options both making the same attack).
+  0/329. NOTE: this rule made a Vue spec fixture with identical filler texts
+  retry — fixture texts must be distinct.
+- Logged cosmetics (no rules): Beast with INT 18 (type-INT dissonance),
+  a self-name typo ("valthorn"), one garbled sentence, a phantom "if
+  available" on an ungated action.
+- Unrelated: a rare dungeon-generator door-conversion flake surfaced during
+  the full run → `plans/dungeon-door-conversion-flake.md`.
+
+### Soak 2 (2026-07-27) — the tail is long; one engine bug found
+
+10 randoms: 3 mechanical findings (more than soak 1 — do not extrapolate
+"done" from one quiet batch). Fixes:
+
+- **`multiattackCount` summed wrong** (engine bug, explains the batch-13
+  Uuloth anomaly): the max-of-any-number heuristic read "makes two Barbed
+  Thorn attacks and one Claw attack" as 2, sizing each attack at HALF the
+  budget instead of a third → a 150% routine shipped band-clean. Now: a bare
+  stated total wins ("makes three attacks: ..."), else named groups SUM,
+  max-heuristic last. Official shapes verified unchanged.
+- **`legendary-recharge`** (reject): a legendary option must never recharge
+  another ability ("Recharge Cannon" — one use converts a Recharge nova into
+  an every-round 59-damage line). 0/329.
+- **`hybrid-targeting` adjacent form generalized** past specific lead-in
+  verbs: any range-bearing single-target sentence followed by a skeleton
+  naming a FRESH generic target flags (live: 300-ft lead-in vs 60-ft
+  skeleton). Referential follow-ups ("that creature") stay legal.
+- **Smalls**: `defense-line-separator` (comma-only mixed defense line →
+  official semicolon rebuild), instruction-leak meta-PARENTHETICAL shape
+  ("(conditions can be applied by this action description)"),
+  `trait-bonus-action` relocation ("As a Bonus Action, ..." traits move to
+  Bonus Actions; grant-form traits like Nimble Escape stay). The relocation
+  counts/section-structure exemptions generalized to any destination.
+- **Corpus kills the Dragon-immunity branch**: the Dragon Turtle officially
+  RESISTS the fire it breathes — so a poison-resistant spore dragon is
+  official-shaped variance, not a defect. Logged, no rule.
+- Tallies: referent orphans ×2 (tar-trails, phantom grapple), capitalized
+  self-names ×2, S-alliteration across 6 lurker names (the lurker phonetics
+  guidance drives sibilants — batch-level monotone, noted under clustering).
+
+### Concept soak (2026-07-27) — the input-path validation
+
+10 GM-style inputs (proper names, descriptors, a lore dump, a bathos trap).
+Wins: **keep-gate 4/4** (Mordecai, Old Gnawbone, Vexanna, Clockwork Leviathan
+verbatim), "evil tree" upgraded, cheese golem passed the bathos test with
+real mechanics (rind-hardening phase shift), first Celestial, at-will spell
+tiers held, and the lore dump produced the sprint's best block (Mournbell —
+the lighthouse concept fully realized). Numbers 10/10 chassis-exact. Five
+fixes:
+
+- **Swarm machinery now gates on the archetype OR a swarm-shaped type line**
+  — a concept-path swarm resolved to skirmisher and skipped EVERYTHING
+  (shipped "Tiny Swarm (Beast)", no half-damage clause). swarm-type unified:
+  any non-canonical shape resolves a component and rebuilds "Swarm of Tiny
+  <Plural>"; new `swarm-size` (swarms are Medium/Large — components are
+  Tiny) whose applier re-derives the hit-die formula for the corrected size.
+- **Pronoun pass**: the first she/her block (Vexanna) exposed It/its-only
+  regex subjects — section-shape and the weave corrector now know
+  her/his/their and She/He/They. Grep for gendered assumptions when adding
+  subject-anchored rules.
+- **`hybrid-targeting` third form**: an attack line followed by a
+  fresh-target save skeleton ("...8 damage. Strength Saving Throw: DC 14,
+  one creature within 60 feet") — riders say "the target" (the Rivet Shot
+  form, which a same-batch block got exactly right). 0/329.
+- **`multiattack-order`** (correctable): Multiattack leads Actions (0/329
+  exceptions); buried ones reorder deterministically.
+- **`legendary-recharge` exemption**: self-gated options ("Pressure Release
+  (2/Day)") are bounded — nova-cadence pricing, consistent with the Envelop
+  precedent.
+
+Naming-quality round (owner observations): (1) type-coded name words —
+`RESERVED_TYPE_WORDS` (golem/wraith/zombie/angel/demon/... → their types;
+"vampire" excluded, the Vampire Familiar is a living Humanoid) enforced in
+pickName with trailing-boundary matching (catches fused "Chainwraith", spares
+"Lichen"/"demonstrate") plus a prompt line — kills the Fiend-named-Golem and
+Celestial-named-Wraith class. (2) The random path's weaker names were
+diagnosed as CONTEXT STARVATION, not filter strictness: the naming call only
+saw size/type/abilities. It now receives THE STORY (the concept/synthesis,
+350 chars) and asks for seven candidates ranging safe-to-bold. Filters stay
+— they are what killed Slinky Boulder.
+
+Post-soak nit (owner): the needle swarm typed itself Beast — animated objects
+are Constructs in official taxonomy (Animated Armor/Flying Sword). New prompt
+rule 13 (2024) / rule 10 (2014): type follows SUBSTANCE — animated objects and
+machines are Constructs, dead things are Undead, only living animals are
+Beasts. Prompt-only; type choice is semantic and unlintable.
+
+Logged: epithet self-references ×2 ("the tree", "the warden" — rule-7 prompt
+guidance not fully holding; candidate for the naming call), name-effect
+mismatches ×2, a trait mashup with a dangling referent, concept drift (swamp
+witch → aberration — the model re-typed; acceptable but note), a 60-ft-radius
+1/Day fog (zone SIZES are unbanded — corpus study needed before any rule),
+and an at-will no-damage single-target Paralyze with success-immunity
+(Task-4 gray zone; the 24h immunity is real counterplay).
+
+### Random soak 3 (2026-07-27) — the double-count bug + naming verdict
+
+Six randoms after the story-fed naming change. Numbers exact again (incl. the
+first CR 30 — every figure to the digit). THE find:
+
+- **`attack-damage-band` double-counted swarm reductions** — the reduced
+  half-damage expression is an ALTERNATIVE but the band summed both, so
+  every correct swarm attack since the half-clause law fired a phantom
+  multi-expression reject (27+14 = "41, restructure to 27"), silently
+  burning fix rounds on every swarm — until a fix call finally PASTED the
+  reject message verbatim into a shipped ability text, exposing the whole
+  chain. Fixed: the reduction clause strips before damage extraction; the
+  instruction-leak rule gained the lint-echo shape with a comma-anchored
+  strip (the legitimate reduction text survives).
+- **`legendary-recharge` bypass phrasings**: "retakes a Vomit Web action
+  (no Recharge roll required)" — recharge-bypass without the word
+  "recharges". Widened; self-gated options stay exempt.
+- **Naming verdict (owner)**: random names improved at the top (Bilewurm,
+  Shissar, Chazkor genuinely good) but the "<modifier> <verb>-er" formula
+  (Silk Shambler, Stalking Webspinner) reads weak from this model — new
+  naming-prompt line caps -er candidates at one and points at fused/coined/
+  concrete-noun alternatives. Model-ceiling note: concept-path quality
+  partly reflects the CONCEPT AUTHOR's model; a Dread-Bellringer-class name
+  needs a Dread-Bellringer-class concept.
+- Tallies: acid/slime/grapple KIT clustering across batches (seed-diversity
+  docket — the theme attractor is at the kit level, not just names);
+  hybrid-targeting warts ×2 shipped (rule fires, fix calls struggle with
+  this class — candidate for a deterministic same-area merge); "the silk"
+  wrong-half self-reference; "Paralysis" condition-name variant; an
+  "ignores Resistance" power rider (0/329, watch).
 
 Still open from batch 3 (cosmetic/deferred): the article-strip ("The Viscous
 Hoop") only runs at assembly, so fix-call rewrites can reintroduce "The "

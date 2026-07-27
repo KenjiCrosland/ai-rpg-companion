@@ -306,19 +306,22 @@ const saveEdit = () => {
   font-style: normal;
 }
 
+/* No native CSS nesting here — this block is plain CSS (no lang="scss"),
+   and the build targets (safari14/chrome87) can't parse nesting, so esbuild
+   ships it broken rather than down-leveling. */
 .dungeon-card-source-link {
   color: var(--par-color-title, #7a1f1f);
   text-decoration: underline;
   cursor: pointer;
+}
 
-  &:hover {
-    color: var(--par-color-title-deep, #58180d);
-  }
+.dungeon-card-source-link:hover {
+  color: var(--par-color-title-deep, #58180d);
+}
 
-  &:focus-visible {
-    outline: 2px solid var(--par-color-title, #7a1f1f);
-    outline-offset: 2px;
-  }
+.dungeon-card-source-link:focus-visible {
+  outline: 2px solid var(--par-color-title, #7a1f1f);
+  outline-offset: 2px;
 }
 
 .dungeon-card-source-deleted {

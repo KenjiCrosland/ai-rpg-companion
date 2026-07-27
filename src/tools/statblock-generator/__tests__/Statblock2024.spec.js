@@ -186,8 +186,10 @@ describe('Statblock2024', () => {
       // check passes; text is number-free so the pseudo-block lint is clean.
       const { slotPlanFor } = require('@/tools/statblock-generator/chassis/slot-plan.mjs');
       const range = slotPlanFor(10, 'controller').traits;
+      // Texts must be DISTINCT — identical sibling texts now trip the
+      // duplicate-entry reject (soak-batch rule) and force a retry.
       const fixture = Array.from({ length: range.min }, (_, i) => ({
-        name: `Dirge Verse ${i + 1}`, text: 'The creature hums a tuneless dirge.',
+        name: `Dirge Verse ${i + 1}`, text: `The creature hums verse ${i + 1} of a tuneless dirge.`,
       }));
       aiClient.generateGptResponse.mockResolvedValue(JSON.stringify(fixture));
       const wrapper = await enterEdit(engineMonster());

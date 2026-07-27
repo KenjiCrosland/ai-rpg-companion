@@ -133,6 +133,391 @@ describe('resistance-unknown (Blindness/Deafness junk)', () => {
   });
 });
 
+describe('random soak 3: band double-count, lint echo, recharge bypass', () => {
+  const c18 = { archetype: 'swarm', save_dc: 15 };
+
+  test('a correct swarm reduction no longer double-counts into a phantom reject', () => {
+    const m = { type: 'Swarm of Tiny Fiends', sections: { Actions: [
+      { name: 'Multiattack', text: 'The swarm makes two Skittering Claw attacks.' },
+      { name: 'Skittering Claw', text: '*Melee Attack Roll:* +8, reach 5 ft. 27 (5d8 + 5) Slashing damage, or 14 (2d8 + 5) Slashing damage if the swarm has half of its Hit Points or fewer.' },
+    ] } };
+    const f = lintStatblock(m, { chassis: c18, edition: '2024', perAttack: 27, totalDamage: 54 }).findings
+      .filter((x) => x.rule === 'attack-damage-band');
+    expect(f).toHaveLength(0); // 27 is the budget; 14 is an alternative, not additive
+  });
+
+  test('an actually-oversized swarm attack still flags', () => {
+    const m = { type: 'Swarm of Tiny Fiends', sections: { Actions: [
+      { name: 'Multiattack', text: 'The swarm makes two Skittering Claw attacks.' },
+      { name: 'Skittering Claw', text: '*Melee Attack Roll:* +8, reach 5 ft. 45 (10d8) Slashing damage, or 22 (5d8) Slashing damage if the swarm has half of its Hit Points or fewer.' },
+    ] } };
+    const f = lintStatblock(m, { chassis: c18, edition: '2024', perAttack: 27, totalDamage: 54 }).findings
+      .filter((x) => x.rule === 'attack-damage-band');
+    expect(f.length).toBeGreaterThan(0); // 45 vs 27 budget
+  });
+
+  test('an echoed lint message is flagged and stripped (Chazkor)', () => {
+    const m = { type: 'Swarm of Tiny Fiends', sections: { Actions: [
+      { name: 'Skittering Claw', text: '*Melee Attack Roll:* +8, reach 5 ft. 27 (5d8 + 5) Slashing damage. If the swarm has half of its Hit Points or fewer, the damage decreases to 14 (2d8 + 5) Slashing damage, and the total for both expressions is 41, which is outside the allowed range; restructure to total 27.' },
+    ] } };
+    const f = lintStatblock(m, { chassis: c18, edition: '2024' }).findings.filter((x) => x.rule === 'instruction-leak');
+    expect(f).toHaveLength(1);
+    const fixed = applyCorrections(m, f, { chassis: c18 });
+    expect(fixed.sections.Actions[0].text).not.toMatch(/allowed range|restructure|both expressions/);
+    expect(fixed.sections.Actions[0].text).toContain('14 (2d8 + 5) Slashing damage.');
+  });
+
+  test('recharge-bypass legendary phrasings are caught (Reinforce Slime)', () => {
+    const m = { type: 'Aberration', sections: { 'Legendary Actions': [
+      { name: 'Reinforce Slime', text: 'The ulghoch retakes a Vomit Web action (no Recharge roll required) that it has already used this combat.' },
+    ] } };
+    expect(lintStatblock(m, { chassis: c18, edition: '2024' }).findings.filter((x) => x.rule === 'legendary-recharge')).toHaveLength(1);
+  });
+
+  test('a self-gated bypass stays exempt (Shattering Dive shape)', () => {
+    const m = { type: 'Monstrosity', sections: { 'Legendary Actions': [
+      { name: 'Dive (1/Day)', text: 'The malmgrave uses Wing Burst without expending a Recharge.' },
+    ] } };
+    expect(lintStatblock(m, { chassis: c18, edition: '2024' }).findings.filter((x) => x.rule === 'legendary-recharge')).toHaveLength(0);
+  });
+});
+
+describe('concept soak: swarm gate, pronouns, attack-hybrid, ordering', () => {
+  const c17 = { archetype: 'skirmisher', save_dc: 14 };
+
+  test('a swarm-TYPED block without the swarm archetype gets the machinery (Needleflight)', () => {
+    const m = {
+      size: 'Tiny', type: 'Swarm (Beast)', hp: 105,
+      stats: { STR: 6, DEX: 18, CON: 12, INT: 2, WIS: 10, CHA: 6 },
+      sections: { Actions: [
+        { name: 'Multiattack', text: 'The needleflight makes two Needle Sting attacks.' },
+        { name: 'Needle Sting', text: '*Melee Attack Roll:* +7, reach 5 ft. 22 (4d8 + 4) Piercing damage.' },
+      ] },
+    };
+    const findings = lintStatblock(m, { chassis: c17, edition: '2024' }).findings;
+    const rules = findings.map((f) => f.rule);
+    expect(rules).toContain('swarm-type');       // malformed type wraps to canonical
+    expect(rules).toContain('swarm-size');       // Tiny swarm → Medium
+    expect(rules).toContain('swarm-half-damage'); // missing reduction clause
+    expect(findings.find((f) => f.rule === 'swarm-type').expected).toBe('Swarm of Tiny Beasts');
+    const fixed = applyCorrections(m, findings, { chassis: c17 });
+    expect(fixed.type).toBe('Swarm of Tiny Beasts');
+    expect(fixed.size).toBe('Medium');
+    expect(fixed.hp_formula).toMatch(/d8/);      // formula re-derived for Medium
+  });
+
+  test('she/her reaction phrasing outside Reactions is caught (Fractured Reflection)', () => {
+    const m = {
+      type: 'Fey',
+      sections: { Traits: [{ name: 'Fractured Reflection', text: 'When Vexanna is hit by an attack, she can use her Reaction to create a shimmering reflection of herself.' }] },
+    };
+    expect(lintStatblock(m, { chassis: c17, edition: '2024' }).findings.filter((f) => f.rule === 'section-shape')).toHaveLength(1);
+  });
+
+  test('an attack followed by a fresh-target save skeleton flags (Spectral Chain)', () => {
+    const m = {
+      type: 'Celestial',
+      sections: { Actions: [{ name: 'Spectral Chain', text: '*Melee Attack Roll:* +6, reach 5 ft. 8 (1d8 + 4) Radiant damage. Strength Saving Throw: DC 14, one creature within 60 feet. Failure: The target has the Grappled (escape DC 12) and Restrained conditions until the grapple ends.' }] },
+    };
+    expect(lintStatblock(m, { chassis: c17, edition: '2024' }).findings.filter((f) => f.rule === 'hybrid-targeting')).toHaveLength(1);
+  });
+
+  test('the official rider form passes ("Saving Throw: DC N, the target")', () => {
+    const m = {
+      type: 'Construct',
+      sections: { Actions: [{ name: 'Rivet Shot', text: '*Ranged Attack Roll:* +14, range 60 ft. 17 (2d8 + 8) Piercing damage. *Strength Saving Throw*: DC 23, the target. *Failure:* The target has the Restrained condition (escape DC 21).' }] },
+    };
+    expect(lintStatblock(m, { chassis: c17, edition: '2024' }).findings.filter((f) => f.rule === 'hybrid-targeting')).toHaveLength(0);
+  });
+
+  test('a buried Multiattack reorders to the top (Pollenbough)', () => {
+    const m = {
+      type: 'Plant',
+      sections: { Actions: [
+        { name: 'Thorn Lash', text: '*Melee Attack Roll:* +5, reach 5 ft. 6 (1d6 + 3) Piercing damage.' },
+        { name: 'Entangling Roots (Recharge 5-6)', text: '*Strength Saving Throw*: DC 13, one creature within 30 feet. *Failure:* The target has the Restrained condition until the start of its next turn.' },
+        { name: 'Multiattack', text: 'The tree makes two Thorn Lash attacks.' },
+      ] },
+    };
+    const f = lintStatblock(m, { chassis: c17, edition: '2024' }).findings.filter((x) => x.rule === 'multiattack-order');
+    expect(f).toHaveLength(1);
+    const fixed = applyCorrections(m, f, { chassis: c17 });
+    expect(fixed.sections.Actions[0].name).toBe('Multiattack');
+    expect(lintStatblock(fixed, { chassis: c17, edition: '2024' }).findings.filter((x) => x.rule === 'multiattack-order')).toHaveLength(0);
+  });
+
+  test('a self-gated legendary recharge option is exempt (Pressure Release (2/Day))', () => {
+    const m = {
+      type: 'Construct',
+      sections: { 'Legendary Actions': [{ name: 'Pressure Release (2/Day)', text: 'The clockwork leviathan recharges Hot Steam Vent and uses it.' }] },
+    };
+    expect(lintStatblock(m, { chassis: c17, edition: '2024' }).findings.filter((f) => f.rule === 'legendary-recharge')).toHaveLength(0);
+  });
+});
+
+describe('soak 2: multiattack count, legendary recharge, hybrid range, smalls', () => {
+  const c16 = { archetype: 'lurker', save_dc: 21 };
+
+  test('mixed multiattack counts SUM — the Sallow Witherer 150% routine flags now', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Actions: [
+        { name: 'Multiattack', text: 'The sallow witherer makes two Barbed Thorn attacks and one Claw attack.' },
+        { name: 'Claw', text: '*Melee Attack Roll:* +15, reach 5 ft. 22 (3d8 + 9) Slashing damage.' },
+        { name: 'Barbed Thorn', text: '*Ranged Attack Roll:* +15, range 300 ft. 13 (1d8 + 9) Piercing damage plus 7 (2d6) Necrotic damage.' },
+      ] },
+    };
+    // Lurker CR 19 shape: total 43 across THREE attacks → ~14 each.
+    const f = lintStatblock(m, { chassis: c16, edition: '2024', perAttack: 14, totalDamage: 43 }).findings
+      .filter((x) => x.rule === 'attack-damage-band');
+    expect(f.length).toBeGreaterThan(0); // 22 vs 43/3 ≈ 14
+  });
+
+  test('official stated-total and single-group forms still count right', () => {
+    const { chassis } = require('../format-2024/generate.mjs').buildContext(10, null);
+    const mk = (text) => ({ type: 'Dragon', sections: { Actions: [
+      { name: 'Multiattack', text },
+      { name: 'Rend', text: '*Melee Attack Roll:* +12, reach 5 ft. 20 (3d8 + 7) Slashing damage.' },
+    ] } });
+    // Stated total: budget = 60/3 = 20 → Rend 20 in band; if the count were
+    // misread as 1, budget would be perAttack 60 and 20 would flag LOW.
+    const f1 = lintStatblock(mk('The dragon makes three attacks: one with its Bite and two with its Claws.'), { chassis, edition: '2024', perAttack: 60, totalDamage: 60 }).findings.filter((x) => x.rule === 'attack-damage-band');
+    expect(f1).toHaveLength(0);
+    const f2 = lintStatblock(mk('The dragon makes three Rend attacks.'), { chassis, edition: '2024', perAttack: 60, totalDamage: 60 }).findings.filter((x) => x.rule === 'attack-damage-band');
+    expect(f2).toHaveLength(0);
+  });
+
+  test('a legendary option that recharges an ability is rejected (Recharge Cannon)', () => {
+    const m = {
+      type: 'Fiend',
+      sections: { 'Legendary Actions': [{ name: 'Recharge Cannon', text: 'The golem recharges its Chest Cannon.' }] },
+    };
+    const f = lintStatblock(m, { chassis: c16, edition: '2024' }).findings.filter((x) => x.rule === 'legendary-recharge');
+    expect(f).toHaveLength(1);
+    expect(f[0].severity).toBe('reject');
+  });
+
+  test('contradictory-range hybrid flags without a specific verb (Void-Blistering Miasma)', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Actions: [{ name: 'Void-Blistering Miasma (1/Day)', text: 'The sallow witherer fires a single, rot-infused thorn at a creature it can see within 300 feet. Constitution Saving Throw: DC 21, one creature within 60 feet. Failure: 42 (12d6) Necrotic damage. Success: Half damage only.' }] },
+    };
+    expect(lintStatblock(m, { chassis: c16, edition: '2024' }).findings.filter((x) => x.rule === 'hybrid-targeting')).toHaveLength(1);
+  });
+
+  test('a referential follow-up skeleton still passes ("that creature")', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Actions: [{ name: 'Focus Fire', text: 'The witherer aims at one creature it can see within 300 feet. Constitution Saving Throw: DC 21, that creature. Failure: 42 (12d6) Necrotic damage.' }] },
+    };
+    expect(lintStatblock(m, { chassis: c16, edition: '2024' }).findings.filter((x) => x.rule === 'hybrid-targeting')).toHaveLength(0);
+  });
+
+  test('missing semicolon in a mixed defense line rebuilds (Cinderchitter)', () => {
+    const m = {
+      type: 'Swarm of Tiny Fiends',
+      immunities: 'Fire, Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned',
+      sections: { Traits: [{ name: 'Swarm', text: 'The swarm can occupy another creature\'s space.' }] },
+    };
+    const f = lintStatblock(m, { chassis: c16, edition: '2024' }).findings.filter((x) => x.rule === 'defense-line-separator');
+    expect(f).toHaveLength(1);
+    const fixed = applyCorrections(m, f, { chassis: c16 });
+    expect(fixed.immunities).toBe('Fire; Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned');
+  });
+
+  test('a meta-parenthetical strips (Reel In)', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Actions: [{ name: 'Reel In', text: 'One creature Grappled by the siltlash (conditions can be applied by this action description) is pulled up to 20 feet straight toward the siltlash.' }] },
+    };
+    const f = lintStatblock(m, { chassis: c16, edition: '2024' }).findings.filter((x) => x.rule === 'instruction-leak');
+    expect(f).toHaveLength(1);
+    const fixed = applyCorrections(m, f, { chassis: c16 });
+    expect(fixed.sections.Actions[0].text).toBe('One creature Grappled by the siltlash is pulled up to 20 feet straight toward the siltlash.');
+  });
+
+  test('an "As a Bonus Action" trait relocates to Bonus Actions (Bone Dust Teleport)', () => {
+    const m = {
+      type: 'Fiend',
+      sections: {
+        Traits: [{ name: 'Bone Dust Teleport', text: 'As a Bonus Action, the Sallow Shardcaster collapses into a cloud of bone dust, teleporting to an unoccupied space it can see within 60 feet.' }],
+      },
+    };
+    const f = lintStatblock(m, { chassis: c16, edition: '2024' }).findings.filter((x) => x.rule === 'trait-bonus-action');
+    expect(f).toHaveLength(1);
+    const fixed = applyCorrections(m, f, { chassis: c16 });
+    expect(fixed.sections.Traits).toHaveLength(0);
+    expect(fixed.sections['Bonus Actions'][0].name).toBe('Bone Dust Teleport');
+    expect(fixed.sections['Bonus Actions'][0].relocated).toBe(true);
+  });
+
+  test('official grant-form bonus-action traits stay put (Nimble Escape shape)', () => {
+    const m = {
+      type: 'Humanoid',
+      sections: { Traits: [{ name: 'Nimble Escape', text: 'The goblin can take the Disengage or Hide action as a Bonus Action.' }] },
+    };
+    expect(lintStatblock(m, { chassis: c16, edition: '2024' }).findings.filter((x) => x.rule === 'trait-bonus-action')).toHaveLength(0);
+  });
+});
+
+describe('soak batch: article-form weave + Elemental immunity + contradictions', () => {
+  const cS = { archetype: 'skirmisher', save_dc: 16 };
+
+  test('"replace one of them with a Shatter Volley" resolves, flags, and strips (Krakkor)', () => {
+    const m = {
+      type: 'Aberration',
+      sections: {
+        Actions: [
+          { name: 'Multiattack', text: 'The krakkor makes two Crystal Claw attacks and can replace one of them with a Shatter Volley.' },
+          { name: 'Crystal Claw', text: '*Melee Attack Roll:* +9, reach 5 ft. 32 (6d8 + 5) Slashing damage.' },
+          { name: 'Shatter Volley', text: '*Dexterity Saving Throw*: DC 16, each creature in a 15-foot Cone. *Failure:* 33 (6d10) Piercing damage. *Success:* Half damage.' },
+        ],
+      },
+    };
+    const opts = { chassis: cS, edition: '2024', perAttack: 33 };
+    const f = lintStatblock(m, opts).findings.filter((x) => x.rule === 'multiattack-substitution');
+    expect(f).toHaveLength(1); // ungated area save woven in
+    const fixed = applyCorrections(m, f, { chassis: cS });
+    expect(fixed.sections.Actions[0].text).toBe('The krakkor makes two Crystal Claw attacks.');
+  });
+
+  test('an Elemental resisting a nonphysical type it deals upgrades to immunity (Shiveroth)', () => {
+    const m = {
+      name: 'Shiveroth', type: 'Elemental',
+      resistances: 'Cold',
+      immunities: 'Poison; Exhaustion, Poisoned',
+      sections: { Actions: [{ name: 'Claw', text: '*Melee Attack Roll:* +9, reach 5 ft. 15 (2d8 + 6) Cold damage.' }] },
+    };
+    const f = lintStatblock(m, { chassis: cS, edition: '2024' }).findings.filter((x) => x.rule === 'identity-immunity');
+    expect(f).toHaveLength(1);
+    const fixed = applyCorrections(m, f, { chassis: cS });
+    expect(fixed.resistances).toBeUndefined();
+    expect(fixed.immunities).toBe('Cold, Poison; Exhaustion, Poisoned');
+  });
+
+  test('the official Water Elemental physical-resist shape stays legal', () => {
+    const m = {
+      name: 'Water Elemental', type: 'Elemental',
+      resistances: 'Acid, Bludgeoning, Piercing, Slashing',
+      sections: { Actions: [{ name: 'Slam', text: '*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Bludgeoning damage.' }] },
+    };
+    // Bludgeoning is dealt and resisted but PHYSICAL — no upgrade; Acid is
+    // resisted but never dealt — no upgrade.
+    expect(lintStatblock(m, { chassis: cS, edition: '2024' }).findings.filter((x) => x.rule === 'identity-immunity')).toHaveLength(0);
+  });
+
+  test('phantom "Success: Half damage" on a no-damage Failure strips (Silt Lunge)', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Actions: [{ name: 'Silt Lunge', text: '*Dexterity Saving Throw*: DC 23, each creature in a 20-foot-radius sphere. *Failure:* The target has the Restrained condition until the end of its next turn. *Success:* Half damage plus the target has the Restrained condition until the end of its current turn.' }] },
+    };
+    const f = lintStatblock(m, { chassis: cS, edition: '2024' }).findings.filter((x) => x.rule === 'success-damage-orphan');
+    expect(f).toHaveLength(1);
+    const fixed = applyCorrections(m, f, { chassis: cS });
+    expect(fixed.sections.Actions[0].text).toContain('*Success:* The target has the Restrained condition until the end of its current turn.');
+    expect(fixed.sections.Actions[0].text).not.toMatch(/Half damage/);
+  });
+
+  test('a real half-damage Success is untouched', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Actions: [{ name: 'Blast', text: '*Dexterity Saving Throw*: DC 16, each creature in a Cone. *Failure:* 33 (6d10) Fire damage. *Success:* Half damage.' }] },
+    };
+    expect(lintStatblock(m, { chassis: cS, edition: '2024' }).findings.filter((x) => x.rule === 'success-damage-orphan')).toHaveLength(0);
+  });
+
+  test('duplicate legendary texts under different names are rejected (Hum = Splinter Spray)', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: {
+        'Legendary Actions': [
+          { name: 'Splinter Spray', text: 'The splintercrawl makes one Splinter Spray attack.' },
+          { name: 'Hum', text: 'The splintercrawl makes one Splinter Spray attack.' },
+        ],
+      },
+    };
+    const f = lintStatblock(m, { chassis: cS, edition: '2024' }).findings.filter((x) => x.rule === 'duplicate-entry');
+    expect(f).toHaveLength(1);
+    expect(f[0].loc.entry).toBe('Hum');
+  });
+});
+
+describe('batch 15: re-roll gates (section-shape + reaction punish scale)', () => {
+  const c15 = { archetype: 'skirmisher', save_dc: 16 };
+  const opts15 = { chassis: c15, edition: '2024', perAttack: 33 };
+  const rules15 = (m, name) => lintStatblock(m, opts15).findings.filter((f) => f.rule === name);
+
+  test('a reaction-phrased entry under Actions is rejected (Venomous Backlash)', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Actions: [{ name: 'Venomous Backlash', text: 'When the spit eel takes damage from a creature within 5 feet of it, it can use its Reaction to force that creature to make a Dexterity Saving Throw (DC 16). Failure: 33 (6d10) Acid damage.' }] },
+    };
+    const f = rules15(m, 'section-shape');
+    expect(f).toHaveLength(1);
+    expect(f[0].severity).toBe('reject');
+  });
+
+  test('"can\'t take Reactions" riders never trip it', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Actions: [{ name: 'Stunning Slap', text: '*Melee Attack Roll:* +9, reach 5 ft. 18 (3d8 + 5) Bludgeoning damage. Hit or miss, the target can\'t take Reactions until the start of its next turn.'.replace(' Hit or miss,', '') }] },
+    };
+    expect(rules15(m, 'section-shape')).toHaveLength(0);
+  });
+
+  test('attack-scale reaction damage re-solves to punish scale (Venomous Retort)', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Reactions: [{ name: 'Venomous Retort', text: '*Trigger:* The spit eel is hit by a melee attack from a creature within 5 feet of it. *Response:* The attacker makes a DC 16 Constitution Saving Throw. *Failure:* 33 (6d10) Poison damage and the Poisoned condition until the end of its next turn. *Success:* Half damage.' }] },
+    };
+    const f = rules15(m, 'reaction-damage-band');
+    expect(f).toHaveLength(1);
+    expect(f[0].expected).toBe(17); // 33 / 2 ≈ 17
+    const fixed = applyCorrections(m, f, { chassis: c15 });
+    const newDmg = Number(/(\d+)\s*\(/.exec(fixed.sections.Reactions[0].text)[1]);
+    expect(newDmg).toBeLessThanOrEqual(Math.round(17 * 1.3));
+    expect(rules15(fixed, 'reaction-damage-band')).toHaveLength(0);
+  });
+
+  test('punish-scale reactions pass (the Krep/Scritch 7-damage class)', () => {
+    const m = {
+      type: 'Monstrosity',
+      sections: { Reactions: [{ name: 'Blazing Rebuke', text: '*Trigger:* A creature hits the krep with an attack roll. *Response:* The attacker takes 14 (4d6) Fire damage.' }] },
+    };
+    expect(rules15(m, 'reaction-damage-band')).toHaveLength(0);
+  });
+
+  test('attack-reuse reactions are exempt (Blocking Leg shape)', () => {
+    const m = {
+      type: 'Aberration',
+      sections: { Reactions: [{ name: 'Blocking Leg', text: '*Trigger:* A creature attacks an ally. *Response:* The frostpounder makes one Slam attack. *Melee Attack Roll:* +15, reach 5 ft. 30 (5d8 + 8) Bludgeoning damage.' }] },
+    };
+    expect(rules15(m, 'reaction-damage-band')).toHaveLength(0);
+  });
+
+  test('rerollEntry FAILS (preserving the original) when the model returns a reaction-shaped action', async () => {
+    const { rerollEntry } = require('../format-2024/generate.mjs');
+    const monster = {
+      name: 'Spit Eel', format: '2024', cr: 10, archetype: 'skirmisher', pb: 4,
+      stats: { STR: 18, DEX: 20, CON: 16, INT: 12, WIS: 14, CHA: 10 },
+      challenge_rating: '10 (XP 5,900; PB +4)',
+      sections: {
+        Actions: [
+          { name: 'Multiattack', text: 'The spit eel makes two Slash attacks.' },
+          { name: 'Slash', text: '*Melee Attack Roll:* +9, reach 5 ft. 32 (6d8 + 5) Slashing damage.' },
+          { name: 'Grappling Lash', text: '*Dexterity Saving Throw*: DC 16, one creature within 15 feet. *Failure:* 33 (6d10) Acid damage. *Success:* Half damage.' },
+        ],
+      },
+    };
+    const badResponse = JSON.stringify({ name: 'Venomous Backlash', text: 'When the spit eel takes damage from a creature within 5 feet, it can use its Reaction to force that creature to make a Dexterity Saving Throw (DC 16). Failure: 33 (6d10) Acid damage.' });
+    await expect(rerollEntry(
+      monster,
+      { kind: 'action', current: { name: 'Grappling Lash', description: monster.sections.Actions[2].text } },
+      async () => badResponse,
+    )).rejects.toThrow();
+  });
+});
+
 describe('batch 14: identity-immunity (Glacial Golem cold resistance)', () => {
   const c14 = { archetype: 'brute', save_dc: 20 };
   const idImm = (m) => lintStatblock(m, { chassis: c14, edition: '2024' }).findings.filter((f) => f.rule === 'identity-immunity');
@@ -426,6 +811,13 @@ describe('anti-clustering name bans (Chit- swarms ×6)', () => {
   test('pickName skips banned-stem candidates', () => {
     expect(pickName(['Chittering Maw', 'Stone Maw'], { bans: ['chit'] })).toBe('Stone Maw');
     expect(pickName(['Chittering Maw', 'Stone Maw'], { bans: [] })).toBe('Chittering Maw');
+  });
+
+  test('pickName rejects type-coded words on the wrong type (Clanking Golem class)', () => {
+    expect(pickName(['Ash Golem', 'Cinder Warden'], { type: 'Fiend' })).toBe('Cinder Warden');
+    expect(pickName(['Chainwraith', 'Chain Warden'], { type: 'Celestial' })).toBe('Chain Warden');
+    expect(pickName(['Ash Golem', 'Cinder Warden'], { type: 'Construct' })).toBe('Ash Golem'); // right type keeps it
+    expect(pickName(['Bone Wraith Choir'], { type: 'Swarm of Tiny Undead' })).toBe('Bone Wraith Choir'); // containment
   });
 
   test('end-to-end: an active ban steers the final name past the attractor', async () => {
@@ -969,5 +1361,166 @@ describe('spellcasting-ability raise-only stamp (Mangrove DC 25 / INT 16)', () =
     j.sections.Actions = j.sections.Actions.filter((e) => e.name !== 'Spellcasting');
     const m = assembleMonster(j, ctx26());
     expect(m.stats.INT).toBe(16);
+  });
+});
+
+describe('2024 batch (Wailglacier/Emberhide/Leafblade): rename reference orphan', () => {
+  const { renameAbilitiesSafely, applyRenameMapping } = require('../format-2024/generate.mjs');
+  const { lintStatblock } = require('../format-2024/lint.mjs');
+
+  // Live block: Multiattack shipped "It can replace one of those attacks
+  // with a use of its Freezing Fog, if available" while the entry had been
+  // renamed "Whisper Crush (Recharge 5-6)" by the naming pass — the model
+  // returned the rename with its usage suffix, which the text rewrite
+  // couldn't find inside the bare prose reference.
+  const wailglacier = () => ({
+    name: 'Wailglacier',
+    type: 'Fiend',
+    sections: {
+      Actions: [
+        { name: 'Multiattack', text: 'The wailglacier makes two Crushing Flow attacks. It can replace one of those attacks with a use of its Freezing Fog, if available.' },
+        { name: 'Crushing Flow', text: 'Melee Attack Roll: +5, reach 5 ft. 6 (1d6 + 3) Bludgeoning damage.' },
+        { name: 'Freezing Fog (Recharge 5-6)', text: 'A freezing cloud.' },
+      ],
+    },
+  });
+
+  test('suffixed ability_renames rewrite bare prose references', () => {
+    const out = renameAbilitiesSafely(wailglacier(), {
+      ability_renames: { 'Freezing Fog (Recharge 5-6)': 'Whisper Crush (Recharge 5-6)' },
+    });
+    expect(out.sections.Actions[2].name).toBe('Whisper Crush (Recharge 5-6)');
+    expect(out.sections.Actions[0].text).toContain('a use of its Whisper Crush');
+    expect(out.sections.Actions[0].text).not.toContain('Freezing Fog');
+    expect(lintStatblock(out, { edition: '2024' }).findings
+      .filter((f) => f.rule === 'undefined-attack-ref')).toHaveLength(0);
+  });
+
+  test('bare ability_renames resolve to the suffixed entry and keep its suffix', () => {
+    const out = renameAbilitiesSafely(wailglacier(), {
+      ability_renames: { 'Freezing Fog': 'Whisper Crush' },
+    });
+    expect(out.sections.Actions[2].name).toBe('Whisper Crush (Recharge 5-6)');
+    expect(out.sections.Actions[0].text).toContain('a use of its Whisper Crush');
+  });
+
+  test('a rename that would strand a reference is reverted, not shipped', () => {
+    // Prose refers to the entry by its first word only — resolvable via
+    // prefix matching pre-rename, unrewritable by substring replacement.
+    const m = wailglacier();
+    m.sections.Actions[0].text = 'The wailglacier makes two Freezing attacks.';
+    const out = renameAbilitiesSafely(m, {
+      ability_renames: { 'Freezing Fog (Recharge 5-6)': 'Whisper Crush (Recharge 5-6)' },
+    });
+    expect(out.sections.Actions[2].name).toBe('Freezing Fog (Recharge 5-6)');
+    expect(out.sections.Actions[0].text).toContain('two Freezing attacks');
+    expect(lintStatblock(out, { edition: '2024' }).findings
+      .filter((f) => f.rule === 'undefined-attack-ref')).toHaveLength(0);
+  });
+
+  test('renames of Multiattack itself stay refused', () => {
+    const out = renameAbilitiesSafely(wailglacier(), {
+      ability_renames: { Multiattack: 'Flurry' },
+    });
+    expect(out.sections.Actions[0].name).toBe('Multiattack');
+  });
+});
+
+describe('epithet self-reference (Tarwurm live finding, corpus-studied 2026-07-27)', () => {
+  const { applyCorrections, buildContext } = require('../format-2024/generate.mjs');
+  const { lintStatblock, findEpithetSelfReference } = require('../format-2024/lint.mjs');
+  const { chassis } = buildContext(22, 'defender');
+
+  // Verbatim live entries: every ability self-refers as "the tar coil" on a
+  // monster named Tarwurm — the strongest case of the epithet tail item.
+  const tarwurm = () => ({
+    name: 'Tarwurm',
+    type: 'Dragon',
+    sections: {
+      Traits: [
+        { name: 'Legendary Resistance (3/Day)', text: 'If the tar coil fails a saving throw, it can choose to succeed instead.' },
+        { name: 'Phasing Coil', text: 'The tar coil can move through other creatures and objects as if they were difficult terrain. It takes 5 (1d10) Force damage if it ends its turn inside an object.' },
+      ],
+      Actions: [
+        { name: 'Slam', text: "*Melee Attack Roll:* +15, reach 10 ft. 30 (5d8 + 8) Bludgeoning damage. The target must succeed on a DC 23 Strength saving throw or be pushed up to 20 feet in a direction of the tar coil's choice." },
+      ],
+    },
+  });
+
+  test('detects the dominant epithet and rewrites every form, possessive included', () => {
+    const m = tarwurm();
+    const findings = lintStatblock(m, { edition: '2024' }).findings
+      .filter((f) => f.rule === 'epithet-self-reference');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].expected).toEqual({ from: 'tar coil', to: 'tarwurm' });
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Traits[0].text).toContain('If the tarwurm fails a saving throw');
+    expect(out.sections.Traits[1].text).toContain('The tarwurm can move through');
+    expect(out.sections.Actions[0].text).toContain("of the tarwurm's choice");
+    const texts = Object.values(out.sections).flat().map((e) => e.text).join('\n');
+    expect(texts).not.toMatch(/tar coil/i);
+  });
+
+  test('official morphology passes: head-morpheme suffix, hyphenated names, type words, swarms', () => {
+    // Androsphinx self-refers as "the sphinx" — suffix of a name word.
+    expect(findEpithetSelfReference('Androsphinx', 'Celestial',
+      ['The sphinx makes two Claw attacks.', 'The sphinx regains spent legendary actions.'])).toBeNull();
+    // Half-Dragon self-refers by its hyphenated name.
+    expect(findEpithetSelfReference('Half-Dragon', 'Dragon',
+      ['The half-dragon makes two attacks.', 'The half-dragon exhales fire.'])).toBeNull();
+    // Type-word self-reference ("the dragon" on a Dragon named Tarwurm).
+    expect(findEpithetSelfReference('Tarwurm', 'Dragon',
+      ['The dragon makes three attacks.', 'The dragon regains uses.'])).toBeNull();
+    // Swarms self-refer as "the swarm".
+    expect(findEpithetSelfReference('Chazkor', 'Swarm of Tiny Fiends',
+      ['The swarm makes two attacks.', 'The swarm can occupy another creature\'s space.'])).toBeNull();
+  });
+
+  test('object subjects and one-off mentions never flag', () => {
+    // "the portal" appears once — under the dominance threshold.
+    expect(findEpithetSelfReference('Stalking Webspinner', 'Elemental',
+      ['The webspinner makes two attacks.', 'The portal lasts for 1 minute.'])).toBeNull();
+    // Stoplisted subjects ("the target has ...") never count as self.
+    expect(findEpithetSelfReference('Askor', 'Undead',
+      ['The target has Disadvantage on attack rolls.', 'The target takes 7 (2d6) Fire damage.'])).toBeNull();
+  });
+});
+
+describe('batch 4 (Smokeshade/Shadowpouncer/Cliffskitter): hybrid range + tier casing', () => {
+  const { applyCorrections, buildContext } = require('../format-2024/generate.mjs');
+  const { lintStatblock } = require('../format-2024/lint.mjs');
+
+  test('hybrid-range-mismatch: verbatim Rending Lunge — skeleton follows the stated 15 feet', () => {
+    const m = { name: 'Shadowpouncer', type: 'Monstrosity', sections: { Actions: [
+      { name: 'Rending Lunge (Recharge 5-6)', text: 'The shadowpouncer lunges at one creature within 15 feet. Dexterity Saving Throw: DC 17, one creature within 60 feet. Failure: The target takes 44 (8d10) Slashing damage. Success: Half damage.' },
+    ] } };
+    const { chassis } = buildContext(11, 'lurker');
+    const findings = lintStatblock(m, { edition: '2024', chassis }).findings
+      .filter((f) => f.rule === 'hybrid-range-mismatch');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].expected).toEqual({ from: '60', to: '15' });
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).toContain('DC 17, one creature within 15 feet');
+    expect(out.sections.Actions[0].text).not.toContain('60 feet');
+  });
+
+  test('hybrid-range-mismatch stays silent when prose and skeleton agree', () => {
+    const m = { name: 'Shadowpouncer', type: 'Monstrosity', sections: { Actions: [
+      { name: 'Lunge', text: 'It lunges at one creature within 15 feet. Dexterity Saving Throw: DC 17, one creature within 15 feet. Failure: 44 (8d10) Slashing damage.' },
+    ] } };
+    expect(lintStatblock(m, { edition: '2024' }).findings
+      .filter((f) => f.rule === 'hybrid-range-mismatch')).toHaveLength(0);
+  });
+
+  test('spell-tiers-inline v2: verbatim Shadowpouncer conversion — lowercase "at will:" breaks and recases', () => {
+    const m = { name: 'Shadowpouncer', type: 'Monstrosity', sections: { Actions: [
+      { name: 'Spellcasting', text: "The shadowpouncer's spellcasting ability is Charisma (spell save DC 17). It can innately cast the following spells: at will: minor illusion, darkness; 1/day each: silence, fear" },
+    ] } };
+    const { chassis } = buildContext(11, 'lurker');
+    const findings = lintStatblock(m, { edition: '2014' }).findings
+      .filter((f) => f.rule === 'spell-tiers-inline');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).toContain('spells:\n\nAt will: minor illusion, darkness\n\n1/day each: silence, fear');
   });
 });

@@ -887,7 +887,21 @@ async function performStatblockDelete() {
   }
 }
 
+// Save target captured when generation STARTS. Browsing the sidebar during
+// the wait moves activeFolder/activeMonsterIndex, and resolving the target
+// at completion time overwrote whichever monster the user had clicked
+// (live bug). Regenerate replaces the monster that was selected at click
+// time; anything else saves as new.
+let generationTarget = null;
+
 async function generateStatblock() {
+  generationTarget = {
+    folder: activeFolder.value || 'Uncategorized',
+    index: activeMonsterIndex.value,
+    name: activeMonsterIndex.value !== null
+      ? (monsters.value[activeFolder.value]?.[activeMonsterIndex.value]?.name ?? null)
+      : null,
+  };
   monster.value = null;
   errorMessage.value = '';
   const canGenerate = await canGenerateStatblock(props.premium);
@@ -1199,23 +1213,40 @@ async function convertMonsterEdition() {
 }
 
 async function saveGeneratedMonster(finalMonster) {
-  // Save and display statblock immediately
-  if (activeMonsterIndex.value !== null) {
-    monsters.value[activeFolder.value][activeMonsterIndex.value] = finalMonster;
-    monsters.value[activeFolder.value] = sortMonstersByCR(activeFolder.value);
-    const newIndex = monsters.value[activeFolder.value].findIndex(monster => monster.name === finalMonster.name);
-    selectMonster(activeFolder.value, newIndex);
+  // Save into the slot captured at generation start — never the current
+  // selection, which may have moved while the user browsed during the wait.
+  const target = generationTarget ?? {
+    folder: activeFolder.value || 'Uncategorized',
+    index: activeMonsterIndex.value,
+    name: activeMonsterIndex.value !== null
+      ? (monsters.value[activeFolder.value]?.[activeMonsterIndex.value]?.name ?? null)
+      : null,
+  };
+  generationTarget = null;
+  const folderName = target.folder;
+  let replaceIndex = null;
+  if (target.index !== null && target.name) {
+    const list = monsters.value[folderName] ?? [];
+    // Indexes shift on delete/sort — trust the index only if the same
+    // monster still occupies it, otherwise find it by name. Deleted
+    // mid-generation → save as new rather than overwrite a stranger.
+    replaceIndex = list[target.index]?.name === target.name
+      ? target.index
+      : list.findIndex((m) => m.name === target.name);
+    if (replaceIndex === -1) replaceIndex = null;
+  }
+  if (!monsters.value[folderName]) {
+    monsters.value[folderName] = [];
+  }
+  if (replaceIndex !== null) {
+    monsters.value[folderName][replaceIndex] = finalMonster;
   } else {
-    const folderName = activeFolder.value || 'Uncategorized';
-    if (!monsters.value[folderName]) {
-      monsters.value[folderName] = [];
-    }
     monster.value = finalMonster;
     monsters.value[folderName].push(finalMonster);
-    monsters.value[folderName] = sortMonstersByCR(folderName);
-    const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
-    selectMonster(folderName, newIndex);
   }
+  monsters.value[folderName] = sortMonstersByCR(folderName);
+  const newIndex = monsters.value[folderName].findIndex(monster => monster.name === finalMonster.name);
+  selectMonster(folderName, newIndex);
   persistMonsters();
   loadingPart2.value = false;
   toast.success('Statblock generated and saved.');

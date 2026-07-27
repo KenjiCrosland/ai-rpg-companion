@@ -489,3 +489,177 @@ describe('edition conversion (⇄ footer action)', () => {
     expect(validateConversionResponse(JSON.stringify({}), model)).toBe(false);
   });
 });
+
+describe('2024-vocabulary leaks in 2014 text (converted soak-3 live batch)', () => {
+  // Verbatim texts from the first live converted batch (2026-07-27): the
+  // conversion call handled the attack/save skeletons but leaked 2024
+  // vocabulary. All four rules sweep 0/327 against the 2014 SRD corpus, and
+  // the appliers are verified no-ops on every official text.
+  const { chassis } = buildContext(7, 'balanced');
+  const lint2014 = (sections) => lintStatblock(
+    { type: 'Monstrosity', sections }, { edition: '2014' }
+  ).findings;
+  const fixed = (sections) => applyCorrections(
+    { sections: JSON.parse(JSON.stringify(sections)) }, lint2014(sections), { chassis }
+  );
+
+  test('bloodied-in-2014: Planar Retreat (Stalking Webspinner)', () => {
+    const sections = { Actions: [{ name: 'Planar Retreat', text: 'The portal lasts for 1 minute or until the Stalking Webspinner ends it (no action required). If the Stalking Webspinner is bloodied, it can use this action as a reaction on its turn.' }] };
+    expect(lint2014(sections).map((f) => f.rule)).toContain('bloodied-in-2014');
+    const out = fixed(sections);
+    expect(out.sections.Actions[0].text).toContain('If the Stalking Webspinner has half of its hit points or fewer');
+    expect(out.sections.Actions[0].text).not.toMatch(/bloodied/i);
+  });
+
+  test('emanation-in-2014: originating-from form (Ulghoch Caustic Slime)', () => {
+    const sections = { Traits: [{ name: 'Caustic Slime', text: 'At the start of each of the ulghoch\'s turns, each creature in a 5-foot emanation originating from the ulghoch takes 11 (2d10) acid damage.' }] };
+    expect(lint2014(sections).map((f) => f.rule)).toContain('emanation-in-2014');
+    const out = fixed(sections);
+    expect(out.sections.Traits[0].text).toContain('each creature within 5 feet of the ulghoch takes 11 (2d10) acid damage');
+    expect(out.sections.Traits[0].text).not.toMatch(/emanation/i);
+  });
+
+  test('emanation-in-2014: radius form (Silk Shambler Spore Burst)', () => {
+    const sections = { Actions: [{ name: 'Spore Burst', text: 'Each creature in a 20-foot-radius emanation centered on the silk shambler must make a DC 27 Constitution saving throw, taking 56 (16d6) poison damage on a failed save, or half as much damage on a successful one.' }] };
+    const out = fixed(sections);
+    expect(out.sections.Actions[0].text).toContain('20-foot-radius sphere centered on the silk shambler');
+    expect(out.sections.Actions[0].text).not.toMatch(/emanation/i);
+  });
+
+  test('area-caps-in-2014: capitalized Cone incl. bare reference (Bilewurm)', () => {
+    const sections = { Actions: [{ name: 'Corrosive Spew', text: 'The bilewurm vomits acid in a 15-foot Cone. Each creature in the Cone must make a DC 13 Constitution saving throw, taking 14 (4d6) acid damage and being knocked prone on a failed save, or half as much damage on a successful one.' }] };
+    expect(lint2014(sections).map((f) => f.rule)).toContain('area-caps-in-2014');
+    const out = fixed(sections);
+    expect(out.sections.Actions[0].text).toContain('in a 15-foot cone');
+    expect(out.sections.Actions[0].text).toContain('in the cone must make');
+  });
+
+  test('area-caps applier never touches creature-name Cube references', () => {
+    const sections = { Actions: [
+      { name: 'Zone', text: 'The wall fills a 10-foot Cube.' },
+      { name: 'Summon', text: 'It uses the Gelatinous Cube stat block.' },
+    ] };
+    const out = fixed(sections);
+    expect(out.sections.Actions[0].text).toContain('10-foot cube');
+    expect(out.sections.Actions[1].text).toContain('Gelatinous Cube stat block');
+  });
+
+  test('condition-phrase-in-2014: Critical Panic (Chazkor)', () => {
+    const sections = { Traits: [{ name: 'Critical Panic', text: 'If the swarm takes damage from a critical hit, it must make a DC 15 Wisdom saving throw. On a failure, it has the stunned condition until the end of its next turn.' }] };
+    expect(lint2014(sections).map((f) => f.rule)).toContain('condition-phrase-in-2014');
+    const out = fixed(sections);
+    expect(out.sections.Traits[0].text).toContain('it is stunned until the end of its next turn');
+  });
+
+  test('condition-phrase applier handles compounds, leaves exhaustion to the fix call', () => {
+    const sections = { Actions: [
+      { name: 'Web', text: 'The target has the Grappled and Restrained conditions.' },
+      { name: 'Drain', text: 'The target has the exhaustion condition.' },
+    ] };
+    const out = fixed(sections);
+    expect(out.sections.Actions[0].text).toContain('is grappled and restrained');
+    // exhaustion is levels in 2014 — no confident rewrite; reject persists.
+    expect(out.sections.Actions[1].text).toContain('has the exhaustion condition');
+    expect(lint2014(out.sections).map((f) => f.rule)).toContain('condition-phrase-in-2014');
+  });
+
+  test('none of the four rules fire on official-shaped 2014 text', () => {
+    const sections = { Actions: [
+      { name: 'Acid Spray', text: 'The dragon spits acid in a 15-foot cone. Each creature in the cone must make a DC 13 Dexterity saving throw, taking 22 (5d8) acid damage on a failed save, or half as much damage on a successful one.' },
+      { name: 'Engulf', text: 'The cube moves up to its speed. The engulfed creature is restrained until the grapple ends.' },
+    ] };
+    const rules = lint2014(sections).map((f) => f.rule);
+    for (const r of ['bloodied-in-2014', 'emanation-in-2014', 'area-caps-in-2014', 'condition-phrase-in-2014']) {
+      expect(rules).not.toContain(r);
+    }
+  });
+
+  test('none of the four rules fire on 2024-edition blocks', () => {
+    const sections = { Actions: [{ name: 'Spew', text: 'Each creature in a 15-foot Cone that is Bloodied has the Stunned condition.' }] };
+    const rules = lintStatblock({ type: 'Monstrosity', sections }, { edition: '2024' }).findings.map((f) => f.rule);
+    for (const r of ['bloodied-in-2014', 'emanation-in-2014', 'area-caps-in-2014', 'condition-phrase-in-2014']) {
+      expect(rules).not.toContain(r);
+    }
+  });
+});
+
+describe('convertEdition gates the leak rules (CONVERSION_LINT_RULES wiring)', () => {
+  const { convertEdition } = require('../format-2024/generate.mjs');
+
+  test('a leaked conversion response is cleaned deterministically — no second call', async () => {
+    const internal = assembleMonster(llm2014Fixture, ctx());
+    const modern = { ...JSON.parse(JSON.stringify(internal)), format: '2024' };
+    const leakedTexts = {
+      'Umbral Veil': 'While in dim light or darkness, the stalker is invisible. While bloodied, it cannot hide.',
+      Multiattack: 'The stalker makes two Shadow Claw attacks.',
+      'Shadow Claw': 'Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 14 (2d8 + 5) slashing damage. The target has the Poisoned condition.',
+      'Ambush Pounce': 'Each creature in a 10-foot emanation must make a DC 13 Dexterity saving throw, taking 21 (6d6) psychic damage on a failed save, or half as much damage on a successful one.',
+    };
+    const response = Object.fromEntries(Object.entries(modern.sections).map(([s, es]) =>
+      [s, es.map((e) => ({ name: e.name, text: leakedTexts[e.name] }))]));
+    const callLLM = jest.fn(async (prompt, validate) => {
+      const raw = JSON.stringify(response);
+      if (validate && !validate(raw)) throw new Error('validator rejected fixture');
+      return raw;
+    });
+    const converted = await convertEdition(modern, callLLM);
+    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(converted.format).toBe('2014');
+    const texts = [...converted.abilities, ...converted.actions].map((e) => e.description).join('\n');
+    expect(texts).toContain('While it has half of its hit points or fewer');
+    expect(texts).toContain('is poisoned');
+    expect(texts).toContain('within 10 feet of it');
+    expect(texts).not.toMatch(/bloodied|emanation|has the \w+ condition/i);
+  });
+});
+
+describe('condition-phrase modal contexts (Emberhide Hulk live regression)', () => {
+  // The bare-verb rewrite turned "the hulk can't have the Invisible
+  // condition" into "the hulk can't are invisible" (converted batch,
+  // 2026-07-27). Modals take the base verb.
+  const { chassis } = buildContext(5, 'defender');
+  const fixed = (text) => {
+    const sections = { Traits: [{ name: 'Blazing Aura', text }] };
+    const findings = lintStatblock({ type: 'Celestial', sections }, { edition: '2014' }).findings;
+    return applyCorrections({ sections }, findings, { chassis }).sections.Traits[0].text;
+  };
+
+  test('modal + have: verbatim Blazing Aura', () => {
+    const out = fixed('While the light shines, the hulk can\'t have the Invisible condition, and any creature within the bright light that hits the hulk with a melee attack takes 5 (1d10) fire damage.');
+    expect(out).toContain('the hulk can\'t be invisible');
+    expect(out).not.toMatch(/can't are|condition/);
+  });
+
+  test('negated do and bare plural have', () => {
+    expect(fixed('The target does not have the Prone condition.')).toContain('is not prone');
+    // Bare "have" (plural subject) has no safe deterministic verb — the
+    // reject stands and rides the fix ladder.
+    expect(fixed('Both targets have the Prone condition.')).toContain('have the Prone condition');
+  });
+});
+
+describe('spell-tiers-inline (Askor converted spellcaster, 2026-07-27)', () => {
+  // The conversion call flattened the tier lines: "...requiring no material
+  // components: At will: minor illusion, blade ward 1/day each: fear, fire
+  // shield (warm shield only)" — official 2014 spellcasting puts every tier
+  // marker at a line start (19/19 corpus spellcasters use "\n\nAt will:").
+  const { chassis } = buildContext(15, 'defender');
+  const fixed = (text) => {
+    const sections = { Actions: [{ name: 'Spellcasting', text }] };
+    const findings = lintStatblock({ type: 'Undead', sections }, { edition: '2014' }).findings;
+    return { findings, text: applyCorrections({ sections }, findings, { chassis }).sections.Actions[0].text };
+  };
+
+  test('verbatim Askor text: tiers break onto their own lines', () => {
+    const { findings, text } = fixed("The askor's spellcasting ability is Charisma (spell save DC 19). It can innately cast the following spells, requiring no material components: At will: minor illusion, blade ward 1/day each: fear, fire shield (warm shield only)");
+    expect(findings.map((f) => f.rule)).toContain('spell-tiers-inline');
+    expect(text).toContain('components:\n\nAt will: minor illusion, blade ward\n\n1/day each: fear, fire shield (warm shield only)');
+  });
+
+  test('official-shaped spellcasting (newline-separated tiers) passes untouched', () => {
+    const official = "The couatl's spellcasting ability is Charisma (spell save DC 14). It can innately cast the following spells, requiring only verbal components:\n\nAt will: detect evil and good, detect magic\n\n3/day each: bless, create food and water";
+    const { findings, text } = fixed(official);
+    expect(findings.map((f) => f.rule)).not.toContain('spell-tiers-inline');
+    expect(text).toBe(official);
+  });
+});

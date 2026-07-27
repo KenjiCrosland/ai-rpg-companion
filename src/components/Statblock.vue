@@ -910,6 +910,13 @@ textarea {
         list-style-type: none;
     }
 
+    li > span {
+        /* Official 2014 spellcasting descriptions carry newline-separated
+           tiers ("At will: ...\n\n3/day each: ..."); collapsing the
+           newlines runs the whole spell list into one line. */
+        white-space: pre-line;
+    }
+
     strong {
         font-style: italic;
     }

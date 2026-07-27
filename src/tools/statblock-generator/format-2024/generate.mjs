@@ -477,6 +477,7 @@ RULES — read first; they apply to every line of output:
    WRONG: One creature within 60 feet must succeed on a saving throw... (no trigger — that is an Action, not a Reaction)
 11. A Trait is ALWAYS-ON or self-referential — it never forces another creature to make a saving throw. If the creature actively imposes a save on an enemy, it is an Action (put it in Actions), or a Reaction with an explicit *Trigger:* — NEVER a Trait. Every save-effect targeting clause names a range or area ("one creature within 60 feet", "each creature in a 20-foot Emanation"); never bare "one creature" or "each creature".
 12. Ability names are plain English that says what the ability does ("Tar Tendril", "Shielding Wall", "Grasping Coils") — an invented or coined word may be the CREATURE's name, never an ability's name. The creature's own name reads like a Monster Manual entry: a real-word compound (Owlbear), a folk name (Shambling Mound), or a coined word (Chuul) — never a flat description of its attack routine.
+13. The type follows the creature's SUBSTANCE: animated objects, machines, and worked materials are Constructs (an animated sword or needle is never a Beast); spirits and remains of the dead are Undead; only living natural animals are Beasts.
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
@@ -551,6 +552,7 @@ RULES — read first; they apply to every line of output:
 7. Defensive traits must be NARROW. Never write a passive trait that halves or reduces incoming damage or grants resistance to everything — the fixed AC/HP already price the creature's defenses. Mitigating a single attack is fine ONLY as a reaction (once per round).
 8. A reaction is not a free action — every Reactions entry begins by stating its trigger in prose: "When <specific event>, the <creature> <responds>." Never write a reaction that can simply be used on the creature's turn.
 9. Ability names are plain English that says what the ability does — an invented or coined word may be the CREATURE's name, never an ability's name. The creature's own name reads like a Monster Manual entry: a real-word compound, a folk name, or a coined word — never a flat description of its attack routine.
+10. The type follows the creature's SUBSTANCE: animated objects, machines, and worked materials are constructs (an animated sword or needle is never a beast); spirits and remains of the dead are undead; only living natural animals are beasts.
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
@@ -939,7 +941,8 @@ const CONVERSION_RULES = {
 - "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage." becomes "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage." (Ranged attacks likewise, keeping the range.)
 - "*<Ability> Saving Throw*: DC n, <targets>. *Failure:* <damage>. *Success:* Half damage only." becomes "<targets> must make a DC n <Ability> saving throw, taking <damage> on a failed save, or half as much damage on a successful one." Condition-only saves become "must succeed on a DC n <Ability> saving throw or <be/become condition>".
 - Reactions: "*Trigger:* <event>. *Response:* <effect>." becomes "When <event>, <the creature does the effect>."
-- Conditions, damage types, and game terms go lowercase in prose: "is knocked prone", "frightened", "slashing damage", "hit points". Never "has the X condition", never "Attack Roll:", never "*Failure:*"/"*Success:*"/"*Trigger:*" markers.
+- Conditions, damage types, and game terms go lowercase in prose: "is knocked prone", "frightened", "slashing damage", "hit points". Never "has the X condition" — write "is stunned". Never "Attack Roll:", never "*Failure:*"/"*Success:*"/"*Trigger:*" markers.
+- 2024-only vocabulary must be translated: "Bloodied" becomes "has half of its hit points or fewer"; "each creature in a 5-foot Emanation originating from it" becomes "each creature within 5 feet of it"; an "N-foot-radius Emanation" becomes an "N-foot-radius sphere". Area shapes go lowercase: "15-foot cone", "the cone".
 - 2024 spellcasting actions convert to the 2014 style: "The creature's spellcasting ability is <Ability> (spell save DC n). It can innately cast the following spells: ..."`,
   2024: `You are converting D&D statblock entries from classic 2014 (5e) phrasing to 2024 (5.5e) phrasing. Rewrite ONLY the wording — every number, die expression, DC, entry name, and mechanical effect stays EXACTLY the same.
 - "Melee Weapon Attack: +7 to hit, reach 5 ft., one target. Hit: 13 (2d8 + 4) slashing damage." becomes "*Melee Attack Roll:* +7, reach 5 ft. 13 (2d8 + 4) Slashing damage." — never "to hit", never "Weapon Attack", Damage Types Capitalized.
@@ -971,6 +974,9 @@ const CONVERSION_LINT_RULES = new Set([
   'phrasing-2014', 'phrasing-to-hit', 'phrasing-saving-throw',
   'phrasing-hybrid-save', 'condition-caps', 'term-caps', 'nonmagical',
   'reaction-trigger', 'phrasing-2024-in-2014', 'second-person',
+  'bloodied-in-2014', 'emanation-in-2014', 'area-caps-in-2014',
+  'condition-phrase-in-2014', 'phrasing-save-or', 'spell-tiers-inline',
+  'epithet-self-reference',
 ]);
 
 /**
@@ -1067,6 +1073,43 @@ const DETERMINISTIC_TEXT_FIXES = [
   ['damage-type-caps', (t) => t.replace(DAMAGE_TYPES_LOWER_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['area-term-caps', (t) => t.replace(/\b(\d+-foot )(cone|line|sphere|cylinder|emanation|cube)\b/g,
     (m, p, a) => p + a[0].toUpperCase() + a.slice(1))],
+  // 2014-target inverses: 2024 vocabulary leaked through conversion. Only
+  // the confident shapes rewrite — anything left standing keeps its reject
+  // and rides the fix ladder.
+  ['bloodied-in-2014', (t) => t
+    .replace(/\bis [Bb]loodied\b/g, 'has half of its hit points or fewer')
+    .replace(/\b([Ww])hile [Bb]loodied\b/g, '$1hile it has half of its hit points or fewer')],
+  ['emanation-in-2014', (t) => t
+    .replace(/\bin an? (\d+)-foot [Ee]manation originating from\b/g, 'within $1 feet of')
+    .replace(/\bin an? (\d+)-foot [Ee]manation\b/g, 'within $1 feet of it')
+    .replace(/\b(\d+-foot-radius) [Ee]manation\b/g, '$1 sphere')
+    .replace(/\ban? (\d+)-foot [Ee]manation\b/g, 'a $1-foot-radius sphere')],
+  ['area-caps-in-2014', (t) => t.replace(/\b(\d+-foot(?:-radius|-long|-wide)? |[Tt]he )(Cone|Line|Sphere|Cylinder|Cube)\b/g,
+    (m, p, a) => p + a.toLowerCase())],
+  // Tier markers break onto their own lines, shedding the inline separator
+  // ("darkness; 1/day each:" → "darkness\n\n1/day each:"), then casing
+  // normalizes to the corpus forms ("At will:", "3/day each:"). The live
+  // conversion emitted lowercase "at will:", which v1 missed entirely.
+  ['spell-tiers-inline', (t) => t
+    .replace(/[;,]?[ \t]+([Aa]t will:|\d+\/[Dd]ay each:)/g, '\n\n$1')
+    .replace(/(^|\n)at will:/g, '$1At will:')
+    .replace(/(^|\n)(\d+)\/Day each:/g, '$1$2/day each:')],
+  // "has the exhaustion condition" is excluded — 2014 phrases exhaustion as
+  // levels ("gains one level of exhaustion"), which needs the fix call.
+  // Modals take the base verb ("can't have the Invisible condition" → "can't
+  // be invisible" — live regression: the bare-verb rewrite produced "can't
+  // are invisible"). A "have" with no recognized lead-in is a plural or
+  // exotic construction — left standing for the fix ladder.
+  ['condition-phrase-in-2014', (t) => t.replace(
+    /\b(?:(can't|cannot|can|couldn't|could|mustn't|must|may|might|won't|wouldn't|would|shall|shouldn't|should|to|longer|not|doesn't|does not|don't|do not) )?(has|have) the ([A-Za-z]\w*(?:(?:,? and |, )[A-Za-z]\w*)*) conditions?\b/g,
+    (m, pre, verb, list) => {
+      if (/\bexhaustion\b/i.test(list)) return m;
+      const low = list.toLowerCase();
+      if (/^(doesn't|does not)$/.test(pre ?? '')) return `is not ${low}`;
+      if (/^(don't|do not)$/.test(pre ?? '')) return `are not ${low}`;
+      if (pre) return `${pre} ${verb === 'has' ? 'is' : 'be'} ${low}`;
+      return verb === 'has' ? `is ${low}` : m;
+    })],
 ];
 
 const DAMAGE_TYPES_LOWER_G = new RegExp(
@@ -1114,7 +1157,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance' || x.rule === 'resistance-unknown') && x.loc?.field
+    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance' || x.rule === 'resistance-unknown' || x.rule === 'defense-line-separator') && x.loc?.field
   )) {
     out[f.loc.field] = f.expected || undefined;
   }
@@ -1144,6 +1187,50 @@ export function applyCorrections(monster, findings, { chassis }) {
     if (entry) entry.text = entry.text.replace(/escape DC \d+/gi, `escape DC ${f.expected}`);
   }
 
+  // Hybrid dual-targeting: the save skeleton's range follows the range the
+  // prose stated ("lunges at one creature within 15 feet" wins over the
+  // skeleton's "within 60 feet").
+  for (const f of correctable.filter((x) => x.rule === 'hybrid-range-mismatch' && x.loc && x.expected)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) {
+      entry.text = entry.text.replace(
+        new RegExp(`(Saving Throw:?\\*?\\s*DC \\d+, one creature within )${f.expected.from}(?= feet)`),
+        `$1${f.expected.to}`
+      );
+    }
+  }
+
+  // Epithet self-references: rewrite "the tar coil" → "the tarwurm" across
+  // every entry (possessives follow for free: "the tar coil's choice").
+  for (const f of correctable.filter((x) => x.rule === 'epithet-self-reference' && x.expected?.from)) {
+    const re = new RegExp(`\\b([Tt])he ${escapeRe(f.expected.from)}\\b`, 'g');
+    for (const entries of Object.values(out.sections ?? {})) {
+      for (const entry of entries) {
+        entry.text = entry.text.replace(re, (m, t) => `${t}he ${f.expected.to}`);
+      }
+    }
+  }
+
+  // Multiattack moves to the top of Actions (officials always lead with it).
+  if (findings.some((f) => f.rule === 'multiattack-order')) {
+    const acts = out.sections?.Actions ?? [];
+    const mi = acts.findIndex((e) => /^Multiattack/i.test(e.name ?? ''));
+    if (mi > 0) acts.unshift(acts.splice(mi, 1)[0]);
+  }
+
+  // Swarm size correction: Medium, with the hit-die formula re-derived for
+  // the corrected size (a Tiny-sized swarm shipped on d4s).
+  for (const f of correctable.filter((x) => x.rule === 'swarm-size')) {
+    out.size = f.expected;
+    const conMod = out.stats ? Math.floor((out.stats.CON - 10) / 2) : 0;
+    if (typeof out.hp === 'number' && out.hp > 0) {
+      const formula = hpFormulaFor(out.hp, f.expected, conMod);
+      out.hp_formula = formula;
+      const avg = avgDice(formula);
+      if (avg) out.hp = avg;
+    }
+  }
+
   // Swarm reduced-damage arithmetic: replace the SECOND damage expression
   // (the Bloodied/half-HP tier) with the recomputed halved-dice value.
   for (const f of correctable.filter((x) => x.rule === 'swarm-half-value' && x.loc)) {
@@ -1164,6 +1251,27 @@ export function applyCorrections(monster, findings, { chassis }) {
       .replace(/(\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)\s+\w+ damage)/,
         `$1, or ${f.expected} if the swarm has half of its Hit Points or fewer`)
       .replace(/\s{2,}/g, ' ').trim();
+  }
+
+  // Phantom "Half damage" in a Success clause whose Failure deals none:
+  // strip the reference ("Half damage plus X" → "X"; a bare half-damage
+  // Success drops to the official omit-when-no-effect convention).
+  for (const f of correctable.filter((x) => x.rule === 'success-damage-orphan' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (!entry) continue;
+    entry.text = entry.text
+      .replace(/(\*?\bSuccess:?\*?\s*)Half damage(?: only)?\s*(?:plus|and)\s*(\w)/i, (m, pre, ch) => pre + ch.toUpperCase())
+      .replace(/\s*\*?\bSuccess:?\*?\s*Half damage(?: only)?\.?\s*$/i, '')
+      .trim();
+  }
+
+  // Reaction damage re-solved to punish scale (half an attack, pure dice).
+  for (const f of correctable.filter((x) => x.rule === 'reaction-damage-band' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) {
+      const d = saveDamageDiceFor(f.expected);
+      entry.text = entry.text.replace(/(\d+)\s*\((\d+d\d+(?:\s*[+-]\s*\d+)?)\)/, `${d.avg} (${d.dice})`);
+    }
   }
 
   // Identity immunity: move the elemental type from resistances to
@@ -1227,7 +1335,28 @@ export function applyCorrections(monster, findings, { chassis }) {
   // action targeting allies." — instruction language is never in-world).
   for (const f of correctable.filter((x) => x.rule === 'instruction-leak' && x.loc)) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
-    if (entry) entry.text = entry.text.replace(/\s*\bThis is an? [^.]*\./gi, '').trim();
+    if (entry) {
+      entry.text = entry.text
+        .replace(/\s*\bThis is an? [^.]*\./gi, '')
+        .replace(/\s*\([^)]*(?:action description|this entry|these instructions)[^)]*\)/gi, '')
+        // Lint-message echoes: strip from the echoed CLAUSE (anchored at
+        // its comma, so the legitimate text before it survives) to the end
+        // of the sentence (", and the total for both expressions is 41, ...").
+        .replace(/,?\s*(?:and |which |but )?[^,.]*(?:outside the allowed range|restructure to total \d+|per-attack budget|total for both expressions)[^.]*\./gi, '.')
+        .replace(/\.\s*\./g, '.')
+        .replace(/\s{2,}/g, ' ').trim();
+    }
+  }
+
+  // An active bonus action written as a trait relocates to Bonus Actions
+  // (relocated marker keeps it scored against the Traits plan range).
+  for (const f of correctable.filter((x) => x.rule === 'trait-bonus-action' && x.loc)) {
+    const traits = out.sections?.Traits ?? [];
+    const idx = traits.findIndex((e) => e.name === f.loc.entry);
+    if (idx === -1) continue;
+    const [entry] = traits.splice(idx, 1);
+    entry.relocated = true;
+    (out.sections['Bonus Actions'] ??= []).push(entry);
   }
 
   // Misspelled stat-block reference with a unique close match ("Strige" →
@@ -1292,13 +1421,16 @@ export function applyCorrections(monster, findings, { chassis }) {
     if (alternation.test(entry.text)) {
       entry.text = entry.text.replace(alternation, '');
     } else {
-      const ref = `(?:its |the )?${esc}(?: action| attack)?`;
+      const ref = `(?:an? |its |the )?${esc}(?: action| attack)?`;
       entry.text = entry.text
         .replace(new RegExp(`,\\s*(?:one of which|which) it can replace with (?:a use of |one use of )?${ref}(?=\\.)`, 'i'), '')
         // Standalone-sentence shape (live: "It can replace one attack with a
         // use of Shriek." / "...a use of its Enveloping Feed action.").
-        .replace(new RegExp(`\\s*(?:It|The [\\w' -]+?) can replace one attack with (?:a use of |one use of )?${ref}\\.`, 'i'), '')
-        .replace(new RegExp(`,?\\s*and (?:it )?can replace one attack with (?:a use of |one use of )?${ref}(?=\\.)`, 'i'), '')
+        // Subject bounded to 1-2 words — an open [\\w' -]+? here once
+        // swallowed "The krakkor makes two Crystal Claw attacks and" and
+        // emptied the whole Multiattack text.
+        .replace(new RegExp(`\\s*(?:It|She|He|They|The \\w+(?: \\w+)?) can replace one (?:attack|of them|of those) with (?:a use of |one use of )?${ref}\\.`, 'i'), '')
+        .replace(new RegExp(`,?\\s*and (?:it )?can replace one (?:attack|of them|of those) with (?:a use of |one use of )?${ref}(?=\\.)`, 'i'), '')
         .replace(new RegExp(`\\s*(?:and|,)?\\s*(?:it )?can use ${ref} in place of one attack`, 'i'), '')
         .replace(new RegExp(`\\s*(?:and|or) uses ${ref}( if available)?`, 'i'), '')
         .replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.');
@@ -1689,7 +1821,8 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
 const ENTRY_FIXABLE = new Set([
   'phrasing-2014', 'phrasing-to-hit', 'phrasing-saving-throw',
   'phrasing-hybrid-save', 'condition-caps', 'term-caps', 'stat-ref',
-  'phrasing-hit-marker', 'defense-restated', 'reaction-trigger-referent',
+  'phrasing-hit-marker', 'defense-restated', 'reaction-trigger-referent', 'section-shape',
+  'duplicate-entry', 'legendary-recharge',
   'phrasing-2024-in-2014', 'second-person', 'trait-mitigation',
   'undefined-attack-ref', 'attack-damage-band', 'reaction-trigger',
   'condition-unknown', 'damage-type-caps', 'area-term-caps',
@@ -1837,7 +1970,7 @@ const PHONETICS_BY_ARCHETYPE = {
   swarm: 'skittering and repetitive — ch, k, tt, z',
 };
 
-export function buildNamingPrompt(monster, traits = null, bans = []) {
+export function buildNamingPrompt(monster, traits = null, bans = [], concept = '') {
   const abilities = Object.values(monster.sections ?? {}).flat()
     .map((e) => `${e.name}: ${e.text.slice(0, 90)}`)
     .join('\n');
@@ -1849,15 +1982,29 @@ export function buildNamingPrompt(monster, traits = null, bans = []) {
   return `Name this finished D&D monster. Read what it actually IS — its movement, attacks, and materials — and name THAT creature.
 
 THE CREATURE: ${monster.size} ${monster.type}, speed ${monster.speed}.
-${abilities}
+${concept ? `THE STORY (the identity this creature was designed from — the name should evoke it): ${String(concept).slice(0, 350)}\n` : ''}${abilities}
 
 THE NAME ${nameSpec}
+The name must FIT the creature's TYPE — never borrow another type's signature words (a Fiend is never a "golem", a Celestial is never a "wraith", a Construct is never a "zombie"; those words belong to Constructs, Undead, and Undead respectively).
+The "<modifier> <verb>-er" formula (Shambler, Webspinner, Stalker, Witherer, Gleamer) is overused and weak — at most ONE candidate may use it; the rest should be fused compounds (Bilewurm, Owlbear), coined sounds (Shissar, Chuul), or concrete-noun heads (Shambling Mound, Mirror Prison).
 ${bans.length ? `BANNED THIS TIME (overused in past names — never use these stems or sounds anywhere in the name): ${bans.join(', ')}.\n` : ''}${monster.archetype && PHONETICS_BY_ARCHETYPE[monster.archetype] ? `Its sound should be ${PHONETICS_BY_ARCHETYPE[monster.archetype]}.\n` : ''}Rules: name concrete things the creature actually does or is made of. Never hyphens. A coined name is built from sound, never by gluing two English words into one. Abstract menace words (terror, doom, dread, horror, death, fear) never as the head noun — as a leading adjective before a concrete doer they are fine. Never cutesy, comedic, or diminutive words (slinky, bouncy, squishy) — satisfy the sound profile with words that keep their menace. The head noun should be a creature, agent, or evocative form, not a plain object (Boulder, Rock, Slab) — an object head is allowed only if the creature genuinely IS an animated object. Never a name already used by a well-known D&D creature, class, or subclass.
 
 Also AUDIT the ability names listed above: any that are coined or invented words, or unexplained proper nouns ("Ulgroth", "Vothar's Ire", "Kragor"), must be renamed to plain English that says what the ability does ("Helping Snarl", "Tar Tendril"). List them in "ability_renames" — an empty object if all are already plain English. Never rename Multiattack or Spellcasting.
 
-Return ONLY JSON, no markdown: {"candidates": ["five different names, best first"], "ability_renames": {"Coined Name": "Plain English Name"}}`;
+Return ONLY JSON, no markdown: {"candidates": ["seven different names, best first — range from safe to bold"], "ability_renames": {"Coined Name": "Plain English Name"}}`;
 }
+
+// Type-coded name words (corpus-consistent, 0/329 after dropping "vampire" —
+// the Vampire Familiar is a living Humanoid servant): a Fiend named "Golem"
+// or a Celestial named "Wraith" reads as a taxonomy error even when the
+// mechanics are fine (live findings: Clanking Golem the Fiend, Chainwraith
+// the Celestial). Enforced in pickName; the prompt states it too.
+const RESERVED_TYPE_WORDS = {
+  golem: 'Construct', zombie: 'Undead', skeleton: 'Undead', ghost: 'Undead',
+  wraith: 'Undead', specter: 'Undead', ghoul: 'Undead', lich: 'Undead',
+  mummy: 'Undead', angel: 'Celestial', demon: 'Fiend', devil: 'Fiend',
+  elemental: 'Elemental',
+};
 
 /**
  * Apply the naming call's ability-name audit (coined ability names are a
@@ -1867,18 +2014,47 @@ Return ONLY JSON, no markdown: {"candidates": ["five different names, best first
  * only existing, non-protected entry names rename, and applyRenameMapping
  * propagates through referencing texts.
  */
+const ENTRY_NAME_SUFFIX_RE = /\s*\((?:Recharge[^)]*|\d+\/Day[^)]*)\)\s*$/i;
+
 function applyAbilityRenames(monster, parsed) {
   const renames = parsed?.ability_renames;
   if (!renames || typeof renames !== 'object' || Array.isArray(renames)) return monster;
   const entryNames = new Set(Object.values(monster.sections ?? {}).flat().map((e) => e.name));
+  const bareOf = (n) => (n ?? '').replace(ENTRY_NAME_SUFFIX_RE, '').trim();
+  const byBare = new Map();
+  for (const n of entryNames) if (!byBare.has(bareOf(n))) byBare.set(bareOf(n), n);
   const safe = {};
   for (const [from, to] of Object.entries(renames)) {
-    if (typeof to === 'string' && to.trim() && to.trim() !== from
-      && entryNames.has(from) && !PROTECTED_ENTRY_NAME_RE.test(from)) {
-      safe[from] = to.trim();
-    }
+    if (typeof to !== 'string' || !to.trim()) continue;
+    // The model may return the name with or without its usage suffix
+    // ("Freezing Fog (Recharge 5-6)"). Resolve to the real entry, rename it
+    // preserving ITS OWN suffix, and map the bare name too so prose
+    // references follow the rename — a suffixed mapping alone strands them
+    // (live finding: Multiattack shipped citing "a use of its Freezing Fog"
+    // after the entry became "Whisper Crush (Recharge 5-6)").
+    const bareFrom = bareOf(from);
+    const fullFrom = entryNames.has(from) ? from : byBare.get(bareFrom);
+    if (!fullFrom || PROTECTED_ENTRY_NAME_RE.test(fullFrom)) continue;
+    const bareTo = bareOf(to);
+    if (!bareTo || bareTo === bareFrom) continue;
+    safe[fullFrom] = bareTo + fullFrom.slice(bareOf(fullFrom).length);
+    if (fullFrom !== bareFrom) safe[bareFrom] = bareTo;
   }
   return Object.keys(safe).length ? applyRenameMapping(monster, safe) : monster;
+}
+
+/**
+ * Renames run AFTER the final lint sweep, so a reference the rename mapping
+ * fails to rewrite would ship unchecked. Names are cosmetic — if applying
+ * the renames manufactures a reference orphan the old text resolved, the
+ * revert is free and strictly safer than shipping an unadjudicable block.
+ */
+export function renameAbilitiesSafely(monster, parsed, edition = '2024') {
+  const renamed = applyAbilityRenames(monster, parsed);
+  if (renamed === monster) return monster;
+  const orphanCount = (m) => lintStatblock(m, { edition }).findings
+    .filter((f) => f.rule === 'undefined-attack-ref').length;
+  return orphanCount(renamed) > orphanCount(monster) ? monster : renamed;
 }
 
 export function validateNamingResponse(jsonString) {
@@ -1892,7 +2068,7 @@ export function validateNamingResponse(jsonString) {
  * Deterministic candidate selection: first name that survives every filter.
  * The register discipline is enforced by filtering, not by hoping.
  */
-export function pickName(candidates, { seedTokens = [], register = '', bans = [] } = {}) {
+export function pickName(candidates, { seedTokens = [], register = '', bans = [], type = '' } = {}) {
   const isCoinage = /coinage/.test(register);
   for (const raw of candidates) {
     // Leading articles are stripped, not rejected — "the Silent Clinger"
@@ -1905,6 +2081,12 @@ export function pickName(candidates, { seedTokens = [], register = '', bans = []
     if (SRD_NAMES.has(lower.replace(/^the /, ''))) continue;
     if (seedTokens.some((t) => lower.includes(t))) continue;
     if (bans.some((b) => lower.includes(b))) continue;
+    // Containment, not equality — "Swarm of Tiny Undead" may use undead
+    // words even though the type string isn't exactly "Undead". Trailing
+    // boundary only: fused compounds ("Chainwraith") must match, while
+    // substrings ("Lichen", "demonstrate") must not.
+    if (type && Object.entries(RESERVED_TYPE_WORDS).some(([w, t]) =>
+      !type.toLowerCase().includes(t.toLowerCase()) && new RegExp(`${w}\\b`, 'i').test(name))) continue;
     if (isCoinage && (name.includes(' ') || name.length > 9)) continue;
     if (name.split(/\s+/).length > 3) continue;
     return titleCaseName(name);
@@ -2105,15 +2287,15 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   const nameBans = rollNameBans({ type: outcome.monster.type ?? '', archetypeName });
   if (seedTraits) {
     try {
-      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits, nameBans), validateNamingResponse);
+      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits, nameBans, concept), validateNamingResponse);
       const parsed = raw ? tryParse(raw) : null;
       const chosen = parsed
-        ? pickName(parsed.candidates, { seedTokens, register: seedTraits.naming ?? '', bans: nameBans })
+        ? pickName(parsed.candidates, { seedTokens, register: seedTraits.naming ?? '', bans: nameBans, type: outcome.monster.type ?? '' })
         : null;
       if (chosen && chosen !== outcome.monster.name) {
         outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });
       }
-      outcome.monster = applyAbilityRenames(outcome.monster, parsed);
+      outcome.monster = renameAbilitiesSafely(outcome.monster, parsed, edition);
     } catch {
       /* naming is best-effort — the provisional name stands */
     }
@@ -2131,16 +2313,28 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
     const kept = typed !== '' && outcome.monster.name.trim().toLowerCase() === typed;
     if (!kept) {
       try {
-        const raw = await callLLM(buildNamingPrompt(outcome.monster, null, nameBans), validateNamingResponse);
+        const raw = await callLLM(buildNamingPrompt(outcome.monster, null, nameBans, concept), validateNamingResponse);
         const parsed = raw ? tryParse(raw) : null;
-        const chosen = parsed ? pickName(parsed.candidates, { bans: nameBans }) : null;
+        const chosen = parsed ? pickName(parsed.candidates, { bans: nameBans, type: outcome.monster.type ?? '' }) : null;
         if (chosen && chosen !== outcome.monster.name) {
           outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });
         }
-        outcome.monster = applyAbilityRenames(outcome.monster, parsed);
+        outcome.monster = renameAbilitiesSafely(outcome.monster, parsed, edition);
       } catch {
         /* naming is best-effort — the provisional name stands */
       }
+    }
+  }
+
+  // Names are final now — one last epithet sweep. A rename can turn the OLD
+  // name's words into an unrelated epithet ("the tar coil" everywhere after
+  // Tar Coil → Tarwurm; live finding), which the pre-naming lint pass could
+  // not see and the head-noun rename mapping misses for two-word forms.
+  {
+    const epithetFindings = lintStatblock(outcome.monster, { edition }).findings
+      .filter((f) => f.rule === 'epithet-self-reference');
+    if (epithetFindings.length) {
+      outcome.monster = applyCorrections(outcome.monster, epithetFindings, { chassis });
     }
   }
 
