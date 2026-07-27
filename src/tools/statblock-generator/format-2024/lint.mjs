@@ -32,6 +32,7 @@
  *   model's fields.
  */
 import { pbFor } from '../chassis/chassis.mjs';
+import srdMonsters from '@/data/srd52-monsters.json';
 
 const HP_BAND = [0.75, 1.35];
 
@@ -115,6 +116,37 @@ const SECTION_FOR_CATEGORY = {
 // lowercase them — both are correct for their edition (live finding: a 2014
 // swarm's lowercase "bludgeoning, piercing, slashing" failed the slot check
 // and forced a doomed full regeneration).
+// Canonical SRD creature names (cased), for stat-block references like
+// "(use Stirge statistics)" — a misspelled reference ("Strige") is
+// unadjudicable, and a unique close match respells deterministically.
+const SRD_NAME_BY_LOWER = new Map(srdMonsters.map((m) => [m.name.toLowerCase(), m.name]));
+function editDistance(a, b) {
+  // Damerau-Levenshtein (OSA): adjacent transpositions cost 1 — "Strige" is
+  // one swap from "Stirge" but two substitutions from "Sprite", so the
+  // transposition-aware distance breaks that tie in the right direction.
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+/** "Monstrosity" → "Monstrosities", "Undead"/"Fey" invariant, else +s.
+ *  Accepts singular or (possibly mangled) plural input. */
+export function pluralizeCreatureType(word) {
+  const base = word.trim().replace(/ies$/i, 'y').replace(/(?<!s)s$/i, '');
+  const cased = base[0].toUpperCase() + base.slice(1).toLowerCase();
+  if (cased === 'Undead' || cased === 'Fey') return cased;
+  if (/y$/i.test(cased)) return cased.replace(/y$/i, 'ies');
+  return `${cased}s`;
+}
+
 const hasAll = (value, terms) => {
   const lower = (value ?? '').toLowerCase();
   return terms.every((t) => lower.includes(t));
@@ -507,7 +539,33 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // ("Pummel or Spellcasting"), trailing words ("Nightmare Haunting
     // action", "Holy Burst twice"), and clause boundaries ("Bite while…") —
     // 26/26 official uses-references resolve under it.
-    for (const ref of entry.text.matchAll(/\b(?:uses?|(?:a|one) use of)\s+(?:(?:a|one) use of\s+)?(?:its\s+)?([A-Z][\w' -]+?)(?= to cast|\s+again\b|\s+if\b|\s+without\b|\s+while\b|\s+when\b|[.,;:]|$)/g)) {
+    // Stat-block references ("use Stirge statistics" / "uses the Treant stat
+    // block") must name a real SRD creature or the block itself — a
+    // misspelled reference ("Strige", live finding) sends the GM hunting for
+    // a statblock that doesn't exist. A unique close match (edit distance
+    // ≤ 2) respells deterministically; anything else goes to the fix call.
+    for (const sb of entry.text.matchAll(/\buses? (?:the )?([A-Z][\w' -]+?) (?:stat block|statistics)\b/gi)) {
+      const raw = sb[1].trim();
+      const lower = raw.toLowerCase();
+      if (SRD_NAME_BY_LOWER.has(lower) || lower === (monster.name ?? '').toLowerCase()) continue;
+      // Unique minimum-distance match within 2 wins; a tie is ambiguous.
+      const scored = [...SRD_NAME_BY_LOWER.keys()]
+        .filter((n) => Math.abs(n.length - lower.length) <= 2)
+        .map((n) => [n, editDistance(n, lower)])
+        .filter(([, d]) => d <= 2)
+        .sort((x, y) => x[1] - y[1]);
+      const close = scored.length && (scored.length === 1 || scored[0][1] < scored[1][1]) ? [scored[0][0]] : [];
+      if (close.length === 1) {
+        push('stat-ref', 'correctable', `${where}: "${raw}" is not an SRD stat block — respelling to "${SRD_NAME_BY_LOWER.get(close[0])}"`,
+          SRD_NAME_BY_LOWER.get(close[0]), { section, entry: entry.name, from: raw });
+      } else {
+        push('stat-ref', 'reject', `${where}: "${raw}" is not an SRD stat block — reference a real SRD creature's statistics or drop the reference`, undefined, loc);
+      }
+    }
+    for (const ref of entry.text.matchAll(/\b(?:uses?|(?:a|one) use of)\s+(?:(?:a|one) use of\s+)?(?:its\s+)?([A-Z][\w' -]+?)(?= to cast|\s+again\b|\s+if\b|\s+without\b|\s+while\b|\s+when\b|\s+stat(?:istics|\s+block)\b|[.,;:]|$)/g)) {
+      // Stat-block references ("use Stirge statistics") are stat-ref's
+      // business, not entry-reference resolution's.
+      if (/^\s+stat(?:istics|\s+block)\b/i.test(entry.text.slice(ref.index + ref[0].length))) continue;
       for (const part of ref[1].split(/ or /)) {
         const name = part.replace(/^\([A-C]\)\s*/, '').replace(/\s+(?:action|attack|twice|once)$/, '').trim();
         if (!name || !/^[A-Z]/.test(name) || /^(?:Spellcasting|Multiattack)$/i.test(name)) continue;
@@ -556,8 +614,13 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     if (monster.name && entry.name.split(' (')[0].toLowerCase() === monster.name.toLowerCase()) {
       push('entry-name-self', 'reject', `${where}: the entry is named after the creature itself — name what the ability DOES. Rename it`, undefined, loc);
     }
-    if (swarmNoHeal && /swarm regains \d+/i.test(entry.text)) {
-      push('swarm-heal-contradiction', 'reject', `${where} heals the swarm, but the Swarm trait says it can't regain hit points — replace the healing with a different benefit`, undefined, loc);
+    // Anchor covers any subject ("the swarm/the Klakkhorde/it regains N") —
+    // the old literal "swarm regains" missed name and pronoun subjects
+    // (live finding: a can't-heal swarm shipped with TWO healing mechanics).
+    // Correctable now: heal clauses strip deterministically; an entry that
+    // was ONLY a heal is removed.
+    if (swarmNoHeal && /\bregains? \d+[^.]*Hit Points/i.test(entry.text)) {
+      push('swarm-heal-contradiction', 'correctable', `${where} heals the swarm, but the Swarm trait says it can't regain Hit Points — the healing is stripped (heal-only entries are removed)`, undefined, loc);
     }
     if (/centred/.test(entry.text)) {
       push('spelling-centred', 'reject', `${where}: "centred" — the books use American spelling ("centered")`, undefined, loc);
@@ -567,6 +630,83 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // content; zero corpus occurrences. Renameable, like coinages.
     if (/\b(mode|nova|slot|budget|tier|dpr|half-damage)\b/i.test(entry.name)) {
       push('entry-name-design-term', 'reject', `${where}: entry name leaks design vocabulary — name the ability in-world (never "mode", "slot", "budget", "tier", "nova"). Rename it`, undefined, loc);
+    }
+    // Mechanic suffixes are Multiattack's business, not the name's (live
+    // finding: "Pinning Grip (Replaces One Attack)"); 0/329 officials.
+    if (/replaces? one attack|in place of (?:an|one) attack/i.test(entry.name)) {
+      push('entry-name-design-term', 'reject', `${where}: the substitution mechanic belongs in Multiattack's text ("can replace one attack with a use of X"), never in an entry name. Strip the suffix and state the substitution in Multiattack`, undefined, loc);
+    }
+    // "makes two Chain Blade Attack attacks" — an entry name ending in
+    // "Attack" doubles every reference; the noun IS the attack (0/329).
+    // Renamed with propagation (references must follow).
+    if (/ Attacks?$/i.test(entry.name) && ATTACK_LINE_RE.test(entry.text)) {
+      push('entry-name-attack-suffix', 'correctable',
+        `${where}: entry names never end in "Attack" — references double up ("makes two ${entry.name} attacks"). Renamed to "${entry.name.replace(/ Attacks?$/i, '')}"`,
+        entry.name.replace(/ Attacks?$/i, ''), loc);
+    }
+    // "can squeeze through a space ... without squeezing" (live garble) —
+    // the official Amorphous verb is "move through". Deterministic.
+    if (/can squeeze through [^.]*? without squeezing/i.test(entry.text)) {
+      push('squeeze-phrasing', 'correctable',
+        `${where}: "can squeeze through ... without squeezing" contradicts itself — the official verb is "move through"`,
+        undefined, loc);
+    }
+    // "Hit:" / "Hit or Miss:" markers are off-skeleton (0/329 in the parsed
+    // corpus; our attack skeleton states damage directly). Live finding: a
+    // "Hit:" clause DUPLICATING the damage already stated ("21 (4d6 + 7)
+    // Piercing damage. Hit: 21 (4d6 + 7) damage, or ..."). Fix call
+    // rewrites — deduplication surgery is not safely deterministic.
+    if (is2024 && (/\bHit(?: or Miss)?:/.test(entry.text) || /\bhit or miss\b[,:]/i.test(entry.text))) {
+      push('phrasing-hit-marker', 'reject', `${where}: "Hit:" markers are not part of the 2024 skeleton — state damage directly after the attack roll (and never state it twice); riders are plain sentences`, undefined, loc);
+    }
+    // Bare "Legendary Resistance" without a uses suffix is unlimited — the
+    // name IS the mechanic's budget (live finding; officials always carry
+    // "(3/Day)" or "(3/Day, or 4/Day in Lair)"). Deterministic rename.
+    if (/^Legendary Resistance$/.test(entry.name.trim())) {
+      push('legendary-resistance-uses', 'correctable',
+        `${where}: Legendary Resistance must carry its uses ("(3/Day)") — a bare name reads as unlimited`,
+        'Legendary Resistance (3/Day)', loc);
+    }
+    // A reaction trigger whose subject is "The target" has no referent —
+    // nothing has defined a target yet (live finding: "Trigger: The target
+    // takes damage from a melee attack roll" on a block whose reaction
+    // meant "the dust"). 0/329. Fix call rewrites with a real actor.
+    if (/(?:\*Trigger:\*|Trigger:)\s*The target\b/.test(entry.text)) {
+      push('reaction-trigger-referent', 'reject',
+        `${where}: the trigger's subject "The target" has no referent — name the creature itself or the acting enemy ("A creature within 30 feet hits the swarm...")`,
+        undefined, loc);
+    }
+    // A trait CONTRADICTING the defense lines (live finding: "Icy Carapace.
+    // The swarm has Resistance to Cold damage..." on a block whose
+    // Immunities line says Cold) — the line is the authority; the sentence
+    // is stripped, keeping any real mechanic that follows. Only fires when
+    // something follows (entire-text restatements are defense-restated's
+    // business). 0/329 contradictions in officials.
+    if (section === 'Traits') {
+      const claim = /The [\w' -]+ has (Resistance|Immunity) to ([A-Z]\w+)(?: and ([A-Z]\w+))? damage\.\s*/.exec(entry.text);
+      if (claim && entry.text.trim() !== claim[0].trim()) {
+        const imm = (monster.immunities ?? '').toLowerCase();
+        const res = (monster.resistances ?? '').toLowerCase();
+        const contradicts = [claim[2], claim[3]].filter(Boolean).some((t) => {
+          const lower = t.toLowerCase();
+          return (claim[1] === 'Resistance' && imm.includes(lower))
+            || (claim[1] === 'Immunity' && res.includes(lower) && !imm.includes(lower));
+        });
+        if (contradicts) {
+          push('defense-contradiction', 'correctable',
+            `${where}: the trait claims ${claim[1]} to ${claim[2]} but the defense lines say otherwise — the lines are the authority; the sentence is stripped`,
+            undefined, loc);
+        }
+      }
+    }
+    // A trait whose ENTIRE text restates the defense lines ("The swarm has
+    // resistance to Cold and Lightning damage" — live finding, Rattling
+    // Shell) is a wasted trait slot; the lines already carry it. 0/329.
+    // Partial restatements with a real mechanic attached (Frozen Carapace)
+    // stay legal. Fix call replaces it with an actual mechanic.
+    if (section === 'Traits'
+      && /^The [\w' -]+ (?:has [Rr]esistance to [^.]*damage|is immune to [^.]*(?:damage|conditions?))\.$/.test(entry.text.trim())) {
+      push('defense-restated', 'reject', `${where}: this trait only restates the Resistances/Immunities lines — the lines already carry it; replace it with a real mechanic or drop it`, undefined, loc);
     }
     // Coined entry names ("Thul-eg"): official hyphenated names join FULL
     // English words (Shape-Shift, Mind-Rending Roar — every corpus fragment
@@ -671,17 +811,88 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     }
     // Swarm archetype demands the swarm type line (live finding: a 2014
     // swarm came out "Medium aberration" — the clause was missing from the
-    // 2014 prompt). Deterministic: wrap the written type.
-    if (chassis.archetype === 'swarm' && monster.type && !/^swarm of/i.test(monster.type)) {
-      push('swarm-type', 'correctable', `Swarm-archetype type must read "Swarm of Tiny <Creature>", not "${monster.type}"`, `Swarm of Tiny ${monster.type.replace(/s$/i, '')}s`, { field: 'type' });
+    // 2014 prompt). Deterministic: wrap the written type. Pluralization is
+    // irregular (live findings: "Monstrositys", "Undeads" — the old naive
+    // "+s" was OUR bug): y → ies, Undead/Fey invariant.
+    if (chassis.archetype === 'swarm' && monster.type) {
+      if (!/^swarm of/i.test(monster.type)) {
+        push('swarm-type', 'correctable', `Swarm-archetype type must read "Swarm of Tiny <Creature>", not "${monster.type}"`, `Swarm of Tiny ${pluralizeCreatureType(monster.type)}`, { field: 'type' });
+      } else {
+        // Validate the plural in a written swarm type ("Swarm of Tiny
+        // Monstrositys" shipped — the swarm-of prefix satisfied the old
+        // check while the plural was garbage).
+        const m = /^Swarm of Tiny ([A-Za-z]+)$/i.exec(monster.type.trim());
+        const canonical = m ? pluralizeCreatureType(m[1]) : null;
+        if (m && m[1] !== canonical) {
+          push('swarm-type', 'correctable', `Swarm type pluralizes irregularly — "${m[1]}" should be "${canonical}"`, `Swarm of Tiny ${canonical}`, { field: 'type' });
+        } else if (!m) {
+          push('swarm-type', 'correctable', `Swarm type must be exactly "Swarm of Tiny <CreaturePlural>", not "${monster.type}"`, 'Swarm of Tiny Beasts', { field: 'type' });
+        }
+      }
+      // The subtype must never carry a second swarm phrase (live finding:
+      // "Swarm of Tiny Monstrositys (Swarm of Tiny Beasts)").
+      if (monster.subtype && /swarm of/i.test(monster.subtype)) {
+        push('swarm-type', 'correctable', `The subtype duplicates the swarm phrase ("${monster.subtype}") — dropped`, '', { field: 'subtype' });
+      }
     }
-    // Substance check for the swarm's half-damage obligation: the model can
-    // satisfy the slot-TAG protocol without writing the mechanic (live
-    // finding). The official clause must exist in an attack line.
-    if (chassis.archetype === 'swarm'
-      && !entriesOf(monster).some(({ entry }) => /half of its hit points or fewer/i.test(entry.text))) {
-      const atk = entriesOf(monster).find(({ entry }) => ATTACK_LINE_RE.test(entry.text));
-      push('swarm-half-damage', 'reject', `The swarm's main attack must carry the official reduced-damage clause: "..., or <about half> damage if the swarm has half of its Hit Points or fewer" — add it to the attack's Hit line`, undefined, atk ? { section: atk.section, entry: atk.entry.name } : undefined);
+    // Substance check for the swarm's half-damage obligation. A REAL
+    // reduction = the half/Bloodied clause plus a second damage expression
+    // in the same entry (swarm-half-value polices the arithmetic). Two live
+    // evasions: the clause absent entirely, and the clause NEGATED ("If the
+    // crawler has half of its Hit Points or fewer, the damage is not
+    // reduced" — malicious compliance with the phrase check). Both are
+    // deterministically injectable when the main attack's dice count ≥ 2
+    // (halve the dice, keep the flat — the official law); n = 1 keeps the
+    // old reject for the fix call.
+    if (chassis.archetype === 'swarm') {
+      const swarmEntries = entriesOf(monster);
+      const hasReal = swarmEntries.some(({ entry }) =>
+        /half of its Hit Points or fewer|if the swarm is Bloodied/i.test(entry.text)
+        && !/not reduced/i.test(entry.text)
+        && [...entry.text.matchAll(/\d+\s*\(\d+d\d+/g)].length >= 2);
+      if (!hasReal) {
+        const atk = swarmEntries.find(({ entry }) => ATTACK_LINE_RE.test(entry.text)
+          && /half of its Hit Points or fewer[^.]*not reduced/i.test(entry.text))
+          ?? swarmEntries.find(({ entry }) => ATTACK_LINE_RE.test(entry.text));
+        const prim = atk ? /(\d+)\s*\((\d+)d(\d+)(?:\s*([+-])\s*(\d+))?\)\s+(\w+) damage/.exec(atk.entry.text) : null;
+        if (prim && Number(prim[2]) >= 2) {
+          const n = Number(prim[2]);
+          const die = Number(prim[3]);
+          const flat = prim[5] ? (prim[4] === '-' ? -1 : 1) * Number(prim[5]) : 0;
+          const half = Math.floor(n / 2);
+          const avg = Math.floor((half * (die + 1)) / 2) + flat;
+          const dice = `${half}d${die}${flat ? ` ${flat > 0 ? '+' : '-'} ${Math.abs(flat)}` : ''}`;
+          push('swarm-half-damage', 'correctable',
+            `${atk.section}/${atk.entry.name}: the swarm's reduced-damage clause is missing or negated — injecting the official form at ${avg} (${dice})`,
+            `${avg} (${dice}) ${prim[6]} damage`, { section: atk.section, entry: atk.entry.name });
+        } else {
+          push('swarm-half-damage', 'reject', `The swarm's main attack must carry the official reduced-damage clause: "..., or <about half> damage if the swarm has half of its Hit Points or fewer" — add it to the attack's Hit line`, undefined, atk ? { section: atk.section, entry: atk.entry.name } : undefined);
+        }
+      }
+    }
+    // The swarm's reduced-damage VALUE must follow the official law: halve
+    // the dice count, keep the flat (Crawling Claws 4d8+2 → 2d8+2; Insects
+    // 2d4+1 → 1d4+1). Live finding: a 4d8 (18) attack "reduced" to 2d8+4
+    // (13) — an invented flat inflating the Bloodied tier by 44%. Only
+    // n ≥ 2 primaries are checked (n = 1 reductions are irregular in the
+    // corpus: Ravens drops the flat, Venomous Snakes shrinks the die).
+    for (const { section, entry } of entriesOf(monster)) {
+      if (!/half of its Hit Points or fewer|if the swarm is Bloodied/i.test(entry.text)) continue;
+      const exprs = [...entry.text.matchAll(/(\d+)\s*\((\d+)d(\d+)(?:\s*([+-])\s*(\d+))?\)/g)];
+      if (exprs.length !== 2) continue;
+      const [, , nStr, dieStr, sign, flatStr] = exprs[0];
+      const n = Number(nStr);
+      if (n < 2) continue;
+      const die = Number(dieStr);
+      const flat = flatStr ? (sign === '-' ? -1 : 1) * Number(flatStr) : 0;
+      const half = Math.floor(n / 2);
+      const expectedAvg = Math.floor((half * (die + 1)) / 2) + flat;
+      if (Math.abs(Number(exprs[1][1]) - expectedAvg) > 1) {
+        const dice = `${half}d${die}${flat ? ` ${flat > 0 ? '+' : '-'} ${Math.abs(flat)}` : ''}`;
+        push('swarm-half-value', 'correctable',
+          `${section}/${entry.name}: the reduced swarm damage ${exprs[1][0]} doesn't follow from ${exprs[0][0]} — official law halves the dice and keeps the flat (expected ${expectedAvg} (${dice}))`,
+          `${expectedAvg} (${dice})`, { section, entry: entry.name });
+      }
     }
     // Escape DCs (grapple riders) are excluded from dc-band by design (the
     // Investigation-masking fix) and official values aren't formulaic — the
@@ -730,6 +941,35 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         push('resistance-unknown', 'correctable',
           `Resistances carry tokens that are neither damage types nor conditions (${junk.join(', ')}) — dropped`,
           kept.join(', '), { field: 'resistances' });
+      }
+    }
+    // Identity immunity (owner call, 3 live instances: a fire-dealing magma
+    // elemental, a Glacial Golem, and a Frostpounder all shipped RESISTING
+    // their own element): a creature whose NAME carries an elemental
+    // material AND that deals the matching damage type is elementally
+    // BODIED — officials give those immunity, never resistance (Fire
+    // Elemental, Winter Wolf, every dragon's breath type). The deals-check
+    // exempts the Giant Fire Beetle (named for its glow, deals no fire).
+    // Fix: move the type from resistances to immunities.
+    if (is2024 && monster.resistances) {
+      const MATERIAL_TYPES = [
+        [/(ice|frost|glacial|glacier|snow|rime|winter|chill)/i, 'Cold'],
+        [/(fire|flame|magma|lava|cinder|ember|pyre|molten)/i, 'Fire'],
+        [/(storm|lightning)/i, 'Lightning'],
+        [/(thunder)/i, 'Thunder'],
+      ];
+      const dealtTypes = new Set();
+      for (const { entry } of entriesOf(monster)) {
+        for (const g of entry.text.matchAll(/\)\s+(\w+) damage/g)) dealtTypes.add(g[1].toLowerCase());
+      }
+      for (const [re, type] of MATERIAL_TYPES) {
+        if (!re.test(monster.name ?? '') || !dealtTypes.has(type.toLowerCase())) continue;
+        const resToks = splitTokens(monster.resistances);
+        if (!resToks.some((t) => t.toLowerCase() === type.toLowerCase())) continue;
+        if ((monster.immunities ?? '').toLowerCase().includes(type.toLowerCase())) continue;
+        push('identity-immunity', 'correctable',
+          `The creature is ${type.toLowerCase()}-bodied (name + dealt damage) but only RESISTS ${type} — officials give elemental bodies immunity to their own element; ${type} moves to Immunities`,
+          type, { field: 'resistances' });
       }
     }
     // Grapple/Restrain machinery must carry counterplay — the SRD 5.2.1
@@ -815,9 +1055,13 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       const actions = monster.sections?.Actions ?? [];
       const baseName = (n) => (n ?? '').replace(/\s*\(.*/, '').trim().toLowerCase();
       for (const entry of legendary) {
-        const reuse = /\buses ([A-Z][\w' -]+?)(?:\s+again|\s+to cast|[.,]|$)/.exec(entry.text);
+        // A legendary OPTION that is itself gated ("Envelop (1/Day)") fires
+        // at nova cadence — priced like a recharge weave, exempt.
+        if (/\((?:Recharge|\d+\s*\/\s*Day)/i.test(entry.name)) continue;
+        const reuse = /\buses (?:its |the )?([A-Z][\w' -]+?)(?:\s+again|\s+to cast|[.,]|$)/.exec(entry.text);
         if (!reuse || /^spellcasting$/i.test(reuse[1].trim())) continue;
-        const target = actions.find((a) => baseName(a.name) === baseName(reuse[1]));
+        const refName = reuse[1].replace(/\s+action$/i, '');
+        const target = actions.find((a) => baseName(a.name) === baseName(refName));
         if (!target || /\((?:Recharge|\d+\s*\/\s*Day)/i.test(target.name)) continue;
         const isAreaSave = /each creature (?:in|within)/i.test(target.text) && /Saving Throw/i.test(target.text);
         const dmg = Math.max(0, ...[...target.text.matchAll(/(\d+)\s*\(\d+d\d+/g)].map((mm) => Number(mm[1])));
@@ -841,7 +1085,11 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         const referenced = [];
         for (const g of multi.text.matchAll(/(?:replace[^.]*? with (?:a use of |one use of )?|can use |and uses |or uses )([^.]+?)(?= in place of| if available|\.|$)/gi)) {
           for (const part of g[1].split(/ or |, /)) {
-            referenced.push(part.replace(/^\([A-C]\)\s*/, '').replace(/ to cast.*/, '').trim());
+            // "a use of its Enveloping Feed action" — strip the possessive
+            // prefix and the "action"/"attack" suffix (live finding: the
+            // unstripped forms broke resolution, so a 99-damage feed stayed
+            // woven into Multiattack unflagged).
+            referenced.push(part.replace(/^\([A-C]\)\s*/, '').replace(/^(?:its|the)\s+/i, '').replace(/ to cast.*/, '').replace(/\s+(?:action|attack)$/i, '').trim());
           }
         }
         for (const name of referenced) {
@@ -890,12 +1138,24 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       // creature it can see within 30 feet. Strength Saving Throw: DC 15,
       // one creature within 60 feet" — Feymire Muck; a skeleton right after
       // a targeting sentence must say "the target", never name a fresh one).
-      const HYBRID_SAME = /(?:forces?|compels?|targets?|chooses?|must (?:make|succeed on))[^.]*?Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature/i;
+      const HYBRID_SAME = /(?:forces?|compels?|targets?|chooses?|(?:is|are) (?:also )?(?:affected by|subjected to)|must (?:make|succeed on))[^.]*?Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature/i;
       const HYBRID_ADJACENT = /(?:targets?|chooses?|forces?)[^.]*? (?:one|each) creature[^.]*\.\s*\*?\w+ Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature/i;
       for (const { section, entry } of entriesOf(monster)) {
         if (HYBRID_SAME.test(entry.text) || HYBRID_ADJACENT.test(entry.text)) {
           push('hybrid-targeting', 'reject',
             `${section}/${entry.name}: the lead-in already names the target, then the save skeleton adds a second targeting clause — keep ONE: either "<Ability> Saving Throw: DC N, <the real target>." with no forcing lead-in, or fold the constraint into the skeleton's targeting clause`,
+            undefined, { section, entry: entry.name });
+        }
+      }
+      // Slot/instruction language leaking into entry text as meta-commentary
+      // (live finding: "This is a buff, heal, or enable action targeting
+      // allies." — the support slot's own description, parroted verbatim).
+      // Officials never write "This is a..." sentences (0/329). The sentence
+      // is deleted deterministically.
+      for (const { section, entry } of entriesOf(monster)) {
+        if (/\bThis is an? [^.]{0,90}?\b(?:buff|heals?|enables?|slot|budget|role)\b[^.]*\./i.test(entry.text)) {
+          push('instruction-leak', 'correctable',
+            `${section}/${entry.name}: instruction language leaked as meta-commentary ("This is a ...") — the sentence is deleted`,
             undefined, { section, entry: entry.name });
         }
       }

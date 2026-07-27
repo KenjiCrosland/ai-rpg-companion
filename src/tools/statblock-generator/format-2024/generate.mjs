@@ -12,7 +12,7 @@
  * injected ((prompt, validate) => Promise<string>) so the pipeline is testable
  * without the AI client; the component passes generateGptResponse.
  */
-import { seedLeakTokens } from './concept-seeds.mjs';
+import { seedLeakTokens, rollNameBans } from './concept-seeds.mjs';
 import spec from '@/data/archetype-chassis-spec.json';
 import srdMonsters from '@/data/srd52-monsters.json';
 import challengeRatings from '@/data/challengeRatings.json';
@@ -290,7 +290,7 @@ export function validateArchetypeResponse(jsonString) {
 export function buildSeedSynthesisPrompt(seed) {
   return `Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.
 
-Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}.
+Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}${seed.creature_type ? `; creature type: ${seed.creature_type} (non-negotiable — reinterpret the other traits through it)` : ''}.
 
 Write 2-3 vivid sentences describing a single unified creature: the first describes what it IS (the traits must merge into one identity — one body, one behavior — not remain separate features; contradictions between traits are creative fuel), the rest describe how it FIGHTS — how it opens, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). The combat role must FOLLOW the rolled disposition — a guardian is a defender, a trickster is not a brute, a pack-hunter skirmishes.
 
@@ -495,11 +495,11 @@ STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
 - NEVER resist all three of Bludgeoning, Piercing, and Slashing — the full physical package is reserved for swarms and incorporeal creatures. Anything else picks elemental/energy resistances instead (or at most ONE physical type with a strong body-material reason).
-- Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. The fixed HP already prices typical defenses. Condition immunities are free-form.
+- Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. A creature whose BODY IS the element takes its signature type as a free IMMUNITY, never mere resistance — a magma-bodied creature is Immune to Fire (the Fire Elemental rule; dragons are Immune to their breath type). Merely DEALING a type earns resistance at most (the Dragon Turtle breathes fire yet only resists it). The fixed HP already prices typical defenses. Condition immunities are free-form.
 ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
 ` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders the uses preamble automatically. Provide only the option entries themselves. Legendary options never carry cost suffixes in 2024 — never write "(Costs N Actions)"; design bigger effects as 1/Day actions instead.
-` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Prefer well-known SRD spells.` : ''}
+` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Choose the ability by IDENTITY, following the official pattern: INNATE casters whose magic is part of their being — dragons, elementals, fey, demons, spirits, monstrosities — use Charisma (every SRD dragon and elemental casts with Charisma). STUDIED casters — wizards, liches, scheming devils, alien intellects — use Intelligence. PRIESTLY or nature casters — druids, priests, oracles — use Wisdom. When unsure, prefer Charisma. Prefer well-known SRD spells. "At will" spells: cantrips plus spells of level ${Math.max(1, Math.floor(cr / 4))} or below (officials scale this with CR — the CR 21 Lich casts Fireball at will, but a low-CR caster gets utility only); anything higher belongs under "1/Day each" or "2/Day each".` : ''}
 
 Ability scores: choose scores that fit the concept, and make the creature's ATTACK ability its highest non-CON score — STR or DEX for weapon strikers, INT, WIS, or CHA for magical strikers. The engine sets that ability's modifier to ${signed(requiredAttackModFor(chassis))} so the attack bonus derives from it. Key save effects to abilities the concept justifies being strong.
 
@@ -560,10 +560,10 @@ DESIGN COHERENCE: before writing entries, decide ONE combat identity — how thi
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
-- Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. The fixed HP already prices typical defenses. Condition immunities are free-form.
+- Defense budget: ${defenses.points} points. Resisting a common type (bludgeoning, piercing, slashing, fire, lightning) costs 1 point; uncommon (cold, acid, thunder, necrotic, radiant, poison) costs 1/2; rare (psychic, force) costs 1/4. IMMUNITY costs double the resistance price. FREE (no cost): the type's canonical defense (undead/construct/elemental: poison; ooze: acid; celestial: radiant; fiend: fire), any damage type the creature itself deals, and the type matching its body material (an ice-bodied creature resists cold free) — DO give it those thematic defenses. A creature whose BODY IS the element takes its signature type as a free IMMUNITY, never mere resistance — a magma-bodied creature is Immune to Fire (the Fire Elemental rule; dragons are Immune to their breath type). Merely DEALING a type earns resistance at most (the Dragon Turtle breathes fire yet only resists it). The fixed HP already prices typical defenses. Condition immunities are free-form.
 ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
-` : ''}${novaDmg ? `- The nova/ambush mechanic may deal up to ${novaDmg.avg} (${novaDmg.dice}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Use only well-known SRD spells, comma-separated on one line — never hyphens or bullet lists.\n` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders one automatically. Provide only the option entries themselves.\n` : ''}
+` : ''}${novaDmg ? `- The nova/ambush mechanic may deal up to ${novaDmg.avg} (${novaDmg.dice}) once per fight.\n` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" trait in 2014 style: "The creature's spellcasting ability is <ability> (spell save DC ${chassis.save_dc}). It can innately cast the following spells: At will: ... 1/day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Choose the ability by IDENTITY: innate casters (dragons, elementals, fey, demons, spirits, monstrosities) use Charisma; studied casters (wizards, liches, scheming devils, alien intellects) use Intelligence; priestly or nature casters use Wisdom. When unsure, prefer Charisma. Use only well-known SRD spells, comma-separated on one line — never hyphens or bullet lists. "At will" spells: cantrips plus spells of level ${Math.max(1, Math.floor(cr / 4))} or below; anything higher belongs under "1/day each".\n` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders one automatically. Provide only the option entries themselves.\n` : ''}
 Ability scores: choose scores that fit the concept, and make the creature's ATTACK ability its highest non-CON score — STR or DEX for weapon strikers, INT, WIS, or CHA for magical strikers. The engine sets that ability's modifier to ${signed(atkMod)} so the attack bonus derives from it. Key save effects to abilities the concept justifies being strong.
 
 Return ONLY a JSON object in exactly this shape (no markdown fences, no commentary). Omit optional fields rather than emitting empty ones. Do NOT include ac, hp, CR, XP, or PB — those are stamped for you:
@@ -633,9 +633,12 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   // Score = (DC − 8 − PB) × 2 + 10, the exact score whose mod closes the gap.
   {
     const NAME_TO_ABBR = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
+    // Paren-OPEN like the lint's SPELL_DC_RES — a closing \) died on the
+    // live "(spell save DC 24, +16 to hit with spell attacks)" continuation,
+    // so the stamp never fired and a DC 24 caster shipped on WIS 20.
     const SPELL_ABILITY_RES = [
-      /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability \(spell save DC (\d+)\)/i,
-      /spellcasting ability is (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) \(spell save DC (\d+)\)/i,
+      /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability \(spell save DC (\d+)/i,
+      /spellcasting ability is (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s*\(spell save DC (\d+)/i,
     ];
     outer: for (const entries of Object.values(sections)) {
       for (const entry of entries) {
@@ -690,7 +693,9 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
     ac: chassis.ac,
     hp,
     hp_formula: hpFormula,
-    speed: llmJson.speed || '30 ft.',
+    // 2024 capitalizes movement modes ("Burrow 20 ft., Fly 60 ft.") but not
+    // the "(hover)" tag (live drift: lowercase "burrow" in a speed line).
+    speed: (llmJson.speed || '30 ft.').replace(/\b(burrow|climb|fly|swim)\b/g, (w) => w[0].toUpperCase() + w.slice(1)),
     initiative_bonus: initiativeBonus,
     initiative_score: 10 + initiativeBonus,
     stats,
@@ -716,7 +721,9 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   }
   if (llmJson.subtype) monster.subtype = llmJson.subtype;
   if (skills) monster.skills = skills;
-  if (llmJson.languages) monster.languages = llmJson.languages;
+  // "none"/"None" written out is model drift — the official empty-languages
+  // form is the em-dash, which the renderer supplies for a missing field.
+  if (llmJson.languages && !/^none$/i.test(llmJson.languages.trim())) monster.languages = llmJson.languages;
   if (llmJson.resistances) monster.resistances = llmJson.resistances;
   if (llmJson.immunities) monster.immunities = llmJson.immunities;
   if (llmJson.vulnerabilities) monster.vulnerabilities = llmJson.vulnerabilities;
@@ -1070,7 +1077,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   if (!findings.length) return monster;
   const correctable = findings.filter((f) => f.severity === 'correctable');
 
-  const out = JSON.parse(JSON.stringify(monster));
+  let out = JSON.parse(JSON.stringify(monster));
   const has = (rule) => findings.some((f) => f.rule === rule);
 
   for (const [rule, fix] of DETERMINISTIC_TEXT_FIXES) {
@@ -1126,7 +1133,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024' || x.rule === 'cc-aoe') && x.loc
+    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024' || x.rule === 'cc-aoe' || x.rule === 'legendary-resistance-uses') && x.loc
   )) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.name = f.expected;
@@ -1135,6 +1142,102 @@ export function applyCorrections(monster, findings, { chassis }) {
   for (const f of correctable.filter((x) => x.rule === 'escape-dc' && x.loc)) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.text = entry.text.replace(/escape DC \d+/gi, `escape DC ${f.expected}`);
+  }
+
+  // Swarm reduced-damage arithmetic: replace the SECOND damage expression
+  // (the Bloodied/half-HP tier) with the recomputed halved-dice value.
+  for (const f of correctable.filter((x) => x.rule === 'swarm-half-value' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (!entry) continue;
+    let seen = 0;
+    entry.text = entry.text.replace(/\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g, (m) => (++seen === 2 ? f.expected : m));
+  }
+
+  // Swarm reduced-damage clause missing or negated: strip any "the damage is
+  // not reduced" evasion, then inject the official clause after the first
+  // damage statement (expected carries "avg (dice) Type damage").
+  for (const f of correctable.filter((x) => x.rule === 'swarm-half-damage' && x.loc && x.expected)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (!entry) continue;
+    entry.text = entry.text
+      .replace(/,?\s*[Ii]f the [\w' -]+ has half of its Hit Points or fewer, the damage is not reduced\.?/, '')
+      .replace(/(\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)\s+\w+ damage)/,
+        `$1, or ${f.expected} if the swarm has half of its Hit Points or fewer`)
+      .replace(/\s{2,}/g, ' ').trim();
+  }
+
+  // Identity immunity: move the elemental type from resistances to
+  // immunities (both lines rewritten; the semicolon structure of immunities
+  // is preserved by prepending to the damage-type segment).
+  for (const f of correctable.filter((x) => x.rule === 'identity-immunity')) {
+    const type = f.expected;
+    const kept = (out.resistances ?? '').split(/,/).map((t) => t.trim())
+      .filter((t) => t && t.toLowerCase() !== type.toLowerCase());
+    out.resistances = kept.join(', ') || undefined;
+    if (out.immunities) {
+      const [dmgPart, ...rest] = out.immunities.split(';');
+      out.immunities = [[type, dmgPart.trim()].filter(Boolean).join(', '), ...rest.map((s) => s.trim())].join('; ');
+    } else {
+      out.immunities = type;
+    }
+  }
+
+  // Swarm healing contradiction: strip heal clauses; delete heal-only entries.
+  for (const f of correctable.filter((x) => x.rule === 'swarm-heal-contradiction' && x.loc)) {
+    const list = out.sections?.[f.loc.section];
+    const idx = list?.findIndex((e) => e.name === f.loc.entry) ?? -1;
+    if (idx === -1) continue;
+    const text = list[idx].text
+      .replace(/,?\s*and (?:the [\w' -]+?|it|the swarm) regains \d+(?:\s*\([^)]*\))?\s*Hit Points/gi, '')
+      .replace(/\s*(?:(?:The [\w' -]+?|It)|When [^.]*?,\s*(?:the [\w' -]+?|it)) regains \d+(?:\s*\([^)]*\))?\s*Hit Points[^.]*\./gi, '')
+      .replace(/,?\s*and no Hit Point regain/gi, '')
+      .replace(/\s{2,}/g, ' ').trim();
+    if (text.replace(/[^a-z]/gi, '').length < 15) list.splice(idx, 1);
+    else list[idx].text = text;
+  }
+
+  // Self-contradicting squeeze phrasing → the official verb.
+  for (const f of correctable.filter((x) => x.rule === 'squeeze-phrasing' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) entry.text = entry.text.replace(/can squeeze through ([^.]*? without squeezing)/gi, 'can move through $1');
+  }
+
+  // Entry names ending in "Attack": rename WITH reference propagation
+  // ("makes two Chain Blade Attack attacks" → "makes two Chain Blade
+  // attacks" everywhere).
+  for (const f of correctable.filter((x) => x.rule === 'entry-name-attack-suffix' && x.loc && x.expected)) {
+    if ((out.sections?.[f.loc.section] ?? []).some((e) => e.name === f.loc.entry)) {
+      out = applyRenameMapping(out, { [f.loc.entry]: f.expected });
+    }
+  }
+
+  // Defense-line contradiction: strip the trait's claim sentence, keep the
+  // mechanic, re-capitalize the survivor ("In addition, when a creature
+  // hits..." → "When a creature hits...").
+  for (const f of correctable.filter((x) => x.rule === 'defense-contradiction' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (!entry) continue;
+    const stripped = entry.text
+      .replace(/\s*The [\w' -]+ has (?:Resistance|Immunity) to [A-Z]\w+(?: and [A-Z]\w+)? damage\.\s*(?:In addition,\s*)?/, ' ')
+      .trim();
+    if (stripped) entry.text = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+  }
+
+  // Meta-commentary sentence deletion ("This is a buff, heal, or enable
+  // action targeting allies." — instruction language is never in-world).
+  for (const f of correctable.filter((x) => x.rule === 'instruction-leak' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) entry.text = entry.text.replace(/\s*\bThis is an? [^.]*\./gi, '').trim();
+  }
+
+  // Misspelled stat-block reference with a unique close match ("Strige" →
+  // "Stirge"): deterministic respell in place.
+  for (const f of correctable.filter((x) => x.rule === 'stat-ref' && x.loc?.from)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) {
+      const from = f.loc.from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      entry.text = entry.text.replace(new RegExp(from, 'g'), f.expected);
+    }
   }
 
   // Bare-targeting save (docs/investigations/03): "each creature." with no
@@ -1189,10 +1292,15 @@ export function applyCorrections(monster, findings, { chassis }) {
     if (alternation.test(entry.text)) {
       entry.text = entry.text.replace(alternation, '');
     } else {
+      const ref = `(?:its |the )?${esc}(?: action| attack)?`;
       entry.text = entry.text
-        .replace(new RegExp(`,\\s*(?:one of which|which) it can replace with (?:a use of |one use of )?${esc}(?=\\.)`, 'i'), '')
-        .replace(new RegExp(`\\s*(?:and|,)?\\s*(?:it )?can use ${esc} in place of one attack`, 'i'), '')
-        .replace(new RegExp(`\\s*(?:and|or) uses ${esc}( if available)?`, 'i'), '')
+        .replace(new RegExp(`,\\s*(?:one of which|which) it can replace with (?:a use of |one use of )?${ref}(?=\\.)`, 'i'), '')
+        // Standalone-sentence shape (live: "It can replace one attack with a
+        // use of Shriek." / "...a use of its Enveloping Feed action.").
+        .replace(new RegExp(`\\s*(?:It|The [\\w' -]+?) can replace one attack with (?:a use of |one use of )?${ref}\\.`, 'i'), '')
+        .replace(new RegExp(`,?\\s*and (?:it )?can replace one attack with (?:a use of |one use of )?${ref}(?=\\.)`, 'i'), '')
+        .replace(new RegExp(`\\s*(?:and|,)?\\s*(?:it )?can use ${ref} in place of one attack`, 'i'), '')
+        .replace(new RegExp(`\\s*(?:and|or) uses ${ref}( if available)?`, 'i'), '')
         .replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.');
     }
   }
@@ -1580,7 +1688,8 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`);
 // otherwise sound, so resend just the flagged entries with their findings.
 const ENTRY_FIXABLE = new Set([
   'phrasing-2014', 'phrasing-to-hit', 'phrasing-saving-throw',
-  'phrasing-hybrid-save', 'condition-caps', 'term-caps',
+  'phrasing-hybrid-save', 'condition-caps', 'term-caps', 'stat-ref',
+  'phrasing-hit-marker', 'defense-restated', 'reaction-trigger-referent',
   'phrasing-2024-in-2014', 'second-person', 'trait-mitigation',
   'undefined-attack-ref', 'attack-damage-band', 'reaction-trigger',
   'condition-unknown', 'damage-type-caps', 'area-term-caps',
@@ -1728,19 +1837,48 @@ const PHONETICS_BY_ARCHETYPE = {
   swarm: 'skittering and repetitive — ch, k, tt, z',
 };
 
-export function buildNamingPrompt(monster, traits) {
+export function buildNamingPrompt(monster, traits = null, bans = []) {
   const abilities = Object.values(monster.sections ?? {}).flat()
     .map((e) => `${e.name}: ${e.text.slice(0, 90)}`)
     .join('\n');
+  // Seedless (concept-path) generations get the generic MM register instead
+  // of a rolled naming register.
+  const nameSpec = traits
+    ? `must be ${traits.naming}`
+    : 'must read like a Monster Manual entry: a real-word compound (Owlbear), a folk name (Shambling Mound), or a coined word built from sound (Chuul) — NEVER a flat description of its attack routine ("Swoop Talon", "Shriek Talon" are the failure mode) and never a generic <adjective> <creature-type> label.';
   return `Name this finished D&D monster. Read what it actually IS — its movement, attacks, and materials — and name THAT creature.
 
 THE CREATURE: ${monster.size} ${monster.type}, speed ${monster.speed}.
 ${abilities}
 
-THE NAME must be ${traits.naming}
-${monster.archetype && PHONETICS_BY_ARCHETYPE[monster.archetype] ? `Its sound should be ${PHONETICS_BY_ARCHETYPE[monster.archetype]}.\n` : ''}Rules: name concrete things the creature actually does or is made of. Never hyphens. A coined name is built from sound, never by gluing two English words into one. Abstract menace words (terror, doom, dread, horror, death, fear) never as the head noun — as a leading adjective before a concrete doer they are fine. Never cutesy, comedic, or diminutive words (slinky, bouncy, squishy) — satisfy the sound profile with words that keep their menace. The head noun should be a creature, agent, or evocative form, not a plain object (Boulder, Rock, Slab) — an object head is allowed only if the creature genuinely IS an animated object. Never a name already used by a well-known D&D creature, class, or subclass.
+THE NAME ${nameSpec}
+${bans.length ? `BANNED THIS TIME (overused in past names — never use these stems or sounds anywhere in the name): ${bans.join(', ')}.\n` : ''}${monster.archetype && PHONETICS_BY_ARCHETYPE[monster.archetype] ? `Its sound should be ${PHONETICS_BY_ARCHETYPE[monster.archetype]}.\n` : ''}Rules: name concrete things the creature actually does or is made of. Never hyphens. A coined name is built from sound, never by gluing two English words into one. Abstract menace words (terror, doom, dread, horror, death, fear) never as the head noun — as a leading adjective before a concrete doer they are fine. Never cutesy, comedic, or diminutive words (slinky, bouncy, squishy) — satisfy the sound profile with words that keep their menace. The head noun should be a creature, agent, or evocative form, not a plain object (Boulder, Rock, Slab) — an object head is allowed only if the creature genuinely IS an animated object. Never a name already used by a well-known D&D creature, class, or subclass.
 
-Return ONLY JSON, no markdown: {"candidates": ["five different names, best first"]}`;
+Also AUDIT the ability names listed above: any that are coined or invented words, or unexplained proper nouns ("Ulgroth", "Vothar's Ire", "Kragor"), must be renamed to plain English that says what the ability does ("Helping Snarl", "Tar Tendril"). List them in "ability_renames" — an empty object if all are already plain English. Never rename Multiattack or Spellcasting.
+
+Return ONLY JSON, no markdown: {"candidates": ["five different names, best first"], "ability_renames": {"Coined Name": "Plain English Name"}}`;
+}
+
+/**
+ * Apply the naming call's ability-name audit (coined ability names are a
+ * recurring live failure the prompt alone doesn't stop — 8 instances across
+ * field batches: Urvoth, Varthun, Ulgroth, Chuul-oth, Vothar's Ire, Morvoth,
+ * Grelgor, Kragor). Language judgment lives in the LLM; this sanitizes it:
+ * only existing, non-protected entry names rename, and applyRenameMapping
+ * propagates through referencing texts.
+ */
+function applyAbilityRenames(monster, parsed) {
+  const renames = parsed?.ability_renames;
+  if (!renames || typeof renames !== 'object' || Array.isArray(renames)) return monster;
+  const entryNames = new Set(Object.values(monster.sections ?? {}).flat().map((e) => e.name));
+  const safe = {};
+  for (const [from, to] of Object.entries(renames)) {
+    if (typeof to === 'string' && to.trim() && to.trim() !== from
+      && entryNames.has(from) && !PROTECTED_ENTRY_NAME_RE.test(from)) {
+      safe[from] = to.trim();
+    }
+  }
+  return Object.keys(safe).length ? applyRenameMapping(monster, safe) : monster;
 }
 
 export function validateNamingResponse(jsonString) {
@@ -1754,7 +1892,7 @@ export function validateNamingResponse(jsonString) {
  * Deterministic candidate selection: first name that survives every filter.
  * The register discipline is enforced by filtering, not by hoping.
  */
-export function pickName(candidates, { seedTokens = [], register = '' } = {}) {
+export function pickName(candidates, { seedTokens = [], register = '', bans = [] } = {}) {
   const isCoinage = /coinage/.test(register);
   for (const raw of candidates) {
     // Leading articles are stripped, not rejected — "the Silent Clinger"
@@ -1766,6 +1904,7 @@ export function pickName(candidates, { seedTokens = [], register = '' } = {}) {
     if (BATHOS_RE.test(name)) continue;
     if (SRD_NAMES.has(lower.replace(/^the /, ''))) continue;
     if (seedTokens.some((t) => lower.includes(t))) continue;
+    if (bans.some((b) => lower.includes(b))) continue;
     if (isCoinage && (name.includes(' ') || name.length > 9)) continue;
     if (name.split(/\s+/).length > 3) continue;
     return titleCaseName(name);
@@ -1960,18 +2099,48 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   // main call's name is provisional; a dedicated micro-call reads the actual
   // design and proposes candidates, which are filtered deterministically —
   // first survivor wins, all-fail keeps the provisional name.
+  // Anti-clustering: each naming call rolls a random subset of overused
+  // stems to ban (statistical — the stems stay reachable across
+  // generations, the attractor breaks; "Chit-" swarms ×6 was the trigger).
+  const nameBans = rollNameBans({ type: outcome.monster.type ?? '', archetypeName });
   if (seedTraits) {
     try {
-      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits), validateNamingResponse);
+      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits, nameBans), validateNamingResponse);
       const parsed = raw ? tryParse(raw) : null;
       const chosen = parsed
-        ? pickName(parsed.candidates, { seedTokens, register: seedTraits.naming ?? '' })
+        ? pickName(parsed.candidates, { seedTokens, register: seedTraits.naming ?? '', bans: nameBans })
         : null;
       if (chosen && chosen !== outcome.monster.name) {
         outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });
       }
+      outcome.monster = applyAbilityRenames(outcome.monster, parsed);
     } catch {
       /* naming is best-effort — the provisional name stands */
+    }
+  } else if (options.namePass) {
+    // Concept-path naming refinement (owner call, batch 5): the naming
+    // micro-call runs on the random path and reliably lands MM-register
+    // names (Grimecloak Cinder, Uulgrath); concept generations skipped it
+    // and kept producing flat attack-routine descriptors (Swoop Talon,
+    // Shriek Talon). Gate: if the model KEPT the user's typed name
+    // verbatim, it judged it a proper name (Headless Horseman) — honor it,
+    // no call. If it renamed (or nothing was typed), it judged the input
+    // generic — refine with candidates. `namePass` is opt-in so headless
+    // callers and tests keep the old single-call contract.
+    const typed = (options.namePass.userTypedName ?? '').trim().toLowerCase();
+    const kept = typed !== '' && outcome.monster.name.trim().toLowerCase() === typed;
+    if (!kept) {
+      try {
+        const raw = await callLLM(buildNamingPrompt(outcome.monster, null, nameBans), validateNamingResponse);
+        const parsed = raw ? tryParse(raw) : null;
+        const chosen = parsed ? pickName(parsed.candidates, { bans: nameBans }) : null;
+        if (chosen && chosen !== outcome.monster.name) {
+          outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });
+        }
+        outcome.monster = applyAbilityRenames(outcome.monster, parsed);
+      } catch {
+        /* naming is best-effort — the provisional name stands */
+      }
     }
   }
 

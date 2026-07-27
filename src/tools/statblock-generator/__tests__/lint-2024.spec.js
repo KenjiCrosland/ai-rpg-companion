@@ -372,7 +372,9 @@ describe('each rule catches its violation class', () => {
       { name: 'Corpse Feast', text: 'The swarm regains 10 (3d6) hit points.' },
     ] } };
     const heal = lint(healSwarm, {}).findings.find((x) => x.rule === 'swarm-heal-contradiction');
-    expect(heal.severity).toBe('reject');
+    // Correctable since batch 12 (Klakkhorde): heal clauses strip
+    // deterministically, heal-only entries are removed.
+    expect(heal.severity).toBe('correctable');
     expect(heal.loc.entry).toBe('Corpse Feast');
 
     const resCond = { ...cleanLurker, resistances: 'Fire, Charmed, Frightened', immunities: 'Poison' };

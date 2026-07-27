@@ -448,6 +448,266 @@ descriptor) disliked. All four blocks chassis-exact (skirmisher / controller
   blocks (Swallow interiors, Gelatinous Cube Transparent), the same
   rider-mechanic niche Gulch-Mother used it in. Not a defect.
 
+### Batch-5 field findings (2026-07-27) — the naming split resolved
+
+All four blocks chassis-exact. Decisive naming pattern: random-path blocks
+(Grimecloak Cinder, Uulgrath) named well — they get the naming micro-call;
+concept-path blocks kept producing flat attack-routine descriptors ("Shriek
+Talon" after "Swoop Talon") — they never had it. Fix: **the naming pass now
+runs on concept generations too** (`options.namePass`, opt-in; the Vue caller
+enables it), with a keep-if-honored gate: if the model kept the user's typed
+name verbatim it judged it a proper name (Headless Horseman) — no call, name
+honored; if it renamed (or nothing was typed) the naming call refines with
+candidates. `buildNamingPrompt` gained a seedless MM-register variant;
+`pickName` already worked register-free. Cost: +1 micro-call on concept
+generations that get renamed. Also: `entry-name-design-term` now rejects
+mechanic suffixes in names ("Pinning Grip (Replaces One Attack)" — the
+substitution belongs in Multiattack's text; 0/329).
+
+Monitored, not actioned: coined ability names persist on the random path
+("Ulgroth", "Chuul-oth" — instances 3–4 after Urvoth/Varthun; Chuul-oth's
+hyphen shape is entry-name-coinage's territory, so it likely shipped as a
+fix-round wart); condition immunities phrased as a trait ("cannot be
+Frightened or Charmed" instead of the Immunities line — 1 instance); a 1-min
+no-repeat-save Frightened (soft CC, officially adjacent but over-long — 1
+instance).
+
+### Batch-6 field findings (2026-07-27) — naming pass validated, three fixes
+
+The concept-path naming pass landed its live test: "vicious bird" →
+**Stormtalon** (concept field) and **Skreev** (lore field) — MM register both
+ways; Skreev's Frightening Shriek even came out in the exact official
+Frightful-Presence shape. Both blocks chassis-exact (CR 20 / CR 7
+skirmishers). Three defects → fixes:
+
+- **`multiattack-substitution` corrector pattern gap** (real bug): the rule
+  FIRED on Stormtalon's Shriek weave (78 dmg > 2×26 cap) but the corrector's
+  clause patterns didn't match the standalone-sentence shape ("It can replace
+  one attack with a use of Shriek.") — a silent correctable leftover shipped
+  (the final normalize pass can't help when the corrector itself can't
+  match). Added standalone-sentence and and-clause patterns; the live shape
+  now corrects to a clean Multiattack.
+- **`hybrid-targeting`** gained the "is (also) affected by / subjected to"
+  lead-in verbs (Dive Bomb: "the target is also affected by a Strength
+  Saving Throw: DC 22, one creature within 60 feet"). Still 0/329.
+- **`stat-ref`** (new): stat-block references ("use Strige statistics") must
+  name an SRD creature or the block itself (the official Treant pattern). A
+  unique closest match within Damerau-Levenshtein distance 2 respells
+  deterministically ("Strige" → "Stirge" — transposition-aware distance
+  breaks the Sprite tie); no/ambiguous match → reject for the fix call.
+  Stat-references are excluded from `undefined-attack-ref`'s uses-scan.
+
+### Batch-7 field findings (2026-07-27) — caster + support coverage
+
+**Spellcasting-ability stamp VERIFIED live**: Grathun (CR 13 defender,
+chassis-exact incl. the legendary routine discount — per-attack 14, AoE 22,
+both to the digit) cast at DC 18 on INT 20 = exactly `(18−8−5)×2+10`, the
+stamp's formula signature. Three changes from this round:
+
+- **Ability-rename audit in the naming call** (zero extra calls): coined
+  ability names hit 8 live instances (Urvoth, Varthun, Ulgroth, Chuul-oth,
+  Vothar's Ire, Morvoth, Grelgor, Kragor) despite prompt rules — a regex
+  can't tell "Flyby" from "Ulgroth" without a dictionary, so the judgment
+  moved into the naming micro-call, which already reads every ability. It now
+  returns `ability_renames`; `applyAbilityRenames` sanitizes (existing,
+  non-protected names only) and `applyRenameMapping` propagates references.
+  Runs on both the seed and concept naming paths.
+- **Identity-immunity prompt guidance** (owner call): a creature whose BODY
+  IS the element takes its signature type as a free IMMUNITY (Fire
+  Elemental / dragon-breath rule); merely dealing a type earns resistance at
+  most. NOT a lint — the corpus forbids it: 12 officials resist types they
+  deal (Dragon Turtle breathes fire and only resists it; wights/vampires
+  deal necrotic and resist it), so "deals it → immune" is officially wrong.
+- **`instruction-leak`** (correctable): slot-description language parroted as
+  meta-commentary in entry text ("This is a buff, heal, or enable action
+  targeting allies." — Lumor, the support slot's own description verbatim).
+  0/329 officials; the sentence is deleted deterministically.
+
+### Batch-8 field finding (2026-07-27) — swarm live test
+
+Chittix (CR 5 swarm) validated the whole swarm stack live: swarm type line,
+the B/P/S package surviving the `bps-resistance` ban via its exemption, the
+full 8-condition immunity set, verbatim Swarm trait, and budgets to the digit
+(Sap Strike 18, Spore Cloud 18). One defect → **`swarm-half-value`**
+(correctable): the Bloodied/half-HP reduced damage must follow the official
+law — halve the dice count, keep the flat (Crawling Claws 4d8+2 → 2d8+2) —
+but the block wrote 4d8 (18) → 2d8+4 (13), inventing a flat. The rule checks
+n ≥ 2 primaries only (n = 1 reductions are corpus-irregular: Ravens drops the
+flat, Venomous Snakes shrinks the die) and recomputes the second damage
+expression deterministically. 0/329.
+
+### Batch-9 field findings (2026-07-27) — high-CR swarms, malicious compliance round
+
+Three swarms (CR 17/11/16), all chassis-exact — including an INT-24
+mental-striker swarm (`attackStatFor` live) and legendary swarm budgets with
+the routine discount to the digit. Four defects → three rules + one upgrade:
+
+- **`swarm-half-damage` v2**: the substance check now demands a REAL
+  reduction (clause + second, smaller expression) and gained a deterministic
+  injector — halve the dice, keep the flat, splice the official clause after
+  the first damage statement. Catches both live evasions: the clause absent
+  entirely (Chittering Shredder) and the clause NEGATED ("If the crawler has
+  half of its Hit Points or fewer, the damage is not reduced" — malicious
+  compliance with the old phrase check). n = 1 primaries keep the reject
+  path (corpus-irregular reductions).
+- **`phrasing-hit-marker`** (reject, fix call): "Hit:" / "Hit or Miss:"
+  markers are off-skeleton (0/329 in the parsed corpus) — live finding was a
+  Hit: clause DUPLICATING the damage already stated. Deduplication surgery
+  isn't safely deterministic, so the fix call rewrites.
+- **`defense-restated`** (reject, fix call): a trait whose ENTIRE text
+  restates the Resistances/Immunities lines ("Rattling Shell. The swarm has
+  resistance to Cold and Lightning damage.") wastes a trait slot; 0/329.
+  Partial restatements with a real mechanic attached (Frozen Carapace) stay
+  legal. Second live instance of the class (Grimecloak's Steadfast Sentinel
+  was the first).
+- Noted: an Icy Rend hybrid-targeting wart shipped (the rule fired; three
+  fix rounds failed; never-fail shipped it — working as designed), and all
+  three swarm names begin "Chit-" — the naming-convergence/theme-clustering
+  docket item's strongest single-batch evidence yet.
+
+### Batch-10 field findings (2026-07-27) — post-fix swarms
+
+The swarm-half-damage v2 law HELD in all three fresh swarms (correct
+halve-dice-keep-flat reductions throughout), budgets exact again (incl. a
+WIS-24 mental-striker swarm). Four new defects → fixes:
+
+- **Swarm type pluralization was OUR bug**: the corrector's naive "+s"
+  produced "Monstrositys"; the model matched it with "Undeads", and the
+  swarm-of prefix satisfied the old check. `pluralizeCreatureType` (y → ies,
+  Undead/Fey invariant) now backs both the wrap branch and a new
+  written-plural validation; a subtype carrying a second swarm phrase
+  ("... (Swarm of Tiny Beasts)") is dropped. Note: the wrap branch fires on
+  official swarms IF force-given a swarm chassis (their JSON `type` is bare
+  "Beast"), pre-existing and production-moot.
+- **`legendary-resistance-uses`** (correctable rename): bare "Legendary
+  Resistance" without "(N/Day)" reads as unlimited; officials always carry
+  the suffix. Deterministic → "(3/Day)".
+- **`reaction-trigger-referent`** (reject, fix call): a trigger whose
+  subject is "The target" has no referent ("Trigger: The target takes
+  damage from a melee attack roll" — meant the swarm itself). 0/329.
+- Cosmetic one-offs logged, not ruled: "plus the target has the Prone
+  condition" (plus→and), "the Frightened condition of itself" (garble),
+  an "Acidic Aura" whose effect is neither acidic nor an aura, and a
+  narrowed trait wearing the official "Magic Resistance" name.
+
+### Anti-clustering name bans (2026-07-27, owner call)
+
+The naming call converges on attractor stems ("Chit-" swarms ×6, "Feymire"
+×2, shard/whisper/grim/cinder across batches). `rollNameBans` in
+`concept-seeds.mjs` samples a random subset of `OVERUSED_NAME_STEMS` (global
+pool + type/archetype-keyed extras) at 50% per stem on EVERY naming call —
+statistical, not absolute: the stems stay reachable, the attractor breaks,
+and no session memory is needed. The bans ride into `buildNamingPrompt` as a
+prompt line AND into `pickName` as a hard candidate filter. Tuning the pool
+is editing one exported object.
+
+### Batch-11 field findings (2026-07-27) — name bans validated
+
+Three fresh swarms: one "Chit-" of three — exactly the 50% statistical break
+the ban design predicts (Kchak, Klickrazz escaped the attractor). Budgets
+exact again; the half-damage law held in ALL THREE including the official
+irregulars (an n=1 die-shrink at CR 1/4 and a 1d6+7 die-shrink at n=3 that
+the ±1 tolerance correctly accepts). Two changes:
+
+- **`defense-contradiction`** (correctable): a trait claiming Resistance to
+  a type the Immunities line already covers (or Immunity where the line says
+  resistance) — the lines are the authority; the claim sentence is stripped,
+  the mechanic kept and re-capitalized. Entire-text cases stay
+  defense-restated's business. 0/329.
+- **Spellcasting-ability identity guidance** (owner question, corpus-backed):
+  every SRD dragon (20/20) and elemental (4/4) casts with CHARISMA — innate
+  magic; INT is for studied casters (Archmage, Mage, Lich, Glabrezu, Ice
+  Devil, Night Hag, Spirit Naga, Sphinx of Lore); WIS for priestly/nature
+  (Druid, Priests, Mummy Lord, Couatl, Storm Giant). Both edition caster
+  instructions now carry the mapping with "when unsure, prefer Charisma" —
+  the INT-20 elemental was the anomaly the owner flagged. Prompt-only; the
+  ability stamp remains ability-agnostic.
+
+### Batch-12 field findings (2026-07-27) — random spellcasters
+
+The Charisma identity guidance landed 4/4 (swarm-beast, fey, construct,
+undead-swarm casters ALL cast with CHA; stamp-signature scores exact on
+three, the fourth within the ±1 lint band). Spell lists tiered correctly in
+3/4. Fixes:
+
+- **`swarm-heal-contradiction` v2**: the anchor was the literal "swarm
+  regains N" — name/pronoun subjects sailed through (live: a can't-heal
+  swarm with a regen trait AND a 24-HP drain heal). Widened to any
+  "regains N ... Hit Points" subject; upgraded to correctable — heal
+  clauses strip deterministically, heal-only entries are deleted. (The old
+  reject contract's test updated.)
+- **`entry-name-attack-suffix`** (correctable): "Chain Blade Attack" doubles
+  every reference ("makes two Chain Blade Attack attacks"); renamed with
+  reference propagation via applyRenameMapping (applyCorrections' `out` is
+  now `let` for that). 0/329.
+- **`squeeze-phrasing`** (correctable): "can squeeze through ... without
+  squeezing" self-contradiction → the official "move through". 0/329.
+- **At-will spell-tier prompt line** (both editions): at-will = cantrips or
+  level 1-2 utility only (the Oni pattern); damaging/condition spells go in
+  1/Day (live outlier: at-will Fear on a CR 7). Prompt-only — a lint needs a
+  spell-level table; watch item.
+- Working-as-designed sightings: a trait-imposed save with its trigger in
+  the targeting clause correctly EXEMPT (Boneshake Aura), the referential
+  "that creature" skeleton form used correctly after a targets-lead-in
+  (Piercing Shriek), and Kchak's n=1 die-shrink reduction matching the
+  official irregular.
+
+### Batch-13 field findings (2026-07-27) — five defects, one own-goal corrected
+
+- **Spell-stamp paren bug**: the stamp's regex required a closing \) after
+  the DC, so the live "(spell save DC 24, +16 to hit with spell attacks)"
+  continuation defeated it — a DC 24 caster shipped on WIS 20. (The +16 was
+  exactly right for the WIS 28 the stamp should have written — the model
+  derived the attack bonus from the required score, then printed the wrong
+  score.) Regexes now paren-open like the lint's SPELL_DC_RES.
+- **Weave extraction hardening**: "a use of its Enveloping Feed action" — the
+  possessive prefix and "action" suffix broke resolution in
+  multiattack-substitution AND legendary-reuse, so a 99-damage vampiric feed
+  stayed woven. Both extractions and the weave corrector now strip
+  its/the/action/attack. Also: a self-gated legendary option ("Envelop
+  (1/Day)") is now EXEMPT from reuse capping — nova cadence prices it.
+- **At-will spell-tier line CORRECTED (corpus discipline)**: the batch-12
+  "utility only" line was wrong — the 2025 Lich casts FIREBALL at will,
+  Black Dragons at-will Fear, Silvers at-will Hold Monster. Officials scale
+  at-will with CR (~level ≤ CR/4). The prompt line now carries that formula;
+  the planned offender-list lint is DROPPED (5 official hits).
+- **Creature-type seed dimension** (owner observation: lifetime output had
+  zero fiends/celestials/humanoids): `rollCreatureType()` — weighted,
+  corpus-inspired, Beast-tail trimmed — joins the seed; the type is mandated
+  in the concept, the synthesis prompt, and the synthesized concept.
+  Follow-up idea (not built): mythic/folklore registers à la the item
+  generator, culturally handled.
+- **Stale-bundle advisory**: two live escapes (a bare targeting clause and a
+  79%-hot support claw) are caught by CURRENT code in isolation tests —
+  suggesting the generating browser tab ran a stale bundle. Hard-refresh
+  before the next batch; if either recurs on fresh code, it's a real
+  pipeline-order bug and worth a deep trace.
+
+### Batch-14 field findings (2026-07-27) — fresh bundle, type dimension validated
+
+Six randoms on a hard-refreshed bundle: ZERO correctable-class escapes
+(confirming batch-13's two anomalies were the stale tab), and the
+creature-type dimension delivered immediately — Fiend, Fey, Construct,
+Undead, Aberration ×2, no monstrosity/plant/ooze clustering. All six
+chassis-exact, including identical CR-16 brute twins and a defender CR-22
+with the discount to the digit. Changes:
+
+- **`identity-immunity`** (correctable; owner asked twice, 3 live
+  instances): a creature whose NAME carries an elemental material AND that
+  deals the matching type is elementally bodied → its resistance upgrades
+  to immunity (moved between lines, semicolon structure preserved). The
+  deals-the-type condition exempts the Giant Fire Beetle (named for its
+  glow); 0/329 after that refinement.
+- **Cosmetic normalizers** in assembly: movement modes capitalize ("burrow"
+  → "Burrow", "(hover)" stays lowercase); languages "none" drops to the
+  renderer's em-dash.
+- Shipped-as-designed warts observed: a self-named trait ("Obsidian Hound"
+  on the Obsidian Hound — entry-name-self fired, fix rounds failed) and a
+  grapple-keyed carapace on a grapple-less block (the Task-3 referent-orphan
+  class, recurrence logged). Owner note for the future: undead-obsidian-
+  hound-style type dissonance is a LORE hook — the pending Lore Generator
+  migration could generate origin stories for exactly these.
+
 Still open from batch 3 (cosmetic/deferred): the article-strip ("The Viscous
 Hoop") only runs at assembly, so fix-call rewrites can reintroduce "The "
 names; name collision within a batch (Swallower / Silent Swallower) and theme

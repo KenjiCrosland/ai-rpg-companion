@@ -136,7 +136,8 @@ export function namingRules(traits) {
  */
 export function buildSynthesizedConcept(traits, synthesis) {
   return `${synthesis.trim()} It is ${traits.intelligence}, and it is ${traits.disposition ?? 'true to its nature'}. ` +
-    'Its alignment and creature type must FOLLOW that disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
+    `${traits.creature_type ? `Its creature type MUST be ${traits.creature_type}. ` : ''}` +
+    'Its alignment must FOLLOW that disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
     'Every ability should express that single identity — do not give each physical detail its own separate ability. ' +
     namingRules(traits);
 }
@@ -146,6 +147,28 @@ export function buildSynthesizedConcept(traits, synthesis) {
  * both the archetype resolve call and the generation prompt (fallback path —
  * the synthesis call produces a fused concept when available).
  */
+// Creature-type dimension (owner call, 2026-07-27): without one, the model's
+// physical/origin seeds funnel everything into monstrosity/plant/ooze —
+// lifetime output had ZERO fiends, celestials, or humanoids. Weights are
+// corpus-inspired with the mundane-animal tail trimmed (Beast low: a random
+// "monster" generator shouldn't roll a deer).
+const TYPE_WEIGHTS = [
+  ['Monstrosity', 13], ['Aberration', 11], ['Fiend', 11], ['Undead', 11],
+  ['Fey', 9], ['Construct', 8], ['Elemental', 8], ['Dragon', 7],
+  ['Celestial', 6], ['Giant', 6], ['Humanoid', 6], ['Plant', 5],
+  ['Beast', 5], ['Ooze', 3],
+];
+const TYPE_WEIGHT_TOTAL = TYPE_WEIGHTS.reduce((s, [, w]) => s + w, 0);
+
+export function rollCreatureType() {
+  let roll = Math.random() * TYPE_WEIGHT_TOTAL;
+  for (const [type, weight] of TYPE_WEIGHTS) {
+    if (roll < weight) return type;
+    roll -= weight;
+  }
+  return 'Monstrosity';
+}
+
 export function buildRandomConceptSeed() {
   const traits = {
     intelligence: pick(SEED_DIMENSIONS.intelligence),
@@ -154,13 +177,38 @@ export function buildRandomConceptSeed() {
     origin: pick(SEED_DIMENSIONS.origin),
     disposition: pick(SEED_DIMENSIONS.disposition),
     naming: pick(SEED_DIMENSIONS.naming),
+    creature_type: rollCreatureType(),
   };
   const concept =
     `a ${traits.intelligence}, ${traits.physical} ${traits.silhouette} from ${traits.origin} — ${traits.disposition}. ` +
-    'Its alignment, combat role, and creature type must FOLLOW the disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
+    `Its creature type MUST be ${traits.creature_type} — reinterpret every other trait through that lens (a ${traits.creature_type} with this body and origin). ` +
+    'Its alignment and combat role must FOLLOW the disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
     'Blend every trait into ONE coherent creature with a single unifying identity — contradictions between traits are creative fuel, not errors. ' +
     namingRules(traits);
   return { ...traits, concept };
+}
+
+// Anti-clustering name bans (owner call, 2026-07-27): the naming call
+// converges hard on attractor stems — six "Chit-" swarms lifetime, "Feymire"
+// twice for feywild-mud, shard/whisper/grim/cinder recurring across batches.
+// Each naming call samples bans from the pool at 50% per stem: statistical,
+// not absolute — the stems stay reachable, the attractor breaks. Keyed by
+// creature type/archetype where the evidence is type-specific.
+export const OVERUSED_NAME_STEMS = {
+  global: ['shard', 'whisper', 'grim', 'gloom', 'storm', 'dread', 'cinder'],
+  swarm: ['chit', 'skitter', 'scuttl', 'hive'],
+  Ooze: ['mire', 'muck', 'gulch'],
+  Fey: ['mire', 'gloam'],
+};
+
+export function rollNameBans({ type = '', archetypeName = '' } = {}) {
+  const pool = [...OVERUSED_NAME_STEMS.global];
+  if (archetypeName === 'swarm' || /swarm/i.test(type)) pool.push(...OVERUSED_NAME_STEMS.swarm);
+  for (const [key, stems] of Object.entries(OVERUSED_NAME_STEMS)) {
+    if (key === 'global' || key === 'swarm') continue;
+    if (type.toLowerCase().includes(key.toLowerCase())) pool.push(...stems);
+  }
+  return [...new Set(pool)].filter(() => Math.random() < 0.5);
 }
 
 // Weighted CR roll for blank-form generations (defect investigation task 6,

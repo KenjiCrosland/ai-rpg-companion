@@ -1046,6 +1046,10 @@ async function generateStatblockEngine(edition) {
         archetypeSource,
         edition,
         seedTraits: randomSeed,
+        // Concept-path naming refinement: refine the name via the naming
+        // micro-call unless the model kept the user's typed name verbatim
+        // (a kept name was judged a proper name — honor it).
+        namePass: randomSeed ? null : { userTypedName: monsterName.value.trim() || null },
         // Fallback-model mode: ship degraded output instead of failing
         // generations the weaker model can't polish (owner call).
         degraded: isDegradedMode(),
