@@ -303,11 +303,169 @@ the `bps-resistance` lint rule + prompt de-anchoring (report 05 — note the
 chassis-gating trick that grandfathers official B/P/S carriers). Reports 02
 (all fixture DCs already chassis-derivable — no fix) and 03 (orphaned
 mechanics are a prose-structure limit) are evidence for future decisions.
-Reports 04 (`cc-aoe`: ungated AoE + damage + hard condition, corpus-verified
-zero-FP), 07 (grapple-exit injection, 52/52 official convention), and 01
-(legendary reuse-target cap, recommendation (a)+(c)) specify promotable rules
-that are **designed but deliberately not implemented** — read the report
-before building any of them.
+### Investigation rules — IMPLEMENTED (2026-07-25)
+
+Five findings were promoted to code, each corpus-calibrated to 0 false
+positives against SRD 5.2.1 and covered by a behavioral spec. All are
+2024-only and chassis-gated (the corpus sweep passes no chassis, so officials
+are never linted by them):
+
+- **`grapple-exit`** (report 07) — Grappled/Restrained without counterplay.
+  Deterministic inject: `(escape DC save_dc−2)` for Grappled, the official
+  repeat-save sentence for Restrained/maintained holds. Spec:
+  `grapple-exit.spec.js`.
+- **`cc-aoe`** (report 04) — ungated area + damage + hard condition
+  (Stunned/Paralyzed/Petrified/Unconscious; Incapacitated excluded).
+  Deterministic: stamp `(Recharge 5-6)`. Spec: `cc-aoe.spec.js`.
+- **`legendary-reuse`** (report 01c) — legendary reuse of an ungated area
+  effect or a save nova above ~1.5× per-attack. Deterministic: retarget to a
+  single-target attack. Plus the report 01a prompt line in `slotInstructions`.
+  Spec: `legendary-reuse.spec.js`.
+- **`bare-targeting`** (report 03, recommendation 1) — a save clause targeting
+  a bare "each creature" (no area) OR "one creature" (no range). Deterministic:
+  default an area target to a 10-foot Emanation, a single target to "within 60
+  feet". Widened to both quantifiers after the post-fix review (0/329 for
+  each). Spec: `bare-targeting.spec.js`. A companion prompt rule (numbered rule
+  11) also forbids filing a save-imposing ability as a Trait — post-fix batches
+  showed the model putting active saves (Reedstrike Spectral Tangle, Strokeg
+  Pacifying Aura) in Traits with no trigger. A backstop LINT rule for that
+  (trait-imposes-save, 0/329) is designed but NOT built: its only correct fix
+  is relocation to Actions, which can trip the hard `counts` reject, so it
+  needs a deliberate fix strategy first.
+- **Legendary routine-DPR discount** (report 08) — `damageBudgetFor` now
+  multiplies the routine budget by `LEGENDARY_ROUTINE_DISCOUNT` (0.6) when the
+  plan carries required/recommended legendary, matching the official ~0.55
+  routine pacing. This CHANGES damage numbers on shipped-quality legendary
+  blocks (~40% lower routine) — **needs field validation** (generate a CR 15
+  and CR 21 legendary block, confirm the routine turn still bites). Spec: the
+  `damageBudgetFor` tests in `generate-2024.spec.js`.
+
+- **`multiattack-substitution`** (post-fix review, Strokeg finding) — a save
+  entry woven into Multiattack ("replace one attack with X" / "and uses X")
+  with damage above 2× per-attack. The single-target save number is a whole
+  turn's budget; weaving it in runs ~1.7× the intended routine. Official
+  substitution ceiling is 1.86× (Lamia) → 2× cap is 0/329. Recharge-gated
+  weaves ("uses X if available") are exempt — nova cadence prices them.
+  Deterministic: drop the offender from the alternation, or the whole clause
+  when it's the sole target; the standalone action survives. Spec:
+  `multiattack-substitution.spec.js`.
+- **`trait-imposes-save`** (post-fix review; Spectral Tangle / Pacifying Aura)
+  — a Traits entry that imposes a save ("Saving Throw: DC N, one/each
+  creature") with no trigger phrase can never fire; officials' trait-saves
+  are self-saves or carry triggers (0/329). Deterministic fix:
+  **relocate-and-exempt (owner call)** — the entry moves to Actions with a
+  `relocated: true` marker, and the `counts` rule scores relocated entries
+  against their ORIGINAL section's plan range, so the move can never trip a
+  counts reject. The prompt-side guard is numbered rule 11. Spec:
+  `trait-imposes-save.spec.js`.
+
+Three prompt lines accompany the lint rules (AoE-hard-condition gating, grapple
+exits, Multiattack-weave damage cap) so the model avoids the defect before lint
+fires.
+
+### Batch-3 field findings (2026-07-27) — third live batch, 7 blocks
+
+All chassis numbers landed exactly (defender ×3, lurker ×2, brute, balanced;
+Engulf 67 = the lurker single-target budget, Ground Pound 66 = the defender AoE
+budget). Five defects → five fixes, all in `batch3-regressions.spec.js`:
+
+- **Spellcasting-ability raise-only stamp** (`assembleMonster`): a DC 25
+  caster shipped on INT 16 — the `spell-dc-ability` reject has no entry-level
+  fix when the DC itself is chassis-correct. The named casting ability now
+  rises to `(DC − 8 − PB) × 2 + 10` (source-side, so the Slinky Boulder
+  objection does not apply; mirrors the striker stamp). Both edition
+  phrasings.
+- **`trait-imposes-save` trigger scan** narrowed to the pre-*Failure* text —
+  the Failure clause's own "takes 44 damage" was satisfying the trigger check
+  (Softening Tremor, a (1/Day) save nuke that shipped in Traits). Pre-Failure,
+  not pre-skeleton: the Aboleth's aura trigger lives in the TARGETING clause.
+- **`grapple-exit` anchor + exits widened**: the anchor now also catches the
+  nonstandard "the target is Restrained" application phrasing (parentheticals
+  stripped; "if/that"-led preconditions excluded — Bugbear/Mimic/Ettercap/
+  Vampire shapes verified 0-FP), and the exit set gained "until the X dies" /
+  "uses an action to make a DC N check" (live Wardwall exits).
+- **`hybrid-targeting`** (reject): a forcing lead-in that names the target
+  followed by a skeleton with its OWN targeting clause ("forces one creature
+  it has Grappled to make a Strength Saving Throw: DC 15, one creature within
+  60 feet"). 0/329; no safe deterministic merge — the fix call rewrites it.
+- **`resistance-unknown`** (correctable): resistance tokens that are neither
+  damage types nor canonical conditions ("Blindness, Deafness") are dropped.
+  Corpus: one Half-Dragon template-placeholder string, moot under the chassis
+  gate.
+
+### Concept-input handling + combat-identity enrichment (2026-07-27)
+
+The name field is really a name-OR-concept field (`concept = name ||
+description || seed`), relabeled accordingly ("Name or concept"). Naming is
+deliberately left to the model on this path (owner call): proper-noun inputs
+("Headless Horseman", "Pumpkin King") survive, generic descriptors ("Vicious
+Bird" → Razortalon) get upgraded — live-verified, and the owner prefers this
+over verbatim stamping. The random-path naming machinery stays random-path
+only.
+
+Against incoherent ability sets, the concept now carries a COMBAT IDENTITY:
+- `buildArchetypeResolvePrompt` (user concept + Auto role) returns
+  `{archetype, identity}` — 2-3 sentences on opener, per-round loop, and
+  temperament — which the caller appends to the concept. `identity` is
+  optional in the validator (backward compatible).
+- `buildSeedSynthesisPrompt` (blank form) asks for the same 2-3-sentence
+  shape in its `synthesis`.
+- Both generation prompts carry a DESIGN COHERENCE directive (abilities must
+  interlock; cut anything a GM would never use) — this also covers the
+  manually-picked-archetype path, which makes no resolve call.
+Live-verified: "Feywild mud monster" → Feymire Muck, whose entries visibly
+execute the resolved identity (mud terrain aura → restraining ranged loop →
+1/Day bloodied drag-down).
+
+Also from that live run: `hybrid-targeting` gained a second sub-shape —
+adjacent-sentence duplication ("targets one creature within 30 feet.
+Saving Throw: DC 15, one creature within 60 feet") and the verbs
+targets/chooses, all still 0/329. And the generation loop gained a **final
+normalization sweep**: same-entry rename collisions (entry-name-caps +
+trait-recharge both renaming one entry — first wins, second no-ops on the
+stale name) previously shipped correctable leftovers with no wart, since the
+round loop re-enters only on rejects.
+
+### Batch-4 field findings (2026-07-27, post-enrichment)
+
+Owner verdict on naming: much better with enriched concepts (Malmgrave,
+Tarrakor, Gulch-Mother approved); only "Swoop Talon" (flat attack-routine
+descriptor) disliked. All four blocks chassis-exact (skirmisher / controller
+/ brute / skirmisher). Changes:
+
+- **`undefined-attack-ref` now resolves "uses X" / "a use of X" references
+  too** — Malmgrave shipped a Multiattack and a 1/Day both referencing "Wing
+  Burst" after the recharge action was renamed "Shardstorm" (rename
+  propagation gap; the lint is the safety net). Hardened extraction
+  (alternations, trailing words, clause boundaries, "a use of" without a
+  "uses" verb) — 26/26 official references resolve, 0 FP context-free.
+- **Prompt rule 12 (2024) / rule 9 (2014)**: ability names are plain English
+  (live coinages: "Urvoth", "Varthun"); creature names read like MM entries —
+  real-word compound / folk name / coined word, never a flat description of
+  the attack routine (the "Swoop Talon" class).
+- **Dropped candidate** (corpus discipline): flagging 2014-style "must
+  succeed on a DC N…" phrasing in 2024 blocks — officials still use it in 6
+  blocks (Swallow interiors, Gelatinous Cube Transparent), the same
+  rider-mechanic niche Gulch-Mother used it in. Not a defect.
+
+Still open from batch 3 (cosmetic/deferred): the article-strip ("The Viscous
+Hoop") only runs at assembly, so fix-call rewrites can reintroduce "The "
+names; name collision within a batch (Swallower / Silent Swallower) and theme
+clustering (tar/ooze/engulf ×4) persist — the seeding-memory docket item; the
+Silent Swallower's CR 1/4 lurker per-attack budget (3) is below the smallest
+representable dice+mod damage, so tiny-CR lurkers ship over-band by
+construction (band floor, not model disobedience).
+
+### Investigation findings NOT promoted
+
+Report 09 found the "bimodal defense" (high AC + low HP) hypothesis does
+**not** reproduce, and the one combination that does escape band (HP × broad
+resistance) is already closed by Task 5's B/P/S ban for all non-swarms. **Note
+the three defense rules — `hp-band`, `ac-band`, `defense-count` — are
+independent and do not price their multiplicative product; this is intentional
+given Task 5, do not assume they compose.** Report 03's referent-phrase
+heuristics and the `area`/`timing` schema fields remain deferred (see the
+report).
 
 ## Legal
 

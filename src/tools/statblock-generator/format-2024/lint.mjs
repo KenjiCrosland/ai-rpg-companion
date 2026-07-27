@@ -500,6 +500,22 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         push('undefined-attack-ref', 'reject', `${where} references a "${name}" attack that is not defined anywhere in the statblock`, undefined, loc);
       }
     }
+    // "uses X" / "a use of X" references must resolve too (live finding: a
+    // Multiattack and a 1/Day both referenced "Wing Burst" after the recharge
+    // action was renamed "Shardstorm" — the reuse texts were never rewritten,
+    // leaving an unadjudicable block). Extraction handles alternations
+    // ("Pummel or Spellcasting"), trailing words ("Nightmare Haunting
+    // action", "Holy Burst twice"), and clause boundaries ("Bite while…") —
+    // 26/26 official uses-references resolve under it.
+    for (const ref of entry.text.matchAll(/\b(?:uses?|(?:a|one) use of)\s+(?:(?:a|one) use of\s+)?(?:its\s+)?([A-Z][\w' -]+?)(?= to cast|\s+again\b|\s+if\b|\s+without\b|\s+while\b|\s+when\b|[.,;:]|$)/g)) {
+      for (const part of ref[1].split(/ or /)) {
+        const name = part.replace(/^\([A-C]\)\s*/, '').replace(/\s+(?:action|attack|twice|once)$/, '').trim();
+        if (!name || !/^[A-Z]/.test(name) || /^(?:Spellcasting|Multiattack)$/i.test(name)) continue;
+        if (!entryNames.some((n) => n === name || n.startsWith(name))) {
+          push('undefined-attack-ref', 'reject', `${where} references a use of "${name}", which is not defined anywhere in the statblock — rewrite the reference to name a real entry`, undefined, loc);
+        }
+      }
+    }
     if (SECOND_PERSON_RE.test(entry.text)) {
       push('second-person', 'reject', `Second-person voice in ${where} — statblocks are third person ("of the creature's choice", never "of your choice")`, undefined, loc);
     }
@@ -701,6 +717,215 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
           kept.join(', '), { field: 'resistances' });
       }
     }
+    // Resistance tokens must be damage types (canonical conditions are the
+    // resistance-conditions rule's business — it moves them to immunities).
+    // Anything else is junk ("Blindness, Deafness" — live finding; 5e has no
+    // such resistances). Corpus: 0/329 real lines (one Half-Dragon template
+    // placeholder string, moot under the chassis gate). Fix: drop the junk.
+    if (is2024 && monster.resistances) {
+      const toks = splitTokens(monster.resistances);
+      const junk = toks.filter((t) => !DAMAGE_TYPE_WORD_RE.test(t) && !CONDITION_TOKEN_SET.has(t.toLowerCase()));
+      if (junk.length) {
+        const kept = toks.filter((t) => !junk.includes(t));
+        push('resistance-unknown', 'correctable',
+          `Resistances carry tokens that are neither damage types nor conditions (${junk.join(', ')}) — dropped`,
+          kept.join(', '), { field: 'resistances' });
+      }
+    }
+    // Grapple/Restrain machinery must carry counterplay — the SRD 5.2.1
+    // convention is 52/52 (see docs/investigations/07-grapple-machinery.md).
+    // A Grappled condition needs an escape DC (2024's escape action is defined
+    // against it, so a bare Grappled is unadjudicable); a Restrained effect
+    // needs a repeat save, fixed duration, or breakable binding. A "maintain
+    // the condition" clause VOIDS a duration exit — the hold is sustainable
+    // forever — so those need a strong exit even when a duration is present.
+    // 2024-only (the "has the X condition" anchor is 2024 phrasing) and
+    // chassis-gated (the corpus sweep passes no chassis; belt-and-suspenders).
+    if (is2024) {
+      const STRONG_EXIT = [
+        /escape DC \d+/i,
+        /AC \d+[^.]*(?:HP|Hit Points) \d+/i,           // breakable binding (statted)
+        /until [\w' -]+ is destroyed|to release the (?:target|creature)/i, // breakable/release (Erinyes)
+        /repeats? the sav|ending the effect on a success/i,
+        // Interior escapes: the official phrasing, plus the generated
+        // variants a live block used ("until the wardwall dies", "uses an
+        // action to make a DC 15 Strength check").
+        /escape by taking an action|(?:if|until) the [\w' -]+ dies/i,
+        /uses? an action to make a DC \d+/i,
+      ];
+      const DURATION_EXIT = /until the (?:end|start) of|for \d+ (?:minute|hour)/i;
+      for (const { section, entry } of entriesOf(monster)) {
+        // Anchor covers the canonical "has the X condition" AND the
+        // nonstandard "the target is Restrained" application phrasing a live
+        // block shipped with — a phrasing wart must not blind the machinery
+        // check. PRECONDITIONS must not match: parentheticals are stripped
+        // (Bugbear "(with Advantage if the target is Grappled)"), "if/that"-
+        // led conditionals are excluded (Mimic, Ettercap), and the vampires'
+        // "has the Grappled, Incapacitated, or Restrained condition"
+        // targeting never matches the contiguous canonical form.
+        const stripped = entry.text.replace(/\([^)]*\)/g, '');
+        const applies = /has the (Grappled|Restrained) condition/.exec(stripped)
+          ?? /(?<!if )(?<!If )(?<!that )(?<!That )\b(?:[Tt]he target|[Tt]he creature|[Ii]t) (?:is|becomes) (?:[A-Z]\w+ and )?(Grappled|Restrained)\b/.exec(stripped);
+        if (!applies) continue;
+        const strong = STRONG_EXIT.some((re) => re.test(entry.text));
+        const maintained = /maintain the (?:Grappled|Restrained)/i.test(entry.text);
+        const hasExit = strong || (!maintained && DURATION_EXIT.test(entry.text));
+        if (!hasExit) {
+          const cond = applies[1];
+          const guidance = cond === 'Grappled'
+            ? 'add an "(escape DC N)" rider'
+            : 'add a repeat save, fixed duration, or breakable binding';
+          push('grapple-exit', 'correctable',
+            `${section}/${entry.name}: the ${cond} condition has no counterplay — ${guidance} (5e always gives Grappled/Restrained an exit)`,
+            cond, { section, entry: entry.name });
+        }
+      }
+    }
+    // Ungated area effect that deals damage AND applies a HARD condition
+    // (Stunned/Paralyzed/Petrified/Unconscious — Incapacitated is spent
+    // freely by officials, so excluded). The conjunction is 0/329 in SRD
+    // 5.2.1 (docs/investigations/04-hard-cc-detection.md): WotC either
+    // recharge-gates such effects (Mind Flayer / dragon breath) or ladders a
+    // no-damage version. Correctable: stamp (Recharge 5-6) onto the name,
+    // turning it into the official gated shape. Chassis-gated + 2024-only.
+    if (is2024) {
+      for (const { section, entry } of entriesOf(monster)) {
+        if (/\((?:Recharge|\d+\s*\/\s*Day)/i.test(entry.name) || /once per day/i.test(entry.text)) continue;
+        const failPart = entry.text.split(/\*?\bFailure:?\*?/i)[1];
+        if (!failPart) continue;
+        const preSuccess = failPart.split(/\*?\bSuccess|\*?\bSecond Failure/i)[0];
+        const hard = /(?:target|creature) has the (Stunned|Paralyzed|Petrified|Unconscious) condition/i.exec(preSuccess);
+        const area = /each creature (?:in|within \d+ feet of (?!the space))/i.test(entry.text);
+        const dmg = /\d+ \(\d+d\d+(?:\s*[+-]\s*\d+)?\)\s+\w+ damage/.test(preSuccess);
+        if (hard && area && dmg) {
+          push('cc-aoe', 'correctable',
+            `${section}/${entry.name}: an area effect that deals damage may not also apply ${hard[1]} unless it is gated — officials recharge-gate this (0/329 ungated); adding (Recharge 5-6)`,
+            `${entry.name} (Recharge 5-6)`, { section, entry: entry.name });
+        }
+      }
+    }
+    // Legendary reuse must not replay an ungated area or oversized save-for-
+    // damage effect: legendary uses refresh every round, so reusing a
+    // party-wide AoE (Psychic Pulse) or a save nova above the per-use ceiling
+    // (Buried Grasp, 1.49× per-attack) multiplies output past the aggregate
+    // budget (docs/investigations/01-legendary-costing.md). Officials reuse
+    // only single-target attacks, Spellcasting, or Recharge/N-Day actions.
+    if (is2024 && perAttack != null) {
+      const legendary = monster.sections?.['Legendary Actions'] ?? [];
+      const actions = monster.sections?.Actions ?? [];
+      const baseName = (n) => (n ?? '').replace(/\s*\(.*/, '').trim().toLowerCase();
+      for (const entry of legendary) {
+        const reuse = /\buses ([A-Z][\w' -]+?)(?:\s+again|\s+to cast|[.,]|$)/.exec(entry.text);
+        if (!reuse || /^spellcasting$/i.test(reuse[1].trim())) continue;
+        const target = actions.find((a) => baseName(a.name) === baseName(reuse[1]));
+        if (!target || /\((?:Recharge|\d+\s*\/\s*Day)/i.test(target.name)) continue;
+        const isAreaSave = /each creature (?:in|within)/i.test(target.text) && /Saving Throw/i.test(target.text);
+        const dmg = Math.max(0, ...[...target.text.matchAll(/(\d+)\s*\(\d+d\d+/g)].map((mm) => Number(mm[1])));
+        const overNova = /Saving Throw/i.test(target.text) && dmg > perAttack * 1.5;
+        if (isAreaSave || overNova) {
+          push('legendary-reuse', 'correctable',
+            `Legendary Actions/${entry.name}: reuses "${target.name}"${isAreaSave ? ' (an ungated area effect)' : ` (${dmg} damage, above the ~${Math.round(perAttack * 1.5)} per-use ceiling)`} — legendary uses refresh every round; reuse only a single-target attack or a Recharge/1-Day action`,
+            undefined, { section: 'Legendary Actions', entry: entry.name });
+        }
+      }
+      // Multiattack-substituted save novas: the prompt's single-target save
+      // number is the WHOLE turn's budget (a standalone action); weaving it
+      // into Multiattack ("replace one attack with Ward's Rebuke") converts it
+      // into a partial-turn component and runs ~1.7× the intended routine.
+      // Officials substitute damaging save entries at up to 1.86× their best
+      // attack (Lamia) — so the cap is 2× per-attack, corpus-clean at 0/329.
+      // Recharge/N-Day targets are exempt (nova cadence prices them); attack
+      // targets are the attack-damage-band's business.
+      const multi = actions.find((a) => /^Multiattack/i.test(a.name));
+      if (multi) {
+        const referenced = [];
+        for (const g of multi.text.matchAll(/(?:replace[^.]*? with (?:a use of |one use of )?|can use |and uses |or uses )([^.]+?)(?= in place of| if available|\.|$)/gi)) {
+          for (const part of g[1].split(/ or |, /)) {
+            referenced.push(part.replace(/^\([A-C]\)\s*/, '').replace(/ to cast.*/, '').trim());
+          }
+        }
+        for (const name of referenced) {
+          const target = actions.find((a) => baseName(a.name) === baseName(name));
+          if (!target || /Attack Roll/i.test(target.text)) continue;
+          if (/\((?:Recharge|\d+\s*\/\s*Day)/i.test(target.name)) continue;
+          const dmg = Math.max(0, ...[...target.text.matchAll(/(\d+)\s*\(\d+d\d+/g)].map((mm) => Number(mm[1])));
+          if (dmg > perAttack * 2) {
+            push('multiattack-substitution', 'correctable',
+              `Actions/Multiattack: weaves in "${target.name}" (${dmg} damage, above the ${perAttack * 2} cap = 2× per-attack) — the single-target save number is a standalone action, never a Multiattack component; the reference is removed`,
+              target.name, { section: 'Actions', entry: multi.name });
+          }
+        }
+      }
+    }
+    // Bare-targeting save effect: "*<Ability> Saving Throw*: DC N, each
+    // creature. *Failure:* ..." with NOTHING qualifying "each creature" — no
+    // area, range, or trigger. Unadjudicable (a DM cannot know who is
+    // affected); 0/329 in the SRD (docs/investigations/03-orphaned-mechanics.md
+    // — officials always write "in a 10-foot Emanation", "within N feet", or a
+    // relational qualifier). Deterministic fix: default to a 10-foot Emanation,
+    // the standard aura shape — makes it adjudicable without a fix call.
+    if (is2024) {
+      for (const { section, entry } of entriesOf(monster)) {
+        // Both quantifiers: bare "each creature" (an aura with no area) and
+        // bare "one creature" (a single-target save with no range) are equally
+        // unadjudicable and equally 0/329 in the SRD. Default an area target
+        // to a 10-foot Emanation; default a single target to "within 60 feet".
+        const bare = /Saving Throw\*?:?\s*DC \d+,\s*(one|each) creature\b([^.*]*?)(?:\.|\*Failure)/i.exec(entry.text);
+        if (bare && bare[2].trim() === '') {
+          const quant = bare[1].toLowerCase();
+          push('bare-targeting', 'correctable',
+            `${section}/${entry.name}: "${quant} creature" has no ${quant === 'one' ? 'range' : 'area'} or trigger — the effect is unadjudicable; defaulting to ${quant === 'one' ? '"within 60 feet"' : 'a 10-foot Emanation'}`,
+            quant, { section, entry: entry.name });
+        }
+      }
+      // Hybrid double-targeting: a forcing lead-in that already names the
+      // target, followed by the skeleton with its OWN targeting clause
+      // ("forces one creature it has Grappled to make a Strength Saving
+      // Throw: DC 15, one creature within 60 feet" — live finding, Stalking
+      // Wardwall). The two clauses contradict; 0/329 officials. Reject-tier:
+      // there is no safe deterministic merge, the fix call rewrites it.
+      // Two sub-shapes, both 0/329: same-sentence ("forces one creature it
+      // has Grappled to make a Strength Saving Throw: DC 15, one creature
+      // within 60 feet" — Wardwall) and adjacent-sentence ("targets one
+      // creature it can see within 30 feet. Strength Saving Throw: DC 15,
+      // one creature within 60 feet" — Feymire Muck; a skeleton right after
+      // a targeting sentence must say "the target", never name a fresh one).
+      const HYBRID_SAME = /(?:forces?|compels?|targets?|chooses?|must (?:make|succeed on))[^.]*?Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature/i;
+      const HYBRID_ADJACENT = /(?:targets?|chooses?|forces?)[^.]*? (?:one|each) creature[^.]*\.\s*\*?\w+ Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature/i;
+      for (const { section, entry } of entriesOf(monster)) {
+        if (HYBRID_SAME.test(entry.text) || HYBRID_ADJACENT.test(entry.text)) {
+          push('hybrid-targeting', 'reject',
+            `${section}/${entry.name}: the lead-in already names the target, then the save skeleton adds a second targeting clause — keep ONE: either "<Ability> Saving Throw: DC N, <the real target>." with no forcing lead-in, or fold the constraint into the skeleton's targeting clause`,
+            undefined, { section, entry: entry.name });
+        }
+      }
+      // A Trait that IMPOSES a save on a target with no trigger/timing phrase
+      // is an action filed in the wrong section — as written it never fires
+      // (live findings: Spectral Tangle, Pacifying Aura). Officials: 0/329
+      // (their trait-saves are all self-saves like Magic Resistance/Undead
+      // Fortitude, or carry a trigger — auras say "at the start of each of
+      // its turns"). Fix: relocate to Actions, marked `relocated` so the
+      // counts rule still scores it against the Traits range.
+      {
+        const TRIGGER_RE = /\b(when|whenever|if (?:a|an|the|another|it) |at the (?:start|end)|starts its turn|enters|ends its turn|is hit|takes .* damage|while (?:in|within|it))\b/i;
+        for (const entry of monster.sections?.Traits ?? []) {
+          const skel = /Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature/i.exec(entry.text);
+          // The trigger must appear BEFORE the Failure clause — scanning the
+          // whole entry let the Failure clause's own "takes 44 damage"
+          // satisfy the trigger check (live finding: Softening Tremor, a
+          // (1/Day) 44-damage save nuke that shipped in Traits). Pre-Failure
+          // (not pre-skeleton) because officials put aura triggers in the
+          // TARGETING clause: the Aboleth's "each creature that touches the
+          // aboleth ... while within 5 feet".
+          const preFailure = entry.text.split(/\*?\bFailure:?\*?/i)[0];
+          if (skel && !TRIGGER_RE.test(preFailure)) {
+            push('trait-imposes-save', 'correctable',
+              `Traits/${entry.name}: a Trait never forces a saving throw without a trigger — as written this ability can never fire; it moves to Actions`,
+              undefined, { section: 'Traits', entry: entry.name });
+          }
+        }
+      }
+    }
   }
 
   // --- Structural rules (need slot plan) ----------------------------------
@@ -747,8 +972,13 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       }
     }
 
-    const nTraits = (monster.sections?.Traits ?? []).length;
-    const nActions = actions.length;
+    // Entries the trait-imposes-save fix relocated from Traits to Actions
+    // still count against their ORIGINAL section's plan range — relocation is
+    // a correction, not a redesign, and must never trigger the counts reject
+    // it would otherwise cause (the exempt half of relocate-and-exempt).
+    const relocated = actions.filter((e) => e.relocated).length;
+    const nTraits = (monster.sections?.Traits ?? []).length + relocated;
+    const nActions = actions.length - relocated;
     if (nTraits < plan.traits.min || nTraits > plan.traits.max) {
       push('counts', 'reject', `${nTraits} traits outside plan range [${plan.traits.min}, ${plan.traits.max}]`);
     }

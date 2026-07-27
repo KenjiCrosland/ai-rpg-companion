@@ -198,14 +198,28 @@ export function buildContext(cr, archetypeName) {
   return { chassis, plan, archetype: normalized };
 }
 
+// Legendary creatures underbuild the routine turn to leave headroom for
+// legendary uses + nova: across the 30 SRD legendary blocks the routine turn
+// runs at a median 0.55× band-mid, aggregate (routine + legendary) at ~1.15×
+// (docs/investigations/08-aggregate-dpr-legendary.md). Without this discount,
+// a legendary block budgets its Multiattack at full mid and then stacks
+// legendary on top, running hot. 0.6 (not 0.55) keeps a small margin so the
+// routine turn still bites. Only required/recommended legendary tiers — an
+// optional-legendary block usually has no legendary actions, so its full
+// routine budget is correct.
+const LEGENDARY_ROUTINE_DISCOUNT = 0.6;
+
 /**
- * Damage-per-round budget: DMG table midpoint × archetype damage_mult, split
+ * Damage-per-round budget: DMG table midpoint × archetype damage_mult ×
+ * (legendary routine discount if the plan carries legendary actions), split
  * across the multiattack count when multiattack is required.
  */
 export function damageBudgetFor(cr, chassis, plan) {
   const row = challengeRatings[crKeyFor(cr)];
   const midpoint = Math.round((row.min_damage_per_round + row.max_damage_per_round) / 2);
-  const total = Math.max(1, Math.round(midpoint * (chassis.damage_mult ?? 1)));
+  const legendaryDiscount = plan.legendary?.status === 'required' || plan.legendary?.status === 'recommended'
+    ? LEGENDARY_ROUTINE_DISCOUNT : 1;
+  const total = Math.max(1, Math.round(midpoint * (chassis.damage_mult ?? 1) * legendaryDiscount));
   const attacks = plan.multiattack.status === 'required' ? plan.multiattack.count[0] : 1;
   const perAttack = Math.max(1, Math.round(total / attacks));
   return { total, attacks, perAttack };
@@ -242,7 +256,7 @@ export function pickRandomArchetype() {
 // ---------------------------------------------------------------------------
 
 export function buildArchetypeResolvePrompt(concept, description = '') {
-  return `Classify this D&D monster concept into exactly one combat-role archetype.
+  return `Classify this D&D monster concept into exactly one combat-role archetype, then sketch its combat identity.
 
 Concept: ${concept}
 ${description ? `Details: ${description}\n` : ''}
@@ -256,7 +270,9 @@ Archetypes:
 - support: buffs, heals, or enables allies
 - swarm: mass of small creatures acting as one
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the eight names above>"}`;
+The identity is 2-3 sentences a designer would build from: how it opens a fight, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). Concrete and specific to THIS creature — never generic filler.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the eight names above>", "identity": "<2-3 sentences>"}`;
 }
 
 export function validateArchetypeResponse(jsonString) {
@@ -276,7 +292,7 @@ export function buildSeedSynthesisPrompt(seed) {
 
 Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}.
 
-Write one vivid sentence describing a single unified creature. The traits must merge into one identity — one body, one behavior — not remain separate features. Contradictions between traits are creative fuel. The combat role must FOLLOW the rolled disposition — a guardian is a defender, a trickster is not a brute, a pack-hunter skirmishes.
+Write 2-3 vivid sentences describing a single unified creature: the first describes what it IS (the traits must merge into one identity — one body, one behavior — not remain separate features; contradictions between traits are creative fuel), the rest describe how it FIGHTS — how it opens, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). The combat role must FOLLOW the rolled disposition — a guardian is a defender, a trickster is not a brute, a pack-hunter skirmishes.
 
 Archetypes:
 - brute: hits hard up close, soaks damage, easy to hit
@@ -288,7 +304,7 @@ Archetypes:
 - support: buffs, heals, or enables allies
 - swarm: mass of small creatures acting as one
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the eight>", "synthesis": "<your one sentence>"}`;
+Return ONLY JSON, no markdown: {"archetype": "<one of the eight>", "synthesis": "<your 2-3 sentences>"}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -383,7 +399,7 @@ function slotInstructions(plan, numbers) {
   if (plan.legendary.status === 'required' || plan.legendary.status === 'recommended') {
     const res = plan.legendary.resistance_per_day;
     lines.push(
-      `- Include a "Legendary Actions" section (2-3 entries)${res ? ` and a "Legendary Resistance (${res[0]}/Day)" trait` : ''}.`
+      `- Include a "Legendary Actions" section (2-3 entries)${res ? ` and a "Legendary Resistance (${res[0]}/Day)" trait` : ''}. Each option is small: one attack, a move, or a minor effect — at most one attack's worth of damage. When an option reuses another action ("The creature uses X"), X must be a single-target attack or a Recharge/1-Day action — NEVER an at-will area or save-for-damage effect (those hit the whole party every round).`
     );
   }
   if (plan.bonus_action === 'recommended') {
@@ -453,20 +469,27 @@ RULES — read first; they apply to every line of output:
    WRONG: "resistances": "Fire/Cold/Lightning"
 5. Spell names are Title Case: Minor Illusion, Blindness/Deafness, Fear.
 6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock — if you created an action called "Spectral Saber", write "makes two Spectral Saber attacks". Never the bare "makes two attacks", and never an attack name that does not appear in this statblock's Actions.
-7. The statblock text is in-world only and third person. Never reference these instructions, rulebook editions ("2024", "5e"), or design terms ("legal condition", "budget"). Never "you"/"your" ("each creature of the warden's choice", not "of your choice"). Never write "(any race)" in the subtype — 2024 dropped it.
+7. The statblock text is in-world only and third person. Never reference these instructions, rulebook editions ("2024", "5e"), or design terms ("legal condition", "budget"). Never "you"/"your" ("each creature of the warden's choice", not "of your choice"). Never write "(any race)" in the subtype — 2024 dropped it. Entry text refers to the creature by its own name or a natural short form of it (the officials' "the dragon" for Adult Brass Dragon) — never an unrelated epithet that appears nowhere else ("the sentinel" on a creature named Strokeg).
 8. Every attack you tell the creature to make ("makes one Shield Bash attack") MUST exist as a fully written attack action in this statblock. Define it or don't reference it.
 9. Defensive traits must be NARROW. Never write a passive trait that halves or reduces incoming damage, grants resistance to everything, or otherwise multiplies the creature's durability — the fixed AC/HP already price its defenses. Mitigating a single attack is fine ONLY as a Reaction (once per round).
 10. A Reaction is NOT a free action — it fires once per round, only when a specific event occurs. Every Reactions entry uses EXACTLY this form: *Trigger:* <the specific event that lets the creature respond>. *Response:* <what it does>.
    CORRECT: *Trigger:* A creature within 30 feet hits the warden with an attack roll. *Response:* The attacker takes 7 (2d6) Radiant damage.
    WRONG: One creature within 60 feet must succeed on a saving throw... (no trigger — that is an Action, not a Reaction)
+11. A Trait is ALWAYS-ON or self-referential — it never forces another creature to make a saving throw. If the creature actively imposes a save on an enemy, it is an Action (put it in Actions), or a Reaction with an explicit *Trigger:* — NEVER a Trait. Every save-effect targeting clause names a range or area ("one creature within 60 feet", "each creature in a 20-foot Emanation"); never bare "one creature" or "each creature".
+12. Ability names are plain English that says what the ability does ("Tar Tendril", "Shielding Wall", "Grasping Coils") — an invented or coined word may be the CREATURE's name, never an ability's name. The creature's own name reads like a Monster Manual entry: a real-word compound (Owlbear), a folk name (Shambling Mound), or a coined word (Chuul) — never a flat description of its attack routine.
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
 ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
+DESIGN COHERENCE: before writing entries, decide ONE combat identity — how this creature opens a fight, what it does every round after that, and its temperament under pressure. Every trait, action, and reaction must serve that identity; cut any ability that a GM running this creature would never actually use. Abilities must interlock (a setup ability must have a payoff ability; a payoff must have its setup), never sit side-by-side as disconnected ideas.
+
 FIXED NUMBERS (do not deviate):
 - Every attack line uses EXACTLY this skeleton: *Melee Attack Roll:* ${signed(chassis.attack_bonus)}, reach 5 ft. ${atkDmg.avg} (${atkDmg.dice}) <Damage Type> damage. (Ranged attacks: *Ranged Attack Roll:* ${signed(chassis.attack_bonus)}, range 60 ft. — same damage skeleton. You choose damage types and may add non-damage riders.) The "+ ${Math.max(0, atkMod)}" is the attack ability's modifier — never change it. To use two damage types, shrink the DICE and add a small dice-only rider of the second type (e.g. "plus 4 (1d8) Fire damage"), keeping the combined average at or below ${atkDmg.avg}; never append a zero rider.
 - Every saving-throw effect uses EXACTLY: *<Ability> Saving Throw*: DC ${chassis.save_dc}, <targeting>. *Failure:* <effect>. *Success:* <lesser effect or none>.
 - Save-based damage is pure dice, no flat bonus, halved on a success. SINGLE-target save effects: about ${saveDmg.avg} (${saveDmg.dice}). AREA effects (Cones, Lines, bursts): about ${aoeDmg.avg} (${aoeDmg.dice}) — areas hit multiple creatures, so they use the HALF number, never the single-target number.${novaDmg ? `\n- The nova/ambush mechanic may deal up to ${novaDmg.avg} (${novaDmg.dice}) once per fight.` : ''}
+- An area effect that deals damage may add a SOFT condition (Prone, Frightened, Poisoned) but NOT a hard lockdown (Stunned, Paralyzed, Petrified, Unconscious) unless the entry is gated "(Recharge 5-6)" or "(1/Day)".
+- An action woven into Multiattack ("can replace one attack with X" / "and uses X") must deal at most the per-attack number (${atkDmg.avg}) unless it is Recharge/1-Day gated. The ${saveDmg.avg} single-target save number is a STANDALONE action used instead of Multiattack, never inside it.
+- Any Grappled condition must carry an "(escape DC ${Math.max(8, chassis.save_dc - 2)})" rider; any Restrained effect must give the target an exit (a repeat save, a fixed duration, or a breakable binding) — never an unescapable or indefinitely-maintained hold.
 
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
@@ -527,10 +550,13 @@ RULES — read first; they apply to every line of output:
 6. Multiattack names the creature's attack actions exactly as YOU named them elsewhere in this statblock. Every attack you reference MUST exist as a written attack action.
 7. Defensive traits must be NARROW. Never write a passive trait that halves or reduces incoming damage or grants resistance to everything — the fixed AC/HP already price the creature's defenses. Mitigating a single attack is fine ONLY as a reaction (once per round).
 8. A reaction is not a free action — every Reactions entry begins by stating its trigger in prose: "When <specific event>, the <creature> <responds>." Never write a reaction that can simply be used on the creature's turn.
+9. Ability names are plain English that says what the ability does — an invented or coined word may be the CREATURE's name, never an ability's name. The creature's own name reads like a Monster Manual entry: a real-word compound, a folk name, or a coined word — never a flat description of its attack routine.
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
 ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
+DESIGN COHERENCE: before writing entries, decide ONE combat identity — how this creature opens a fight, what it does every round after that, and its temperament under pressure. Every trait, action, and reaction must serve that identity; cut any ability that a GM running this creature would never actually use. Abilities must interlock (a setup ability must have a payoff ability; a payoff must have its setup), never sit side-by-side as disconnected ideas.
+
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
 - Actions: between ${plan.actions.min} and ${plan.actions.max} entries.
@@ -597,6 +623,33 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   // toward 30 at high CR). Derivability is already guaranteed: the chassis
   // caps keep save_dc ≤ attack_bonus + 8 at every CR × archetype, so the
   // stamped striker stat always satisfies DC ≤ 8 + PB + mod.
+
+  // Spellcasting-ability coherence (raise-only, mirrors the striker stamp —
+  // this is SOURCE-side, so the Slinky Boulder objection doesn't apply): the
+  // caster instruction pins spell save DC to the chassis and demands a score
+  // that supports it, but the model sometimes keeps the DC and leaves the
+  // score low (live finding: a DC 25 caster on INT 16 — the spell-dc-ability
+  // reject then has no entry-level fix, since the DC itself is correct).
+  // Score = (DC − 8 − PB) × 2 + 10, the exact score whose mod closes the gap.
+  {
+    const NAME_TO_ABBR = { Strength: 'STR', Dexterity: 'DEX', Constitution: 'CON', Intelligence: 'INT', Wisdom: 'WIS', Charisma: 'CHA' };
+    const SPELL_ABILITY_RES = [
+      /using (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) as the spellcasting ability \(spell save DC (\d+)\)/i,
+      /spellcasting ability is (Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) \(spell save DC (\d+)\)/i,
+    ];
+    outer: for (const entries of Object.values(sections)) {
+      for (const entry of entries) {
+        for (const re of SPELL_ABILITY_RES) {
+          const m = re.exec(entry.text);
+          if (!m) continue;
+          const abbr = NAME_TO_ABBR[m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()];
+          const required = (Number(m[2]) - 8 - chassis.pb) * 2 + 10;
+          if (abbr && required <= 30 && required > (stats[abbr] ?? 10)) stats[abbr] = required;
+          break outer;
+        }
+      }
+    }
+  }
 
   const pb = chassis.pb;
   const saveProfs = (llmJson.save_proficiencies ?? []).filter((s) => STAT_ORDER.includes(s));
@@ -1054,7 +1107,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance') && x.loc?.field
+    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance' || x.rule === 'resistance-unknown') && x.loc?.field
   )) {
     out[f.loc.field] = f.expected || undefined;
   }
@@ -1073,7 +1126,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024') && x.loc
+    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024' || x.rule === 'cc-aoe') && x.loc
   )) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.name = f.expected;
@@ -1082,6 +1135,91 @@ export function applyCorrections(monster, findings, { chassis }) {
   for (const f of correctable.filter((x) => x.rule === 'escape-dc' && x.loc)) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.text = entry.text.replace(/escape DC \d+/gi, `escape DC ${f.expected}`);
+  }
+
+  // Bare-targeting save (docs/investigations/03): "each creature." with no
+  // qualifier → default to a 10-foot Emanation, the standard aura shape.
+  for (const f of correctable.filter((x) => x.rule === 'bare-targeting' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) {
+      const insert = f.expected === 'one' ? ' within 60 feet' : ' in a 10-foot Emanation originating from it';
+      entry.text = entry.text.replace(
+        /(Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature)(\s*)(\.|\*Failure)/i,
+        `$1${insert}$2$3`
+      );
+    }
+  }
+
+  // Legendary reuse of an ungated AoE / oversized save (docs/investigations/
+  // 01): retarget to a single-target attack ("uses X" → "makes one <Attack>
+  // attack"). Deterministic. If the block has no attack action (rare), the
+  // finding survives and ships as a wart per never-fail generation.
+  for (const f of correctable.filter((x) => x.rule === 'legendary-reuse' && x.loc)) {
+    const entry = (out.sections?.['Legendary Actions'] ?? []).find((e) => e.name === f.loc.entry);
+    if (!entry) continue;
+    const attack = (out.sections?.Actions ?? []).find((a) => /Attack Roll/i.test(a.text) && !/^Multiattack/i.test(a.name));
+    if (attack) {
+      const base = attack.name.replace(/\s*\(.*/, '');
+      entry.text = entry.text.replace(/\buses [A-Z][\w' -]+?(?=\s+again|\s+to cast|[.,]|$)/, `makes one ${base} attack`);
+    }
+  }
+
+  // A save-imposing Trait with no trigger (docs: post-fix review) relocates
+  // to Actions — as a Trait it can never fire. The `relocated` marker keeps
+  // it scored against the Traits plan range in the counts rule, so the move
+  // can never trip a counts reject (relocate-and-exempt, owner call).
+  for (const f of correctable.filter((x) => x.rule === 'trait-imposes-save' && x.loc)) {
+    const traits = out.sections?.Traits ?? [];
+    const idx = traits.findIndex((e) => e.name === f.loc.entry);
+    if (idx === -1) continue;
+    const [entry] = traits.splice(idx, 1);
+    entry.relocated = true;
+    (out.sections.Actions ??= []).push(entry);
+  }
+
+  // Multiattack-substituted save nova (the Strokeg pattern): remove the
+  // offending reference from Multiattack, leaving the entry as a standalone
+  // action. If it shares an "X or Y" alternation with a legal sibling, only
+  // the offender is dropped; a sole target takes the whole clause with it.
+  for (const f of correctable.filter((x) => x.rule === 'multiattack-substitution' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (!entry) continue;
+    const esc = f.expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const alternation = new RegExp(`(\\s+or\\s+${esc}|${esc}\\s+or\\s+)`, 'i');
+    if (alternation.test(entry.text)) {
+      entry.text = entry.text.replace(alternation, '');
+    } else {
+      entry.text = entry.text
+        .replace(new RegExp(`,\\s*(?:one of which|which) it can replace with (?:a use of |one use of )?${esc}(?=\\.)`, 'i'), '')
+        .replace(new RegExp(`\\s*(?:and|,)?\\s*(?:it )?can use ${esc} in place of one attack`, 'i'), '')
+        .replace(new RegExp(`\\s*(?:and|or) uses ${esc}( if available)?`, 'i'), '')
+        .replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.');
+    }
+  }
+
+  // Grapple/Restrain machinery missing counterplay (docs/investigations/07):
+  // Grappled → inject the escape-DC rider (same value as escape-dc lands on,
+  // save_dc − 2 floored at 8); Restrained/maintained holds → inject the
+  // official repeat-save sentence (escape DCs are wrong for non-physical
+  // grips — a psychic hold has nothing to Athletics out of). Deterministic;
+  // no fix call. The exit-pattern set was the gate, so this only fires when
+  // NO counterplay was recognized.
+  for (const f of correctable.filter((x) => x.rule === 'grapple-exit' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (!entry) continue;
+    if (f.expected === 'Grappled' && !/escape DC \d+/i.test(entry.text)) {
+      const dc = Math.max(8, chassis.save_dc - 2);
+      // Also normalizes the nonstandard "is/becomes Grappled" phrasing the
+      // widened anchor now catches.
+      entry.text = entry.text.replace(/(?:has the Grappled condition|(?:is|becomes) Grappled\b)/, `has the Grappled condition (escape DC ${dc})`);
+    } else {
+      const sentence = ' The target repeats the save at the end of each of its turns, ending the effect on a success.';
+      if (/\*?Success:\*?/i.test(entry.text)) {
+        entry.text = entry.text.replace(/(\s*)(\*?Success:\*?)/i, `${sentence}$1$2`);
+      } else {
+        entry.text = entry.text.trimEnd() + sentence;
+      }
+    }
   }
 
   // Single-expression attacks outside the damage band clamp to the exact
@@ -1789,6 +1927,20 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
     monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps }).findings, { chassis });
     const result = lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps });
     outcome = { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
+  }
+
+  // Final normalization pass: correctable leftovers must not ship. Two
+  // renames colliding on one entry inside a single applyCorrections pass
+  // (the first rename wins; the second's lookup then misses on the stale
+  // name) — or a last-round fix call introducing a fresh correctable —
+  // leaves corrections unapplied, and the round loop only re-enters on
+  // REJECTS (live finding: "Death Knell (Recharge 5-6)" shipped as a trait
+  // with no wart logged). One more lint + apply closes the class.
+  {
+    const sweep = lintStatblock(outcome.monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps });
+    if (sweep.findings.some((f) => f.severity === 'correctable')) {
+      outcome.monster = applyCorrections(outcome.monster, sweep.findings, { chassis });
+    }
   }
 
   // GENERATION never fails once an assembled block exists (owner call,

@@ -69,7 +69,8 @@
             <VersionBadge :premium="premium" />
           </div>
           <h1 class="page-heading__title">Build custom D&D 5e monsters in seconds</h1>
-          <p class="page-heading__tagline">Create balanced, export-ready 5e statblocks — no math required.</p>
+          <p class="page-heading__tagline">Create balanced, export-ready statblocks in 2024 or 2014 rules — every number computed and CR-checked for you.</p>
+          <p class="page-heading__tagline">Edit anything in place, re-roll any ability, and convert between editions with one click.</p>
           <p class="page-heading__formats">Exports to Roll20, Homebrewery, Foundry VTT, and Improved Initiative</p>
         </div>
 
@@ -81,9 +82,9 @@
               off-label="2014 rules" on-label="2024 rules" aria-label="Use 2024 rules" />
           </div>
           <form @submit.prevent="generateStatblock" class="monster-form">
-            <ParField label="Monster name" :optional="true">
+            <ParField label="Name or concept" :optional="true">
               <ParInput id="monsterName" v-model="monsterName"
-                placeholder="Headless Horseman, or leave blank for a random monster" />
+                placeholder="Headless Horseman, feywild mud monster — or blank for a random monster" />
             </ParField>
 
             <div class="form-grid">
@@ -985,6 +986,7 @@ async function generateStatblockEngine(edition) {
   let archetypeName = archetype.value;
   let archetypeSource = 'user';
   let synthesizedConcept = null;
+  let conceptIdentity = null;
   if (archetypeName === 'auto') {
     archetypeSource = 'auto';
     try {
@@ -994,7 +996,15 @@ async function generateStatblockEngine(edition) {
           validateArchetypeResponse,
           2,
         );
-        archetypeName = parseGenerationResponse(raw)?.archetype || pickRandomArchetype();
+        const parsed = parseGenerationResponse(raw);
+        archetypeName = parsed?.archetype || pickRandomArchetype();
+        // The resolve call also sketches a combat identity (tactics, per-round
+        // behavior, temperament) — riding it into the concept gives the
+        // generation one coherent identity to design toward instead of a bare
+        // phrase (the anti-incoherent-ability-set mechanism, user-concept side).
+        if (typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) {
+          conceptIdentity = parsed.identity.trim();
+        }
       } else {
         // Blank form: the same micro-call fuses the rolled axes into one
         // creature identity AND picks the role — generation designs from
@@ -1016,10 +1026,13 @@ async function generateStatblockEngine(edition) {
     }
   }
 
-  const concept = monsterName.value.trim()
+  const baseConcept = monsterName.value.trim()
     || monsterDescription.value.trim()
     || synthesizedConcept
     || randomSeed.concept;
+  const concept = conceptIdentity
+    ? `${baseConcept}\nCOMBAT IDENTITY (design every ability to serve this): ${conceptIdentity}`
+    : baseConcept;
 
   let finalMonster;
   try {

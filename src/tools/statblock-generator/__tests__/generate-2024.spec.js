@@ -31,7 +31,7 @@ const llmFixture = {
     Actions: [
       { name: 'Multiattack', text: 'The stalker makes two Shadow Claw attacks.' },
       { name: 'Shadow Claw', text: '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.' },
-      { name: 'Ambush Pounce', slot: 'ambush or once-per-fight nova mechanic', text: '*Dexterity Saving Throw*: DC 13, one creature. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.' },
+      { name: 'Ambush Pounce', slot: 'ambush or once-per-fight nova mechanic', text: '*Dexterity Saving Throw*: DC 13, one creature within 60 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage.' },
     ],
   },
 };
@@ -130,6 +130,31 @@ describe('damageBudgetFor', () => {
   test('single attack at tier 1', () => {
     const { chassis, plan } = buildContext(0.25, null);
     expect(damageBudgetFor(0.25, chassis, plan).attacks).toBe(1);
+  });
+
+  // docs/investigations/08: legendary-bearing tiers discount the routine turn
+  // to ~0.6× so routine + legendary lands in band (officials build routine at
+  // ~0.55× mid). Optional-legendary and non-legendary tiers keep full routine.
+  test('applies the 0.6 routine discount at required/recommended legendary tiers', () => {
+    for (const cr of [14, 21]) { // recommended, required
+      const { chassis, plan } = buildContext(cr, null);
+      expect(['recommended', 'required']).toContain(plan.legendary.status);
+      const raw = damageBudgetFor(cr, { ...chassis, damage_mult: chassis.damage_mult ?? 1 }, {
+        ...plan, legendary: { ...plan.legendary, status: 'optional' },
+      }).total;
+      const discounted = damageBudgetFor(cr, chassis, plan).total;
+      expect(discounted).toBeLessThan(raw);
+      expect(discounted / raw).toBeCloseTo(0.6, 1);
+    }
+  });
+
+  test('does NOT discount a non-legendary (optional) tier', () => {
+    const cr = 10;
+    const { chassis, plan } = buildContext(cr, null);
+    expect(plan.legendary.status).toBe('optional');
+    // Full routine = midpoint × damage_mult, no discount at this tier.
+    const withStatus = (status) => damageBudgetFor(cr, chassis, { ...plan, legendary: { ...plan.legendary, status } }).total;
+    expect(withStatus('optional')).toBe(withStatus('forbidden'));
   });
 });
 
