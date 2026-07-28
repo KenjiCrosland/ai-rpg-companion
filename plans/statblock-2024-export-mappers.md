@@ -9,13 +9,22 @@ generator, Roll20 extension expectations).
 
 ## Cross-tool consumer audit (2026-07-18, during production review)
 
-The encounter generator's `monster-adapter.mjs` normalizes 2024 blocks
-degraded-but-working: CR/XP resolve via the compat `challenge_rating` string,
-but ability scores default to 10s (reads `attributes`, not `stats`),
-Actions/Traits come out empty (reads `actions` arrays, not `sections`), and
-defenses are missed (reads `damage_immunities`, not `immunities`). Encounter
-AI context for 2024 monsters is therefore hollow until the adapter learns the
-2024 shape — the mapper below is the fix.
+~~The encounter generator's `monster-adapter.mjs` normalizes 2024 blocks
+degraded-but-working~~ **RESOLVED 2026-07-28 (encounter phase 2)**: the
+adapter now maps 2024 blocks through `toLegacyModel` (the mapper this plan
+prescribed — it was built during the 2014-engine retrofit) before
+normalizing, so scores/actions/defenses/AI context are full-fidelity; the
+original 2024 block stays attached for the Statblock2024 display dispatch.
+`convertStatblockToPlainText` routes through the same mapper (replacing the
+inline shim). The encounter's own statblock generation is engine-routed via
+`generateEmbeddedStatblock` with a rules switch in the Monsters header.
+Fidelity test: `src/util/embedded-statblock.spec.js` (adapter describe).
+
+REMAINING (this plan stays open for): Foundry VTT / Improved Initiative
+export of 2024 blocks in `StatblockExports.vue` — `toLegacyModel` now makes
+this nearly free (feed it to the existing converters; decide Bonus
+Actions/Reactions folding per target) — and the Roll20 Conjure Creature
+extension expectations check.
 
 Already shimmed inline (minimal fallbacks, done during review):
 - `EncounterGenerator.vue` `convertStatblockToPlainText` — crashed on 2024

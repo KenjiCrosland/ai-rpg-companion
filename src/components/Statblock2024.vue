@@ -1,5 +1,5 @@
 <template>
-  <div ref="containerRef" :style="widthStyle" :class="`sb24-container ${effectiveColumns}`">
+  <div ref="containerRef" :style="widthStyle" :class="`sb24-container ${effectiveColumns}${tightGrid ? ' sb24--tight' : ''}`">
     <div v-if="loading" class="sb24-card">
       <Statblock2024Skeleton />
     </div>
@@ -434,6 +434,13 @@ let resizeObserver = null;
 const effectiveColumns = computed(() =>
   containerWidth.value < 700 ? 'one_column' : props.columns
 );
+// Below the statblock generator's canonical 850px, two-column text columns
+// get narrower than the full-size ability grid (38.2rem needs ~385px per
+// column) — compress the grid instead of letting the third group wrap
+// (live: embedded NPC/dungeon cards run ~750-820px containers).
+const tightGrid = computed(() =>
+  effectiveColumns.value === 'two_columns' && containerWidth.value < 850
+);
 const widthStyle = computed(() => ({ maxWidth: `${props.width}px` }));
 
 onMounted(() => {
@@ -564,6 +571,17 @@ onBeforeUnmount(() => {
   column-gap: 0.3rem;
   align-items: center;
   text-align: center;
+}
+
+/* Tight mode (two-column container under 850px): the grid compresses to
+   ~33rem so all three groups stay on one row in ~330px columns. */
+.sb24-container.sb24--tight .sb24-abilities {
+  gap: 0.4rem 0.6rem;
+}
+
+.sb24-container.sb24--tight .sb24-ability-cell {
+  grid-template-columns: 2.8rem 2rem 2.6rem 2.6rem;
+  column-gap: 0.2rem;
 }
 
 .sb24-ability-head {

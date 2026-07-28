@@ -1,36 +1,13 @@
-import { generateGptResponse } from "@/util/ai-client.mjs";
-import { createStatblockPrompts } from '../prompts/monster-prompts.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
+import { generateEmbeddedStatblock } from '@/util/embedded-statblock.mjs';
 
-function validationPart1(jsonString) {
-  try {
-    const jsonObj = JSON.parse(jsonString);
-    const keys = [
-      'armor_class',
-      'hit_points',
-      'speed',
-      'senses',
-      'languages',
-      'challenge_rating',
-      'proficiency_bonus',
-      'abilities',
-    ];
-    return keys.every((key) => key in jsonObj);
-  } catch (error) {
-    return false;
-  }
-}
-
-function validationPart2(jsonString) {
-  try {
-    const jsonObj = JSON.parse(jsonString);
-    const keys = ['actions'];
-    return keys.every((key) => key in jsonObj);
-  } catch (error) {
-    return false;
-  }
-}
-
+/**
+ * Engine-routed (phase 1 of the embedded edition migration, 2026-07-28):
+ * previously the legacy two-part pipeline. Same two LLM calls, now with
+ * chassis-exact numbers, the full lint stack, and the shared edition
+ * preference. 2014 output is the legacy model shape (drop-in); 2024 output
+ * is the sections model carrying `format: '2024'`.
+ */
 export async function generateStatblockForCreature({
   name,
   CR,
@@ -43,42 +20,10 @@ export async function generateStatblockForCreature({
     throw new Error('Cannot generate statblock. Limit reached or not allowed.');
   }
 
-  const promptOptions = {
-    monsterName: name,
-    challengeRating: CR,
-    monsterType: 'Random', // Adjust if needed
-    monsterDescription: description,
+  return generateEmbeddedStatblock({
+    name,
+    cr: CR,
+    description,
     caster: isSpellcaster,
-  };
-
-  const npcPrompts = createStatblockPrompts(promptOptions);
-
-  // Part 1
-  const npcStatsPart1 = await generateGptResponse(
-    npcPrompts.part1,
-    validationPart1,
-    3,
-  );
-  const part1Data = JSON.parse(npcStatsPart1);
-
-  const previousContext = [
-    {
-      role: 'user',
-      content: `Please give me the first part of a D&D statblock in the following format`,
-    },
-    { role: 'system', content: `${npcStatsPart1}` },
-  ];
-
-  const npcStatsPart2 = await generateGptResponse(
-    npcPrompts.part2,
-    validationPart2,
-    3,
-    previousContext,
-  );
-  const part2Data = JSON.parse(npcStatsPart2);
-
-  return {
-    ...part1Data,
-    ...part2Data,
-  };
+  });
 }

@@ -1,7 +1,11 @@
 <template>
   <div class="dungeon-monsters parchment">
     <div class="dungeon-monsters-heading">
-      <h3 class="dungeon-monsters-heading__title">Dungeon Monsters</h3>
+      <div class="dungeon-monsters-heading__row">
+        <h3 class="dungeon-monsters-heading__title">Dungeon Monsters</h3>
+        <ParSwitch v-model="rulesIs2024" data-testid="rules-switch"
+          off-label="2014 rules" on-label="2024 rules" aria-label="Use 2024 rules" />
+      </div>
       <p class="dungeon-monsters-heading__tagline">
         Creatures lurking in this dungeon — generate a full statblock for any of them.
       </p>
@@ -96,7 +100,11 @@
               dungeonStore?.monsterLoadingStates[monster.id]?.part1 ||
               dungeonStore?.monsterLoadingStates[monster.id]?.part2
             " style="margin-top: 1rem;">
-              <Statblock :monster="monster.statblock" :premium="premium" :readonly="true"
+              <Statblock2024
+                v-if="monster.statblock?.format === '2024' || (rulesIs2024 && !monster.statblock && dungeonStore.monsterLoadingStates[monster.id]?.generating)"
+                :monster="monster.statblock" :premium="premium" :readonly="true"
+                :loading="dungeonStore.monsterLoadingStates[monster.id]?.generating && !monster.statblock" />
+              <Statblock v-else :monster="monster.statblock" :premium="premium" :readonly="true"
                 :loadingPart1="dungeonStore.monsterLoadingStates[monster.id]?.part1 || false"
                 :loadingPart2="dungeonStore.monsterLoadingStates[monster.id]?.part2 || false"
                 @update-monster="updateMonsterStatblock(monster, $event)" />
@@ -135,8 +143,8 @@
                 <ParField label="CR">
                   <ParSelect v-model="monster.CR" :options="crOptions" placeholder="Select CR" />
                 </ParField>
-                <ParField label="Monster Type">
-                  <ParSelect v-model="monster.monsterType" :options="monsterTypeOptions" placeholder="Select type" />
+                <ParField label="Combat role">
+                  <ParSelect v-model="monster.archetype" :options="archetypeOptions" placeholder="Combat role" />
                 </ParField>
               </div>
               <ParCheckbox v-model="monster.isSpellcaster">Creature is a spellcaster</ParCheckbox>
@@ -205,19 +213,22 @@
       <h3 class="create-monster-form__title">Create a custom monster</h3>
       <p v-if="statblockFormError" class="create-monster-form__error">{{ statblockFormError }}</p>
 
+      <ParField label="Name or concept" :optional="true">
+        <ParInput id="monsterName" v-model="statblockForm.name"
+          placeholder="Headless Horseman, feywild mud monster — or blank for a random monster" />
+      </ParField>
+
       <div class="create-monster-grid">
-        <ParField label="Monster name" :optional="true">
-          <ParInput id="monsterName" v-model="statblockForm.name" placeholder="e.g., Headless Horseman" />
+        <ParField label="Combat role">
+          <ParSelect v-model="statblockForm.archetype" :options="archetypeOptions" />
         </ParField>
-        <ParField label="Monster Type">
-          <ParSelect v-model="statblockForm.monsterType" :options="monsterTypeOptions" placeholder="Select type" />
-        </ParField>
-        <ParField label="CR">
+        <ParField label="Challenge rating">
           <ParSelect v-model="statblockForm.CR" :options="crOptions" placeholder="Select CR" />
         </ParField>
       </div>
+      <p class="archetype-help">{{ archetypeHelp }}</p>
 
-      <ParField label="Monster description / special instructions" :optional="true">
+      <ParField label="Description / special instructions" :optional="true">
         <ParTextarea v-model="statblockForm.description" :rows="4"
           placeholder="Describe the monster's abilities, or any special instructions…" />
       </ParField>
@@ -245,12 +256,23 @@
 </template>
 
 <script setup>
-import { ParButton, ParCardButton, ParField, ParInput, ParTextarea, ParSelect, ParCheckbox, ParConfirm } from "@/parchment";
-import { ref, computed, onMounted } from 'vue';
+import { ParButton, ParCardButton, ParField, ParInput, ParTextarea, ParSelect, ParCheckbox, ParConfirm, ParSwitch } from "@/parchment";
+import { ref, computed, onMounted, watch } from 'vue';
 import { useDungeonStore } from '../stores/dungeon-store.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
 import Statblock from '@/components/Statblock.vue';
+import Statblock2024 from '@/components/Statblock2024.vue';
+import { setPreferredEdition, editionPreferenceRef, ARCHETYPE_HELP, ARCHETYPE_OPTIONS } from '@/util/embedded-statblock.mjs';
 import PatreonCallout from '@/components/PatreonCallout.vue';
+
+// Shared app-wide edition preference (same key the statblock generator
+// persists) — one reactive source, so this switch, the NPCs tab's, and the
+// NPC generator's stay in sync.
+const editionPref = editionPreferenceRef();
+const rulesIs2024 = computed({
+  get: () => editionPref.value === '2024',
+  set: (v) => setPreferredEdition(v ? '2024' : '2014'),
+});
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
 import crList from '../data/cr-list.json';
 import MonsterDescriptionSkeleton from './skeletons/MonsterDescriptionSkeleton.vue';
@@ -262,7 +284,7 @@ const props = defineProps({ premium: { type: Boolean, default: false } });
 const monsters = computed(() => dungeonStore.currentDungeon?.monsters || []);
 
 // Statblock-bias options for the CR/type selects.
-const monsterTypeOptions = ['Random', 'Stronger Defense', 'Balanced', 'Stronger Offense'];
+const archetypeOptions = ARCHETYPE_OPTIONS;
 
 // One-line teaser for a collapsed card — first sentence of the richest
 // available description.
@@ -331,10 +353,11 @@ const monsterEditForm = ref({
 });
 
 // This form is for creating a brand-new monster from scratch
+const archetypeHelp = computed(() => ARCHETYPE_HELP[statblockForm.value.archetype] ?? '');
 const statblockForm = ref({
   name: '',
   CR: '',
-  monsterType: '',
+  archetype: 'auto',
   description: '',
   isSpellcaster: false,
 });
@@ -406,7 +429,7 @@ async function generateNewMonster() {
     await dungeonStore.createAndGenerateMonster({
       name: statblockForm.value.name,
       shortDescription: statblockForm.value.description,
-      monsterType: statblockForm.value.monsterType,
+      archetype: statblockForm.value.archetype,
       CR: statblockForm.value.CR,
       isSpellcaster: statblockForm.value.isSpellcaster,
       premium: props.premium,
@@ -890,5 +913,19 @@ function saveEditMonster() {
   .button-group button {
     width: 100%;
   }
+}
+
+.archetype-help {
+  margin: -0.4rem 0 0.8rem;
+  font-size: 1.3rem;
+  color: var(--par-color-text-muted, #6b6b6b);
+}
+
+.dungeon-monsters-heading__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem 1.5rem;
+  flex-wrap: wrap;
 }
 </style>

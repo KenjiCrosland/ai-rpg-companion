@@ -314,6 +314,7 @@ import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import challengeRatingData from '@/data/challengeRatings.json';
 import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
 import { canGenerateStatblock } from "@/util/can-generate-statblock.mjs";
+import { ARCHETYPE_HELP, ARCHETYPE_OPTIONS } from "@/util/embedded-statblock.mjs";
 import { QUOTA_FIELDS, RESERVED_HOST_FIELDS } from "@/util/quota-storage.mjs";
 import { renameStatblockReferences, moveStatblockToNewFolder } from '@/util/statblock-storage.mjs';
 import { navigateToTool, getNavigationParams } from '@/util/navigation.mjs';
@@ -353,25 +354,7 @@ const formatIs2024 = computed({
 });
 
 const archetype = ref('auto');
-const ARCHETYPE_HELP = {
-  auto: "We'll pick the role that best fits your monster's name and description.",
-  balanced: 'No role bias — the raw mathematical baseline for this CR.',
-  brute: 'Hits hard up close, soaks damage, easy to hit. Ogres, zombies, giant hyenas.',
-  defender: 'High AC, protects allies, punishes movement. Animated armor, ropers.',
-  skirmisher: 'Mobile hit-and-run attacker with a movement trick.',
-  artillery: 'Fragile long-range damage dealer with an escape tool.',
-  controller: 'Locks enemies down with conditions instead of raw damage. Aboleths.',
-  lurker: 'Fragile ambusher with a devastating opening strike. Ghosts, will-o\'-wisps.',
-  support: 'Buffs, heals, and enables allies — underperforms its CR when fought alone.',
-  swarm: 'A mass of small creatures acting as one, hard to put down with weapons.',
-};
-const archetypeOptions = [
-  { label: 'Auto — match my concept', value: 'auto' },
-  { label: 'Balanced (no role)', value: 'balanced' },
-  ...Object.keys(ARCHETYPE_HELP)
-    .filter((k) => k !== 'auto' && k !== 'balanced')
-    .map((k) => ({ label: k.charAt(0).toUpperCase() + k.slice(1), value: k })),
-];
+const archetypeOptions = ARCHETYPE_OPTIONS;
 const archetypeHelp = computed(() => ARCHETYPE_HELP[archetype.value] ?? '');
 
 // Legacy Build values map onto archetypes for regenerating pre-engine

@@ -1013,6 +1013,45 @@ action/frequency cost — off-corpus shape, defense-budget family, n=1
 watch); Frostfire Burst all-fire despite the name; "Chitterchill" is
 Chit-cluster slip #7 (the 50% ban roll missed).
 
+## Embedded-tools edition migration — PHASE 1 SHIPPED (2026-07-28)
+
+Dungeon monsters, dungeon NPC statblocks, and NPC-generator statblocks now
+generate through the ENGINE instead of the legacy two-part pipeline —
+inheriting chassis-exact numbers, the full lint/corrector stack, essences,
+and both editions. Design (owner-approved): **switch at generation,
+dispatch at display, no tabs/conversion inside embedded tools (v1)**.
+
+Mechanics:
+- `src/util/embedded-statblock.mjs`: `generateEmbeddedStatblock({name, cr,
+  description, caster, type, edition, onResolve})` — archetype-resolve
+  micro-call (identity + creature_type by substance; tool-known type wins)
+  then `generateMonster2024`. Same two LLM calls as the old part1/part2
+  flow. The TOOL owns the name: drifted output names are stamped back via
+  applyRenameMapping (self-references follow). `preferredEdition()`/
+  `setPreferredEdition()` read/write the statblock generator's persisted
+  `statblock-format` key — one app-wide preference.
+- Rewired: dungeon monster-store, dungeon npc-store, dungeon
+  util/statblock-generator.mjs (the creature quick-path), NPCGenerator.vue.
+  Loading flags: part1 clears on the resolve callback; part2 on completion.
+- Display: MonstersTab / NPCsTab / NPCGenerator format-dispatch between
+  Statblock and Statblock2024 (readonly) on the block's own `format`.
+- Rules switches: NPC generator statblock form + dungeon MonstersTab
+  create form carry the same ParSwitch (`rules-switch`), bound to the
+  shared preference. Dungeon NPC statblocks follow the preference.
+- Exports: all three dungeon converters dispatch 2024-format embedded
+  blocks through `renderStatblock2024` (markdown verbatim; plain-text
+  strips markup; HTML converts basic markdown).
+
+Known v1 limits (deliberate): no tabs/Convert inside embedded tools
+(conversion lives where monsters are owned — the statblock generator; the
+auto-saved library copy is convertible there); dungeon statblock EDIT
+prompts (statblock-edit-prompts.mjs) remain legacy-shaped — the dungeon's
+AI-edit affordances only render for 2014-format blocks (2024 embedded
+cards are readonly); whole-dungeon batch conversion is docketed as v2
+(N conversions = N metered generations). `createStatblockPrompts`
+consumers are now ONLY the statblock generator's escape-flag legacy
+fallback — the retirement decision is unblocked.
+
 ## Defect investigation (2026-07-25)
 
 The 16-block field-test corpus was split verbatim into `fixtures/` and audited

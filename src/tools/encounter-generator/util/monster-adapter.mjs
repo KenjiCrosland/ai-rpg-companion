@@ -4,6 +4,7 @@
  */
 
 import crToXP from '@/data/cr-to-xp.json';
+import { toLegacyModel } from '@/tools/statblock-generator/format-2024/generate.mjs';
 import { logger } from '@/util/logger.mjs';
 
 /**
@@ -55,6 +56,20 @@ function parseAttributes(attributesString) {
 }
 
 export function normalizeCustomMonster(monster, folderName = 'Uncategorized') {
+  // 2024-format blocks map through the engine's legacy-shape converter so
+  // every downstream reader (ability scores, actions, defenses, the
+  // encounter AI context) gets full fidelity — previously they normalized
+  // "degraded-but-working": scores defaulted to 10, Actions/Traits came out
+  // empty (plans/statblock-2024-export-mappers.md). The ORIGINAL block stays
+  // attached as `statblock` so display renders the 2024 card.
+  const original = monster;
+  if (monster.format === '2024') {
+    try {
+      monster = toLegacyModel(monster);
+    } catch (e) {
+      logger.warn('2024→legacy mapping failed for encounter adapter:', e);
+    }
+  }
   const cr = extractCR(monster.challenge_rating);
   const xp = getXPForCR(cr);
 
@@ -102,7 +117,7 @@ export function normalizeCustomMonster(monster, folderName = 'Uncategorized') {
     quantity: 1,
     source: 'custom',
     sourceLabel: folderName,
-    statblock: monster, // Full statblock available for display
+    statblock: original, // Full statblock available for display (original format)
     description: '',
     type: 'Balanced',
     creatureType,

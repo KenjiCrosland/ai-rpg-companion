@@ -229,9 +229,13 @@
                     <div>
                         <!-- Generate or Attach Statblock (only show if no statblock attached) -->
                         <div v-if="!npcDescriptionPart1.statblock_name" class="npc-statblock__form parchment">
-                            <h3 class="npc-statblock__heading npc-statblock__heading--inset">
-                                Generate a D&D 5e statblock for {{ npcDescriptionPart1.character_name }}
-                            </h3>
+                            <div class="npc-statblock__header">
+                                <h3 class="npc-statblock__heading npc-statblock__heading--inset">
+                                    Generate a D&D 5e statblock for {{ npcDescriptionPart1.character_name }}
+                                </h3>
+                                <ParSwitch v-model="rulesIs2024" data-testid="rules-switch"
+                                    off-label="2014 rules" on-label="2024 rules" aria-label="Use 2024 rules" />
+                            </div>
                             <div class="npc-statblock__fields">
                                 <ParField label="Challenge rating" class="npc-statblock__cr">
                                     <ParSelect v-model="selectedChallengeRating"
@@ -281,7 +285,11 @@
                             </div>
                         </div>
 
-                        <Statblock v-if="(loadingStatblockPart1 || loadingStatblockPart1 || statblock)"
+                        <Statblock2024
+                            v-if="statblock?.format === '2024' || (rulesIs2024 && !statblock && (loadingStatblockPart1 || loadingStatblockPart2))"
+                            :monster="statblock" :premium="premium" :readonly="true"
+                            :loading="loadingStatblockPart1 || loadingStatblockPart2" />
+                        <Statblock v-else-if="(loadingStatblockPart1 || loadingStatblockPart2 || statblock)"
                             :loadingPart1="loadingStatblockPart1" :loadingPart2="loadingStatblockPart2"
                             :monster="statblock" :premium="premium" :copyButtons="true" :readonly="true"
                             @update-monster="updateStatblock" />
@@ -344,7 +352,7 @@
 </template>
 
 <script setup>
-import { ParButton, ParAccordion, ParAccordionGroup, ParField, ParInput, ParSelect, ParCheckbox, ParConfirm } from "@/parchment";
+import { ParButton, ParAccordion, ParAccordionGroup, ParField, ParInput, ParSelect, ParCheckbox, ParConfirm, ParSwitch } from "@/parchment";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { CdrLink, CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
 import { useToast } from '@/composables/useToast';
@@ -353,6 +361,7 @@ import VersionBadge from '@/components/VersionBadge.vue';
 import NPCCard from '@/components/NPCCard.vue';
 import PatreonCallout from '@/components/PatreonCallout.vue';
 import Statblock from '@/components/Statblock.vue';
+import Statblock2024 from '@/components/Statblock2024.vue';
 import DataManagerModal from '@/components/DataManagerModal.vue';
 import StatblockFuzzySearch from '@/components/StatblockFuzzySearch.vue';
 import SeededFromBanner from '@/components/SeededFromBanner.vue';
@@ -361,7 +370,7 @@ import { logger } from '@/util/logger.mjs';
 import { sweepOrphanReferences } from '@/util/sweep-orphan-references.mjs';
 import ItemExportsSection from '@/tools/item-generator/components/ItemExportsSection.vue';
 import { generateGptResponse } from "@/util/ai-client.mjs";
-import { createStatblockPrompts } from "@/prompts/monster-prompts.mjs";
+import { generateEmbeddedStatblock, setPreferredEdition, editionPreferenceRef } from "@/util/embedded-statblock.mjs";
 import { requestNPCDescription } from "./utils/request-npc-description.mjs";
 import { convertNPCToMarkdown, convertNPCToPlainText } from '@/util/convertToMarkdown.mjs';
 import { patreonTiersUrl } from '@/util/patreon-urls.mjs';
@@ -433,6 +442,13 @@ const loadingStatblockPart2 = ref(false);
 const statblock = ref(null);
 const selectedChallengeRating = ref('1');
 const isSpellcaster = ref(false);
+// Shared app-wide edition preference (same key the statblock generator
+// persists) — the switch here writes it for every tool.
+const editionPref = editionPreferenceRef();
+const rulesIs2024 = computed({
+  get: () => editionPref.value === '2024',
+  set: (v) => setPreferredEdition(v ? '2024' : '2014'),
+});
 const statblockLimitReached = ref(false);
 const loadingNewRelationship = ref(false);
 const selectedStatblock = ref(null);
@@ -1750,28 +1766,20 @@ async function generateStatblock() {
     loadingStatblockPart1.value = true;
     loadingStatblockPart2.value = true;
     const fullNPCDescription = `Description of Position: ${npcDescriptionPart1.value.description_of_position}. Distinctive Feature: ${npcDescriptionPart1.value.distinctive_feature_or_mannerism}. Character Secret: ${npcDescriptionPart1.value.character_secret}. Read Aloud Description: ${npcDescriptionPart1.value.read_aloud_description}`;
-    const promptOptions = {
-        monsterName: npcDescriptionPart1.value.character_name,
-        challengeRating: selectedChallengeRating.value,
-        monsterType: 'Random',
-        monsterDescription: fullNPCDescription,
-        caster: isSpellcaster.value
-    };
-    const npcPrompts = createStatblockPrompts(promptOptions);
 
     try {
-        const npcStatsPart1 = await generateGptResponse(npcPrompts.part1, validationPart1, 3);
-        statblock.value = JSON.parse(npcStatsPart1);
-        loadingStatblockPart1.value = false;
-        const previousContext = [
-            { role: 'user', content: `Please give me the first part of a D&D statblock in the following format` },
-            { role: 'system', content: `${npcStatsPart1}` }
-        ];
-        const npcStatsPart2 = await generateGptResponse(npcPrompts.part2, validationPart2, 3, previousContext);
-        const finalStatblock = {
-            ...JSON.parse(npcStatsPart1),
-            ...JSON.parse(npcStatsPart2),
-        };
+        // Engine-routed (phase 1 of the embedded edition migration): same
+        // two calls as the old part1/part2 flow, with chassis-exact numbers,
+        // the lint stack, and the shared edition preference. NPCs default to
+        // Humanoid; the resolve call may override by substance.
+        const finalStatblock = await generateEmbeddedStatblock({
+            name: npcDescriptionPart1.value.character_name,
+            cr: selectedChallengeRating.value,
+            description: fullNPCDescription,
+            caster: isSpellcaster.value,
+            type: 'Humanoid',
+            onResolve: () => { loadingStatblockPart1.value = false; },
+        });
         statblock.value = finalStatblock;
 
         // Auto-save statblock to shared storage (all NPC statblocks go to "NPC Statblocks" folder)
@@ -1807,35 +1815,6 @@ async function generateStatblock() {
         errorMessage.value = 'There was an issue generating the full description. Please reload your browser and resubmit your creature.';
     }
     loadingStatblockPart2.value = false;
-}
-
-function validationPart1(jsonString) {
-    try {
-        const jsonObj = JSON.parse(jsonString);
-        const keys = [
-            'armor_class',
-            'hit_points',
-            'speed',
-            'senses',
-            'languages',
-            'challenge_rating',
-            'proficiency_bonus',
-            'abilities'
-        ];
-        return keys.every((key) => key in jsonObj);
-    } catch (error) {
-        return false;
-    }
-}
-
-function validationPart2(jsonString) {
-    try {
-        const jsonObj = JSON.parse(jsonString);
-        const keys = ['actions'];
-        return keys.every((key) => key in jsonObj);
-    } catch (error) {
-        return false;
-    }
 }
 
 function singleRelationshipValidation(jsonString) {
@@ -2339,6 +2318,21 @@ div[class^="cdr-skeleton-bone"] {
     align-items: flex-end;
     gap: 2rem;
     flex-wrap: wrap;
+}
+
+/* Heading and rules toggle share one header row — no stacked margins. */
+.npc-statblock__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem 1.5rem;
+    flex-wrap: wrap;
+    /* Carries the inset heading's original 1.5rem rhythm to the fields. */
+    margin-bottom: 1.5rem;
+}
+
+.npc-statblock__header .npc-statblock__heading {
+    margin-bottom: 0;
 }
 
 .npc-statblock .npc-statblock__cr {
