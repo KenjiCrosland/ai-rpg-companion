@@ -138,7 +138,9 @@ jest.mock('@rei/cedar', () => ({
 jest.mock('@/composables/useToast', () => ({
   useToast: () => ({
     success: jest.fn(),
-    error: jest.fn()
+    error: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn()
   })
 }));
 

@@ -69,7 +69,7 @@ jest.mock('@rei/cedar', () => ({
 }));
 
 jest.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: jest.fn(), error: jest.fn() }),
+  useToast: () => ({ success: jest.fn(), error: jest.fn(), info: jest.fn(), warning: jest.fn() }),
 }));
 
 // Deterministic seed: a REAL random seed can roll words that collide with the
@@ -389,6 +389,30 @@ describe('StatblockGenerator 2024 flow', () => {
       await clickEditionTab(wrapper, '2024 rules');
       expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(false);
       expect(wrapper.find('.statblock-2024-stub').exists()).toBe(true);
+      wrapper.unmount();
+    });
+
+    test('Convert meters through the generation quota: gate consulted, denial blocks the call', async () => {
+      const { canGenerateStatblock } = require('@/util/can-generate-statblock.mjs');
+      canGenerateStatblock.mockClear();
+      const wrapper = await mountWithStalker();
+      await clickEditionTab(wrapper, '2014 rules');
+
+      // Quota denied (free user at the daily cap): no LLM call, preview stays.
+      canGenerateStatblock.mockResolvedValueOnce(false);
+      await wrapper.find('[data-testid="convert-edition"]').trigger('click');
+      await flushPromises();
+      expect(canGenerateStatblock).toHaveBeenCalledWith(true); // premium flag forwarded
+      expect(aiClient.generateGptResponse).not.toHaveBeenCalled();
+      expect(wrapper.find('[data-testid="edition-preview"]').exists()).toBe(true);
+      expect(savedMonsters().Uncategorized[0].format).toBe('2024');
+
+      // Quota available: the conversion proceeds.
+      aiClient.generateGptResponse.mockResolvedValue(JSON.stringify(conversion2014));
+      await wrapper.find('[data-testid="convert-edition"]').trigger('click');
+      await flushPromises();
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(1);
+      expect(savedMonsters().Uncategorized[0].format).toBe('2014');
       wrapper.unmount();
     });
 

@@ -12,13 +12,13 @@
  * injected ((prompt, validate) => Promise<string>) so the pipeline is testable
  * without the AI client; the component passes generateGptResponse.
  */
-import { seedLeakTokens, rollNameBans } from './concept-seeds.mjs';
+import { seedLeakTokens, rollNameBans, TYPE_ESSENCES } from './concept-seeds.mjs';
 import spec from '@/data/archetype-chassis-spec.json';
 import srdMonsters from '@/data/srd52-monsters.json';
 import challengeRatings from '@/data/challengeRatings.json';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
-import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS } from './lint.mjs';
+import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP } from './lint.mjs';
 import { logger } from '@/util/logger.mjs';
 
 export const ARCHETYPE_NAMES = Object.keys(spec.archetypes).filter((n) => !n.startsWith('_'));
@@ -272,7 +272,9 @@ Archetypes:
 
 The identity is 2-3 sentences a designer would build from: how it opens a fight, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). Concrete and specific to THIS creature — never generic filler.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the eight names above>", "identity": "<2-3 sentences>"}`;
+Also decide the creature TYPE from the concept's SUBSTANCE — what it physically IS: animated objects/machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; masses of vermin are a swarm (name the base type); giants are massive humanoid-shaped folk; fungus/vegetation are Plant. Never type by vibe.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the eight names above>", "identity": "<2-3 sentences>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>"}`;
 }
 
 export function validateArchetypeResponse(jsonString) {
@@ -290,7 +292,8 @@ export function validateArchetypeResponse(jsonString) {
 export function buildSeedSynthesisPrompt(seed) {
   return `Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.
 
-Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}${seed.creature_type ? `; creature type: ${seed.creature_type} (non-negotiable — reinterpret the other traits through it)` : ''}.
+Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}.
+${seed.creature_type ? `Creature type: ${seed.creature_type} — ${TYPE_ESSENCES[seed.creature_type] ?? 'build from what that type IS'}. Fuse the rolled traits INTO this essence (the traits are raw material; the essence is what the creature fundamentally is) — never design the traits first and paint the type on after.` : ''}
 
 Write 2-3 vivid sentences describing a single unified creature: the first describes what it IS (the traits must merge into one identity — one body, one behavior — not remain separate features; contradictions between traits are creative fuel), the rest describe how it FIGHTS — how it opens, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). The combat role must FOLLOW the rolled disposition — a guardian is a defender, a trickster is not a brute, a pack-hunter skirmishes.
 
@@ -304,7 +307,9 @@ Archetypes:
 - support: buffs, heals, or enables allies
 - swarm: mass of small creatures acting as one
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the eight>", "synthesis": "<your 2-3 sentences>"}`;
+Echo the rolled creature type in "creature_type" — but if the fused concept's SUBSTANCE contradicts it (the fusion turned out to be a vermin multitude rolled as Giant, or an amber construct rolled as Humanoid), override it with the type the substance demands.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the eight>", "synthesis": "<your 2-3 sentences>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>"}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -552,7 +557,7 @@ RULES — read first; they apply to every line of output:
 7. Defensive traits must be NARROW. Never write a passive trait that halves or reduces incoming damage or grants resistance to everything — the fixed AC/HP already price the creature's defenses. Mitigating a single attack is fine ONLY as a reaction (once per round).
 8. A reaction is not a free action — every Reactions entry begins by stating its trigger in prose: "When <specific event>, the <creature> <responds>." Never write a reaction that can simply be used on the creature's turn.
 9. Ability names are plain English that says what the ability does — an invented or coined word may be the CREATURE's name, never an ability's name. The creature's own name reads like a Monster Manual entry: a real-word compound, a folk name, or a coined word — never a flat description of its attack routine.
-10. The type follows the creature's SUBSTANCE: animated objects, machines, and worked materials are constructs (an animated sword or needle is never a beast); spirits and remains of the dead are undead; only living natural animals are beasts.
+10. The type follows the creature's SUBSTANCE: animated objects, machines, and worked materials are constructs (an animated sword or needle is never a beast); spirits and remains of the dead are undead; only living natural animals are beasts. A giant is a massive humanoid-shaped person (an ogre, a titan) — a crawling creature, a vermin multitude, or a plant is NEVER a giant; fungus and vegetation creatures are plants; a cloud, cluster, or multitude of small creatures is a swarm of its creature type. Beasts are natural animals: INT 3 or lower, and NEVER spellcasters. If the concept's substance contradicts the requested type, follow the SUBSTANCE.
 
 CONCEPT: ${concept}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
@@ -583,7 +588,7 @@ Apply ALL the RULES from the top of this prompt. Return ONLY the JSON object.`;
 // Assembly — engine numbers stamped over the LLM's flavor
 // ---------------------------------------------------------------------------
 
-export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, archetypeSource = 'user' }) {
+export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, archetypeSource = 'user', resolvedType = null }) {
   const stats = {};
   for (const s of STAT_ORDER) {
     stats[s] = Math.min(30, Math.max(1, Math.round(llmJson.stats?.[s] ?? 10)));
@@ -602,9 +607,9 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   }
 
   const sections = {};
-  for (const [name, entries] of Object.entries(llmJson.sections ?? {})) {
+  for (const [sectionName, entries] of Object.entries(llmJson.sections ?? {})) {
     if (!Array.isArray(entries) || entries.length === 0) continue;
-    sections[name] = entries
+    sections[sectionName] = entries
       .filter((e) => e && e.name && e.text)
       .map((e) => {
         // Strip zero-damage riders ("plus 0 fire damage") — malicious
@@ -612,7 +617,11 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
         const text = e.text.replace(/\s*,?\s*plus 0(?:\s*\([^)]*\))?\s+\w+ damage/gi, '');
         // Entry names never carry a leading article ("The Unstable" →
         // "Unstable") — zero corpus occurrences of "The "-prefixed names.
-        const name = e.name.replace(/^the\s+/i, '');
+        // A cost suffix inside its OWN section is redundant, and doubles on
+        // the legacy fold ("Disengage (Bonus Action) (Bonus Action)" — live).
+        let name = e.name.replace(/^the\s+/i, '');
+        if (sectionName === 'Bonus Actions') name = name.replace(/\s*\(Bonus Action\)\s*$/i, '');
+        if (sectionName === 'Reactions') name = name.replace(/\s*\(Reaction\)\s*$/i, '');
         return e.slot ? { name, text, slot: e.slot } : { name, text };
       });
   }
@@ -650,6 +659,20 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
           const abbr = NAME_TO_ABBR[m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()];
           const required = (Number(m[2]) - 8 - chassis.pb) * 2 + 10;
           if (abbr && required <= 30 && required > (stats[abbr] ?? 10)) stats[abbr] = required;
+          // The inverse mismatch — a score OVERSHOOTING the printed DC
+          // (live: CHA 22 under "spell save DC 17" at PB +4; derived 18,
+          // inside the lint rule's ±1 tolerance) — rewrites the DC (and any
+          // spell-attack bonus) to the derivation. Corpus DCs always derive
+          // exactly; the chassis DC stays the floor via the raise above.
+          if (abbr) {
+            const mod = modOf(stats[abbr]);
+            const derived = 8 + chassis.pb + mod;
+            if (derived !== Number(m[2])) {
+              entry.text = entry.text
+                .replace(new RegExp(`spell save DC ${m[2]}\\b`), `spell save DC ${derived}`)
+                .replace(/\+\d+ to hit with spell attacks/, `${signed(chassis.pb + mod)} to hit with spell attacks`);
+            }
+          }
           break outer;
         }
       }
@@ -671,7 +694,10 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   const perception = 10 + modOf(stats.WIS) + (skillProfs.includes('Perception') ? pb : 0);
   const sensesSpecial = (llmJson.senses_special ?? '').trim()
     // Corpus lowercases sense names ("darkvision 120 ft.").
-    .replace(/\b(Blindsight|Darkvision|Tremorsense|Truesight)\b/g, (w) => w.toLowerCase());
+    .replace(/\b(Blindsight|Darkvision|Tremorsense|Truesight)\b/g, (w) => w.toLowerCase())
+    // The blind-beyond clause is always parenthesized in officials
+    // ("blindsight 60 ft. (blind beyond this radius)"), never comma-joined.
+    .replace(/,\s*(blind beyond this radius)/i, ' ($1)');
   const senses = sensesSpecial
     ? `${sensesSpecial}; Passive Perception ${perception}`
     : `Passive Perception ${perception}`;
@@ -685,12 +711,23 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   const hpFormula = hpFormulaFor(chassis.hp, size, modOf(stats.CON));
   const hp = Math.max(1, avgDice(hpFormula) ?? chassis.hp);
 
+  // Creature-type stamp (owner call, batch 8: an amber-shard flyer shipped
+  // as Humanoid): the resolve/synthesis micro-call decides the type from the
+  // concept's SUBSTANCE, and the engine stamps it like a number. The model's
+  // own type survives only when no resolved type exists, when it emitted a
+  // swarm form (the stamp never breaks "Swarm of Tiny X"), or when the
+  // resolved value isn't canonical.
+  const CANONICAL_TYPES = ['Aberration', 'Beast', 'Celestial', 'Construct', 'Dragon', 'Elemental', 'Fey', 'Fiend', 'Giant', 'Humanoid', 'Monstrosity', 'Ooze', 'Plant', 'Undead'];
+  let creatureType = llmJson.type || 'Monstrosity';
+  const stampType = resolvedType && CANONICAL_TYPES.find((t) => t.toLowerCase() === String(resolvedType).trim().toLowerCase());
+  if (stampType && !/^swarm/i.test(creatureType)) creatureType = stampType;
+
   const monster = {
     // Names never carry a leading article — prose and display add "the" —
     // and always render Title Case regardless of what the model wrote.
     name: titleCaseName((llmJson.name || 'Unnamed Creature').replace(/^the\s+/i, '')),
     size,
-    type: llmJson.type || 'Monstrosity',
+    type: creatureType,
     alignment: llmJson.alignment || 'Unaligned',
     ac: chassis.ac,
     hp,
@@ -725,10 +762,28 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   if (skills) monster.skills = skills;
   // "none"/"None" written out is model drift — the official empty-languages
   // form is the em-dash, which the renderer supplies for a missing field.
-  if (llmJson.languages && !/^none$/i.test(llmJson.languages.trim())) monster.languages = llmJson.languages;
-  if (llmJson.resistances) monster.resistances = llmJson.resistances;
-  if (llmJson.immunities) monster.immunities = llmJson.immunities;
-  if (llmJson.vulnerabilities) monster.vulnerabilities = llmJson.vulnerabilities;
+  // "does not/cannot speak" normalizes to the corpus form (31/31 official
+  // mute-languages lines write "can't speak"; recurring live drift).
+  if (llmJson.languages && !/^none$/i.test(llmJson.languages.trim())) {
+    monster.languages = llmJson.languages
+      .replace(/\b(?:does not|doesn't|cannot) speak\b/gi, "can't speak")
+      // "Infernal, understands Common but can't speak" — a spoken language
+      // contradicting the mute clause (live); fold it into the understood
+      // list (0 mixed shapes in either corpus).
+      .replace(/^([A-Z][\w' ]+(?:, [A-Z][\w' ]+)*), understands (.+?) but can't speak/,
+        "understands $1 and $2 but can't speak");
+  }
+  // Defense LINES list bare types — "poison damage" inside the line is model
+  // drift (live: "Damage Immunities: poison damage"). Token-level strip only;
+  // sentence-form values (Half-Dragon's "Damage type chosen for...") survive.
+  // "exhausted" is the condition misnamed (live: an Immunities line carried
+  // it) — normalized so the condition classifier can route it.
+  const stripDamageWord = (v) => v
+    ?.replace(/\b(acid|bludgeoning|cold|fire|force|lightning|necrotic|piercing|poison|psychic|radiant|slashing|thunder) damage\b/gi, '$1')
+    .replace(/\bexhausted\b/gi, 'exhaustion');
+  if (llmJson.resistances) monster.resistances = stripDamageWord(llmJson.resistances);
+  if (llmJson.immunities) monster.immunities = stripDamageWord(llmJson.immunities);
+  if (llmJson.vulnerabilities) monster.vulnerabilities = stripDamageWord(llmJson.vulnerabilities);
   return monster;
 }
 
@@ -806,8 +861,10 @@ export function toLegacyModel(m) {
 
   const abilities = [
     ...entryList('Traits'),
-    ...entryList('Bonus Actions').map((e) => ({ ...e, name: `${e.name} (Bonus Action)` })),
-    ...entryList('Reactions').map((e) => ({ ...e, name: `${e.name} (Reaction)` })),
+    // Guard: a model-emitted name that ALREADY carries the suffix must not
+    // double it ("Disengage (Bonus Action) (Bonus Action)" — live finding).
+    ...entryList('Bonus Actions').map((e) => ({ ...e, name: /\(Bonus Action\)\s*$/i.test(e.name) ? e.name : `${e.name} (Bonus Action)` })),
+    ...entryList('Reactions').map((e) => ({ ...e, name: /\(Reaction\)\s*$/i.test(e.name) ? e.name : `${e.name} (Reaction)` })),
   ];
 
   // 2014 lowercases the type line — except the size term inside a swarm
@@ -949,7 +1006,9 @@ const CONVERSION_RULES = {
 - Save effects use the structured skeleton as the WHOLE sentence: "*<Ability> Saving Throw*: DC n, <who saves, e.g. each creature in a 30-foot Cone>. *Failure:* <effect>. *Success:* <lesser effect>." Omit *Success:* entirely when success does nothing. Never "must make a" or "must succeed on".
 - Conditions are Capitalized and phrased "has the X condition" (Prone, Frightened, Poisoned, ...). Game terms Capitalized: Hit Points, Opportunity Attack.
 - Reactions become "*Trigger:* <the specific event>. *Response:* <what the creature does>."
-- 2014 spellcasting traits convert to: "The creature casts one of the following spells, using <Ability> as the spellcasting ability (spell save DC n): ..." Spell names Title Case.`,
+- 2014 spellcasting traits convert to: "The <creature's name> casts one of the following spells, using <Ability> as the spellcasting ability (spell save DC n): ..." Spell names Title Case. The entry is named "Spellcasting".
+- NEVER invert meaning: "is immune to the poisoned condition" stays an immunity (never "has the Poisoned condition"); a save's Success outcome keeps its original meaning (if success avoided a push, Success must still avoid it); never repeat an attack's damage inside its Failure clause.
+- Keep the entry's SETUP sentence first (what the creature creates or does), then the save skeleton — never open with the skeleton and append the setup after the Success clause.`,
 };
 
 export function validateConversionResponse(jsonString, model) {
@@ -976,7 +1035,18 @@ const CONVERSION_LINT_RULES = new Set([
   'reaction-trigger', 'phrasing-2024-in-2014', 'second-person',
   'bloodied-in-2014', 'emanation-in-2014', 'area-caps-in-2014',
   'condition-phrase-in-2014', 'phrasing-save-or', 'spell-tiers-inline',
-  'epithet-self-reference',
+  'epithet-self-reference', 'condition-caps-in-2014', 'vocab-adjacent',
+  'prose-ft-abbrev', 'phrasing-hit-marker', 'area-term-caps',
+  'damage-type-caps', 'success-no-effect', 'area-circle', 'spelling-centred',
+  'success-half-phrasing', 'skeleton-fusion', 'trigger-outside-reactions',
+  'duplicate-cross-section', 'self-afflicted-condition',
+  'generic-self-reference', 'spellcasting-entry-name', 'failure-damage-echo',
+  'action-passive-rider', 'inability-phrasing', 'vocab-register',
+  // Owner call (batch 6): stripping "from nonmagical attacks" on 2014→2024
+  // silently UPGRADED the B/P/S package; official 2024 reprints dropped the
+  // physical types instead. The one sanctioned rebalance in conversion —
+  // is2024-gated in lint, so 2024→2014 never sees it; the UI toasts it.
+  'bps-resistance',
 ]);
 
 /**
@@ -1015,9 +1085,54 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   };
 
   const { chassis, plan } = buildContext(model.cr, model.archetype ?? 'balanced');
-  const phrasingFindings = (m) => lintStatblock(m, { edition: target }).findings
+  // Chassis passed so chassis-gated rules in the conversion set (bps-
+  // resistance) can fire; the set filter keeps every other chassis rule out.
+  const phrasingFindings = (m) => lintStatblock(m, { edition: target, chassis }).findings
     .filter((f) => CONVERSION_LINT_RULES.has(f.rule));
-  converted = applyCorrections(converted, phrasingFindings(converted), { chassis });
+  const firstPass = phrasingFindings(converted);
+  converted = applyCorrections(converted, firstPass, { chassis });
+  // Surface the sanctioned rebalance so the UI can toast it.
+  // Partial physical packages dodge bps-resistance (needs all three) — but
+  // any physical resistance the SOURCE qualified with "nonmagical" dies in
+  // 2024 the same way (Treant-style unqualified partials are untouched:
+  // the key is the source qualifier, not the shape).
+  const sourceResistances = `${monster.damage_resistances ?? ''} ${monster.resistances ?? ''}`;
+  let partialDropped = false;
+  if (/nonmagical/i.test(sourceResistances) && converted.resistances) {
+    const kept = converted.resistances.split(/[;,]/).map((t) => t.trim())
+      .filter((t) => t && !/^(?:and )?(?:bludgeoning|piercing|slashing)$/i.test(t));
+    if (kept.join(', ') !== converted.resistances) {
+      partialDropped = true;
+      converted.resistances = kept.join(', ') || undefined;
+    }
+  }
+  const conversionNotes = partialDropped || firstPass.some((f) => f.rule === 'bps-resistance')
+    ? ['Dropped the Bludgeoning/Piercing/Slashing resistance package — 2024 removed the "nonmagical" qualifier, and official reprints drop the physical resistances instead of upgrading them.']
+    : [];
+  if (conversionNotes.length) {
+    // The dropped package must not survive as a TRAIT restatement ("it is
+    // resistant to Bludgeoning... from nonmagical attacks" — live: Stony
+    // Hide contradicted the stripped line).
+    for (const es of Object.values(converted.sections ?? {})) {
+      for (const e of es) {
+        e.text = e.text
+          // Clause-level first ("...stone, and it is resistant to B/P/S
+          // from nonmagical attacks.") so the host sentence survives...
+          .replace(/,\s*(?:and\s+)?(?:it\s+)?(?:is|has)\s+resistan\w*[^.!?;]*nonmagical[^.!?;]*/gi, '')
+          // ...the grant-form flavor sentence dies whole ("...a mass of
+          // animated bones that grant it resistance to ... nonmagical
+          // weapons." — live, Bone Shroud).
+          .replace(/[^.!?]*grants? (?:it|the [\w' -]+) resistan\w*[^.!?]*nonmagical[^.!?]*\.\s*/gi, '')
+          // ...then whole sentences that ARE the restatement.
+          .replace(/(?:^|(?<=\.\s))(?:It|The [\w' -]+?)\s+(?:is|has)\s+resistan\w*[^.!?]*nonmagical[^.!?]*\.\s*/g, '')
+          .replace(/\s{2,}/g, ' ').trim();
+      }
+    }
+    // A trait that WAS only the restatement is now empty — drop it.
+    for (const [sec, es] of Object.entries(converted.sections)) {
+      converted.sections[sec] = es.filter((e) => (e.text ?? '').trim());
+    }
+  }
   let rejects = phrasingFindings(converted).filter((f) => f.severity === 'reject');
   if (rejects.length) {
     converted = await rewriteFlaggedEntries(
@@ -1044,7 +1159,10 @@ Return ONLY a JSON object with the SAME sections, SAME entry order, SAME entry n
   if ((converted.sections['Legendary Actions'] ?? []).length && !converted.legendary_uses) {
     converted.legendary_uses = 3;
   }
-  return { ...converted, format: '2024', ...meta };
+  const result = { ...converted, format: '2024', ...meta };
+  // Transient — the caller toasts and deletes this before persisting.
+  if (conversionNotes.length) result._conversionNotes = conversionNotes;
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -1061,7 +1179,12 @@ const DETERMINISTIC_TEXT_FIXES = [
   ['term-caps', (t) => t
     .replace(/\bhit points\b/g, 'Hit Points').replace(/\bhit point\b/g, 'Hit Point')
     .replace(/\bopportunity attacks\b/g, 'Opportunity Attacks')
-    .replace(/\bopportunity attack\b/g, 'Opportunity Attack')],
+    .replace(/\bopportunity attack\b/g, 'Opportunity Attack')
+    .replace(/\bas an? bonus action\b/g, 'as a Bonus Action')
+    .replace(/\bas an? reaction\b/g, 'as a Reaction')
+    .replace(/\badvantage\b/g, 'Advantage').replace(/\bdisadvantage\b/g, 'Disadvantage')
+    .replace(/\blong rest\b/g, 'Long Rest').replace(/\bshort rest\b/g, 'Short Rest')
+    .replace(/\bspeed\b/g, 'Speed')],
   ['condition-caps', (t) => t.replace(LOWERCASE_CONDITIONS_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['phrasing-to-hit', (t) => t.replace(/(Attack Roll:\*?\s*\+\d+)\s+to hit/g, '$1')],
   ['second-person', (t) => t.replace(/\byours\b/gi, 'its').replace(/\byour\b/gi, 'its')],
@@ -1069,7 +1192,7 @@ const DETERMINISTIC_TEXT_FIXES = [
     (m, also, rest) => `must ${also ?? ''}succeed on ${rest} or`)],
   ['area-circle', (t) => t.replace(/(\d+-foot(?:-radius)?) circle\b/gi, '$1 Sphere')],
   ['spelling-centred', (t) => t.replace(/centred/g, 'centered')],
-  ['success-no-effect', (t) => t.replace(/\s*\*?Success:\*?\s*(?:No effect|None|The \w+ is not [A-Z]\w+)\.?/g, '')],
+  ['success-no-effect', (t) => t.replace(/\s*\*?Success:\*?\s*(?:No effect|No damage|None|The \w+ is not [A-Z]\w+)\.?/gi, '')],
   ['damage-type-caps', (t) => t.replace(DAMAGE_TYPES_LOWER_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['area-term-caps', (t) => t.replace(/\b(\d+-foot )(cone|line|sphere|cylinder|emanation|cube)\b/g,
     (m, p, a) => p + a[0].toUpperCase() + a.slice(1))],
@@ -1100,6 +1223,32 @@ const DETERMINISTIC_TEXT_FIXES = [
   // be invisible" — live regression: the bare-verb rewrite produced "can't
   // are invisible"). A "have" with no recognized lead-in is a plural or
   // exotic construction — left standing for the fix ladder.
+  ['vocab-adjacent', (t) => t.replace(/\badjacent to\b/gi, 'within 5 feet of')],
+  ['half-as-much-phrasing', (t) => t.replace(/half as much on a success/gi, 'half as much damage on a success')],
+  ['inability-phrasing', (t) => t.replace(/ha(?:s|ve) the inability to/gi, "can't")],
+  ['vocab-register', (t) => t
+    .replace(/attacks of opportunity/gi, 'opportunity attacks')
+    .replace(/attack of opportunity/gi, 'opportunity attack')
+    .replace(/\bmay\b/g, 'can')],
+  ['prose-ft-abbrev', (t) => t
+    .replace(/\b(within|up to|by) (\d+) ft\.(?=\s|$)/gi, '$1 $2 feet')
+    .replace(/\ba (\d+) ft\. radius/gi, 'a $1-foot radius')
+    .replace(/\b(\d+) ft\. away/gi, '$1 feet away')],
+  // "Hit:" markers strip cleanly — 2024 states damage directly after the roll.
+  ['phrasing-hit-marker', (t) => t.replace(/\s*\bHit(?: or Miss)?:\s*/g, ' ').replace(/\s{2,}/g, ' ').trim()],
+  ['success-half-phrasing', (t) => t.replace(/(Success:\*?\s*)Half as much[^.]*\./gi, '$1Half damage only.')],
+  ['skeleton-fusion', (t) => t
+    .replace(/ and (\*?(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw:?\*?\s*DC)/g, '. $1')
+    .replace(/([a-z]\w*): (\*?(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw:)/g, '$1. $2')],
+  // Trigger/Response garble outside Reactions: vacuous self-triggers strip;
+  // "Trigger: The X uses Y. Response: It does so." collapses to the deed.
+  ['trigger-outside-reactions', (t) => t
+    .replace(/\*?Trigger:\*?\s*(The [\w' -]+ uses [\w' -]+\.)\s*\*?Response:\*?\s*It does so\.?/i, '$1')
+    .replace(/\*?Trigger:\*?\s*The [\w' -]+ (?:takes|uses) this action\.\s*\*?Response:\*?\s*/i, '')
+    .replace(/\s{2,}/g, ' ').trim()],
+  ['condition-caps-in-2014', (t) => t.replace(
+    /([a-z,;] )(Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Invisible|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious)\b/g,
+    (m, pre, cond) => pre + cond.toLowerCase())],
   ['condition-phrase-in-2014', (t) => t.replace(
     /\b(?:(can't|cannot|can|couldn't|could|mustn't|must|may|might|won't|wouldn't|would|shall|shouldn't|should|to|longer|not|doesn't|does not|don't|do not) )?(has|have) the ([A-Za-z]\w*(?:(?:,? and |, )[A-Za-z]\w*)*) conditions?\b/g,
     (m, pre, verb, list) => {
@@ -1157,7 +1306,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance' || x.rule === 'resistance-unknown' || x.rule === 'defense-line-separator') && x.loc?.field
+    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance' || x.rule === 'resistance-unknown' || x.rule === 'defense-line-separator' || x.rule === 'beast-intelligence') && x.loc?.field
   )) {
     out[f.loc.field] = f.expected || undefined;
   }
@@ -1176,7 +1325,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024' || x.rule === 'cc-aoe' || x.rule === 'legendary-resistance-uses') && x.loc
+    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024' || x.rule === 'cc-aoe' || x.rule === 'legendary-resistance-uses' || x.rule === 'spellcasting-entry-name') && x.loc
   )) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.name = f.expected;
@@ -1185,6 +1334,58 @@ export function applyCorrections(monster, findings, { chassis }) {
   for (const f of correctable.filter((x) => x.rule === 'escape-dc' && x.loc)) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.text = entry.text.replace(/escape DC \d+/gi, `escape DC ${f.expected}`);
+  }
+
+  // Dead self-escape clause (condition the immunity line already prevents).
+  for (const f of correctable.filter((x) => x.rule === 'self-escape-immune-condition' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) {
+      entry.text = entry.text
+        .replace(/\s*(?:It )?ends? (?:any|the) \w+(?: or \w+)? conditions? on itself(?:, (?:and )?|\. )/i, ' It ')
+        .replace(/\s{2,}/g, ' ').replace(/^\s*It\s*$/, '').trim();
+    }
+  }
+
+  // Failure-clause damage echo: strip the repeated bare average.
+  for (const f of correctable.filter((x) => x.rule === 'failure-damage-echo' && x.loc && x.expected)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) {
+      entry.text = entry.text
+        .replace(new RegExp(`(Failure:\\*?\\s*)${f.expected.avg} ${f.expected.type} damage(?:,? and | and |, )?`), '$1')
+        .replace(/Failure:(\*?)\s*the target/, 'Failure:$1 The target')
+        .replace(/\s{2,}/g, ' ');
+    }
+  }
+
+  // Generic acting subject: "The creature casts..." names the monster.
+  // (Falls back to pattern-matching the entry — a same-pass rename, e.g.
+  // spellcasting-entry-name, may have changed the recorded name.)
+  for (const f of correctable.filter((x) => x.rule === 'generic-self-reference' && x.loc)) {
+    const list = out.sections?.[f.loc.section] ?? [];
+    const entry = list.find((e) => e.name === f.loc.entry)
+      ?? list.find((e) => /(^|\. )The creature (casts|makes|uses)\b/.test(e.text));
+    if (entry && out.name) {
+      entry.text = entry.text.replace(/(^|\. )The creature (casts|makes|uses)\b/g,
+        (m, pre, verb) => `${pre}The ${out.name.toLowerCase()} ${verb}`);
+    }
+  }
+
+  // Bare 2014 grapple gets its escape DC stamped on the imposing clause.
+  for (const f of correctable.filter((x) => x.rule === 'grapple-escape-dc-2014' && x.loc && x.expected)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) {
+      entry.text = entry.text.replace(
+        /((?:saving throw|ability check) or (?:be|is|becomes?) grappled|\bis grappled\b(?!\s*\()(?! by))/i,
+        `$1 (escape DC ${f.expected})`
+      );
+    }
+  }
+
+  // Cross-section duplicate: the Traits copy of a twice-defined mechanic is
+  // dropped (the sectioned copy — Reaction/Bonus Action — is the real home).
+  for (const f of correctable.filter((x) => x.rule === 'duplicate-cross-section' && x.loc)) {
+    const list = out.sections?.[f.loc.section];
+    if (list) out.sections[f.loc.section] = list.filter((e) => e.name !== f.loc.entry);
   }
 
   // Hybrid dual-targeting: the save skeleton's range follows the range the
@@ -1338,7 +1539,12 @@ export function applyCorrections(monster, findings, { chassis }) {
     if (entry) {
       entry.text = entry.text
         .replace(/\s*\bThis is an? [^.]*\./gi, '')
+        .replace(/\s*\bThis attack is an? [\w -]*attack\./gi, '')
+        .replace(/\s*\bCredits?:[^.]*\./gi, '')
+        .replace(/\s*[^.]*fills the (?:required )?slot[^.]*\./gi, '')
+        .replace(/\s*\bslot: .*$/i, '')
         .replace(/\s*\([^)]*(?:action description|this entry|these instructions)[^)]*\)/gi, '')
+        .replace(/\s*\([^)]*or a similar (?:trait|ability|effect)[^)]*\)/gi, '')
         // Lint-message echoes: strip from the echoed CLAUSE (anchored at
         // its comma, so the legitimate text before it survives) to the end
         // of the sentence (", and the total for both expressions is 41, ...").
@@ -1346,6 +1552,18 @@ export function applyCorrections(monster, findings, { chassis }) {
         .replace(/\.\s*\./g, '.')
         .replace(/\s{2,}/g, ' ').trim();
     }
+  }
+
+  // A passive rider filed as an action relocates to Traits (inverse of
+  // trait-imposes-save; its own marker so the counts exemption never
+  // double-counts it).
+  for (const f of correctable.filter((x) => x.rule === 'action-passive-rider' && x.loc)) {
+    const acts = out.sections?.Actions ?? [];
+    const idx = acts.findIndex((e) => e.name === f.loc.entry);
+    if (idx === -1) continue;
+    const [entry] = acts.splice(idx, 1);
+    entry.relocatedToTraits = true;
+    (out.sections.Traits ??= []).push(entry);
   }
 
   // An active bonus action written as a trait relocates to Bonus Actions
@@ -1406,6 +1624,10 @@ export function applyCorrections(monster, findings, { chassis }) {
     if (idx === -1) continue;
     const [entry] = traits.splice(idx, 1);
     entry.relocated = true;
+    // 2014 traits open the cost in prose — relocated to Actions, the lead-in
+    // is redundant ("As an action, shalespire can launch..." → "Shalespire
+    // can launch...").
+    entry.text = entry.text.replace(/^As an action,\s*/i, '').replace(/^[a-z]/, (c) => c.toUpperCase());
     (out.sections.Actions ??= []).push(entry);
   }
 
@@ -1929,7 +2151,9 @@ Return ONLY a JSON array in the SAME order as the entries above, no markdown fen
     matched.add(t);
     const entry = (out.sections?.[t.section] ?? []).find((e) => e.name === t.entry);
     if (!entry) continue;
-    entry.name = resp.name.trim();
+    // Same name normalization the assembly applies — fix-call renames were
+    // bypassing it (live: "The Watcher", "The Mound-Warden" shipped).
+    entry.name = resp.name.trim().replace(/^the\s+/i, '');
     entry.text = resp.text;
     const oldBase = t.entry.split(' (')[0];
     const newBase = entry.name.split(' (')[0];
@@ -1991,6 +2215,8 @@ ${bans.length ? `BANNED THIS TIME (overused in past names — never use these st
 
 Also AUDIT the ability names listed above: any that are coined or invented words, or unexplained proper nouns ("Ulgroth", "Vothar's Ire", "Kragor"), must be renamed to plain English that says what the ability does ("Helping Snarl", "Tar Tendril"). List them in "ability_renames" — an empty object if all are already plain English. Never rename Multiattack or Spellcasting.
 
+Your candidates will be judged by a separate model on ORIGINALITY and EVOCATIVENESS — a name that could belong to any monster, or that echoes names you have produced before (guttural Uu-/Ul- coinages, <noun><verb> gluings like "Obsidiancrawl"), scores poorly. Aim for names a reader would remember after closing the book.
+
 Return ONLY JSON, no markdown: {"candidates": ["seven different names, best first — range from safe to bold"], "ability_renames": {"Coined Name": "Plain English Name"}}`;
 }
 
@@ -2035,7 +2261,7 @@ function applyAbilityRenames(monster, parsed) {
     const bareFrom = bareOf(from);
     const fullFrom = entryNames.has(from) ? from : byBare.get(bareFrom);
     if (!fullFrom || PROTECTED_ENTRY_NAME_RE.test(fullFrom)) continue;
-    const bareTo = bareOf(to);
+    const bareTo = bareOf(to).replace(/^the\s+/i, '');
     if (!bareTo || bareTo === bareFrom) continue;
     safe[fullFrom] = bareTo + fullFrom.slice(bareOf(fullFrom).length);
     if (fullFrom !== bareFrom) safe[bareFrom] = bareTo;
@@ -2164,6 +2390,12 @@ export function applyRenameMapping(monster, mapping) {
       const n = newWords[newWords.length - 1];
       if (o.length >= 4 && o.toLowerCase() !== n.toLowerCase()) wordPairs = [[o, n]];
     }
+    // Never word-pair-map common OBJECT nouns — "the barrier"/"the shield"
+    // in ability text usually names something the ability CREATES, not the
+    // creature (live corruption: a "…Barrier"→"Shardwisp" rename turned an
+    // action's barrier object into "the shardwisp" throughout). The exact
+    // full-name replacement above still applies.
+    wordPairs = wordPairs.filter(([o]) => !SELF_REF_STOP.has(o.toLowerCase()));
     for (const list of Object.values(out.sections ?? {})) {
       for (const entry of list ?? []) {
         if (entry.name === oldName) entry.name = newName;
@@ -2187,9 +2419,9 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null } = options;
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
-  const assembleCtx = { cr, chassis, plan, archetypeName: archetype, archetypeSource };
+  const assembleCtx = { cr, chassis, plan, archetypeName: archetype, archetypeSource, resolvedType };
   const seedTokens = seedTraits ? seedLeakTokens(seedTraits) : undefined;
   const { perAttack: rawPerAttack, total: totalDamage } = damageBudgetFor(cr, chassis, plan);
   // Band against the SKELETON per-attack value (what the prompt dictated),

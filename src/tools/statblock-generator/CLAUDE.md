@@ -48,7 +48,9 @@ touching anything under `chassis/` or `format-2024/`.
   swaps active↔cached and persists (instant, lossless, no call). Flipping
   toward a not-yet-converted edition shows the target card as a blurred
   deterministic shape preview (`toLegacyModel`/`fromLegacyModel`) under a
-  one-time premium Convert button that runs `convertEdition()`
+  one-time Convert button (metered as one generation through
+  `canGenerateStatblock` — no premium gate; free tier spends one of the
+  daily five) that runs `convertEdition()`
   (`format-2024/generate.mjs`): ONE LLM call rewrites entry texts into the
   target phrasing, gated by the phrasing-only lint subset
   (`CONVERSION_LINT_RULES`); numbers are never rebalanced. Any

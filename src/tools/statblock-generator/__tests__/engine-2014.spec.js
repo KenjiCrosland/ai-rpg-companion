@@ -633,8 +633,9 @@ describe('condition-phrase modal contexts (Emberhide Hulk live regression)', () 
   test('negated do and bare plural have', () => {
     expect(fixed('The target does not have the Prone condition.')).toContain('is not prone');
     // Bare "have" (plural subject) has no safe deterministic verb — the
-    // reject stands and rides the fix ladder.
-    expect(fixed('Both targets have the Prone condition.')).toContain('have the Prone condition');
+    // grammar survives for the fix ladder (condition-caps-in-2014 may still
+    // lowercase the condition word inside it).
+    expect(fixed('Both targets have the Prone condition.')).toMatch(/have the [Pp]rone condition/);
   });
 });
 
@@ -661,5 +662,836 @@ describe('spell-tiers-inline (Askor converted spellcaster, 2026-07-27)', () => {
     const { findings, text } = fixed(official);
     expect(findings.map((f) => f.rule)).not.toContain('spell-tiers-inline');
     expect(text).toBe(official);
+  });
+});
+
+describe('native-2014 batch 1 (Kralvag): pattern gaps in edition-agnostic rules', () => {
+  const { chassis } = buildContext(12, 'skirmisher');
+
+  test('defense-restated catches 2014-lowercase compound restatements (verbatim Glimborg)', () => {
+    const m = { name: 'Kralvag', type: 'Giant', resistances: 'cold', immunities: 'poison; poisoned', sections: { Traits: [
+      { name: 'Glimborg', text: 'The kralvag has resistance to cold damage and immunity to poison damage and the poisoned condition.' },
+    ] } };
+    expect(lintStatblock(m, { edition: '2014' }).findings.map((f) => f.rule)).toContain('defense-restated');
+  });
+
+  test('duplicate-cross-section: verbatim Crystal Burst trait+reaction — the Traits copy drops', () => {
+    const m = { name: 'Kralvag', type: 'Giant', sections: {
+      Traits: [
+        { name: 'Crystal Burst', text: 'When the kralvag takes damage from a melee weapon attack, it can burst into a cloud of razor-sharp crystalline dust and teleport up to 30 feet to an unoccupied space it can see. Immediately after it teleports, each creature within 10 feet of the space it left must succeed on a DC 17 Dexterity saving throw or take 9 (2d8) slashing damage.' },
+        { name: 'Wall Climb', text: 'The kralvag can climb difficult surfaces, including upside down on ceilings, without needing to make an ability check.' },
+      ],
+      Reactions: [
+        { name: 'Crystal Burst (Reaction)', text: 'When the kralvag takes damage from a melee weapon attack, it can use its reaction to burst into a cloud of razor-sharp crystalline dust, teleporting up to 30 feet to an unoccupied space it can see. Each creature within 10 feet of the space it left must succeed on a DC 17 Dexterity saving throw or take 9 (2d8) slashing damage.' },
+      ],
+    } };
+    const findings = lintStatblock(m, { edition: '2014' }).findings
+      .filter((f) => f.rule === 'duplicate-cross-section');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].severity).toBe('correctable');
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Traits.map((e) => e.name)).toEqual(['Wall Climb']);
+    expect(out.sections.Reactions).toHaveLength(1);
+  });
+
+  test('legendary attack-reuse same-name entries stay legal (low overlap)', () => {
+    const m = { name: 'Legmire', type: 'Monstrosity', sections: {
+      Actions: [{ name: 'Pseudopod', text: 'Melee Weapon Attack: +16 to hit, reach 10 ft., one target. Hit: 36 (6d8 + 9) cold damage.' }],
+      'Legendary Actions': [{ name: 'Pseudopod', text: 'The legmire makes one Pseudopod attack.' }],
+    } };
+    expect(lintStatblock(m, { edition: '2014' }).findings
+      .filter((f) => f.rule === 'duplicate-cross-section')).toHaveLength(0);
+  });
+
+  test('languages normalize to the corpus mute form (verbatim Kralvag line)', () => {
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.languages = 'understands Giant but does not speak';
+    const m = assembleMonster(fixture, ctx());
+    expect(m.languages).toBe("understands Giant but can't speak");
+  });
+});
+
+describe('native-2014 batch 2 (Uulghul/Chuugoth/Uuloth): vocabulary + dependency rules', () => {
+  const { chassis } = buildContext(21, 'controller');
+  const lint14 = (m) => lintStatblock(m, { edition: '2014' }).findings;
+
+  test('condition-caps-in-2014: verbatim Salt Anchor "becomes Restrained" lowercases', () => {
+    const m = { name: 'Uuloth', type: 'Aberration', sections: { Actions: [
+      { name: 'Salt Anchor (Recharge 4-6)', text: "Each creature within 30 feet of the uuloth must make a DC 23 Strength saving throw. On a failed save, a creature's speed is reduced to 0 and it becomes Restrained until the end of its next turn. On a successful save, its speed is halved until the end of its next turn." },
+    ] } };
+    const findings = lint14(m).filter((f) => f.rule === 'condition-caps-in-2014');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).toContain('becomes restrained until');
+  });
+
+  test('grapple-dependency-orphan: verbatim Uuloth Constrict flags; Bonewrack (imposes) does not', () => {
+    const uuloth = { name: 'Uuloth', type: 'Aberration', sections: { Actions: [
+      { name: 'Constrict', text: 'Melee Weapon Attack: +15 to hit, reach 5 ft., one target grappled by the uuloth. Hit: 21 (3d8 + 8) bludgeoning damage, and the target is restrained until the grapple ends.' },
+    ], Traits: [
+      { name: 'Sand Sink', text: "The uuloth can't use this reaction while it has a creature grappled by it." },
+    ] } };
+    expect(lint14(uuloth).map((f) => f.rule)).toContain('grapple-dependency-orphan');
+    const bonewrack = { name: 'Bonewrack', type: 'Dragon', sections: { Actions: [
+      { name: 'Bite', text: "Melee Weapon Attack: +6 to hit, reach 0 ft., one target in the swarm's space. Hit: 13 (2d8 + 4) piercing damage. If the target is a creature, it must succeed on a DC 13 Strength saving throw or be grappled (escape DC 11)." },
+      { name: 'Crush', text: 'One target grappled by the bonewrack takes 7 (2d6) bludgeoning damage.' },
+    ] } };
+    expect(lint14(bonewrack).map((f) => f.rule)).not.toContain('grapple-dependency-orphan');
+  });
+
+  test('vocab-adjacent: verbatim Coordinated Strike rewrites to "within 5 feet of"', () => {
+    const m = { name: 'Uulghul', type: 'Ooze', sections: { Traits: [
+      { name: 'Coordinated Strike', text: 'If the uulghul can see or sense another uulghul that is within 30 feet of a hostile creature, the uulghul can take the Dash action as a bonus action and must end its movement adjacent to that hostile creature.' },
+    ] } };
+    const findings = lint14(m).filter((f) => f.rule === 'vocab-adjacent');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Traits[0].text).toContain('must end its movement within 5 feet of that hostile creature');
+  });
+
+  test('defense lines strip the "damage" word token-wise; languages catch "doesn\'t speak"', () => {
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.immunities = 'poison damage';
+    fixture.resistances = 'bludgeoning, piercing, and slashing from nonmagical attacks';
+    fixture.languages = "understands Deep Speech but doesn't speak";
+    const m = assembleMonster(fixture, ctx());
+    expect(m.immunities).toBe('poison');
+    expect(m.resistances).toBe('bludgeoning, piercing, and slashing from nonmagical attacks');
+    expect(m.languages).toBe("understands Deep Speech but can't speak");
+  });
+});
+
+describe('native-2014 batch 3 (Sinterhoard/Grech/Bloatbough): stamp + leak fixes', () => {
+  test('spell DC rewrites to the derivation when the score overshoots (verbatim Sinterhoard)', () => {
+    // The live case: CR 11 (PB +4), CHA 22, printed DC 17 — required score
+    // for DC 17 is 20, so the raise stays silent; derived DC is 18 and the
+    // printed DC must follow it (corpus DCs always derive exactly).
+    const { chassis: c11, plan: p11, archetype: a11 } = (() => {
+      const r = buildContext(11, 'defender');
+      return { chassis: r.chassis, plan: r.plan, archetype: r.archetype };
+    })();
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.stats = { ...fixture.stats, CHA: 22 };
+    fixture.sections.Actions.push({
+      name: 'Spellcasting',
+      text: "The sinterhoard's spellcasting ability is Charisma (spell save DC 17). It can innately cast the following spells:\n\nAt will: heat metal, light, mending\n\n1/day each: wall of stone",
+    });
+    const m = assembleMonster(fixture, { cr: 11, chassis: c11, plan: p11, archetypeName: a11, archetypeSource: 'user' });
+    const spell = m.sections.Actions.find((e) => e.name === 'Spellcasting');
+    expect(spell.text).toContain('spell save DC 18');
+    expect(m.stats.CHA).toBe(22);
+  });
+
+  test('raise-only branch still lifts an undersupporting score to the printed DC', () => {
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.stats = { ...fixture.stats, CHA: 10 };
+    fixture.sections.Actions.push({
+      name: 'Spellcasting',
+      text: 'The stalker casts spells, using Charisma as the spellcasting ability (spell save DC 13).',
+    });
+    const m = assembleMonster(fixture, ctx()); // PB +2 → mod needed +3 → CHA 16
+    expect(m.stats.CHA).toBe(16);
+    const spell = m.sections.Actions.find((e) => e.name === 'Spellcasting');
+    expect(spell.text).toContain('spell save DC 13'); // derives exactly after the raise
+  });
+
+  test('instruction-leak: verbatim Bloatbough classifier sentence strips', () => {
+    const { chassis } = buildContext(1, 'brute');
+    const m = { name: 'Bloatbough', type: 'Plant', sections: { Actions: [
+      { name: 'Slam', text: 'Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 12 (2d8 + 3) bludgeoning damage. This attack is a heavy melee attack.' },
+    ] } };
+    const findings = lintStatblock(m, { edition: '2014' }).findings
+      .filter((f) => f.rule === 'instruction-leak');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).toBe('Melee Weapon Attack: +5 to hit, reach 5 ft., one target. Hit: 12 (2d8 + 3) bludgeoning damage.');
+  });
+
+  test('prompt-example-name: verbatim Grech "Helping Snarl" flags', () => {
+    const m = { name: 'Grech', type: 'Humanoid', sections: { Traits: [
+      { name: 'Helping Snarl', text: 'While within 5 feet of a friendly creature, the grech has advantage on saving throws against being charmed.' },
+    ] } };
+    expect(lintStatblock(m, { edition: '2014' }).findings.map((f) => f.rule)).toContain('prompt-example-name');
+    const clean = { name: 'Grech', type: 'Humanoid', sections: { Traits: [
+      { name: 'Warding Snarl', text: 'While within 5 feet of a friendly creature, the grech has advantage on saving throws against being charmed.' },
+    ] } };
+    expect(lintStatblock(clean, { edition: '2014' }).findings.map((f) => f.rule)).not.toContain('prompt-example-name');
+  });
+});
+
+describe('native-2014 batch 4 (Glintspinner/Multitude/Bulwark): defense + grapple gaps', () => {
+  const { chassis: c20 } = buildContext(20, 'skirmisher');
+  const { chassis: cHalf } = buildContext(0.5, 'brute');
+
+  test('resistance-unknown now covers immunities in 2014 (verbatim "prismatic")', () => {
+    const m = {
+      name: 'Glintspinner', type: 'Dragon',
+      resistances: 'psychic', immunities: 'prismatic',
+      sections: { Actions: [{ name: 'Claw', text: 'Melee Weapon Attack: +14 to hit, reach 5 ft., one target. Hit: 26 (4d8 + 8) slashing damage.' }] },
+    };
+    const findings = lintStatblock(m, { edition: '2014', chassis: c20 }).findings
+      .filter((f) => f.rule === 'resistance-unknown');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].loc.field).toBe('immunities');
+    const out = applyCorrections(m, findings, { chassis: c20 });
+    expect(out.immunities).toBeUndefined();
+    expect(out.resistances).toBe('psychic');
+  });
+
+  test('2014 nonmagical-qualified lines never read as junk', () => {
+    const m = {
+      name: 'Rootkelp', type: 'Plant',
+      resistances: 'bludgeoning, piercing, and slashing from nonmagical attacks',
+      immunities: 'poison; poisoned',
+      sections: { Actions: [{ name: 'Tendril', text: 'Melee Weapon Attack: +11 to hit, reach 10 ft., one target. Hit: 25 (4d8 + 7) bludgeoning damage.' }] },
+    };
+    expect(lintStatblock(m, { edition: '2014', chassis: c20 }).findings
+      .filter((f) => f.rule === 'resistance-unknown')).toHaveLength(0);
+  });
+
+  test('grapple-escape-dc-2014: verbatim Snatching Bite gets a DC stamped', () => {
+    const m = { name: 'Skittering Multitude', type: 'Giant', sections: { Actions: [
+      { name: 'Snatching Bite', text: 'Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) piercing damage, and the target must succeed on a DC 12 Strength saving throw or be grappled. While grappled in this way, the creature is restrained.' },
+    ] } };
+    const findings = lintStatblock(m, { edition: '2014', chassis: cHalf }).findings
+      .filter((f) => f.rule === 'grapple-escape-dc-2014');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis: cHalf });
+    expect(out.sections.Actions[0].text).toMatch(/saving throw or be grappled \(escape DC \d+\)\. While grappled/);
+  });
+
+  test('grapple preconditions and DC-carrying grapples stay silent', () => {
+    const precondition = { name: 'Vampire', type: 'Undead', sections: { Actions: [
+      { name: 'Bite', text: 'Melee Weapon Attack: +9 to hit, reach 5 ft., one willing creature, or a creature that is grappled by the vampire. Hit: 7 (1d6 + 4) piercing damage.' },
+    ] } };
+    expect(lintStatblock(precondition, { edition: '2014', chassis: c20 }).findings
+      .filter((f) => f.rule === 'grapple-escape-dc-2014')).toHaveLength(0);
+    const withDC = { name: 'Rootkelp', type: 'Plant', sections: { Actions: [
+      { name: 'Tendril', text: 'Hit: 25 (4d8 + 7) bludgeoning damage, and the target must succeed on a DC 17 Strength saving throw or be grappled (escape DC 17).' },
+    ] } };
+    expect(lintStatblock(withDC, { edition: '2014', chassis: c20 }).findings
+      .filter((f) => f.rule === 'grapple-escape-dc-2014')).toHaveLength(0);
+  });
+
+  test('defense/senses normalizers: verbatim Glazed Bulwark lines', () => {
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.immunities = 'acid, lightning, exhausted';
+    fixture.senses_special = 'blindsight 60 ft., blind beyond this radius';
+    const m = assembleMonster(fixture, ctx());
+    expect(m.immunities).toBe('acid, lightning, exhaustion');
+    expect(m.senses).toContain('blindsight 60 ft. (blind beyond this radius);');
+  });
+});
+
+describe('native-2014 batch 5 (Shardwisp/Shivver): rename corruption + reference gaps', () => {
+  const { applyRenameMapping } = require('../format-2024/generate.mjs');
+  const { chassis } = buildContext(12, 'lurker');
+
+  test('head-noun rename never maps common object nouns (the Shardwisp barrier corruption)', () => {
+    const m = { name: 'Glimmer Barrier', sections: { Actions: [
+      { name: 'Anchored Barrier', text: 'The Glimmer Barrier anchors a crystal at a point within 30 feet. The barrier lasts for 1 minute. While the barrier is active, any creature within the barrier gains half cover.' },
+    ] } };
+    const out = applyRenameMapping(m, { 'Glimmer Barrier': 'Shardwisp' });
+    expect(out.name).toBe('Shardwisp');
+    // The exact full name follows the rename; the barrier OBJECT does not.
+    expect(out.sections.Actions[0].text).toContain('The Shardwisp anchors a crystal');
+    expect(out.sections.Actions[0].text).toContain('The barrier lasts for 1 minute');
+    expect(out.sections.Actions[0].text).not.toContain('the Shardwisp lasts');
+  });
+
+  test('head-noun rename still follows genuine self-references (the burrower contract)', () => {
+    const m = { name: 'Gloom Stalker', sections: { Traits: [
+      { name: 'Umbral Veil', text: 'While in dim light, the stalker is invisible.' },
+    ] } };
+    const out = applyRenameMapping(m, { 'Gloom Stalker': 'Quietmaw' });
+    expect(out.sections.Traits[0].text).toContain('the quietmaw is invisible');
+  });
+
+  test('undefined uses-reference survives a trailing parenthetical (verbatim Skitter Away)', () => {
+    const m = { name: 'Shivver', type: 'Elemental', sections: {
+      Traits: [{ name: 'Rain Cloak', text: 'While in an area of heavy rain, mist, or magical darkness, the shivver is invisible.' }],
+      Actions: [{ name: 'Skitter Away', text: 'The shivver moves up to its speed without provoking opportunity attacks. If it ends this movement in an area of heavy rain, mist, or magical darkness, it can use its Storm Invisibility (or a similar trait that grants invisibility in such conditions) as part of this action.' }],
+    } };
+    const findings = lintStatblock(m, { edition: '2014', chassis }).findings;
+    expect(findings.some((f) => f.rule === 'undefined-attack-ref' && /Storm Invisibility/.test(f.message))).toBe(true);
+    // The hedge parenthetical is instruction-leak material and strips.
+    const leak = findings.filter((f) => f.rule === 'instruction-leak');
+    expect(leak).toHaveLength(1);
+    const out = applyCorrections(m, leak, { chassis });
+    expect(out.sections.Actions[0].text).not.toContain('or a similar trait');
+  });
+
+  test('clause boundaries keep official-shaped uses-references resolving (Aboleth shape)', () => {
+    const m = { name: 'Aboleth', type: 'Aberration', sections: { 'Legendary Actions': [
+      { name: 'Psychic Drain', text: 'The aboleth uses Consume Memories and regains 5 (2d4) Hit Points.' },
+    ], Actions: [
+      { name: 'Consume Memories', text: 'One creature must make a saving throw.' },
+    ] } };
+    expect(lintStatblock(m, { edition: '2014', chassis }).findings
+      .filter((f) => f.rule === 'undefined-attack-ref')).toHaveLength(0);
+  });
+
+  test('prose-ft-abbrev: verbatim Shardwisp distances normalize to feet', () => {
+    const m = { name: 'Shardwisp', type: 'Fey', sections: { Actions: [
+      { name: 'Anchored Barrier', text: 'The shardwisp anchors a crystal at a point within 30 ft. of it, creating a shimmering barrier.' },
+    ] } };
+    const findings = lintStatblock(m, { edition: '2014', chassis }).findings
+      .filter((f) => f.rule === 'prose-ft-abbrev');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).toContain('within 30 feet of it');
+  });
+});
+
+describe('2014→2024 conversion batch (Shisstril/Bonesilence/Prism Storm/Shivver leaks)', () => {
+  const { chassis } = buildContext(22, 'lurker');
+  const fix = (sections, type = 'Fey', name = 'Shisstril') => {
+    const m = { name, type, sections };
+    const findings = lintStatblock(m, { edition: '2024', chassis }).findings;
+    return { findings, out: applyCorrections(m, findings, { chassis }) };
+  };
+
+  test('phrasing-hit-marker strips deterministically (verbatim Poisonous Tongue)', () => {
+    const { findings, out } = fix({ Actions: [
+      { name: 'Poisonous Tongue', text: '*Melee Attack Roll:* +16, reach 10 ft. Hit: 18 (2d8 + 9) Piercing damage plus 9 (2d8) Poison damage.' },
+    ] });
+    expect(findings.map((f) => f.rule)).toContain('phrasing-hit-marker');
+    expect(out.sections.Actions[0].text).toContain('reach 10 ft. 18 (2d8 + 9) Piercing damage');
+    expect(out.sections.Actions[0].text).not.toContain('Hit:');
+  });
+
+  test('success-half-phrasing: verbatim Shivver clause becomes "Half damage only."', () => {
+    const { findings, out } = fix({ Actions: [
+      { name: 'Lightning Bolt (Recharge 5-6)', text: '*Dexterity Saving Throw:* DC 17, each creature in a line 30 feet long and 5 feet wide. *Failure:* 24 (7d6) Lightning damage. *Success:* Half as much Lightning damage.' },
+    ] }, 'Elemental');
+    expect(findings.map((f) => f.rule)).toContain('success-half-phrasing');
+    expect(out.sections.Actions[0].text).toContain('*Success:* Half damage only.');
+  });
+
+  test('skeleton-fusion: verbatim Shattering Charge unfuses at the skeleton', () => {
+    const { findings, out } = fix({ Traits: [
+      { name: 'Shattering Charge', text: 'If the bonesilence moves at least 20 feet straight toward a target and then hits it with a Bone Smash attack on the same turn, the target takes an extra 18 (4d8) Bludgeoning damage and Strength Saving Throw: DC 17, the target. Failure: The target is pushed 10 feet away from the bonesilence and has the Prone condition.' },
+    ] }, 'Beast');
+    expect(findings.map((f) => f.rule)).toContain('skeleton-fusion');
+    // (dc-band may also retune the DC to the test chassis — the unfusing
+    // is what this test pins.)
+    expect(out.sections.Traits[0].text).toMatch(/Bludgeoning damage\. Strength Saving Throw: DC \d+/);
+  });
+
+  test('trigger-outside-reactions: verbatim Prism Storm legendary garbles collapse', () => {
+    const { findings, out } = fix({
+      'Legendary Actions': [
+        { name: 'Double Teleport', text: 'Trigger: The storm uses Shard Teleport. Response: It does so.' },
+        { name: 'Shard Volley (Costs 2 Actions)', text: 'Trigger: The storm takes this action. Response: It makes one Refractive Shard attack against each creature of its choice within 60 feet.' },
+      ],
+      Reactions: [
+        { name: 'Real Reaction', text: '*Trigger:* A creature within 30 feet hits the storm with an attack roll. *Response:* The storm makes one Refractive Shard attack against that creature.' },
+      ],
+    }, 'Aberration', 'Prism Storm');
+    const hits = findings.filter((f) => f.rule === 'trigger-outside-reactions');
+    expect(hits).toHaveLength(2);
+    const out2 = out.sections['Legendary Actions'];
+    expect(out2[0].text).toBe('The storm uses Shard Teleport.');
+    expect(out2[1].text).toBe('It makes one Refractive Shard attack against each creature of its choice within 60 feet.');
+    // Real reactions keep their Trigger/Response form untouched.
+    expect(out.sections.Reactions[0].text).toContain('*Trigger:* A creature within 30 feet');
+  });
+
+  test('prose-ft-abbrev extended shapes: radius and by-distance', () => {
+    const { findings, out } = fix({ Actions: [
+      { name: 'Anchored Barrier', text: 'The shardwisp anchors a crystal, creating a shimmering barrier in a 10 ft. radius centered on that point. Speed is reduced by 10 ft. until the end of its next turn.' },
+    ] });
+    expect(findings.map((f) => f.rule)).toContain('prose-ft-abbrev');
+    expect(out.sections.Actions[0].text).toContain('a 10-foot radius');
+    expect(out.sections.Actions[0].text).toContain('by 10 feet until');
+  });
+});
+
+describe('conversion BPS-package drop (owner call, batch 6)', () => {
+  const { convertEdition } = require('../format-2024/generate.mjs');
+  const queuedLLM = (queue) => jest.fn(async (prompt, validate) => {
+    const raw = JSON.stringify(queue.shift());
+    if (validate && !validate(raw)) throw new Error('validator rejected fixture');
+    return raw;
+  });
+
+  const legacyBase = (extras = {}) => ({
+    name: 'Shivver',
+    type_and_alignment: 'Medium elemental, chaotic evil',
+    armor_class: '17',
+    hit_points: '157 (21d8 + 63)',
+    speed: '40 ft., climb 40 ft.',
+    attributes: 'STR 10 (+0), DEX 24 (+7), CON 16 (+3), INT 6 (-2), WIS 14 (+2), CHA 8 (-1)',
+    saving_throws: 'DEX +11, WIS +6',
+    damage_resistances: 'lightning; bludgeoning, piercing, and slashing from nonmagical attacks',
+    damage_immunities: 'poison',
+    condition_immunities: 'poisoned',
+    senses: 'darkvision 60 ft.; passive Perception 16',
+    languages: "understands Primordial but can't speak",
+    challenge_rating: '12 (8,400 XP)',
+    proficiency_bonus: '+4',
+    format: '2014',
+    abilities: [],
+    actions: [{ name: 'Bite', description: 'Melee Weapon Attack: +11 to hit, reach 5 ft., one target. Hit: 20 (3d8 + 7) piercing damage.' }],
+    ...extras,
+  });
+
+  test('2014→2024 drops the physical package on a non-swarm and reports a note', async () => {
+    const legacy = legacyBase();
+    const response = { Actions: [{ name: 'Bite', text: '*Melee Attack Roll:* +11, reach 5 ft. 20 (3d8 + 7) Piercing damage.' }] };
+    const converted = await convertEdition(legacy, queuedLLM([response]));
+    expect(converted.format).toBe('2024');
+    expect(converted.resistances).toBe('Lightning');
+    expect(converted._conversionNotes).toHaveLength(1);
+    expect(converted._conversionNotes[0]).toContain('resistance package');
+  });
+
+  test('a swarm keeps its B/P/S package, no note', async () => {
+    const legacy = legacyBase({
+      name: 'Bonewrack',
+      type_and_alignment: 'Medium swarm of Tiny dragons, chaotic neutral',
+      damage_resistances: 'bludgeoning, piercing, slashing',
+    });
+    const response = { Actions: [{ name: 'Bite', text: '*Melee Attack Roll:* +11, reach 5 ft. 20 (3d8 + 7) Piercing damage.' }] };
+    const converted = await convertEdition(legacy, queuedLLM([response]));
+    expect(converted.resistances).toContain('Bludgeoning');
+    expect(converted._conversionNotes).toBeUndefined();
+  });
+});
+
+describe('batch 7 (Facetwing/Saltweb/Juggernaut): inversions + suffix doubling', () => {
+  const { chassis } = buildContext(11, 'skirmisher');
+  const lint24 = (m) => lintStatblock(m, { edition: '2024', chassis }).findings;
+
+  test('self-afflicted-condition: verbatim inverted Poison Immunity flags; Invisible Stalker stays legal', () => {
+    const bad = { name: 'Facetwing', type: 'Elemental', sections: { Traits: [
+      { name: 'Poison Immunity', text: 'The facetwing has the Poisoned condition. It has Resistance to Bludgeoning, Piercing, and Slashing damage from nonmagical attacks.' },
+    ] } };
+    expect(lint24(bad).map((f) => f.rule)).toContain('self-afflicted-condition');
+    const stalker = { name: 'Invisible Stalker', type: 'Elemental', sections: { Traits: [
+      { name: 'Invisibility', text: 'The stalker has the Invisible condition.' },
+    ] } };
+    expect(lint24(stalker).map((f) => f.rule)).not.toContain('self-afflicted-condition');
+  });
+
+  test('generic-self-reference: verbatim "The creature casts" names the monster', () => {
+    const m = { name: 'Saltweb Skitterer', type: 'Construct', sections: { Traits: [
+      { name: 'Innate Spellcasting', text: 'The creature casts one of the following spells, using Charisma as the spellcasting ability (spell save DC 17): At will: Blade Ward, True Strike.' },
+    ] } };
+    const findings = lint24(m);
+    expect(findings.map((f) => f.rule)).toContain('generic-self-reference');
+    expect(findings.map((f) => f.rule)).toContain('spellcasting-entry-name');
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Traits[0].text).toContain('The saltweb skitterer casts one of');
+    expect(out.sections.Traits[0].name).toBe('Spellcasting');
+  });
+
+  test('skeleton-fusion colon variant: verbatim Rusting Touch unfuses', () => {
+    const m = { name: 'Saltweb Skitterer', type: 'Construct', sections: { Traits: [
+      { name: 'Rusting Touch', text: 'A creature that hits the skitterer with a nonmagical metal weapon: Dexterity Saving Throw: DC 15, that creature. Failure: the weapon takes a permanent and cumulative −1 penalty to damage rolls.' },
+    ] } };
+    const findings = lint24(m).filter((f) => f.rule === 'skeleton-fusion');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Traits[0].text).toContain('weapon. Dexterity Saving Throw: DC 15');
+  });
+
+  test('doubled cost suffix: assembly strips in-section suffixes; the legacy fold never doubles', () => {
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.sections['Bonus Actions'] = [
+      { name: 'Disengage (Bonus Action)', text: 'The stalker takes the Disengage action.' },
+    ];
+    const m = assembleMonster(fixture, ctx());
+    expect(m.sections['Bonus Actions'][0].name).toBe('Disengage');
+    const legacy = toLegacyModel(m);
+    const folded = legacy.abilities.find((a) => /Disengage/.test(a.name));
+    expect(folded.name).toBe('Disengage (Bonus Action)');
+  });
+
+  test('duplicate-cross-section matches through doubled suffixes', () => {
+    const m = { name: 'Saltweb Skitterer', type: 'Construct', sections: {
+      Traits: [{ name: 'Disengage (Bonus Action) (Bonus Action)', text: 'The saltweb skitterer takes the Disengage action.' }],
+      Actions: [{ name: 'Disengage (Bonus Action)', text: 'The saltweb skitterer takes the Disengage action.' }],
+    } };
+    const findings = lint24(m).filter((f) => f.rule === 'duplicate-cross-section');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Traits).toHaveLength(0);
+  });
+
+  test('bps drop also strips the trait restatement (verbatim Stony Hide clause)', async () => {
+    const { convertEdition } = require('../format-2024/generate.mjs');
+    const queuedLLM = (queue) => jest.fn(async (prompt, validate) => {
+      const raw = JSON.stringify(queue.shift());
+      if (validate && !validate(raw)) throw new Error('validator rejected fixture');
+      return raw;
+    });
+    const legacy = {
+      name: 'Stoneslide Juggernaut',
+      type_and_alignment: 'Huge giant, neutral',
+      armor_class: '23', hit_points: '400 (32d12 + 192)', speed: '40 ft.',
+      attributes: 'STR 26 (+8), DEX 10 (+0), CON 22 (+6), INT 18 (+4), WIS 16 (+3), CHA 12 (+1)',
+      saving_throws: 'STR +15, CON +13',
+      damage_resistances: 'bludgeoning, piercing, and slashing from nonmagical attacks',
+      damage_immunities: 'cold', condition_immunities: 'paralyzed, petrified',
+      senses: 'darkvision 120 ft.; passive Perception 20', languages: 'Giant',
+      challenge_rating: '21 (33,000 XP)', proficiency_bonus: '+7', format: '2014',
+      abilities: [{ name: 'Stony Hide', description: "The juggernaut's hide is as hard as stone, and it is resistant to bludgeoning, piercing, and slashing damage from nonmagical attacks." }],
+      actions: [{ name: 'Slam', description: 'Melee Weapon Attack: +15 to hit, reach 10 ft., one target. Hit: 26 (4d8 + 8) bludgeoning damage.' }],
+    };
+    const response = {
+      Traits: [{ name: 'Stony Hide', text: "The juggernaut's hide is as hard as stone, and it is resistant to Bludgeoning, Piercing, and Slashing damage from nonmagical attacks." }],
+      Actions: [{ name: 'Slam', text: '*Melee Attack Roll:* +15, reach 10 ft. 26 (4d8 + 8) Bludgeoning damage.' }],
+    };
+    const converted = await convertEdition(legacy, queuedLLM([response]));
+    expect(converted.resistances).toBeUndefined();
+    expect(converted.sections.Traits[0].text).toBe("The juggernaut's hide is as hard as stone.");
+    expect(converted._conversionNotes).toHaveLength(1);
+  });
+});
+
+describe('batch 8 (Siltsine/Amber Hound): type stamp + new leak shapes', () => {
+  const { chassis } = buildContext(12, 'lurker');
+  const lint24 = (m) => lintStatblock(m, { edition: '2024', chassis }).findings;
+
+  test('resolved creature type stamps over a model-typed Humanoid (the Amber Hound class)', () => {
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.type = 'Humanoid';
+    const m = assembleMonster(fixture, { ...ctx(), resolvedType: 'Construct' });
+    expect(m.type).toBe('Construct');
+  });
+
+  test('the stamp never breaks swarm forms and ignores junk values', () => {
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.type = 'Swarm of Tiny Constructs';
+    const swarm = assembleMonster(fixture, { ...ctx(), resolvedType: 'Beast' });
+    expect(swarm.type).toBe('Swarm of Tiny Constructs');
+    const fixture2 = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture2.type = 'Monstrosity';
+    const junk = assembleMonster(fixture2, { ...ctx(), resolvedType: 'Sparkle Fairy' });
+    expect(junk.type).toBe('Monstrosity');
+  });
+
+  test('instruction-leak: verbatim Siltsine Credits sentence strips', () => {
+    const m = { name: 'Siltsine', type: 'Aberration', sections: { Actions: [
+      { name: 'Burrowing Eruption (Recharge 5-6)', text: 'Each creature in that area must make a DC 17 Dexterity saving throw, taking 49 (14d6) poison damage on a failed save, or half as much damage on a successful one. Credits: This ability fills the required slot for an ambush or once-per-fight nova mechanic.' },
+    ] } };
+    const findings = lintStatblock(m, { edition: '2014', chassis }).findings
+      .filter((f) => f.rule === 'instruction-leak');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).not.toMatch(/Credits|slot/);
+    expect(out.sections.Actions[0].text).toContain('half as much damage on a successful one.');
+  });
+
+  test('failure-damage-echo: verbatim Spore Volley conversion drops the doubled 25', () => {
+    const m = { name: 'Siltsine', type: 'Aberration', sections: { Actions: [
+      { name: 'Spore Volley', text: '*Ranged Attack Roll:* +11, range 120 ft. 25 (4d8 + 7) Poison damage. *Constitution Saving Throw:* DC 17, the target. *Failure:* 25 Poison damage and the target has the Poisoned condition for 1 minute.' },
+    ] } };
+    const findings = lint24(m).filter((f) => f.rule === 'failure-damage-echo');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).toContain('*Failure:* The target has the Poisoned condition');
+    // The attack line's real damage survives.
+    expect(out.sections.Actions[0].text).toContain('25 (4d8 + 7) Poison damage');
+  });
+
+  test('conversion drops source-qualified PARTIAL physical packages with the note', async () => {
+    const { convertEdition } = require('../format-2024/generate.mjs');
+    const queuedLLM = (queue) => jest.fn(async (prompt, validate) => {
+      const raw = JSON.stringify(queue.shift());
+      if (validate && !validate(raw)) throw new Error('validator rejected fixture');
+      return raw;
+    });
+    const legacy = {
+      name: 'Siltsine', type_and_alignment: 'Medium aberration, neutral evil',
+      armor_class: '17', hit_points: '157 (21d8 + 63)', speed: '30 ft., burrow 30 ft.',
+      attributes: 'STR 10 (+0), DEX 24 (+7), CON 16 (+3), INT 18 (+4), WIS 14 (+2), CHA 12 (+1)',
+      saving_throws: 'INT +8, WIS +6',
+      damage_resistances: 'psychic, bludgeoning, and slashing from nonmagical attacks',
+      damage_immunities: 'poison', condition_immunities: 'poisoned, frightened',
+      senses: 'darkvision 120 ft.; passive Perception 16', languages: 'Deep Speech',
+      challenge_rating: '12 (8,400 XP)', proficiency_bonus: '+4', format: '2014',
+      abilities: [], actions: [{ name: 'Spore Volley', description: 'Ranged Weapon Attack: +11 to hit, range 120 ft., one target. Hit: 25 (4d8 + 7) poison damage.' }],
+    };
+    const response = { Actions: [{ name: 'Spore Volley', text: '*Ranged Attack Roll:* +11, range 120 ft. 25 (4d8 + 7) Poison damage.' }] };
+    const converted = await convertEdition(legacy, queuedLLM([response]));
+    expect(converted.resistances).toBe('Psychic');
+    expect(converted._conversionNotes).toHaveLength(1);
+  });
+});
+
+describe('batch 9 (Shusspore/Shalespire): self-named entries, 2014 trait novas, The-names', () => {
+  const { chassis } = buildContext(23, 'lurker');
+  const lint14 = (m) => lintStatblock(m, { edition: '2014', chassis }).findings;
+
+  test('entry-named-after-monster: verbatim Shusspore trait flags', () => {
+    const m = { name: 'Shusspore', type: 'Celestial', sections: { Traits: [
+      { name: 'Shusspore', text: 'While buried in earth or stone, the shusspore has tremorsense up to 60 feet and is indistinguishable from the surrounding ground.' },
+    ] } };
+    expect(lint14(m).map((f) => f.rule)).toContain('entry-named-after-monster');
+  });
+
+  test('trait-imposes-save catches the 2014 prose form and strips the cost lead-in (verbatim Spine Burst)', () => {
+    const m = { name: 'Shalespire', type: 'Plant', sections: { Traits: [
+      { name: 'Spine Burst (1/Day)', text: 'As an action, shalespire can launch a concentrated volley of barbed spines in a 30-foot-radius sphere centered on a point it can see within 120 feet. Each creature in that area must make a DC 23 Dexterity saving throw. On a failed save, a creature takes 44 (8d10) piercing damage, or half as much on a successful one.' },
+    ] } };
+    const findings = lint14(m).filter((f) => f.rule === 'trait-imposes-save');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Traits).toHaveLength(0);
+    expect(out.sections.Actions[0].name).toBe('Spine Burst (1/Day)');
+    expect(out.sections.Actions[0].text).toMatch(/^Shalespire can launch/);
+    expect(out.sections.Actions[0].relocated).toBe(true);
+  });
+
+  test('official As-an-action utility traits without saves stay in Traits (Flameskull shape)', () => {
+    const m = { name: 'Flameskull', type: 'Undead', sections: { Traits: [
+      { name: 'Illumination', text: 'As an action, the flameskull can set its flames to shed bright light in a 15-foot radius, dim light in a 15-foot radius, or both.' },
+    ] } };
+    expect(lint14(m).filter((f) => f.rule === 'trait-imposes-save')).toHaveLength(0);
+  });
+
+  test('half-as-much-phrasing: verbatim Shalespire clause gains "damage"', () => {
+    const m = { name: 'Shalespire', type: 'Plant', sections: { Actions: [
+      { name: 'Root-Leg Trample', text: 'Each creature whose space it enters must make a DC 23 Dexterity saving throw, taking 21 (6d6) bludgeoning damage on a failed save, or half as much on a successful one.' },
+    ] } };
+    const findings = lint14(m).filter((f) => f.rule === 'half-as-much-phrasing');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).toContain('half as much damage on a successful one');
+  });
+});
+
+describe('type essences (anti-reskinning, owner call 2026-07-28)', () => {
+  const { buildRandomConceptSeed, TYPE_ESSENCES, buildSynthesizedConcept } =
+    require('../format-2024/concept-seeds.mjs');
+  const { buildSeedSynthesisPrompt } = require('../format-2024/generate.mjs');
+
+  test('every rolled type has an essence and the seed carries it', () => {
+    for (const t of Object.keys(TYPE_ESSENCES)) {
+      expect(TYPE_ESSENCES[t].length).toBeGreaterThan(40);
+    }
+    const seed = buildRandomConceptSeed();
+    expect(seed.concept).toContain(`Its creature type MUST be ${seed.creature_type}: ${TYPE_ESSENCES[seed.creature_type]}`);
+    expect(seed.concept).toContain('never a finished creature the type is painted onto');
+  });
+
+  test('the synthesis prompt fuses FROM the essence, not onto it', () => {
+    const seed = { intelligence: 'mindless (INT 1-2)', physical: 'fungal', silhouette: 'burrower', origin: 'a city of graves', disposition: 'a relentless ambush predator', creature_type: 'Celestial' };
+    const prompt = buildSeedSynthesisPrompt(seed);
+    expect(prompt).toContain('Celestial — a being OF the higher planes');
+    expect(prompt).toContain('never design the traits first and paint the type on after');
+  });
+
+  test('synthesized concepts carry the essence too', () => {
+    const traits = { intelligence: 'scheming (INT 14-16)', disposition: 'a patient killer that strikes from extreme range', creature_type: 'Fiend', naming: 'a folk name: what frightened villagers would whisper — an <adjective> <noun> pair built from plain words that describe its body or behavior (store it WITHOUT a leading "the"; prose adds the article)' };
+    const out = buildSynthesizedConcept(traits, 'A tar-black huntsman that watches from chimney smoke.');
+    expect(out).toContain('Fiend: a being of the lower planes');
+  });
+});
+
+describe('batch 10 (Bonecradle/Fissurecheat): flavor restatements, passive-rider actions', () => {
+  const { renameAbilitiesSafely } = require('../format-2024/generate.mjs');
+  const { chassis } = buildContext(8, 'controller');
+  const lint14 = (m) => lintStatblock(m, { edition: '2014', chassis }).findings;
+
+  test('defense-restated catches the flavor-lead shape (verbatim Bone Shroud)', () => {
+    const m = { name: 'Bonecradle', type: 'Undead', resistances: 'bludgeoning, piercing, and slashing from nonmagical attacks', sections: { Traits: [
+      { name: 'Bone Shroud', text: "The bonecradle's body is a mass of animated bones that grant it resistance to bludgeoning, piercing, and slashing damage from nonmagical weapons." },
+    ] } };
+    expect(lint14(m).map((f) => f.rule)).toContain('defense-restated');
+  });
+
+  test('action-passive-rider: verbatim Grasping Earth relocates to Traits and still scores as an action', () => {
+    const { plan } = buildContext(8, 'controller');
+    const m = { name: 'Bonecradle', type: 'Undead', sections: {
+      Traits: [{ name: 'Spike Field', text: 'Whenever a creature starts its turn in the space, it takes 5 (1d10) piercing damage.' }],
+      Actions: [
+        { name: 'Multiattack', text: 'The bonecradle makes two attacks: one with its Skeletal Grasp and one with its Crushing Ribs.' },
+        { name: 'Skeletal Grasp', text: 'Melee Weapon Attack: +8 to hit, reach 15 ft., one target. Hit: 18 (3d8 + 5) bludgeoning damage.' },
+        { name: 'Crushing Ribs', text: 'Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 18 (3d8 + 5) bludgeoning damage.' },
+        { name: 'Grasping Earth', text: "The first time on each of the bonecradle's turns that it hits a creature with its Skeletal Grasp attack, the target must succeed on a DC 16 Strength saving throw or be grappled (escape DC 16)." },
+      ],
+    } };
+    const findings = lint14(m).filter((f) => f.rule === 'action-passive-rider');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions.map((e) => e.name)).not.toContain('Grasping Earth');
+    const moved = out.sections.Traits.find((e) => e.name === 'Grasping Earth');
+    expect(moved.relocatedToTraits).toBe(true);
+    // Counts: still scores as an action, never inflates the trait count.
+    const counts = lintStatblock(out, { chassis, plan, edition: '2014' }).findings.filter((f) => f.rule === 'counts');
+    expect(counts.map((f) => f.message)).toEqual(counts.map((f) => f.message)); // no throw path
+  });
+
+  test('ability_renames strips a model-emitted leading article (the Seeping Fissures path)', () => {
+    const m = { name: 'Fissurecheat', sections: { Traits: [
+      { name: 'Searing Skin', text: 'A creature that touches the swarm takes 5 (1d10) fire damage.' },
+    ] } };
+    const out = renameAbilitiesSafely(m, { ability_renames: { 'Searing Skin': 'The Seeping Fissures' } });
+    expect(out.sections.Traits[0].name).toBe('Seeping Fissures');
+  });
+});
+
+describe('batch 10 conversions (Bonecradle/Wardrake/Thudstep leaks)', () => {
+  const { chassis } = buildContext(8, 'controller');
+  const fix = (sections, name = 'Thudstep', type = 'Construct') => {
+    const m = { name, type, sections };
+    const findings = lintStatblock(m, { edition: '2024', chassis }).findings;
+    return { findings, out: applyCorrections(m, findings, { chassis }) };
+  };
+
+  test('term-caps: verbatim advantage/long rest capitalize in 2024', () => {
+    const { findings, out } = fix({ Traits: [
+      { name: 'Magic Resistance', text: 'The thudstep has advantage on saving throws against spells and other magical effects.' },
+      { name: 'Necrotic Pulse', text: 'This reduction lasts until the creature finishes a long rest.' },
+    ] });
+    expect(findings.map((f) => f.rule)).toContain('term-caps');
+    expect(out.sections.Traits[0].text).toContain('has Advantage on saving throws');
+    expect(out.sections.Traits[1].text).toContain('finishes a Long Rest');
+  });
+
+  test('success-no-effect: verbatim "Success: No damage." strips', () => {
+    const { out } = fix({ 'Bonus Actions': [
+      { name: 'Squirm Advance', text: 'If it moves through another creature\'s space, *Dexterity Saving Throw:* DC 15, that creature. *Failure:* 5 (1d10) Fire damage. *Success:* No damage.' },
+    ] }, 'Fissurecheat', 'Fey');
+    expect(out.sections['Bonus Actions'][0].text).not.toMatch(/No damage/);
+    expect(out.sections['Bonus Actions'][0].text).toContain('*Failure:* 5 (1d10) Fire damage.');
+  });
+
+  test('inability-phrasing: verbatim Spore Cloud garble becomes "can\'t"', () => {
+    const { findings, out } = fix({ Traits: [
+      { name: 'Spore Cloud', text: '*Wisdom Saving Throw:* DC 17, each hostile creature within 10 feet of it. *Failure:* It has the inability to take reactions until the start of the wardrake\'s next turn.' },
+    ] }, 'Sporeveil Wardrake', 'Dragon');
+    expect(findings.map((f) => f.rule)).toContain('inability-phrasing');
+    expect(out.sections.Traits[0].text).toContain("It can't take reactions until");
+  });
+
+  test('paren-DC saving throw flags as phrasing (verbatim Grasping Earth)', () => {
+    const { findings } = fix({ Traits: [
+      { name: 'Grasping Earth', text: 'The first time on each of the bonecradle\'s turns that it hits a creature with its Skeletal Grasp attack, the target must make a Strength Saving Throw (DC 16). Failure: The target has the Grappled condition (escape DC 16).' },
+    ] }, 'Bonecradle', 'Undead');
+    expect(findings.map((f) => f.rule)).toContain('phrasing-saving-throw');
+  });
+
+  test('conversion strips grant-form restatements and relocates passive riders (Bonecradle e2e)', async () => {
+    const { convertEdition } = require('../format-2024/generate.mjs');
+    const queuedLLM = (queue) => jest.fn(async (prompt, validate) => {
+      const raw = JSON.stringify(queue.shift());
+      if (validate && !validate(raw)) throw new Error('validator rejected fixture');
+      return raw;
+    });
+    const legacy = {
+      name: 'Bonecradle', type_and_alignment: 'Large undead, neutral evil',
+      armor_class: '16', hit_points: '133 (14d10 + 56)', speed: '30 ft., burrow 20 ft.',
+      attributes: 'STR 20 (+5), DEX 10 (+0), CON 18 (+4), INT 6 (-2), WIS 14 (+2), CHA 10 (+0)',
+      saving_throws: 'STR +8, CON +7',
+      damage_resistances: 'bludgeoning, piercing, and slashing from nonmagical attacks',
+      damage_immunities: 'poison', condition_immunities: 'frightened, poisoned',
+      senses: 'darkvision 60 ft.; passive Perception 15', languages: "understands the languages of its creator but can't speak",
+      challenge_rating: '8 (3,900 XP)', proficiency_bonus: '+3', format: '2014',
+      abilities: [{ name: 'Bone Shroud', description: "The bonecradle's body is a mass of animated bones that grant it resistance to bludgeoning, piercing, and slashing damage from nonmagical weapons." }],
+      actions: [
+        { name: 'Crushing Ribs', description: 'Melee Weapon Attack: +8 to hit, reach 5 ft., one target. Hit: 18 (3d8 + 5) bludgeoning damage.' },
+        { name: 'Grasping Earth', description: "The first time on each of the bonecradle's turns that it hits a creature with its Skeletal Grasp attack, the target has the Grappled condition (escape DC 16)." },
+      ],
+    };
+    const response = {
+      Traits: [{ name: 'Bone Shroud', text: "The bonecradle's body is a mass of animated bones that grant it resistance to Bludgeoning, Piercing, and Slashing damage from nonmagical weapons." }],
+      Actions: [
+        { name: 'Crushing Ribs', text: '*Melee Attack Roll:* +8, reach 5 ft. 18 (3d8 + 5) Bludgeoning damage.' },
+        { name: 'Grasping Earth', text: "The first time on each of the bonecradle's turns that it hits a creature with its Skeletal Grasp attack, the target has the Grappled condition (escape DC 16)." },
+      ],
+    };
+    const converted = await convertEdition(legacy, queuedLLM([response]));
+    expect(converted.resistances).toBeUndefined();
+    // Grant-form restatement stripped with the package; the emptied trait drops.
+    expect(converted.sections.Traits.map((e) => e.name)).not.toContain('Bone Shroud');
+    // Passive rider relocated out of Actions.
+    expect(converted.sections.Actions.map((e) => e.name)).not.toContain('Grasping Earth');
+    expect(converted.sections.Traits.map((e) => e.name)).toContain('Grasping Earth');
+    expect(converted._conversionNotes).toHaveLength(1);
+  });
+});
+
+describe('batch 11 (Glassfang/Shardswarm/Chitterchill): slot leak, beast INT, swarm shape', () => {
+  const { chassis } = buildContext(12, 'swarm');
+  const lint14 = (m) => lintStatblock(m, { edition: '2014', chassis }).findings;
+
+  test('raw slot descriptor strips (verbatim Sand Veil)', () => {
+    const m = { name: 'Glassfang', type: 'Monstrosity', sections: { Traits: [
+      { name: 'Sand Veil', text: 'While burrowing, the glassfang cannot be targeted by attacks of opportunity. It may use its bonus action to Disengage. slot: movement trick: bonus-action Disengage, flyby, spider climb, or burrow' },
+    ] } };
+    const findings = lint14(m);
+    expect(findings.map((f) => f.rule)).toContain('instruction-leak');
+    expect(findings.map((f) => f.rule)).toContain('vocab-register');
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Traits[0].text).not.toMatch(/slot:/);
+    expect(out.sections.Traits[0].text).toContain('opportunity attacks');
+    expect(out.sections.Traits[0].text).toContain('It can use its bonus action');
+  });
+
+  test('beast-intelligence retypes a genius Beast to Monstrosity; Giant Owl INT 8 stays', () => {
+    const genius = { name: 'Glassfang', type: 'Beast', stats: { STR: 14, DEX: 16, CON: 13, INT: 18, WIS: 14, CHA: 10 }, sections: { Actions: [
+      { name: 'Searing Bite', text: 'Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 6 (1d8 + 2) piercing damage.' },
+    ] } };
+    const findings = lint14(genius).filter((f) => f.rule === 'beast-intelligence');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(genius, findings, { chassis });
+    expect(out.type).toBe('Monstrosity');
+    const owl = { ...genius, stats: { ...genius.stats, INT: 8 } };
+    expect(lint14(owl).filter((f) => f.rule === 'beast-intelligence')).toHaveLength(0);
+  });
+
+  test('swarm-half-value enforces the dice SHAPE (verbatim Claw Storm)', () => {
+    const m = { name: 'Shardswarm', type: 'Swarm of Tiny Dragons', sections: { Actions: [
+      { name: 'Claw Storm', text: 'Melee Weapon Attack: +10 to hit, reach 5 ft., one target. Hit: 37 (7d8 + 6) slashing damage, or 18 (4d8) slashing damage if the swarm has half of its hit points or fewer.' },
+    ] } };
+    const findings = lint14(m).filter((f) => f.rule === 'swarm-half-value');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections.Actions[0].text).toContain('or 19 (3d8 + 6) slashing damage');
+  });
+
+  test('identity-immunity material branch now runs on 2014 (verbatim Chitterchill)', () => {
+    const m = {
+      name: 'Chitterchill Horde', type: 'Swarm of Tiny Fiends',
+      resistances: 'bludgeoning, piercing, slashing, cold', immunities: 'fire',
+      sections: { Traits: [{ name: 'Frozen Fury', text: 'Each creature that starts its turn in the same space as the horde takes 5 (1d10) fire damage and 5 (1d10) cold damage.' }] },
+    };
+    const findings = lint14(m).filter((f) => f.rule === 'identity-immunity');
+    expect(findings).toHaveLength(1);
+    expect(findings[0].expected).toBe('Cold');
+  });
+
+  test('mixed spoken/mute languages fold into the understood list', () => {
+    const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
+    fixture.languages = "Infernal, understands Common but can't speak";
+    const m = assembleMonster(fixture, ctx());
+    expect(m.languages).toBe("understands Infernal and Common but can't speak");
+  });
+});
+
+describe('self-escape-immune-condition (verbatim Fracture Escape)', () => {
+  test('the dead clause strips; a non-immune escape stays', () => {
+    const { chassis } = buildContext(23, 'swarm');
+    const m = {
+      name: 'Chitterchill Horde', type: 'Swarm of Tiny Fiends',
+      immunities: 'fire; charmed, frightened, grappled, paralyzed, petrified, prone, restrained, stunned',
+      sections: { 'Legendary Actions': [
+        { name: 'Fracture Escape (Costs 2 Actions)', text: 'The horde scatters into its constituent fiends. It ends any grappled or restrained condition on itself, moves up to half its speed, and then reforms.' },
+      ] },
+    };
+    const findings = lintStatblock(m, { edition: '2014', chassis }).findings
+      .filter((f) => f.rule === 'self-escape-immune-condition');
+    expect(findings).toHaveLength(1);
+    const out = applyCorrections(m, findings, { chassis });
+    expect(out.sections['Legendary Actions'][0].text).toContain('It moves up to half its speed, and then reforms.');
+    expect(out.sections['Legendary Actions'][0].text).not.toMatch(/ends any/);
+    // A creature NOT immune keeps its escape clause.
+    const escaper = { ...m, immunities: 'fire' };
+    expect(lintStatblock(escaper, { edition: '2014', chassis }).findings
+      .filter((f) => f.rule === 'self-escape-immune-condition')).toHaveLength(0);
   });
 });

@@ -136,7 +136,7 @@ export function namingRules(traits) {
  */
 export function buildSynthesizedConcept(traits, synthesis) {
   return `${synthesis.trim()} It is ${traits.intelligence}, and it is ${traits.disposition ?? 'true to its nature'}. ` +
-    `${traits.creature_type ? `Its creature type MUST be ${traits.creature_type}. ` : ''}` +
+    typeMandate(traits.creature_type) +
     'Its alignment must FOLLOW that disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
     'Every ability should express that single identity — do not give each physical detail its own separate ability. ' +
     namingRules(traits);
@@ -169,6 +169,32 @@ export function rollCreatureType() {
   return 'Monstrosity';
 }
 
+// Type ESSENCES (owner call, 2026-07-28 — the anti-reskinning mechanism):
+// a bare type mandate produced retrofits ("a spore creature... OH, make it
+// sparkly" — the Shusspore). The essence tells the synthesis what the type's
+// body and powers ARE, so the fusion is built FROM type material instead of
+// painted with it. The substance-override stamp remains the backstop.
+export const TYPE_ESSENCES = {
+  Aberration: 'a wrongness from outside reality — alien anatomy, minds and senses that work by other laws, powers that violate expectation (psychic force, impossible geometry)',
+  Beast: 'a natural animal, however large or strange — animal intelligence, animal weapons (bite, claw, gore), no magic',
+  Celestial: 'a being OF the higher planes — its body is light, law, sanctified matter, or divine purpose given form; its powers are judgments, wards, and radiant wrath. Even a stalker or ambusher among them is a huntsman of justice, not a skulking animal',
+  Construct: 'a MADE thing — animated matter, worked material, or machinery; it does not tire, fear, or bleed, and its powers come from its construction',
+  Dragon: 'a draconic creature — reptilian majesty, a breath or elemental gift, pride and territory in its bones, however small or young',
+  Elemental: 'living elemental matter — its body IS fire, water, air, earth, or some fusion; its attacks and defenses are that element behaving like a creature',
+  Fey: 'a creature of the dreaming otherworld — bargains, glamours, seasons, and rules-with-loopholes; its magic is trickery and enchantment, its logic is story-logic',
+  Fiend: 'a being of the lower planes — cruelty, corruption, or hunger given form; its powers tempt, torment, burn, or bind',
+  Giant: 'a massive humanoid-shaped person — a folk, however monstrous, with culture and tools scaled huge; it throws, smashes, and strides',
+  Humanoid: 'a person of a mortal people — tools, training, language, and tactics rather than innate monstrousness',
+  Monstrosity: 'an unnatural predator — a creature that should not exist but hunts as if it always has; frightening anatomy turned to killing use',
+  Ooze: 'mindless hungry liquid — it engulfs, dissolves, splits, and seeps; no plan, only appetite and chemistry',
+  Plant: 'ambulatory vegetation or fungus — roots, spores, vines, and bark; patient, territorial, feeding on what it catches',
+  Undead: 'the dead refusing to rest — a corpse, spirit, or necromantic residue animated by will, curse, or hunger for the living',
+};
+
+const typeMandate = (type) => (type
+  ? `Its creature type MUST be ${type}: ${TYPE_ESSENCES[type] ?? 'build the concept from what that type IS'}. Build the creature FROM this essence — the other traits are raw material the essence shapes, never a finished creature the type is painted onto. `
+  : '');
+
 export function buildRandomConceptSeed() {
   const traits = {
     intelligence: pick(SEED_DIMENSIONS.intelligence),
@@ -181,7 +207,7 @@ export function buildRandomConceptSeed() {
   };
   const concept =
     `a ${traits.intelligence}, ${traits.physical} ${traits.silhouette} from ${traits.origin} — ${traits.disposition}. ` +
-    `Its creature type MUST be ${traits.creature_type} — reinterpret every other trait through that lens (a ${traits.creature_type} with this body and origin). ` +
+    typeMandate(traits.creature_type) +
     'Its alignment and combat role must FOLLOW the disposition (guardians and wardens are not evil; tricksters are not brutes). ' +
     'Blend every trait into ONE coherent creature with a single unifying identity — contradictions between traits are creative fuel, not errors. ' +
     namingRules(traits);
@@ -195,7 +221,9 @@ export function buildRandomConceptSeed() {
 // not absolute — the stems stay reachable, the attractor breaks. Keyed by
 // creature type/archetype where the evidence is type-specific.
 export const OVERUSED_NAME_STEMS = {
-  global: ['shard', 'whisper', 'grim', 'gloom', 'storm', 'dread', 'cinder'],
+  // 'uul'/'ulg': the guttural Uu-/Ulg- attractor produced Uuloth, Uulghul,
+  // Ulghoch, and Uulgrath across soaks — two in a single 2014 batch.
+  global: ['shard', 'whisper', 'grim', 'gloom', 'storm', 'dread', 'cinder', 'uul', 'ulg'],
   swarm: ['chit', 'skitter', 'scuttl', 'hive'],
   Ooze: ['mire', 'muck', 'gulch'],
   Fey: ['mire', 'gloam'],

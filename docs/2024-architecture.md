@@ -243,7 +243,9 @@ never accept LLM numbers); missing required_slots reject the generation.
   instant and lossless — downstream consumers always read the active
   object). Flipping toward a missing edition shows the target card as a
   blurred DETERMINISTIC shape mapping (`toLegacyModel`/`fromLegacyModel` —
-  real numbers, source-phrased prose) under a one-time premium Convert
+  real numbers, source-phrased prose) under a one-time Convert (metered as
+one generation via canGenerateStatblock — owner call 2026-07-28, replacing
+the premium gate; free tier spends one of the daily five)
   button (`convertEdition`). Any edit/re-roll/regenerate invalidates the
   cache — never sync edits across editions. **Editing is IN PLACE (owner call, second pass same
   day): the 2014 card's convention won — fields swap to inputs where they
@@ -519,6 +521,497 @@ corpus hits — all extraction artifacts (greedy two-word captures like
 heart"). The dominance threshold IS the 0-FP mechanism. Garbled one-off
 referents stay in the referent-orphan (fix-call) family; do not re-attempt
 without a fundamentally tighter subject extractor.
+
+## Native-2014 batch 1 (2026-07-27, six random blocks — the sprint's untested half)
+
+Kralvag CR 12 skirmisher / Thornbark CR 13 BRUTE (first live brute) /
+Siltstone CR 11 lurker+caster / Glacier Eel CR 2 defender / Spumescum CR 22
+lurker+legendary / Sticky Hound CR 2 defender. **Chassis exact on all six**
+— the numbers layer is edition-clean: Kralvag cone 39 = AoE 39; Thornbark
+per-attack 19 = 19 and routine 57 vs 58 (brute shipped sane — partial
+answer to the brute-docket question); Siltstone eruption 22 = AoE 22;
+Spumescum breath 31 vs 30 with the 40-damage ambush rider = lurker nova;
+both CR 2s within a point of budget; escape DCs formula-exact.
+
+The predicted is2024-gating holes turned out to be PATTERN gaps in
+edition-agnostic rules, both fixed and swept 0/329 + 0/327:
+1. **defense-restated** required capitalized types and simple shapes —
+   Kralvag's "Glimborg" ("has resistance to cold damage and immunity to
+   poison damage and the poisoned condition", lowercase compound) sailed
+   through. Regex now edition-robust (case-insensitive, chained compounds).
+2. **duplicate-entry** only compared identical text within ONE section —
+   Kralvag defined "Crystal Burst" twice (Trait + paraphrased Reaction).
+   New `duplicate-cross-section`: same bare name (suffix-stripped) in two
+   sections + token-Jaccard ≥ 0.5 → the Traits copy drops (correctable);
+   non-Traits pairs go to the fix call. Attack-reuse same-name entries
+   (legendary "Pseudopod: makes one Pseudopod attack") stay legal via the
+   overlap threshold.
+3. **Languages mute-form normalizer** in assembleMonster: "does not/cannot
+   speak" → "can't speak" (31/31 officials; recurring drift — Kralvag,
+   Cliffskitter, Askor).
+
+Correctly-gated confirmations: Sticky Hound's cold+fire+BPS-nonmagical
+resistance stack at CR 2 is 2014-legal (Imp precedent) — the is2024 gates
+on the defense-budget rules did the right thing by staying silent.
+
+Model-judgment slips, no rule possible: Glacier Eel typed Construct and
+Sticky Hound typed neutral Fiend DESPITE the substance rule being present
+in the 2014 prompt (rule 10) — prompt-adherence watch, 2/6 in this batch
+vs ~0 recent 2024 batches; monitor whether 2014 needs the guidance
+strengthened. Other one-offs: Kralvag's redundant double-Disengage (Quick
+Step + Quick Withdraw); Siltstone's "must succeed or take X... on a
+successful save half" mixed construction (save-or is corpus-legal via
+Swallow, the half-clause hybrid is the wart); Spumescum trait-housed
+ambush attack (Surprise-Attack-adjacent, adjudicable); "Siltstone Swarm"
+named Swarm without being one.
+
+## Native-2014 batch 2 (2026-07-27, six random blocks)
+
+Uulghul CR 9 skirmisher / Chuugoth CR 12 skirmisher+caster / Charrflutter
+CR 1/2 brute / Obsidiancrawl CR 1/4 defender / Bonewrack CR 4 swarm /
+Uuloth CR 21 controller+legendary. **Chassis exact 6/6 (12/12 native 2014
+total)**: Uuloth the standout — routine 63 = 63, perAttack 21 = 21, Shard
+Spray 32 = AoE 32; Bonewrack swarm hp 97≈98 with halved-dice Bite done
+right; Chuugoth whirlwind 39 = AoE 39 and a rules-correct 60-ft-fall 6d6;
+Obsidiancrawl Bite 7 vs 4 = documented tiny-CR floor wobble.
+
+Shipped (all corpus-swept):
+1. **grapple-dependency-orphan** (block-level reject): Uuloth's Constrict
+   targeted "one target grappled by the uuloth" and Sand Sink referenced a
+   held grapple — but NOTHING in the block imposes Grappled; the entry is
+   unusable. 0/327 + 0/329 (the Mimic false positive taught the imposes
+   pattern "grappled by it (escape DC"). Fix call — adding a grapple rider
+   is design surgery.
+2. **condition-caps-in-2014** + applier: "becomes Restrained" mid-sentence
+   (Uuloth Salt Anchor) — 2024-ism; 0/327 in official entry prose (the
+   first sweep's 57 hits were condition-immunity LINES, which stay
+   capitalized internally). Lowercases when preceded by lowercase prose.
+3. **vocab-adjacent** (both editions) + applier: "adjacent" is 3e
+   vocabulary, 0/329 + 0/327; "adjacent to" → "within 5 feet of"
+   deterministically (Uulghul's Coordinated Strike), other forms ride the
+   ladder. Both 2+3 added to CONVERSION_LINT_RULES.
+4. Defense-line "poison damage" → "poison" token strip + languages
+   normalizer extended to "doesn't speak" (third live variant).
+
+**Corpus-killed (valued): auto-hover for walk-0 flyers.** Swarm of Bats
+officially prints "0 ft., fly 30 ft." with no hover — officials DO make
+walk-0 non-hover flyers. Chuugoth's hoverless fly stays a note, not a rule.
+
+Naming: the Uu-/Ulg- attractor confirmed (Uulghul + Uuloth in ONE batch;
+Ulghoch/Uulgrath historically) — 'uul'/'ulg' added to global
+OVERUSED_NAME_STEMS; buildNamingPrompt now tells the model its candidates
+are judged by a separate model on originality/evocativeness and names the
+observed failure attractors (guttural Uu- coinages, noun+verb gluings like
+"Obsidiancrawl" — owner-flagged bad name).
+
+Watch items: type-substance adherence now 3/12 on 2014 (Chuugoth: a
+scattering bone-cloud typed HUMANOID — worst case yet; prior: Construct
+eel, neutral Fiend hound) vs ~0/8 on 2024 — if batch 3 continues the rate,
+strengthen the 2014 prompt's rule 10 with a NEVER-example like the 2024
+variant carries. One-offs: Bone Jab dealing fire (name/type mismatch),
+speaking swarm (Languages Draconic on a swarm), Chuugoth scatter-reform
+adjudication wobble, trailing periods on spell tier lines.
+
+## Native-2014 batch 3 (2026-07-27, six random blocks)
+
+Sandstare CR 2 lurker / Colossus CR 2 defender / Burrowmound CR 1 defender /
+Sinterhoard CR 11 defender+caster / Grech CR 3 defender / Bloatbough CR 1
+brute. **Chassis clean 6/6 (18/18 native 2014)** — Grech HP 67 = 61×1.1
+exact; Sandstare bolt 11 vs lurker total 10.5; Bloatbough the brute
+fingerprint (AC −1, HP ×1.25).
+
+Found + fixed:
+1. **instruction-leak was is2024-GATED** — the first true gating hole of the
+   sprint (the batch-1 fears finally materialized, just once). Bloatbough
+   shipped "This attack is a heavy melee attack." (slot-vocabulary
+   classifier sentence) because the whole instruction-leak loop sat inside
+   the is2024 block. Moved to edition-agnostic scope + fourth detection
+   shape added (0/327 + 0/329).
+2. **prompt-example-name**: Grech shipped a trait named "Helping Snarl" —
+   the naming prompt's own rename-guidance example, copied verbatim.
+   Reject on exact example names (Helping Snarl, Tar Tendril).
+3. **Spell-DC derivation both ways**: Sinterhoard printed spell DC 17 under
+   CHA 22 at PB +4 (derived 18) — the raise-only stamp lifts an
+   undersupporting score but never touched the DC when the score
+   overshoots, and the lint rule's ±1 tolerance let it ship. The stamp now
+   rewrites the printed DC (and spell-attack bonus) to 8+PB+mod whenever it
+   doesn't derive exactly; chassis DC stays the floor via the raise.
+
+**Corpus-killed (valued): blanket recharge-on-attack-roll rule.** Four
+officials do it (Ettercap/Giant Spider Web, Minotaur Gore, Ape Rock) — but
+all four add value (utility, rider, or damage above the at-will).
+Sinterhoard's Crystal Burst (recharge-gated 28 vs at-will 30, no rider)
+stays a real design wart with n=1 — refined rule (recharge attack with
+damage ≤ perAttack AND no rider) goes on the docket if it recurs.
+
+Watch items: languageless Humanoid (Grech; 0/656 officials — folded into
+the type-adherence watch, which improved this batch: only Grech and the
+fungal Burrowmound-as-Aberration are borderline, no hard slips);
+"Scrabbling Colossus" INT 17 on a mindless-reading shard beast;
+name-size dissonance (Colossus = Large CR 2); trailing periods on spell
+tier lines (recurring cosmetic).
+
+## Native-2014 batch 4 (2026-07-27, six random blocks)
+
+Tarstrike CR 1 defender / Glazed Bulwark CR 3 defender / Rootkelp CR 12
+lurker / Skittering Multitude CR 1/2 / Feverthorn CR 11 skirmisher+caster /
+Glintspinner CR 20 skirmisher+legendary. **Chassis clean 6/6 (24/24 native
+2014)** — three EXACT hp fingerprints (Rootkelp 161, Feverthorn 187,
+Glintspinner 332≈333), Glintspinner perAttack 26 = 26 and breath 40 = AoE
+40, Tarstrike hp 30 = 30.
+
+**The Giant-type failure is confirmed**: Skittering Multitude (a clinging
+vermin-multitude concept — owner: "what is this even") and Feverthorn (a
+spore-plant caster) both typed Large GIANT, joining Kralvag (crystal
+pincer-beast, batch 1). Native-2014 hard type slips now 5/24 (all but one
+mistyped AS Giant) vs 0/8 recent 2024. Action taken: 2014 prompt rule 10
+strengthened — giants are massive humanoid-shaped folk, NEVER crawling
+creatures/multitudes/plants; multitudes are swarms; substance overrides the
+requested type. Monitor next batch.
+
+Shipped (all swept):
+1. **resistance-unknown un-gated + extended to all three defense lines**
+   (was resistances-only + is2024) — gating hole #2: Glintspinner shipped
+   "Damage Immunities: prismatic" (invented type). Manual field sweep 0/327
+   + 0/329; 2014 nonmagical-qualified clauses pass via contains-matching.
+2. **grapple-escape-dc-2014** (correctable): Multitude's "or be grappled"
+   carried no escape DC anywhere. Both imposition shapes (save-or and
+   Hit-rider) swept 0/327 + 0/329 after excluding "grappled by"
+   preconditions (Vampire Bite) and escape traits (Kraken). Applier stamps
+   (escape DC save_dc−2) on the imposing clause. Mirrors 2024's
+   grapple-exit, whose anchors are 2024-phrasing-bound.
+3. Normalizers: "exhausted" → "exhaustion" in defense lines (was landing in
+   DAMAGE immunities as junk); "blindsight 60 ft., blind beyond this
+   radius" → parenthesized corpus form.
+
+One-offs / notes: Tarstrike trait named "Chomp" describing a tar slick
+(name-content mismatch); Tendril Lash flat +2 vs STR +3 (CR-1 band
+tolerance); Glintspinner "confused" pseudo-condition — but with an inline
+d10 behavior table, i.e. the official Umber Hulk pattern minus the naming
+(condition-fake stays 2024-gated; the inline definition makes it
+adjudicable); Glintspinner rider DCs 20 derive from no stat (chassis 22 −2,
+conservative direction); Hairball Hurl's self-throwing referent mush
+(fix-call class); trailing spell-tier periods (recurring cosmetic).
+
+## Native-2014 batch 5 (2026-07-27, six random blocks)
+
+Sporemound CR 1/4 / Shardwisp CR 1 defender / Bonesilence + Shivver CR 12
+lurkers / Prism Storm CR 16 controller+legendary / Shisstril CR 22
+lurker+legendary. **Chassis clean 6/6 (30/30 native 2014)**: Prism Storm
+shard 14 = perAttack 14 and Cage 22 = AoE 22; Shivver/Bonesilence twin
+lurker fingerprints (both AoEs 24 = 24); Shisstril hp 289≈288, legendary
+"if available" recharge-gate used correctly.
+
+**Machinery bug found live — head-noun rename corruption (Shardwisp)**: the
+Anchored Barrier action read "The shardwisp lasts for 1 minute… any
+creature within the shardwisp gains half cover" — a provisional name ending
+in "Barrier" was renamed to "Shardwisp", and applyRenameMapping's head-noun
+word-pair fallback rewrote every "the barrier", including the OBJECT the
+action creates. Fix: word-pairs now filter through SELF_REF_STOP (exported
+from lint; 'barrier'/'shield'/'veil'/'field' added) — exact full-name
+replacement still applies; genuine self-references ("the stalker") still
+follow renames.
+
+**Rule-hardening (uses-references)**: Shivver's "use its Storm Invisibility
+(or a similar trait…)" — the undefined reference went unchecked because a
+parenthetical defeats every lookahead terminator. Extending the lookahead
+exposed that this rule had NEVER been swept against the 2014 corpus:
+official substitution phrasings ("Hurl Flame in place of any melee
+attack", "Swallow instead of its bite", "Engulf on it") were over-capturing
+— live 2014 generations using official phrasing were eating spurious
+rejects. Terminators added (\(, and, to, in, instead, on, against);
+re-swept 0/329 + 0/327. The hedge parenthetical itself is now an
+instruction-leak shape (stripped). Also shipped: prose-ft-abbrev ("within
+30 ft." → "within 30 feet", 0/0 corpus) + conversion-gated; prompt rule 10
+adds "Beasts are natural animals: INT 3 or lower, NEVER spellcasters"
+(Bonesilence: a CHA-20 innate-caster BEAST — the caster-stamp did its job
+on a design that shouldn't have had Spellcasting at all).
+
+One-offs: Shisstril Mimicry "or is shaken as an action" (garbled escape
+clause); Prism Storm "the double's space" (referent from a draft concept
+that no longer exists) and "Jagged Ice" on a light-themed creature;
+"Lightning Bolt" as a non-spell action name; S/Sh-initial name cluster
+(5/6 this batch — watch as the possible next attractor after the Uu- ban).
+
+## Conversion sprint — batch 6 (2026-07-27, FIRST 2014→2024 direction, six blocks)
+
+The batch-5 native blocks converted 2014→2024 — the last untested direction.
+Numbers carried verbatim ✓; skeletons mostly converted well; the conversion
+even REPAIRED two source defects (Shivver's "Storm Invisibility" → "Rain
+Cloak" + hedge parenthetical dropped; Shardwisp's barrier references
+partially restored). Shardwisp's rename corruption otherwise carried (source
+predates the fix — saved monsters aren't retro-repaired).
+
+Four leak classes found, all 0/329-swept, shipped with deterministic
+appliers and gated into CONVERSION_LINT_RULES:
+1. **phrasing-hit-marker was missing from the conversion gate** — "Hit:"
+   markers shipped in Shisstril's 2024 attack lines. Added, plus a
+   deterministic strip applier (was fix-call-only).
+2. **success-half-phrasing**: "Success: Half as much Lightning damage."
+   (2014 residue, three blocks) → "Success: Half damage only."
+3. **skeleton-fusion**: "...damage and Strength Saving Throw: DC 17, the
+   target." — a skeleton fused mid-sentence (Bonesilence). Unfuses at the
+   conjunction.
+4. **trigger-outside-reactions**: the Trigger:/Response: reaction format
+   applied to LEGENDARY ACTIONS ("Trigger: The storm takes this action.
+   Response: It does so." — Prism Storm). Vacuous self-triggers strip;
+   "uses X / It does so" collapses to the deed; real Reactions untouched
+   (pattern-narrow). Also gated the rest of the phrasing-applier family
+   into conversion (area-term-caps, damage-type-caps, success-no-effect,
+   area-circle, spelling-centred) and extended prose-ft-abbrev ("by 10
+   ft.", "a 10 ft. radius", "N ft. away").
+
+**RESOLVED (owner call: option b, with toast)**: converting 2014→2024 now
+applies bps-resistance — the physical package drops on non-swarm,
+non-incorporeal creatures, matching official 2024 reprints. This is the ONE
+sanctioned rebalance in conversion. Mechanics: convertEdition passes
+chassis into the conversion lint (the set filter keeps other chassis rules
+out), 'bps-resistance' joined CONVERSION_LINT_RULES (is2024-gated, so
+2024→2014 never sees it), and the strip surfaces as a transient
+`_conversionNotes` entry that the Vue toasts (info, 8s) and deletes before
+persisting. Swarms/incorporeal keep the package, no note. 2024→2014
+direction is unaffected (the qualifier is legitimately reconstructed there
+by the LLM from 2014 style).
+
+Cosmetic notes: Languages line omitted (vs corpus "Languages None") on
+languageless converted blocks; "1/day each" casing vs 2024-native "1/Day
+each"; "surprised creature" hook survives into 2024 where surprise works
+differently.
+
+## Batch 7 (2026-07-27, three native 2014 + 2014→2024 conversions)
+
+Facetwing CR 4 BRUTE (exact fingerprint: AC 13 = brute −1, hp 97 ≈ 78×1.25,
+Reckless — a coherent brute kit) / Saltweb Skitterer CR 11 skirmisher
+(exact: claws 74 vs 72, spit 36 = AoE 36) / Stoneslide Juggernaut CR 21
+defender+legendary (exact: 3×26 = 78 vs ~75, and a LEGITIMATE Giant — first
+post-prompt-fix batch, 0 hard type slips in 3). Native one-offs: Facetwing's
+malformed resistance line ("bludgeoning, and slashing" — missing piercing vs
+its own trait) + poisoned immunity in trait but not line; secondary DCs at
+chassis−2 deriving from no stat (2nd occurrence — Juggernaut DC 20, was
+Glintspinner; watch → rule if it recurs); INT 18 on mindless-reading brutes.
+
+**NEW CONVERSION DEFECT CLASS — SEMANTIC INVERSION**: Facetwing's "is
+immune to the poisoned condition" converted to "has the Poisoned condition"
+(immunity → affliction!), and Wall of Ice's Success clause gained the push
+the original success avoided. Shipped: `self-afflicted-condition` (reject;
+the Invisible Stalker's permanent Invisibility is the one legal
+self-affliction, 1/329 — Invisible exempt) + a NEVER-invert guard in the
+2024 conversion prompt. Success-outcome inversion has no deterministic net
+(officials legitimately vary success outcomes) — prompt guard only, watch.
+
+Also shipped (all swept 0/329 + 0/327):
+- **Suffix doubling fixed at both ends**: assembly strips in-section cost
+  suffixes ("Disengage (Bonus Action)" inside Bonus Actions), and the
+  legacy fold no longer re-appends; duplicate-cross-section's bareName now
+  strips parentheticals repeatedly (the doubled suffix defeated it) and
+  joined CONVERSION_LINT_RULES.
+- **skeleton-fusion extended**: colon-fusion ("weapon: Dexterity Saving
+  Throw:") unfuses deterministically; comma-fusion detected (fix call).
+- **generic-self-reference**: "The creature casts..." → the monster names
+  itself (applier substitutes the name; falls back to pattern-match when a
+  same-pass rename moved the entry).
+- **spellcasting-entry-name**: "Innate Spellcasting" → "Spellcasting" in
+  2024. success-no-effect now case-insensitive ("Success: no effect.").
+- **bps-drop trait cleanup**: when conversion drops the B/P/S package, the
+  trait RESTATEMENT of it strips too (clause-level first — "as hard as
+  stone, and it is resistant to..." keeps its host sentence; Stony Hide
+  live case contradicted the stripped line).
+
+## Batch 8 (2026-07-28, five native 2014 + conversions) — TYPE-BY-SUBSTANCE STAMP
+
+Pumice Skitterer CR 4 skirmisher / Scuttlegeist CR 2 balanced (hp 44 = 44,
+spray 9 = AoE 9) / Siltsine + Mistcrag CR 12 lurkers (Mistcrag's
+absorb-gated Lightning Discharge is a standout mechanic) / Amber Hound CR
+24 controller (AC 22, DC 25, Mind Scar 42 vs 43). **Chassis 5/5 — native
+2014 now 35/35.**
+
+**Creature type is now engine-stamped (owner call — "can we determine the
+type in the concept call?"): YES, shipped.** Both existing micro-calls
+(concept-path archetype resolve; random-path seed synthesis) now also
+return `creature_type`, decided by the concept's SUBSTANCE — the synthesis
+may OVERRIDE the rolled type when the fusion contradicts it (the
+Amber-Hound-as-Humanoid class). The engine stamps it in assembleMonster
+like a number: canonical-list validated, never overrides "Swarm of ..."
+forms, model type survives when no resolution exists (e.g. user-picked
+role skips the micro-call). Zero extra LLM calls (piggybacked).
+
+Also shipped (swept 0/329):
+- **instruction-leak "Credits:" shape**: Siltsine shipped "Credits: This
+  ability fills the required slot for an ambush or once-per-fight nova
+  mechanic." — verbatim slot-plan language. Detection + sentence strip.
+- **failure-damage-echo** (correctable, conversion-gated): the Spore
+  Volley conversion repeated the attack's own 25 damage as a bare average
+  inside the Failure clause — double-counting. Officials' hybrid Failure
+  clauses only carry EXTRA dice damage (0/329). Applier strips the echo.
+- **Partial-package conversion drop**: Siltsine's "psychic, bludgeoning,
+  and slashing from nonmagical" (no piercing) dodged bps-resistance
+  (needs all three). The conversion now drops ANY physical token whose
+  SOURCE line carried the nonmagical qualifier — Treant-style unqualified
+  partials (3 official) are untouched because the key is the source
+  qualifier, not the shape. Same toast note.
+- **term-caps** extended: "as a bonus action/reaction" capitalizes in 2024
+  (0/329 lowercase). **Setup-order prompt guard**: conversions were
+  opening with the skeleton and appending the setup sentence after
+  Success (Shard Storm, Illusory Double — n=2, no safe deterministic
+  reorder; prompt line + watch).
+
+One-offs: "cuttlegeist" name header vs "scuttlegeist" body (probable paste
+artifact or one-off casing garble — conversion printed it correctly);
+secondary-DC-minus-2 did NOT recur this batch; Amber Hound "Bone Shriek"
+name on an amber creature.
+
+## Batch 9 (2026-07-28, three native 2014)
+
+Cinderbarge CR 1/2 brute (AC 11 EXACT, single arm 8 = total 8) / Shusspore
+CR 12 lurker (hp 161, spikes 50 vs 47, CHA-striker +11 with CHA-coherent
+spell DC 19) / Shalespire CR 23 lurker (AC 21, hp 304≈301, atk +17 EXACT
+via DEX 30, spines 69 vs total 67, Seed Volley 35 ≈ AoE 34). Chassis 3/3 —
+native 2014 38/38. Shusspore's Celestial: owner reviewed — "crystalline
+spores... borderline but acceptable" (radiant immunity + mercy cantrips
+half-honor the roll; whether it predates the type stamp is unknown — next
+batch decides).
+
+Found + fixed (all swept):
+1. **trait-imposes-save was is2024-gated AND only knew the 2024 skeleton**
+   (gating hole #3): Shalespire's Spine Burst — a 1/Day 44-damage nova
+   with "As an action" phrasing — shipped in Traits. Rule moved out of the
+   gate, skeleton detection covers 2014 prose ("must make a DC N ... saving
+   throw"), the pre-Failure trigger cut now also cuts at 2014 outcome
+   phrases ("On a failed save", ", taking" — the Softening-Tremor bug in
+   the other dialect), the state-gate targeting exclusion covers
+   Will-o'-Wisp ("that has 0 hit points"), official As-an-action utility
+   traits without saves stay legal (Flameskull), and the relocation applier
+   strips the "As an action, " lead-in.
+2. **entry-named-after-monster** (reject): Shusspore shipped a trait
+   literally named "Shusspore". 0/329 + 0/327.
+3. **Fix-call renames bypassed name normalization** — "The Watcher" and
+   "The Mound-Warden" shipped with leading articles because
+   rewriteFlaggedEntries applied response names raw; it now strips like
+   the assembly does.
+4. **half-as-much-phrasing** (+applier): "half as much on a successful
+   one" gains the missing "damage" (0/327).
+
+## Type essences — the anti-reskinning mechanism (2026-07-28, owner-driven)
+
+Owner diagnosis of the Shusspore class: "deepseek was obviously thinking of
+some spore creature and then said OH! I need to make it more sparkly" —
+the rolled type was a LABEL retrofitted onto an already-formed concept.
+Choosing type AFTER the concept was considered and rejected: the type roll
+exists because unconstrained deepseek concepts cluster hard
+(plant/ooze/undead/monstrosity; lifetime zero fiends/celestials/humanoids
+pre-roll) — type-after would regress that. Instead: `TYPE_ESSENCES` in
+concept-seeds.mjs — each of the 14 types carries a one-line definition of
+what its body and powers ARE ("Celestial: a being OF the higher planes —
+its body is light, law, sanctified matter... even a stalker among them is
+a huntsman of justice, not a skulking animal"). The seed concept, the
+synthesis prompt, and the synthesized concept all carry the essence with
+explicit fuse-FROM framing ("the traits are raw material the essence
+shapes, never a finished creature the type is painted onto"). The
+substance-override + engine type stamp (batch 8) remain the backstop for
+fusions that still fail. Diversity preserved (roll unchanged), retrofits
+attacked at the prompt layer, correctness guaranteed at the stamp layer.
+
+## Batch 10 (2026-07-28, four native 2014 — FIRST POST-ESSENCE BATCH)
+
+Bonecradle CR 8 controller / Fissurecheat CR 9 swarm / Sporeveil Wardrake
+CR 12 defender / Thudstep CR 23 defender+legendary. **Chassis 4/4 (native
+2014 42/42)**: Bonecradle DC 16 = controller +1, routine 36 vs 33;
+Fissurecheat hp 201≈204 swarm with halved-dice bites done right (7d6→3d6);
+Wardrake hp 238≈235; Thudstep hp 437≈441, routine 94 vs 87, wave 49 vs 43.
+
+**Type essences: early verdict GOOD — 4/4 type-coherent.** The Wardrake is
+the mechanism working as designed: a spore-flavored DRAGON (drake body,
+breath weapon, flight — spores as ingredient) instead of a spore creature
+painted draconic; Thudstep is a coherent barnacle harbor-golem; the fey
+eel-swarm earns its type through the Silver Temptation trickery kit;
+Bonecradle is substance-perfect Undead. Notable designs: Thudstep's
+Respect Sense / bow-to-be-protected kit; Bonecradle's Parry-shaped Bone
+Shield.
+
+Shipped (0/329 + 0/327 swept):
+1. **defense-restated flavor-lead shape**: "The bonecradle's body is a
+   mass of animated bones THAT GRANT IT resistance to..." — a whole-text
+   restatement hiding behind a flavor clause, invisible to the has/is
+   pattern.
+2. **action-passive-rider** (correctable): Grasping Earth — a triggered
+   rider ("The first time on each of its turns that it hits...") filed
+   under Actions; nothing the creature DOES with an action. Relocates to
+   Traits with its own `relocatedToTraits` marker; the counts rule scores
+   it as an ACTION still (the relocate-and-exempt contract, inverse
+   direction, without double-counting).
+3. **Leading-article leak path #2**: "The Seeping Fissures" arrived via
+   ability_renames (the model's rename value carried "The "); the
+   rewriteFlaggedEntries fix (batch 9) didn't cover this path.
+   applyAbilityRenames now strips leading articles too.
+
+Notes: Wardrake Tendril Strike is flat-less (22 (5d8), no striker mod —
+in-band, corpus-rare; watch); "Vulnerability Mark" reaction neither marks
+nor exposes vulnerability (name-content one-off); Fissurecheat DC 15 vs
+chassis 16 (−1 band).
+
+## Batch 10 conversions (2026-07-28, 2014→2024) — strongest conversion batch
+
+Skeletons, sections, Trigger/Response all correct; the swarm CORRECTLY kept
+its unqualified B/P/S package (exemption + source-qualifier key both
+working, no false note); Bonecradle's line-level package dropped with the
+toast. Seven leak shapes found, six shipped (all 0/329):
+1. **term-caps extended**: advantage/disadvantage, long/short rest, and
+   speed all capitalize in 2024 (recurring across every converted block).
+2. **success-no-effect += "Success: No damage."** (three occurrences —
+   officials omit the clause).
+3. **inability-phrasing**: "has the inability to take reactions" → "can't"
+   (condition-izing garble; shared rule, both editions).
+4. **phrasing-saving-throw += paren-DC mutant**: "must make a Strength
+   Saving Throw (DC 16)" dodged both the 2014 and 2024 patterns.
+5. **Grant-form trait strip in the BPS drop**: Bone Shroud's "bones that
+   grant it resistance to... nonmagical weapons" survived the batch-7
+   cleanup (is/has patterns only); the grant-form sentence now dies whole,
+   and a trait EMPTIED by the strip is dropped entirely.
+6. **action-passive-rider + inability-phrasing conversion-gated**:
+   Grasping Earth now relocates to Traits during conversion too.
+Remaining note (no rule): "has the Grappled condition (escape DC 16) by
+the swarm" dangling agent (cosmetic); "Success: The target takes half as
+much damage and doesn't have the Restrained condition" wordy negation
+(official form is "Half damage only." — watch, fix-call territory).
+
+## Batch 11 (2026-07-28, final native-2014 batch of the sprint)
+
+Glassfang CR 1/4 lurker / Shardswarm CR 12 swarm+caster / Chitterchill
+Horde CR 23 swarm+legendary. **Chassis 3/3 — native 2014 closes 45/45**
+(Chitterchill hp 501 = 501 and burst 56 = AoE 56 exact; Shardswarm 270≈268,
+breath 39 = 39).
+
+Shipped (all swept; "may" and "attacks of opportunity" are 0/329 + 0/327):
+1. **instruction-leak += raw "slot:" shape**: Glassfang shipped "slot:
+   movement trick: bonus-action Disengage, flyby, spider climb, or burrow"
+   verbatim. Tail-strip applier.
+2. **vocab-register** (+applier, conversion-gated): "attacks of
+   opportunity" → "opportunity attacks"; "may" → "can" (officials NEVER
+   write "may" — free vocabulary law).
+3. **beast-intelligence** (correctable retype): Beast + INT > 8 (the
+   official ceiling — Giant Eagle/Owl at 8) retypes to Monstrosity.
+   Glassfang was an INT-18 "beast" — first essence miss post-essences
+   (1/7 blocks), now deterministically corrected.
+4. **swarm-half-value enforces dice SHAPE**: "7d8+6, or 18 (4d8)" sat
+   inside the ±1 average tolerance with halved-count wrong AND the flat
+   dropped; the rule now requires half-count + same die + kept flat
+   (0/329 + 0/327 structural).
+5. **identity-immunity material branch un-gated for 2014** (0/327; the
+   Elemental-TYPE branch stays 2024-only — the 2014 Djinni legitimately
+   resists its own lightning): Chitterchill dealt cold on a "chill" name
+   while only resisting it.
+6. **Mixed spoken/mute languages normalize**: "Infernal, understands
+   Common but can't speak" → "understands Infernal and Common but can't
+   speak" (0 mixed shapes in either corpus).
+
+**Corpus-killed (valued): bare-Multiattack rule** — the 2014 Erinyes
+officially prints "makes three attacks." Ambiguous generated versions
+stay fix-call-free.
+
+One-offs: Crystalline Glide's uncapped free damage reduction (no
+action/frequency cost — off-corpus shape, defense-budget family, n=1
+watch); Frostfire Burst all-fire despite the name; "Chitterchill" is
+Chit-cluster slip #7 (the 50% ban roll missed).
 
 ## Defect investigation (2026-07-25)
 

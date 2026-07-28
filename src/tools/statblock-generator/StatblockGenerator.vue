@@ -171,7 +171,7 @@
             <ParButton data-testid="convert-edition" :disabled="converting" @click="convertMonsterEdition">
               {{ converting ? 'Converting…' : `Convert to ${previewEdition} rules` }}
             </ParButton>
-            <p class="edition-preview__note">One-time AI conversion — the numbers stay identical; the wording is rewritten in {{ previewEdition }} style. After that the tabs flip instantly.</p>
+            <p class="edition-preview__note">One-time AI conversion (counts as one generation) — the numbers stay identical; the wording is rewritten in {{ previewEdition }} style. After that the tabs flip instantly.</p>
           </div>
         </div>
         <Statblock v-else-if="displayFormat === '2014' && (loadingPart1 || loadingPart2 || monster)" :loadingPart1="loadingPart1"
@@ -1001,6 +1001,10 @@ async function generateStatblockEngine(edition) {
   let archetypeSource = 'user';
   let synthesizedConcept = null;
   let conceptIdentity = null;
+  // Type-by-substance (owner call): the micro-calls decide creature type
+  // from the concept's substance; the engine stamps it. Random path falls
+  // back to the rolled type when the call fails or skips.
+  let resolvedType = randomSeed?.creature_type ?? null;
   if (archetypeName === 'auto') {
     archetypeSource = 'auto';
     try {
@@ -1019,6 +1023,7 @@ async function generateStatblockEngine(edition) {
         if (typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) {
           conceptIdentity = parsed.identity.trim();
         }
+        if (typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
       } else {
         // Blank form: the same micro-call fuses the rolled axes into one
         // creature identity AND picks the role — generation designs from
@@ -1033,6 +1038,9 @@ async function generateStatblockEngine(edition) {
         if (parsed?.synthesis) {
           synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis);
         }
+        // Synthesis may override the rolled type when the fused concept's
+        // substance contradicts it (the Amber-Hound-as-Humanoid class).
+        if (typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
       }
     } catch (e) {
       logger.warn('Archetype auto-resolve failed, picking randomly:', e);
@@ -1060,6 +1068,7 @@ async function generateStatblockEngine(edition) {
         archetypeSource,
         edition,
         seedTraits: randomSeed,
+        resolvedType,
         // Concept-path naming refinement: refine the name via the naming
         // micro-call unless the model kept the user's typed name verbatim
         // (a kept name was judged a proper name — honor it).
@@ -1187,16 +1196,21 @@ function swapEditions() {
 // the prose into the target edition (convertEdition); numbers never change.
 async function convertMonsterEdition() {
   if (!monster.value || !previewEdition.value || converting.value) return;
-  if (!props.premium) {
-    alert('Edition conversion is available to premium supporters.');
-    return;
-  }
+  // Conversion is one LLM call — it meters like a generation (owner call:
+  // no premium gate; free users spend one of the daily five, premium is
+  // unlimited). canGenerateStatblock also owns the incognito + limit toasts.
+  const canConvert = await canGenerateStatblock(props.premium);
+  if (!canConvert) return;
   const target = previewEdition.value;
   converting.value = true;
   try {
     const source = JSON.parse(JSON.stringify(monster.value));
     delete source.other_edition;
     const converted = await convertEdition(source, (p, v) => generateGptResponse(p, v, 3), { degraded: isDegradedMode() });
+    // Sanctioned conversion adjustments (e.g. the 2024 B/P/S-package drop)
+    // arrive as transient notes — toast them, never persist them.
+    const conversionNotes = converted._conversionNotes ?? [];
+    delete converted._conversionNotes;
     converted.other_edition = source;
     monster.value = converted;
     monsters.value[activeFolder.value][activeMonsterIndex.value] = converted;
@@ -1204,6 +1218,7 @@ async function convertMonsterEdition() {
     format.value = converted.format === '2024' ? '2024' : '2014';
     previewEdition.value = null;
     toast.success(`Converted to the ${target} rules — both printings are saved; use the tabs to flip between them.`);
+    for (const note of conversionNotes) toast.info(note, 8000);
   } catch (e) {
     logger.error('Edition conversion failed:', e);
     toast.error('Failed to convert this statblock. Please try again.');

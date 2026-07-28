@@ -51,7 +51,7 @@ export async function canGenerateStatblock(isPremium) {
     }
     const resetTime = new Date(firstGenTime + RESET_WINDOW_MS);
     toast.warning(
-      `You've hit the daily limit (5 statblocks per 24 hours). Resets at ${resetTime.toLocaleString()}.`,
+      `You've hit the daily limit (5 AI generations per 24 hours — statblocks and edition conversions). Resets at ${resetTime.toLocaleString()}.`,
       0,
       'rate-limit-warning',
     );

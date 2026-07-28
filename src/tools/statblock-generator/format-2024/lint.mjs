@@ -66,7 +66,7 @@ const HYBRID_SAVE_RE =
 
 // Game terms the 2024 SRD always capitalizes (case-sensitive; zero lowercase
 // occurrences across the corpus).
-const LOWERCASE_TERM_RE = /\b(hit points?|opportunity attacks?)\b/;
+const LOWERCASE_TERM_RE = /\b(hit points?|opportunity attacks?|advantage|disadvantage|long rest|short rest|speed)\b/;
 
 // "make(s) a <Name> attack" references — every one must resolve to a defined
 // entry name (168 references across the corpus, zero dangling). Catches
@@ -408,6 +408,44 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     }
   }
 
+  // The same ability defined twice across sections (live 2014 finding:
+  // "Crystal Burst" as a Trait AND "Crystal Burst (Reaction)" — one
+  // paraphrased mechanic in two homes). Same-name attack-REUSE entries are
+  // corpus-legal (legendary "Pseudopod: makes one Pseudopod attack"), so
+  // only pairs whose texts substantially overlap flag. The Traits copy is
+  // the wart (the sectioned copy is properly housed) — correctable drop;
+  // a non-Traits pair goes to the fix call.
+  {
+    const bareName = (n) => {
+      // Strip trailing parentheticals REPEATEDLY — a doubled suffix
+      // ("Disengage (Bonus Action) (Bonus Action)", live) defeated the
+      // single-strip match.
+      let b = (n ?? '').trim();
+      while (/\s*\([^)]*\)$/.test(b)) b = b.replace(/\s*\([^)]*\)$/, '').trim();
+      return b.toLowerCase();
+    };
+    const tokensOf = (t) => new Set((t ?? '').toLowerCase().match(/[a-z']+/g) ?? []);
+    const flat = Object.entries(monster.sections ?? {}).flatMap(([s, es]) => (es ?? []).map((e) => ({ s, e })));
+    for (let i = 0; i < flat.length; i++) {
+      for (let j = i + 1; j < flat.length; j++) {
+        const a = flat[i];
+        const b = flat[j];
+        if (a.s === b.s || !bareName(a.e.name) || bareName(a.e.name) !== bareName(b.e.name)) continue;
+        const ta = tokensOf(a.e.text);
+        const tb = tokensOf(b.e.text);
+        const inter = [...ta].filter((w) => tb.has(w)).length;
+        if (inter / ((ta.size + tb.size - inter) || 1) < 0.5) continue;
+        const traitCopy = a.s === 'Traits' ? a : (b.s === 'Traits' ? b : null);
+        if (traitCopy) {
+          const other = traitCopy === a ? b : a;
+          push('duplicate-cross-section', 'correctable', `Traits/${traitCopy.e.name}: the same mechanic is defined again under ${other.s} — one ability, two homes; the Traits copy is dropped`, undefined, { section: 'Traits', entry: traitCopy.e.name });
+        } else {
+          push('duplicate-cross-section', 'reject', `${a.s}/${a.e.name} and ${b.s}/${b.e.name} define the same mechanic twice — merge them into one properly-housed entry`, undefined, { section: b.s, entry: b.e.name });
+        }
+      }
+    }
+  }
+
   // Seed-leakage (random-seeded generations only): the rolled trait words
   // must not surface in the creature's name or its ability names — the seed
   // is design guidance, not vocabulary. Promoted from a prompt rule after a
@@ -507,6 +545,9 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       if (/to hit(?! with spell attacks)/.test(entry.text)) {
         push('phrasing-to-hit', 'reject', `"to hit" phrasing in ${where} — 2024 attack lines carry no "to hit"`, undefined, loc);
       }
+      if (/Saving Throw \(DC \d+\)/.test(entry.text)) {
+        push('phrasing-saving-throw', 'reject', `Saving throw in ${where} writes its DC in a parenthetical — the skeleton is "*Ability Saving Throw:* DC n, <targets>"`, undefined, loc);
+      }
       for (const m of entry.text.matchAll(/Saving Throw/g)) {
         const before = entry.text.slice(0, m.index);
         if (!new RegExp(`(${ABILITIES.join('|')})[*\\s]*$`).test(before)) {
@@ -560,8 +601,54 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       // "*Success:* No effect." / "Success: The target is not X." — official
       // style OMITS the Success clause when success does nothing (zero
       // corpus occurrences). Deterministically stripped.
-      if (/\*?Success:\*?\s*(?:No effect|None|The \w+ is not [A-Z]\w+)\.?/.test(entry.text)) {
+      if (/\*?Success:\*?\s*(?:No effect|No damage|None|The \w+ is not [A-Z]\w+)\.?/i.test(entry.text)) {
         push('success-no-effect', 'reject', `${where}: a Success clause that does nothing — omit *Success:* entirely when success has no effect`, undefined, loc);
+      }
+      // 2014 residue in a Success clause ("Success: Half as much Lightning
+      // damage.") — 2024 writes "Success: Half damage only." (0/329; live
+      // 2014→2024 conversion leak, three blocks in one batch).
+      if (/Success:\*?\s*Half as much/i.test(entry.text)) {
+        push('success-half-phrasing', 'reject', `${where}: "Half as much damage" is the 2014 form — 2024 Success clauses read "Half damage only."`, undefined, loc);
+      }
+      // A save skeleton fused mid-sentence ("...damage and Strength Saving
+      // Throw: DC 17, the target.") — skeletons always start a sentence
+      // (0/329; live conversion artifact).
+      if (/(?:\band |[a-z]\w*: |, )\*?(?:Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma) Saving Throw:?\*?\s*DC/.test(entry.text)) {
+        push('skeleton-fusion', 'reject', `${where}: a save skeleton is fused mid-sentence (after "and", a colon, or a comma) — skeletons always start a sentence`, undefined, loc);
+      }
+      // Trigger:/Response: is the REACTION format — in any other section it
+      // is a conversion garble ("Trigger: The storm takes this action.
+      // Response: It does so." — live legendary actions). 0/329.
+      if (section !== 'Reactions' && /\*?Trigger:\*?/.test(entry.text)) {
+        push('trigger-outside-reactions', 'correctable', `${where}: Trigger:/Response: markers belong to Reactions only — the entry states its effect directly`, undefined, loc);
+      }
+      // A creature declaring a CONDITION on itself ("The facetwing has the
+      // Poisoned condition." — live conversion INVERSION of "is immune to
+      // the poisoned condition"). Only the Invisible Stalker's permanent
+      // Invisibility does this legitimately (1/329) — Invisible is exempt.
+      const selfAfflict = /(?:^|\. )The [\w' -]+ has the (Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious) condition\./.exec(entry.text);
+      if (selfAfflict) {
+        push('self-afflicted-condition', 'reject', `${where}: the creature declares the ${selfAfflict[1]} condition on ITSELF — almost certainly an inverted immunity or garbled effect; state the immunity in the Immunities line or describe the real effect`, undefined, loc);
+      }
+      // A hybrid attack whose Failure clause REPEATS the attack line's own
+      // damage as a bare average ("25 Poison damage" with no dice) double-
+      // counts it (live conversion artifact, Spore Volley). Officials'
+      // hybrid Failure clauses only ever carry EXTRA dice damage (0/329).
+      {
+        const atk = /Attack Roll:\*?\s*[+-]\d+[^]*?(\d+)\s*\(\d*d\d+[^)]*\)\s*(\w+) damage/.exec(entry.text);
+        if (atk && new RegExp(`Failure:\\*?[^.]*?\\b${atk[1]} ${atk[2]} damage(?!\\s*\\()`).test(entry.text)) {
+          push('failure-damage-echo', 'correctable', `${where}: the Failure clause repeats the attack's own ${atk[1]} ${atk[2]} damage — the attack already dealt it; the echo is removed`, { avg: atk[1], type: atk[2] }, loc);
+        }
+      }
+      // "The creature casts..." as the SUBJECT — generic-referent leak; the
+      // monster names itself (0/329).
+      if (/(?:^|\. )The creature (?:casts|makes|uses)\b/.test(entry.text)) {
+        push('generic-self-reference', 'correctable', `${where}: "The creature" as the acting subject — the monster names itself`, undefined, loc);
+      }
+      // 2024 renamed the entry: "Spellcasting", never "Innate Spellcasting"
+      // (0/329).
+      if (/^Innate Spellcasting$/i.test((entry.name ?? '').trim())) {
+        push('spellcasting-entry-name', 'correctable', `${where}: 2024 names this entry "Spellcasting"`, 'Spellcasting', loc);
       }
       // Invented conditions: "has the X condition" where X isn't one of the
       // 14 real conditions (+ Exhaustion). The model occasionally imports
@@ -621,6 +708,32 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       if (/[^\n] (?:[Aa]t will:|\d+\/[Dd]ay each:)/.test(entry.text) || /(?:^|\n)at will:/.test(entry.text)) {
         push('spell-tiers-inline', 'reject', `${where}: spell tier markers ("At will:", "N/day each:") must each start their own line with corpus casing`, undefined, loc);
       }
+      // Capitalized conditions mid-sentence are a 2024-ism leaking into 2014
+      // prose (live: "becomes Restrained until the end of its next turn").
+      // 0/327 in official entry prose; the immunity LINES stay capitalized
+      // per the internal convention and are not entry text.
+      const capCond = /[a-z,;] (Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Invisible|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious)\b/.exec(entry.text);
+      if (capCond) {
+        push('condition-caps-in-2014', 'reject', `${where}: capitalized condition "${capCond[1]}" mid-sentence — 2014 prose lowercases conditions`, undefined, loc);
+      }
+      // "half as much on a successful one" drops the word "damage" —
+      // corpus always writes "half as much damage" (0/327).
+      if (/half as much on a success/i.test(entry.text)) {
+        push('half-as-much-phrasing', 'reject', `${where}: "half as much on a successful one" — corpus writes "half as much damage on a successful one"`, undefined, loc);
+      }
+      // A grapple imposed with no escape DC is unadjudicable (live: "or be
+      // grappled. While grappled in this way, the creature is restrained."
+      // — no DC anywhere). 0/327 + 0/329 for both imposition shapes (the
+      // save-or form and the Hit-rider form; "grappled by" preconditions
+      // and escape traits never match). Mirrors the 2024 grapple-exit rule,
+      // whose anchors are 2024-phrasing-bound.
+      if (chassis && !/escape DC/i.test(entry.text)
+        && (/(?:saving throw|ability check) or (?:be|is|becomes?) grappled\b/i.test(entry.text)
+          || (/Hit:/.test(entry.text) && /\bis grappled\b(?!\s*\()(?! by)/i.test(entry.text)))) {
+        push('grapple-escape-dc-2014', 'correctable',
+          `${where}: a grapple is imposed with no escape DC — 5e grapples always carry one; stamping (escape DC ${Math.max(8, chassis.save_dc - 2)})`,
+          Math.max(8, chassis.save_dc - 2), loc);
+      }
     }
     for (const ref of entry.text.matchAll(ATTACK_REF_RE)) {
       const name = ref[1].trim();
@@ -658,7 +771,17 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         push('stat-ref', 'reject', `${where}: "${raw}" is not an SRD stat block — reference a real SRD creature's statistics or drop the reference`, undefined, loc);
       }
     }
-    for (const ref of entry.text.matchAll(/\b(?:uses?|(?:a|one) use of)\s+(?:(?:a|one) use of\s+)?(?:its\s+)?([A-Z][\w' -]+?)(?= to cast|\s+again\b|\s+if\b|\s+without\b|\s+while\b|\s+when\b|\s+stat(?:istics|\s+block)\b|[.,;:]|$)/g)) {
+    // Lookahead additions (live gap: "use its Storm Invisibility (or a
+    // similar trait...)" — the parenthetical defeated every terminator, so
+    // the undefined reference went unchecked): `\s*\(` ends a name at a
+    // parenthetical, and `\s+and\b`/`\s+to\b` end it at clause boundaries
+    // (the Aboleth's "uses Consume Memories and regains 5 (2d4)..." must
+    // capture "Consume Memories", not the whole clause). Prefix-matching
+    // resolution keeps names that legitimately contain " and"/" to" safe.
+    // ...plus the official substitution phrasings the first 2014-corpus
+    // sweep of this rule exposed as over-captures ("Hurl Flame in place of
+    // any melee attack", "Swallow instead of its bite", "Engulf on it").
+    for (const ref of entry.text.matchAll(/\b(?:uses?|(?:a|one) use of)\s+(?:(?:a|one) use of\s+)?(?:its\s+)?([A-Z][\w' -]+?)(?= to\b|\s+and\b|\s+again\b|\s+if\b|\s+in\b|\s+instead\b|\s+on\b|\s+against\b|\s+without\b|\s+while\b|\s+when\b|\s+stat(?:istics|\s+block)\b|\s*\(|[.,;:]|$)/g)) {
       // Stat-block references ("use Stirge statistics") are stat-ref's
       // business, not entry-reference resolution's.
       if (/^\s+stat(?:istics|\s+block)\b/i.test(entry.text.slice(ref.index + ref[0].length))) continue;
@@ -672,6 +795,47 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     }
     if (SECOND_PERSON_RE.test(entry.text)) {
       push('second-person', 'reject', `Second-person voice in ${where} — statblocks are third person ("of the creature's choice", never "of your choice")`, undefined, loc);
+    }
+    // A passive triggered rider filed under Actions ("The first time on
+    // each of the bonecradle's turns that it hits..." — nothing a creature
+    // DOES with its action; live 2014 finding, Grasping Earth). Officials:
+    // 0/329 + 0/327 actions open with a trigger phrase. Relocates to Traits.
+    if (section === 'Actions' && /^(?:When(?:ever)? |The first time )/i.test(entry.text.trim())) {
+      push('action-passive-rider', 'correctable', `${where}: the entry is a triggered rider, not something the creature does with its action — it moves to Traits`, undefined, loc);
+    }
+    // An entry named after the MONSTER itself ("Shusspore. While buried..."
+    // on a monster named Shusspore) — officials never do this (0/329 +
+    // 0/327); the name says nothing about what the ability does.
+    if ((entry.name ?? '').trim().toLowerCase() === (monster.name ?? '').trim().toLowerCase() && (monster.name ?? '').trim()) {
+      push('entry-named-after-monster', 'reject', `${where}: the entry is named after the creature itself — rename it to plain English describing what the ability does`, undefined, loc);
+    }
+    // The naming prompt's own example ability names, copied verbatim as an
+    // entry name (live 2014 finding: a trait shipped named "Helping Snarl" —
+    // the rename-guidance example). Instruction-leak family.
+    if (/^(?:Helping Snarl|Tar Tendril)$/i.test((entry.name ?? '').trim())) {
+      push('prompt-example-name', 'reject', `${where}: "${entry.name}" is a verbatim example from the naming instructions, not a name for THIS ability — rename it to plain English describing what the ability does`, undefined, loc);
+    }
+    // "adjacent" is 3e vocabulary — zero corpus occurrences in either
+    // edition (0/329 + 0/327); 5e writes "within 5 feet of".
+    if (/\badjacent\b/i.test(entry.text)) {
+      push('vocab-adjacent', 'reject', `${where} uses "adjacent" — not 5e vocabulary in either edition; write "within 5 feet of"`, undefined, loc);
+    }
+    // "has the inability to X" — a condition-izing garble of "can't X"
+    // (live conversion artifact; 0/329 + 0/327).
+    if (/ha(?:s|ve) the inability to/i.test(entry.text)) {
+      push('inability-phrasing', 'reject', `${where}: "has the inability to" — write "can't"`, undefined, loc);
+    }
+    // Off-register vocabulary with zero corpus occurrences in either
+    // edition: "attacks of opportunity" (word order) and "may" (5e writes
+    // "can" — 0/329 + 0/327).
+    if (/attacks? of opportunity/i.test(entry.text) || /\bmay\b/.test(entry.text)) {
+      push('vocab-register', 'reject', `${where}: off-corpus register — "opportunity attacks" (never "attacks of opportunity") and "can" (never "may")`, undefined, loc);
+    }
+    // Prose distances write "feet" — "within 30 ft.", "by 10 ft.", "a 10 ft.
+    // radius" appear in zero corpus entries in either edition (the ft.
+    // abbreviation belongs to reach/range clauses and stat lines).
+    if (/\b(?:within|up to|by) \d+ ft\.|\ba \d+ ft\. radius|\b\d+ ft\. away/i.test(entry.text)) {
+      push('prose-ft-abbrev', 'reject', `${where}: prose distances write "feet", never "ft." ("within 30 feet", "a 10-foot radius")`, undefined, loc);
     }
     // ALL-CAPS entry names ("CRACKLE (1/Day)") — style wart, deterministically
     // title-cased by the corrections pass. Judged on the base name so
@@ -817,8 +981,13 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // Shell) is a wasted trait slot; the lines already carry it. 0/329.
     // Partial restatements with a real mechanic attached (Frozen Carapace)
     // stay legal. Fix call replaces it with an actual mechanic.
+    // Edition-robust: 2014 text lowercases types and chains compounds ("has
+    // resistance to cold damage and immunity to poison damage and the
+    // poisoned condition" — live 2014 finding, "Glimborg"), which the
+    // original capitalized two-branch regex sailed past.
     if (section === 'Traits'
-      && /^The [\w' -]+ (?:has [Rr]esistance to [^.]*damage|is immune to [^.]*(?:damage|conditions?))\.$/.test(entry.text.trim())) {
+      && (/^The [\w' -]+ (?:has|is) (?:resistance|resistant|immunity|immune)[^.]*(?:damage|conditions?)\.$/i.test(entry.text.trim())
+        || /^The [\w' -]+(?:'s [\w' -]+)? is [^.]*grants? (?:it|the [\w' -]+) (?:resistance|immunity)[^.]*\.$/i.test(entry.text.trim()))) {
       push('defense-restated', 'reject', `${where}: this trait only restates the Resistances/Immunities lines — the lines already carry it; replace it with a real mechanic or drop it`, undefined, loc);
     }
     // Coined entry names ("Thul-eg"): official hyphenated names join FULL
@@ -1044,7 +1213,13 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       const flat = flatStr ? (sign === '-' ? -1 : 1) * Number(flatStr) : 0;
       const half = Math.floor(n / 2);
       const expectedAvg = Math.floor((half * (die + 1)) / 2) + flat;
-      if (Math.abs(Number(exprs[1][1]) - expectedAvg) > 1) {
+      // Structural law, not just average: halved COUNT and kept FLAT (live:
+      // "7d8+6, or 18 (4d8)" sat inside the ±1 average tolerance with the
+      // wrong dice shape and a dropped flat). 0/329 + 0/327 structural.
+      const [, , n2Str, die2Str, sign2, flat2Str] = exprs[1];
+      const flat2 = flat2Str ? (sign2 === '-' ? -1 : 1) * Number(flat2Str) : 0;
+      if (Math.abs(Number(exprs[1][1]) - expectedAvg) > 1
+        || Number(n2Str) !== half || Number(die2Str) !== die || flat2 !== flat) {
         const dice = `${half}d${die}${flat ? ` ${flat > 0 ? '+' : '-'} ${Math.abs(flat)}` : ''}`;
         push('swarm-half-value', 'correctable',
           `${section}/${entry.name}: the reduced swarm damage ${exprs[1][0]} doesn't follow from ${exprs[0][0]} — official law halves the dice and keeps the flat (expected ${expectedAvg} (${dice}))`,
@@ -1085,19 +1260,21 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
           kept.join(', '), { field: 'resistances' });
       }
     }
-    // Resistance tokens must be damage types (canonical conditions are the
-    // resistance-conditions rule's business — it moves them to immunities).
-    // Anything else is junk ("Blindness, Deafness" — live finding; 5e has no
-    // such resistances). Corpus: 0/329 real lines (one Half-Dragon template
-    // placeholder string, moot under the chassis gate). Fix: drop the junk.
-    if (is2024 && monster.resistances) {
-      const toks = splitTokens(monster.resistances);
+    // Defense tokens must be damage types or canonical conditions (the
+    // resistance-conditions rule relocates conditions). Anything else is
+    // junk ("Blindness, Deafness"; "prismatic" — live 2014 finding, an
+    // invented damage type in Immunities). Edition-agnostic and covering
+    // all three lines (was resistances-only + is2024-gated, which let
+    // "prismatic" ship). 0/329 + 0/327 real lines.
+    for (const field of ['resistances', 'immunities', 'vulnerabilities']) {
+      if (!monster[field]) continue;
+      const toks = splitTokens(monster[field]);
       const junk = toks.filter((t) => !DAMAGE_TYPE_WORD_RE.test(t) && !CONDITION_TOKEN_SET.has(t.toLowerCase()));
       if (junk.length) {
         const kept = toks.filter((t) => !junk.includes(t));
         push('resistance-unknown', 'correctable',
-          `Resistances carry tokens that are neither damage types nor conditions (${junk.join(', ')}) — dropped`,
-          kept.join(', '), { field: 'resistances' });
+          `${field} carry tokens that are neither damage types nor conditions (${junk.join(', ')}) — dropped`,
+          kept.join(', '), { field });
       }
     }
     // Identity immunity (owner call, 3 live instances: a fire-dealing magma
@@ -1108,7 +1285,10 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // Elemental, Winter Wolf, every dragon's breath type). The deals-check
     // exempts the Giant Fire Beetle (named for its glow, deals no fire).
     // Fix: move the type from resistances to immunities.
-    if (is2024 && monster.resistances) {
+    if (monster.resistances) {
+      // Material-NAME branch runs on both editions (0/327 swept — Winter
+      // Wolf law holds in 2014); the Elemental-TYPE branch below stays
+      // 2024-only (the 2014 Djinni legitimately resists its own lightning).
       const MATERIAL_TYPES = [
         [/(ice|frost|glacial|glacier|snow|rime|winter|chill)/i, 'Cold'],
         [/(fire|flame|magma|lava|cinder|ember|pyre|molten)/i, 'Fire'],
@@ -1129,7 +1309,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       for (const [re, type] of MATERIAL_TYPES) {
         if (re.test(monster.name ?? '') && dealtTypes.has(type.toLowerCase())) candidates.add(type);
       }
-      if (/^elemental$/i.test(monster.type ?? '')) {
+      if (is2024 && /^elemental$/i.test(monster.type ?? '')) {
         for (const t of dealtTypes) {
           if (NONPHYSICAL.has(t)) candidates.add(t[0].toUpperCase() + t.slice(1));
         }
@@ -1340,27 +1520,6 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
             undefined, { section, entry: entry.name });
         }
       }
-      // Slot/instruction language leaking into entry text as meta-commentary
-      // (live finding: "This is a buff, heal, or enable action targeting
-      // allies." — the support slot's own description, parroted verbatim).
-      // Officials never write "This is a..." sentences (0/329). The sentence
-      // is deleted deterministically.
-      for (const { section, entry } of entriesOf(monster)) {
-        // Two shapes: the meta-SENTENCE ("This is a buff, heal, or enable
-        // action targeting allies.") and the meta-PARENTHETICAL ("(conditions
-        // can be applied by this action description)" — live, batch soak-2).
-        // Third shape: LINT MESSAGE ECHO — a fix call pasted the reject
-        // feedback into the ability text ("...and the total for both
-        // expressions is 41, which is outside the allowed range;
-        // restructure to total 27.").
-        if (/\bThis is an? [^.]{0,90}?\b(?:buff|heals?|enables?|slot|budget|role)\b[^.]*\./i.test(entry.text)
-          || /\([^)]*(?:action description|this entry|these instructions)[^)]*\)/i.test(entry.text)
-          || /outside the allowed range|restructure to total \d+|per-attack budget|the total for both expressions/i.test(entry.text)) {
-          push('instruction-leak', 'correctable',
-            `${section}/${entry.name}: instruction language leaked as meta-commentary — the sentence/parenthetical is deleted`,
-            undefined, { section, entry: entry.name });
-        }
-      }
       // A trait written as an ACTIVE Bonus Action ("As a Bonus Action, the X
       // collapses into dust and teleports...") belongs under Bonus Actions —
       // official traits only GRANT bonus-action uses ("can take the
@@ -1373,33 +1532,41 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
             undefined, { section: 'Traits', entry: entry.name });
         }
       }
-      // A Trait that IMPOSES a save on a target with no trigger/timing phrase
-      // is an action filed in the wrong section — as written it never fires
-      // (live findings: Spectral Tangle, Pacifying Aura). Officials: 0/329
-      // (their trait-saves are all self-saves like Magic Resistance/Undead
-      // Fortitude, or carry a trigger — auras say "at the start of each of
-      // its turns"). Fix: relocate to Actions, marked `relocated` so the
-      // counts rule still scores it against the Traits range.
-      {
-        const TRIGGER_RE = /\b(when|whenever|if (?:a|an|the|another|it) |at the (?:start|end)|starts its turn|enters|ends its turn|is hit|takes .* damage|while (?:in|within|it))\b/i;
-        for (const entry of monster.sections?.Traits ?? []) {
-          const skel = /Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature/i.exec(entry.text);
-          // The trigger must appear BEFORE the Failure clause — scanning the
-          // whole entry let the Failure clause's own "takes 44 damage"
-          // satisfy the trigger check (live finding: Softening Tremor, a
-          // (1/Day) 44-damage save nuke that shipped in Traits). Pre-Failure
-          // (not pre-skeleton) because officials put aura triggers in the
-          // TARGETING clause: the Aboleth's "each creature that touches the
-          // aboleth ... while within 5 feet".
-          const preFailure = entry.text.split(/\*?\bFailure:?\*?/i)[0];
-          if (skel && !TRIGGER_RE.test(preFailure)) {
-            push('trait-imposes-save', 'correctable',
-              `Traits/${entry.name}: a Trait never forces a saving throw without a trigger — as written this ability can never fire; it moves to Actions`,
-              undefined, { section: 'Traits', entry: entry.name });
-          }
+    }
+
+    // A Trait that IMPOSES a save on a target with no trigger/timing phrase
+    // is an action filed in the wrong section — as written it never fires
+    // (live findings: Spectral Tangle, Pacifying Aura). Officials: 0/329
+    // (their trait-saves are all self-saves like Magic Resistance/Undead
+    // Fortitude, or carry a trigger — auras say "at the start of each of
+    // its turns"). Fix: relocate to Actions, marked `relocated` so the
+    // counts rule still scores it against the Traits range.
+    {
+      const TRIGGER_RE = /\b(when|whenever|if (?:a|an|the|another|it) |at the (?:start|end)|starts its turn|enters|ends its turn|is hit|takes .* damage|while (?:in|within|it)|that touches|that has \d+ hit points)\b/i;
+      for (const entry of monster.sections?.Traits ?? []) {
+      // Both dialects: the 2024 skeleton AND 2014 prose ("must make a DC
+      // 23 Dexterity saving throw" — live: a 1/Day nova shipped in
+      // Traits because the check only knew the 2024 form).
+        const skel = /Saving Throw\*?:?\s*DC \d+,\s*(?:one|each) creature/i.exec(entry.text)
+        ?? /must (?:make|succeed on) a DC \d+ \w+ saving throw/i.exec(entry.text);
+      // The trigger must appear BEFORE the Failure clause — scanning the
+      // whole entry let the Failure clause's own "takes 44 damage"
+      // satisfy the trigger check (live finding: Softening Tremor, a
+      // (1/Day) 44-damage save nuke that shipped in Traits). Pre-Failure
+      // (not pre-skeleton) because officials put aura triggers in the
+      // TARGETING clause: the Aboleth's "each creature that touches the
+      // aboleth ... while within 5 feet".
+        // Cut at the 2024 Failure marker OR the 2014 outcome phrases ("On a
+        // failed save", ", taking") — otherwise the outcome's own "takes 44
+        // damage" satisfies the trigger scan (Softening Tremor, both dialects).
+        const preFailure = entry.text.split(/\*?\bFailure:?\*?|On a fail(?:ed|ure) save|, taking /i)[0];
+        if (skel && !TRIGGER_RE.test(preFailure)) {
+        push('trait-imposes-save', 'correctable',
+          `Traits/${entry.name}: a Trait never forces a saving throw without a trigger — as written this ability can never fire; it moves to Actions`,
+          undefined, { section: 'Traits', entry: entry.name });
         }
       }
-    }
+      }
   }
 
   // --- Structural rules (need slot plan) ----------------------------------
@@ -1455,13 +1622,80 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // relocate-and-exempt).
     const relocatedAnywhere = Object.values(monster.sections ?? {}).flat().filter((e) => e.relocated).length;
     const relocatedInActions = actions.filter((e) => e.relocated).length;
-    const nTraits = (monster.sections?.Traits ?? []).length + relocatedAnywhere;
-    const nActions = actions.length - relocatedInActions;
+    // The inverse relocation (action-passive-rider → Traits) carries its own
+    // marker: those entries still score as ACTIONS, not traits.
+    const relocatedToTraits = (monster.sections?.Traits ?? []).filter((e) => e.relocatedToTraits).length;
+    const nTraits = (monster.sections?.Traits ?? []).length - relocatedToTraits + relocatedAnywhere;
+    const nActions = actions.length - relocatedInActions + relocatedToTraits;
     if (nTraits < plan.traits.min || nTraits > plan.traits.max) {
       push('counts', 'reject', `${nTraits} traits outside plan range [${plan.traits.min}, ${plan.traits.max}]`);
     }
     if (nActions < plan.actions.min || nActions > plan.actions.max) {
       push('counts', 'reject', `${nActions} actions outside plan range [${plan.actions.min}, ${plan.actions.max}]`);
+    }
+  }
+
+  // Slot/instruction language leaking into entry text as meta-commentary
+  // (live finding: "This is a buff, heal, or enable action targeting
+  // allies." — the support slot's own description, parroted verbatim).
+  // Officials never write "This is a..." sentences (0/329 + 0/327). EDITION-
+  // AGNOSTIC — previously sat inside the is2024 block, which let "This
+  // attack is a heavy melee attack." ship on the 2014 path (live, Bloatbough).
+  for (const { section, entry } of entriesOf(monster)) {
+    // Shapes: meta-SENTENCE ("This is a buff, heal, or enable action..."),
+    // meta-PARENTHETICAL ("(conditions can be applied by this action
+    // description)"), LINT MESSAGE ECHO (a fix call pasted reject feedback
+    // into the text), and slot-vocabulary CLASSIFIER ("This attack is a
+    // heavy melee attack.").
+    if (/\bThis is an? [^.]{0,90}?\b(?:buff|heals?|enables?|slot|budget|role)\b[^.]*\./i.test(entry.text)
+      || /\bThis attack is an? [\w -]*attack\./i.test(entry.text)
+      || /Credits?:|fills the (?:required )?slot|\bslot: /i.test(entry.text)
+      || /\([^)]*(?:action description|this entry|these instructions)[^)]*\)/i.test(entry.text)
+      || /\([^)]*or a similar (?:trait|ability|effect)[^)]*\)/i.test(entry.text)
+      || /outside the allowed range|restructure to total \d+|per-attack budget|the total for both expressions/i.test(entry.text)) {
+      push('instruction-leak', 'correctable',
+        `${section}/${entry.name}: instruction language leaked as meta-commentary — the sentence/parenthetical is deleted`,
+        undefined, { section, entry: entry.name });
+    }
+  }
+
+  {
+    // An ability that ends a condition on ITSELF which its own immunity
+    // line already prevents (live: a grapple-immune swarm's escape action
+    // "ends any grappled or restrained condition on itself") — dead
+    // mechanics. 0/329 + 0/327. The dead clause strips.
+    const immLine = `${monster.immunities ?? ''} ${monster.condition_immunities ?? ''}`.toLowerCase();
+    for (const { section, entry } of entriesOf(monster)) {
+      const m = /ends? (?:any|the) (\w+)(?: or (\w+))? conditions? on itself/i.exec(entry.text);
+      if (m && [m[1], m[2]].filter(Boolean).every((c) => immLine.includes(c.toLowerCase()))) {
+        push('self-escape-immune-condition', 'correctable',
+          `${section}/${entry.name}: it ends the ${[m[1], m[2]].filter(Boolean).join('/')} condition on itself, but its immunity line already prevents ${[m[1], m[2]].filter(Boolean).length > 1 ? 'those conditions' : 'that condition'} — the dead clause is removed`,
+          undefined, { section, entry: entry.name });
+      }
+    }
+  }
+
+  // A Beast with genius INT is a mistyped Monstrosity — the official Beast
+  // ceiling is INT 8 (Giant Eagle/Owl); 0/329 + 0/327 above it. Substance
+  // law: a smart unnatural predator IS a monstrosity (live: an INT-18
+  // "beast"). Correctable retype.
+  if (/^Beast$/i.test(monster.type ?? '') && (monster.stats?.INT ?? 0) > 8) {
+    push('beast-intelligence', 'correctable',
+      `type Beast with INT ${monster.stats.INT} — beasts cap at INT 8 (Giant Owl); a genius predator is a Monstrosity`,
+      'Monstrosity', { field: 'type' });
+  }
+
+  {
+    // A grapple-DEPENDENT effect ("one target grappled by the uuloth") in a
+    // block where NOTHING imposes the grapple — the entry can never be used
+    // (live 2014 finding: Constrict + Sand Sink both referenced a grapple no
+    // attack ever created). 0/327 + 0/329: every official grapple reference
+    // has an imposer. Design surgery isn't deterministic — fix call.
+    const blockText = Object.values(monster.sections ?? {}).flat().map((e) => e.text ?? '').join('\n');
+    const needsGrapple = /(?:target|creature) (?:it is |that is |currently )?grappled by\b|grappled by (?:the|it)\b/i.test(blockText);
+    const imposesGrapple = /grappled (?:by [\w' ]+ )?\(escape|Grappled condition|\bgrapples\b|is (?:also )?grappled\b|has grappled|can grapple/i.test(blockText);
+    if (needsGrapple && !imposesGrapple) {
+      push('grapple-dependency-orphan', 'reject', 'an entry depends on a target being grappled, but nothing in the block imposes the Grappled condition — give an attack a grapple rider (with an escape DC) or drop the dependency');
     }
   }
 
@@ -1493,7 +1727,12 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
 // subjects that do take these verbs.
 const SELF_REF_VERBS = "makes|can|cannot|has|have|is|isn't|regains|moves|uses|takes|deals|gains|releases|exhales|targets|chooses|dies|fails|succeeds|magically|doesn't|returns|attacks|knows|senses|teleports|casts|must|adds|emits|shifts|hits|remains|sheds|whips|extends|withdraws|spews|swallows|creates|slams";
 const SELF_REF_RE = new RegExp(`\\b[Tt]he ([a-z][a-z'-]+(?: [a-z][a-z'-]+)?) (?:${SELF_REF_VERBS})\\b`, 'g');
-const SELF_REF_STOP = new Set([
+// Exported: applyRenameMapping's head-noun word-pair fallback must never map
+// these — a provisional name ending in a common OBJECT noun ("… Barrier" →
+// "Shardwisp") otherwise rewrites every "the barrier" in the texts,
+// including objects the abilities CREATE (live corruption: "the shardwisp
+// lasts for 1 minute… any creature within the shardwisp gains half cover").
+export const SELF_REF_STOP = new Set([
   'target', 'targets', 'creature', 'creatures', 'attacker', 'grappled',
   'swallowed', 'charmed', 'frightened', 'restrained', 'poisoned', 'cursed',
   'zone', 'area', 'effect', 'effects', 'damage', 'condition', 'save',
@@ -1504,7 +1743,7 @@ const SELF_REF_STOP = new Set([
   'bite', 'claw', 'claws', 'tail', 'wing', 'wings', 'breath', 'gaze',
   'aura', 'magic', 'illusion', 'duplicate', 'duplicates', 'copy', 'image',
   'host', 'victim', 'wearer', 'user', 'initiative', 'result', 'roll',
-  'first', 'second', 'new',
+  'first', 'second', 'new', 'barrier', 'shield', 'veil', 'field',
 ]);
 
 /**
