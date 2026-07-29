@@ -41,6 +41,8 @@
       <select id="page-select" v-model="currentPage" @change="saveDevPage">
         <optgroup label="Generators">
           <option value="statblock-generator">Statblock Generator</option>
+          <option value="statblock-converter">Statblock Converter</option>
+          <option value="statblock-converter-premium">Statblock Converter (Premium)</option>
           <option value="statblock-generator-premium">Statblock Generator (Premium)</option>
           <option value="npc-generator">NPC Generator</option>
           <option value="npc-generator-premium">NPC Generator (Premium)</option>
@@ -86,6 +88,8 @@
     <Dashboard v-if="currentPage === 'gm-dashboard'" />
     <DashboardPlus v-if="currentPage === 'gm-dashboard-plus'" />
     <StatblockGenerator v-if="currentPage === 'statblock-generator'" />
+    <StatblockConverter v-if="currentPage === 'statblock-converter'" />
+    <StatblockConverter :premium="true" v-if="currentPage === 'statblock-converter-premium'" />
     <StatblockGenerator :premium="true" v-if="currentPage === 'statblock-generator-premium'" />
     <BookGenerator v-if="currentPage === 'book-generator'" />
     <LoreGenerator v-if="currentPage === 'lore-generator'" />
@@ -118,6 +122,7 @@ import NPCGenerator from '@/tools/npc-generator/NPCGenerator.vue';
 import Dashboard from '@/components/Dashboard.vue';
 import DashboardPlus from '@/components/DashboardPlus.vue';
 import StatblockGenerator from '@/tools/statblock-generator/StatblockGenerator.vue';
+import StatblockConverter from '@/tools/statblock-converter/StatblockConverter.vue';
 import BookGenerator from '@/components/BookGenerator.vue';
 import LegacyDungeonGenerator from '@/tools/legacy-tools/dungeon-generator/LegacyDungeonGenerator.vue';
 import LegacyDungeonGeneratorPremium from '@/tools/legacy-tools/dungeon-generator/LegacyDungeonGeneratorPremium.vue';
@@ -145,6 +150,7 @@ export default {
     Dashboard,
     DashboardPlus,
     StatblockGenerator,
+    StatblockConverter,
     CdrLink,
     BookGenerator,
     LegacyDungeonGenerator,

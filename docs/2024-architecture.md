@@ -1071,6 +1071,34 @@ remaining caveat lives here: the Roll20 Conjure Creature extension reads
 the `monsters` localStorage key directly and its handling of 2024-shaped
 entries is UNVERIFIED (external codebase — watch for user reports).
 
+## Statblock Converter tool (2026-07-28, owner design)
+
+New standalone tool (`src/tools/statblock-converter/`, page ids
+`statblock-converter[-premium]`, entry + WP template included): paste any
+statblock → deterministic edition detection + parse → FREE preview as the
+detected edition's card → metered Convert → saved to the library
+("Converted" folder) with BOTH printings (`other_edition`) → deep-link
+funnel to the statblock generator.
+
+Mechanics:
+- `statblock-text-parser.mjs`: `detectEdition` (scored heuristics),
+  `parseStatblockText` (line-based deterministic parse → legacy shape for
+  2014, internal model for 2024; handles inline and tabular 2014 ability
+  rows, the 2024 MOD/SAVE grid incl. proficient saves, headerless 2014
+  traits, suffixed entry names). Parser tests use the sprint's real pasted
+  batches as fixtures.
+- LLM normalization fallback (owner call): a messy paste spends its quota
+  unit on parse-call + conversion-call, the same two-call shape as a
+  generation. The free preview NEVER calls the LLM; `parseStatblockText`
+  reports `missing` fields and the UI says Convert will read the rest.
+- Convert = `canGenerateStatblock` gate → optional LLM parse →
+  `convertEdition` (full conversion gate incl. the BPS policy toast notes)
+  → save with `other_edition` = source printing.
+
+Follow-ups if wanted: premium WP template (copy the free one with the
+-premium page id), a suite cross-link to the converter from the other
+tools' SEO sections.
+
 ## Defect investigation (2026-07-25)
 
 The 16-block field-test corpus was split verbatim into `fixtures/` and audited

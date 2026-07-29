@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           statblock: 'src/entries/statblock.js',
+          'statblock-converter': 'src/entries/statblock-converter.js',
           npc: 'src/entries/npc.js',
           item: 'src/entries/item.js',
           encounter: 'src/entries/encounter.js',
