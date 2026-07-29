@@ -1,4 +1,33 @@
+import { toLegacyModel } from '@/tools/statblock-generator/format-2024/generate.mjs';
+
 export function convertToImprovedInitiative(monster) {
+    // 2024-format blocks: run the legacy-shape mapping through the normal
+    // path, then upgrade with what the 2024 model knows natively — the
+    // schema has first-class BonusActions and InitiativeModifier fields
+    // (https://github.com/cynicaloptimist/improved-initiative), so 2024
+    // exports carry MORE fidelity than 2014 ones.
+    if (monster?.format === '2024') {
+        const legacy = toLegacyModel(monster);
+        const out = convertToImprovedInitiative({
+            ...legacy,
+            abilities: legacy.abilities ?? [],
+            actions: legacy.actions ?? [],
+            condition_immunities: legacy.condition_immunities ?? '',
+            senses: legacy.senses ?? '',
+            languages: legacy.languages ?? '\u2014',
+            saving_throws: legacy.saving_throws ?? '',
+            skills: legacy.skills ?? '',
+            format: '2014',
+        });
+        out.InitiativeModifier = monster.initiative_bonus ?? 0;
+        const bySection = (sec) => (monster.sections?.[sec] ?? [])
+            .map((e) => ({ Name: e.name, Content: e.text }));
+        out.BonusActions = bySection('Bonus Actions');
+        out.Reactions = bySection('Reactions');
+        // The legacy fold put suffixed copies under Traits — drop them.
+        out.Traits = out.Traits.filter((t) => !/\((?:Bonus Action|Reaction)\)$/i.test(t.Name));
+        return out;
+    }
     const hpRegex = /(\d+)\s\((.*)\)/;
     const attributeRegex = /([A-Z]{3})\s(\d+)/g;
     const savingThrowsRegex = /(\w+)\s\+(\d+)/g;
@@ -24,7 +53,7 @@ export function convertToImprovedInitiative(monster) {
         "DamageVulnerabilities": [], // There's no damage vulnerabilities info in the input object
         "DamageResistances": monster.damage_resistances ? [monster.damage_resistances] : [],
         "DamageImmunities": monster.damage_immunities ? [monster.damage_immunities] : [],
-        "ConditionImmunities": monster.condition_immunities.split(', '),
+        "ConditionImmunities": (monster.condition_immunities ?? '').split(', ').filter(Boolean),
         "Saves": [],
         "Skills": [],
         "Senses": monster.senses.match(sensesRegex) ? monster.senses.match(sensesRegex) : [],

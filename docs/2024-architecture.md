@@ -1052,6 +1052,25 @@ cards are readonly); whole-dungeon batch conversion is docketed as v2
 consumers are now ONLY the statblock generator's escape-flag legacy
 fallback — the retirement decision is unblocked.
 
+## 2024 exports unhidden (2026-07-28) — plans/statblock-2024-export-mappers.md RESOLVED
+
+Foundry VTT and Improved Initiative export buttons now show for 2024-format
+monsters. Research first (owner request): the Foundry "5e Statblock
+Importer" (Aioros fork) parses the classic WotC TEXT layout — its 2024-
+format text parsing is unadvertised — while Improved Initiative imports a
+structured JSON whose schema natively has BonusActions and
+InitiativeModifier. Implementation: both converters branch on format ===
+'2024' and map through toLegacyModel (classic structure, 2024 phrasing as
+prose — the Foundry importer keys on structure, not phrasing); Improved
+Initiative then UPGRADES from the 2024 model — native BonusActions and
+Reactions arrays from sections (the legacy fold's suffixed Trait copies
+filtered out) and InitiativeModifier from initiative_bonus — so 2024
+exports carry MORE fidelity than 2014 ones. Tests:
+src/util/convert-2024-exports.spec.js. The plan file is deleted; its one
+remaining caveat lives here: the Roll20 Conjure Creature extension reads
+the `monsters` localStorage key directly and its handling of 2024-shaped
+entries is UNVERIFIED (external codebase — watch for user reports).
+
 ## Defect investigation (2026-07-25)
 
 The 16-block field-test corpus was split verbatim into `fixtures/` and audited

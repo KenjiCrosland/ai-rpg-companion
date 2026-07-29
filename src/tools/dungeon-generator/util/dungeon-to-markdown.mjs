@@ -1,10 +1,10 @@
 import { statblockToMarkdown } from './statblock-to-markdown.mjs';
-import { renderStatblock2024 } from '@/tools/statblock-generator/format-2024/render.mjs';
+import { renderStatblock2024Homebrewery } from '@/tools/statblock-generator/format-2024/render.mjs';
 
 // Embedded statblocks carry `format` since the engine migration — 2024
 // blocks render through the engine's own markdown renderer.
 const anyStatblockToMarkdown = (sb, columns) => (sb?.format === '2024'
-  ? renderStatblock2024(sb) + '\n'
+  ? renderStatblock2024Homebrewery(sb) + '\n'
   : statblockToMarkdown(sb, columns));
 import { renderOverview } from './renderDungeonOverview.mjs';
 import { overviewAstToMarkdown } from '@/util/renderSettingOverview.mjs';

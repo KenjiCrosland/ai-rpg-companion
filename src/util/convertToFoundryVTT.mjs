@@ -1,4 +1,17 @@
+import { toLegacyModel } from '@/tools/statblock-generator/format-2024/generate.mjs';
+
 export function convertToFoundryVTT(monster) {
+    // 2024-format blocks map through the engine's legacy-shape converter:
+    // the importer parses the 2014 STRUCTURE (header lines, attribute rows,
+    // section names); the 2024 phrasing rides inside descriptions as prose.
+    if (monster?.format === '2024') {
+        const legacy = toLegacyModel(monster);
+        monster = {
+            ...legacy,
+            abilities: legacy.abilities ?? [],
+            actions: legacy.actions ?? [],
+        };
+    }
     let lines = [];
 
     // Basic info

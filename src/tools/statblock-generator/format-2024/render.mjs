@@ -116,3 +116,84 @@ export function renderStatblock2024(monster) {
 
   return lines.join('\n');
 }
+
+// ---------------------------------------------------------------------------
+// Homebrewery v3 monster-frame renderer (2024 layout)
+// ---------------------------------------------------------------------------
+// Matches Homebrewery's official 2024-style example: {{monster,frame ...}},
+// "::" definition-list stat lines, the three-group MOD/SAVE ability table
+// (Str/Dex/Con over Int/Wis/Cha, Title-case abbreviations, negative numbers
+// written "--1" per the example), and a {{legend ...}} block for the
+// legendary-uses intro. The plain renderStatblock2024 stays for plain-text
+// and HTML surfaces that strip markup.
+
+const hbSigned = (n) => (n >= 0 ? `+${n}` : `--${Math.abs(n)}`);
+
+function hbAbilityTable(monster) {
+  const cell = (stat) => {
+    const score = monster.stats[stat];
+    const mod = modOf(score);
+    const save = monster.saves?.[stat] ?? mod;
+    const abbr = stat.charAt(0) + stat.slice(1).toLowerCase();
+    return `|${abbr}| ${score}| ${hbSigned(mod)} | ${hbSigned(save)} `;
+  };
+  const row = (stats) => stats.map(cell).join('') + '|';
+  return [
+    '|   |   | MOD | SAVE |   |   | MOD | SAVE |   |   | MOD | SAVE |',
+    '|:--|:-:|:---:|:----:|:--|:-:|:---:|:----:|:--|:-:|:---:|:----:|',
+    row(['STR', 'DEX', 'CON']),
+    row(['INT', 'WIS', 'CHA']),
+  ].join('\n');
+}
+
+export function renderStatblock2024Homebrewery(monster) {
+  assertRenderable(monster);
+  const pad = (label) => `**${label}**`.padEnd(15) + '::';
+
+  const lines = [];
+  lines.push('{{monster,frame');
+  lines.push(`## ${monster.name}`);
+  const subtype = monster.subtype ? ` (${monster.subtype})` : '';
+  const subtitle = [`${monster.size ?? ''} ${monster.type ?? ''}${subtype}`.trim(), monster.alignment]
+    .filter(Boolean)
+    .join(', ');
+  if (subtitle) lines.push(`*${subtitle}*`);
+  lines.push('');
+
+  const acNote = monster.ac_note ? ` (${monster.ac_note})` : '';
+  lines.push(`${pad('AC')} ${monster.ac}${acNote}`);
+  lines.push(`${pad('HP')} ${monster.hp_formula ? `${monster.hp} (${monster.hp_formula})` : monster.hp}`);
+  if (monster.speed) lines.push(`${pad('Speed')} ${monster.speed}`);
+  lines.push('');
+  const initBonus = monster.initiative_bonus ?? modOf(monster.stats.DEX);
+  const initScore = monster.initiative_score ?? 10 + initBonus;
+  lines.push(`${pad('Initiative')} ${initBonus >= 0 ? `+${initBonus}` : initBonus} (${initScore})`);
+  lines.push('');
+
+  lines.push(hbAbilityTable(monster));
+  lines.push('');
+
+  for (const [field, label] of DETAIL_LINES) {
+    if (monster[field]) lines.push(`${pad(label)} ${monster[field]}`);
+  }
+  const cr = monster.cr_str ?? String(monster.cr);
+  const xp = (monster.xp ?? 0).toLocaleString('en-US');
+  lines.push(`${pad('CR')} ${cr} (XP ${xp}; PB ${signed(monster.pb ?? 2)})`);
+
+  for (const section of SECTION_ORDER) {
+    const entries = monster.sections?.[section];
+    if (!entries?.length) continue;
+    lines.push('');
+    lines.push(`### ${section}`);
+    if (section === 'Legendary Actions' && monster.legendary_uses) {
+      lines.push(`{{legend Legendary Action Uses: ${monster.legendary_uses}. Immediately after another creature's turn, it can expend a use to take one of the following actions. It regains all expended uses at the start of each of its turns.}}`);
+    }
+    for (const entry of entries) {
+      lines.push('');
+      const name = /[.!?]$/.test(entry.name) ? entry.name : `${entry.name}.`;
+      lines.push(`***${name}*** ${entry.text}`);
+    }
+  }
+  lines.push('}}');
+  return lines.join('\n');
+}
