@@ -1,0 +1,162 @@
+<!-- ============================================================
+  Kenji's Game Master Tool Updates — parchment update cards.
+  Paste this whole file into a WordPress "Custom HTML" block on
+  /kenjis-game-master-tool-updates/ (replaces the old plain text).
+  Styles are scoped under .kgt-updates so the theme can't fight them.
+  Tokens mirror parchment.md: cream #FEFBF4, burgundy #7a1f1f,
+  lapis #2A4D70, ink #222. New entries go at the TOP.
+============================================================= -->
+<style>
+  .kgt-updates { max-width: 760px; margin: 0 auto; font-family: 'Source Serif 4', Georgia, serif; color: #222; }
+  .kgt-updates * { box-sizing: border-box; }
+  .kgt-card {
+    background: #FEFBF4; border: 1px solid #e2d9c6; border-radius: 4px;
+    padding: 26px 30px 24px; margin: 0 0 26px;
+  }
+  .kgt-card__date {
+    font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+    color: #2A4D70; margin: 0 0 6px; font-weight: 600;
+  }
+  .kgt-card__title {
+    font-size: 24px; line-height: 1.25; color: #7a1f1f; margin: 0 0 10px;
+    font-weight: 600;
+  }
+  .kgt-card__lede { font-size: 16px; line-height: 1.55; color: #555; margin: 0 0 18px; font-style: italic; }
+  .kgt-card__section {
+    font-size: 13px; letter-spacing: .1em; text-transform: uppercase;
+    color: #7a1f1f; font-weight: 600; margin: 18px 0 8px;
+    border-bottom: 1px solid #eee4d0; padding-bottom: 4px;
+  }
+  .kgt-card ul { margin: 0; padding-left: 20px; }
+  .kgt-card li { font-size: 15.5px; line-height: 1.55; margin: 0 0 9px; }
+  .kgt-card li strong { color: #222; }
+  .kgt-card p { font-size: 15.5px; line-height: 1.55; margin: 0 0 10px; }
+</style>
+
+<div class="kgt-updates">
+
+  <!-- ═══════════ 7/30/2026 ═══════════ -->
+  <div class="kgt-card">
+    <p class="kgt-card__date">July 30, 2026</p>
+    <h2 class="kgt-card__title">The 2024 rules arrive: both editions, conversion, and a new converter tool</h2>
+    <p class="kgt-card__lede">The statblock generator now speaks both editions of 5e, converts between them, and computes every number with real math. This was months of work and it touches every tool that makes monsters.</p>
+
+    <p class="kgt-card__section">Both editions, real math</p>
+    <ul>
+      <li><strong>Generate in 2014 or 2024 format</strong>: one switch, any CR, and the output uses the right layout and phrasing for its edition. The new 2024 cards have the official look: merged Immunities, the MOD/SAVE grid, Failure/Success saving throws.</li>
+      <li><strong>The AI never decides numbers.</strong> AC, HP, attack bonuses, save DCs, and damage all come from an engine built on the DMG's CR math. The AI writes names, lore, and abilities. Every rule the engine enforces was checked against the published SRD statblocks first.</li>
+      <li><strong>Combat roles shape the monster</strong>: brute, defender, skirmisher, artillery, controller, lurker, support, or swarm. Each role changes the stat math the way official monsters vary. Pick one or let the tool read your concept.</li>
+      <li><strong>Monsters cohere</strong>: names come from what a creature is, lore lines anchor the design, and abilities interlock instead of sitting side by side. A separate quality pass checks each block the way an editor would.</li>
+    </ul>
+
+    <p class="kgt-card__section">Edition conversion</p>
+    <ul>
+      <li><strong>Flip any saved monster between editions</strong>: tabs on the statblock card switch printings instantly once both exist. Converting rewrites the wording only. The numbers never change.</li>
+      <li><strong>New tool: the Statblock Converter.</strong> Paste any 5e statblock, from books, PDFs, or D&amp;D Beyond, even messy copies. It detects the edition, shows the block as a proper card, and converts it in one click. Converted monsters save to your library and open in the statblock generator with both printings attached.</li>
+      <li>Conversions count toward the same daily generation limit as new monsters. No separate gate.</li>
+    </ul>
+
+    <p class="kgt-card__section">Everywhere else</p>
+    <ul>
+      <li><strong>Dungeon, NPC, and encounter tools</strong> generate statblocks in either edition, following one sitewide rules preference.</li>
+      <li><strong>Exports for both editions</strong>: Homebrewery markdown in the official 2024 frame style, Foundry VTT, and Improved Initiative with native 2024 fields.</li>
+      <li><strong>Watch it build</strong>: generation now shows the engine's numbers instantly, then the full draft while the quality pass polishes it, with live status the whole way.</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════ 7/18/2026 ═══════════ -->
+  <div class="kgt-card">
+    <p class="kgt-card__date">July 18, 2026</p>
+    <h2 class="kgt-card__title">One parchment look across the whole toolkit</h2>
+    <p class="kgt-card__lede">A sitewide design refresh. Every tool now shares one visual language: parchment surfaces, burgundy titles, lapis controls. Things you learn in one tool hold everywhere.</p>
+    <ul>
+      <li><strong>One design system</strong>: cream card surfaces, a consistent serif for everything you read, and one set of buttons, switches, tabs, and checkboxes across all tools.</li>
+      <li><strong>Cards share an anatomy</strong>: item, NPC, setting, monster, and faction cards use the same structure, so scanning one teaches you all of them.</li>
+      <li><strong>Color has meaning</strong>: burgundy is content, lapis is controls, red is reserved for delete. You can tell what a thing does before reading it.</li>
+      <li><strong>Editing happens in place</strong>: fields swap to inputs where they live on the card instead of opening separate forms.</li>
+      <li><strong>Banners, headers, and footers</strong> match across every tool page.</li>
+      <li><strong>Loading states look like what they become</strong>: skeleton cards shaped like the content, so the page never jumps.</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════ 6/14/2026 (existing entry, restyled) ═══════════ -->
+  <div class="kgt-card">
+    <p class="kgt-card__date">June 14, 2026</p>
+    <h2 class="kgt-card__title">Items can now seed full dungeons + dungeons that read like real dungeons</h2>
+    <p class="kgt-card__lede">The Item &rarr; Dungeon connection is live, completing &ldquo;your magic items can spawn the world around them.&rdquo; Just as significant &mdash; every room prompt in the dungeon generator got a serious overhaul, and dungeons now feel like dungeons you&rsquo;d actually run.</p>
+
+    <p class="kgt-card__section">Cross-tool + UI</p>
+    <ul>
+      <li><strong>Item &rarr; Dungeon connections work end-to-end</strong> &mdash; click a related-dungeon stub on an item to generate a full dungeon prefilled with its lore. Rename or delete the item and nothing gets orphaned. Same shape as Item &rarr; NPC and Item &rarr; Setting.</li>
+      <li><strong>NPCs from dungeons connect properly</strong> &mdash; promote a dungeon NPC to a full NPC and the connection holds through renames, deletes, and edits. The NPC card auto-expands after generation so you&rsquo;re not hunting for it.</li>
+      <li><strong>Map UI polish</strong> &mdash; sidebar styling refresh, loading spinner during dungeon assembly, banner consistency across the toolkit.</li>
+    </ul>
+
+    <p class="kgt-card__section">The prompt work</p>
+    <ul>
+      <li><strong>Boxed text reads like atmosphere, not real estate</strong> &mdash; read-aloud no longer recites &ldquo;this 20-foot square chamber&rdquo; or &ldquo;the room is approximately 500 square feet.&rdquo; Scale is shown through sensory cues now &mdash; the four walls feel near at hand, footsteps echo too long, two people couldn&rsquo;t pass without turning sideways. Numeric dimensions stay in the DM notes where they belong.</li>
+      <li><strong>Players discover exits by exploring</strong> &mdash; read-aloud no longer reads like a tour-guide listing doors. Doors are GM-side. A thematically distinctive doorway &mdash; a sigil-sealed arch, a curtain of frost-light &mdash; can still get called out as a scene element, but the boring stuff stays out of the boxed text.</li>
+      <li><strong>Rooms know about each other</strong> &mdash; when one room mentions &ldquo;Brother Galen is at the forge in area 7,&rdquo; area 7&rsquo;s generation knows. No more contradictions between rooms about what&rsquo;s where.</li>
+      <li><strong>DM notes stay focused</strong> &mdash; door material, secret-door mechanics, exit lists, and other things that belong elsewhere no longer clutter the GM-facing notes. Each section owns its own job.</li>
+      <li><strong>Setbacks scale with party tier</strong> &mdash; failure consequences are physical, immediate, and observable. No more &ldquo;wait 12 hours&rdquo; punishments or invisible-effect failures. Damage is fine; vague consequences aren&rsquo;t.</li>
+      <li><strong>Across-the-board clich&eacute; reduction</strong> &mdash; the prompts steer away from common AI-fantasy attractor patterns (bells, commissioning-NPC quest hooks, cosmic-horror &ldquo;voices that call your name&rdquo;) and toward concrete, specific content.</li>
+    </ul>
+
+    <p class="kgt-card__section">Smarter procgen layouts</p>
+    <ul>
+      <li><strong>The goal isn&rsquo;t right next to the entrance anymore</strong> &mdash; whatever the party is sent in to retrieve now sits deeper in the dungeon, with real exploration in between.</li>
+      <li><strong>Boss rooms have presence</strong> &mdash; the final fight reliably sits in a meaningful room, not a broom closet at the end of a hallway.</li>
+      <li><strong>Picking a lock is always worth it</strong> &mdash; every pickable lock now gates an actual side reward. No more locked doors leading to nothing, no more locks the party is forced to pick to progress.</li>
+      <li><strong>Dead-end rooms have specific payoffs</strong> &mdash; small rewards waiting at the ends of side passages: lore fragments, hidden caches, foreshadowing, evocative discoveries. The dungeon doesn&rsquo;t waste your players&rsquo; exploration.</li>
+      <li><strong>Surprises hit during the exploration phase, not right before the boss reveal</strong> &mdash; the dungeon bites the party on the way in, when it&rsquo;s pacing-appropriate.</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════ 5/24/2026 (existing entry, restyled) ═══════════ -->
+  <div class="kgt-card">
+    <p class="kgt-card__date">May 24, 2026</p>
+    <h2 class="kgt-card__title">Items can now seed full settings + grounded, cohesive setting prose</h2>
+    <p class="kgt-card__lede">Following on from the May 3 item-to-NPC release: items can now also spawn full settings. Click a related-settings stub on an item and the setting takes the item&rsquo;s lore as its seed &mdash; the item&rsquo;s history becomes the world it lives in.</p>
+    <ul>
+      <li>NPC card revisions and small design tweaks across the setting tabs.</li>
+      <li><strong>Item &rarr; Setting connections work end-to-end</strong> &mdash; promote a setting from an item stub in one click. The setting card shows &ldquo;Inspired by [item]&rdquo; and the item tracks which settings came from it. Renames and deletes don&rsquo;t break the link.</li>
+      <li><strong>Nested settings</strong> &mdash; kingdoms contain cities; cities contain districts. Walking up and down the hierarchy is one click.</li>
+      <li><strong>Related places between settings</strong> &mdash; sibling and aunt/uncle settings surface as related places, so the world feels connected without you having to wire every relationship by hand.</li>
+      <li><strong>Settings get the same cultural and genre awareness as NPCs and items</strong> &mdash; each one has consistent texture rather than blending into generic fantasy defaults. Cyberpunk settings feel cyberpunk; ancient Mediterranean settings feel ancient Mediterranean.</li>
+      <li><strong>Faction reclassification fix</strong> &mdash; a category of mis-tagged factions got corrected.</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════ 5/13/2026 (existing entry, restyled) ═══════════ -->
+  <div class="kgt-card">
+    <p class="kgt-card__date">May 13, 2026</p>
+    <h2 class="kgt-card__title">Generators got smarter about culture, genre, and your input</h2>
+    <p class="kgt-card__lede">The NPC and item generators can now handle a much wider range of inputs and produce more deployable results. Whether you&rsquo;re typing a generic role, a culturally-specific concept, a non-fantasy genre, or a specific name, the generators do their best to match what you&rsquo;re actually asking for instead of force-fitting everything into generic Western fantasy.</p>
+    <p>Most of the work was architectural &mdash; how the generators identify what you&rsquo;re asking for, how cultural context propagates through to relationships, and how the system handles inputs it doesn&rsquo;t have explicit support for. But there&rsquo;s a lot of visible improvement:</p>
+    <ul>
+      <li><strong>Item generator now actually respects what you typed</strong> &mdash; &ldquo;Elven Longbow&rdquo; gives you an elven longbow, &ldquo;Goblin Dagger&rdquo; gives you a goblin dagger. The variety architecture used to override user intent in some cases; that&rsquo;s fixed.</li>
+      <li><strong>Random NPC generation now produces real cultural texture</strong> &mdash; stablemasters, innkeepers, diviners, and goblin tinkerers each appear with distinct naming traditions, vocabularies, and folklore rather than blending into generic fantasy defaults.</li>
+      <li><strong>Four new linguistic-cultural registers</strong> &mdash; drawing on ancient Mediterranean and Near Eastern traditions &mdash; each producing characters with distinctive texture that drops into any campaign.</li>
+      <li><strong>Non-fantasy genres work properly</strong> &mdash; cyberpunk hackers, noir detectives, post-apocalyptic survivors, and historical-period characters get coherent genre treatment.</li>
+      <li><strong>Named characters stay named</strong> &mdash; &ldquo;goblin named Boblin&rdquo; gives you Boblin, not whatever the generator would have picked.</li>
+      <li><strong>Setting context grounds characters</strong> &mdash; adding your setting to the prompt produces NPCs integrated into that world.</li>
+      <li><strong>Cross-cultural relationships happen organically</strong> &mdash; about half of NPCs have a relationship with someone from outside their cultural background, creating realistic trade networks, outsider perspectives, and diaspora connections.</li>
+      <li><strong>Wider input tolerance</strong> &mdash; inputs the generator doesn&rsquo;t yet have explicit support for (samurai, kitsune, and similar concepts from traditions we haven&rsquo;t formally added) now produce coherent characters rather than getting force-fit into mismatched registers.</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════ 5/3/2026 (existing entry, restyled) ═══════════ -->
+  <div class="kgt-card">
+    <p class="kgt-card__date">May 3, 2026</p>
+    <h2 class="kgt-card__title">Stronger connections between items and NPCs</h2>
+    <p class="kgt-card__lede">When NPCs are mentioned in your items&rsquo; lore, you can now promote them to full NPCs with one click. The connection persists &mdash; your item&rsquo;s card shows which NPCs have been created from it, and your NPCs remember which item they came from. Rename or delete things and nothing gets orphaned.</p>
+    <p>Most of the work was architectural &mdash; making sure connections hold up under renames, deletions, and edits across all your tools. But there&rsquo;s visible polish too:</p>
+    <ul>
+      <li>Item card got a typography refresh &mdash; mechanics tighten up for scanning, lore breathes for reading.</li>
+      <li>Related NPCs section reorganized so connections show at a glance.</li>
+      <li>Smoother handoff when creating an NPC from an item &mdash; the NPC generator now knows where you came from.</li>
+      <li>Removed the gate on adding new features to items &mdash; that&rsquo;s free for everyone now.</li>
+    </ul>
+  </div>
+
+</div>
