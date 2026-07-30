@@ -93,7 +93,9 @@ export function renderStatblock2024(monster) {
   lines.push('');
 
   for (const [field, label] of DETAIL_LINES) {
+    // Languages always renders; the official 2024 empty form is "None".
     if (monster[field]) lines.push(`**${label}** ${monster[field]}`);
+    else if (field === 'languages') lines.push(`**${label}** None`);
   }
   lines.push(crLine(monster));
 

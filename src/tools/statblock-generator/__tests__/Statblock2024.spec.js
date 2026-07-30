@@ -91,9 +91,9 @@ describe('Statblock2024', () => {
   });
 
   describe('optional fields and role chip', () => {
-    test('absent detail lines are omitted; subtype renders', () => {
+    test('absent detail lines are omitted — except Languages, which shows the official "None"', () => {
       const wrapper = mountCard(byName('Allosaurus'));
-      expect(wrapper.text()).not.toContain('Languages');
+      expect(wrapper.text()).toContain('Languages None'); // batch 14: always renders
       expect(wrapper.text()).not.toContain('Resistances');
       expect(wrapper.find('.sb24-subtitle').text()).toBe('Large Beast (Dinosaur), Unaligned');
     });
@@ -149,7 +149,11 @@ describe('Statblock2024', () => {
 
     test('band hints appear for off-budget numbers and do not block saving', async () => {
       const wrapper = await enterEdit(engineMonster());
-      expect(wrapper.find('[data-testid="band-hints"]').exists()).toBe(false);
+      // The official Aboleth's Mucus Cloud (DC 14) sits under the controller
+      // CR 10 budget (17) — surfaced by the per-instance dc-band check
+      // (batch 12); the max-only check masked it. Advisory, never blocking.
+      expect(wrapper.find('[data-testid="band-hints"]').text()).toContain('DC');
+      expect(wrapper.find('[data-testid="band-hints"]').text()).not.toContain('AC');
       await wrapper.find('[data-testid="edit-ac"]').setValue(25); // controller CR 10 budget is 17
       expect(wrapper.find('[data-testid="band-hints"]').text()).toContain('AC');
       await wrapper.find('[data-testid="save-edit"]').trigger('click');

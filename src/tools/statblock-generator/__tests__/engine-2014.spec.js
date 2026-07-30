@@ -329,7 +329,7 @@ describe('generateMonster2024 with edition 2014', () => {
       { concept: 'a shadow stalker', cr: 4, archetypeName: 'lurker', edition: '2014' },
       callLLM,
     );
-    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(callLLM).toHaveBeenCalledTimes(2); // generation + audit (gate opened)
     expect(monster.format).toBe('2014');
     expect(monster.attributes).toContain('STR 12');
     expect(monster.sections).toBeUndefined(); // legacy shape, not internal
@@ -340,6 +340,7 @@ describe('generateMonster2024 with edition 2014', () => {
     modern.sections.Actions[1].text = '*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage.';
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(modern))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit (gate opened)
       // Entry-fix response: only the flagged entry, same name, classic phrasing.
       .mockResolvedValueOnce(JSON.stringify([{
         name: 'Shadow Claw',
@@ -349,9 +350,9 @@ describe('generateMonster2024 with edition 2014', () => {
       { concept: 'a shadow stalker', cr: 4, archetypeName: 'lurker', edition: '2014' },
       callLLM,
     );
-    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(callLLM).toHaveBeenCalledTimes(3); // + audit
     const { validateSectionResponse } = require('../format-2024/generate.mjs');
-    expect(callLLM.mock.calls[1][1]).toBe(validateSectionResponse);
+    expect(callLLM.mock.calls[2][1]).toBe(validateSectionResponse); // audit sits at [1]
     expect(monster.format).toBe('2014');
     expect(monster.actions.find((a) => a.name === 'Shadow Claw').description).toContain('Weapon Attack');
   });

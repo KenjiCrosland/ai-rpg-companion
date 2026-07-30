@@ -85,7 +85,7 @@ describe('2024 format conventions', () => {
 describe('optional fields', () => {
   test('absent fields produce no line at all', () => {
     const allosaurus = renderStatblock2024(byName('Allosaurus'));
-    expect(allosaurus).not.toContain('**Languages**');
+    expect(allosaurus).toContain('**Languages** None'); // batch 14: always renders
     expect(allosaurus).not.toContain('**Resistances**');
     expect(allosaurus).not.toContain('**Gear**');
     const airElemental = renderStatblock2024(byName('Air Elemental'));

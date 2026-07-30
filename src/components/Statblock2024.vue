@@ -1,7 +1,7 @@
 <template>
   <div ref="containerRef" :style="widthStyle" :class="`sb24-container ${effectiveColumns}${tightGrid ? ' sb24--tight' : ''}`">
     <div v-if="loading" class="sb24-card">
-      <Statblock2024Skeleton />
+      <Statblock2024Skeleton :chassis="chassisPreview" />
     </div>
 
     <!-- No role chip here — the card stays canonical (owner call, 2026-07-18);
@@ -213,6 +213,7 @@ const props = defineProps({
   columns: { type: String, default: 'two_columns' },
   width: { type: Number, default: 850 },
   loading: { type: Boolean, default: false },
+  chassisPreview: { type: Object, default: null },
   readonly: { type: Boolean, default: false },
   premium: { type: Boolean, default: false },
 });
@@ -253,7 +254,11 @@ const initiativeScore = computed(() =>
 );
 
 const detailLines = computed(() =>
-  DETAIL_FIELDS.filter(([field]) => props.monster[field]).map(([field, label]) => [label, props.monster[field]])
+  // Languages ALWAYS renders — the official 2024 empty form is "None"
+  // (assembly leaves the field unset; live: a block shipped with no
+  // Languages line at all). 2014's em-dash is toLegacyModel's business.
+  DETAIL_FIELDS.filter(([field]) => props.monster[field] || field === 'languages')
+    .map(([field, label]) => [label, props.monster[field] ?? 'None'])
 );
 
 const crText = computed(() => {

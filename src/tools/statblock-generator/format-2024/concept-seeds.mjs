@@ -230,13 +230,19 @@ export const OVERUSED_NAME_STEMS = {
 };
 
 export function rollNameBans({ type = '', archetypeName = '' } = {}) {
-  const pool = [...OVERUSED_NAME_STEMS.global];
-  if (archetypeName === 'swarm' || /swarm/i.test(type)) pool.push(...OVERUSED_NAME_STEMS.swarm);
+  // GLOBAL stems ban unconditionally — they are owner-vetoed sounds
+  // ('uul', 'ulg'), and the old coin-flip let "Ulgoth" ship on a tails.
+  // Type/archetype stems still roll at 50% so those namespaces breathe.
+  const rolled = [];
+  if (archetypeName === 'swarm' || /swarm/i.test(type)) rolled.push(...OVERUSED_NAME_STEMS.swarm);
   for (const [key, stems] of Object.entries(OVERUSED_NAME_STEMS)) {
     if (key === 'global' || key === 'swarm') continue;
-    if (type.toLowerCase().includes(key.toLowerCase())) pool.push(...stems);
+    if (type.toLowerCase().includes(key.toLowerCase())) rolled.push(...stems);
   }
-  return [...new Set(pool)].filter(() => Math.random() < 0.5);
+  return [...new Set([
+    ...OVERUSED_NAME_STEMS.global,
+    ...rolled.filter(() => Math.random() < 0.5),
+  ])];
 }
 
 // Weighted CR roll for blank-form generations (defect investigation task 6,

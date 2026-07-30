@@ -101,18 +101,19 @@ export async function generateEmbeddedStatblock({
   let archetypeSource = 'auto';
   let identity = null;
   let resolvedType = type && type !== 'Random' ? type : null;
-  // A user-picked role skips the resolve call entirely — one LLM call,
-  // same contract as the statblock generator's form.
-  if (archetype && archetype !== 'auto') {
-    archetypeName = archetype;
+  const typeSource = resolvedType ? 'user' : 'auto';
+  // The resolve call runs for user-picked roles too (owner call,
+  // 2026-08-04): skipping it left those generations with no identity, no
+  // lore, and no type honesty. The picked role passes as GIVEN.
+  const givenArchetype = archetype && archetype !== 'auto' ? archetype : null;
+  if (givenArchetype) {
+    archetypeName = givenArchetype;
     archetypeSource = 'user';
-    if (onResolve) onResolve();
-    return runGeneration();
   }
   try {
-    const raw = await generateGptResponse(buildArchetypeResolvePrompt(concept), validateArchetypeResponse, 2);
+    const raw = await generateGptResponse(buildArchetypeResolvePrompt(concept, '', { cr, archetype: givenArchetype }), validateArchetypeResponse, 2);
     const parsed = parseGenerationResponse(raw);
-    archetypeName = parsed?.archetype ?? null;
+    archetypeName = givenArchetype ?? parsed?.archetype ?? null;
     if (typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) {
       identity = parsed.identity.trim();
     }
@@ -141,6 +142,7 @@ export async function generateEmbeddedStatblock({
         archetypeSource,
         edition,
         resolvedType,
+        typeSource,
         namePass: null,
         degraded: isDegradedMode(),
       },

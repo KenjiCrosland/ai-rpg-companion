@@ -7,10 +7,12 @@
     <CdrSkeletonBone type="line" class="sb24-skeleton__bone" style="width: 30%; height: 1.4rem;" />
 
     <div class="sb24-skeleton__split">
-      <CdrSkeletonBone type="line" class="sb24-skeleton__bone" style="width: 8rem;" />
+      <span v-if="chassis" class="sb24-skeleton__real" data-testid="skeleton-ac"><strong>AC</strong> {{ chassis.ac }}</span>
+      <CdrSkeletonBone v-else type="line" class="sb24-skeleton__bone" style="width: 8rem;" />
       <CdrSkeletonBone type="line" class="sb24-skeleton__bone" style="width: 12rem;" />
     </div>
-    <CdrSkeletonBone type="line" class="sb24-skeleton__bone" style="width: 16rem;" />
+    <span v-if="chassis" class="sb24-skeleton__real" data-testid="skeleton-hp"><strong>HP</strong> ~{{ chassis.hp }}</span>
+    <CdrSkeletonBone v-else type="line" class="sb24-skeleton__bone" style="width: 16rem;" />
     <CdrSkeletonBone type="line" class="sb24-skeleton__bone" style="width: 12rem;" />
 
     <div class="sb24-skeleton__abilities">
@@ -19,7 +21,9 @@
       </div>
     </div>
 
-    <CdrSkeletonBone v-for="line in 4" :key="`d${line}`" type="line" class="sb24-skeleton__bone" :style="`width: ${30 + line * 8}%;`" />
+    <CdrSkeletonBone v-for="line in 3" :key="`d${line}`" type="line" class="sb24-skeleton__bone" :style="`width: ${30 + line * 8}%;`" />
+    <span v-if="chassis" class="sb24-skeleton__real" data-testid="skeleton-cr"><strong>CR</strong> {{ chassis.cr_str }} (XP {{ chassis.xp.toLocaleString('en-US') }}; PB +{{ chassis.pb }})</span>
+    <CdrSkeletonBone v-else type="line" class="sb24-skeleton__bone" style="width: 62%;" />
 
     <CdrSkeletonBone type="line" class="sb24-skeleton__bone sb24-skeleton__section" style="width: 18%; height: 1.6rem;" />
     <template v-for="entry in 3" :key="`e${entry}`">
@@ -31,12 +35,24 @@
 
 <script setup>
 import { CdrSkeleton, CdrSkeletonBone } from '@rei/cedar';
+
+// Engine chassis numbers, known before any LLM call — rendered as REAL
+// values inside the shimmer ({ ac, hp, cr_str, pb, xp }). HP is the budget
+// (the final formula-derived value lands near it), hence the tilde.
+defineProps({ chassis: { type: Object, default: null } });
 import '@rei/cedar/dist/style/cdr-skeleton.css';
 import '@rei/cedar/dist/style/cdr-skeleton-bone.css';
 </script>
 
 <style scoped>
 .sb24-skeleton__bone {
+  margin-bottom: 0.7rem;
+}
+
+.sb24-skeleton__real {
+  display: block;
+  font-size: 1.4rem;
+  color: #58180D;
   margin-bottom: 0.7rem;
 }
 

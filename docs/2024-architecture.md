@@ -1071,6 +1071,315 @@ remaining caveat lives here: the Roll20 Conjure Creature extension reads
 the `monsters` localStorage key directly and its handling of 2024-shaped
 entries is UNVERIFIED (external codebase — watch for user reports).
 
+## Batch 13 — Reedwrack/Rustking/Sussanyx (2026-07-30)
+
+Eight new deterministic rules from three live blocks, all swept 0/329 +
+0/327: `per-combat-vocab` (→ per day), `rider-target-mismatch` (on-hit
+riders re-target "the target"; prose range beats skeleton range),
+`emanation-form` (plain-sized, "originating from"), `speed-paren` (modes
+comma-separated; "(hover)" exempt), `undefined-area` (dangling "that
+area" AND undefined named zones "enters the cloud" — reject, fix ladder),
+`orphan-repeat-save` (repeat-save sentence in a saveless entry —
+deterministic strip; live: Spore Saturation).
+
+Audit-layer ledger after 4 audited generations: 5 correct findings, ~2
+expected-class misses, but only 2 landed — 3 died on our own rails
+(structural-skip bug, case-sensitive span match, P5 confidence gate).
+Rails fixed: spans now case-insensitive + smart-quote tolerant.
+DECISION PENDING (owner): if realized yield stays ~1 minor catch per
+block over the next batches, demote the audit to dev-only telemetry (rule
+discovery without user latency). Watch `mechanical audit merged findings`
++ drop logs. Unresolved observation: Sussanyx shipped a trait named
+"Thalvor" (an alien proper noun, neither the monster's provisional nor
+final name) — audit principle 3 territory, no 0-FP deterministic
+detection found; recurrence earns a naming-machinery look.
+
+## Batch 21 — concept call: CR in, lore out (2026-08-04, owner design)
+
+Owner spec: the concept call should take creature type, CR, archetype,
+and lore, and produce a lore line "to guide the ship." Gap analysis:
+type was in/out (batch 20 honesty), archetype out, CR ABSENT, lore
+absent as an output (the random path rolls an origin axis in but the
+synthesis compressed it into combat framing).
+
+Landed: both micro-calls take CR ("scale the creature's ambition to
+this tier — a CR 2 creature is a local menace, a CR 20+ creature is a
+mythic force") and return a one-sentence "lore" field (where it comes
+from, what it wants — the GM-read-aloud line). The lore threads into
+the concept string as "LORE (the creature's story — every ability and
+its name should feel like they belong to it): ..." so BOTH the
+generation call and the naming call read it — the anti-hodgepodge
+anchor and a name-fit input in one. Validators tolerate absent lore
+(legacy responses stay valid).
+
+DECIDED (owner, 2026-08-04): user-picked archetypes RUN the resolve
+call with the role passed as GIVEN (the prompt echoes it and designs
+the identity around it) — main generator AND embedded tools. +1 call on
+those paths, bought for identity/lore/type-honesty coverage.
+
+### Batch 21b — Starfilth findings (2026-08-04)
+
+- `buff-behind-save` (reject): beneficial effects gated behind saving
+  throws — Glimmering Dome granted 15 THP + Advantage on a FAILED save
+  (inverted semantics). 0/329 with the target-beneficial pattern; the
+  Sphinx exhaustion-gain and Wisp self-heal shapes don't match.
+- `garbled-condition-grammar`: "can't be has the Prone condition" →
+  "can't have the" (fused 2024 idioms, deterministic).
+- `energy-type-spread` (reject): 4+ distinct energy damage types on one
+  body (spellcasting entries excluded) — officials: 96% use <= 2, 1/329
+  reaches 4. Radiant+Poison co-occurs officially ONLY via the Druid's
+  spell list, so pair-level bans were rejected as FP-prone; the count
+  rule + prompt discipline + audit exemplar cover it in layers.
+- Generation prompt: DAMAGE-TYPE DISCIPLINE (one earned energy type,
+  two max) and MOTIF FATIGUE (spore mechanics only for actually-fungal
+  concepts — owner: "Deepseek really really loves spore attacks").
+
+## Batch 20 — type honesty + naming corrections (2026-08-03)
+
+**Type assignment diagnosis completed across three layers** (owner:
+"Something is fundamentally wrong with type assignment and the
+abilities" — Scaleglint, an "Elemental" that reads Aberration/
+Monstrosity with fins but Fly-only movement):
+1. Generation (batch 19): resolvedType + essence now IN the prompt. Not
+   sufficient alone.
+2. Synthesis/resolve (this batch): TYPE HONESTY clause — creature_type
+   must be the type the identity actually EXPRESSES; fuse into it for
+   real or declare what was actually written. The label-without-substance
+   failure named explicitly.
+3. Audit backstop widened: also corrects types the content never
+   expresses at all (not just clear contradictions).
+Plus ANATOMY COHERENCE in the generation prompt (fins → Swim, wings →
+Fly) and the Fin Slash exemplar in audit principle 3.
+
+**Naming corrections (owner: "not sure I trust the naming evaluation";
+"Frosthowl Giant" → "Glacial Brawler" was a downgrade):** threshold
+REVERTED to A/B-keeps (the A-only threshold made renames frequent while
+the judge's candidates were the weak link); `demoteFormulaHeads` sorts
+"-er" formula candidates last (demotion not rejection); global name-ban
+stems ('uul', 'ulg') now ban UNCONDITIONALLY — the old 50% coin-flip on
+the whole pool let "Ulgoth" ship on a tails.
+
+**Boulderhatch defect harvest** (owner: "a hodgepodge of abilities"):
+`dangling-use-ref` (bare self-delegation to a nonexistent action —
+"uses Swarm Eruption"; official self-mention prose exempt via
+Entangling Rope), `flat-damage-reduction` (0/329 — reject for
+redesign), `rider-flat-bonus` (riders are pure dice — deterministic
+recompute), `ba-opener` strip, `primordial-dialects` (only
+Aquan/Auran/Ignan/Terran parenthesize — "Primordial (Giant, Aquan)"
+splits). Hodgepodge identity itself → audit principle-3 anatomy
+exemplars. Parked observation: Bristleback attack +11 with flat +6
+against STR +7/PB +5 — attack-mod-coherence may have a raise-only gap;
+check next batch.
+
+## Batch 19 — type-blind generation fixed + gate opened (2026-08-03)
+
+**Root cause of the recurring type mismatches found (owner diagnosis:
+"are we missing context from the concept call?"): `buildGenerationPrompt`
+never received the creature type.** The synthesis call resolved
+creature_type with the essence mandate, but the generation call got only
+the fused concept SENTENCES — the type survived as prose residue, the
+model designed mechanics type-blind, and assembly stamped the label onto
+the finished block (the Gemshard's Infernal languages were the model
+expressing fiend-residue in the cheapest slot). Fix: `resolvedType` +
+its TYPE_ESSENCES line now thread into BOTH generation prompt bodies
+("Express the type in the creature's MECHANICS and substance — languages
+and name alone do not make a type"). The audit's `type_correction` is
+now the backstop, not the primary defense.
+
+Also landed: **audit gate OPENED to all CRs** (owner: "the audit pass is
+fine on all creatures"; live: CR 4 Muckmaw shipped "the released
+creature" with no release mechanic — simple monsters do get fumbled).
+~15 test suites updated for the always-on audit call. **swarm-half-value
+rider fix**: typed riders ("plus 4 (1d8) Fire") no longer exempt the
+entry (Sorrowsand shipped 7d8+6 → 18 (4d8), dice rounded UP and flat
+dropped); the corrector anchors on ", or"/"the damage is" instead of
+positional second-expression (which corrupted riders). **Name-fit
+anchor** sharpened: a name mismatching what the creature DOES caps at C
+(Muckmaw: swamp name on a psychic telepath).
+
+## Batch 18b — type-correction channel (2026-08-02)
+
+Owner: "Bad type mismatches..." (Blightwind Shatterer, a Giant that is a
+teleporting mist; Shusker, a Construct that is a spore-bearing fungus —
+third and fourth instances). Root cause: even when the audit FLAGS a
+type mismatch, the fix ladder rewrites entry text and can never touch
+the type field. New channel: the audit returns `type_correction`
+(canonical list; "only CLEAR contradictions of substance, never theme");
+`auditTypeCorrection` validates and the apply site guards — never a
+USER-picked type (new `typeSource` option, embedded tools pass 'user'),
+never Swarm forms. Also: `entry-name-meta-paren` strips
+meta-instructions from entry names ("Disengage (if not already used)")
+— the official paren set was enumerated from the corpus (metering,
+Requires …, … Form Only, Recharge after …) after the corpus-acceptance
+suite caught two FP shapes the ad-hoc sweep missed. Shusker's "numbing
+nummings" word-salad noted as an audit principle-4 class (broken
+English); no deterministic rule.
+
+## Batch 18 — five blocks, threshold bump (2026-08-02)
+
+Shakt / Glintwrithe / Rattling Slink / Whisperbone: clean, coherent,
+numbers exact (Glintwrithe's Weaving Barrier + Interposing Glitter is
+defender design worth imitating). Gliding Shade carried the batch's
+defects:
+
+- **Rename threshold raised to B-or-lower renames** (owner: "renaming is
+  seldom happening") — only an A keeps now; missing/malformed grades
+  still lean keep (`nameGradeKeeps` full-match validity: "excellent"
+  must not read as a grade E).
+- **Type-vs-substance** ("The shade is not a giant"): no deterministic
+  rule possible; added as an audit principle-3 exemplar ("a 'Giant' that
+  is a bodiless planar shade").
+- **Empty defense segment**: "Immunities ; Charmed, Frightened" — the
+  model left the damage half blank; assembly now tidies leading/trailing/
+  doubled semicolons on all three defense fields.
+- **rider-target-mismatch extended**: rider saves inside ATTACK entries
+  re-targeting "one creature within N feet" (Forgetting Puncture) → "the
+  target" (0/329 officials).
+
+## Batch 17 — naming inversion + rename residue (2026-08-02)
+
+**Naming pass inverted to KEEP-BY-DEFAULT (owner call: 3/4 live renames
+were worse — Thawcap→Shiverfungus, Burrowing→Grinding Hardshell,
+Icetread's provisional).** The provisional name now enters pickName FIRST:
+it survives unless it fails a filter (bans, bathos, SRD/subclass
+collision, seed leakage, hyphens, flat attack-descriptor heads — the new
+FLAT_ATTACK_HEADS set closes the Swoop Talon loophole keep-by-default
+would have reopened; 0/329 official names end in an attack noun). The
+naming call still runs for ability_renames and for filter-failing
+provisionals. Refined same day to a GRADE GATE (owner design): the call
+grades the current name A-F (evocativeness / type fit / catchiness, with
+"most decent names are B" calibration); A/B keeps, C or lower opens the
+candidate pool (`nameGradeKeeps`). Missing/malformed grades lean KEEP —
+the judge's improve-compulsion is the documented failure mode. Filters
+stay hard gates at any grade. Grades logged (`naming grade: ...`) for
+batch review. Refined again (owner design): on AUDITED blocks the AUDIT
+call grades the name (`name_grade` field, `auditNameGrade`) — an
+independent judge with no candidates to sell (the namer grading its own
+predecessor had a conflict of interest). Audit grade A/B + provisional
+passing pickName's filters → the naming call is SKIPPED entirely (a
+saved call, offsetting the audit's cost); C or lower → the naming call
+runs told "a separate evaluator graded it ${grade} — it is being
+replaced". Unaudited blocks (CR < 5 non-legendary, degraded) fall back
+to naming-call self-grading. Validated by accident in tests: "Gloom
+Stalker" as a fixture provisional was correctly rejected — it's a ranger
+subclass.
+
+Rename residue fixes (3 live instances in one batch): renameInText now
+pluralizes trailing-s matches ("thawcaps" → "shiverfunguses"); word-pair
+self-reference mapping handles possessives ("the herder's") and bare
+plurals. `choice-referent` rule: "of the <noun>'s choice" with an alien
+noun rewrites to the official "of its choice" (officials use their OWN
+name or "its" — Numbing Aura live text). success-half-only widened to
+creature-variant clauses; prone-vocab covers "knocked Prone" (0/329).
+
+Coherence verdicts (Gulfmaw/Shiverfungus/Icetread/Hardshell): all four
+table-runnable; numbers perfect across the board; Engulfing Bubble is
+counterplay-rich design worth imitating. Judgment-layer leftovers: Memory
+Scent's "can smell the creature" self-referent slip; Icetread's
+Reforming Shatter dead clause (chooses unoccupied, then "if occupied");
+"Stalking Swarm" trait name on a non-swarm.
+
+## Batch 16 — coherence-focused audit (2026-08-01)
+
+Owner recalibration: idiom defects are fine; the bar is coherence,
+usability, technical precision. Four blocks (Prism Lurcher, Shimmerscale
+Serpent, Tarzotch, Lullaby Maw) yielded:
+
+- `empty-entry` (reject, fix ladder): a named entry with no rules text
+  (live: "Psionic Lullaby (1/Day)." with nothing under it). The audit HAD
+  caught it but called the entry "Ethereal Lullaby" — the strict name
+  lookup dropped a correct finding. Rails loosened: fuzzy entry resolution
+  (unique shared-token match only) and spans verify against name+text so
+  empty entries are quotable. Threshold is truly-empty (<3 chars);
+  reroll pseudo-block name stubs are exempt via `_stub`.
+- `swarm-content-untyped` (STRUCTURAL → regen): swarm/colony mechanics on
+  a non-swarm block (live: Shimmerscale, a Medium Monstrosity with a
+  dispersing colony). Name-aware detection (official swarms type by
+  component with "Swarm of" in the name — 7/7).
+- `undefined-area` extended to movement-path referents ("each creature in
+  the line" after a move that defines no line — live: Tar Rush).
+- `phrasing-rider-save` bridge 40→120 chars (re-swept 0/329; live miss:
+  Tarzotch's Glistening with a 82-char targeting clause).
+- `line-dimensions` also strips the redundant-width echo ("5-foot-wide
+  Line that is 5 feet wide" — live: Spear-Swarm Strike).
+- Audit prompt: principle 2 adds the no-rules-text backstop; principle 3
+  adds swarm-mechanics-on-non-swarm and (batch 15) name-promise
+  mismatches.
+- NOT a bug: support/controller legendaries at 11-damage attacks — the
+  archetype damage_mult (0.6/0.7) × legendary routine discount (0.6)
+  compounds to ~0.36-0.42× base. On-budget by design; whether the
+  compounding is too aggressive is a chassis design question, parked.
+- Killed candidate: Emanation without "originating from" is official
+  (Pit Fiend Fear Aura, 1/329) — no rule.
+- `escape-dc-band` (owner concern: could audit-driven fix calls corrupt
+  numbers?): every OTHER number is re-stamped by the post-fix re-lint;
+  escape DCs were the one unchecked surface (dc-band exempts them by
+  design). Now banded to max(8, save_dc−2) with a deterministic restamp.
+- `unknown-action-ref` (reject, fix ladder): "the <X> action" must name a
+  standard action or one of the block's own entries — officials reference
+  only Hide/Dash/own attacks (live: "takes the withdrawal action").
+
+## Batch 12 — post-close memo fixes (2026-07-29)
+
+Three mechanical fixes + two sweep answers from the Scuttling Husk/Stoneswarm/
+Tarwretch/Moon Moth/Shissk batch. Tests: batch12-regressions.spec.js (memo
+verbatim text + official negatives).
+
+1. **phrasing-rider-save** (reject, style-tier, 2024-gated): rider saves in
+   the 2014 "must succeed on a DC n ... saving throw" / "unless the attacker
+   succeeds" forms. Subject-scoped, 0/329: officials' swallow regurgitation
+   saves have the MONSTER as saver; ability CHECKS keep the 2014 form
+   officially (Gelatinous Cube); the subject→verb bridge allows comma-free
+   targeting qualifiers only ("each creature in that area must succeed").
+2. **dc-band per-instance**: detection now flags EVERY save-context DC outside
+   ±1 of chassis (was max-only — Tarwretch's DC 15 riders hid under the DC 17
+   primary). Corrector already swept per-instance; escape DCs exempt by
+   regex construction. NOTE: officials with legitimate DC spread (Aboleth
+   Mucus Cloud 14 vs budget 17) now show an advisory band hint on load in
+   the edit UI — accepted; hints never block.
+3. **removal-counterplay** (reject, rewrite ladder): removal-from-play
+   (banish/swallow/plane-shift verbs, subject-scoped) requires a save gate or
+   escape/interior-escape clause. 0/329 — devils' death-return ("its body
+   disappears") has the monster as subject. Live: Shissk Void Latch.
+4. **restrain-gate** (correctable, cc-aoe stamp mechanism): at-will no-damage
+   attack applying Restrained gets "(Recharge 5-6)" stamped — 0/329 ungated
+   in officials. Live: Moon Moth Web Lasso (legendary-reusable, 3+/round).
+5. **Prompt rule 11 narrowed**: trait saves now explicitly allow the official
+   Stench aura form and death explosions (Ghast/Hezrou Stench, Aboleth Mucus
+   Cloud, Pit Fiend Fear Aura, Death Bursts — corpus-verified). The lint side
+   (trait-imposes-save) already exempted triggered/timed saves; only the
+   prompt was over-broad.
+
+
+### Mechanical-audit judgment layer (2026-07-29, owner option c)
+
+`format-2024/audit.mjs` — one LLM call auditing the assembled block against
+five principles (counterplay, adjudicability, self-consistency, format
+integrity, table usability) for the long-tail defect classes deterministic
+rules can't see. Guardrails: gated to CR >= 5 or Legendary Actions (the
+model doesn't fumble simple monsters); every finding must quote a verbatim
+span (verifyAuditFindings drops non-substring spans — hallucinated defects
+cost nothing); confidence filter (high+medium, principle 5 high-only);
+capped at 6; findings merge into the FIRST fix round as extra problems on
+the same rewriteFlaggedEntries call; never re-audited, never blocks
+shipping, skipped when degraded. Low-confidence/dropped findings log via
+logger.log for batch review. Cost: +1 call for eligible blocks only.
+Tests: audit-layer.spec.js (validator-identity mock routing). Guards added
+from live runs: structural rejects skip the audit (findings would merge into
+a fix loop that never runs — Spinepounce); audit findings quote the
+PROVISIONAL name (the naming pass runs later — expected). First end-to-end
+win: Zizzak (both findings correct, fixes visible in the shipped block).
+Judge miscalibration found there: it suggested a duration for Prone —
+officials never duration Prone (0/329 + 0/327). Countered twice: a
+calibration bullet in the audit prompt (conditions with inherent exits need
+no duration) AND the deterministic `prone-duration` lint rule + strip, so
+even a bad audit suggestion gets caught by the deterministic layer on the
+next lint pass.
+
+Engine answer for fix 2's question: only ESCAPE DCs are deliberately stamped
+at save_dc−2 (prompt line + self-escape corrector); genuine rider saves at −2
+are LLM drift — the escape number bleeding into real saves.
+
 ## Statblock Converter tool (2026-07-28, owner design)
 
 New standalone tool (`src/tools/statblock-converter/`, page ids

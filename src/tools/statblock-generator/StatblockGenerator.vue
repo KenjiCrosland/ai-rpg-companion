@@ -180,12 +180,24 @@
           @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
           @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
           @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
-        <Statblock2024 v-else-if="displayFormat === '2024' && (loadingPart1 || monster)"
-          :monster="monster" :columns="userColumnsPreference" :width="850" :loading="loadingPart1"
-          :premium="premium" @update-monster="updateMonster"
-          @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
-          @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
-          @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+        <template v-else-if="displayFormat === '2024' && (loadingPart1 || monster)">
+          <div v-if="loadingPart1 && generationStage" class="sb24-stage-note" data-testid="generation-stage">
+            {{ generationStage }}
+          </div>
+          <!-- Staged loading (owner ask, 2026-07-30): the assembled draft
+               renders read-only while the audit/fix ladder polishes it;
+               before that, the skeleton carries the real engine numbers. -->
+          <div v-if="loadingPart1 && generationDraft" class="sb24-draft-revising">
+            <Statblock2024 :monster="generationDraft" :readonly="true" :columns="userColumnsPreference" :width="850" />
+          </div>
+          <Statblock2024 v-else
+            :monster="monster" :columns="userColumnsPreference" :width="850" :loading="loadingPart1"
+            :chassis-preview="generationChassis"
+            :premium="premium" @update-monster="updateMonster"
+            @move-to-folder="showFolderMover = !showFolderMover" @use-in-encounter="useInEncounter" @create-npc="createNPC"
+            @delete="deleteStatblock" @can-switch-columns="canSwitchColumns = $event"
+            @toggle-export="showExports = !showExports" @toggle-regenerate="showRegenerate = !showRegenerate" />
+        </template>
       </div>
 
       <!-- Regenerate panel (toggled by the 🔄 Regenerate action in the
@@ -338,6 +350,38 @@ const patreonLoginUrl = computed(() => {
 
 const loadingPart1 = ref(false);
 const loadingPart2 = ref(false);
+
+// Staged-loading previews (2024 path): engine numbers land instantly, the
+// assembled draft shows while the audit/fix ladder runs, and each call
+// boundary reports what it's doing.
+const generationChassis = ref(null);
+const generationDraft = ref(null);
+const generationStage = ref('');
+const STAGE_COPY = {
+  writing: 'Writing abilities…',
+  rebuilding: 'Structure was off — rebuilding…',
+  audit: 'Checking our work…',
+  // The draft card already shows the provisional name — "finalizing"
+  // matches what actually happens (it may survive, it may improve).
+  naming: 'Finalizing the name…',
+};
+function onGenerationProgress(p) {
+  if (p.phase === 'chassis') {
+    generationChassis.value = p.chassis;
+    generationStage.value = 'Locking the numbers…';
+  } else if (p.phase === 'draft') {
+    generationDraft.value = p.monster;
+  } else if (p.phase === 'status') {
+    generationStage.value = p.stage === 'fixing'
+      ? `Polishing ${p.count === 1 ? 'a flagged ability' : `${p.count} flagged abilities`}…`
+      : (STAGE_COPY[p.stage] ?? '');
+  }
+}
+function clearGenerationPreview() {
+  generationChassis.value = null;
+  generationDraft.value = null;
+  generationStage.value = '';
+}
 const monsterName = ref('');
 const monsterType = ref('Random');
 
@@ -984,21 +1028,27 @@ async function generateStatblockEngine(edition) {
   let archetypeSource = 'user';
   let synthesizedConcept = null;
   let conceptIdentity = null;
+  let conceptLore = null;
   // Type-by-substance (owner call): the micro-calls decide creature type
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
   let resolvedType = randomSeed?.creature_type ?? null;
-  if (archetypeName === 'auto') {
-    archetypeSource = 'auto';
+  // The resolve/synthesis call runs for USER-PICKED archetypes too (owner
+  // call, 2026-08-04): those generations previously skipped it entirely and
+  // got no identity, no lore, and no type honesty. The picked role is
+  // passed as GIVEN — the call echoes it and designs around it.
+  const givenArchetype = archetypeName === 'auto' ? null : archetypeName;
+  {
+    archetypeSource = givenArchetype ? 'user' : 'auto';
     try {
       if (userConcept) {
         const raw = await generateGptResponse(
-          buildArchetypeResolvePrompt(userConcept),
+          buildArchetypeResolvePrompt(userConcept, monsterDescription.value, { cr, archetype: givenArchetype }),
           validateArchetypeResponse,
           2,
         );
         const parsed = parseGenerationResponse(raw);
-        archetypeName = parsed?.archetype || pickRandomArchetype();
+        archetypeName = givenArchetype ?? (parsed?.archetype || pickRandomArchetype());
         // The resolve call also sketches a combat identity (tactics, per-round
         // behavior, temperament) — riding it into the concept gives the
         // generation one coherent identity to design toward instead of a bare
@@ -1006,28 +1056,34 @@ async function generateStatblockEngine(edition) {
         if (typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) {
           conceptIdentity = parsed.identity.trim();
         }
+        if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) {
+          conceptLore = parsed.lore.trim();
+        }
         if (typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
       } else {
         // Blank form: the same micro-call fuses the rolled axes into one
         // creature identity AND picks the role — generation designs from
         // the fused sentence, not the axis list.
         const raw = await generateGptResponse(
-          buildSeedSynthesisPrompt(randomSeed),
+          buildSeedSynthesisPrompt(randomSeed, { cr, archetype: givenArchetype }),
           validateSeedSynthesisResponse,
           2,
         );
         const parsed = parseGenerationResponse(raw);
-        archetypeName = parsed?.archetype || pickRandomArchetype();
+        archetypeName = givenArchetype ?? (parsed?.archetype || pickRandomArchetype());
         if (parsed?.synthesis) {
           synthesizedConcept = buildSynthesizedConcept(randomSeed, parsed.synthesis);
+        }
+        if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) {
+          conceptLore = parsed.lore.trim();
         }
         // Synthesis may override the rolled type when the fused concept's
         // substance contradicts it (the Amber-Hound-as-Humanoid class).
         if (typeof parsed?.creature_type === 'string') resolvedType = parsed.creature_type;
       }
     } catch (e) {
-      logger.warn('Archetype auto-resolve failed, picking randomly:', e);
-      archetypeName = pickRandomArchetype();
+      logger.warn('Archetype resolve failed:', e);
+      archetypeName = givenArchetype ?? pickRandomArchetype();
     }
   }
 
@@ -1035,9 +1091,13 @@ async function generateStatblockEngine(edition) {
     || monsterDescription.value.trim()
     || synthesizedConcept
     || randomSeed.concept;
-  const concept = conceptIdentity
+  let concept = conceptIdentity
     ? `${baseConcept}\nCOMBAT IDENTITY (design every ability to serve this): ${conceptIdentity}`
     : baseConcept;
+  // The lore line guides the ship (owner design, 2026-08-04): one sentence
+  // of who-it-is-and-why that the generation designs toward and the naming
+  // call reads for fit — the anti-hodgepodge anchor.
+  if (conceptLore) concept += `\nLORE (the creature's story — every ability and its name should feel like they belong to it): ${conceptLore}`;
 
   let finalMonster;
   try {
@@ -1059,6 +1119,7 @@ async function generateStatblockEngine(edition) {
         // Fallback-model mode: ship degraded output instead of failing
         // generations the weaker model can't polish (owner call).
         degraded: isDegradedMode(),
+        onProgress: onGenerationProgress,
       },
       (prompt, validate) => generateGptResponse(prompt, validate, 3),
     );
@@ -1081,6 +1142,7 @@ async function generateStatblockEngine(edition) {
       localStorage.setItem('statblock-failure-log', JSON.stringify(log.slice(-20)));
     } catch { /* telemetry must never break the error path */ }
     toast.error('Failed to generate statblock. Please try again.');
+    clearGenerationPreview();
     loadingPart1.value = false;
     loadingPart2.value = false;
     return;
@@ -1093,6 +1155,7 @@ async function generateStatblockEngine(edition) {
   finalMonster.monsterName = monsterName.value || finalMonster.name;
   finalMonster.caster = caster.value;
 
+  clearGenerationPreview();
   loadingPart1.value = false;
   await saveGeneratedMonster(finalMonster);
   // lint_warnings stay stamped on the monster (console + debugging), but
@@ -1570,6 +1633,50 @@ async function saveGeneratedMonster(finalMonster) {
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* "Ink still drying": a soft band of light sweeps the draft card while
+   the audit/fix ladder revises it. Overlay only — text stays readable,
+   nothing shifts. */
+.sb24-draft-revising {
+  position: relative;
+}
+
+.sb24-draft-revising::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(212, 175, 55, 0.10) 47%,
+    rgba(212, 175, 55, 0.16) 50%,
+    rgba(212, 175, 55, 0.10) 53%,
+    transparent 65%
+  );
+  background-size: 300% 100%;
+  animation: sb24-revising-sweep 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes sb24-revising-sweep {
+  0% { background-position: 120% 0; }
+  100% { background-position: -80% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb24-draft-revising::after {
+    animation: none;
+    background: rgba(212, 175, 55, 0.07);
+  }
+}
+
+.sb24-stage-note {
+  font-family: var(--par-font-serif, Georgia, serif);
+  font-style: italic;
+  font-size: 1.4rem;
+  color: #58180D;
+  margin: 0 0 0.8rem;
 }
 
 .monster-form__caster {

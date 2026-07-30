@@ -538,6 +538,148 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
   for (const { section, entry } of entriesOf(monster)) {
     const where = `${section}/${entry.name}`;
     const loc = { section, entry: entry.name };
+    // An entry with a name and no rules text is unusable at the table
+    // (0/329 + 0/327 near-empty; live: Lullaby Maw shipped "Psionic
+    // Lullaby (1/Day)." with nothing under it — the audit even caught it
+    // but the finding died on strict entry-name matching). The fix call
+    // writes the mechanic.
+    // _stub entries are the reroll pseudo-block's name-only context rows.
+    if (!entry._stub && (entry.text ?? '').trim().length < 3) {
+      push('empty-entry', 'reject', `${where}: the entry has no rules text — write the complete mechanic this name promises`, undefined, loc);
+      continue;
+    }
+    if (entry._stub) continue;
+    // Damage RIDERS are pure dice — the flat bonus belongs to the primary
+    // expression only (0/329 + engine discipline; live: "plus 12 (2d8 + 3)
+    // Fire"). Deterministic: recompute the rider as pure dice.
+    if (/\bplus \d+\s*\(\d+d\d+\s*[+-]\s*\d+\)/.test(entry.text)) {
+      push('rider-flat-bonus', 'correctable', `${where}: a damage rider carries a flat bonus — riders are pure dice; the flat is dropped and the average recomputed`, undefined, loc);
+    }
+    // A Bonus Actions entry opening "As a Bonus Action," restates its own
+    // section (0/329). Deterministic strip.
+    if (section === 'Bonus Actions' && /^As a Bonus Action,?\s*/i.test(entry.text.trim())) {
+      push('ba-opener', 'correctable', `${where}: a Bonus Actions entry doesn't announce "As a Bonus Action" — the section already says it`, undefined, loc);
+    }
+    // Prone never takes a duration — standing up IS its exit (0/329 2024,
+    // 0/327 2014; live: Zizzak's Swarm Rush shipped "Prone condition until
+    // the end of the zizzak's next turn" via an audit-suggested fix).
+    // Both editions; deterministic strip.
+    if (/\b(?:the [Pp]rone condition|knocked [Pp]rone|falls? [Pp]rone) (?:until|for)\b/.test(entry.text)) {
+      push('prone-duration', 'correctable', `${where}: Prone carries a duration — officials never duration Prone (standing up is the exit); the duration is stripped`, undefined, loc);
+    }
+    // Action references must name a STANDARD action or one of the block's
+    // own entries — officials reference only Hide/Dash/their own attacks
+    // (live: Prism Lurcher "takes the withdrawal action", which no rules
+    // text defines). Fix ladder rewrites to a real action.
+    {
+      const STANDARD_ACTIONS = new Set(['attack', 'dash', 'disengage', 'dodge', 'help', 'hide', 'ready', 'search', 'study', 'utilize', 'magic', 'grapple', 'shove', 'influence', 'multiattack']);
+      const GENERIC = new Set(['same', 'chosen', 'following', 'listed', 'previous', 'triggering', 'this', 'that', 'an', 'another', 'legendary', 'bonus']);
+      const ownNames = new Set(entriesOf(monster).map((x) => x.entry.name.split(' (')[0].toLowerCase()));
+      for (const m of entry.text.matchAll(/\bthe (\w+) action\b/gi)) {
+        const ref = m[1].toLowerCase();
+        if (!STANDARD_ACTIONS.has(ref) && !GENERIC.has(ref) && !ownNames.has(ref)) {
+          push('unknown-action-ref', 'reject', `${where}: "the ${m[1]} action" is not a standard action or one of this block's entries — reference a real action (Dash, Disengage, Dodge, Hide…) or an entry by name`, undefined, loc);
+        }
+      }
+    }
+    // Swarm-defining mechanics on a block that isn't typed as a swarm
+    // (live: Shimmerscale Serpent, a Medium Monstrosity with "Swarm Form"
+    // and a colony that disperses). Corpus-safe: every official with these
+    // phrases carries "Swarm of" in its name (7/7). Structural — the fix
+    // is an identity decision (commit to Swarm typing with the half-damage
+    // law, or drop the colony mechanics), so it earns a regeneration.
+    if (/occupy another creature's space|opening large enough for a Tiny/i.test(entry.text)
+      && !/swarm/i.test(`${monster.type ?? ''} ${monster.name ?? ''} ${monster.subtype ?? ''}`)) {
+      push('swarm-content-untyped', 'reject', `${where}: swarm/colony mechanics on a non-swarm block — either type it "Swarm of Tiny <X>" (with the swarm trait set and half-damage attack clauses) or remove the colony mechanics`, undefined, loc);
+    }
+    // Entry-name parentheticals outside the official metering set are
+    // meta-instructions leaking into the name (live: "Disengage (if not
+    // already used)"). Strip to the base name.
+    {
+      const pm = /\(([^)]+)\)\s*$/.exec(entry.name);
+      // Official paren set (full corpus enumeration): metering (Recharge…,
+      // N/Day…, Costs N), requirements (Requires …), and form qualifiers
+      // (… Form Only). Everything else is a meta-instruction leak.
+      if (pm && !/^(?:Recharge[\s\d]|\d+\/Day|Costs \d+|Bonus Action$|Reaction$|\d+\/Turn|Requires )/i.test(pm[1].trim())
+        && !/Form Only$/i.test(pm[1].trim()) && !/^Recharge after/i.test(pm[1].trim())) {
+        push('entry-name-meta-paren', 'correctable', `${where}: "(${pm[1]})" in an entry name is not official metering (Recharge/N-Day/Costs) — the parenthetical is stripped`, undefined, loc);
+      }
+    }
+    // "uses <X>" must resolve to a real entry (live: a legendary action
+    // named "Swarm Eruption" whose text says "uses Swarm Eruption" — no
+    // such entry exists anywhere in the block; the real action was
+    // "Swarm's Talons"). Officials resolve 100% after or-list/multiplier
+    // normalization. Self-loops count as dangling unless ANOTHER entry
+    // carries the name (a legendary "Scatter" may use the ACTION Scatter).
+    {
+      const allEntries = entriesOf(monster);
+      const OK_REFS = new Set(['spellcasting', 'multiattack', 'dash', 'disengage', 'dodge', 'hide', 'help', 'ready', 'search', 'attack']);
+      const ownBase = entry.name.split(' (')[0].toLowerCase();
+      for (const m of entry.text.matchAll(/\buses (?:its |the )?([A-Z][\w' -]+?)(?:\s+action)?(?=[.,;]|\s+(?:if|to|again|twice|three|or|while|on|against|and|as|instead)\b)/g)) {
+        for (const refRaw of m[1].split(/\s+or\s+/)) {
+          const ref = refRaw.trim().replace(/\s*\(.*$/, '').replace(/\s+(?:stat block|twice|three times)$/i, '').toLowerCase();
+          if (!ref || OK_REFS.has(ref) || /stat block/i.test(refRaw)) continue;
+          const resolvedElsewhere = allEntries.some((x) => x.entry !== entry && x.entry.name.split(' (')[0].toLowerCase() === ref);
+          // Self-mentions are official (reuse-restriction prose inside the
+          // same entry) — dangling only when the ENTIRE entry is a bare
+          // delegation to itself with nothing else to point at (live:
+          // "Swarm Eruption. The boulderhatch uses Swarm Eruption...").
+          const bareDelegation = ref === ownBase
+            && new RegExp(`^The [\\w' -]+ uses (?:its |the )?${ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^.]*\\.?$`, 'i').test(entry.text.trim());
+          if (!resolvedElsewhere && (ref !== ownBase || bareDelegation)) {
+            push('dangling-use-ref', 'reject', `${where}: "uses ${refRaw.trim()}" references an entry that doesn't exist — reference a real entry by its exact name`, undefined, loc);
+          }
+        }
+      }
+    }
+    // A BUFF gated behind a saving throw is inverted mechanics — allies
+    // don't save against help, and the live case granted MORE on a failed
+    // save (Glimmering Dome: Failure 15 THP + Advantage, Success 7 THP).
+    // 0/329 with the target-beneficial pattern (the Sphinx "gains 1
+    // Exhaustion level" and the Wisp regaining its OWN HP don't match).
+    if (/(?:Failure|Success):[^.]*target (?:gains \d+ (?:temporary )?Hit Points|regains \d+ Hit Points|has Advantage)/i.test(entry.text)) {
+      push('buff-behind-save', 'reject', `${where}: a beneficial effect sits behind a saving throw — buffs are granted, never saved against; redesign without the save frame`, undefined, loc);
+    }
+    // "can't be has the X condition" — two 2024 idioms fused into garble
+    // (live: Starfilth's Drifting Form). Deterministic.
+    if (/\bbe has the\b/.test(entry.text)) {
+      push('garbled-condition-grammar', 'correctable', `${where}: "be has the" is fused grammar — normalized to "have the"`, undefined, loc);
+    }
+    // Flat damage REDUCTION doesn't exist in officials (0/329) — mitigation
+    // is Resistance or an AC/save mechanic (live: "reduces the damage by
+    // 10 (3d6)"). Needs a redesign → fix ladder.
+    if (/reduc\w+ (?:the |that )?damage (?:taken )?by \d+/i.test(entry.text)) {
+      push('flat-damage-reduction', 'reject', `${where}: flat damage reduction is not a 5e mechanic — express mitigation as Resistance, Half Cover, or an AC bonus`, undefined, loc);
+    }
+    // "once per combat/encounter" is video-game vocabulary — 0/329 + 0/327
+    // (live: Reedwrack's Sunken Lunge). Deterministic: becomes "once per
+    // day", the nearest official metering.
+    if (/\bper (?:combat|encounter)\b/i.test(entry.text)) {
+      push('per-combat-vocab', 'correctable', `${where}: "per combat/encounter" is not 5e vocabulary — officials meter with per day/turn; rewritten to per day`, undefined, loc);
+    }
+    // An area-effect referent with no area defined before it ("each
+    // creature in that area" and nothing establishes the area) is
+    // unadjudicable — the audit prompt's own exemplar class, caught
+    // deterministically. 0/329; the 2014 corpus's 50 uses ALL define the
+    // area first (0 dangling). Needs new content → reject, fix ladder.
+    {
+      const areaRef = /(?:each|a|any) creature in (?:that|the) area/i.exec(entry.text)
+        ?? /\b(?:enters?|starts its turn (?:in|inside)|within) the (?:cloud|zone|aura|mist|vapor|web|field)\b/i.exec(entry.text)
+        ?? /(?:each|a|any) creature in the (?:line|path|trail|wake)\b/i.exec(entry.text);
+      if (areaRef && !/Emanation|Cone|Line|Sphere|Cylinder|Cube|radius|-foot/i.test(entry.text.slice(0, areaRef.index))) {
+        push('undefined-area', 'reject', `${where}: targets an area or zone ("${areaRef[0]}") that is never defined — name the shape, size, and origin (e.g. "a 20-foot Emanation originating from it")`, undefined, loc);
+      }
+    }
+    // A repeat-save sentence in an entry that contains NO save ("The
+    // target repeats the save...") is an orphan — usually duplicated from
+    // the entry it synergizes with (live: Sussanyx's Spore Saturation
+    // copied Spore Breath's repeat line into a trait where "the save" has
+    // no referent). 0/329 + 0/327. Deterministic strip; the entry stands
+    // complete without it.
+    if (/repeats? the sav|ending the (?:effect|condition) on a success/i.test(entry.text)
+      && !/DC \d+|[Ss]aving [Tt]hrow/.test(entry.text)) {
+      push('orphan-repeat-save', 'correctable', `${where}: has a repeat-save sentence but no save — "the save" has no referent here; the sentence is stripped`, undefined, loc);
+    }
     if (is2024) {
       if (/(Melee|Ranged)\s+(Weapon|Spell)\s+Attack/.test(entry.text)) {
         push('phrasing-2014', 'reject', `2014 attack phrasing in ${where} — use "Melee Attack Roll:" form`, undefined, loc);
@@ -547,6 +689,89 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       }
       if (/Saving Throw \(DC \d+\)/.test(entry.text)) {
         push('phrasing-saving-throw', 'reject', `Saving throw in ${where} writes its DC in a parenthetical — the skeleton is "*Ability Saving Throw:* DC n, <targets>"`, undefined, loc);
+      }
+      // Rider saves (trait triggers, attack riders, bonus actions) revert to
+      // 2014 phrasing while primary saves get the skeleton (live: Pumpkin
+      // King ×3, Tarwretch ×2). Subject-scoped, 0/329: officials' swallow
+      // regurgitation saves have the MONSTER as saver ("the behir must
+      // succeed…"), and ability CHECKS legitimately keep the "must succeed
+      // on a DC 15 Wisdom (Perception) check" form (Gelatinous Cube).
+      // The optional bridge covers targeting qualifiers ("each creature in
+      // that area must succeed") but excludes commas — "one creature inside
+      // it, the behir must succeed" hands the verb to a NEW subject.
+      if (/\b(?:the target|the attacker|each creature|that creature|a creature|the creature|its target)(?:\s+(?:in|within|that|of|inside|touching|near)[^,.]{0,120})?\s+must succeed on a DC \d+\s+\w+\s+saving throw/i.test(entry.text)
+        || /unless the (?:attacker|target|creature) succeeds on a DC \d+/i.test(entry.text)) {
+        push('phrasing-rider-save', 'reject', `2014 rider-save phrasing in ${where} — rider saves use the skeleton too: "*<Ability> Saving Throw:* DC n, <target>. *Failure:* <effect>"`, undefined, loc);
+      }
+      // Rider-save targeting that contradicts the entry's own attack/prose
+      // range (live: Reedwrack "On a hit, ... one creature within 60 feet"
+      // — WHICH creature? — and Wracking Flense prose "within 5 feet"
+      // against a "within 60 feet" skeleton). 0/329 both shapes.
+      if (/On a hit,?\s*\*?[A-Z]\w+ Saving Throw\*?:?\s*DC \d+,\s*one creature within \d+ feet/i.test(entry.text)
+        || (/Attack Roll:/i.test(entry.text) && /Saving Throw\*?:?\s*DC \d+,\s*one creature within \d+ feet/i.test(entry.text))) {
+        push('rider-target-mismatch', 'correctable', `${where}: an on-hit rider save re-targets "one creature within N feet" — the saver is the creature that was hit; targeting becomes "the target"`, undefined, loc);
+      } else {
+        const prose = /within (\d+) feet of (?:it|the [\w' -]+?)\b/i.exec(entry.text);
+        const skel = /Saving Throw\*?:?\s*DC \d+,\s*one creature within (\d+) feet/i.exec(entry.text);
+        if (prose && skel && prose[1] !== skel[1]) {
+          push('rider-target-mismatch', 'correctable', `${where}: prose says within ${prose[1]} feet but the save targets one creature within ${skel[1]} feet — the skeleton takes the prose range`, undefined, loc);
+        }
+      }
+      // Emanation vocabulary: officials size Emanations plainly and they
+      // ORIGINATE from the creature — never "-radius" and never "centered
+      // on" (0/329; live: Reedwrack's Stifling Bog). Deterministic.
+      if (/-radius Emanation/i.test(entry.text) || /Emanation cent(?:er|r)ed on/i.test(entry.text)
+        || /within an? \d+-foot Emanation/i.test(entry.text)) {
+        push('emanation-form', 'correctable', `${where}: Emanations are sized plainly, originate from the creature, and targets are IN them ("each creature in a 20-foot Emanation originating from") — never "-radius", "centered on", or "within a"`, undefined, loc);
+      }
+      // Lines carry BOTH dimensions — all 24 official Lines are
+      // "N-foot-long, M-foot-wide" (0/329 one-dimensional; live: Gongthokk
+      // "10-foot Line"). Deterministic: the official default width is 5 feet.
+      if (/\b\d+-foot Line\b/.test(entry.text) || /-foot-wide Line that is \d+ feet wide/i.test(entry.text)) {
+        push('line-dimensions', 'correctable', `${where}: a Line needs length AND width exactly once ("60-foot-long, 5-foot-wide Line")`, undefined, loc);
+      }
+      // Flat damage bonuses don't exist in officials (0/329 + 0/327) —
+      // damage riders are extra DICE ("deals an extra 4 (1d8)"), and the
+      // engine's damage discipline is dice + stat mod exactly (live:
+      // Gongthokk's Echoing Shards "+2 bonus to damage rolls").
+      if (/\+\d+ (?:bonus )?to (?:its )?damage rolls/i.test(entry.text)) {
+        push('flat-damage-bonus', 'reject', `${where}: grants a flat damage bonus — officials express damage riders as extra dice ("deals an extra 4 (1d8) damage"); rewrite it that way`, undefined, loc);
+      }
+      // "Success: Half damage and no push." — the official idiom for
+      // rider-cancels-on-success is "Half damage only." (11 official uses,
+      // 0 of the "and no X" form; live: Cinderstone Giant). Deterministic.
+      if (/Success:\*?\s*Half damage,? and (?:no |the (?:target|creature) (?:isn't|is not) )/i.test(entry.text)) {
+        push('success-half-only', 'correctable', `${where}: "Half damage and no <rider>" normalizes to the official "Half damage only."`, undefined, loc);
+      }
+      // "falls Prone" is 2014 vocabulary (6 official 2014 uses) — 2024
+      // writes "has the Prone condition" (0/329 "falls Prone"). 2024-gated.
+      if (/\bfalls? Prone\b/.test(entry.text) || /\bknocked Prone\b/.test(entry.text)) {
+        push('prone-vocab', 'correctable', `${where}: "falls/knocked Prone" is 2014 phrasing — 2024 writes "has the Prone condition"`, undefined, loc);
+      }
+      // "of the <noun>'s choice" where the noun is neither this monster nor
+      // the DM — a stale identity leak (live: "any creature of the herder's
+      // choice" on a block named Grinding Hardshell). Officials use their
+      // OWN name or "of its choice"; the rewrite is the safe official form.
+      {
+        const cm = /of the (\w+)'s choice/i.exec(entry.text);
+        if (cm) {
+          const nameWords = new Set(`${monster.name ?? ''}`.toLowerCase().split(/\s+/));
+          const ok = nameWords.has(cm[1].toLowerCase()) || ['dm', 'gm'].includes(cm[1].toLowerCase());
+          if (!ok) {
+            push('choice-referent', 'correctable', `${where}: "${cm[0]}" names something that isn't this creature — rewritten to "of its choice"`, cm[0], loc);
+          }
+        }
+      }
+      // A "cannot be <Condition>" clause restating the Immunities line is
+      // redundant (0/329; the one 2014 near-miss — Mummy Lord's whirlwind
+      // form — has the condition NOT on its line, hence the immunities
+      // gate). The fix call drops the clause.
+      {
+        const restated = /can(?:'t|not) be (Charmed|Frightened|Grappled|Paralyzed|Poisoned|Stunned|Restrained|Petrified|Blinded|Deafened)/i.exec(entry.text);
+        const immLine = `${monster.immunities ?? ''} ${monster.condition_immunities ?? ''}`.toLowerCase();
+        if (restated && immLine.includes(restated[1].toLowerCase())) {
+          push('immunity-restated-clause', 'reject', `${where}: "cannot be ${restated[1]}" restates the Immunities line — the line is the authority; drop the clause`, undefined, loc);
+        }
       }
       for (const m of entry.text.matchAll(/Saving Throw/g)) {
         const before = entry.text.slice(0, m.index);
@@ -1113,6 +1338,43 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     if (monster.ac != null && Math.abs(monster.ac - chassis.ac) > 1) {
       push('ac-band', 'correctable', `AC ${monster.ac} outside ±1 of budget ${chassis.ac}`, chassis.ac);
     }
+    // Energy damage-type spread: 96% of officials use <= 2 distinct energy
+    // types; 4+ is 1/329. Generated hodgepodges stack unrelated elements.
+    {
+      const TYPES = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder'];
+      const allText = entriesOf(monster)
+        .filter(({ entry }) => !/^Spellcasting/i.test(entry.name))
+        .map(({ entry }) => entry.text).join(' ');
+      const used = TYPES.filter((t) => new RegExp(`\\b${t} damage`).test(allText));
+      if (used.length >= 4) {
+        push('energy-type-spread', 'reject', `Block uses ${used.length} distinct energy damage types (${used.join(', ')}) — officials almost never exceed two; consolidate to the types the creature's substance earns`, undefined, { section: 'Actions', entry: (monster.sections?.Actions?.[0]?.name ?? '') });
+      }
+    }
+    // Primordial's parenthetical lists ONLY elemental dialects (Aquan,
+    // Auran, Ignan, Terran — 8/8 official forms). Anything else moves out
+    // as its own language (live: "Primordial (Giant, Aquan)").
+    if (typeof monster.languages === 'string') {
+      const pm = /Primordial\s*\(([^)]+)\)/i.exec(monster.languages);
+      if (pm) {
+        const DIALECTS = new Set(['aquan', 'auran', 'ignan', 'terran']);
+        const toks = pm[1].split(',').map((t) => t.trim()).filter(Boolean);
+        const bad = toks.filter((t) => !DIALECTS.has(t.toLowerCase()));
+        if (bad.length) {
+          const good = toks.filter((t) => DIALECTS.has(t.toLowerCase()));
+          const fixedPrim = good.length ? `Primordial (${good.join(', ')})` : 'Primordial';
+          const expected = `${bad.join(', ')}, ${monster.languages.replace(pm[0], fixedPrim)}`
+            .replace(/^,\s*/, '');
+          push('primordial-dialects', 'correctable', `Languages: "${pm[0]}" parenthesizes non-dialects (${bad.join(', ')}) — only Aquan/Auran/Ignan/Terran are Primordial dialects`, expected, { field: 'languages' });
+        }
+      }
+    }
+    // Movement modes never sit in parentheses — "30 ft., Burrow 20 ft.",
+    // not "30 ft. (Burrow 20 ft.)". Officials' only speed parenthetical is
+    // "(hover)" (0/329 + 0/327 otherwise; live: Rustking Mycelium).
+    if (typeof monster.speed === 'string' && /\((?:Burrow|Climb|Swim|Fly)\s/i.test(monster.speed)) {
+      push('speed-paren', 'correctable', `Speed line parenthesizes a movement mode ("${monster.speed}") — modes are comma-separated`,
+        monster.speed.replace(/\s*\((Burrow|Climb|Swim|Fly)(\s+\d+\s*ft\.?[^)]*)\)/gi, ', $1$2'), { field: 'speed' });
+    }
     // Matches both editions: "Melee Attack Roll: +9" and "Melee Weapon Attack: +7 to hit".
     const maxAttack = maxExtracted(monster, /Attack(?: Roll)?:\*?\s*\+(\d+)/g);
     if (maxAttack != null && Math.abs(maxAttack - chassis.attack_bonus) > 1) {
@@ -1121,12 +1383,38 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // SAVE DCs only — check DCs (Investigation, escape DCs) are excluded, or
     // a high skill-check DC masks under-budget save DCs (live finding: an
     // Investigation DC 20 hid save DCs sitting 2 under a 21 budget).
-    const maxDC = Math.max(
-      maxExtracted(monster, /Saving Throw\*?:?\s*DC\s+(\d+)/gi) ?? -Infinity,
-      maxExtracted(monster, /DC\s+(\d+)\s+\w+ saving throw/gi) ?? -Infinity,
-    );
-    if (Number.isFinite(maxDC) && Math.abs(maxDC - chassis.save_dc) > 1) {
-      push('dc-band', 'correctable', `Save DC ${maxDC} outside ±1 of budget ${chassis.save_dc}`, chassis.save_dc);
+    // PER-INSTANCE, not max-only: a rider save can sit 2 under budget while
+    // the primary save masks it (live: Tarwretch's Sticky Ichor/Tar Tendril
+    // at DC 15 under a DC 17 chassis — the max check passed clean). Escape
+    // DCs are exempt by construction: "(escape DC 15)" matches neither
+    // save-context regex, and they sit at save_dc−2 by design.
+    const dcOut = new Set();
+    for (const re of [/Saving Throw\*?:?\s*DC\s+(\d+)/gi, /DC\s+(\d+)\s+\w+ saving throw/gi]) {
+      for (const { entry } of entriesOf(monster)) {
+        for (const m of entry.text.matchAll(re)) {
+          if (Math.abs(Number(m[1]) - chassis.save_dc) > 1) dcOut.add(Number(m[1]));
+        }
+      }
+    }
+    if (dcOut.size) {
+      push('dc-band', 'correctable', `Save DC${dcOut.size > 1 ? 's' : ''} ${[...dcOut].join(', ')} outside ±1 of budget ${chassis.save_dc}`, chassis.save_dc);
+    }
+    // Escape DCs are exempt from dc-band BY DESIGN, which made them the
+    // one number a fix-call rewrite could corrupt unchecked (live: a 2014
+    // block shipped escape DC 18 against the save_dc−2 policy of 15).
+    // Engine policy: every escape DC = max(8, save_dc − 2), restamped
+    // deterministically.
+    {
+      const escapeDC = Math.max(8, chassis.save_dc - 2);
+      const bad = new Set();
+      for (const { entry } of entriesOf(monster)) {
+        for (const m of entry.text.matchAll(/escape DC (\d+)/gi)) {
+          if (Number(m[1]) !== escapeDC) bad.add(Number(m[1]));
+        }
+      }
+      if (bad.size) {
+        push('escape-dc-band', 'correctable', `Escape DC${bad.size > 1 ? 's' : ''} ${[...bad].join(', ')} off the save_dc−2 policy (${escapeDC})`, escapeDC);
+      }
     }
     // Swarm archetype demands the swarm type line (live finding: a 2014
     // swarm came out "Medium aberration" — the clause was missing from the
@@ -1204,7 +1492,12 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // corpus: Ravens drops the flat, Venomous Snakes shrinks the die).
     for (const { section, entry } of entriesOf(monster)) {
       if (!/half of its Hit Points or fewer|if the swarm is Bloodied/i.test(entry.text)) continue;
-      const exprs = [...entry.text.matchAll(/(\d+)\s*\((\d+)d(\d+)(?:\s*([+-])\s*(\d+))?\)/g)];
+      // Typed riders ("plus 4 (1d8) Fire damage") shifted the expression
+      // pairing and silently exempted the entry (live: Sorrowsand shipped
+      // "7d8+6 → 18 (4d8)" — dice rounded UP and the flat dropped). Strip
+      // riders before pairing.
+      const riderless = entry.text.replace(/\s*plus \d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)\s*\w+ damage/gi, '');
+      const exprs = [...riderless.matchAll(/(\d+)\s*\((\d+)d(\d+)(?:\s*([+-])\s*(\d+))?\)/g)];
       if (exprs.length !== 2) continue;
       const [, , nStr, dieStr, sign, flatStr] = exprs[0];
       const n = Number(nStr);
@@ -1371,6 +1664,25 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
             cond, { section, entry: entry.name });
         }
       }
+      // The same counterplay principle, generalized to REMOVAL FROM PLAY
+      // (banish, swallow, forced plane shift — live: Shissk's Void Latch
+      // removed the target on a plain hit for up to a minute). Gating
+      // (1/Day, Bloodied) limits frequency, not target agency: officials
+      // always pair removal with a save gate or an escape/interior-escape
+      // clause (Banishment = save + Concentration; every swallow carries
+      // interior-escape). Subject-scoped anchor, 0/329 — self-removal on
+      // death (Diabolical/Exalted Restoration) has the monster as subject.
+      const REMOVAL_RE = /\b(?:target|creature) (?:disappears|is banished|is transported|vanishes)|(?:swallows|banishes|shunts) the target/i;
+      for (const { section, entry } of entriesOf(monster)) {
+        const m = REMOVAL_RE.exec(entry.text);
+        if (!m) continue;
+        if (/Saving Throw/i.test(entry.text)) continue;
+        if (STRONG_EXIT.some((re) => re.test(entry.text))
+          || /Concentration|regurgitat|takes \d+ damage or more/i.test(entry.text)) continue;
+        push('removal-counterplay', 'reject',
+          `${section}/${entry.name}: removes the target from play ("${m[0]}") with no save and no escape — gate it behind a saving throw or add an escape clause the target can use while removed`,
+          undefined, { section, entry: entry.name });
+      }
     }
     // Ungated area effect that deals damage AND applies a HARD condition
     // (Stunned/Paralyzed/Petrified/Unconscious — Incapacitated is spent
@@ -1393,6 +1705,20 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
             `${section}/${entry.name}: an area effect that deals damage may not also apply ${hard[1]} unless it is gated — officials recharge-gate this (0/329 ungated); adding (Recharge 5-6)`,
             `${entry.name} (Recharge 5-6)`, { section, entry: entry.name });
         }
+      }
+      // At-will NO-DAMAGE attacks that apply Restrained don't exist in
+      // officials (0/329 — web appliers are save-based AND Recharge-gated,
+      // e.g. Giant Spider's Web). Live: Moon Moth's Web Lasso, at-will and
+      // legendary-reusable for 3+ restrains a round. Same fix shape as
+      // cc-aoe: stamp the gate.
+      for (const { section, entry } of entriesOf(monster)) {
+        if (/\((?:Recharge|\d+\s*\/\s*Day)/i.test(entry.name)) continue;
+        if (!/Attack Roll:/i.test(entry.text)) continue;
+        if (/\d+d\d+/.test(entry.text)) continue;
+        if (!/\bRestrained\b/.test(entry.text)) continue;
+        push('restrain-gate', 'correctable',
+          `${section}/${entry.name}: a no-damage attack applying Restrained is never at-will in officials (0/329) — adding (Recharge 5-6)`,
+          `${entry.name} (Recharge 5-6)`, { section, entry: entry.name });
       }
     }
     // Legendary reuse must not replay an ungated area or oversized save-for-

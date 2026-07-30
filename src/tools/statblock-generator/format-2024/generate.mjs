@@ -20,6 +20,7 @@ import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
 import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP } from './lint.mjs';
 import { logger } from '@/util/logger.mjs';
+import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditNameGrade, auditTypeCorrection } from './audit.mjs';
 
 export const ARCHETYPE_NAMES = Object.keys(spec.archetypes).filter((n) => !n.startsWith('_'));
 
@@ -255,11 +256,13 @@ export function pickRandomArchetype() {
 // Archetype auto-resolve micro-call
 // ---------------------------------------------------------------------------
 
-export function buildArchetypeResolvePrompt(concept, description = '') {
-  return `Classify this D&D monster concept into exactly one combat-role archetype, then sketch its combat identity.
+export function buildArchetypeResolvePrompt(concept, description = '', { cr = null, archetype = null } = {}) {
+  return `${archetype
+    ? `The combat role of this D&D monster is FIXED by the user: ${archetype}. Echo it in "archetype" unchanged, and sketch a combat identity built around that role.`
+    : 'Classify this D&D monster concept into exactly one combat-role archetype, then sketch its combat identity.'}
 
 Concept: ${concept}
-${description ? `Details: ${description}\n` : ''}
+${description ? `Details: ${description}\n` : ''}${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force). The identity must read like a creature OF this tier.\n` : ''}
 Archetypes:
 - brute: hits hard up close, soaks damage, easy to hit
 - defender: protects allies, high AC, punishes movement
@@ -274,7 +277,11 @@ The identity is 2-3 sentences a designer would build from: how it opens a fight,
 
 Also decide the creature TYPE from the concept's SUBSTANCE — what it physically IS: animated objects/machines are Construct; remains or spirits of the dead are Undead; natural animals are Beast; masses of vermin are a swarm (name the base type); giants are massive humanoid-shaped folk; fungus/vegetation are Plant. Never type by vibe.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the eight names above>", "identity": "<2-3 sentences>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>"}`;
+TYPE HONESTY: creature_type must be the type your identity actually EXPRESSES — its body, abilities, and origin, not its label. If the concept's substance isn't genuinely that type, either rewrite the identity to BE it or declare the type you actually wrote. A type the content never expresses (an "Elemental" whose body and habits could belong to any animal) is a failure.
+
+Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — the story a GM would read aloud. Grounded in the concept's substance, never generic doom-prose.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the eight names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>"}`;
 }
 
 export function validateArchetypeResponse(jsonString) {
@@ -289,10 +296,13 @@ export function validateArchetypeResponse(jsonString) {
  * list — the model designs from a single idea rather than giving each rolled
  * trait its own disconnected ability.
  */
-export function buildSeedSynthesisPrompt(seed) {
-  return `Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.
+export function buildSeedSynthesisPrompt(seed, { cr = null, archetype = null } = {}) {
+  return `${archetype
+    ? `Fuse these randomly rolled traits into ONE coherent monster concept. Its combat role is FIXED by the user: ${archetype} — echo it in "archetype" unchanged and shape the concept around that role.`
+    : 'Fuse these randomly rolled traits into ONE coherent monster concept, then classify its combat role.'}
 
 Rolled traits: ${seed.intelligence}; ${seed.physical}; a ${seed.silhouette}; from ${seed.origin}${seed.disposition ? `; ${seed.disposition}` : ''}.
+${cr != null ? `Challenge Rating: ${crKeyFor(cr)} — scale the creature's ambition to this tier (a CR 2 creature is a local menace; a CR 20+ creature is a mythic force).` : ''}
 ${seed.creature_type ? `Creature type: ${seed.creature_type} — ${TYPE_ESSENCES[seed.creature_type] ?? 'build from what that type IS'}. Fuse the rolled traits INTO this essence (the traits are raw material; the essence is what the creature fundamentally is) — never design the traits first and paint the type on after.` : ''}
 
 Write 2-3 vivid sentences describing a single unified creature: the first describes what it IS (the traits must merge into one identity — one body, one behavior — not remain separate features; contradictions between traits are creative fuel), the rest describe how it FIGHTS — how it opens, what it does every round after that, and its temperament under pressure (does it flee bloodied, fight to the death, toy with prey?). The combat role must FOLLOW the rolled disposition — a guardian is a defender, a trickster is not a brute, a pack-hunter skirmishes.
@@ -309,7 +319,11 @@ Archetypes:
 
 Echo the rolled creature type in "creature_type" — but if the fused concept's SUBSTANCE contradicts it (the fusion turned out to be a vermin multitude rolled as Giant, or an amber construct rolled as Humanoid), override it with the type the substance demands.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the eight>", "synthesis": "<your 2-3 sentences>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>"}`;
+TYPE HONESTY: creature_type must be the type your synthesis actually EXPRESSES — its body, abilities, and origin, not its label. The seeded type is raw material: either fuse the concept INTO it for real, or declare the type your fused creature actually is. A label the content never expresses (an "Elemental" whose body and habits could belong to any animal) is a failure.
+
+Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — drawn from the rolled ORIGIN, the story a GM would read aloud. Grounded in the fused substance, never generic doom-prose.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the eight>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>"}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -413,7 +427,7 @@ function slotInstructions(plan, numbers) {
   return lines.join('\n');
 }
 
-export function buildGenerationPrompt({ concept, description = '', cr, chassis, plan, caster = false, edition = '2024' }) {
+export function buildGenerationPrompt({ concept, description = '', cr, chassis, plan, caster = false, edition = '2024', resolvedType = null }) {
   const numbers = damageBudgetFor(cr, chassis, plan);
   // The attack ability's mod is engine-determined BEFORE the LLM runs
   // (attack bonus − PB), so the flat damage bonus in every skeleton is
@@ -429,7 +443,7 @@ export function buildGenerationPrompt({ concept, description = '', cr, chassis, 
     ? saveDamageDiceFor(Math.round(numbers.perAttack * chassis.nova_mult))
     : null;
   if (edition === '2014') {
-    return buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, aoeDmg, novaDmg });
+    return buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, aoeDmg, novaDmg, resolvedType });
   }
   const exemplar = exemplarFor(chassis.archetype, cr);
 
@@ -480,13 +494,17 @@ RULES — read first; they apply to every line of output:
 10. A Reaction is NOT a free action — it fires once per round, only when a specific event occurs. Every Reactions entry uses EXACTLY this form: *Trigger:* <the specific event that lets the creature respond>. *Response:* <what it does>.
    CORRECT: *Trigger:* A creature within 30 feet hits the warden with an attack roll. *Response:* The attacker takes 7 (2d6) Radiant damage.
    WRONG: One creature within 60 feet must succeed on a saving throw... (no trigger — that is an Action, not a Reaction)
-11. A Trait is ALWAYS-ON or self-referential — it never forces another creature to make a saving throw. If the creature actively imposes a save on an enemy, it is an Action (put it in Actions), or a Reaction with an explicit *Trigger:* — NEVER a Trait. Every save-effect targeting clause names a range or area ("one creature within 60 feet", "each creature in a 20-foot Emanation"); never bare "one creature" or "each creature".
+11. A Trait is ALWAYS-ON or self-referential — it never forces another creature to make a saving throw, with two official exceptions: a recurring proximity aura in the Stench form ("*Constitution Saving Throw*: DC n, any creature that starts its turn in a X-foot Emanation originating from the <name>") and a death explosion ("The <name> explodes when it dies. *Dexterity Saving Throw*: ..."). Any OTHER save imposed on an enemy is an Action (put it in Actions), or a Reaction with an explicit *Trigger:* — NEVER a Trait. Every save-effect targeting clause names a range or area ("one creature within 60 feet", "each creature in a 20-foot Emanation"); never bare "one creature" or "each creature".
 12. Ability names are plain English that says what the ability does ("Tar Tendril", "Shielding Wall", "Grasping Coils") — an invented or coined word may be the CREATURE's name, never an ability's name. The creature's own name reads like a Monster Manual entry: a real-word compound (Owlbear), a folk name (Shambling Mound), or a coined word (Chuul) — never a flat description of its attack routine.
 13. The type follows the creature's SUBSTANCE: animated objects, machines, and worked materials are Constructs (an animated sword or needle is never a Beast); spirits and remains of the dead are Undead; only living natural animals are Beasts.
 
 CONCEPT: ${concept}
+${resolvedType ? `CREATURE TYPE: ${resolvedType} — ${TYPE_ESSENCES[resolvedType] ?? 'build from what that type IS'}. Express the type in the creature's MECHANICS and substance — its abilities should only make sense for a ${resolvedType}. Languages and name alone do not make a type.` : ''}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
 ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
+DAMAGE-TYPE DISCIPLINE: choose ONE energy damage type that follows from the creature's substance; a second only when its anatomy genuinely earns it (a molten body may burn AND crush). Official monsters almost never exceed two. Never pair types with no shared physical cause (Radiant tendrils on a body that also puffs Poison spores is a failure).
+MOTIF FATIGUE: spore clouds, poison spores, and fungal-haze mechanics are heavily overused across generations — use them ONLY if the concept's substance is actually fungal.
+ANATOMY COHERENCE: the creature's body parts, movement modes, and abilities must agree — fins mean a Swim speed, wings mean a Fly speed, a burrower has claws or a drill-shaped body. Never give an ability an anatomical name the statline contradicts.
 DESIGN COHERENCE: before writing entries, decide ONE combat identity — how this creature opens a fight, what it does every round after that, and its temperament under pressure. Every trait, action, and reaction must serve that identity; cut any ability that a GM running this creature would never actually use. Abilities must interlock (a setup ability must have a payoff ability; a payoff must have its setup), never sit side-by-side as disconnected ideas.
 
 FIXED NUMBERS (do not deviate):
@@ -523,7 +541,7 @@ Apply ALL the RULES from the top of this prompt. Return ONLY the JSON object.`;
 // 2014-edition prompt: identical numeric skeletons and structure, classic
 // phrasing rules, hand-written exemplar. Same JSON schema — assembly and lint
 // run on the shared internal model before legacy conversion.
-function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, aoeDmg, novaDmg }) {
+function buildGenerationPrompt2014({ concept, description, cr, chassis, plan, caster, numbers, atkMod, atkDmg, saveDmg, aoeDmg, novaDmg, resolvedType = null }) {
   const defenses = defenseBudgetFor(cr, chassis.archetype);
   const schema = {
     name: 'CREATURE NAME',
@@ -560,8 +578,12 @@ RULES — read first; they apply to every line of output:
 10. The type follows the creature's SUBSTANCE: animated objects, machines, and worked materials are constructs (an animated sword or needle is never a beast); spirits and remains of the dead are undead; only living natural animals are beasts. A giant is a massive humanoid-shaped person (an ogre, a titan) — a crawling creature, a vermin multitude, or a plant is NEVER a giant; fungus and vegetation creatures are plants; a cloud, cluster, or multitude of small creatures is a swarm of its creature type. Beasts are natural animals: INT 3 or lower, and NEVER spellcasters. If the concept's substance contradicts the requested type, follow the SUBSTANCE.
 
 CONCEPT: ${concept}
+${resolvedType ? `CREATURE TYPE: ${resolvedType} — ${TYPE_ESSENCES[resolvedType] ?? 'build from what that type IS'}. Express the type in the creature's MECHANICS and substance — its abilities should only make sense for a ${resolvedType}. Languages and name alone do not make a type.` : ''}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
 ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
+DAMAGE-TYPE DISCIPLINE: choose ONE energy damage type that follows from the creature's substance; a second only when its anatomy genuinely earns it (a molten body may burn AND crush). Official monsters almost never exceed two. Never pair types with no shared physical cause (Radiant tendrils on a body that also puffs Poison spores is a failure).
+MOTIF FATIGUE: spore clouds, poison spores, and fungal-haze mechanics are heavily overused across generations — use them ONLY if the concept's substance is actually fungal.
+ANATOMY COHERENCE: the creature's body parts, movement modes, and abilities must agree — fins mean a Swim speed, wings mean a Fly speed, a burrower has claws or a drill-shaped body. Never give an ability an anatomical name the statline contradicts.
 DESIGN COHERENCE: before writing entries, decide ONE combat identity — how this creature opens a fight, what it does every round after that, and its temperament under pressure. Every trait, action, and reaction must serve that identity; cut any ability that a GM running this creature would never actually use. Abilities must interlock (a setup ability must have a payoff ability; a payoff must have its setup), never sit side-by-side as disconnected ideas.
 
 STRUCTURE (exact requirements):
@@ -760,8 +782,9 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   }
   if (llmJson.subtype) monster.subtype = llmJson.subtype;
   if (skills) monster.skills = skills;
-  // "none"/"None" written out is model drift — the official empty-languages
-  // form is the em-dash, which the renderer supplies for a missing field.
+  // "none"/"None" written out is model drift — the field stays unset and
+  // the render layer supplies the official empty form ("None" in 2024,
+  // the em-dash via toLegacyModel in 2014).
   // "does not/cannot speak" normalizes to the corpus form (31/31 official
   // mute-languages lines write "can't speak"; recurring live drift).
   if (llmJson.languages && !/^none$/i.test(llmJson.languages.trim())) {
@@ -781,9 +804,14 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   const stripDamageWord = (v) => v
     ?.replace(/\b(acid|bludgeoning|cold|fire|force|lightning|necrotic|piercing|poison|psychic|radiant|slashing|thunder) damage\b/gi, '$1')
     .replace(/\bexhausted\b/gi, 'exhaustion');
-  if (llmJson.resistances) monster.resistances = stripDamageWord(llmJson.resistances);
-  if (llmJson.immunities) monster.immunities = stripDamageWord(llmJson.immunities);
-  if (llmJson.vulnerabilities) monster.vulnerabilities = stripDamageWord(llmJson.vulnerabilities);
+  // Empty segments sanitize: a condition-only line arrives as "; Charmed,
+  // Frightened" when the model leaves the damage half blank (live:
+  // Gliding Shade shipped "Immunities ; Charmed, Frightened").
+  const tidyDefense = (v) => stripDamageWord(v)
+    .replace(/^\s*;\s*/, '').replace(/;\s*$/, '').replace(/;\s*;/g, ';').trim();
+  if (llmJson.resistances) monster.resistances = tidyDefense(llmJson.resistances);
+  if (llmJson.immunities) monster.immunities = tidyDefense(llmJson.immunities);
+  if (llmJson.vulnerabilities) monster.vulnerabilities = tidyDefense(llmJson.vulnerabilities);
   return monster;
 }
 
@@ -1192,6 +1220,46 @@ const DETERMINISTIC_TEXT_FIXES = [
     (m, also, rest) => `must ${also ?? ''}succeed on ${rest} or`)],
   ['area-circle', (t) => t.replace(/(\d+-foot(?:-radius)?) circle\b/gi, '$1 Sphere')],
   ['spelling-centred', (t) => t.replace(/centred/g, 'centered')],
+  ['prone-duration', (t) => t.replace(/\b((?:the [Pp]rone condition|knocked [Pp]rone|falls? [Pp]rone)) (?:until the (?:end|start) of [^,.]+|for \d+ [^,.]+)/g, '$1')],
+  ['per-combat-vocab', (t) => t.replace(/\bper (?:combat|encounter)\b/gi, 'per day')],
+  ['orphan-repeat-save', (t) => t
+    .replace(/\s*(?:The (?:target|creature) can )?[Rr]epeats? the sav(?:e|ing throw)[^.]*\.\s*/g, ' ')
+    .replace(/\s*The (?:target|creature) (?:can )?repeats? the sav(?:e|ing throw)[^.]*\.\s*/g, ' ')
+    .replace(/\s{2,}/g, ' ').trim()],
+  ['emanation-form', (t) => t
+    .replace(/(\d+)-foot-radius Emanation/gi, '$1-foot Emanation')
+    .replace(/Emanation cent(?:er|r)ed on/gi, 'Emanation originating from')
+    .replace(/within (an? \d+-foot Emanation)/gi, 'in $1')],
+  ['line-dimensions', (t) => t
+    .replace(/\b(\d+)-foot Line\b/g, '$1-foot-long, 5-foot-wide Line')
+    .replace(/(-foot-wide Line) that is \d+ feet wide/gi, '$1')],
+  ['success-half-only', (t) => t.replace(/(Success:\*?\s*)Half damage,? and (?:no |the (?:target|creature) (?:isn't|is not) )[^.]*\./gi, '$1Half damage only.')],
+  ['entry-name-meta-paren', (t) => t], // name-level fix — handled in applyCorrections
+  ['garbled-condition-grammar', (t) => t.replace(/\bbe has the\b/g, 'have the')],
+  ['rider-flat-bonus', (t) => t.replace(/\bplus \d+\s*\((\d+)d(\d+)\s*[+-]\s*\d+\)/g,
+    (m, n, die) => `plus ${Math.floor((Number(n) * (Number(die) + 1)) / 2)} (${n}d${die})`)],
+  ['ba-opener', (t) => t.replace(/^As a Bonus Action,?\s*(\w)/i, (m, c) => c.toUpperCase())],
+  ['prone-vocab', (t) => t
+    .replace(/\bfalls? Prone\b/g, 'has the Prone condition')
+    .replace(/\bis knocked Prone\b/g, 'has the Prone condition')
+    .replace(/\bknocked Prone\b/g, 'has the Prone condition')],
+  ['rider-target-mismatch', (t) => {
+    // On-hit riders: the saver IS the hit creature.
+    let out = t.replace(/(On a hit,?\s*\*?[A-Z]\w+ Saving Throw\*?:?\s*DC \d+,\s*)one creature within \d+ feet/gi, '$1the target');
+    // Rider saves inside ATTACK entries re-target the same way (live:
+    // Forgetting Puncture's save aimed at "one creature within 5 feet"
+    // after the attack already chose its target).
+    if (/Attack Roll:/i.test(out)) {
+      out = out.replace(/(Saving Throw\*?:?\s*DC \d+,\s*)one creature within \d+ feet/gi, '$1the target');
+    }
+    // Prose-range vs skeleton-range: prose wins.
+    const prose = /within (\d+) feet of (?:it|the [\w' -]+?)\b/i.exec(out);
+    if (prose) {
+      out = out.replace(/(Saving Throw\*?:?\s*DC \d+,\s*one creature within )(\d+)( feet)/gi,
+        (m, pre, n, post) => (n !== prose[1] ? `${pre}${prose[1]}${post}` : m));
+    }
+    return out;
+  }],
   ['success-no-effect', (t) => t.replace(/\s*\*?Success:\*?\s*(?:No effect|No damage|None|The \w+ is not [A-Z]\w+)\.?/gi, '')],
   ['damage-type-caps', (t) => t.replace(DAMAGE_TYPES_LOWER_G, (m) => m[0].toUpperCase() + m.slice(1))],
   ['area-term-caps', (t) => t.replace(/\b(\d+-foot )(cone|line|sphere|cylinder|emanation|cube)\b/g,
@@ -1306,7 +1374,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance' || x.rule === 'resistance-unknown' || x.rule === 'defense-line-separator' || x.rule === 'beast-intelligence') && x.loc?.field
+    (x) => (x.rule === 'defense-count' || x.rule === 'defense-overlap' || x.rule === 'swarm-type' || x.rule === 'bps-resistance' || x.rule === 'resistance-unknown' || x.rule === 'defense-line-separator' || x.rule === 'beast-intelligence' || x.rule === 'speed-paren' || x.rule === 'primordial-dialects') && x.loc?.field
   )) {
     out[f.loc.field] = f.expected || undefined;
   }
@@ -1325,7 +1393,7 @@ export function applyCorrections(monster, findings, { chassis }) {
   }
 
   for (const f of correctable.filter(
-    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024' || x.rule === 'cc-aoe' || x.rule === 'legendary-resistance-uses' || x.rule === 'spellcasting-entry-name') && x.loc
+    (x) => (x.rule === 'entry-name-caps' || x.rule === 'trait-recharge' || x.rule === 'legendary-cost-2024' || x.rule === 'cc-aoe' || x.rule === 'restrain-gate' || x.rule === 'legendary-resistance-uses' || x.rule === 'spellcasting-entry-name') && x.loc
   )) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (entry) entry.name = f.expected;
@@ -1437,8 +1505,14 @@ export function applyCorrections(monster, findings, { chassis }) {
   for (const f of correctable.filter((x) => x.rule === 'swarm-half-value' && x.loc)) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (!entry) continue;
-    let seen = 0;
-    entry.text = entry.text.replace(/\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)/g, (m) => (++seen === 2 ? f.expected : m));
+    // The reduction expression follows ", or" (inline form) or "the damage
+    // is/decreases to" (sentence form) — a positional second-expression
+    // replace corrupted typed riders (Sorrowsand's Fire).
+    const before = entry.text;
+    entry.text = entry.text.replace(/(,?\s*or\s+)\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)/i, (m, pre) => `${pre}${f.expected}`);
+    if (entry.text === before) {
+      entry.text = entry.text.replace(/((?:the damage (?:is|decreases to))\s+)\d+\s*\(\d+d\d+(?:\s*[+-]\s*\d+)?\)/i, (m, pre) => `${pre}${f.expected}`);
+    }
   }
 
   // Swarm reduced-damage clause missing or negated: strip any "the damage is
@@ -1684,6 +1758,19 @@ export function applyCorrections(monster, findings, { chassis }) {
     }
   }
 
+  // Meta parentheticals in entry NAMES ("Disengage (if not already
+  // used)") strip to the base name; references keep working because the
+  // paren was never part of any cross-reference.
+  for (const f of correctable.filter((x) => x.rule === 'entry-name-meta-paren' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry) entry.name = entry.name.replace(/\s*\([^)]*\)\s*$/, '');
+  }
+
+  for (const f of correctable.filter((x) => x.rule === 'choice-referent' && x.loc)) {
+    const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
+    if (entry && f.expected) entry.text = entry.text.replace(f.expected, 'of its choice');
+  }
+
   // Single-expression attacks outside the damage band clamp to the exact
   // skeleton (owner call, 2026-07-19): the prompt dictates exact numbers, so
   // deviation is disobedience — variety lives in damage types and riders.
@@ -1715,13 +1802,18 @@ export function applyCorrections(monster, findings, { chassis }) {
     }
   }
 
-  if (has('attack-band') || has('dc-band')) {
+  if (has('attack-band') || has('dc-band') || has('escape-dc-band')) {
     for (const entries of Object.values(out.sections ?? {})) {
       for (const entry of entries) {
         if (has('attack-band')) {
           entry.text = entry.text.replace(/(Attack(?: Roll)?:\*?\s*)\+(\d+)/g, (m, pre, n) =>
             Math.abs(Number(n) - chassis.attack_bonus) > 1 ? `${pre}${signed(chassis.attack_bonus)}` : m
           );
+        }
+        if (has('escape-dc-band')) {
+          const escapeDC = Math.max(8, chassis.save_dc - 2);
+          entry.text = entry.text.replace(/(escape DC )(\d+)/gi, (m, pre, n) =>
+            Number(n) !== escapeDC ? `${pre}${escapeDC}` : m);
         }
         if (has('dc-band')) {
           // Both directions (under-budget DCs raise too), scoped to SAVE
@@ -1862,7 +1954,7 @@ Return ONLY JSON, no markdown fences: {"name": "...", "text": "..."}`;
     const sections = {};
     for (const r of rows) {
       if (r.name === current.name && r.section === section) continue;
-      (sections[r.section] ??= []).push({ name: r.name, text: '' });
+      (sections[r.section] ??= []).push({ name: r.name, text: '', _stub: true });
     }
     (sections[section] ??= []).push({ name: parsed.name, text: parsed.text });
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
@@ -1991,7 +2083,7 @@ Return ONLY a JSON array, no markdown fences: [{"name": "...", "text": "..."}, .
     const parsed = tryParse(raw);
     if (!Array.isArray(parsed)) return null;
     const sections = {};
-    for (const r of otherRows) (sections[r.section] ??= []).push({ name: r.name, text: '' });
+    for (const r of otherRows) (sections[r.section] ??= []).push({ name: r.name, text: '', _stub: true });
     sections[section] = parsed.map((e) => ({ name: e.name, text: e.text }));
     let pseudo = { name: monster.name, stats: stats ?? undefined, pb, sections };
     pseudo = applyCorrections(pseudo, lintStatblock(pseudo, { chassis, edition, perAttack: attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg, totalDamage: numbers.total }).findings, { chassis });
@@ -2053,6 +2145,10 @@ const ENTRY_FIXABLE = new Set([
   'area-circle', 'spelling-centred', 'phrasing-surprised',
   'entry-name-bathos', 'attack-mod-coherence',
   'condition-fake', 'success-no-effect',
+  'phrasing-rider-save', 'removal-counterplay', 'undefined-area',
+  'flat-damage-bonus', 'immunity-restated-clause', 'empty-entry',
+  'unknown-action-ref', 'dangling-use-ref', 'flat-damage-reduction',
+  'buff-behind-save', 'energy-type-spread',
 ]);
 
 // Rules whose defect is the entry's NAME — the fix call may rename these
@@ -2072,7 +2168,8 @@ const STYLE_TIER_REJECTS = new Set([
   'area-circle', 'spelling-centred', 'second-person', 'entry-name-caps',
   'entry-name-coinage', 'entry-name-design-term', 'entry-name-self',
   'entry-name-bathos', 'seed-leakage', 'attack-mod-coherence',
-  'success-no-effect',
+  'success-no-effect', 'phrasing-rider-save', 'flat-damage-bonus',
+  'immunity-restated-clause',
 ]);
 
 /** True when every remaining reject is a shippable style wart. */
@@ -2092,7 +2189,7 @@ function validationError(prefix, rejects) {
 // change with save/skill ripple, not an entry rewrite.
 const STRUCTURAL_REJECTS = new Set([
   'slot-missing', 'multiattack', 'legendary', 'section-structure', 'counts',
-  'spell-dc-ability',
+  'spell-dc-ability', 'swarm-content-untyped',
 ]);
 
 async function rewriteFlaggedEntries(monster, rejects, { edition, chassis, plan, cr }, callLLM) {
@@ -2194,7 +2291,7 @@ const PHONETICS_BY_ARCHETYPE = {
   swarm: 'skittering and repetitive — ch, k, tt, z',
 };
 
-export function buildNamingPrompt(monster, traits = null, bans = [], concept = '') {
+export function buildNamingPrompt(monster, traits = null, bans = [], concept = '', externalGrade = null) {
   const abilities = Object.values(monster.sections ?? {}).flat()
     .map((e) => `${e.name}: ${e.text.slice(0, 90)}`)
     .join('\n');
@@ -2204,6 +2301,10 @@ export function buildNamingPrompt(monster, traits = null, bans = [], concept = '
     ? `must be ${traits.naming}`
     : 'must read like a Monster Manual entry: a real-word compound (Owlbear), a folk name (Shambling Mound), or a coined word built from sound (Chuul) — NEVER a flat description of its attack routine ("Swoop Talon", "Shriek Talon" are the failure mode) and never a generic <adjective> <creature-type> label.';
   return `Name this finished D&D monster. Read what it actually IS — its movement, attacks, and materials — and name THAT creature.
+
+Its current working name is "${monster.name}". ${externalGrade
+    ? `A separate evaluator graded that name ${externalGrade} — it is being replaced. Propose your strongest candidates.`
+    : 'FIRST, grade that name A-F on evocativeness, fit for this creature\'s type and abilities, and catchiness (would a reader remember it?). Grade honestly against these anchors: A = a name that could sit in the Monster Manual as-is; B = solid, fits, no reason to change; C = serviceable but generic or forgettable; D = wrong register or a flat description; F = absurd, misleading, or broken English. A rename happens at B or lower — only an A keeps the current name. Grade the name, not your ability to invent a different one.'}
 
 THE CREATURE: ${monster.size} ${monster.type}, speed ${monster.speed}.
 ${concept ? `THE STORY (the identity this creature was designed from — the name should evoke it): ${String(concept).slice(0, 350)}\n` : ''}${abilities}
@@ -2217,7 +2318,7 @@ Also AUDIT the ability names listed above: any that are coined or invented words
 
 Your candidates will be judged by a separate model on ORIGINALITY and EVOCATIVENESS — a name that could belong to any monster, or that echoes names you have produced before (guttural Uu-/Ul- coinages, <noun><verb> gluings like "Obsidiancrawl"), scores poorly. Aim for names a reader would remember after closing the book.
 
-Return ONLY JSON, no markdown: {"candidates": ["seven different names, best first — range from safe to bold"], "ability_renames": {"Coined Name": "Plain English Name"}}`;
+Return ONLY JSON, no markdown: {"grade": "A-F for the current name", "candidates": ["seven different names, best first — range from safe to bold"], "ability_renames": {"Coined Name": "Plain English Name"}}`;
 }
 
 // Type-coded name words (corpus-consistent, 0/329 after dropping "vampire" —
@@ -2287,13 +2388,47 @@ export function validateNamingResponse(jsonString) {
   const parsed = tryParse(jsonString);
   return !!parsed && Array.isArray(parsed.candidates)
     && parsed.candidates.length >= 3
-    && parsed.candidates.every((c) => typeof c === 'string' && c.trim() !== '');
+    && parsed.candidates.every((c) => typeof c === 'string' && c.trim() !== '')
+    && (parsed.grade === undefined || /^[A-F][+-]?$/i.test(String(parsed.grade).trim()));
+}
+
+/**
+ * Grade gate (owner calls, 2026-08-02): only an A keeps the current name;
+ * B or lower opens the rename pool ("renaming is seldom happening" after
+ * the C threshold proved too lenient a keep). Missing/malformed grades
+ * still lean KEEP — a silent grade must not trigger a rename. The
+ * deterministic pickName filters stay hard gates either way: a
+ * filter-failing provisional renames even at grade A.
+ */
+export function nameGradeKeeps(grade) {
+  const g = String(grade ?? '').trim();
+  if (!/^[A-F][+-]?$/i.test(g)) return true; // missing/malformed leans keep
+  // A/B keep (reverted 2026-08-03 — the A-only threshold produced worse
+  // renames than the provisionals it replaced: "Frosthowl Giant" became
+  // "Glacial Brawler"; the judge's candidates are the weak link, so
+  // renames stay reserved for genuinely bad names).
+  return /^[AB]/i.test(g);
+}
+
+/**
+ * "<modifier> <verb>-er" formula names sort LAST among candidates —
+ * demotion, not rejection (live: "Glacial Brawler" beat better shapes).
+ * The provisional is never demoted; callers pool it separately.
+ */
+export function demoteFormulaHeads(candidates) {
+  const erHead = (raw) => {
+    const words = String(raw).trim().split(/\s+/);
+    return words.length >= 2 && /[a-z]er$/i.test(words[words.length - 1]);
+  };
+  return [...candidates.filter((c) => !erHead(c)), ...candidates.filter(erHead)];
 }
 
 /**
  * Deterministic candidate selection: first name that survives every filter.
  * The register discipline is enforced by filtering, not by hoping.
  */
+const FLAT_ATTACK_HEADS = new Set(['talon', 'claw', 'fang', 'bite', 'sting', 'strike', 'slash', 'shriek', 'swoop', 'pounce', 'rake', 'gore', 'lash']);
+
 export function pickName(candidates, { seedTokens = [], register = '', bans = [], type = '' } = {}) {
   const isCoinage = /coinage/.test(register);
   for (const raw of candidates) {
@@ -2303,6 +2438,10 @@ export function pickName(candidates, { seedTokens = [], register = '', bans = []
     const lower = name.toLowerCase();
     if (!name || name.includes('-')) continue;
     if (headIsMenace(name)) continue;
+    // Flat attack-routine descriptors ("Swoop Talon", "Shriek Talon") —
+    // the concept-path failure mode. 0/329 official names end in an
+    // attack noun.
+    if (name.includes(' ') && FLAT_ATTACK_HEADS.has(name.split(/\s+/).pop().toLowerCase())) continue;
     if (BATHOS_RE.test(name)) continue;
     if (SRD_NAMES.has(lower.replace(/^the /, ''))) continue;
     if (seedTokens.some((t) => lower.includes(t))) continue;
@@ -2334,8 +2473,13 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Replace a name everywhere in text, preserving lowercase prose usage. */
 function renameInText(text, oldName, newName) {
-  return text.replace(new RegExp(escapeRe(oldName), 'gi'), (m) =>
-    m === m.toLowerCase() ? newName.toLowerCase() : newName);
+  // Trailing-s plurals rename as plurals ("thawcaps" → "shiverfunguses",
+  // not "shiverfunguss" — live: Frozen Chitter's conspecific reference).
+  return text.replace(new RegExp(`${escapeRe(oldName)}(s\\b)?`, 'gi'), (m, pluralS) => {
+    const base = m.replace(/s$/i, '') === m.replace(/s$/i, '').toLowerCase() ? newName.toLowerCase() : newName;
+    if (!pluralS) return base;
+    return /(?:s|x|ch|sh)$/i.test(newName) ? `${base}es` : `${base}s`;
+  });
 }
 
 /**
@@ -2403,9 +2547,18 @@ export function applyRenameMapping(monster, mapping) {
         // Only the self-reference form "the <word>" — a bare word replace
         // would corrupt OTHER entry names' references ("Shadow Claw").
         for (const [o, n] of wordPairs) {
+          // "the <word>", "the <word>'s", and bare plurals ("other
+          // thawcaps") — possessives and plurals survived the article-only
+          // replace (live: Shiverfungus talking to "other thawcaps",
+          // an aura keyed to "the herder's choice").
           entry.text = entry.text.replace(
-            new RegExp(`\\b(the) ${escapeRe(o)}\\b`, 'gi'),
-            (m, article) => `${article} ${n.toLowerCase()}`
+            new RegExp(`\\b(the) ${escapeRe(o)}('s)?\\b`, 'gi'),
+            (m, article, poss) => `${article} ${n.toLowerCase()}${poss ?? ''}`
+          );
+          const plural = /(?:s|x|ch|sh)$/i.test(n) ? `${n.toLowerCase()}es` : `${n.toLowerCase()}s`;
+          entry.text = entry.text.replace(
+            new RegExp(`\\b${escapeRe(o)}s\\b`, 'gi'),
+            plural
           );
         }
       }
@@ -2419,8 +2572,25 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', onProgress = null } = options;
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
+  // Perceived-loading staging (owner ask, 2026-07-30): the engine's numbers
+  // exist before any LLM call — surface them instantly, then the assembled
+  // draft while the audit/fix ladder polishes. Progress must never break
+  // generation.
+  const progress = (phase, data) => {
+    if (!onProgress) return;
+    try { onProgress({ phase, ...data }); } catch { /* display-only */ }
+  };
+  progress('chassis', {
+    chassis: {
+      ac: chassis.ac,
+      hp: chassis.hp,
+      cr_str: crKeyFor(cr),
+      pb: chassis.pb,
+      xp: challengeRatings[crKeyFor(cr)]?.XP ?? 0,
+    },
+  });
   const assembleCtx = { cr, chassis, plan, archetypeName: archetype, archetypeSource, resolvedType };
   const seedTokens = seedTraits ? seedLeakTokens(seedTraits) : undefined;
   const { perAttack: rawPerAttack, total: totalDamage } = damageBudgetFor(cr, chassis, plan);
@@ -2429,7 +2599,7 @@ export async function generateMonster2024(options, callLLM) {
   // mandatory flat mod (live: CR 1/2 budget 4, skeleton 6 (1d6 + 3)).
   const perAttack = attackDamageDiceFor(rawPerAttack, requiredAttackModFor(chassis)).avg;
   const defenseCaps = defenseBudgetFor(cr, archetype);
-  const prompt = buildGenerationPrompt({ concept, description, cr, chassis, plan, caster, edition });
+  const prompt = buildGenerationPrompt({ concept, description, cr, chassis, plan, caster, edition, resolvedType });
 
   const attempt = async (p) => {
     const raw = await callLLM(p, validateGenerationResponse);
@@ -2442,6 +2612,7 @@ export async function generateMonster2024(options, callLLM) {
     return { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
   };
 
+  progress('status', { stage: 'writing' });
   let outcome = await attempt(prompt);
   if (!outcome) throw new Error('Empty or malformed 2024 statblock response');
 
@@ -2455,6 +2626,7 @@ export async function generateMonster2024(options, callLLM) {
   const needsRegen = (rejects) => rejects.some((f) => STRUCTURAL_REJECTS.has(f.rule));
 
   if (outcome.rejects.length && needsRegen(outcome.rejects)) {
+    progress('status', { stage: 'rebuilding' });
     const retryPrompt = `${prompt}
 
 Your previous attempt was rejected for these reasons — fix ALL of them this time:
@@ -2463,23 +2635,67 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
     if (retry) outcome = retry;
   }
 
+  // Mechanical-audit judgment layer (owner call, 2026-07-29, option c):
+  // complex blocks only — CR >= 5 or legendary machinery — because the
+  // model doesn't fumble simple monsters, and the long tail lives in the
+  // complex ones. One call; span-verified findings merge into the FIRST
+  // fix round below; the block is never re-audited and audit findings can
+  // never block shipping (never-fail generation). Skipped when degraded.
+  progress('draft', { monster: outcome.monster });
+
+  // Never audit a block with unresolved STRUCTURAL rejects: those skip the
+  // fix loop, so audit findings would merge and then be thrown away (live:
+  // Spinepounce CR 22 — a correct dead-clause finding was spent on a block
+  // that shipped with missing legendary actions and never ran a fix round).
+  let auditProblems = [];
+  let auditGrade = null; // independent name grade — the audit has no candidates to sell
+  if (!degraded && !needsRegen(outcome.rejects) && auditEligible(outcome.monster, cr)) {
+    try {
+      progress('status', { stage: 'audit' });
+      const auditRaw = await callLLM(buildAuditPrompt(outcome.monster, edition), validateAuditResponse);
+      auditProblems = verifyAuditFindings(outcome.monster, auditRaw);
+      auditGrade = auditNameGrade(auditRaw);
+      if (auditGrade) logger.log('audit name grade:', auditGrade, 'for', outcome.monster.name);
+      // Type correction: the judgment layer can retype (live: a "Giant"
+      // bodiless mist, a "Construct" fungus — the fix ladder rewrites
+      // entry TEXT and could never fix the type field). Guards: never a
+      // user-picked type, never Swarm forms, canonical list only.
+      const retype = auditTypeCorrection(auditRaw, outcome.monster.type);
+      if (retype && typeSource !== 'user' && !/swarm/i.test(outcome.monster.type ?? '')) {
+        logger.log('audit type correction:', outcome.monster.type, '→', retype);
+        outcome.monster.type = retype;
+      }
+      if (auditProblems.length) {
+        logger.log('mechanical audit merged findings:', auditProblems.map((f) => `${f.loc.section}/${f.loc.entry}: ${f.message}`));
+      }
+    } catch (e) {
+      logger.warn('mechanical audit skipped:', e?.message ?? e);
+    }
+  }
+
   // Up to three fix rounds — but only MECHANICAL rejects earn the extra
   // rounds (owner call, 2026-07-24): cosmetic leftovers ship silently
   // anyway, so calls spent polishing them past round one are waste.
-  for (let i = 0; i < 3 && outcome.rejects.length && !needsRegen(outcome.rejects); i++) {
+  for (let i = 0; i < 3 && (outcome.rejects.length || auditProblems.length) && !needsRegen(outcome.rejects); i++) {
     if (i >= 1 && onlyStyleRejects(outcome.rejects)) break;
     let monster = outcome.monster;
     if (outcome.rejects.some((f) => f.rule === 'seed-leakage')) {
       monster = await renameLeakedNames(monster, seedTokens, seedTraits?.naming, callLLM);
     }
-    const entryRejects = outcome.rejects.filter((f) => ENTRY_FIXABLE.has(f.rule) && f.loc);
+    const entryRejects = [
+      ...outcome.rejects.filter((f) => ENTRY_FIXABLE.has(f.rule) && f.loc),
+      ...auditProblems,
+    ];
+    auditProblems = []; // first round only — never re-audited, never re-spent
     if (entryRejects.length) {
+      progress('status', { stage: 'fixing', count: entryRejects.length });
       monster = await rewriteFlaggedEntries(monster, entryRejects, { edition, chassis, plan, cr }, callLLM);
     }
     // Fixed text may drift numerically — run corrections, then re-judge.
     monster = applyCorrections(monster, lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps }).findings, { chassis });
     const result = lintStatblock(monster, { chassis, plan, edition, seedTokens, perAttack, totalDamage, defenseCaps });
     outcome = { monster, rejects: result.findings.filter((f) => f.severity === 'reject') };
+    progress('draft', { monster: outcome.monster });
   }
 
   // Final normalization pass: correctable leftovers must not ship. Two
@@ -2517,12 +2733,25 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   // stems to ban (statistical — the stems stay reachable across
   // generations, the attractor breaks; "Chit-" swarms ×6 was the trigger).
   const nameBans = rollNameBans({ type: outcome.monster.type ?? '', archetypeName });
-  if (seedTraits) {
+  // Audit-graded keep: an INDEPENDENT judge rated the name A/B and the
+  // provisional clears every deterministic filter — the naming call is
+  // skipped (owner design, 2026-08-02: the namer grading its own
+  // predecessor had a conflict of interest; and a saved call besides).
+  const auditKeepsName = auditGrade != null && nameGradeKeeps(auditGrade)
+    && pickName([outcome.monster.name], { seedTokens, bans: nameBans, type: outcome.monster.type ?? '' }) === outcome.monster.name;
+  if (auditKeepsName) {
+    logger.log('naming call skipped — audit graded', auditGrade);
+  } else if (seedTraits) {
     try {
-      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits, nameBans, concept), validateNamingResponse);
+      progress('status', { stage: 'naming' });
+      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits, nameBans, concept, auditGrade), validateNamingResponse);
       const parsed = raw ? tryParse(raw) : null;
+      if (parsed?.grade) logger.log('naming grade:', parsed.grade, 'for', outcome.monster.name);
+      const effectiveGrade = auditGrade ?? parsed?.grade;
+      const ranked = parsed ? demoteFormulaHeads(parsed.candidates) : [];
+      const pool = parsed ? (nameGradeKeeps(effectiveGrade) ? [outcome.monster.name, ...ranked] : ranked) : [];
       const chosen = parsed
-        ? pickName(parsed.candidates, { seedTokens, register: seedTraits.naming ?? '', bans: nameBans, type: outcome.monster.type ?? '' })
+        ? pickName(pool, { seedTokens, register: seedTraits.naming ?? '', bans: nameBans, type: outcome.monster.type ?? '' })
         : null;
       if (chosen && chosen !== outcome.monster.name) {
         outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });
@@ -2545,9 +2774,13 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
     const kept = typed !== '' && outcome.monster.name.trim().toLowerCase() === typed;
     if (!kept) {
       try {
-        const raw = await callLLM(buildNamingPrompt(outcome.monster, null, nameBans, concept), validateNamingResponse);
+        progress('status', { stage: 'naming' });
+        const raw = await callLLM(buildNamingPrompt(outcome.monster, null, nameBans, concept, auditGrade), validateNamingResponse);
         const parsed = raw ? tryParse(raw) : null;
-        const chosen = parsed ? pickName(parsed.candidates, { bans: nameBans, type: outcome.monster.type ?? '' }) : null;
+        if (parsed?.grade) logger.log('naming grade:', parsed.grade, 'for', outcome.monster.name);
+        const chosen = parsed
+          ? pickName(nameGradeKeeps(auditGrade ?? parsed.grade) ? [outcome.monster.name, ...demoteFormulaHeads(parsed.candidates)] : demoteFormulaHeads(parsed.candidates), { bans: nameBans, type: outcome.monster.type ?? '' })
+          : null;
         if (chosen && chosen !== outcome.monster.name) {
           outcome.monster = applyRenameMapping(outcome.monster, { [outcome.monster.name]: chosen });
         }

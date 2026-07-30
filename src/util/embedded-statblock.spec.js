@@ -91,17 +91,21 @@ describe('generateEmbeddedStatblock', () => {
 });
 
 describe('user-picked combat role (dungeon form parity)', () => {
-  test('a non-auto archetype skips the resolve call entirely — one LLM call', async () => {
+  test('a non-auto archetype still runs the resolve call with the role as GIVEN (owner call, 2026-08-04)', async () => {
     const { generateMonster2024 } = require('@/tools/statblock-generator/format-2024/generate.mjs');
     const aiClient = require('@/util/ai-client.mjs');
     jest.clearAllMocks();
+    aiClient.generateGptResponse.mockResolvedValueOnce(JSON.stringify({
+      archetype: 'defender', identity: 'A vault-bound sentinel that plants itself between intruders and its charge.', creature_type: 'Construct',
+    }));
     generateMonster2024.mockResolvedValueOnce({ name: 'Vault Warden', format: '2024', sections: {} });
     await generateEmbeddedStatblock({ name: 'Vault Warden', cr: 5, archetype: 'defender' });
-    // No resolve call went through the raw client; the engine got the role as user-picked.
-    expect(aiClient.generateGptResponse).not.toHaveBeenCalled();
+    // The resolve call ran (identity + type honesty for picked roles too).
+    expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(1);
     const opts = generateMonster2024.mock.calls[0][0];
-    expect(opts.archetypeName).toBe('defender');
+    expect(opts.archetypeName).toBe('defender'); // user's pick is authoritative
     expect(opts.archetypeSource).toBe('user');
+    expect(opts.concept).toContain('COMBAT IDENTITY');
   });
 });
 

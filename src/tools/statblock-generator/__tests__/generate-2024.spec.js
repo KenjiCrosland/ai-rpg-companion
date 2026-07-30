@@ -360,6 +360,7 @@ describe('seed leakage', () => {
     leaky.sections.Actions[1].name = 'Drift Claw'; // leaks in an entry name too
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(leaky))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit (gate opened)
       .mockResolvedValueOnce(JSON.stringify({ 'Shadow Drifter': 'Gloom Stalker', 'Drift Claw': 'Night Talon' }));
     const monster = await generateMonster2024(
       {
@@ -368,10 +369,10 @@ describe('seed leakage', () => {
       },
       callLLM,
     );
-    // Call 1 = generation, call 2 = rename fix, call 3 = naming pass
+    // Call 1 = generation, 2 = audit, 3 = rename fix, 4 = naming pass
     // (mock exhausted → provisional name kept) — never a full re-roll.
-    expect(callLLM).toHaveBeenCalledTimes(3);
-    expect(callLLM.mock.calls[1][1]).toBe(require('../format-2024/generate.mjs').validateRenameResponse);
+    expect(callLLM).toHaveBeenCalledTimes(4);
+    expect(callLLM.mock.calls[2][1]).toBe(require('../format-2024/generate.mjs').validateRenameResponse);
     expect(monster.name).toBe('Gloom Stalker');
     const actionNames = monster.sections.Actions.map((e) => e.name);
     expect(actionNames).toContain('Night Talon');
@@ -386,6 +387,7 @@ describe('seed leakage', () => {
     leaky.sections.Traits[0].text = 'While in dim light or darkness, the drifter is invisible. The drifter hungers.';
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(leaky))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit (gate opened)
       .mockResolvedValueOnce(JSON.stringify({ 'Drifter of the Deep': 'Excavator of the Deep' }));
     const monster = await generateMonster2024(
       {
@@ -394,7 +396,7 @@ describe('seed leakage', () => {
       },
       callLLM,
     );
-    expect(callLLM).toHaveBeenCalledTimes(3); // + naming pass (exhausted)
+    expect(callLLM).toHaveBeenCalledTimes(4); // + audit + naming pass (exhausted)
     expect(monster.name).toBe('Excavator of the Deep');
     // (capital Invisible: the condition-caps deterministic fix also ran)
     expect(monster.sections.Traits[0].text).toContain('the excavator is Invisible');
@@ -406,6 +408,7 @@ describe('seed leakage', () => {
     leaky.name = 'Shadow Drifter';
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(leaky))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit (gate opened)
       .mockResolvedValueOnce(JSON.stringify({ 'Shadow Drifter': 'Drifting Shade' })) // still leaks
       .mockResolvedValueOnce(JSON.stringify({ 'Drifting Shade': 'Drift Wraith' })); // stubborn
     // Stubborn leakage is a STYLE wart: one rename attempt, then the block
@@ -417,7 +420,7 @@ describe('seed leakage', () => {
       },
       callLLM,
     );
-    expect(callLLM).toHaveBeenCalledTimes(3); // generation + ONE fix + naming pass
+    expect(callLLM).toHaveBeenCalledTimes(4); // generation + audit + ONE fix + naming pass
     expect(monster.name).toBe('Drifting Shade'); // first rename attempt kept
   });
 });
@@ -501,7 +504,7 @@ describe('defense caps', () => {
       { concept: 'a shadow stalker', cr: 4, archetypeName: 'lurker', archetypeSource: 'user' },
       callLLM,
     );
-    expect(callLLM).toHaveBeenCalledTimes(1); // deterministic trim, no fix call
+    expect(callLLM).toHaveBeenCalledTimes(2); // deterministic trim + audit, no fix call
     // Lurker CR 4 budget is ZERO (fragile-by-design archetypes can't buy
     // durability back): fire and cold trim, the poison immunity trims
     // (monstrosities get no poison canon) — but Psychic survives free
@@ -556,17 +559,50 @@ describe('naming pass', () => {
     expect(validateNamingResponse(JSON.stringify({ candidates: ['A', ''] }))).toBe(false);
   });
 
-  test('seeded pipeline runs the naming pass and applies the rename with self-references', async () => {
+  test('a provisional name that passes the filters is KEPT over candidates (batch 17, owner call: 3/4 live renames were worse)', async () => {
     const naming = { naming: 'a folk name' };
+    // NOT "Gloom Stalker" — that's a real ranger subclass and the SRD
+    // filter rightly rejects it (which itself validated the filter).
+    const clean = { ...JSON.parse(JSON.stringify(llmFixture)), name: 'Palegrasp' };
     const callLLM = jest.fn()
-      .mockResolvedValueOnce(JSON.stringify(llmFixture)) // generation
+      .mockResolvedValueOnce(JSON.stringify(clean))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit: no name_grade → naming self-grades
       .mockResolvedValueOnce(JSON.stringify({ candidates: ['Quietmaw', 'Bogtorch', 'Mirelock'] }));
     const monster = await generateMonster2024(
       { concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto', seedTraits: naming },
       callLLM,
     );
-    expect(callLLM).toHaveBeenCalledTimes(2);
-    expect(callLLM.mock.calls[1][1]).toBe(validateNamingResponse);
+    expect(callLLM).toHaveBeenCalledTimes(3); // naming pass still runs (ability renames)
+    expect(monster.name).toBe('Palegrasp'); // provisional survives on merit
+  });
+
+  test('a C grade renames even a filter-passing provisional (grade gate)', async () => {
+    const naming = { naming: 'a folk name' };
+    const clean = { ...JSON.parse(JSON.stringify(llmFixture)), name: 'Palegrasp' };
+    const callLLM = jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(clean))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit: no name_grade
+      .mockResolvedValueOnce(JSON.stringify({ grade: 'C', candidates: ['Quietmaw', 'Bogtorch', 'Mirelock'] }));
+    const monster = await generateMonster2024(
+      { concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto', seedTraits: naming },
+      callLLM,
+    );
+    expect(monster.name).toBe('Quietmaw');
+  });
+
+  test('a filter-failing provisional name still renames with self-references', async () => {
+    const naming = { naming: 'a folk name' };
+    const leaky = JSON.parse(JSON.stringify(llmFixture));
+    leaky.name = 'Gloom-Stalker'; // hyphens always fail pickName
+    leaky.sections.Actions[0].text = 'The stalker makes two Shadow Claw attacks.';
+    const callLLM = jest.fn()
+      .mockResolvedValueOnce(JSON.stringify(leaky))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit (gate opened)
+      .mockResolvedValueOnce(JSON.stringify({ candidates: ['Quietmaw', 'Bogtorch', 'Mirelock'] }));
+    const monster = await generateMonster2024(
+      { concept: 'seeded', cr: 4, archetypeName: 'lurker', archetypeSource: 'auto', seedTraits: naming },
+      callLLM,
+    );
     expect(monster.name).toBe('Quietmaw');
     // "the stalker" self-references follow via the head-noun mapping.
     expect(monster.sections.Actions[0].text).toContain('The quietmaw makes');
@@ -682,7 +718,7 @@ describe('generateMonster2024 orchestration', () => {
   test('returns an assembled, lint-clean monster on a good first response', async () => {
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(llmFixture));
     const monster = await generateMonster2024(options, callLLM);
-    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(callLLM).toHaveBeenCalledTimes(2); // generation + audit (gate opened)
     expect(monster.name).toBe('Gloom Stalker');
     expect(monster.format).toBe('2024');
   });
@@ -692,7 +728,7 @@ describe('generateMonster2024 orchestration', () => {
     // budget of 9 — the live Lysilyth failure class (half-CR offense).
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(llmFixture));
     const monster = await generateMonster2024(options, callLLM);
-    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(callLLM).toHaveBeenCalledTimes(2); // generation + audit (gate opened)
     // The clamp is mod-aware: the flat +5 IS the required attack-stat mod.
     expect(monster.sections.Actions[1].text).toContain('9 (1d8 + 5)');
     expect(monster.sections.Actions[1].text).not.toContain('14 (2d8 + 5)');
@@ -707,11 +743,12 @@ describe('generateMonster2024 orchestration', () => {
     coined.sections.Traits[0].text += ' While Thul-eg is active, it makes no sound.';
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(coined))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })) // audit (gate opened)
       .mockResolvedValueOnce(JSON.stringify([
         { name: 'Amorphous', text: 'The stalker can move through a space as narrow as 1 inch wide without squeezing.' },
       ]));
     const monster = await generateMonster2024(options, callLLM);
-    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(callLLM).toHaveBeenCalledTimes(3);
     const names = monster.sections.Traits.map((e) => e.name);
     expect(names).toContain('Amorphous');
     expect(names).not.toContain('Thul-eg');
@@ -724,7 +761,7 @@ describe('generateMonster2024 orchestration', () => {
       "*Melee Attack Roll:* +7 to hit, reach 5 ft. 14 (2d8 + 5) Slashing damage, and the target is knocked prone and can't regain hit points. It then moves toward a creature of your choice without provoking opportunity attacks.";
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(messy));
     const monster = await generateMonster2024(options, callLLM);
-    expect(callLLM).toHaveBeenCalledTimes(1); // string surgery, no fix call
+    expect(callLLM).toHaveBeenCalledTimes(2); // string surgery + audit, no fix call
     const text = monster.sections.Actions[1].text;
     expect(text).not.toContain('to hit');
     expect(text).toContain('Prone');
@@ -738,7 +775,7 @@ describe('generateMonster2024 orchestration', () => {
     hot.sections.Actions[1].text = '*Melee Attack Roll:* +11, reach 5 ft. 14 (2d8 + 5) Slashing damage.';
     const callLLM = jest.fn().mockResolvedValue(JSON.stringify(hot));
     const monster = await generateMonster2024(options, callLLM);
-    expect(callLLM).toHaveBeenCalledTimes(1);
+    expect(callLLM).toHaveBeenCalledTimes(2); // + audit (gate opened)
     expect(monster.sections.Actions[1].text).toContain('+7');
   });
 
@@ -747,9 +784,10 @@ describe('generateMonster2024 orchestration', () => {
     delete broken.sections.Actions[2].slot; // missing required nova slot → reject
     const callLLM = jest.fn()
       .mockResolvedValueOnce(JSON.stringify(broken))
-      .mockResolvedValueOnce(JSON.stringify(llmFixture));
+      .mockResolvedValueOnce(JSON.stringify(llmFixture))
+      .mockResolvedValueOnce(JSON.stringify({ findings: [] })); // audit after the regen
     const monster = await generateMonster2024(options, callLLM);
-    expect(callLLM).toHaveBeenCalledTimes(2);
+    expect(callLLM).toHaveBeenCalledTimes(3);
     expect(monster.name).toBe('Gloom Stalker');
   });
 

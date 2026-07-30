@@ -794,12 +794,15 @@ describe('anti-clustering name bans (Chit- swarms ×6)', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  test('rollNameBans samples each stem at 50% (all in at 0, none at 0.99)', () => {
+  test('rollNameBans: globals unconditional, type stems sampled at 50%', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0);
     const all = rollNameBans({ type: 'Swarm of Tiny Beasts', archetypeName: 'swarm' });
     expect(all).toEqual(expect.arrayContaining(['chit', ...OVERUSED_NAME_STEMS.global]));
     Math.random.mockReturnValue(0.99);
-    expect(rollNameBans({ type: 'Swarm of Tiny Beasts', archetypeName: 'swarm' })).toHaveLength(0);
+    // At 0.99 only the unconditional globals remain — swarm stems rolled away.
+    const globalsOnly = rollNameBans({ type: 'Swarm of Tiny Beasts', archetypeName: 'swarm' });
+    expect(globalsOnly).toEqual(expect.arrayContaining(['uul', 'ulg']));
+    expect(globalsOnly).not.toContain('chit');
   });
 
   test('type-keyed stems only join for their type', () => {
@@ -823,7 +826,7 @@ describe('anti-clustering name bans (Chit- swarms ×6)', () => {
   test('end-to-end: an active ban steers the final name past the attractor', async () => {
     jest.spyOn(Math, 'random').mockReturnValue(0); // every stem banned
     const fixture = JSON.stringify({
-      name: 'Chittix',
+      name: 'Grimtix', // contains the banned 'grim' stem — provisional filtered, steering still exercised
       size: 'Medium', type: 'Monstrosity', alignment: 'Unaligned', speed: '40 ft.',
       stats: { STR: 12, DEX: 16, CON: 12, INT: 6, WIS: 14, CHA: 8 },
       save_proficiencies: ['DEX'], skill_proficiencies: ['Stealth'],
@@ -1097,7 +1100,9 @@ describe('batch 7: ability-rename audit in the naming pass (Morvoth class)', () 
     expect(actionNames).not.toContain('Bad Idea');
     const multi = m.sections.Actions.find((e) => e.name === 'Multiattack');
     expect(multi.text).toContain('Raking Claw');             // reference propagated
-    expect(m.name).toBe('Gravewing');
+    // Batch 17 (owner call): a filter-passing provisional name is KEPT —
+    // the naming call still ran (ability renames above prove it).
+    expect(m.name).toBe('Lumor');
   });
 });
 
@@ -1216,12 +1221,16 @@ describe('concept-path naming pass (Swoop/Shriek Talon class)', () => {
   });
 
   test('runs when no name was typed (description-only concept)', async () => {
-    const callLLM = namingAware(fixtureWithName('Gloom Stalker'));
+    // "Palegrasp", not "Gloom Stalker" — the latter is a real ranger
+    // subclass and the SRD filter rejects it.
+    const callLLM = namingAware(fixtureWithName('Palegrasp'));
     const m = await generateMonster2024(
       { concept: 'a lurking dread of the fens', cr: 4, archetypeName: 'lurker', edition: '2024', namePass: { userTypedName: null } },
       callLLM,
     );
-    expect(m.name).toBe('Gravewing');
+    // Batch 17: the call runs, but a filter-passing provisional is kept.
+    expect(m.name).toBe('Palegrasp');
+    expect(callLLM.mock.calls.some(([p]) => p.startsWith('Name this finished'))).toBe(true);
   });
 
   test('without namePass the old single-call contract holds (back-compat)', async () => {

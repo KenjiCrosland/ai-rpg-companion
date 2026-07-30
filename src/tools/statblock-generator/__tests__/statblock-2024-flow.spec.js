@@ -15,6 +15,7 @@ import {
   validateArchetypeResponse, validateGenerationResponse, validateSeedSynthesisResponse,
   validateNamingResponse,
 } from '../format-2024/generate.mjs';
+import { validateAuditResponse } from '../format-2024/audit.mjs';
 
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
@@ -110,6 +111,9 @@ const llmFixture = {
 
 function mockLLM({ resolvedArchetype = 'lurker' } = {}) {
   aiClient.generateGptResponse.mockImplementation((prompt, validate) => {
+    if (validate === validateAuditResponse) {
+      return Promise.resolve(JSON.stringify({ findings: [] })); // gate opened: all CRs audit
+    }
     if (validate === validateArchetypeResponse) {
       return Promise.resolve(JSON.stringify({ archetype: resolvedArchetype }));
     }
@@ -203,7 +207,7 @@ describe('StatblockGenerator 2024 flow', () => {
   });
 
   describe('resolve-call routing', () => {
-    test('manual archetype: one LLM call, archetype_source user', async () => {
+    test('manual archetype: resolve runs with the role as GIVEN, archetype_source user', async () => {
       mockLLM();
       const wrapper = mountGenerator();
       const roleSelect = wrapper.findAll('select').find((s) =>
@@ -213,8 +217,9 @@ describe('StatblockGenerator 2024 flow', () => {
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      // generation + the naming pass (blank form → seeded)
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(2);
+      // resolve (user role passes as GIVEN — owner call 2026-08-04) +
+      // generation + audit + naming pass
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('user');
@@ -228,7 +233,7 @@ describe('StatblockGenerator 2024 flow', () => {
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(2);
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(3); // + audit (gate opened)
       expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateArchetypeResponse);
       expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateGenerationResponse);
       const saved = savedMonsters().Uncategorized[0];
@@ -243,11 +248,12 @@ describe('StatblockGenerator 2024 flow', () => {
       await setCR(wrapper, '4');
       await generate(wrapper);
 
-      // Blank form: synthesis micro-call → generation → naming pass.
-      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(3);
+      // Blank form: synthesis micro-call → generation → audit → naming pass.
+      expect(aiClient.generateGptResponse).toHaveBeenCalledTimes(4);
       expect(aiClient.generateGptResponse.mock.calls[0][1]).toBe(validateSeedSynthesisResponse);
       expect(aiClient.generateGptResponse.mock.calls[1][1]).toBe(validateGenerationResponse);
-      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validateNamingResponse);
+      expect(aiClient.generateGptResponse.mock.calls[2][1]).toBe(validateAuditResponse);
+      expect(aiClient.generateGptResponse.mock.calls[3][1]).toBe(validateNamingResponse);
       const saved = savedMonsters().Uncategorized[0];
       expect(saved.archetype).toBe('lurker');
       expect(saved.archetype_source).toBe('auto');
