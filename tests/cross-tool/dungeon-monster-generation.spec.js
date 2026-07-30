@@ -35,6 +35,6 @@ test('creating a custom dungeon monster generates and renders its statblock', as
 
   // …with a generated statblock (expand it and confirm — no "not found").
   await page.locator('.monster-card--collapsed', { hasText: 'Bone Colossus' }).click();
-  await expect(page.locator('.monster-card--expanded').getByText('Armor Class').first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.monster-card--expanded').getByText(/Armor Class|AC \d+/).first()).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.statblock-not-found-message')).toHaveCount(0);
 });

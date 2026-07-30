@@ -1094,6 +1094,95 @@ discovery without user latency). Watch `mechanical audit merged findings`
 final name) — audit principle 3 territory, no 0-FP deterministic
 detection found; recurrence earns a naming-machinery look.
 
+## COHERENCE ARC CLOSED (2026-07-30, owner call)
+
+Owner: "This feels definitively long tail, and all of these are GM
+fixable at the table even if they don't notice it in the moment. That's
+the threshold I'm looking for." The quality bar, stated as policy:
+**defects that would break a table block; defects a GM silently
+house-rules ship.** The arc ran batches 12-26: the mechanical-audit
+judgment layer (all CRs, span-verified, name grades, type correction),
+the type-honesty stack (essence → synthesis honesty → generation
+mandate → audit majority-of-suite), lore-driven naming (IS not DOES,
+grade-gated keeps, unconditional global bans, formula demotion), CR+lore
+in the concept calls, resolve for user-picked archetypes, and ~45 new
+corpus-swept deterministic rules.
+
+Watchlist (long-tail, no action unless recurring): trivially-satisfied
+conditionals (Soulbog's always-Invisible), 3-energy-type blocks (hard
+rule fires at 4), name/mechanic promises the audit misses, support ×
+legendary damage compounding (0.36×), encounter snapshot monsters
+lacking retroactive other_edition, dungeon whole-batch convert (v2),
+Roll20 extension 2024-shape (external).
+
+## Batch 26 — Soulbog (2026-07-30)
+
+Coherent block (undead soul-bog: type right, all three damage types
+substance-earned, CHA-caster consistent, gated Stunned nova). Two
+deterministic fixes:
+- `grapple-restrain-linkage`: fused "Grappled (escape DC N) and the
+  Restrained condition" leaves Restrained without an end condition —
+  rewritten to the official "until the grapple ends" linkage (2/2
+  official uses; fused form 0/329).
+- Languages "(can't speak)" paren variant normalizes to "understands X
+  but can't speak" at assembly.
+Judgment-layer observation (no rule): Amorphous Stealth grants Invisible
+"while completely within its own difficult terrain created by Mire
+Pool" — but Mire Pool is an Emanation centered on the soulbog, so the
+condition is ALWAYS true; a degenerate always-on Invisible wearing a
+conditional costume. The audit's principle-2 "trivially-satisfied
+condition" class; watch for recurrence.
+
+## Batch 25 — the hybrid-type leak (2026-07-30)
+
+Owner diagnosis question answered: the type stack succeeds ~75% because
+TYPE HONESTY catches FULL mismatches; the leak is HYBRIDS — one
+authentic trait (Earth Glide on the Weeping Reaper) satisfies the label
+while the ability suite (Necrotic riders, Animate Dead, Blight,
+life-siphon) expresses another type, and the audit's "clear
+contradiction" bar stayed conservative. Owner: could be Monstrosity,
+"but still not an elemental" — corpus agrees (Monstrosity carries
+Necrotic 2/37; Elemental/Construct/Beast/Ooze/Celestial: 0/141).
+
+- `type-damage-affinity` (reject): Necrotic damage on the zero-precedent
+  types (Elemental/Construct/Beast/Ooze/Celestial). Monstrosity, Plant,
+  Fiend, Humanoid, Fey, Giant, Dragon stay legal.
+- `spell-type-affinity` (reject): raise-the-dead necromancy (Animate
+  Dead, Create Undead, Finger of Death, Circle of Death) on the same
+  restricted set — an official DRAGON casts Create Undead, so the rule
+  restricts rather than allowlists.
+- Audit type_correction: majority-of-suite language ("one authentic
+  trait does not outweigh the suite").
+- Generation prompt: damage type follows the TYPE essence, never mood or
+  name ("a grim-named Elemental still deals its element"); spell lists
+  must express the type essence.
+
+## Batch 24 — Mudgrave Warden (2026-07-30)
+
+A mostly-excellent block (INT-striker warden, statted breakable-binding
+counterplay, lore-fitting name) that exposed two EXISTING-rule blind
+spots and yielded two new rules:
+
+- **Duplicated slot-tagged action**: "Gravity Pulse" appeared twice, the
+  second carrying "(slot: … (2024 capitalized condition names))". Missed
+  because `duplicate-entry` compares identical TEXT only (the tag made
+  them differ) and the instruction-leak corrector's `slot:` strip cut
+  to end-of-string and predates nested parens. Fixed at four layers:
+  slot annotations strip at ASSEMBLY before sections copy (nested-safe);
+  the corrector strip is nested-safe and sentence-bounded; new
+  `duplicate-name` rule — same-section name collisions (0/329;
+  cross-section delegation names stay legal) with a deterministic
+  dedup for identical-modulo-tag copies; and `duplicate-mechanic`
+  (batch 22) as the semantic net.
+- `immune-damage-end-contradiction` (reject, 0/329): Entomb's Petrified
+  target "Immune to damage" with a 50-damage end threshold — an
+  unadjudicable loop; officials entomb with Resistance, keeping the
+  threshold reachable.
+- `check-imposes-condition` (reject, 0/329): Tectonic Aura imposed Prone
+  on a failed "Strength check (DC 25)" — imposed effects are saves;
+  checks are for escapes and contests (escape checks don't match: no
+  "or <effect>" clause).
+
 ## Batch 23 — coherence confirmed both editions (2026-08-04)
 
 Owner verdict on Quagkeel (2014, CR 17) and Sandslither Warden (2024,

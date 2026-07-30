@@ -1,0 +1,22 @@
+{
+  "name": "Gloom Stalker Beast",
+  "size": "Medium",
+  "type": "Monstrosity",
+  "alignment": "Neutral Evil",
+  "speed": "40 ft.",
+  "stats": { "STR": 12, "DEX": 16, "CON": 12, "INT": 6, "WIS": 14, "CHA": 8 },
+  "save_proficiencies": ["DEX"],
+  "skill_proficiencies": ["Stealth", "Perception"],
+  "senses_special": "darkvision 60 ft.",
+  "languages": "Common",
+  "sections": {
+    "Traits": [
+      { "name": "Umbral Veil", "slot": "stealth/phasing/invisibility trait", "text": "While in Dim Light or Darkness, the stalker has the Invisible condition." }
+    ],
+    "Actions": [
+      { "name": "Multiattack", "text": "The stalker makes two Shadow Claw attacks." },
+      { "name": "Shadow Claw", "text": "*Melee Attack Roll:* +7, reach 5 ft. 14 (2d8 + 5) Slashing damage." },
+      { "name": "Ambush Pounce", "slot": "ambush or once-per-fight nova mechanic", "text": "*Dexterity Saving Throw*: DC 13, one creature within 60 feet. *Failure:* 21 (6d6) Psychic damage. *Success:* Half damage." }
+    ]
+  }
+}

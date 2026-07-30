@@ -128,19 +128,26 @@ Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze,
 Plant, Undead); otherwise null. Correct CLEAR contradictions of
 substance, AND types the content never expresses at all — an "Elemental"
 whose body and abilities could belong to any animal is a Monstrosity or
-Beast. Never retype on theme or mood alone.
+Beast. One authentic trait does not outweigh the suite: if MOST of the
+abilities express a different type (necrotic magic, Animate Dead, and
+life-siphoning on an "Elemental" that merely burrows), correct to the
+type the majority expresses. Never retype on theme or mood alone.
 
 ALSO grade the monster's NAME ("name_grade"): A-F on evocativeness, fit
 for this creature's type and abilities, and catchiness. A = could sit in
 the Monster Manual as-is; B = solid, no reason to change; C = serviceable
 but generic or forgettable; D = wrong register or a flat attack
 description; F = absurd or misleading. FIT is judged against
-what the creature actually DOES: a psychic-damage telepath named for
-swamp muck, or a fire creature named like a frost spirit, caps at C
-regardless of how good the name sounds. FIT is judged against
-what the creature actually DOES: a psychic-damage telepath named for
-swamp muck, or a fire creature named like a frost spirit, caps at C
-regardless of how good the name sounds. A or B keeps the current
+what the creature IS — its nature, substance, and story: a psychic
+telepath named for swamp muck, or a fire creature named like a frost
+spirit, caps at C regardless of how good the name sounds. A name that
+is merely a summary of its attack routine also caps at C — names carry
+what a creature IS, not what it does. FIT is judged against
+what the creature IS — its nature, substance, and story: a psychic
+telepath named for swamp muck, or a fire creature named like a frost
+spirit, caps at C regardless of how good the name sounds. A name that
+is merely a summary of its attack routine also caps at C — names carry
+what a creature IS, not what it does. A or B keeps the current
 name — C or lower means it will be replaced. Grade the name, not your
 ability to invent a different one.
 

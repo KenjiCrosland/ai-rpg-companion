@@ -502,7 +502,7 @@ CONCEPT: ${concept}
 ${resolvedType ? `CREATURE TYPE: ${resolvedType} — ${TYPE_ESSENCES[resolvedType] ?? 'build from what that type IS'}. Express the type in the creature's MECHANICS and substance — its abilities should only make sense for a ${resolvedType}. Languages and name alone do not make a type.` : ''}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
 ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
-DAMAGE-TYPE DISCIPLINE: choose ONE energy damage type that follows from the creature's substance; a second only when its anatomy genuinely earns it (a molten body may burn AND crush). Official monsters almost never exceed two. Never pair types with no shared physical cause (Radiant tendrils on a body that also puffs Poison spores is a failure).
+DAMAGE-TYPE DISCIPLINE: choose ONE energy damage type that follows from the creature's TYPE essence and substance — never from its mood or name (a grim-named Elemental still deals its element, not Necrotic); a second type only when its anatomy genuinely earns it (a molten body may burn AND crush). Official monsters almost never exceed two. Never pair types with no shared physical cause (Radiant tendrils on a body that also puffs Poison spores is a failure).
 MOTIF FATIGUE: spore clouds, poison spores, and fungal-haze mechanics are heavily overused across generations — use them ONLY if the concept's substance is actually fungal.
 ANATOMY COHERENCE: the creature's body parts, movement modes, and abilities must agree — fins mean a Swim speed, wings mean a Fly speed, a burrower has claws or a drill-shaped body. Never give an ability an anatomical name the statline contradicts.
 DESIGN COHERENCE: before writing entries, decide ONE combat identity — how this creature opens a fight, what it does every round after that, and its temperament under pressure. Every trait, action, and reaction must serve that identity; cut any ability that a GM running this creature would never actually use. Abilities must interlock (a setup ability must have a payoff ability; a payoff must have its setup), never sit side-by-side as disconnected ideas.
@@ -523,7 +523,7 @@ STRUCTURE (exact requirements):
 ${slotInstructions(plan, numbers)}
 ${chassis.archetype === 'swarm' ? `- The "type" field must be "Swarm of Tiny <Creature>" (e.g. "Swarm of Tiny Beasts") — this overrides the type list in the schema below. Size is Medium or Large.
 ` : ''}${plan.legendary.status === 'required' || plan.legendary.status === 'recommended' ? `- Do NOT write a preamble/intro entry in the Legendary Actions section — the sheet renders the uses preamble automatically. Provide only the option entries themselves. Legendary options never carry cost suffixes in 2024 — never write "(Costs N Actions)"; design bigger effects as 1/Day actions instead.
-` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Choose the ability by IDENTITY, following the official pattern: INNATE casters whose magic is part of their being — dragons, elementals, fey, demons, spirits, monstrosities — use Charisma (every SRD dragon and elemental casts with Charisma). STUDIED casters — wizards, liches, scheming devils, alien intellects — use Intelligence. PRIESTLY or nature casters — druids, priests, oracles — use Wisdom. When unsure, prefer Charisma. Prefer well-known SRD spells. "At will" spells: cantrips plus spells of level ${Math.max(1, Math.floor(cr / 4))} or below (officials scale this with CR — the CR 21 Lich casts Fireball at will, but a low-CR caster gets utility only); anything higher belongs under "1/Day each" or "2/Day each".` : ''}
+` : ''}${caster ? `- The creature is a spellcaster: include a "Spellcasting" action (2024 style — inside Actions, no spell slots): "The creature casts one of the following spells, using <ability> as the spellcasting ability (spell save DC ${chassis.save_dc}): At will: ... 1/Day each: ..." The chosen ability's SCORE must be at least ${(chassis.save_dc - 8 - chassis.pb) * 2 + 10} so that DC ${chassis.save_dc} = 8 + PB + its modifier. Choose the ability by IDENTITY, following the official pattern: INNATE casters whose magic is part of their being — dragons, elementals, fey, demons, spirits, monstrosities — use Charisma (every SRD dragon and elemental casts with Charisma). STUDIED casters — wizards, liches, scheming devils, alien intellects — use Intelligence. PRIESTLY or nature casters — druids, priests, oracles — use Wisdom. When unsure, prefer Charisma. Prefer well-known SRD spells. The spell LIST must express the creature's TYPE essence — an Elemental's spells are its element behaving as magic, a Fey's are glamours and tricks; raise-the-dead necromancy (Animate Dead, Blight-style withering) belongs to Undead and mortal or fiendish necromancers only. "At will" spells: cantrips plus spells of level ${Math.max(1, Math.floor(cr / 4))} or below (officials scale this with CR — the CR 21 Lich casts Fireball at will, but a low-CR caster gets utility only); anything higher belongs under "1/Day each" or "2/Day each".` : ''}
 
 Ability scores: choose scores that fit the concept, and make the creature's ATTACK ability its highest non-CON score — STR or DEX for weapon strikers, INT, WIS, or CHA for magical strikers. The engine sets that ability's modifier to ${signed(requiredAttackModFor(chassis))} so the attack bonus derives from it. Key save effects to abilities the concept justifies being strong.
 
@@ -581,7 +581,7 @@ CONCEPT: ${concept}
 ${resolvedType ? `CREATURE TYPE: ${resolvedType} — ${TYPE_ESSENCES[resolvedType] ?? 'build from what that type IS'}. Express the type in the creature's MECHANICS and substance — its abilities should only make sense for a ${resolvedType}. Languages and name alone do not make a type.` : ''}
 CHALLENGE RATING: ${crKeyFor(cr)}${chassis.archetype ? `\nCOMBAT ROLE: ${chassis.archetype}` : ''}
 ${description ? `SPECIAL INSTRUCTIONS FROM THE USER: ${description}\n` : ''}
-DAMAGE-TYPE DISCIPLINE: choose ONE energy damage type that follows from the creature's substance; a second only when its anatomy genuinely earns it (a molten body may burn AND crush). Official monsters almost never exceed two. Never pair types with no shared physical cause (Radiant tendrils on a body that also puffs Poison spores is a failure).
+DAMAGE-TYPE DISCIPLINE: choose ONE energy damage type that follows from the creature's TYPE essence and substance — never from its mood or name (a grim-named Elemental still deals its element, not Necrotic); a second type only when its anatomy genuinely earns it (a molten body may burn AND crush). Official monsters almost never exceed two. Never pair types with no shared physical cause (Radiant tendrils on a body that also puffs Poison spores is a failure).
 MOTIF FATIGUE: spore clouds, poison spores, and fungal-haze mechanics are heavily overused across generations — use them ONLY if the concept's substance is actually fungal.
 ANATOMY COHERENCE: the creature's body parts, movement modes, and abilities must agree — fins mean a Swim speed, wings mean a Fly speed, a burrower has claws or a drill-shaped body. Never give an ability an anatomical name the statline contradicts.
 DESIGN COHERENCE: before writing entries, decide ONE combat identity — how this creature opens a fight, what it does every round after that, and its temperament under pressure. Every trait, action, and reaction must serve that identity; cut any ability that a GM running this creature would never actually use. Abilities must interlock (a setup ability must have a payoff ability; a payoff must have its setup), never sit side-by-side as disconnected ideas.
@@ -626,6 +626,18 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   const atkStat = attackStatFor(stats);
   if (modOf(stats[atkStat]) < requiredMod) {
     stats[atkStat] = Math.min(30, requiredMod * 2 + 10);
+  }
+
+  // Slot annotations belong in the JSON slot FIELD; any "(slot: ...)"
+  // echoed into entry text strips at assembly (nested-paren-safe — live:
+  // a duplicated action carried "(slot: save-based action imposing a
+  // condition (2024 capitalized condition names))" verbatim).
+  for (const list of Object.values(llmJson.sections ?? {})) {
+    for (const e of list ?? []) {
+      if (typeof e?.text === 'string') {
+        e.text = e.text.replace(/\s*\((?:slot|fills? slot):[^()]*(?:\([^()]*\)[^()]*)*\)/gi, '').trim();
+      }
+    }
   }
 
   const sections = {};
@@ -789,6 +801,7 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   // mute-languages lines write "can't speak"; recurring live drift).
   if (llmJson.languages && !/^none$/i.test(llmJson.languages.trim())) {
     monster.languages = llmJson.languages
+      .replace(/^([A-Z][\w, ]+?)\s*\(can't speak\)$/i, "understands $1 but can't speak")
       .replace(/\b(?:does not|doesn't|cannot) speak\b/gi, "can't speak")
       // "Infernal, understands Common but can't speak" — a spoken language
       // contradicting the mute clause (live); fold it into the understood
@@ -1236,6 +1249,9 @@ const DETERMINISTIC_TEXT_FIXES = [
   ['success-half-only', (t) => t.replace(/(Success:\*?\s*)Half damage,? and (?:no |the (?:target|creature) (?:isn't|is not) )[^.]*\./gi, '$1Half damage only.')],
   ['entry-name-meta-paren', (t) => t], // name-level fix — handled in applyCorrections
   ['garbled-condition-grammar', (t) => t.replace(/\bbe has the\b/g, 'have the')],
+  ['grapple-restrain-linkage', (t) => t.replace(
+    /(Grappled condition \(escape DC \d+\)) and the Restrained condition/g,
+    '$1. Until the grapple ends, the target also has the Restrained condition')],
   ['rider-flat-bonus', (t) => t.replace(/\bplus \d+\s*\((\d+)d(\d+)\s*[+-]\s*\d+\)/g,
     (m, n, die) => `plus ${Math.floor((Number(n) * (Number(die) + 1)) / 2)} (${n}d${die})`)],
   ['ba-opener', (t) => t.replace(/^As a Bonus Action,?\s*(\w)/i, (m, c) => c.toUpperCase())],
@@ -1616,7 +1632,8 @@ export function applyCorrections(monster, findings, { chassis }) {
         .replace(/\s*\bThis attack is an? [\w -]*attack\./gi, '')
         .replace(/\s*\bCredits?:[^.]*\./gi, '')
         .replace(/\s*[^.]*fills the (?:required )?slot[^.]*\./gi, '')
-        .replace(/\s*\bslot: .*$/i, '')
+        .replace(/\s*\((?:slot|fills? slot):[^()]*(?:\([^()]*\)[^()]*)*\)/gi, '')
+        .replace(/\s*\bslot: [^.]*\.?/gi, '')
         .replace(/\s*\([^)]*(?:action description|this entry|these instructions)[^)]*\)/gi, '')
         .replace(/\s*\([^)]*or a similar (?:trait|ability|effect)[^)]*\)/gi, '')
         // Lint-message echoes: strip from the echoed CLAUSE (anchored at
@@ -1755,6 +1772,21 @@ export function applyCorrections(monster, findings, { chassis }) {
       } else {
         entry.text = entry.text.trimEnd() + sentence;
       }
+    }
+  }
+
+  if (has('duplicate-name')) {
+    const stripTail = (t) => (t ?? '')
+      .replace(/\s*\((?:slot|fills? slot):[^()]*(?:\([^()]*\)[^()]*)*\)\s*$/i, '')
+      .replace(/\s*\([^()]*\)\s*$/, '')
+      .trim().toLowerCase();
+    for (const [sec, list] of Object.entries(out.sections ?? {})) {
+      const firstByName = new Map();
+      out.sections[sec] = list.filter((e) => {
+        const base = (e.name ?? '').split(' (')[0].toLowerCase();
+        if (!firstByName.has(base)) { firstByName.set(base, e); return true; }
+        return stripTail(e.text) !== stripTail(firstByName.get(base).text);
+      });
     }
   }
 
@@ -2150,7 +2182,8 @@ const ENTRY_FIXABLE = new Set([
   'unknown-action-ref', 'dangling-use-ref', 'flat-damage-reduction',
   'buff-behind-save', 'energy-type-spread',
   'self-condition-immunity-contradiction', 'motionless-invisible',
-  'duplicate-mechanic',
+  'duplicate-mechanic', 'immune-damage-end-contradiction', 'check-imposes-condition',
+  'type-damage-affinity', 'spell-type-affinity',
 ]);
 
 // Rules whose defect is the entry's NAME — the fix call may rename these
@@ -2293,7 +2326,7 @@ const PHONETICS_BY_ARCHETYPE = {
   swarm: 'skittering and repetitive — ch, k, tt, z',
 };
 
-export function buildNamingPrompt(monster, traits = null, bans = [], concept = '', externalGrade = null) {
+export function buildNamingPrompt(monster, traits = null, bans = [], concept = '', externalGrade = null, lore = null) {
   const abilities = Object.values(monster.sections ?? {}).flat()
     .map((e) => `${e.name}: ${e.text.slice(0, 90)}`)
     .join('\n');
@@ -2302,14 +2335,14 @@ export function buildNamingPrompt(monster, traits = null, bans = [], concept = '
   const nameSpec = traits
     ? `must be ${traits.naming}`
     : 'must read like a Monster Manual entry: a real-word compound (Owlbear), a folk name (Shambling Mound), or a coined word built from sound (Chuul) — NEVER a flat description of its attack routine ("Swoop Talon", "Shriek Talon" are the failure mode) and never a generic <adjective> <creature-type> label.';
-  return `Name this finished D&D monster. Read what it actually IS — its movement, attacks, and materials — and name THAT creature.
+  return `Name this finished D&D monster. Name what it IS — its nature, origin, and story — never a summary of what it does in combat. A name that reads like an attack routine is a failure even when accurate; a name that carries the creature's story is the goal (owner's law: names are about what creatures ARE).
 
 Its current working name is "${monster.name}". ${externalGrade
     ? `A separate evaluator graded that name ${externalGrade} — it is being replaced. Propose your strongest candidates.`
-    : 'FIRST, grade that name A-F on evocativeness, fit for this creature\'s type and abilities, and catchiness (would a reader remember it?). Grade honestly against these anchors: A = a name that could sit in the Monster Manual as-is; B = solid, fits, no reason to change; C = serviceable but generic or forgettable; D = wrong register or a flat description; F = absurd, misleading, or broken English. A rename happens at B or lower — only an A keeps the current name. Grade the name, not your ability to invent a different one.'}
+    : 'FIRST, grade that name A-F on evocativeness, fit for this creature\'s type and abilities, and catchiness (would a reader remember it?). Grade honestly against these anchors: A = a name that could sit in the Monster Manual as-is; B = solid, fits, no reason to change; C = serviceable but generic or forgettable; D = wrong register or a flat description; F = absurd, misleading, or broken English. A rename happens at C or lower — an A or B keeps the current name. Grade the name, not your ability to invent a different one.'}
 
 THE CREATURE: ${monster.size} ${monster.type}, speed ${monster.speed}.
-${concept ? `THE STORY (the identity this creature was designed from — the name should evoke it): ${String(concept).slice(0, 350)}\n` : ''}${abilities}
+${lore ? `ITS LORE (the PRIMARY source for the name — name the creature this sentence describes): ${lore}\n` : ''}${concept ? `ITS COMBAT IDENTITY (context only — never name the creature after these mechanics): ${String(concept).slice(0, 700)}\n` : ''}${abilities}
 
 THE NAME ${nameSpec}
 The name must FIT the creature's TYPE — never borrow another type's signature words (a Fiend is never a "golem", a Celestial is never a "wraith", a Construct is never a "zombie"; those words belong to Constructs, Undead, and Undead respectively).
@@ -2574,7 +2607,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', onProgress = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, onProgress = null } = options;
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
   // Perceived-loading staging (owner ask, 2026-07-30): the engine's numbers
   // exist before any LLM call — surface them instantly, then the assembled
@@ -2746,7 +2779,7 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
   } else if (seedTraits) {
     try {
       progress('status', { stage: 'naming' });
-      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits, nameBans, concept, auditGrade), validateNamingResponse);
+      const raw = await callLLM(buildNamingPrompt(outcome.monster, seedTraits, nameBans, concept, auditGrade, lore), validateNamingResponse);
       const parsed = raw ? tryParse(raw) : null;
       if (parsed?.grade) logger.log('naming grade:', parsed.grade, 'for', outcome.monster.name);
       const effectiveGrade = auditGrade ?? parsed?.grade;
@@ -2777,7 +2810,7 @@ ${outcome.rejects.map((f) => `- ${f.message}`).join('\n')}`;
     if (!kept) {
       try {
         progress('status', { stage: 'naming' });
-        const raw = await callLLM(buildNamingPrompt(outcome.monster, null, nameBans, concept, auditGrade), validateNamingResponse);
+        const raw = await callLLM(buildNamingPrompt(outcome.monster, null, nameBans, concept, auditGrade, lore), validateNamingResponse);
         const parsed = raw ? tryParse(raw) : null;
         if (parsed?.grade) logger.log('naming grade:', parsed.grade, 'for', outcome.monster.name);
         const chosen = parsed

@@ -45,6 +45,23 @@ const classifyNpcs = load('classify-npcs.json');
 const itemQuestHook = load('item-quest-hook.json');
 const loreEvent = load('lore-event.json');
 const dungeonOverview = load('dungeon-overview.json');
+const engineStatblock = load('statblock-engine-2024.json');
+
+// Engine-pipeline control calls are routed by their stable prompt openers
+// (strings the app owns), NOT by call order — the engine's call count
+// varies (resolve, generation, audit, optional naming/fix rounds), which
+// broke modulo sequencing when the audit gate opened. The audit response
+// grades the name "A" so the naming call is skipped and sequences stay
+// short. Tool-content calls still use the per-tool modulo sequences.
+const ENGINE_ROUTES = [
+  { marker: 'You are auditing a D&D', fixture: { name_grade: 'A', type_correction: null, findings: [] } },
+  { marker: 'Classify this D&D monster concept', fixture: { archetype: 'skirmisher', identity: 'A swift shadow-hunter that strikes from darkness and circles back for more.', lore: 'Born where a forest swallowed a battlefield, it stalks whatever disturbs the graves.', creature_type: 'Monstrosity' } },
+  { marker: 'combat role of this D&D monster is FIXED', fixture: { archetype: 'skirmisher', identity: 'A swift shadow-hunter that strikes from darkness and circles back for more.', lore: 'Born where a forest swallowed a battlefield, it stalks whatever disturbs the graves.', creature_type: 'Monstrosity' } },
+  { marker: 'Fuse these randomly rolled traits', fixture: { archetype: 'skirmisher', synthesis: 'A swift shadow-hunter that strikes from darkness and circles back for more prey.', lore: 'Born where a forest swallowed a battlefield, it stalks whatever disturbs the graves.', creature_type: 'Monstrosity' } },
+  { marker: 'Name this finished D&D monster', fixture: { grade: 'A', candidates: ['Duskprowler', 'Gravehound', 'Mirestep'], ability_renames: {} } },
+  { marker: 'Write the FLAVOR for a statblock', fixture: engineStatblock },
+  { marker: 'You are FIXING specific entries', fixture: [] },
+];
 
 const GENERIC = { description: 'stub', text: 'stub', name: 'Stub' };
 
@@ -80,6 +97,13 @@ async function installRoute(page, tool, delayMs) {
   let call = 0;
 
   await page.route('**/api/ai/**', async (route) => {
+    const body = route.request().postData() ?? '';
+    const engine = ENGINE_ROUTES.find((r) => body.includes(r.marker));
+    if (engine) {
+      if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
+      await route.fulfill({ json: wrap(engine.fixture) });
+      return;
+    }
     const fixture = sequence[call % sequence.length];
     call += 1;
     if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));

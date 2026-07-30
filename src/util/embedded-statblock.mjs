@@ -100,6 +100,7 @@ export async function generateEmbeddedStatblock({
   let archetypeName = null;
   let archetypeSource = 'auto';
   let identity = null;
+  let lore = null;
   let resolvedType = type && type !== 'Random' ? type : null;
   const typeSource = resolvedType ? 'user' : 'auto';
   // The resolve call runs for user-picked roles too (owner call,
@@ -116,6 +117,9 @@ export async function generateEmbeddedStatblock({
     archetypeName = givenArchetype ?? parsed?.archetype ?? null;
     if (typeof parsed?.identity === 'string' && parsed.identity.trim().length > 20) {
       identity = parsed.identity.trim();
+    }
+    if (typeof parsed?.lore === 'string' && parsed.lore.trim().length > 15) {
+      lore = parsed.lore.trim();
     }
     if (!resolvedType && typeof parsed?.creature_type === 'string') {
       resolvedType = parsed.creature_type;
@@ -143,6 +147,7 @@ export async function generateEmbeddedStatblock({
         edition,
         resolvedType,
         typeSource,
+        lore,
         namePass: null,
         degraded: isDegradedMode(),
       },

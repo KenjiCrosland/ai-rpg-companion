@@ -117,3 +117,12 @@ describe('concept-call lore threading (owner design, 2026-08-04)', () => {
     expect(typeof buildArchetypeResolvePrompt('a bog stalker')).toBe('string'); // legacy call shape
   });
 });
+
+describe('lore-driven naming (owner law: names are what creatures ARE)', () => {
+  test('buildNamingPrompt accepts a lore field and legacy call shapes still work', () => {
+    const { buildNamingPrompt } = require('../format-2024/generate.mjs');
+    const m = { name: 'Palegrasp', size: 'Medium', type: 'Fey', speed: '30 ft.', sections: {} };
+    expect(typeof buildNamingPrompt(m, null, [], 'a concept', null, 'Born from the last breath of a drowned oath-keeper.')).toBe('string');
+    expect(typeof buildNamingPrompt(m, null, [], 'a concept')).toBe('string');
+  });
+});

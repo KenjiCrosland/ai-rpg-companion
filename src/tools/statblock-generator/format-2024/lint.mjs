@@ -395,6 +395,17 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
   // options with identical text under different names — one wasted slot).
   // 0/329. Reject: the fix call rewrites the duplicate into something new.
   for (const [dupSection, dupList] of Object.entries(monster.sections ?? {})) {
+    const nameSeen = new Set();
+    for (const e of dupList ?? []) {
+      const base = (e.name ?? '').split(' (')[0].trim().toLowerCase();
+      if (base && nameSeen.has(base)) {
+        push('duplicate-name', 'correctable',
+          `${dupSection}/${e.name}: two entries in this section share a name — identical copies are dropped; a genuinely different second ability must be renamed`,
+          undefined, { section: dupSection, entry: e.name });
+      } else if (base) {
+        nameSeen.add(base);
+      }
+    }
     const seen = new Map();
     for (const e of dupList ?? []) {
       const key = (e.text ?? '').trim().toLowerCase();
@@ -659,6 +670,47 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     // the disguise form ("indistinguishable from an ordinary <object>").
     if (/motionless[^.]*Invisible condition|Invisible condition[^.]*motionless/i.test(entry.text)) {
       push('motionless-invisible', 'reject', `${where}: motionless disguise written as the Invisible condition — a still creature is indistinguishable from an object, not unseen; use "is indistinguishable from an ordinary <object>"`, undefined, loc);
+    }
+    // Fused "Grappled (escape DC N) and the Restrained condition" leaves
+    // the Restrained end-condition undefined — the official form links it
+    // to the grapple ("until the grapple ends", 2/2 official uses; the
+    // fused form is 0/329). Deterministic rewrite.
+    if (/Grappled condition \(escape DC \d+\) and the Restrained condition/.test(entry.text)) {
+      push('grapple-restrain-linkage', 'correctable', `${where}: Restrained is granted alongside the grapple with no end condition — linked to the grapple per the official form`, undefined, loc);
+    }
+    // Necrotic damage on substance-mechanical types has ZERO official
+    // precedent (Elemental/Construct/Beast/Ooze/Celestial: 0 of 141
+    // blocks; live: a necromantic "Elemental" whose whole suite was
+    // death magic). Monstrosity/Plant/Fiend/Humanoid carry it officially
+    // and stay legal. The fix call re-themes the damage — or the audit
+    // retypes the block.
+    if (/Necrotic damage/.test(entry.text)
+      && /^(?:Elemental|Construct|Beast|Ooze|Celestial)$/i.test((monster.type ?? '').split(' ')[0])) {
+      push('type-damage-affinity', 'reject', `${where}: Necrotic damage on ${monster.type} — no official ${monster.type} deals Necrotic; re-theme the damage to the creature's substance (or the type itself is wrong)`, undefined, loc);
+    }
+    // Raise-the-dead necromancy on substance-mechanical types (same
+    // restricted set as type-damage-affinity). Officials put it on Undead
+    // AND a Dragon (Create Undead) — so only the types where death magic
+    // has no story are flagged.
+    {
+      const necroSpell = /(Animate Dead|Create Undead|Finger of Death|Circle of Death|Danse Macabre)/.exec(entry.text);
+      if (necroSpell && /^(?:Elemental|Construct|Beast|Ooze|Celestial)$/i.test((monster.type ?? '').split(' ')[0])) {
+        push('spell-type-affinity', 'reject', `${where}: ${necroSpell[1]} on ${monster.type} — raise-the-dead necromancy belongs to Undead (and mortal or fiendish necromancers); pick spells that express this creature's type`, undefined, loc);
+      }
+    }
+    // "Immune to damage" + a damage-threshold end condition in one entry
+    // is an unadjudicable loop — if immune, the threshold can never be
+    // reached (live: Entomb's Petrified target "Immune to damage" that
+    // frees at 50+ damage). 0/329.
+    if (/[Ii]mmune to (?:all )?damage/.test(entry.text) && /takes? \d+ (?:or more )?damage/.test(entry.text)) {
+      push('immune-damage-end-contradiction', 'reject', `${where}: the target is immune to damage AND the effect ends on a damage threshold — one side must go (officials use Resistance to all damage for entombment, keeping the threshold reachable)`, undefined, loc);
+    }
+    // Conditions imposed via ability CHECK — effects use SAVING THROWS;
+    // checks belong to escapes and contests (0/329 for "succeed on a X
+    // check ... or <effect>"; live: an aura imposing Prone on a failed
+    // "Strength check (DC 25)").
+    if (/succeed on a (?:DC \d+ )?\w+ check(?: \(DC \d+\))? or /i.test(entry.text)) {
+      push('check-imposes-condition', 'reject', `${where}: an imposed effect uses an ability CHECK — effects are resisted with SAVING THROWS ("<Ability> Saving Throw: DC n"); checks are for escapes and contests`, undefined, loc);
     }
     // A BUFF gated behind a saving throw is inverted mechanics — allies
     // don't save against help, and the live case granted MORE on a failed

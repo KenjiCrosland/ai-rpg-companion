@@ -1112,6 +1112,7 @@ async function generateStatblockEngine(edition) {
         edition,
         seedTraits: randomSeed,
         resolvedType,
+        lore: conceptLore,
         // Concept-path naming refinement: refine the name via the naming
         // micro-call unless the model kept the user's typed name verbatim
         // (a kept name was judged a proper name — honor it).

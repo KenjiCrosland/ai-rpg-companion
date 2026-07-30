@@ -119,7 +119,7 @@ export function seedLeakTokens(traits) {
 // Naming directives shared by the raw-seed concept and the synthesized one.
 export function namingRules(traits) {
   return `Name it as ${traits.naming}. ` +
-    'The name must match the creature you actually designed — its primary movement, attack, material, or sound as expressed in its abilities, not a generic monster vibe. ' +
+    'The name must express what the creature IS — its nature, material, origin, and story — never a summary of its attacks or combat routine, and never a generic monster vibe. ' +
     'Ability names likewise must name what each ability actually does, in PLAIN ENGLISH — coined or invented words belong to the creature\'s name only, never to ability names. Never mood words the creature doesn\'t earn (nothing "laments" unless an ability laments). ' +
     'Never hyphenate names: two-word names use a space; compound names fuse into one word — but a COINED name is built from sound, never by gluing two English words together ("Disshadow" is a glue-word, not a coinage). ' +
     'The name\'s SOUND should fit the creature: heavy slow things take heavy sounds (long vowels; b, d, g, m), quick things take sharp short sounds (k, t, short vowels), sinuous or stealthy things take sibilants and liquids (s, sh, l). ' +
