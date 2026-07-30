@@ -2,7 +2,9 @@
   <div class="converter-page">
     <div class="converter-column">
       <div class="form-card parchment paper-grain">
-        <h2 class="form-heading">Convert a statblock between 2014 and 2024 rules</h2>
+        <!-- h1: this is the page's first heading and the template removes the
+             Genesis post title, so the page would otherwise have none. -->
+        <h1 class="form-heading">Convert a D&amp;D statblock between 2014 and 2024 rules</h1>
         <p class="converter-hint">
           Paste any D&amp;D 5e monster statblock. The tool detects its edition,
           shows it as a card, and converts the wording to the other edition
@@ -180,6 +182,7 @@ function openInGenerator() {
    page headings are chrome). Entity names stay burgundy. */
 .form-heading {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
+  /* Sized as a form heading, not as a document h1. */
   font-size: 2.4rem;
   font-weight: 600;
   text-align: center;

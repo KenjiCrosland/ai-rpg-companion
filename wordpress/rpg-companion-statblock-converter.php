@@ -32,9 +32,13 @@ function vue_app_enqueue_assets() {
     wp_register_style( 'rpg-companion-overrides', false );
     wp_enqueue_style( 'rpg-companion-overrides' );
     wp_add_inline_style( 'rpg-companion-overrides', '
+            /* Single-column tool (no sidebar): center the app column so it
+               shares a center axis with the SEO copy below it. */
             main.content {
                 max-width: 940px;
                 width: auto;
+                margin-left: auto;
+                margin-right: auto;
             }
             .site-container .site-inner {
                 max-width: none;
@@ -83,20 +87,31 @@ add_action( 'genesis_after_content', 'rpg_converter_seo_content' );
 
 function rpg_converter_seo_content() {
     ?>
+    <!-- No sidebar spacer: the converter is a single centered column, so the
+         SEO copy centers on the page instead of aligning to a sidebar edge. -->
     <section class="rpg-seo-section">
-      <div class="rpg-seo-spacer"></div>
       <div class="rpg-seo-inner">
 
-        <h2>Convert D&amp;D statblocks between 2014 and 2024 rules</h2>
+        <h2>Converting D&amp;D monster statblocks to the 2024 rules</h2>
 
         <p>
-          Paste any 5th edition monster statblock and the tool detects whether
-          it uses the classic 2014 layout or the new 2024 style, then shows it
-          as a formatted card. One click converts the wording to the other
-          edition. The numbers never change: AC, hit points, attack bonuses,
-          save DCs, and damage stay exactly as written, and only the phrasing
-          is translated. Converted monsters save to your library with both
-          printings attached, and you can open them in the
+          If your game moved to the 2024 rules and your monsters are still
+          written in 2014 books, you do not have to convert anything. The two
+          editions are compatible, and a 2014 statblock runs at a 2024 table
+          without changes. Converting is about speed at the table: the 2024
+          layout puts attacks, saving throws, and conditions in the same place
+          every time, so a monster reads the same way as everything else in
+          front of you.
+        </p>
+
+        <p>
+          This tool takes any 5e monster statblock, works out which edition it
+          came from, and rewrites the wording into the other one. It goes both
+          directions, so a 2024 block can also go back to the classic layout
+          for a table still running 2014. Every number stays exactly as
+          written: AC, hit points, attack bonuses, save DCs, and damage.
+          Converted monsters save to your library with both printings
+          attached, and you can open them in the
           <a href="/ai-powered-dnd-5e-monster-statblock-generator/">statblock generator</a>
           to edit, re-roll abilities, or export.
         </p>
@@ -119,6 +134,19 @@ function rpg_converter_seo_content() {
         <h3>Frequently asked questions</h3>
 
         <div class="rpg-faq" itemscope itemtype="https://schema.org/FAQPage">
+
+          <details itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <summary itemprop="name">Do I need to convert my 2014 monsters to 2024?</summary>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+              <p itemprop="text">
+                No. The editions are compatible, and a 2014 monster runs at a
+                2024 table with no changes. Convert when you want a monster to
+                read like everything else you are using that night: the same
+                layout, the same condition wording, the same saving throw
+                structure. That consistency is what saves time mid-combat.
+              </p>
+            </div>
+          </details>
 
           <details itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
             <summary itemprop="name">Is the converter free?</summary>
