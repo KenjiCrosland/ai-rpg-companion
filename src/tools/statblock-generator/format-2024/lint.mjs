@@ -615,7 +615,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
       const allEntries = entriesOf(monster);
       const OK_REFS = new Set(['spellcasting', 'multiattack', 'dash', 'disengage', 'dodge', 'hide', 'help', 'ready', 'search', 'attack']);
       const ownBase = entry.name.split(' (')[0].toLowerCase();
-      for (const m of entry.text.matchAll(/\buses (?:its |the )?([A-Z][\w' -]+?)(?:\s+action)?(?=[.,;]|\s+(?:if|to|again|twice|three|or|while|on|against|and|as|instead)\b)/g)) {
+      for (const m of entry.text.matchAll(/\buses? (?:its |the )?([A-Z][\w' -]+?)(?:\s+(?:action|reaction))?(?=[.,;]|\s+(?:if|to|again|twice|three|or|while|on|against|and|as|instead)\b)/g)) {
         for (const refRaw of m[1].split(/\s+or\s+/)) {
           const ref = refRaw.trim().replace(/\s*\(.*$/, '').replace(/\s+(?:stat block|twice|three times)$/i, '').toLowerCase();
           if (!ref || OK_REFS.has(ref) || /stat block/i.test(refRaw)) continue;
@@ -631,6 +631,34 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
           }
         }
       }
+    }
+    // Self-afflicted condition the block is IMMUNE to — a hard
+    // contradiction whatever the phrasing (live: a Construct immune to
+    // Stunned that stuns ITSELF as a cost, three times). Name-subject
+    // anchored so "The target has the Stunned condition" never matches;
+    // the older generic self-afflicted-condition rule stays for the
+    // sentence-shape inversions.
+    {
+      const immLine = `${monster.immunities ?? ''} ${monster.condition_immunities ?? ''}`.toLowerCase();
+      const headWord = (monster.name ?? '').trim().split(/\s+/).pop();
+      if (headWord && headWord.length >= 4) {
+        // Subject position only: the name must follow a sentence boundary
+        // with at most an adverb before "has" — "pushed away from the
+        // elemental and has the Prone condition" (official Whirlwind) puts
+        // the name in OBJECT position and must not match.
+        const subj = `(?:^|[.:?!]\\s+|\\*\\s*)[Tt]he (?:${(monster.name ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${headWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`;
+        const m = new RegExp(`${subj}(?: then| now| also| afterward)? has the (Blinded|Charmed|Deafened|Frightened|Grappled|Incapacitated|Paralyzed|Petrified|Poisoned|Prone|Restrained|Stunned|Unconscious) condition`, 'i').exec(entry.text);
+        if (m && immLine.includes(m[1].toLowerCase())) {
+          push('self-condition-immunity-contradiction', 'reject', `${where}: the creature gives ITSELF the ${m[1]} condition but its Immunities line includes ${m[1]} — remove one side of the contradiction (immune creatures cannot be afflicted, even by themselves)`, undefined, loc);
+        }
+      }
+    }
+    // A statue-still disguise expressed as the Invisible condition —
+    // Invisible means unseen, not indistinguishable (0/329; live: False
+    // Appearance granting Invisible for standing motionless). Redesign to
+    // the disguise form ("indistinguishable from an ordinary <object>").
+    if (/motionless[^.]*Invisible condition|Invisible condition[^.]*motionless/i.test(entry.text)) {
+      push('motionless-invisible', 'reject', `${where}: motionless disguise written as the Invisible condition — a still creature is indistinguishable from an object, not unseen; use "is indistinguishable from an ordinary <object>"`, undefined, loc);
     }
     // A BUFF gated behind a saving throw is inverted mechanics — allies
     // don't save against help, and the live case granted MORE on a failed
@@ -1337,6 +1365,33 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     }
     if (monster.ac != null && Math.abs(monster.ac - chassis.ac) > 1) {
       push('ac-band', 'correctable', `AC ${monster.ac} outside ±1 of budget ${chassis.ac}`, chassis.ac);
+    }
+    // Two entries sharing >= 2 identical long sentences are the same
+    // mechanic written twice (live: Toll of Silence vs Frantic Ringing —
+    // identical Failure AND Success sentences; only the area and a 1/Day
+    // gate differ). Officials share at most ONE boilerplate sentence
+    // (paired dragon breaths) — 0/329 at the two-sentence threshold.
+    {
+      const seen = new Map();
+      const pairCounts = new Map();
+      for (const { entry } of entriesOf(monster)) {
+        for (const sent of entry.text.split(/(?<=\.)\s+/)) {
+          const t = sent.trim();
+          if (t.length < 60) continue;
+          if (seen.has(t) && seen.get(t) !== entry.name) {
+            const key = `${seen.get(t)}\u0000${entry.name}`;
+            pairCounts.set(key, (pairCounts.get(key) ?? 0) + 1);
+          } else if (!seen.has(t)) {
+            seen.set(t, entry.name);
+          }
+        }
+      }
+      for (const [key, count] of pairCounts) {
+        if (count >= 2) {
+          const [a, bName] = key.split('\u0000');
+          push('duplicate-mechanic', 'reject', `"${a}" and "${bName}" share ${count} identical sentences — the same mechanic written twice; merge them or make the second genuinely different`, undefined, { section: 'Actions', entry: bName });
+        }
+      }
     }
     // Energy damage-type spread: 96% of officials use <= 2 distinct energy
     // types; 4+ is 1/329. Generated hodgepodges stack unrelated elements.

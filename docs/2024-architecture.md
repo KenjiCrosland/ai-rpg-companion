@@ -1094,6 +1094,47 @@ discovery without user latency). Watch `mechanical audit merged findings`
 final name) — audit principle 3 territory, no 0-FP deterministic
 detection found; recurrence earns a naming-machinery look.
 
+## Batch 23 — coherence confirmed both editions (2026-08-04)
+
+Owner verdict on Quagkeel (2014, CR 17) and Sandslither Warden (2024,
+CR 12): "Things are starting to look coherent again." Both blocks
+chassis-exact; Quagkeel's Searing Echo is a real setup/payoff interlock
+(fire enables the psychic echo); the Warden's Heat Sink inverts
+absorbed heat into Cold damage; INT-based attacks price correctly via
+the caster-aware striker stat; escape checks at save_dc−2 with helper
+clauses. The lore/type-honesty/damage-discipline stack is holding in
+both editions.
+
+One fix: `dangling-use-ref` extended to the "use its <X> reaction/
+action" form (the Warden's Arcane Resilience referenced "its Arcane
+Escape reaction" — the reaction is named Runic Retort). Officials use
+the form twice, both resolving (0-FP).
+
+## Batch 22 — Dread Bellringer (2026-08-04)
+
+Answered: the mechanical audit runs on ALL generated monsters (user
+concepts, random seeds, picked archetypes, any CR) — never on converter
+pastes or inline re-rolls.
+
+Rules from one block, all corpus-verified:
+- `self-condition-immunity-contradiction` (reject): a Stunned-immune
+  Construct stunned ITSELF three times. Name-subject-anchored in subject
+  position only — the Air Elemental's "pushed away from the elemental
+  and has the Prone condition" (object position) was the corpus FP that
+  forced the boundary anchor. Complements the older sentence-shape
+  self-afflicted-condition rule, which missed adverbs and duration tails.
+- `duplicate-mechanic` (reject): two entries sharing >= 2 identical
+  60+-char sentences (Toll of Silence vs Frantic Ringing — same Failure
+  AND Success sentences; only area + a 1/Day gate differed). One shared
+  sentence is official boilerplate (paired dragon breaths, 10/329) —
+  the two-sentence threshold is 0/329.
+- `motionless-invisible` (reject): stillness-disguise written as the
+  Invisible condition (False Appearance class) — Invisible means unseen,
+  not indistinguishable.
+- KILLED: ungated no-damage AoE hard CC — 8 official hits (dragon
+  alternate breaths share their sibling's recharge without their own
+  gate tag). Left to the audit.
+
 ## Batch 21 — concept call: CR in, lore out (2026-08-04, owner design)
 
 Owner spec: the concept call should take creature type, CR, archetype,

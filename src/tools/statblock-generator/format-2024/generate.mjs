@@ -2149,6 +2149,8 @@ const ENTRY_FIXABLE = new Set([
   'flat-damage-bonus', 'immunity-restated-clause', 'empty-entry',
   'unknown-action-ref', 'dangling-use-ref', 'flat-damage-reduction',
   'buff-behind-save', 'energy-type-spread',
+  'self-condition-immunity-contradiction', 'motionless-invisible',
+  'duplicate-mechanic',
 ]);
 
 // Rules whose defect is the entry's NAME — the fix call may rename these

@@ -159,3 +159,78 @@ describe('batch 21b: Starfilth live findings', () => {
     expect(lintStatblock(two, { chassis, edition: '2024' }).findings.filter((x) => x.rule === 'energy-type-spread')).toHaveLength(0);
   });
 });
+
+describe('batch 22: Dread Bellringer live findings', () => {
+  const bellringer = {
+    type: 'Construct', name: 'Dread Bellringer',
+    immunities: 'Poison; Charmed, Exhaustion, Frightened, Poisoned, Stunned, Unconscious',
+    sections: {
+      Actions: [
+        { name: 'Toll of Silence', text: "Constitution Saving Throw: DC 14, each creature in a 20-foot Emanation originating from the Dread Bellringer. Failure: The target has the Deafened and Stunned conditions until the end of the Dread Bellringer's next turn. Success: The target has the Deafened condition until the end of the Dread Bellringer's next turn." },
+        { name: 'Frantic Ringing (1/Day)', text: "The Dread Bellringer rings its cracked bell in a 30-foot Emanation. Constitution Saving Throw: DC 14, each creature in that Emanation. Failure: The target has the Deafened and Stunned conditions until the end of the Dread Bellringer's next turn. Success: The target has the Deafened condition until the end of the Dread Bellringer's next turn. The Dread Bellringer then has the Stunned condition until the start of its next turn." },
+      ],
+    },
+  };
+
+  test('self-stun on a Stunned-immune block is a contradiction reject', () => {
+    const f = lintStatblock(bellringer, { chassis, edition: '2024' }).findings
+      .filter((x) => x.rule === 'self-condition-immunity-contradiction');
+    expect(f.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test('target-stunning text never matches the self-contradiction rule', () => {
+    const clean = { ...bellringer, immunities: 'Poison; Poisoned', sections: { Actions: [bellringer.sections.Actions[0]] } };
+    expect(lintStatblock(clean, { chassis, edition: '2024' }).findings
+      .filter((x) => x.rule === 'self-condition-immunity-contradiction')).toHaveLength(0);
+  });
+
+  test('two entries sharing two identical sentences are a duplicate-mechanic reject', () => {
+    const f = lintStatblock(bellringer, { chassis, edition: '2024' }).findings
+      .filter((x) => x.rule === 'duplicate-mechanic');
+    expect(f).toHaveLength(1);
+  });
+
+  test('one shared boilerplate sentence passes (official paired-breath shape)', () => {
+    const m = {
+      type: 'Dragon', name: 'X',
+      sections: { Actions: [
+        { name: 'Cold Breath (Recharge 5-6)', text: 'Constitution Saving Throw: DC 20, each creature in a 90-foot Cone originating from the dragon. Failure: 58 (13d8) Cold damage. Success: Half damage.' },
+        { name: 'Paralyzing Breath', text: 'Constitution Saving Throw: DC 20, each creature in a 90-foot Cone originating from the dragon. Failure: The target has the Paralyzed condition. Success: No effect.' },
+      ] },
+    };
+    expect(lintStatblock(m, { chassis, edition: '2024' }).findings
+      .filter((x) => x.rule === 'duplicate-mechanic')).toHaveLength(0);
+  });
+
+  test('motionless disguise as Invisible is a reject (False Appearance)', () => {
+    const m = wrap('Traits', 'False Appearance',
+      'If the Dread Bellringer is motionless at the start of combat, it has the Invisible condition until it moves or takes any action.');
+    const f = rulesFor(m, 'motionless-invisible');
+    expect(f).toHaveLength(1);
+  });
+});
+
+describe('batch 23: dangling reaction reference (Sandslither Warden)', () => {
+  test('"use its X reaction" naming a nonexistent reaction is a reject', () => {
+    const m = {
+      type: 'Construct', name: 'Sandslither Warden',
+      sections: {
+        Traits: [{ name: 'Arcane Resilience', text: 'If the warden would be reduced to 0 Hit Points by a spell, it can use its Arcane Escape reaction to instead drop to 1 Hit Point.' }],
+        Reactions: [{ name: 'Runic Retort', text: 'Trigger: A creature within 30 feet deals damage to the warden. Response: The attacker takes 11 (2d10) Radiant damage.' }],
+      },
+    };
+    const f = lintStatblock(m, { chassis, edition: '2024' }).findings.filter((x) => x.rule === 'dangling-use-ref');
+    expect(f).toHaveLength(1);
+  });
+
+  test('a correctly named reaction reference passes', () => {
+    const m = {
+      type: 'Construct', name: 'Sandslither Warden',
+      sections: {
+        Traits: [{ name: 'Arcane Resilience', text: 'If the warden would be reduced to 0 Hit Points by a spell, it can use its Runic Retort reaction to punish the caster.' }],
+        Reactions: [{ name: 'Runic Retort', text: 'Trigger: A creature within 30 feet deals damage to the warden. Response: The attacker takes 11 (2d10) Radiant damage.' }],
+      },
+    };
+    expect(lintStatblock(m, { chassis, edition: '2024' }).findings.filter((x) => x.rule === 'dangling-use-ref')).toHaveLength(0);
+  });
+});
