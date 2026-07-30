@@ -140,7 +140,9 @@ function rpg_converter_seo_content() {
                 Plain text copied from PDFs, websites, or other tools. The
                 parser reads the standard statblock layout directly. If a paste
                 is messy or incomplete, the convert step runs an extra AI pass
-                to read it first, included in the same generation.
+                to read it first, included in the same generation. If a format
+                keeps failing, <a href="https://cros.land/contact-me/">contact
+                me</a> and I will add support for it.
               </p>
             </div>
           </details>
@@ -196,8 +198,9 @@ function rpg_converter_footer() {
         <a href="https://www.patreon.com/c/ai_rpg_tookit" target="_blank">Patreon</a>
       </div>
       <div class="rpg-footer-ogl">
-        This content uses the D&amp;D 5e SRD under the
-        <a href="https://cros.land/ogl" target="_blank">Open Gaming License</a>
+        Includes material from the D&amp;D System Reference Documents (SRD 5.1
+        and SRD 5.2.1) by Wizards of the Coast LLC, used under the
+        <a href="https://cros.land/ogl" target="_blank">Creative Commons Attribution 4.0 License</a>
       </div>
     </div>
     <?php

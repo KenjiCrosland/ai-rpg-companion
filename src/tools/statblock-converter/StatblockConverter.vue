@@ -6,18 +6,22 @@
         <p class="converter-hint">
           Paste any D&amp;D 5e monster statblock. The tool detects its edition,
           shows it as a card, and converts the wording to the other edition
-          while keeping every number identical.
+          while keeping every number identical. If a format doesn't parse
+          right, <a href="https://cros.land/contact-me/" target="_blank" rel="noopener">contact me</a>
+          and I'll add support for it.
         </p>
         <ParTextarea v-model="pasteText" :rows="14" data-testid="converter-input"
           placeholder="Paste a full statblock here — name, AC, hit points, abilities, actions…" />
       </div>
 
-      <template v-if="parsed && pasteText.trim()">
+      <div v-if="parsed && pasteText.trim()" class="output-card parchment paper-grain">
         <div class="converter-detected" data-testid="detected-banner">
           <span class="converter-detected__chip">Detected: {{ parsed.edition }} rules</span>
           <span v-if="!parsed.ok" class="converter-detected__warn">
             Couldn't read: {{ parsed.missing.join(', ') }}. Convert runs an extra
-            AI pass to read the whole block first.
+            AI pass to read the whole block first. If a statblock format keeps
+            failing, <a href="https://cros.land/contact-me/" target="_blank" rel="noopener">let me know</a>
+            and I'll add support for it.
           </span>
         </div>
 
@@ -31,9 +35,9 @@
             {{ converting ? 'Converting…' : `Convert to ${targetEdition} rules` }}
           </ParButton>
         </div>
-      </template>
+      </div>
 
-      <template v-if="converted">
+      <div v-if="converted" class="output-card parchment paper-grain">
         <h3 class="converter-result-heading">{{ converted.name }} — {{ targetEdition }} rules</h3>
         <div class="converter-preview" data-testid="converted-card">
           <Statblock2024 v-if="converted.format === '2024'" :monster="converted" :readonly="true" />
@@ -48,7 +52,7 @@
             between them.
           </p>
         </div>
-      </template>
+      </div>
     </div>
   </div>
 </template>
@@ -156,21 +160,39 @@ function openInGenerator() {
   gap: 1.2rem;
 }
 
-.form-card {
-  padding: 1.6rem;
+/* The parchment surface recipe — same as the item generator's form card
+   (.parchment alone carries no styles; each card provides its surface). */
+.form-card,
+.output-card {
+  background: var(--par-color-surface-card, #FEFBF4);
+  border: 0.5px solid var(--par-color-border-strong, #c9b99a);
+  border-radius: var(--par-radius-lg, 12px);
+  padding: 2.25rem 2.25rem 2rem;
 }
 
+.output-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* Form headings are lapis + centered across the suite (parchment.md:
+   page headings are chrome). Entity names stay burgundy. */
 .form-heading {
   font-family: var(--par-font-serif, 'Source Serif 4', Georgia, serif);
-  font-size: 2.2rem;
-  margin: 0 0 0.6rem;
+  font-size: 2.4rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
   color: var(--color-action-hover, #2A4D70);
 }
 
 .converter-hint {
   margin: 0 0 1rem;
   font-size: 1.4rem;
-  color: var(--par-color-text-muted, #6b6b6b);
+  text-align: center;
+  color: var(--par-color-text-secondary, #555);
 }
 
 .converter-detected {
@@ -212,7 +234,7 @@ function openInGenerator() {
 .converter-result-heading {
   font-family: var(--par-font-serif, Georgia, serif);
   font-size: 1.9rem;
-  margin: 0.6rem 0 0;
-  color: var(--color-action-hover, #2A4D70);
+  margin: 0;
+  color: var(--par-color-title, #7a1f1f);
 }
 </style>
