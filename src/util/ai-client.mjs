@@ -17,7 +17,7 @@ const __DEV__ = process.env.NODE_ENV !== 'production';
 
 /**
  * Circuit Breaker State
- * Tracks provider failures and temporarily switches to fallback provider
+ * Tracks provider failures and flips degraded mode when the primary keeps failing
  * when primary provider is experiencing issues
  */
 const circuitBreaker = {
@@ -62,23 +62,10 @@ function clearPersistedBreaker() {
 
 // Hang guard, not a latency target: genuinely long generations are normal
 // (big prompts, loaded providers), so this only cuts calls that are almost
-// certainly dead — and stays under Chrome's own ~300s fetch cutoff so OUR
-// timeout classifies as transient and fails over, instead of surfacing as a
-// generic network error minutes later.
+// certainly dead — and stays under Chrome's own ~300s fetch cutoff so a
+// hung call surfaces as OUR timeout instead of a generic network error
+// minutes later.
 const REQUEST_TIMEOUT_MS = 240_000;
-
-/**
- * Transient = the PROVIDER's fault right now (5xx, rate limit, timeout,
- * network drop) — worth retrying the same call on the fallback provider.
- * 4xx-class errors are OUR request's fault and would fail identically
- * everywhere, so they never fail over (and never burn fallback spend).
- */
-function isTransientProviderError(error) {
-  if (error?.name === 'AbortError' || error?.timedOut) return true;
-  if (typeof error?.status === 'number') return error.status >= 500 || error.status === 429;
-  // fetch network failures surface as TypeError with no status
-  return error instanceof TypeError;
-}
 
 /**
  * Check if circuit breaker should allow trying primary provider again
@@ -101,7 +88,7 @@ function checkCircuitBreaker() {
     return false;
   }
 
-  return true; // Circuit is still open, use fallback
+  return true; // Circuit is still open — degraded mode
 }
 
 /**
@@ -114,7 +101,7 @@ function recordFailure(providerName) {
     circuitBreaker.isOpen = true;
     circuitBreaker.openedAt = Date.now();
     persistBreakerOpen();
-    logger.warn(`⚠️ Circuit breaker opened for ${providerName} - switching to fallback provider for ${circuitBreaker.COOLDOWN_MS / 60000} minutes`);
+    logger.warn(`⚠️ Circuit breaker opened for ${providerName} — generations run in degraded mode for ${circuitBreaker.COOLDOWN_MS / 60000} minutes`);
   }
 }
 
@@ -128,35 +115,27 @@ function recordSuccess() {
 }
 
 /**
- * True when generations are being served by the fallback-quality model —
- * either the user switched to OpenAI outright, or the circuit breaker has
- * routed traffic there. Content pipelines use this to relax their final
- * validation gates (accept degraded output rather than fail generations
- * a weaker model can't polish).
+ * True when generations should relax their final validation gates — either
+ * the user switched to the weaker OpenAI model outright, or the primary
+ * provider is failing repeatedly (open breaker). There is NO automatic
+ * provider failover: routing to a fallback whose key may not exist turned
+ * one bad patch of failures into a total outage (live: an open breaker
+ * sent every call to a keyless OpenAI endpoint, 401 after 401, and three
+ * consecutive generations shipped as never-fail placeholder blocks while
+ * the primary was healthy again). Calls fail honestly on the primary;
+ * degraded mode is a validation posture, not a routing decision.
  */
 export function isDegradedMode() {
-  hydrateBreakerFromStorage();
-  return getAIProvider() === PROVIDERS.OPENAI || circuitBreaker.isOpen;
-}
-
-/**
- * Get fallback provider configuration
- */
-function getFallbackProvider(currentProvider) {
-  // If DeepSeek is failing, fall back to OpenAI
-  if (currentProvider === PROVIDERS.DEEPSEEK) {
-    return PROVIDERS.OPENAI;
-  }
-  // If OpenAI is failing, there's no fallback
-  return null;
+  return getAIProvider() === PROVIDERS.OPENAI || checkCircuitBreaker();
 }
 
 /**
  * Generate AI response with automatic provider selection and retry logic
  *
- * Supports multiple AI providers (DeepSeek, OpenAI) with automatic
- * fallback and JSON validation. Includes circuit breaker pattern to
- * temporarily switch to fallback provider when primary fails repeatedly.
+ * Supports multiple AI providers (DeepSeek, OpenAI) with JSON validation.
+ * A circuit breaker tracks repeated primary-provider failures and flips
+ * isDegradedMode() so content pipelines relax their validation gates —
+ * it never reroutes calls (see isDegradedMode).
  *
  * @param {string} prompt - The prompt to send to the AI
  * @param {function} validateJSONKeys - Optional validator for JSON response
@@ -174,58 +153,36 @@ export async function generateGptResponse(
   model = null,
   providerOverride = null,
 ) {
-  // Check circuit breaker and potentially use fallback provider
+  // Calls always run on the selected provider — no automatic failover (see
+  // isDegradedMode). An explicit providerOverride (dev aiControls) still
+  // goes exactly where it's told.
   const primaryProvider = providerOverride || getAIProvider();
-  const isCircuitOpen = !providerOverride && checkCircuitBreaker();
-  let usingFallback = false;
   let providerConfig;
 
-  if (providerOverride) {
-    // Use specified provider directly (skip circuit breaker)
-    if (providerOverride === PROVIDERS.OPENAI) {
-      providerConfig = {
-        name: 'GPT-4o-mini',
-        endpoint: 'https://api.openai.com/v1/chat/completions',
-        devEndpoint: '/api/ai/openai',
-        model: 'gpt-4o-mini',
-        type: 'openai',
-      };
-    } else if (providerOverride === PROVIDERS.DEEPSEEK) {
-      providerConfig = {
-        name: 'DeepSeek V4 Flash',
-        endpoint: 'https://api.deepseek.com/v1/chat/completions',
-        devEndpoint: '/api/ai/deepseek',
-        model: 'deepseek-v4-flash',
-        type: 'openai',
-      };
-    }
-  } else if (isCircuitOpen) {
-    const fallbackProvider = getFallbackProvider(primaryProvider);
-    if (fallbackProvider && fallbackProvider === PROVIDERS.OPENAI) {
-      // Use hardcoded OpenAI fallback config
-      providerConfig = {
-        name: 'GPT-4o-mini (Fallback)',
-        endpoint: 'https://api.openai.com/v1/chat/completions',
-        devEndpoint: '/api/ai/openai',
-        model: 'gpt-4o-mini',
-        type: 'openai',
-      };
-      usingFallback = true;
-      logger.warn(`⚠️ Using fallback provider: ${providerConfig.name}`);
-    } else {
-      // No fallback available, use primary
-      providerConfig = getProviderConfig();
-    }
+  if (providerOverride === PROVIDERS.OPENAI) {
+    providerConfig = {
+      name: 'GPT-4o-mini',
+      endpoint: 'https://api.openai.com/v1/chat/completions',
+      devEndpoint: '/api/ai/openai',
+      model: 'gpt-4o-mini',
+      type: 'openai',
+    };
+  } else if (providerOverride === PROVIDERS.DEEPSEEK) {
+    providerConfig = {
+      name: 'DeepSeek V4 Flash',
+      endpoint: 'https://api.deepseek.com/v1/chat/completions',
+      devEndpoint: '/api/ai/deepseek',
+      model: 'deepseek-v4-flash',
+      type: 'openai',
+    };
   } else {
-    // Use primary provider
     providerConfig = getProviderConfig();
   }
 
   // Breaker bookkeeping tracks the PRIMARY provider only: explicit override
-  // calls (including the per-call transient failover, which re-enters with
-  // providerOverride) must neither record failures against it nor reset its
-  // failure count on success.
-  const skipBreaker = usingFallback || !!providerOverride;
+  // calls must neither record failures against it nor reset its failure
+  // count on success.
+  const skipBreaker = !!providerOverride;
 
   const adapter = getAdapter(providerConfig.type);
   // Use provider's default model (model normalization only relevant when user has overridden provider)
@@ -234,9 +191,6 @@ export async function generateGptResponse(
   // Log provider in dev mode
   if (__DEV__) {
     logger.log(`🤖 Using AI provider: ${providerConfig.name} (${modelToUse})`);
-    if (usingFallback) {
-      logger.log(`   ⚠️ Using fallback due to circuit breaker`);
-    }
   }
 
   let attempts = 0;
@@ -275,7 +229,7 @@ export async function generateGptResponse(
         body: JSON.stringify(body),
       };
 
-      // Hang guard: abort after REQUEST_TIMEOUT_MS so failover can engage.
+      // Hang guard: abort after REQUEST_TIMEOUT_MS.
       const abort = new AbortController();
       const timeoutId = setTimeout(() => abort.abort(), REQUEST_TIMEOUT_MS);
       requestOptions.signal = abort.signal;
@@ -292,7 +246,7 @@ export async function generateGptResponse(
           ...requestOptions,
           headers: {
             ...requestOptions.headers,
-            'X-AI-Provider': usingFallback ? PROVIDERS.OPENAI : primaryProvider,
+            'X-AI-Provider': primaryProvider,
           },
         };
         wpRequestOptions.signal = abort.signal;
@@ -306,7 +260,7 @@ export async function generateGptResponse(
         const errorText = await response.text();
         providerError = new Error(`HTTP ${response.status}: ${errorText}`);
         providerError.status = response.status;
-        // Record failure for circuit breaker (only for primary provider, not fallback)
+        // Record failure for circuit breaker (primary provider only)
         if (!skipBreaker) {
           recordFailure(providerConfig.name);
         }
@@ -318,7 +272,7 @@ export async function generateGptResponse(
       // Check for API errors using adapter
       if (adapter.hasError(responseData)) {
         providerError = new Error(`${providerConfig.name} API error: ${adapter.getErrorMessage(responseData)}`);
-        // Record failure for circuit breaker (only for primary provider, not fallback)
+        // Record failure for circuit breaker (primary provider only)
         if (!skipBreaker) {
           recordFailure(providerConfig.name);
         }
@@ -375,12 +329,6 @@ export async function generateGptResponse(
   }
 
   if (providerError) {
-    const fallback = getFallbackProvider(primaryProvider);
-    if (!usingFallback && !providerOverride && fallback === PROVIDERS.OPENAI
-      && isTransientProviderError(providerError)) {
-      logger.warn(`⚠️ ${providerConfig.name} failed transiently (${String(providerError.message).slice(0, 120)}) — retrying this call on the fallback provider`);
-      return generateGptResponse(prompt, validateJSONKeys, maxAttempts, previousContext, model, PROVIDERS.OPENAI);
-    }
     throw providerError;
   }
 

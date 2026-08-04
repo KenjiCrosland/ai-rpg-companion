@@ -951,3 +951,187 @@ describe('the Groan: assembly-level stamps', () => {
     }
   });
 });
+
+/**
+ * Live block 11 (the Rift-Shell Crag, CR 20): Multiattack said "a use of
+ * Lightning Blade" while the block's second attack had been renamed Folded
+ * Aperture — the build-time clause held the DEFAULT name through a swap the
+ * rename pass keyed past. Multiattack is now regenerated from final names
+ * as applyFlavor's last step.
+ */
+describe('the Rift-Shell Crag: Multiattack never references a missing attack', () => {
+  const attackNamesIn = (m) => new Set(Object.values(m.sections).flat().map((e) => e.name.replace(/\s*\(.*\)$/, '')));
+
+  test('a renamed secondary attack keeps its Multiattack reference', () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 80 && checked < 3; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, size: 'Huge', seed, alternatives: 3 });
+      const atks = sk.entries.filter((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack');
+      if (atks.length < 2 || !sk.entries.some((e) => e.slot_type === 'multiattack')) continue;
+      checked += 1;
+      const reqs = flavorRequests(sk);
+      const m = applyFlavor(sk, {
+        name: 'Crag', size: 'Huge', type: 'Monstrosity', alignment: 'Unaligned', speed: '30 ft.',
+        stats: { STR: 26, DEX: 10, CON: 24, INT: 2, WIS: 18, CHA: 8 },
+        entries: reqs.map((r) => ({
+          id: r.id,
+          // rename EVERY attack; swap everything to its LAST option too
+          name: r.id === atks[1].id ? 'Folded Aperture' : r.id === atks[0].id ? 'Rift Splinter' : r.placeholder_name,
+          choose: r.options.length > 1 ? r.options[r.options.length - 1].key : undefined,
+          ...Object.fromEntries(r.slots.map((s) => [s, 'rift glass'])),
+        })),
+      });
+      const multi = Object.values(m.sections).flat().find((e) => e.name === 'Multiattack');
+      const names = attackNamesIn(m);
+      for (const mm of multi.text.matchAll(/a use of ([A-Z][\w' -]+?)\./g)) {
+        expect(`seed ${seed} references ${mm[1]}: ${names.has(mm[1])}`).toBe(`seed ${seed} references ${mm[1]}: true`);
+      }
+      // and the primary reference resolves too
+      const primary = multi.text.match(/makes \w+ (.+?) attacks\./)[1];
+      expect(names.has(primary)).toBe(true);
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The Rift-Shell Crag part 2: the MIND axis. A Cha 26 lie-sensing
+ * Fear-casting Int 2 mindless monstrosity — cognition rows had no gate.
+ * Measured: zero printed mindless casters (66 casters, min INT 3 = the
+ * Stone Golem, which understands languages) and zero mindless lie-sensers
+ * (2 blocks, both INT 19+).
+ */
+describe('the Rift-Shell Crag: mindless blocks carry no cognition abilities', () => {
+  const COGNITION = /spellcasting ability|knows if it hears a lie/;
+
+  test('no seed at any CR gives a mindless block a caster or lie-senser row', () => {
+    for (const cr of [5, 11, 17, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3, mind: 'mindless' });
+        for (const e of [...sk.entries, ...sk.traits]) {
+          expect(`CR ${cr} seed ${seed} ${e.name}: ${COGNITION.test(e.text)}`)
+            .toBe(`CR ${cr} seed ${seed} ${e.name}: false`);
+          for (const o of e.options ?? []) {
+            expect(COGNITION.test(o.text)).toBe(false);
+          }
+        }
+      }
+    }
+  });
+
+  test('an explicit caster request overrides the mind profile', () => {
+    // the user checked the spellcaster box — sapience is implied
+    let sawCaster = false;
+    for (let seed = 1; seed <= 30 && !sawCaster; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, caster: true, mind: 'mindless' });
+      sawCaster = sk.entries.some((e) => /spellcasting ability/.test(e.text));
+    }
+    expect(sawCaster).toBe(true);
+  });
+
+  test('sapient (the default) still fields casters', () => {
+    let sawCaster = false;
+    for (let seed = 1; seed <= 30 && !sawCaster; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed });
+      sawCaster = [...sk.entries, ...sk.traits].some((e) => /spellcasting ability/.test(e.text));
+    }
+    expect(sawCaster).toBe(true);
+  });
+
+  test('both concept prompts ask for the mind profile', async () => {
+    const { buildArchetypeResolvePrompt, buildSeedSynthesisPrompt } = await import('../../format-2024/generate.mjs');
+    for (const p of [
+      buildArchetypeResolvePrompt('a stone colossus', '', { cr: 20 }),
+      buildSeedSynthesisPrompt({ intelligence: 'mindless', physical: 'stone', silhouette: 'colossus', origin: 'the deep' }, { cr: 20 }),
+    ]) {
+      expect(p).toMatch(/"mind"/);
+      expect(p).toMatch(/sapient\|bestial\|mindless/);
+      expect(p).toMatch(/only sapient creatures cast spells/);
+    }
+  });
+});
+
+/**
+ * Live block 12 (the Dreamweb, CR 20 mindless Construct): shipped with the
+ * audit skipped. A 30-damage no-save paralysis rider (print prices the
+ * Lich's at half), legendary sight ranges doubling a blind-beyond-60 sense
+ * line, "its a churning rush" (an option's slot the default never asked
+ * for, plus an article-carrying fallback), and names lying about payloads
+ * (Hypnotic aura that frightens, Colony Breath about not breathing).
+ */
+describe('the Dreamweb: save-less hard riders price at print', () => {
+  test('the Lich touch template gets the measured discount', () => {
+    const lich = Object.values(library.categories).flat()
+      .find((r) => r.source === 'Lich' && r.ability === 'Paralyzing Touch');
+    const { numbersFor: numsFor } = require('../build-skeleton.mjs');
+    const nums = numsFor(20);
+    const { damage } = fillTemplateX(lich, { cr: 20, size: 'Large', nums });
+    expect(damage).toBeLessThanOrEqual(Math.ceil(nums.per_attack_damage * 0.55));
+    expect(damage).toBeGreaterThanOrEqual(Math.floor(nums.per_attack_damage * 0.4));
+  });
+});
+const { fillTemplate: fillTemplateX } = require('../build-skeleton.mjs');
+const library = require('@/data/ability-library.json');
+
+describe('the Dreamweb: text follows the senses line', () => {
+  const mini = (text, senses) => ({
+    cr: '20', size: 'Large', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 22,
+    multiattack: 3, con_mod: 8, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 8,
+    counts: {}, themes: [], traits: [],
+    entries: [{ id: 'e1', section: 'Legendary Actions', slot_type: 'legendary', name: 'Rattle', gate: null, text, damage: 0, options: [] }],
+  });
+  const flavor = (senses) => ({
+    name: 'Dreamweb', size: 'Large', type: 'Construct', alignment: 'Unaligned', speed: '30 ft.',
+    stats: { STR: 26, DEX: 14, CON: 26, INT: 2, WIS: 10, CHA: 6 },
+    senses_special: senses, entries: [],
+  });
+
+  test('"can see within" clamps to a blind-beyond radius', () => {
+    const m = applyFlavor(
+      mini('*Constitution Saving Throw*: DC 22, each creature in a 20-foot-radius Sphere centered on a point the {creature} can see within 120 feet.'),
+      flavor('blindsight 60 ft. (blind beyond this radius), tremorsense 60 ft.'),
+    );
+    const text = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+    expect(text).toContain('can see within 60 feet');
+    expect(text).not.toContain('120 feet');
+  });
+
+  test('darkvision creatures are not clamped', () => {
+    const m = applyFlavor(
+      mini('one creature the {creature} can see within 120 feet.'),
+      flavor('darkvision 60 ft.'),
+    );
+    const texts = Object.values(m.sections).flat().map((e) => e.text).join('\n');
+    expect(texts).toContain('within 120 feet');
+  });
+});
+
+describe('the Dreamweb: menu options get their slots asked and filled', () => {
+  test('flavorRequests unions slots across the whole menu', () => {
+    const sk = {
+      cr: '20', entries: [{
+        id: 'e1', section: 'Bonus Actions', slot_type: 'utility', name: 'Teleport',
+        text: 'The {creature} teleports up to 60 feet.', gate: null,
+        options: [{ key: 'Ignited Illumination', text: 'The {creature} activates or suppresses its {substance}.' }],
+      }],
+      traits: [],
+    };
+    expect(flavorRequests(sk)[0].slots).toContain('substance');
+  });
+
+  test('an unfilled possessive substance falls back without an article', () => {
+    const m = applyFlavor({
+      cr: '20', size: 'Large', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 22,
+      multiattack: 3, con_mod: 8, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 8,
+      counts: {}, themes: [], traits: [],
+      entries: [{ id: 'e1', section: 'Bonus Actions', slot_type: 'utility', name: 'Lantern', gate: null, text: 'The {creature} activates or suppresses its {substance}.', damage: 0, options: [] }],
+    }, {
+      name: 'Dreamweb', size: 'Large', type: 'Construct', alignment: 'Unaligned', speed: '30 ft.',
+      stats: { STR: 26, DEX: 14, CON: 26, INT: 2, WIS: 10, CHA: 6 }, entries: [],
+    });
+    const text = Object.values(m.sections).flat().find((e) => /suppresses/.test(e.text)).text;
+    expect(text).not.toMatch(/its a /);
+    expect(text).toMatch(/its churning vapor/);
+  });
+});
+

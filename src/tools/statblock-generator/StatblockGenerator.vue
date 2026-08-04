@@ -1030,6 +1030,7 @@ async function generateStatblockEngine(edition) {
   let conceptIdentity = null;
   let conceptLore = null;
   let conceptThemes = null;
+  let conceptMind = null;
   // Type-by-substance (owner call): the micro-calls decide creature type
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
@@ -1066,13 +1067,14 @@ async function generateStatblockEngine(edition) {
           const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
           if (t.length) conceptThemes = t;
         }
+        if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
         {
           logger.log('[concept] synthesis:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
-            + ` themes=${(conceptThemes ?? []).join('/') || 'none'}`
+            + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
             + `${synthesizedConcept ? ' concept=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
         }
         logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
-          + ` themes=${(conceptThemes ?? []).join('/') || 'none'}`
+          + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
           + `${conceptIdentity ? ' identity=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
       } else {
         // Blank form: the same micro-call fuses the rolled axes into one
@@ -1099,6 +1101,7 @@ async function generateStatblockEngine(edition) {
           const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
           if (t.length) conceptThemes = t;
         }
+        if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
       }
     } catch (e) {
       logger.warn('Archetype resolve failed:', e);
@@ -1133,6 +1136,7 @@ async function generateStatblockEngine(edition) {
         resolvedType,
         lore: conceptLore,
         themes: conceptThemes,
+        mind: conceptMind,
         // Concept-path naming refinement: refine the name via the naming
         // micro-call unless the model kept the user's typed name verbatim
         // (a kept name was judged a proper name — honor it).

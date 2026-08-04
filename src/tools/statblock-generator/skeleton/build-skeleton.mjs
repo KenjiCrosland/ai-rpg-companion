@@ -291,7 +291,16 @@ function satisfiedBy(chosen, traits = []) {
  * preference is visible in the mechanics. Costs no extra call — the choice
  * rides along with the flavor request.
  */
-export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, archetype = null, spineRows = [], themes = null) {
+/**
+ * Cognition gate: abilities that only make sense on a comprehending mind.
+ * Measured across all 329 printed blocks: zero mindless or bestial creatures
+ * cast spells (66 casters, min INT 3 — the Stone Golem, which understands
+ * languages) and zero sense lies (2 blocks, both INT 19+). Computed from the
+ * template rather than tagged, so new rows can't dodge it.
+ */
+const needsMind = (a) => /spellcasting ability|knows if it hears a lie/.test(a.template_2024 ?? '');
+
+export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, archetype = null, spineRows = [], themes = null, mind = 'sapient') {
   const chosen = [];
   const usedTemplates = new Set();
   const usedNames = new Set();
@@ -334,6 +343,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       const haveGated = chosen.some(gatedLike);
       const pool = ABILITIES.filter((a) => a.slot_type === slot
         && !(gatedLike(a) && haveGated)
+        && (mind === 'sapient' || !needsMind(a))
         // A ceiling-tagged row's counterplay stops working above its tier
         // (the Ghost's Possession is body-HP-gated); the one deliberate
         // exception to whole-library-eligible, documented on the row.
@@ -453,7 +463,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
 }
 
 /** Traits, deduped, same proximity weighting. */
-export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, themes = null) {
+export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, themes = null, mind = 'sapient') {
   const out = []; const used = new Set();
   // Whole-text containment reads as redundancy however the wording lands:
   // Amorphous ("move through a 1-inch space") is the entire second half of
@@ -470,6 +480,7 @@ export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, t
   for (let i = 0; i < n; i += 1) {
     const met = satisfiedBy(chosenAbilities, out);
     const pool = TRAITS.filter((t) => !used.has(t.template_2024)
+      && (mind === 'sapient' || !needsMind(t))
       && (t.requires ?? []).every((r) => met.has(r))
       && ![...chosenAbilities, ...out].some((c) => contains(t.template_2024, c.template_2024)));
     if (!pool.length) break;
@@ -531,7 +542,19 @@ function damageBudgetFor(ability, nums) {
     }
     case 'area': return Math.round(round * (ability.gate ? r.gated_area_multiplier : r.ungated_area_multiplier));
     case 'save_nuke': return Math.round(round * r.ungated_area_multiplier);
-    default: return nums.per_attack_damage;
+    default: {
+      // A SAVE-LESS hard-condition rider pays for itself in damage: print's
+      // only such attack, the Lich's Paralyzing Touch, deals 15 beside its
+      // 31-damage Eldritch Burst (0.48x) — while the SAVED paralysis
+      // carriers (Ghoul, Ghast) take no discount. Full-pool pricing shipped
+      // a 30-damage no-save paralyzer whose crit follow-ups cleared 135 a
+      // round (live: Spore-Laced Claw).
+      const savelessHard = /Attack Roll/.test(ability.template_2024 ?? '')
+        && !/Saving Throw/.test(ability.template_2024 ?? '')
+        && /Paralyzed|Stunned|Petrified|Unconscious|\{condition_hard\}/.test(ability.template_2024 ?? '');
+      if (savelessHard) return Math.max(1, Math.round(nums.per_attack_damage * 0.5));
+      return nums.per_attack_damage;
+    }
   }
 }
 
@@ -715,8 +738,15 @@ for (const r of [...Object.values(library.categories).flat(), ...Object.values(l
  * Returns { rows, traitRows } or null when nothing fits the sampled counts —
  * in which case the block is all singles, as before.
  */
-export function pickPackage(cr, counts, rng, archetype = null, themes = null) {
-  const list = (library.packages?.list ?? []).filter((pk) => pk.members.length >= 2);
+export function pickPackage(cr, counts, rng, archetype = null, themes = null, mind = 'sapient') {
+  // Packages bypass the pool filters (they enter as a spine), so the
+  // cognition gate must apply to the package as a whole: a mindless block
+  // must not receive a Spellcasting member through the side door.
+  const list = (library.packages?.list ?? []).filter((pk) => pk.members.length >= 2
+    && (mind === 'sapient' || !pk.members.some((m) => {
+      const row = ROW_INDEX.get(`${pk.source}|${m.name.replace(/ \(.*\)$/, '')}`) ?? ROW_INDEX.get(`${pk.source}|${m.name}`);
+      return row && needsMind(row);
+    })));
   if (!list.length) return null;
   const weights = {};
   list.forEach((pk, i) => {
@@ -840,7 +870,7 @@ export function pickSize(cr, rng) {
 
 export function buildSkeleton({
   cr, size = null, seed = 1, alternatives = 1, archetype = null, caster = false,
-  strikeStat = null, family = null, themes = null, typeHint = null,
+  strikeStat = null, family = null, themes = null, typeHint = null, mind = 'sapient',
 }) {
   const rng = makeRng(seed);
   // eslint-disable-next-line no-param-reassign
@@ -857,12 +887,17 @@ export function buildSkeleton({
   // to the dice — the chassis honored it and the skeleton had dropped it.
   if (caster) counts.utility = Math.max(counts.utility ?? 0, 1);
 
+  // An explicit caster request overrides the mind profile: the user asked
+  // for spells, so the concept is sapient whatever the seed rolled. Dragons
+  // are sapient by definition (every printed dragon speaks).
+  const effMind = caster || family === 'dragon' ? 'sapient' : mind;
+
   // The spine: a whole printed dragon for Dragon-typed generations (the one
   // family users expect a SHAPE from), else a mined synergy package when one
   // fits the sampled counts, else nothing and the block is all singles.
   let spine = null;
   if (family === 'dragon') spine = pickDragonKit(cr, rng);
-  if (!spine) spine = pickPackage(cr, counts, rng, archetype, themes);
+  if (!spine) spine = pickPackage(cr, counts, rng, archetype, themes, effMind);
   const spineTraits = spine?.traitRows ?? [];
   if (family === 'dragon' && spine) {
     // A dragon kit IS the layout: counts follow it instead of the dice.
@@ -870,7 +905,7 @@ export function buildSkeleton({
     counts.legendary = spine.rows.filter((r) => r.section === 'Legendary Actions').length;
     counts.trait = 0;
   }
-  const abilities = pickAbilities(cr, counts, rng, [], alternatives, archetype, spine?.rows ?? [], themes);
+  const abilities = pickAbilities(cr, counts, rng, [], alternatives, archetype, spine?.rows ?? [], themes, effMind);
   if (caster && !abilities.some((a) => /\{spells\}/.test(a.template_2024))) {
     const pool = ABILITIES.filter((a) => a.slot_type === 'utility' && /\{spells\}/.test(a.template_2024));
     if (pool.length) {
@@ -879,7 +914,7 @@ export function buildSkeleton({
       abilities.push({ ...pool[pickWeighted(w, rng)], options: undefined });
     }
   }
-  let traits = pickTraits(cr, counts.trait, rng, abilities, archetype, themes);
+  let traits = pickTraits(cr, counts.trait, rng, abilities, archetype, themes, effMind);
   const onDeath = pickOnDeath(cr, rng, { typeHint: family === 'dragon' ? 'Dragon' : typeHint, themes });
   if (onDeath) traits = [...traits, onDeath];
   // Spine traits ride along (the Mimic's Adhesive arrives WITH its Bite),

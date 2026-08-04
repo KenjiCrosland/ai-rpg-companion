@@ -64,7 +64,13 @@ export function flavorRequests(skeleton) {
       id: e.id,
       section: e.section,
       placeholder_name: e.name,
-      slots: slotsIn(e.text),
+      // Union across the MENU, not just the default: an option carrying a
+      // slot the default lacks was never asked for, so choosing it spliced
+      // the raw fallback ("its a churning rush" — live, the Dreamweb's
+      // lantern: the default Teleport had no {substance}, the chosen
+      // Ignited Illumination did).
+      slots: [...new Set([e.text, ...(e.options ?? []).map((o) => o.text)]
+        .flatMap((t) => slotsIn(t)))],
       signature: Boolean(e.signature),
       text: e.text,
       options: e.options ?? [],
@@ -181,7 +187,9 @@ export function validateFlavorResponse(jsonString) {
 const FALLBACK = {
   // Avoid any word that is also a damage type: "raw force" tripped
   // damage-type-caps, which reads a lowercase "force" as a miscased type.
-  substance: 'a churning rush',
+  // And ARTICLE-FREE: templates use both "unleashes {substance}" and "its
+  // {substance}" — "its a churning rush" shipped live (the Dreamweb).
+  substance: 'churning vapor',
   delivery: 'unleashes',
   terrain: 'difficult ground',
   spells: '*Detect Magic*',
@@ -483,8 +491,15 @@ export function applyFlavor(skeleton, llmJson) {
     if (!sections[section]) sections[section] = [];
     sections[section].push(e);
   };
+  // Skeleton entry -> its rendered object, so the Multiattack rebuild at the
+  // bottom can read FINAL names (post-swap, post-rename, post-vetting).
+  const renderedOf = new Map();
   for (const t of skeleton.traits) push('Traits', fill(t));
-  for (const e of skeleton.entries) push(e.section, fill(e));
+  for (const e of skeleton.entries) {
+    const r = fill(e);
+    renderedOf.set(e, r);
+    push(e.section, r);
+  }
 
   // A swap can change which entry IS the attack, so references written
   // against the pre-swap name dangle ("makes one Rend attack" with no Rend).
@@ -542,6 +557,26 @@ export function applyFlavor(skeleton, llmJson) {
             .split(`its ${mode} Speed`).join('its Speed')
             .replace(mode === 'Fly' ? /\bflies out of\b/g : /$^/, 'moves out of')
             .replace(mode === 'Fly' ? /\bfly up to\b/g : /$^/, 'move up to');
+        }
+      }
+    }
+  }
+
+  // 0a2. Sight ranges must fit the senses line: "one creature it can see
+  //      within 120 feet" on "blindsight 60 ft. (blind beyond this radius)"
+  //      leaves the outer 60 feet as dead text (live: the Dreamweb, all
+  //      three legendary actions doubled its perceptual universe).
+  {
+    const senses = String(j.senses_special ?? '');
+    if (/blind beyond/i.test(senses)) {
+      const radii = [...senses.matchAll(/(\d+)\s*ft/g)].map((m) => Number(m[1]));
+      const radius = radii.length ? Math.max(...radii) : null;
+      if (radius) {
+        for (const list of Object.values(sections)) {
+          for (const e of list) {
+            e.text = e.text.replace(/can see within (\d+) feet/g,
+              (m0, n) => (Number(n) > radius ? `can see within ${radius} feet` : m0));
+          }
         }
       }
     }
@@ -703,6 +738,27 @@ export function applyFlavor(skeleton, llmJson) {
       e.text = e.text.replace(/1\/Day Each:(\*\*[^\n,]*)$/gm, '1/Day:$1')
         .replace(/- \*\*1\/Day Each:\*\* ([^,\n]+)$/gm, '- **1/Day:** $1');
       e.text = e.text.replace(/\n{3,}/g, '\n\n').trim();
+    }
+  }
+
+  // Multiattack is ENGINE text: regenerate it last, from the final rendered
+  // names, instead of writing default names at build time and chasing them
+  // through swaps and renames (live: "a use of Lightning Blade" pointing at
+  // an attack the model had renamed Folded Aperture — the build-time clause
+  // survived a swap that the rename pass keyed past). One source of truth,
+  // computed after every pass that can change a name has run.
+  {
+    const multi = skeleton.entries.find((e) => e.slot_type === 'multiattack');
+    const finalAtks = skeleton.entries
+      .filter((e) => e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack')
+      .map((e) => renderedOf.get(e))
+      .filter(Boolean);
+    const rendered = multi && renderedOf.get(multi);
+    if (rendered && finalAtks.length) {
+      const n = skeleton.multiattack;
+      const stripGate = (nm) => nm.replace(/\s*\(.*\)$/, '');
+      rendered.text = `The ${inline} makes ${['', 'one', 'two', 'three', 'four', 'five', 'six'][n] ?? n} ${stripGate(finalAtks[0].name)} attacks.`
+        + finalAtks.slice(1).map((a) => ` It can replace one attack with a use of ${stripGate(a.name)}.`).join('');
     }
   }
 

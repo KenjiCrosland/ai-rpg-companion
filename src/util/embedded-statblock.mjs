@@ -107,6 +107,7 @@ export async function generateEmbeddedStatblock({
   let identity = null;
   let lore = null;
   let themes = null;
+  let mind = null;
   let resolvedType = type && type !== 'Random' ? type : null;
   const typeSource = resolvedType ? 'user' : 'auto';
   // The resolve call runs for user-picked roles too (owner call,
@@ -135,6 +136,7 @@ export async function generateEmbeddedStatblock({
       const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
       if (t.length) themes = t;
     }
+    if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) mind = parsed.mind;
   } catch (e) {
     logger.warn('Embedded archetype resolve failed, picking randomly:', e);
   }
@@ -160,6 +162,7 @@ export async function generateEmbeddedStatblock({
         typeSource,
         lore,
         themes,
+        mind,
         namePass: null,
         degraded: isDegradedMode(),
       },

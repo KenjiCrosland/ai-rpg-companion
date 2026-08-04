@@ -45,7 +45,7 @@ export async function generateFromSkeleton(options, callLLM) {
   const {
     concept, description = '', cr, archetypeName = null, resolvedType = null,
     lore = null, identity = null, seed = null, onProgress = null, degraded = false,
-    caster = false, strikeStat = null, themes = null,
+    caster = false, strikeStat = null, themes = null, mind = null,
   } = options;
 
   const progress = (phase, data) => {
@@ -81,9 +81,17 @@ export async function generateFromSkeleton(options, callLLM) {
     ?? (blockThemes ?? []).map((th) => DOMAIN_OF[th]).find(Boolean)
     ?? 'Monstrosity';
 
+  // The MIND profile gates cognition abilities (owner call, 2026-08-03, the
+  // Rift-Shell Crag: a Cha 26 lie-sensing Fear-caster with Int 2 and no
+  // languages). Measured: zero printed mindless casters or lie-sensers.
+  // Default is sapient — no exclusion unless the concept SAYS mindless — and
+  // an explicit caster request always wins over the profile.
+  const blockMind = caster ? 'sapient'
+    : (['sapient', 'bestial', 'mindless'].includes(mind) ? mind : 'sapient');
+
   const skeleton = buildSkeleton({
     cr: crNum, seed: useSeed, alternatives: ALTERNATIVES, archetype: archetypeName,
-    caster, strikeStat, themes: blockThemes,
+    caster, strikeStat, themes: blockThemes, mind: blockMind,
     // Dragons get the whole-kit treatment; everything else may get a mined
     // synergy package as its spine (owner call, 2026-08-02). The trigger is
     // the resolved TYPE or a draconic THEME — a live block was typed Dragon
@@ -124,6 +132,7 @@ export async function generateFromSkeleton(options, callLLM) {
 
   progress('status', { stage: 'writing' });
   if (blockThemes) trace('themes:', blockThemes.join(', '));
+  trace('mind:', blockMind, mind ? '(concept call)' : '(default)');
   const prompt = buildFlavorPrompt(skeleton, {
     concept,
     themes: blockThemes,
@@ -155,8 +164,13 @@ export async function generateFromSkeleton(options, callLLM) {
   }
 
   // Never-fail: a dead flavor call still yields a mechanically correct block.
+  // The placeholder name is a CONSTANT, never the concept: concepts grew
+  // from short user phrases into synthesized paragraphs (identity + essence
+  // + naming rules), and `name: concept` shipped that entire paragraph as a
+  // Title-Cased monster title and every {creature} reference (live, the
+  // prompt-leak block).
   const model = applyFlavor(skeleton, flavor ?? {
-    name: concept || 'Unnamed Creature',
+    name: 'Unnamed Creature',
     size: skeleton.size,
     type: finalType,
     alignment: 'Neutral',
