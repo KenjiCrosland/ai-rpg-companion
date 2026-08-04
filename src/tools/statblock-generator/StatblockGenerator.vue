@@ -1031,6 +1031,10 @@ async function generateStatblockEngine(edition) {
   let conceptLore = null;
   let conceptThemes = null;
   let conceptMind = null;
+  let conceptSize = null;
+  let conceptMovement = null;
+  let conceptAttackMode = null;
+  let conceptSignature = null;
   // Type-by-substance (owner call): the micro-calls decide creature type
   // from the concept's substance; the engine stamps it. Random path falls
   // back to the rolled type when the call fails or skips.
@@ -1068,14 +1072,22 @@ async function generateStatblockEngine(edition) {
           if (t.length) conceptThemes = t;
         }
         if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
+        if (typeof parsed?.size === 'string') conceptSize = parsed.size;
+        if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
+        if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
+        if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
         {
           logger.log('[concept] synthesis:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
             + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
             + `${synthesizedConcept ? ' concept=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
+          if (parsed?.synthesis) logger.log('[concept] synthesis text:', parsed.synthesis);
+          if (conceptLore) logger.log('[concept] lore:', conceptLore);
         }
         logger.log('[concept] resolve:', `archetype=${archetypeName} type=${resolvedType ?? '?'}`
           + ` themes=${(conceptThemes ?? []).join('/') || 'none'} mind=${conceptMind ?? '?'}`
           + `${conceptIdentity ? ' identity=✓' : ''}${conceptLore ? ' lore=✓' : ''}`);
+        if (conceptIdentity) logger.log('[concept] identity:', conceptIdentity);
+        if (conceptLore) logger.log('[concept] lore:', conceptLore);
       } else {
         // Blank form: the same micro-call fuses the rolled axes into one
         // creature identity AND picks the role — generation designs from
@@ -1102,6 +1114,10 @@ async function generateStatblockEngine(edition) {
           if (t.length) conceptThemes = t;
         }
         if (['sapient', 'bestial', 'mindless'].includes(parsed?.mind)) conceptMind = parsed.mind;
+        if (typeof parsed?.size === 'string') conceptSize = parsed.size;
+        if (Array.isArray(parsed?.movement)) conceptMovement = parsed.movement;
+        if (typeof parsed?.attack_mode === 'string') conceptAttackMode = parsed.attack_mode;
+        if (typeof parsed?.signature_mechanic === 'string') conceptSignature = parsed.signature_mechanic;
       }
     } catch (e) {
       logger.warn('Archetype resolve failed:', e);
@@ -1137,6 +1153,10 @@ async function generateStatblockEngine(edition) {
         lore: conceptLore,
         themes: conceptThemes,
         mind: conceptMind,
+        conceptSize,
+        movement: conceptMovement,
+        attackMode: conceptAttackMode,
+        signatureMechanic: conceptSignature,
         // Concept-path naming refinement: refine the name via the naming
         // micro-call unless the model kept the user's typed name verbatim
         // (a kept name was judged a proper name — honor it).

@@ -242,7 +242,14 @@ Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept 
 
 Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends speech — most named monsters), "bestial" (animal cunning, no speech), or "mindless" (vermin, oozes, automatons with no comprehension). Print discipline: only sapient creatures cast spells, sense lies, or issue commands — the corpus has zero mindless casters and zero mindless lie-sensers. A golem that understands its maker's commands counts as sapient.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>"}`;
+
+Also give the engine its ASSEMBLY METADATA — structural signals the builder honors directly, unlike the prose:
+- "size": the body the concept describes (Tiny|Small|Medium|Large|Huge|Gargantuan).
+- "movement": the modes the body actually has, from ["swim","burrow","fly","climb"] (walking is implied; an empty array means walk only). The builder GATES abilities on these — a creature without fly never receives a flying ability.
+- "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
+- "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, web — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
 }
 
 export function validateArchetypeResponse(jsonString) {
@@ -290,7 +297,14 @@ Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept 
 
 Also decide the creature's MIND ("mind"): "sapient" (it reasons and comprehends speech — most named monsters), "bestial" (animal cunning, no speech), or "mindless" (vermin, oozes, automatons with no comprehension). Print discipline: only sapient creatures cast spells, sense lies, or issue commands — the corpus has zero mindless casters and zero mindless lie-sensers. A golem that understands its maker's commands counts as sapient.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>"}`;
+
+Also give the engine its ASSEMBLY METADATA — structural signals the builder honors directly, unlike the prose:
+- "size": the body the concept describes (Tiny|Small|Medium|Large|Huge|Gargantuan).
+- "movement": the modes the body actually has, from ["swim","burrow","fly","climb"] (walking is implied; an empty array means walk only). The builder GATES abilities on these — a creature without fly never receives a flying ability.
+- "attack_mode": "melee"|"ranged"|"mixed" — how it delivers its attacks. If its identity is striking from afar, say "ranged"; the builder guarantees at least one ranged attack ships.
+- "signature_mechanic": the ONE mechanic the creature IS, from: thrown-weapon, breath, engulf, grapple, gaze, aura, teleport, summon, web — the engine guarantees it a seat. Omit if no single mechanic dominates the concept.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"], "mind": "<sapient|bestial|mindless>", "size": "<Tiny|Small|Medium|Large|Huge|Gargantuan>", "movement": ["zero or more of swim|burrow|fly|climb"], "attack_mode": "<melee|ranged|mixed>", "signature_mechanic": "<one of the list above, or omit>"}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -786,6 +800,9 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
       // list (0 mixed shapes in either corpus).
       .replace(/^([A-Z][\w' ]+(?:, [A-Z][\w' ]+)*), understands (.+?) but can't speak/,
         "understands $1 and $2 but can't speak");
+    // The line always starts capitalized (21/24 printed "Understands" lines
+    // do; our output was coin-flipping per generation — a machine tell).
+    monster.languages = monster.languages.charAt(0).toUpperCase() + monster.languages.slice(1);
   }
   // Defense LINES list bare types — "poison damage" inside the line is model
   // drift (live: "Damage Immunities: poison damage"). Token-level strip only;
@@ -2601,7 +2618,7 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, onProgress = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, mind = null, conceptSize = null, movement = null, attackMode = null, signatureMechanic = null, onProgress = null } = options;
 
   // The skeleton path is how 2024 monsters are built now; set
   // localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
@@ -2619,6 +2636,7 @@ export async function generateMonster2024(options, callLLM) {
     const { generateFromSkeleton } = await import('../skeleton/generate.mjs');
     return generateFromSkeleton({
       concept, description, cr, archetypeName, resolvedType, lore, themes, mind, degraded, onProgress, caster,
+      conceptSize, movement, attackMode, signatureMechanic,
     }, callLLM);
   }
 

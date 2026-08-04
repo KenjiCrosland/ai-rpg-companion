@@ -64,8 +64,13 @@ const isSwarm = (r) => /Swarm/i.test(r.source) || /\bthe swarm\b/i.test(r.templa
 // `excluded` rows are the short list of mechanics bound to ONE creature's
 // identity — body theft, the vampire's stake-and-coffin liturgy — where no
 // reskin works (owner call, 2026-08-02). Each row documents its reason.
+// pool 'on_death' rows ship ONLY through pickOnDeath: the Balor's Death
+// Throes carries slot_type 'area', and leaving it drawable here let the
+// area machinery seat it beside an independently-drawn Restoration — two
+// on-death occupants restating the same revival (live: the Brimstone
+// Warden's triple-stated Nine Hells return).
 const ABILITIES = Object.values(library.categories).flat()
-  .filter((a) => a.pool !== 'trait' && !isSwarm(a) && !a.excluded);
+  .filter((a) => a.pool !== 'trait' && a.pool !== 'on_death' && !isSwarm(a) && !a.excluded);
 const TRAITS = [
   ...Object.values(library.traits.by_category).flat(),
   ...Object.values(library.categories).flat().filter((a) => a.pool === 'trait'),
@@ -302,7 +307,54 @@ function satisfiedBy(chosen, traits = []) {
  */
 const needsMind = (a) => /spellcasting ability|knows if it hears a lie|intentions or sincerity/.test(a.template_2024 ?? '');
 
-export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, archetype = null, spineRows = [], themes = null, mind = 'sapient') {
+/**
+ * The concept's ASSEMBLY METADATA (owner call, 2026-08-04): structured
+ * signals the synthesis emits so the skeleton can honor the concept —
+ * prose steers the flavor call, metadata steers the picks.
+ *   attack_mode         melee|ranged|mixed — weights attack rows, with a
+ *                       guarantee pass so a ranged identity always ships
+ *                       at least one ranged attack (live: the Shivering
+ *                       Watcher's hurled bone-fetish arrived as three
+ *                       melee rows because delivery mode wasn't a signal)
+ *   movement            modes the body has; rows REFERENCING a mode the
+ *                       concept lacks are gated out at pick time (the
+ *                       Flyby-on-a-walker class, killed at the root)
+ *   signature_mechanic  the ONE mechanic the creature IS, from a
+ *                       controlled family list — guaranteed a seat, the
+ *                       caster-checkbox pattern generalized
+ */
+const MODE_REFS = {
+  fly: /\bflies\b|Fly Speed/,
+  swim: /Swim Speed|while (?:it is )?underwater/,
+  burrow: /\bburrows\b|Burrow Speed/,
+  climb: /Climb Speed/,
+};
+const SIGNATURE_FAMILIES = {
+  'thrown-weapon': (a) => /Ranged Attack Roll/.test(a.template_2024) && (a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack'),
+  breath: (a) => a.slot_type === 'area' && Boolean(a.gate) && /Cone|Line/.test(a.template_2024),
+  engulf: (a) => /swallow/i.test(a.template_2024),
+  grapple: (a) => (a.imposes ?? []).includes('grapple'),
+  gaze: (a) => (a.facets ?? []).includes('gaze'),
+  aura: (a) => /Emanation originating from the \{creature\}(?: takes| while it doesn't have)/.test(a.template_2024),
+  teleport: (a) => /teleports? (?:up to|itself)/.test(a.template_2024),
+  summon: (a) => /animates|conjures/.test(a.template_2024),
+  web: (a) => /Restrained condition until the \{substance\} is destroyed/.test(a.template_2024),
+};
+const referencesMissingMode = (a, movement) => {
+  if (!movement) return false; // no metadata: legacy behavior, nothing gated
+  return Object.entries(MODE_REFS).some(([mode, re]) => !movement.includes(mode)
+    && re.test(a.template_2024 ?? ''));
+};
+const attackModeWeight = (a, mode) => {
+  if (!mode || mode === 'mixed') return 1;
+  const isAttack = a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack';
+  if (!isAttack) return 1;
+  const ranged = /Ranged Attack Roll/.test(a.template_2024);
+  if (mode === 'ranged') return ranged ? 6 : 0.5;
+  return ranged ? 0.5 : 6; // melee
+};
+
+export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, archetype = null, spineRows = [], themes = null, mind = 'sapient', meta = {}) {
   const chosen = [];
   const usedTemplates = new Set();
   const usedNames = new Set();
@@ -346,6 +398,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       const pool = ABILITIES.filter((a) => a.slot_type === slot
         && !(gatedLike(a) && haveGated)
         && (mind === 'sapient' || !needsMind(a))
+        && !referencesMissingMode(a, meta.movement)
         // A ceiling-tagged row's counterplay stops working above its tier
         // (the Ghost's Possession is body-HP-gated); the one deliberate
         // exception to whole-library-eligible, documented on the row.
@@ -364,7 +417,7 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         && (a.requires ?? []).every((r) => met.has(r)));
       if (!pool.length) continue; // leave the slot empty rather than repeat
       const weights = {};
-      pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes); });
+      pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * attackModeWeight(a, meta.attackMode) * (meta.signatureMechanic && SIGNATURE_FAMILIES[meta.signatureMechanic]?.(a) ? 6 : 1); });
       const pick = pool[pickWeighted(weights, rng)];
       // Two different mechanics can still share most of their sentences
       // (Weight of Years and Blinding Gaze differ in one clause). The lint
@@ -397,8 +450,17 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
         // lists shipped live (Spellcasting + Hellfire Spellcasting — the
         // Groan) because the name dedupe saw two different names.
         /\*\*(?:At Will|\d+\/Day(?: Each)?):\*\*/,
+        // one SPEED-DEBUFF zap per block: 0 of 329 printed blocks carry two
+        // (live: Brine-Spray Rupture beside Rotting Tide Exhalation — same
+        // damage, same function, one strictly dominated). Scoped to the
+        // until-end-of-turn form so the Slowing Breath's repeat-save shape
+        // stays free.
+        /Speed is (?:0|halved) until the end of (?:the target's|its) next turn/,
       ];
       const familyOf = (t) => FAMILIES.findIndex((re) => re.test(t));
+      // Same predicate lint's legendary-no-damage applies post-fill, phrased
+      // for templates (placeholders, not literal dice).
+      const paysLike = (a) => /\{damage\}|\b(?:makes|uses)\b/.test(a.template_2024);
       if (familyOf(pick.template_2024) !== -1
           && chosen.some((c) => familyOf(c.template_2024) === familyOf(pick.template_2024))) {
         continue;
@@ -434,10 +496,19 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
           // legal only on the entry whose DEFAULT is the block's gated one,
           // so no set of menu choices can assemble two Recharge entries.
           && (!gatedLike(a) || gatedLike(pick))
-          // family guard applies to menu alternatives too, or a swap could
-          // reintroduce the second teleport the pick loop just prevented
-          && !(familyOf(a.template_2024) !== -1
-            && chosen.some((c) => familyOf(c.template_2024) === familyOf(a.template_2024)))
+          // Combination safety for EVERY family cap (the gatedLike rule):
+          // a family-carrying alternative is legal only on an entry whose
+          // DEFAULT is in that family — checking chosen-so-far missed the
+          // earlier-menu/later-pick ordering (live-sweep: a Scorching Sands
+          // option beside a chosen Freezing Burst, two speed debuffs one
+          // swap away).
+          && (familyOf(a.template_2024) === -1
+            || familyOf(pick.template_2024) === familyOf(a.template_2024))
+          // Combination safety for the legendary damage invariant: a paying
+          // legendary (damage dice or makes/uses delegation) only offers
+          // paying alternatives, so any set of menu choices keeps at least
+          // the payers the default set had (which lint already verified).
+          && (pick.slot_type !== 'legendary' || !paysLike(pick) || paysLike(a))
           && !options.some((o) => o.ability === a.ability));
         if (!rest.length) break;
         const w = {};
@@ -461,11 +532,94 @@ export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, ar
       chosen.push({ ...pick, options });
     }
   }
+  // Print's legendary invariant (measured 2026-08-04): at least one option
+  // is always UNLOCKED — 7 of 8 printed two-option sets lock exactly one,
+  // and zero printed sets lock everything. An all-locked draw (live: the
+  // Shivering Watcher's two-lock, no-decision turn) swaps its last
+  // legendary for an unlocked row.
+  {
+    const LOCK = /can't take this action again/;
+    const legendaries = chosen.filter((c) => c.slot_type === 'legendary');
+    if (legendaries.length && legendaries.every((c) => LOCK.test(c.template_2024))) {
+      const replaceable = legendaries[legendaries.length - 1];
+      // The swap must SURVIVE the downstream dependency filter: an unlocked
+      // echo requiring Spellcasting on a casterless block gets dropped and
+      // the all-locked pair quietly returns (live-sweep: CR 15 seed 7).
+      const met = satisfiedBy(chosen.filter((c) => c !== replaceable), traits);
+      const alt = ABILITIES.filter((a) => a.slot_type === 'legendary'
+        && !LOCK.test(a.template_2024)
+        && !usedTemplates.has(a.template_2024) && !usedNames.has(a.ability)
+        && (a.requires ?? []).every((r) => met.has(r))
+        && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
+      if (alt.length) {
+        const weights = {};
+        alt.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes); });
+        const swap = alt[pickWeighted(weights, rng)];
+        usedTemplates.add(swap.template_2024);
+        usedNames.add(swap.ability);
+        chosen[chosen.indexOf(replaceable)] = { ...swap, options: [swap] };
+      }
+    }
+  }
+  // GUARANTEE PASSES — the metadata's promises are non-negotiable, the
+  // caster-checkbox pattern: weight first, then verify, then swap.
+  const guaranteed = new Set();
+  const swapIn = (predicate, slotTypes, prefer = null) => {
+    if (chosen.some((c) => predicate(c))) return;
+    const met = satisfiedBy(chosen, traits);
+    const pool = ABILITIES.filter((a) => predicate(a)
+      && slotTypes.includes(a.slot_type)
+      && !usedTemplates.has(a.template_2024) && !usedNames.has(a.ability)
+      && (a.requires ?? []).every((r) => met.has(r))
+      && !referencesMissingMode(a, meta.movement)
+      && (mind === 'sapient' || !needsMind(a))
+      && (a.cr_ceiling == null || crNumber(cr) <= a.cr_ceiling));
+    if (!pool.length) return;
+    const weights = {};
+    pool.forEach((a, idx) => { weights[idx] = proximityWeight(a.cr, cr) * archetypeWeight(a, archetype) * themeWeight(a, themes) * (prefer && prefer(a) ? 8 : 1); });
+    const pick = pool[pickWeighted(weights, rng)];
+    // Replace the LAST same-slot pick; append if none. Never a spine row,
+    // never an earlier guarantee, and never a row whose imposes satisfy the
+    // incoming pick's requires — the engulf chain seated its grappler and
+    // the swallow's victim-search then replaced that very grappler.
+    const spineSet = new Set(spineRows);
+    const victimIdx = chosen.map((c, i) => (c.slot_type === pick.slot_type
+      && !spineSet.has(c) && !guaranteed.has(c)
+      && !(pick.requires ?? []).some((r) => (c.imposes ?? []).includes(r))
+      ? i : -1))
+      .filter((i) => i !== -1).pop();
+    usedTemplates.add(pick.template_2024);
+    usedNames.add(pick.ability);
+    const entry = { ...pick, options: [pick] };
+    guaranteed.add(entry);
+    if (victimIdx != null) chosen[victimIdx] = entry;
+    else chosen.push(entry);
+  };
+  if (meta.attackMode === 'ranged' || meta.attackMode === 'mixed') {
+    swapIn((a) => /Ranged Attack Roll/.test(a.template_2024 ?? '')
+      && (a.slot_type === 'plain_attack' || a.slot_type === 'rider_attack'),
+    ['plain_attack', 'rider_attack']);
+  }
+  if (meta.signatureMechanic && SIGNATURE_FAMILIES[meta.signatureMechanic]) {
+    // A signature implies its CHAIN: engulf requires a grappler, so the
+    // prerequisite is seated first (swapIn no-ops when already present) —
+    // otherwise the swallow pool is empty on any block without a grapple
+    // and the guarantee silently starves.
+    if (meta.signatureMechanic === 'engulf') {
+      swapIn((a) => (a.imposes ?? []).includes('grapple'), ['plain_attack', 'rider_attack', 'save_effect']);
+    }
+    // Bonus-action swallows preferred (4 of 5 printed swallowers): the
+    // swallow rides the turn instead of replacing it, and the Blinded
+    // rider arrives with the family (the Kraken's action-cost, riderless
+    // swallow stays reachable — every row remains print-verbatim).
+    swapIn(SIGNATURE_FAMILIES[meta.signatureMechanic], SLOT_TYPES.concat('legendary'),
+      meta.signatureMechanic === 'engulf' ? (a) => a.section === 'Bonus Actions' : null);
+  }
   return chosen;
 }
 
 /** Traits, deduped, same proximity weighting. */
-export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, themes = null, mind = 'sapient') {
+export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, themes = null, mind = 'sapient', meta = {}) {
   const out = []; const used = new Set();
   // Whole-text containment reads as redundancy however the wording lands:
   // Amorphous ("move through a 1-inch space") is the entire second half of
@@ -483,6 +637,7 @@ export function pickTraits(cr, n, rng, chosenAbilities = [], archetype = null, t
     const met = satisfiedBy(chosenAbilities, out);
     const pool = TRAITS.filter((t) => !used.has(t.template_2024)
       && (mind === 'sapient' || !needsMind(t))
+      && !referencesMissingMode(t, meta.movement)
       && (t.requires ?? []).every((r) => met.has(r))
       && ![...chosenAbilities, ...out].some((c) => contains(t.template_2024, c.template_2024)));
     if (!pool.length) break;
@@ -576,7 +731,7 @@ function damageBudgetFor(ability, nums) {
  * (x3) — guide, never constrain. Without an rng the printed original ships,
  * which keeps no-seed fills and never-fail fallbacks print-identical.
  */
-function pickCondition(ability, slot, rng, themes) {
+function pickCondition(ability, slot, rng, themes, usedConditions = null, recordConditions = false) {
   const meta = library._meta.condition_slots;
   const dflt = ability.condition_default
     ?? (slot === 'condition_pair' ? meta.pairs[0].pair
@@ -596,6 +751,23 @@ function pickCondition(ability, slot, rng, themes) {
       .map(([c]) => c);
   }
   if (!options.includes(dflt)) options.push(dflt); // print is always legal
+  // RECURRING AURAS use print's aura menu only (measured 2026-08-04: every
+  // printed start-of-turn aura imposes Frightened, Poisoned, Incapacitated
+  // or Paralyzed — never Charmed or Deafened). A once-per-round party-wide
+  // charm field is a combination print never mints.
+  if (/starts its turn in the aura|Emanation while it doesn't have/.test(ability.template_2024 ?? '')) {
+    const AURA_CONDITIONS = ['Frightened', 'Poisoned', 'Incapacitated', 'Paralyzed'];
+    const auraLegal = options.filter((c) => c.split(' and ').every((w) => AURA_CONDITIONS.includes(w)));
+    if (auraLegal.length) options = auraLegal;
+  }
+  // Cross-entry dedupe (owner-approved 2026-08-04): a condition another
+  // entry already imposes leaves the menu — the live Seam's aura granted
+  // 24-hour Frightened immunity that a second Frightened emanation then
+  // ignored. Never empties: a menu with no fresh options keeps them all.
+  if (usedConditions && usedConditions.size) {
+    const fresh = options.filter((c) => !c.split(' and ').some((w) => usedConditions.has(w)));
+    if (fresh.length) options = fresh;
+  }
   const weights = {};
   options.forEach((c, i) => {
     let w = c === dflt ? 4 : 1;
@@ -609,7 +781,7 @@ function pickCondition(ability, slot, rng, themes) {
   return options[pickWeighted(weights, rng)];
 }
 
-export function fillTemplate(ability, { cr, size, nums, rng = null, themes = null }) {
+export function fillTemplate(ability, { cr, size, nums, rng = null, themes = null, usedConditions = null, recordConditions = false }) {
   const sb = scaleBand(cr);
   const area = library._meta.scale_slots.area;
   const attackMod = nums.attack_bonus - nums.pb;
@@ -707,7 +879,11 @@ export function fillTemplate(ability, { cr, size, nums, rng = null, themes = nul
   for (const [k, v] of Object.entries(values)) text = text.split(`{${k}}`).join(String(v));
   for (const slot of ['condition_soft', 'condition_hard', 'condition_pair']) {
     if (!text.includes(`{${slot}}`)) continue;
-    text = text.split(`{${slot}}`).join(pickCondition(ability, slot, rng, themes));
+    const picked = pickCondition(ability, slot, rng, themes, usedConditions, recordConditions);
+    if (recordConditions && usedConditions) {
+      for (const w of picked.split(' and ')) usedConditions.add(w);
+    }
+    text = text.split(`{${slot}}`).join(picked);
   }
   return { text, damage: main.avg + (hasRider ? rider.avg : 0) };
 }
@@ -884,8 +1060,15 @@ export function pickSize(cr, rng) {
 export function buildSkeleton({
   cr, size = null, seed = 1, alternatives = 1, archetype = null, caster = false,
   strikeStat = null, family = null, themes = null, typeHint = null, mind = 'sapient',
+  attackMode = null, movement = null, signatureMechanic = null,
 }) {
+  const meta = { attackMode, movement, signatureMechanic };
   const rng = makeRng(seed);
+  // One condition ledger per block: entries and traits RECORD their
+  // engine-filled conditions, menu options only consult, so no two entries
+  // impose the same condition through different delivery paths (the
+  // double-fear laundering class).
+  const usedConditions = new Set();
   // eslint-disable-next-line no-param-reassign
   size = size ?? pickSize(cr, rng);
   const nums = numbersFor(cr);
@@ -918,7 +1101,7 @@ export function buildSkeleton({
     counts.legendary = spine.rows.filter((r) => r.section === 'Legendary Actions').length;
     counts.trait = 0;
   }
-  const abilities = pickAbilities(cr, counts, rng, [], alternatives, archetype, spine?.rows ?? [], themes, effMind);
+  const abilities = pickAbilities(cr, counts, rng, [], alternatives, archetype, spine?.rows ?? [], themes, effMind, meta);
   if (caster && !abilities.some((a) => /\{spells\}/.test(a.template_2024))) {
     const pool = ABILITIES.filter((a) => a.slot_type === 'utility' && /\{spells\}/.test(a.template_2024));
     if (pool.length) {
@@ -927,7 +1110,24 @@ export function buildSkeleton({
       abilities.push({ ...pool[pickWeighted(w, rng)], options: undefined });
     }
   }
-  let traits = pickTraits(cr, counts.trait, rng, abilities, archetype, themes, effMind);
+  let traits = pickTraits(cr, counts.trait, rng, abilities, archetype, themes, effMind, meta);
+  // The aura signature lives in the TRAIT pool, out of swapIn's reach: if
+  // the concept named it and neither side carries one, seat an aura trait.
+  if (signatureMechanic === 'aura') {
+    const AURA = /Emanation originating from the \{creature\}(?: takes| while it doesn't have)/;
+    const has = [...abilities, ...traits].some((r) => AURA.test(r.template_2024 ?? ''));
+    if (!has) {
+      const metA = satisfiedBy(abilities, traits);
+      const pool = TRAITS.filter((t) => AURA.test(t.template_2024 ?? '')
+        && !traits.some((x) => x.template_2024 === t.template_2024)
+        && ((t.requires ?? []).every((r) => metA.has(r))));
+      if (pool.length) {
+        const w = {};
+        pool.forEach((t, idx) => { w[idx] = proximityWeight(t.cr, cr) * archetypeWeight(t, archetype) * themeWeight(t, themes); });
+        traits = [...traits, pool[pickWeighted(w, rng)]];
+      }
+    }
+  }
   const onDeath = pickOnDeath(cr, rng, { typeHint: family === 'dragon' ? 'Dragon' : typeHint, themes });
   if (onDeath) traits = [...traits, onDeath];
   // Spine traits ride along (the Mimic's Adhesive arrives WITH its Bite),
@@ -970,7 +1170,7 @@ export function buildSkeleton({
   }
 
   const entries = kept.map((a, i) => {
-    const { text, damage } = fillTemplate(a, { cr, size, nums, rng, themes });
+    const { text, damage } = fillTemplate(a, { cr, size, nums, rng, themes, usedConditions, recordConditions: true });
     // A repeatable 60-foot paralysis cone is the class of thing no printed
     // block ships: hard-condition areas are ALWAYS gated. Belt-and-braces
     // over the data fix, because one ungated row slipping through is a
@@ -1020,7 +1220,7 @@ export function buildSkeleton({
       // concept picks one; whichever it picks is mechanically valid, so the
       // choice cannot break the block.
       options: (a.options ?? [a]).map((o) => {
-        const filled = fillTemplate(o, { cr, size, nums, rng, themes });
+        const filled = fillTemplate(o, { cr, size, nums, rng, themes, usedConditions });
         return {
           key: o.ability,
           name: o.ability,
@@ -1139,6 +1339,7 @@ export function buildSkeleton({
       legendary: (counts.legendary ?? 0) > 0,
     },
     themes: themes ?? [],
+    movement: movement ?? null,
     traits: traits.map((t, i) => ({
       // gate and section ride along so the flavor step can re-append the
       // use limit after a rename: the model renamed Legendary Resistance to
@@ -1157,7 +1358,7 @@ export function buildSkeleton({
       name: t.trait ?? t.ability,
       // Traits go through the SAME substitution as abilities. Handling only
       // {dc} here left "{radius}-foot radius" rendering literally.
-      text: fillTemplate({ ...t, slot_type: t.slot_type ?? 'utility' }, { cr, size, nums, rng, themes }).text,
+      text: fillTemplate({ ...t, slot_type: t.slot_type ?? 'utility' }, { cr, size, nums, rng, themes, usedConditions, recordConditions: true }).text,
       derived_from: `${t.source} (CR ${t.cr})`,
     })),
     entries,

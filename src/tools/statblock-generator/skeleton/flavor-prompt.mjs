@@ -226,17 +226,19 @@ Resistances and immunities are a budget, not a list: below CR 5 usually none or 
 
 Pick save proficiencies to match the tier: below CR 5 usually none, CR 5-10 up to two, CR 11+ two to four. Pick zero to three skills (Perception and Stealth are by far the most common in print).
 
-Pick ONE physical damage type and ONE energy damage type for the whole creature. Its parts were assembled from several monsters, so choosing per ability produces something that deals fire, cold, poison and necrotic at once.
+Pick ONE physical damage type and ONE energy damage type for the whole creature. Its parts were assembled from several monsters, so choosing per ability produces something that deals fire, cold, poison and necrotic at once. You may ALSO pick an optional second energy type ("energy_damage_2") for dual-natured effects — a demon that burns AND blasts (Fire + Force) — only when the concept genuinely has two energies; omit it otherwise.
+If the creature cannot speak, give it telepathy in senses_special or pick only spells it could deliver without a voice.
 
 Return ONLY JSON:
 {
   "physical_damage": "Bludgeoning|Piercing|Slashing",
   "energy_damage": "Acid|Cold|Fire|Force|Lightning|Necrotic|Poison|Psychic|Radiant|Thunder",
+  "energy_damage_2": "optional second energy type, or omit",
   "name": "the creature's name",
   "size": "${skeleton.size}",
 
   "alignment": "e.g. Chaotic Evil",
-  "speed": "e.g. 30 ft., Fly 60 ft.",
+  "speed": "${skeleton.movement && skeleton.movement.length ? `must include these modes: ${skeleton.movement.map((m) => m[0].toUpperCase() + m.slice(1)).join(', ')} — e.g. '30 ft., ${skeleton.movement.map((m) => `${m[0].toUpperCase() + m.slice(1)} 40 ft.`).join(', ')}'` : 'e.g. 30 ft., Fly 60 ft.'}",
   "stats": { "STR": 10, "DEX": 10, "CON": 10, "INT": 10, "WIS": 10, "CHA": 10 },
   "senses_special": "e.g. Darkvision 60 ft., Tremorsense 60 ft. — or omit",
   "save_proficiencies": ["zero to four of STR|DEX|CON|INT|WIS|CHA"],
@@ -425,7 +427,12 @@ export function resolveChoices(skeleton, byId) {
   // model then named the entry for the mechanic it believed it had (live:
   // "Lidless Glare" that pushes, because *Blinding Gaze matched nothing and
   // Cold Gale stayed).
-  const normKey = (s) => String(s ?? '').replace(/[*_`]/g, '').trim().toLowerCase();
+  const normKey = (s) => String(s ?? '').replace(/[*`]/g, '')
+    // snake_case and kebab-case arrive from the model ("cold_breath") —
+    // separators normalize to spaces, not deletion ("coldbreath" matched
+    // nothing and every multi-word choice silently kept its default; live:
+    // the Shivering Watcher's trace)
+    .replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
   const chosen = skeleton.entries.map((e) => {
     if (!e.options || e.options.length < 2) return e;
     const want = normKey(byId.get(e.id)?.choose);
@@ -554,10 +561,24 @@ export function applyFlavor(skeleton, llmJson) {
   const physical = PHYSICAL.includes(j.physical_damage) ? j.physical_damage : 'Bludgeoning';
   const energy = typeof j.energy_damage === 'string' && j.energy_damage.trim()
     ? j.energy_damage.trim() : 'Force';
+  // Optional SECOND energy for dual-natured effects (owner call, 2026-08-04):
+  // a dual-pool print row (the Balor's Fire + Force Death Throes) fills its
+  // rider with the second energy when the concept granted one; otherwise the
+  // same-type pools merge downstream.
+  const ENERGY_TYPES = ['Acid', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic', 'Poison', 'Psychic', 'Radiant', 'Thunder'];
+  const energy2 = typeof j.energy_damage_2 === 'string'
+    && ENERGY_TYPES.includes(j.energy_damage_2.trim())
+    && j.energy_damage_2.trim() !== energy
+    ? j.energy_damage_2.trim() : null;
 
   // Facets this block may speak in, for the fill vet and banked fallbacks.
   const own = ownFacets(j.type, skeleton.themes);
   const TEXTURE_SLOTS = ['substance', 'delivery', 'terrain', 'appendage', 'appendage_plural'];
+  // Echo-spell uniqueness across the block: print fields TWO spell-echo
+  // legendaries (the Blue's Cloaked Flight + Sonic Boom) but never two
+  // echoes of the SAME spell — the live Warden cast Command from two
+  // legendary actions at once. A duplicate fill redraws on-palette.
+  const usedEchoSpells = new Set();
 
   const fill = (entry) => {
     const given = byId.get(entry.id) ?? {};
@@ -614,25 +635,23 @@ export function applyFlavor(skeleton, llmJson) {
       if (value && TEXTURE_SLOTS.includes(slot) && offDomainToken(value, own)) {
         value = null;
       }
+      // Theme-aware spell draw (owner-approved 2026-08-03): on-palette,
+      // pre-filtered against everything the downstream vets would reject,
+      // so a pick always survives. Used for dead signature fills AND for
+      // echo-spell dedupe redraws.
+      const themedSpell = (exclude) => {
+        const legendary = entry.section === 'Legendary Actions';
+        const pool = Object.entries(library._meta.spell_facets ?? {})
+          .filter(([, fs]) => fs.some((f) => own.has(f)))
+          .map(([sp]) => sp)
+          .filter((sp) => !SLOW_CAST.includes(sp) && !NON_ACTION_SPELLS.includes(sp)
+            && !(exclude && exclude.has(sp))
+            && !(legendary && CONCENTRATION_SPELLS.includes(sp)));
+        return pool.length ? `*${pool[Math.floor(entryRng() * pool.length)]}*` : null;
+      };
       if (!value) {
-        // Spell fallbacks are theme-aware (owner-approved 2026-08-03): a
-        // dead signature fill draws an on-palette spell from spell_facets
-        // instead of shipping a static Chromatic Orb onto every register
-        // (live: "Molten Solder Breath casts Chromatic Orb"). The pool
-        // pre-filters what the downstream vets would reject, so the pick
-        // survives; an empty pool falls to the static default.
-        const themedSpell = () => {
-          if (!slot.startsWith('signature_spell')) return null;
-          const legendary = entry.section === 'Legendary Actions';
-          const pool = Object.entries(library._meta.spell_facets ?? {})
-            .filter(([, fs]) => fs.some((f) => own.has(f)))
-            .map(([sp]) => sp)
-            .filter((sp) => !SLOW_CAST.includes(sp) && !NON_ACTION_SPELLS.includes(sp)
-              && !(legendary && CONCENTRATION_SPELLS.includes(sp)));
-          return pool.length ? `*${pool[Math.floor(entryRng() * pool.length)]}*` : null;
-        };
         value = (TEXTURE_SLOTS.includes(slot) ? bankFallback(slot) : null)
-          ?? themedSpell()
+          ?? (slot.startsWith('signature_spell') ? themedSpell() : null)
           ?? FALLBACK[slot];
       }
       // Fills never carry their own terminal punctuation: the template
@@ -658,6 +677,16 @@ export function applyFlavor(skeleton, llmJson) {
       }
       // (Off-list vetting for spell slots now happens in normalizeSpellFill
       // above — unknown names never survive normalization.)
+      // Echo-spell dedupe: an ECHO entry (anything that isn't the tiered
+      // list) filling a spell another echo already cast redraws on-palette.
+      if (SPELL_SLOTS(slot) && !/casts one of the following/.test(entry.text)) {
+        const names = [...value.matchAll(/\*([A-Z][\w' ]+?)\*/g)].map((mm) => mm[1]);
+        if (names.some((nm) => usedEchoSpells.has(nm))) {
+          const alt = themedSpell(new Set([...usedEchoSpells, ...names]));
+          if (alt) value = alt;
+        }
+        for (const mm of value.matchAll(/\*([A-Z][\w' ]+?)\*/g)) usedEchoSpells.add(mm[1]);
+      }
       // "each creature that isn't a Humanoid" spares the party — a kindred
       // exclusion only works when the kindred isn't what adventurers are.
       if (slot === 'kindred_type' && /humanoid/i.test(value)) value = FALLBACK.kindred_type;
@@ -667,7 +696,11 @@ export function applyFlavor(skeleton, llmJson) {
     const mainIsPhysical = entry.slot_type === 'plain_attack' || entry.slot_type === 'rider_attack';
     text = text.split('{damage_type}').join(mainIsPhysical ? physical : energy);
     for (const s of ['rider_damage_type', 'rider2_damage_type', 'alt_damage_type', 'alt2_damage_type']) {
-      text = text.split(`{${s}}`).join(s.startsWith('alt') && mainIsPhysical ? physical : energy);
+      // On a NON-attack entry the main is already the energy, so a rider
+      // slot takes the second energy when the concept granted one — print's
+      // dual-pool rows (Fire plus Force) instead of "Fire plus Fire".
+      const riderEnergy = s.startsWith('rider') && !mainIsPhysical ? (energy2 ?? energy) : energy;
+      text = text.split(`{${s}}`).join(s.startsWith('alt') && mainIsPhysical ? physical : riderEnergy);
     }
     text = text.split('{creature}').join(inline);
     let name = (entry.name_locked ? entry.name : (given.name || entry.name)).trim();
@@ -904,6 +937,17 @@ export function applyFlavor(skeleton, llmJson) {
       // shipped live). A finite list, not a vowel rule — "a Unicorn" is
       // correct English and would break under the naive heuristic.
       e.text = e.text.replace(/\ba (Undead|Elemental|Aberration|Ooze)\b/g, 'an $1');
+      // Same-type damage pools merge (the belt under the dual-energy
+      // contract): "16 (3d10) Fire plus 11 (2d10) Fire" is one printed pool
+      // — 27 (5d10) Fire (live: the Brimstone Warden's death blast).
+      e.text = e.text.replace(
+        /\d+ \((\d+)d(\d+)\) (\w+) damage plus \d+ \((\d+)d(\d+)\) \3 damage/g,
+        (m0, n1, d1, type, n2, d2) => {
+          if (d1 !== d2) return m0;
+          const n = Number(n1) + Number(n2);
+          return `${Math.floor((n * (Number(d1) + 1)) / 2)} (${n}d${d1}) ${type} damage`;
+        },
+      );
       // Article agreement after number substitution: the printed brass line
       // carries "in an 20-foot line" (a WotC typo), which scaling turned
       // into "an 90-foot-long" (live). "an" only before 8, 11, 18-series.

@@ -46,6 +46,7 @@ export async function generateFromSkeleton(options, callLLM) {
     concept, description = '', cr, archetypeName = null, resolvedType = null,
     lore = null, identity = null, seed = null, onProgress = null, degraded = false,
     caster = false, strikeStat = null, themes = null, mind = null,
+    conceptSize = null, movement = null, attackMode = null, signatureMechanic = null,
   } = options;
 
   const progress = (phase, data) => {
@@ -89,9 +90,22 @@ export async function generateFromSkeleton(options, callLLM) {
   const blockMind = caster ? 'sapient'
     : (['sapient', 'bestial', 'mindless'].includes(mind) ? mind : 'sapient');
 
+  // Assembly metadata, validated: bad values degrade to "no signal" and the
+  // legacy sampling behavior — never to a failed generation.
+  const SIZES_OK = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
+  const blockSize = SIZES_OK.includes(conceptSize) ? conceptSize : null;
+  const blockMovement = Array.isArray(movement)
+    ? movement.map((m) => String(m).toLowerCase()).filter((m) => ['swim', 'burrow', 'fly', 'climb'].includes(m))
+    : null;
+  const blockAttackMode = ['melee', 'ranged', 'mixed'].includes(attackMode) ? attackMode : null;
+  const SIGNATURES_OK = ['thrown-weapon', 'breath', 'engulf', 'grapple', 'gaze', 'aura', 'teleport', 'summon', 'web'];
+  const blockSignature = SIGNATURES_OK.includes(signatureMechanic) ? signatureMechanic : null;
+
   const skeleton = buildSkeleton({
     cr: crNum, seed: useSeed, alternatives: ALTERNATIVES, archetype: archetypeName,
     caster, strikeStat, themes: blockThemes, mind: blockMind,
+    size: blockSize, attackMode: blockAttackMode, movement: blockMovement,
+    signatureMechanic: blockSignature,
     // Dragons get the whole-kit treatment; everything else may get a mined
     // synergy package as its spine (owner call, 2026-08-02). The trigger is
     // the resolved TYPE or a draconic THEME — a live block was typed Dragon
@@ -133,6 +147,18 @@ export async function generateFromSkeleton(options, callLLM) {
   progress('status', { stage: 'writing' });
   if (blockThemes) trace('themes:', blockThemes.join(', '));
   trace('mind:', blockMind, mind ? '(concept call)' : '(default)');
+  if (blockSize || blockMovement || blockAttackMode || blockSignature) {
+    trace('assembly metadata:', [
+      blockSize && `size ${blockSize}`,
+      blockMovement && `movement ${blockMovement.join('/') || 'walk only'}`,
+      blockAttackMode && `attacks ${blockAttackMode}`,
+      blockSignature && `signature ${blockSignature}`,
+    ].filter(Boolean).join(', '));
+  }
+  // The full concept in the trace: every hollowness investigation so far
+  // has needed the synthesis text, and it lived only in the network tab.
+  if (concept) trace('concept:', String(concept).slice(0, 600));
+  if (lore) trace('lore:', lore);
   const prompt = buildFlavorPrompt(skeleton, {
     concept,
     themes: blockThemes,
@@ -330,12 +356,16 @@ export async function generateFromSkeleton(options, callLLM) {
     }
   }
 
-  // A block whose only legendary options lock themselves per-turn cannot
-  // spend three uses; uses are capped by what the options support.
+  // Print's legendary invariant (measured 2026-08-04): every printed
+  // legendary set keeps AT LEAST ONE unlocked option — 7 of 8 two-option
+  // sets lock exactly one. With an unlocked spend always available, the
+  // sampled uses stand; the cap survives only as the belt for the
+  // all-locked shape print never fields (and the picker now prevents).
   {
-    const legendaryCount = (monster.sections?.['Legendary Actions'] ?? []).length;
-    if (monster.legendary_uses && legendaryCount) {
-      monster.legendary_uses = Math.min(monster.legendary_uses, legendaryCount);
+    const legendaries = monster.sections?.['Legendary Actions'] ?? [];
+    const unlocked = legendaries.filter((e) => !/can't take this action again/.test(e.text));
+    if (monster.legendary_uses && legendaries.length && !unlocked.length) {
+      monster.legendary_uses = Math.min(monster.legendary_uses, legendaries.length);
     }
   }
 

@@ -708,7 +708,7 @@ describe('native-2014 batch 1 (Kralvag): pattern gaps in edition-agnostic rules'
     const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
     fixture.languages = 'understands Giant but does not speak';
     const m = assembleMonster(fixture, ctx());
-    expect(m.languages).toBe("understands Giant but can't speak");
+    expect(m.languages).toBe("Understands Giant but can't speak");
   });
 });
 
@@ -758,7 +758,7 @@ describe('native-2014 batch 2 (Uulghul/Chuugoth/Uuloth): vocabulary + dependency
     const m = assembleMonster(fixture, ctx());
     expect(m.immunities).toBe('poison');
     expect(m.resistances).toBe('bludgeoning, piercing, and slashing from nonmagical attacks');
-    expect(m.languages).toBe("understands Deep Speech but can't speak");
+    expect(m.languages).toBe("Understands Deep Speech but can't speak");
   });
 });
 
@@ -1470,7 +1470,7 @@ describe('batch 11 (Glassfang/Shardswarm/Chitterchill): slot leak, beast INT, sw
     const fixture = JSON.parse(JSON.stringify(llm2014Fixture));
     fixture.languages = "Infernal, understands Common but can't speak";
     const m = assembleMonster(fixture, ctx());
-    expect(m.languages).toBe("understands Infernal and Common but can't speak");
+    expect(m.languages).toBe("Understands Infernal and Common but can't speak");
   });
 });
 

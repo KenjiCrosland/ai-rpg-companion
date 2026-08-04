@@ -1174,10 +1174,13 @@ describe('the Bogstone: size gates never fall below Medium at CR 5+', () => {
 const { fillTemplate: fillTemplateB, numbersFor: numbersForB, makeRng: makeRngB } = require('../build-skeleton.mjs');
 
 describe('the Bogstone: theme affinity actually steers conditions now', () => {
-  test('a beguiling theme outdraws the Frightened default on a Wis-save aura', () => {
+  test('a beguiling theme outdraws the Frightened default on a Wis save', () => {
+    // NOT an aura: recurring auras restrict to print's aura menu (measured
+    // 2026-08-04 — no printed aura ever charms), so the steering assertion
+    // lives on a single-target save where the full tier menu applies.
     const row = {
-      source: 'Test', ability: 'Aura', cr: '20', slot_type: 'save_effect',
-      template_2024: '*Wisdom Saving Throw*: DC {dc}, any enemy that starts its turn in the aura. *Failure:* The target has the {condition_soft} condition until the start of its next turn.',
+      source: 'Test', ability: 'Gaze', cr: '20', slot_type: 'save_effect',
+      template_2024: '*Wisdom Saving Throw*: DC {dc}, one creature the {creature} can see within {sight_range} feet. *Failure:* The target has the {condition_soft} condition until the start of its next turn.',
       condition_default: 'Frightened',
     };
     const nums = numbersForB(20);
@@ -1587,5 +1590,280 @@ describe('the Tallying Seam: the concentration list covers the known universe', 
       entries: [{ id: 'e1', name: 'Echo', signature_spell: 'Earthquake' }],
     });
     expect(Object.values(m.sections).flat().map((e) => e.text).join('\n')).not.toContain('Earthquake');
+  });
+});
+
+/**
+ * Live block 19 (the Brimstone Warden): six assembly defects, five with
+ * roots — the on_death pool leaking into the area slot (Death Throes beside
+ * an independent Restoration, revival stated three times), same-type damage
+ * pools splicing ("16 Fire plus 11 Fire"), two legendary echoes casting the
+ * SAME spell (print fields two echoes — the Blue dragon — but never two of
+ * one spell), a Prone-gated bonus action with no Prone source (the
+ * dependency vocabulary had no 'prone' edge), and the languages-line
+ * capitalization coin-flip.
+ */
+describe('the Brimstone Warden: one on-death occupant, ever', () => {
+  test('Death Throes is not drawable as an area — on_death rows ship only via pickOnDeath', () => {
+    for (const cr of [11, 17, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        const deathRows = [...sk.entries, ...sk.traits]
+          .filter((e) => /explodes when it dies|dies outside|reforms with all its Hit Points|gains a new body/.test(e.text));
+        // at most ONE on-death occupant (the pickOnDeath draw itself)
+        expect(`CR ${cr} seed ${seed}: ${deathRows.length} death rows`).toBe(`CR ${cr} seed ${seed}: ${Math.min(deathRows.length, 1)} death rows`);
+        for (const e of sk.entries) {
+          for (const o of e.options ?? []) {
+            expect(/explodes when it dies/.test(o.text)).toBe(false);
+          }
+        }
+      }
+    }
+  });
+});
+
+describe('the Brimstone Warden: dual-energy riders', () => {
+  const mini = () => ({
+    cr: '20', size: 'Gargantuan', ac: 20, hp: 330, pb: 6, attack_bonus: 14, save_dc: 21,
+    multiattack: 3, con_mod: 6, strike_stat: 'STR', cast_stat: 'Wisdom', cast_mod: 7,
+    seed: 8, counts: {}, themes: [], traits: [],
+    entries: [{
+      id: 'e1', section: 'Traits', slot_type: 'area', name: 'Death Throes', gate: null, damage: 0, options: [],
+      text: 'The {creature} explodes when it dies. *Failure:* 16 (3d10) {damage_type} damage plus 11 (2d10) {rider_damage_type} damage. *Success:* Half damage.',
+    }],
+  });
+  const flavor = (extra) => ({
+    name: 'Warden', size: 'Gargantuan', type: 'Fiend', alignment: 'Lawful Neutral', speed: '40 ft.',
+    stats: { STR: 26, DEX: 10, CON: 22, INT: 7, WIS: 24, CHA: 16 },
+    physical_damage: 'Bludgeoning', energy_damage: 'Fire', entries: [], ...extra,
+  });
+
+  test('a second energy fills the rider — print\'s Fire plus Force', () => {
+    const m = applyFlavor(mini(), flavor({ energy_damage_2: 'Force' }));
+    const text = Object.values(m.sections).flat()[0].text;
+    expect(text).toContain('Fire damage plus');
+    expect(text).toContain('Force damage');
+  });
+
+  test('no second energy: same-type pools merge into one printed pool', () => {
+    const m = applyFlavor(mini(), flavor());
+    const text = Object.values(m.sections).flat()[0].text;
+    expect(text).toContain('27 (5d10) Fire damage');
+    expect(text).not.toContain('plus');
+  });
+});
+
+describe('the Brimstone Warden: two echoes never cast the same spell', () => {
+  test('a duplicate echo fill redraws on-palette', () => {
+    const sk = {
+      cr: '20', size: 'Gargantuan', ac: 20, hp: 330, pb: 6, attack_bonus: 14, save_dc: 21,
+      multiattack: 3, con_mod: 6, strike_stat: 'STR', cast_stat: 'Wisdom', cast_mod: 7,
+      seed: 8, counts: {}, themes: ['grave'], traits: [],
+      entries: [
+        { id: 'e1', section: 'Legendary Actions', slot_type: 'legendary', name: 'EchoA', gate: null, damage: 0, options: [], text: 'The {creature} uses Spellcasting to cast {signature_spell}.' },
+        { id: 'e2', section: 'Legendary Actions', slot_type: 'legendary', name: 'EchoB', gate: null, damage: 0, options: [], text: 'The {creature} casts {signature_spell}, using the same spellcasting ability as Spellcasting.' },
+      ],
+    };
+    const m = applyFlavor(sk, {
+      name: 'Warden', size: 'Gargantuan', type: 'Undead', alignment: 'Lawful Neutral', speed: '40 ft.',
+      stats: { STR: 26, DEX: 10, CON: 22, INT: 7, WIS: 24, CHA: 16 },
+      entries: [
+        { id: 'e1', name: 'EchoA', signature_spell: 'Blight' },
+        { id: 'e2', name: 'EchoB', signature_spell: 'Blight' },
+      ],
+    });
+    const texts = Object.values(m.sections).flat().map((e) => e.text);
+    const blightCasts = texts.filter((t) => t.includes('*Blight*')).length;
+    expect(blightCasts).toBe(1); // the second redrew
+  });
+});
+
+describe('the Brimstone Warden: Prone gates require a Prone source', () => {
+  test('a Trample never ships without a knockdown beside it', () => {
+    for (const cr of [5, 11, 17, 20]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        const gated = [...sk.entries].filter((e) => /creature[^.]*that has the Prone condition/.test(e.text));
+        if (!gated.length) continue;
+        const imposer = [...sk.entries, ...sk.traits]
+          .some((e) => /(?:target|it) has the Prone condition/.test(e.text) && !/that has the Prone condition/.test(e.text));
+        expect(`CR ${cr} seed ${seed} trample has knockdown: ${imposer}`).toBe(`CR ${cr} seed ${seed} trample has knockdown: true`);
+      }
+    }
+  });
+});
+
+describe('the Brimstone Warden: no two entries impose the same engine-filled condition', () => {
+  test('two soft-condition entries in one block draw different conditions', () => {
+    const { fillTemplate: fillT, numbersFor: numsF, makeRng: mkRng } = require('../build-skeleton.mjs');
+    const nums = numsF(20);
+    const rowA = { source: 'T', ability: 'A', cr: '20', slot_type: 'save_effect', condition_default: 'Frightened', template_2024: '*Wisdom Saving Throw*: DC {dc}. *Failure:* The target has the {condition_soft} condition until the start of its next turn.' };
+    const rowB = { source: 'T', ability: 'B', cr: '20', slot_type: 'legendary', condition_default: 'Frightened', template_2024: '*Wisdom Saving Throw*: DC {dc}. *Failure:* The target has the {condition_soft} condition until the end of its next turn.' };
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const used = new Set();
+      const rng = mkRng(seed);
+      const a = fillT(rowA, { cr: 20, size: 'Large', nums, rng, usedConditions: used, recordConditions: true }).text.match(/has the (\w+) condition/)[1];
+      const b = fillT(rowB, { cr: 20, size: 'Large', nums, rng, usedConditions: used, recordConditions: true }).text.match(/has the (\w+) condition/)[1];
+      expect(`seed ${seed}: ${a} vs ${b} differ: ${a !== b}`).toBe(`seed ${seed}: ${a} vs ${b} differ: true`);
+    }
+  });
+});
+
+/**
+ * Live block 20 (the Shivering Watcher, stale-code generation): the two
+ * HEAD-real findings — snake_cased choose keys silently keeping defaults,
+ * and the all-locked legendary set print never fields (7 of 8 printed
+ * two-option sets lock exactly one; zero lock all). Plus the measured aura
+ * menu: no printed recurring aura ever imposes Charmed or Deafened.
+ */
+describe('the Shivering Watcher: degraded-response and legendary invariants', () => {
+  test('snake_case and kebab-case choose keys resolve', () => {
+    const { resolveChoices } = require('../flavor-prompt.mjs');
+    const sk = {
+      entries: [{
+        id: 'e1', section: 'Actions', slot_type: 'area', name: 'Cold Breath', gate: 'Recharge 5-6', text: 'cold', damage: 0,
+        options: [
+          { key: 'Cold Breath', name: 'Cold Breath', text: 'cold', gate: 'Recharge 5-6', slot_type: 'area' },
+          { key: 'Acid Breath', name: 'Acid Breath', text: 'acid', gate: 'Recharge 5-6', slot_type: 'area' },
+        ],
+      }],
+      traits: [],
+    };
+    for (const choose of ['acid_breath', 'ACID-BREATH', 'acid breath']) {
+      const r = resolveChoices(sk, new Map([['e1', { id: 'e1', choose }]]));
+      expect(r[0].name).toBe('Acid Breath');
+    }
+  });
+
+  test('no block ever ships an all-locked legendary set', () => {
+    const LOCK = /can't take this action again/;
+    for (const cr of [15, 17, 20, 24]) {
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        const legs = sk.entries.filter((e) => e.slot_type === 'legendary');
+        if (legs.length === 0) continue;
+        const unlocked = legs.filter((e) => !LOCK.test(e.text));
+        expect(`CR ${cr} seed ${seed}: ${unlocked.length} unlocked of ${legs.length}`)
+          .not.toBe(`CR ${cr} seed ${seed}: 0 unlocked of ${legs.length}`);
+      }
+    }
+  });
+
+  test('a recurring aura never fills Charmed or Deafened', () => {
+    const { fillTemplate: fT, numbersFor: nF, makeRng: mR } = require('../build-skeleton.mjs');
+    const nums = nF(20);
+    const aura = {
+      source: 'T', ability: 'Aura', cr: '20', slot_type: 'utility', condition_default: 'Frightened',
+      template_2024: 'The {creature} emanates an aura in a {area}-foot Emanation while it doesn\'t have the Incapacitated condition. *Wisdom Saving Throw*: DC {dc}, any enemy that starts its turn in the aura. *Failure:* The target has the {condition_soft} condition until the start of its next turn.',
+    };
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const c = fT(aura, { cr: 20, size: 'Huge', nums, rng: mR(seed), themes: ['beguiling'] })
+        .text.match(/has the (\w+) condition until the start/)[1];
+      expect(['Frightened', 'Poisoned']).toContain(c);
+    }
+  });
+});
+
+/**
+ * The assembly-metadata bus (owner call, 2026-08-04): the synthesis emits
+ * structured signals — size, movement, attack_mode, signature_mechanic —
+ * and the skeleton assembler honors them with guarantees. Born from the
+ * Shivering Watcher: a hurled-harpoon concept whose delivery mode had no
+ * channel to the picker and shipped as three melee rows.
+ */
+describe('the assembly-metadata bus', () => {
+  test('both concept prompts ask for the assembly metadata', async () => {
+    const { buildArchetypeResolvePrompt, buildSeedSynthesisPrompt } = await import('../../format-2024/generate.mjs');
+    for (const p of [
+      buildArchetypeResolvePrompt('a drowned harpooner', '', { cr: 20 }),
+      buildSeedSynthesisPrompt({ intelligence: 'bestial', physical: 'peat', silhouette: 'hillock', origin: 'the fen' }, { cr: 20 }),
+    ]) {
+      expect(p).toContain('ASSEMBLY METADATA');
+      expect(p).toContain('"attack_mode"');
+      expect(p).toContain('"signature_mechanic"');
+      expect(p).toContain('"movement"');
+    }
+  });
+
+  test('attack_mode ranged guarantees a ranged attack ships', () => {
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, alternatives: 3, attackMode: 'ranged' });
+      const ranged = sk.entries.some((e) => (e.slot_type === 'plain_attack' || e.slot_type === 'rider_attack')
+        && /Ranged Attack Roll/.test(e.text));
+      expect(`seed ${seed} has ranged attack: ${ranged}`).toBe(`seed ${seed} has ranged attack: true`);
+    }
+  });
+
+  test('movement gating: a walk-only body never receives a mode-dependent row', () => {
+    const REFS = /\bflies\b|Fly Speed|Swim Speed|while (?:it is )?underwater|\bburrows\b|Burrow Speed|Climb Speed/;
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const sk = buildSkeleton({ cr: 17, seed, alternatives: 3, movement: [] });
+      for (const e of [...sk.entries, ...sk.traits]) {
+        expect(`seed ${seed} ${e.name}: ${REFS.test(e.text)}`).toBe(`seed ${seed} ${e.name}: false`);
+      }
+    }
+  });
+
+  test('signature_mechanic guarantees its family a seat', () => {
+    const CHECKS = {
+      engulf: (sk) => [...sk.entries].some((e) => /swallow/i.test(e.text)),
+      breath: (sk) => sk.entries.some((e) => e.slot_type === 'area' && e.gate && /Cone|Line/.test(e.text)),
+      'thrown-weapon': (sk) => sk.entries.some((e) => /Ranged Attack Roll/.test(e.text)),
+      aura: (sk) => [...sk.entries, ...sk.traits].some((e) => /Emanation originating from the/.test(e.text) && /takes|while it doesn't have/.test(e.text)),
+    };
+    for (const [sig, check] of Object.entries(CHECKS)) {
+      for (let seed = 1; seed <= 8; seed += 1) {
+        const sk = buildSkeleton({ cr: 20, seed, alternatives: 3, signatureMechanic: sig });
+        expect(`${sig} seed ${seed}: ${check(sk)}`).toBe(`${sig} seed ${seed}: true`);
+      }
+    }
+  });
+
+  test('the flavor prompt seeds the speed line from movement metadata', () => {
+    const sk = buildSkeleton({ cr: 20, seed: 3, movement: ['swim', 'burrow'] });
+    const prompt = buildFlavorPrompt(sk, { concept: 'a drowned harpooner' });
+    expect(prompt).toContain('must include these modes: Swim, Burrow');
+  });
+});
+
+/**
+ * Live block 21 (the Dredging Charnel): the two findings that survived
+ * verification — two speed-debuff legendaries (0/329 in print; one
+ * strictly dominated the other) and the engulf guarantee seating the
+ * Kraken's action-cost swallow when 4 of 5 printed swallowers ride a
+ * bonus action and bring the Blinded rider with them.
+ */
+describe('the Dredging Charnel: one speed-debuff zap, bonus-action swallows', () => {
+  test('no block carries two until-end-of-turn speed debuffs', () => {
+    const FAMILY = /Speed is (?:0|halved) until the end of (?:the target's|its) next turn/;
+    for (const cr of [15, 17, 20, 24]) {
+      for (let seed = 1; seed <= 15; seed += 1) {
+        const sk = buildSkeleton({ cr, seed, alternatives: 3 });
+        const hits = [...sk.entries, ...sk.traits].filter((e) => FAMILY.test(e.text));
+        expect(`CR ${cr} seed ${seed}: ${hits.length}`).toBe(`CR ${cr} seed ${seed}: ${Math.min(hits.length, 1)}`);
+        // and no menu combination can assemble a second one
+        for (const e of sk.entries) {
+          if (FAMILY.test(e.text)) continue;
+          for (const o of e.options ?? []) {
+            if (FAMILY.test(o.text) && hits.length) {
+              throw new Error(`speed-debuff option beside a chosen one: ${o.key}`);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  test('the engulf guarantee predominantly seats bonus-action swallows', () => {
+    let bonus = 0; let total = 0;
+    for (let seed = 1; seed <= 12; seed += 1) {
+      const sk = buildSkeleton({ cr: 20, seed, alternatives: 3, signatureMechanic: 'engulf' });
+      const swallow = sk.entries.find((e) => /swallow/i.test(e.text) && /Grappled by the/.test(e.text));
+      if (!swallow) continue;
+      total += 1;
+      if (swallow.section === 'Bonus Actions') bonus += 1;
+    }
+    expect(total).toBeGreaterThan(8);
+    expect(bonus / total).toBeGreaterThan(0.6);
   });
 });

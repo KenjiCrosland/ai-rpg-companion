@@ -129,7 +129,7 @@ describe('batch 26: Soulbog fixes', () => {
       sections: { Actions: [{ name: 'Slam', text: 'Melee Attack Roll: +12, reach 5 ft. 11 (1d8 + 7) Acid damage.' }] },
     };
     const m = assembleMonster(llm, { cr: 14, chassis: { ...chassis, ac: 18, hp: 190, attack_bonus: 12, pb: 5 }, plan: null, archetypeName: 'lurker' });
-    expect(m.languages).toBe("understands Common but can't speak");
+    expect(m.languages).toBe("Understands Common but can't speak");
   });
 });
 

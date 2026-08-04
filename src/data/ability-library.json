@@ -15034,6 +15034,9 @@
         "damage_class": "area",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -15619,7 +15622,10 @@
           "terror",
           "voice"
         ],
-        "excluded": "Fingerprint exclusion (owner call 2026-08-03, the Possession precedent): the escalating three-roar sequence with a Long Rest reset is a one-of-a-kind subsystem \u2014 no rename disguises the structure, and it reads as a sphinx reskin on sight."
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03, the Possession precedent): the escalating three-roar sequence with a Long Rest reset is a one-of-a-kind subsystem \u2014 no rename disguises the structure, and it reads as a sphinx reskin on sight.",
+        "imposes": [
+          "prone"
+        ]
       },
       {
         "cr": "23",
@@ -15681,7 +15687,8 @@
         ],
         "damage_class": "attack",
         "imposes": [
-          "space_sharing"
+          "space_sharing",
+          "prone"
         ],
         "facets": [
           "fey"
@@ -15712,6 +15719,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "requires": [
+          "prone"
         ]
       },
       {
@@ -15777,7 +15787,10 @@
           "controller",
           "skirmisher"
         ],
-        "damage_class": "attack"
+        "damage_class": "attack",
+        "imposes": [
+          "prone"
+        ]
       },
       {
         "cr": "5",
@@ -15808,6 +15821,9 @@
         "damage_class": "attack",
         "facets": [
           "armed"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -15835,6 +15851,9 @@
         "damage_class": "attack",
         "facets": [
           "forged"
+        ],
+        "requires": [
+          "prone"
         ]
       },
       {
@@ -15862,6 +15881,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "requires": [
+          "prone"
         ]
       },
       {
@@ -15935,6 +15957,9 @@
         "damage_class": "attack",
         "facets": [
           "grasping"
+        ],
+        "imposes": [
+          "prone"
         ]
       }
     ],
@@ -16966,6 +16991,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17069,6 +17097,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17100,6 +17131,9 @@
         "facets": [
           "bestial",
           "grave"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17204,6 +17238,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17234,6 +17271,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17263,6 +17303,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17295,6 +17338,9 @@
         "facets": [
           "bestial",
           "mind"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17369,6 +17415,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17553,6 +17602,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17590,6 +17642,9 @@
         "damage_class": "attack",
         "facets": [
           "grave"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17620,6 +17675,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17650,6 +17708,9 @@
         "damage_class": "attack",
         "facets": [
           "armed"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17716,6 +17777,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17746,6 +17810,9 @@
         "damage_class": "attack",
         "facets": [
           "elemental"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17777,6 +17844,9 @@
         "facets": [
           "bestial",
           "forged"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17806,6 +17876,9 @@
         "damage_class": "attack",
         "facets": [
           "armed"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17836,6 +17909,9 @@
         "damage_class": "attack",
         "facets": [
           "elemental"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17866,6 +17942,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17933,6 +18012,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17963,6 +18045,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -17993,6 +18078,9 @@
         "damage_class": "attack",
         "facets": [
           "armed"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -18023,6 +18111,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -18053,6 +18144,9 @@
         "damage_class": "attack",
         "facets": [
           "elemental"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -18084,6 +18178,9 @@
         "facets": [
           "bestial",
           "draconic"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -18122,6 +18219,9 @@
         "facets": [
           "armed",
           "fiendish"
+        ],
+        "imposes": [
+          "prone"
         ]
       },
       {
@@ -18152,6 +18252,9 @@
         "damage_class": "attack",
         "facets": [
           "bestial"
+        ],
+        "imposes": [
+          "prone"
         ]
       }
     ],
