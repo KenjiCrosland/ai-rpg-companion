@@ -3,10 +3,14 @@
     "name": "cros.land 2024 statblock archetype chassis",
     "derived_from": "SRD 5.2.1 (springbov markdown mirror), 329 stat blocks, fitted 2026-07-18",
     "attribution_required": "This work includes material from the System Reference Document 5.2.1 (\"SRD 5.2.1\") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.",
-    "fit_quality": { "hp_r2": 0.917, "attack_r2": 0.898, "dc_r2": 0.896, "ac_r2": 0.553,
-      "note": "AC intentionally loose — archetype identity lives largely in the AC/HP trade." }
+    "fit_quality": {
+      "hp_r2": 0.917,
+      "attack_r2": 0.898,
+      "dc_r2": 0.896,
+      "ac_r2": 0.553,
+      "note": "AC intentionally loose \u2014 archetype identity lives largely in the AC/HP trade."
+    }
   },
-
   "chassis": {
     "_comment": "Baseline expected values for a Balanced creature at a given CR. Computed in JS, never by the LLM. CR below 1: use anchor table, not formulas.",
     "formulas_cr_gte_1": {
@@ -17,76 +21,285 @@
       "pb": "cr < 5 ? 2 : 2 + floor((ceil(cr) - 1) / 4)"
     },
     "anchors_cr_lt_1": {
-      "0":     { "ac": 11, "hp": 3,  "attack_bonus": 2, "save_dc": 10 },
-      "0.125": { "ac": 12, "hp": 9,  "attack_bonus": 4, "save_dc": 11 },
-      "0.25":  { "ac": 12, "hp": 13, "attack_bonus": 4, "save_dc": 11 },
-      "0.5":   { "ac": 12, "hp": 21, "attack_bonus": 4, "save_dc": 11 }
+      "0": {
+        "ac": 11,
+        "hp": 3,
+        "attack_bonus": 2,
+        "save_dc": 10
+      },
+      "0.125": {
+        "ac": 12,
+        "hp": 9,
+        "attack_bonus": 4,
+        "save_dc": 11
+      },
+      "0.25": {
+        "ac": 12,
+        "hp": 13,
+        "attack_bonus": 4,
+        "save_dc": 11
+      },
+      "0.5": {
+        "ac": 12,
+        "hp": 21,
+        "attack_bonus": 4,
+        "save_dc": 11
+      }
     },
     "observed_spread": {
-      "hp_ratio_p10_p90": [0.78, 1.34],
-      "ac_deviation_p10_p90": [-2.3, 2.6],
+      "hp_ratio_p10_p90": [
+        0.78,
+        1.34
+      ],
+      "ac_deviation_p10_p90": [
+        -2.3,
+        2.6
+      ],
       "_comment": "Lint bounds. Generated blocks outside archetype-adjusted versions of these ranges get rejected or corrected."
     }
   },
-
   "structural_tiers": {
     "_comment": "How many mechanical slots a block gets. Empirical breakpoints from SRD 5.2.1: multiattack goes 0% (CR 0) -> ~40% (CR 1-2) -> ~80-90% (CR 3-5) -> 100% (CR 6+); legendary actions appear ~CR 10, dominant CR 13+, universal CR 21+.",
-    "tier_1_minion":   { "cr": [0, 0.5],  "traits": [0, 1], "actions": [1, 2], "multiattack": false, "bonus_action": false, "reaction": false, "legendary": false },
-    "tier_2_standard": { "cr": [1, 2],    "traits": [1, 2], "actions": [2, 3], "multiattack": "optional", "bonus_action": "optional", "reaction": false, "legendary": false },
-    "tier_3_veteran":  { "cr": [3, 7],    "traits": [1, 3], "actions": [3, 4], "multiattack": "x2 required", "bonus_action": "optional", "reaction": "archetype-dependent", "legendary": false },
-    "tier_4_elite":    { "cr": [8, 12],   "traits": [2, 4], "actions": [3, 5], "multiattack": "x2-x3 required", "bonus_action": "recommended", "reaction": "archetype-dependent", "legendary": "optional" },
-    "tier_5_paragon":  { "cr": [13, 20],  "traits": [3, 5], "actions": [4, 5], "multiattack": "x3 required", "bonus_action": "optional", "reaction": "optional", "legendary": "recommended, resistance 3/day" },
-    "tier_6_mythic":   { "cr": [21, 30],  "traits": [3, 6], "actions": [4, 6], "multiattack": "x3 required", "bonus_action": "optional", "reaction": "optional", "legendary": "required, resistance 3-4/day, consider lair" }
+    "tier_1_minion": {
+      "cr": [
+        0,
+        0.5
+      ],
+      "traits": [
+        0,
+        1
+      ],
+      "actions": [
+        1,
+        2
+      ],
+      "multiattack": false,
+      "bonus_action": false,
+      "reaction": false,
+      "legendary": false
+    },
+    "tier_2_standard": {
+      "cr": [
+        1,
+        2
+      ],
+      "traits": [
+        1,
+        2
+      ],
+      "actions": [
+        2,
+        3
+      ],
+      "multiattack": "optional",
+      "bonus_action": "optional",
+      "reaction": false,
+      "legendary": false
+    },
+    "tier_3_veteran": {
+      "cr": [
+        3,
+        7
+      ],
+      "traits": [
+        1,
+        3
+      ],
+      "actions": [
+        3,
+        4
+      ],
+      "multiattack": "x2 required",
+      "bonus_action": "optional",
+      "reaction": "archetype-dependent",
+      "legendary": false
+    },
+    "tier_4_elite": {
+      "cr": [
+        8,
+        12
+      ],
+      "traits": [
+        2,
+        4
+      ],
+      "actions": [
+        3,
+        5
+      ],
+      "multiattack": "x2-x3 required",
+      "bonus_action": "recommended",
+      "reaction": "archetype-dependent",
+      "legendary": "optional"
+    },
+    "tier_5_paragon": {
+      "cr": [
+        13,
+        20
+      ],
+      "traits": [
+        3,
+        5
+      ],
+      "actions": [
+        4,
+        5
+      ],
+      "multiattack": "x3 required",
+      "bonus_action": "optional",
+      "reaction": "optional",
+      "legendary": "recommended, resistance 3/day"
+    },
+    "tier_6_mythic": {
+      "cr": [
+        21,
+        30
+      ],
+      "traits": [
+        3,
+        6
+      ],
+      "actions": [
+        4,
+        6
+      ],
+      "multiattack": "x3 required",
+      "bonus_action": "optional",
+      "reaction": "optional",
+      "legendary": "required, resistance 3-4/day, consider lair"
+    }
   },
-
   "archetypes": {
     "_comment": "Multipliers apply to chassis values, then round. required_slots are structural obligations the generator must fill; the LLM chooses/writes flavor for them, never the numbers.",
     "brute": {
-      "hp_mult": 1.3, "ac_mod": -1, "damage_mult": 1.15, "attack_mod": 0, "dc_mod": 0,
-      "required_slots": ["heavy melee attack", "high STR"],
-      "forbidden": ["ranged attack as primary"],
-      "srd_exemplars": ["Ogre Zombie", "Earth Elemental", "Giant Hyena"]
+      "hp_mult": 1.3,
+      "ac_mod": -1,
+      "damage_mult": 1.15,
+      "attack_mod": 0,
+      "dc_mod": 0,
+      "required_slots": [
+        "heavy melee attack",
+        "high STR"
+      ],
+      "forbidden": [
+        "ranged attack as primary"
+      ],
+      "srd_exemplars": [
+        "Ogre Zombie",
+        "Earth Elemental",
+        "Giant Hyena"
+      ]
     },
     "defender": {
-      "hp_mult": 1.1, "ac_mod": 2, "damage_mult": 0.85, "attack_mod": 0, "dc_mod": 0,
-      "required_slots": ["reaction (tier 3+): protect ally or punish movement"],
-      "srd_exemplars": ["Animated Armor", "Roper", "Couatl"]
+      "hp_mult": 1.1,
+      "ac_mod": 2,
+      "damage_mult": 0.85,
+      "attack_mod": 0,
+      "dc_mod": 0,
+      "required_slots": [
+        "reaction (tier 3+): protect ally or punish movement"
+      ],
+      "srd_exemplars": [
+        "Animated Armor",
+        "Roper",
+        "Couatl"
+      ]
     },
     "skirmisher": {
-      "hp_mult": 0.95, "ac_mod": 0, "damage_mult": 1.0, "attack_mod": 0, "dc_mod": 0,
-      "required_slots": ["movement trick: bonus-action Disengage, flyby, spider climb, or burrow"],
-      "srd_exemplars": ["Goblin-type pattern (SRD 5.2 uses generic equivalents)"]
+      "hp_mult": 0.95,
+      "ac_mod": 0,
+      "damage_mult": 1.0,
+      "attack_mod": 0,
+      "dc_mod": 0,
+      "required_slots": [
+        "movement trick: bonus-action Disengage, flyby, spider climb, or burrow"
+      ],
+      "srd_exemplars": [
+        "Goblin-type pattern (SRD 5.2 uses generic equivalents)"
+      ]
     },
     "artillery": {
-      "hp_mult": 0.75, "ac_mod": -1, "damage_mult": 1.1, "attack_mod": 1, "dc_mod": 0,
-      "required_slots": ["primary ranged attack, 60ft+", "escape or zone-denial tool"],
-      "forbidden": ["melee damage exceeding ranged damage"]
+      "hp_mult": 0.75,
+      "ac_mod": -1,
+      "damage_mult": 1.1,
+      "attack_mod": 1,
+      "dc_mod": 0,
+      "required_slots": [
+        "primary ranged attack, 60ft+",
+        "escape or zone-denial tool"
+      ],
+      "forbidden": [
+        "melee damage exceeding ranged damage"
+      ]
+    },
+    "glass_cannon": {
+      "hp_mult": 0.65,
+      "ac_mod": -2,
+      "damage_mult": 1.35,
+      "attack_mod": 1,
+      "dc_mod": 0,
+      "required_slots": [
+        "high-damage melee or close-range attack routine",
+        "an all-in trait that buys offense with its own safety (advantage on its attacks while attacks against it have advantage, extra damage when it presses recklessly, or a similar bargain)"
+      ],
+      "forbidden": [
+        "defensive traits that reduce or mitigate incoming damage",
+        "high AC"
+      ]
     },
     "controller": {
-      "hp_mult": 0.9, "ac_mod": 0, "damage_mult": 0.7, "attack_mod": 0, "dc_mod": 1,
-      "required_slots": ["save-based action imposing a condition (2024 capitalized condition names)"],
-      "srd_exemplars": ["Aboleth (Dominate Mind pattern)"]
+      "hp_mult": 0.9,
+      "ac_mod": 0,
+      "damage_mult": 0.7,
+      "attack_mod": 0,
+      "dc_mod": 1,
+      "required_slots": [
+        "save-based action imposing a condition (2024 capitalized condition names)"
+      ],
+      "srd_exemplars": [
+        "Aboleth (Dominate Mind pattern)"
+      ]
     },
     "lurker": {
-      "hp_mult": 0.75, "ac_mod": 0, "damage_mult": 0.6, "attack_mod": 1, "dc_mod": 0,
+      "hp_mult": 0.75,
+      "ac_mod": 0,
+      "damage_mult": 0.6,
+      "attack_mod": 1,
+      "dc_mod": 0,
       "nova_mult": 2.0,
-      "required_slots": ["stealth/phasing/invisibility trait", "ambush or once-per-fight nova mechanic"],
-      "srd_exemplars": ["Ghost", "Will-o'-Wisp", "Chain Devil"]
+      "required_slots": [
+        "stealth/phasing/invisibility trait",
+        "ambush or once-per-fight nova mechanic"
+      ],
+      "srd_exemplars": [
+        "Ghost",
+        "Will-o'-Wisp",
+        "Chain Devil"
+      ]
     },
     "support": {
-      "hp_mult": 0.85, "ac_mod": 0, "damage_mult": 0.6, "attack_mod": 0, "dc_mod": 1,
-      "required_slots": ["buff, heal, or enable action targeting allies"],
+      "hp_mult": 0.85,
+      "ac_mod": 0,
+      "damage_mult": 0.6,
+      "attack_mod": 0,
+      "dc_mod": 1,
+      "required_slots": [
+        "buff, heal, or enable action targeting allies"
+      ],
       "solo_warning": "flag in UI: supports underperform their CR when encountered alone"
     },
     "swarm": {
-      "hp_mult": 1.25, "ac_mod": -1, "damage_mult": 1.0,
-      "required_slots": ["swarm trait (occupy other creatures' space, no Tiny-space penalty)",
-                         "resistance package: Bludgeoning/Piercing/Slashing",
-                         "condition immunities: Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned",
-                         "half-damage attack mode at or below half HP"]
+      "hp_mult": 1.25,
+      "ac_mod": -1,
+      "damage_mult": 1.0,
+      "required_slots": [
+        "swarm trait (occupy other creatures' space, no Tiny-space penalty)",
+        "resistance package: Bludgeoning/Piercing/Slashing",
+        "condition immunities: Charmed, Frightened, Grappled, Paralyzed, Petrified, Prone, Restrained, Stunned",
+        "half-damage attack mode at or below half HP"
+      ]
     }
   },
-
   "lint_rules": {
     "_comment": "Post-generation validation. Reject or auto-correct, then regenerate flavor only.",
     "checks": [

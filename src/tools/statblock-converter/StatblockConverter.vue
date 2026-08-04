@@ -12,6 +12,11 @@
           right, <a href="https://cros.land/contact-me/" target="_blank" rel="noopener">contact me</a>
           and I'll add support for it.
         </p>
+        <p v-if="showTrialNote" class="converter-trial" data-testid="trial-note">
+          <strong>Free and unlimited through {{ promoEndLabel }}</strong> while the
+          converter is new. After that, conversions count toward the free plan's
+          limit of 5 AI generations a day.
+        </p>
         <ParTextarea v-model="pasteText" :rows="14" data-testid="converter-input"
           placeholder="Paste a full statblock here — name, AC, hit points, abilities, actions…" />
       </div>
@@ -68,6 +73,7 @@ import { parseStatblockText, buildStatblockParsePrompt, validateParsedStatblock,
 import { convertEdition } from '@/tools/statblock-generator/format-2024/generate.mjs';
 import { generateGptResponse, isDegradedMode } from '@/util/ai-client.mjs';
 import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
+import { isConverterPromoActive, CONVERTER_PROMO_END_LABEL } from '@/util/converter-promo.mjs';
 import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { useToast } from '@/composables/useToast';
@@ -75,6 +81,11 @@ import { logger } from '@/util/logger.mjs';
 
 const props = defineProps({ premium: { type: Boolean, default: false } });
 const toast = useToast();
+
+// Evaluated once at mount: the window is a week long, so a session
+// straddling the boundary is not worth reactive plumbing.
+const showTrialNote = !props.premium && isConverterPromoActive();
+const promoEndLabel = CONVERTER_PROMO_END_LABEL;
 
 const pasteText = ref('');
 const parsed = ref(null);
@@ -98,9 +109,14 @@ async function convert() {
   if (!parsed.value || converting.value) return;
   // Conversion meters like a generation; a messy paste spends its unit on
   // up to two calls (LLM parse + conversion), same shape as a generation's
-  // resolve + main call.
-  const canConvert = await canGenerateStatblock(props.premium);
-  if (!canConvert) return;
+  // resolve + main call. During the launch trial the quota is skipped
+  // entirely (the gate both checks AND consumes, so it can't be called).
+  // Premium still calls through: it always passes, and the call seeds the
+  // quota record a later drop to the free tier depends on.
+  if (props.premium || !isConverterPromoActive()) {
+    const canConvert = await canGenerateStatblock(props.premium);
+    if (!canConvert) return;
+  }
 
   converting.value = true;
   try {
@@ -189,6 +205,19 @@ function openInGenerator() {
   margin: 0 0 0.5rem;
   line-height: 1.2;
   color: var(--color-action-hover, #2A4D70);
+}
+
+.converter-trial {
+  margin: 0 0 1.2rem;
+  /* Same size as the hint above it: visible, never fine print. */
+  font-size: 1.4rem;
+  text-align: center;
+  color: var(--par-color-text-secondary, #555);
+}
+
+.converter-trial strong {
+  color: var(--par-color-title, #7a1f1f);
+  font-weight: 600;
 }
 
 .converter-hint {

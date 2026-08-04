@@ -108,19 +108,25 @@ describe('audit fuzzy entry recovery (the Ethereal Lullaby drop)', () => {
 });
 
 describe('escape-dc-band (fix-call number-integrity hole)', () => {
-  test('an off-policy escape DC restamps to save_dc − 2', () => {
+  // Policy updated 2026-08-02: escape DC = 8 + PB + strike mod, which is
+  // attack_bonus + 8. Measured on the 39 printed escape DCs, 46% match it
+  // exactly and the rest sit 1-3 below; the old save_dc − 2 matched 17%.
+  // this fixture chassis has no attack_bonus; the rule falls back through save_dc − 6
+  const policy = (chassis.attack_bonus ?? chassis.save_dc - 6) + 8;
+
+  test('an off-policy escape DC restamps to 8 + PB + strike mod', () => {
     const m = wrap('Actions', 'Thorn Lash',
       'Melee Attack Roll: +10, reach 10 ft. 27 (6d6 + 6) Piercing damage, and the target has the Grappled condition (escape DC 18).');
     const f = rulesFor(m, 'escape-dc-band');
     expect(f).toHaveLength(1);
-    const fixed = applyCorrections(m, f, { chassis }); // save_dc 24 → escape 22
-    expect(fixed.sections.Actions[0].text).toContain('(escape DC 22)');
+    const fixed = applyCorrections(m, f, { chassis });
+    expect(fixed.sections.Actions[0].text).toContain(`(escape DC ${policy})`);
     expect(rulesFor(fixed, 'escape-dc-band')).toHaveLength(0);
   });
 
   test('the policy DC passes', () => {
     const m = wrap('Actions', 'Grab',
-      'Hit: 14 (2d8 + 5) Bludgeoning damage and the target has the Grappled condition (escape DC 22).');
+      `Hit: 14 (2d8 + 5) Bludgeoning damage and the target has the Grappled condition (escape DC ${policy}).`);
     expect(rulesFor(m, 'escape-dc-band')).toHaveLength(0);
   });
 });

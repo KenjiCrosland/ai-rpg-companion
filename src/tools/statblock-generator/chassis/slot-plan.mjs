@@ -46,6 +46,12 @@ const SLOT_CATEGORIES = {
   // artillery
   'primary ranged attack, 60ft+': { category: 'action' },
   'escape or zone-denial tool': { category: ['action', 'bonus_action'] },
+  // glass cannon — the payload is an action; the bargain that pays for it
+  // is a trait (an always-on posture, not something it activates)
+  'high-damage melee or close-range attack routine': { category: 'action' },
+  'an all-in trait that buys offense with its own safety (advantage on its attacks while attacks against it have advantage, extra damage when it presses recklessly, or a similar bargain)': {
+    category: 'trait',
+  },
   // controller
   'save-based action imposing a condition (2024 capitalized condition names)': {
     category: 'action',

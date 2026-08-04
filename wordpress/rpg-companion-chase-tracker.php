@@ -256,7 +256,9 @@ function rpg_chase_tracker_footer() {
         from <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a>
         under <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>.
         Includes material from the D&amp;D System Reference Documents (SRD 5.1
-        and SRD 5.2.1) by Wizards of the Coast LLC, used under the
+        and SRD 5.2.1) by Wizards of the Coast LLC, and monster design analysis
+        by <a href="https://blogofholding.com/?p=8130" target="_blank" rel="noopener">Blog of Holding</a>,
+        used under the
         <a href="https://cros.land/ogl" target="_blank" rel="noopener">Creative Commons Attribution 4.0 License</a>.
       </div>
     </div>

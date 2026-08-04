@@ -1115,6 +1115,58 @@ legendary damage compounding (0.36×), encounter snapshot monsters
 lacking retroactive other_edition, dungeon whole-batch convert (v2),
 Roll20 extension 2024-shape (external).
 
+## Batch 27 — Frostgrave: damage floor + glass cannon (2026-07-31)
+
+Owner pasted a CR 16 legendary controller dealing 32/round and asked what
+was going on. Three findings, two of them ours:
+
+1. **`multiattackCount` inflation (bug, fixed)**: "It can replace one Claw
+   attack with a use of X" was counted as an extra attack. 3 attacks read
+   as 4, dropping the per-attack budget from 14 to 11, which is exactly why
+   under-damage attacks passed `attack-damage-band`. Substitution clauses
+   are now stripped before counting (the official "replace one attack with
+   a use of Spellcasting" shape is the same pattern).
+2. **`save-dc-unsupported` (new rule)**: an outside review claimed monster
+   save DCs cannot exceed 8 + PB + best ability modifier. The corpus AGREES
+   (0 of 136 official blocks exceed it; 54 sit exactly on it), so the
+   chassis DC now clamps to that ceiling. The Frostgrave's controller +1
+   had pushed DC 21 past a ceiling of 20.
+3. **Legendary budget: NO chassis change, after two wrong turns.** The
+   arithmetic, worked through properly: a CR 16 controller's total output
+   is 102 x 0.7 = 71, split as 43 routine + ~28 from legendary actions.
+   Fix the multiattack count and the Frostgrave's attacks clamp to 14
+   each, giving 42 routine + 30 from three legendary Ice Shards = 72
+   against a target of 71. It lands ON budget from fix #1 alone. Two
+   proposals died on the way here, both mine: taking `max()` of the
+   multipliers removed the discount for every role at or above 0.6
+   damage_mult (the exact overrun the discount prevents), and a 0.5 floor
+   on the compounded product made damage-light legendary creatures ~14%
+   HOT once their legendary actions paid out. The compounding is correct.
+   Owner caught it: "Isn't a balanced creature supposed to be 102 DPR if
+   you include the legendaries?"
+   The residual risk is narrower than either proposal assumed: a block
+   whose legendary options are ALL utility never earns the discount back.
+   New rule `legendary-no-damage` (reject) covers exactly that — officials
+   are 30/30 with at least one option that deals damage or delegates to an
+   attack. Re-roll pseudo-block stubs are exempt.
+   LESSON: price the whole creature (routine + legendary) before touching
+   a multiplier. The other model's "hitting like a CR 5 creature" compared
+   against the BALANCED target and ignored the controller role.
+
+Also **new archetype: `glass_cannon`** (owner noticed the gap). hp 0.65,
+ac −2, damage 1.35, attack +1. The existing roles had no fragile
+high-damage MELEE option: artillery is fragile but forbidden from
+melee-primary, brute is durable, lurker trades sustained damage for a
+nova. Required slots are the payload attack plus an all-in trait that buys
+offense with its own safety. Registered in the spec (which drives
+ARCHETYPE_NAMES), slot-plan categories, both micro-call prompts,
+phonetics, and the UI (label logic now renders multi-word keys, so
+`glass_cannon` shows as "Glass cannon").
+
+Outstanding from this block, no rule: "The Hollow-Sink" uses its own name
+as an undefined verb and the legendary action says "using its The
+Hollow-Sink trait". Audit principle-2 territory; the audit missed it.
+
 ## Batch 26 — Soulbog (2026-07-30)
 
 Coherent block (undead soul-bog: type right, all three damage types

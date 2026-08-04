@@ -65,11 +65,11 @@ describe('grapple-exit lint rule', () => {
 });
 
 describe('grapple-exit correction (deterministic injection)', () => {
-  test('injects an escape DC rider on a bare Grappled (save_dc − 2)', () => {
+  test('injects an escape DC rider on a bare Grappled (8 + PB + strike mod)', () => {
     const m = wrap('Actions', entry('Clutch',
       '*Failure:* The target has the Grappled condition and takes 10 (3d6) damage.'));
     const fixed = applyCorrections(m, findingsFor(m), { chassis });
-    expect(fixed.sections.Actions[0].text).toContain('has the Grappled condition (escape DC 21)');
+    expect(fixed.sections.Actions[0].text).toContain('has the Grappled condition (escape DC 25)');
     expect(findingsFor(fixed)).toHaveLength(0);
   });
 

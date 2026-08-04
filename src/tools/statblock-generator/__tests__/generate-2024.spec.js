@@ -13,6 +13,14 @@ import {
 } from '../format-2024/generate.mjs';
 import { lintStatblock, avgDice } from '../format-2024/lint.mjs';
 
+
+// These exercise the CHASSIS path, which 2024 no longer uses by default
+// (owner call, 2026-08-02) but which is still reachable: 2014 generation,
+// seeded random-trait generation, and localStorage['statblock-skeleton']='0'.
+// Opt in explicitly so the suite keeps testing what it was written for.
+beforeEach(() => localStorage.setItem('statblock-skeleton', '0'));
+afterEach(() => localStorage.removeItem('statblock-skeleton'));
+
 // Well-formed LLM response for a lurker at CR 4 (chassis: hp 59, ac 14,
 // attack +7, DC 13, pb 2 — verified in chassis.spec.js).
 const llmFixture = {

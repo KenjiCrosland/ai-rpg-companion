@@ -22,7 +22,7 @@
     </div>
 
     <CdrSkeletonBone v-for="line in 3" :key="`d${line}`" type="line" class="sb24-skeleton__bone" :style="`width: ${30 + line * 8}%;`" />
-    <span v-if="chassis" class="sb24-skeleton__real" data-testid="skeleton-cr"><strong>CR</strong> {{ chassis.cr_str }} (XP {{ chassis.xp.toLocaleString('en-US') }}; PB +{{ chassis.pb }})</span>
+    <span v-if="chassis" class="sb24-skeleton__real" data-testid="skeleton-cr"><strong>CR</strong> {{ chassis.cr_str }} (XP {{ (chassis.xp ?? 0).toLocaleString('en-US') }}; PB +{{ chassis.pb }})</span>
     <CdrSkeletonBone v-else type="line" class="sb24-skeleton__bone" style="width: 62%;" />
 
     <CdrSkeletonBone type="line" class="sb24-skeleton__bone sb24-skeleton__section" style="width: 18%; height: 1.6rem;" />

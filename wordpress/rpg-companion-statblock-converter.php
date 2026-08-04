@@ -152,9 +152,16 @@ function rpg_converter_seo_content() {
             <summary itemprop="name">Is the converter free?</summary>
             <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
               <p itemprop="text">
-                Pasting and previewing is free. Each conversion counts as one of
-                the 5 daily AI generations on the free tier, shared with the
-                statblock generator.
+                Pasting and previewing is always free.
+                <?php if ( time() < strtotime( '2026-08-08 00:00:00 -0700' ) ) : ?>
+                Converting is free and unlimited through August 7 while the tool
+                is new. After that, each conversion counts as one of the 5 daily
+                AI generations on the free tier, shared with the statblock
+                generator.
+                <?php else : ?>
+                Each conversion counts as one of the 5 daily AI generations on
+                the free tier, shared with the statblock generator.
+                <?php endif; ?>
                 <a href="https://www.patreon.com/c/ai_rpg_tookit">Premium</a>
                 ($5/month) removes the limit.
               </p>
@@ -227,7 +234,9 @@ function rpg_converter_footer() {
       </div>
       <div class="rpg-footer-ogl">
         Includes material from the D&amp;D System Reference Documents (SRD 5.1
-        and SRD 5.2.1) by Wizards of the Coast LLC, used under the
+        and SRD 5.2.1) by Wizards of the Coast LLC, and monster design analysis
+        by <a href="https://blogofholding.com/?p=8130" target="_blank">Blog of Holding</a>,
+        used under the
         <a href="https://cros.land/ogl" target="_blank">Creative Commons Attribution 4.0 License</a>
       </div>
     </div>

@@ -16,17 +16,40 @@ import { seedLeakTokens, rollNameBans, TYPE_ESSENCES } from './concept-seeds.mjs
 import spec from '@/data/archetype-chassis-spec.json';
 import srdMonsters from '@/data/srd52-monsters.json';
 import challengeRatings from '@/data/challengeRatings.json';
+import crTable from '@/data/cr-table.json';
 import { chassisFor, applyArchetype } from '../chassis/chassis.mjs';
+import { HIT_DIE_BY_SIZE, hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor } from './dice.mjs';
 import { slotPlanFor } from '../chassis/slot-plan.mjs';
 import { lintStatblock, avgDice, CONDITIONS, DEFENSE_WEIGHTS, SELF_REF_STOP } from './lint.mjs';
 import { logger } from '@/util/logger.mjs';
 import { auditEligible, buildAuditPrompt, validateAuditResponse, verifyAuditFindings, auditNameGrade, auditTypeCorrection } from './audit.mjs';
 
+// Dice solvers live in dice.mjs so skeleton/ can use them without importing
+// this module. Re-exported here: existing importers and tests are unaffected.
+export { hpFormulaFor, attackDamageDiceFor, saveDamageDiceFor } from './dice.mjs';
+
+/**
+ * The skeleton path is the DEFAULT for 2024 (owner call, 2026-08-02).
+ *
+ * Set localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
+ * Read at call time, not import time, so flipping it takes effect on the next
+ * generation with no reload — the same convention as the legacy-2014 flag.
+ *
+ * A blocked storage (incognito, embedded frame) keeps the default rather than
+ * throwing: the fallback should never be reached by accident.
+ */
+function usesSkeletonPath() {
+  try {
+    return typeof localStorage === 'undefined' || localStorage.getItem('statblock-skeleton') !== '0';
+  } catch {
+    return true;
+  }
+}
+
 export const ARCHETYPE_NAMES = Object.keys(spec.archetypes).filter((n) => !n.startsWith('_'));
 
 const STAT_ORDER = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 
-const HIT_DIE_BY_SIZE = { Tiny: 4, Small: 6, Medium: 8, Large: 10, Huge: 12, Gargantuan: 20 };
 
 const SKILL_ABILITY = {
   Athletics: 'STR',
@@ -101,77 +124,8 @@ export function crNumberFor(str) {
   return Number(s);
 }
 
-/**
- * Deterministic hit-dice solver, CON-coherent: the flat bonus is EXACTLY
- * dice-count × CON mod (the DMG construction grognards check — "17d10 + 69"
- * with CON +4 is a tell). Dice count is chosen so the floor-average lands
- * nearest the chassis target; callers re-read the exact average via
- * avgDice() and stamp it as the block's HP (the ±35% band absorbs the
- * drift).
- */
-export function hpFormulaFor(targetHp, size, conMod = 0) {
-  const die = HIT_DIE_BY_SIZE[size] ?? 8;
-  const avgPerDie = (die + 1) / 2;
-  // The 0.5 floor keeps the dice-count estimate honest when CON drags the
-  // per-die contribution near zero (small dice, deeply negative CON).
-  const perDie = Math.max(0.5, avgPerDie + conMod);
-  let n = Math.max(1, Math.round(targetHp / perDie));
-  // Deep-negative CON guard: never emit a formula whose average is < 1.
-  while (n > 1 && Math.floor(n * avgPerDie) + n * conMod < 1) n--;
-  const m = n * conMod;
-  if (m === 0) return `${n}d${die}`;
-  return m > 0 ? `${n}d${die} + ${m}` : `${n}d${die} - ${-m}`;
-}
 
-/**
- * Attack damage skeleton: NdD + M where M IS the attack ability's modifier
- * (grognard contract: the flat damage bonus equals the ability mod that
- * made the attack roll). Returns the dice and their exact floor-average —
- * the skeleton prints that average, not the raw budget.
- */
-export function attackDamageDiceFor(avg, mod) {
-  // House die is d8; smaller dice only when meaningfully closer. Within a
-  // ±1 closeness tolerance the LARGER die wins — officials write "4d6 + 9",
-  // not "6d4 + 9" (live finding) — while low-CR budgets (avg ≈ mod) still
-  // fall to d4/d6 to avoid overshooting.
-  const candidates = [];
-  for (const die of [8, 6, 4]) {
-    const per = (die + 1) / 2;
-    const n = Math.max(1, Math.round((avg - mod) / per));
-    const actual = Math.floor(n * per) + mod;
-    if (actual < 1) continue;
-    const dice = mod === 0 ? `${n}d${die}` : mod > 0 ? `${n}d${die} + ${mod}` : `${n}d${die} - ${-mod}`;
-    candidates.push({ dice, avg: actual, diff: Math.abs(actual - avg) });
-  }
-  if (!candidates.length) return { dice: '1d4', avg: Math.max(1, 2 + mod) };
-  const minDiff = Math.min(...candidates.map((c) => c.diff));
-  const { dice, avg: actual } = candidates.find((c) => c.diff <= minDiff + 1);
-  return { dice, avg: actual };
-}
 
-/**
- * Save-effect damage skeleton: pure dice, no flat bonus — the SRD's own
- * convention for save-based effects ("21 (6d6)"). Picks the die whose
- * floor-average lands closest to the budget.
- */
-export function saveDamageDiceFor(avg) {
-  // Closeness first, but dice-count sanity matters at scale: officials top
-  // out at 26 dice (Ancient Red's 26d6), while a closeness-only pick
-  // produced "311 (89d6)" (live finding). Counts beyond 15 pay a growing
-  // penalty, so big budgets climb to larger dice (24d12, not 45d6) while
-  // small ones keep the canonical handfuls (6d6).
-  let best = null;
-  for (const die of [6, 8, 10, 12]) {
-    const per = (die + 1) / 2;
-    const n = Math.max(1, Math.round(avg / per));
-    const actual = Math.floor(n * per);
-    const score = Math.abs(actual - avg) + Math.max(0, n - 15) * 0.5;
-    if (!best || score < best.score) {
-      best = { dice: `${n}d${die}`, avg: actual, score };
-    }
-  }
-  return { dice: best.dice, avg: best.avg };
-}
 
 /** The chassis-required attack-ability modifier (attack bonus = mod + PB). */
 export function requiredAttackModFor(chassis) {
@@ -209,6 +163,7 @@ export function buildContext(cr, archetypeName) {
 // optional-legendary block usually has no legendary actions, so its full
 // routine budget is correct.
 const LEGENDARY_ROUTINE_DISCOUNT = 0.6;
+
 
 /**
  * Damage-per-round budget: DMG table midpoint × archetype damage_mult ×
@@ -268,6 +223,7 @@ Archetypes:
 - defender: protects allies, high AC, punishes movement
 - skirmisher: mobile hit-and-run attacker
 - artillery: fragile ranged damage dealer
+- glass_cannon: the highest damage at its CR, paid for with the thinnest defenses; it wins fast or dies fast
 - controller: locks enemies down with conditions instead of damage
 - lurker: fragile ambusher with a devastating opening strike
 - support: buffs, heals, or enables allies
@@ -281,7 +237,9 @@ TYPE HONESTY: creature_type must be the type your identity actually EXPRESSES �
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — the story a GM would read aloud. Grounded in the concept's substance, never generic doom-prose.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the eight names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>"}`;
+Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "identity": "<2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"]}`;
 }
 
 export function validateArchetypeResponse(jsonString) {
@@ -312,6 +270,7 @@ Archetypes:
 - defender: protects allies, high AC, punishes movement
 - skirmisher: mobile hit-and-run attacker
 - artillery: fragile ranged damage dealer
+- glass_cannon: the highest damage at its CR, paid for with the thinnest defenses; it wins fast or dies fast
 - controller: locks enemies down with conditions instead of damage
 - lurker: fragile ambusher with a devastating opening strike
 - support: buffs, heals, or enables allies
@@ -323,7 +282,9 @@ TYPE HONESTY: creature_type must be the type your synthesis actually EXPRESSES �
 
 Also write ONE sentence of world-lore ("lore"): where this creature comes from and what it wants — drawn from the rolled ORIGIN, the story a GM would read aloud. Grounded in the fused substance, never generic doom-prose.
 
-Return ONLY JSON, no markdown: {"archetype": "<one of the eight>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>"}`;
+Also pick the creature's THEME THREADS ("themes"): ONE primary word the concept is most about, plus at most ONE supporting word that complements it — from this list only: bestial, armed, amorphous, grave, fiendish, celestial, fey, draconic, elemental, verdant, forged, mind, venomous, terror, beguiling, grasping, devouring, aquatic, subterranean, aerial, uncanny, arcane, voice, gaze, breath. The pair must COHERE — grave+aquatic is a drowned dead thing; subterranean+celestial is nonsense. And themes must AGREE with creature_type: celestial means a Celestial, grave means Undead, fiendish a Fiend, draconic a Dragon, verdant a Plant, forged a Construct — never declare a domain theme the type contradicts.
+
+Return ONLY JSON, no markdown: {"archetype": "<one of the role names above>", "synthesis": "<your 2-3 sentences>", "lore": "<one sentence>", "creature_type": "<one of: Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead>", "themes": ["2-3 from the list"]}`;
 }
 
 export function validateSeedSynthesisResponse(jsonString) {
@@ -513,7 +474,7 @@ FIXED NUMBERS (do not deviate):
 - Save-based damage is pure dice, no flat bonus, halved on a success. SINGLE-target save effects: about ${saveDmg.avg} (${saveDmg.dice}). AREA effects (Cones, Lines, bursts): about ${aoeDmg.avg} (${aoeDmg.dice}) — areas hit multiple creatures, so they use the HALF number, never the single-target number.${novaDmg ? `\n- The nova/ambush mechanic may deal up to ${novaDmg.avg} (${novaDmg.dice}) once per fight.` : ''}
 - An area effect that deals damage may add a SOFT condition (Prone, Frightened, Poisoned) but NOT a hard lockdown (Stunned, Paralyzed, Petrified, Unconscious) unless the entry is gated "(Recharge 5-6)" or "(1/Day)".
 - An action woven into Multiattack ("can replace one attack with X" / "and uses X") must deal at most the per-attack number (${atkDmg.avg}) unless it is Recharge/1-Day gated. The ${saveDmg.avg} single-target save number is a STANDALONE action used instead of Multiattack, never inside it.
-- Any Grappled condition must carry an "(escape DC ${Math.max(8, chassis.save_dc - 2)})" rider; any Restrained effect must give the target an exit (a repeat save, a fixed duration, or a breakable binding) — never an unescapable or indefinitely-maintained hold.
+- Any Grappled condition must carry an "(escape DC ${Math.max(8, (chassis.attack_bonus ?? chassis.save_dc - 6) + 8)})" rider; any Restrained effect must give the target an exit (a repeat save, a fixed duration, or a breakable binding) — never an unescapable or indefinitely-maintained hold.
 
 STRUCTURE (exact requirements):
 - Traits: between ${plan.traits.min} and ${plan.traits.max} entries.
@@ -739,7 +700,12 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
   const size = HIT_DIE_BY_SIZE[llmJson.size] ? llmJson.size : 'Medium';
   const crStr = crKeyFor(cr);
   const xp = challengeRatings[crStr]?.XP ?? 0;
-  const initiativeBonus = modOf(stats.DEX);
+  // Printed Initiative sits ABOVE the raw DEX mod from CR 8 up (measured:
+  // 29/29 printed CR 15+ blocks stamp it, modal +4 — see cr-table _meta).
+  const crNumForInit = { '1/8': 0.125, '1/4': 0.25, '1/2': 0.5 }[String(cr)] ?? Number(cr) ?? 0;
+  const initBand = crNumForInit <= 7 ? '0-7' : crNumForInit <= 14 ? '8-14' : crNumForInit <= 20 ? '15-20' : '21-30';
+  const initiativeBonus = modOf(stats.DEX)
+    + (crTable._meta.initiative?.delta_by_band?.[initBand] ?? 0);
   // HP follows the CON-coherent formula exactly (bonus = dice × CON mod);
   // the small drift off the chassis target stays well inside the HP band.
   const hpFormula = hpFormulaFor(chassis.hp, size, modOf(stats.CON));
@@ -1761,7 +1727,7 @@ export function applyCorrections(monster, findings, { chassis }) {
     const entry = (out.sections?.[f.loc.section] ?? []).find((e) => e.name === f.loc.entry);
     if (!entry) continue;
     if (f.expected === 'Grappled' && !/escape DC \d+/i.test(entry.text)) {
-      const dc = Math.max(8, chassis.save_dc - 2);
+      const dc = Math.max(8, (chassis.attack_bonus ?? chassis.save_dc - 6) + 8);
       // Also normalizes the nonstandard "is/becomes Grappled" phrasing the
       // widened anchor now catches.
       entry.text = entry.text.replace(/(?:has the Grappled condition|(?:is|becomes) Grappled\b)/, `has the Grappled condition (escape DC ${dc})`);
@@ -1834,6 +1800,19 @@ export function applyCorrections(monster, findings, { chassis }) {
     }
   }
 
+  // Clamp unsupported save DCs before the band sweep below, so the two
+  // corrections cannot fight over the same numbers.
+  for (const f of correctable.filter((x) => x.rule === 'save-dc-unsupported')) {
+    const ceiling = Number(f.expected);
+    if (!Number.isFinite(ceiling)) continue;
+    for (const entries of Object.values(out.sections ?? {})) {
+      for (const entry of entries) {
+        entry.text = entry.text.replace(/(Saving Throw\*?:?\s*DC\s+)(\d+)/gi, (m, pre, n) =>
+          (Number(n) > ceiling ? `${pre}${ceiling}` : m));
+      }
+    }
+  }
+
   if (has('attack-band') || has('dc-band') || has('escape-dc-band')) {
     for (const entries of Object.values(out.sections ?? {})) {
       for (const entry of entries) {
@@ -1843,7 +1822,9 @@ export function applyCorrections(monster, findings, { chassis }) {
           );
         }
         if (has('escape-dc-band')) {
-          const escapeDC = Math.max(8, chassis.save_dc - 2);
+          // Policy (measured, 2026-08-02): 8 + PB + strike mod = attack_bonus
+          // + 8. Must match the lint rule, or flag and restamp fight forever.
+          const escapeDC = Math.max(8, (chassis.attack_bonus ?? chassis.save_dc - 6) + 8);
           entry.text = entry.text.replace(/(escape DC )(\d+)/gi, (m, pre, n) =>
             Number(n) !== escapeDC ? `${pre}${escapeDC}` : m);
         }
@@ -2183,7 +2164,7 @@ const ENTRY_FIXABLE = new Set([
   'buff-behind-save', 'energy-type-spread',
   'self-condition-immunity-contradiction', 'motionless-invisible',
   'duplicate-mechanic', 'immune-damage-end-contradiction', 'check-imposes-condition',
-  'type-damage-affinity', 'spell-type-affinity',
+  'type-damage-affinity', 'spell-type-affinity', 'legendary-no-damage',
 ]);
 
 // Rules whose defect is the entry's NAME — the fix call may rename these
@@ -2320,6 +2301,7 @@ const PHONETICS_BY_ARCHETYPE = {
   defender: 'solid and blunt — st, gr, d clusters',
   skirmisher: 'quick and sharp — short vowels, crisp consonants (k, t, p)',
   artillery: 'taut and snapping — k, t, x',
+  glass_cannon: 'keen and violent — hard k and t, clipped vowels, edged clusters',
   controller: 'resonant and intoning — long o and u, n, m',
   lurker: 'hushed and sibilant — s, sh, wh, soft vowels',
   support: 'soft and chiming — l, m, open vowels',
@@ -2607,7 +2589,27 @@ export function applyRenameMapping(monster, mapping) {
 // ---------------------------------------------------------------------------
 
 export async function generateMonster2024(options, callLLM) {
-  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, onProgress = null } = options;
+  const { concept, description = '', cr, archetypeName, caster = false, archetypeSource = 'user', edition = '2024', seedTraits = null, degraded = false, resolvedType = null, typeSource = 'auto', lore = null, themes = null, onProgress = null } = options;
+
+  // The skeleton path is how 2024 monsters are built now; set
+  // localStorage['statblock-skeleton'] = '0' to fall back to the chassis.
+  // Both paths share this call site, the progress staging and the save flow.
+  //
+  // 2024 only — the ability library's 2014 templates cover about half the rows
+  // and no traits at all. Seeded (blank-form "random monster") generations DO
+  // use it: the seed's synthesized concept arrives in `concept` like any other,
+  // and excluding them meant the most common way to try the generator silently
+  // kept using the old path.
+  const useSkeleton = edition === '2024' && usesSkeletonPath();
+  logger.log(`[statblock] path: ${useSkeleton ? 'SKELETON' : 'chassis'} (edition ${edition}`
+    + `${seedTraits ? ', seeded' : ''})`);
+  if (useSkeleton) {
+    const { generateFromSkeleton } = await import('../skeleton/generate.mjs');
+    return generateFromSkeleton({
+      concept, description, cr, archetypeName, resolvedType, lore, themes, degraded, onProgress, caster,
+    }, callLLM);
+  }
+
   const { chassis, plan, archetype } = buildContext(cr, archetypeName);
   // Perceived-loading staging (owner ask, 2026-07-30): the engine's numbers
   // exist before any LLM call — surface them instantly, then the assembled

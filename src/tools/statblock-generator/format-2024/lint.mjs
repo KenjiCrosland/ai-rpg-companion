@@ -206,10 +206,16 @@ function multiattackCount(monster) {
   if (!entry) return 1;
   const WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
   const val = (w) => WORDS[w.toLowerCase()] ?? Number(w);
-  const total = /\bmakes (one|two|three|four|five|six|\d+) attacks?\b/i.exec(entry.text);
+  // Substitution clauses ("It can replace one Claw attack with a use of X")
+  // name an attack that is SWAPPED OUT, not an extra one. Counting it
+  // inflated the attack count, which shrank the per-attack budget and let
+  // genuinely under-damage attacks pass the band (live: a CR 16 block whose
+  // 3 attacks were counted as 4, dropping the budget from 14 to 11).
+  const text = entry.text.replace(/\b(?:it )?can replace [^.]*\.?/gi, '');
+  const total = /\bmakes (one|two|three|four|five|six|\d+) attacks?\b/i.exec(text);
   if (total && Number.isFinite(val(total[1]))) return Math.min(6, Math.max(1, val(total[1])));
   let sum = 0;
-  for (const m of entry.text.matchAll(/\b(one|two|three|four|five|six|\d+)\s+[A-Z][\w' -]*?\s+attacks?\b/g)) {
+  for (const m of text.matchAll(/\b(one|two|three|four|five|six|\d+)\s+[A-Z][\w' -]*?\s+attacks?\b/g)) {
     if (Number.isFinite(val(m[1]))) sum += val(m[1]);
   }
   if (sum) return Math.min(6, sum);
@@ -1233,12 +1239,19 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     if (section !== 'Reactions' && /\b(?:can use|uses) (?:its|a|her|his|their) Reaction\b/i.test(entry.text)) {
       push('section-shape', 'reject', `${where}: this is written as a Reaction ("uses its Reaction") but sits under ${section} — write a true ${section} entry, or it belongs in Reactions with the *Trigger:*/*Response:* form`, undefined, loc);
     }
-    // "Hit:" / "Hit or Miss:" markers are off-skeleton (0/329 in the parsed
-    // corpus; our attack skeleton states damage directly). Live finding: a
-    // "Hit:" clause DUPLICATING the damage already stated ("21 (4d6 + 7)
-    // Piercing damage. Hit: 21 (4d6 + 7) damage, or ..."). Fix call
-    // rewrites — deduplication surgery is not safely deterministic.
-    if (is2024 && (/\bHit(?: or Miss)?:/.test(entry.text) || /\bhit or miss\b[,:]/i.test(entry.text))) {
+    // A bare "Hit:" marker is 2014 phrasing and is off-skeleton: 0/329 in the
+    // corpus, since our attack skeleton states damage directly. Live finding:
+    // a "Hit:" clause DUPLICATING the damage already stated ("21 (4d6 + 7)
+    // Piercing damage. Hit: 21 (4d6 + 7) damage, or ..."). Fix call rewrites
+    // — deduplication surgery is not safely deterministic.
+    //
+    // "*Hit or Miss:*" is EXEMPT: it is official 2024 phrasing for weapons
+    // that return to the wielder, used by the Ice Devil, Merfolk Skirmisher,
+    // Salamander and Solar (4/329). This rule previously caught it and the
+    // corpus sweep still read 0/329, because all four blocks carried a parse
+    // artifact ("HitomThe") that hid the marker from both the rule and the
+    // sweep. Repairing the corpus surfaced the false positive.
+    if (is2024 && /(?<!or Miss)\bHit:/.test(entry.text)) {
       push('phrasing-hit-marker', 'reject', `${where}: "Hit:" markers are not part of the 2024 skeleton — state damage directly after the attack roll (and never state it twice); riders are plain sentences`, undefined, loc);
     }
     // Bare "Legendary Resistance" without a uses suffix is unlimited — the
@@ -1506,13 +1519,51 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
     if (dcOut.size) {
       push('dc-band', 'correctable', `Save DC${dcOut.size > 1 ? 's' : ''} ${[...dcOut].join(', ')} outside ±1 of budget ${chassis.save_dc}`, chassis.save_dc);
     }
+    // A legendary creature's budget assumes its legendary actions carry
+    // roughly the share the routine discount removes. If EVERY option is
+    // utility (move, hide, teleport), the creature quietly delivers ~60%
+    // of its tier. Officials never do this: 30/30 legendary blocks have at
+    // least one option that deals damage or delegates to an attack.
+    {
+      // Re-roll pseudo-blocks carry name-only stubs for the entries that
+      // aren't being re-rolled; they carry no text to judge.
+      const legendary = (monster.sections?.['Legendary Actions'] ?? []).filter((e) => !e._stub);
+      if (legendary.length) {
+        const pays = legendary.some((e) => /\d+\s*\(\d+d\d+/.test(e.text) || /\b(?:makes|uses)\b/.test(e.text));
+        if (!pays) {
+          push('legendary-no-damage', 'reject', 'Every legendary option is utility — a legendary creature\'s damage budget assumes its legendary actions carry part of the load; give at least one option an attack or damaging effect', undefined,
+            { section: 'Legendary Actions', entry: legendary[0].name });
+        }
+      }
+    }
+    // A save DC must be supported by an ability score: officials never
+    // exceed 8 + PB + their best modifier (0/136 blocks with both data
+    // points; 54 sit exactly on it). The chassis sets DC by CR and
+    // archetype, so a role that bumps the DC can outrun the stats the
+    // model chose (live: a CR 16 controller stamped DC 21 with a best
+    // modifier of +7 and PB +5, a ceiling of 20). Deterministic clamp.
+    if (monster.stats && monster.pb != null) {
+      const best = Math.max(...Object.values(monster.stats).map((v) => Math.floor((Number(v) - 10) / 2)));
+      const ceiling = 8 + monster.pb + best;
+      const over = new Set();
+      for (const { entry } of entriesOf(monster)) {
+        for (const m of entry.text.matchAll(/Saving Throw\*?:?\s*DC\s+(\d+)/gi)) {
+          if (Number(m[1]) > ceiling) over.add(Number(m[1]));
+        }
+      }
+      if (over.size) {
+        push('save-dc-unsupported', 'correctable', `Save DC ${[...over].join(', ')} above what any ability score supports (8 + PB ${monster.pb} + best modifier ${best >= 0 ? '+' : ''}${best} = ${ceiling})`, ceiling);
+      }
+    }
     // Escape DCs are exempt from dc-band BY DESIGN, which made them the
     // one number a fix-call rewrite could corrupt unchecked (live: a 2014
-    // block shipped escape DC 18 against the save_dc−2 policy of 15).
-    // Engine policy: every escape DC = max(8, save_dc − 2), restamped
-    // deterministically.
+    // block shipped an off-policy escape DC).
+    // Engine policy: escape DC = 8 + PB + strike mod, i.e. attack_bonus + 8.
+    // Measured on the 39 printed escape DCs: 46% match this exactly and the
+    // rest sit 1-3 BELOW it; the old save_dc − 2 policy matched only 17%
+    // (live: an escape DC 19 that reconciled with nothing on the block).
     {
-      const escapeDC = Math.max(8, chassis.save_dc - 2);
+      const escapeDC = Math.max(8, (chassis.attack_bonus ?? chassis.save_dc - 6) + 8);
       const bad = new Set();
       for (const { entry } of entriesOf(monster)) {
         for (const m of entry.text.matchAll(/escape DC (\d+)/gi)) {
@@ -1520,7 +1571,7 @@ export function lintStatblock(monster, { chassis, plan, edition = '2024', seedTo
         }
       }
       if (bad.size) {
-        push('escape-dc-band', 'correctable', `Escape DC${bad.size > 1 ? 's' : ''} ${[...bad].join(', ')} off the save_dc−2 policy (${escapeDC})`, escapeDC);
+        push('escape-dc-band', 'correctable', `Escape DC${bad.size > 1 ? 's' : ''} ${[...bad].join(', ')} off the 8 + PB + strike-mod policy (${escapeDC})`, escapeDC);
       }
     }
     // Swarm archetype demands the swarm type line (live finding: a 2014

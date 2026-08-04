@@ -14,6 +14,14 @@ import { generateMonster2024, validateGenerationResponse, validateNamingResponse
 import { auditEligible, validateAuditResponse } from '../format-2024/audit.mjs';
 import Statblock2024Skeleton from '@/components/skeletons/Statblock2024Skeleton.vue';
 
+
+// These exercise the CHASSIS path, which 2024 no longer uses by default
+// (owner call, 2026-08-02) but which is still reachable: 2014 generation,
+// seeded random-trait generation, and localStorage['statblock-skeleton']='0'.
+// Opt in explicitly so the suite keeps testing what it was written for.
+beforeEach(() => localStorage.setItem('statblock-skeleton', '0'));
+afterEach(() => localStorage.removeItem('statblock-skeleton'));
+
 const llmFixture = {
   name: 'Gloom Stalker',
   size: 'Medium', type: 'Monstrosity', alignment: 'Neutral Evil',

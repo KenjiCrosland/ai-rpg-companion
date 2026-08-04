@@ -30,6 +30,7 @@ export const ARCHETYPE_HELP = {
   defender: 'High AC, protects allies, punishes movement. Animated armor, ropers.',
   skirmisher: 'Mobile hit-and-run attacker with a movement trick.',
   artillery: 'Fragile long-range damage dealer with an escape tool.',
+  glass_cannon: 'Hits harder than anything at its CR and dies fast. All offense, no cushion.',
   controller: 'Locks enemies down with conditions instead of raw damage. Aboleths.',
   lurker: "Fragile ambusher with a devastating opening strike. Ghosts, will-o'-wisps.",
   support: 'Buffs, heals, and enables allies — underperforms its CR when fought alone.',
@@ -40,7 +41,11 @@ export const ARCHETYPE_OPTIONS = [
   { label: 'Balanced (no role)', value: 'balanced' },
   ...Object.keys(ARCHETYPE_HELP)
     .filter((k) => k !== 'auto' && k !== 'balanced')
-    .map((k) => ({ label: k.charAt(0).toUpperCase() + k.slice(1), value: k })),
+    // Multi-word keys (glass_cannon) render as "Glass cannon".
+    .map((k) => ({
+      label: k.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()),
+      value: k,
+    })),
 ];
 
 // The statblock generator's persisted rules toggle is the app-wide edition
@@ -101,6 +106,7 @@ export async function generateEmbeddedStatblock({
   let archetypeSource = 'auto';
   let identity = null;
   let lore = null;
+  let themes = null;
   let resolvedType = type && type !== 'Random' ? type : null;
   const typeSource = resolvedType ? 'user' : 'auto';
   // The resolve call runs for user-picked roles too (owner call,
@@ -123,6 +129,11 @@ export async function generateEmbeddedStatblock({
     }
     if (!resolvedType && typeof parsed?.creature_type === 'string') {
       resolvedType = parsed.creature_type;
+    }
+    if (Array.isArray(parsed?.themes)) {
+      const FACETS = ['bestial','armed','amorphous','grave','fiendish','celestial','fey','draconic','elemental','verdant','forged','mind','venomous','terror','beguiling','grasping','devouring','aquatic','subterranean','aerial','uncanny','arcane','voice','gaze','breath'];
+      const t = parsed.themes.filter((x) => FACETS.includes(String(x).toLowerCase())).slice(0, 2);
+      if (t.length) themes = t;
     }
   } catch (e) {
     logger.warn('Embedded archetype resolve failed, picking randomly:', e);
@@ -148,6 +159,7 @@ export async function generateEmbeddedStatblock({
         resolvedType,
         typeSource,
         lore,
+        themes,
         namePass: null,
         degraded: isDegradedMode(),
       },

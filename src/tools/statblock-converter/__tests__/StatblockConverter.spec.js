@@ -7,6 +7,10 @@ jest.mock('@/util/ai-client.mjs', () => ({
 jest.mock('@/util/can-generate-statblock.mjs', () => ({
   canGenerateStatblock: jest.fn(() => Promise.resolve(true)),
 }));
+jest.mock('@/util/converter-promo.mjs', () => ({
+  ...jest.requireActual('@/util/converter-promo.mjs'),
+  isConverterPromoActive: jest.fn(() => false), // default: post-trial behavior
+}));
 jest.mock('@/util/statblock-storage.mjs', () => ({
   saveStatblockToStorage: jest.fn(),
 }));
@@ -33,6 +37,7 @@ import { canGenerateStatblock } from '@/util/can-generate-statblock.mjs';
 import { saveStatblockToStorage } from '@/util/statblock-storage.mjs';
 import { navigateToTool } from '@/util/navigation.mjs';
 import { convertEdition } from '@/tools/statblock-generator/format-2024/generate.mjs';
+import { isConverterPromoActive } from '@/util/converter-promo.mjs';
 
 const PASTE_2014 = `Kralvag
 Large giant, neutral evil
@@ -53,7 +58,10 @@ const settle = async () => {
 };
 
 describe('StatblockConverter', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    isConverterPromoActive.mockReturnValue(false);
+  });
 
   test('paste renders a free preview with the detected edition and zero LLM calls', async () => {
     const wrapper = mount(StatblockConverter);
@@ -123,5 +131,74 @@ describe('StatblockConverter', () => {
     expect(convertEdition).toHaveBeenCalledTimes(1);
     expect(convertEdition.mock.calls[0][0].name).toBe('Gribble');
     wrapper.unmount();
+  });
+});
+
+describe('launch trial window (owner call, 2026-07-31)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('during the trial a free-tier conversion skips the quota entirely', async () => {
+    isConverterPromoActive.mockReturnValue(true);
+    convertEdition.mockResolvedValueOnce({ name: 'Kralvag', format: '2024', sections: {} });
+    const wrapper = mount(StatblockConverter);
+    await wrapper.find('textarea').setValue(PASTE_2014);
+    await settle();
+
+    await wrapper.find('[data-testid="convert-button"]').trigger('click');
+    await flushPromises();
+
+    // The gate both checks and consumes, so skipping the call IS the promo.
+    expect(canGenerateStatblock).not.toHaveBeenCalled();
+    expect(convertEdition).toHaveBeenCalledTimes(1);
+    expect(saveStatblockToStorage).toHaveBeenCalled();
+    wrapper.unmount();
+  });
+
+  test('the trial note states both the offer and what happens after', async () => {
+    isConverterPromoActive.mockReturnValue(true);
+    const wrapper = mount(StatblockConverter);
+    const note = wrapper.find('[data-testid="trial-note"]');
+    expect(note.exists()).toBe(true);
+    expect(note.text()).toContain('Free and unlimited through August 7');
+    expect(note.text()).toContain('5 AI generations a day');
+    wrapper.unmount();
+  });
+
+  test('premium never sees the trial note and still calls through the gate', async () => {
+    isConverterPromoActive.mockReturnValue(true);
+    convertEdition.mockResolvedValueOnce({ name: 'Kralvag', format: '2024', sections: {} });
+    const wrapper = mount(StatblockConverter, { props: { premium: true } });
+    expect(wrapper.find('[data-testid="trial-note"]').exists()).toBe(false);
+    await wrapper.find('textarea').setValue(PASTE_2014);
+    await settle();
+    await wrapper.find('[data-testid="convert-button"]').trigger('click');
+    await flushPromises();
+    expect(canGenerateStatblock).toHaveBeenCalledWith(true);
+    wrapper.unmount();
+  });
+
+  test('after the window everything reverts with no deploy: gate enforced, note gone', async () => {
+    isConverterPromoActive.mockReturnValue(false);
+    canGenerateStatblock.mockResolvedValueOnce(false);
+    const wrapper = mount(StatblockConverter);
+    expect(wrapper.find('[data-testid="trial-note"]').exists()).toBe(false);
+    await wrapper.find('textarea').setValue(PASTE_2014);
+    await settle();
+    await wrapper.find('[data-testid="convert-button"]').trigger('click');
+    await flushPromises();
+    expect(canGenerateStatblock).toHaveBeenCalled();
+    expect(convertEdition).not.toHaveBeenCalled();
+    wrapper.unmount();
+  });
+});
+
+describe('isConverterPromoActive', () => {
+  const { isConverterPromoActive: real, CONVERTER_PROMO_END_MS } =
+    jest.requireActual('@/util/converter-promo.mjs');
+
+  test('is true before the end instant and false at or after it', () => {
+    expect(real(CONVERTER_PROMO_END_MS - 1)).toBe(true);
+    expect(real(CONVERTER_PROMO_END_MS)).toBe(false);
+    expect(real(CONVERTER_PROMO_END_MS + 86400000)).toBe(false);
   });
 });

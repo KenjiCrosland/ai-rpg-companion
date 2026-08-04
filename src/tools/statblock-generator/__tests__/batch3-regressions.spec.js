@@ -8,6 +8,14 @@
 import { lintStatblock } from '../format-2024/lint.mjs';
 import { applyCorrections, assembleMonster, buildContext } from '../format-2024/generate.mjs';
 
+
+// These exercise the CHASSIS path, which 2024 no longer uses by default
+// (owner call, 2026-08-02) but which is still reachable: 2014 generation,
+// seeded random-trait generation, and localStorage['statblock-skeleton']='0'.
+// Opt in explicitly so the suite keeps testing what it was written for.
+beforeEach(() => localStorage.setItem('statblock-skeleton', '0'));
+afterEach(() => localStorage.removeItem('statblock-skeleton'));
+
 const chassis = { archetype: 'lurker', save_dc: 23 };
 const rule = (m, name, opts = {}) =>
   lintStatblock(m, { chassis, edition: '2024', ...opts }).findings.filter((f) => f.rule === name);
@@ -69,7 +77,7 @@ describe('grapple-exit: widened anchor and exit patterns (Stalking Wardwall)', (
     const f = rule(m, 'grapple-exit');
     expect(f[0]?.expected).toBe('Grappled');
     const fixed = applyCorrections(m, f, { chassis });
-    expect(fixed.sections.Actions[0].text).toContain('has the Grappled condition (escape DC 21)');
+    expect(fixed.sections.Actions[0].text).toContain('has the Grappled condition (escape DC 25)');
     expect(rule(fixed, 'grapple-exit')).toHaveLength(0);
   });
 
@@ -646,21 +654,25 @@ describe('batch 13: spell-stamp paren fix + weave extraction hardening', () => {
     expect(f).toHaveLength(0);
   });
 
-  test('support CR 18 clamps a 25-damage claw in current code (Uuloth anomaly check)', () => {
+  test('support CR 18 clamps an over-budget claw (Uuloth anomaly check)', () => {
     const { chassis, plan } = bc(18, 'support');
     const { damageBudgetFor: dbf, attackDamageDiceFor, requiredAttackModFor } = require('../format-2024/generate.mjs');
     const numbers = dbf(18, chassis, plan);
     const perAttack = attackDamageDiceFor(numbers.perAttack, requiredAttackModFor(chassis)).avg;
+    // Derived from the live budget rather than hardcoded, so chassis tuning
+    // (batch 27's legendary floor moved support's budget up) can't quietly
+    // turn this into a test of nothing.
+    const over = Math.round(perAttack * 2);
     const m = {
       type: 'Plant',
       sections: { Actions: [
         { name: 'Multiattack', text: 'The uuloth makes three Claw attacks.' },
-        { name: 'Claw', text: '*Melee Attack Roll:* +13, reach 5 ft. 25 (4d8 + 7) Slashing damage.' },
+        { name: 'Claw', text: `*Melee Attack Roll:* +13, reach 5 ft. ${over} (4d8 + 7) Slashing damage.` },
       ] },
     };
     const findings = lintStatblock(m, { chassis, plan, edition: '2024', perAttack, totalDamage: numbers.total }).findings
       .filter((f) => f.rule === 'attack-damage-band');
-    expect(findings.length).toBeGreaterThan(0); // 25 vs ~14 budget must flag
+    expect(findings.length).toBeGreaterThan(0); // 2x budget must flag
     const fixed = applyCorrections(m, findings, { chassis });
     const dmg = Number(/(\d+)\s*\(/.exec(fixed.sections.Actions[1].text)[1]);
     expect(dmg).toBeLessThanOrEqual(Math.round(numbers.perAttack * 1.3));

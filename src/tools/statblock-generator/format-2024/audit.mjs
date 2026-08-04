@@ -244,8 +244,13 @@ export function verifyAuditFindings(monster, raw) {
       ...(f.section && sections[f.section] ? [[f.section, sections[f.section]]] : []),
       ...Object.entries(sections),
     ];
+    // Normalize before matching: curly apostrophes, and the use-limit
+    // suffix the engine appends ("Glacier's Possession (Recharge 6)") —
+    // the judge cites the bare name (live: two correct Possession findings
+    // dropped as "unknown entry").
+    const norm = (n) => String(n).replace(/[\u2018\u2019]/g, "'").replace(/\s*\(.*?\)\s*$/, '').trim().toLowerCase();
     for (const [name, entries] of ordered) {
-      const hit = (entries ?? []).find((e) => e.name === f.entry);
+      const hit = (entries ?? []).find((e) => e.name === f.entry || norm(e.name) === norm(f.entry));
       if (hit) { section = name; entry = hit; break; }
     }
     if (!entry) {
@@ -255,13 +260,21 @@ export function verifyAuditFindings(monster, raw) {
       // exactly ONE entry matches; ambiguity stays a drop.
       const tokens = (n) => n.toLowerCase().replace(/\(.*?\)/g, '').split(/[^a-z]+/).filter((w) => w.length >= 4);
       const want = new Set(tokens(f.entry));
-      const candidates = [];
+      // Score by OVERLAP COUNT and accept a unique maximum: one shared token
+      // was too loose — "Glacier's Possession" tied with "Glacier Rebirth"
+      // on "glacier" and a correct finding died on the ambiguity.
+      const scored = [];
       for (const [name, list] of Object.entries(sections)) {
         for (const e of list ?? []) {
-          if (tokens(e.name).some((w) => want.has(w))) candidates.push([name, e]);
+          const overlap = tokens(e.name).filter((w) => want.has(w)).length;
+          if (overlap > 0) scored.push([overlap, name, e]);
         }
       }
-      if (candidates.length === 1) [section, entry] = candidates[0];
+      scored.sort((a, b) => b[0] - a[0]);
+      if (scored.length === 1
+          || (scored.length > 1 && scored[0][0] > scored[1][0])) {
+        [, section, entry] = scored[0];
+      }
     }
     if (!entry) {
       logger.log('audit finding names unknown entry, dropped:', f.entry);

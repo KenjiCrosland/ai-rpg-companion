@@ -17,6 +17,14 @@ import {
 } from '../format-2024/generate.mjs';
 import { validateAuditResponse } from '../format-2024/audit.mjs';
 
+
+// These exercise the CHASSIS path, which 2024 no longer uses by default
+// (owner call, 2026-08-02) but which is still reachable: 2014 generation,
+// seeded random-trait generation, and localStorage['statblock-skeleton']='0'.
+// Opt in explicitly so the suite keeps testing what it was written for.
+beforeEach(() => localStorage.setItem('statblock-skeleton', '0'));
+afterEach(() => localStorage.removeItem('statblock-skeleton'));
+
 jest.mock('@/util/ai-client.mjs', () => ({
   generateGptResponse: jest.fn(),
   isDegradedMode: jest.fn(() => false),
@@ -154,6 +162,8 @@ const savedMonsters = () => JSON.parse(localStorage.getItem('monsters') ?? '{}')
 describe('StatblockGenerator 2024 flow', () => {
   beforeEach(() => {
     localStorage.clear();
+    // Re-set after the clear: this suite exercises the CHASSIS path.
+    localStorage.setItem('statblock-skeleton', '0');
     jest.clearAllMocks();
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
   });
