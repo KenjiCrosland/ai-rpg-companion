@@ -236,13 +236,16 @@ export async function generateFromSkeleton(options, callLLM) {
     lintStatblock(monster, { chassis, plan, edition: '2024', defenseCaps }).findings,
     { chassis },
   );
-  // A coined entry name (the lint's entry-name-coinage) has a deterministic
-  // fix on this path: revert to the skeleton's placeholder, which pick-time
-  // guards made unique and legal, and let applyRenameMapping repoint the
-  // references (live: "Tar-Ice Vortex" shipped as a reject with no remedy).
+  // A bad entry NAME has a deterministic fix on this path: revert to the
+  // skeleton's placeholder, which pick-time guards made unique and legal,
+  // and let applyRenameMapping repoint the references. Covers coinage
+  // ("Tar-Ice Vortex"), self-naming and monster-naming (a legendary action
+  // literally named "Grave Vow" — shipped live on an audit-flake day, when
+  // the audit that would have swapped it never ran).
   {
+    const NAME_REVERT_RULES = ['entry-name-coinage', 'entry-name-self', 'entry-named-after-monster'];
     const coinage = lintStatblock(monster, { chassis, plan, edition: '2024', defenseCaps })
-      .findings.filter((f) => f.rule === 'entry-name-coinage' && f.loc?.entry);
+      .findings.filter((f) => NAME_REVERT_RULES.includes(f.rule) && f.loc?.entry);
     for (const f of coinage) {
       const bad = f.loc.entry;
       const placeholder = model.name_origins?.[bad];
@@ -270,6 +273,11 @@ export async function generateFromSkeleton(options, callLLM) {
   // named the creature and every entry with the full concept in hand, so a
   // second opinion would be worse informed, not better.
   let auditNotes = [];
+  if (degraded && auditEligible(monster, crNum)) {
+    // The silent case was indistinguishable from "attempted and failed" in
+    // the trace — say so explicitly.
+    trace('audit: skipped (degraded mode — provider unhealthy)');
+  }
   if (!degraded && auditEligible(monster, crNum)) {
     try {
       progress('status', { stage: 'audit' });

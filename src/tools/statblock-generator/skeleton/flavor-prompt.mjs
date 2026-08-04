@@ -82,8 +82,8 @@ const SLOT_BRIEF = {
   substance: 'what the effect is MADE of — a short noun phrase ("caustic brine", "shrieking dust")',
   delivery: 'how it leaves the body, third person singular ("exhales", "sprays", "sheds")',
   terrain: 'the surface this movement is keyed to ("loose scree", "still water")',
-  spells: 'the at-will spell list: 2-3 modest ACTION-castable spells in *italics*, level 3 or lower, from the 2024 core rules only, and only spells this creature would actually use in a fight — no utility-cantrip padding. Never Reaction or Bonus Action spells (Shield, Misty Step, Counterspell)',
-  spells_daily: 'the 1/Day list: 1-2 BIGGER spells in *italics*, never repeating the at-will list. Above CR 12, upcast a spell that actually scales — "*Cone of Cold* (level 9 version)" — never annotate a non-scaling spell (Dream has no level 9 version)',
+  spells: 'the at-will spell list: a JSON ARRAY of 2-3 plain spell names, e.g. ["Scorching Ray", "Command"] — NO markup, no asterisks, the engine formats them. Modest ACTION-castable spells, level 3 or lower, from the 2024 core rules only, and only spells this creature would actually use in a fight — no utility-cantrip padding. Never Reaction or Bonus Action spells (Shield, Misty Step, Counterspell)',
+  spells_daily: 'the 1/Day list: a JSON ARRAY of 1-2 BIGGER plain spell names, never repeating the at-will list. Above CR 12, upcast a spell that actually scales — "Cone of Cold (level 9 version)" — never annotate a non-scaling spell (Dream has no level 9 version)',
   kindred_type: 'the creature\'s OWN type, so its aura spares its own kind (Undead, Fiend, Plant…)',
   home_plane: 'a CANONICAL plane with its article ("the Nine Hells", "the Feywild", "the Abyss") — never invented geography; a made-up realm reads tacked on',
   anchor: 'a thing the creature itself establishes — "the site of its oldest unpaid bargain", "a coin from its hoard", "the deepest root of its grove"',
@@ -91,8 +91,8 @@ const SLOT_BRIEF = {
   legacy: 'one sentence of inheritance — "its unpaid debts pass to the creature that struck the killing blow"',
   appendage: 'the grasping limb, singular ("tentacle", "barbed chain")',
   appendage_plural: 'the same limb, plural ("tentacles", "barbed chains")',
-  signature_spell: 'ONE damaging or controlling spell in *italics* that fits the palette ("*Ice Knife*", "*Fear*") — it will be added to the spell list automatically',
-  signature_spell_2: 'a SECOND, different spell in *italics*, same rules as the first — an alternative cast, not a repeat',
+  signature_spell: 'ONE damaging or controlling spell as a plain name, no markup ("Ice Knife", "Fear") — the engine formats it and adds it to the spell list automatically',
+  signature_spell_2: 'a SECOND, different spell as a plain name, same rules as the first — an alternative cast, not a repeat',
 };
 
 /** Which flavor slots an entry actually contains. */
@@ -134,6 +134,14 @@ export function flavorRequests(skeleton) {
  * new words that belong beside these). Whole banks, not samples (owner
  * call): a block carries at most two facets, the token cost is trivial,
  * and a thin sample would make outputs MORE repetitive, not less.
+ *
+ * REVERTED EXPERIMENT (owner call, 2026-08-03): a "calibration, not a
+ * checklist — invent most fills fresh" reframe correlated with a run of
+ * conceptually hollow blocks (census-keepers and memory-scribes whose
+ * mechanics couldn't cash their names' checks). Bank-anchored naming keeps
+ * names TEXTURAL (moonfrost, thistledown) — texture decorates mechanics;
+ * invented CONCEPTS (tallying, unremembering) write promises no printed
+ * mechanic can keep. "Draw on it" is the tested wording.
  */
 function texturePalette(skeleton, themes) {
   const facetNames = [...new Set(themes ?? [])].filter((t) => BANK_FACETS[t]);
@@ -147,7 +155,7 @@ function texturePalette(skeleton, themes) {
   const dmg = [...new Set(banks.flatMap((b) => Object.entries(b.damage_affinity ?? {})
     .filter(([k, v]) => !k.startsWith('_') && v > 0)
     .sort((a, b) => b[1] - a[1]).map(([k]) => k)))];
-  return `\nTEXTURE PALETTE — the register this creature speaks in, shown by example. This is CALIBRATION, not a checklist: invent most of your fills and names fresh, in this same voice, and borrow an example directly only when it is exactly right. Never tour the list — a block that uses many of these verbatim reads as assembled, not alive.
+  return `\nTEXTURE PALETTE — this register's full vocabulary. Draw on it for every fill and name: choose from it, combine from it, or write words that belong beside it.
 - substances: ${substances.join(', ')}
 - limbs: ${limbs.join(', ')}
 - delivery verbs: ${verbs.join(', ')}
@@ -359,7 +367,10 @@ export const CONCENTRATION_SPELLS = ['Fear', 'Hold Person', 'Hold Monster', 'Dom
   'Darkness', 'Fog Cloud', 'Silence', 'Moonbeam', 'Call Lightning', 'Flaming Sphere',
   'Witch Bolt', 'Eyebite', 'Sunbeam', 'Telekinesis', 'Polymorph', 'Charm Monster',
   'Compulsion', 'Stinking Cloud', 'Sleet Storm', 'Gaseous Form', 'Detect Thoughts',
-  'Insect Plague', 'Cloudkill', 'Wall of Fire', 'Wall of Ice', 'Wall of Force', 'Wall of Stone'];
+  'Insect Plague', 'Cloudkill', 'Wall of Fire', 'Wall of Ice', 'Wall of Force', 'Wall of Stone',
+  // gap-audit additions (live: Census Command cast Earthquake from a
+  // legendary action — the rule was right, the list was short)
+  'Earthquake', 'Vampiric Touch', 'Control Water', 'Control Weather'];
 
 /**
  * Spells where "(level N version)" actually changes anything. Dream has no
@@ -567,9 +578,36 @@ export function applyFlavor(skeleton, llmJson) {
       if (slot === 'delivery') return bankDraw('deliveries', own, entryRng);
       return null; // terrain has no bank; the static fallback covers it
     };
+    // Spell fills are STRUCTURED DATA, not markup (owner call, 2026-08-03):
+    // the contract asks for plain names (arrays for lists), and the ENGINE
+    // writes every asterisk. The model authoring its own italics made a
+    // stylistic convention load-bearing — a degraded response dropped it and
+    // every spell-recognizing layer went blind at once (live: the Grave
+    // Vow's empty list and its dangling Blight echo). Strings still
+    // normalize through the same path as a compatibility belt.
+    const SPELL_SLOTS = (slot) => ['spells', 'spells_daily'].includes(slot) || slot.startsWith('signature_spell');
+    const canonicalSpell = (rawName) => {
+      const upcast = (rawName.match(/\s*\((level \d+ version)\)\s*$/) ?? [])[1];
+      const bare = rawName.replace(/[*_`]/g, '').replace(/\s*\(level \d+ version\)\s*$/, '').trim();
+      const hit = [...KNOWN_SPELLS].find((k) => k.toLowerCase() === bare.toLowerCase());
+      if (!hit) return null;
+      return `*${hit}*${upcast ? ` (${upcast})` : ''}`;
+    };
+    const normalizeSpellFill = (slot, raw) => {
+      const names = Array.isArray(raw) ? raw.map(String)
+        : typeof raw === 'string' ? raw.split(',') : [];
+      const kept = names.map((n) => canonicalSpell(n)).filter(Boolean);
+      const limit = slot === 'spells' || slot === 'spells_daily' ? kept.length : 1;
+      return kept.length ? kept.slice(0, Math.max(1, limit)).join(', ') : null;
+    };
     for (const slot of slotsIn(entry.text)) {
-      let value = typeof given[slot] === 'string' && given[slot].trim()
-        ? given[slot].trim() : null;
+      let value;
+      if (SPELL_SLOTS(slot)) {
+        value = normalizeSpellFill(slot, given[slot]);
+      } else {
+        value = typeof given[slot] === 'string' && given[slot].trim()
+          ? given[slot].trim() : null;
+      }
       // The fill vet: a texture fill claiming a facet this block doesn't own
       // ("spore-laced" on a forged block whose themes never said verdant) is
       // replaced from the block's own banks, exactly like a missing fill.
@@ -618,15 +656,8 @@ export function applyFlavor(skeleton, llmJson) {
           if (kept.length !== names.length) value = kept.join(', ') || FALLBACK[slot];
         }
       }
-      // Off-list spells never enter through a fill either: an unknown name
-      // in a spell slot would flow into an echo ("uses Spellcasting to cast
-      // *Erupting Earth*") that the list filter can't reach.
-      if (['spells', 'spells_daily'].includes(slot) || slot.startsWith('signature_spell')) {
-        const vetted = [...value.matchAll(/\*([A-Z][\w' ]+?)\*( \(level \d+ version\))?/g)]
-          .filter((mm) => KNOWN_SPELLS.has(mm[1]))
-          .map((mm) => `*${mm[1]}*${mm[2] ?? ''}`);
-        if (/\*[A-Z]/.test(value)) value = vetted.length ? vetted.join(', ') : FALLBACK[slot];
-      }
+      // (Off-list vetting for spell slots now happens in normalizeSpellFill
+      // above — unknown names never survive normalization.)
       // "each creature that isn't a Humanoid" spares the party — a kindred
       // exclusion only works when the kindred isn't what adventurers are.
       if (slot === 'kindred_type' && /humanoid/i.test(value)) value = FALLBACK.kindred_type;
@@ -861,11 +892,18 @@ export function applyFlavor(skeleton, llmJson) {
         return kept.length ? `${head} ${kept.join(', ')}` : head;
       });
       e.text = e.text.replace(/(\*\*(?:At Will|\d+\/Day(?: Each)?):\*\*)\s*(?=\n|$)/g, '');
+      // An emptied list line leaves its bare bullet behind — remove the
+      // whole line, never ship an orphan dash (live: the Grave Vow's "-").
+      e.text = e.text.replace(/^\s*-\s*$/gm, '');
       // A list-style caster whose every pick was dropped still casts
       // SOMETHING: Detect Magic is on printed at-will lists at every band.
       if (/casts one of the following/.test(e.text) && !/\*\*(?:At Will|\d+\/Day)/.test(e.text)) {
         e.text += '\n\n- **At Will:** *Detect Magic*';
       }
+      // Article agreement for vowel-initial kindred types ("isn't a Undead"
+      // shipped live). A finite list, not a vowel rule — "a Unicorn" is
+      // correct English and would break under the naive heuristic.
+      e.text = e.text.replace(/\ba (Undead|Elemental|Aberration|Ooze)\b/g, 'an $1');
       // Article agreement after number substitution: the printed brass line
       // carries "in an 20-foot line" (a WotC typo), which scaling turned
       // into "an 90-foot-long" (live). "an" only before 8, 11, 18-series.
@@ -926,6 +964,21 @@ export function applyFlavor(skeleton, llmJson) {
       rendered.text = `The ${inline} makes ${['', 'one', 'two', 'three', 'four', 'five', 'six'][n] ?? n} ${stripGate(finalAtks[0].name)} attacks.`
         + finalAtks.slice(1).map((a) => ` It can replace one attack with a use of ${stripGate(a.name)}.`).join('');
     }
+  }
+
+  // Actions order follows print: Multiattack, then attacks, then everything
+  // else (Recharge included), Spellcasting LAST — 47 of 48 printed
+  // Spellcasting actions sit at the end of Actions, and all 21 that share a
+  // block with a Recharge entry come after it (the dragons' universal
+  // layout). Stable within ranks, so pick order still decides ties.
+  if (sections.Actions) {
+    const rank = (e) => (e.name === 'Multiattack' ? 0
+      : /Attack Roll:\*?/.test(e.text) ? 1
+        : /casts one of the following/.test(e.text) ? 3 : 2);
+    sections.Actions = sections.Actions
+      .map((e, i) => [rank(e), i, e])
+      .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+      .map(([, , e]) => e);
   }
 
   const nameOrigins = {};

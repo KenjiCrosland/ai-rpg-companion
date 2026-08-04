@@ -273,3 +273,37 @@ describe('condition slots (engine-filled, owner call 2026-08-03)', () => {
     }
   });
 });
+
+describe('fingerprint exclusions (the Possession precedent)', () => {
+  // Structurally one-of-a-kind subsystems that no rename disguises: the
+  // sphinx's escalating roar sequence, the cube's engulf machinery, the
+  // vampire's sunlight-gated forms, the hag's ethereal dream-murder. Length
+  // alone never excludes — the swallow family and the whirlwind reskin
+  // fine; STRUCTURE is the fingerprint.
+  const lib3 = require('../ability-library.json');
+  const rows3 = Object.values(lib3.categories).flat();
+
+  test('the four fingerprint rows are excluded, with documented reasons', () => {
+    for (const [src, ab] of [
+      ['Sphinx of Valor', 'Roar'], ['Gelatinous Cube', 'Engulf'],
+      ['Vampire', 'Shape-Shift'], ['Night Hag', 'Nightmare Haunting'],
+    ]) {
+      const matches = rows3.filter((r) => r.source === src && r.ability === ab);
+      expect(matches.length).toBeGreaterThan(0);
+      for (const r of matches) {
+        expect(typeof r.excluded).toBe('string');
+        expect(r.excluded.length).toBeGreaterThan(30);
+      }
+    }
+  });
+
+  test('the Chain Devil conjures an appendage, never a second {creature}', () => {
+    // The generifier ate "chain": "conjures a fiery {creature}" rendered as
+    // "the grave vow conjures a fiery grave vow" — the Invisible Stalker
+    // class of name-leak, fourth instance.
+    const cd = rows3.find((r) => r.source === 'Chain Devil' && /Conjure/.test(r.ability));
+    expect(cd.template_2024).toContain('conjures a fiery {appendage}');
+    expect(cd.template_2024).toContain('the {appendage} disappears');
+    expect(cd.template_2024).not.toMatch(/conjures a fiery \{creature\}/);
+  });
+});

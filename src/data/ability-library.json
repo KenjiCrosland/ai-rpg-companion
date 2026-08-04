@@ -15618,7 +15618,8 @@
           "celestial",
           "terror",
           "voice"
-        ]
+        ],
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03, the Possession precedent): the escalating three-roar sequence with a Long Rest reset is a one-of-a-kind subsystem \u2014 no rename disguises the structure, and it reads as a sphinx reskin on sight."
       },
       {
         "cr": "23",
@@ -18196,7 +18197,8 @@
           "amorphous",
           "devouring",
           "grasping"
-        ]
+        ],
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03): the move-through-spaces engulf subsystem cross-references the Ooze Cube trait and IS the cube \u2014 structurally unmistakable, and dangling without its sibling trait."
       },
       {
         "cr": "3",
@@ -18769,7 +18771,7 @@
           "target_size_offset": 1,
           "damage_type": "Fire"
         },
-        "template_2024": "The {creature} conjures a fiery {creature} to bind a creature. *Dexterity Saving Throw*: DC {dc}, one creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage, and the target has the Restrained condition until the end of the {creature}'s next turn, at which point the {creature} disappears. If the target is {target_size} or smaller, the {creature} moves the target up to 30 feet straight toward itself. *Success:* The {creature} disappears.",
+        "template_2024": "The {creature} conjures a fiery {appendage} to bind a creature. *Dexterity Saving Throw*: DC {dc}, one creature the {creature} can see within {sight_range} feet. *Failure:* {damage} ({dice}) {damage_type} damage, and the target has the Restrained condition until the end of the {creature}'s next turn, at which point the {appendage} disappears. If the target is {target_size} or smaller, the {creature} moves the target up to 30 feet straight toward itself. *Success:* The {appendage} disappears.",
         "source_size": "Medium",
         "slot_type": "save_effect",
         "pool": "ability",
@@ -23277,7 +23279,8 @@
           "fiendish",
           "grave",
           "uncanny"
-        ]
+        ],
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03): Ethereal-plane dream-murder of sleeping victims is hag identity end to end \u2014 un-reskinnable."
       },
       {
         "cr": "5",
@@ -24154,7 +24157,8 @@
           "aquatic",
           "grave",
           "uncanny"
-        ]
+        ],
+        "excluded": "Fingerprint exclusion (owner call 2026-08-03): bat/mist forms gated on sunlight and running water are the vampire liturgy \u2014 same identity cluster as the excluded stake-and-coffin rows."
       },
       {
         "cr": "13",

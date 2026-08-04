@@ -698,7 +698,13 @@ export function assembleMonster(llmJson, { cr, chassis, plan, archetypeName, arc
     .replace(/\b(Blindsight|Darkvision|Tremorsense|Truesight)\b/g, (w) => w.toLowerCase())
     // The blind-beyond clause is always parenthesized in officials
     // ("blindsight 60 ft. (blind beyond this radius)"), never comma-joined.
-    .replace(/,\s*(blind beyond this radius)/i, ' ($1)');
+    .replace(/,\s*(blind beyond this radius)/i, ' ($1)')
+    // The COMPUTED Passive Perception is authoritative — a model that
+    // embeds its own doubles the line (live: "…Passive Perception 18;
+    // Passive Perception 19" on the Grave Vow).
+    .replace(/[;,]?\s*Passive Perception \d+/gi, '')
+    .replace(/[;,]\s*$/, '')
+    .trim();
   const senses = sensesSpecial
     ? `${sensesSpecial}; Passive Perception ${perception}`
     : `Passive Perception ${perception}`;

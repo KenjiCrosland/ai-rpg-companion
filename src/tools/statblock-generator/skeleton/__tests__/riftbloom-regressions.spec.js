@@ -436,7 +436,11 @@ describe('Glacier Keeper regressions (live block 6, CR 20)', () => {
     // Some rows exist in multiple categories (multi-instance extraction), so
     // compare the unique identity set.
     expect([...new Set(excluded.map((r) => `${r.source}/${r.ability ?? r.trait}`))].sort()).toEqual([
-      'Ghost/Possession', 'Vampire Spawn/Vampire Weakness', 'Vampire/Misty Escape', 'Vampire/Vampire Weakness',
+      // identity-bound (the original batch) + fingerprint exclusions
+      // (2026-08-03: structurally one-of-a-kind subsystems no rename hides)
+      'Gelatinous Cube/Engulf', 'Ghost/Possession', 'Night Hag/Nightmare Haunting',
+      'Sphinx of Valor/Roar', 'Vampire Spawn/Vampire Weakness', 'Vampire/Misty Escape',
+      'Vampire/Shape-Shift', 'Vampire/Vampire Weakness',
     ]);
     for (const r of excluded) expect(r.excluded.length).toBeGreaterThan(20);
     // and none of them can ever be picked or offered on a menu
@@ -1377,11 +1381,15 @@ describe('the Foundry Stag: fallback spells are citizens of their own universe',
     expect(text).not.toMatch(/\.\./);
   });
 
-  test('the palette prompt frames the banks as calibration, not a checklist', () => {
+  test('the palette prompt uses the bank-anchored wording (invention reframe reverted)', () => {
+    // The "invent most fills fresh" experiment correlated with conceptually
+    // hollow blocks — invented CONCEPT names (tallying, unremembering)
+    // write mechanical promises no printed template keeps. Reverted to the
+    // tested "draw on it" framing (owner call, 2026-08-03).
     const sk = mini('Legendary Actions', 'The {creature} casts {signature_spell}.', ['forged']);
     const prompt = buildFlavorPrompt(sk, { concept: 'a foundry stag', themes: ['forged'] });
-    expect(prompt).toContain('CALIBRATION, not a checklist');
-    expect(prompt).toContain('invent most of your fills');
+    expect(prompt).toContain('Draw on it for every fill and name');
+    expect(prompt).not.toContain('CALIBRATION');
   });
 });
 
@@ -1414,5 +1422,170 @@ describe('the Scribe: markdown-wrapped choices still resolve', () => {
     // garbage still keeps the default rather than throwing
     const kept = resolveChoices(sk, new Map([['e1', { id: 'e1', choose: 'Nonexistent Pick' }]]));
     expect(kept[0].name).toBe('Cold Gale');
+  });
+});
+
+/**
+ * Live block 17 (the Grave Vow, audit-flake day): a degraded response
+ * dropped markdown everywhere — plain-text spell fills emptied the
+ * Spellcasting list to bare dashes, a plain "Blight" echo dangled unlisted,
+ * senses doubled Passive Perception, "isn't a Undead" shipped, a legendary
+ * named itself "Grave Vow", and Spellcasting rendered second instead of
+ * last. Root fix: spell fills are STRUCTURED DATA (plain names, arrays) and
+ * the ENGINE writes every asterisk; strings normalize through the same path.
+ */
+describe('the Grave Vow: the engine owns all spell markup', () => {
+  const mini = (entries, seed = 5) => ({
+    cr: '20', size: 'Large', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 21,
+    multiattack: 3, con_mod: 7, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 7,
+    seed, counts: {}, themes: ['grave'], traits: [],
+    entries,
+  });
+  const flavor = (entries, extra = {}) => ({
+    name: 'Grave Vow', size: 'Large', type: 'Undead', alignment: 'Lawful Neutral', speed: '25 ft.',
+    stats: { STR: 26, DEX: 8, CON: 24, INT: 18, WIS: 16, CHA: 24 }, entries, ...extra,
+  });
+  const CASTER = {
+    id: 'e1', section: 'Actions', slot_type: 'utility', name: 'Spellcasting', name_locked: true,
+    gate: null, damage: 0, options: [],
+    text: 'The {creature} casts one of the following spells, using Charisma as the spellcasting ability (spell save DC 21):\n\n- **At Will:** {spells}\n- **1/Day Each:** {spells_daily}',
+  };
+  const textOf = (m) => Object.values(m.sections).flat().map((e) => e.text).join('\n');
+
+  test('array fills arrive plain and leave italicized, vetted, upcast preserved', () => {
+    const m = applyFlavor(mini([CASTER]), flavor([{
+      id: 'e1', name: 'x',
+      spells: ['Scorching Ray', 'Erupting Earth', 'command'],
+      spells_daily: ['Fireball (level 9 version)'],
+    }]));
+    const text = textOf(m);
+    expect(text).toContain('*Scorching Ray*');
+    expect(text).toContain('*Command*'); // case-normalized to canonical
+    expect(text).toContain('*Fireball* (level 9 version)');
+    expect(text).not.toContain('Erupting Earth'); // off-list never survives
+  });
+
+  test('a plain-text STRING fill normalizes through the same path (the belt)', () => {
+    const m = applyFlavor(mini([CASTER]), flavor([{
+      id: 'e1', name: 'x', spells: 'Chill Touch, Blight', spells_daily: '',
+    }]));
+    const text = textOf(m);
+    expect(text).toContain('*Blight*');
+    expect(text).not.toMatch(/^\s*-\s*$/m); // never an orphan dash
+  });
+
+  test('garbage fills leave no bare bullets — the rescue line stands alone', () => {
+    const m = applyFlavor(mini([CASTER]), flavor([{
+      id: 'e1', name: 'x', spells: 'Grave Vow', spells_daily: 'nonsense words',
+    }]));
+    const text = Object.values(m.sections).flat().find((e) => /casts one of the following/.test(e.text)).text;
+    expect(text).toContain('- **At Will:** *Detect Magic*');
+    expect(text).not.toMatch(/^\s*-\s*$/m);
+  });
+
+  test('a plain-name signature echo still reaches the spell list (cast implies listed)', () => {
+    const ECHO = {
+      id: 'e2', section: 'Legendary Actions', slot_type: 'legendary', name: 'Echo', gate: null,
+      damage: 0, options: [],
+      text: 'The {creature} uses Spellcasting to cast {signature_spell}.',
+    };
+    const m = applyFlavor(mini([CASTER, ECHO]), flavor([
+      { id: 'e1', name: 'x', spells: ['Chill Touch'], spells_daily: [] },
+      { id: 'e2', name: 'Echo', signature_spell: 'Blight' },
+    ]));
+    const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
+    expect(textOf(m)).toContain('cast *Blight*');
+    expect(caster.text).toContain('*Blight*');
+  });
+
+  test('kindred article agreement: an Undead, not a Undead', () => {
+    const AURA = {
+      id: 'e1', section: 'Legendary Actions', slot_type: 'legendary', name: 'Aura', gate: null,
+      damage: 0, options: [],
+      text: "each creature that isn't a {kindred_type} in a 30-foot Emanation takes damage.",
+    };
+    const m = applyFlavor(mini([AURA]), flavor([{ id: 'e1', name: 'Aura', kindred_type: 'Undead' }]));
+    expect(textOf(m)).toContain("isn't an Undead");
+  });
+
+  test('Actions order: Multiattack, attacks, Recharge, Spellcasting LAST', () => {
+    const sk = mini([
+      CASTER,
+      { id: 'e2', section: 'Actions', slot_type: 'plain_attack', name: 'Claw', gate: null, damage: 30, options: [], text: '*Melee Attack Roll:* +14, reach 5 ft. 30 (5d8 + 8) {damage_type} damage.' },
+      { id: 'e3', section: 'Actions', slot_type: 'area', name: 'Breath', gate: 'Recharge 5-6', damage: 91, options: [], text: '*Constitution Saving Throw*: DC 21, each creature in a 60-foot Cone. *Failure:* 91 (14d12) {damage_type} damage. *Success:* Half damage.' },
+    ]);
+    sk.entries.push({ id: undefined, section: 'Actions', slot_type: 'multiattack', name: 'Multiattack', gate: null, damage: 0, options: [], text: 'The {creature} makes three Claw attacks.' });
+    const m = applyFlavor(sk, flavor([{ id: 'e1', name: 'x', spells: ['Chill Touch'], spells_daily: [] }]));
+    const names = m.sections.Actions.map((e) => e.name.replace(/\s*\(.*\)$/, ''));
+    expect(names[0]).toBe('Multiattack');
+    expect(names[names.length - 1]).toBe('Spellcasting');
+    expect(names.indexOf('Breath')).toBeLessThan(names.indexOf('Spellcasting'));
+    expect(names.indexOf('Claw')).toBeLessThan(names.indexOf('Breath'));
+  });
+});
+
+describe('the Grave Vow: assembly-level cleanups', () => {
+  test('a model-embedded Passive Perception is stripped — computed value is authoritative', async () => {
+    const m = await generateFromSkeleton(
+      { concept: 'a grave guardian', cr: 20, seed: 6, resolvedType: 'Undead' },
+      async (p) => {
+        if (!/Every number is already fixed/.test(p)) return JSON.stringify({ problems: [] });
+        const sk = buildSkeleton({ cr: 20, seed: 6, alternatives: 3, archetype: null });
+        return JSON.stringify(respond(sk, {
+          senses_special: 'blindsight 60 ft. (blind beyond this radius), Passive Perception 18',
+        }));
+      },
+    );
+    expect((m.senses.match(/Passive Perception/g) ?? []).length).toBe(1);
+    expect(m.senses).not.toContain('Passive Perception 18,');
+  });
+
+  test('an entry named after the monster reverts to its placeholder (no-audit backstop)', async () => {
+    const m = await generateFromSkeleton(
+      { concept: 'a grave guardian', cr: 20, seed: 6, resolvedType: 'Undead' },
+      async (p) => {
+        if (!/Every number is already fixed/.test(p)) throw new Error('audit down'); // audit-flake day
+        const sk = buildSkeleton({ cr: 20, seed: 6, alternatives: 3, archetype: null });
+        const r = respond(sk);
+        r.name = 'Riftbloom';
+        r.entries[0].name = 'Riftbloom'; // model names an entry after the monster
+        return JSON.stringify(r);
+      },
+    );
+    for (const [sec, list] of Object.entries(m.sections)) {
+      for (const e of list) {
+        expect(`${sec}/${e.name} self-named: ${e.name.replace(/\s*\(.*\)$/, '') === 'Riftbloom'}`)
+          .toBe(`${sec}/${e.name} self-named: false`);
+      }
+    }
+  });
+});
+
+/**
+ * Live block 18 (the Tallying Seam): Census Command cast Earthquake from a
+ * legendary action — the concentration overrule was implemented but its
+ * list was short. The gap audit swept the known universe against the SRD.
+ */
+describe('the Tallying Seam: the concentration list covers the known universe', () => {
+  test('Earthquake-class spells are vetted out of legendary echoes', () => {
+    const { CONCENTRATION_SPELLS } = require('../flavor-prompt.mjs');
+    for (const sp of ['Earthquake', 'Vampiric Touch', 'Control Water', 'Control Weather']) {
+      expect(CONCENTRATION_SPELLS).toContain(sp);
+    }
+  });
+
+  test('a legendary echo filling Earthquake takes the vetted fallback', () => {
+    const sk = {
+      cr: '20', size: 'Huge', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 21,
+      multiattack: 3, con_mod: 6, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 7,
+      seed: 4, counts: {}, themes: [], traits: [],
+      entries: [{ id: 'e1', section: 'Legendary Actions', slot_type: 'legendary', name: 'Echo', gate: null, damage: 0, options: [], text: 'The {creature} uses Spellcasting to cast {signature_spell}.' }],
+    };
+    const m = applyFlavor(sk, {
+      name: 'Seam', size: 'Huge', type: 'Elemental', alignment: 'Lawful Neutral', speed: '40 ft.',
+      stats: { STR: 26, DEX: 14, CON: 22, INT: 16, WIS: 16, CHA: 24 },
+      entries: [{ id: 'e1', name: 'Echo', signature_spell: 'Earthquake' }],
+    });
+    expect(Object.values(m.sections).flat().map((e) => e.text).join('\n')).not.toContain('Earthquake');
   });
 });
