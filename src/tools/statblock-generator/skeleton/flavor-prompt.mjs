@@ -14,7 +14,57 @@
  * if plain, statblock.
  */
 import library from '@/data/ability-library.json';
-import { FLAVOR_SLOTS } from './build-skeleton.mjs';
+import textureBanks from '@/data/texture-banks.json';
+import { FLAVOR_SLOTS, makeRng } from './build-skeleton.mjs';
+
+/**
+ * The texture-bank layer (Phase 3, owner-approved 2026-08-03). Three duties,
+ * wired inside-out:
+ *   1. FALLBACKS: a missing fill draws from the block's own facet banks,
+ *      seeded — the never-fail floor is on-theme, not generic.
+ *   2. VET: a model fill carrying another facet's domain-claiming token
+ *      (spore on a forged block, gear on a grove) is replaced the same way.
+ *      Token match is word-boundary-anchored and prefix-style, the
+ *      NAME_LEXICON semantics. Themes license crossovers: forged+verdant
+ *      makes spore vocabulary legal.
+ *   3. MENUS: the flavor prompt carries the block's facet banks IN FULL as
+ *      the model's working vocabulary, so replacements stay rare (see
+ *      texturePalette).
+ * Banks are data (src/data/texture-banks.json), authored to the printed
+ * register and owner-reviewed; guide, never constrain.
+ */
+const BANK_FACETS = textureBanks.facets ?? {};
+// full type -> facet map (the name-vetting TYPE_FACET below is the 3-domain
+// subset that predates it)
+const TYPE_BANK_FACET = {
+  Undead: 'grave', Fiend: 'fiendish', Celestial: 'celestial', Fey: 'fey',
+  Dragon: 'draconic', Elemental: 'elemental', Plant: 'verdant', Construct: 'forged',
+  Aberration: 'mind', Ooze: 'amorphous', Beast: 'bestial', Giant: 'armed',
+};
+const VET_TOKEN_OWNER = (() => {
+  const m = new Map();
+  for (const [facet, bank] of Object.entries(BANK_FACETS)) {
+    for (const t of bank.vet_tokens ?? []) m.set(t, facet);
+  }
+  return m;
+})();
+/** The facets this block may legally speak in: its type's facet + themes. */
+function ownFacets(type, themes) {
+  return new Set([TYPE_BANK_FACET[type], ...(themes ?? [])].filter(Boolean));
+}
+/** The first off-domain token a fill carries, or null if it's clean. */
+function offDomainToken(value, own) {
+  for (const [tok, owner] of VET_TOKEN_OWNER) {
+    if (!own.has(owner) && new RegExp(`\\b${tok}`, 'i').test(value)) return tok;
+  }
+  return null;
+}
+/** Seeded pick from the union of the block's facet banks for a field. */
+function bankDraw(field, own, rng) {
+  const pool = [...own].flatMap((f) => BANK_FACETS[f]?.[field] ?? []);
+  if (!pool.length || !rng) return null;
+  return pool[Math.floor(rng() * pool.length)];
+}
 
 /**
  * Slots asked about PER ENTRY. {creature} is the name itself, and the damage
@@ -77,6 +127,33 @@ export function flavorRequests(skeleton) {
     }));
 }
 
+/**
+ * The TEXTURE PALETTE section: the block's facet banks IN FULL, injected
+ * into every flavor prompt as the model's working vocabulary (the themed
+ * spell menus' pattern — menus, not pre-stamps; the model may also write
+ * new words that belong beside these). Whole banks, not samples (owner
+ * call): a block carries at most two facets, the token cost is trivial,
+ * and a thin sample would make outputs MORE repetitive, not less.
+ */
+function texturePalette(skeleton, themes) {
+  const facetNames = [...new Set(themes ?? [])].filter((t) => BANK_FACETS[t]);
+  if (!facetNames.length) return '';
+  const banks = facetNames.map((f) => BANK_FACETS[f]);
+  const substances = [...new Set(banks.flatMap((b) => b.substances ?? []))];
+  const limbs = [...new Set(banks.flatMap((b) => (b.appendages ?? []).map((a) => a.one)))];
+  const verbs = [...new Set(banks.flatMap((b) => b.deliveries ?? []))];
+  const adjs = [...new Set(banks.flatMap((b) => b.name_adjectives ?? []))];
+  const nouns = [...new Set(banks.flatMap((b) => b.name_nouns ?? []))];
+  const dmg = [...new Set(banks.flatMap((b) => Object.entries(b.damage_affinity ?? {})
+    .filter(([k, v]) => !k.startsWith('_') && v > 0)
+    .sort((a, b) => b[1] - a[1]).map(([k]) => k)))];
+  return `\nTEXTURE PALETTE — the register this creature speaks in, shown by example. This is CALIBRATION, not a checklist: invent most of your fills and names fresh, in this same voice, and borrow an example directly only when it is exactly right. Never tour the list — a block that uses many of these verbatim reads as assembled, not alive.
+- substances: ${substances.join(', ')}
+- limbs: ${limbs.join(', ')}
+- delivery verbs: ${verbs.join(', ')}
+- name words: ${adjs.join(', ')} / ${nouns.join(', ')}${dmg.length ? `\n- energy damage this register favors: ${dmg.join(', ')}` : ''}`;
+}
+
 export function buildFlavorPrompt(skeleton, { concept, description = '', themes = null } = {}) {
 
   const reqs = flavorRequests(skeleton);
@@ -122,7 +199,7 @@ export function buildFlavorPrompt(skeleton, { concept, description = '', themes 
 
   return `You are writing the flavor for a D&D 2024 monster. Every number is already fixed and is NOT your concern.
 
-CONCEPT: ${concept}${description ? `\nDETAILS: ${description}` : ''}${themes && themes.length ? `\nTHEME THREADS — the block's ENTIRE palette. Every name, every {substance}, every {delivery} and {appendage} draws from these and nothing else: ${themes.join(', ')}` : ''}
+CONCEPT: ${concept}${description ? `\nDETAILS: ${description}` : ''}${themes && themes.length ? `\nTHEME THREADS — the block's ENTIRE palette. Every name, every {substance}, every {delivery} and {appendage} draws from these and nothing else: ${themes.join(', ')}` : ''}${texturePalette(skeleton, themes)}
 
 The creature is CR ${skeleton.cr}, ${skeleton.size}, AC ${skeleton.ac}, HP ${skeleton.hp}.
 
@@ -268,6 +345,23 @@ const SLOW_CAST = ['Geas', 'Dream', 'Scrying', 'Commune', 'Legend Lore', 'Animat
   'Glyph of Warding', 'Find Familiar', 'Modify Memory'];
 
 /**
+ * Concentration spells never cast from a LEGENDARY action (owner overrule,
+ * 2026-08-03, modified_from_print on the White Dragon rows): the corpus's
+ * one example reads as WotC errata, not policy — and a legendary-action
+ * concentration cast is self-defeating anyway, competing with the
+ * creature's own turn. Daily and at-will lists remain legal homes for
+ * these (the Night Hag precedent).
+ */
+export const CONCENTRATION_SPELLS = ['Fear', 'Hold Person', 'Hold Monster', 'Dominate Person',
+  'Dominate Monster', 'Dominate Beast', 'Hypnotic Pattern', 'Slow', 'Haste', 'Invisibility',
+  'Greater Invisibility', 'Fly', 'Levitate', 'Blur', 'Banishment', 'Confusion',
+  'Phantasmal Killer', 'Spirit Guardians', 'Bless', 'Bane', 'Faerie Fire', 'Web', 'Entangle',
+  'Darkness', 'Fog Cloud', 'Silence', 'Moonbeam', 'Call Lightning', 'Flaming Sphere',
+  'Witch Bolt', 'Eyebite', 'Sunbeam', 'Telekinesis', 'Polymorph', 'Charm Monster',
+  'Compulsion', 'Stinking Cloud', 'Sleet Storm', 'Gaseous Form', 'Detect Thoughts',
+  'Insect Plague', 'Cloudkill', 'Wall of Fire', 'Wall of Ice', 'Wall of Force', 'Wall of Stone'];
+
+/**
  * Spells where "(level N version)" actually changes anything. Dream has no
  * upcast — "(level 9 version)" on it is noise the spike nudge invited.
  */
@@ -315,10 +409,16 @@ const KNOWN_SPELLS = new Set([
  * remains — the offending entries revert rather than shipping stranded.
  */
 export function resolveChoices(skeleton, byId) {
+  // Choices match on NORMALIZED keys: the model wraps picks in markdown
+  // ("*Blinding Gaze*"), and an exact match silently kept the default — the
+  // model then named the entry for the mechanic it believed it had (live:
+  // "Lidless Glare" that pushes, because *Blinding Gaze matched nothing and
+  // Cold Gale stayed).
+  const normKey = (s) => String(s ?? '').replace(/[*_`]/g, '').trim().toLowerCase();
   const chosen = skeleton.entries.map((e) => {
     if (!e.options || e.options.length < 2) return e;
-    const want = byId.get(e.id)?.choose;
-    const hit = e.options.find((o) => o.key === want);
+    const want = normKey(byId.get(e.id)?.choose);
+    const hit = want && e.options.find((o) => normKey(o.key) === want);
     return hit ? { ...e, ...hit, id: e.id, section: e.section } : e;
   });
   // Dependency repair BEFORE the clash pass. A swap can remove the block's
@@ -444,15 +544,79 @@ export function applyFlavor(skeleton, llmJson) {
   const energy = typeof j.energy_damage === 'string' && j.energy_damage.trim()
     ? j.energy_damage.trim() : 'Force';
 
+  // Facets this block may speak in, for the fill vet and banked fallbacks.
+  const own = ownFacets(j.type, skeleton.themes);
+  const TEXTURE_SLOTS = ['substance', 'delivery', 'terrain', 'appendage', 'appendage_plural'];
+
   const fill = (entry) => {
     const given = byId.get(entry.id) ?? {};
     let text = entry.text;
+    // Seeded per entry so fallback texture varies across a block instead of
+    // repeating one phrase, yet stays reproducible from the block's seed.
+    const entryRng = makeRng(((skeleton.seed ?? 1) >>> 0)
+      + [...String(entry.id ?? '')].reduce((s, c) => s + c.charCodeAt(0), 0));
+    // One appendage PAIR per entry: {appendage} and {appendage_plural} must
+    // agree ("piston arm" / "piston arms"), so both draw from the same pick.
+    let appendagePair = null;
+    const bankFallback = (slot) => {
+      if (slot === 'appendage' || slot === 'appendage_plural') {
+        appendagePair = appendagePair ?? bankDraw('appendages', own, entryRng);
+        return appendagePair ? (slot === 'appendage' ? appendagePair.one : appendagePair.many) : null;
+      }
+      if (slot === 'substance') return bankDraw('substances', own, entryRng);
+      if (slot === 'delivery') return bankDraw('deliveries', own, entryRng);
+      return null; // terrain has no bank; the static fallback covers it
+    };
     for (const slot of slotsIn(entry.text)) {
       let value = typeof given[slot] === 'string' && given[slot].trim()
-        ? given[slot].trim() : FALLBACK[slot];
+        ? given[slot].trim() : null;
+      // The fill vet: a texture fill claiming a facet this block doesn't own
+      // ("spore-laced" on a forged block whose themes never said verdant) is
+      // replaced from the block's own banks, exactly like a missing fill.
+      if (value && TEXTURE_SLOTS.includes(slot) && offDomainToken(value, own)) {
+        value = null;
+      }
+      if (!value) {
+        // Spell fallbacks are theme-aware (owner-approved 2026-08-03): a
+        // dead signature fill draws an on-palette spell from spell_facets
+        // instead of shipping a static Chromatic Orb onto every register
+        // (live: "Molten Solder Breath casts Chromatic Orb"). The pool
+        // pre-filters what the downstream vets would reject, so the pick
+        // survives; an empty pool falls to the static default.
+        const themedSpell = () => {
+          if (!slot.startsWith('signature_spell')) return null;
+          const legendary = entry.section === 'Legendary Actions';
+          const pool = Object.entries(library._meta.spell_facets ?? {})
+            .filter(([, fs]) => fs.some((f) => own.has(f)))
+            .map(([sp]) => sp)
+            .filter((sp) => !SLOW_CAST.includes(sp) && !NON_ACTION_SPELLS.includes(sp)
+              && !(legendary && CONCENTRATION_SPELLS.includes(sp)));
+          return pool.length ? `*${pool[Math.floor(entryRng() * pool.length)]}*` : null;
+        };
+        value = (TEXTURE_SLOTS.includes(slot) ? bankFallback(slot) : null)
+          ?? themedSpell()
+          ?? FALLBACK[slot];
+      }
+      // Fills never carry their own terminal punctuation: the template
+      // supplies it, and a sentence-shaped fill ("...every forge it
+      // consumed.") spliced before the template's period shipped a live
+      // double period (the Foundry Stag's Furnace Heart).
+      value = value.replace(/\.+$/, '');
       // an echo casts at combat speed: a 1-minute spell in it is impossible
       if (slot.startsWith('signature_spell') && SLOW_CAST.includes(value.replace(/\*/g, '').replace(/\s*\(.*\)$/, '').trim())) {
         value = FALLBACK[slot];
+      }
+      // No concentration spell casts from a LEGENDARY action (owner
+      // overrule, see CONCENTRATION_SPELLS). List-shaped fills keep their
+      // clean members; a fill emptied by the filter takes the fallback.
+      if (entry.section === 'Legendary Actions'
+        && (['spells', 'spells_daily'].includes(slot) || slot.startsWith('signature_spell'))) {
+        const names = [...value.matchAll(/\*([A-Z][\w' ]+?)\*( \(level \d+ version\))?/g)];
+        if (names.length) {
+          const kept = names.filter((mm) => !CONCENTRATION_SPELLS.includes(mm[1]))
+            .map((mm) => `*${mm[1]}*${mm[2] ?? ''}`);
+          if (kept.length !== names.length) value = kept.join(', ') || FALLBACK[slot];
+        }
       }
       // Off-list spells never enter through a fill either: an unknown name
       // in a spell slot would flow into an echo ("uses Spellcasting to cast
@@ -690,7 +854,9 @@ export function applyFlavor(skeleton, llmJson) {
       // vetted names in the tier lines, preserving their upcast notation.
       e.text = e.text.replace(/(- \*\*(?:At Will|\d+\/Day(?: Each)?):\*\*)([^\n]*)/g, (m0, head, rest) => {
         const kept = [...rest.matchAll(/\*([A-Z][\w' -]+?)\*( \(level \d+ version\))?/g)]
-          .filter((mm) => KNOWN_SPELLS.has(mm[1]))
+          // a spell another entry casts THROUGH this list stays listed even
+          // if the tables can't tier it — stripping it re-strands the echo
+          .filter((mm) => KNOWN_SPELLS.has(mm[1]) || referenced.includes(mm[1]))
           .map((mm) => `*${mm[1]}*${mm[2] ?? ''}`);
         return kept.length ? `${head} ${kept.join(', ')}` : head;
       });

@@ -1002,7 +1002,7 @@ describe('the Rift-Shell Crag: Multiattack never references a missing attack', (
  * (2 blocks, both INT 19+).
  */
 describe('the Rift-Shell Crag: mindless blocks carry no cognition abilities', () => {
-  const COGNITION = /spellcasting ability|knows if it hears a lie/;
+  const COGNITION = /spellcasting ability|knows if it hears a lie|intentions or sincerity/;
 
   test('no seed at any CR gives a mindless block a caster or lie-senser row', () => {
     for (const cr of [5, 11, 17, 20]) {
@@ -1131,7 +1131,288 @@ describe('the Dreamweb: menu options get their slots asked and filled', () => {
     });
     const text = Object.values(m.sections).flat().find((e) => /suppresses/.test(e.text)).text;
     expect(text).not.toMatch(/its a /);
-    expect(text).toMatch(/its churning vapor/);
+    // a Construct now draws its fallback from the forged bank (Phase 3);
+    // the static article-free phrase remains the floor for bankless blocks
+    const banks3 = require('@/data/texture-banks.json').facets;
+    const legal = [...banks3.forged.substances, 'churning vapor'];
+    expect(legal.some((sub) => text.includes(`its ${sub}`))).toBe(true);
   });
 });
 
+
+/**
+ * Live block 13 (the Bogstone, CR 20 Large Fey): a swallow kit gated
+ * "Small or smaller" — dead text against a Medium party — because the
+ * Purple Worm's printed RELATIVE offset (two sizes down) was applied to a
+ * Large creature. Zero printed grapple/swallow gates sit below Medium at
+ * CR 5+. Plus: the condition-slot theme boost (x3) always lost to the
+ * printed default (x4), shipping the same Frightened aura four blocks
+ * running.
+ */
+describe('the Bogstone: size gates never fall below Medium at CR 5+', () => {
+  test('the Purple Worm swallow row on a Large CR 20 gates Medium, not Small', () => {
+    const worm = Object.values(library.categories).flat()
+      .find((r) => r.source === 'Purple Worm' && r.ability === 'Swallow');
+    const nums = numbersForB(20);
+    const { text } = fillTemplateB(worm, { cr: 20, size: 'Large', nums });
+    expect(text).toContain('Medium or smaller');
+    expect(text).not.toContain('Small or smaller');
+  });
+
+  test('low-CR blocks keep gates below Medium (floor only applies at CR 5+)', () => {
+    const frog = Object.values(library.categories).flat()
+      .find((r) => r.source === 'Giant Frog' && r.ability === 'Bite');
+    const nums = numbersForB(0.25);
+    const { text } = fillTemplateB(frog, { cr: 0.25, size: 'Small', nums });
+    expect(text).toContain('Small or smaller');
+  });
+});
+const { fillTemplate: fillTemplateB, numbersFor: numbersForB, makeRng: makeRngB } = require('../build-skeleton.mjs');
+
+describe('the Bogstone: theme affinity actually steers conditions now', () => {
+  test('a beguiling theme outdraws the Frightened default on a Wis-save aura', () => {
+    const row = {
+      source: 'Test', ability: 'Aura', cr: '20', slot_type: 'save_effect',
+      template_2024: '*Wisdom Saving Throw*: DC {dc}, any enemy that starts its turn in the aura. *Failure:* The target has the {condition_soft} condition until the start of its next turn.',
+      condition_default: 'Frightened',
+    };
+    const nums = numbersForB(20);
+    const seen = {};
+    for (let s = 1; s <= 400; s += 1) {
+      const c = fillTemplateB(row, { cr: 20, size: 'Large', nums, rng: makeRngB(s), themes: ['beguiling'] })
+        .text.match(/has the (\w+) condition/)[1];
+      seen[c] = (seen[c] ?? 0) + 1;
+    }
+    expect(seen.Charmed).toBeGreaterThan(seen.Frightened); // steering wins
+    expect(seen.Frightened).toBeGreaterThan(0); // guide, never constrain
+  });
+});
+
+/**
+ * Phase 3 wiring (owner-approved 2026-08-03): the texture banks feed the
+ * flavor prompt in full (menus), replace off-domain fills (vet), and back
+ * missing fills (banked never-fail). Banks are data in
+ * src/data/texture-banks.json; guide, never constrain — themes license
+ * crossovers.
+ */
+describe('texture banks: menus, vet, fallbacks', () => {
+  const banks = require('@/data/texture-banks.json').facets;
+  const mini = (text, themes, type = 'Construct', extra = {}) => ({
+    cr: '20', size: 'Large', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 22,
+    multiattack: 3, con_mod: 8, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 8,
+    seed: 42, counts: {}, themes, traits: [],
+    entries: [{ id: 'e1', section: 'Actions', slot_type: 'utility', name: 'Vent', gate: null, text, damage: 0, options: [] }],
+    ...extra,
+  });
+  const flavor = (type, entries = []) => ({
+    name: 'Testling', size: 'Large', type, alignment: 'Unaligned', speed: '30 ft.',
+    stats: { STR: 26, DEX: 10, CON: 26, INT: 6, WIS: 12, CHA: 8 }, entries,
+  });
+  const textOf = (m) => Object.values(m.sections).flat().map((e) => e.text).join('\n');
+
+  test('the flavor prompt carries the FULL banks for the block\'s facets', () => {
+    const sk = mini('The {creature} vents {substance}.', ['forged']);
+    const prompt = buildFlavorPrompt(sk, { concept: 'a furnace colossus', themes: ['forged'] });
+    expect(prompt).toContain('TEXTURE PALETTE');
+    for (const s of banks.forged.substances) expect(prompt).toContain(s);
+    expect(prompt).toContain('energy damage this register favors');
+  });
+
+  test('a missing fill draws from the block\'s own banks, deterministically', () => {
+    const sk = mini('The {creature} vents {substance}.', ['forged']);
+    const a = textOf(applyFlavor(sk, flavor('Construct')));
+    const b = textOf(applyFlavor(sk, flavor('Construct')));
+    expect(a).toBe(b); // seeded
+    const filled = a.match(/vents (.+)\./)[1];
+    expect(banks.forged.substances).toContain(filled);
+  });
+
+  test('an off-domain fill is vetted and replaced on-theme', () => {
+    const sk = mini('The {creature} vents {substance}.', ['forged']);
+    const m = applyFlavor(sk, flavor('Construct', [{ id: 'e1', name: 'Vent', substance: 'spore-laced haze' }]));
+    const text = textOf(m);
+    expect(text).not.toContain('spore');
+    expect(banks.forged.substances.some((s) => text.includes(s))).toBe(true);
+  });
+
+  test('themes license crossovers: verdant theme keeps spore vocabulary', () => {
+    const sk = mini('The {creature} vents {substance}.', ['forged', 'verdant']);
+    const m = applyFlavor(sk, flavor('Construct', [{ id: 'e1', name: 'Vent', substance: 'spore-laced haze' }]));
+    expect(textOf(m)).toContain('spore-laced haze');
+  });
+
+  test('the TYPE facet licenses its own register with no themes at all', () => {
+    const sk = mini('The {creature} vents {substance}.', []);
+    const m = applyFlavor(sk, flavor('Plant', [{ id: 'e1', name: 'Vent', substance: 'spore cloud' }]));
+    expect(textOf(m)).toContain('spore cloud');
+  });
+
+  test('appendage pairs stay coherent when both slots fall back', () => {
+    const sk = mini('One {appendage}; many {appendage_plural}.', ['forged']);
+    const text = textOf(applyFlavor(sk, flavor('Construct')));
+    const [, one, many] = text.match(/One (.+); many (.+)\./);
+    const pair = banks.forged.appendages.find((p) => p.one === one);
+    expect(pair).toBeTruthy();
+    expect(many).toBe(pair.many);
+  });
+
+  test('no themes, no banks: the static fallback still ships', () => {
+    const sk = mini('The {creature} vents {substance}.', []);
+    const text = textOf(applyFlavor(sk, flavor('Monstrosity')));
+    expect(text).toContain('churning vapor');
+  });
+});
+
+/**
+ * Owner overrule (2026-08-03): no concentration spell casts from a
+ * LEGENDARY action. Print's single instance (White Dragon Frightful
+ * Presence casting *Fear*) is judged errata-shaped; those rows are
+ * rewritten as a native fear emanation (modified_from_print). Slotted
+ * legendary echoes vet their fills; daily/at-will lists stay legal homes
+ * (the Night Hag precedent).
+ */
+describe('no concentration spell ever casts from a legendary action', () => {
+  const { CONCENTRATION_SPELLS } = require('../flavor-prompt.mjs');
+  const library2 = require('@/data/ability-library.json');
+
+  test('no legendary row hardcodes a concentration cast (data)', () => {
+    const offenders = [];
+    for (const r of Object.values(library2.categories).flat()) {
+      if (r.slot_type !== 'legendary') continue;
+      for (const m of (r.template_2024 ?? '').matchAll(/casts \*([A-Z][\w' ]+?)\*/g)) {
+        if (CONCENTRATION_SPELLS.includes(m[1])) offenders.push(`${r.source}/${r.ability}: ${m[1]}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+    // and the rewritten rows carry their provenance
+    const white = Object.values(library2.categories).flat()
+      .filter((r) => /White Dragon/.test(r.source) && r.ability === 'Frightful Presence');
+    expect(white.length).toBe(2);
+    for (const r of white) {
+      expect(r.modified_from_print).toMatch(/overrule/i);
+      expect(r.condition_default).toBe('Frightened');
+    }
+  });
+
+  test('a legendary echo fill of a concentration spell is vetted out', () => {
+    const mini = (section) => ({
+      cr: '20', size: 'Large', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 22,
+      multiattack: 3, con_mod: 8, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 8,
+      seed: 9, counts: {}, themes: [], traits: [],
+      entries: [{ id: 'e1', section, slot_type: 'legendary', name: 'Echo', gate: null, text: 'The {creature} casts {spells}, using the same spellcasting ability as Spellcasting.', damage: 0, options: [] }],
+    });
+    const flavor = { name: 'Testling', size: 'Large', type: 'Monstrosity', alignment: 'Unaligned', speed: '30 ft.', stats: { STR: 26, DEX: 10, CON: 26, INT: 6, WIS: 12, CHA: 8 }, entries: [{ id: 'e1', name: 'Echo', spells: '*Hold Monster*' }] };
+    const leg = applyFlavor(mini('Legendary Actions'), flavor);
+    const legText = Object.values(leg.sections).flat().map((e) => e.text).join('\n');
+    expect(legText).not.toContain('Hold Monster');
+    expect(legText).toContain('*Detect Magic*'); // never-fail fallback
+    // the rule is legendary-only: the same fill in Actions is untouched
+    const act = applyFlavor(mini('Actions'), flavor);
+    expect(Object.values(act.sections).flat().map((e) => e.text).join('\n')).toContain('Hold Monster');
+  });
+});
+
+/**
+ * Live block 15 (the Foundry Stag, CR 20, user-typed name): the signature
+ * FALLBACK (*Chromatic Orb*) wasn't in KNOWN_SPELLS, so the reconciliation
+ * appended it to the At Will list and the off-list filter stripped it right
+ * back out — a legendary echo casting a spell the sheet didn't carry. Plus
+ * a splice artifact: a sentence-shaped legacy fill ending in "." before the
+ * template's own "." shipped a double period.
+ */
+describe('the Foundry Stag: fallback spells are citizens of their own universe', () => {
+  const mini = (section, tmpl, themes = [], seed = 9) => ({
+    cr: '20', size: 'Large', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 21,
+    multiattack: 3, con_mod: 6, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 7,
+    seed, counts: {}, themes, traits: [],
+    entries: [
+      { id: 'e1', section: 'Actions', slot_type: 'utility', name: 'Spellcasting', name_locked: true, gate: null, text: 'The {creature} casts one of the following spells, using Charisma as the spellcasting ability (spell save DC 21):\n\n- **At Will:** *Scorching Ray*', damage: 0, options: [] },
+      { id: 'e2', section, slot_type: 'legendary', name: 'Echo', gate: null, text: tmpl, damage: 0, options: [] },
+    ],
+  });
+  const flavor = (entries = []) => ({
+    name: 'Stag', size: 'Large', type: 'Construct', alignment: 'Unaligned', speed: '30 ft.',
+    stats: { STR: 26, DEX: 12, CON: 22, INT: 6, WIS: 16, CHA: 24 }, entries,
+  });
+  const textOf = (m) => Object.values(m.sections).flat().map((e) => e.text).join('\n');
+
+  test('a static-fallback echo spell survives onto the spell list (cast implies listed)', () => {
+    // themeless: no themed pool, falls to *Chromatic Orb* — which must now
+    // ride the reconciliation onto the At Will line and STAY there
+    const m = applyFlavor(
+      mini('Legendary Actions', 'The {creature} uses Spellcasting to cast {signature_spell}. The {creature} can\'t take this action again until the start of its next turn.'),
+      flavor(),
+    );
+    const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
+    expect(caster.text).toContain('Chromatic Orb');
+  });
+
+  test('a themed block\'s dead signature fill draws an on-palette spell instead', () => {
+    const m = applyFlavor(
+      mini('Legendary Actions', 'The {creature} uses Spellcasting to cast {signature_spell}. The {creature} can\'t take this action again until the start of its next turn.', ['grave']),
+      flavor(),
+    );
+    const text = textOf(m);
+    const cast = text.match(/to cast \*([A-Z][\w' ]+?)\*/)[1];
+    const graveSpells = Object.entries(require('@/data/ability-library.json')._meta.spell_facets)
+      .filter(([, fs]) => fs.includes('grave')).map(([sp]) => sp);
+    expect(graveSpells).toContain(cast);
+    // and never a concentration spell from a legendary, nor a slow cast
+    expect(['Darkness', 'Animate Dead', 'Create Undead']).not.toContain(cast);
+    // cast-implies-listed holds for the themed pick too
+    const caster = Object.values(m.sections).flat().find((e) => /At Will:/.test(e.text));
+    expect(caster.text).toContain(cast);
+  });
+
+  test('sentence-shaped fills never splice a double period', () => {
+    const sk = {
+      cr: '20', size: 'Large', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 21,
+      multiattack: 3, con_mod: 6, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 7,
+      seed: 9, counts: {}, themes: [], traits: [],
+      entries: [{ id: 'e1', section: 'Traits', slot_type: 'utility', name: 'Legacy', gate: null, text: 'When the {creature} dies, {legacy}.', damage: 0, options: [] }],
+    };
+    const m = applyFlavor(sk, flavor([{ id: 'e1', name: 'Furnace Heart', legacy: 'its core cools into a lump of slag that hums with heat.' }]));
+    const text = textOf(m);
+    expect(text).toContain('hums with heat.');
+    expect(text).not.toMatch(/\.\./);
+  });
+
+  test('the palette prompt frames the banks as calibration, not a checklist', () => {
+    const sk = mini('Legendary Actions', 'The {creature} casts {signature_spell}.', ['forged']);
+    const prompt = buildFlavorPrompt(sk, { concept: 'a foundry stag', themes: ['forged'] });
+    expect(prompt).toContain('CALIBRATION, not a checklist');
+    expect(prompt).toContain('invent most of your fills');
+  });
+});
+
+/**
+ * Live block 16 (the Lidless Prismatic Scribe): the model wrapped its menu
+ * choices in markdown ("*Blinding Gaze") and the exact-key match silently
+ * kept the default — the block shipped a gaze-named PUSH mechanic because
+ * the model named the entry for the choice it believed it had made.
+ */
+describe('the Scribe: markdown-wrapped choices still resolve', () => {
+  const { resolveChoices } = require('../flavor-prompt.mjs');
+  test('starred, bolded, and case-shifted choose keys all match', () => {
+    const sk = {
+      cr: '20', size: 'Huge', ac: 20, hp: 300, pb: 6, attack_bonus: 14, save_dc: 21,
+      multiattack: 3, con_mod: 6, strike_stat: 'STR', cast_stat: 'Charisma', cast_mod: 7,
+      seed: 3, counts: {}, themes: [], traits: [],
+      entries: [{
+        id: 'e1', section: 'Legendary Actions', slot_type: 'legendary', name: 'Cold Gale',
+        gate: null, text: 'Push text.', damage: 0,
+        options: [
+          { key: 'Cold Gale', name: 'Cold Gale', text: 'Push text.', gate: null, slot_type: 'legendary' },
+          { key: 'Blinding Gaze', name: 'Blinding Gaze', text: 'Blind text.', gate: null, slot_type: 'legendary' },
+        ],
+      }],
+    };
+    for (const choose of ['*Blinding Gaze', '**Blinding Gaze**', 'blinding gaze', '`Blinding Gaze`']) {
+      const resolved = resolveChoices(sk, new Map([['e1', { id: 'e1', choose }]]));
+      expect(resolved[0].name).toBe('Blinding Gaze');
+    }
+    // garbage still keeps the default rather than throwing
+    const kept = resolveChoices(sk, new Map([['e1', { id: 'e1', choose: 'Nonexistent Pick' }]]));
+    expect(kept[0].name).toBe('Cold Gale');
+  });
+});

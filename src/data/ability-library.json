@@ -13562,7 +13562,7 @@
           "reach": 5,
           "damage_type": "Slashing"
         },
-        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. If the target is a creature, it is cursed. While cursed, the target gains no benefit from finishing a Short Rest|XPHB|Short or Long Rest.",
+        "template_2024": "*Melee Attack Roll:* {attack}, reach {reach} ft. {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage. If the target is a creature, it is cursed. While cursed, the target gains no benefit from finishing a Short or Long Rest.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -15878,7 +15878,7 @@
           "target_size_offset": -1,
           "damage_type": "Acid"
         },
-        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one {target_size} or smaller creature Grappled by the {creature} (the {creature} can have only one creature swallowed at a time). *Failure:* The {creature} swallows the target, which is no longer Grappled. While swallowed, a creature has the Blinded and Restrained conditions, has Cover|XPHB|Total Cover against attacks and other effects outside the {creature}, and takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 30 damage or more on a single turn from the swallowed creature, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate the creature, which falls in a space within 10 feet of the {creature} and has the Prone condition. If the {creature} dies, a swallowed creature is no longer Restrained and can escape from the corpse by using 15 feet of movement, exiting Prone.",
+        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one {target_size} or smaller creature Grappled by the {creature} (the {creature} can have only one creature swallowed at a time). *Failure:* The {creature} swallows the target, which is no longer Grappled. While swallowed, a creature has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the {creature}, and takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 30 damage or more on a single turn from the swallowed creature, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate the creature, which falls in a space within 10 feet of the {creature} and has the Prone condition. If the {creature} dies, a swallowed creature is no longer Restrained and can escape from the corpse by using 15 feet of movement, exiting Prone.",
         "template_2014": "The {creature} makes one bite attack against a Medium or smaller target it is grappling. If the attack hits, the target is also swallowed, and the grapple ends. While swallowed, the target is blinded and restrained, it has total cover against attacks and other effects outside the {creature}, and it takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. A {creature} can have only one creature swallowed at a time. If the {creature} takes 30 damage or more on a single turn from the swallowed creature, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate the creature, which falls prone in a space within 10 feet of the {creature}. If the {creature} dies, a swallowed creature is no longer restrained by it and can escape from the corpse by using 15 feet of movement, exiting prone.",
         "source_size": "Huge",
         "requires": [
@@ -18173,7 +18173,7 @@
           "target_size_offset": 0,
           "damage_type": "Acid"
         },
-        "template_2024": "The {creature} moves up to its Speed without provoking Opportunity Attacks. The {creature} can move through the spaces of {target_size} or smaller creatures if it has room inside itself to contain them (see the Ooze {creature} [Area of Effect]|XPHB|{creature} trait). *Dexterity Saving Throw*: DC {dc}, each creature whose space the {creature} enters for the first time during this move. *Failure:* {damage} ({dice}) {damage_type} damage, and the target is engulfed. An engulfed target is suffocating, can't cast spells with a Verbal component, has the Restrained condition, and takes {rider_damage} ({rider_dice}) {rider_damage_type} damage at the start of each of the {creature}'s turns. When the {creature} moves, the engulfed target moves with it. An engulfed target can try to escape by taking an action to make a DC {dc} Strength (Athletics) check. On a successful check, the target escapes and enters the nearest unoccupied space. *Success:* Half damage, and the target moves to an unoccupied space within 5 feet of the {creature}. If there is no unoccupied space, the target fails the save instead.",
+        "template_2024": "The {creature} moves up to its Speed without provoking Opportunity Attacks. The {creature} can move through the spaces of {target_size} or smaller creatures if it has room inside itself to contain them (see the Ooze Cube trait). *Dexterity Saving Throw*: DC {dc}, each creature whose space the {creature} enters for the first time during this move. *Failure:* {damage} ({dice}) {damage_type} damage, and the target is engulfed. An engulfed target is suffocating, can't cast spells with a Verbal component, has the Restrained condition, and takes {rider_damage} ({rider_dice}) {rider_damage_type} damage at the start of each of the {creature}'s turns. When the {creature} moves, the engulfed target moves with it. An engulfed target can try to escape by taking an action to make a DC {dc} Strength (Athletics) check. On a successful check, the target escapes and enters the nearest unoccupied space. *Success:* Half damage, and the target moves to an unoccupied space within 5 feet of the {creature}. If there is no unoccupied space, the target fails the save instead.",
         "template_2014": "the {creature} moves up to its speed. While doing so, it can enter Large or smaller creatures' spaces. Whenever the {creature} enters a creature's space, the creature must make a DC {dc} Dexterity saving throw. On a successful save, the creature can choose to be pushed {push_distance} feet back or to the side of the {creature}. A creature that chooses not to be pushed suffers the consequences of a failed saving throw. On a failed save, the {creature} enters the creature's space, and the creature takes {damage} ({dice}) {damage_type} damage and is engulfed. The engulfed creature can't breathe, is restrained, and takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. When the {creature} moves, the engulfed creature moves with it. An engulfed creature can try to escape by taking an action to make a DC 12 Strength check. On a success, the creature escapes and enters a space of its choice within 5 feet of the {creature}.",
         "damage_instances": {
           "additive": 1,
@@ -18802,7 +18802,7 @@
           "target_size_offset": -1,
           "damage_type": "Acid"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature Grappled by the {creature} (it can have up to two creatures swallowed at a time). *Failure:* The target is swallowed by the {creature}, and the Grappled condition ends. A swallowed creature has the Blinded and Restrained conditions, it has Cover|XPHB|Total Cover against attacks and other effects outside the {creature}, and it takes {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 30 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 5 feet of the {creature} and has the Prone condition. If the {creature} dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse by using 15 feet of movement, exiting Prone.",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature Grappled by the {creature} (it can have up to two creatures swallowed at a time). *Failure:* The target is swallowed by the {creature}, and the Grappled condition ends. A swallowed creature has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the {creature}, and it takes {damage} ({dice}) {damage_type} damage plus {rider_damage} ({rider_dice}) {rider_damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 30 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 5 feet of the {creature} and has the Prone condition. If the {creature} dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse by using 15 feet of movement, exiting Prone.",
         "template_2014": "The {creature} makes one bite attack against a Medium or smaller creature it is grappling. If the attack hits, that creature takes the bite's damage and is swallowed, and the grapple ends. While swallowed, the creature is blinded and restrained, it has total cover against attacks and other effects outside the {creature}, and it takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 30 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, which fall prone in a space within 10 feet of the {creature}. If the {creature} dies, a swallowed creature is no longer restrained by it and can escape from the corpse using 15 feet of movement, exiting prone.",
         "damage_instances": {
           "additive": 1,
@@ -18876,7 +18876,7 @@
           "target_size_offset": -2,
           "damage_type": "Acid"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature Grappled by the {creature} (it can have up to three creatures swallowed at a time). *Failure:* The target is swallowed by the {creature}, and the Grappled condition ends. A swallowed creature has the Blinded and Restrained conditions, has Cover|XPHB|Total Cover against attacks and other effects outside the {creature}, and takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 30 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 5 feet of the {creature} and has the Prone condition. If the {creature} dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse using 20 feet of movement, exiting Prone.",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature Grappled by the {creature} (it can have up to three creatures swallowed at a time). *Failure:* The target is swallowed by the {creature}, and the Grappled condition ends. A swallowed creature has the Blinded and Restrained conditions, has Total Cover against attacks and other effects outside the {creature}, and takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 30 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 5 feet of the {creature} and has the Prone condition. If the {creature} dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse using 20 feet of movement, exiting Prone.",
         "source_size": "Gargantuan",
         "requires": [
           "grapple"
@@ -18917,7 +18917,7 @@
           "target_size_offset": -2,
           "damage_type": "Piercing"
         },
-        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one creature Grappled by the {creature} (it can have up to four creatures swallowed at a time). *Failure:* {damage} ({dice}) {damage_type} damage. If the target is {target_size} or smaller, it is swallowed and no longer Grappled. A swallowed creature has the Restrained condition, has Cover|XPHB|Total Cover against attacks and other effects outside the {creature}, and takes {rider_damage} ({rider_dice}) {rider_damage_type} damage at the start of each of its turns. If the {creature} takes 50 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 10 feet of the {creature} with the Prone condition. If the {creature} dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse using 15 feet of movement, exiting Prone.",
+        "template_2024": "*Dexterity Saving Throw*: DC {dc}, one creature Grappled by the {creature} (it can have up to four creatures swallowed at a time). *Failure:* {damage} ({dice}) {damage_type} damage. If the target is {target_size} or smaller, it is swallowed and no longer Grappled. A swallowed creature has the Restrained condition, has Total Cover against attacks and other effects outside the {creature}, and takes {rider_damage} ({rider_dice}) {rider_damage_type} damage at the start of each of its turns. If the {creature} takes 50 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 10 feet of the {creature} with the Prone condition. If the {creature} dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse using 15 feet of movement, exiting Prone.",
         "damage_instances": {
           "additive": 1,
           "alternative": 0
@@ -18957,7 +18957,7 @@
           "target_size_offset": -2,
           "damage_type": "Acid"
         },
-        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature Grappled by the {creature} (it can have up to six creatures swallowed at a time). *Failure:* The target is swallowed, and the Grappled condition ends. A swallowed creature has the Blinded and Restrained conditions and can't teleport, it has Cover|XPHB|Total Cover against attacks and other effects outside the {creature}, and it takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 60 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 10 feet of the {creature} and has the Prone condition. If the {creature} dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse using 20 feet of movement, exiting Prone.",
+        "template_2024": "*Strength Saving Throw*: DC {dc}, one {target_size} or smaller creature Grappled by the {creature} (it can have up to six creatures swallowed at a time). *Failure:* The target is swallowed, and the Grappled condition ends. A swallowed creature has the Blinded and Restrained conditions and can't teleport, has Total Cover against attacks and other effects outside the {creature}, and it takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 60 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 10 feet of the {creature} and has the Prone condition. If the {creature} dies, any swallowed creature no longer has the Restrained condition and can escape from the corpse using 20 feet of movement, exiting Prone.",
         "template_2014": "The {creature} makes one bite attack against a Large or smaller creature it is grappling. If the attack hits, the target takes the bite's damage, the target is swallowed, and the grapple ends. While swallowed, the creature is blinded and restrained, it has total cover against attacks and other effects outside the {creature}, and it takes {damage} ({dice}) {damage_type} damage at the start of each of the {creature}'s turns. If the {creature} takes 60 damage or more on a single turn from a creature inside it, the {creature} must succeed on a DC {dc} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, which fall prone in a space within 10 feet of the {creature}. If the {creature} dies, a swallowed creature is no longer restrained by it and can escape from the corpse by using 30 feet of movement, exiting prone.",
         "source_size": "Gargantuan",
         "requires": [
@@ -20711,7 +20711,7 @@
         "numbers": {
           "dc": 14
         },
-        "template_2024": "The {creature} casts *Fear*, requiring no Material components and using {cast_stat} as the spellcasting ability (spell save DC {dc}). The {creature} can't take this action again until the start of its next turn.",
+        "template_2024": "*Wisdom Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature}. *Failure:* The target has the {condition_soft} condition until the end of its next turn. *Failure or Success*: The {creature} can't take this action again until the start of its next turn.",
         "slot_type": "legendary",
         "extracted": "second pass (utility entries the first pass skipped)",
         "pool": "ability",
@@ -20719,7 +20719,9 @@
         "facets": [
           "arcane",
           "draconic"
-        ]
+        ],
+        "condition_default": "Frightened",
+        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) \u2014 the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock)."
       },
       {
         "cr": "21",
@@ -21228,7 +21230,7 @@
         "numbers": {
           "dc": 18
         },
-        "template_2024": "The {creature} casts *Fear*, requiring no Material components and using {cast_stat} as the spellcasting ability (spell save DC {dc}). The {creature} can't take this action again until the start of its next turn.",
+        "template_2024": "*Wisdom Saving Throw*: DC {dc}, each creature in a {area}-foot Emanation originating from the {creature}. *Failure:* The target has the {condition_soft} condition until the end of its next turn. *Failure or Success*: The {creature} can't take this action again until the start of its next turn.",
         "slot_type": "legendary",
         "extracted": "second pass (utility entries the first pass skipped)",
         "pool": "ability",
@@ -21236,7 +21238,9 @@
         "facets": [
           "arcane",
           "draconic"
-        ]
+        ],
+        "condition_default": "Frightened",
+        "modified_from_print": "Owner overrule 2026-08-03: print has this legendary action cast *Fear* (a concentration spell) \u2014 the corpus's single instance, judged errata-shaped rather than policy. Rewritten as a native fear emanation assembled from printed clause parts (the Fear Aura condition clause and the standard legendary lock)."
       },
       {
         "cr": "23",
@@ -26291,7 +26295,7 @@
           "trait": "Magic Rope",
           "numbers": {},
           "scales_with_cr": false,
-          "template_2024": "The {creature} has a magic {appendage}. While bearing it, the {creature} can use the Entangling Rope action. The rope has AC 20, HP 90, and Immunity to Poison and Psychic damage. The rope turns to dust if reduced to 0 Hit Points, if it is 5+ feet away from the {creature} for 1 hour or more, or if the {creature} dies. If the {appendage} is damaged or destroyed, the {creature} can fully restore it when finishing a Short Rest|XPHB|Short or Long Rest.",
+          "template_2024": "The {creature} has a magic {appendage}. While bearing it, the {creature} can use the Entangling Rope action. The rope has AC 20, HP 90, and Immunity to Poison and Psychic damage. The rope turns to dust if reduced to 0 Hit Points, if it is 5+ feet away from the {creature} for 1 hour or more, or if the {creature} dies. If the {appendage} is damaged or destroyed, the {creature} can fully restore it when finishing a Short or Long Rest.",
           "requires": [
             "ability:Entangling Rope"
           ],
@@ -26572,7 +26576,7 @@
             "dc": 12
           },
           "scales_with_cr": true,
-          "template_2024": "The {creature} fills its entire space and is transparent. Other creatures can enter that space, but a creature that does so is subjected to the {creature}'s Engulf and has Disadvantage on the saving throw. Creatures inside the {creature} have Cover|XPHB|Total Cover, and the {creature} can hold one Large creature or up to four Medium or Small creatures inside itself at a time. As an action, a creature within {reach} feet of the {creature} can pull a creature or an object out of the {creature} by succeeding on a DC {dc} Strength (Athletics) check, and the puller takes {damage} ({dice}) {damage_type} damage.",
+          "template_2024": "The {creature} fills its entire space and is transparent. Other creatures can enter that space, but a creature that does so is subjected to the {creature}'s Engulf and has Disadvantage on the saving throw. Creatures inside the {creature} have Total Cover, and the {creature} can hold one Large creature or up to four Medium or Small creatures inside itself at a time. As an action, a creature within {reach} feet of the {creature} can pull a creature or an object out of the {creature} by succeeding on a DC {dc} Strength (Athletics) check, and the puller takes {damage} ({dice}) {damage_type} damage.",
           "requires": [
             "swallow"
           ],

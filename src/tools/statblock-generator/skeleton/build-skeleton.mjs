@@ -295,10 +295,12 @@ function satisfiedBy(chosen, traits = []) {
  * Cognition gate: abilities that only make sense on a comprehending mind.
  * Measured across all 329 printed blocks: zero mindless or bestial creatures
  * cast spells (66 casters, min INT 3 — the Stone Golem, which understands
- * languages) and zero sense lies (2 blocks, both INT 19+). Computed from the
- * template rather than tagged, so new rows can't dodge it.
+ * languages), zero sense lies (2 blocks, both INT 19+), and the Sphinx's
+ * "intentions or sincerity" Insight clause presumes intentions worth reading
+ * (live: Inscrutable on an Int 3 stone guardian). Computed from the template
+ * rather than tagged, so new rows can't dodge it.
  */
-const needsMind = (a) => /spellcasting ability|knows if it hears a lie/.test(a.template_2024 ?? '');
+const needsMind = (a) => /spellcasting ability|knows if it hears a lie|intentions or sincerity/.test(a.template_2024 ?? '');
 
 export function pickAbilities(cr, counts, rng, traits = [], alternatives = 1, archetype = null, spineRows = [], themes = null, mind = 'sapient') {
   const chosen = [];
@@ -597,7 +599,11 @@ function pickCondition(ability, slot, rng, themes) {
   const weights = {};
   options.forEach((c, i) => {
     let w = c === dflt ? 4 : 1;
-    if (c.split(' and ').some((word) => boosted.has(word))) w *= 3;
+    // The boost must OUTWEIGH the bare default or it never steers: at x3 a
+    // theme-boosted alternative (3) always lost to the printed default (4),
+    // and four consecutive live blocks shipped the same Frightened aura
+    // while their themes pointed elsewhere.
+    if (c.split(' and ').some((word) => boosted.has(word))) w *= 6;
     weights[i] = w;
   });
   return options[pickWeighted(weights, rng)];
@@ -630,7 +636,14 @@ export function fillTemplate(ability, { cr, size, nums, rng = null, themes = nul
   const rider = riderDamageDiceFor(riderAvg);
 
   const sizeIdx = SIZES.indexOf(size);
-  const shift = (off) => SIZES[Math.min(SIZES.length - 1, Math.max(0, sizeIdx + (off ?? 0)))];
+  // Size-gate floor: zero printed grapple/swallow gates sit below Medium at
+  // CR 5+ (all 329 blocks; the CR 11+ floor is the Marilith's Medium, on a
+  // Large creature). The printed offsets are RELATIVE (Purple Worm swallows
+  // two steps below its own size), so a Large creature inherited "Small or
+  // smaller" — a CR 20 whose entire engulf kit was dead text against a
+  // Medium party (live: the Bogstone).
+  const sizeFloor = crNumber(cr) >= 5 ? SIZES.indexOf('Medium') : 0;
+  const shift = (off) => SIZES[Math.min(SIZES.length - 1, Math.max(sizeFloor, Math.max(0, sizeIdx + (off ?? 0))))];
   const n = ability.numbers ?? {};
 
   const values = {

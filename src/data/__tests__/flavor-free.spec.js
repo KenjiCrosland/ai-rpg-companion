@@ -179,6 +179,17 @@ describe('consolidation', () => {
   });
 });
 
+describe('no raw markup survives in the data', () => {
+  test('no template contains a pipe character', () => {
+    // The scrape carried 5etools cross-reference tags ("Cover|XPHB|Total
+    // Cover") into 9 rows, and one shipped verbatim on a live block —
+    // machine markup with the serial number showing. Print prose never
+    // needs a pipe, so the ban is absolute.
+    const offenders = ROWS.filter((r) => texts(r).some((t) => t.includes('|'))).map(label);
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe('spell names are sacred', () => {
   test('no flavor slot sits inside an italicized spell name', () => {
     // The flavor-stripper ate "Fire" out of *Wall of Fire* and *Faerie
